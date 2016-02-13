@@ -957,10 +957,13 @@ func countRepositories(showPrivate bool) int64 {
 	sess := x.NewSession()
 
 	if !showPrivate {
-		sess.Where("is_private=", false)
+		sess.Where("is_private=?", false)
 	}
 
-	count, _ := sess.Count(new(Repository))
+	count, err := sess.Count(new(Repository))
+	if err != nil {
+		log.Error(4, "countRepositories: %v", err)
+	}
 	return count
 }
 
@@ -1100,6 +1103,7 @@ func TransferOwnership(u *User, newOwnerName string, repo *Repository) error {
 
 	wikiPath := WikiPath(owner.Name, repo.Name)
 	if com.IsExist(wikiPath) {
+		RemoveAllWithNotice("Delete repository wiki local copy", repo.LocalWikiPath())
 		if err = os.Rename(wikiPath, WikiPath(newOwner.Name, repo.Name)); err != nil {
 			return fmt.Errorf("rename repository wiki: %v", err)
 		}
