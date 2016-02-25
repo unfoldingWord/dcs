@@ -14,8 +14,9 @@ import (
 	"gopkg.in/macaron.v1"
 
 	"github.com/gogits/gogs/models"
-	"github.com/gogits/gogs/models/cron"
 	"github.com/gogits/gogs/modules/base"
+	"github.com/gogits/gogs/modules/cron"
+	"github.com/gogits/gogs/modules/mailer"
 	"github.com/gogits/gogs/modules/middleware"
 	"github.com/gogits/gogs/modules/process"
 	"github.com/gogits/gogs/modules/setting"
@@ -172,6 +173,18 @@ func Dashboard(ctx *middleware.Context) {
 	updateSystemStatus()
 	ctx.Data["SysStatus"] = sysStatus
 	ctx.HTML(200, DASHBOARD)
+}
+
+func SendTestMail(ctx *middleware.Context) {
+	email := ctx.Query("email")
+	// Send a test email to the user's email address and redirect back to Config
+	if err := mailer.SendTestMail(email); err != nil {
+		ctx.Flash.Error(ctx.Tr("admin.config.test_mail_failed", email, err))
+	} else {
+		ctx.Flash.Info(ctx.Tr("admin.config.test_mail_sent", email))
+	}
+
+	ctx.Redirect(setting.AppSubUrl + "/admin/config")
 }
 
 func Config(ctx *middleware.Context) {

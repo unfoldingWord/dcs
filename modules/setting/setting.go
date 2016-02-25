@@ -65,6 +65,7 @@ var (
 	StartSSHServer     bool
 	SSHDomain          string
 	SSHPort            int
+	SSHListenPort      int
 	SSHRootPath        string
 	OfflineMode        bool
 	DisableRouterLog   bool
@@ -324,6 +325,7 @@ func NewContext() {
 	}
 	SSHDomain = sec.Key("SSH_DOMAIN").MustString(Domain)
 	SSHPort = sec.Key("SSH_PORT").MustInt(22)
+	SSHListenPort = sec.Key("SSH_LISTEN_PORT").MustInt(SSHPort)
 	SSHRootPath = sec.Key("SSH_ROOT_PATH").MustString(path.Join(homeDir, ".ssh"))
 	if err := os.MkdirAll(SSHRootPath, 0700); err != nil {
 		log.Fatal(4, "Fail to create '%s': %v", SSHRootPath, err)
@@ -455,7 +457,6 @@ var Service struct {
 	DisableRegistration            bool
 	ShowRegistrationButton         bool
 	RequireSignInView              bool
-	EnableCacheAvatar              bool
 	EnableNotifyMail               bool
 	EnableReverseProxyAuth         bool
 	EnableReverseProxyAutoRegister bool
@@ -469,7 +470,6 @@ func newService() {
 	Service.DisableRegistration = sec.Key("DISABLE_REGISTRATION").MustBool()
 	Service.ShowRegistrationButton = sec.Key("SHOW_REGISTRATION_BUTTON").MustBool(!Service.DisableRegistration)
 	Service.RequireSignInView = sec.Key("REQUIRE_SIGNIN_VIEW").MustBool()
-	Service.EnableCacheAvatar = sec.Key("ENABLE_CACHE_AVATAR").MustBool()
 	Service.EnableReverseProxyAuth = sec.Key("ENABLE_REVERSE_PROXY_AUTHENTICATION").MustBool()
 	Service.EnableReverseProxyAutoRegister = sec.Key("ENABLE_REVERSE_PROXY_AUTO_REGISTRATION").MustBool()
 	Service.EnableCaptcha = sec.Key("ENABLE_CAPTCHA").MustBool()
