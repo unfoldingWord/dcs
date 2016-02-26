@@ -308,7 +308,7 @@ func (u *User) EncodePasswd() {
 		cmd := exec.Command(app, arg0, arg1)
 		stdout, err := cmd.Output()
 		if err != nil {
-			log.Info("Dokuwiki Password Error: %s", err.Error())
+			log.Info("Dokuwiki Password Error for %s: %s", u.LowerName, err.Error())
 		} else {
 			u.Passwd = strings.Split(string(stdout), "$")[3]
 			log.Info("Dokuwiki Password Hash for %s: %s", u.LowerName, string(stdout))
