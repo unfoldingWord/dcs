@@ -304,7 +304,7 @@ func (u *User) EncodePasswd() {
 	if len(u.Salt) <= 8 && ! strings.Contains(u.Passwd, "'") {
 		app := "/usr/bin/php"
 		arg0 := "-r"
-		arg1 := "include '/var/www/vhosts/door43.org/httpdocs/inc/PassHash.class.php';$p = new PassHash();echo $p->hash_smd5('" + u.Passwd + "', '" + u.Salt + "');"
+		arg1 := "echo crypt('" + u.Passwd + "', '$1$" + u.Salt + "$');"
 		cmd := exec.Command(app, arg0, arg1)
 		stdout, err := cmd.Output()
 		if err != nil {
