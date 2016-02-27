@@ -1,6 +1,6 @@
 # Docker for Gogs
 
-Visit [Docker Hub](https://hub.docker.com/r/gogs/gogs/) or [Quay](https://quay.io/repository/gogs/gogs) see all available tags.
+Visit [Docker Hub](https://hub.docker.com/r/gogs/gogs/) see all available tags.
 
 ## Usage
 
@@ -88,4 +88,4 @@ Steps to upgrade Gogs with Docker:
 
 ## Known Issues
 
-- `.dockerignore` seems to be ignored during Docker Hub Automated build
+- The docker container can not currently be build on Raspberry 1 (armv6l) as our base image `alpine` does not have a `go` package available for this platform.
