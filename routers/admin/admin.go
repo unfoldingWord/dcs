@@ -204,6 +204,8 @@ func Config(ctx *middleware.Context) {
 	ctx.Data["ScriptType"] = setting.ScriptType
 	ctx.Data["ReverseProxyAuthUser"] = setting.ReverseProxyAuthUser
 
+	ctx.Data["SSH"] = setting.SSH
+
 	ctx.Data["Service"] = setting.Service
 	ctx.Data["DbCfg"] = models.DbCfg
 	ctx.Data["Webhook"] = setting.Webhook
@@ -220,7 +222,6 @@ func Config(ctx *middleware.Context) {
 
 	ctx.Data["SessionConfig"] = setting.SessionConfig
 
-	ctx.Data["PictureService"] = setting.PictureService
 	ctx.Data["DisableGravatar"] = setting.DisableGravatar
 
 	type logger struct {
