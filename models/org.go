@@ -1080,7 +1080,7 @@ func (org *User) GetUserRepositories(userID int64) (err error) {
 		Join("INNER", "`team_repo`", "`team_repo`.repo_id=`repository`.id").
 		Where("`repository`.owner_id=?", org.Id).
 		And("`repository`.is_private=?", false).
-		Or("`team_repo`.team_id=(?)", strings.Join(teamIDs, ",")).
+		Or("`team_repo`.team_id IN ("+strings.Join(teamIDs, ",")+")").
 		GroupBy("`repository`.id").
 		Find(&org.Repos); err != nil {
 		return fmt.Errorf("GetUserRepositories: get repositories: %v", err)
