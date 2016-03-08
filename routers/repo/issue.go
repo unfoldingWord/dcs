@@ -55,15 +55,21 @@ var (
 func MustEnableIssues(ctx *middleware.Context) {
 	if !ctx.Repo.Repository.EnableIssues {
 		ctx.Handle(404, "MustEnableIssues", nil)
+		return
 	}
 }
 
 func MustAllowPulls(ctx *middleware.Context) {
 	if !ctx.Repo.Repository.AllowsPulls() {
 		ctx.Handle(404, "MustAllowPulls", nil)
+		return
 	}
 
-	ctx.Data["HasForkedRepo"] = ctx.IsSigned && ctx.User.HasForkedRepo(ctx.Repo.Repository.ID)
+	// User can send pull request if owns a forked repository.
+	if ctx.IsSigned && ctx.User.HasForkedRepo(ctx.Repo.Repository.ID) {
+		ctx.Repo.PullRequest.Allowed = true
+		ctx.Repo.PullRequest.HeadInfo = ctx.User.Name + ":" + ctx.Repo.BranchName
+	}
 }
 
 func RetrieveLabels(ctx *middleware.Context) {
@@ -273,7 +279,7 @@ func RetrieveRepoMilestonesAndAssignees(ctx *middleware.Context, repo *models.Re
 }
 
 func RetrieveRepoMetas(ctx *middleware.Context, repo *models.Repository) []*models.Label {
-	if !ctx.Repo.IsAdmin() {
+	if !ctx.Repo.IsWriter() {
 		return nil
 	}
 
@@ -356,7 +362,7 @@ func ValidateRepoMetas(ctx *middleware.Context, form auth.CreateIssueForm) ([]in
 		return nil, 0, 0
 	}
 
-	if !ctx.Repo.IsAdmin() {
+	if !ctx.Repo.IsWriter() {
 		return nil, 0, 0
 	}
 
@@ -560,14 +566,18 @@ func ViewIssue(ctx *middleware.Context) {
 	}
 
 	if issue.IsPull {
+		MustAllowPulls(ctx)
+		if ctx.Written() {
+			return
+		}
+		ctx.Data["PageIsPullList"] = true
+
 		if err = issue.GetPullRequest(); err != nil {
 			ctx.Handle(500, "GetPullRequest", err)
 			return
 		}
 
-		ctx.Data["PageIsPullList"] = true
 		ctx.Data["PageIsPullConversation"] = true
-		ctx.Data["HasForkedRepo"] = ctx.IsSigned && ctx.User.HasForkedRepo(ctx.Repo.Repository.ID)
 	} else {
 		MustEnableIssues(ctx)
 		if ctx.Written() {
@@ -624,7 +634,7 @@ func ViewIssue(ctx *middleware.Context) {
 	ctx.Data["Labels"] = labels
 
 	// Check milestone and assignee.
-	if ctx.Repo.IsAdmin() {
+	if ctx.Repo.IsWriter() {
 		RetrieveRepoMilestonesAndAssignees(ctx, repo)
 		if ctx.Written() {
 			return
@@ -664,8 +674,8 @@ func ViewIssue(ctx *middleware.Context) {
 			if repo.IsOwnedBy(comment.PosterID) ||
 				(repo.Owner.IsOrganization() && repo.Owner.IsOwnedBy(comment.PosterID)) {
 				comment.ShowTag = models.COMMENT_TAG_OWNER
-			} else if comment.Poster.IsAdminOfRepo(repo) {
-				comment.ShowTag = models.COMMENT_TAG_ADMIN
+			} else if comment.Poster.IsWriterOfRepo(repo) {
+				comment.ShowTag = models.COMMENT_TAG_WRITER
 			} else if comment.PosterID == issue.PosterID {
 				comment.ShowTag = models.COMMENT_TAG_POSTER
 			}
@@ -688,7 +698,7 @@ func ViewIssue(ctx *middleware.Context) {
 	ctx.Data["Participants"] = participants
 	ctx.Data["NumParticipants"] = len(participants)
 	ctx.Data["Issue"] = issue
-	ctx.Data["IsIssueOwner"] = ctx.Repo.IsAdmin() || (ctx.IsSigned && issue.IsPoster(ctx.User.Id))
+	ctx.Data["IsIssueOwner"] = ctx.Repo.IsWriter() || (ctx.IsSigned && (issue.IsPoster(ctx.User.Id) || ctx.User.IsAdmin))
 	ctx.Data["SignInLink"] = setting.AppSubUrl + "/user/login"
 
 	ctx.Data["RequireHighlightJS"] = true
@@ -715,7 +725,7 @@ func UpdateIssueTitle(ctx *middleware.Context) {
 		return
 	}
 
-	if !ctx.IsSigned || (ctx.User.Id != issue.PosterID && !ctx.Repo.IsAdmin()) {
+	if !ctx.IsSigned || (ctx.User.Id != issue.PosterID && !ctx.Repo.IsWriter() && !ctx.User.IsAdmin) {
 		ctx.Error(403)
 		return
 	}
@@ -742,7 +752,7 @@ func UpdateIssueContent(ctx *middleware.Context) {
 		return
 	}
 
-	if !ctx.IsSigned || (ctx.User.Id != issue.PosterID && !ctx.Repo.IsAdmin()) {
+	if !ctx.IsSigned || (ctx.User.Id != issue.PosterID && !ctx.Repo.IsWriter() && !ctx.User.IsAdmin) {
 		ctx.Error(403)
 		return
 	}
@@ -883,7 +893,7 @@ func NewComment(ctx *middleware.Context, form auth.CreateCommentForm) {
 	var comment *models.Comment
 	defer func() {
 		// Check if issue admin/poster changes the status of issue.
-		if (ctx.Repo.IsAdmin() || (ctx.IsSigned && issue.IsPoster(ctx.User.Id))) &&
+		if (ctx.Repo.IsWriter() || (ctx.IsSigned && issue.IsPoster(ctx.User.Id))) &&
 			(form.Status == "reopen" || form.Status == "close") &&
 			!(issue.IsPull && issue.HasMerged) {
 

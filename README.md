@@ -3,7 +3,7 @@ Gogs - Go Git Service [![Build Status](https://travis-ci.org/gogits/gogs.svg?bra
 
 ![](https://github.com/gogits/gogs/blob/master/public/img/gogs-large-resize.png?raw=true)
 
-##### Current version: 0.8.55
+##### Current version: 0.9.1
 
 | Web | UI  | Preview  |
 |:-------------:|:-------:|:-------:|
@@ -13,11 +13,12 @@ Gogs - Go Git Service [![Build Status](https://travis-ci.org/gogits/gogs.svg?bra
 
 ### Important Notes
 
-1. Due to testing purpose, data of [try.gogs.io](https://try.gogs.io) was reset in **Jan 28, 2015** and will reset multiple times after. Please do **NOT** put your important data on the site.
-2. The demo site [try.gogs.io](https://try.gogs.io) is running under `develop` branch.
-3. If you think there are vulnerabilities in the project, please talk privately to **u@gogs.io**. Thanks!
-4. If you're interested in using APIs, we have experimental support with [documentation](https://github.com/gogits/go-gogs-client/wiki).
-5. If your team/company is using Gogs and would like to put your logo on [our website](http://gogs.io), contact us by any means.
+1. **YOU MUST READ [Contributing Code](https://github.com/gogits/gogs/wiki/Contributing-Code) BEFORE STARTING TO WORK ON A PULL REQUEST**.
+2. Due to testing purpose, data of [try.gogs.io](https://try.gogs.io) was reset in **Jan 28, 2015** and will reset multiple times after. Please do **NOT** put your important data on the site.
+3. The demo site [try.gogs.io](https://try.gogs.io) is running under `develop` branch.
+4. If you think there are vulnerabilities in the project, please talk privately to **u@gogs.io**. Thanks!
+5. If you're interested in using APIs, we have experimental support with [documentation](https://github.com/gogits/go-gogs-client/wiki).
+6. If your team/company is using Gogs and would like to put your logo on [our website](http://gogs.io), contact us by any means.
 
 [简体中文](README_ZH.md)
 
@@ -48,7 +49,7 @@ The goal of this project is to make the easiest, fastest, and most painless way 
 - Mail service
 - Administration panel
 - Supports MySQL, PostgreSQL, SQLite3 and [TiDB](https://github.com/pingcap/tidb) (experimental)
-- Multi-language support ([14 languages](https://crowdin.com/project/gogs))
+- Multi-language support ([15 languages](https://crowdin.com/project/gogs))
 
 ## System Requirements
 

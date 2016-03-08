@@ -142,6 +142,10 @@ func SettingsPost(ctx *middleware.Context, form auth.RepoSettingForm) {
 		ctx.Redirect(ctx.Repo.RepoLink + "/settings")
 
 	case "convert":
+		if !ctx.Repo.IsOwner() {
+			ctx.Error(404)
+			return
+		}
 		if repo.Name != form.RepoName {
 			ctx.RenderWithErr(ctx.Tr("form.enterred_invalid_repo_name"), SETTINGS_OPTIONS, nil)
 			return
@@ -172,6 +176,10 @@ func SettingsPost(ctx *middleware.Context, form auth.RepoSettingForm) {
 		ctx.Redirect(setting.AppSubUrl + "/" + ctx.Repo.Owner.Name + "/" + repo.Name)
 
 	case "transfer":
+		if !ctx.Repo.IsOwner() {
+			ctx.Error(404)
+			return
+		}
 		if repo.Name != form.RepoName {
 			ctx.RenderWithErr(ctx.Tr("form.enterred_invalid_repo_name"), SETTINGS_OPTIONS, nil)
 			return
@@ -205,7 +213,12 @@ func SettingsPost(ctx *middleware.Context, form auth.RepoSettingForm) {
 		log.Trace("Repository transfered: %s/%s -> %s", ctx.Repo.Owner.Name, repo.Name, newOwner)
 		ctx.Flash.Success(ctx.Tr("repo.settings.transfer_succeed"))
 		ctx.Redirect(setting.AppSubUrl + "/" + newOwner + "/" + repo.Name)
+
 	case "delete":
+		if !ctx.Repo.IsOwner() {
+			ctx.Error(404)
+			return
+		}
 		if repo.Name != form.RepoName {
 			ctx.RenderWithErr(ctx.Tr("form.enterred_invalid_repo_name"), SETTINGS_OPTIONS, nil)
 			return
@@ -226,7 +239,12 @@ func SettingsPost(ctx *middleware.Context, form auth.RepoSettingForm) {
 
 		ctx.Flash.Success(ctx.Tr("repo.settings.deletion_success"))
 		ctx.Redirect(ctx.Repo.Owner.DashboardLink())
+
 	case "delete-wiki":
+		if !ctx.Repo.IsOwner() {
+			ctx.Error(404)
+			return
+		}
 		if repo.Name != form.RepoName {
 			ctx.RenderWithErr(ctx.Tr("form.enterred_invalid_repo_name"), SETTINGS_OPTIONS, nil)
 			return
@@ -257,30 +275,13 @@ func Collaboration(ctx *middleware.Context) {
 	ctx.Data["Title"] = ctx.Tr("repo.settings")
 	ctx.Data["PageIsSettingsCollaboration"] = true
 
-	// Delete collaborator.
-	remove := strings.ToLower(ctx.Query("remove"))
-	if len(remove) > 0 && remove != ctx.Repo.Owner.LowerName {
-		u, err := models.GetUserByName(remove)
-		if err != nil {
-			ctx.Handle(500, "GetUserByName", err)
-			return
-		}
-		if err := ctx.Repo.Repository.DeleteCollaborator(u); err != nil {
-			ctx.Handle(500, "DeleteCollaborator", err)
-			return
-		}
-		ctx.Flash.Success(ctx.Tr("repo.settings.remove_collaborator_success"))
-		ctx.Redirect(ctx.Repo.RepoLink + "/settings/collaboration")
-		return
-	}
-
 	users, err := ctx.Repo.Repository.GetCollaborators()
 	if err != nil {
 		ctx.Handle(500, "GetCollaborators", err)
 		return
 	}
-
 	ctx.Data["Collaborators"] = users
+
 	ctx.HTML(200, COLLABORATION)
 }
 
@@ -330,6 +331,26 @@ func CollaborationPost(ctx *middleware.Context) {
 
 	ctx.Flash.Success(ctx.Tr("repo.settings.add_collaborator_success"))
 	ctx.Redirect(setting.AppSubUrl + ctx.Req.URL.Path)
+}
+
+func ChangeCollaborationAccessMode(ctx *middleware.Context) {
+	if err := ctx.Repo.Repository.ChangeCollaborationAccessMode(
+		ctx.QueryInt64("uid"),
+		models.AccessMode(ctx.QueryInt("mode"))); err != nil {
+		log.Error(4, "ChangeCollaborationAccessMode: %v", err)
+	}
+}
+
+func DeleteCollaboration(ctx *middleware.Context) {
+	if err := ctx.Repo.Repository.DeleteCollaboration(ctx.QueryInt64("id")); err != nil {
+		ctx.Flash.Error("DeleteCollaboration: " + err.Error())
+	} else {
+		ctx.Flash.Success(ctx.Tr("repo.settings.remove_collaborator_success"))
+	}
+
+	ctx.JSON(200, map[string]interface{}{
+		"redirect": ctx.Repo.RepoLink + "/settings/collaboration",
+	})
 }
 
 func parseOwnerAndRepo(ctx *middleware.Context) (*models.User, *models.Repository) {
