@@ -181,6 +181,7 @@
 // conf/license/BSD 2-clause License
 // conf/license/BSD 3-clause License
 // conf/license/BSD 4-clause License
+// conf/license/CC BY-SA 4.0 License
 // conf/license/Creative Commons CC0 1.0 Universal
 // conf/license/Eclipse Public License 1.0
 // conf/license/Educational Community License v1.0
@@ -225,11 +226,11 @@ import (
 	"compress/gzip"
 	"fmt"
 	"io"
-	"strings"
-	"os"
-	"time"
 	"io/ioutil"
+	"os"
 	"path/filepath"
+	"strings"
+	"time"
 )
 
 func bindataRead(data []byte, name string) ([]byte, error) {
@@ -258,9 +259,9 @@ type asset struct {
 }
 
 type bindataFileInfo struct {
-	name string
-	size int64
-	mode os.FileMode
+	name    string
+	size    int64
+	mode    os.FileMode
 	modTime time.Time
 }
 
@@ -283,7 +284,7 @@ func (fi bindataFileInfo) Sys() interface{} {
 	return nil
 }
 
-var _confAppIni = []byte("\x1f\x8b\x08\x00\x00\x09\x6e\x88\x00\xff\xb4\x5a\x5b\x6f\xe3\x48\x76\x7e\xe7\xaf\xa8\xf1\x64\xd2\xdd\x01\x25\x59\x76\xbb\xbb\xc7\xbb\xde\x8c\x2c\x51\xb6\xb6\x75\x5b\x52\xee\x9e\x9e\x86\x41\xd3\x62\x49\xe2\x98\x22\x35\x2c\xd2\x6e\x0f\x82\x60\x17\x79\x08\x90\xd7\x04\xc9\x4b\x10\x24\x0f\x41\x80\xcd\x05\x59\xe4\x65\x37\x41\x9e\x06\x79\xef\xf9\x0f\x8b\xd9\xe4\x5f\xe4\x3b\xa7\x8a\x12\xe5\xf6\x38\x59\x20\x99\x8b\xc5\x4b\xd5\xa9\xaa\x53\xe7\x9c\xef\x3b\xa7\xf8\xb1\x18\x3a\xaf\x1c\x57\xf0\x9f\xc1\xa8\xd3\xeb\xbe\x11\x93\xd3\x9e\x27\xba\xbd\xbe\x63\x7d\x2c\xc6\x7d\xa7\xe5\x39\x62\xd0\x7a\xe9\x88\xf6\x69\x6b\x78\xe2\x78\x62\x34\x14\xed\x91\xeb\x3a\xde\x78\x34\xec\xf4\x86\x27\xa2\x7d\xe6\x4d\x46\x03\x3c\x1c\x76\x7b\x27\xba\xa7\xf5\x03\xd1\x5a\xad\x44\x12\x2c\xa5\xc8\x17\x41\x2e\xd4\x22\xbd\x51\x22\x4d\x84\xbc\x96\xd9\xad\x58\x05\x73\xbc\x88\xf2\x58\x5a\xad\xf1\xd8\x1f\xb6\x06\x8e\x38\x12\x27\xe9\x5c\x1d\xe2\xaf\x38\x89\x72\xe1\xc9\xec\x3a\x9a\x4a\x48\x6a\x2f\x82\x04\xcd\xf1\x2c\x9a\x89\xdb\xb4\x10\x59\x91\x88\x38\x9d\x06\x71\x7c\x6b\xb9\x67\x43\xff\xcc\xc3\xec\x8f\xc4\x3c\xca\xd1\xda\x89\xf2\x85\xcc\xc4\x4e\x28\xaf\x77\x6c\xb1\xb3\xca\xd2\x70\x47\xa4\x78\x90\x4b\x95\xe3\x49\x28\x67\x41\x11\x43\x96\xd2\x6d\x58\x02\x96\x4e\x13\xc0\xbd\x65\xbd\xcd\xe4\x2a\x55\x51\x9e\x66\xb7\xe7\x96\x3b\x1a\x4d\xc4\x91\xe5\xb5\xdd\xde\x78\xe2\x4f\xde\x8c\xa9\xd9\x65\xa0\x16\x18\xa9\x63\x24\xb5\x86\x5e\x4f\x4c\x17\x41\xa6\x64\x6e\xd1\x8d\x0f\x55\xb9\x9e\x83\x8e\x02\xcd\xba\x69\x36\x95\x66\xdd\x89\xbc\x11\x1b\xf1\x22\x4f\xc5\xa5\x14\xab\x2c\xba\x0e\x72\x69\x75\x47\x6e\xdb\xf1\xc7\x6e\xef\x55\x6b\x42\xc3\xcc\x82\x58\xd1\xfa\x4f\xe2\xf4\x32\x88\xc5\x32\x78\x17\x2d\x8b\xa5\x98\x66\x32\xc8\x23\xa8\x32\x8e\x96\xd0\x49\x3a\xab\x4a\x5c\x61\xe9\x85\x92\x99\x2d\x6a\x4d\xb1\x94\x41\xa2\x44\x92\xea\x96\xd6\xa0\xf5\xb9\xdf\x76\x9d\xd6\xa4\x37\x1a\xfa\xfd\xde\xa0\x47\x13\xac\x35\x31\xc2\x38\xc8\xa7\x0b\x41\x0a\x12\x5f\x15\xb2\x90\x22\x96\xc9\x3c\x5f\xd8\x18\xf3\x8a\x15\x1f\x28\x11\x07\x19\x36\x01\x17\x18\x4b\x45\x97\xd8\xb9\xf1\x59\xbf\xef\xbb\xce\x4f\xce\x1c\x6f\xe2\xe3\xef\x99\xe3\xf7\x9d\xe1\xc9\xe4\x14\x62\x9b\xbb\xf8\x07\xba\x2c\xa2\x73\xc8\x1f\x16\xcb\x4b\x4c\xac\x3a\xd5\x48\x2a\x6d\x19\x41\x26\xd9\x3a\x64\x28\xa2\x04\x16\x02\x55\xbd\x5b\xc5\x29\x9e\x92\x91\x58\xce\xe7\xe3\xfe\xc8\x85\x5a\x5a\x27\xb0\x35\x7f\x78\x36\x80\xf4\xbd\xdd\x2d\xa1\x91\x52\xc5\xf7\x8b\x63\x31\x3d\xcf\x3b\xbb\x23\xa4\xb9\x2d\x64\xad\xde\x74\x09\x65\xa9\x3b\x42\x82\x69\x1e\x5d\x47\xf9\xad\x98\x49\x19\x5a\x5d\xc7\xe9\xf8\xac\xce\xd1\x00\x6a\x34\x02\x0f\x20\xef\x55\x10\x43\x7d\x10\x77\x01\x2b\x5c\xca\xda\x34\xc5\x52\x2e\xb0\x13\x79\x20\xf2\x60\x6e\xd3\xe6\x84\xe2\xf2\x56\xb4\x92\x30\x4b\xa3\x50\xfc\x08\xfd\xea\x34\x93\x56\x82\xb1\xae\x83\x18\xcf\xb8\x13\x36\x0d\xba\xdf\x49\x30\xba\xb6\xdf\x30\x52\x01\xd4\xbe\x23\x6e\xa2\x38\x16\x8b\xe0\x9a\x5c\x4b\xae\xed\x59\xe5\xb7\x31\x59\xcb\x80\x54\x17\x25\xb3\xf4\x50\x2c\xf2\x7c\xa5\x0e\x1b\x0d\x98\xb5\x8c\x53\x98\x86\xaa\xcf\xd3\x74\x1e\xcb\x3a\x16\xd9\xb8\x91\x97\x8d\x62\x15\xc2\xf2\x54\x63\x6f\xb7\xf9\xb4\xd1\x6c\x36\xbc\x62\xb5\x4a\xb3\xbc\x36\x4b\xb3\x5a\x65\x01\xb5\x28\xa9\xb5\x17\x59\x8a\xfb\xfd\x4f\xf9\xa5\x99\xbe\x35\x39\x75\x06\x0e\xd4\x80\x3d\xf2\x07\xce\xa4\xe5\x4f\x5a\x27\x50\xc5\xc5\xc7\xb3\xd9\xc1\xfe\xd3\xfd\x0b\x36\x81\x7a\x10\x2e\xa3\x64\xdb\x10\xc8\x48\x1f\xde\x32\xf2\xea\xed\x1d\x3b\xd8\xfd\xd0\x96\x1e\x14\xe1\x3a\xe3\xd1\x83\x22\x92\x34\x47\x8c\x79\x58\xc8\x70\x34\xe9\xb5\xef\x1a\xe0\xc1\x96\x98\x34\x9b\x07\x49\xf4\xb5\x76\xcb\x87\x64\x8d\xdc\x93\x0f\xe6\x63\xbd\x5d\x06\xd9\x55\x98\xde\xb0\x86\x9c\x84\x36\x19\xdb\x9b\x85\xb0\x00\xf4\xbb\x84\xbb\x5f\xc1\x27\x72\x99\x28\x88\xb7\x9c\x61\xeb\xb8\xef\xf8\x88\x30\x1d\x38\xf1\xd0\xf1\x8f\xe1\xd2\x2f\x2b\xe1\xa2\x1f\x29\x8e\x0a\xd3\x42\xe5\xe9\x52\x9c\xb9\xfd\x9a\x37\xa5\xbd\xac\x2c\x13\xa1\x93\xe7\x46\x7e\x1d\x25\x57\x4a\xdc\x2c\x64\x02\x85\x26\xa1\xcc\xa2\x64\x2e\x06\x66\x46\x10\x87\xdd\xc6\xe8\xc1\x72\x85\x59\x21\xc2\xda\xcb\x60\x9e\x20\xce\xe9\xa0\xef\x43\xba\xef\xb5\xc9\x08\x3c\x84\x49\xeb\x2d\x76\x15\x81\xee\xdc\x1a\xbb\xa3\xc9\x08\x66\x81\x79\x91\x15\x5a\x9d\xd1\xa0\xd5\x1b\xe2\x8e\xe3\xf6\x22\x55\x39\x87\x56\xea\x8f\x87\x9f\x3c\x2e\xdb\x3f\x21\x7b\xfd\xe4\xb1\x6e\x8e\x9b\x4f\x1e\x9f\x4e\x26\x63\x7f\x3c\x72\x27\x4f\x54\xc3\xe2\x9b\x56\xa7\x83\x70\x6f\xad\x5f\x40\xc0\x3e\x45\x1b\x2c\x9d\x84\x8b\xc7\x9d\xc1\x17\x4f\x68\xdd\x3c\x77\x02\x15\x71\x93\x66\x57\x64\x6f\x8f\x55\x81\x40\x87\x55\x7b\xde\xa9\xd0\xc6\xff\x04\xbe\x0d\x13\x50\xb4\x6c\xb8\x84\x50\x1a\x77\xea\x10\xd7\x4b\xc4\x12\x33\x15\xd3\x40\x41\x79\x84\x3c\x61\x4a\x26\x83\x30\x0e\xdd\x21\x78\x4f\x35\x32\x55\xdd\xf0\x9a\x02\x00\x75\x6e\xc5\x39\x8c\x83\x02\x74\x12\xdf\x1a\xe4\xca\x78\x5c\xad\x23\x08\x0a\x25\xa1\x10\x09\x24\x09\x8a\xc0\x12\x53\xa3\x75\xf1\xcb\xba\xd5\x1f\xb5\x5b\x08\xb1\x1b\x45\x91\x2e\xa1\xa0\xb5\x12\xef\xea\x07\xa0\xa4\xa3\x04\x0f\x34\x03\x50\x14\xd8\x6d\xde\x5c\x1a\x26\xb8\x0e\xa2\x98\x5e\x5b\x9d\x9e\xc7\x66\x44\xcd\x36\xa6\xf3\x7a\x21\x19\x3c\xe1\x9c\xe2\xb2\x88\xe2\x1c\xb6\x5b\x99\x71\x4a\x93\xce\xeb\x96\x37\x69\xb9\x13\xea\xea\xc3\x45\x5f\x31\xf6\x96\x12\x3a\xe9\x32\x40\x27\x0d\xfc\x8c\x6e\x88\xe6\xa9\xd2\x6e\x30\x8d\xc9\x11\xb0\x12\x8b\xfa\xae\x4d\x62\xb3\xdd\x04\x45\x08\x3f\x22\xd1\x9e\xf5\x3f\x08\x30\x7b\xbf\xb7\x77\xa7\xdb\x3d\x33\x8f\xe1\x13\xf0\x1f\xec\x05\xf7\xec\xf7\xbc\x89\x33\x2c\x05\x7c\xf2\xb8\x94\xc6\x33\x70\x53\x68\x6a\x15\xe4\x0b\x72\x22\x92\x11\x46\x99\x9c\x12\xba\x6e\x91\x87\x47\x7f\xd8\xa8\x2b\xb5\x78\x64\x63\xbc\x9c\x8d\x43\x87\xe4\x94\xb5\xf7\xa8\xb1\x40\xb4\x6c\xc0\x61\x74\xab\x3a\x8f\xcb\x3b\x39\x6e\x31\x42\xf2\x5e\x19\xc1\x6c\x4b\x04\xeb\xe8\x2f\x97\x88\xc0\x01\x9e\xcd\xa2\x58\x1a\xc7\x64\x64\x5e\x15\x97\x71\x34\xbd\x12\x57\xf2\x16\x43\x90\xb9\x42\x70\x0d\x77\x73\x99\xd8\x90\x56\x99\x9b\xba\xc5\x72\x97\x15\x59\xeb\x25\xe8\x79\xbc\x74\xde\xf8\x13\x42\x6d\x3d\x17\xcd\x00\x16\x34\x8b\x8a\xc8\xad\xc5\x6e\x9e\x3f\x12\x41\x82\xd0\x24\x89\xd3\x49\x00\xd1\x2c\xc2\x6d\x0a\x15\xdc\x2c\x22\xf8\x16\x6d\x10\xad\x06\x11\x66\x3d\xd6\x09\xe9\x5a\xaf\x7a\x23\x87\xfd\x2b\x8c\xa6\xb4\xe8\x1b\x63\x77\xec\x52\x12\x6b\x04\x5c\x30\x18\xd3\x5a\x55\xf4\x35\x5a\x80\xd5\x01\x17\xb3\x4c\xaa\x55\x8a\x6e\x58\x7d\x7e\xbb\x92\xd6\xa0\x37\xec\x0d\xce\x06\xbc\x22\xaf\xf7\x05\xa0\xe8\xd4\x69\x57\xa3\x61\xe9\x0f\xed\xce\x90\x38\x18\x81\x6c\x49\x0a\x97\xf0\x31\x6b\xd4\xed\x72\x14\x35\x0c\x50\x77\x2b\xbd\xc3\x1d\x9d\x4d\x00\x42\xfd\xd1\x49\x95\x8e\xc9\x44\x66\x34\x6b\xe8\x18\xf0\x8a\x27\xbf\x23\xea\x8d\x39\x85\x99\xa9\x84\x15\xd6\xa6\xc1\x51\x9e\x81\x05\xd4\xc2\x22\x63\x48\x38\x7a\xf1\xfc\xd9\xee\x62\x77\xb9\xab\x44\x8d\xbc\xf6\x68\x79\x4b\x3f\x75\x13\x56\x09\x8d\xad\x1f\x40\xce\x28\x13\x33\x80\xac\x08\x44\x7d\x35\x7b\xc7\x06\xc0\xd6\x9f\xe5\x30\x7f\x7e\x43\x71\xe2\x35\x14\x4e\x64\x9a\x06\x8b\x66\x5a\x81\x88\xf4\xf0\xf3\xc7\x61\x0a\x29\xe4\xe8\x08\x7c\x73\xec\x10\xf4\xa9\xfb\x73\x47\xc3\x33\x49\xa9\x4f\xf4\xb4\xc1\x09\x12\xa5\x62\xb1\xba\x9a\xaa\xe6\x9e\xa8\x91\x8b\x41\x2a\x8f\x5e\xa3\x3d\xd5\x77\x30\xa5\x5a\x92\xa2\x9b\xfa\xdf\xf5\x42\xcb\xb2\x13\xbd\x50\x74\x11\x4a\x65\xb5\x1d\x84\x0d\xca\x0f\xa0\x4d\x8d\x4e\x0d\xa6\x28\x8d\x72\x18\x8b\xb6\xf1\xbe\x06\x46\x22\x86\x3f\x5b\x11\xc5\x8d\x89\xd1\x90\x7f\x92\x89\xc7\xb4\x28\x32\x4a\x95\x43\xdd\x53\xad\x37\x72\xe0\x6d\xa7\x60\x15\x90\x99\xc3\xda\xa0\x2c\xc6\x05\x3c\x96\xef\xe4\xb4\x80\x82\x29\xaa\x01\xe8\xab\x3e\xaa\xb3\x98\x98\x54\xcc\x7c\x9b\x07\x3d\xf9\xa2\x37\x16\x4a\xf3\xa4\x12\x8c\xf9\x59\x05\x81\x03\x6d\xa1\x9c\xe5\xcc\x38\x6a\x26\xb5\x38\x9d\xcf\xb1\x8d\xcc\x7b\x6c\xf8\x47\x42\xb1\x6d\x87\xa2\x84\xa6\x77\x86\xf5\xee\x58\xfd\x16\xa7\x55\xc4\x13\x48\x0f\xd4\xc2\xd2\xd9\x06\xd1\x81\x35\x72\xc7\x73\x90\xe8\x7c\xb1\x54\xbc\x74\x2c\x2e\xca\xb6\xdc\x46\x53\x78\xf1\x98\xa2\x11\x72\x01\x98\x82\x21\x90\x30\x2f\x72\x9d\x27\x00\x6b\xb5\xa8\x9b\x2e\x3e\xba\xf8\xe4\x69\xea\xdc\x72\x3a\x7b\x07\x07\xcd\x4f\x99\xe6\x3c\xb3\x9c\x76\xc7\x6b\x09\x61\xee\x5c\xbe\xe6\xbb\xdd\xa7\x2f\xac\xce\xfa\xb6\xb9\xbb\xf7\x14\xf8\x0f\x44\x0d\x90\x1e\xc9\xf3\x4a\x26\xb6\xbc\x55\x5f\xc5\x9c\x8b\xc1\xe8\xe7\xf0\x60\xbd\x60\x3c\x8c\x72\xb9\x8f\x17\x51\xfe\x48\x69\x78\x9c\x2e\x52\xca\xf9\x3a\xc7\x65\xaa\xc5\x7d\xad\xd3\x91\x47\x81\xba\xb9\xf7\xbc\xbe\x8b\x7f\x9b\x87\xfb\xfb\xbb\xcf\x2c\x93\x35\x92\xe7\x59\x26\x05\xcc\x10\xbb\xad\x71\xcb\xf3\x5e\x77\x78\xfb\xba\x34\x50\x65\x58\x40\xb1\x2d\x64\x99\x21\x1a\x42\x8d\x99\x65\xf2\xab\x02\x21\x52\x4f\x0c\x80\x11\xcd\x6e\x6b\xb3\x22\x8e\x77\x10\xc2\xfa\xeb\xec\x50\xb7\x2f\xc5\x96\xf3\x67\xfd\xef\xe4\x51\x78\xb9\xc3\xf4\x5e\x04\x97\x2a\x8d\x61\x52\x6b\x6b\x4b\x18\x1e\x60\x9d\x19\x67\x52\x86\x61\x58\x26\x24\x92\xca\x38\x7c\xd4\xc3\x4b\x68\xd0\x70\x65\xa2\x52\xd3\x02\x3b\x8c\x24\xb4\x37\x84\x6d\x22\xd7\x02\x1d\xa8\x86\xb6\x8f\x3e\xd2\x29\xb9\xce\xd8\x27\x23\xf1\xd2\x71\xc6\xe2\xcd\xe8\xcc\x15\xac\x8e\x4e\x6b\xd2\x12\x5e\xab\xeb\x7c\xf4\x91\xe5\x39\xc8\xfc\x26\x14\x26\x21\xe0\xa3\x8f\x3f\xeb\x76\x9c\xd7\x2e\xfe\xfb\xdd\xdf\x7b\x4c\x56\x5e\xe4\x29\x19\x68\x44\x1c\x70\x29\x19\x45\xc3\x00\xee\x8e\xc8\xd7\x1b\x22\xc7\x1b\x38\x83\x63\x04\xc2\x4e\xeb\x0d\x68\x9e\x78\x6e\xb5\x47\xa3\x97\x3d\x87\x13\xef\xca\x2e\xf8\xc1\x8d\x54\x64\xae\xe6\xf5\xba\x5f\xb5\x4d\x94\x00\xe9\xc2\x48\x2b\xd2\xa5\xb4\x58\x51\x68\x4a\xdf\xdd\x8a\xa0\xc0\xc6\x24\x79\xe9\x6f\x0b\x19\x84\xc4\x93\x88\x4b\x98\x8c\x81\x6f\x40\xeb\x41\x3a\x3c\x4a\x95\x47\x9f\xbf\xf1\x5b\x67\x48\x42\x86\x70\x5d\x9d\xd8\x1a\x4b\xf8\xbc\xf6\xda\x39\xa6\x57\x35\x7a\x60\x98\x29\xb4\x7e\x6e\xb5\xda\x93\xde\x2b\xca\x59\x3a\xc8\x57\xe9\x0a\x18\x82\x30\x4f\x0b\x6b\xbe\xd8\x85\x70\x64\xee\xbe\xb6\xa1\xef\x6d\x84\x38\xc4\xb3\x29\x79\x60\x9a\xcc\xa2\x6c\x29\x64\x0d\xec\x27\x66\x97\xcf\xe4\x1c\x9c\x43\xc7\x7f\xc8\x3c\x21\xc6\xe1\xfa\x0e\x78\x4e\xdf\xe7\x4a\x89\x3b\xd8\xa2\x4d\x52\x13\x41\x76\x6f\xd3\x19\x03\x90\x69\xb1\x41\x94\xf4\x00\x5c\x35\x2d\x12\x4d\x2a\x37\x30\xc5\xe2\x5d\x5e\x7f\x45\x28\x4f\x71\x89\x30\x0a\x08\x9d\x33\xf0\x61\xaa\xd7\x91\xbc\x81\xd8\xdb\x7c\x81\x08\x55\xb7\x28\x7d\xef\x21\xbd\xf6\x7a\x27\x43\xec\xf4\xab\x9e\xf3\xba\x22\x61\x40\xab\xa1\x1c\x69\x66\xf6\xa4\x0c\x78\x94\x13\x75\xdf\xf8\xb4\x9a\x6a\x73\x02\xa1\x10\xa9\x6e\x14\x6f\x92\x4f\x50\xa0\x45\x71\xc9\x19\x27\xf6\x1f\x99\x35\xdb\x7a\x43\xe7\xec\x8d\xe6\xb3\x83\x52\xe6\x43\xbb\xba\x1e\xe4\xfb\xda\x8e\xbe\x4f\x09\x26\x9f\x9a\x06\xab\x1c\x6c\x5d\x70\x82\xad\xcd\xeb\x83\x5d\x32\xb2\xdb\xad\xf1\x04\x8e\x05\x19\x84\xe2\xb0\x1c\x64\x05\x8b\x34\xbd\xa2\x90\x76\x8a\x5f\xe4\xf1\xea\x6a\xab\x4e\x62\xdd\x53\xfc\xe0\x88\x1d\x47\x44\x3e\xf3\x68\x29\x09\x16\xb1\x01\xf0\x69\xb0\x17\x65\x75\x1c\x32\x2a\xd7\x9f\xf4\x06\x0e\x38\x86\x29\x1e\xb4\x78\xf3\xa3\x84\x3d\x5f\x56\x00\x9e\x66\xe7\xbd\xec\x8d\xfd\x49\xdf\xf3\xd1\x8f\xca\x74\x9b\x25\x6e\xf2\xd0\x45\xa4\x98\x4e\x52\xfa\x9f\x2d\xf5\x32\x31\xaa\x0c\x40\xcc\x38\xff\xbc\x5b\x00\xa1\xdc\x13\x68\x89\x84\x4d\x2f\xbe\x53\x11\x7b\x5c\xcc\x66\x0c\xb5\x8c\x23\x94\x50\x22\xdb\x49\x64\x6c\x03\x5e\xe4\xca\x54\x85\x22\x86\x56\x53\x97\x0b\xd3\xe4\x11\xd0\x3f\xc1\x22\x6e\x28\xd3\xe4\x97\x60\x81\xce\xb0\xe3\x1f\x9f\x75\xbb\x44\xa5\x9c\xa1\x56\x10\xcd\x9b\x1c\x1b\x41\x15\x00\x7e\xab\xf9\x3d\x7b\x8f\x2e\x0b\x7a\x67\xc7\x3f\x76\xda\x9a\x9e\x97\x25\x42\xa6\xe7\x6c\x93\x9a\xd6\x13\x19\x5b\xb2\xb1\xa9\x65\xbe\xaa\xcf\xe9\x9a\x0c\xed\xf0\xe0\xc5\x73\xbc\xfb\xc9\x4f\xcc\x8b\xaf\xbe\xe2\xa7\x3a\x69\x4f\x73\x69\xd3\x84\x99\x0e\x10\x35\x42\xd2\xab\x34\xbf\xdc\x79\xfa\xec\x00\x31\xdc\x1b\x4c\xc6\x9e\xae\xb2\x00\xa2\xa9\x60\x53\x87\x2f\x11\xa0\x73\xe2\x83\x3d\xa0\x42\x26\xf7\xc5\x40\xb4\x7e\x90\xeb\x74\xb9\xa4\xec\x39\xe4\x0a\x9c\xdb\x6d\x8b\x67\x4f\x77\x3f\xad\x8b\x9e\x1e\xc8\xa4\x21\x86\x36\xa8\x8d\x20\xa8\x88\x07\x0a\xe2\x1b\xc4\xdb\xf5\x78\x25\xe2\x55\x08\xec\xa9\xd3\x1f\x11\xf5\xd2\xc6\xaa\x61\x85\x58\x24\x87\x47\xca\xe9\xc3\x88\xf6\x0b\xf1\xb3\xbe\x0e\x0c\xdc\x87\xa5\xb4\x75\x31\x60\xdd\x81\x8c\x7f\x5b\xe2\x16\xdf\x67\xb2\xa9\xb3\x08\xcc\x05\xed\x7c\x9a\x90\x09\xe3\x1c\xaf\x38\x5a\x69\xa4\xe4\x15\x56\xd9\x68\x5a\x5d\x74\x5d\x8c\x28\x01\x26\x60\x44\xcc\x51\x3c\xb2\x92\xf1\xac\x46\x41\x09\xfa\xaa\x74\x54\xda\xc8\xd7\x06\xae\x63\x18\xb2\xbe\x08\xab\xaa\x36\x24\xb8\xf7\x89\x4d\xf6\xba\x14\x20\x36\xc4\xfd\x1e\x86\xa9\x0d\xfc\x21\x8a\x69\x5a\x6c\x38\x26\x9b\x98\x66\xe2\x61\x08\xe2\x00\xbe\x46\x3b\x7a\xb0\xbf\xb7\x57\x17\x13\x5a\x84\xa1\x6f\x5f\x52\x70\xc5\xa5\x64\xc3\x5d\x37\xc6\x0a\x69\xfd\x17\x3b\x64\xe1\x3b\xe2\x87\xfc\xfa\xb3\x0a\xdb\xff\xd1\x85\xd0\x0e\x2a\xac\xae\x3b\x1a\x30\x55\x19\xf0\x2c\x36\x28\xc7\xb1\x7f\x15\x28\x75\x93\x66\xa1\xe1\x37\x1b\x6a\x63\xbd\x9d\xc2\xa9\xb7\x69\x96\x5c\xc2\xf7\x35\x9b\x81\x57\xed\xf0\x3c\xe8\x29\xb7\xbc\x53\xf9\x36\x8d\xad\x56\x07\xd1\x8e\x01\x53\x3f\x29\xc9\x8d\x79\x6f\x18\xd3\x49\x1b\xde\x09\x3c\x42\xf4\xac\x44\xb1\x2d\x89\xcf\x76\x41\x53\x20\xe9\x55\x8b\x10\xe1\xd9\x6e\x29\x48\xcf\x45\x73\xa4\xca\x5c\x20\x20\x41\x46\xca\x30\x4f\x25\x16\xa3\x3b\xf4\xe2\x0e\x87\x80\xd6\x9c\x8a\x36\x47\xf9\x74\x65\xd3\xcb\xa3\xc3\x67\xfb\xcf\x3f\xb5\x4b\x85\x1c\x2d\x83\x69\x90\xc1\x6a\xc3\xcb\xa3\x5d\x7b\x95\xa6\x31\xb3\xd7\x23\x44\x16\x3b\x0a\x63\xe9\x9b\xa0\x7b\xa4\xd1\xba\x1c\xf9\x50\x5c\x6c\x48\x64\xb3\xb9\xd7\x6c\x5e\x18\x57\x63\x86\xa0\xa8\xc2\x76\xbf\x4e\x29\xa9\xd8\xe8\x56\xab\xd6\xf0\xda\xfb\xf4\x0a\x60\x7a\xd5\xeb\x6c\x2b\x76\x9c\xa5\xd7\x11\x31\x1a\xa6\x0b\x73\xb8\x1e\xad\x5f\xe9\xe9\xa1\xc9\x21\xfb\x14\x57\x11\x00\xd0\x65\xab\x5b\x49\xa7\x1a\x34\x3c\xa2\x99\x9e\xe1\x26\xc3\x01\x99\xad\xcf\xeb\xe2\x82\x39\xa4\x79\xab\x2e\xfe\xdf\xb4\x48\x0b\x3e\x04\x8d\xab\xe1\xb7\x16\x66\x84\x6e\x0d\x7e\x28\x42\x95\x94\x13\x06\x9e\x22\x56\x96\x33\x23\x46\x7e\x58\x8e\xf7\x59\x39\x47\x3f\xa7\x98\x76\xb1\x56\x93\x6f\x0e\x8f\x0c\x1b\x2e\x57\x82\x31\x3d\xb3\xe4\x29\x90\x37\x92\x9a\xff\x19\x7a\x69\xc2\x51\xe4\x53\xa5\xdc\xd7\xe4\x82\xaa\x0a\x1a\x8c\x28\xe0\x94\xfa\x82\xcd\x32\x1d\x31\xe6\x5c\x0d\x74\x3a\x6c\x68\x81\x20\xc9\x67\xae\xf3\x21\x79\x50\x48\xa5\xf5\xf8\x5b\x7d\x99\x1e\x18\xd2\x40\x9c\x51\x4b\x29\x79\xc3\x66\xea\xf0\x1e\xd2\xe3\xda\x85\xb6\x84\xbc\x00\x4e\xec\x5a\x27\x6d\xbf\xf4\x1e\xe6\x04\x10\xa2\x5f\x6c\xa4\xc4\xd1\x4c\xb2\x9c\x7b\xba\x7b\x8e\xe7\xe9\x43\x9d\xae\xb3\xdd\xdf\x7a\xbb\x8a\xa6\x54\x04\x04\xef\x7d\x85\x7c\xc0\xf5\xcf\xc6\xfd\x51\xab\xe3\x57\x93\x8f\xe0\x1a\x7f\x33\xc5\x47\x6d\xc8\x31\x95\x34\xd5\x79\x8a\x72\xc8\xc8\x52\x3c\xd8\x09\x8b\x54\x2d\x8a\x74\x07\x8d\x60\xfb\x41\x59\x5d\xd6\x5d\x85\x42\xf2\x36\xc5\xcc\x68\x27\x0e\xcb\x2a\xe5\x34\xa9\xcf\x33\xdd\x80\xe9\x9f\xbe\x6c\x58\x27\xae\x99\x8a\x87\x54\xa5\xcd\x89\x81\x69\xb6\x06\xae\xb2\xc9\x7a\x2f\x90\x17\xe5\x39\x3c\x18\x20\x9b\x9f\x57\x2a\x95\x9b\xa7\x8a\x41\x50\xf2\x8e\x01\xb0\xcd\xe1\x9c\x22\xce\x7b\x41\x1b\x72\x61\xb6\x6a\xb3\x3f\x5c\xf3\x22\x38\xaa\x08\xb9\xd3\x51\xab\x67\xf3\xfa\x62\x2b\x69\xab\xbc\xa0\xea\x0d\xb2\x73\x08\x5b\xa6\x95\xfa\x3a\x25\xda\xca\xb8\x42\xb4\x04\x03\x6b\x7c\xb9\x92\xf3\x3f\xd0\x97\xab\x64\x6e\x21\xad\x1b\xbd\x76\x3a\x9c\xee\x52\x72\x71\x6f\x23\x02\x87\x77\xba\x0e\x06\x68\x65\x36\x47\x11\x60\x7b\xae\xfb\x7b\x83\x63\x3e\xe2\xa3\x32\x18\x24\x3d\x35\xdd\x92\x35\x3b\xd4\x05\x45\x3e\x21\x5c\xc5\x69\x70\x47\x49\x60\x83\xd4\x9b\xa0\xd1\x63\x3e\x6a\xbd\x25\x6b\x23\x65\x7b\x2b\x39\x05\xf2\x4a\x5d\x43\x31\xc8\x45\x8a\xa3\x14\xf9\x96\x8a\x7f\x2b\xaa\xa0\x08\x3e\x4b\xda\x96\x0a\xdc\x44\x98\xdd\x2f\x85\x00\x3f\x0c\x07\x42\x73\x2e\x95\xeb\x6d\xa3\x53\xd3\xb6\x2d\xce\x92\xe8\x5d\x27\x20\x82\xe6\x16\x97\xb7\xe6\xaa\xdb\x7e\xb1\xb7\x57\xfe\x7e\xa1\x2f\x0e\x76\xed\x52\xf4\xfa\x42\xbf\xda\xdf\xdf\xff\x74\x7d\x31\x0c\x92\xd4\x16\x2f\x23\x50\x7f\x2a\x68\x7a\x39\x10\xd8\xfc\x0c\xc0\xba\xa2\xf5\xf5\x34\x4b\x19\xa2\xf8\x96\x7a\x19\xf8\x5a\x96\x87\x69\x25\x9b\x0e\x2e\x89\xc9\x57\xd4\xa0\xa4\x2c\xed\x7d\x9e\xc6\x01\x72\xaa\x34\x9b\x37\x56\x57\xf3\x06\x69\xaf\xf1\x31\xae\x6a\x08\x8c\x48\xfe\xc9\x4a\xba\x23\x77\xd0\xd2\x68\x83\x74\x5b\x1f\x2f\x6f\x8a\x4d\x25\xea\x50\xfb\x54\xc3\x4d\x09\x3b\x84\x97\xf4\x4b\x7c\xd6\x1c\x07\x9a\x4a\xcb\x1d\x00\x2a\xfb\x96\xdc\x09\xbc\x34\xe0\xc2\xae\x5c\x05\x5c\xb5\x5c\xa2\x65\x44\x87\x39\x54\xfe\x2c\x6d\xb3\xec\x66\xb3\x91\xec\x58\xa6\xe2\x61\x9e\xfe\x5f\x26\x03\x77\xf3\x00\x8e\x71\xe5\xc2\x27\x59\x30\xe5\xe5\x76\xe4\x65\x31\xa7\x8b\x1e\x74\x4f\xbf\xaf\x83\x8c\xd7\xef\x64\x59\x9a\xd1\x45\x3b\x8b\xa8\x50\x70\x17\x7f\xb5\x04\xab\x8f\xfc\x90\x78\x08\xdf\x5a\x25\x17\x29\x75\xc3\x4b\xd7\x29\x34\x6d\x43\xdd\x3c\x3f\x2f\xbb\xad\x3b\xb0\x32\xee\xb6\xa6\x87\x9b\xa6\x3f\xd0\x84\x50\xc7\x1d\x45\x25\x8c\x14\x66\x01\xeb\x46\x53\x91\xa5\x39\xae\x1f\xab\x1b\xb2\x40\x76\xc1\x94\x02\x03\xa5\x12\x06\xfc\x9f\x7c\x88\x28\xfd\xd1\x89\xef\x8e\x26\x9a\xd6\x9a\x50\x45\x8e\xcc\xa7\x81\x1b\x6f\xa6\x84\x04\xbb\x48\xb3\xd9\x92\xc1\x3a\xdd\xd5\xce\x4c\x95\x6d\xaf\xd4\x33\x6b\x7a\x1d\x48\xd4\x22\x9a\xe5\x0f\xc9\xd9\x7b\x61\xbe\x1f\x68\x8a\x1f\xfe\x10\x77\x36\xd5\xff\x2a\x21\xc6\xf7\x4e\x7b\x5d\x3e\x7f\x79\xc1\x28\x35\xa7\x38\xc8\xab\x0e\xc1\x64\x6f\x3f\x5c\x57\xa7\xd5\xeb\xbf\xf9\x60\x65\xce\xbb\x55\x94\x71\xec\x40\xfa\x83\xe9\x90\x00\x9a\xcb\xe3\x50\xc6\x92\x0a\x1e\x33\xaa\x83\x2c\x31\x6d\x6a\xb1\xad\xae\xe7\x3c\x99\x75\x51\xaa\xb2\xcd\xc9\x7d\x7b\x9c\x54\x77\xcd\x95\x86\x82\x6a\xfe\xc9\xa7\x9c\xfc\x89\x86\xd1\xc7\x12\xb0\x8b\xf8\x7b\x0f\x59\x70\x1d\x90\x95\x21\x72\x53\x1f\x88\x3b\xf0\xaa\x47\x03\x13\x7d\x94\x93\xad\x65\x73\x96\x56\xe1\xba\x10\x12\x63\xb8\x87\xa4\x56\xe9\x87\x71\x0b\xb0\x37\x32\xf9\x02\xd1\x51\xfb\x7e\x11\xae\xee\xd8\x3d\x35\xa9\x1e\xba\xe2\x9e\xcb\x15\x15\x6a\x6d\x8e\x4d\xd7\xe5\x4b\x8e\x24\x77\xb4\x44\x0f\xab\x5a\x7a\x28\x45\xdf\x9e\x40\x27\x0a\xe6\x09\x86\x8b\xa6\xa5\xea\x4c\x12\xc9\x49\xe0\x4e\x25\x9f\x7f\xb8\xe5\x9d\x0c\xdf\x90\xf3\xdf\x36\x3d\xe2\xfd\x95\xc4\x4f\x37\xb5\xf6\x74\x83\xcf\x26\xea\xbd\xdd\x69\x56\xb3\xb2\x1d\x7b\x67\x6f\xeb\xfe\x9c\x76\xc5\xa1\x42\x8d\x57\x51\xdc\x3a\xf0\xde\x55\xde\xa6\xf6\xbd\x51\xe0\x76\x0d\x5c\x6c\x95\xa3\xad\x8e\xdb\xe3\xd3\x53\x8a\xaf\x01\x1d\x71\xc2\x42\xde\x01\x56\xf4\xf4\x0e\xb9\x9a\x7d\x48\x7f\x3e\x5b\x1f\xf8\x72\xf1\xec\xf7\xcd\xc7\x46\x47\x45\x3e\x7b\x61\x91\xdd\xe8\x8c\x30\x4b\xab\x9f\x10\x64\x45\x92\x50\xa4\xa1\xc7\x5c\xb3\x62\xec\x8f\x52\x3a\x73\x03\x6c\xd7\x2b\x25\x1f\xe3\x8b\x6e\x91\x54\x5b\xb3\xf1\xf2\x31\x09\x97\xae\x11\xbc\xe9\x53\xa9\xd6\xc4\xe7\xea\xc5\x86\x9a\xd1\xa1\x4c\xc8\xd0\x12\x51\x74\x56\x7a\x26\x75\x7d\xbc\xee\x9b\x87\xe7\x16\x7d\x26\xd0\x39\x63\x02\xf6\x99\x76\xb5\xe6\xc2\xe2\x9d\x5a\x7f\xbd\xb4\x90\x41\x4c\xe7\x7c\x74\x06\x68\xa4\xd0\x47\x1e\xbe\x7e\xee\xf3\xf3\xfb\x04\xed\x3d\x5d\x58\x9b\x52\xda\xb3\x5d\xa2\x63\xad\x6c\x5e\x68\x5e\x48\xbe\xcd\x38\x08\x8b\x79\x84\x24\x41\xcc\xd4\xf4\xea\x51\x89\x7c\xb5\x5a\x91\x64\xc4\xa9\x58\x69\xb5\x5a\x1e\xcc\x15\xa1\x27\x01\x3b\xc3\x7f\x9a\xac\x01\x3e\xca\x6b\x6a\xba\x64\x32\x1b\xa6\x53\xc5\x0f\x48\x58\xa3\x59\x7f\x5e\x3f\xb0\x5a\xee\x09\x45\x22\x8b\x89\x34\x1d\x63\x56\x3e\xcc\xe2\xb3\x29\x32\xfa\x52\x3d\xbc\x18\x9f\x97\x47\xef\xa0\xa0\x3b\xda\xe5\x4d\xb9\x7f\xad\xd6\x5b\x8c\x7c\xce\xd1\xef\xa4\x37\xf1\x3b\xbd\x6e\x77\x3b\xd6\x3f\xbc\xfe\xf9\xb4\xb2\xfa\x60\x4e\xc6\xa8\xe0\x2b\x58\x3c\xc1\xd7\x6f\xb3\xf8\xf9\xd4\x2c\x1d\x09\x4c\x65\xf5\xa3\x75\x99\xea\x9e\xda\x27\xcd\xbd\x6e\x9e\x63\x0d\x3d\x70\x7d\x06\x84\x67\x04\x5a\x3d\xd7\x1d\xb9\xfa\x83\x0e\xab\xdd\x1f\x0d\x1d\x73\x4d\xdf\x9a\x99\x4b\xeb\x6d\xd4\x7c\x41\xb1\xbc\x35\xe4\x01\x65\x52\x3b\xf3\xec\xaf\x17\xb5\xf6\x90\xfe\x9e\xbe\xb4\x43\x59\xeb\x38\xf6\x2c\xab\x75\x5d\x3b\x89\x6b\xc3\xbe\x1d\x5f\xd7\xfa\xaf\xec\xac\xa8\xb9\x67\xf6\x97\x41\xed\xc7\x63\x5b\xaa\x9a\xe3\xd9\xab\xbc\x76\xec\xda\xab\xb8\x36\xee\xdb\x97\xf3\xda\xf1\x89\x8d\x45\xf5\x26\xf6\x2c\xaa\x75\x7b\x7c\xc0\x44\x23\x38\x40\x84\x48\x2d\xec\xdf\xfc\xd3\x4f\x7f\xfd\xef\x7f\xfa\xeb\x5f\xfe\xe3\x77\x7f\xfe\xc7\xf6\x6f\x7e\xf5\xb3\xff\xfa\xfb\x3f\x33\x37\x1d\x59\xe4\x6a\xba\xb0\xbb\x59\x90\x7c\xf3\x77\x41\xa4\xec\xa1\x44\xa6\x0f\x3e\x18\x2a\xbb\x1f\xe4\xd7\x91\xfc\x8f\xbf\x29\xec\xf7\x7f\xfd\xed\x1f\x7d\xfb\xb3\x6f\x7f\xf6\xfe\x5f\xdf\xff\xf2\xfd\xaf\xec\xef\xfe\xe2\x6f\xbf\xfb\xcb\x7f\xf8\xcf\x9f\xff\x95\xed\xa8\x55\xf0\xcd\x2f\xd2\xd8\xa6\xef\x18\x8a\x79\xf1\xcd\xcf\x15\x7d\x6b\x72\x9c\x05\x2a\xa2\x87\xb1\xba\x8a\xec\xf7\xbf\xf8\xf6\x4f\xde\xff\xdb\xfb\x7f\x79\xff\xcf\xdf\xfe\x54\xcb\xb0\x7b\x79\x10\x47\x44\x72\xbd\x02\xb4\x23\x0e\x40\x11\x12\x4b\x53\xbf\x90\xf7\x9d\x5c\x90\x74\x8d\x2c\xf0\x0a\xe1\x94\x55\x47\x81\x4a\x12\x55\x3d\xb7\x58\x77\xac\x43\x8b\x15\x88\xcb\xaf\x17\x16\x6b\x91\x2f\x6b\x93\xd7\x16\x6b\x93\x3f\x8e\xb4\x58\xa5\xe4\xf8\x99\xc5\x7a\xc5\x65\x12\x5b\xac\x5c\xfa\xb4\xe7\xda\x62\x0d\xd3\x39\x5c\x61\xb1\x9a\x71\xf9\x65\x60\xb1\xae\x69\x14\x65\xb1\xc2\x71\xc9\xbf\x16\x2b\x9e\xee\x62\x8b\xb5\x8f\xcb\xcb\xb9\xc5\x5b\x40\xb9\x50\x6e\xf1\x3e\xd0\x80\x91\xc5\x5c\xc1\x7c\x04\x05\x14\x5a\xad\xf8\x1b\x80\x54\x2c\xa2\xf9\x22\xc6\xff\x48\xd1\xe3\x80\x2b\x48\x6c\xd9\x75\xf0\xb0\xf8\x28\x4a\x22\xeb\xed\xba\x45\xdd\x74\xa3\xd3\xb5\x94\xe2\x32\x62\xc9\xe9\xe8\xb5\xdf\x05\x0b\x07\x27\x3d\x76\xf5\xc9\x6b\x05\x81\xbd\x05\xe8\x2b\xa1\x88\xae\x22\xdc\xcd\x03\xf8\xd0\x9f\xdc\x6a\x9e\xf2\xf1\x0a\xa7\x05\x29\x08\xcb\x96\x5c\xc2\x0f\x7d\x28\xc1\x2e\xfd\xdf\x01\x00\x00\xff\xff\xd0\xae\x40\x40\x74\x2b\x00\x00")
+var _confAppIni = []byte("\x1f\x8b\x08\x00\x00\x09\x6e\x88\x00\xff\xb4\x5a\x5b\x6f\xe3\x48\x76\x7e\xe7\xaf\xa8\xf1\x64\xd2\xdd\x01\x25\x59\x76\xbb\xbb\xc7\xbb\xde\x8c\x2c\x51\xb6\xb6\x75\x5b\x52\xee\x9e\x9e\x86\x41\xd3\x62\x49\xe2\x98\x22\x35\x2c\xd2\x6e\x0f\x82\x60\x17\x79\x08\x90\xd7\x04\xc9\x4b\x10\x24\x0f\x41\x80\xcd\x05\x59\xe4\x65\x37\x41\x9e\x06\x79\xef\xf9\x0f\x8b\xd9\xe4\x5f\xe4\x3b\xa7\x8a\x12\xe5\xf6\x38\x59\x20\x99\x8b\xc5\x4b\xd5\xa9\xaa\x53\xe7\x9c\xef\x3b\xa7\xf8\xb1\x18\x3a\xaf\x1c\x57\xf0\x9f\xc1\xa8\xd3\xeb\xbe\x11\x93\xd3\x9e\x27\xba\xbd\xbe\x63\x7d\x2c\xc6\x7d\xa7\xe5\x39\x62\xd0\x7a\xe9\x88\xf6\x69\x6b\x78\xe2\x78\x62\x34\x14\xed\x91\xeb\x3a\xde\x78\x34\xec\xf4\x86\x27\xa2\x7d\xe6\x4d\x46\x03\x3c\x1c\x76\x7b\x27\xba\xa7\xf5\x03\xd1\x5a\xad\x44\x12\x2c\xa5\xc8\x17\x41\x2e\xd4\x22\xbd\x51\x22\x4d\x84\xbc\x96\xd9\xad\x58\x05\x73\xbc\x88\xf2\x58\x5a\xad\xf1\xd8\x1f\xb6\x06\x8e\x38\x12\x27\xe9\x5c\x1d\xe2\xaf\x38\x89\x72\xe1\xc9\xec\x3a\x9a\x4a\x48\x6a\x2f\x82\x04\xcd\xf1\x2c\x9a\x89\xdb\xb4\x10\x59\x91\x88\x38\x9d\x06\x71\x7c\x6b\xb9\x67\x43\xff\xcc\xc3\xec\x8f\xc4\x3c\xca\xd1\xda\x89\xf2\x85\xcc\xc4\x4e\x28\xaf\x77\x6c\xb1\xb3\xca\xd2\x70\x47\xa4\x78\x90\x4b\x95\xe3\x49\x28\x67\x41\x11\x43\x96\xd2\x6d\x58\x02\x96\x4e\x13\xc0\xbd\x65\xbd\xcd\xe4\x2a\x55\x51\x9e\x66\xb7\xe7\x96\x3b\x1a\x4d\xc4\x91\xe5\xb5\xdd\xde\x78\xe2\x4f\xde\x8c\xa9\xd9\x65\xa0\x16\x18\xa9\x63\x24\xb5\x86\x5e\x4f\x4c\x17\x41\xa6\x64\x6e\xd1\x8d\x0f\x55\xb9\x9e\x83\x8e\x02\xcd\xba\x69\x36\x95\x66\xdd\x89\xbc\x11\x1b\xf1\x22\x4f\xc5\xa5\x14\xab\x2c\xba\x0e\x72\x69\x75\x47\x6e\xdb\xf1\xc7\x6e\xef\x55\x6b\x42\xc3\xcc\x82\x58\xd1\xfa\x4f\xe2\xf4\x32\x88\xc5\x32\x78\x17\x2d\x8b\xa5\x98\x66\x32\xc8\x23\xa8\x32\x8e\x96\xd0\x49\x3a\xab\x4a\x5c\x61\xe9\x85\x92\x99\x2d\x6a\x4d\xb1\x94\x41\xa2\x44\x92\xea\x96\xd6\xa0\xf5\xb9\xdf\x76\x9d\xd6\xa4\x37\x1a\xfa\xfd\xde\xa0\x47\x13\xac\x35\x31\xc2\x38\xc8\xa7\x0b\x41\x0a\x12\x5f\x15\xb2\x90\x22\x96\xc9\x3c\x5f\xd8\x18\xf3\x8a\x15\x1f\x28\x11\x07\x19\x36\x01\x17\x18\x4b\x45\x97\xd8\xb9\xf1\x59\xbf\xef\xbb\xce\x4f\xce\x1c\x6f\xe2\xe3\xef\x99\xe3\xf7\x9d\xe1\xc9\xe4\x14\x62\x9b\xbb\xf8\x07\xba\x2c\xa2\x73\xc8\x1f\x16\xcb\x4b\x4c\xac\x3a\xd5\x48\x2a\x6d\x19\x41\x26\xd9\x3a\x64\x28\xa2\x04\x16\x02\x55\xbd\x5b\xc5\x29\x9e\x92\x91\x58\xce\xe7\xe3\xfe\xc8\x85\x5a\x5a\x27\xb0\x35\x7f\x78\x36\x80\xf4\xbd\xdd\x2d\xa1\x91\x52\xc5\xf7\x8b\x63\x31\x3d\xcf\x3b\xbb\x23\xa4\xb9\x2d\x64\xad\xde\x74\x09\x65\xa9\x3b\x42\x82\x69\x1e\x5d\x47\xf9\xad\x98\x49\x19\x5a\x5d\xc7\xe9\xf8\xac\xce\xd1\x00\x6a\x34\x02\x0f\x20\xef\x55\x10\x43\x7d\x10\x77\x01\x2b\x5c\xca\xda\x34\xc5\x52\x2e\xb0\x13\x79\x20\xf2\x60\x6e\xd3\xe6\x84\xe2\xf2\x56\xb4\x92\x30\x4b\xa3\x50\xfc\x08\xfd\xea\x34\x93\x56\x82\xb1\xae\x83\x18\xcf\xb8\x13\x36\x0d\xba\xdf\x49\x30\xba\xb6\xdf\x30\x52\x01\xd4\xbe\x23\x6e\xa2\x38\x16\x8b\xe0\x9a\x5c\x4b\xae\xed\x59\xe5\xb7\x31\x59\xcb\x80\x54\x17\x25\xb3\xf4\x50\x2c\xf2\x7c\xa5\x0e\x1b\x0d\x98\xb5\x8c\x53\x98\x86\xaa\xcf\xd3\x74\x1e\xcb\x3a\x16\xd9\xb8\x91\x97\x8d\x62\x15\xc2\xf2\x54\x63\x6f\xb7\xf9\xb4\xd1\x6c\x36\xbc\x62\xb5\x4a\xb3\xbc\x36\x4b\xb3\x5a\x65\x01\xb5\x28\xa9\xb5\x17\x59\x8a\xfb\xfd\x4f\xf9\xa5\x99\xbe\x35\x39\x75\x06\x0e\xd4\x80\x3d\xf2\x07\xce\xa4\xe5\x4f\x5a\x27\x50\xc5\xc5\xc7\xb3\xd9\xc1\xfe\xd3\xfd\x0b\x36\x81\x7a\x10\x2e\xa3\x64\xdb\x10\xc8\x48\x1f\xde\x32\xf2\xea\xed\x1d\x3b\xd8\xfd\xd0\x96\x1e\x14\xe1\x3a\xe3\xd1\x83\x22\x92\x34\x47\x8c\x79\x58\xc8\x70\x34\xe9\xb5\xef\x1a\xe0\xc1\x96\x98\x34\x9b\x07\x49\xf4\xb5\x76\xcb\x87\x64\x8d\xdc\x93\x0f\xe6\x63\xbd\x5d\x06\xd9\x55\x98\xde\xb0\x86\x9c\x84\x36\x19\xdb\x9b\x85\xb0\x00\xf4\xbb\x84\xbb\x5f\xc1\x27\x72\x99\x28\x88\xb7\x9c\x61\xeb\xb8\xef\xf8\x88\x30\x1d\x38\xf1\xd0\xf1\x8f\xe1\xd2\x2f\x2b\xe1\xa2\x1f\x29\x8e\x0a\xd3\x42\xe5\xe9\x52\x9c\xb9\xfd\x9a\x37\xa5\xbd\xac\x2c\x13\xa1\x93\xe7\x46\x7e\x1d\x25\x57\x4a\xdc\x2c\x64\x02\x85\x26\xa1\xcc\xa2\x64\x2e\x06\x66\x46\x10\x87\xdd\xc6\xe8\xc1\x72\x85\x59\x21\xc2\xda\xcb\x60\x9e\x20\xce\xe9\xa0\xef\x43\xba\xef\xb5\xc9\x08\x3c\x84\x49\xeb\x2d\x76\x15\x81\xee\xdc\x1a\xbb\xa3\xc9\x08\x66\x81\x79\x91\x15\x5a\x9d\xd1\xa0\xd5\x1b\xe2\x8e\xe3\xf6\x22\x55\x39\x87\x56\xea\x8f\x87\x9f\x3c\x2e\xdb\x3f\x21\x7b\xfd\xe4\xb1\x6e\x8e\x9b\x4f\x1e\x9f\x4e\x26\x63\x7f\x3c\x72\x27\x4f\x54\xc3\xe2\x9b\x56\xa7\x83\x70\x6f\xad\x5f\x40\xc0\x3e\x45\x1b\x2c\x9d\x84\x8b\xc7\x9d\xc1\x17\x4f\x68\xdd\x3c\x77\x02\x15\x71\x93\x66\x57\x64\x6f\x8f\x55\x81\x40\x87\x55\x7b\xde\xa9\xd0\xc6\xff\x04\xbe\x0d\x13\x50\xb4\x6c\xb8\x84\x50\x1a\x77\xea\x10\xd7\x4b\xc4\x12\x33\x15\xd3\x40\x41\x79\x84\x3c\x61\x4a\x26\x83\x30\x0e\xdd\x21\x78\x4f\x35\x32\x55\xdd\xf0\x9a\x02\x00\x75\x6e\xc5\x39\x8c\x83\x02\x74\x12\xdf\x1a\xe4\xca\x78\x5c\xad\x23\x08\x0a\x25\xa1\x10\x09\x24\x09\x8a\xc0\x12\x53\xa3\x75\xf1\xcb\xba\xd5\x1f\xb5\x5b\x08\xb1\x1b\x45\x91\x2e\xa1\xa0\xb5\x12\xef\xea\x07\xa0\xa4\xa3\x04\x0f\x34\x03\x50\x14\xd8\x6d\xde\x5c\x1a\x26\xb8\x0e\xa2\x98\x5e\x5b\x9d\x9e\xc7\x66\x44\xcd\x36\xa6\xf3\x7a\x21\x19\x3c\xe1\x9c\xe2\xb2\x88\xe2\x1c\xb6\x5b\x99\x71\x4a\x93\xce\xeb\x96\x37\x69\xb9\x13\xea\xea\xc3\x45\x5f\x31\xf6\x96\x12\x3a\xe9\x32\x40\x27\x0d\xfc\x8c\x6e\x88\xe6\xa9\xd2\x6e\x30\x8d\xc9\x11\xb0\x12\x8b\xfa\xae\x4d\x62\xb3\xdd\x04\x45\x08\x3f\x22\xd1\x9e\xf5\x3f\x08\x30\x7b\xbf\xb7\x77\xa7\xdb\x3d\x33\x8f\xe1\x13\xf0\x1f\xec\x05\xf7\xec\xf7\xbc\x89\x33\x2c\x05\x7c\xf2\xb8\x94\xc6\x33\x70\x53\x68\x6a\x15\xe4\x0b\x72\x22\x92\x11\x46\x99\x9c\x12\xba\x6e\x91\x87\x47\x7f\xd8\xa8\x2b\xb5\x78\x64\x63\xbc\x9c\x8d\x43\x87\xe4\x94\xb5\xf7\xa8\xb1\x40\xb4\x6c\xc0\x61\x74\xab\x3a\x8f\xcb\x3b\x39\x6e\x31\x42\xf2\x5e\x19\xc1\x6c\x4b\x04\xeb\xe8\x2f\x97\x88\xc0\x01\x9e\xcd\xa2\x58\x1a\xc7\x64\x64\x5e\x15\x97\x71\x34\xbd\x12\x57\xf2\x16\x43\x90\xb9\x42\x70\x0d\x77\x73\x99\xd8\x90\x56\x99\x9b\xba\xc5\x72\x97\x15\x59\xeb\x25\xe8\x79\xbc\x74\xde\xf8\x13\x42\x6d\x3d\x17\xcd\x00\x16\x34\x8b\x8a\xc8\xad\xc5\x6e\x9e\x3f\x12\x41\x82\xd0\x24\x89\xd3\x49\x00\xd1\x2c\xc2\x6d\x0a\x15\xdc\x2c\x22\xf8\x16\x6d\x10\xad\x06\x11\x66\x3d\xd6\x09\xe9\x5a\xaf\x7a\x23\x87\xfd\x2b\x8c\xa6\xb4\xe8\x1b\x63\x77\xec\x52\x12\x6b\x04\x5c\x30\x18\xd3\x5a\x55\xf4\x35\x5a\x80\xd5\x01\x17\xb3\x4c\xaa\x55\x8a\x6e\x58\x7d\x7e\xbb\x92\xd6\xa0\x37\xec\x0d\xce\x06\xbc\x22\xaf\xf7\x05\xa0\xe8\xd4\x69\x57\xa3\x61\xe9\x0f\xed\xce\x90\x38\x18\x81\x6c\x49\x0a\x97\xf0\x31\x6b\xd4\xed\x72\x14\x35\x0c\x50\x77\x2b\xbd\xc3\x1d\x9d\x4d\x00\x42\xfd\xd1\x49\x95\x8e\xc9\x44\x66\x34\x6b\xe8\x18\xf0\x8a\x27\xbf\x23\xea\x8d\x39\x85\x99\xa9\x84\x15\xd6\xa6\xc1\x51\x9e\x81\x05\xd4\xc2\x22\x63\x48\x38\x7a\xf1\xfc\xd9\xee\x62\x77\xb9\xab\x44\x8d\xbc\xf6\x68\x79\x4b\x3f\x75\x13\x56\x09\x8d\xad\x1f\x40\xce\x28\x13\x33\x80\xac\x08\x44\x7d\x35\x7b\xc7\x06\xc0\xd6\x9f\xe5\x30\x7f\x7e\x43\x71\xe2\x35\x14\x4e\x64\x9a\x06\x8b\x66\x5a\x81\x88\xf4\xf0\xf3\xc7\x61\x0a\x29\xe4\xe8\x08\x7c\x73\xec\x10\xf4\xa9\xfb\x73\x47\xc3\x33\x49\xa9\x4f\xf4\xb4\xc1\x09\x12\xa5\x62\xb1\xba\x9a\xaa\xe6\x9e\xa8\x91\x8b\x41\x2a\x8f\x5e\xa3\x3d\xd5\x77\x30\xa5\x5a\x92\xa2\x9b\xfa\xdf\xf5\x42\xcb\xb2\x13\xbd\x50\x74\x11\x4a\x65\xb5\x1d\x84\x0d\xca\x0f\xa0\x4d\x8d\x4e\x0d\xa6\x28\x8d\x72\x18\x8b\xb6\xf1\xbe\x06\x46\x22\x86\x3f\x5b\x11\xc5\x8d\x89\xd1\x90\x7f\x92\x89\xc7\xb4\x28\x32\x4a\x95\x43\xdd\x53\xad\x37\x72\xe0\x6d\xa7\x60\x15\x90\x99\xc3\xda\xa0\x2c\xc6\x05\x3c\x96\xef\xe4\xb4\x80\x82\x29\xaa\x01\xe8\xab\x3e\xaa\xb3\x98\x98\x54\xcc\x7c\x9b\x07\x3d\xf9\xa2\x37\x16\x4a\xf3\xa4\x12\x8c\xf9\x59\x05\x81\x03\x6d\xa1\x9c\xe5\xcc\x38\x6a\x26\xb5\x38\x9d\xcf\xb1\x8d\xcc\x7b\x6c\xf8\x47\x42\xb1\x6d\x87\xa2\x84\xa6\x77\x86\xf5\xee\x58\xfd\x16\xa7\x55\xc4\x13\x48\x0f\x25\x1b\xb6\x74\xc6\x41\x94\x60\x8d\xde\xf1\x1c\x44\x3a\x5f\x2c\x15\x2f\x1f\x0b\x8c\xb2\x2d\xd7\xd1\x34\x5e\x3c\xa6\x88\x84\x7c\x00\xe6\x60\x48\x24\x4c\x8c\xdc\xe7\x09\x00\x5b\x2d\xea\xa6\x8b\x8f\x2e\x3e\x79\x9b\x3a\xb7\x9c\xce\xde\xc1\x41\xf3\x53\xa6\x3a\xcf\x2c\xa7\xdd\xf1\x5a\x42\x98\x3b\x97\xaf\xf9\x6e\xf7\xe9\x0b\xab\xb3\xbe\x6d\xee\xee\x3d\x05\x07\x00\xaa\x06\x48\x91\xe4\x79\x25\x1b\x5b\xde\xaa\xaf\x62\xce\xc7\x60\xf8\x73\x78\xb1\x5e\x34\x1e\x46\xb9\xdc\xc7\x8b\x28\x7f\xa4\x34\x44\x4e\x17\x29\xe5\x7d\x9d\xe3\x32\xdd\xe2\xbe\xd6\xe9\xc8\xa3\x60\xdd\xdc\x7b\x5e\xdf\xc5\xbf\xcd\xc3\xfd\xfd\xdd\x67\x96\xc9\x1c\xc9\xfb\x2c\x93\x06\x66\x88\xdf\xd6\xb8\xe5\x79\xaf\x3b\xbc\x85\x5d\x1a\xa8\x32\x2c\xe0\xd8\x16\xb2\xcc\x12\x0d\xa9\xc6\xcc\x32\xf9\x55\x81\x30\xa9\x27\x06\xd0\x88\x66\xb7\xb5\x59\x11\xc7\x3b\x08\x63\xfd\x75\x86\xa8\xdb\x97\x62\xcb\xf9\xb3\xfe\x77\xf2\x28\xbc\xdc\x61\x8a\x2f\x82\x4b\x95\xc6\x30\xab\xb5\xc5\x25\x0c\x11\xb0\xd0\x8c\xb3\x29\xc3\x32\x2c\x13\x16\x49\x65\x1c\x42\xea\xe1\x25\x34\x68\xf8\x32\xd1\xa9\x69\x81\x1d\x46\x22\xda\x1b\xc2\x3e\x91\x6f\x81\x12\x54\xc3\xdb\x47\x1f\xe9\xb4\x5c\x67\xed\x93\x91\x78\xe9\x38\x63\xf1\x66\x74\xe6\x0a\x56\x47\xa7\x35\x69\x09\xaf\xd5\x75\x3e\xfa\xc8\xf2\x1c\x64\x7f\x13\x0a\x95\x10\xf0\xd1\xc7\x9f\x75\x3b\xce\x6b\x17\xff\xfd\xee\xef\x3d\x26\x4b\x2f\xf2\x94\x8c\x34\x22\x1e\xb8\x94\x8c\xa4\x61\x00\x97\x47\xf4\xeb\x0d\x91\xe7\x0d\x9c\xc1\x31\x82\x61\xa7\xf5\x06\x54\x4f\x3c\xb7\xda\xa3\xd1\xcb\x9e\xc3\xc9\x77\x65\x17\xfc\xe0\x46\x2a\x18\x75\xf9\x7a\xdd\xaf\xda\x26\x4a\x80\x76\x61\xa4\x15\xe9\x52\x6a\xac\x28\x3c\xa5\xef\x6e\x45\x50\x60\x63\x92\xbc\xf4\xb9\x85\x0c\x42\xe2\x4a\xc4\x27\x4c\xd6\xc0\x37\xa0\xf6\x20\x1e\x1e\xa5\xcb\xa3\xcf\xdf\xf8\xad\x33\x24\x22\x43\xb8\xaf\x4e\x6e\x8d\x25\x7c\x5e\x7b\xed\x1c\xd3\xab\x1a\x3d\x30\xec\x14\x5a\x3f\xb7\x5a\xed\x49\xef\x15\xe5\x2d\x1d\xe4\xac\x74\x05\x1c\x41\xa8\xa7\x85\x35\x5f\xec\x42\x38\xb2\x77\x5f\xdb\xd0\xf7\x36\x42\x2c\xe2\xd9\x94\x5c\x30\x4d\x66\x51\xb6\x14\xb2\x06\x06\x14\xb3\xdb\x67\x72\x0e\xde\xa1\x31\x00\x32\x4f\x88\x75\xb8\xbe\x03\xae\xd3\xf7\xb9\x5a\xe2\x0e\xb6\xa8\x93\xd4\x64\x90\xdd\xdb\x74\xc6\x00\x64\x5a\x6c\x10\x25\x45\x00\x5f\x4d\x8b\x44\x13\xcb\x0d\x54\xb1\x78\x97\xd7\x5f\x11\xca\x53\x5c\x22\x94\x02\x46\xe7\x0c\x7e\x98\xea\x75\x24\x6f\x20\xf6\x36\x5f\x20\x4a\xd5\x2d\x4a\xe1\x7b\x48\xb1\xbd\xde\xc9\x10\x3b\xfd\xaa\xe7\xbc\xae\x48\x18\xd0\x6a\x28\x4f\x9a\x99\x3d\x29\x83\x1e\xe5\x45\xdd\x37\x3e\xad\xa6\xda\x9c\x62\x55\x88\x74\x37\x8a\x37\x09\x28\x68\xd0\xa2\xb8\xe4\xac\x13\xfb\x8f\xec\x9a\x6d\xbd\xa1\xf3\xf6\x46\xf3\xd9\x41\x29\xf3\xa1\x5d\x5d\x0f\xf2\x7d\x6d\x47\xdf\xa7\x04\x93\x53\x4d\x83\x55\x0e\xc6\x2e\x38\xc9\xd6\xe6\xf5\xc1\x2e\x19\xd9\xed\xd6\x78\x02\xc7\x82\x0c\x42\x72\x58\x0e\x32\x83\x45\x9a\x5e\x51\x48\x3b\xc5\x2f\x72\x79\x75\xb5\x55\x2b\xb1\xee\x29\x80\x70\xc4\x8e\x23\x22\xa0\x79\xb4\x94\x04\x8d\xd8\x00\xf8\x34\x18\x8c\xb2\x3a\x0e\x19\x95\xeb\x4f\x7a\x03\x07\x3c\xc3\x14\x10\x5a\xbc\xf9\x51\xc2\x9e\x2f\x2b\x20\x4f\xb3\xf3\x5e\xf6\xc6\xfe\xa4\xef\xf9\xe8\x47\xa5\xba\xcd\x12\x37\xb9\xe8\x22\x52\x4c\x29\xa9\x04\x90\x2d\xf5\x32\x31\xaa\x0c\x40\xce\x38\x07\xbd\x5b\x04\xa1\xfc\x13\x88\x89\xa4\x4d\x2f\xbe\x53\x11\x7b\x5c\xcc\x66\x0c\xb7\x8c\x23\x94\x54\x22\xe3\x49\x64\x6c\x03\x5e\xe4\xca\x54\x86\x22\x86\x57\x53\x9b\x0b\xd3\xe4\x11\x18\x40\x82\x45\xdc\x50\xb6\xc9\x2f\xc1\x04\x9d\x61\xc7\x3f\x3e\xeb\x76\x89\x4e\x39\x43\xad\x20\x9a\x37\x39\x36\x82\x2a\x40\xfc\x56\x73\x7c\xf6\x1e\x5d\x1a\xf4\xce\x8e\x7f\xec\xb4\x35\x45\x2f\xcb\x84\x4c\xd1\xd9\x26\x35\xb5\x27\x42\xb6\x64\x63\x53\xcb\x7c\x55\x9f\xd3\x35\x19\xda\xe1\xc1\x8b\xe7\x78\xf7\x93\x9f\x98\x17\x5f\x7d\xc5\x4f\x75\xe2\x9e\xe6\xd2\xa6\x09\x33\x25\x20\x7a\x84\xc4\x57\x69\x8e\xb9\xf3\xf4\xd9\x01\x62\xb8\x37\x98\x8c\x3d\x5d\x69\x01\x4c\x53\xd1\xa6\x0e\x5f\x22\x50\xe7\xe4\x07\x7b\x40\xc5\x4c\xee\x8b\x81\x68\xfd\x20\xd8\xe9\x72\x49\x19\x74\xc8\x55\x38\xb7\xdb\x16\xcf\x9e\xee\x7e\x5a\x17\x3d\x3d\x90\x49\x45\x0c\x75\x50\x1b\x41\x50\x11\x0f\x14\xc4\x37\x88\xb7\xeb\xf1\x4a\xc4\xab\x90\xd8\x53\xa7\x3f\x22\xfa\xa5\x8d\x55\xc3\x0a\x31\x49\x0e\x8f\x94\xd7\x87\x11\xed\x17\xe2\x67\x7d\x1d\x18\xb8\x0f\x4b\x69\xeb\x82\xc0\xba\x03\x19\xff\xb6\xc4\x2d\xce\xcf\x84\x53\x67\x12\x98\x0b\xda\xf9\x34\x21\x13\xc6\x39\x5e\x71\xb4\xd2\x48\xc9\x2b\xac\x32\xd2\xb4\xba\xe8\xba\x18\x51\x12\x4c\xc0\x88\x98\xa3\x78\x64\x25\xe3\x59\x8d\x82\x12\xf4\x55\xe9\xa8\xb4\x91\xaf\x0d\x5c\xc7\x30\x64\x7e\x11\x56\x55\x6d\x48\x70\xef\x13\xa3\xec\x75\x29\x40\x6c\xc8\xfb\x3d\x2c\x53\x1b\xf8\x43\x34\xd3\xb4\xd8\xf0\x4c\x36\x31\xcd\xc6\xc3\x10\xc4\x01\x9c\x8d\x76\xf4\x60\x7f\x6f\xaf\x2e\x26\xb4\x08\x43\xe1\xbe\xa4\xe0\x8a\x4b\xc9\x86\xbb\x6e\x8c\x15\xd2\xfa\x2f\x76\xc8\xc2\x77\xc4\x0f\xf9\xf5\x67\x15\xc6\xff\xa3\x0b\xa1\x1d\x54\x58\x5d\x77\x34\x60\xaa\x32\xe0\x59\x6c\x50\x8e\x63\xff\x2a\x50\xea\x26\xcd\x42\xc3\x6f\x36\xd4\xc6\x7a\x3b\x85\x53\x6f\xd3\x2c\xb9\x84\xef\x6b\x36\x03\xaf\xda\xe1\x79\xd0\x53\x6e\x79\xa7\xfa\x6d\x1a\x5b\xad\x0e\xa2\x1d\x03\xa6\x7e\x52\x92\x1b\xf3\xde\x30\xa6\x93\x36\xbc\x13\x78\x84\xe8\x59\x89\x62\x5b\x12\x9f\xed\x82\xa6\x40\xd2\xab\x16\x21\xc2\xb3\xdd\x52\x90\x9e\x8b\xe6\x48\x95\xb9\x40\x40\x82\xac\x94\x61\x9e\xca\x2c\x46\x77\xe8\xc5\x1d\x0e\x01\xad\x39\x15\x6e\x8e\xf2\xe9\xca\xa6\x97\x47\x87\xcf\xf6\x9f\x7f\x6a\x97\x0a\x39\x5a\x06\xd3\x20\x83\xd5\x86\x97\x47\xbb\xf6\x2a\x4d\x63\x66\xaf\x47\x88\x2c\x76\x14\xc6\xd2\x37\x41\xf7\x48\xa3\x75\x39\xf2\xa1\xb8\xd8\x90\xc8\x66\x73\xaf\xd9\xbc\x30\xae\xc6\x0c\x41\x51\x95\xed\x7e\x9d\x52\x62\xb1\xd1\xad\x56\xad\xe1\xb5\xf7\xe9\x15\xc0\xf4\xaa\xd7\xd9\x56\xec\x38\x4b\xaf\x23\x62\x34\x4c\x17\xe6\x70\x3d\x5a\xbf\xd2\xd3\x43\x93\x43\xf6\x29\xae\x24\x00\xa0\xcb\x56\xb7\x92\x4e\x36\x68\x78\x44\x33\x3d\xc3\x4d\x96\x03\x32\x5b\x9f\xd7\xc5\x05\x73\x48\xf3\x56\x5d\xfc\xbf\x69\x91\x16\x7c\x08\x1a\x57\xc3\x6f\x2d\xcc\x08\xdd\x1a\xfc\x50\x84\x2a\x29\x27\x0c\x3c\x45\xac\x2c\x67\x46\x8c\xfc\xb0\x1c\xef\xb3\x72\x8e\x7e\x4e\x31\xed\x62\xad\x26\xdf\x1c\x20\x19\x36\x5c\xae\x04\x63\x7a\x66\xc9\x53\x20\x6f\x24\x35\xff\x33\xf4\xd2\x84\xa3\xc8\xa7\x6a\xb9\xaf\xc9\x05\x55\x16\x34\x18\x51\xc0\x29\xf5\x05\x9b\x65\x3a\x62\xcc\xb9\x1a\xe8\x74\xd8\xd0\x02\x41\x92\xcf\x5c\xe7\x43\xf2\xa0\x90\x4e\xeb\xf1\xb7\xfa\x32\x3d\x30\xa4\x81\x38\xa3\x96\x52\xf2\x86\xcd\xd4\xe1\x3d\xa4\xc7\xb5\x0b\x6d\x09\x79\x01\x9c\xd8\xb5\x4e\xda\x7e\xe9\x3d\xcc\x09\x20\x44\xbf\xd8\x48\x89\xa3\x99\x64\x39\xf7\x74\xf7\x1c\xcf\xd3\x07\x3b\x5d\x67\xbb\xbf\xf5\x76\x15\x4d\xa9\x10\x08\xde\xfb\x0a\xf9\x80\xeb\x9f\x8d\xfb\xa3\x56\xc7\xaf\x26\x1f\xc1\x35\xfe\x66\x8a\x8f\xdb\x90\x63\x2a\x69\x2a\xf4\x14\xe5\x90\x91\xa5\x78\xb0\x13\x16\xa9\x5a\x14\xe9\x0e\x1a\xc1\xf6\x83\xb2\xc2\xac\xbb\x0a\x85\xe4\x6d\x8a\x99\xd1\x4e\x1c\x96\x95\xca\x69\x52\x9f\x67\xba\x01\xd3\x3f\x7d\xd9\xb0\x4e\x5c\x33\x15\x0f\xa9\x4a\x9b\x13\x03\xd3\x6c\x0d\x5c\x65\x93\xf5\x5e\x20\x2f\xca\x73\x78\x30\x40\x36\x3f\xaf\x54\x2b\x37\x4f\x15\x83\xa0\xe4\x1d\x03\x60\x9b\x03\x3a\x45\x9c\xf7\x82\x36\xe4\xc2\x6c\xd5\x66\x7f\xb8\xee\x45\x70\x54\x11\x72\xa7\xa3\x56\xcf\xe6\xf5\xc5\x56\xd2\x56\x79\x41\x15\x1c\x64\xe7\x10\xb6\x4c\x2b\x35\x76\x4a\xb4\x95\x71\x85\x68\x09\x06\xd6\xf8\x72\x25\xe7\x7f\xa0\x2f\x57\xc9\xdc\x42\x5a\x37\x7a\xed\x74\x38\xdd\xa5\xe4\xe2\xde\x46\x04\x0e\xef\x74\x2d\x0c\xd0\xca\x6c\x8e\x22\xc0\xf6\x5c\xf7\xf7\x06\xc7\x7c\xcc\x47\xa5\x30\x48\x7a\x6a\xba\x25\x6b\x76\xa8\x8b\x8a\x7c\x4a\xb8\x8a\xd3\xe0\x8e\x92\xc0\x06\xa9\x37\x41\xa3\xc7\x7c\xd4\x7a\x4b\xd6\x46\xca\xf6\x56\x72\x0a\xe4\x95\xba\x8e\x62\x90\x8b\x14\x47\x29\xf2\x2d\x15\x00\x57\x54\x45\x11\x7c\x9e\xb4\x2d\x15\xb8\x89\x30\xbb\x5f\x0a\x01\x7e\x18\x0e\x84\xe6\x5c\x2e\xd7\xdb\x46\x27\xa7\x6d\x5b\x9c\x25\xd1\xbb\x4e\x40\x04\xcd\x2d\x2e\x6f\xcd\x55\xb7\xfd\x62\x6f\xaf\xfc\xfd\x42\x5f\x1c\xec\xda\xa5\xe8\xf5\x85\x7e\xb5\xbf\xbf\xff\xe9\xfa\x62\x18\x24\xa9\x2d\x5e\x46\xa0\xfe\x54\xd4\xf4\x72\x20\xb0\xf9\x19\x80\x75\x45\xeb\xeb\x69\x96\x32\x44\xf1\x2d\xf5\x32\xf0\xb5\x2c\x0f\xd4\x4a\x36\x1d\x5c\x12\x93\xaf\xa8\x41\x49\x59\xda\xfb\x3c\x8d\x03\xe4\x54\x69\x36\x6f\xac\xae\xe6\x0d\xd2\x5e\xe3\x63\x5c\xd5\x10\x18\x91\xfc\x93\x95\x74\x47\xee\xa0\xa5\xd1\x06\xe9\xb6\x3e\x62\xde\x14\x9c\x4a\xd4\xa1\xf6\xa9\x86\x9b\x12\x76\x08\x2f\xe9\x97\xf8\xac\x39\x12\x34\x95\x96\x3b\x00\x54\xf6\x2d\xb9\x13\x78\x69\xc0\xc5\x5d\xb9\x0a\xb8\x72\xb9\x44\xcb\x88\x0e\x74\xa8\x04\x5a\xda\x66\xd9\xcd\x66\x23\xd9\xb1\x4c\xc5\xc3\x3c\xfd\xbf\x4c\x06\xee\xe6\x01\x1c\xe3\xca\x85\x4f\xb2\x60\xca\xcb\xed\xc8\xcb\x62\x4e\x17\x3d\xe8\x9e\x7e\x5f\x07\x19\xaf\xdf\xc9\xb2\x34\xa3\x8b\x76\x16\x51\xa1\xe0\x2e\xfe\x6a\x09\x56\x1f\xf9\x21\xf1\x10\xbe\xb5\x4a\x2e\x52\xea\x86\x97\xae\x53\x68\xda\x86\xba\x79\x7e\x5e\x76\x5b\x77\x60\x65\xdc\x6d\x4d\x0f\x37\x4d\x7f\xa0\x09\xa1\x8e\x3b\x8a\x4a\x18\x29\xcc\x02\xd6\x8d\xa6\x22\x4b\x73\x5c\x3f\x56\x37\x64\x81\xec\x82\x29\x05\x06\x4a\x25\x0c\xf8\x3f\xf9\x10\x51\xfa\xa3\x13\xdf\x1d\x4d\x34\xad\x35\xa1\x8a\x1c\x99\x4f\x04\x37\xde\x4c\x09\x09\x76\x91\x66\xb3\x25\x83\x75\xba\xab\x9d\x99\xaa\xdb\x5e\xa9\x67\xd6\xf4\x3a\x90\xa8\x45\x34\xcb\x1f\x92\xb3\xf7\xc2\x7c\x43\xd0\x14\x3f\xfc\x21\xee\x6c\xaa\xff\x55\x42\x8c\xef\x9d\xf6\xba\x7c\x06\xf3\x82\x51\x6a\x4e\x71\x90\x57\x1d\x82\xc9\xde\x7e\xb8\xae\x4e\xab\xd7\x7f\xf3\xc1\xca\x9c\x77\xab\x28\xe3\xd8\x81\xf4\x07\xd3\x21\x01\x34\x97\xc7\xa1\x8c\x25\x15\x3c\x66\x54\x07\x59\x62\xda\xd4\x62\x5b\x5d\xcf\x79\x32\xeb\xa2\x54\x65\x9b\x93\xfb\xf6\x38\xa9\xee\x9a\x2b\x0d\x05\xd5\xfc\x93\x4f\x3a\xf9\x33\x0d\xa3\x8f\x25\x60\x17\xf1\xf7\x1e\xb2\xe0\x3a\x20\x2b\x43\xe4\xa6\x3e\x10\x77\xe0\x55\x8f\x07\x26\xfa\x38\x27\x5b\xcb\xe6\x2c\xad\xc2\x75\x21\x24\xc6\x70\x0f\x49\xad\xd2\x0f\xe3\x16\x60\x6f\x64\xf2\x05\xa2\xa3\xf6\xfd\x22\x5c\xdd\xb1\x7b\x6a\x52\x3d\x78\xc5\x3d\x97\x2b\x2a\xd4\xda\x1c\x9d\xae\xcb\x97\x1c\x49\xee\x68\x89\x1e\x56\xb5\xf4\x50\x8a\xbe\x3d\x81\x4e\x14\xcc\x13\x0c\x17\x4d\x4b\xd5\x99\x24\x92\x93\xc0\x9d\x4a\x3e\xff\x70\xcb\x3b\x19\xbe\x21\xe7\xbf\x6d\x7a\xc4\xfb\x2b\x89\x9f\x6e\xea\xed\xe9\x06\x9f\x4d\xd4\x7b\xbb\xd3\xac\x66\x65\x3b\xf6\xce\xde\xd6\xfd\x39\xed\x8a\x43\x85\x1a\xaf\xa2\xb8\x75\xe0\xbd\xab\xbc\x4d\xed\x7b\xa3\xc0\xed\x1a\xb8\xd8\x2a\x47\x5b\x1d\xb7\xc7\x27\xa8\x14\x5f\x03\x3a\xe6\x84\x85\xbc\x03\xac\xe8\xe9\x1d\x72\x35\xfb\x90\xfe\x7c\xb6\x3e\xf4\xe5\xe2\xd9\xef\x9b\x0f\x8e\x8e\x8a\x7c\xf6\xc2\x22\xbb\xd1\x19\x61\x96\x56\x3f\x23\xc8\x8a\x24\xa1\x48\x43\x8f\xb9\x66\xc5\xd8\x1f\xa5\x74\xee\x06\xd8\xae\x57\x4a\x3e\xc6\x17\xdd\x22\xa9\xb6\x66\xe3\xe5\xa3\x12\x2e\x5d\x23\x78\xd3\xe7\x52\xad\x89\xcf\xd5\x8b\x0d\x35\xa3\x83\x99\x90\xa1\x25\xa2\xe8\xac\xf4\x4c\xea\xfa\x88\xdd\x37\x0f\xcf\x2d\xfa\x54\xa0\x73\xc6\x04\xec\x33\xed\x6a\xcd\x85\xc5\x3b\xb5\xfe\x82\x69\x21\x83\x98\xce\xfa\xe8\x1c\xd0\x48\xa1\x0f\x3d\x7c\xfd\xdc\xe7\xe7\xf7\x09\xda\x7b\xba\xb0\x36\xa5\xb4\x67\xbb\x44\xc7\x5a\xd9\xbc\xd0\xbc\x90\x7c\x9b\x71\x10\x16\xf3\x08\x49\x82\x98\xa9\xe9\xd5\xa3\x12\xf9\x6a\xb5\x22\xc9\x88\x53\xb1\xd2\x6a\xb5\x3c\x98\x2b\x42\x4f\x02\x76\x86\xff\x34\x59\x03\x7c\x94\xd7\xd4\x74\xc9\x64\x36\x4c\xa7\x8a\x1f\x90\xb0\x46\xb3\xfe\xbc\x7e\x60\xb5\xdc\x13\x8a\x44\x16\x13\x69\x3a\xca\xac\x7c\x9c\xc5\xe7\x53\x64\xf4\xa5\x7a\x78\x31\x3e\x2f\x8f\xde\x41\x41\x77\xb4\xcb\x9b\x72\xff\x5a\xad\xb7\x18\xf9\x9c\xa3\xdf\x49\x6f\xe2\x77\x7a\xdd\xee\x76\xac\x7f\x78\xfd\xf3\x69\x65\xf5\xc1\x9c\x8c\x51\xc1\x57\xb0\x78\x82\xaf\xdf\x66\xf1\xf3\xa9\x59\x3a\x12\x98\xca\xea\x47\xeb\x32\xd5\x3d\xb5\x4f\x9a\x7b\xdd\x3c\xc7\x1a\x7a\xe0\xfa\x0c\x08\xcf\x08\xb4\x7a\xae\x3b\x72\xf5\x47\x1d\x56\xbb\x3f\x1a\x3a\xe6\x9a\xbe\x37\x33\x97\xd6\xdb\xa8\xf9\x82\x62\x79\x6b\xc8\x03\xca\xa4\x76\xe6\xd9\x5f\x2f\x6a\xed\x21\xfd\x3d\x7d\x69\x87\xb2\xd6\x71\xec\x59\x56\xeb\xba\x76\x12\xd7\x86\x7d\x3b\xbe\xae\xf5\x5f\xd9\x59\x51\x73\xcf\xec\x2f\x83\xda\x8f\xc7\xb6\x54\x35\xc7\xb3\x57\x79\xed\xd8\xb5\x57\x71\x6d\xdc\xb7\x2f\xe7\xb5\xe3\x13\x1b\x8b\xea\x4d\xec\x59\x54\xeb\xf6\xf8\x80\x89\x46\x70\x80\x08\x91\x5a\xd8\xbf\xf9\xa7\x9f\xfe\xfa\xdf\xff\xf4\xd7\xbf\xfc\xc7\xef\xfe\xfc\x8f\xed\xdf\xfc\xea\x67\xff\xf5\xf7\x7f\x66\x6e\x3a\xb2\xc8\xd5\x74\x61\x77\xb3\x20\xf9\xe6\xef\x82\x48\xd9\x43\x89\x4c\x1f\x7c\x30\x54\x76\x3f\xc8\xaf\x23\xf9\x1f\x7f\x53\xd8\xef\xff\xfa\xdb\x3f\xfa\xf6\x67\xdf\xfe\xec\xfd\xbf\xbe\xff\xe5\xfb\x5f\xd9\xdf\xfd\xc5\xdf\x7e\xf7\x97\xff\xf0\x9f\x3f\xff\x2b\xdb\x51\xab\xe0\x9b\x5f\xa4\xb1\x4d\xdf\x32\x14\xf3\xe2\x9b\x9f\x2b\xfa\xde\xe4\x38\x0b\x54\x44\x0f\x63\x75\x15\xd9\xef\x7f\xf1\xed\x9f\xbc\xff\xb7\xf7\xff\xf2\xfe\x9f\xbf\xfd\xa9\x96\x61\xf7\xf2\x20\x8e\x88\xe4\x7a\x05\x68\x47\x1c\x80\x22\x24\x96\xa6\x7e\x21\xef\x3b\xb9\x20\xe9\x1a\x59\xe0\x15\xc2\x29\xab\x8e\x02\x95\x24\xaa\x7a\x6e\xb1\xee\x58\x87\x16\x2b\x10\x97\x5f\x2f\x2c\xd6\x22\x5f\xd6\x26\xaf\x2d\xd6\x26\x7f\x20\x69\xb1\x4a\xc9\xf1\x33\x8b\xf5\x8a\xcb\x24\xb6\x58\xb9\xf4\x79\xcf\xb5\xc5\x1a\xa6\x73\xb8\xc2\x62\x35\xe3\xf2\xcb\xc0\x62\x5d\xd3\x28\xca\x62\x85\xe3\x92\x7f\x2d\x56\x3c\xdd\xc5\x16\x6b\x1f\x97\x97\x73\x8b\xb7\x80\x72\xa1\xdc\xe2\x7d\xa0\x01\x23\x8b\xb9\x82\xf9\x10\x0a\x28\xb4\x5a\xf1\x77\x00\xa9\x58\x44\xf3\x45\x8c\xff\x91\xa2\xc7\x01\x57\x90\xd8\xb2\xeb\xe0\x61\xf1\x51\x94\x44\xd6\xdb\x75\x8b\xba\xe9\x46\xa7\x6b\x29\xc5\x65\xc4\x92\xd3\xd1\x6b\xbf\x0b\x16\x0e\x4e\x7a\xec\xea\xd3\xd7\x0a\x02\x7b\x0b\xd0\x57\x42\x11\x5d\x45\xb8\x9b\x07\xf0\xc1\x3f\xb9\xd5\x3c\xe5\xe3\x15\x4e\x0b\x52\x10\x96\x2d\xb9\x84\x1f\xfa\x50\x82\x5d\xfa\xbf\x03\x00\x00\xff\xff\xb0\xdd\x62\xac\x78\x2b\x00\x00")
 
 func confAppIniBytes() ([]byte, error) {
 	return bindataRead(
@@ -298,8 +299,8 @@ func confAppIni() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "conf/app.ini", size: 11124, mode: os.FileMode(420), modTime: time.Unix(1457230221, 0)}
-	a := &asset{bytes: bytes, info:  info}
+	info := bindataFileInfo{name: "conf/app.ini", size: 11128, mode: os.FileMode(436), modTime: time.Unix(1457460418, 0)}
+	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
 
@@ -318,8 +319,8 @@ func confGitignoreActionscript() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "conf/gitignore/Actionscript", size: 300, mode: os.FileMode(420), modTime: time.Unix(1444419364, 0)}
-	a := &asset{bytes: bytes, info:  info}
+	info := bindataFileInfo{name: "conf/gitignore/Actionscript", size: 300, mode: os.FileMode(438), modTime: time.Unix(1456415087, 0)}
+	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
 
@@ -338,8 +339,8 @@ func confGitignoreAda() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "conf/gitignore/Ada", size: 51, mode: os.FileMode(420), modTime: time.Unix(1444419364, 0)}
-	a := &asset{bytes: bytes, info:  info}
+	info := bindataFileInfo{name: "conf/gitignore/Ada", size: 51, mode: os.FileMode(438), modTime: time.Unix(1456415087, 0)}
+	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
 
@@ -358,8 +359,8 @@ func confGitignoreAgda() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "conf/gitignore/Agda", size: 8, mode: os.FileMode(420), modTime: time.Unix(1444419364, 0)}
-	a := &asset{bytes: bytes, info:  info}
+	info := bindataFileInfo{name: "conf/gitignore/Agda", size: 8, mode: os.FileMode(438), modTime: time.Unix(1456415087, 0)}
+	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
 
@@ -378,8 +379,8 @@ func confGitignoreAndroid() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "conf/gitignore/Android", size: 394, mode: os.FileMode(420), modTime: time.Unix(1444419364, 0)}
-	a := &asset{bytes: bytes, info:  info}
+	info := bindataFileInfo{name: "conf/gitignore/Android", size: 394, mode: os.FileMode(438), modTime: time.Unix(1456415087, 0)}
+	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
 
@@ -398,8 +399,8 @@ func confGitignoreAnjuta() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "conf/gitignore/Anjuta", size: 78, mode: os.FileMode(420), modTime: time.Unix(1444419364, 0)}
-	a := &asset{bytes: bytes, info:  info}
+	info := bindataFileInfo{name: "conf/gitignore/Anjuta", size: 78, mode: os.FileMode(438), modTime: time.Unix(1456415087, 0)}
+	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
 
@@ -418,8 +419,8 @@ func confGitignoreAppengine() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "conf/gitignore/AppEngine", size: 58, mode: os.FileMode(420), modTime: time.Unix(1444419364, 0)}
-	a := &asset{bytes: bytes, info:  info}
+	info := bindataFileInfo{name: "conf/gitignore/AppEngine", size: 58, mode: os.FileMode(438), modTime: time.Unix(1456415087, 0)}
+	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
 
@@ -438,8 +439,8 @@ func confGitignoreAppceleratortitanium() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "conf/gitignore/AppceleratorTitanium", size: 45, mode: os.FileMode(420), modTime: time.Unix(1444419364, 0)}
-	a := &asset{bytes: bytes, info:  info}
+	info := bindataFileInfo{name: "conf/gitignore/AppceleratorTitanium", size: 45, mode: os.FileMode(438), modTime: time.Unix(1456415087, 0)}
+	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
 
@@ -458,8 +459,8 @@ func confGitignoreArchlinuxpackages() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "conf/gitignore/ArchLinuxPackages", size: 75, mode: os.FileMode(420), modTime: time.Unix(1444419364, 0)}
-	a := &asset{bytes: bytes, info:  info}
+	info := bindataFileInfo{name: "conf/gitignore/ArchLinuxPackages", size: 75, mode: os.FileMode(438), modTime: time.Unix(1456415087, 0)}
+	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
 
@@ -478,8 +479,8 @@ func confGitignoreArchives() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "conf/gitignore/Archives", size: 295, mode: os.FileMode(420), modTime: time.Unix(1444419364, 0)}
-	a := &asset{bytes: bytes, info:  info}
+	info := bindataFileInfo{name: "conf/gitignore/Archives", size: 295, mode: os.FileMode(438), modTime: time.Unix(1456415087, 0)}
+	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
 
@@ -498,8 +499,8 @@ func confGitignoreAutotools() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "conf/gitignore/Autotools", size: 181, mode: os.FileMode(420), modTime: time.Unix(1444419364, 0)}
-	a := &asset{bytes: bytes, info:  info}
+	info := bindataFileInfo{name: "conf/gitignore/Autotools", size: 181, mode: os.FileMode(438), modTime: time.Unix(1456415087, 0)}
+	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
 
@@ -518,8 +519,8 @@ func confGitignoreBricxcc() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "conf/gitignore/BricxCC", size: 72, mode: os.FileMode(420), modTime: time.Unix(1444419364, 0)}
-	a := &asset{bytes: bytes, info:  info}
+	info := bindataFileInfo{name: "conf/gitignore/BricxCC", size: 72, mode: os.FileMode(438), modTime: time.Unix(1456415087, 0)}
+	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
 
@@ -538,8 +539,8 @@ func confGitignoreC() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "conf/gitignore/C", size: 246, mode: os.FileMode(420), modTime: time.Unix(1444419364, 0)}
-	a := &asset{bytes: bytes, info:  info}
+	info := bindataFileInfo{name: "conf/gitignore/C", size: 246, mode: os.FileMode(438), modTime: time.Unix(1456415087, 0)}
+	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
 
@@ -558,8 +559,8 @@ func confGitignoreCSharp() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "conf/gitignore/C Sharp", size: 1521, mode: os.FileMode(420), modTime: time.Unix(1444419364, 0)}
-	a := &asset{bytes: bytes, info:  info}
+	info := bindataFileInfo{name: "conf/gitignore/C Sharp", size: 1521, mode: os.FileMode(438), modTime: time.Unix(1456415087, 0)}
+	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
 
@@ -578,8 +579,8 @@ func confGitignoreC2() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "conf/gitignore/C++", size: 242, mode: os.FileMode(420), modTime: time.Unix(1444419364, 0)}
-	a := &asset{bytes: bytes, info:  info}
+	info := bindataFileInfo{name: "conf/gitignore/C++", size: 242, mode: os.FileMode(438), modTime: time.Unix(1456415087, 0)}
+	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
 
@@ -598,8 +599,8 @@ func confGitignoreCfwheels() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "conf/gitignore/CFWheels", size: 205, mode: os.FileMode(420), modTime: time.Unix(1444419364, 0)}
-	a := &asset{bytes: bytes, info:  info}
+	info := bindataFileInfo{name: "conf/gitignore/CFWheels", size: 205, mode: os.FileMode(438), modTime: time.Unix(1456415087, 0)}
+	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
 
@@ -618,8 +619,8 @@ func confGitignoreCmake() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "conf/gitignore/CMake", size: 89, mode: os.FileMode(420), modTime: time.Unix(1444419364, 0)}
-	a := &asset{bytes: bytes, info:  info}
+	info := bindataFileInfo{name: "conf/gitignore/CMake", size: 89, mode: os.FileMode(438), modTime: time.Unix(1456415087, 0)}
+	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
 
@@ -638,8 +639,8 @@ func confGitignoreCuda() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "conf/gitignore/CUDA", size: 38, mode: os.FileMode(420), modTime: time.Unix(1444419364, 0)}
-	a := &asset{bytes: bytes, info:  info}
+	info := bindataFileInfo{name: "conf/gitignore/CUDA", size: 38, mode: os.FileMode(438), modTime: time.Unix(1456415087, 0)}
+	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
 
@@ -658,8 +659,8 @@ func confGitignoreCvs() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "conf/gitignore/CVS", size: 39, mode: os.FileMode(420), modTime: time.Unix(1444419364, 0)}
-	a := &asset{bytes: bytes, info:  info}
+	info := bindataFileInfo{name: "conf/gitignore/CVS", size: 39, mode: os.FileMode(438), modTime: time.Unix(1456415087, 0)}
+	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
 
@@ -678,8 +679,8 @@ func confGitignoreCakephp() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "conf/gitignore/CakePHP", size: 136, mode: os.FileMode(420), modTime: time.Unix(1444419364, 0)}
-	a := &asset{bytes: bytes, info:  info}
+	info := bindataFileInfo{name: "conf/gitignore/CakePHP", size: 136, mode: os.FileMode(438), modTime: time.Unix(1456415087, 0)}
+	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
 
@@ -698,8 +699,8 @@ func confGitignoreChefcookbook() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "conf/gitignore/ChefCookbook", size: 77, mode: os.FileMode(420), modTime: time.Unix(1444419364, 0)}
-	a := &asset{bytes: bytes, info:  info}
+	info := bindataFileInfo{name: "conf/gitignore/ChefCookbook", size: 77, mode: os.FileMode(438), modTime: time.Unix(1456415087, 0)}
+	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
 
@@ -718,8 +719,8 @@ func confGitignoreCloud9() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "conf/gitignore/Cloud9", size: 45, mode: os.FileMode(420), modTime: time.Unix(1444419364, 0)}
-	a := &asset{bytes: bytes, info:  info}
+	info := bindataFileInfo{name: "conf/gitignore/Cloud9", size: 45, mode: os.FileMode(438), modTime: time.Unix(1456415087, 0)}
+	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
 
@@ -738,8 +739,8 @@ func confGitignoreCodeigniter() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "conf/gitignore/CodeIgniter", size: 106, mode: os.FileMode(420), modTime: time.Unix(1444419364, 0)}
-	a := &asset{bytes: bytes, info:  info}
+	info := bindataFileInfo{name: "conf/gitignore/CodeIgniter", size: 106, mode: os.FileMode(438), modTime: time.Unix(1456415087, 0)}
+	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
 
@@ -758,8 +759,8 @@ func confGitignoreCodekit() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "conf/gitignore/CodeKit", size: 54, mode: os.FileMode(420), modTime: time.Unix(1444419364, 0)}
-	a := &asset{bytes: bytes, info:  info}
+	info := bindataFileInfo{name: "conf/gitignore/CodeKit", size: 54, mode: os.FileMode(438), modTime: time.Unix(1456415087, 0)}
+	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
 
@@ -778,8 +779,8 @@ func confGitignoreCommonlisp() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "conf/gitignore/CommonLisp", size: 26, mode: os.FileMode(420), modTime: time.Unix(1444419364, 0)}
-	a := &asset{bytes: bytes, info:  info}
+	info := bindataFileInfo{name: "conf/gitignore/CommonLisp", size: 26, mode: os.FileMode(438), modTime: time.Unix(1456415087, 0)}
+	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
 
@@ -798,8 +799,8 @@ func confGitignoreComposer() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "conf/gitignore/Composer", size: 250, mode: os.FileMode(420), modTime: time.Unix(1444419364, 0)}
-	a := &asset{bytes: bytes, info:  info}
+	info := bindataFileInfo{name: "conf/gitignore/Composer", size: 250, mode: os.FileMode(438), modTime: time.Unix(1456415087, 0)}
+	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
 
@@ -818,8 +819,8 @@ func confGitignoreConcrete5() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "conf/gitignore/Concrete5", size: 42, mode: os.FileMode(420), modTime: time.Unix(1444419364, 0)}
-	a := &asset{bytes: bytes, info:  info}
+	info := bindataFileInfo{name: "conf/gitignore/Concrete5", size: 42, mode: os.FileMode(438), modTime: time.Unix(1456415087, 0)}
+	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
 
@@ -838,8 +839,8 @@ func confGitignoreCoq() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "conf/gitignore/Coq", size: 18, mode: os.FileMode(420), modTime: time.Unix(1444419364, 0)}
-	a := &asset{bytes: bytes, info:  info}
+	info := bindataFileInfo{name: "conf/gitignore/Coq", size: 18, mode: os.FileMode(438), modTime: time.Unix(1456415087, 0)}
+	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
 
@@ -858,8 +859,8 @@ func confGitignoreCraftcms() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "conf/gitignore/CraftCMS", size: 120, mode: os.FileMode(420), modTime: time.Unix(1444419364, 0)}
-	a := &asset{bytes: bytes, info:  info}
+	info := bindataFileInfo{name: "conf/gitignore/CraftCMS", size: 120, mode: os.FileMode(438), modTime: time.Unix(1456415087, 0)}
+	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
 
@@ -878,8 +879,8 @@ func confGitignoreDm() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "conf/gitignore/DM", size: 29, mode: os.FileMode(420), modTime: time.Unix(1444419364, 0)}
-	a := &asset{bytes: bytes, info:  info}
+	info := bindataFileInfo{name: "conf/gitignore/DM", size: 29, mode: os.FileMode(438), modTime: time.Unix(1456415087, 0)}
+	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
 
@@ -898,8 +899,8 @@ func confGitignoreDart() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "conf/gitignore/Dart", size: 234, mode: os.FileMode(420), modTime: time.Unix(1444419364, 0)}
-	a := &asset{bytes: bytes, info:  info}
+	info := bindataFileInfo{name: "conf/gitignore/Dart", size: 234, mode: os.FileMode(438), modTime: time.Unix(1456415087, 0)}
+	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
 
@@ -918,8 +919,8 @@ func confGitignoreDarteditor() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "conf/gitignore/DartEditor", size: 19, mode: os.FileMode(420), modTime: time.Unix(1444419364, 0)}
-	a := &asset{bytes: bytes, info:  info}
+	info := bindataFileInfo{name: "conf/gitignore/DartEditor", size: 19, mode: os.FileMode(438), modTime: time.Unix(1456415087, 0)}
+	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
 
@@ -938,8 +939,8 @@ func confGitignoreDelphi() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "conf/gitignore/Delphi", size: 1347, mode: os.FileMode(420), modTime: time.Unix(1444419364, 0)}
-	a := &asset{bytes: bytes, info:  info}
+	info := bindataFileInfo{name: "conf/gitignore/Delphi", size: 1347, mode: os.FileMode(438), modTime: time.Unix(1456415087, 0)}
+	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
 
@@ -958,8 +959,8 @@ func confGitignoreDreamweaver() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "conf/gitignore/Dreamweaver", size: 47, mode: os.FileMode(420), modTime: time.Unix(1444419364, 0)}
-	a := &asset{bytes: bytes, info:  info}
+	info := bindataFileInfo{name: "conf/gitignore/Dreamweaver", size: 47, mode: os.FileMode(438), modTime: time.Unix(1456415087, 0)}
+	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
 
@@ -978,8 +979,8 @@ func confGitignoreDrupal() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "conf/gitignore/Drupal", size: 605, mode: os.FileMode(420), modTime: time.Unix(1444419364, 0)}
-	a := &asset{bytes: bytes, info:  info}
+	info := bindataFileInfo{name: "conf/gitignore/Drupal", size: 605, mode: os.FileMode(438), modTime: time.Unix(1456415087, 0)}
+	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
 
@@ -998,8 +999,8 @@ func confGitignoreEpiserver() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "conf/gitignore/EPiServer", size: 81, mode: os.FileMode(420), modTime: time.Unix(1444419364, 0)}
-	a := &asset{bytes: bytes, info:  info}
+	info := bindataFileInfo{name: "conf/gitignore/EPiServer", size: 81, mode: os.FileMode(438), modTime: time.Unix(1456415087, 0)}
+	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
 
@@ -1018,8 +1019,8 @@ func confGitignoreEagle() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "conf/gitignore/Eagle", size: 401, mode: os.FileMode(420), modTime: time.Unix(1444419364, 0)}
-	a := &asset{bytes: bytes, info:  info}
+	info := bindataFileInfo{name: "conf/gitignore/Eagle", size: 401, mode: os.FileMode(438), modTime: time.Unix(1456415087, 0)}
+	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
 
@@ -1038,8 +1039,8 @@ func confGitignoreEclipse() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "conf/gitignore/Eclipse", size: 458, mode: os.FileMode(420), modTime: time.Unix(1444419364, 0)}
-	a := &asset{bytes: bytes, info:  info}
+	info := bindataFileInfo{name: "conf/gitignore/Eclipse", size: 458, mode: os.FileMode(438), modTime: time.Unix(1456415087, 0)}
+	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
 
@@ -1058,8 +1059,8 @@ func confGitignoreEiffelstudio() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "conf/gitignore/EiffelStudio", size: 35, mode: os.FileMode(420), modTime: time.Unix(1444419364, 0)}
-	a := &asset{bytes: bytes, info:  info}
+	info := bindataFileInfo{name: "conf/gitignore/EiffelStudio", size: 35, mode: os.FileMode(438), modTime: time.Unix(1456415087, 0)}
+	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
 
@@ -1078,8 +1079,8 @@ func confGitignoreElisp() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "conf/gitignore/Elisp", size: 36, mode: os.FileMode(420), modTime: time.Unix(1444419364, 0)}
-	a := &asset{bytes: bytes, info:  info}
+	info := bindataFileInfo{name: "conf/gitignore/Elisp", size: 36, mode: os.FileMode(438), modTime: time.Unix(1456415087, 0)}
+	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
 
@@ -1098,8 +1099,8 @@ func confGitignoreElixir() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "conf/gitignore/Elixir", size: 34, mode: os.FileMode(420), modTime: time.Unix(1444419364, 0)}
-	a := &asset{bytes: bytes, info:  info}
+	info := bindataFileInfo{name: "conf/gitignore/Elixir", size: 34, mode: os.FileMode(438), modTime: time.Unix(1456415087, 0)}
+	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
 
@@ -1118,8 +1119,8 @@ func confGitignoreEmacs() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "conf/gitignore/Emacs", size: 320, mode: os.FileMode(420), modTime: time.Unix(1444419364, 0)}
-	a := &asset{bytes: bytes, info:  info}
+	info := bindataFileInfo{name: "conf/gitignore/Emacs", size: 320, mode: os.FileMode(438), modTime: time.Unix(1456415087, 0)}
+	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
 
@@ -1138,8 +1139,8 @@ func confGitignoreEnsime() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "conf/gitignore/Ensime", size: 57, mode: os.FileMode(420), modTime: time.Unix(1444419364, 0)}
-	a := &asset{bytes: bytes, info:  info}
+	info := bindataFileInfo{name: "conf/gitignore/Ensime", size: 57, mode: os.FileMode(438), modTime: time.Unix(1456415087, 0)}
+	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
 
@@ -1158,8 +1159,8 @@ func confGitignoreErlang() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "conf/gitignore/Erlang", size: 95, mode: os.FileMode(420), modTime: time.Unix(1444419364, 0)}
-	a := &asset{bytes: bytes, info:  info}
+	info := bindataFileInfo{name: "conf/gitignore/Erlang", size: 95, mode: os.FileMode(438), modTime: time.Unix(1456415087, 0)}
+	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
 
@@ -1178,8 +1179,8 @@ func confGitignoreEspresso() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "conf/gitignore/Espresso", size: 9, mode: os.FileMode(420), modTime: time.Unix(1444419364, 0)}
-	a := &asset{bytes: bytes, info:  info}
+	info := bindataFileInfo{name: "conf/gitignore/Espresso", size: 9, mode: os.FileMode(438), modTime: time.Unix(1456415087, 0)}
+	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
 
@@ -1198,8 +1199,8 @@ func confGitignoreExpressionengine() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "conf/gitignore/ExpressionEngine", size: 342, mode: os.FileMode(420), modTime: time.Unix(1444419364, 0)}
-	a := &asset{bytes: bytes, info:  info}
+	info := bindataFileInfo{name: "conf/gitignore/ExpressionEngine", size: 342, mode: os.FileMode(438), modTime: time.Unix(1456415087, 0)}
+	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
 
@@ -1218,8 +1219,8 @@ func confGitignoreExtjs() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "conf/gitignore/ExtJs", size: 38, mode: os.FileMode(420), modTime: time.Unix(1444419364, 0)}
-	a := &asset{bytes: bytes, info:  info}
+	info := bindataFileInfo{name: "conf/gitignore/ExtJs", size: 38, mode: os.FileMode(438), modTime: time.Unix(1456415087, 0)}
+	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
 
@@ -1238,8 +1239,8 @@ func confGitignoreFancy() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "conf/gitignore/Fancy", size: 12, mode: os.FileMode(420), modTime: time.Unix(1444419364, 0)}
-	a := &asset{bytes: bytes, info:  info}
+	info := bindataFileInfo{name: "conf/gitignore/Fancy", size: 12, mode: os.FileMode(438), modTime: time.Unix(1456415087, 0)}
+	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
 
@@ -1258,8 +1259,8 @@ func confGitignoreFinale() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "conf/gitignore/Finale", size: 184, mode: os.FileMode(420), modTime: time.Unix(1444419364, 0)}
-	a := &asset{bytes: bytes, info:  info}
+	info := bindataFileInfo{name: "conf/gitignore/Finale", size: 184, mode: os.FileMode(438), modTime: time.Unix(1456415087, 0)}
+	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
 
@@ -1278,8 +1279,8 @@ func confGitignoreFlexbuilder() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "conf/gitignore/FlexBuilder", size: 29, mode: os.FileMode(420), modTime: time.Unix(1444419364, 0)}
-	a := &asset{bytes: bytes, info:  info}
+	info := bindataFileInfo{name: "conf/gitignore/FlexBuilder", size: 29, mode: os.FileMode(438), modTime: time.Unix(1456415087, 0)}
+	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
 
@@ -1298,8 +1299,8 @@ func confGitignoreForcedotcom() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "conf/gitignore/ForceDotCom", size: 57, mode: os.FileMode(420), modTime: time.Unix(1444419364, 0)}
-	a := &asset{bytes: bytes, info:  info}
+	info := bindataFileInfo{name: "conf/gitignore/ForceDotCom", size: 57, mode: os.FileMode(438), modTime: time.Unix(1456415087, 0)}
+	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
 
@@ -1318,8 +1319,8 @@ func confGitignoreFuelphp() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "conf/gitignore/FuelPHP", size: 39, mode: os.FileMode(420), modTime: time.Unix(1444419364, 0)}
-	a := &asset{bytes: bytes, info:  info}
+	info := bindataFileInfo{name: "conf/gitignore/FuelPHP", size: 39, mode: os.FileMode(438), modTime: time.Unix(1456415087, 0)}
+	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
 
@@ -1338,8 +1339,8 @@ func confGitignoreGwt() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "conf/gitignore/GWT", size: 395, mode: os.FileMode(420), modTime: time.Unix(1444419364, 0)}
-	a := &asset{bytes: bytes, info:  info}
+	info := bindataFileInfo{name: "conf/gitignore/GWT", size: 395, mode: os.FileMode(438), modTime: time.Unix(1456415087, 0)}
+	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
 
@@ -1358,8 +1359,8 @@ func confGitignoreGcov() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "conf/gitignore/Gcov", size: 56, mode: os.FileMode(420), modTime: time.Unix(1444419364, 0)}
-	a := &asset{bytes: bytes, info:  info}
+	info := bindataFileInfo{name: "conf/gitignore/Gcov", size: 56, mode: os.FileMode(438), modTime: time.Unix(1456415087, 0)}
+	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
 
@@ -1378,8 +1379,8 @@ func confGitignoreGitbook() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "conf/gitignore/GitBook", size: 353, mode: os.FileMode(420), modTime: time.Unix(1444419364, 0)}
-	a := &asset{bytes: bytes, info:  info}
+	info := bindataFileInfo{name: "conf/gitignore/GitBook", size: 353, mode: os.FileMode(438), modTime: time.Unix(1456415087, 0)}
+	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
 
@@ -1398,8 +1399,8 @@ func confGitignoreGo() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "conf/gitignore/Go", size: 266, mode: os.FileMode(420), modTime: time.Unix(1444419364, 0)}
-	a := &asset{bytes: bytes, info:  info}
+	info := bindataFileInfo{name: "conf/gitignore/Go", size: 266, mode: os.FileMode(438), modTime: time.Unix(1456415087, 0)}
+	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
 
@@ -1418,8 +1419,8 @@ func confGitignoreGradle() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "conf/gitignore/Gradle", size: 157, mode: os.FileMode(420), modTime: time.Unix(1444419364, 0)}
-	a := &asset{bytes: bytes, info:  info}
+	info := bindataFileInfo{name: "conf/gitignore/Gradle", size: 157, mode: os.FileMode(438), modTime: time.Unix(1456415087, 0)}
+	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
 
@@ -1438,8 +1439,8 @@ func confGitignoreGrails() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "conf/gitignore/Grails", size: 583, mode: os.FileMode(420), modTime: time.Unix(1444419364, 0)}
-	a := &asset{bytes: bytes, info:  info}
+	info := bindataFileInfo{name: "conf/gitignore/Grails", size: 583, mode: os.FileMode(438), modTime: time.Unix(1456415087, 0)}
+	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
 
@@ -1458,8 +1459,8 @@ func confGitignoreHaskell() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "conf/gitignore/Haskell", size: 135, mode: os.FileMode(420), modTime: time.Unix(1444419364, 0)}
-	a := &asset{bytes: bytes, info:  info}
+	info := bindataFileInfo{name: "conf/gitignore/Haskell", size: 135, mode: os.FileMode(438), modTime: time.Unix(1456415087, 0)}
+	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
 
@@ -1478,8 +1479,8 @@ func confGitignoreIgorpro() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "conf/gitignore/IGORPro", size: 121, mode: os.FileMode(420), modTime: time.Unix(1444419364, 0)}
-	a := &asset{bytes: bytes, info:  info}
+	info := bindataFileInfo{name: "conf/gitignore/IGORPro", size: 121, mode: os.FileMode(438), modTime: time.Unix(1456415087, 0)}
+	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
 
@@ -1498,8 +1499,8 @@ func confGitignoreIpythonnotebook() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "conf/gitignore/IPythonNotebook", size: 37, mode: os.FileMode(420), modTime: time.Unix(1444419364, 0)}
-	a := &asset{bytes: bytes, info:  info}
+	info := bindataFileInfo{name: "conf/gitignore/IPythonNotebook", size: 37, mode: os.FileMode(438), modTime: time.Unix(1456415087, 0)}
+	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
 
@@ -1518,8 +1519,8 @@ func confGitignoreIdris() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "conf/gitignore/Idris", size: 10, mode: os.FileMode(420), modTime: time.Unix(1444419364, 0)}
-	a := &asset{bytes: bytes, info:  info}
+	info := bindataFileInfo{name: "conf/gitignore/Idris", size: 10, mode: os.FileMode(438), modTime: time.Unix(1456415087, 0)}
+	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
 
@@ -1538,8 +1539,8 @@ func confGitignoreJdeveloper() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "conf/gitignore/JDeveloper", size: 255, mode: os.FileMode(420), modTime: time.Unix(1444419364, 0)}
-	a := &asset{bytes: bytes, info:  info}
+	info := bindataFileInfo{name: "conf/gitignore/JDeveloper", size: 255, mode: os.FileMode(438), modTime: time.Unix(1456415087, 0)}
+	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
 
@@ -1558,8 +1559,8 @@ func confGitignoreJava() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "conf/gitignore/Java", size: 189, mode: os.FileMode(420), modTime: time.Unix(1444419364, 0)}
-	a := &asset{bytes: bytes, info:  info}
+	info := bindataFileInfo{name: "conf/gitignore/Java", size: 189, mode: os.FileMode(438), modTime: time.Unix(1456415087, 0)}
+	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
 
@@ -1578,8 +1579,8 @@ func confGitignoreJboss() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "conf/gitignore/Jboss", size: 509, mode: os.FileMode(420), modTime: time.Unix(1444419364, 0)}
-	a := &asset{bytes: bytes, info:  info}
+	info := bindataFileInfo{name: "conf/gitignore/Jboss", size: 509, mode: os.FileMode(438), modTime: time.Unix(1456415087, 0)}
+	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
 
@@ -1598,8 +1599,8 @@ func confGitignoreJekyll() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "conf/gitignore/Jekyll", size: 37, mode: os.FileMode(420), modTime: time.Unix(1444419364, 0)}
-	a := &asset{bytes: bytes, info:  info}
+	info := bindataFileInfo{name: "conf/gitignore/Jekyll", size: 37, mode: os.FileMode(438), modTime: time.Unix(1456415087, 0)}
+	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
 
@@ -1618,8 +1619,8 @@ func confGitignoreJetbrains() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "conf/gitignore/JetBrains", size: 860, mode: os.FileMode(420), modTime: time.Unix(1444419364, 0)}
-	a := &asset{bytes: bytes, info:  info}
+	info := bindataFileInfo{name: "conf/gitignore/JetBrains", size: 860, mode: os.FileMode(438), modTime: time.Unix(1456415087, 0)}
+	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
 
@@ -1638,8 +1639,8 @@ func confGitignoreJoomla() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "conf/gitignore/Joomla", size: 22387, mode: os.FileMode(420), modTime: time.Unix(1444419364, 0)}
-	a := &asset{bytes: bytes, info:  info}
+	info := bindataFileInfo{name: "conf/gitignore/Joomla", size: 22387, mode: os.FileMode(438), modTime: time.Unix(1456415087, 0)}
+	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
 
@@ -1658,8 +1659,8 @@ func confGitignoreKdevelop4() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "conf/gitignore/KDevelop4", size: 16, mode: os.FileMode(420), modTime: time.Unix(1444419364, 0)}
-	a := &asset{bytes: bytes, info:  info}
+	info := bindataFileInfo{name: "conf/gitignore/KDevelop4", size: 16, mode: os.FileMode(438), modTime: time.Unix(1456415087, 0)}
+	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
 
@@ -1678,8 +1679,8 @@ func confGitignoreKate() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "conf/gitignore/Kate", size: 34, mode: os.FileMode(420), modTime: time.Unix(1444419364, 0)}
-	a := &asset{bytes: bytes, info:  info}
+	info := bindataFileInfo{name: "conf/gitignore/Kate", size: 34, mode: os.FileMode(438), modTime: time.Unix(1456415087, 0)}
+	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
 
@@ -1698,8 +1699,8 @@ func confGitignoreKicad() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "conf/gitignore/KiCAD", size: 208, mode: os.FileMode(420), modTime: time.Unix(1444419364, 0)}
-	a := &asset{bytes: bytes, info:  info}
+	info := bindataFileInfo{name: "conf/gitignore/KiCAD", size: 208, mode: os.FileMode(438), modTime: time.Unix(1456415087, 0)}
+	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
 
@@ -1718,8 +1719,8 @@ func confGitignoreKohana() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "conf/gitignore/Kohana", size: 39, mode: os.FileMode(420), modTime: time.Unix(1444419364, 0)}
-	a := &asset{bytes: bytes, info:  info}
+	info := bindataFileInfo{name: "conf/gitignore/Kohana", size: 39, mode: os.FileMode(438), modTime: time.Unix(1456415087, 0)}
+	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
 
@@ -1738,8 +1739,8 @@ func confGitignoreLabview() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "conf/gitignore/LabVIEW", size: 142, mode: os.FileMode(420), modTime: time.Unix(1444419364, 0)}
-	a := &asset{bytes: bytes, info:  info}
+	info := bindataFileInfo{name: "conf/gitignore/LabVIEW", size: 142, mode: os.FileMode(438), modTime: time.Unix(1456415087, 0)}
+	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
 
@@ -1758,8 +1759,8 @@ func confGitignoreLaravel() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "conf/gitignore/Laravel", size: 49, mode: os.FileMode(420), modTime: time.Unix(1444419364, 0)}
-	a := &asset{bytes: bytes, info:  info}
+	info := bindataFileInfo{name: "conf/gitignore/Laravel", size: 49, mode: os.FileMode(438), modTime: time.Unix(1456415087, 0)}
+	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
 
@@ -1778,8 +1779,8 @@ func confGitignoreLazarus() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "conf/gitignore/Lazarus", size: 407, mode: os.FileMode(420), modTime: time.Unix(1444419364, 0)}
-	a := &asset{bytes: bytes, info:  info}
+	info := bindataFileInfo{name: "conf/gitignore/Lazarus", size: 407, mode: os.FileMode(438), modTime: time.Unix(1456415087, 0)}
+	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
 
@@ -1798,8 +1799,8 @@ func confGitignoreLeiningen() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "conf/gitignore/Leiningen", size: 138, mode: os.FileMode(420), modTime: time.Unix(1444419364, 0)}
-	a := &asset{bytes: bytes, info:  info}
+	info := bindataFileInfo{name: "conf/gitignore/Leiningen", size: 138, mode: os.FileMode(438), modTime: time.Unix(1456415087, 0)}
+	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
 
@@ -1818,8 +1819,8 @@ func confGitignoreLemonstand() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "conf/gitignore/LemonStand", size: 348, mode: os.FileMode(420), modTime: time.Unix(1444419364, 0)}
-	a := &asset{bytes: bytes, info:  info}
+	info := bindataFileInfo{name: "conf/gitignore/LemonStand", size: 348, mode: os.FileMode(438), modTime: time.Unix(1456415087, 0)}
+	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
 
@@ -1838,8 +1839,8 @@ func confGitignoreLibreoffice() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "conf/gitignore/LibreOffice", size: 30, mode: os.FileMode(420), modTime: time.Unix(1444419364, 0)}
-	a := &asset{bytes: bytes, info:  info}
+	info := bindataFileInfo{name: "conf/gitignore/LibreOffice", size: 30, mode: os.FileMode(438), modTime: time.Unix(1456415087, 0)}
+	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
 
@@ -1858,8 +1859,8 @@ func confGitignoreLilypond() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "conf/gitignore/Lilypond", size: 33, mode: os.FileMode(420), modTime: time.Unix(1444419364, 0)}
-	a := &asset{bytes: bytes, info:  info}
+	info := bindataFileInfo{name: "conf/gitignore/Lilypond", size: 33, mode: os.FileMode(438), modTime: time.Unix(1456415087, 0)}
+	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
 
@@ -1878,8 +1879,8 @@ func confGitignoreLinux() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "conf/gitignore/Linux", size: 118, mode: os.FileMode(420), modTime: time.Unix(1444419364, 0)}
-	a := &asset{bytes: bytes, info:  info}
+	info := bindataFileInfo{name: "conf/gitignore/Linux", size: 118, mode: os.FileMode(438), modTime: time.Unix(1456415087, 0)}
+	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
 
@@ -1898,8 +1899,8 @@ func confGitignoreLithium() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "conf/gitignore/Lithium", size: 28, mode: os.FileMode(420), modTime: time.Unix(1444419364, 0)}
-	a := &asset{bytes: bytes, info:  info}
+	info := bindataFileInfo{name: "conf/gitignore/Lithium", size: 28, mode: os.FileMode(438), modTime: time.Unix(1456415087, 0)}
+	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
 
@@ -1918,8 +1919,8 @@ func confGitignoreLua() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "conf/gitignore/Lua", size: 324, mode: os.FileMode(420), modTime: time.Unix(1444419364, 0)}
-	a := &asset{bytes: bytes, info:  info}
+	info := bindataFileInfo{name: "conf/gitignore/Lua", size: 324, mode: os.FileMode(438), modTime: time.Unix(1456415087, 0)}
+	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
 
@@ -1938,8 +1939,8 @@ func confGitignoreLyx() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "conf/gitignore/LyX", size: 75, mode: os.FileMode(420), modTime: time.Unix(1444419364, 0)}
-	a := &asset{bytes: bytes, info:  info}
+	info := bindataFileInfo{name: "conf/gitignore/LyX", size: 75, mode: os.FileMode(438), modTime: time.Unix(1456415087, 0)}
+	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
 
@@ -1958,8 +1959,8 @@ func confGitignoreMagento() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "conf/gitignore/Magento", size: 2599, mode: os.FileMode(420), modTime: time.Unix(1444419364, 0)}
-	a := &asset{bytes: bytes, info:  info}
+	info := bindataFileInfo{name: "conf/gitignore/Magento", size: 2599, mode: os.FileMode(438), modTime: time.Unix(1456415087, 0)}
+	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
 
@@ -1978,8 +1979,8 @@ func confGitignoreMatlab() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "conf/gitignore/Matlab", size: 360, mode: os.FileMode(420), modTime: time.Unix(1444419364, 0)}
-	a := &asset{bytes: bytes, info:  info}
+	info := bindataFileInfo{name: "conf/gitignore/Matlab", size: 360, mode: os.FileMode(438), modTime: time.Unix(1456415087, 0)}
+	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
 
@@ -1998,8 +1999,8 @@ func confGitignoreMaven() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "conf/gitignore/Maven", size: 170, mode: os.FileMode(420), modTime: time.Unix(1444419364, 0)}
-	a := &asset{bytes: bytes, info:  info}
+	info := bindataFileInfo{name: "conf/gitignore/Maven", size: 170, mode: os.FileMode(438), modTime: time.Unix(1456415087, 0)}
+	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
 
@@ -2018,8 +2019,8 @@ func confGitignoreMercurial() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "conf/gitignore/Mercurial", size: 50, mode: os.FileMode(420), modTime: time.Unix(1444419364, 0)}
-	a := &asset{bytes: bytes, info:  info}
+	info := bindataFileInfo{name: "conf/gitignore/Mercurial", size: 50, mode: os.FileMode(438), modTime: time.Unix(1456415087, 0)}
+	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
 
@@ -2038,8 +2039,8 @@ func confGitignoreMercury() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "conf/gitignore/Mercury", size: 93, mode: os.FileMode(420), modTime: time.Unix(1444419364, 0)}
-	a := &asset{bytes: bytes, info:  info}
+	info := bindataFileInfo{name: "conf/gitignore/Mercury", size: 93, mode: os.FileMode(438), modTime: time.Unix(1456415087, 0)}
+	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
 
@@ -2058,8 +2059,8 @@ func confGitignoreMetaprogrammingsystem() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "conf/gitignore/MetaProgrammingSystem", size: 391, mode: os.FileMode(420), modTime: time.Unix(1444419364, 0)}
-	a := &asset{bytes: bytes, info:  info}
+	info := bindataFileInfo{name: "conf/gitignore/MetaProgrammingSystem", size: 391, mode: os.FileMode(438), modTime: time.Unix(1456415087, 0)}
+	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
 
@@ -2078,8 +2079,8 @@ func confGitignoreMicrosoftoffice() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "conf/gitignore/MicrosoftOffice", size: 88, mode: os.FileMode(420), modTime: time.Unix(1444419364, 0)}
-	a := &asset{bytes: bytes, info:  info}
+	info := bindataFileInfo{name: "conf/gitignore/MicrosoftOffice", size: 88, mode: os.FileMode(438), modTime: time.Unix(1456415087, 0)}
+	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
 
@@ -2098,8 +2099,8 @@ func confGitignoreModelsim() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "conf/gitignore/ModelSim", size: 282, mode: os.FileMode(420), modTime: time.Unix(1444419364, 0)}
-	a := &asset{bytes: bytes, info:  info}
+	info := bindataFileInfo{name: "conf/gitignore/ModelSim", size: 282, mode: os.FileMode(438), modTime: time.Unix(1456415087, 0)}
+	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
 
@@ -2118,8 +2119,8 @@ func confGitignoreMomentics() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "conf/gitignore/Momentics", size: 76, mode: os.FileMode(420), modTime: time.Unix(1444419364, 0)}
-	a := &asset{bytes: bytes, info:  info}
+	info := bindataFileInfo{name: "conf/gitignore/Momentics", size: 76, mode: os.FileMode(438), modTime: time.Unix(1456415087, 0)}
+	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
 
@@ -2138,8 +2139,8 @@ func confGitignoreMonodevelop() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "conf/gitignore/MonoDevelop", size: 93, mode: os.FileMode(420), modTime: time.Unix(1444419364, 0)}
-	a := &asset{bytes: bytes, info:  info}
+	info := bindataFileInfo{name: "conf/gitignore/MonoDevelop", size: 93, mode: os.FileMode(438), modTime: time.Unix(1456415087, 0)}
+	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
 
@@ -2158,8 +2159,8 @@ func confGitignoreNanoc() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "conf/gitignore/Nanoc", size: 197, mode: os.FileMode(420), modTime: time.Unix(1444419364, 0)}
-	a := &asset{bytes: bytes, info:  info}
+	info := bindataFileInfo{name: "conf/gitignore/Nanoc", size: 197, mode: os.FileMode(438), modTime: time.Unix(1456415087, 0)}
+	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
 
@@ -2178,8 +2179,8 @@ func confGitignoreNetbeans() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "conf/gitignore/NetBeans", size: 96, mode: os.FileMode(420), modTime: time.Unix(1444419364, 0)}
-	a := &asset{bytes: bytes, info:  info}
+	info := bindataFileInfo{name: "conf/gitignore/NetBeans", size: 96, mode: os.FileMode(438), modTime: time.Unix(1456415087, 0)}
+	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
 
@@ -2198,8 +2199,8 @@ func confGitignoreNim() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "conf/gitignore/Nim", size: 10, mode: os.FileMode(420), modTime: time.Unix(1444419364, 0)}
-	a := &asset{bytes: bytes, info:  info}
+	info := bindataFileInfo{name: "conf/gitignore/Nim", size: 10, mode: os.FileMode(438), modTime: time.Unix(1456415087, 0)}
+	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
 
@@ -2218,8 +2219,8 @@ func confGitignoreNinja() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "conf/gitignore/Ninja", size: 23, mode: os.FileMode(420), modTime: time.Unix(1444419364, 0)}
-	a := &asset{bytes: bytes, info:  info}
+	info := bindataFileInfo{name: "conf/gitignore/Ninja", size: 23, mode: os.FileMode(438), modTime: time.Unix(1456415087, 0)}
+	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
 
@@ -2238,8 +2239,8 @@ func confGitignoreNode() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "conf/gitignore/Node", size: 529, mode: os.FileMode(420), modTime: time.Unix(1444419364, 0)}
-	a := &asset{bytes: bytes, info:  info}
+	info := bindataFileInfo{name: "conf/gitignore/Node", size: 529, mode: os.FileMode(438), modTime: time.Unix(1456415087, 0)}
+	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
 
@@ -2258,8 +2259,8 @@ func confGitignoreNotepadpp() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "conf/gitignore/NotepadPP", size: 30, mode: os.FileMode(420), modTime: time.Unix(1444419364, 0)}
-	a := &asset{bytes: bytes, info:  info}
+	info := bindataFileInfo{name: "conf/gitignore/NotepadPP", size: 30, mode: os.FileMode(438), modTime: time.Unix(1456415087, 0)}
+	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
 
@@ -2278,8 +2279,8 @@ func confGitignoreOcaml() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "conf/gitignore/OCaml", size: 178, mode: os.FileMode(420), modTime: time.Unix(1444419364, 0)}
-	a := &asset{bytes: bytes, info:  info}
+	info := bindataFileInfo{name: "conf/gitignore/OCaml", size: 178, mode: os.FileMode(438), modTime: time.Unix(1456415087, 0)}
+	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
 
@@ -2298,8 +2299,8 @@ func confGitignoreOsx() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "conf/gitignore/OSX", size: 356, mode: os.FileMode(420), modTime: time.Unix(1444419364, 0)}
-	a := &asset{bytes: bytes, info:  info}
+	info := bindataFileInfo{name: "conf/gitignore/OSX", size: 356, mode: os.FileMode(438), modTime: time.Unix(1456415087, 0)}
+	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
 
@@ -2318,8 +2319,8 @@ func confGitignoreObjectiveC() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "conf/gitignore/Objective-C", size: 837, mode: os.FileMode(420), modTime: time.Unix(1444419364, 0)}
-	a := &asset{bytes: bytes, info:  info}
+	info := bindataFileInfo{name: "conf/gitignore/Objective-C", size: 837, mode: os.FileMode(438), modTime: time.Unix(1456415087, 0)}
+	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
 
@@ -2338,8 +2339,8 @@ func confGitignoreOpa() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "conf/gitignore/Opa", size: 90, mode: os.FileMode(420), modTime: time.Unix(1444419364, 0)}
-	a := &asset{bytes: bytes, info:  info}
+	info := bindataFileInfo{name: "conf/gitignore/Opa", size: 90, mode: os.FileMode(438), modTime: time.Unix(1456415087, 0)}
+	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
 
@@ -2358,8 +2359,8 @@ func confGitignoreOpencart() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "conf/gitignore/OpenCart", size: 115, mode: os.FileMode(420), modTime: time.Unix(1444419364, 0)}
-	a := &asset{bytes: bytes, info:  info}
+	info := bindataFileInfo{name: "conf/gitignore/OpenCart", size: 115, mode: os.FileMode(438), modTime: time.Unix(1456415087, 0)}
+	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
 
@@ -2378,8 +2379,8 @@ func confGitignoreOracleforms() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "conf/gitignore/OracleForms", size: 100, mode: os.FileMode(420), modTime: time.Unix(1444419364, 0)}
-	a := &asset{bytes: bytes, info:  info}
+	info := bindataFileInfo{name: "conf/gitignore/OracleForms", size: 100, mode: os.FileMode(438), modTime: time.Unix(1456415087, 0)}
+	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
 
@@ -2398,8 +2399,8 @@ func confGitignorePacker() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "conf/gitignore/Packer", size: 55, mode: os.FileMode(420), modTime: time.Unix(1444419364, 0)}
-	a := &asset{bytes: bytes, info:  info}
+	info := bindataFileInfo{name: "conf/gitignore/Packer", size: 55, mode: os.FileMode(438), modTime: time.Unix(1456415087, 0)}
+	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
 
@@ -2418,8 +2419,8 @@ func confGitignorePerl() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "conf/gitignore/Perl", size: 191, mode: os.FileMode(420), modTime: time.Unix(1444419364, 0)}
-	a := &asset{bytes: bytes, info:  info}
+	info := bindataFileInfo{name: "conf/gitignore/Perl", size: 191, mode: os.FileMode(438), modTime: time.Unix(1456415087, 0)}
+	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
 
@@ -2438,8 +2439,8 @@ func confGitignorePhalcon() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "conf/gitignore/Phalcon", size: 29, mode: os.FileMode(420), modTime: time.Unix(1444419364, 0)}
-	a := &asset{bytes: bytes, info:  info}
+	info := bindataFileInfo{name: "conf/gitignore/Phalcon", size: 29, mode: os.FileMode(438), modTime: time.Unix(1456415087, 0)}
+	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
 
@@ -2458,8 +2459,8 @@ func confGitignorePlayframework() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "conf/gitignore/PlayFramework", size: 170, mode: os.FileMode(420), modTime: time.Unix(1444419364, 0)}
-	a := &asset{bytes: bytes, info:  info}
+	info := bindataFileInfo{name: "conf/gitignore/PlayFramework", size: 170, mode: os.FileMode(438), modTime: time.Unix(1456415087, 0)}
+	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
 
@@ -2478,8 +2479,8 @@ func confGitignorePlone() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "conf/gitignore/Plone", size: 137, mode: os.FileMode(420), modTime: time.Unix(1444419364, 0)}
-	a := &asset{bytes: bytes, info:  info}
+	info := bindataFileInfo{name: "conf/gitignore/Plone", size: 137, mode: os.FileMode(438), modTime: time.Unix(1456415087, 0)}
+	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
 
@@ -2498,8 +2499,8 @@ func confGitignorePrestashop() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "conf/gitignore/Prestashop", size: 483, mode: os.FileMode(420), modTime: time.Unix(1444419364, 0)}
-	a := &asset{bytes: bytes, info:  info}
+	info := bindataFileInfo{name: "conf/gitignore/Prestashop", size: 483, mode: os.FileMode(438), modTime: time.Unix(1456415087, 0)}
+	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
 
@@ -2518,8 +2519,8 @@ func confGitignoreProcessing() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "conf/gitignore/Processing", size: 120, mode: os.FileMode(420), modTime: time.Unix(1444419364, 0)}
-	a := &asset{bytes: bytes, info:  info}
+	info := bindataFileInfo{name: "conf/gitignore/Processing", size: 120, mode: os.FileMode(438), modTime: time.Unix(1456415087, 0)}
+	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
 
@@ -2538,8 +2539,8 @@ func confGitignorePython() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "conf/gitignore/Python", size: 713, mode: os.FileMode(420), modTime: time.Unix(1444419364, 0)}
-	a := &asset{bytes: bytes, info:  info}
+	info := bindataFileInfo{name: "conf/gitignore/Python", size: 713, mode: os.FileMode(438), modTime: time.Unix(1456415087, 0)}
+	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
 
@@ -2558,8 +2559,8 @@ func confGitignoreQooxdoo() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "conf/gitignore/Qooxdoo", size: 58, mode: os.FileMode(420), modTime: time.Unix(1444419364, 0)}
-	a := &asset{bytes: bytes, info:  info}
+	info := bindataFileInfo{name: "conf/gitignore/Qooxdoo", size: 58, mode: os.FileMode(438), modTime: time.Unix(1456415087, 0)}
+	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
 
@@ -2578,8 +2579,8 @@ func confGitignoreQt() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "conf/gitignore/Qt", size: 292, mode: os.FileMode(420), modTime: time.Unix(1444419364, 0)}
-	a := &asset{bytes: bytes, info:  info}
+	info := bindataFileInfo{name: "conf/gitignore/Qt", size: 292, mode: os.FileMode(438), modTime: time.Unix(1456415087, 0)}
+	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
 
@@ -2598,8 +2599,8 @@ func confGitignoreR() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "conf/gitignore/R", size: 255, mode: os.FileMode(420), modTime: time.Unix(1444419364, 0)}
-	a := &asset{bytes: bytes, info:  info}
+	info := bindataFileInfo{name: "conf/gitignore/R", size: 255, mode: os.FileMode(438), modTime: time.Unix(1456415087, 0)}
+	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
 
@@ -2618,8 +2619,8 @@ func confGitignoreRos() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "conf/gitignore/ROS", size: 493, mode: os.FileMode(420), modTime: time.Unix(1444419364, 0)}
-	a := &asset{bytes: bytes, info:  info}
+	info := bindataFileInfo{name: "conf/gitignore/ROS", size: 493, mode: os.FileMode(438), modTime: time.Unix(1456415087, 0)}
+	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
 
@@ -2638,8 +2639,8 @@ func confGitignoreRails() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "conf/gitignore/Rails", size: 707, mode: os.FileMode(420), modTime: time.Unix(1444419364, 0)}
-	a := &asset{bytes: bytes, info:  info}
+	info := bindataFileInfo{name: "conf/gitignore/Rails", size: 707, mode: os.FileMode(438), modTime: time.Unix(1456415087, 0)}
+	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
 
@@ -2658,8 +2659,8 @@ func confGitignoreRedcar() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "conf/gitignore/Redcar", size: 8, mode: os.FileMode(420), modTime: time.Unix(1444419364, 0)}
-	a := &asset{bytes: bytes, info:  info}
+	info := bindataFileInfo{name: "conf/gitignore/Redcar", size: 8, mode: os.FileMode(438), modTime: time.Unix(1456415087, 0)}
+	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
 
@@ -2678,8 +2679,8 @@ func confGitignoreRedis() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "conf/gitignore/Redis", size: 51, mode: os.FileMode(420), modTime: time.Unix(1444419364, 0)}
-	a := &asset{bytes: bytes, info:  info}
+	info := bindataFileInfo{name: "conf/gitignore/Redis", size: 51, mode: os.FileMode(438), modTime: time.Unix(1456415087, 0)}
+	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
 
@@ -2698,8 +2699,8 @@ func confGitignoreRhodesrhomobile() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "conf/gitignore/RhodesRhomobile", size: 77, mode: os.FileMode(420), modTime: time.Unix(1444419364, 0)}
-	a := &asset{bytes: bytes, info:  info}
+	info := bindataFileInfo{name: "conf/gitignore/RhodesRhomobile", size: 77, mode: os.FileMode(438), modTime: time.Unix(1456415087, 0)}
+	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
 
@@ -2718,8 +2719,8 @@ func confGitignoreRuby() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "conf/gitignore/Ruby", size: 607, mode: os.FileMode(420), modTime: time.Unix(1444419364, 0)}
-	a := &asset{bytes: bytes, info:  info}
+	info := bindataFileInfo{name: "conf/gitignore/Ruby", size: 607, mode: os.FileMode(438), modTime: time.Unix(1456415087, 0)}
+	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
 
@@ -2738,8 +2739,8 @@ func confGitignoreRust() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "conf/gitignore/Rust", size: 91, mode: os.FileMode(420), modTime: time.Unix(1444419364, 0)}
-	a := &asset{bytes: bytes, info:  info}
+	info := bindataFileInfo{name: "conf/gitignore/Rust", size: 91, mode: os.FileMode(438), modTime: time.Unix(1456415087, 0)}
+	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
 
@@ -2758,8 +2759,8 @@ func confGitignoreSbt() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "conf/gitignore/SBT", size: 186, mode: os.FileMode(420), modTime: time.Unix(1444419364, 0)}
-	a := &asset{bytes: bytes, info:  info}
+	info := bindataFileInfo{name: "conf/gitignore/SBT", size: 186, mode: os.FileMode(438), modTime: time.Unix(1456415087, 0)}
+	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
 
@@ -2778,8 +2779,8 @@ func confGitignoreScons() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "conf/gitignore/SCons", size: 90, mode: os.FileMode(420), modTime: time.Unix(1444419364, 0)}
-	a := &asset{bytes: bytes, info:  info}
+	info := bindataFileInfo{name: "conf/gitignore/SCons", size: 90, mode: os.FileMode(438), modTime: time.Unix(1456415087, 0)}
+	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
 
@@ -2798,8 +2799,8 @@ func confGitignoreSvn() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "conf/gitignore/SVN", size: 6, mode: os.FileMode(420), modTime: time.Unix(1444419364, 0)}
-	a := &asset{bytes: bytes, info:  info}
+	info := bindataFileInfo{name: "conf/gitignore/SVN", size: 6, mode: os.FileMode(438), modTime: time.Unix(1456415087, 0)}
+	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
 
@@ -2818,8 +2819,8 @@ func confGitignoreSass() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "conf/gitignore/Sass", size: 23, mode: os.FileMode(420), modTime: time.Unix(1444419364, 0)}
-	a := &asset{bytes: bytes, info:  info}
+	info := bindataFileInfo{name: "conf/gitignore/Sass", size: 23, mode: os.FileMode(438), modTime: time.Unix(1456415087, 0)}
+	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
 
@@ -2838,8 +2839,8 @@ func confGitignoreScala() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "conf/gitignore/Scala", size: 185, mode: os.FileMode(420), modTime: time.Unix(1444419364, 0)}
-	a := &asset{bytes: bytes, info:  info}
+	info := bindataFileInfo{name: "conf/gitignore/Scala", size: 185, mode: os.FileMode(438), modTime: time.Unix(1456415087, 0)}
+	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
 
@@ -2858,8 +2859,8 @@ func confGitignoreScrivener() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "conf/gitignore/Scrivener", size: 140, mode: os.FileMode(420), modTime: time.Unix(1444419364, 0)}
-	a := &asset{bytes: bytes, info:  info}
+	info := bindataFileInfo{name: "conf/gitignore/Scrivener", size: 140, mode: os.FileMode(438), modTime: time.Unix(1456415087, 0)}
+	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
 
@@ -2878,8 +2879,8 @@ func confGitignoreSdcc() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "conf/gitignore/Sdcc", size: 55, mode: os.FileMode(420), modTime: time.Unix(1444419364, 0)}
-	a := &asset{bytes: bytes, info:  info}
+	info := bindataFileInfo{name: "conf/gitignore/Sdcc", size: 55, mode: os.FileMode(438), modTime: time.Unix(1456415087, 0)}
+	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
 
@@ -2898,8 +2899,8 @@ func confGitignoreSeamgen() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "conf/gitignore/SeamGen", size: 961, mode: os.FileMode(420), modTime: time.Unix(1444419364, 0)}
-	a := &asset{bytes: bytes, info:  info}
+	info := bindataFileInfo{name: "conf/gitignore/SeamGen", size: 961, mode: os.FileMode(438), modTime: time.Unix(1456415087, 0)}
+	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
 
@@ -2918,8 +2919,8 @@ func confGitignoreSketchup() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "conf/gitignore/SketchUp", size: 6, mode: os.FileMode(420), modTime: time.Unix(1444419364, 0)}
-	a := &asset{bytes: bytes, info:  info}
+	info := bindataFileInfo{name: "conf/gitignore/SketchUp", size: 6, mode: os.FileMode(438), modTime: time.Unix(1456415087, 0)}
+	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
 
@@ -2938,8 +2939,8 @@ func confGitignoreSlickedit() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "conf/gitignore/SlickEdit", size: 323, mode: os.FileMode(420), modTime: time.Unix(1444419364, 0)}
-	a := &asset{bytes: bytes, info:  info}
+	info := bindataFileInfo{name: "conf/gitignore/SlickEdit", size: 323, mode: os.FileMode(438), modTime: time.Unix(1456415087, 0)}
+	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
 
@@ -2958,8 +2959,8 @@ func confGitignoreStella() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "conf/gitignore/Stella", size: 207, mode: os.FileMode(420), modTime: time.Unix(1444419364, 0)}
-	a := &asset{bytes: bytes, info:  info}
+	info := bindataFileInfo{name: "conf/gitignore/Stella", size: 207, mode: os.FileMode(438), modTime: time.Unix(1456415087, 0)}
+	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
 
@@ -2978,8 +2979,8 @@ func confGitignoreSublimetext() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "conf/gitignore/SublimeText", size: 354, mode: os.FileMode(420), modTime: time.Unix(1444419364, 0)}
-	a := &asset{bytes: bytes, info:  info}
+	info := bindataFileInfo{name: "conf/gitignore/SublimeText", size: 354, mode: os.FileMode(438), modTime: time.Unix(1456415087, 0)}
+	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
 
@@ -2998,8 +2999,8 @@ func confGitignoreSugarcrm() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "conf/gitignore/SugarCRM", size: 734, mode: os.FileMode(420), modTime: time.Unix(1444419364, 0)}
-	a := &asset{bytes: bytes, info:  info}
+	info := bindataFileInfo{name: "conf/gitignore/SugarCRM", size: 734, mode: os.FileMode(438), modTime: time.Unix(1456415087, 0)}
+	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
 
@@ -3018,8 +3019,8 @@ func confGitignoreSwift() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "conf/gitignore/Swift", size: 837, mode: os.FileMode(420), modTime: time.Unix(1444419364, 0)}
-	a := &asset{bytes: bytes, info:  info}
+	info := bindataFileInfo{name: "conf/gitignore/Swift", size: 837, mode: os.FileMode(438), modTime: time.Unix(1456415087, 0)}
+	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
 
@@ -3038,8 +3039,8 @@ func confGitignoreSymfony() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "conf/gitignore/Symfony", size: 531, mode: os.FileMode(420), modTime: time.Unix(1444419364, 0)}
-	a := &asset{bytes: bytes, info:  info}
+	info := bindataFileInfo{name: "conf/gitignore/Symfony", size: 531, mode: os.FileMode(438), modTime: time.Unix(1456415087, 0)}
+	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
 
@@ -3058,8 +3059,8 @@ func confGitignoreSymphonycms() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "conf/gitignore/SymphonyCMS", size: 90, mode: os.FileMode(420), modTime: time.Unix(1444419364, 0)}
-	a := &asset{bytes: bytes, info:  info}
+	info := bindataFileInfo{name: "conf/gitignore/SymphonyCMS", size: 90, mode: os.FileMode(438), modTime: time.Unix(1456415087, 0)}
+	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
 
@@ -3078,8 +3079,8 @@ func confGitignoreSynopsysvcs() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "conf/gitignore/SynopsysVCS", size: 971, mode: os.FileMode(420), modTime: time.Unix(1444419364, 0)}
-	a := &asset{bytes: bytes, info:  info}
+	info := bindataFileInfo{name: "conf/gitignore/SynopsysVCS", size: 971, mode: os.FileMode(438), modTime: time.Unix(1456415087, 0)}
+	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
 
@@ -3098,8 +3099,8 @@ func confGitignoreTags() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "conf/gitignore/Tags", size: 177, mode: os.FileMode(420), modTime: time.Unix(1444419364, 0)}
-	a := &asset{bytes: bytes, info:  info}
+	info := bindataFileInfo{name: "conf/gitignore/Tags", size: 177, mode: os.FileMode(438), modTime: time.Unix(1456415087, 0)}
+	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
 
@@ -3118,8 +3119,8 @@ func confGitignoreTex() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "conf/gitignore/TeX", size: 1328, mode: os.FileMode(420), modTime: time.Unix(1444419364, 0)}
-	a := &asset{bytes: bytes, info:  info}
+	info := bindataFileInfo{name: "conf/gitignore/TeX", size: 1328, mode: os.FileMode(438), modTime: time.Unix(1456415087, 0)}
+	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
 
@@ -3138,8 +3139,8 @@ func confGitignoreTextmate() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "conf/gitignore/TextMate", size: 28, mode: os.FileMode(420), modTime: time.Unix(1444419364, 0)}
-	a := &asset{bytes: bytes, info:  info}
+	info := bindataFileInfo{name: "conf/gitignore/TextMate", size: 28, mode: os.FileMode(438), modTime: time.Unix(1456415087, 0)}
+	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
 
@@ -3158,8 +3159,8 @@ func confGitignoreTextpattern() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "conf/gitignore/Textpattern", size: 177, mode: os.FileMode(420), modTime: time.Unix(1444419364, 0)}
-	a := &asset{bytes: bytes, info:  info}
+	info := bindataFileInfo{name: "conf/gitignore/Textpattern", size: 177, mode: os.FileMode(438), modTime: time.Unix(1456415087, 0)}
+	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
 
@@ -3178,8 +3179,8 @@ func confGitignoreTortoisegit() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "conf/gitignore/TortoiseGit", size: 38, mode: os.FileMode(420), modTime: time.Unix(1444419364, 0)}
-	a := &asset{bytes: bytes, info:  info}
+	info := bindataFileInfo{name: "conf/gitignore/TortoiseGit", size: 38, mode: os.FileMode(438), modTime: time.Unix(1456415087, 0)}
+	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
 
@@ -3198,8 +3199,8 @@ func confGitignoreTurbogears2() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "conf/gitignore/TurboGears2", size: 202, mode: os.FileMode(420), modTime: time.Unix(1444419364, 0)}
-	a := &asset{bytes: bytes, info:  info}
+	info := bindataFileInfo{name: "conf/gitignore/TurboGears2", size: 202, mode: os.FileMode(438), modTime: time.Unix(1456415087, 0)}
+	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
 
@@ -3218,8 +3219,8 @@ func confGitignoreTypo3() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "conf/gitignore/Typo3", size: 466, mode: os.FileMode(420), modTime: time.Unix(1444419364, 0)}
-	a := &asset{bytes: bytes, info:  info}
+	info := bindataFileInfo{name: "conf/gitignore/Typo3", size: 466, mode: os.FileMode(438), modTime: time.Unix(1456415087, 0)}
+	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
 
@@ -3238,8 +3239,8 @@ func confGitignoreUmbraco() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "conf/gitignore/Umbraco", size: 536, mode: os.FileMode(420), modTime: time.Unix(1444419364, 0)}
-	a := &asset{bytes: bytes, info:  info}
+	info := bindataFileInfo{name: "conf/gitignore/Umbraco", size: 536, mode: os.FileMode(438), modTime: time.Unix(1456415087, 0)}
+	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
 
@@ -3258,8 +3259,8 @@ func confGitignoreUnity() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "conf/gitignore/Unity", size: 267, mode: os.FileMode(420), modTime: time.Unix(1444419364, 0)}
-	a := &asset{bytes: bytes, info:  info}
+	info := bindataFileInfo{name: "conf/gitignore/Unity", size: 267, mode: os.FileMode(438), modTime: time.Unix(1456415087, 0)}
+	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
 
@@ -3278,8 +3279,8 @@ func confGitignoreVvvv() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "conf/gitignore/VVVV", size: 57, mode: os.FileMode(420), modTime: time.Unix(1444419364, 0)}
-	a := &asset{bytes: bytes, info:  info}
+	info := bindataFileInfo{name: "conf/gitignore/VVVV", size: 57, mode: os.FileMode(438), modTime: time.Unix(1456415087, 0)}
+	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
 
@@ -3298,8 +3299,8 @@ func confGitignoreVagrant() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "conf/gitignore/Vagrant", size: 10, mode: os.FileMode(420), modTime: time.Unix(1444419364, 0)}
-	a := &asset{bytes: bytes, info:  info}
+	info := bindataFileInfo{name: "conf/gitignore/Vagrant", size: 10, mode: os.FileMode(438), modTime: time.Unix(1456415087, 0)}
+	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
 
@@ -3318,8 +3319,8 @@ func confGitignoreVim() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "conf/gitignore/Vim", size: 66, mode: os.FileMode(420), modTime: time.Unix(1444419364, 0)}
-	a := &asset{bytes: bytes, info:  info}
+	info := bindataFileInfo{name: "conf/gitignore/Vim", size: 66, mode: os.FileMode(438), modTime: time.Unix(1456415087, 0)}
+	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
 
@@ -3338,8 +3339,8 @@ func confGitignoreVirtualenv() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "conf/gitignore/VirtualEnv", size: 151, mode: os.FileMode(420), modTime: time.Unix(1444419364, 0)}
-	a := &asset{bytes: bytes, info:  info}
+	info := bindataFileInfo{name: "conf/gitignore/VirtualEnv", size: 151, mode: os.FileMode(438), modTime: time.Unix(1456415087, 0)}
+	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
 
@@ -3358,8 +3359,8 @@ func confGitignoreVisualstudio() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "conf/gitignore/VisualStudio", size: 3412, mode: os.FileMode(420), modTime: time.Unix(1444419364, 0)}
-	a := &asset{bytes: bytes, info:  info}
+	info := bindataFileInfo{name: "conf/gitignore/VisualStudio", size: 3412, mode: os.FileMode(438), modTime: time.Unix(1456415087, 0)}
+	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
 
@@ -3378,8 +3379,8 @@ func confGitignoreVisualstudiocode() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "conf/gitignore/VisualStudioCode", size: 11, mode: os.FileMode(420), modTime: time.Unix(1444419364, 0)}
-	a := &asset{bytes: bytes, info:  info}
+	info := bindataFileInfo{name: "conf/gitignore/VisualStudioCode", size: 11, mode: os.FileMode(438), modTime: time.Unix(1456415087, 0)}
+	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
 
@@ -3398,8 +3399,8 @@ func confGitignoreWaf() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "conf/gitignore/Waf", size: 87, mode: os.FileMode(420), modTime: time.Unix(1444419364, 0)}
-	a := &asset{bytes: bytes, info:  info}
+	info := bindataFileInfo{name: "conf/gitignore/Waf", size: 87, mode: os.FileMode(438), modTime: time.Unix(1456415087, 0)}
+	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
 
@@ -3418,8 +3419,8 @@ func confGitignoreWebmethods() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "conf/gitignore/WebMethods", size: 424, mode: os.FileMode(420), modTime: time.Unix(1444419364, 0)}
-	a := &asset{bytes: bytes, info:  info}
+	info := bindataFileInfo{name: "conf/gitignore/WebMethods", size: 424, mode: os.FileMode(438), modTime: time.Unix(1456415087, 0)}
+	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
 
@@ -3438,8 +3439,8 @@ func confGitignoreWindows() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "conf/gitignore/Windows", size: 211, mode: os.FileMode(420), modTime: time.Unix(1444419364, 0)}
-	a := &asset{bytes: bytes, info:  info}
+	info := bindataFileInfo{name: "conf/gitignore/Windows", size: 211, mode: os.FileMode(438), modTime: time.Unix(1456415087, 0)}
+	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
 
@@ -3458,8 +3459,8 @@ func confGitignoreWordpress() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "conf/gitignore/WordPress", size: 297, mode: os.FileMode(420), modTime: time.Unix(1444419364, 0)}
-	a := &asset{bytes: bytes, info:  info}
+	info := bindataFileInfo{name: "conf/gitignore/WordPress", size: 297, mode: os.FileMode(438), modTime: time.Unix(1456415087, 0)}
+	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
 
@@ -3478,8 +3479,8 @@ func confGitignoreXcode() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "conf/gitignore/Xcode", size: 361, mode: os.FileMode(420), modTime: time.Unix(1444419364, 0)}
-	a := &asset{bytes: bytes, info:  info}
+	info := bindataFileInfo{name: "conf/gitignore/Xcode", size: 361, mode: os.FileMode(438), modTime: time.Unix(1456415087, 0)}
+	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
 
@@ -3498,8 +3499,8 @@ func confGitignoreXilinxise() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "conf/gitignore/XilinxISE", size: 566, mode: os.FileMode(420), modTime: time.Unix(1444419364, 0)}
-	a := &asset{bytes: bytes, info:  info}
+	info := bindataFileInfo{name: "conf/gitignore/XilinxISE", size: 566, mode: os.FileMode(438), modTime: time.Unix(1456415087, 0)}
+	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
 
@@ -3518,8 +3519,8 @@ func confGitignoreXojo() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "conf/gitignore/Xojo", size: 160, mode: os.FileMode(420), modTime: time.Unix(1444419364, 0)}
-	a := &asset{bytes: bytes, info:  info}
+	info := bindataFileInfo{name: "conf/gitignore/Xojo", size: 160, mode: os.FileMode(438), modTime: time.Unix(1456415087, 0)}
+	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
 
@@ -3538,8 +3539,8 @@ func confGitignoreYeoman() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "conf/gitignore/Yeoman", size: 52, mode: os.FileMode(420), modTime: time.Unix(1444419364, 0)}
-	a := &asset{bytes: bytes, info:  info}
+	info := bindataFileInfo{name: "conf/gitignore/Yeoman", size: 52, mode: os.FileMode(438), modTime: time.Unix(1456415087, 0)}
+	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
 
@@ -3558,8 +3559,8 @@ func confGitignoreYii() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "conf/gitignore/Yii", size: 120, mode: os.FileMode(420), modTime: time.Unix(1444419364, 0)}
-	a := &asset{bytes: bytes, info:  info}
+	info := bindataFileInfo{name: "conf/gitignore/Yii", size: 120, mode: os.FileMode(438), modTime: time.Unix(1456415087, 0)}
+	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
 
@@ -3578,8 +3579,8 @@ func confGitignoreZendframework() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "conf/gitignore/ZendFramework", size: 217, mode: os.FileMode(420), modTime: time.Unix(1444419364, 0)}
-	a := &asset{bytes: bytes, info:  info}
+	info := bindataFileInfo{name: "conf/gitignore/ZendFramework", size: 217, mode: os.FileMode(438), modTime: time.Unix(1456415087, 0)}
+	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
 
@@ -3598,8 +3599,8 @@ func confGitignoreZephir() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "conf/gitignore/Zephir", size: 387, mode: os.FileMode(420), modTime: time.Unix(1444419364, 0)}
-	a := &asset{bytes: bytes, info:  info}
+	info := bindataFileInfo{name: "conf/gitignore/Zephir", size: 387, mode: os.FileMode(438), modTime: time.Unix(1456415087, 0)}
+	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
 
@@ -3618,8 +3619,8 @@ func confLicenseAbstylesLicense() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "conf/license/Abstyles License", size: 730, mode: os.FileMode(420), modTime: time.Unix(1444419364, 0)}
-	a := &asset{bytes: bytes, info:  info}
+	info := bindataFileInfo{name: "conf/license/Abstyles License", size: 730, mode: os.FileMode(438), modTime: time.Unix(1456415087, 0)}
+	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
 
@@ -3638,8 +3639,8 @@ func confLicenseAcademicFreeLicenseV11() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "conf/license/Academic Free License v1.1", size: 4660, mode: os.FileMode(420), modTime: time.Unix(1444419364, 0)}
-	a := &asset{bytes: bytes, info:  info}
+	info := bindataFileInfo{name: "conf/license/Academic Free License v1.1", size: 4660, mode: os.FileMode(438), modTime: time.Unix(1456415087, 0)}
+	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
 
@@ -3658,8 +3659,8 @@ func confLicenseAcademicFreeLicenseV12() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "conf/license/Academic Free License v1.2", size: 4949, mode: os.FileMode(420), modTime: time.Unix(1444419364, 0)}
-	a := &asset{bytes: bytes, info:  info}
+	info := bindataFileInfo{name: "conf/license/Academic Free License v1.2", size: 4949, mode: os.FileMode(438), modTime: time.Unix(1456415087, 0)}
+	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
 
@@ -3678,8 +3679,8 @@ func confLicenseAcademicFreeLicenseV20() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "conf/license/Academic Free License v2.0", size: 8937, mode: os.FileMode(420), modTime: time.Unix(1444419364, 0)}
-	a := &asset{bytes: bytes, info:  info}
+	info := bindataFileInfo{name: "conf/license/Academic Free License v2.0", size: 8937, mode: os.FileMode(438), modTime: time.Unix(1456415087, 0)}
+	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
 
@@ -3698,8 +3699,8 @@ func confLicenseAcademicFreeLicenseV21() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "conf/license/Academic Free License v2.1", size: 8922, mode: os.FileMode(420), modTime: time.Unix(1444419364, 0)}
-	a := &asset{bytes: bytes, info:  info}
+	info := bindataFileInfo{name: "conf/license/Academic Free License v2.1", size: 8922, mode: os.FileMode(438), modTime: time.Unix(1456415087, 0)}
+	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
 
@@ -3718,8 +3719,8 @@ func confLicenseAcademicFreeLicenseV30() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "conf/license/Academic Free License v3.0", size: 10306, mode: os.FileMode(420), modTime: time.Unix(1444419364, 0)}
-	a := &asset{bytes: bytes, info:  info}
+	info := bindataFileInfo{name: "conf/license/Academic Free License v3.0", size: 10306, mode: os.FileMode(438), modTime: time.Unix(1456415087, 0)}
+	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
 
@@ -3738,8 +3739,8 @@ func confLicenseAfferoGeneralPublicLicenseV10() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "conf/license/Affero General Public License v1.0", size: 15837, mode: os.FileMode(420), modTime: time.Unix(1444419364, 0)}
-	a := &asset{bytes: bytes, info:  info}
+	info := bindataFileInfo{name: "conf/license/Affero General Public License v1.0", size: 15837, mode: os.FileMode(438), modTime: time.Unix(1456415087, 0)}
+	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
 
@@ -3758,8 +3759,8 @@ func confLicenseApacheLicense10() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "conf/license/Apache License 1.0", size: 2475, mode: os.FileMode(420), modTime: time.Unix(1444419364, 0)}
-	a := &asset{bytes: bytes, info:  info}
+	info := bindataFileInfo{name: "conf/license/Apache License 1.0", size: 2475, mode: os.FileMode(438), modTime: time.Unix(1456415087, 0)}
+	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
 
@@ -3778,8 +3779,8 @@ func confLicenseApacheLicense11() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "conf/license/Apache License 1.1", size: 2508, mode: os.FileMode(420), modTime: time.Unix(1444419364, 0)}
-	a := &asset{bytes: bytes, info:  info}
+	info := bindataFileInfo{name: "conf/license/Apache License 1.1", size: 2508, mode: os.FileMode(438), modTime: time.Unix(1456415087, 0)}
+	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
 
@@ -3798,8 +3799,8 @@ func confLicenseApacheLicense20() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "conf/license/Apache License 2.0", size: 10261, mode: os.FileMode(420), modTime: time.Unix(1444419364, 0)}
-	a := &asset{bytes: bytes, info:  info}
+	info := bindataFileInfo{name: "conf/license/Apache License 2.0", size: 10261, mode: os.FileMode(438), modTime: time.Unix(1456415087, 0)}
+	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
 
@@ -3818,8 +3819,8 @@ func confLicenseArtisticLicense10() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "conf/license/Artistic License 1.0", size: 4789, mode: os.FileMode(420), modTime: time.Unix(1444419364, 0)}
-	a := &asset{bytes: bytes, info:  info}
+	info := bindataFileInfo{name: "conf/license/Artistic License 1.0", size: 4789, mode: os.FileMode(438), modTime: time.Unix(1456415087, 0)}
+	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
 
@@ -3838,8 +3839,8 @@ func confLicenseArtisticLicense20() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "conf/license/Artistic License 2.0", size: 8661, mode: os.FileMode(420), modTime: time.Unix(1444419364, 0)}
-	a := &asset{bytes: bytes, info:  info}
+	info := bindataFileInfo{name: "conf/license/Artistic License 2.0", size: 8661, mode: os.FileMode(438), modTime: time.Unix(1456415087, 0)}
+	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
 
@@ -3858,8 +3859,8 @@ func confLicenseBsd2ClauseLicense() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "conf/license/BSD 2-clause License", size: 1286, mode: os.FileMode(420), modTime: time.Unix(1444419364, 0)}
-	a := &asset{bytes: bytes, info:  info}
+	info := bindataFileInfo{name: "conf/license/BSD 2-clause License", size: 1286, mode: os.FileMode(438), modTime: time.Unix(1456415087, 0)}
+	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
 
@@ -3878,8 +3879,8 @@ func confLicenseBsd3ClauseLicense() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "conf/license/BSD 3-clause License", size: 1480, mode: os.FileMode(420), modTime: time.Unix(1444419364, 0)}
-	a := &asset{bytes: bytes, info:  info}
+	info := bindataFileInfo{name: "conf/license/BSD 3-clause License", size: 1480, mode: os.FileMode(438), modTime: time.Unix(1456415087, 0)}
+	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
 
@@ -3898,8 +3899,28 @@ func confLicenseBsd4ClauseLicense() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "conf/license/BSD 4-clause License", size: 1624, mode: os.FileMode(420), modTime: time.Unix(1444419364, 0)}
-	a := &asset{bytes: bytes, info:  info}
+	info := bindataFileInfo{name: "conf/license/BSD 4-clause License", size: 1624, mode: os.FileMode(438), modTime: time.Unix(1456415087, 0)}
+	a := &asset{bytes: bytes, info: info}
+	return a, nil
+}
+
+var _confLicenseCcBySa40License = []byte("\x1f\x8b\x08\x00\x00\x09\x6e\x88\x00\xff\x74\x54\xcd\x6e\xdc\x36\x10\xbe\xeb\x29\x06\x3e\xb4\xf1\x62\xa3\x2d\xd0\x9c\x0c\xf4\xe0\xba\x28\x10\xa0\x45\x0e\x49\x11\x14\x86\x0f\x5c\x69\x24\xb1\x96\x48\x81\x43\xed\x46\x40\x0f\x7d\x88\x3e\x61\x9f\xa4\xdf\x90\xb4\xbd\x42\x1c\x5f\xd6\x92\x86\xdf\xcc\xf7\x33\xbc\xf3\xf3\x1a\x6c\x3f\x44\xa1\xef\xe8\x37\xdb\xb0\x13\xeb\xfa\xea\xa7\x57\xff\xaa\xea\xd3\x60\x85\xce\x3e\x3c\x12\x7e\x27\xd3\x32\x99\x93\xb1\xa3\x39\x8e\x4c\x8b\x6b\x39\x90\xa1\xfb\xbb\xc0\x26\xda\x13\xd3\x9d\x9f\x26\xef\x84\x6e\x63\x0c\xf6\xb8\x44\xeb\xdd\xdb\x8f\x83\x09\x7c\x3b\xda\x47\xa6\x77\xf5\x0f\xf4\xde\x45\x0e\xce\xe8\x27\x33\x96\x01\xf8\xe1\xcd\x10\xe3\x7c\x73\x38\x34\x05\xa9\xc9\x40\xb5\x0f\xfd\x61\xcc\x35\x72\x38\xae\x6f\xc5\x1c\x00\x72\xb8\xde\xd3\x79\xb0\xcd\x40\x13\x1b\x27\x55\xf5\xa7\x5f\x08\x5d\xa8\x0b\xcc\x37\x55\x45\xb4\xa3\xd4\x96\xfe\xfb\xe7\x5f\x6a\xc0\x98\x8c\x6b\x29\x70\x6b\x25\x0f\xc6\x14\x07\x06\x1f\xcc\x62\x31\x86\x75\x28\x58\x81\xd6\xda\x65\x22\x1f\xa8\xf3\x01\x1f\x13\xd0\x6d\x6b\xe6\x98\x80\x02\x4f\xf6\xcb\x9e\x62\x40\x4f\x2d\xd8\x27\xd4\xe3\x62\xc7\x96\x96\xd9\xbb\x2d\x26\x2a\x12\xe8\xbc\x84\xd9\x0b\xef\x89\x4f\xec\x48\x89\x71\x68\x50\x30\xae\x75\x55\xfd\x91\x24\xd4\x73\x9d\x1f\x47\x7f\x86\x15\x28\x71\xad\x55\x7d\xa4\x50\xb9\x50\x33\xcd\xa1\x6c\xa7\x45\x22\x99\x78\xc9\x26\xb9\x64\xa4\x20\xc9\x0d\x5d\x7d\x80\xd1\x56\x65\xce\x9f\x9e\x8d\x33\x91\xee\xef\x8b\xe2\xad\xf7\xe1\xdd\x8f\x2a\x74\xfd\xf7\xd7\xaf\x1e\x1e\xae\x36\xed\x25\x82\xde\xc4\x0e\xe9\x81\x66\x98\xdd\x9e\xb2\xf3\xda\x41\x48\x06\xbf\x40\x0c\xe7\xe3\x93\xa4\x67\xb3\x92\x2c\x7d\xcf\x18\x37\x0e\x68\x7c\x66\x62\xd7\xfa\x20\x4c\x2b\x78\x40\x24\xfc\x04\x5a\xf0\xec\x3b\x94\x94\xb8\xd5\x2f\x26\xe6\xec\x28\xf1\xf7\x5d\x3a\xf3\xb5\x0f\x40\xf9\x86\x0d\xfb\x74\x22\xa9\x75\x61\x7e\x6a\x09\x9d\x9f\x89\x49\x09\xb3\x1e\x15\x33\x31\x95\xd0\xa9\x9e\xfa\xce\x17\x25\x61\xd9\xa5\x1c\x98\xf8\x97\x24\x16\x92\x5f\xc0\xc0\xec\x1b\xcb\xb4\x5d\xac\xcf\x03\xd2\x60\xa7\xd9\x87\xa8\xa6\x1b\xb0\x12\x4c\xd5\x30\xbd\xe1\xba\xaf\xf1\xe2\xe8\xfd\xe3\x9e\x7e\xb6\xea\x98\xc4\xa5\x5d\x11\xa1\xd8\xd4\xd7\x90\x36\xfa\xd2\x77\xbf\x99\x2e\xfb\x9c\xc8\x1e\xf9\x25\x1d\xad\xb2\x90\x99\x1b\xdb\x59\x3c\x1c\xd7\x7c\x68\xc6\x00\x4f\x34\x33\xfb\xbc\x53\x36\xea\xae\x3f\xa7\xa5\xa6\x5f\x21\x2f\x7f\x31\xd3\x3c\x72\xee\x67\x42\x4c\x9d\x60\x5a\xab\x46\x7f\x50\xa8\x3c\xe8\x47\x08\x60\x59\x36\x08\x4f\x17\x85\xdb\xf6\xd4\xe5\x41\x59\x33\xb2\x09\xe3\x7a\x39\x6e\xf1\x70\x0e\xfe\x2f\x6e\xe2\xf7\x42\xf7\x93\x41\x9b\xd9\xf4\xe5\xa6\x90\x4d\x4a\x0f\xec\x0e\xfe\x28\xd7\x30\xe7\xd2\x06\x82\x4a\x05\x42\x14\xb2\x38\x65\x7a\x5c\x12\x39\x8b\xbb\x5d\x62\x73\x61\x68\x7a\xed\x9b\x66\xc1\x71\x03\x14\xc4\xc8\x36\xba\xab\x4a\x53\x8b\x03\x9f\xac\x68\x25\x82\x8a\x26\xab\x46\x00\x8b\x8d\x7f\x74\x3a\xe5\x23\x4b\xd7\xd9\xc6\x62\x47\x36\xc8\x7a\x1d\x00\xc0\x86\x1c\xef\xdd\x8e\xe8\x93\x36\xb3\xb2\x2f\x00\xcd\xcb\xec\x3a\xba\xc9\x01\x1f\xcd\x53\xd2\x5e\x53\x59\x93\x60\xb0\x6e\x03\xf4\x1d\x8d\xeb\x97\x32\xc4\x88\xe9\xb2\xef\x57\x3a\x75\xa1\xfe\xd9\x07\xec\xc8\xef\x56\x24\x45\x5e\x6f\xeb\xc5\xd9\xb8\x5e\xe9\x02\x89\x9f\x18\xeb\x87\x2c\x02\x33\xe9\xc0\x5d\x07\xed\x6a\xcc\x09\x4c\xdc\x49\x27\xdb\x2e\x08\xd9\x76\x6f\x94\xbf\xd1\xd4\xbc\x52\xa0\x37\x60\x50\x1f\x59\x38\x9c\x72\x56\x5e\x15\x31\x8b\x83\x96\x17\x94\xeb\xea\xff\x00\x00\x00\xff\xff\xc4\xd2\xe8\x98\xab\x06\x00\x00")
+
+func confLicenseCcBySa40LicenseBytes() ([]byte, error) {
+	return bindataRead(
+		_confLicenseCcBySa40License,
+		"conf/license/CC BY-SA 4.0 License",
+	)
+}
+
+func confLicenseCcBySa40License() (*asset, error) {
+	bytes, err := confLicenseCcBySa40LicenseBytes()
+	if err != nil {
+		return nil, err
+	}
+
+	info := bindataFileInfo{name: "conf/license/CC BY-SA 4.0 License", size: 1707, mode: os.FileMode(436), modTime: time.Unix(1457592143, 0)}
+	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
 
@@ -3918,8 +3939,8 @@ func confLicenseCreativeCommonsCc010Universal() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "conf/license/Creative Commons CC0 1.0 Universal", size: 6894, mode: os.FileMode(420), modTime: time.Unix(1444419364, 0)}
-	a := &asset{bytes: bytes, info:  info}
+	info := bindataFileInfo{name: "conf/license/Creative Commons CC0 1.0 Universal", size: 6894, mode: os.FileMode(438), modTime: time.Unix(1456415087, 0)}
+	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
 
@@ -3938,8 +3959,8 @@ func confLicenseEclipsePublicLicense10() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "conf/license/Eclipse Public License 1.0", size: 11248, mode: os.FileMode(420), modTime: time.Unix(1444419364, 0)}
-	a := &asset{bytes: bytes, info:  info}
+	info := bindataFileInfo{name: "conf/license/Eclipse Public License 1.0", size: 11248, mode: os.FileMode(438), modTime: time.Unix(1456415087, 0)}
+	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
 
@@ -3958,8 +3979,8 @@ func confLicenseEducationalCommunityLicenseV10() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "conf/license/Educational Community License v1.0", size: 2394, mode: os.FileMode(420), modTime: time.Unix(1444419364, 0)}
-	a := &asset{bytes: bytes, info:  info}
+	info := bindataFileInfo{name: "conf/license/Educational Community License v1.0", size: 2394, mode: os.FileMode(438), modTime: time.Unix(1456415087, 0)}
+	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
 
@@ -3978,8 +3999,8 @@ func confLicenseEducationalCommunityLicenseV20() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "conf/license/Educational Community License v2.0", size: 11085, mode: os.FileMode(420), modTime: time.Unix(1444419364, 0)}
-	a := &asset{bytes: bytes, info:  info}
+	info := bindataFileInfo{name: "conf/license/Educational Community License v2.0", size: 11085, mode: os.FileMode(438), modTime: time.Unix(1456415087, 0)}
+	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
 
@@ -3998,8 +4019,8 @@ func confLicenseGnuAfferoGeneralPublicLicenseV30() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "conf/license/GNU Affero General Public License v3.0", size: 33818, mode: os.FileMode(420), modTime: time.Unix(1444419364, 0)}
-	a := &asset{bytes: bytes, info:  info}
+	info := bindataFileInfo{name: "conf/license/GNU Affero General Public License v3.0", size: 33818, mode: os.FileMode(438), modTime: time.Unix(1456415087, 0)}
+	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
 
@@ -4018,8 +4039,8 @@ func confLicenseGnuFreeDocumentationLicenseV11() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "conf/license/GNU Free Documentation License v1.1", size: 17912, mode: os.FileMode(420), modTime: time.Unix(1444419364, 0)}
-	a := &asset{bytes: bytes, info:  info}
+	info := bindataFileInfo{name: "conf/license/GNU Free Documentation License v1.1", size: 17912, mode: os.FileMode(438), modTime: time.Unix(1456415087, 0)}
+	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
 
@@ -4038,8 +4059,8 @@ func confLicenseGnuFreeDocumentationLicenseV12() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "conf/license/GNU Free Documentation License v1.2", size: 20209, mode: os.FileMode(420), modTime: time.Unix(1444419364, 0)}
-	a := &asset{bytes: bytes, info:  info}
+	info := bindataFileInfo{name: "conf/license/GNU Free Documentation License v1.2", size: 20209, mode: os.FileMode(438), modTime: time.Unix(1456415087, 0)}
+	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
 
@@ -4058,8 +4079,8 @@ func confLicenseGnuFreeDocumentationLicenseV13() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "conf/license/GNU Free Documentation License v1.3", size: 22732, mode: os.FileMode(420), modTime: time.Unix(1444419364, 0)}
-	a := &asset{bytes: bytes, info:  info}
+	info := bindataFileInfo{name: "conf/license/GNU Free Documentation License v1.3", size: 22732, mode: os.FileMode(438), modTime: time.Unix(1456415087, 0)}
+	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
 
@@ -4078,8 +4099,8 @@ func confLicenseGnuGeneralPublicLicenseV10() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "conf/license/GNU General Public License v1.0", size: 12165, mode: os.FileMode(420), modTime: time.Unix(1444419364, 0)}
-	a := &asset{bytes: bytes, info:  info}
+	info := bindataFileInfo{name: "conf/license/GNU General Public License v1.0", size: 12165, mode: os.FileMode(438), modTime: time.Unix(1456415087, 0)}
+	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
 
@@ -4098,8 +4119,8 @@ func confLicenseGnuGeneralPublicLicenseV20() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "conf/license/GNU General Public License v2.0", size: 17277, mode: os.FileMode(420), modTime: time.Unix(1444419364, 0)}
-	a := &asset{bytes: bytes, info:  info}
+	info := bindataFileInfo{name: "conf/license/GNU General Public License v2.0", size: 17277, mode: os.FileMode(438), modTime: time.Unix(1456415087, 0)}
+	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
 
@@ -4118,8 +4139,8 @@ func confLicenseGnuGeneralPublicLicenseV30() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "conf/license/GNU General Public License v3.0", size: 34570, mode: os.FileMode(420), modTime: time.Unix(1444419364, 0)}
-	a := &asset{bytes: bytes, info:  info}
+	info := bindataFileInfo{name: "conf/license/GNU General Public License v3.0", size: 34570, mode: os.FileMode(438), modTime: time.Unix(1456415087, 0)}
+	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
 
@@ -4138,8 +4159,8 @@ func confLicenseGnuLesserGeneralPublicLicenseV21() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "conf/license/GNU Lesser General Public License v2.1", size: 25885, mode: os.FileMode(420), modTime: time.Unix(1444419364, 0)}
-	a := &asset{bytes: bytes, info:  info}
+	info := bindataFileInfo{name: "conf/license/GNU Lesser General Public License v2.1", size: 25885, mode: os.FileMode(438), modTime: time.Unix(1456415087, 0)}
+	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
 
@@ -4158,8 +4179,8 @@ func confLicenseGnuLesserGeneralPublicLicenseV30() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "conf/license/GNU Lesser General Public License v3.0", size: 7355, mode: os.FileMode(420), modTime: time.Unix(1444419364, 0)}
-	a := &asset{bytes: bytes, info:  info}
+	info := bindataFileInfo{name: "conf/license/GNU Lesser General Public License v3.0", size: 7355, mode: os.FileMode(438), modTime: time.Unix(1456415087, 0)}
+	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
 
@@ -4178,8 +4199,8 @@ func confLicenseGnuLibraryGeneralPublicLicenseV20() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "conf/license/GNU Library General Public License v2.0", size: 24758, mode: os.FileMode(420), modTime: time.Unix(1444419364, 0)}
-	a := &asset{bytes: bytes, info:  info}
+	info := bindataFileInfo{name: "conf/license/GNU Library General Public License v2.0", size: 24758, mode: os.FileMode(438), modTime: time.Unix(1456415087, 0)}
+	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
 
@@ -4198,8 +4219,8 @@ func confLicenseIscLicense() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "conf/license/ISC license", size: 823, mode: os.FileMode(420), modTime: time.Unix(1444419364, 0)}
-	a := &asset{bytes: bytes, info:  info}
+	info := bindataFileInfo{name: "conf/license/ISC license", size: 823, mode: os.FileMode(438), modTime: time.Unix(1456415087, 0)}
+	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
 
@@ -4218,8 +4239,8 @@ func confLicenseMitLicense() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "conf/license/MIT License", size: 1077, mode: os.FileMode(420), modTime: time.Unix(1444419364, 0)}
-	a := &asset{bytes: bytes, info:  info}
+	info := bindataFileInfo{name: "conf/license/MIT License", size: 1077, mode: os.FileMode(438), modTime: time.Unix(1456415087, 0)}
+	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
 
@@ -4238,8 +4259,8 @@ func confLicenseMozillaPublicLicense10() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "conf/license/Mozilla Public License 1.0", size: 18026, mode: os.FileMode(420), modTime: time.Unix(1444419364, 0)}
-	a := &asset{bytes: bytes, info:  info}
+	info := bindataFileInfo{name: "conf/license/Mozilla Public License 1.0", size: 18026, mode: os.FileMode(438), modTime: time.Unix(1456415087, 0)}
+	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
 
@@ -4258,8 +4279,8 @@ func confLicenseMozillaPublicLicense11() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "conf/license/Mozilla Public License 1.1", size: 23361, mode: os.FileMode(420), modTime: time.Unix(1444419364, 0)}
-	a := &asset{bytes: bytes, info:  info}
+	info := bindataFileInfo{name: "conf/license/Mozilla Public License 1.1", size: 23361, mode: os.FileMode(438), modTime: time.Unix(1456415087, 0)}
+	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
 
@@ -4278,8 +4299,8 @@ func confLicenseMozillaPublicLicense20() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "conf/license/Mozilla Public License 2.0", size: 14827, mode: os.FileMode(420), modTime: time.Unix(1444419364, 0)}
-	a := &asset{bytes: bytes, info:  info}
+	info := bindataFileInfo{name: "conf/license/Mozilla Public License 2.0", size: 14827, mode: os.FileMode(438), modTime: time.Unix(1456415087, 0)}
+	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
 
@@ -4298,8 +4319,8 @@ func confLocaleLocale_bgBgIni() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "conf/locale/locale_bg-BG.ini", size: 77956, mode: os.FileMode(493), modTime: time.Unix(1457322334, 0)}
-	a := &asset{bytes: bytes, info:  info}
+	info := bindataFileInfo{name: "conf/locale/locale_bg-BG.ini", size: 77956, mode: os.FileMode(509), modTime: time.Unix(1457460418, 0)}
+	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
 
@@ -4318,8 +4339,8 @@ func confLocaleLocale_deDeIni() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "conf/locale/locale_de-DE.ini", size: 54304, mode: os.FileMode(493), modTime: time.Unix(1457322334, 0)}
-	a := &asset{bytes: bytes, info:  info}
+	info := bindataFileInfo{name: "conf/locale/locale_de-DE.ini", size: 54304, mode: os.FileMode(509), modTime: time.Unix(1457460418, 0)}
+	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
 
@@ -4338,8 +4359,8 @@ func confLocaleLocale_enUsIni() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "conf/locale/locale_en-US.ini", size: 50827, mode: os.FileMode(420), modTime: time.Unix(1457228752, 0)}
-	a := &asset{bytes: bytes, info:  info}
+	info := bindataFileInfo{name: "conf/locale/locale_en-US.ini", size: 50827, mode: os.FileMode(436), modTime: time.Unix(1457591858, 0)}
+	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
 
@@ -4358,8 +4379,8 @@ func confLocaleLocale_esEsIni() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "conf/locale/locale_es-ES.ini", size: 55308, mode: os.FileMode(493), modTime: time.Unix(1457322332, 0)}
-	a := &asset{bytes: bytes, info:  info}
+	info := bindataFileInfo{name: "conf/locale/locale_es-ES.ini", size: 55308, mode: os.FileMode(509), modTime: time.Unix(1457460418, 0)}
+	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
 
@@ -4378,8 +4399,8 @@ func confLocaleLocale_fiFiIni() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "conf/locale/locale_fi-FI.ini", size: 52346, mode: os.FileMode(493), modTime: time.Unix(1457322334, 0)}
-	a := &asset{bytes: bytes, info:  info}
+	info := bindataFileInfo{name: "conf/locale/locale_fi-FI.ini", size: 52346, mode: os.FileMode(509), modTime: time.Unix(1457460418, 0)}
+	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
 
@@ -4398,8 +4419,8 @@ func confLocaleLocale_frFrIni() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "conf/locale/locale_fr-FR.ini", size: 54780, mode: os.FileMode(493), modTime: time.Unix(1457322332, 0)}
-	a := &asset{bytes: bytes, info:  info}
+	info := bindataFileInfo{name: "conf/locale/locale_fr-FR.ini", size: 54780, mode: os.FileMode(509), modTime: time.Unix(1457460418, 0)}
+	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
 
@@ -4418,8 +4439,8 @@ func confLocaleLocale_itItIni() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "conf/locale/locale_it-IT.ini", size: 52464, mode: os.FileMode(493), modTime: time.Unix(1457322334, 0)}
-	a := &asset{bytes: bytes, info:  info}
+	info := bindataFileInfo{name: "conf/locale/locale_it-IT.ini", size: 52464, mode: os.FileMode(509), modTime: time.Unix(1457460418, 0)}
+	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
 
@@ -4438,8 +4459,8 @@ func confLocaleLocale_jaJpIni() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "conf/locale/locale_ja-JP.ini", size: 59868, mode: os.FileMode(493), modTime: time.Unix(1457322334, 0)}
-	a := &asset{bytes: bytes, info:  info}
+	info := bindataFileInfo{name: "conf/locale/locale_ja-JP.ini", size: 59868, mode: os.FileMode(509), modTime: time.Unix(1457460418, 0)}
+	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
 
@@ -4458,8 +4479,8 @@ func confLocaleLocale_lvLvIni() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "conf/locale/locale_lv-LV.ini", size: 55144, mode: os.FileMode(493), modTime: time.Unix(1457322336, 0)}
-	a := &asset{bytes: bytes, info:  info}
+	info := bindataFileInfo{name: "conf/locale/locale_lv-LV.ini", size: 55144, mode: os.FileMode(509), modTime: time.Unix(1457460418, 0)}
+	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
 
@@ -4478,8 +4499,8 @@ func confLocaleLocale_nlNlIni() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "conf/locale/locale_nl-NL.ini", size: 51453, mode: os.FileMode(493), modTime: time.Unix(1457322334, 0)}
-	a := &asset{bytes: bytes, info:  info}
+	info := bindataFileInfo{name: "conf/locale/locale_nl-NL.ini", size: 51453, mode: os.FileMode(509), modTime: time.Unix(1457460418, 0)}
+	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
 
@@ -4498,8 +4519,8 @@ func confLocaleLocale_plPlIni() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "conf/locale/locale_pl-PL.ini", size: 52869, mode: os.FileMode(493), modTime: time.Unix(1457322334, 0)}
-	a := &asset{bytes: bytes, info:  info}
+	info := bindataFileInfo{name: "conf/locale/locale_pl-PL.ini", size: 52869, mode: os.FileMode(509), modTime: time.Unix(1457460418, 0)}
+	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
 
@@ -4518,8 +4539,8 @@ func confLocaleLocale_ptBrIni() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "conf/locale/locale_pt-BR.ini", size: 53475, mode: os.FileMode(493), modTime: time.Unix(1457322334, 0)}
-	a := &asset{bytes: bytes, info:  info}
+	info := bindataFileInfo{name: "conf/locale/locale_pt-BR.ini", size: 53475, mode: os.FileMode(509), modTime: time.Unix(1457460418, 0)}
+	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
 
@@ -4538,8 +4559,8 @@ func confLocaleLocale_ruRuIni() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "conf/locale/locale_ru-RU.ini", size: 78374, mode: os.FileMode(493), modTime: time.Unix(1457322334, 0)}
-	a := &asset{bytes: bytes, info:  info}
+	info := bindataFileInfo{name: "conf/locale/locale_ru-RU.ini", size: 78374, mode: os.FileMode(509), modTime: time.Unix(1457460418, 0)}
+	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
 
@@ -4558,8 +4579,8 @@ func confLocaleLocale_zhCnIni() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "conf/locale/locale_zh-CN.ini", size: 48570, mode: os.FileMode(493), modTime: time.Unix(1457322334, 0)}
-	a := &asset{bytes: bytes, info:  info}
+	info := bindataFileInfo{name: "conf/locale/locale_zh-CN.ini", size: 48570, mode: os.FileMode(509), modTime: time.Unix(1457460418, 0)}
+	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
 
@@ -4578,8 +4599,8 @@ func confLocaleLocale_zhHkIni() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "conf/locale/locale_zh-HK.ini", size: 48605, mode: os.FileMode(493), modTime: time.Unix(1457322334, 0)}
-	a := &asset{bytes: bytes, info:  info}
+	info := bindataFileInfo{name: "conf/locale/locale_zh-HK.ini", size: 48605, mode: os.FileMode(509), modTime: time.Unix(1457460418, 0)}
+	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
 
@@ -4598,8 +4619,8 @@ func confReadmeDefault() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "conf/readme/Default", size: 23, mode: os.FileMode(420), modTime: time.Unix(1444419364, 0)}
-	a := &asset{bytes: bytes, info:  info}
+	info := bindataFileInfo{name: "conf/readme/Default", size: 23, mode: os.FileMode(438), modTime: time.Unix(1456415087, 0)}
+	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
 
@@ -4622,7 +4643,7 @@ func Asset(name string) ([]byte, error) {
 // It simplifies safe initialization of global variables.
 func MustAsset(name string) []byte {
 	a, err := Asset(name)
-	if (err != nil) {
+	if err != nil {
 		panic("asset: Asset(" + name + "): " + err.Error())
 	}
 
@@ -4836,6 +4857,7 @@ var _bindata = map[string]func() (*asset, error){
 	"conf/license/BSD 2-clause License": confLicenseBsd2ClauseLicense,
 	"conf/license/BSD 3-clause License": confLicenseBsd3ClauseLicense,
 	"conf/license/BSD 4-clause License": confLicenseBsd4ClauseLicense,
+	"conf/license/CC BY-SA 4.0 License": confLicenseCcBySa40License,
 	"conf/license/Creative Commons CC0 1.0 Universal": confLicenseCreativeCommonsCc010Universal,
 	"conf/license/Eclipse Public License 1.0": confLicenseEclipsePublicLicense10,
 	"conf/license/Educational Community License v1.0": confLicenseEducationalCommunityLicenseV10,
@@ -4909,498 +4931,283 @@ func AssetDir(name string) ([]string, error) {
 }
 
 type bintree struct {
-	Func func() (*asset, error)
+	Func     func() (*asset, error)
 	Children map[string]*bintree
 }
 var _bintree = &bintree{nil, map[string]*bintree{
 	"conf": &bintree{nil, map[string]*bintree{
-		"app.ini": &bintree{confAppIni, map[string]*bintree{
-		}},
+		"app.ini": &bintree{confAppIni, map[string]*bintree{}},
 		"gitignore": &bintree{nil, map[string]*bintree{
-			"Actionscript": &bintree{confGitignoreActionscript, map[string]*bintree{
-			}},
-			"Ada": &bintree{confGitignoreAda, map[string]*bintree{
-			}},
-			"Agda": &bintree{confGitignoreAgda, map[string]*bintree{
-			}},
-			"Android": &bintree{confGitignoreAndroid, map[string]*bintree{
-			}},
-			"Anjuta": &bintree{confGitignoreAnjuta, map[string]*bintree{
-			}},
-			"AppEngine": &bintree{confGitignoreAppengine, map[string]*bintree{
-			}},
-			"AppceleratorTitanium": &bintree{confGitignoreAppceleratortitanium, map[string]*bintree{
-			}},
-			"ArchLinuxPackages": &bintree{confGitignoreArchlinuxpackages, map[string]*bintree{
-			}},
-			"Archives": &bintree{confGitignoreArchives, map[string]*bintree{
-			}},
-			"Autotools": &bintree{confGitignoreAutotools, map[string]*bintree{
-			}},
-			"BricxCC": &bintree{confGitignoreBricxcc, map[string]*bintree{
-			}},
-			"C": &bintree{confGitignoreC, map[string]*bintree{
-			}},
-			"C Sharp": &bintree{confGitignoreCSharp, map[string]*bintree{
-			}},
-			"C++": &bintree{confGitignoreC2, map[string]*bintree{
-			}},
-			"CFWheels": &bintree{confGitignoreCfwheels, map[string]*bintree{
-			}},
-			"CMake": &bintree{confGitignoreCmake, map[string]*bintree{
-			}},
-			"CUDA": &bintree{confGitignoreCuda, map[string]*bintree{
-			}},
-			"CVS": &bintree{confGitignoreCvs, map[string]*bintree{
-			}},
-			"CakePHP": &bintree{confGitignoreCakephp, map[string]*bintree{
-			}},
-			"ChefCookbook": &bintree{confGitignoreChefcookbook, map[string]*bintree{
-			}},
-			"Cloud9": &bintree{confGitignoreCloud9, map[string]*bintree{
-			}},
-			"CodeIgniter": &bintree{confGitignoreCodeigniter, map[string]*bintree{
-			}},
-			"CodeKit": &bintree{confGitignoreCodekit, map[string]*bintree{
-			}},
-			"CommonLisp": &bintree{confGitignoreCommonlisp, map[string]*bintree{
-			}},
-			"Composer": &bintree{confGitignoreComposer, map[string]*bintree{
-			}},
-			"Concrete5": &bintree{confGitignoreConcrete5, map[string]*bintree{
-			}},
-			"Coq": &bintree{confGitignoreCoq, map[string]*bintree{
-			}},
-			"CraftCMS": &bintree{confGitignoreCraftcms, map[string]*bintree{
-			}},
-			"DM": &bintree{confGitignoreDm, map[string]*bintree{
-			}},
-			"Dart": &bintree{confGitignoreDart, map[string]*bintree{
-			}},
-			"DartEditor": &bintree{confGitignoreDarteditor, map[string]*bintree{
-			}},
-			"Delphi": &bintree{confGitignoreDelphi, map[string]*bintree{
-			}},
-			"Dreamweaver": &bintree{confGitignoreDreamweaver, map[string]*bintree{
-			}},
-			"Drupal": &bintree{confGitignoreDrupal, map[string]*bintree{
-			}},
-			"EPiServer": &bintree{confGitignoreEpiserver, map[string]*bintree{
-			}},
-			"Eagle": &bintree{confGitignoreEagle, map[string]*bintree{
-			}},
-			"Eclipse": &bintree{confGitignoreEclipse, map[string]*bintree{
-			}},
-			"EiffelStudio": &bintree{confGitignoreEiffelstudio, map[string]*bintree{
-			}},
-			"Elisp": &bintree{confGitignoreElisp, map[string]*bintree{
-			}},
-			"Elixir": &bintree{confGitignoreElixir, map[string]*bintree{
-			}},
-			"Emacs": &bintree{confGitignoreEmacs, map[string]*bintree{
-			}},
-			"Ensime": &bintree{confGitignoreEnsime, map[string]*bintree{
-			}},
-			"Erlang": &bintree{confGitignoreErlang, map[string]*bintree{
-			}},
-			"Espresso": &bintree{confGitignoreEspresso, map[string]*bintree{
-			}},
-			"ExpressionEngine": &bintree{confGitignoreExpressionengine, map[string]*bintree{
-			}},
-			"ExtJs": &bintree{confGitignoreExtjs, map[string]*bintree{
-			}},
-			"Fancy": &bintree{confGitignoreFancy, map[string]*bintree{
-			}},
-			"Finale": &bintree{confGitignoreFinale, map[string]*bintree{
-			}},
-			"FlexBuilder": &bintree{confGitignoreFlexbuilder, map[string]*bintree{
-			}},
-			"ForceDotCom": &bintree{confGitignoreForcedotcom, map[string]*bintree{
-			}},
-			"FuelPHP": &bintree{confGitignoreFuelphp, map[string]*bintree{
-			}},
-			"GWT": &bintree{confGitignoreGwt, map[string]*bintree{
-			}},
-			"Gcov": &bintree{confGitignoreGcov, map[string]*bintree{
-			}},
-			"GitBook": &bintree{confGitignoreGitbook, map[string]*bintree{
-			}},
-			"Go": &bintree{confGitignoreGo, map[string]*bintree{
-			}},
-			"Gradle": &bintree{confGitignoreGradle, map[string]*bintree{
-			}},
-			"Grails": &bintree{confGitignoreGrails, map[string]*bintree{
-			}},
-			"Haskell": &bintree{confGitignoreHaskell, map[string]*bintree{
-			}},
-			"IGORPro": &bintree{confGitignoreIgorpro, map[string]*bintree{
-			}},
-			"IPythonNotebook": &bintree{confGitignoreIpythonnotebook, map[string]*bintree{
-			}},
-			"Idris": &bintree{confGitignoreIdris, map[string]*bintree{
-			}},
-			"JDeveloper": &bintree{confGitignoreJdeveloper, map[string]*bintree{
-			}},
-			"Java": &bintree{confGitignoreJava, map[string]*bintree{
-			}},
-			"Jboss": &bintree{confGitignoreJboss, map[string]*bintree{
-			}},
-			"Jekyll": &bintree{confGitignoreJekyll, map[string]*bintree{
-			}},
-			"JetBrains": &bintree{confGitignoreJetbrains, map[string]*bintree{
-			}},
-			"Joomla": &bintree{confGitignoreJoomla, map[string]*bintree{
-			}},
-			"KDevelop4": &bintree{confGitignoreKdevelop4, map[string]*bintree{
-			}},
-			"Kate": &bintree{confGitignoreKate, map[string]*bintree{
-			}},
-			"KiCAD": &bintree{confGitignoreKicad, map[string]*bintree{
-			}},
-			"Kohana": &bintree{confGitignoreKohana, map[string]*bintree{
-			}},
-			"LabVIEW": &bintree{confGitignoreLabview, map[string]*bintree{
-			}},
-			"Laravel": &bintree{confGitignoreLaravel, map[string]*bintree{
-			}},
-			"Lazarus": &bintree{confGitignoreLazarus, map[string]*bintree{
-			}},
-			"Leiningen": &bintree{confGitignoreLeiningen, map[string]*bintree{
-			}},
-			"LemonStand": &bintree{confGitignoreLemonstand, map[string]*bintree{
-			}},
-			"LibreOffice": &bintree{confGitignoreLibreoffice, map[string]*bintree{
-			}},
-			"Lilypond": &bintree{confGitignoreLilypond, map[string]*bintree{
-			}},
-			"Linux": &bintree{confGitignoreLinux, map[string]*bintree{
-			}},
-			"Lithium": &bintree{confGitignoreLithium, map[string]*bintree{
-			}},
-			"Lua": &bintree{confGitignoreLua, map[string]*bintree{
-			}},
-			"LyX": &bintree{confGitignoreLyx, map[string]*bintree{
-			}},
-			"Magento": &bintree{confGitignoreMagento, map[string]*bintree{
-			}},
-			"Matlab": &bintree{confGitignoreMatlab, map[string]*bintree{
-			}},
-			"Maven": &bintree{confGitignoreMaven, map[string]*bintree{
-			}},
-			"Mercurial": &bintree{confGitignoreMercurial, map[string]*bintree{
-			}},
-			"Mercury": &bintree{confGitignoreMercury, map[string]*bintree{
-			}},
-			"MetaProgrammingSystem": &bintree{confGitignoreMetaprogrammingsystem, map[string]*bintree{
-			}},
-			"MicrosoftOffice": &bintree{confGitignoreMicrosoftoffice, map[string]*bintree{
-			}},
-			"ModelSim": &bintree{confGitignoreModelsim, map[string]*bintree{
-			}},
-			"Momentics": &bintree{confGitignoreMomentics, map[string]*bintree{
-			}},
-			"MonoDevelop": &bintree{confGitignoreMonodevelop, map[string]*bintree{
-			}},
-			"Nanoc": &bintree{confGitignoreNanoc, map[string]*bintree{
-			}},
-			"NetBeans": &bintree{confGitignoreNetbeans, map[string]*bintree{
-			}},
-			"Nim": &bintree{confGitignoreNim, map[string]*bintree{
-			}},
-			"Ninja": &bintree{confGitignoreNinja, map[string]*bintree{
-			}},
-			"Node": &bintree{confGitignoreNode, map[string]*bintree{
-			}},
-			"NotepadPP": &bintree{confGitignoreNotepadpp, map[string]*bintree{
-			}},
-			"OCaml": &bintree{confGitignoreOcaml, map[string]*bintree{
-			}},
-			"OSX": &bintree{confGitignoreOsx, map[string]*bintree{
-			}},
-			"Objective-C": &bintree{confGitignoreObjectiveC, map[string]*bintree{
-			}},
-			"Opa": &bintree{confGitignoreOpa, map[string]*bintree{
-			}},
-			"OpenCart": &bintree{confGitignoreOpencart, map[string]*bintree{
-			}},
-			"OracleForms": &bintree{confGitignoreOracleforms, map[string]*bintree{
-			}},
-			"Packer": &bintree{confGitignorePacker, map[string]*bintree{
-			}},
-			"Perl": &bintree{confGitignorePerl, map[string]*bintree{
-			}},
-			"Phalcon": &bintree{confGitignorePhalcon, map[string]*bintree{
-			}},
-			"PlayFramework": &bintree{confGitignorePlayframework, map[string]*bintree{
-			}},
-			"Plone": &bintree{confGitignorePlone, map[string]*bintree{
-			}},
-			"Prestashop": &bintree{confGitignorePrestashop, map[string]*bintree{
-			}},
-			"Processing": &bintree{confGitignoreProcessing, map[string]*bintree{
-			}},
-			"Python": &bintree{confGitignorePython, map[string]*bintree{
-			}},
-			"Qooxdoo": &bintree{confGitignoreQooxdoo, map[string]*bintree{
-			}},
-			"Qt": &bintree{confGitignoreQt, map[string]*bintree{
-			}},
-			"R": &bintree{confGitignoreR, map[string]*bintree{
-			}},
-			"ROS": &bintree{confGitignoreRos, map[string]*bintree{
-			}},
-			"Rails": &bintree{confGitignoreRails, map[string]*bintree{
-			}},
-			"Redcar": &bintree{confGitignoreRedcar, map[string]*bintree{
-			}},
-			"Redis": &bintree{confGitignoreRedis, map[string]*bintree{
-			}},
-			"RhodesRhomobile": &bintree{confGitignoreRhodesrhomobile, map[string]*bintree{
-			}},
-			"Ruby": &bintree{confGitignoreRuby, map[string]*bintree{
-			}},
-			"Rust": &bintree{confGitignoreRust, map[string]*bintree{
-			}},
-			"SBT": &bintree{confGitignoreSbt, map[string]*bintree{
-			}},
-			"SCons": &bintree{confGitignoreScons, map[string]*bintree{
-			}},
-			"SVN": &bintree{confGitignoreSvn, map[string]*bintree{
-			}},
-			"Sass": &bintree{confGitignoreSass, map[string]*bintree{
-			}},
-			"Scala": &bintree{confGitignoreScala, map[string]*bintree{
-			}},
-			"Scrivener": &bintree{confGitignoreScrivener, map[string]*bintree{
-			}},
-			"Sdcc": &bintree{confGitignoreSdcc, map[string]*bintree{
-			}},
-			"SeamGen": &bintree{confGitignoreSeamgen, map[string]*bintree{
-			}},
-			"SketchUp": &bintree{confGitignoreSketchup, map[string]*bintree{
-			}},
-			"SlickEdit": &bintree{confGitignoreSlickedit, map[string]*bintree{
-			}},
-			"Stella": &bintree{confGitignoreStella, map[string]*bintree{
-			}},
-			"SublimeText": &bintree{confGitignoreSublimetext, map[string]*bintree{
-			}},
-			"SugarCRM": &bintree{confGitignoreSugarcrm, map[string]*bintree{
-			}},
-			"Swift": &bintree{confGitignoreSwift, map[string]*bintree{
-			}},
-			"Symfony": &bintree{confGitignoreSymfony, map[string]*bintree{
-			}},
-			"SymphonyCMS": &bintree{confGitignoreSymphonycms, map[string]*bintree{
-			}},
-			"SynopsysVCS": &bintree{confGitignoreSynopsysvcs, map[string]*bintree{
-			}},
-			"Tags": &bintree{confGitignoreTags, map[string]*bintree{
-			}},
-			"TeX": &bintree{confGitignoreTex, map[string]*bintree{
-			}},
-			"TextMate": &bintree{confGitignoreTextmate, map[string]*bintree{
-			}},
-			"Textpattern": &bintree{confGitignoreTextpattern, map[string]*bintree{
-			}},
-			"TortoiseGit": &bintree{confGitignoreTortoisegit, map[string]*bintree{
-			}},
-			"TurboGears2": &bintree{confGitignoreTurbogears2, map[string]*bintree{
-			}},
-			"Typo3": &bintree{confGitignoreTypo3, map[string]*bintree{
-			}},
-			"Umbraco": &bintree{confGitignoreUmbraco, map[string]*bintree{
-			}},
-			"Unity": &bintree{confGitignoreUnity, map[string]*bintree{
-			}},
-			"VVVV": &bintree{confGitignoreVvvv, map[string]*bintree{
-			}},
-			"Vagrant": &bintree{confGitignoreVagrant, map[string]*bintree{
-			}},
-			"Vim": &bintree{confGitignoreVim, map[string]*bintree{
-			}},
-			"VirtualEnv": &bintree{confGitignoreVirtualenv, map[string]*bintree{
-			}},
-			"VisualStudio": &bintree{confGitignoreVisualstudio, map[string]*bintree{
-			}},
-			"VisualStudioCode": &bintree{confGitignoreVisualstudiocode, map[string]*bintree{
-			}},
-			"Waf": &bintree{confGitignoreWaf, map[string]*bintree{
-			}},
-			"WebMethods": &bintree{confGitignoreWebmethods, map[string]*bintree{
-			}},
-			"Windows": &bintree{confGitignoreWindows, map[string]*bintree{
-			}},
-			"WordPress": &bintree{confGitignoreWordpress, map[string]*bintree{
-			}},
-			"Xcode": &bintree{confGitignoreXcode, map[string]*bintree{
-			}},
-			"XilinxISE": &bintree{confGitignoreXilinxise, map[string]*bintree{
-			}},
-			"Xojo": &bintree{confGitignoreXojo, map[string]*bintree{
-			}},
-			"Yeoman": &bintree{confGitignoreYeoman, map[string]*bintree{
-			}},
-			"Yii": &bintree{confGitignoreYii, map[string]*bintree{
-			}},
-			"ZendFramework": &bintree{confGitignoreZendframework, map[string]*bintree{
-			}},
-			"Zephir": &bintree{confGitignoreZephir, map[string]*bintree{
-			}},
+			"Actionscript": &bintree{confGitignoreActionscript, map[string]*bintree{}},
+			"Ada": &bintree{confGitignoreAda, map[string]*bintree{}},
+			"Agda": &bintree{confGitignoreAgda, map[string]*bintree{}},
+			"Android": &bintree{confGitignoreAndroid, map[string]*bintree{}},
+			"Anjuta": &bintree{confGitignoreAnjuta, map[string]*bintree{}},
+			"AppEngine": &bintree{confGitignoreAppengine, map[string]*bintree{}},
+			"AppceleratorTitanium": &bintree{confGitignoreAppceleratortitanium, map[string]*bintree{}},
+			"ArchLinuxPackages": &bintree{confGitignoreArchlinuxpackages, map[string]*bintree{}},
+			"Archives": &bintree{confGitignoreArchives, map[string]*bintree{}},
+			"Autotools": &bintree{confGitignoreAutotools, map[string]*bintree{}},
+			"BricxCC": &bintree{confGitignoreBricxcc, map[string]*bintree{}},
+			"C": &bintree{confGitignoreC, map[string]*bintree{}},
+			"C Sharp": &bintree{confGitignoreCSharp, map[string]*bintree{}},
+			"C++": &bintree{confGitignoreC2, map[string]*bintree{}},
+			"CFWheels": &bintree{confGitignoreCfwheels, map[string]*bintree{}},
+			"CMake": &bintree{confGitignoreCmake, map[string]*bintree{}},
+			"CUDA": &bintree{confGitignoreCuda, map[string]*bintree{}},
+			"CVS": &bintree{confGitignoreCvs, map[string]*bintree{}},
+			"CakePHP": &bintree{confGitignoreCakephp, map[string]*bintree{}},
+			"ChefCookbook": &bintree{confGitignoreChefcookbook, map[string]*bintree{}},
+			"Cloud9": &bintree{confGitignoreCloud9, map[string]*bintree{}},
+			"CodeIgniter": &bintree{confGitignoreCodeigniter, map[string]*bintree{}},
+			"CodeKit": &bintree{confGitignoreCodekit, map[string]*bintree{}},
+			"CommonLisp": &bintree{confGitignoreCommonlisp, map[string]*bintree{}},
+			"Composer": &bintree{confGitignoreComposer, map[string]*bintree{}},
+			"Concrete5": &bintree{confGitignoreConcrete5, map[string]*bintree{}},
+			"Coq": &bintree{confGitignoreCoq, map[string]*bintree{}},
+			"CraftCMS": &bintree{confGitignoreCraftcms, map[string]*bintree{}},
+			"DM": &bintree{confGitignoreDm, map[string]*bintree{}},
+			"Dart": &bintree{confGitignoreDart, map[string]*bintree{}},
+			"DartEditor": &bintree{confGitignoreDarteditor, map[string]*bintree{}},
+			"Delphi": &bintree{confGitignoreDelphi, map[string]*bintree{}},
+			"Dreamweaver": &bintree{confGitignoreDreamweaver, map[string]*bintree{}},
+			"Drupal": &bintree{confGitignoreDrupal, map[string]*bintree{}},
+			"EPiServer": &bintree{confGitignoreEpiserver, map[string]*bintree{}},
+			"Eagle": &bintree{confGitignoreEagle, map[string]*bintree{}},
+			"Eclipse": &bintree{confGitignoreEclipse, map[string]*bintree{}},
+			"EiffelStudio": &bintree{confGitignoreEiffelstudio, map[string]*bintree{}},
+			"Elisp": &bintree{confGitignoreElisp, map[string]*bintree{}},
+			"Elixir": &bintree{confGitignoreElixir, map[string]*bintree{}},
+			"Emacs": &bintree{confGitignoreEmacs, map[string]*bintree{}},
+			"Ensime": &bintree{confGitignoreEnsime, map[string]*bintree{}},
+			"Erlang": &bintree{confGitignoreErlang, map[string]*bintree{}},
+			"Espresso": &bintree{confGitignoreEspresso, map[string]*bintree{}},
+			"ExpressionEngine": &bintree{confGitignoreExpressionengine, map[string]*bintree{}},
+			"ExtJs": &bintree{confGitignoreExtjs, map[string]*bintree{}},
+			"Fancy": &bintree{confGitignoreFancy, map[string]*bintree{}},
+			"Finale": &bintree{confGitignoreFinale, map[string]*bintree{}},
+			"FlexBuilder": &bintree{confGitignoreFlexbuilder, map[string]*bintree{}},
+			"ForceDotCom": &bintree{confGitignoreForcedotcom, map[string]*bintree{}},
+			"FuelPHP": &bintree{confGitignoreFuelphp, map[string]*bintree{}},
+			"GWT": &bintree{confGitignoreGwt, map[string]*bintree{}},
+			"Gcov": &bintree{confGitignoreGcov, map[string]*bintree{}},
+			"GitBook": &bintree{confGitignoreGitbook, map[string]*bintree{}},
+			"Go": &bintree{confGitignoreGo, map[string]*bintree{}},
+			"Gradle": &bintree{confGitignoreGradle, map[string]*bintree{}},
+			"Grails": &bintree{confGitignoreGrails, map[string]*bintree{}},
+			"Haskell": &bintree{confGitignoreHaskell, map[string]*bintree{}},
+			"IGORPro": &bintree{confGitignoreIgorpro, map[string]*bintree{}},
+			"IPythonNotebook": &bintree{confGitignoreIpythonnotebook, map[string]*bintree{}},
+			"Idris": &bintree{confGitignoreIdris, map[string]*bintree{}},
+			"JDeveloper": &bintree{confGitignoreJdeveloper, map[string]*bintree{}},
+			"Java": &bintree{confGitignoreJava, map[string]*bintree{}},
+			"Jboss": &bintree{confGitignoreJboss, map[string]*bintree{}},
+			"Jekyll": &bintree{confGitignoreJekyll, map[string]*bintree{}},
+			"JetBrains": &bintree{confGitignoreJetbrains, map[string]*bintree{}},
+			"Joomla": &bintree{confGitignoreJoomla, map[string]*bintree{}},
+			"KDevelop4": &bintree{confGitignoreKdevelop4, map[string]*bintree{}},
+			"Kate": &bintree{confGitignoreKate, map[string]*bintree{}},
+			"KiCAD": &bintree{confGitignoreKicad, map[string]*bintree{}},
+			"Kohana": &bintree{confGitignoreKohana, map[string]*bintree{}},
+			"LabVIEW": &bintree{confGitignoreLabview, map[string]*bintree{}},
+			"Laravel": &bintree{confGitignoreLaravel, map[string]*bintree{}},
+			"Lazarus": &bintree{confGitignoreLazarus, map[string]*bintree{}},
+			"Leiningen": &bintree{confGitignoreLeiningen, map[string]*bintree{}},
+			"LemonStand": &bintree{confGitignoreLemonstand, map[string]*bintree{}},
+			"LibreOffice": &bintree{confGitignoreLibreoffice, map[string]*bintree{}},
+			"Lilypond": &bintree{confGitignoreLilypond, map[string]*bintree{}},
+			"Linux": &bintree{confGitignoreLinux, map[string]*bintree{}},
+			"Lithium": &bintree{confGitignoreLithium, map[string]*bintree{}},
+			"Lua": &bintree{confGitignoreLua, map[string]*bintree{}},
+			"LyX": &bintree{confGitignoreLyx, map[string]*bintree{}},
+			"Magento": &bintree{confGitignoreMagento, map[string]*bintree{}},
+			"Matlab": &bintree{confGitignoreMatlab, map[string]*bintree{}},
+			"Maven": &bintree{confGitignoreMaven, map[string]*bintree{}},
+			"Mercurial": &bintree{confGitignoreMercurial, map[string]*bintree{}},
+			"Mercury": &bintree{confGitignoreMercury, map[string]*bintree{}},
+			"MetaProgrammingSystem": &bintree{confGitignoreMetaprogrammingsystem, map[string]*bintree{}},
+			"MicrosoftOffice": &bintree{confGitignoreMicrosoftoffice, map[string]*bintree{}},
+			"ModelSim": &bintree{confGitignoreModelsim, map[string]*bintree{}},
+			"Momentics": &bintree{confGitignoreMomentics, map[string]*bintree{}},
+			"MonoDevelop": &bintree{confGitignoreMonodevelop, map[string]*bintree{}},
+			"Nanoc": &bintree{confGitignoreNanoc, map[string]*bintree{}},
+			"NetBeans": &bintree{confGitignoreNetbeans, map[string]*bintree{}},
+			"Nim": &bintree{confGitignoreNim, map[string]*bintree{}},
+			"Ninja": &bintree{confGitignoreNinja, map[string]*bintree{}},
+			"Node": &bintree{confGitignoreNode, map[string]*bintree{}},
+			"NotepadPP": &bintree{confGitignoreNotepadpp, map[string]*bintree{}},
+			"OCaml": &bintree{confGitignoreOcaml, map[string]*bintree{}},
+			"OSX": &bintree{confGitignoreOsx, map[string]*bintree{}},
+			"Objective-C": &bintree{confGitignoreObjectiveC, map[string]*bintree{}},
+			"Opa": &bintree{confGitignoreOpa, map[string]*bintree{}},
+			"OpenCart": &bintree{confGitignoreOpencart, map[string]*bintree{}},
+			"OracleForms": &bintree{confGitignoreOracleforms, map[string]*bintree{}},
+			"Packer": &bintree{confGitignorePacker, map[string]*bintree{}},
+			"Perl": &bintree{confGitignorePerl, map[string]*bintree{}},
+			"Phalcon": &bintree{confGitignorePhalcon, map[string]*bintree{}},
+			"PlayFramework": &bintree{confGitignorePlayframework, map[string]*bintree{}},
+			"Plone": &bintree{confGitignorePlone, map[string]*bintree{}},
+			"Prestashop": &bintree{confGitignorePrestashop, map[string]*bintree{}},
+			"Processing": &bintree{confGitignoreProcessing, map[string]*bintree{}},
+			"Python": &bintree{confGitignorePython, map[string]*bintree{}},
+			"Qooxdoo": &bintree{confGitignoreQooxdoo, map[string]*bintree{}},
+			"Qt": &bintree{confGitignoreQt, map[string]*bintree{}},
+			"R": &bintree{confGitignoreR, map[string]*bintree{}},
+			"ROS": &bintree{confGitignoreRos, map[string]*bintree{}},
+			"Rails": &bintree{confGitignoreRails, map[string]*bintree{}},
+			"Redcar": &bintree{confGitignoreRedcar, map[string]*bintree{}},
+			"Redis": &bintree{confGitignoreRedis, map[string]*bintree{}},
+			"RhodesRhomobile": &bintree{confGitignoreRhodesrhomobile, map[string]*bintree{}},
+			"Ruby": &bintree{confGitignoreRuby, map[string]*bintree{}},
+			"Rust": &bintree{confGitignoreRust, map[string]*bintree{}},
+			"SBT": &bintree{confGitignoreSbt, map[string]*bintree{}},
+			"SCons": &bintree{confGitignoreScons, map[string]*bintree{}},
+			"SVN": &bintree{confGitignoreSvn, map[string]*bintree{}},
+			"Sass": &bintree{confGitignoreSass, map[string]*bintree{}},
+			"Scala": &bintree{confGitignoreScala, map[string]*bintree{}},
+			"Scrivener": &bintree{confGitignoreScrivener, map[string]*bintree{}},
+			"Sdcc": &bintree{confGitignoreSdcc, map[string]*bintree{}},
+			"SeamGen": &bintree{confGitignoreSeamgen, map[string]*bintree{}},
+			"SketchUp": &bintree{confGitignoreSketchup, map[string]*bintree{}},
+			"SlickEdit": &bintree{confGitignoreSlickedit, map[string]*bintree{}},
+			"Stella": &bintree{confGitignoreStella, map[string]*bintree{}},
+			"SublimeText": &bintree{confGitignoreSublimetext, map[string]*bintree{}},
+			"SugarCRM": &bintree{confGitignoreSugarcrm, map[string]*bintree{}},
+			"Swift": &bintree{confGitignoreSwift, map[string]*bintree{}},
+			"Symfony": &bintree{confGitignoreSymfony, map[string]*bintree{}},
+			"SymphonyCMS": &bintree{confGitignoreSymphonycms, map[string]*bintree{}},
+			"SynopsysVCS": &bintree{confGitignoreSynopsysvcs, map[string]*bintree{}},
+			"Tags": &bintree{confGitignoreTags, map[string]*bintree{}},
+			"TeX": &bintree{confGitignoreTex, map[string]*bintree{}},
+			"TextMate": &bintree{confGitignoreTextmate, map[string]*bintree{}},
+			"Textpattern": &bintree{confGitignoreTextpattern, map[string]*bintree{}},
+			"TortoiseGit": &bintree{confGitignoreTortoisegit, map[string]*bintree{}},
+			"TurboGears2": &bintree{confGitignoreTurbogears2, map[string]*bintree{}},
+			"Typo3": &bintree{confGitignoreTypo3, map[string]*bintree{}},
+			"Umbraco": &bintree{confGitignoreUmbraco, map[string]*bintree{}},
+			"Unity": &bintree{confGitignoreUnity, map[string]*bintree{}},
+			"VVVV": &bintree{confGitignoreVvvv, map[string]*bintree{}},
+			"Vagrant": &bintree{confGitignoreVagrant, map[string]*bintree{}},
+			"Vim": &bintree{confGitignoreVim, map[string]*bintree{}},
+			"VirtualEnv": &bintree{confGitignoreVirtualenv, map[string]*bintree{}},
+			"VisualStudio": &bintree{confGitignoreVisualstudio, map[string]*bintree{}},
+			"VisualStudioCode": &bintree{confGitignoreVisualstudiocode, map[string]*bintree{}},
+			"Waf": &bintree{confGitignoreWaf, map[string]*bintree{}},
+			"WebMethods": &bintree{confGitignoreWebmethods, map[string]*bintree{}},
+			"Windows": &bintree{confGitignoreWindows, map[string]*bintree{}},
+			"WordPress": &bintree{confGitignoreWordpress, map[string]*bintree{}},
+			"Xcode": &bintree{confGitignoreXcode, map[string]*bintree{}},
+			"XilinxISE": &bintree{confGitignoreXilinxise, map[string]*bintree{}},
+			"Xojo": &bintree{confGitignoreXojo, map[string]*bintree{}},
+			"Yeoman": &bintree{confGitignoreYeoman, map[string]*bintree{}},
+			"Yii": &bintree{confGitignoreYii, map[string]*bintree{}},
+			"ZendFramework": &bintree{confGitignoreZendframework, map[string]*bintree{}},
+			"Zephir": &bintree{confGitignoreZephir, map[string]*bintree{}},
 		}},
 		"license": &bintree{nil, map[string]*bintree{
-			"Abstyles License": &bintree{confLicenseAbstylesLicense, map[string]*bintree{
-			}},
-			"Academic Free License v1.1": &bintree{confLicenseAcademicFreeLicenseV11, map[string]*bintree{
-			}},
-			"Academic Free License v1.2": &bintree{confLicenseAcademicFreeLicenseV12, map[string]*bintree{
-			}},
-			"Academic Free License v2.0": &bintree{confLicenseAcademicFreeLicenseV20, map[string]*bintree{
-			}},
-			"Academic Free License v2.1": &bintree{confLicenseAcademicFreeLicenseV21, map[string]*bintree{
-			}},
-			"Academic Free License v3.0": &bintree{confLicenseAcademicFreeLicenseV30, map[string]*bintree{
-			}},
-			"Affero General Public License v1.0": &bintree{confLicenseAfferoGeneralPublicLicenseV10, map[string]*bintree{
-			}},
-			"Apache License 1.0": &bintree{confLicenseApacheLicense10, map[string]*bintree{
-			}},
-			"Apache License 1.1": &bintree{confLicenseApacheLicense11, map[string]*bintree{
-			}},
-			"Apache License 2.0": &bintree{confLicenseApacheLicense20, map[string]*bintree{
-			}},
-			"Artistic License 1.0": &bintree{confLicenseArtisticLicense10, map[string]*bintree{
-			}},
-			"Artistic License 2.0": &bintree{confLicenseArtisticLicense20, map[string]*bintree{
-			}},
-			"BSD 2-clause License": &bintree{confLicenseBsd2ClauseLicense, map[string]*bintree{
-			}},
-			"BSD 3-clause License": &bintree{confLicenseBsd3ClauseLicense, map[string]*bintree{
-			}},
-			"BSD 4-clause License": &bintree{confLicenseBsd4ClauseLicense, map[string]*bintree{
-			}},
-			"Creative Commons CC0 1.0 Universal": &bintree{confLicenseCreativeCommonsCc010Universal, map[string]*bintree{
-			}},
-			"Eclipse Public License 1.0": &bintree{confLicenseEclipsePublicLicense10, map[string]*bintree{
-			}},
-			"Educational Community License v1.0": &bintree{confLicenseEducationalCommunityLicenseV10, map[string]*bintree{
-			}},
-			"Educational Community License v2.0": &bintree{confLicenseEducationalCommunityLicenseV20, map[string]*bintree{
-			}},
-			"GNU Affero General Public License v3.0": &bintree{confLicenseGnuAfferoGeneralPublicLicenseV30, map[string]*bintree{
-			}},
-			"GNU Free Documentation License v1.1": &bintree{confLicenseGnuFreeDocumentationLicenseV11, map[string]*bintree{
-			}},
-			"GNU Free Documentation License v1.2": &bintree{confLicenseGnuFreeDocumentationLicenseV12, map[string]*bintree{
-			}},
-			"GNU Free Documentation License v1.3": &bintree{confLicenseGnuFreeDocumentationLicenseV13, map[string]*bintree{
-			}},
-			"GNU General Public License v1.0": &bintree{confLicenseGnuGeneralPublicLicenseV10, map[string]*bintree{
-			}},
-			"GNU General Public License v2.0": &bintree{confLicenseGnuGeneralPublicLicenseV20, map[string]*bintree{
-			}},
-			"GNU General Public License v3.0": &bintree{confLicenseGnuGeneralPublicLicenseV30, map[string]*bintree{
-			}},
-			"GNU Lesser General Public License v2.1": &bintree{confLicenseGnuLesserGeneralPublicLicenseV21, map[string]*bintree{
-			}},
-			"GNU Lesser General Public License v3.0": &bintree{confLicenseGnuLesserGeneralPublicLicenseV30, map[string]*bintree{
-			}},
-			"GNU Library General Public License v2.0": &bintree{confLicenseGnuLibraryGeneralPublicLicenseV20, map[string]*bintree{
-			}},
-			"ISC license": &bintree{confLicenseIscLicense, map[string]*bintree{
-			}},
-			"MIT License": &bintree{confLicenseMitLicense, map[string]*bintree{
-			}},
-			"Mozilla Public License 1.0": &bintree{confLicenseMozillaPublicLicense10, map[string]*bintree{
-			}},
-			"Mozilla Public License 1.1": &bintree{confLicenseMozillaPublicLicense11, map[string]*bintree{
-			}},
-			"Mozilla Public License 2.0": &bintree{confLicenseMozillaPublicLicense20, map[string]*bintree{
-			}},
+			"Abstyles License": &bintree{confLicenseAbstylesLicense, map[string]*bintree{}},
+			"Academic Free License v1.1": &bintree{confLicenseAcademicFreeLicenseV11, map[string]*bintree{}},
+			"Academic Free License v1.2": &bintree{confLicenseAcademicFreeLicenseV12, map[string]*bintree{}},
+			"Academic Free License v2.0": &bintree{confLicenseAcademicFreeLicenseV20, map[string]*bintree{}},
+			"Academic Free License v2.1": &bintree{confLicenseAcademicFreeLicenseV21, map[string]*bintree{}},
+			"Academic Free License v3.0": &bintree{confLicenseAcademicFreeLicenseV30, map[string]*bintree{}},
+			"Affero General Public License v1.0": &bintree{confLicenseAfferoGeneralPublicLicenseV10, map[string]*bintree{}},
+			"Apache License 1.0": &bintree{confLicenseApacheLicense10, map[string]*bintree{}},
+			"Apache License 1.1": &bintree{confLicenseApacheLicense11, map[string]*bintree{}},
+			"Apache License 2.0": &bintree{confLicenseApacheLicense20, map[string]*bintree{}},
+			"Artistic License 1.0": &bintree{confLicenseArtisticLicense10, map[string]*bintree{}},
+			"Artistic License 2.0": &bintree{confLicenseArtisticLicense20, map[string]*bintree{}},
+			"BSD 2-clause License": &bintree{confLicenseBsd2ClauseLicense, map[string]*bintree{}},
+			"BSD 3-clause License": &bintree{confLicenseBsd3ClauseLicense, map[string]*bintree{}},
+			"BSD 4-clause License": &bintree{confLicenseBsd4ClauseLicense, map[string]*bintree{}},
+			"CC BY-SA 4.0 License": &bintree{confLicenseCcBySa40License, map[string]*bintree{}},
+			"Creative Commons CC0 1.0 Universal": &bintree{confLicenseCreativeCommonsCc010Universal, map[string]*bintree{}},
+			"Eclipse Public License 1.0": &bintree{confLicenseEclipsePublicLicense10, map[string]*bintree{}},
+			"Educational Community License v1.0": &bintree{confLicenseEducationalCommunityLicenseV10, map[string]*bintree{}},
+			"Educational Community License v2.0": &bintree{confLicenseEducationalCommunityLicenseV20, map[string]*bintree{}},
+			"GNU Affero General Public License v3.0": &bintree{confLicenseGnuAfferoGeneralPublicLicenseV30, map[string]*bintree{}},
+			"GNU Free Documentation License v1.1": &bintree{confLicenseGnuFreeDocumentationLicenseV11, map[string]*bintree{}},
+			"GNU Free Documentation License v1.2": &bintree{confLicenseGnuFreeDocumentationLicenseV12, map[string]*bintree{}},
+			"GNU Free Documentation License v1.3": &bintree{confLicenseGnuFreeDocumentationLicenseV13, map[string]*bintree{}},
+			"GNU General Public License v1.0": &bintree{confLicenseGnuGeneralPublicLicenseV10, map[string]*bintree{}},
+			"GNU General Public License v2.0": &bintree{confLicenseGnuGeneralPublicLicenseV20, map[string]*bintree{}},
+			"GNU General Public License v3.0": &bintree{confLicenseGnuGeneralPublicLicenseV30, map[string]*bintree{}},
+			"GNU Lesser General Public License v2.1": &bintree{confLicenseGnuLesserGeneralPublicLicenseV21, map[string]*bintree{}},
+			"GNU Lesser General Public License v3.0": &bintree{confLicenseGnuLesserGeneralPublicLicenseV30, map[string]*bintree{}},
+			"GNU Library General Public License v2.0": &bintree{confLicenseGnuLibraryGeneralPublicLicenseV20, map[string]*bintree{}},
+			"ISC license": &bintree{confLicenseIscLicense, map[string]*bintree{}},
+			"MIT License": &bintree{confLicenseMitLicense, map[string]*bintree{}},
+			"Mozilla Public License 1.0": &bintree{confLicenseMozillaPublicLicense10, map[string]*bintree{}},
+			"Mozilla Public License 1.1": &bintree{confLicenseMozillaPublicLicense11, map[string]*bintree{}},
+			"Mozilla Public License 2.0": &bintree{confLicenseMozillaPublicLicense20, map[string]*bintree{}},
 		}},
 		"locale": &bintree{nil, map[string]*bintree{
-			"locale_bg-BG.ini": &bintree{confLocaleLocale_bgBgIni, map[string]*bintree{
-			}},
-			"locale_de-DE.ini": &bintree{confLocaleLocale_deDeIni, map[string]*bintree{
-			}},
-			"locale_en-US.ini": &bintree{confLocaleLocale_enUsIni, map[string]*bintree{
-			}},
-			"locale_es-ES.ini": &bintree{confLocaleLocale_esEsIni, map[string]*bintree{
-			}},
-			"locale_fi-FI.ini": &bintree{confLocaleLocale_fiFiIni, map[string]*bintree{
-			}},
-			"locale_fr-FR.ini": &bintree{confLocaleLocale_frFrIni, map[string]*bintree{
-			}},
-			"locale_it-IT.ini": &bintree{confLocaleLocale_itItIni, map[string]*bintree{
-			}},
-			"locale_ja-JP.ini": &bintree{confLocaleLocale_jaJpIni, map[string]*bintree{
-			}},
-			"locale_lv-LV.ini": &bintree{confLocaleLocale_lvLvIni, map[string]*bintree{
-			}},
-			"locale_nl-NL.ini": &bintree{confLocaleLocale_nlNlIni, map[string]*bintree{
-			}},
-			"locale_pl-PL.ini": &bintree{confLocaleLocale_plPlIni, map[string]*bintree{
-			}},
-			"locale_pt-BR.ini": &bintree{confLocaleLocale_ptBrIni, map[string]*bintree{
-			}},
-			"locale_ru-RU.ini": &bintree{confLocaleLocale_ruRuIni, map[string]*bintree{
-			}},
-			"locale_zh-CN.ini": &bintree{confLocaleLocale_zhCnIni, map[string]*bintree{
-			}},
-			"locale_zh-HK.ini": &bintree{confLocaleLocale_zhHkIni, map[string]*bintree{
-			}},
+			"locale_bg-BG.ini": &bintree{confLocaleLocale_bgBgIni, map[string]*bintree{}},
+			"locale_de-DE.ini": &bintree{confLocaleLocale_deDeIni, map[string]*bintree{}},
+			"locale_en-US.ini": &bintree{confLocaleLocale_enUsIni, map[string]*bintree{}},
+			"locale_es-ES.ini": &bintree{confLocaleLocale_esEsIni, map[string]*bintree{}},
+			"locale_fi-FI.ini": &bintree{confLocaleLocale_fiFiIni, map[string]*bintree{}},
+			"locale_fr-FR.ini": &bintree{confLocaleLocale_frFrIni, map[string]*bintree{}},
+			"locale_it-IT.ini": &bintree{confLocaleLocale_itItIni, map[string]*bintree{}},
+			"locale_ja-JP.ini": &bintree{confLocaleLocale_jaJpIni, map[string]*bintree{}},
+			"locale_lv-LV.ini": &bintree{confLocaleLocale_lvLvIni, map[string]*bintree{}},
+			"locale_nl-NL.ini": &bintree{confLocaleLocale_nlNlIni, map[string]*bintree{}},
+			"locale_pl-PL.ini": &bintree{confLocaleLocale_plPlIni, map[string]*bintree{}},
+			"locale_pt-BR.ini": &bintree{confLocaleLocale_ptBrIni, map[string]*bintree{}},
+			"locale_ru-RU.ini": &bintree{confLocaleLocale_ruRuIni, map[string]*bintree{}},
+			"locale_zh-CN.ini": &bintree{confLocaleLocale_zhCnIni, map[string]*bintree{}},
+			"locale_zh-HK.ini": &bintree{confLocaleLocale_zhHkIni, map[string]*bintree{}},
 		}},
 		"readme": &bintree{nil, map[string]*bintree{
-			"Default": &bintree{confReadmeDefault, map[string]*bintree{
-			}},
+			"Default": &bintree{confReadmeDefault, map[string]*bintree{}},
 		}},
 	}},
 }}
 
 // RestoreAsset restores an asset under the given directory
 func RestoreAsset(dir, name string) error {
-        data, err := Asset(name)
-        if err != nil {
-                return err
-        }
-        info, err := AssetInfo(name)
-        if err != nil {
-                return err
-        }
-        err = os.MkdirAll(_filePath(dir, filepath.Dir(name)), os.FileMode(0755))
-        if err != nil {
-                return err
-        }
-        err = ioutil.WriteFile(_filePath(dir, name), data, info.Mode())
-        if err != nil {
-                return err
-        }
-        err = os.Chtimes(_filePath(dir, name), info.ModTime(), info.ModTime())
-        if err != nil {
-                return err
-        }
-        return nil
+	data, err := Asset(name)
+	if err != nil {
+		return err
+	}
+	info, err := AssetInfo(name)
+	if err != nil {
+		return err
+	}
+	err = os.MkdirAll(_filePath(dir, filepath.Dir(name)), os.FileMode(0755))
+	if err != nil {
+		return err
+	}
+	err = ioutil.WriteFile(_filePath(dir, name), data, info.Mode())
+	if err != nil {
+		return err
+	}
+	err = os.Chtimes(_filePath(dir, name), info.ModTime(), info.ModTime())
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 // RestoreAssets restores an asset under the given directory recursively
 func RestoreAssets(dir, name string) error {
-        children, err := AssetDir(name)
-        // File
-        if err != nil {
-                return RestoreAsset(dir, name)
-        }
-        // Dir
-        for _, child := range children {
-                err = RestoreAssets(dir, filepath.Join(name, child))
-                if err != nil {
-                        return err
-                }
-        }
-        return nil
+	children, err := AssetDir(name)
+	// File
+	if err != nil {
+		return RestoreAsset(dir, name)
+	}
+	// Dir
+	for _, child := range children {
+		err = RestoreAssets(dir, filepath.Join(name, child))
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func _filePath(dir, name string) string {
-        cannonicalName := strings.Replace(name, "\\", "/", -1)
-        return filepath.Join(append([]string{dir}, strings.Split(cannonicalName, "/")...)...)
+	cannonicalName := strings.Replace(name, "\\", "/", -1)
+	return filepath.Join(append([]string{dir}, strings.Split(cannonicalName, "/")...)...)
 }
 
