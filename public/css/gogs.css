@@ -963,7 +963,7 @@ footer .container .links > *:first-child {
 .user.reset.password form .help,
 .user.signin form .help,
 .user.signup form .help {
-  margin-left: 265px !important;
+  margin-left: 215px !important;
 }
 .user.activate form .optional .title,
 .user.forgot.password form .optional .title,
