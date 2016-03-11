@@ -41,6 +41,8 @@ const (
 	ACTION_MERGE_PULL_REQUEST                        // 11
 	ACTION_CLOSE_ISSUE                               // 12
 	ACTION_REOPEN_ISSUE                              // 13
+	ACTION_CLOSE_PULL_REQUEST                        // 14
+	ACTION_REOPEN_PULL_REQUEST                       // 15
 )
 
 var (
@@ -82,13 +84,18 @@ type Action struct {
 	RefName      string
 	IsPrivate    bool      `xorm:"NOT NULL DEFAULT false"`
 	Content      string    `xorm:"TEXT"`
-	Created      time.Time `xorm:"created"`
+	Created      time.Time `xorm:"-"`
+	CreatedUnix  int64
+}
+
+func (a *Action) BeforeInsert() {
+	a.CreatedUnix = time.Now().UTC().Unix()
 }
 
 func (a *Action) AfterSet(colName string, _ xorm.Cell) {
 	switch colName {
-	case "created":
-		a.Created = regulateTimeZone(a.Created)
+	case "created_unix":
+		a.Created = time.Unix(a.CreatedUnix, 0).Local()
 	}
 }
 

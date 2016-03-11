@@ -2,7 +2,7 @@
 // Use of this source code is governed by a MIT-style
 // license that can be found in the LICENSE file.
 
-package middleware
+package context
 
 import (
 	"fmt"
@@ -140,33 +140,7 @@ func RepoAssignment(args ...bool) macaron.Handler {
 		ctx.Data["Owner"] = ctx.Repo.Repository.Owner
 		ctx.Data["IsRepositoryOwner"] = ctx.Repo.IsOwner()
 		ctx.Data["IsRepositoryAdmin"] = ctx.Repo.IsAdmin()
-		ctx.Data["IsRepositoryPusher"] = ctx.Repo.IsPusher()
-
-		if repo.IsFork {
-			RetrieveBaseRepo(ctx, repo)
-			if ctx.Written() {
-				return
-			}
-		}
-
-		// People who have push access and propose a new pull request.
-		if ctx.Repo.IsPusher() {
-			// Pull request is allowed if this is a fork repository
-			// and base repository accepts pull requests.
-			if repo.BaseRepo != nil {
-				if repo.BaseRepo.AllowsPulls() {
-					ctx.Data["CanPullRequest"] = true
-					ctx.Data["BaseRepo"] = repo.BaseRepo
-				}
-			} else {
-				// Or, this is repository accepts pull requests between branches.
-				if repo.AllowsPulls() {
-					ctx.Data["CanPullRequest"] = true
-					ctx.Data["BaseRepo"] = repo
-					ctx.Data["IsBetweenBranches"] = true
-				}
-			}
-		}
+		ctx.Data["IsRepositoryWriter"] = ctx.Repo.IsWriter()
 
 		ctx.Data["DisableSSH"] = setting.SSH.Disabled
 		ctx.Data["CloneLink"] = repo.CloneLink()
@@ -209,9 +183,40 @@ func RepoAssignment(args ...bool) macaron.Handler {
 				ctx.Repo.BranchName = brs[0]
 			}
 		}
-
 		ctx.Data["BranchName"] = ctx.Repo.BranchName
 		ctx.Data["CommitID"] = ctx.Repo.CommitID
+
+		if repo.IsFork {
+			RetrieveBaseRepo(ctx, repo)
+			if ctx.Written() {
+				return
+			}
+		}
+
+		// People who have push access and propose a new pull request.
+		if ctx.Repo.IsWriter() {
+			// Pull request is allowed if this is a fork repository
+			// and base repository accepts pull requests.
+			if repo.BaseRepo != nil {
+				if repo.BaseRepo.AllowsPulls() {
+					ctx.Data["BaseRepo"] = repo.BaseRepo
+					ctx.Repo.PullRequest.BaseRepo = repo.BaseRepo
+					ctx.Repo.PullRequest.Allowed = true
+					ctx.Repo.PullRequest.HeadInfo = ctx.Repo.Owner.Name + ":" + ctx.Repo.BranchName
+				}
+			} else {
+				// Or, this is repository accepts pull requests between branches.
+				if repo.AllowsPulls() {
+					ctx.Data["BaseRepo"] = repo
+					ctx.Repo.PullRequest.BaseRepo = repo
+					ctx.Repo.PullRequest.Allowed = true
+					ctx.Repo.PullRequest.SameRepo = true
+					ctx.Repo.PullRequest.HeadInfo = ctx.Repo.BranchName
+				}
+			}
+		}
+		fmt.Println(222222, ctx.Repo.PullRequest)
+		ctx.Data["PullRequestCtx"] = ctx.Repo.PullRequest
 
 		if ctx.Query("go-get") == "1" {
 			ctx.Data["GoGetImport"] = path.Join(setting.Domain, setting.AppSubUrl, owner.Name, repo.Name)
@@ -336,16 +341,16 @@ func RepoRef() macaron.Handler {
 
 func RequireRepoAdmin() macaron.Handler {
 	return func(ctx *Context) {
-		if !ctx.Repo.IsAdmin() {
+		if !ctx.IsSigned || (!ctx.Repo.IsAdmin() && !ctx.User.IsAdmin) {
 			ctx.Handle(404, ctx.Req.RequestURI, nil)
 			return
 		}
 	}
 }
 
-func RequireRepoPusher() macaron.Handler {
+func RequireRepoWriter() macaron.Handler {
 	return func(ctx *Context) {
-		if !ctx.Repo.IsPusher() {
+		if !ctx.IsSigned || (!ctx.Repo.IsWriter() && !ctx.User.IsAdmin) {
 			ctx.Handle(404, ctx.Req.RequestURI, nil)
 			return
 		}

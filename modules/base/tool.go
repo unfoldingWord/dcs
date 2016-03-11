@@ -97,6 +97,7 @@ func GetRandomString(n int, alphabets ...byte) string {
 }
 
 // http://code.google.com/p/go/source/browse/pbkdf2/pbkdf2.go?repo=crypto
+// FIXME: use https://godoc.org/golang.org/x/crypto/pbkdf2?
 func PBKDF2(password, salt []byte, iter, keyLen int, h func() hash.Hash) []byte {
 	prf := hmac.New(h, password)
 	hashLen := prf.Size()
@@ -462,6 +463,15 @@ func EllipsisString(str string, length int) string {
 		return str
 	}
 	return str[:length-3] + "..."
+}
+
+// TruncateString returns a truncated string with given limit,
+// it returns input string if length is not reached limit.
+func TruncateString(str string, limit int) string {
+	if len(str) < limit {
+		return str
+	}
+	return str[:limit]
 }
 
 // StringsToInt64s converts a slice of string to a slice of int64.
