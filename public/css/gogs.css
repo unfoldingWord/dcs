@@ -2620,3 +2620,11 @@ footer .container .links > *:first-child {
   font-size: 12px;
   color: #808080;
 }
+
+.repository.new.repo .ui.form #readme {
+  margin-left: 265px !important;
+}
+
+.repository.new.repo .ui.form #auto-init .help {
+  margin-left: 0 !important;
+}
