@@ -52,12 +52,26 @@ type Issue struct {
 	RenderedContent string `xorm:"-"`
 	Priority        int
 	NumComments     int
-	Deadline        time.Time
-	Created         time.Time `xorm:"CREATED"`
-	Updated         time.Time `xorm:"UPDATED"`
+
+	Deadline     time.Time `xorm:"-"`
+	DeadlineUnix int64
+	Created      time.Time `xorm:"-"`
+	CreatedUnix  int64
+	Updated      time.Time `xorm:"-"`
+	UpdatedUnix  int64
 
 	Attachments []*Attachment `xorm:"-"`
 	Comments    []*Comment    `xorm:"-"`
+}
+
+func (i *Issue) BeforeInsert() {
+	i.CreatedUnix = time.Now().UTC().Unix()
+	i.UpdatedUnix = i.CreatedUnix
+}
+
+func (i *Issue) BeforeUpdate() {
+	i.UpdatedUnix = time.Now().UTC().Unix()
+	i.DeadlineUnix = i.Deadline.UTC().Unix()
 }
 
 func (i *Issue) AfterSet(colName string, _ xorm.Cell) {
@@ -92,8 +106,12 @@ func (i *Issue) AfterSet(colName string, _ xorm.Cell) {
 		if err != nil {
 			log.Error(3, "GetUserByID[%d]: %v", i.ID, err)
 		}
-	case "created":
-		i.Created = regulateTimeZone(i.Created)
+	case "deadline_unix":
+		i.Deadline = time.Unix(i.DeadlineUnix, 0).Local()
+	case "created_unix":
+		i.Created = time.Unix(i.CreatedUnix, 0).Local()
+	case "updated_unix":
+		i.Updated = time.Unix(i.UpdatedUnix, 0).Local()
 	}
 }
 
@@ -219,6 +237,7 @@ func (i *Issue) ReadBy(uid int64) error {
 }
 
 func (i *Issue) changeStatus(e *xorm.Session, doer *User, repo *Repository, isClosed bool) (err error) {
+	// Nothing should be performed if current status is same as target status
 	if i.IsClosed == isClosed {
 		return nil
 	}
@@ -230,7 +249,7 @@ func (i *Issue) changeStatus(e *xorm.Session, doer *User, repo *Repository, isCl
 		return err
 	}
 
-	// Update labels.
+	// Update issue count of labels
 	if err = i.getLabels(e); err != nil {
 		return err
 	}
@@ -245,12 +264,12 @@ func (i *Issue) changeStatus(e *xorm.Session, doer *User, repo *Repository, isCl
 		}
 	}
 
-	// Update milestone.
+	// Update issue count of milestone
 	if err = changeMilestoneIssueStats(e, i); err != nil {
 		return err
 	}
 
-	// New action comment.
+	// New action comment
 	if _, err = createStatusComment(e, doer, repo, i); err != nil {
 		return err
 	}
@@ -258,7 +277,7 @@ func (i *Issue) changeStatus(e *xorm.Session, doer *User, repo *Repository, isCl
 	return nil
 }
 
-// ChangeStatus changes issue status to open/closed.
+// ChangeStatus changes issue status to open or closed.
 func (i *Issue) ChangeStatus(doer *User, repo *Repository, isClosed bool) (err error) {
 	sess := x.NewSession()
 	defer sessionRelease(sess)
@@ -297,16 +316,18 @@ func newIssue(e *xorm.Session, repo *Repository, issue *Issue, labelIDs []int64,
 		return err
 	}
 
-	// During the session, SQLite3 dirver cannot handle retrieve objects after update something.
-	// So we have to get all needed labels first.
-	labels := make([]*Label, 0, len(labelIDs))
-	if err = e.In("id", labelIDs).Find(&labels); err != nil {
-		return fmt.Errorf("find all labels: %v", err)
-	}
+	if len(labelIDs) > 0 {
+		// During the session, SQLite3 dirver cannot handle retrieve objects after update something.
+		// So we have to get all needed labels first.
+		labels := make([]*Label, 0, len(labelIDs))
+		if err = e.In("id", labelIDs).Find(&labels); err != nil {
+			return fmt.Errorf("find all labels: %v", err)
+		}
 
-	for _, label := range labels {
-		if err = issue.addLabel(e, label); err != nil {
-			return fmt.Errorf("addLabel: %v", err)
+		for _, label := range labels {
+			if err = issue.addLabel(e, label); err != nil {
+				return fmt.Errorf("addLabel: %v", err)
+			}
 		}
 	}
 
@@ -474,11 +495,11 @@ func Issues(opts *IssuesOptions) ([]*Issue, error) {
 
 	switch opts.SortType {
 	case "oldest":
-		sess.Asc("created")
+		sess.Asc("created_unix")
 	case "recentupdate":
-		sess.Desc("updated")
+		sess.Desc("updated_unix")
 	case "leastupdate":
-		sess.Asc("updated")
+		sess.Asc("updated_unix")
 	case "mostcomment":
 		sess.Desc("num_comments")
 	case "leastcomment":
@@ -486,7 +507,7 @@ func Issues(opts *IssuesOptions) ([]*Issue, error) {
 	case "priority":
 		sess.Desc("priority")
 	default:
-		sess.Desc("created")
+		sess.Desc("created_unix")
 	}
 
 	labelIDs := base.StringsToInt64s(strings.Split(opts.Labels, ","))
@@ -857,7 +878,7 @@ func UpdateIssue(issue *Issue) error {
 	return updateIssue(x, issue)
 }
 
-// updateIssueCols updates specific fields of given issue.
+// updateIssueCols only updates values of specific columns for given issue.
 func updateIssueCols(e Engine, issue *Issue, cols ...string) error {
 	_, err := e.Id(issue.ID).Cols(cols...).Update(issue)
 	return err
@@ -948,12 +969,19 @@ type Milestone struct {
 	IsClosed        bool
 	NumIssues       int
 	NumClosedIssues int
-	NumOpenIssues   int `xorm:"-"`
-	Completeness    int // Percentage(1-100).
-	Deadline        time.Time
-	DeadlineString  string `xorm:"-"`
-	IsOverDue       bool   `xorm:"-"`
-	ClosedDate      time.Time
+	NumOpenIssues   int  `xorm:"-"`
+	Completeness    int  // Percentage(1-100).
+	IsOverDue       bool `xorm:"-"`
+
+	DeadlineString string    `xorm:"-"`
+	Deadline       time.Time `xorm:"-"`
+	DeadlineUnix   int64
+	ClosedDate     time.Time `xorm:"-"`
+	ClosedDateUnix int64
+}
+
+func (m *Milestone) BeforeInsert() {
+	m.DeadlineUnix = m.Deadline.UTC().Unix()
 }
 
 func (m *Milestone) BeforeUpdate() {
@@ -962,19 +990,25 @@ func (m *Milestone) BeforeUpdate() {
 	} else {
 		m.Completeness = 0
 	}
+
+	m.DeadlineUnix = m.Deadline.UTC().Unix()
+	m.ClosedDateUnix = m.ClosedDate.UTC().Unix()
 }
 
 func (m *Milestone) AfterSet(colName string, _ xorm.Cell) {
-	if colName == "deadline" {
+	switch colName {
+	case "deadline_unix":
+		m.Deadline = time.Unix(m.DeadlineUnix, 0).Local()
 		if m.Deadline.Year() == 9999 {
 			return
 		}
-		m.Deadline = regulateTimeZone(m.Deadline)
 
 		m.DeadlineString = m.Deadline.Format("2006-01-02")
-		if time.Now().After(m.Deadline) {
+		if time.Now().Local().After(m.Deadline) {
 			m.IsOverDue = true
 		}
+	case "closed_date_unix":
+		m.ClosedDate = time.Unix(m.ClosedDateUnix, 0).Local()
 	}
 }
 
@@ -1241,270 +1275,6 @@ func DeleteMilestoneByID(id int64) error {
 	return sess.Commit()
 }
 
-// _________                                       __
-// \_   ___ \  ____   _____   _____   ____   _____/  |_
-// /    \  \/ /  _ \ /     \ /     \_/ __ \ /    \   __\
-// \     \___(  <_> )  Y Y  \  Y Y  \  ___/|   |  \  |
-//  \______  /\____/|__|_|  /__|_|  /\___  >___|  /__|
-//         \/             \/      \/     \/     \/
-
-// CommentType defines whether a comment is just a simple comment, an action (like close) or a reference.
-type CommentType int
-
-const (
-	// Plain comment, can be associated with a commit (CommitId > 0) and a line (Line > 0)
-	COMMENT_TYPE_COMMENT CommentType = iota
-	COMMENT_TYPE_REOPEN
-	COMMENT_TYPE_CLOSE
-
-	// References.
-	COMMENT_TYPE_ISSUE_REF
-	// Reference from a commit (not part of a pull request)
-	COMMENT_TYPE_COMMIT_REF
-	// Reference from a comment
-	COMMENT_TYPE_COMMENT_REF
-	// Reference from a pull request
-	COMMENT_TYPE_PULL_REF
-)
-
-type CommentTag int
-
-const (
-	COMMENT_TAG_NONE CommentTag = iota
-	COMMENT_TAG_POSTER
-	COMMENT_TAG_ADMIN
-	COMMENT_TAG_OWNER
-)
-
-// Comment represents a comment in commit and issue page.
-type Comment struct {
-	ID              int64 `xorm:"pk autoincr"`
-	Type            CommentType
-	PosterID        int64
-	Poster          *User `xorm:"-"`
-	IssueID         int64 `xorm:"INDEX"`
-	CommitID        int64
-	Line            int64
-	Content         string    `xorm:"TEXT"`
-	RenderedContent string    `xorm:"-"`
-	Created         time.Time `xorm:"CREATED"`
-
-	// Reference issue in commit message
-	CommitSHA string `xorm:"VARCHAR(40)"`
-
-	Attachments []*Attachment `xorm:"-"`
-
-	// For view issue page.
-	ShowTag CommentTag `xorm:"-"`
-}
-
-func (c *Comment) AfterSet(colName string, _ xorm.Cell) {
-	var err error
-	switch colName {
-	case "id":
-		c.Attachments, err = GetAttachmentsByCommentID(c.ID)
-		if err != nil {
-			log.Error(3, "GetAttachmentsByCommentID[%d]: %v", c.ID, err)
-		}
-
-	case "poster_id":
-		c.Poster, err = GetUserByID(c.PosterID)
-		if err != nil {
-			if IsErrUserNotExist(err) {
-				c.PosterID = -1
-				c.Poster = NewFakeUser()
-			} else {
-				log.Error(3, "GetUserByID[%d]: %v", c.ID, err)
-			}
-		}
-	case "created":
-		c.Created = regulateTimeZone(c.Created)
-	}
-}
-
-func (c *Comment) AfterDelete() {
-	_, err := DeleteAttachmentsByComment(c.ID, true)
-
-	if err != nil {
-		log.Info("Could not delete files for comment %d on issue #%d: %s", c.ID, c.IssueID, err)
-	}
-}
-
-// HashTag returns unique hash tag for comment.
-func (c *Comment) HashTag() string {
-	return "issuecomment-" + com.ToStr(c.ID)
-}
-
-// EventTag returns unique event hash tag for comment.
-func (c *Comment) EventTag() string {
-	return "event-" + com.ToStr(c.ID)
-}
-
-func createComment(e *xorm.Session, u *User, repo *Repository, issue *Issue, commitID, line int64, cmtType CommentType, content, commitSHA string, uuids []string) (_ *Comment, err error) {
-	comment := &Comment{
-		PosterID:  u.Id,
-		Type:      cmtType,
-		IssueID:   issue.ID,
-		CommitID:  commitID,
-		Line:      line,
-		Content:   content,
-		CommitSHA: commitSHA,
-	}
-	if _, err = e.Insert(comment); err != nil {
-		return nil, err
-	}
-
-	// Compose comment action, could be plain comment, close or reopen issue.
-	// This object will be used to notify watchers in the end of function.
-	act := &Action{
-		ActUserID:    u.Id,
-		ActUserName:  u.Name,
-		ActEmail:     u.Email,
-		Content:      fmt.Sprintf("%d|%s", issue.Index, strings.Split(content, "\n")[0]),
-		RepoID:       repo.ID,
-		RepoUserName: repo.Owner.Name,
-		RepoName:     repo.Name,
-		IsPrivate:    repo.IsPrivate,
-	}
-
-	// Check comment type.
-	switch cmtType {
-	case COMMENT_TYPE_COMMENT:
-		act.OpType = ACTION_COMMENT_ISSUE
-
-		if _, err = e.Exec("UPDATE `issue` SET num_comments=num_comments+1 WHERE id=?", issue.ID); err != nil {
-			return nil, err
-		}
-
-		// Check attachments.
-		attachments := make([]*Attachment, 0, len(uuids))
-		for _, uuid := range uuids {
-			attach, err := getAttachmentByUUID(e, uuid)
-			if err != nil {
-				if IsErrAttachmentNotExist(err) {
-					continue
-				}
-				return nil, fmt.Errorf("getAttachmentByUUID[%s]: %v", uuid, err)
-			}
-			attachments = append(attachments, attach)
-		}
-
-		for i := range attachments {
-			attachments[i].IssueID = issue.ID
-			attachments[i].CommentID = comment.ID
-			// No assign value could be 0, so ignore AllCols().
-			if _, err = e.Id(attachments[i].ID).Update(attachments[i]); err != nil {
-				return nil, fmt.Errorf("update attachment[%d]: %v", attachments[i].ID, err)
-			}
-		}
-
-	case COMMENT_TYPE_REOPEN:
-		act.OpType = ACTION_REOPEN_ISSUE
-
-		if issue.IsPull {
-			_, err = e.Exec("UPDATE `repository` SET num_closed_pulls=num_closed_pulls-1 WHERE id=?", repo.ID)
-		} else {
-			_, err = e.Exec("UPDATE `repository` SET num_closed_issues=num_closed_issues-1 WHERE id=?", repo.ID)
-		}
-		if err != nil {
-			return nil, err
-		}
-	case COMMENT_TYPE_CLOSE:
-		act.OpType = ACTION_CLOSE_ISSUE
-
-		if issue.IsPull {
-			_, err = e.Exec("UPDATE `repository` SET num_closed_pulls=num_closed_pulls+1 WHERE id=?", repo.ID)
-		} else {
-			_, err = e.Exec("UPDATE `repository` SET num_closed_issues=num_closed_issues+1 WHERE id=?", repo.ID)
-		}
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	// Notify watchers for whatever action comes in.
-	if err = notifyWatchers(e, act); err != nil {
-		return nil, fmt.Errorf("notifyWatchers: %v", err)
-	}
-
-	return comment, nil
-}
-
-func createStatusComment(e *xorm.Session, doer *User, repo *Repository, issue *Issue) (*Comment, error) {
-	cmtType := COMMENT_TYPE_CLOSE
-	if !issue.IsClosed {
-		cmtType = COMMENT_TYPE_REOPEN
-	}
-	return createComment(e, doer, repo, issue, 0, 0, cmtType, "", "", nil)
-}
-
-// CreateComment creates comment of issue or commit.
-func CreateComment(doer *User, repo *Repository, issue *Issue, commitID, line int64, cmtType CommentType, content, commitSHA string, attachments []string) (comment *Comment, err error) {
-	sess := x.NewSession()
-	defer sessionRelease(sess)
-	if err = sess.Begin(); err != nil {
-		return nil, err
-	}
-
-	comment, err = createComment(sess, doer, repo, issue, commitID, line, cmtType, content, commitSHA, attachments)
-	if err != nil {
-		return nil, err
-	}
-
-	return comment, sess.Commit()
-}
-
-// CreateIssueComment creates a plain issue comment.
-func CreateIssueComment(doer *User, repo *Repository, issue *Issue, content string, attachments []string) (*Comment, error) {
-	return CreateComment(doer, repo, issue, 0, 0, COMMENT_TYPE_COMMENT, content, "", attachments)
-}
-
-// CreateRefComment creates a commit reference comment to issue.
-func CreateRefComment(doer *User, repo *Repository, issue *Issue, content, commitSHA string) error {
-	if len(commitSHA) == 0 {
-		return fmt.Errorf("cannot create reference with empty commit SHA")
-	}
-
-	// Check if same reference from same commit has already existed.
-	has, err := x.Get(&Comment{
-		Type:      COMMENT_TYPE_COMMIT_REF,
-		IssueID:   issue.ID,
-		CommitSHA: commitSHA,
-	})
-	if err != nil {
-		return fmt.Errorf("check reference comment: %v", err)
-	} else if has {
-		return nil
-	}
-
-	_, err = CreateComment(doer, repo, issue, 0, 0, COMMENT_TYPE_COMMIT_REF, content, commitSHA, nil)
-	return err
-}
-
-// GetCommentByID returns the comment by given ID.
-func GetCommentByID(id int64) (*Comment, error) {
-	c := new(Comment)
-	has, err := x.Id(id).Get(c)
-	if err != nil {
-		return nil, err
-	} else if !has {
-		return nil, ErrCommentNotExist{id}
-	}
-	return c, nil
-}
-
-// GetCommentsByIssueID returns all comments of issue by given ID.
-func GetCommentsByIssueID(issueID int64) ([]*Comment, error) {
-	comments := make([]*Comment, 0, 10)
-	return comments, x.Where("issue_id=?", issueID).Asc("created").Find(&comments)
-}
-
-// UpdateComment updates information of comment.
-func UpdateComment(c *Comment) error {
-	_, err := x.Id(c.ID).AllCols().Update(c)
-	return err
-}
-
 // Attachment represent a attachment of issue/comment/release.
 type Attachment struct {
 	ID        int64  `xorm:"pk autoincr"`
@@ -1513,7 +1283,20 @@ type Attachment struct {
 	CommentID int64
 	ReleaseID int64 `xorm:"INDEX"`
 	Name      string
-	Created   time.Time `xorm:"CREATED"`
+
+	Created     time.Time `xorm:"-"`
+	CreatedUnix int64
+}
+
+func (a *Attachment) BeforeInsert() {
+	a.CreatedUnix = time.Now().UTC().Unix()
+}
+
+func (a *Attachment) AfterSet(colName string, _ xorm.Cell) {
+	switch colName {
+	case "created_unix":
+		a.Created = time.Unix(a.CreatedUnix, 0).Local()
+	}
 }
 
 // AttachmentLocalPath returns where attachment is stored in local file system based on given UUID.

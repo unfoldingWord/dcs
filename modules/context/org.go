@@ -2,7 +2,7 @@
 // Use of this source code is governed by a MIT-style
 // license that can be found in the LICENSE file.
 
-package middleware
+package context
 
 import (
 	"strings"
@@ -90,7 +90,7 @@ func HandleOrgAssignment(ctx *Context, args ...bool) {
 	if ctx.Org.IsMember {
 		if ctx.Org.IsOwner {
 			if err := org.GetTeams(); err != nil {
-				ctx.Handle(500, "GetUserTeams", err)
+				ctx.Handle(500, "GetTeams", err)
 				return
 			}
 		} else {

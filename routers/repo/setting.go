@@ -13,9 +13,9 @@ import (
 	"github.com/gogits/gogs/models"
 	"github.com/gogits/gogs/modules/auth"
 	"github.com/gogits/gogs/modules/base"
+	"github.com/gogits/gogs/modules/context"
 	"github.com/gogits/gogs/modules/log"
 	"github.com/gogits/gogs/modules/mailer"
-	"github.com/gogits/gogs/modules/middleware"
 	"github.com/gogits/gogs/modules/setting"
 )
 
@@ -27,13 +27,13 @@ const (
 	DEPLOY_KEYS      base.TplName = "repo/settings/deploy_keys"
 )
 
-func Settings(ctx *middleware.Context) {
+func Settings(ctx *context.Context) {
 	ctx.Data["Title"] = ctx.Tr("repo.settings")
 	ctx.Data["PageIsSettingsOptions"] = true
 	ctx.HTML(200, SETTINGS_OPTIONS)
 }
 
-func SettingsPost(ctx *middleware.Context, form auth.RepoSettingForm) {
+func SettingsPost(ctx *context.Context, form auth.RepoSettingForm) {
 	ctx.Data["Title"] = ctx.Tr("repo.settings")
 	ctx.Data["PageIsSettingsOptions"] = true
 
@@ -142,6 +142,10 @@ func SettingsPost(ctx *middleware.Context, form auth.RepoSettingForm) {
 		ctx.Redirect(ctx.Repo.RepoLink + "/settings")
 
 	case "convert":
+		if !ctx.Repo.IsOwner() {
+			ctx.Error(404)
+			return
+		}
 		if repo.Name != form.RepoName {
 			ctx.RenderWithErr(ctx.Tr("form.enterred_invalid_repo_name"), SETTINGS_OPTIONS, nil)
 			return
@@ -172,6 +176,10 @@ func SettingsPost(ctx *middleware.Context, form auth.RepoSettingForm) {
 		ctx.Redirect(setting.AppSubUrl + "/" + ctx.Repo.Owner.Name + "/" + repo.Name)
 
 	case "transfer":
+		if !ctx.Repo.IsOwner() {
+			ctx.Error(404)
+			return
+		}
 		if repo.Name != form.RepoName {
 			ctx.RenderWithErr(ctx.Tr("form.enterred_invalid_repo_name"), SETTINGS_OPTIONS, nil)
 			return
@@ -205,7 +213,12 @@ func SettingsPost(ctx *middleware.Context, form auth.RepoSettingForm) {
 		log.Trace("Repository transfered: %s/%s -> %s", ctx.Repo.Owner.Name, repo.Name, newOwner)
 		ctx.Flash.Success(ctx.Tr("repo.settings.transfer_succeed"))
 		ctx.Redirect(setting.AppSubUrl + "/" + newOwner + "/" + repo.Name)
+
 	case "delete":
+		if !ctx.Repo.IsOwner() {
+			ctx.Error(404)
+			return
+		}
 		if repo.Name != form.RepoName {
 			ctx.RenderWithErr(ctx.Tr("form.enterred_invalid_repo_name"), SETTINGS_OPTIONS, nil)
 			return
@@ -226,7 +239,12 @@ func SettingsPost(ctx *middleware.Context, form auth.RepoSettingForm) {
 
 		ctx.Flash.Success(ctx.Tr("repo.settings.deletion_success"))
 		ctx.Redirect(ctx.Repo.Owner.DashboardLink())
+
 	case "delete-wiki":
+		if !ctx.Repo.IsOwner() {
+			ctx.Error(404)
+			return
+		}
 		if repo.Name != form.RepoName {
 			ctx.RenderWithErr(ctx.Tr("form.enterred_invalid_repo_name"), SETTINGS_OPTIONS, nil)
 			return
@@ -253,38 +271,21 @@ func SettingsPost(ctx *middleware.Context, form auth.RepoSettingForm) {
 	}
 }
 
-func Collaboration(ctx *middleware.Context) {
+func Collaboration(ctx *context.Context) {
 	ctx.Data["Title"] = ctx.Tr("repo.settings")
 	ctx.Data["PageIsSettingsCollaboration"] = true
-
-	// Delete collaborator.
-	remove := strings.ToLower(ctx.Query("remove"))
-	if len(remove) > 0 && remove != ctx.Repo.Owner.LowerName {
-		u, err := models.GetUserByName(remove)
-		if err != nil {
-			ctx.Handle(500, "GetUserByName", err)
-			return
-		}
-		if err := ctx.Repo.Repository.DeleteCollaborator(u); err != nil {
-			ctx.Handle(500, "DeleteCollaborator", err)
-			return
-		}
-		ctx.Flash.Success(ctx.Tr("repo.settings.remove_collaborator_success"))
-		ctx.Redirect(ctx.Repo.RepoLink + "/settings/collaboration")
-		return
-	}
 
 	users, err := ctx.Repo.Repository.GetCollaborators()
 	if err != nil {
 		ctx.Handle(500, "GetCollaborators", err)
 		return
 	}
-
 	ctx.Data["Collaborators"] = users
+
 	ctx.HTML(200, COLLABORATION)
 }
 
-func CollaborationPost(ctx *middleware.Context) {
+func CollaborationPost(ctx *context.Context) {
 	name := strings.ToLower(ctx.Query("collaborator"))
 	if len(name) == 0 || ctx.Repo.Owner.LowerName == name {
 		ctx.Redirect(setting.AppSubUrl + ctx.Req.URL.Path)
@@ -332,7 +333,27 @@ func CollaborationPost(ctx *middleware.Context) {
 	ctx.Redirect(setting.AppSubUrl + ctx.Req.URL.Path)
 }
 
-func parseOwnerAndRepo(ctx *middleware.Context) (*models.User, *models.Repository) {
+func ChangeCollaborationAccessMode(ctx *context.Context) {
+	if err := ctx.Repo.Repository.ChangeCollaborationAccessMode(
+		ctx.QueryInt64("uid"),
+		models.AccessMode(ctx.QueryInt("mode"))); err != nil {
+		log.Error(4, "ChangeCollaborationAccessMode: %v", err)
+	}
+}
+
+func DeleteCollaboration(ctx *context.Context) {
+	if err := ctx.Repo.Repository.DeleteCollaboration(ctx.QueryInt64("id")); err != nil {
+		ctx.Flash.Error("DeleteCollaboration: " + err.Error())
+	} else {
+		ctx.Flash.Success(ctx.Tr("repo.settings.remove_collaborator_success"))
+	}
+
+	ctx.JSON(200, map[string]interface{}{
+		"redirect": ctx.Repo.RepoLink + "/settings/collaboration",
+	})
+}
+
+func parseOwnerAndRepo(ctx *context.Context) (*models.User, *models.Repository) {
 	owner, err := models.GetUserByName(ctx.Params(":username"))
 	if err != nil {
 		if models.IsErrUserNotExist(err) {
@@ -356,7 +377,7 @@ func parseOwnerAndRepo(ctx *middleware.Context) (*models.User, *models.Repositor
 	return owner, repo
 }
 
-func GitHooks(ctx *middleware.Context) {
+func GitHooks(ctx *context.Context) {
 	ctx.Data["Title"] = ctx.Tr("repo.settings.githooks")
 	ctx.Data["PageIsSettingsGitHooks"] = true
 
@@ -370,7 +391,7 @@ func GitHooks(ctx *middleware.Context) {
 	ctx.HTML(200, GITHOOKS)
 }
 
-func GitHooksEdit(ctx *middleware.Context) {
+func GitHooksEdit(ctx *context.Context) {
 	ctx.Data["Title"] = ctx.Tr("repo.settings.githooks")
 	ctx.Data["PageIsSettingsGitHooks"] = true
 
@@ -388,7 +409,7 @@ func GitHooksEdit(ctx *middleware.Context) {
 	ctx.HTML(200, GITHOOK_EDIT)
 }
 
-func GitHooksEditPost(ctx *middleware.Context) {
+func GitHooksEditPost(ctx *context.Context) {
 	name := ctx.Params(":name")
 	hook, err := ctx.Repo.GitRepo.GetHook(name)
 	if err != nil {
@@ -407,7 +428,7 @@ func GitHooksEditPost(ctx *middleware.Context) {
 	ctx.Redirect(ctx.Repo.RepoLink + "/settings/hooks/git")
 }
 
-func DeployKeys(ctx *middleware.Context) {
+func DeployKeys(ctx *context.Context) {
 	ctx.Data["Title"] = ctx.Tr("repo.settings.deploy_keys")
 	ctx.Data["PageIsSettingsKeys"] = true
 
@@ -421,7 +442,7 @@ func DeployKeys(ctx *middleware.Context) {
 	ctx.HTML(200, DEPLOY_KEYS)
 }
 
-func DeployKeysPost(ctx *middleware.Context, form auth.AddSSHKeyForm) {
+func DeployKeysPost(ctx *context.Context, form auth.AddSSHKeyForm) {
 	ctx.Data["Title"] = ctx.Tr("repo.settings.deploy_keys")
 	ctx.Data["PageIsSettingsKeys"] = true
 
@@ -471,7 +492,7 @@ func DeployKeysPost(ctx *middleware.Context, form auth.AddSSHKeyForm) {
 	ctx.Redirect(ctx.Repo.RepoLink + "/settings/keys")
 }
 
-func DeleteDeployKey(ctx *middleware.Context) {
+func DeleteDeployKey(ctx *context.Context) {
 	if err := models.DeleteDeployKey(ctx.User, ctx.QueryInt64("id")); err != nil {
 		ctx.Flash.Error("DeleteDeployKey: " + err.Error())
 	} else {
