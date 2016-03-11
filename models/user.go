@@ -37,8 +37,8 @@ import (
 type UserType int
 
 const (
-	INDIVIDUAL UserType = iota // Historic reason to make it starts at 0.
-	ORGANIZATION
+	USER_TYPE_INDIVIDUAL UserType = iota // Historic reason to make it starts at 0.
+	USER_TYPE_ORGANIZATION
 )
 
 var (
@@ -69,10 +69,13 @@ type User struct {
 	Repos       []*Repository `xorm:"-"`
 	Location    string
 	Website     string
-	Rands       string    `xorm:"VARCHAR(10)"`
-	Salt        string    `xorm:"VARCHAR(10)"`
-	Created     time.Time `xorm:"CREATED"`
-	Updated     time.Time `xorm:"UPDATED"`
+	Rands       string `xorm:"VARCHAR(10)"`
+	Salt        string `xorm:"VARCHAR(10)"`
+
+	Created     time.Time `xorm:"-"`
+	CreatedUnix int64
+	Updated     time.Time `xorm:"-"`
+	UpdatedUnix int64
 
 	// Remember visibility choice for convenience, true for private
 	LastRepoVisibility bool
@@ -104,18 +107,26 @@ type User struct {
 	Members     []*User `xorm:"-"`
 }
 
+func (u *User) BeforeInsert() {
+	u.CreatedUnix = time.Now().UTC().Unix()
+	u.UpdatedUnix = u.CreatedUnix
+}
+
 func (u *User) BeforeUpdate() {
 	if u.MaxRepoCreation < -1 {
 		u.MaxRepoCreation = -1
 	}
+	u.UpdatedUnix = time.Now().UTC().Unix()
 }
 
 func (u *User) AfterSet(colName string, _ xorm.Cell) {
 	switch colName {
 	case "full_name":
 		u.FullName = markdown.Sanitizer.Sanitize(u.FullName)
-	case "created":
-		u.Created = regulateTimeZone(u.Created)
+	case "created_unix":
+		u.Created = time.Unix(u.CreatedUnix, 0).Local()
+	case "updated_unix":
+		u.Updated = time.Unix(u.UpdatedUnix, 0).Local()
 	}
 }
 
@@ -393,7 +404,7 @@ func (u *User) IsWriterOfRepo(repo *Repository) bool {
 
 // IsOrganization returns true if user is actually a organization.
 func (u *User) IsOrganization() bool {
-	return u.Type == ORGANIZATION
+	return u.Type == USER_TYPE_ORGANIZATION
 }
 
 // IsUserOrgOwner returns true if user is in the owner team of given organization.
@@ -1118,16 +1129,45 @@ func GetUserByEmail(email string) (*User, error) {
 	return nil, ErrUserNotExist{0, email}
 }
 
-// SearchUserByName returns given number of users whose name contains keyword.
-func SearchUserByName(opt SearchOption) (us []*User, err error) {
-	if len(opt.Keyword) == 0 {
-		return us, nil
-	}
-	opt.Keyword = strings.ToLower(opt.Keyword)
+type SearchUserOptions struct {
+	Keyword  string
+	Type     UserType
+	OrderBy  string
+	Page     int
+	PageSize int // Can be smaller than or equal to setting.ExplorePagingNum
+}
 
-	us = make([]*User, 0, opt.Limit)
-	err = x.Limit(opt.Limit).Where("type=0").And("lower_name like ?", "%"+opt.Keyword+"%").Find(&us)
-	return us, err
+// SearchUserByName takes keyword and part of user name to search,
+// it returns results in given range and number of total results.
+func SearchUserByName(opts *SearchUserOptions) (users []*User, _ int64, _ error) {
+	if len(opts.Keyword) == 0 {
+		return users, 0, nil
+	}
+	opts.Keyword = strings.ToLower(opts.Keyword)
+
+	if opts.PageSize <= 0 || opts.PageSize > setting.ExplorePagingNum {
+		opts.PageSize = setting.ExplorePagingNum
+	}
+	if opts.Page <= 0 {
+		opts.Page = 1
+	}
+
+	users = make([]*User, 0, opts.PageSize)
+	// Append conditions
+	fmt.Println(opts.Type)
+	sess := x.Where("lower_name like ?", "%"+opts.Keyword+"%").And("type = ?", opts.Type)
+	if len(opts.OrderBy) > 0 {
+		sess.OrderBy(opts.OrderBy)
+	}
+
+	var countSess xorm.Session
+	countSess = *sess
+	count, err := countSess.Count(new(User))
+	if err != nil {
+		return nil, 0, fmt.Errorf("Count: %v", err)
+	}
+
+	return users, count, sess.Limit(opts.PageSize, (opts.Page-1)*opts.PageSize).Find(&users)
 }
 
 // ___________    .__  .__

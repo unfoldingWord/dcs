@@ -2594,6 +2594,10 @@ footer .container .links > *:first-child {
   padding-top: 15px;
   padding-bottom: 80px;
 }
+.explore .navbar .octicon {
+  width: 16px;
+  text-align: center;
+}
 .ui.repository.list .item {
   padding-bottom: 25px;
 }
@@ -2627,4 +2631,28 @@ footer .container .links > *:first-child {
 
 .repository.new.repo .ui.form #auto-init .help {
   margin-left: 0 !important;
+}
+
+.ui.user.list .item {
+  padding-bottom: 25px;
+}
+.ui.user.list .item:not(:first-child) {
+  border-top: 1px solid #eee;
+  padding-top: 25px;
+}
+.ui.user.list .item .ui.avatar.image {
+  width: 40px;
+  height: 40px;
+}
+.ui.user.list .item .description {
+  margin-top: 5px;
+}
+.ui.user.list .item .description .octicon:not(:first-child) {
+  margin-left: 5px;
+}
+.ui.user.list .item .description a {
+  color: #333;
+}
+.ui.user.list .item .description a:hover {
+  text-decoration: underline;
 }
