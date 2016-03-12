@@ -122,7 +122,13 @@ func SignInPost(ctx *context.Context, form auth.SignInForm) {
 		return
 	}
 
-	ctx.Redirect(setting.AppSubUrl + "/")
+	if len(u.Salt) <= 8 {
+		// This is for our old Dokuwiki users who are using smd5 password hashing. Want them to change password so it is PBRDF2 hasing
+		ctx.Flash.Error("You need to update your password to use the new Door43. Please update your password before proceeding further.")
+		ctx.Redirect(setting.AppSubUrl + "/user/settings/password")
+	} else {
+		ctx.Redirect(setting.AppSubUrl + "/")
+	}
 }
 
 func SignOut(ctx *context.Context) {

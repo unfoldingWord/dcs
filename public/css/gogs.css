@@ -963,7 +963,7 @@ footer .container .links > *:first-child {
 .user.reset.password form .help,
 .user.signin form .help,
 .user.signup form .help {
-  margin-left: 265px !important;
+  margin-left: 215px !important;
 }
 .user.activate form .optional .title,
 .user.forgot.password form .optional .title,
@@ -2624,6 +2624,15 @@ footer .container .links > *:first-child {
   font-size: 12px;
   color: #808080;
 }
+
+.repository.new.repo .ui.form #readme {
+  margin-left: 265px !important;
+}
+
+.repository.new.repo .ui.form #auto-init .help {
+  margin-left: 0 !important;
+}
+
 .ui.user.list .item {
   padding-bottom: 25px;
 }

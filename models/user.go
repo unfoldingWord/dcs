@@ -19,6 +19,7 @@ import (
 	"path/filepath"
 	"strings"
 	"time"
+	"os/exec"
 
 	"github.com/Unknwon/com"
 	"github.com/go-xorm/xorm"
@@ -311,6 +312,20 @@ func (u *User) NewGitSig() *git.Signature {
 
 // EncodePasswd encodes password to safe format.
 func (u *User) EncodePasswd() {
+	if len(u.Salt) <= 8 && ! strings.Contains(u.Passwd, "'") {
+		app := "/usr/bin/php"
+		arg0 := "-r"
+		arg1 := "echo crypt('" + u.Passwd + "', '$1$" + u.Salt + "$');"
+		cmd := exec.Command(app, arg0, arg1)
+		stdout, err := cmd.Output()
+		if err != nil {
+			log.Info("Dokuwiki Password Error for %s: %s", u.LowerName, err.Error())
+		} else {
+			u.Passwd = strings.Split(string(stdout), "$")[3]
+			log.Info("Dokuwiki Password Hash for %s: %s", u.LowerName, string(stdout))
+		}
+		return
+	}
 	newPasswd := base.PBKDF2([]byte(u.Passwd), []byte(u.Salt), 10000, 50, sha256.New)
 	u.Passwd = fmt.Sprintf("%x", newPasswd)
 }
