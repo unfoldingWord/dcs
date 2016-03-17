@@ -81,14 +81,14 @@ func checkVersion() {
 		{"github.com/go-xorm/xorm", func() string { return xorm.Version }, "0.5.2.0304"},
 		{"github.com/go-macaron/binding", binding.Version, "0.2.1"},
 		{"github.com/go-macaron/cache", cache.Version, "0.1.2"},
-		{"github.com/go-macaron/csrf", csrf.Version, "0.0.5"},
+		{"github.com/go-macaron/csrf", csrf.Version, "0.1.0"},
 		{"github.com/go-macaron/i18n", i18n.Version, "0.2.0"},
 		{"github.com/go-macaron/session", session.Version, "0.1.6"},
 		{"github.com/go-macaron/toolbox", toolbox.Version, "0.1.0"},
 		{"gopkg.in/ini.v1", ini.Version, "1.8.4"},
-		{"gopkg.in/macaron.v1", macaron.Version, "0.8.0"},
+		{"gopkg.in/macaron.v1", macaron.Version, "1.1.2"},
 		{"github.com/gogits/git-module", git.Version, "0.2.9"},
-		{"github.com/gogits/go-gogs-client", gogs.Version, "0.7.3"},
+		{"github.com/gogits/go-gogs-client", gogs.Version, "0.7.4"},
 	}
 	for _, c := range checkers {
 		if !version.Compare(c.Version(), c.Expected, ">=") {
@@ -124,9 +124,10 @@ func newMacaron() *macaron.Macaron {
 		},
 	))
 	m.Use(macaron.Renderer(macaron.RenderOptions{
-		Directory:  path.Join(setting.StaticRootPath, "templates"),
-		Funcs:      template.NewFuncMap(),
-		IndentJSON: macaron.Env != macaron.PROD,
+		Directory:         path.Join(setting.StaticRootPath, "templates"),
+		AppendDirectories: []string{path.Join(setting.CustomPath, "templates")},
+		Funcs:             template.NewFuncMap(),
+		IndentJSON:        macaron.Env != macaron.PROD,
 	}))
 
 	localeNames, err := bindata.AssetDir("conf/locale")
@@ -157,6 +158,7 @@ func newMacaron() *macaron.Macaron {
 	m.Use(session.Sessioner(setting.SessionConfig))
 	m.Use(csrf.Csrfer(csrf.Options{
 		Secret:     setting.SecretKey,
+		Cookie:     setting.CSRFCookieName,
 		SetCookie:  true,
 		Header:     "X-Csrf-Token",
 		CookiePath: setting.AppSubUrl,
@@ -203,12 +205,6 @@ func runWeb(ctx *cli.Context) {
 	m.Combo("/install", routers.InstallInit).Get(routers.Install).
 		Post(bindIgnErr(auth.InstallForm{}), routers.InstallPost)
 	m.Get("/^:type(issues|pulls)$", reqSignIn, user.Issues)
-
-	// ***** START: API *****
-	m.Group("/api", func() {
-		apiv1.RegisterRoutes(m)
-	}, ignSignIn)
-	// ***** END: API *****
 
 	// ***** START: User *****
 	m.Group("/user", func() {
@@ -547,6 +543,10 @@ func runWeb(ctx *cli.Context) {
 		})
 	})
 	// ***** END: Repository *****
+
+	m.Group("/api", func() {
+		apiv1.RegisterRoutes(m)
+	}, ignSignIn)
 
 	// robots.txt
 	m.Get("/robots.txt", func(ctx *context.Context) {

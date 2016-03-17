@@ -63,6 +63,7 @@ func AutoSignIn(ctx *context.Context) (bool, error) {
 	isSucceed = true
 	ctx.Session.Set("uid", u.Id)
 	ctx.Session.Set("uname", u.Name)
+	ctx.SetCookie(setting.CSRFCookieName, "", -1, setting.AppSubUrl)
 	return true, nil
 }
 
@@ -116,6 +117,10 @@ func SignInPost(ctx *context.Context, form auth.SignInForm) {
 
 	ctx.Session.Set("uid", u.Id)
 	ctx.Session.Set("uname", u.Name)
+
+	// Clear whatever CSRF has right now, force to generate a new one
+	ctx.SetCookie(setting.CSRFCookieName, "", -1, setting.AppSubUrl)
+
 	if redirectTo, _ := url.QueryUnescape(ctx.GetCookie("redirect_to")); len(redirectTo) > 0 {
 		ctx.SetCookie("redirect_to", "", -1, setting.AppSubUrl)
 		ctx.Redirect(redirectTo)
@@ -126,9 +131,9 @@ func SignInPost(ctx *context.Context, form auth.SignInForm) {
 		// This is for our old Dokuwiki users who are using smd5 password hashing. Want them to change password so it is PBRDF2 hasing
 		ctx.Flash.Error("You need to update your password to use the new Door43. Please update your password before proceeding further.")
 		ctx.Redirect(setting.AppSubUrl + "/user/settings/password")
-	} else {
-		ctx.Redirect(setting.AppSubUrl + "/")
+		return
 	}
+	ctx.Redirect(setting.AppSubUrl + "/")
 }
 
 func SignOut(ctx *context.Context) {
@@ -139,6 +144,7 @@ func SignOut(ctx *context.Context) {
 	ctx.Session.Delete("socialEmail")
 	ctx.SetCookie(setting.CookieUserName, "", -1, setting.AppSubUrl)
 	ctx.SetCookie(setting.CookieRememberName, "", -1, setting.AppSubUrl)
+	ctx.SetCookie(setting.CSRFCookieName, "", -1, setting.AppSubUrl)
 	ctx.Redirect(setting.AppSubUrl + "/")
 }
 
@@ -340,6 +346,12 @@ func ForgotPasswdPost(ctx *context.Context) {
 		} else {
 			ctx.Handle(500, "user.ResetPasswd(check existence)", err)
 		}
+		return
+	}
+
+	if !u.IsLocal() {
+		ctx.Data["Err_Email"] = true
+		ctx.RenderWithErr(ctx.Tr("auth.non_local_account"), FORGOT_PASSWORD, nil)
 		return
 	}
 

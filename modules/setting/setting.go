@@ -54,7 +54,7 @@ var (
 	AppSubUrl      string
 	AppSubUrlDepth int // Number of slashes
 	AppPath        string
-	AppDataPath    = "data"
+	AppDataPath    string
 
 	// Server settings
 	Protocol           Scheme
@@ -156,7 +156,8 @@ var (
 	CacheConn     string
 
 	// Session settings
-	SessionConfig session.Options
+	SessionConfig  session.Options
+	CSRFCookieName = "_csrf"
 
 	// Git settings
 	Git struct {
@@ -334,6 +335,7 @@ func NewContext() {
 	OfflineMode = sec.Key("OFFLINE_MODE").MustBool()
 	DisableRouterLog = sec.Key("DISABLE_ROUTER_LOG").MustBool()
 	StaticRootPath = sec.Key("STATIC_ROOT_PATH").MustString(workDir)
+	AppDataPath = sec.Key("APP_DATA_PATH").MustString("data")
 	EnableGzip = sec.Key("ENABLE_GZIP").MustBool()
 
 	switch sec.Key("LANDING_PAGE").MustString("home") {
