@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"path"
 	"strings"
+        "time"
 
 	"gopkg.in/gomail.v2"
 	"gopkg.in/macaron.v1"
@@ -36,6 +37,7 @@ func ComposeTplData(u *models.User) map[interface{}]interface{} {
 	data["AppUrl"] = setting.AppUrl
 	data["ActiveCodeLives"] = setting.Service.ActiveCodeLives / 60
 	data["ResetPwdCodeLives"] = setting.Service.ResetPwdCodeLives / 60
+        data["CopyrightYear"] = time.Now().UTC().Format("2006")
 
 	if u != nil {
 		data["User"] = u
