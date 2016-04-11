@@ -61,6 +61,13 @@ func SignedInID(ctx *macaron.Context, sess session.Store) int64 {
 			}
 			// REMOVE THIS IF WHEN TOKEN-BY-ACTION IS IMPLEMENTED -Rich
 			if(t.Restricted && ! IsAllowedTokenAction(ctx.Req.URL.Path)) {
+				u, err := models.GetUserByID(t.UID)
+				if err != nil {
+					log.Error(4, "GetUserById: %v", err)
+				} else {
+					log.Error(4, "Access is restricted for %s (UID %d), tried to access %s", u.Name, u.Id, ctx.Req.URL.Path)
+				}
+				ctx.Error(401)
 				return 0
 			}
 			t.Updated = time.Now()
