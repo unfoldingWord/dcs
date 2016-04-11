@@ -25,6 +25,11 @@ func IsAPIPath(url string) bool {
 	return strings.HasPrefix(url, "/api/")
 }
 
+// Added by Rich to only allow creation of users when api is an admin call
+func IsAllowedTokenAction(url string) bool {
+	return url == "/api/v1/admin/users" || ! strings.HasPrefix(url, "/api/v1/admin")
+}
+
 // SignedInID returns the id of signed in user.
 func SignedInID(ctx *macaron.Context, sess session.Store) int64 {
 	if !models.HasEngine {
@@ -33,6 +38,10 @@ func SignedInID(ctx *macaron.Context, sess session.Store) int64 {
 
 	// Check access token.
 	if IsAPIPath(ctx.Req.URL.Path) {
+		// REMOVE THIS IF WHEN TOKEN-BY-ACTION IS IMPLEMENTED -Rich
+		if ! IsAllowedTokenAction(ctx.Req.URL.Path) {
+			return 0
+		}
 		tokenSHA := ctx.Query("token")
 		if len(tokenSHA) == 0 {
 			// Well, check with header again.
