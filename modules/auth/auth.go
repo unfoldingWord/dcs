@@ -38,10 +38,6 @@ func SignedInID(ctx *macaron.Context, sess session.Store) int64 {
 
 	// Check access token.
 	if IsAPIPath(ctx.Req.URL.Path) {
-		// REMOVE THIS IF WHEN TOKEN-BY-ACTION IS IMPLEMENTED -Rich
-		if ! IsAllowedTokenAction(ctx.Req.URL.Path) {
-			return 0
-		}
 		tokenSHA := ctx.Query("token")
 		if len(tokenSHA) == 0 {
 			// Well, check with header again.
@@ -61,6 +57,10 @@ func SignedInID(ctx *macaron.Context, sess session.Store) int64 {
 				if models.IsErrAccessTokenNotExist(err) {
 					log.Error(4, "GetAccessTokenBySHA: %v", err)
 				}
+				return 0
+			}
+			// REMOVE THIS IF WHEN TOKEN-BY-ACTION IS IMPLEMENTED -Rich
+			if(t.Restricted && ! IsAllowedTokenAction(ctx.Req.URL.Path)) {
 				return 0
 			}
 			t.Updated = time.Now()
