@@ -26,8 +26,8 @@ func IsAPIPath(url string) bool {
 }
 
 // Added by Rich to only allow creation of users when api is an admin call
-func IsAllowedTokenAction(url string) bool {
-	return url == "/api/v1/admin/users" || ! strings.HasPrefix(url, "/api/v1/admin")
+func IsAllowedTokenAction(url string, method string) bool {
+	return url == "/api/v1/admin/users" || (method == "PATCH" && strings.HasPrefix(url, "/api/v1/admin/users/")) || ! strings.HasPrefix(url, "/api/v1/admin")
 }
 
 // SignedInID returns the id of signed in user.
@@ -60,12 +60,12 @@ func SignedInID(ctx *macaron.Context, sess session.Store) int64 {
 				return 0
 			}
 			// REMOVE THIS IF WHEN TOKEN-BY-ACTION IS IMPLEMENTED -Rich
-			if(t.Restricted && ! IsAllowedTokenAction(ctx.Req.URL.Path)) {
+			if(t.Restricted && ! IsAllowedTokenAction(ctx.Req.URL.Path, ctx.Req.Method)) {
 				u, err := models.GetUserByID(t.UID)
 				if err != nil {
 					log.Error(4, "GetUserById: %v", err)
 				} else {
-					log.Error(4, "Access is restricted for %s (UID %d), tried to access %s", u.Name, u.Id, ctx.Req.URL.Path)
+					log.Error(4, "Access is restricted for %s (UID %d), tried to access %s [%s]", u.Name, u.Id, ctx.Req.URL.Path, ctx.Req.Method)
 				}
 				ctx.Error(401)
 				return 0
