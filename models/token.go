@@ -19,6 +19,7 @@ type AccessToken struct {
 	UID  int64 `xorm:"INDEX"`
 	Name string
 	Sha1 string `xorm:"UNIQUE VARCHAR(40)"`
+	Restricted        bool
 
 	Created           time.Time `xorm:"-"`
 	CreatedUnix       int64
