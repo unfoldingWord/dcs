@@ -21,6 +21,7 @@ import (
 	"github.com/gogits/gogs/modules/markdown"
 	"github.com/gogits/gogs/modules/template"
 	"github.com/gogits/gogs/modules/template/highlight"
+	"path/filepath"
 )
 
 const (
@@ -42,6 +43,9 @@ func Home(ctx *context.Context) {
 	branchLink := ctx.Repo.RepoLink + "/src/" + branchName
 	treeLink := branchLink
 	rawLink := ctx.Repo.RepoLink + "/raw/" + branchName
+	editLink := ctx.Repo.RepoLink + "/edit/" + branchName
+	deleteLink := ctx.Repo.RepoLink + "/delete/" + branchName
+	newFileLink := ctx.Repo.RepoLink + "/new/" + branchName
 
 	// Get tree path
 	treename := ctx.Repo.TreeName
@@ -97,8 +101,10 @@ func Home(ctx *context.Context) {
 			switch {
 			case isPDFFile:
 				ctx.Data["IsPDFFile"] = true
+				ctx.Data["NoFileEditLinkReason"] = ctx.Tr("repo.cannot_edit_binary_files")
 			case isImageFile:
 				ctx.Data["IsImageFile"] = true
+				ctx.Data["NoFileEditLinkReason"] = ctx.Tr("repo.cannot_edit_binary_files")
 			case isTextFile:
 				d, _ := ioutil.ReadAll(dataRc)
 				buf = append(buf, d...)
@@ -116,7 +122,33 @@ func Home(ctx *context.Context) {
 						ctx.Data["FileContent"] = content
 					}
 				}
+				if (! ctx.Repo.IsViewCommit) && ctx.Repo.IsWriter() {
+					ctx.Data["FileEditLink"] = editLink + "/" + treename
+				} else {
+					if ctx.Repo.IsViewCommit {
+						ctx.Data["NoFileEditLinkReason"] = ctx.Tr("repo.must_be_on_branch")
+					} else if ! ctx.Repo.IsWriter() {
+						ctx.Data["NoFileEditLinkReason"] = ctx.Tr("repo.must_be_writer")
+					}
+				}
+			default:
+				ctx.Data["NoFileEditLinkReason"] = ctx.Tr("repo.cannot_edit_binary_files")
 			}
+			if (! ctx.Repo.IsViewCommit) && ctx.Repo.IsWriter() {
+				ctx.Data["FileDeleteLink"] = deleteLink + "/" + treename
+			} else {
+				if ctx.Repo.IsViewCommit {
+					ctx.Data["NoFileDeleteLinkReason"] = ctx.Tr("repo.must_be_on_branch")
+				} else if ! ctx.Repo.IsWriter() {
+					ctx.Data["NoFileDeleteLinkReason"] = ctx.Tr("repo.must_be_writer")
+				}
+			}
+
+			parentDir := filepath.Dir(treename)
+			if parentDir == "." {
+				parentDir = ""
+			}
+			ctx.Data["NewFileLink"] = newFileLink + "/" + parentDir
 		}
 	} else {
 		// Directory and file list.
@@ -193,6 +225,7 @@ func Home(ctx *context.Context) {
 		}
 		ctx.Data["LastCommit"] = lastCommit
 		ctx.Data["LastCommitUser"] = models.ValidateCommitWithEmail(lastCommit)
+		ctx.Data["NewFileLink"] = newFileLink + "/" + treename
 	}
 
 	ctx.Data["Username"] = userName

@@ -522,6 +522,11 @@ func runWeb(ctx *cli.Context) error {
 			m.Get("/commits/*", repo.RefCommits)
 			m.Get("/commit/:sha([a-z0-9]{40})$", repo.Diff)
 			m.Get("/forks", repo.Forks)
+			m.Combo("/edit/*").Get(repo.EditFile).
+				Post(bindIgnErr(auth.EditForm{}), repo.EditFilePost)
+			m.Combo("/new/*").Get(repo.EditNewFile).
+				Post(bindIgnErr(auth.EditForm{}), repo.EditNewFilePost)
+			m.Post("/delete/*", bindIgnErr(auth.DeleteForm{}), repo.DeleteFilePost)
 		}, context.RepoRef())
 		m.Get("/commit/:sha([a-z0-9]{40})\\.:ext(patch|diff)", repo.RawDiff)
 

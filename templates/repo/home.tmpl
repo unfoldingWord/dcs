@@ -31,6 +31,13 @@
 					{{end}}
 				</div>
 			</div>
+			<div class="right fitted item">
+				<form class="ui form inline-form" action="{{EscapePound .NewFileLink}}" method="get">
+					<button class="ui button" type="submit" title="{{.i18n.Tr "repo.new_file"}}">
+						{{.i18n.Tr "repo.new_file"}}
+					</button>
+				</form>
+			</div>
 			{{if eq $n 0}}
 				<div class="right fitted item">
 					<div class="ui action small input" id="clone-panel">

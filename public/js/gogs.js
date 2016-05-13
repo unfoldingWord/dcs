@@ -517,6 +517,147 @@ function initWiki() {
     }
 }
 
+var editor;
+var editFilename;
+var editArea;
+
+function initEditor() {
+    if (!$('#edit-area').length)
+        return;
+
+    if ($('#file-name').val().endsWith('.md')) {
+        editArea = $('#edit-area');
+        var simplemde = new SimpleMDE({
+            autoDownloadFontAwesome: false,
+            element: editArea[0],
+            forceSync: true,
+            previewRender: function (plainText, preview) { // Async method
+                setTimeout(function () {
+                    // FIXME: still send render request when return back to edit mode
+                    $.post(editArea.data('url'), {
+                            "_csrf": csrf,
+                            "mode": "gfm",
+                            "context": editArea.data('context'),
+                            "text": plainText
+                        },
+                        function (data) {
+                            preview.innerHTML = '<div class="markdown">' + data + '</div>';
+                            emojify.run($('.editor-preview')[0]);
+                        }
+                    );
+                }, 0);
+
+                return "Loading...";
+            },
+            renderingConfig: {
+                singleLineBreaks: false
+            },
+            spellChecker: false,
+            tabSize: 4,
+            toolbar: ["bold", "italic", "strikethrough", "|",
+                "heading", "heading-1", "heading-2", "heading-3", "|",
+                "code", "quote", "|",
+                "unordered-list", "ordered-list", "|",
+                "link", "image", "horizontal-rule", "|",
+                "preview", "fullscreen"]
+        })
+    }
+    else {
+        editor = CodeMirror.fromTextArea(document.getElementById("edit-area"), {
+            lineNumbers: true
+        });
+        editFilename = document.getElementById("file-name");
+        CodeMirror.on(editFilename, "change", function (e) {
+            editFilenameChange();
+        });
+        editFilenameChange();
+    }
+
+    (function ($, undefined) {
+        $.fn.getCursorPosition = function () {
+            var el = $(this).get(0);
+            var pos = 0;
+            if ('selectionStart' in el) {
+                pos = el.selectionStart;
+            } else if ('selection' in document) {
+                el.focus();
+                var Sel = document.selection.createRange();
+                var SelLength = document.selection.createRange().text.length;
+                Sel.moveStart('character', -el.value.length);
+                pos = Sel.text.length - SelLength;
+            }
+            return pos;
+        }
+    })(jQuery);
+
+    $('#file-name').keyup(function (e) {
+        var sections = $('.breadcrumb span.section');
+        var dividers = $('.breadcrumb div.divider');
+        if (e.keyCode == 8) {
+            if ($(this).getCursorPosition() == 0) {
+                if (sections.length > 0) {
+                    var value = sections.last().find('a').text();
+                    $(this).val(value + $(this).val());
+                    $(this)[0].setSelectionRange(value.length, value.length);
+                    sections.last().remove();
+                    dividers.last().remove();
+                }
+            }
+        }
+        if (e.keyCode == 191) {
+            var parts = $(this).val().split('/');
+            for (var i = 0; i < parts.length; ++i) {
+                var value = parts[i];
+                if (i < parts.length - 1) {
+                    if (value.length) {
+                        $('<span class="section"><a href="#">' + value + '</a></span>').insertBefore($(this));
+                        $('<div class="divider"> / </div>').insertBefore($(this));
+                    }
+                }
+                else {
+                    $(this).val(value);
+                }
+            }
+        }
+        var parts = [];
+        $('.breadcrumb span.section').each(function (i, element) {
+            element = $(element);
+            if (element.find('a').length) {
+                parts.push(element.find('a').text());
+            } else {
+                parts.push(element.text());
+            }
+        });
+        if ($(this).val())
+            parts.push($(this).val());
+        $('#tree-name').val(parts.join('/'));
+    });
+}
+
+function editFilenameChange() {
+    var val = editFilename.value, m, mode, spec;
+    if (m = /.+\.([^.]+)$/.exec(val)) {
+        var info = CodeMirror.findModeByExtension(m[1]);
+        if (info) {
+            mode = info.mode;
+            spec = info.mime;
+        }
+    } else if (/\//.test(val)) {
+        var info = CodeMirror.findModeByMIME(val);
+        if (info) {
+            mode = info.mode;
+            spec = val;
+        }
+    } else {
+        mode = spec = val;
+    }
+    if (mode) {
+        editor.setOption("mode", spec);
+        CodeMirror.autoLoadMode(editor, mode);
+    }
+}
+
+
 function initOrganization() {
     if ($('.organization').length == 0) {
         return;
@@ -974,6 +1115,7 @@ $(document).ready(function () {
     initInstall();
     initRepository();
     initWiki();
+    initEditor();
     initOrganization();
     initWebhook();
     initAdmin();
