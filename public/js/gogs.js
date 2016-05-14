@@ -642,14 +642,6 @@ function editFilenameChange() {
             mode = info.mode;
             spec = info.mime;
         }
-    } else if (/\//.test(val)) {
-        var info = CodeMirror.findModeByMIME(val);
-        if (info) {
-            mode = info.mode;
-            spec = val;
-        }
-    } else {
-        mode = spec = val;
     }
     if (mode) {
         editor.setOption("mode", spec);
