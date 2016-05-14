@@ -564,7 +564,7 @@ function initEditor() {
     }
     else {
         editor = CodeMirror.fromTextArea(document.getElementById("edit-area"), {
-            lineNumbers: true
+            lineNumbers: true,
         });
         editFilename = document.getElementById("file-name");
         CodeMirror.on(editFilename, "change", function (e) {
@@ -635,9 +635,10 @@ function initEditor() {
 }
 
 function editFilenameChange() {
-    var val = editFilename.value, m, mode, spec;
+    var val = editFilename.value, m, mode, spec, extension;
     if (m = /.+\.([^.]+)$/.exec(val)) {
-        var info = CodeMirror.findModeByExtension(m[1]);
+        extension = m[1];
+        var info = CodeMirror.findModeByExtension(extension);
         if (info) {
             mode = info.mode;
             spec = info.mime;
@@ -646,6 +647,12 @@ function editFilenameChange() {
     if (mode) {
         editor.setOption("mode", spec);
         CodeMirror.autoLoadMode(editor, mode);
+    }
+    if (extension == null || extension == "txt" || extension == "md") {
+        editor.setOption("lineWrapping", true);
+    }
+    else {
+        editor.setOption("lineWrapping", false);
     }
 }
 
