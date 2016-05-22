@@ -23,6 +23,11 @@ const (
 )
 
 func Home(ctx *context.Context) {
+	if ctx.Req.URL.Path == "/about" {
+		ctx.Data["PageIsHome"] = true
+		ctx.HTML(200, HOME)
+		return
+	}
 	if ctx.IsSigned {
 		if !ctx.User.IsActive && setting.Service.RegisterEmailConfirm {
 			ctx.Data["Title"] = ctx.Tr("auth.active_your_account")
