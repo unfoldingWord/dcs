@@ -15,7 +15,7 @@ import (
 func renderHtmlTable(m map[interface{}]interface{}) []byte {
 	var thead, tbody string
 	for k, v := range m {
-		thead += fmt.Sprintf("<td>%v</td>", k)
+		thead += fmt.Sprintf("<th>%v</th>", k)
 		rt := reflect.TypeOf(v)
 		switch rt.Kind() {
 		case reflect.Map:
