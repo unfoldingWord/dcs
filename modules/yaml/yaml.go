@@ -17,10 +17,14 @@ func renderHtmlTable(m map[interface{}]interface{}) []byte {
 	for k, v := range m {
 		thead += fmt.Sprintf("<th>%v</th>", k)
 		rt := reflect.TypeOf(v)
-		switch rt.Kind() {
-		case reflect.Map:
-			tbody += fmt.Sprintf("<td>%s</td>", renderHtmlTable(v.(map[interface{}]interface{})))
-		default:
+		if rt != nil {
+			switch rt.Kind() {
+			case reflect.Map:
+				tbody += fmt.Sprintf("<td>%s</td>", renderHtmlTable(v.(map[interface{}]interface{})))
+			default:
+				tbody += fmt.Sprintf("<td>%v</td>", v)
+			}
+		} else {
 			tbody += fmt.Sprintf("<td>%v</td>", v)
 		}
 	}
@@ -36,7 +40,7 @@ func RenderYamlHtmlTable(data []byte) []byte {
 	m := make(map[interface{}]interface{})
 
 	if err := yaml.Unmarshal(data, &m); err != nil {
-		return data
+		return []byte("")
 	}
 
 	return renderHtmlTable(m)
