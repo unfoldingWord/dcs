@@ -2894,6 +2894,8 @@ table[data-table-type="yaml-metadata"] {
 }
 .ui.breadcrumb.field {
   margin-bottom: 10px !important;
+  font-size: 1.5em;
+  color: #767676;
 }
 .repo-edit-file-cancel {
   padding-left: 10px;
