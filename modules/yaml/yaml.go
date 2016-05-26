@@ -12,38 +12,39 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
-func renderHtmlTable(m map[interface{}]interface{}) []byte {
+func renderHtmlTable(m yaml.MapSlice) string {
 	var thead, tbody string
-	for k, v := range m {
-		thead += fmt.Sprintf("<th>%v</th>", k)
-		rt := reflect.TypeOf(v)
-		if rt != nil {
-			switch rt.Kind() {
-			case reflect.Map:
-				tbody += fmt.Sprintf("<td>%s</td>", renderHtmlTable(v.(map[interface{}]interface{})))
-			default:
-				tbody += fmt.Sprintf("<td>%v</td>", v)
-			}
-		} else {
-			tbody += fmt.Sprintf("<td>%v</td>", v)
+	var mi yaml.MapItem
+	for _, mi = range m {
+		key := mi.Key
+		value := mi.Value
+
+		if  key != nil && reflect.TypeOf(key).String() == "yaml.MapSlice" {
+			key = renderHtmlTable(key.(yaml.MapSlice))
 		}
+		thead += fmt.Sprintf("<th>%v</th>", key)
+
+		if value != nil && reflect.TypeOf(value).String() == "yaml.MapSlice" {
+			value = renderHtmlTable(value.(yaml.MapSlice))
+		}
+		tbody += fmt.Sprintf("<td>%v</td>", value)
 	}
 
 	table := ""
 	if len(thead) > 0 {
 		table = fmt.Sprintf(`<table data="yaml-metadata"><thead><tr>%s</tr></thead><tbody><tr>%s</tr></table>`, thead, tbody)
 	}
-	return []byte(table)
+	return table
 }
 
 func RenderYamlHtmlTable(data []byte) []byte {
-	m := make(map[interface{}]interface{})
+	m := yaml.MapSlice{}
 
 	if err := yaml.Unmarshal(data, &m); err != nil {
 		return []byte("")
 	}
 
-	return renderHtmlTable(m)
+	return []byte(renderHtmlTable(m))
 }
 
 func StripYamlFromText(data []byte) []byte {
