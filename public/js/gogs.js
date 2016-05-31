@@ -406,7 +406,7 @@ function initRepository() {
 
         // Change status
         var $status_btn = $('#status-button');
-        $('#content').keyup(function () {
+        $('#edit-area').keyup(function () {
             if ($(this).val().length == 0) {
                 $status_btn.text($status_btn.data('status'))
             } else {
@@ -477,10 +477,9 @@ function initWiki() {
         return;
     }
 
-
     if ($('.repository.wiki.new').length > 0) {
         var $edit_area = $('#edit-area');
-        var simplemde = new SimpleMDE({
+        new SimpleMDE({
             autoDownloadFontAwesome: false,
             element: $edit_area[0],
             forceSync: true,
@@ -505,16 +504,214 @@ function initWiki() {
             renderingConfig: {
                 singleLineBreaks: false
             },
-            spellChecker: false,
+            spellChecker: true,
+            autosave: {
+                enabled: true,
+                unique_id: "wiki-edit"
+            },
             tabSize: 4,
             toolbar: ["bold", "italic", "strikethrough", "|",
-                "heading", "heading-1", "heading-2", "heading-3", "|",
+                "heading-1", "heading-2", "heading-3", "heading-bigger", "heading-smaller", "|",
                 "code", "quote", "|",
                 "unordered-list", "ordered-list", "|",
-                "link", "image", "horizontal-rule", "|",
-                "preview", "fullscreen"]
+                "link", "image", "table", "horizontal-rule", "|",
+                "clean-block", "preview", "fullscreen", "side-by-side"]
         })
     }
+}
+
+var editArea;
+var editFilename;
+var smdEditor;
+var cmEditor;
+var mdFileExtensions;
+var lineWrapExtensions;
+
+// For IE
+String.prototype.endsWith = function(pattern) {
+    var d = this.length - pattern.length;
+    return d >= 0 && this.lastIndexOf(pattern) === d;
+};
+
+function initEditor() {
+    editFilename = $("#file-name");
+    editArea = $('textarea#edit-area');
+
+    if (!editArea.length)
+        return;
+
+    (function ($, undefined) {
+        $.fn.getCursorPosition = function () {
+            var el = $(this).get(0);
+            var pos = 0;
+            if ('selectionStart' in el) {
+                pos = el.selectionStart;
+            } else if ('selection' in document) {
+                el.focus();
+                var Sel = document.selection.createRange();
+                var SelLength = document.selection.createRange().text.length;
+                Sel.moveStart('character', -el.value.length);
+                pos = Sel.text.length - SelLength;
+            }
+            return pos;
+        }
+    })(jQuery);
+
+    CodeMirror.modeURL = editArea.data("mode-url");
+    mdFileExtensions = editArea.data("md-file-extensions").split(",");
+    lineWrapExtensions = editArea.data("line-wrap-extensions").split(",");
+
+    editFilename.on("keyup", function (e) {
+        var val = editFilename.val(), m, mode, spec, extension, extWithDot;
+        extension = extWithDot = "";
+        if(m = /.+\.([^.]+)$/.exec(val)) {
+            extension = m[1];
+            extWithDot = "."+extension;
+        }
+
+        // If this file is a Markdown extensions, we will load that editor and return
+        if (mdFileExtensions.indexOf(extWithDot) >= 0) {
+            if (setSimpleMDE()) {
+                return;
+            }
+        }
+
+        // Else we are going to use CodeMirror
+        if(! cmEditor){
+            if( ! setCodeMirror())
+                return;
+        }
+
+        var info = CodeMirror.findModeByExtension(extension);
+        if (info) {
+            mode = info.mode;
+            spec = info.mime;
+        }
+
+        if (mode) {
+            cmEditor.setOption("mode", spec);
+            CodeMirror.autoLoadMode(cmEditor, mode);
+        }
+
+        if (lineWrapExtensions.indexOf(extWithDot) >= 0) {
+            cmEditor.setOption("lineWrapping", true);
+        }
+        else {
+            cmEditor.setOption("lineWrapping", false);
+        }
+    })
+    .keyup(function (e) {
+        var sections = $('.breadcrumb span.section');
+        var dividers = $('.breadcrumb div.divider');
+        if (e.keyCode == 8) {
+            if ($(this).getCursorPosition() == 0) {
+                if (sections.length > 0) {
+                    var value = sections.last().find('a').text();
+                    $(this).val(value + $(this).val());
+                    $(this)[0].setSelectionRange(value.length, value.length);
+                    sections.last().remove();
+                    dividers.last().remove();
+                }
+            }
+        }
+        if (e.keyCode == 191) {
+            var parts = $(this).val().split('/');
+            for (var i = 0; i < parts.length; ++i) {
+                var value = parts[i];
+                if (i < parts.length - 1) {
+                    if (value.length) {
+                        $('<span class="section"><a href="#">' + value + '</a></span>').insertBefore($(this));
+                        $('<div class="divider"> / </div>').insertBefore($(this));
+                    }
+                }
+                else {
+                    $(this).val(value);
+                }
+                $(this)[0].setSelectionRange(0, 0);
+            }
+        }
+        var parts = [];
+        $('.breadcrumb span.section').each(function (i, element) {
+            element = $(element);
+            if (element.find('a').length) {
+                parts.push(element.find('a').text());
+            } else {
+                parts.push(element.text());
+            }
+        });
+        if ($(this).val())
+            parts.push($(this).val());
+        $('#tree-name').val(parts.join('/'));
+    }).trigger('keyup');
+}
+
+function setSimpleMDE() {
+    if(cmEditor) {
+        cmEditor.toTextArea();
+        cmEditor = null;
+    }
+
+    if(smdEditor) {
+        return true;
+    }
+
+    smdEditor = new SimpleMDE({
+        autoDownloadFontAwesome: false,
+        element: editArea[0],
+        forceSync: true,
+        renderingConfig: {
+            singleLineBreaks: false
+        },
+        tabSize: 4,
+        spellChecker: true,
+        autosave: {
+            enabled: true,
+            unique_id: "repo-edit-"+editArea.data('id')
+        },
+        toolbar: ["bold", "italic", "strikethrough", "|",
+            "heading-1", "heading-2", "heading-3", "heading-bigger", "heading-smaller", "|",
+            "code", "quote", "|",
+            "unordered-list", "ordered-list", "|",
+            "link", "image", "table", "horizontal-rule", "|",
+            "clean-block", "preview", "fullscreen", "side-by-side"]
+    });
+
+    return true;
+}
+
+function setCodeMirror() {
+    if(smdEditor) {
+        smdEditor.toTextArea();
+        smdEditor = null;
+    }
+
+    if(cmEditor){
+        return true;
+    }
+
+    cmEditor = CodeMirror.fromTextArea(editArea[0], {
+        lineNumbers: true
+    });
+    cmEditor.on("change", function (cm, change) {
+        editArea.val(cm.getValue());
+    });
+
+    return true;
+}
+
+function initQuickPull(){
+    $('.js-quick-pull-choice-option').change(function() {
+        quickPullChoiceChange();
+    });
+    quickPullChoiceChange();
+}
+
+function quickPullChoiceChange(){
+    var radio = $('.js-quick-pull-choice-option:checked');
+    if (radio.val() == 'commit-to-new-branch')
+        $('.quick-pull-branch-name').show();
+    else
+        $('.quick-pull-branch-name').hide();
 }
 
 function initOrganization() {
@@ -802,6 +999,8 @@ function searchRepositories() {
     hideWhenLostFocus('#search-repo-box .results', '#search-repo-box');
 }
 
+var $dropz;
+
 $(document).ready(function () {
     csrf = $('meta[name=_csrf]').attr("content");
     suburl = $('meta[name=_suburl]').attr("content");
@@ -851,12 +1050,12 @@ $(document).ready(function () {
     }
 
     // Dropzone
-    if ($('#dropzone').length > 0) {
+    var $dropz = $('#dropzone');
+    if ($dropz.length > 0) {
         // Disable auto discover for all elements:
         Dropzone.autoDiscover = false;
 
         var filenameDict = {};
-        var $dropz = $('#dropzone');
         $dropz.dropzone({
             url: $dropz.data('upload-url'),
             headers: {"X-Csrf-Token": csrf},
@@ -871,11 +1070,15 @@ $(document).ready(function () {
             init: function () {
                 this.on("success", function (file, data) {
                     filenameDict[file.name] = data.uuid;
-                    $('.attachments').append('<input id="' + data.uuid + '" name="attachments" type="hidden" value="' + data.uuid + '">');
+                    var input = $('<input id="' + data.uuid + '" name="files" type="hidden">').val(data.uuid);
+                    $('.files').append(input);
                 });
                 this.on("removedfile", function (file) {
                     if (file.name in filenameDict) {
                         $('#' + filenameDict[file.name]).remove();
+                    }
+                    if($dropz.data('remove-url') && $dropz.data('csrf')) {
+                        $.post($dropz.data('remove-url'), {file: filenameDict[file.name], _csrf: $dropz.data('csrf')});
                     }
                 })
             }
@@ -909,6 +1112,15 @@ $(document).ready(function () {
         $('#' + e.trigger.getAttribute('id')).popup('show');
         e.trigger.setAttribute('data-content', e.trigger.getAttribute('data-original'))
     });
+
+    // Clipboard for copying filename on edit page
+    if($('.clipboard-tree-name').length) {
+        new Clipboard(document.querySelector('.clipboard-tree-name'), {
+            text: function () {
+                return $('#tree-name').val();
+            }
+        });
+    }
 
     // Helpers.
     $('.delete-button').click(function () {
@@ -974,9 +1186,11 @@ $(document).ready(function () {
     initInstall();
     initRepository();
     initWiki();
+    initEditor();
     initOrganization();
     initWebhook();
     initAdmin();
+    initQuickPull();
 
     var routes = {
         'div.user.settings': initUserSettings,
@@ -1096,5 +1310,5 @@ $(window).load(function () {
 });
 
 $(function() {
-	$('form').areYouSure();
+    $('form').areYouSure();
 });
