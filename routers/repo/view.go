@@ -24,6 +24,7 @@ import (
 	"path/filepath"
 	"strconv"
 	"github.com/gogits/gogs/modules/setting"
+	"github.com/gogits/gogs/modules/yaml"
 )
 
 const (
@@ -118,7 +119,10 @@ func Home(ctx *context.Context) {
 				ctx.Data["ReadmeExist"] = isReadme
 				ctx.Data["IsMarkdown"] = isMarkdown
 				if isMarkdown {
+					yamlHtml := yaml.RenderYamlHtmlTable(buf)
+					markdownBody := markdown.Render(yaml.StripYamlFromText(buf), path.Dir(treeLink), ctx.Repo.Repository.ComposeMetas())
 					ctx.Data["FileContent"] = string(markdown.Render(buf, path.Dir(treeLink), ctx.Repo.Repository.ComposeMetas()))
+					ctx.Data["FileContent"] = string(append(yamlHtml, markdownBody...))
 				} else {
 					if err, content := template.ToUtf8WithErr(buf); err != nil {
 						if err != nil {
