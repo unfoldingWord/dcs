@@ -8,18 +8,24 @@ import (
 	"fmt"
 	"strings"
 	"reflect"
-	"github.com/gogits/gogs/modules/log"
+	"path/filepath"
 
 	"gopkg.in/yaml.v2"
 	"github.com/microcosm-cc/bluemonday"
-)
-
-const (
-	DIR_HORIZONTAL    = "horizontal"
-	DIR_VERTICAL      = "vertial"
+	"github.com/gogits/gogs/modules/log"
 )
 
 var Sanitizer = bluemonday.UGCPolicy()
+
+// IsYamlFile reports whether name looks like a Yaml file
+// based on its extension.
+func IsYamlFile(name string) bool {
+	name = strings.ToLower(name)
+	if ".yaml" == filepath.Ext(name) {
+		return true
+	}
+	return false
+}
 
 func renderHorizontalHtmlTable(m yaml.MapSlice) string {
 	var thead, tbody, table string
@@ -46,37 +52,53 @@ func renderHorizontalHtmlTable(m yaml.MapSlice) string {
 	return table
 }
 
-func renderVerticalHtmlTable(m yaml.MapSlice) string {
+func renderVerticalHtmlTable(m []yaml.MapSlice) string {
+	var ms yaml.MapSlice
 	var mi yaml.MapItem
 	var table string
 
-	table = `<table data="yaml-metadata">`
-	for _, mi = range m {
-		key := mi.Key
-		value := mi.Value
+	for _, ms = range m {
+		table += `<table data="yaml-metadata">`
+		for _, mi = range ms {
+			key := mi.Key
+			value := mi.Value
 
-		log.Info("Key: %v", key)
-		log.Info("VAlue: %v", value)
-		table += `<tr>`
-		if  key != nil && reflect.TypeOf(key).String() == "yaml.MapSlice" {
-			key = renderHorizontalHtmlTable(key.(yaml.MapSlice))
+			table += `<tr>`
+			if key != nil && reflect.TypeOf(key).String() == "yaml.MapSlice" {
+				key = renderHorizontalHtmlTable(key.(yaml.MapSlice))
+			} else if key != nil && reflect.TypeOf(key).String() == "[]interface {}" {
+				var ks string
+				for _, ki := range key.([]interface {}) {
+					log.Info("KI: %v", ki)
+					log.Info("Type: %s", reflect.TypeOf(ki).String())
+					ks += renderHorizontalHtmlTable(ki.(yaml.MapSlice))
+				}
+				key = ks
+			}
+			table += fmt.Sprintf("<td>%v</td>", key)
+
+			if value != nil && reflect.TypeOf(value).String() == "yaml.MapSlice" {
+				value = renderHorizontalHtmlTable(value.(yaml.MapSlice))
+			} else if value != nil && reflect.TypeOf(value).String() == "[]interface {}" {
+				value = value.([]interface{})
+				v := make([]yaml.MapSlice, len(value.([]interface{})))
+				for i, vs := range value.([]interface{}) {
+					v[i] = vs.(yaml.MapSlice)
+				}
+				value = renderVerticalHtmlTable(v)
+			}
+			table += fmt.Sprintf("<td>%v</td>", value)
+
+			table += `</tr>`
 		}
-		table += fmt.Sprintf("<td>%v</td>", key)
-
-		if value != nil && reflect.TypeOf(value).String() == "yaml.MapSlice" {
-			value = renderVerticalHtmlTable(value.(yaml.MapSlice))
-		}
-		table += fmt.Sprintf("<td>%v</td>", value)
-
-		table += `</tr>`
+		table += "</table>"
 	}
-	table += `</table>`
 
 	return table
 }
 
-func RenderYamlHtmlTable(data []byte, dir string) []byte {
-	m := yaml.MapSlice{}
+func RenderYaml(data []byte) []byte {
+	m := []yaml.MapSlice{}
 
 	if len(data) < 1 {
 		return []byte("")
@@ -94,13 +116,29 @@ func RenderYamlHtmlTable(data []byte, dir string) []byte {
 		return []byte("")
 	}
 
-	if dir == DIR_HORIZONTAL {
-		return []byte(renderHorizontalHtmlTable(m))
-	} else if dir == DIR_VERTICAL {
-		return []byte(renderVerticalHtmlTable(m))
-	} else {
-		return data
+	return []byte(renderVerticalHtmlTable(m))
+}
+
+func RenderMarkdownYaml(data []byte) []byte {
+	m := yaml.MapSlice{}
+
+	if len(data) < 1 {
+		return []byte("")
 	}
+
+	lines := strings.Split(string(data), "\r\n")
+	if len(lines) == 1 {
+		lines = strings.Split(string(data), "\n")
+	}
+	if len(lines) < 1 || lines[0] != "---" {
+		return []byte("")
+	}
+
+	if err := yaml.Unmarshal(data, &m); err != nil {
+		return []byte("")
+	}
+
+	return []byte(renderHorizontalHtmlTable(m))
 }
 
 func StripYamlFromText(data []byte) []byte {
@@ -132,8 +170,7 @@ func StripYamlFromText(data []byte) []byte {
 }
 
 func Render(rawBytes []byte) []byte {
-	result := RenderYamlHtmlTable(rawBytes, DIR_VERTICAL)
-	log.Info("HERE: %s", string(result))
+	result := RenderYaml(rawBytes)
 	result = Sanitizer.SanitizeBytes(result)
 	return result
 }

@@ -116,12 +116,16 @@ func Home(ctx *context.Context) {
 				buf = append(buf, d...)
 				isReadme := markdown.IsReadmeFile(blob.Name())
 				isMarkdown := isReadme || markdown.IsMarkdownFile(blob.Name())
+				isYaml := yaml.IsYamlFile(blob.Name())
 				ctx.Data["ReadmeExist"] = isReadme
 				ctx.Data["IsMarkdown"] = isMarkdown
+				ctx.Data["IsYaml"] = isYaml
 				if isMarkdown {
-					yamlHtml := yaml.RenderYamlHtmlTable(buf, yaml.DIR_HORIZONTAL)
+					yamlHtml := yaml.RenderMarkdownYaml(buf)
 					markdownBody := markdown.Render(yaml.StripYamlFromText(buf), path.Dir(treeLink), ctx.Repo.Repository.ComposeMetas())
 					ctx.Data["FileContent"] = string(append(yamlHtml, markdownBody...))
+				} else if isYaml {
+					ctx.Data["FileContent"] = string(yaml.RenderYaml(buf))
 				} else {
 					if err, content := template.ToUtf8WithErr(buf); err != nil {
 						if err != nil {

@@ -574,8 +574,6 @@ function initWikiForm() {
 
 function initIssueForm() {
     var $edit_area = $('.repository.issue textarea.edit_area');
-    console.log($edit_area);
-    console.log($edit_area.length);
     if ($edit_area.length > 0) {
         $edit_area.each(function(i, edit_area) {
             new SimpleMDE({
@@ -772,6 +770,7 @@ function setSimpleMDE() {
         },
         tabSize: 4,
         spellChecker: false,
+        indentWithTabs: false,
         previewRender: function (plainText, preview) { // Async method
             setTimeout(function () {
                 // FIXME: still send render request when return back to edit mode
