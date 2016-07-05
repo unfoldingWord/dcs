@@ -87,6 +87,9 @@ func renderVerticalHtmlTable(m []yaml.MapSlice) string {
 				}
 				value = renderVerticalHtmlTable(v)
 			}
+			if key == "slug" {
+				value = fmt.Sprintf(`<a href="content/%v.md">%v</a>`, value, value)
+			}
 			table += fmt.Sprintf("<td>%v</td>", value)
 
 			table += `</tr>`
