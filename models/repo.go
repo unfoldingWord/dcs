@@ -2237,7 +2237,7 @@ func (repo *Repository) UpdateRepoFile(doer *User, oldBranchName, branchName, ol
 	return nil
 }
 
-func (repo *Repository) GetPreviewDiff(repoPath, branchName, treeName, text string, maxlines int) (diff *Diff, err error) {
+func (repo *Repository) GetPreviewDiff(repoPath, branchName, treeName, text string, maxlines, maxchars, maxfiles int) (diff *Diff, err error) {
 	repoWorkingPool.CheckIn(com.ToStr(repo.ID))
 	defer repoWorkingPool.CheckOut(com.ToStr(repo.ID))
 
@@ -2275,7 +2275,7 @@ func (repo *Repository) GetPreviewDiff(repoPath, branchName, treeName, text stri
 	pid := process.Add(fmt.Sprintf("GetDiffRange (%s)", repoPath), cmd)
 	defer process.Remove(pid)
 
-	diff, err = ParsePatch(maxlines, stdout)
+	diff, err = ParsePatch(maxlines, maxchars, maxfiles, stdout)
 	if err != nil {
 		return nil, fmt.Errorf("ParsePatch: %v", err)
 	}
