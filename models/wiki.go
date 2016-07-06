@@ -21,44 +21,6 @@ import (
 	"github.com/gogits/gogs/modules/setting"
 )
 
-// workingPool represents a pool of working status which makes sure
-// that only one instance of same task is performing at a time.
-// However, different type of tasks can performing at the same time.
-type workingPool struct {
-	lock  sync.Mutex
-	pool  map[string]*sync.Mutex
-	count map[string]int
-}
-
-// CheckIn checks in a task and waits if others are running.
-func (p *workingPool) CheckIn(name string) {
-	p.lock.Lock()
-
-	lock, has := p.pool[name]
-	if !has {
-		lock = &sync.Mutex{}
-		p.pool[name] = lock
-	}
-	p.count[name]++
-
-	p.lock.Unlock()
-	lock.Lock()
-}
-
-// CheckOut checks out a task to let other tasks run.
-func (p *workingPool) CheckOut(name string) {
-	p.lock.Lock()
-	defer p.lock.Unlock()
-
-	p.pool[name].Unlock()
-	if p.count[name] == 1 {
-		delete(p.pool, name)
-		delete(p.count, name)
-	} else {
-		p.count[name]--
-	}
-}
-
 var wikiWorkingPool = &workingPool{
 	pool:  make(map[string]*sync.Mutex),
 	count: make(map[string]int),
@@ -69,10 +31,12 @@ func ToWikiPageURL(name string) string {
 	return url.QueryEscape(strings.Replace(name, " ", "-", -1))
 }
 
-// ToWikiPageName formats a URL back to corresponding wiki page name.
+// ToWikiPageName formats a URL back to corresponding wiki page name,
+// and removes leading characters './' to prevent changing files
+// that are not belong to wiki repository.
 func ToWikiPageName(urlString string) string {
 	name, _ := url.QueryUnescape(strings.Replace(urlString, "-", " ", -1))
-	return name
+	return strings.Replace(strings.TrimLeft(name, "./"), "/", " ", -1)
 }
 
 // WikiCloneLink returns clone URLs of repository wiki.
@@ -113,7 +77,7 @@ func (repo *Repository) LocalWikiPath() string {
 
 // UpdateLocalWiki makes sure the local copy of repository wiki is up-to-date.
 func (repo *Repository) UpdateLocalWiki() error {
-	return updateLocalCopy(repo.WikiPath(), repo.LocalWikiPath())
+	return updateLocalCopy(repo.WikiPath(), repo.LocalWikiPath(), repo.DefaultBranch)
 }
 
 // discardLocalWikiChanges discards local commits make sure
@@ -149,7 +113,7 @@ func (repo *Repository) updateWikiPage(doer *User, oldTitle, title, content, mes
 		return fmt.Errorf("UpdateLocalWiki: %v", err)
 	}
 
-	title = ToWikiPageName(strings.Replace(title, "/", " ", -1))
+	title = ToWikiPageName(title)
 	filename := path.Join(localPath, title+".md")
 
 	// If not a new file, show perform update not create.
@@ -160,6 +124,13 @@ func (repo *Repository) updateWikiPage(doer *User, oldTitle, title, content, mes
 	} else {
 		os.Remove(path.Join(localPath, oldTitle+".md"))
 	}
+
+	// SECURITY: if new file is a symlink to non-exist critical file,
+	// attack content can be written to the target file (e.g. authorized_keys2)
+	// as a new page operation.
+	// So we want to make sure the symlink is removed before write anything.
+	// The new file we created will be in normal text format.
+	os.Remove(filename)
 
 	if err = ioutil.WriteFile(filename, []byte(content), 0666); err != nil {
 		return fmt.Errorf("WriteFile: %v", err)
@@ -198,7 +169,7 @@ func (repo *Repository) DeleteWikiPage(doer *User, title string) (err error) {
 		return fmt.Errorf("UpdateLocalWiki: %v", err)
 	}
 
-	title = ToWikiPageName(strings.Replace(title, "/", " ", -1))
+	title = ToWikiPageName(title)
 	filename := path.Join(localPath, title+".md")
 	os.Remove(filename)
 

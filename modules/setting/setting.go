@@ -110,6 +110,8 @@ var (
 		ForcePrivate           bool
 		MaxCreationLimit       int
 		PullRequestQueueLength int
+		LineWrapExtensions     []string
+		PreviewTabApis         []string
 	}
 	RepoRootPath string
 	ScriptType   string
@@ -128,6 +130,7 @@ var (
 	Markdown struct {
 		EnableHardLineBreak bool
 		CustomURLSchemes    []string `ini:"CUSTOM_URL_SCHEMES"`
+		MdFileExtensions    []string
 	}
 
 	// Picture settings
@@ -147,6 +150,13 @@ var (
 	AttachmentMaxFiles     int
 	AttachmentEnabled      bool
 
+	// Repo Upload settings
+	UploadTempPath         string
+	UploadAllowedTypes 	string
+	UploadMaxSize      	int64
+	UploadMaxFiles     	int
+	UploadEnabled      	bool
+
 	// Time settings
 	TimeFormat string
 
@@ -158,18 +168,6 @@ var (
 	// Session settings
 	SessionConfig  session.Options
 	CSRFCookieName = "_csrf"
-
-	// Git settings
-	Git struct {
-		MaxGitDiffLines int
-		GcArgs          []string `delim:" "`
-		Timeout         struct {
-			Migrate int
-			Mirror  int
-			Clone   int
-			Pull    int
-		} `ini:"git.timeout"`
-	}
 
 	// Cron tasks
 	Cron struct {
@@ -190,6 +188,25 @@ var (
 			RunAtStart bool
 			Schedule   string
 		} `ini:"cron.check_repo_stats"`
+	}
+
+	// Git settings
+	Git struct {
+		MaxGitDiffLines          int
+		MaxGitDiffLineCharacters int
+		MaxGitDiffFiles          int
+		GcArgs                   []string `delim:" "`
+		Timeout                  struct {
+			Migrate int
+			Mirror  int
+			Clone   int
+			Pull    int
+		} `ini:"git.timeout"`
+	}
+
+	// API settings
+	API struct {
+		MaxResponseItems int
 	}
 
 	// I18n settings
@@ -331,7 +348,7 @@ func NewContext() {
 	Domain = sec.Key("DOMAIN").MustString("localhost")
 	HttpAddr = sec.Key("HTTP_ADDR").MustString("0.0.0.0")
 	HttpPort = sec.Key("HTTP_PORT").MustString("3000")
-	LocalURL = sec.Key("LOCAL_ROOT_URL").MustString("http://localhost:" + HttpPort + "/")
+	LocalURL = sec.Key("LOCAL_ROOT_URL").MustString(string(Protocol) + "://localhost:" + HttpPort + "/")
 	OfflineMode = sec.Key("OFFLINE_MODE").MustBool()
 	DisableRouterLog = sec.Key("DISABLE_ROUTER_LOG").MustBool()
 	StaticRootPath = sec.Key("STATIC_ROOT_PATH").MustString(workDir)
@@ -386,8 +403,8 @@ func NewContext() {
 		AttachmentPath = path.Join(workDir, AttachmentPath)
 	}
 	AttachmentAllowedTypes = strings.Replace(sec.Key("ALLOWED_TYPES").MustString("image/jpeg,image/png"), "|", ",", -1)
-	AttachmentMaxSize = sec.Key("MAX_SIZE").MustInt64(4)
-	AttachmentMaxFiles = sec.Key("MAX_FILES").MustInt(5)
+	AttachmentMaxSize = sec.Key("MAX_SIZE").MustInt64(32)
+	AttachmentMaxFiles = sec.Key("MAX_FILES").MustInt(10)
 	AttachmentEnabled = sec.Key("ENABLE").MustBool(true)
 
 	TimeFormat = map[string]string{
@@ -429,6 +446,16 @@ func NewContext() {
 		log.Fatal(4, "Fail to map Repository settings: %v", err)
 	}
 
+	sec = Cfg.Section("upload")
+	UploadTempPath = sec.Key("UPLOAD_TEMP_PATH").MustString(path.Join(AppDataPath, "tmp/uploads"))
+	if !filepath.IsAbs(UploadTempPath) {
+		UploadTempPath = path.Join(workDir, UploadTempPath)
+	}
+	UploadAllowedTypes = strings.Replace(sec.Key("UPLOAD_ALLOWED_TYPES").MustString(""), "|", ",", -1)
+	UploadMaxSize = sec.Key("UPLOAD_FILE_MAX_SIZE").MustInt64(32)
+	UploadMaxFiles = sec.Key("UPLOAD_MAX_FILES").MustInt(10)
+	UploadEnabled = sec.Key("ENABLE_UPLOADS").MustBool(true)
+
 	// UI settings.
 	sec = Cfg.Section("ui")
 	ExplorePagingNum = sec.Key("EXPLORE_PAGING_NUM").MustInt(20)
@@ -463,10 +490,12 @@ func NewContext() {
 
 	if err = Cfg.Section("markdown").MapTo(&Markdown); err != nil {
 		log.Fatal(4, "Fail to map Markdown settings: %v", err)
-	} else if err = Cfg.Section("git").MapTo(&Git); err != nil {
-		log.Fatal(4, "Fail to map Git settings: %v", err)
 	} else if err = Cfg.Section("cron").MapTo(&Cron); err != nil {
 		log.Fatal(4, "Fail to map Cron settings: %v", err)
+	} else if err = Cfg.Section("git").MapTo(&Git); err != nil {
+		log.Fatal(4, "Fail to map Git settings: %v", err)
+	} else if err = Cfg.Section("api").MapTo(&API); err != nil {
+		log.Fatal(4, "Fail to map API settings: %v", err)
 	}
 
 	Langs = Cfg.Section("i18n").Key("LANGS").Strings(",")
@@ -612,16 +641,17 @@ func newSessionService() {
 
 // Mailer represents mail service.
 type Mailer struct {
-	QueueLength       int
-	Name              string
-	Host              string
-	From              string
-	User, Passwd      string
-	DisableHelo       bool
-	HeloHostname      string
-	SkipVerify        bool
-	UseCertificate    bool
-	CertFile, KeyFile string
+	QueueLength           int
+	Name                  string
+	Host                  string
+	From                  string
+	User, Passwd          string
+	DisableHelo           bool
+	HeloHostname          string
+	SkipVerify            bool
+	UseCertificate        bool
+	CertFile, KeyFile     string
+	EnableHTMLAlternative bool
 }
 
 var (
@@ -636,17 +666,18 @@ func newMailService() {
 	}
 
 	MailService = &Mailer{
-		QueueLength:    sec.Key("SEND_BUFFER_LEN").MustInt(100),
-		Name:           sec.Key("NAME").MustString(AppName),
-		Host:           sec.Key("HOST").String(),
-		User:           sec.Key("USER").String(),
-		Passwd:         sec.Key("PASSWD").String(),
-		DisableHelo:    sec.Key("DISABLE_HELO").MustBool(),
-		HeloHostname:   sec.Key("HELO_HOSTNAME").String(),
-		SkipVerify:     sec.Key("SKIP_VERIFY").MustBool(),
-		UseCertificate: sec.Key("USE_CERTIFICATE").MustBool(),
-		CertFile:       sec.Key("CERT_FILE").String(),
-		KeyFile:        sec.Key("KEY_FILE").String(),
+		QueueLength:           sec.Key("SEND_BUFFER_LEN").MustInt(100),
+		Name:                  sec.Key("NAME").MustString(AppName),
+		Host:                  sec.Key("HOST").String(),
+		User:                  sec.Key("USER").String(),
+		Passwd:                sec.Key("PASSWD").String(),
+		DisableHelo:           sec.Key("DISABLE_HELO").MustBool(),
+		HeloHostname:          sec.Key("HELO_HOSTNAME").String(),
+		SkipVerify:            sec.Key("SKIP_VERIFY").MustBool(),
+		UseCertificate:        sec.Key("USE_CERTIFICATE").MustBool(),
+		CertFile:              sec.Key("CERT_FILE").String(),
+		KeyFile:               sec.Key("KEY_FILE").String(),
+		EnableHTMLAlternative: sec.Key("ENABLE_HTML_ALTERNATIVE").MustBool(),
 	}
 	MailService.From = sec.Key("FROM").MustString(MailService.User)
 	log.Info("Mail Service Enabled")

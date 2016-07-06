@@ -280,6 +280,18 @@ func (err ErrAccessTokenNotExist) Error() string {
 	return fmt.Sprintf("access token does not exist [sha: %s]", err.SHA)
 }
 
+type ErrAccessTokenEmpty struct {
+}
+
+func IsErrAccessTokenEmpty(err error) bool {
+	_, ok := err.(ErrAccessTokenEmpty)
+	return ok
+}
+
+func (err ErrAccessTokenEmpty) Error() string {
+	return fmt.Sprintf("access token is empty")
+}
+
 // ________                            .__                __  .__
 // \_____  \_______  _________    ____ |__|____________ _/  |_|__| ____   ____
 //  /   |   \_  __ \/ ___\__  \  /    \|  \___   /\__  \\   __\  |/  _ \ /    \
@@ -601,4 +613,48 @@ func IsErrTeamAlreadyExist(err error) bool {
 
 func (err ErrTeamAlreadyExist) Error() string {
 	return fmt.Sprintf("team already exists [org_id: %d, name: %s]", err.OrgID, err.Name)
+}
+
+// __________
+// \______   \ ____ ______   ____
+//  |       _// __ \\____ \ /  _ \
+//  |    |   \  ___/|  |_> >  <_> )
+//  |____|_  /\___  >   __/ \____/
+//         \/     \/|__|
+
+type ErrRepoFileAlreadyExist struct {
+	FileName string
+}
+
+func IsErrRepoFileAlreadyExist(err error) bool {
+	_, ok := err.(ErrRepoFileAlreadyExist)
+	return ok
+}
+
+func (err ErrRepoFileAlreadyExist) Error() string {
+	return fmt.Sprintf("Repo file already exists [file name: %s]", err.FileName)
+}
+
+//  ____ ___        .__                    .___
+// |    |   \______ |  |   _________     __| _/
+// |    |   /\____ \|  |  /  _ \__  \   / __ |
+// |    |  / |  |_> >  |_(  <_> ) __ \_/ /_/ |
+// |______/  |   __/|____/\____(____  /\____ |
+//           |__|                   \/      \/
+//
+
+type ErrUploadNotExist struct {
+	ID     int64
+	UUID   string
+	UserID int64
+	RepoID int64
+}
+
+func IsErrUploadNotExist(err error) bool {
+	_, ok := err.(ErrAttachmentNotExist)
+	return ok
+}
+
+func (err ErrUploadNotExist) Error() string {
+	return fmt.Sprintf("attachment does not exist [id: %d, uuid: %s]", err.ID, err.UUID)
 }

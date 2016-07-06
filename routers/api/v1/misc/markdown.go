@@ -9,6 +9,7 @@ import (
 
 	"github.com/gogits/gogs/modules/context"
 	"github.com/gogits/gogs/modules/markdown"
+	"github.com/gogits/gogs/modules/yaml"
 )
 
 // https://github.com/gogits/go-gogs-client/wiki/Miscellaneous#render-an-arbitrary-markdown-document
@@ -21,14 +22,17 @@ func Markdown(ctx *context.APIContext, form api.MarkdownOption) {
 	if len(form.Text) == 0 {
 		ctx.Write([]byte(""))
 		return
-	}
+		}
 
+	var yamlHtml, markdownBody []byte
+	yamlHtml = yaml.RenderMarkdownYaml([]byte(form.Text))
 	switch form.Mode {
 	case "gfm":
-		ctx.Write(markdown.Render([]byte(form.Text), form.Context, nil))
+		markdownBody = markdown.Render(yaml.StripYamlFromText([]byte(form.Text)), form.Context, nil)
 	default:
-		ctx.Write(markdown.RenderRaw([]byte(form.Text), ""))
+		markdownBody = markdown.RenderRaw([]byte(form.Text), "")
 	}
+	ctx.Write(append(yamlHtml, markdownBody...))
 }
 
 // https://github.com/gogits/go-gogs-client/wiki/Miscellaneous#render-a-markdown-document-in-raw-mode

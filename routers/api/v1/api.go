@@ -161,6 +161,8 @@ func RegisterRoutes(m *macaron.Macaron) {
 		m.Post("/markdown", bind(api.MarkdownOption{}), misc.Markdown)
 		m.Post("/markdown/raw", misc.MarkdownRaw)
 
+		m.Post("/yaml", bind(api.YamlOption{}), misc.Yaml)
+
 		// Users
 		m.Group("/users", func() {
 			m.Get("/search", user.Search)

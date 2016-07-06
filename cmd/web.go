@@ -82,12 +82,12 @@ func checkVersion() {
 		{"github.com/go-macaron/binding", binding.Version, "0.2.1"},
 		{"github.com/go-macaron/cache", cache.Version, "0.1.2"},
 		{"github.com/go-macaron/csrf", csrf.Version, "0.1.0"},
-		{"github.com/go-macaron/i18n", i18n.Version, "0.2.0"},
+		{"github.com/go-macaron/i18n", i18n.Version, "0.3.0"},
 		{"github.com/go-macaron/session", session.Version, "0.1.6"},
 		{"github.com/go-macaron/toolbox", toolbox.Version, "0.1.0"},
 		{"gopkg.in/ini.v1", ini.Version, "1.8.4"},
 		{"gopkg.in/macaron.v1", macaron.Version, "1.1.2"},
-		{"github.com/gogits/git-module", git.Version, "0.2.9"},
+		{"github.com/gogits/git-module", git.Version, "0.3.1"},
 		{"github.com/gogits/go-gogs-client", gogs.Version, "0.7.4"},
 	}
 	for _, c := range checkers {
@@ -175,7 +175,7 @@ func newMacaron() *macaron.Macaron {
 	return m
 }
 
-func runWeb(ctx *cli.Context) {
+func runWeb(ctx *cli.Context) error {
 	if ctx.IsSet("config") {
 		setting.CustomConf = ctx.String("config")
 	}
@@ -482,6 +482,20 @@ func runWeb(ctx *cli.Context) {
 
 		m.Combo("/compare/*", repo.MustAllowPulls).Get(repo.CompareAndPullRequest).
 			Post(bindIgnErr(auth.CreateIssueForm{}), repo.CompareAndPullRequestPost)
+
+		m.Group("", func() {
+			m.Combo("/edit/*").Get(repo.EditFile).
+			Post(bindIgnErr(auth.EditRepoFileForm{}), repo.EditFilePost)
+			m.Combo("/new/*").Get(repo.EditNewFile).
+			Post(bindIgnErr(auth.EditRepoFileForm{}), repo.EditNewFilePost)
+			m.Combo("/upload/*").Get(repo.UploadFile).
+			Post(bindIgnErr(auth.UploadRepoFileForm{}), repo.UploadFilePost)
+			m.Post("/delete/*", bindIgnErr(auth.DeleteRepoFileForm{}), repo.DeleteFilePost)
+			m.Post("/branches", bindIgnErr(auth.NewBranchForm{}), repo.NewBranchPost)
+			m.Post("/upload-file", repo.UploadFileToServer)
+			m.Post("/upload-remove", bindIgnErr(auth.UploadRemoveFileForm{}), repo.UploadRemoveFileFromServer)
+			m.Post("/preview/*", bindIgnErr(auth.EditPreviewDiffForm{}), repo.DiffPreviewPost)
+		}, context.RepoRef(), context.RepoAssignment(), reqRepoWriter)
 	}, reqSignIn, context.RepoAssignment(), repo.MustBeNotBare)
 
 	m.Group("/:username/:reponame", func() {
@@ -585,4 +599,6 @@ func runWeb(ctx *cli.Context) {
 	if err != nil {
 		log.Fatal(4, "Fail to start server: %v", err)
 	}
+
+	return nil
 }
