@@ -19,11 +19,11 @@ import (
 	"github.com/gogits/gogs/modules/context"
 	"github.com/gogits/gogs/modules/log"
 	"github.com/gogits/gogs/modules/markdown"
+	"github.com/gogits/gogs/modules/setting"
 	"github.com/gogits/gogs/modules/template"
 	"github.com/gogits/gogs/modules/template/highlight"
 	"path/filepath"
 	"strconv"
-	"github.com/gogits/gogs/modules/setting"
 	"github.com/gogits/gogs/modules/yaml"
 )
 
@@ -116,28 +116,33 @@ func Home(ctx *context.Context) {
 				ctx.Data["IsImageFile"] = true
 				ctx.Data["FileEditLinkTooltip"] = ctx.Tr("repo.cannot_edit_binary_files")
 			case isTextFile:
-				d, _ := ioutil.ReadAll(dataRc)
-				buf = append(buf, d...)
-				isReadme := markdown.IsReadmeFile(blob.Name())
-				isMarkdown := isReadme || markdown.IsMarkdownFile(blob.Name())
-				isYaml := yaml.IsYamlFile(blob.Name())
-				ctx.Data["ReadmeExist"] = isReadme
-				ctx.Data["IsMarkdown"] = isMarkdown
-				ctx.Data["IsYaml"] = isYaml
-				if isMarkdown {
-					yamlHtml := yaml.RenderMarkdownYaml(buf)
-					markdownBody := markdown.Render(yaml.StripYamlFromText(buf), path.Dir(treeLink), ctx.Repo.Repository.ComposeMetas())
-					ctx.Data["FileContent"] = string(append(yamlHtml, markdownBody...))
-				} else if isYaml {
-					ctx.Data["FileContent"] = string(yaml.RenderYaml(buf))
+				if blob.Size() >= setting.MaxDisplayFileSize {
+					ctx.Data["IsFileTooLarge"] = true
 				} else {
-					if err, content := template.ToUtf8WithErr(buf); err != nil {
-						if err != nil {
-							log.Error(4, "Convert content encoding: %s", err)
-						}
-						ctx.Data["FileContent"] = string(buf)
+					ctx.Data["IsFileTooLarge"] = false
+					d, _ := ioutil.ReadAll(dataRc)
+					buf = append(buf, d...)
+					isReadme := markdown.IsReadmeFile(blob.Name())
+					isMarkdown := isReadme || markdown.IsMarkdownFile(blob.Name())
+					isYaml := yaml.IsYamlFile(blob.Name())
+					ctx.Data["ReadmeExist"] = isReadme
+					ctx.Data["IsMarkdown"] = isMarkdown
+					ctx.Data["IsYaml"] = isYaml
+					if isMarkdown {
+						yamlHtml := yaml.RenderMarkdownYaml(buf)
+						markdownBody := markdown.Render(yaml.StripYamlFromText(buf), path.Dir(treeLink), ctx.Repo.Repository.ComposeMetas())
+						ctx.Data["FileContent"] = string(append(yamlHtml, markdownBody...))
+					} else if isYaml {
+						ctx.Data["FileContent"] = string(yaml.RenderYaml(buf))
 					} else {
-						ctx.Data["FileContent"] = content
+						if err, content := template.ToUtf8WithErr(buf); err != nil {
+							if err != nil {
+								log.Error(4, "Convert content encoding: %s", err)
+							}
+							ctx.Data["FileContent"] = string(buf)
+						} else {
+ 							ctx.Data["FileContent"] = content
+						}
 					}
 				}
 				if ctx.Repo.IsWriter() && ctx.Repo.IsViewBranch  {
