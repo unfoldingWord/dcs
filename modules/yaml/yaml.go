@@ -101,10 +101,10 @@ func renderVerticalHtmlTable(m []yaml.MapSlice) string {
 }
 
 func RenderYaml(data []byte) []byte {
-	m := []yaml.MapSlice{}
+	mss := []yaml.MapSlice{}
 
 	if len(data) < 1 {
-		return []byte("")
+		return data
 	}
 
 	lines := strings.Split(string(data), "\r\n")
@@ -112,18 +112,22 @@ func RenderYaml(data []byte) []byte {
 		lines = strings.Split(string(data), "\n")
 	}
 	if len(lines) < 1 {
-		return []byte("")
+		return data
 	}
 
-	if err := yaml.Unmarshal(data, &m); err != nil {
-		return []byte("")
+	if err := yaml.Unmarshal(data, &mss); err != nil {
+		ms := yaml.MapSlice{}
+		if err := yaml.Unmarshal(data, &ms); err != nil {
+			return data
+		}
+		return []byte(renderHorizontalHtmlTable(ms))
+	}  else {
+		return []byte(renderVerticalHtmlTable(mss))
 	}
-
-	return []byte(renderVerticalHtmlTable(m))
 }
 
 func RenderMarkdownYaml(data []byte) []byte {
-	m := yaml.MapSlice{}
+	mss := []yaml.MapSlice{}
 
 	if len(data) < 1 {
 		return []byte("")
@@ -137,17 +141,24 @@ func RenderMarkdownYaml(data []byte) []byte {
 		return []byte("")
 	}
 
-	if err := yaml.Unmarshal(data, &m); err != nil {
-		return []byte("")
+	if err := yaml.Unmarshal(data, &mss); err != nil {
+		ms := yaml.MapSlice{}
+		if err := yaml.Unmarshal(data, &ms); err != nil {
+			return []byte("")
+		}
+		return []byte(renderHorizontalHtmlTable(ms))
+	} else {
+		return []byte(renderVerticalHtmlTable(mss))
 	}
-
-	return []byte(renderHorizontalHtmlTable(m))
 }
 
 func StripYamlFromText(data []byte) []byte {
-	m := make(map[interface{}]interface{})
-	if err := yaml.Unmarshal(data, &m); err != nil {
-		return data
+	mss := []yaml.MapSlice{}
+	if err := yaml.Unmarshal(data, &mss); err != nil {
+		ms := yaml.MapSlice{}
+		if err := yaml.Unmarshal(data, &ms); err != nil {
+			return data
+		}
 	}
 
 	lines := strings.Split(string(data), "\r\n")
