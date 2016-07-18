@@ -141,7 +141,7 @@ func Home(ctx *context.Context) {
 							}
 							ctx.Data["FileContent"] = string(buf)
 						} else {
-							ctx.Data["FileContent"] = content
+ 							ctx.Data["FileContent"] = content
 						}
 					}
 				}
