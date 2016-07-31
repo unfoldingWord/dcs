@@ -9,6 +9,7 @@ import (
 	"io/ioutil"
 	"path"
 	"strings"
+	"strconv"
 
 	"github.com/Unknwon/paginater"
 
@@ -22,7 +23,7 @@ import (
 	"github.com/gogits/gogs/modules/setting"
 	"github.com/gogits/gogs/modules/template"
 	"github.com/gogits/gogs/modules/template/highlight"
-	"strconv"
+	"github.com/gogits/gogs/modules/yaml"
 )
 
 const (
@@ -125,7 +126,9 @@ func Home(ctx *context.Context) {
 					ctx.Data["ReadmeExist"] = readmeExist
 					ctx.Data["IsMarkdown"] = isMarkdown
 					if isMarkdown {
-						ctx.Data["FileContent"] = string(markdown.Render(buf, path.Dir(treeLink), ctx.Repo.Repository.ComposeMetas()))
+						yamlHtml := yaml.RenderMarkdownYaml(buf)
+						markdownBody := markdown.Render(yaml.StripYamlFromText(buf), path.Dir(treeLink), ctx.Repo.Repository.ComposeMetas())
+						ctx.Data["FileContent"] = string(append(yamlHtml, markdownBody...))
 					} else {
 						if err, content := template.ToUtf8WithErr(buf); err != nil {
 							if err != nil {
