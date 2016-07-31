@@ -38,8 +38,12 @@
 		{{end}}
 	</h4>
 	<div class="ui attached table segment">
-		<div class="file-view {{if .IsMarkdown}}markdown{{else if .IsFileText}}code-view{{end}} has-emoji">
+		<div class="file-view {{if .IsMarkdown}}markdown{{else if .IsYaml}}markdown{{else if .IsFileText}}code-view{{end}} has-emoji">
 			{{if .IsMarkdown}}
+				<article class="markdown-body" itemprop="text">
+				{{if .FileContent}}{{.FileContent | Str2html}}{{end}}
+				</article>
+			{{else if .IsYaml}}
 				<article class="markdown-body" itemprop="text">
 				{{if .FileContent}}{{.FileContent | Str2html}}{{end}}
 				</article>
