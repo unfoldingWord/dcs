@@ -73,8 +73,13 @@ func checkVersion() {
 	if err != nil {
 		log.Fatal(4, "Fail to read 'templates/.VERSION': %v", err)
 	}
-	if string(data) != setting.AppVer {
-		log.Fatal(4, "Binary and template file version does not match, did you forget to recompile?")
+	tplVer := string(data)
+	if tplVer != setting.AppVer {
+		if version.Compare(tplVer, setting.AppVer, ">") {
+			log.Fatal(4, "Binary version is lower than template file version, did you forget to recompile Gogs?")
+		} else {
+			log.Fatal(4, "Binary version is higher than template file version, did you forget to update template files?")
+		}
 	}
 
 	// Check dependency version.
@@ -209,6 +214,7 @@ func runWeb(ctx *cli.Context) error {
 		})
 		m.Get("/repos", routers.ExploreRepos)
 		m.Get("/users", routers.ExploreUsers)
+		m.Get("/organizations", routers.ExploreOrganizations)
 	}, ignSignIn)
 	m.Combo("/install", routers.InstallInit).Get(routers.Install).
 		Post(bindIgnErr(auth.InstallForm{}), routers.InstallPost)
@@ -491,10 +497,26 @@ func runWeb(ctx *cli.Context) error {
 		m.Group("/releases", func() {
 			m.Get("/new", repo.NewRelease)
 			m.Post("/new", bindIgnErr(auth.NewReleaseForm{}), repo.NewReleasePost)
-			m.Get("/edit/*", repo.EditRelease)
-			m.Post("/edit/*", bindIgnErr(auth.EditReleaseForm{}), repo.EditReleasePost)
 			m.Post("/delete", repo.DeleteRelease)
 		}, reqRepoWriter, context.RepoRef())
+
+		m.Group("/releases", func() {
+			m.Get("/edit/*", repo.EditRelease)
+			m.Post("/edit/*", bindIgnErr(auth.EditReleaseForm{}), repo.EditReleasePost)
+		}, reqRepoWriter, func(ctx *context.Context) {
+			var err error
+			ctx.Repo.Commit, err = ctx.Repo.GitRepo.GetBranchCommit(ctx.Repo.Repository.DefaultBranch)
+			if err != nil {
+				ctx.Handle(500, "GetBranchCommit", err)
+				return
+			}
+			ctx.Repo.CommitsCount, err = ctx.Repo.Commit.CommitsCount()
+			if err != nil {
+				ctx.Handle(500, "CommitsCount", err)
+				return
+			}
+			ctx.Data["CommitsCount"] = ctx.Repo.CommitsCount
+		})
 
 		m.Combo("/compare/*", repo.MustAllowPulls).Get(repo.CompareAndPullRequest).
 			Post(bindIgnErr(auth.CreateIssueForm{}), repo.CompareAndPullRequestPost)

@@ -1231,6 +1231,7 @@ footer .ui.language .menu {
 }
 .repository.file.list #file-buttons .ui.button {
   padding: 8px 10px;
+  font-weight: normal;
 }
 .repository.file.list #repo-files-table thead th {
   padding-top: 8px;
@@ -2739,6 +2740,10 @@ footer .ui.language .menu {
 .dashboard.feeds .ui.right .head.menu .item.active,
 .dashboard.issues .ui.right .head.menu .item.active {
   color: #d9453d;
+}
+.feeds .news > .ui.grid {
+  margin-left: auto;
+  margin-right: auto;
 }
 .feeds .news .ui.avatar {
   margin-top: 13px;

@@ -46,7 +46,6 @@ var (
 	ErrEmailNotExist         = errors.New("E-mail does not exist")
 	ErrEmailNotActivated     = errors.New("E-mail address has not been activated")
 	ErrUserNameIllegal       = errors.New("User name contains illegal characters")
-	ErrLoginSourceNotExist   = errors.New("Login source does not exist")
 	ErrLoginSourceNotActived = errors.New("Login source is not actived")
 	ErrUnsupportedLoginType  = errors.New("Login source is unknown")
 )
@@ -272,7 +271,7 @@ func (u *User) RelAvatarLink() string {
 func (u *User) AvatarLink() string {
 	link := u.RelAvatarLink()
 	if link[0] == '/' && link[1] != '/' {
-		return setting.AppUrl + link[1:]
+		return setting.AppUrl + strings.TrimPrefix(link, setting.AppSubUrl)[1:]
 	}
 	return link
 }

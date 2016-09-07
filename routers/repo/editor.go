@@ -64,9 +64,7 @@ func editFile(ctx *context.Context, isNewFile bool) {
 
 		buf := make([]byte, 1024)
 		n, _ := dataRc.Read(buf)
-		if n > 0 {
-			buf = buf[:n]
-		}
+		buf = buf[:n]
 
 		// Only text file are editable online.
 		if !base.IsTextFile(buf) {
@@ -98,6 +96,7 @@ func editFile(ctx *context.Context, isNewFile bool) {
 	ctx.Data["MarkdownFileExts"] = strings.Join(setting.Markdown.FileExtensions, ",")
 	ctx.Data["LineWrapExtensions"] = strings.Join(setting.Repository.Editor.LineWrapExtensions, ",")
 	ctx.Data["PreviewableFileModes"] = strings.Join(setting.Repository.Editor.PreviewableFileModes, ",")
+	ctx.Data["EditorconfigURLPrefix"] = fmt.Sprintf("%s/api/v1/repos/%s/editorconfig/", setting.AppSubUrl, ctx.Repo.Repository.FullName())
 
 	ctx.HTML(200, EDIT_FILE)
 }
