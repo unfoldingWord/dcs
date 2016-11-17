@@ -22,7 +22,7 @@ import (
 	"code.gitea.io/gitea/modules/template"
 	"code.gitea.io/gitea/modules/template/highlight"
 	"github.com/Unknwon/paginater"
-	"github.com/gogits/gogs/modules/yaml"
+	"code.gitea.io/gitea/modules/yaml"
 )
 
 const (
@@ -160,7 +160,6 @@ func renderFile(ctx *context.Context, entry *git.TreeEntry, treeLink, rawLink st
 
 		readmeExist := isMarkdown || markdown.IsReadmeFile(blob.Name())
 		ctx.Data["ReadmeExist"] = readmeExist
-<<<<<<< HEAD
 
 		isYaml := yaml.IsYamlFile(blob.Name())
 		ctx.Data["IsYaml"] = isYaml
