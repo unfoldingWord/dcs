@@ -12,18 +12,16 @@ import (
 	"path"
 	"strings"
 
+	"code.gitea.io/git"
+	"code.gitea.io/gitea/models"
+	"code.gitea.io/gitea/modules/base"
+	"code.gitea.io/gitea/modules/context"
+	"code.gitea.io/gitea/modules/log"
+	"code.gitea.io/gitea/modules/markdown"
+	"code.gitea.io/gitea/modules/setting"
+	"code.gitea.io/gitea/modules/template"
+	"code.gitea.io/gitea/modules/template/highlight"
 	"github.com/Unknwon/paginater"
-
-	"github.com/gogits/git-module"
-
-	"github.com/gogits/gogs/models"
-	"github.com/gogits/gogs/modules/base"
-	"github.com/gogits/gogs/modules/context"
-	"github.com/gogits/gogs/modules/log"
-	"github.com/gogits/gogs/modules/markdown"
-	"github.com/gogits/gogs/modules/setting"
-	"github.com/gogits/gogs/modules/template"
-	"github.com/gogits/gogs/modules/template/highlight"
 	"github.com/gogits/gogs/modules/yaml"
 )
 
@@ -91,6 +89,9 @@ func renderDirectory(ctx *context.Context, treeLink string) {
 				ctx.Data["IsMarkdown"] = true
 				buf = markdown.Render(buf, treeLink, ctx.Repo.Repository.ComposeMetas())
 			default:
+				// FIXME This is the only way to show non-markdown files
+				// instead of a broken "View Raw" link
+				ctx.Data["IsMarkdown"] = true
 				buf = bytes.Replace(buf, []byte("\n"), []byte(`<br>`), -1)
 			}
 			ctx.Data["FileContent"] = string(buf)
@@ -159,12 +160,12 @@ func renderFile(ctx *context.Context, entry *git.TreeEntry, treeLink, rawLink st
 
 		readmeExist := isMarkdown || markdown.IsReadmeFile(blob.Name())
 		ctx.Data["ReadmeExist"] = readmeExist
+<<<<<<< HEAD
 
 		isYaml := yaml.IsYamlFile(blob.Name())
 		ctx.Data["IsYaml"] = isYaml
 
-		if readmeExist {
-			// TODO: don't need to render if it's a README but not Markdown file.
+		if readmeExist && isMarkdown {
 			yamlHtml := yaml.RenderMarkdownYaml(buf)
 			markdownBody := markdown.Render(yaml.StripYamlFromText(buf), path.Dir(treeLink), ctx.Repo.Repository.ComposeMetas())
 			ctx.Data["FileContent"] = string(append(yamlHtml, markdownBody...))
@@ -253,13 +254,6 @@ func Home(ctx *context.Context) {
 	if ctx.Written() {
 		return
 	}
-
-	ec, err := ctx.Repo.GetEditorconfig()
-	if err != nil && !git.IsErrNotExist(err) {
-		ctx.Handle(500, "Repo.GetEditorconfig", err)
-		return
-	}
-	ctx.Data["Editorconfig"] = ec
 
 	var treeNames []string
 	paths := make([]string, 0, 5)
