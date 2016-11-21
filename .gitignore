@@ -3,12 +3,9 @@
 *.a
 *.so
 
-# Folders
-_obj
-_test
-
 # IntelliJ
 .idea
+*.iml
 
 # Architecture specific extensions/prefixes
 *.[568vq]
@@ -29,13 +26,18 @@ _testmain.go
 coverage.out
 
 *.db
-*.log
 
-/gitea
+# the compiled executable file
+gitea
 
-/bin
-/dist
-/custom
-/data
-/log
-/public/img/avatar
+# Folders
+_obj/
+_test/
+bin/
+dist/
+data/
+log/
+public/img/avatar/
+
+# the custom directory can be a symbolic link, so no trailing slash
+custom
