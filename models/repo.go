@@ -18,6 +18,7 @@ import (
 	"sort"
 	"strings"
 	"time"
+	"encoding/json"
 
 	"code.gitea.io/git"
 	"code.gitea.io/gitea/modules/bindata"
@@ -32,6 +33,7 @@ import (
 	"github.com/go-xorm/xorm"
 	version "github.com/mcuadros/go-version"
 	ini "gopkg.in/ini.v1"
+	"reflect"
 )
 
 const (
@@ -1901,6 +1903,122 @@ func (repos MirrorRepositoryList) loadAttributes(e Engine) error {
 
 func (repos MirrorRepositoryList) LoadAttributes() error {
 	return repos.loadAttributes(x)
+}
+
+type ScrubSensativeDataOptions struct {
+	LastCommitID	string
+}
+
+// SrubSenstaiveData removes emails and passwords from the manifest.json or project.json file's history.
+func (repo *Repository) ScrubSensativeData(doer *User, opts ScrubSensativeDataOptions)  error {
+	repoWorkingPool.CheckIn(com.ToStr(repo.ID))
+	defer repoWorkingPool.CheckOut(com.ToStr(repo.ID))
+
+	localPath := repo.LocalCopyPath()
+
+	if err := repo.DiscardLocalRepoBranchChanges("master"); err != nil {
+		return fmt.Errorf("DiscardLocalRepoBranchChanges [branch: master]: %v", err)
+	} else if err = repo.UpdateLocalCopyBranch("master"); err != nil {
+		return fmt.Errorf("UpdateLocalCopyBranch [branch: master]: %v", err)
+	}
+
+	dirty := false
+	dirty = repo.ScrubJsonFile("project.json") || dirty
+	dirty = repo.ScrubJsonFile("package.json") || dirty
+	dirty = repo.ScrubJsonFile("manifest.json") || dirty
+
+	if ! dirty {
+		return fmt.Errorf("There is nothing that can be removed from the project's JSON files.")
+	}
+
+	if err := git.AddChanges(localPath, true); err != nil {
+		return fmt.Errorf("git add --all: %v", err)
+	} else if err := git.CommitChanges(localPath, git.CommitChangesOptions{
+		Committer: doer.NewGitSig(),
+		Message:   "Removed sensative data",
+	}); err != nil {
+		return fmt.Errorf("CommitChanges: %v", err)
+	} else if err := git.PushForce(localPath, "origin", "master"); err != nil {
+		return fmt.Errorf("git push --force --all origin %s: %v", "master", err)
+	}
+
+	gitRepo, err := git.OpenRepository(repo.RepoPath())
+	if err != nil {
+		log.Error(4, "OpenRepository: %v", err)
+		return nil
+	}
+	commit, err := gitRepo.GetBranchCommit("master")
+	if err != nil {
+		log.Error(4, "GetBranchCommit [branch: %s]: %v", "master", err)
+		return nil
+	}
+
+	// Simulate push event.
+	pushCommits := &PushCommits{
+		Len:     1,
+		Commits: []*PushCommit{CommitToPushCommit(commit)},
+	}
+	oldCommitID := opts.LastCommitID
+	if err := CommitRepoAction(CommitRepoActionOptions{
+		PusherName:  doer.Name,
+		RepoOwnerID: repo.MustOwner().ID,
+		RepoName:    repo.Name,
+		RefFullName: git.BRANCH_PREFIX + "master",
+		OldCommitID: oldCommitID,
+		NewCommitID: commit.ID.String(),
+		Commits:     pushCommits,
+	}); err != nil {
+		log.Error(4, "CommitRepoAction: %v", err)
+		return nil
+	}
+
+	return nil
+}
+
+func (repo *Repository) ScrubJsonFile(fileName string) bool {
+	localPath := repo.LocalCopyPath()
+	jsonPath := path.Join(localPath, fileName)
+
+	var jsonData interface{}
+	if fileContent, err := ioutil.ReadFile(jsonPath); err != nil {
+		return false
+	} else {
+		log.Info(string(fileContent))
+		if err = json.Unmarshal(fileContent, &jsonData); err != nil {
+			return false
+		}
+	}
+
+	m := jsonData.(map[string]interface{})
+	repo.ScrubMap(m)
+	if fileContent, err := json.MarshalIndent(m, "", "  "); err != nil {
+		return false
+	} else {
+		if err := git.ScrubFile(repo.LocalCopyPath(), fileName); err != nil {
+			return false
+		}
+		if err := ioutil.WriteFile(jsonPath, []byte(fileContent), 0666); err != nil {
+			return false
+		}
+	}
+
+	return true
+}
+
+func (repo *Repository) ScrubMap(m map[string]interface{}) {
+	if _, ok := m["translators"]; ok {
+		m["translators"] =  map[string]interface{}{}
+	}
+	if _, ok := m["contributors"]; ok {
+		m["contributors"] =  map[string]interface{}{}
+	}
+
+	for _, v := range m {
+		if reflect.ValueOf(v).Kind() == reflect.Map {
+			vm := v.(map[string]interface{})
+			repo.ScrubMap(vm)
+		}
+	}
 }
 
 //  __      __         __         .__
