@@ -1907,6 +1907,7 @@ func (repos MirrorRepositoryList) LoadAttributes() error {
 
 type ScrubSensativeDataOptions struct {
 	LastCommitID	string
+	CommitMessage	string
 }
 
 // SrubSenstaiveData removes emails and passwords from the manifest.json or project.json file's history.
@@ -1926,16 +1927,17 @@ func (repo *Repository) ScrubSensativeData(doer *User, opts ScrubSensativeDataOp
 	dirty = repo.ScrubJsonFile("project.json") || dirty
 	dirty = repo.ScrubJsonFile("package.json") || dirty
 	dirty = repo.ScrubJsonFile("manifest.json") || dirty
+	dirty = repo.ScrubJsonFile("status.json") || dirty
 
 	if ! dirty {
-		return fmt.Errorf("There is nothing that can be removed from the project's JSON files.")
+		return fmt.Errorf("repo.settings.scrub_nothing_to_scrub")
 	}
 
 	if err := git.AddChanges(localPath, true); err != nil {
 		return fmt.Errorf("git add --all: %v", err)
 	} else if err := git.CommitChanges(localPath, git.CommitChangesOptions{
 		Committer: doer.NewGitSig(),
-		Message:   "Removed sensative data",
+		Message:   opts.CommitMessage,
 	}); err != nil {
 		return fmt.Errorf("CommitChanges: %v", err)
 	} else if err := git.PushForce(localPath, "origin", "master"); err != nil {
@@ -2005,20 +2007,24 @@ func (repo *Repository) ScrubJsonFile(fileName string) bool {
 	return true
 }
 
-func (repo *Repository) ScrubMap(m map[string]interface{}) {
-	if _, ok := m["translators"]; ok {
-		m["translators"] =  map[string]interface{}{}
-	}
-	if _, ok := m["contributors"]; ok {
-		m["contributors"] =  map[string]interface{}{}
+func (repo *Repository) ScrubMap(m map[string]interface{}) bool {
+	dirty := false
+	fieldsToScrub := [...]string{"translators", "contributors", "checking_entity"}
+	for _, field := range fieldsToScrub {
+		if _, ok := m[field]; ok {
+			m[field] = map[string]interface{}{}
+			dirty = true
+		}
 	}
 
 	for _, v := range m {
 		if reflect.ValueOf(v).Kind() == reflect.Map {
 			vm := v.(map[string]interface{})
-			repo.ScrubMap(vm)
+			dirty = repo.ScrubMap(vm) || dirty
 		}
 	}
+
+	return dirty
 }
 
 //  __      __         __         .__
