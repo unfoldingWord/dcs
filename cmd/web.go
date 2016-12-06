@@ -430,8 +430,8 @@ func runWeb(ctx *cli.Context) error {
 	}, ignSignIn, context.RepoAssignment(), context.RepoRef())
 
 	// Redirect hashtag requests for ineligible repositories
-	m.Group("/:username/:reponame(.+[^-][^u][^b][^n][^-].+|.+[^-][^u][^b][^n]$)", func() {
-		m.Get("/hashtags/?*", func(ctx *macaron.Context) {
+	m.Group("/:username/:reponame", func() {
+		m.Get("/hashtags/*.*", func(ctx *macaron.Context) {
 			ctx.Redirect(setting.AppSubUrl + "/" + ctx.Params(":username")+ "/" + ctx.Params(":reponame"), 301)
 		})
 	}, ignSignIn)

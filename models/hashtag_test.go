@@ -86,7 +86,7 @@ VALUES ('1','1','1','en','amill','article1.md','1480336882','1480336882'),
 	defer os.RemoveAll(tempDir)
 
 	Convey("Test Hashtag.GetHashtagSummary()", t, func() {
-		results, err := GetHashtagSummary(testEngine, "en-ubn")
+		results, err := getHashtagSummary(testEngine, "en-ubn")
 		So(err, ShouldBeNil)
 
 		//print("Hashtags found: " + strconv.Itoa(len(results)) + "\n")

@@ -13,7 +13,7 @@ const (
 	HASHTAGS    base.TplName = "repo/hashtag/list"
 )
 
-// Produce a page listing all hashtags for this language, with counts
+// Hashtags produces a page listing all hashtags for this language, with counts
 func Hashtags(ctx *context.Context) {
 
 	// get the LANG-ubn repository name prefix
@@ -29,7 +29,7 @@ func Hashtags(ctx *context.Context) {
 	ctx.Data["reponame"] = ctx.Repo.Repository.Name
 	ctx.Data["RepoLink"] = ctx.Repo.Repository.Link()
 	ctx.Data["Title"] = ctx.Tr("repo.hashtag.all_hashtags", ctx.Repo.Repository.Owner.Name + "/" + repo_prefix)
-	results, err := models.GetHashtagSummary(nil, repo_prefix)
+	results, err := models.GetHashtagSummary(repo_prefix)
 
 	if err != nil {
 		log.Error(4, "Hashtags: %v", err)
@@ -41,7 +41,7 @@ func Hashtags(ctx *context.Context) {
 	ctx.HTML(200, HASHTAGS)
 }
 
-// Produce a disambiguation page
+// HashtagDisambiguation produces a disambiguation page
 func HashtagDisambiguation(ctx *context.Context) {
 
 	hashtag := ctx.Params(":hashtag")
