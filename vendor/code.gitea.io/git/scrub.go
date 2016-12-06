@@ -7,7 +7,7 @@ import (
 	"os/exec"
 )
 
-// Scrub file completely removes a file from a repository's history
+// ScrubFile completely removes a file from a repository's history
 func ScrubFile(repoPath string, fileName string) error {
 	gitPath, _ := exec.LookPath("git")
 	cmd := NewCommand("filter-branch", "--force", "--prune-empty", "--tag-name-filter", "cat",

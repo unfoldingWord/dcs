@@ -153,10 +153,12 @@ func Push(repoPath, remote, branch string) error {
 	return err
 }
 
-// PushFroce pushs local commits to given remote branch and forces any changes.
+// PushForce pushes local commits to given remote branch and forces any changes.
 func PushForce(repoPath, remote, branch string) error {
-	_, err := NewCommand("push", "--force", "--all", remote, branch).RunInDir(repoPath)
-	_, err = NewCommand("push", "--force", "--tags", remote, branch).RunInDir(repoPath)
+	if _, err := NewCommand("push", "--force", "--all", remote, branch).RunInDir(repoPath); err != nil {
+		return err
+	}
+	_, err := NewCommand("push", "--force", "--tags", remote, branch).RunInDir(repoPath)
 	return err
 }
 

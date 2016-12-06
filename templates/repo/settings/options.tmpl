@@ -402,6 +402,36 @@
 		</div>
 	</div>
 	{{end}}
+
+  <div class="ui small modal" id="scrub-repo-modal">
+  	<div class="header">
+  		{{.i18n.Tr "repo.settings.scrub"}}
+  	</div>
+  	<div class="content">
+  		<div class="ui warning message text left">
+  			{{.i18n.Tr "repo.settings.scrub_notices_1" | Safe}} <br>
+  		</div>
+  		<form class="ui form" action="{{.Link}}" method="post">
+  			{{.CsrfTokenHtml}}
+  			<input type="hidden" name="action" value="scrub">
+  			<div class="field">
+  				<label>
+  					{{.i18n.Tr "repo.settings.scrub_form_title"}}
+  					<span class="text red">{{.Repository.Name}}</span>
+  				</label>
+  			</div>
+  			<div class="required field">
+  				<label for="repo_name">{{.i18n.Tr "repo.repo_name"}}</label>
+  				<input id="repo_name" name="repo_name" required>
+  			</div>
+
+  			<div class="text right actions">
+  				<div class="ui cancel button">{{.i18n.Tr "settings.cancel"}}</div>
+  				<button class="ui red button">{{.i18n.Tr "repo.settings.scrub"}}</button>
+  			</div>
+  		</form>
+  	</div>
+  </div>
 {{end}}
 
 {{template "base/footer" .}}

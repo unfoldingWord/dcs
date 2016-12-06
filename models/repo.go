@@ -18,7 +18,6 @@ import (
 	"sort"
 	"strings"
 	"time"
-	"encoding/json"
 
 	"code.gitea.io/git"
 	"code.gitea.io/gitea/modules/bindata"
@@ -33,7 +32,7 @@ import (
 	"github.com/go-xorm/xorm"
 	version "github.com/mcuadros/go-version"
 	ini "gopkg.in/ini.v1"
-	"reflect"
+	"code.gitea.io/gitea/modules/scrub"
 )
 
 const (
@@ -1905,13 +1904,13 @@ func (repos MirrorRepositoryList) LoadAttributes() error {
 	return repos.loadAttributes(x)
 }
 
-type ScrubSensativeDataOptions struct {
+type ScrubSensitiveDataOptions struct {
 	LastCommitID	string
 	CommitMessage	string
 }
 
-// SrubSenstaiveData removes emails and passwords from the manifest.json or project.json file's history.
-func (repo *Repository) ScrubSensativeData(doer *User, opts ScrubSensativeDataOptions)  error {
+// ScrubSensitiveData removes names and email addresses from the manifest|project|package|status.json files and scrubs previous history.
+func (repo *Repository) ScrubSensitiveData(doer *User, opts ScrubSensitiveDataOptions)  error {
 	repoWorkingPool.CheckIn(com.ToStr(repo.ID))
 	defer repoWorkingPool.CheckOut(com.ToStr(repo.ID))
 
@@ -1923,21 +1922,15 @@ func (repo *Repository) ScrubSensativeData(doer *User, opts ScrubSensativeDataOp
 		return fmt.Errorf("UpdateLocalCopyBranch [branch: master]: %v", err)
 	}
 
-	dirty := false
-	dirty = repo.ScrubJsonFile("project.json") || dirty
-	dirty = repo.ScrubJsonFile("package.json") || dirty
-	dirty = repo.ScrubJsonFile("manifest.json") || dirty
-	dirty = repo.ScrubJsonFile("status.json") || dirty
-
-	if ! dirty {
-		return fmt.Errorf("repo.settings.scrub_nothing_to_scrub")
+	if success := scrub.ScrubJsonFiles(localPath); ! success {
+		return fmt.Errorf("Nothing to scrub")
 	}
 
 	if err := git.AddChanges(localPath, true); err != nil {
 		return fmt.Errorf("git add --all: %v", err)
 	} else if err := git.CommitChanges(localPath, git.CommitChangesOptions{
 		Committer: doer.NewGitSig(),
-		Message:   opts.CommitMessage,
+		Message: opts.CommitMessage,
 	}); err != nil {
 		return fmt.Errorf("CommitChanges: %v", err)
 	} else if err := git.PushForce(localPath, "origin", "master"); err != nil {
@@ -1975,56 +1968,6 @@ func (repo *Repository) ScrubSensativeData(doer *User, opts ScrubSensativeDataOp
 	}
 
 	return nil
-}
-
-func (repo *Repository) ScrubJsonFile(fileName string) bool {
-	localPath := repo.LocalCopyPath()
-	jsonPath := path.Join(localPath, fileName)
-
-	var jsonData interface{}
-	if fileContent, err := ioutil.ReadFile(jsonPath); err != nil {
-		return false
-	} else {
-		log.Info(string(fileContent))
-		if err = json.Unmarshal(fileContent, &jsonData); err != nil {
-			return false
-		}
-	}
-
-	m := jsonData.(map[string]interface{})
-	repo.ScrubMap(m)
-	if fileContent, err := json.MarshalIndent(m, "", "  "); err != nil {
-		return false
-	} else {
-		if err := git.ScrubFile(repo.LocalCopyPath(), fileName); err != nil {
-			return false
-		}
-		if err := ioutil.WriteFile(jsonPath, []byte(fileContent), 0666); err != nil {
-			return false
-		}
-	}
-
-	return true
-}
-
-func (repo *Repository) ScrubMap(m map[string]interface{}) bool {
-	dirty := false
-	fieldsToScrub := [...]string{"translators", "contributors", "checking_entity"}
-	for _, field := range fieldsToScrub {
-		if _, ok := m[field]; ok {
-			m[field] = map[string]interface{}{}
-			dirty = true
-		}
-	}
-
-	for _, v := range m {
-		if reflect.ValueOf(v).Kind() == reflect.Map {
-			vm := v.(map[string]interface{})
-			dirty = repo.ScrubMap(vm) || dirty
-		}
-	}
-
-	return dirty
 }
 
 //  __      __         __         .__
