@@ -12,6 +12,7 @@ import (
 	. "github.com/smartystreets/goconvey/convey"
 	"code.gitea.io/gitea/modules/scrub"
 	"code.gitea.io/git"
+	"time"
 )
 
 // The repos to be tested and the "success" result that should be expected
@@ -34,6 +35,16 @@ func TestScrubJsonFiles(t *testing.T) {
 		git.InitRepository(repoDir, false)
 		git.AddChanges(repoDir, true)
 		git.CommitChanges(repoDir, git.CommitChangesOptions{
+			Committer: &git.Signature{
+				Name: "John Smith",
+				Email: "john@smith.com",
+				When: time.Now(),
+			},
+			Author: &git.Signature{
+				Name: "John Smith",
+				Email: "john@smith.com",
+				When: time.Now(),
+			},
 			Message: "Initial Commit",
 		})
 		Convey(fmt.Sprintf("The repo %s should return %v", repoName, expectedResult), t, func() {
