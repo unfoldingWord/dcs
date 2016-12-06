@@ -20,7 +20,6 @@ func ScrubJsonFiles(localPath string) bool {
 	for _, fileName := range JSON_FILES_TO_SCRUB {
 		success = ScrubJsonFile(localPath, fileName) || success
 	}
-
 	return success
 }
 

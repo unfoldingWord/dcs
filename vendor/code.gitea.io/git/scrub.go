@@ -13,7 +13,6 @@ func ScrubFile(repoPath string, fileName string) error {
 	cmd := NewCommand("filter-branch", "--force", "--prune-empty", "--tag-name-filter", "cat",
 		"--index-filter", "\""+gitPath+"\" rm --cached --ignore-unmatch "+fileName,
 		"--", "--all")
-	fmt.Println("CMD: ", cmd)
 	_, err := cmd.RunInDir(repoPath);
 	if err != nil && err.Error() == "exit status 1" {
 		os.RemoveAll(path.Join(repoPath, ".git/refs/original/"))
