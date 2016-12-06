@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"code.gitea.io/git"
 	"reflect"
+	"fmt"
 )
 
 var JSON_FILES_TO_SCRUB = [...]string{
@@ -31,6 +32,7 @@ func ScrubJsonFile(localPath, fileName string) bool {
 		return false
 	} else {
 		if err = json.Unmarshal(fileContent, &jsonData); err != nil {
+			fmt.Println("ERROR: ", err)
 			return false
 		}
 	}
@@ -42,9 +44,11 @@ func ScrubJsonFile(localPath, fileName string) bool {
 		return false
 	} else {
 		if err := git.ScrubFile(localPath, fileName); err != nil {
+			fmt.Println("ERROR: ", err)
 			return false
 		}
 		if err := ioutil.WriteFile(jsonPath, []byte(fileContent), 0666); err != nil {
+			fmt.Println("ERROR: ", err)
 			return false
 		}
 	}

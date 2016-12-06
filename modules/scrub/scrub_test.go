@@ -18,9 +18,9 @@ import (
 var TESTING_REPOS = map[string]bool{
 	"all_json_files": true,
 	"bad_json_file": false,
-	"multiple_sensative_fields": true,
+	"multiple_sensitive_fields": true,
 	"no_json_files": false,
-	"no_sensative_data": true,
+	"no_sensitive_data": true,
 }
 
 func TestScrubJsonFiles(t *testing.T) {
@@ -29,7 +29,8 @@ func TestScrubJsonFiles(t *testing.T) {
 	tempDir, _ := ioutil.TempDir(os.TempDir(), "scrub_test")
 	for repoName, expectedResult := range TESTING_REPOS {
 		repoDir := path.Join(tempDir, repoName)
-		CopyDir(path.Join(testFilesDir, repoName),repoDir)
+		fmt.Println("Copying ", path.Join(testFilesDir, repoName), "==>", repoDir)
+		CopyDir(path.Join(testFilesDir, repoName), repoDir)
 		git.InitRepository(repoDir, false)
 		git.AddChanges(repoDir, true)
 		git.CommitChanges(repoDir, git.CommitChangesOptions{
@@ -41,7 +42,7 @@ func TestScrubJsonFiles(t *testing.T) {
 	}
 }
 
-// Below code to copy directories was retreived by Richard Mahn from https://gist.github.com/m4ng0squ4sh/92462b38df26839a3ca324697c8cba04
+// The below code to copy directories was retrieved by Richard Mahn from https://gist.github.com/m4ng0squ4sh/92462b38df26839a3ca324697c8cba04
 
 // CopyFile copies the contents of the file named src to the file named
 // by dst. The file will be created if it does not already exist. If the
@@ -93,9 +94,6 @@ func CopyFile(src, dst string) (err error) {
 func CopyDir(src string, dst string) (err error) {
 	src = filepath.Clean(src)
 	dst = filepath.Clean(dst)
-
-	fmt.Println(src)
-	fmt.Println(dst)
 
 	si, err := os.Stat(src)
 	if err != nil {
