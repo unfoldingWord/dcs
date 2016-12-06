@@ -308,7 +308,7 @@ func SettingsPost(ctx *context.Context, form auth.RepoSettingForm) {
 		if err := repo.ScrubSensitiveData(ctx.User, models.ScrubSensitiveDataOptions{
 			LastCommitID: ctx.Repo.CommitID,
 			CommitMessage: ctx.Tr("repo.settings.scrub_commit_mesage")}); err != nil {
-			ctx.Flash.Error(ctx.Tr("settings.scrub_nothing_to_scurb"))
+			ctx.Flash.Error(ctx.Tr("repo.settings.scrub_nothing_to_scurb"))
 		} else {
 			log.Trace("Repository scrubbed: %s/%s", ctx.Repo.Owner.Name, repo.Name)
 
