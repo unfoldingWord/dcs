@@ -9,6 +9,7 @@ _test
 
 # IntelliJ
 .idea
+*.iml
 
 # Architecture specific extensions/prefixes
 *.[568vq]
