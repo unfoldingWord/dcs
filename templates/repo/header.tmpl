@@ -4,16 +4,16 @@
 		<div class="ui vertically padded grid head"><!-- start grid -->
 			<div class="column"><!-- start column -->
 				<div class="ui header">
-					<div class="ui huge breadcrumb">
+					<div class="ui left huge breadcrumb">
 						<i class="mega-octicon octicon-{{if .IsPrivate}}lock{{else if .IsMirror}}repo-clone{{else if .IsFork}}repo-forked{{else}}repo{{end}}"></i>
 						<a href="{{AppSubUrl}}/{{.Owner.Name}}">{{.Owner.Name}}</a>
 						<div class="divider"> / </div>
 						<a href="{{$.RepoLink}}">{{.Name}}</a>
-						{{if .IsMirror}}<div class="fork-flag">{{$.i18n.Tr "repo.mirror_from"}} <a target="_blank" rel="noopener" href="{{$.Mirror.Address}}">{{$.Mirror.Address}}</a></div>{{end}}
+						{{if .IsMirror}}<div class="fork-flag">{{$.i18n.Tr "repo.mirror_from"}} <a target="_blank" href="{{$.Mirror.Address}}">{{$.Mirror.Address}}</a></div>{{end}}
 						{{if .IsFork}}<div class="fork-flag">{{$.i18n.Tr "repo.forked_from"}} <a href="{{.BaseRepo.Link}}">{{SubStr .BaseRepo.RelLink 1 -1}}</a></div>{{end}}
 					</div>
 
-					<div class="ui right">
+					<div class="ui right" style="margin-top:5px">
 						<div class="ui labeled button" tabindex="0">
 							<a class="ui button" href="{{$.RepoLink}}/action/{{if $.IsWatchingRepo}}un{{end}}watch?redirect_to={{$.Link}}">
 								<i class="icon fa-eye{{if not $.IsWatchingRepo}}-slash{{end}}"></i>{{if $.IsWatchingRepo}}{{$.i18n.Tr "repo.unwatch"}}{{else}}{{$.i18n.Tr "repo.watch"}}{{end}}
@@ -41,6 +41,14 @@
 							</div>
 						{{end}}
 					</div>
+
+                                        <div class="ui middle" style="margin: 0 auto; text-align:center;">
+						<div class="ui button" tabindex="0" style="padding: 0; box-shadow: 5px 5px 5px #888888; margin-top: 1px;">
+							<a href="https://live.door43.org/u/{{.Owner.Name}}/{{.Name}}/" style="padding: 7px;" class="ui button" target="_blank">
+								View this on <img src="/img/door43.png" width="20px" valign="middle"/>	
+							</a>
+                                                </div>
+                                        </div>
 				</div>
 			</div><!-- end column -->
 		</div><!-- end grid -->
@@ -72,6 +80,11 @@
 				<a class="{{if .PageIsWiki}}active{{end}} item" href="{{.RepoLink}}/wiki">
 					<i class="octicon octicon-book"></i> {{.i18n.Tr "repo.wiki"}}
 				</a>
+			{{end}}
+			{{if .RepoIsUBN}}
+			<a class="{{if .PageIsHashtags}}active{{end}} item" href="{{.RepoLink}}/hashtags">
+				<i class="fa fa-hashtag"></i> {{.i18n.Tr "repo.hashtags"}}
+			</a>
 			{{end}}
 			{{if .IsRepositoryAdmin}}
 				<div class="right menu">

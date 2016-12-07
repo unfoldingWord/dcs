@@ -62,6 +62,7 @@
 						<label for="repo_name">{{.i18n.Tr "repo.repo_name"}}</label>
 						<input id="repo_name" name="repo_name" value="{{.repo_name}}" required>
 					</div>
+					{{if .SignedUser.IsAdmin}}
 					<div class="inline field">
 						<label>{{.i18n.Tr "repo.visibility"}}</label>
 						<div class="ui checkbox">
@@ -74,6 +75,7 @@
 							{{end}}
 						</div>
 					</div>
+					{{end}}
 					<div class="inline field">
 						<label>{{.i18n.Tr "repo.migrate_type"}}</label>
 						<div class="ui checkbox">

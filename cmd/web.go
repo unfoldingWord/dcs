@@ -377,7 +377,7 @@ func runWeb(ctx *cli.Context) error {
 	// Redirect hashtag requests for ineligible repositories
 	m.Group("/:username/:reponame", func() {
 		m.Get("/hashtags/*.*", func(ctx *macaron.Context) {
-			ctx.Redirect(setting.AppSubUrl + "/" + ctx.Params(":username")+ "/" + ctx.Params(":reponame"), 301)
+			ctx.Redirect(setting.AppSubURL + "/" + ctx.Params(":username")+ "/" + ctx.Params(":reponame"), 301)
 		})
 	}, ignSignIn)
 

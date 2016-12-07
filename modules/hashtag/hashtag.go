@@ -16,7 +16,7 @@ func ConvertHashtagsToLinks(repo *models.Repository, html []byte) []byte {
 	indexOfUbn := strings.Index(repoName, "-ubn-")
 	if indexOfUbn > 0 {
 		ubnRepo := repoName[0:indexOfUbn+4]
-		hashtagsUrl := setting.AppSubUrl + "/" + repo.Owner.LowerName + "/" + ubnRepo + "/hashtags"
+		hashtagsUrl := setting.AppSubURL + "/" + repo.Owner.LowerName + "/" + ubnRepo + "/hashtags"
 		re, _ := regexp.Compile(`(^|\n|<p>)#([A-Za-uw-z0-9_-][\w-]+|v\d+[A-Za-z_-][\w-]*|v[A-Za-z_-][^\w-]*)`)
 		html = re.ReplaceAll(html, []byte("$1<a href=\"" + hashtagsUrl +"/$2\">#$2</a>$3"))
 	}

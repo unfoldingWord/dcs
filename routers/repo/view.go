@@ -233,6 +233,8 @@ func Home(ctx *context.Context) {
 	ctx.Data["PageIsViewCode"] = true
 	ctx.Data["RequireHighlightJS"] = true
 
+	ctx.Data["RepoIsUBN"] = strings.HasSuffix(ctx.Repo.Repository.LowerName, "-ubn") || strings.Index(ctx.Repo.Repository.LowerName, "-ubn-") > 0
+
 	branchLink := ctx.Repo.RepoLink + "/src/" + ctx.Repo.BranchName
 	treeLink := branchLink
 	rawLink := ctx.Repo.RepoLink + "/raw/" + ctx.Repo.BranchName
