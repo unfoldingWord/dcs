@@ -16,11 +16,11 @@ import (
 	"code.gitea.io/gitea/models"
 	"code.gitea.io/gitea/modules/base"
 	"code.gitea.io/gitea/modules/context"
+	"code.gitea.io/gitea/modules/highlight"
 	"code.gitea.io/gitea/modules/log"
 	"code.gitea.io/gitea/modules/markdown"
 	"code.gitea.io/gitea/modules/setting"
-	"code.gitea.io/gitea/modules/template"
-	"code.gitea.io/gitea/modules/template/highlight"
+	"code.gitea.io/gitea/modules/templates"
 	"github.com/Unknwon/paginater"
 	"code.gitea.io/gitea/modules/yaml"
 	"code.gitea.io/gitea/modules/hashtag"
@@ -175,7 +175,7 @@ func renderFile(ctx *context.Context, entry *git.TreeEntry, treeLink, rawLink st
 		} else {
 			// Building code view blocks with line number on server side.
 			var fileContent string
-			if err, content := template.ToUTF8WithErr(buf); err != nil {
+			if content, err := templates.ToUTF8WithErr(buf); err != nil {
 				if err != nil {
 					log.Error(4, "ToUTF8WithErr: %s", err)
 				}
@@ -232,6 +232,8 @@ func Home(ctx *context.Context) {
 	ctx.Data["Title"] = title
 	ctx.Data["PageIsViewCode"] = true
 	ctx.Data["RequireHighlightJS"] = true
+
+	ctx.Data["RepoIsUBN"] = strings.HasSuffix(ctx.Repo.Repository.LowerName, "-ubn") || strings.Index(ctx.Repo.Repository.LowerName, "-ubn-") > 0
 
 	branchLink := ctx.Repo.RepoLink + "/src/" + ctx.Repo.BranchName
 	treeLink := branchLink

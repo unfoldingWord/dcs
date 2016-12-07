@@ -17,7 +17,7 @@ func TestHashtag(t *testing.T) {
 			LowerName: "joesmith",
 		}
 	)
-	setting.AppSubUrl = "http://example.com"
+	setting.AppSubURL = "http://example.com"
 
 	Convey("Rendering markdown with hashtags of a <lang>-ubn-<book> repo", t, func() {
 		var (

@@ -51,7 +51,9 @@ func setup(logPath string) {
 
 	if setting.UseSQLite3 || setting.UseTiDB {
 		workDir, _ := setting.WorkDir()
-		os.Chdir(workDir)
+		if err := os.Chdir(workDir); err != nil {
+			log.GitLogger.Fatal(4, "Fail to change directory %s: %v", workDir, err)
+		}
 	}
 
 	models.SetEngine()
@@ -253,10 +255,14 @@ func runServ(c *cli.Context) error {
 					"User %s does not have level %v access to repository %s",
 					user.Name, requestedMode, repoPath)
 			}
+
+			os.Setenv("GITEA_PUSHER_NAME", user.Name)
 		}
 	}
 
 	uuid := gouuid.NewV4().String()
+	os.Setenv("GITEA_UUID", uuid)
+	// Keep the old env variable name for backward compability
 	os.Setenv("uuid", uuid)
 
 	// Special handle for Windows.

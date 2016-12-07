@@ -13,7 +13,7 @@ import (
 
 // https://github.com/gogits/go-gogs-client/wiki/Miscellaneous#render-an-arbitrary-markdown-document
 func Yaml(ctx *context.APIContext, form api.YamlOption) {
-	if ctx.HasApiError() {
+	if ctx.HasAPIError() {
 		ctx.Error(422, "", ctx.GetErrMsg())
 		return
 	}

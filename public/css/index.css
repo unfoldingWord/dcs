@@ -2957,3 +2957,6 @@ table[data-table-type="yaml-metadata"] {
   font-weight: bold;
 }
 
+.repository .header-wrapper .ui.tabular .fa {
+  margin-right: 5px;
+}
