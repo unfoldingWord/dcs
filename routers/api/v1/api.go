@@ -211,6 +211,8 @@ func RegisterRoutes(m *macaron.Macaron) {
 				})
 
 				m.Get("/starred", user.GetStarredRepos)
+
+				m.Get("/subscriptions", user.GetWatchedRepos)
 			})
 		}, reqToken())
 
@@ -241,6 +243,8 @@ func RegisterRoutes(m *macaron.Macaron) {
 					m.Delete("", user.Unstar)
 				}, context.ExtractOwnerAndRepo())
 			})
+
+			m.Get("/subscriptions", user.GetMyWatchedRepos)
 		}, reqToken())
 
 		// Repositories
@@ -313,6 +317,11 @@ func RegisterRoutes(m *macaron.Macaron) {
 						Patch(reqRepoWriter(), bind(api.EditMilestoneOption{}), repo.EditMilestone).
 						Delete(reqRepoWriter(), repo.DeleteMilestone)
 				})
+				m.Group("/subscription", func() {
+					m.Get("", user.IsWatching)
+					m.Put("", user.Watch)
+					m.Delete("", user.Unwatch)
+				}, context.ExtractOwnerAndRepo())
 				m.Get("/editorconfig/:filename", context.RepoRef(), repo.GetEditorconfig)
 				m.Group("/pulls", func() {
 					m.Combo("").Get(bind(api.ListPullRequestsOptions{}), repo.ListPullRequests).Post(reqRepoWriter(), bind(api.CreatePullRequestOption{}), repo.CreatePullRequest)
