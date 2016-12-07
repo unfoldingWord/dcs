@@ -158,8 +158,10 @@ func PushForce(repoPath, remote, branch string) error {
 	if _, err := NewCommand("push", "--force", remote, branch).RunInDir(repoPath); err != nil {
 		return err
 	}
-	_, err := NewCommand("push", "--force", "--tags", remote, branch).RunInDir(repoPath)
-	return err
+	if _, err := NewCommand("push", "--force", "--tags", remote, branch).RunInDir(repoPath); err != nil {
+		return err
+	}
+	return nil
 }
 
 type CheckoutOptions struct {
