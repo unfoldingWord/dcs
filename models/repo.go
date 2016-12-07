@@ -36,7 +36,7 @@ import (
 )
 
 const (
-	tplUpdateHook = "#!/usr/bin/env %s\n%s update $1 $2 $3 --config='%s'\n\"%s/custom/bin/update\" $1 $2 $3 \"%s\""
+	tplUpdateHook = "#!/usr/bin/env %s\n%s update $1 $2 $3 --config='%s'\n\"%s/custom/bin/update\" $1 $2 $3 \"%s\"\n"
 )
 
 var repoWorkingPool = sync.NewExclusivePool()
