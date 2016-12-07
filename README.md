@@ -1,13 +1,12 @@
-# Gitea - Git with a cup of tea
+# Gitea - Git with a cup of tea - Door43 Version
 
 [![Build Status](https://travis-ci.org/unfoldingWord-dev/gogs.svg?branch=master)](https://travis-ci.org/unfoldingWord-dev/gogs)
-[![codecov](https://codecov.io/gh/unfoldingWord-dev/gogs/branch/master/graph/badge.svg)](https://codecov.io/gh/unfoldingWord-dev/gogs)
-[![Go Report Card](https://goreportcard.com/badge/github.com/unfoldingWord-dev)](https://goreportcard.com/report/github.com/unfoldingWord-dev/gogs)
-[![GoDoc](https://godoc.org/github.com/go-gitea/gitea?status.svg)](https://godoc.org/github.com/go-gitea/gitea)
-[![](https://images.microbadger.com/badges/image/gitea/gitea.svg)](http://microbadger.com/images/gitea/gitea "Get your own image badge on microbadger.com")
 [![Join the chat at https://gitter.im/go-gitea/gitea](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/go-gitea/gitea?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+[![Coverage Status](https://codecov.io/gh/unfoldingWord-dev/gogs/branch/master/graph/badge.svg)](https://codecov.io/gh/unfoldingWord-dev/gogs)
+[![Go Report Card](https://goreportcard.com/badge/github.com/unfoldingWord-dev)](https://goreportcard.com/report/github.com/unfoldingWord-dev/gogs)
+[![GoDoc](https://godoc.org/code.gitea.io/gitea?status.svg)](https://godoc.org/code.gitea.io/gitea)
 
-![](https://github.com/unfoldingword-dev/gogs/blob/master/public/img/gitea-large-resize.png?raw=true)
+[![](public/img/door43.png)](https://git.door43.org)
 
 ##### Status
 
@@ -46,7 +45,7 @@ The goal of this project is to make the easiest, fastest, and most painless way 
 - Mail service
 - Administration panel
 - Supports MySQL, PostgreSQL, SQLite3 and [TiDB](https://github.com/pingcap/tidb) (experimental)
-- Multi-language support ([19 languages](https://crowdin.com/project/gogs))
+- Multi-language support ([20 languages](https://crowdin.com/project/gogs))
 
 ## System Requirements
 
@@ -122,11 +121,16 @@ How to install Gitea:
 - Thanks [DigitalOcean](https://www.digitalocean.com) for hosting home and demo sites.
 - Thanks [KeyCDN](https://www.keycdn.com/) and [QiNiu](http://www.qiniu.com/) for providing CDN service.
 
-## Contributors
 
-- See [Maintainer](https://github.com/orgs/go-gitea/people)
-- See [Contributors](https://github.com/go-gitea/gitea/graphs/contributors) for full list of contributors.
-- See [Translators](conf/locale/TRANSLATORS) for public list of translators.
+## Contributing
+
+Fork -> Patch -> Push -> Pull Request
+
+## Authors
+
+* [Maintainers](https://github.com/orgs/go-gitea/people)
+* [Contributors](https://github.com/go-gitea/gitea/graphs/contributors)
+* [Translators](conf/locale/TRANSLATORS)
 
 ## License
 

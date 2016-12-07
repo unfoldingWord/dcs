@@ -13,9 +13,12 @@ import (
 	"path"
 	"strings"
 
+	// Needed for the MySQL driver
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/go-xorm/core"
 	"github.com/go-xorm/xorm"
+
+	// Needed for the Postgresql driver
 	_ "github.com/lib/pq"
 
 	"code.gitea.io/gitea/models/migrations"
@@ -45,16 +48,22 @@ func sessionRelease(sess *xorm.Session) {
 }
 
 var (
-	x         *xorm.Engine
-	tables    []interface{}
+	x      *xorm.Engine
+	tables []interface{}
+
+	// HasEngine specifies if we have a xorm.Engine
 	HasEngine bool
 
+	// DbCfg holds the database settings
 	DbCfg struct {
 		Type, Host, Name, User, Passwd, Path, SSLMode string
 	}
 
+	// EnableSQLite3 use SQLite3
 	EnableSQLite3 bool
-	EnableTiDB    bool
+
+	// EnableTiDB enable TiDB
+	EnableTiDB bool
 )
 
 func init() {
@@ -70,12 +79,13 @@ func init() {
 		new(Notice), new(EmailAddress),
 		new(Hashtag))
 
-	gonicNames := []string{"SSL"}
+	gonicNames := []string{"SSL", "UID"}
 	for _, name := range gonicNames {
 		core.LintGonicMapper[name] = true
 	}
 }
 
+// LoadConfigs loads the database settings
 func LoadConfigs() {
 	sec := setting.Cfg.Section("database")
 	DbCfg.Type = sec.Key("DB_TYPE").String()
@@ -116,7 +126,7 @@ func parsePostgreSQLHostPort(info string) (string, string) {
 
 func getEngine() (*xorm.Engine, error) {
 	connStr := ""
-	var Param string = "?"
+	var Param = "?"
 	if strings.Contains(DbCfg.Name, Param) {
 		Param = "&"
 	}
@@ -140,7 +150,7 @@ func getEngine() (*xorm.Engine, error) {
 		}
 	case "sqlite3":
 		if !EnableSQLite3 {
-			return nil, errors.New("This binary version does not build support for SQLite3.")
+			return nil, errors.New("this binary version does not build support for SQLite3")
 		}
 		if err := os.MkdirAll(path.Dir(DbCfg.Path), os.ModePerm); err != nil {
 			return nil, fmt.Errorf("Fail to create directories: %v", err)
@@ -148,7 +158,7 @@ func getEngine() (*xorm.Engine, error) {
 		connStr = "file:" + DbCfg.Path + "?cache=shared&mode=rwc"
 	case "tidb":
 		if !EnableTiDB {
-			return nil, errors.New("This binary version does not build support for TiDB.")
+			return nil, errors.New("this binary version does not build support for TiDB")
 		}
 		if err := os.MkdirAll(path.Dir(DbCfg.Path), os.ModePerm); err != nil {
 			return nil, fmt.Errorf("Fail to create directories: %v", err)
@@ -160,6 +170,7 @@ func getEngine() (*xorm.Engine, error) {
 	return xorm.NewEngine(DbCfg.Type, connStr)
 }
 
+// NewTestEngine sets a new test xorm.Engine
 func NewTestEngine(x *xorm.Engine) (err error) {
 	x, err = getEngine()
 	if err != nil {
@@ -170,6 +181,7 @@ func NewTestEngine(x *xorm.Engine) (err error) {
 	return x.StoreEngine("InnoDB").Sync2(tables...)
 }
 
+// SetEngine sets the xorm.Engine
 func SetEngine() (err error) {
 	x, err = getEngine()
 	if err != nil {
@@ -181,7 +193,10 @@ func SetEngine() (err error) {
 	// WARNING: for serv command, MUST remove the output to os.stdout,
 	// so use log file to instead print to stdout.
 	logPath := path.Join(setting.LogRootPath, "xorm.log")
-	os.MkdirAll(path.Dir(logPath), os.ModePerm)
+
+	if err := os.MkdirAll(path.Dir(logPath), os.ModePerm); err != nil {
+		return fmt.Errorf("Fail to create dir %s: %v", logPath, err)
+	}
 
 	f, err := os.Create(logPath)
 	if err != nil {
@@ -192,8 +207,13 @@ func SetEngine() (err error) {
 	return nil
 }
 
+// NewEngine initializes a new xorm.Engine
 func NewEngine() (err error) {
 	if err = SetEngine(); err != nil {
+		return err
+	}
+
+	if err = x.Ping(); err != nil {
 		return err
 	}
 
@@ -202,12 +222,13 @@ func NewEngine() (err error) {
 	}
 
 	if err = x.StoreEngine("InnoDB").Sync2(tables...); err != nil {
-		return fmt.Errorf("sync database struct error: %v\n", err)
+		return fmt.Errorf("sync database struct error: %v", err)
 	}
 
 	return nil
 }
 
+// Statistic contains the database statistics
 type Statistic struct {
 	Counter struct {
 		User, Org, PublicKey,
@@ -219,6 +240,7 @@ type Statistic struct {
 	}
 }
 
+// GetStatistic returns the database statistics
 func GetStatistic() (stats Statistic) {
 	stats.Counter.User = CountUsers()
 	stats.Counter.Org = CountOrganizations()
@@ -245,6 +267,7 @@ func GetStatistic() (stats Statistic) {
 	return
 }
 
+// Ping tests if database is alive
 func Ping() error {
 	return x.Ping()
 }
