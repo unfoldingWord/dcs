@@ -42,11 +42,7 @@ func getWatchedRepos(userID int64, private bool) ([]*api.Repository, error) {
 		if err != nil {
 			return nil, err
 		}
-		repos[i] = watched.APIFormat(&api.Permission{
-			Admin: access >= models.AccessModeAdmin,
-			Push:  access >= models.AccessModeWrite,
-			Pull:  access >= models.AccessModeRead,
-		})
+		repos[i] = watched.APIFormat(access)
 	}
 	return repos, nil
 }

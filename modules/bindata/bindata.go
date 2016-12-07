@@ -182,6 +182,7 @@
 // conf/license/BSD 2-clause License
 // conf/license/BSD 3-clause License
 // conf/license/BSD 4-clause License
+// conf/license/Creative Commons Attribution-ShareAlike 4.0 International License
 // conf/license/Creative Commons CC0 1.0 Universal
 // conf/license/Eclipse Public License 1.0
 // conf/license/Educational Community License v1.0
@@ -304,7 +305,7 @@ func confAppIni() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "conf/app.ini", size: 14047, mode: os.FileMode(504), modTime: time.Unix(1481081321, 0)}
+	info := bindataFileInfo{name: "conf/app.ini", size: 14047, mode: os.FileMode(504), modTime: time.Unix(1481092237, 0)}
 	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
@@ -3929,6 +3930,26 @@ func confLicenseBsd4ClauseLicense() (*asset, error) {
 	return a, nil
 }
 
+var _confLicenseCreativeCommonsAttributionSharealike40InternationalLicense = []byte("\x1f\x8b\x08\x00\x00\x09\x6e\x88\x00\xff\x74\x54\xcd\x6a\xe4\x46\x10\xbe\xeb\x29\x8a\xf5\xc5\x1e\xc6\x9a\x40\xf6\xe4\x9b\x33\x10\x58\x08\x9b\xc3\x6e\x0e\x4b\xc8\xa1\x47\xaa\x91\x1a\x77\x77\x89\xfe\x99\xb1\x6e\x79\x88\x3c\x61\x9e\x24\x5f\xb5\x34\x5e\x99\xb0\x60\x18\x4b\x5d\xfd\xf5\xf7\xd7\xba\xa3\xdf\x6c\xc7\x21\x71\x73\x77\x47\xc7\xc8\x26\xdb\x0b\xd3\x51\xbc\x97\x90\xe8\x39\xe7\x68\x4f\x25\x5b\x09\x8f\x5f\x46\x13\xf9\xd9\xd9\x17\xa6\x8f\xed\x4f\xf4\x29\x64\x8e\xc1\xe8\x92\x71\x74\x7f\x3c\xd2\x2f\xdf\x1e\xbf\x3c\xeb\xda\x43\xd3\x7c\x1d\x6d\x22\xfc\x19\x1a\x8b\x37\xe1\x11\xc0\xbd\x39\x39\xa6\x54\xbc\x37\x71\x26\x39\xd3\xbd\x09\x3d\x05\xc9\x18\x4a\xe5\x94\xb2\xcd\x25\x33\x9d\x25\x3e\x50\x1e\x99\xfe\x74\x0b\xb1\xbf\xee\xc7\x9c\xa7\xa7\xc3\xa1\x5b\xd9\x75\x0b\xb9\x56\xe2\x70\x58\x67\xd2\xe1\x34\x3f\x26\x73\xc0\xe1\x87\x87\xb6\x81\x96\x3b\xfa\x26\x85\xc0\x98\xce\x91\x99\xb2\x3c\x35\x0d\xd1\x8e\x76\xbb\xaa\x63\xb7\xa3\x7f\xff\xfe\x87\x3a\x99\x66\x52\x1a\x91\x7b\x9b\x16\xad\x5c\x4f\xf7\x06\xf2\x2c\x94\xd9\x80\x81\x99\x3c\x06\x8a\x27\x89\x4a\x10\x8b\x2b\xd8\x73\x6f\xa6\xbc\x82\x45\xf6\xf6\x75\x4f\x39\x9a\x90\x74\x68\x5f\x91\x4f\xc5\xba\x9e\xca\x24\xe1\x3d\x6e\xd3\x60\xa6\x42\x4f\x25\x4e\x92\x78\x4f\x7c\xe1\x40\xaa\x8e\x63\x87\x11\x37\xb7\x6a\x24\xd3\x22\x12\xd3\x9d\x09\xea\x57\xe4\x8b\xbc\x54\x9a\x69\x91\xd7\x8b\x87\xd5\x89\x9c\x84\x41\x7f\x67\x48\x3f\x8b\x73\x72\xad\x67\xae\x26\x11\x4e\xf6\x69\x75\xe7\x8f\xd0\x73\xac\xab\xcb\xa0\xc5\xce\x4e\x42\x6f\x35\xd0\xf4\x66\xd6\xa6\x00\xab\x4a\xb5\xd5\x97\x84\xd4\xf2\xd6\xaf\xab\xc4\x17\x3d\x7a\x41\x4b\x4f\xf4\xe1\xf7\x68\x07\xab\xdd\x58\x96\x2e\xc6\xba\xda\x00\x93\x49\x03\x4d\x48\xb4\x17\x89\x1f\x7f\xae\x41\xb6\x1f\xb6\x65\xa3\x94\xe1\x93\xe7\x90\x93\x06\x00\xaa\xf6\xb2\x34\x53\xc1\x12\xa5\x51\x8a\x5b\xca\xb3\xe6\x73\x35\x33\x5a\x34\x0c\x0c\x66\x79\xc4\x19\x57\x26\x0e\xbd\x44\xe8\x56\x3b\xe0\x1e\x7e\x22\x15\x3c\xa3\x7b\x59\xfb\xa9\x58\xed\xb6\x15\xb5\xdd\xab\xce\x4f\xe7\xba\xef\xff\xa1\x02\xe9\x07\x99\xee\xeb\x8e\x6a\xce\xa6\x4d\xf5\x58\x58\xfb\x26\x2e\x51\x79\x33\x3f\x19\xff\x3d\x1f\xd8\xa7\xef\x64\x35\x0e\x49\xed\x76\x9f\x85\x4c\xbf\xa4\x02\x2b\x23\x2b\x6c\x57\x51\xb6\x79\x40\x7c\xbd\x48\xd3\xe4\x66\x72\x3c\x60\xb4\x86\xad\x64\x33\x77\x63\x10\x27\x83\xed\xf0\xda\xb3\x49\x05\x30\x8b\x49\x75\x14\x5b\x6e\xb8\x24\x20\x10\x91\x62\x14\x4f\xbd\x68\x29\x60\x2e\xcc\xc2\x3f\xdb\x26\x4d\x00\xb7\xf9\xd6\xa5\xcf\x92\xf1\x5e\x4b\xa3\x64\x7a\xa9\x5c\x46\x73\xd1\x6b\xa7\x7d\x56\x52\x57\x9b\xc7\x77\x10\xda\x7e\x76\x6b\xc6\x35\x91\xf7\x97\x4e\x9f\xa7\x72\xc2\x38\x10\xbd\xc1\x1b\x6c\xb8\x82\x1d\x7f\x0f\x12\x19\x2e\x4c\x32\xe3\xa2\xe9\x4d\xae\x16\x40\xa8\x16\x8d\x5f\x3b\x9e\x6a\x9b\xb0\xd3\x59\x8c\xd5\xaf\x15\x48\xc3\xd4\xab\x89\x88\x34\x5b\x38\xa1\x1f\x89\x01\xdd\x0a\x2d\x7d\xdd\x10\xbc\x99\xaa\x4b\x35\x58\x38\x75\x23\x5a\x4f\x4d\xa9\x86\x19\x18\xda\x93\x7e\xd3\xce\xb7\x92\x59\x7c\x1b\x11\x71\xaf\x24\x5b\xfa\x55\x95\xbe\x1a\xd8\x80\x3b\x5e\x0d\x26\x24\x3c\x42\x76\x2a\xdd\xa8\xa9\x2f\x3a\x6d\x9e\xf7\x34\x69\xd3\xbb\xb9\xd6\xcc\x4b\xd4\xcc\x97\x59\xa5\x53\x45\xd0\x88\x6b\xad\x7c\xd4\x81\xad\x6b\x6d\xf3\x5f\x00\x00\x00\xff\xff\x11\x49\x52\x68\xcd\x05\x00\x00")
+
+func confLicenseCreativeCommonsAttributionSharealike40InternationalLicenseBytes() ([]byte, error) {
+	return bindataRead(
+		_confLicenseCreativeCommonsAttributionSharealike40InternationalLicense,
+		"conf/license/Creative Commons Attribution-ShareAlike 4.0 International License",
+	)
+}
+
+func confLicenseCreativeCommonsAttributionSharealike40InternationalLicense() (*asset, error) {
+	bytes, err := confLicenseCreativeCommonsAttributionSharealike40InternationalLicenseBytes()
+	if err != nil {
+		return nil, err
+	}
+
+	info := bindataFileInfo{name: "conf/license/Creative Commons Attribution-ShareAlike 4.0 International License", size: 1485, mode: os.FileMode(504), modTime: time.Unix(1481094538, 0)}
+	a := &asset{bytes: bytes, info: info}
+	return a, nil
+}
+
 var _confLicenseCreativeCommonsCc010Universal = []byte("\x1f\x8b\x08\x00\x00\x09\x6e\x88\x00\xff\xec\x59\x5d\x6f\xdb\x38\x16\x7d\xcf\xaf\x20\xf2\xb2\x09\xa0\xba\xd3\xdd\xc1\x00\xdd\x79\x72\x6d\xa7\x35\x26\xb1\x0b\xdb\x69\x30\x8f\xb4\x44\xdb\x6c\x24\x51\x43\x4a\x76\xfc\xef\xf7\xdc\x7b\x29\x59\xf9\x68\x26\x0b\xf4\x71\x80\x02\xb1\x28\xf1\x7e\xdf\x73\x0f\xd9\x91\x37\xba\xb6\x7b\xa3\x46\xae\x28\x5c\x19\xd4\x68\xf4\x8b\xfa\x30\xf8\x45\xdd\x96\x58\xf5\x41\xe7\x67\xa3\xc5\x64\xb8\x9a\x7e\x9b\xa8\xd1\xfc\xe6\x66\x3e\x5b\xe2\xef\xe2\xeb\x7c\x81\xb5\xf9\x4c\x4d\x97\x6a\x36\x5f\xa9\xa1\xba\x1e\xde\xa9\xab\xe9\xe2\x46\x0d\x67\x63\x35\x9e\x4f\x64\xfd\xeb\x62\xfe\x6d\x3a\x9e\xa8\xeb\xc9\xe7\xe1\xb5\x5a\x4e\x16\xdf\xa6\xa3\xc9\x72\xa0\xc6\xd3\xe5\x6a\x31\xfd\x74\xcb\x32\xe6\x57\x6a\xf5\x05\x82\xc6\xf3\xd1\xed\xcd\x64\xb6\x3a\x6d\x67\xd5\x13\x88\x54\xc3\xd5\x6a\xbe\x98\x4d\xfe\x7c\x37\xba\x9e\xd2\x27\x8b\xc9\x35\x1b\xb0\xfc\x32\xfd\x3a\x50\xcf\x4c\x8c\x7a\x97\x22\x78\x3a\xbb\x9a\x2f\x6e\xc4\x60\xfc\x83\xb8\xf3\xe1\xf2\xdd\x74\x79\xae\x3e\x0d\x97\xd3\xe5\x0b\xfb\x6f\x86\x7f\xb0\x09\xea\x6e\xb8\x58\x0c\x67\xab\x29\x9e\x16\xf0\x61\x31\x9e\xce\x3e\x43\xe8\x44\xdd\x2e\x27\xcf\x0d\x9f\x2f\xf8\xdd\x23\x7d\x0b\x75\x37\x5f\xfc\xd1\x99\x34\x56\x5f\x26\x8b\xc9\xed\x6c\x3c\x59\x24\x12\xab\xe9\x72\x74\x3d\x9c\xde\x2c\xd5\xf5\x74\xf8\x69\x7a\x3d\x5d\xfd\xa9\xb0\x5d\x8d\x87\x37\xc3\xcf\xac\x76\x79\x7b\xbd\x22\xb5\x57\x8b\xf9\xcd\xcf\xd2\x3d\x38\x5b\xd6\xba\x36\x85\x29\x6b\xe5\x36\xea\x6b\xe3\x2b\x17\xcc\xd9\xd9\x6a\x67\x54\xae\x0f\x81\x16\x0b\x17\x6a\xf5\xbd\xf1\x36\x64\x36\xad\x2d\x55\x47\xbd\xf3\xae\xd9\xee\x5c\x53\xe3\xa7\x51\x07\xe7\xf3\x4c\xe9\xa6\x76\x05\xaa\x28\xd5\x79\x7e\x54\xa9\x2b\x37\xc6\x2b\xf3\x90\xe6\x4d\x90\xca\xaa\x8e\xde\x6e\x77\xb5\xd2\x65\xa6\x16\x26\x87\x5e\xfc\xa5\x95\xa0\x2e\x32\xb3\xb1\x25\x9e\xd7\x26\x77\x87\x4b\xd5\x54\xae\x64\xd1\x29\x15\xa6\xf3\xbc\x27\x34\xeb\x60\xfe\x6a\xd8\xd6\x43\x69\xfc\x45\xb8\x54\x17\x46\xa7\x3b\x7e\x0b\xad\x09\x7e\xa8\x73\x7e\x77\x7e\x49\xa6\xe3\xd1\x41\xa7\x2d\x75\x4e\x46\xde\xf3\x5a\x53\xef\x9c\x0f\x3b\x5b\xd1\xb6\xf7\x24\x5b\x65\xba\xd6\x6b\x1d\x8c\x88\x83\x18\x75\x7e\x87\xcf\xcf\x2f\x07\x67\x67\x23\xe3\x6b\x6d\x4b\x51\x19\xd4\xc1\x86\x9d\xaa\x9d\xaa\x8c\x2f\x74\x09\x5b\xe0\xab\x37\xb9\x2d\xff\x6a\xf8\xcd\x0e\xf1\x53\x5e\xbc\xc2\x67\x5a\x91\x20\xb5\x81\x1a\x72\xa7\x92\x00\x93\x1d\x08\x50\xed\xed\xba\xa9\x6d\xb9\x95\x2f\xd3\xd8\x7b\xf4\x32\xf6\x63\xa2\xd2\x26\xaf\x1b\x0f\xfb\x39\x02\xa9\x85\x46\xbb\xb1\x29\xbb\x83\xb8\x9d\xc7\x86\x85\xbf\xf5\x4e\xd7\x51\xc9\x3a\xc7\x17\x29\xbc\x27\xcb\xf4\x1a\x26\xd2\xee\x83\xad\x39\x65\x1b\xa3\x3d\x29\xa1\x0c\x78\x95\xe6\xda\x16\xac\xd4\x96\x1b\x0f\x63\xa4\x1a\xd6\x8d\x45\x4e\x29\x0f\x09\x2a\x20\xb3\x9b\x63\x82\x0f\x52\x07\xfb\x3d\xf6\x29\x8a\x08\x94\x79\x31\x24\x81\xa6\x06\x7e\x91\x1a\x6f\x32\x1b\xc4\x35\x2c\x04\xb5\xf1\xc6\x90\x05\x41\xc1\xf5\x60\xd7\x39\x6f\xd6\xe5\x91\xa2\x52\xa8\x03\xcc\x0e\xce\x00\x65\x78\xf7\x86\x93\x7d\x6c\x23\x15\x58\x6b\xde\x64\x14\xa5\xd6\x81\xdc\x16\x16\x65\x8b\x52\xe4\x98\x19\x9f\x5a\x04\xa8\xdd\x31\x50\xa8\x5e\x8a\xb1\x24\xac\xd0\xc7\x53\xac\x0d\x45\x9a\x62\xd4\xe2\x1c\x65\xd2\xbb\xc2\xd1\x1b\x2c\xdb\xcc\x40\x12\x55\x09\x9b\x1d\xa3\x2f\x7e\xd1\xfb\x4d\xe3\xd9\x69\xec\xc9\x1a\x6e\x86\xff\x23\x5b\x89\xa2\x2a\x70\x6a\x4b\xe5\xe4\x4d\xd5\x44\x1f\xb0\xba\x25\x09\x90\xdb\x45\x8e\xd6\x63\xd1\x58\x2f\x35\x84\x4d\x95\xf6\x75\xdb\x7c\x6c\x4f\x1b\x73\xb3\xc1\xc7\x35\x67\x91\xb3\x12\x50\xb8\x57\xb2\x5d\xbe\xa0\x3a\x97\x7c\xb5\x61\xe2\x7d\x70\xdc\xee\xd9\x8a\x90\x3c\xaa\x11\x4a\x81\x79\xa8\x4c\xda\xda\x88\x90\x64\x99\xa5\xdf\xf0\x0e\xf1\x0c\x08\x95\xef\xec\x47\x1a\x2a\x53\x06\x7e\x4e\xa4\x08\x61\x04\xde\xe9\x10\x1c\xb2\xc3\x45\x4e\x33\x85\xe4\xb7\x4d\x71\x41\xdf\x9d\x0f\x37\x1b\xeb\x0b\xea\xd8\xa4\x4d\x8e\x79\xa8\xa9\x04\xb9\xa0\xf1\x08\xf9\x81\x72\x13\xb8\x9f\x29\xab\x64\xce\xab\x78\x62\x05\x3d\x48\x4d\xa2\xf6\x2e\x6f\xca\x5a\x7b\x8b\x2a\x34\x39\x5c\x92\xce\xac\x2a\x3c\x93\x4d\x51\x2b\xdb\x44\xb2\xa4\x7f\xf0\xb2\x57\xc7\xdd\x07\x4d\x09\xbf\x95\x25\x19\x40\x00\x44\x8d\x3d\xba\x2f\xdd\x21\x37\xd9\x96\x3b\x7b\x07\x4b\x61\x33\x05\xfb\xad\x46\x76\x05\x56\x18\x5d\x52\xac\xe8\xd9\x96\x08\x43\x86\xef\x73\xb3\x45\xd0\x91\x63\xd8\xce\xae\xc3\x68\xc6\xc7\x13\xd6\x20\xdf\x1f\x06\xaf\xaa\x1b\x60\x3a\xb3\xaa\x42\x67\x28\x89\xbd\xb6\xb9\xa6\x5e\x14\x87\x48\x24\x75\xca\xda\x50\x6d\xd7\x50\x44\x60\x4c\x9d\xd3\x97\xe8\xa3\x44\x78\x57\x1a\xac\xae\x1d\x01\x46\x0b\x77\x04\x46\x3f\xd6\x0f\x30\xfd\xbb\x70\x50\x9f\xa3\x89\xd6\x54\x7f\x68\xba\xd2\xc5\x56\xc7\x37\xb5\x93\xb2\xda\xb8\x1c\x03\x02\x4a\xff\x7b\x76\x66\x07\xbc\x24\x02\x91\x44\xb4\x14\xb7\x25\x44\xe8\x4c\x57\x75\xd2\x4b\x60\x42\x05\x49\x78\xc3\x8b\x55\xae\x01\x67\x84\x1d\x4d\x89\x79\x45\xaf\x39\x01\x5e\x97\x81\x6c\x8a\x15\xfa\x3b\x74\x40\x49\xe1\xa8\xa3\xa3\x93\xde\xd0\x34\x90\xe0\xd4\x5c\x9c\x71\xbe\xc8\x5c\xa1\x99\x14\xdb\x2d\x2a\xe4\x39\xc5\x92\x20\x4a\x4a\xcb\xd6\x02\xc8\x95\x47\xf3\xa5\xc7\x56\x74\x25\x93\xa6\x9b\x07\xd2\x42\xff\x42\x64\x0a\xbd\xe5\x36\xc8\xed\xbd\x29\x4d\x08\x2a\x33\x95\xe5\x14\x11\x92\x76\xb6\xee\x07\x9d\x28\xc9\x21\x57\x12\xc1\x0d\x26\x78\x53\x6e\xb4\x8d\x9d\x5a\x73\x23\x2b\x86\xa1\xad\xf6\x59\x6f\x54\x25\x34\x66\xbf\x53\xa1\xc5\xb6\x38\x81\x6d\x88\x10\xa4\xb7\x5e\x57\x3b\xf5\xeb\x85\x46\xcb\xf2\xc0\x86\xf2\x17\x75\xc7\x66\xf6\x3a\x15\x60\x40\xe8\x83\x29\x10\x2e\x79\x3c\x4d\x8c\x46\x66\x22\xcd\xe1\x47\x2e\xed\x11\xb3\x6e\x38\xb7\x65\x16\x1a\x1a\xf9\x21\xd6\x3f\xfa\x3a\x90\x2e\xa9\xe3\xb1\xf5\xa4\x1b\x7c\xe3\xe3\x6f\xef\x3f\xbe\x9f\x8c\x48\x2c\x99\x31\x69\xbc\xab\xd0\x5c\xea\xab\xf6\x98\x89\x3c\xe3\x48\x77\x7c\x3d\x72\x4d\x99\x5a\x86\xfe\x0f\x1f\xd4\x8d\xf6\x50\xf1\xe1\xe3\xc7\xdf\x54\xe4\x21\xd2\x82\xad\x6b\x02\x88\xad\x61\x11\x3a\xc5\x00\x02\x4e\xf1\x0f\xdf\xdb\xa2\xca\x79\x9c\x0a\x50\x12\xfe\x1a\xb7\xe9\x8f\x34\xfa\x9c\x8c\xc9\xa4\xab\xe0\x5a\x8a\xfc\xe2\x17\xb1\xee\xa8\x87\xfd\xcd\x5a\xc7\x2e\x7f\x27\x6d\x14\x1a\xc4\x46\x20\x3d\x20\x45\xb9\xf6\x89\x02\x3b\x42\x45\xe5\xcc\x90\x28\xd5\xde\x9b\x80\x09\x9e\xf5\x9a\xf4\x45\xea\x46\x5e\x64\xe4\x2a\x81\x22\x1a\x82\x70\x01\xf4\x8f\xe7\x15\x4d\xa6\xa3\x78\xf8\x8a\x6f\xa1\x75\x0e\x40\xf4\xef\x81\xba\xd3\x74\x6c\xc0\x24\x96\x1a\x92\xf1\x86\x22\x8c\xc8\x4e\xe4\xc9\xd6\x02\x31\xd2\xef\xd4\xeb\xb6\x94\x41\xad\xf7\x34\x36\xd9\xf7\xe4\x89\x45\xe0\xca\x71\x5c\x10\xbc\x1a\xf4\xa0\x83\x1e\x70\xb0\x04\xa3\x39\xa7\x3f\x3d\x5e\x86\x38\x23\x00\x7b\x97\x76\x0c\x08\x39\xa6\x68\x88\x07\x58\x3b\x90\x99\x94\xbe\x35\xde\x76\x33\x30\x34\xd8\x46\xc9\x0c\x44\x2a\x29\x03\xad\x52\xf4\xe2\xab\x10\xc6\x41\x8a\x13\x0f\xab\x91\x5a\xd1\x6a\xaa\x1b\x9a\xb9\x34\x46\x63\x2f\x1c\x76\x86\x93\x87\xc9\xc1\xe3\x83\xe7\x68\x53\xca\xcf\x8b\x53\x85\x98\x07\x80\x18\x97\x0a\xc8\xa7\x81\x3d\x44\xa9\x1a\x66\x25\xaf\xc8\xbf\x4c\x1e\x8d\x97\x0b\x7b\xc9\x7d\x85\xed\x18\x5b\xde\x82\x52\x5b\x7c\xce\xd9\x3f\x58\x02\xdd\x0b\x8b\x4f\x5a\x9a\x5a\xe8\x07\x5b\x34\x85\xca\x9a\x38\xe2\x51\xf8\x7b\x9b\x09\xea\xfd\xa8\x46\xfa\x46\x47\x03\x6b\x5b\xc4\x69\x4e\xb5\x1c\x2e\x59\x4d\x34\x05\xb5\x94\x72\xa0\xb9\x56\xe3\x86\x02\xdc\x11\x7a\xfb\x44\xb0\x6c\x8a\xb5\x4c\x7c\xcc\x22\xdb\x36\xdb\x85\xdd\x5f\x3e\xe5\x8a\x3d\x2a\xf9\x66\xd6\x48\xa3\x82\x2a\x48\x30\xc4\xf9\xc8\x06\xa5\xc4\x3b\xaa\x24\x4c\x45\x8a\x9a\xe6\x58\x57\x84\x85\xbe\x37\x41\xc2\xcc\x2f\xbb\x08\xae\x81\xd3\x1b\xcb\xd3\x9a\x4f\x28\x85\x69\xbd\xe8\x31\x74\xd0\x1b\xb4\xed\x36\xd2\x4b\x69\x95\xcc\x60\x62\xb5\xe7\xb1\x5e\xdd\x11\x0f\x0c\xb1\x3c\x23\x46\x84\x58\xf4\x91\x28\x08\xe0\x42\x26\xe3\x45\xb4\x27\xec\x28\xe7\xd4\x5d\x98\xec\x3d\x64\x97\xbe\x90\x4a\x04\x48\xa4\x00\x66\xfe\x8d\x43\x43\x8a\x22\x6b\x89\x1c\xf5\x69\x8b\xd6\x31\xd8\x02\x39\x82\x87\x58\x22\xc8\xa9\xb9\x18\xa4\xf0\x48\x38\x60\xde\x37\x95\x00\x0c\x5e\x1b\xf4\x7d\xf9\xdd\x1d\x5b\xaf\xba\xaa\x8c\x23\xb4\x8d\x46\xe0\xf6\x37\xc0\x15\x1d\xd9\x47\xcf\x7f\x90\x51\x4f\x93\xef\xa5\xf3\x2a\x30\xe7\x3f\x03\x3c\xb0\x98\x6b\x9b\xa2\xdc\x8c\xba\x82\xe3\x6b\x9d\xde\x0f\xd4\x12\xe9\xcf\x05\xbd\x98\x40\xb7\x26\x9c\x32\x46\xaf\x50\xc3\x44\x58\x11\xa6\xef\x0d\x88\x5c\x64\x5d\x1c\x5d\x40\xaa\x65\x78\xc6\xe0\x67\x12\x46\xf3\x25\xc2\xfd\x13\x78\x82\xe0\xb2\x2f\x5d\xe2\xcf\xac\x0a\x4c\xdc\xef\x4d\x97\xe8\xb6\xc7\x9e\x41\x62\xad\xef\x29\x95\x48\x2a\x66\x72\x9a\x62\x30\xd5\x6f\x0e\x84\x9a\x96\x1d\x4f\x7f\x4e\xa7\x3b\xab\x40\x50\x83\x6b\xfd\x7c\x8a\xa8\x98\xee\xa5\x50\x64\x39\x5b\xb3\xc7\xf8\xae\x65\xf4\xca\xbb\xa3\xce\xeb\xe3\x3b\x3a\x21\x25\xa8\xad\x52\x88\x13\x8e\xfb\x14\x07\x59\x09\x9c\x0c\x3a\x12\x74\x4b\xdd\x55\x40\x1f\x97\xcd\x73\x5c\x56\x79\xcc\x20\x59\xf0\x40\x6d\x8a\xdf\x6f\x45\xe0\x7f\x40\xef\x27\x83\x5e\x6c\x27\x42\x3d\xba\x14\x6a\xbb\xab\xab\xeb\xcc\xa0\x08\x33\x75\xea\x0b\x1d\xda\x06\xcb\x88\x49\xf3\xa1\x0f\x6b\x1c\xc0\xc7\x5d\xdd\x3f\x78\xfd\xb0\x4b\x5b\x85\x3f\xb7\x4d\x19\x22\x49\x0d\x5d\x1c\xc4\x9d\xc4\xca\x1f\x6f\x66\xaa\x7d\x42\xd0\xf8\x9d\x8e\xc7\x41\x6f\x0a\x30\xeb\xec\x84\xea\xd1\xd4\x24\x1e\xde\x44\x49\xaa\x7b\xd5\xdb\xb6\x98\xe6\xe7\xf0\xf4\x84\x7b\xb0\x51\x13\x55\x6e\x57\xfa\x0c\xba\x8f\x4e\x95\xa2\x99\x8f\xd4\x6f\xed\x05\xec\xe4\x62\x07\x3b\x41\xe2\x85\x76\xbe\x89\xa8\xc8\xf9\x96\x78\x64\xef\x4c\x20\x07\x05\xc8\x37\x96\xa7\x01\x3b\x29\xdc\xcd\x1f\xe9\xa3\xb7\x03\xf7\xaf\x03\xc4\xed\x74\xc2\x20\x13\xc6\x36\xb0\x41\x72\x8d\xa1\x07\x6a\xe6\x08\x61\x32\x78\x2d\x9e\x54\x9a\x01\x2d\x32\xda\x9d\xc9\x1f\x97\x15\x9d\x1d\x99\xd9\x65\x1d\xb3\xa3\x9f\x1d\xad\xa3\x87\x88\x31\x5c\x2e\x3c\xd1\x0e\x1c\xea\x16\xeb\x78\x32\x21\xe0\x99\x4b\x1b\xb2\x19\x76\xac\x7b\x63\xdf\xe1\x3b\x1f\x7a\xa7\xf7\xf0\xce\xc6\x0b\x15\x26\x04\xa5\x1c\x46\x81\xf8\x1d\x3d\x86\x9e\x83\xf6\x04\xad\x36\x86\x17\x29\x00\xd0\x67\x14\xb7\xd4\xf8\xb2\x3d\x2f\x49\x6c\x63\xd4\x12\xa6\xd9\x96\xcd\x87\xa4\x06\x10\x76\x7c\x64\xf2\xdf\xf4\xfc\x63\x95\x38\xf6\x11\x18\x13\x0a\xec\xb0\xaa\xd7\x36\xb7\xc4\xed\x41\x54\xb8\xd4\xb9\xc7\xa4\x2d\xd2\x06\xcc\xa4\xc5\x02\xc1\xef\xfe\xf5\xa0\x5c\x65\xc1\x5a\xbd\x86\x8f\xa9\x69\xaf\x13\x05\xd7\x84\x22\x64\x86\x82\x49\xd0\x95\x02\xf3\x70\xce\xed\x36\xc5\xc8\x30\xa3\x38\xed\x07\x44\x33\xa7\x69\x89\x31\x5d\x32\xa0\x17\x40\x26\x52\x22\xf9\x32\x48\x18\xcc\x5f\x39\x54\xc4\x0b\xc6\x97\xba\x1e\x39\x4c\x7b\x39\xcc\x62\x95\x05\x25\x87\x24\x6c\xe4\x70\x70\x14\xd2\xdc\xe8\xfe\xd5\x46\x7b\xaf\x16\x87\x60\xec\x5c\xba\x30\x91\x6b\xa4\xfe\x15\x52\x04\x2a\x3a\xd2\xbe\x70\xe0\x7b\x21\x49\x0c\x79\xed\x59\xff\xad\x1d\x3d\x50\x57\x72\x17\x99\xbc\xd1\x25\xb7\x6e\x2f\x17\x78\xc0\x18\xe2\x90\xd4\xad\x74\x97\x87\xf0\x85\xa4\x0b\x60\x2c\x57\x71\xb8\xbb\xf6\x00\x91\x43\xe7\x74\x38\x1c\x4f\xec\x9d\x39\x67\x67\x59\x2f\xb8\x1c\x7f\x54\x6c\x99\xc5\x43\x51\xda\xdd\x90\xc5\xd8\x3d\xfb\x1f\x27\x1b\x38\xdd\x52\x7f\x31\xa2\xbd\x0e\x64\x31\x3b\xcd\xbd\x95\x35\x02\xd5\x0e\x1c\x63\xab\x7f\x80\x52\x56\xfe\x13\x8b\x0e\x55\x4f\x4d\xfd\x5f\x00\x00\x00\xff\xff\x93\x28\x3d\xff\xee\x1a\x00\x00")
 
 func confLicenseCreativeCommonsCc010UniversalBytes() ([]byte, error) {
@@ -4324,7 +4345,7 @@ func confLocaleLocalebgBgIni() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "conf/locale/locale_bg-BG.ini", size: 85926, mode: os.FileMode(504), modTime: time.Unix(1481081321, 0)}
+	info := bindataFileInfo{name: "conf/locale/locale_bg-BG.ini", size: 85926, mode: os.FileMode(504), modTime: time.Unix(1481092237, 0)}
 	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
@@ -4344,7 +4365,7 @@ func confLocaleLocalecsCzIni() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "conf/locale/locale_cs-CZ.ini", size: 59802, mode: os.FileMode(504), modTime: time.Unix(1481081321, 0)}
+	info := bindataFileInfo{name: "conf/locale/locale_cs-CZ.ini", size: 59802, mode: os.FileMode(504), modTime: time.Unix(1481092237, 0)}
 	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
@@ -4364,7 +4385,7 @@ func confLocaleLocaledeDeIni() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "conf/locale/locale_de-DE.ini", size: 60149, mode: os.FileMode(504), modTime: time.Unix(1481081321, 0)}
+	info := bindataFileInfo{name: "conf/locale/locale_de-DE.ini", size: 60149, mode: os.FileMode(504), modTime: time.Unix(1481092237, 0)}
 	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
@@ -4384,7 +4405,7 @@ func confLocaleLocaleenUsIni() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "conf/locale/locale_en-US.ini", size: 58309, mode: os.FileMode(504), modTime: time.Unix(1481090527, 0)}
+	info := bindataFileInfo{name: "conf/locale/locale_en-US.ini", size: 58309, mode: os.FileMode(504), modTime: time.Unix(1481092237, 0)}
 	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
@@ -4404,7 +4425,7 @@ func confLocaleLocaleesEsIni() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "conf/locale/locale_es-ES.ini", size: 61150, mode: os.FileMode(504), modTime: time.Unix(1481081321, 0)}
+	info := bindataFileInfo{name: "conf/locale/locale_es-ES.ini", size: 61150, mode: os.FileMode(504), modTime: time.Unix(1481092237, 0)}
 	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
@@ -4424,7 +4445,7 @@ func confLocaleLocalefiFiIni() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "conf/locale/locale_fi-FI.ini", size: 57336, mode: os.FileMode(504), modTime: time.Unix(1481081321, 0)}
+	info := bindataFileInfo{name: "conf/locale/locale_fi-FI.ini", size: 57336, mode: os.FileMode(504), modTime: time.Unix(1481092237, 0)}
 	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
@@ -4444,7 +4465,7 @@ func confLocaleLocalefrFrIni() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "conf/locale/locale_fr-FR.ini", size: 60977, mode: os.FileMode(504), modTime: time.Unix(1481081321, 0)}
+	info := bindataFileInfo{name: "conf/locale/locale_fr-FR.ini", size: 60977, mode: os.FileMode(504), modTime: time.Unix(1481092237, 0)}
 	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
@@ -4464,7 +4485,7 @@ func confLocaleLocaleitItIni() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "conf/locale/locale_it-IT.ini", size: 58175, mode: os.FileMode(504), modTime: time.Unix(1481081321, 0)}
+	info := bindataFileInfo{name: "conf/locale/locale_it-IT.ini", size: 58175, mode: os.FileMode(504), modTime: time.Unix(1481092237, 0)}
 	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
@@ -4484,7 +4505,7 @@ func confLocaleLocalejaJpIni() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "conf/locale/locale_ja-JP.ini", size: 65505, mode: os.FileMode(504), modTime: time.Unix(1481081321, 0)}
+	info := bindataFileInfo{name: "conf/locale/locale_ja-JP.ini", size: 65505, mode: os.FileMode(504), modTime: time.Unix(1481092237, 0)}
 	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
@@ -4504,7 +4525,7 @@ func confLocaleLocalelvLvIni() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "conf/locale/locale_lv-LV.ini", size: 61178, mode: os.FileMode(504), modTime: time.Unix(1481081321, 0)}
+	info := bindataFileInfo{name: "conf/locale/locale_lv-LV.ini", size: 61178, mode: os.FileMode(504), modTime: time.Unix(1481092237, 0)}
 	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
@@ -4524,7 +4545,7 @@ func confLocaleLocalenlNlIni() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "conf/locale/locale_nl-NL.ini", size: 56875, mode: os.FileMode(504), modTime: time.Unix(1481081321, 0)}
+	info := bindataFileInfo{name: "conf/locale/locale_nl-NL.ini", size: 56875, mode: os.FileMode(504), modTime: time.Unix(1481092237, 0)}
 	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
@@ -4544,7 +4565,7 @@ func confLocaleLocaleplPlIni() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "conf/locale/locale_pl-PL.ini", size: 58235, mode: os.FileMode(504), modTime: time.Unix(1481081321, 0)}
+	info := bindataFileInfo{name: "conf/locale/locale_pl-PL.ini", size: 58235, mode: os.FileMode(504), modTime: time.Unix(1481092237, 0)}
 	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
@@ -4564,7 +4585,7 @@ func confLocaleLocaleptBrIni() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "conf/locale/locale_pt-BR.ini", size: 59248, mode: os.FileMode(504), modTime: time.Unix(1481081321, 0)}
+	info := bindataFileInfo{name: "conf/locale/locale_pt-BR.ini", size: 59248, mode: os.FileMode(504), modTime: time.Unix(1481092237, 0)}
 	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
@@ -4584,7 +4605,7 @@ func confLocaleLocaleruRuIni() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "conf/locale/locale_ru-RU.ini", size: 85266, mode: os.FileMode(504), modTime: time.Unix(1481081321, 0)}
+	info := bindataFileInfo{name: "conf/locale/locale_ru-RU.ini", size: 85266, mode: os.FileMode(504), modTime: time.Unix(1481092237, 0)}
 	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
@@ -4604,7 +4625,7 @@ func confLocaleLocalesrSpIni() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "conf/locale/locale_sr-SP.ini", size: 79066, mode: os.FileMode(504), modTime: time.Unix(1481081321, 0)}
+	info := bindataFileInfo{name: "conf/locale/locale_sr-SP.ini", size: 79066, mode: os.FileMode(504), modTime: time.Unix(1481092237, 0)}
 	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
@@ -4624,7 +4645,7 @@ func confLocaleLocalesvSeIni() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "conf/locale/locale_sv-SE.ini", size: 57140, mode: os.FileMode(504), modTime: time.Unix(1481081321, 0)}
+	info := bindataFileInfo{name: "conf/locale/locale_sv-SE.ini", size: 57140, mode: os.FileMode(504), modTime: time.Unix(1481092237, 0)}
 	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
@@ -4644,7 +4665,7 @@ func confLocaleLocaletrTrIni() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "conf/locale/locale_tr-TR.ini", size: 58631, mode: os.FileMode(504), modTime: time.Unix(1481081321, 0)}
+	info := bindataFileInfo{name: "conf/locale/locale_tr-TR.ini", size: 58631, mode: os.FileMode(504), modTime: time.Unix(1481092237, 0)}
 	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
@@ -4664,7 +4685,7 @@ func confLocaleLocalezhCnIni() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "conf/locale/locale_zh-CN.ini", size: 53729, mode: os.FileMode(504), modTime: time.Unix(1481081321, 0)}
+	info := bindataFileInfo{name: "conf/locale/locale_zh-CN.ini", size: 53729, mode: os.FileMode(504), modTime: time.Unix(1481092237, 0)}
 	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
@@ -4684,7 +4705,7 @@ func confLocaleLocalezhHkIni() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "conf/locale/locale_zh-HK.ini", size: 53601, mode: os.FileMode(504), modTime: time.Unix(1481081321, 0)}
+	info := bindataFileInfo{name: "conf/locale/locale_zh-HK.ini", size: 53601, mode: os.FileMode(504), modTime: time.Unix(1481092237, 0)}
 	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
@@ -4704,7 +4725,7 @@ func confLocaleLocalezhTwIni() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "conf/locale/locale_zh-TW.ini", size: 53460, mode: os.FileMode(504), modTime: time.Unix(1481081321, 0)}
+	info := bindataFileInfo{name: "conf/locale/locale_zh-TW.ini", size: 53460, mode: os.FileMode(504), modTime: time.Unix(1481092237, 0)}
 	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
@@ -4781,228 +4802,229 @@ func AssetNames() []string {
 
 // _bindata is a table, holding each asset generator, mapped to its name.
 var _bindata = map[string]func() (*asset, error){
-	"conf/app.ini":                                         confAppIni,
-	"conf/gitignore/Actionscript":                          confGitignoreActionscript,
-	"conf/gitignore/Ada":                                   confGitignoreAda,
-	"conf/gitignore/Agda":                                  confGitignoreAgda,
-	"conf/gitignore/Android":                               confGitignoreAndroid,
-	"conf/gitignore/Anjuta":                                confGitignoreAnjuta,
-	"conf/gitignore/AppEngine":                             confGitignoreAppengine,
-	"conf/gitignore/AppceleratorTitanium":                  confGitignoreAppceleratortitanium,
-	"conf/gitignore/ArchLinuxPackages":                     confGitignoreArchlinuxpackages,
-	"conf/gitignore/Archives":                              confGitignoreArchives,
-	"conf/gitignore/Autotools":                             confGitignoreAutotools,
-	"conf/gitignore/BricxCC":                               confGitignoreBricxcc,
-	"conf/gitignore/C":                                     confGitignoreC,
-	"conf/gitignore/C Sharp":                               confGitignoreCSharp,
-	"conf/gitignore/C++":                                   confGitignoreC2,
-	"conf/gitignore/CFWheels":                              confGitignoreCfwheels,
-	"conf/gitignore/CMake":                                 confGitignoreCmake,
-	"conf/gitignore/CUDA":                                  confGitignoreCuda,
-	"conf/gitignore/CVS":                                   confGitignoreCvs,
-	"conf/gitignore/CakePHP":                               confGitignoreCakephp,
-	"conf/gitignore/ChefCookbook":                          confGitignoreChefcookbook,
-	"conf/gitignore/Cloud9":                                confGitignoreCloud9,
-	"conf/gitignore/CodeIgniter":                           confGitignoreCodeigniter,
-	"conf/gitignore/CodeKit":                               confGitignoreCodekit,
-	"conf/gitignore/CommonLisp":                            confGitignoreCommonlisp,
-	"conf/gitignore/Composer":                              confGitignoreComposer,
-	"conf/gitignore/Concrete5":                             confGitignoreConcrete5,
-	"conf/gitignore/Coq":                                   confGitignoreCoq,
-	"conf/gitignore/CraftCMS":                              confGitignoreCraftcms,
-	"conf/gitignore/DM":                                    confGitignoreDm,
-	"conf/gitignore/Dart":                                  confGitignoreDart,
-	"conf/gitignore/DartEditor":                            confGitignoreDarteditor,
-	"conf/gitignore/Delphi":                                confGitignoreDelphi,
-	"conf/gitignore/Dreamweaver":                           confGitignoreDreamweaver,
-	"conf/gitignore/Drupal":                                confGitignoreDrupal,
-	"conf/gitignore/EPiServer":                             confGitignoreEpiserver,
-	"conf/gitignore/Eagle":                                 confGitignoreEagle,
-	"conf/gitignore/Eclipse":                               confGitignoreEclipse,
-	"conf/gitignore/EiffelStudio":                          confGitignoreEiffelstudio,
-	"conf/gitignore/Elisp":                                 confGitignoreElisp,
-	"conf/gitignore/Elixir":                                confGitignoreElixir,
-	"conf/gitignore/Emacs":                                 confGitignoreEmacs,
-	"conf/gitignore/Ensime":                                confGitignoreEnsime,
-	"conf/gitignore/Erlang":                                confGitignoreErlang,
-	"conf/gitignore/Espresso":                              confGitignoreEspresso,
-	"conf/gitignore/ExpressionEngine":                      confGitignoreExpressionengine,
-	"conf/gitignore/ExtJs":                                 confGitignoreExtjs,
-	"conf/gitignore/Fancy":                                 confGitignoreFancy,
-	"conf/gitignore/Finale":                                confGitignoreFinale,
-	"conf/gitignore/FlexBuilder":                           confGitignoreFlexbuilder,
-	"conf/gitignore/ForceDotCom":                           confGitignoreForcedotcom,
-	"conf/gitignore/FuelPHP":                               confGitignoreFuelphp,
-	"conf/gitignore/GWT":                                   confGitignoreGwt,
-	"conf/gitignore/Gcov":                                  confGitignoreGcov,
-	"conf/gitignore/GitBook":                               confGitignoreGitbook,
-	"conf/gitignore/Go":                                    confGitignoreGo,
-	"conf/gitignore/Gradle":                                confGitignoreGradle,
-	"conf/gitignore/Grails":                                confGitignoreGrails,
-	"conf/gitignore/Haskell":                               confGitignoreHaskell,
-	"conf/gitignore/IGORPro":                               confGitignoreIgorpro,
-	"conf/gitignore/IPythonNotebook":                       confGitignoreIpythonnotebook,
-	"conf/gitignore/Idris":                                 confGitignoreIdris,
-	"conf/gitignore/JDeveloper":                            confGitignoreJdeveloper,
-	"conf/gitignore/Java":                                  confGitignoreJava,
-	"conf/gitignore/Jboss":                                 confGitignoreJboss,
-	"conf/gitignore/Jekyll":                                confGitignoreJekyll,
-	"conf/gitignore/JetBrains":                             confGitignoreJetbrains,
-	"conf/gitignore/Joomla":                                confGitignoreJoomla,
-	"conf/gitignore/KDevelop4":                             confGitignoreKdevelop4,
-	"conf/gitignore/Kate":                                  confGitignoreKate,
-	"conf/gitignore/KiCAD":                                 confGitignoreKicad,
-	"conf/gitignore/Kohana":                                confGitignoreKohana,
-	"conf/gitignore/LabVIEW":                               confGitignoreLabview,
-	"conf/gitignore/Laravel":                               confGitignoreLaravel,
-	"conf/gitignore/Lazarus":                               confGitignoreLazarus,
-	"conf/gitignore/Leiningen":                             confGitignoreLeiningen,
-	"conf/gitignore/LemonStand":                            confGitignoreLemonstand,
-	"conf/gitignore/LibreOffice":                           confGitignoreLibreoffice,
-	"conf/gitignore/Lilypond":                              confGitignoreLilypond,
-	"conf/gitignore/Linux":                                 confGitignoreLinux,
-	"conf/gitignore/Lithium":                               confGitignoreLithium,
-	"conf/gitignore/Lua":                                   confGitignoreLua,
-	"conf/gitignore/LyX":                                   confGitignoreLyx,
-	"conf/gitignore/Magento":                               confGitignoreMagento,
-	"conf/gitignore/Matlab":                                confGitignoreMatlab,
-	"conf/gitignore/Maven":                                 confGitignoreMaven,
-	"conf/gitignore/Mercurial":                             confGitignoreMercurial,
-	"conf/gitignore/Mercury":                               confGitignoreMercury,
-	"conf/gitignore/MetaProgrammingSystem":                 confGitignoreMetaprogrammingsystem,
-	"conf/gitignore/MicrosoftOffice":                       confGitignoreMicrosoftoffice,
-	"conf/gitignore/ModelSim":                              confGitignoreModelsim,
-	"conf/gitignore/Momentics":                             confGitignoreMomentics,
-	"conf/gitignore/MonoDevelop":                           confGitignoreMonodevelop,
-	"conf/gitignore/Nanoc":                                 confGitignoreNanoc,
-	"conf/gitignore/NetBeans":                              confGitignoreNetbeans,
-	"conf/gitignore/Nim":                                   confGitignoreNim,
-	"conf/gitignore/Ninja":                                 confGitignoreNinja,
-	"conf/gitignore/Node":                                  confGitignoreNode,
-	"conf/gitignore/NotepadPP":                             confGitignoreNotepadpp,
-	"conf/gitignore/OCaml":                                 confGitignoreOcaml,
-	"conf/gitignore/OSX":                                   confGitignoreOsx,
-	"conf/gitignore/Objective-C":                           confGitignoreObjectiveC,
-	"conf/gitignore/Opa":                                   confGitignoreOpa,
-	"conf/gitignore/OpenCart":                              confGitignoreOpencart,
-	"conf/gitignore/OracleForms":                           confGitignoreOracleforms,
-	"conf/gitignore/Packer":                                confGitignorePacker,
-	"conf/gitignore/Perl":                                  confGitignorePerl,
-	"conf/gitignore/Phalcon":                               confGitignorePhalcon,
-	"conf/gitignore/PlayFramework":                         confGitignorePlayframework,
-	"conf/gitignore/Plone":                                 confGitignorePlone,
-	"conf/gitignore/Prestashop":                            confGitignorePrestashop,
-	"conf/gitignore/Processing":                            confGitignoreProcessing,
-	"conf/gitignore/Python":                                confGitignorePython,
-	"conf/gitignore/Qooxdoo":                               confGitignoreQooxdoo,
-	"conf/gitignore/Qt":                                    confGitignoreQt,
-	"conf/gitignore/R":                                     confGitignoreR,
-	"conf/gitignore/ROS":                                   confGitignoreRos,
-	"conf/gitignore/Rails":                                 confGitignoreRails,
-	"conf/gitignore/Redcar":                                confGitignoreRedcar,
-	"conf/gitignore/Redis":                                 confGitignoreRedis,
-	"conf/gitignore/RhodesRhomobile":                       confGitignoreRhodesrhomobile,
-	"conf/gitignore/Ruby":                                  confGitignoreRuby,
-	"conf/gitignore/Rust":                                  confGitignoreRust,
-	"conf/gitignore/SBT":                                   confGitignoreSbt,
-	"conf/gitignore/SCons":                                 confGitignoreScons,
-	"conf/gitignore/SVN":                                   confGitignoreSvn,
-	"conf/gitignore/Sass":                                  confGitignoreSass,
-	"conf/gitignore/Scala":                                 confGitignoreScala,
-	"conf/gitignore/Scrivener":                             confGitignoreScrivener,
-	"conf/gitignore/Sdcc":                                  confGitignoreSdcc,
-	"conf/gitignore/SeamGen":                               confGitignoreSeamgen,
-	"conf/gitignore/SketchUp":                              confGitignoreSketchup,
-	"conf/gitignore/SlickEdit":                             confGitignoreSlickedit,
-	"conf/gitignore/Stella":                                confGitignoreStella,
-	"conf/gitignore/SublimeText":                           confGitignoreSublimetext,
-	"conf/gitignore/SugarCRM":                              confGitignoreSugarcrm,
-	"conf/gitignore/Swift":                                 confGitignoreSwift,
-	"conf/gitignore/Symfony":                               confGitignoreSymfony,
-	"conf/gitignore/SymphonyCMS":                           confGitignoreSymphonycms,
-	"conf/gitignore/SynopsysVCS":                           confGitignoreSynopsysvcs,
-	"conf/gitignore/Tags":                                  confGitignoreTags,
-	"conf/gitignore/TeX":                                   confGitignoreTex,
-	"conf/gitignore/TextMate":                              confGitignoreTextmate,
-	"conf/gitignore/Textpattern":                           confGitignoreTextpattern,
-	"conf/gitignore/TortoiseGit":                           confGitignoreTortoisegit,
-	"conf/gitignore/TurboGears2":                           confGitignoreTurbogears2,
-	"conf/gitignore/Typo3":                                 confGitignoreTypo3,
-	"conf/gitignore/Umbraco":                               confGitignoreUmbraco,
-	"conf/gitignore/Unity":                                 confGitignoreUnity,
-	"conf/gitignore/VVVV":                                  confGitignoreVvvv,
-	"conf/gitignore/Vagrant":                               confGitignoreVagrant,
-	"conf/gitignore/Vim":                                   confGitignoreVim,
-	"conf/gitignore/VirtualEnv":                            confGitignoreVirtualenv,
-	"conf/gitignore/VisualStudio":                          confGitignoreVisualstudio,
-	"conf/gitignore/VisualStudioCode":                      confGitignoreVisualstudiocode,
-	"conf/gitignore/Waf":                                   confGitignoreWaf,
-	"conf/gitignore/WebMethods":                            confGitignoreWebmethods,
-	"conf/gitignore/Windows":                               confGitignoreWindows,
-	"conf/gitignore/WordPress":                             confGitignoreWordpress,
-	"conf/gitignore/Xcode":                                 confGitignoreXcode,
-	"conf/gitignore/XilinxISE":                             confGitignoreXilinxise,
-	"conf/gitignore/Xojo":                                  confGitignoreXojo,
-	"conf/gitignore/Yeoman":                                confGitignoreYeoman,
-	"conf/gitignore/Yii":                                   confGitignoreYii,
-	"conf/gitignore/ZendFramework":                         confGitignoreZendframework,
-	"conf/gitignore/Zephir":                                confGitignoreZephir,
-	"conf/label/Default":                                   confLabelDefault,
-	"conf/license/Abstyles License":                        confLicenseAbstylesLicense,
-	"conf/license/Academic Free License v1.1":              confLicenseAcademicFreeLicenseV11,
-	"conf/license/Academic Free License v1.2":              confLicenseAcademicFreeLicenseV12,
-	"conf/license/Academic Free License v2.0":              confLicenseAcademicFreeLicenseV20,
-	"conf/license/Academic Free License v2.1":              confLicenseAcademicFreeLicenseV21,
-	"conf/license/Academic Free License v3.0":              confLicenseAcademicFreeLicenseV30,
-	"conf/license/Affero General Public License v1.0":      confLicenseAfferoGeneralPublicLicenseV10,
-	"conf/license/Apache License 1.0":                      confLicenseApacheLicense10,
-	"conf/license/Apache License 1.1":                      confLicenseApacheLicense11,
-	"conf/license/Apache License 2.0":                      confLicenseApacheLicense20,
-	"conf/license/Artistic License 1.0":                    confLicenseArtisticLicense10,
-	"conf/license/Artistic License 2.0":                    confLicenseArtisticLicense20,
-	"conf/license/BSD 2-clause License":                    confLicenseBsd2ClauseLicense,
-	"conf/license/BSD 3-clause License":                    confLicenseBsd3ClauseLicense,
-	"conf/license/BSD 4-clause License":                    confLicenseBsd4ClauseLicense,
-	"conf/license/Creative Commons CC0 1.0 Universal":      confLicenseCreativeCommonsCc010Universal,
-	"conf/license/Eclipse Public License 1.0":              confLicenseEclipsePublicLicense10,
-	"conf/license/Educational Community License v1.0":      confLicenseEducationalCommunityLicenseV10,
-	"conf/license/Educational Community License v2.0":      confLicenseEducationalCommunityLicenseV20,
-	"conf/license/GNU Affero General Public License v3.0":  confLicenseGnuAfferoGeneralPublicLicenseV30,
-	"conf/license/GNU Free Documentation License v1.1":     confLicenseGnuFreeDocumentationLicenseV11,
-	"conf/license/GNU Free Documentation License v1.2":     confLicenseGnuFreeDocumentationLicenseV12,
-	"conf/license/GNU Free Documentation License v1.3":     confLicenseGnuFreeDocumentationLicenseV13,
-	"conf/license/GNU General Public License v1.0":         confLicenseGnuGeneralPublicLicenseV10,
-	"conf/license/GNU General Public License v2.0":         confLicenseGnuGeneralPublicLicenseV20,
-	"conf/license/GNU General Public License v3.0":         confLicenseGnuGeneralPublicLicenseV30,
-	"conf/license/GNU Lesser General Public License v2.1":  confLicenseGnuLesserGeneralPublicLicenseV21,
-	"conf/license/GNU Lesser General Public License v3.0":  confLicenseGnuLesserGeneralPublicLicenseV30,
-	"conf/license/GNU Library General Public License v2.0": confLicenseGnuLibraryGeneralPublicLicenseV20,
-	"conf/license/ISC license":                             confLicenseIscLicense,
-	"conf/license/MIT License":                             confLicenseMitLicense,
-	"conf/license/Mozilla Public License 1.0":              confLicenseMozillaPublicLicense10,
-	"conf/license/Mozilla Public License 1.1":              confLicenseMozillaPublicLicense11,
-	"conf/license/Mozilla Public License 2.0":              confLicenseMozillaPublicLicense20,
-	"conf/locale/locale_bg-BG.ini":                         confLocaleLocalebgBgIni,
-	"conf/locale/locale_cs-CZ.ini":                         confLocaleLocalecsCzIni,
-	"conf/locale/locale_de-DE.ini":                         confLocaleLocaledeDeIni,
-	"conf/locale/locale_en-US.ini":                         confLocaleLocaleenUsIni,
-	"conf/locale/locale_es-ES.ini":                         confLocaleLocaleesEsIni,
-	"conf/locale/locale_fi-FI.ini":                         confLocaleLocalefiFiIni,
-	"conf/locale/locale_fr-FR.ini":                         confLocaleLocalefrFrIni,
-	"conf/locale/locale_it-IT.ini":                         confLocaleLocaleitItIni,
-	"conf/locale/locale_ja-JP.ini":                         confLocaleLocalejaJpIni,
-	"conf/locale/locale_lv-LV.ini":                         confLocaleLocalelvLvIni,
-	"conf/locale/locale_nl-NL.ini":                         confLocaleLocalenlNlIni,
-	"conf/locale/locale_pl-PL.ini":                         confLocaleLocaleplPlIni,
-	"conf/locale/locale_pt-BR.ini":                         confLocaleLocaleptBrIni,
-	"conf/locale/locale_ru-RU.ini":                         confLocaleLocaleruRuIni,
-	"conf/locale/locale_sr-SP.ini":                         confLocaleLocalesrSpIni,
-	"conf/locale/locale_sv-SE.ini":                         confLocaleLocalesvSeIni,
-	"conf/locale/locale_tr-TR.ini":                         confLocaleLocaletrTrIni,
-	"conf/locale/locale_zh-CN.ini":                         confLocaleLocalezhCnIni,
-	"conf/locale/locale_zh-HK.ini":                         confLocaleLocalezhHkIni,
-	"conf/locale/locale_zh-TW.ini":                         confLocaleLocalezhTwIni,
-	"conf/readme/Default":                                  confReadmeDefault,
+	"conf/app.ini":                                                                   confAppIni,
+	"conf/gitignore/Actionscript":                                                    confGitignoreActionscript,
+	"conf/gitignore/Ada":                                                             confGitignoreAda,
+	"conf/gitignore/Agda":                                                            confGitignoreAgda,
+	"conf/gitignore/Android":                                                         confGitignoreAndroid,
+	"conf/gitignore/Anjuta":                                                          confGitignoreAnjuta,
+	"conf/gitignore/AppEngine":                                                       confGitignoreAppengine,
+	"conf/gitignore/AppceleratorTitanium":                                            confGitignoreAppceleratortitanium,
+	"conf/gitignore/ArchLinuxPackages":                                               confGitignoreArchlinuxpackages,
+	"conf/gitignore/Archives":                                                        confGitignoreArchives,
+	"conf/gitignore/Autotools":                                                       confGitignoreAutotools,
+	"conf/gitignore/BricxCC":                                                         confGitignoreBricxcc,
+	"conf/gitignore/C":                                                               confGitignoreC,
+	"conf/gitignore/C Sharp":                                                         confGitignoreCSharp,
+	"conf/gitignore/C++":                                                             confGitignoreC2,
+	"conf/gitignore/CFWheels":                                                        confGitignoreCfwheels,
+	"conf/gitignore/CMake":                                                           confGitignoreCmake,
+	"conf/gitignore/CUDA":                                                            confGitignoreCuda,
+	"conf/gitignore/CVS":                                                             confGitignoreCvs,
+	"conf/gitignore/CakePHP":                                                         confGitignoreCakephp,
+	"conf/gitignore/ChefCookbook":                                                    confGitignoreChefcookbook,
+	"conf/gitignore/Cloud9":                                                          confGitignoreCloud9,
+	"conf/gitignore/CodeIgniter":                                                     confGitignoreCodeigniter,
+	"conf/gitignore/CodeKit":                                                         confGitignoreCodekit,
+	"conf/gitignore/CommonLisp":                                                      confGitignoreCommonlisp,
+	"conf/gitignore/Composer":                                                        confGitignoreComposer,
+	"conf/gitignore/Concrete5":                                                       confGitignoreConcrete5,
+	"conf/gitignore/Coq":                                                             confGitignoreCoq,
+	"conf/gitignore/CraftCMS":                                                        confGitignoreCraftcms,
+	"conf/gitignore/DM":                                                              confGitignoreDm,
+	"conf/gitignore/Dart":                                                            confGitignoreDart,
+	"conf/gitignore/DartEditor":                                                      confGitignoreDarteditor,
+	"conf/gitignore/Delphi":                                                          confGitignoreDelphi,
+	"conf/gitignore/Dreamweaver":                                                     confGitignoreDreamweaver,
+	"conf/gitignore/Drupal":                                                          confGitignoreDrupal,
+	"conf/gitignore/EPiServer":                                                       confGitignoreEpiserver,
+	"conf/gitignore/Eagle":                                                           confGitignoreEagle,
+	"conf/gitignore/Eclipse":                                                         confGitignoreEclipse,
+	"conf/gitignore/EiffelStudio":                                                    confGitignoreEiffelstudio,
+	"conf/gitignore/Elisp":                                                           confGitignoreElisp,
+	"conf/gitignore/Elixir":                                                          confGitignoreElixir,
+	"conf/gitignore/Emacs":                                                           confGitignoreEmacs,
+	"conf/gitignore/Ensime":                                                          confGitignoreEnsime,
+	"conf/gitignore/Erlang":                                                          confGitignoreErlang,
+	"conf/gitignore/Espresso":                                                        confGitignoreEspresso,
+	"conf/gitignore/ExpressionEngine":                                                confGitignoreExpressionengine,
+	"conf/gitignore/ExtJs":                                                           confGitignoreExtjs,
+	"conf/gitignore/Fancy":                                                           confGitignoreFancy,
+	"conf/gitignore/Finale":                                                          confGitignoreFinale,
+	"conf/gitignore/FlexBuilder":                                                     confGitignoreFlexbuilder,
+	"conf/gitignore/ForceDotCom":                                                     confGitignoreForcedotcom,
+	"conf/gitignore/FuelPHP":                                                         confGitignoreFuelphp,
+	"conf/gitignore/GWT":                                                             confGitignoreGwt,
+	"conf/gitignore/Gcov":                                                            confGitignoreGcov,
+	"conf/gitignore/GitBook":                                                         confGitignoreGitbook,
+	"conf/gitignore/Go":                                                              confGitignoreGo,
+	"conf/gitignore/Gradle":                                                          confGitignoreGradle,
+	"conf/gitignore/Grails":                                                          confGitignoreGrails,
+	"conf/gitignore/Haskell":                                                         confGitignoreHaskell,
+	"conf/gitignore/IGORPro":                                                         confGitignoreIgorpro,
+	"conf/gitignore/IPythonNotebook":                                                 confGitignoreIpythonnotebook,
+	"conf/gitignore/Idris":                                                           confGitignoreIdris,
+	"conf/gitignore/JDeveloper":                                                      confGitignoreJdeveloper,
+	"conf/gitignore/Java":                                                            confGitignoreJava,
+	"conf/gitignore/Jboss":                                                           confGitignoreJboss,
+	"conf/gitignore/Jekyll":                                                          confGitignoreJekyll,
+	"conf/gitignore/JetBrains":                                                       confGitignoreJetbrains,
+	"conf/gitignore/Joomla":                                                          confGitignoreJoomla,
+	"conf/gitignore/KDevelop4":                                                       confGitignoreKdevelop4,
+	"conf/gitignore/Kate":                                                            confGitignoreKate,
+	"conf/gitignore/KiCAD":                                                           confGitignoreKicad,
+	"conf/gitignore/Kohana":                                                          confGitignoreKohana,
+	"conf/gitignore/LabVIEW":                                                         confGitignoreLabview,
+	"conf/gitignore/Laravel":                                                         confGitignoreLaravel,
+	"conf/gitignore/Lazarus":                                                         confGitignoreLazarus,
+	"conf/gitignore/Leiningen":                                                       confGitignoreLeiningen,
+	"conf/gitignore/LemonStand":                                                      confGitignoreLemonstand,
+	"conf/gitignore/LibreOffice":                                                     confGitignoreLibreoffice,
+	"conf/gitignore/Lilypond":                                                        confGitignoreLilypond,
+	"conf/gitignore/Linux":                                                           confGitignoreLinux,
+	"conf/gitignore/Lithium":                                                         confGitignoreLithium,
+	"conf/gitignore/Lua":                                                             confGitignoreLua,
+	"conf/gitignore/LyX":                                                             confGitignoreLyx,
+	"conf/gitignore/Magento":                                                         confGitignoreMagento,
+	"conf/gitignore/Matlab":                                                          confGitignoreMatlab,
+	"conf/gitignore/Maven":                                                           confGitignoreMaven,
+	"conf/gitignore/Mercurial":                                                       confGitignoreMercurial,
+	"conf/gitignore/Mercury":                                                         confGitignoreMercury,
+	"conf/gitignore/MetaProgrammingSystem":                                           confGitignoreMetaprogrammingsystem,
+	"conf/gitignore/MicrosoftOffice":                                                 confGitignoreMicrosoftoffice,
+	"conf/gitignore/ModelSim":                                                        confGitignoreModelsim,
+	"conf/gitignore/Momentics":                                                       confGitignoreMomentics,
+	"conf/gitignore/MonoDevelop":                                                     confGitignoreMonodevelop,
+	"conf/gitignore/Nanoc":                                                           confGitignoreNanoc,
+	"conf/gitignore/NetBeans":                                                        confGitignoreNetbeans,
+	"conf/gitignore/Nim":                                                             confGitignoreNim,
+	"conf/gitignore/Ninja":                                                           confGitignoreNinja,
+	"conf/gitignore/Node":                                                            confGitignoreNode,
+	"conf/gitignore/NotepadPP":                                                       confGitignoreNotepadpp,
+	"conf/gitignore/OCaml":                                                           confGitignoreOcaml,
+	"conf/gitignore/OSX":                                                             confGitignoreOsx,
+	"conf/gitignore/Objective-C":                                                     confGitignoreObjectiveC,
+	"conf/gitignore/Opa":                                                             confGitignoreOpa,
+	"conf/gitignore/OpenCart":                                                        confGitignoreOpencart,
+	"conf/gitignore/OracleForms":                                                     confGitignoreOracleforms,
+	"conf/gitignore/Packer":                                                          confGitignorePacker,
+	"conf/gitignore/Perl":                                                            confGitignorePerl,
+	"conf/gitignore/Phalcon":                                                         confGitignorePhalcon,
+	"conf/gitignore/PlayFramework":                                                   confGitignorePlayframework,
+	"conf/gitignore/Plone":                                                           confGitignorePlone,
+	"conf/gitignore/Prestashop":                                                      confGitignorePrestashop,
+	"conf/gitignore/Processing":                                                      confGitignoreProcessing,
+	"conf/gitignore/Python":                                                          confGitignorePython,
+	"conf/gitignore/Qooxdoo":                                                         confGitignoreQooxdoo,
+	"conf/gitignore/Qt":                                                              confGitignoreQt,
+	"conf/gitignore/R":                                                               confGitignoreR,
+	"conf/gitignore/ROS":                                                             confGitignoreRos,
+	"conf/gitignore/Rails":                                                           confGitignoreRails,
+	"conf/gitignore/Redcar":                                                          confGitignoreRedcar,
+	"conf/gitignore/Redis":                                                           confGitignoreRedis,
+	"conf/gitignore/RhodesRhomobile":                                                 confGitignoreRhodesrhomobile,
+	"conf/gitignore/Ruby":                                                            confGitignoreRuby,
+	"conf/gitignore/Rust":                                                            confGitignoreRust,
+	"conf/gitignore/SBT":                                                             confGitignoreSbt,
+	"conf/gitignore/SCons":                                                           confGitignoreScons,
+	"conf/gitignore/SVN":                                                             confGitignoreSvn,
+	"conf/gitignore/Sass":                                                            confGitignoreSass,
+	"conf/gitignore/Scala":                                                           confGitignoreScala,
+	"conf/gitignore/Scrivener":                                                       confGitignoreScrivener,
+	"conf/gitignore/Sdcc":                                                            confGitignoreSdcc,
+	"conf/gitignore/SeamGen":                                                         confGitignoreSeamgen,
+	"conf/gitignore/SketchUp":                                                        confGitignoreSketchup,
+	"conf/gitignore/SlickEdit":                                                       confGitignoreSlickedit,
+	"conf/gitignore/Stella":                                                          confGitignoreStella,
+	"conf/gitignore/SublimeText":                                                     confGitignoreSublimetext,
+	"conf/gitignore/SugarCRM":                                                        confGitignoreSugarcrm,
+	"conf/gitignore/Swift":                                                           confGitignoreSwift,
+	"conf/gitignore/Symfony":                                                         confGitignoreSymfony,
+	"conf/gitignore/SymphonyCMS":                                                     confGitignoreSymphonycms,
+	"conf/gitignore/SynopsysVCS":                                                     confGitignoreSynopsysvcs,
+	"conf/gitignore/Tags":                                                            confGitignoreTags,
+	"conf/gitignore/TeX":                                                             confGitignoreTex,
+	"conf/gitignore/TextMate":                                                        confGitignoreTextmate,
+	"conf/gitignore/Textpattern":                                                     confGitignoreTextpattern,
+	"conf/gitignore/TortoiseGit":                                                     confGitignoreTortoisegit,
+	"conf/gitignore/TurboGears2":                                                     confGitignoreTurbogears2,
+	"conf/gitignore/Typo3":                                                           confGitignoreTypo3,
+	"conf/gitignore/Umbraco":                                                         confGitignoreUmbraco,
+	"conf/gitignore/Unity":                                                           confGitignoreUnity,
+	"conf/gitignore/VVVV":                                                            confGitignoreVvvv,
+	"conf/gitignore/Vagrant":                                                         confGitignoreVagrant,
+	"conf/gitignore/Vim":                                                             confGitignoreVim,
+	"conf/gitignore/VirtualEnv":                                                      confGitignoreVirtualenv,
+	"conf/gitignore/VisualStudio":                                                    confGitignoreVisualstudio,
+	"conf/gitignore/VisualStudioCode":                                                confGitignoreVisualstudiocode,
+	"conf/gitignore/Waf":                                                             confGitignoreWaf,
+	"conf/gitignore/WebMethods":                                                      confGitignoreWebmethods,
+	"conf/gitignore/Windows":                                                         confGitignoreWindows,
+	"conf/gitignore/WordPress":                                                       confGitignoreWordpress,
+	"conf/gitignore/Xcode":                                                           confGitignoreXcode,
+	"conf/gitignore/XilinxISE":                                                       confGitignoreXilinxise,
+	"conf/gitignore/Xojo":                                                            confGitignoreXojo,
+	"conf/gitignore/Yeoman":                                                          confGitignoreYeoman,
+	"conf/gitignore/Yii":                                                             confGitignoreYii,
+	"conf/gitignore/ZendFramework":                                                   confGitignoreZendframework,
+	"conf/gitignore/Zephir":                                                          confGitignoreZephir,
+	"conf/label/Default":                                                             confLabelDefault,
+	"conf/license/Abstyles License":                                                  confLicenseAbstylesLicense,
+	"conf/license/Academic Free License v1.1":                                        confLicenseAcademicFreeLicenseV11,
+	"conf/license/Academic Free License v1.2":                                        confLicenseAcademicFreeLicenseV12,
+	"conf/license/Academic Free License v2.0":                                        confLicenseAcademicFreeLicenseV20,
+	"conf/license/Academic Free License v2.1":                                        confLicenseAcademicFreeLicenseV21,
+	"conf/license/Academic Free License v3.0":                                        confLicenseAcademicFreeLicenseV30,
+	"conf/license/Affero General Public License v1.0":                                confLicenseAfferoGeneralPublicLicenseV10,
+	"conf/license/Apache License 1.0":                                                confLicenseApacheLicense10,
+	"conf/license/Apache License 1.1":                                                confLicenseApacheLicense11,
+	"conf/license/Apache License 2.0":                                                confLicenseApacheLicense20,
+	"conf/license/Artistic License 1.0":                                              confLicenseArtisticLicense10,
+	"conf/license/Artistic License 2.0":                                              confLicenseArtisticLicense20,
+	"conf/license/BSD 2-clause License":                                              confLicenseBsd2ClauseLicense,
+	"conf/license/BSD 3-clause License":                                              confLicenseBsd3ClauseLicense,
+	"conf/license/BSD 4-clause License":                                              confLicenseBsd4ClauseLicense,
+	"conf/license/Creative Commons Attribution-ShareAlike 4.0 International License": confLicenseCreativeCommonsAttributionSharealike40InternationalLicense,
+	"conf/license/Creative Commons CC0 1.0 Universal":                                confLicenseCreativeCommonsCc010Universal,
+	"conf/license/Eclipse Public License 1.0":                                        confLicenseEclipsePublicLicense10,
+	"conf/license/Educational Community License v1.0":                                confLicenseEducationalCommunityLicenseV10,
+	"conf/license/Educational Community License v2.0":                                confLicenseEducationalCommunityLicenseV20,
+	"conf/license/GNU Affero General Public License v3.0":                            confLicenseGnuAfferoGeneralPublicLicenseV30,
+	"conf/license/GNU Free Documentation License v1.1":                               confLicenseGnuFreeDocumentationLicenseV11,
+	"conf/license/GNU Free Documentation License v1.2":                               confLicenseGnuFreeDocumentationLicenseV12,
+	"conf/license/GNU Free Documentation License v1.3":                               confLicenseGnuFreeDocumentationLicenseV13,
+	"conf/license/GNU General Public License v1.0":                                   confLicenseGnuGeneralPublicLicenseV10,
+	"conf/license/GNU General Public License v2.0":                                   confLicenseGnuGeneralPublicLicenseV20,
+	"conf/license/GNU General Public License v3.0":                                   confLicenseGnuGeneralPublicLicenseV30,
+	"conf/license/GNU Lesser General Public License v2.1":                            confLicenseGnuLesserGeneralPublicLicenseV21,
+	"conf/license/GNU Lesser General Public License v3.0":                            confLicenseGnuLesserGeneralPublicLicenseV30,
+	"conf/license/GNU Library General Public License v2.0":                           confLicenseGnuLibraryGeneralPublicLicenseV20,
+	"conf/license/ISC license":                                                       confLicenseIscLicense,
+	"conf/license/MIT License":                                                       confLicenseMitLicense,
+	"conf/license/Mozilla Public License 1.0":                                        confLicenseMozillaPublicLicense10,
+	"conf/license/Mozilla Public License 1.1":                                        confLicenseMozillaPublicLicense11,
+	"conf/license/Mozilla Public License 2.0":                                        confLicenseMozillaPublicLicense20,
+	"conf/locale/locale_bg-BG.ini":                                                   confLocaleLocalebgBgIni,
+	"conf/locale/locale_cs-CZ.ini":                                                   confLocaleLocalecsCzIni,
+	"conf/locale/locale_de-DE.ini":                                                   confLocaleLocaledeDeIni,
+	"conf/locale/locale_en-US.ini":                                                   confLocaleLocaleenUsIni,
+	"conf/locale/locale_es-ES.ini":                                                   confLocaleLocaleesEsIni,
+	"conf/locale/locale_fi-FI.ini":                                                   confLocaleLocalefiFiIni,
+	"conf/locale/locale_fr-FR.ini":                                                   confLocaleLocalefrFrIni,
+	"conf/locale/locale_it-IT.ini":                                                   confLocaleLocaleitItIni,
+	"conf/locale/locale_ja-JP.ini":                                                   confLocaleLocalejaJpIni,
+	"conf/locale/locale_lv-LV.ini":                                                   confLocaleLocalelvLvIni,
+	"conf/locale/locale_nl-NL.ini":                                                   confLocaleLocalenlNlIni,
+	"conf/locale/locale_pl-PL.ini":                                                   confLocaleLocaleplPlIni,
+	"conf/locale/locale_pt-BR.ini":                                                   confLocaleLocaleptBrIni,
+	"conf/locale/locale_ru-RU.ini":                                                   confLocaleLocaleruRuIni,
+	"conf/locale/locale_sr-SP.ini":                                                   confLocaleLocalesrSpIni,
+	"conf/locale/locale_sv-SE.ini":                                                   confLocaleLocalesvSeIni,
+	"conf/locale/locale_tr-TR.ini":                                                   confLocaleLocaletrTrIni,
+	"conf/locale/locale_zh-CN.ini":                                                   confLocaleLocalezhCnIni,
+	"conf/locale/locale_zh-HK.ini":                                                   confLocaleLocalezhHkIni,
+	"conf/locale/locale_zh-TW.ini":                                                   confLocaleLocalezhTwIni,
+	"conf/readme/Default":                                                            confReadmeDefault,
 }
 
 // AssetDir returns the file names below a certain
@@ -5219,40 +5241,41 @@ var _bintree = &bintree{nil, map[string]*bintree{
 			"Default": &bintree{confLabelDefault, map[string]*bintree{}},
 		}},
 		"license": &bintree{nil, map[string]*bintree{
-			"Abstyles License":                        &bintree{confLicenseAbstylesLicense, map[string]*bintree{}},
-			"Academic Free License v1.1":              &bintree{confLicenseAcademicFreeLicenseV11, map[string]*bintree{}},
-			"Academic Free License v1.2":              &bintree{confLicenseAcademicFreeLicenseV12, map[string]*bintree{}},
-			"Academic Free License v2.0":              &bintree{confLicenseAcademicFreeLicenseV20, map[string]*bintree{}},
-			"Academic Free License v2.1":              &bintree{confLicenseAcademicFreeLicenseV21, map[string]*bintree{}},
-			"Academic Free License v3.0":              &bintree{confLicenseAcademicFreeLicenseV30, map[string]*bintree{}},
-			"Affero General Public License v1.0":      &bintree{confLicenseAfferoGeneralPublicLicenseV10, map[string]*bintree{}},
-			"Apache License 1.0":                      &bintree{confLicenseApacheLicense10, map[string]*bintree{}},
-			"Apache License 1.1":                      &bintree{confLicenseApacheLicense11, map[string]*bintree{}},
-			"Apache License 2.0":                      &bintree{confLicenseApacheLicense20, map[string]*bintree{}},
-			"Artistic License 1.0":                    &bintree{confLicenseArtisticLicense10, map[string]*bintree{}},
-			"Artistic License 2.0":                    &bintree{confLicenseArtisticLicense20, map[string]*bintree{}},
-			"BSD 2-clause License":                    &bintree{confLicenseBsd2ClauseLicense, map[string]*bintree{}},
-			"BSD 3-clause License":                    &bintree{confLicenseBsd3ClauseLicense, map[string]*bintree{}},
-			"BSD 4-clause License":                    &bintree{confLicenseBsd4ClauseLicense, map[string]*bintree{}},
-			"Creative Commons CC0 1.0 Universal":      &bintree{confLicenseCreativeCommonsCc010Universal, map[string]*bintree{}},
-			"Eclipse Public License 1.0":              &bintree{confLicenseEclipsePublicLicense10, map[string]*bintree{}},
-			"Educational Community License v1.0":      &bintree{confLicenseEducationalCommunityLicenseV10, map[string]*bintree{}},
-			"Educational Community License v2.0":      &bintree{confLicenseEducationalCommunityLicenseV20, map[string]*bintree{}},
-			"GNU Affero General Public License v3.0":  &bintree{confLicenseGnuAfferoGeneralPublicLicenseV30, map[string]*bintree{}},
-			"GNU Free Documentation License v1.1":     &bintree{confLicenseGnuFreeDocumentationLicenseV11, map[string]*bintree{}},
-			"GNU Free Documentation License v1.2":     &bintree{confLicenseGnuFreeDocumentationLicenseV12, map[string]*bintree{}},
-			"GNU Free Documentation License v1.3":     &bintree{confLicenseGnuFreeDocumentationLicenseV13, map[string]*bintree{}},
-			"GNU General Public License v1.0":         &bintree{confLicenseGnuGeneralPublicLicenseV10, map[string]*bintree{}},
-			"GNU General Public License v2.0":         &bintree{confLicenseGnuGeneralPublicLicenseV20, map[string]*bintree{}},
-			"GNU General Public License v3.0":         &bintree{confLicenseGnuGeneralPublicLicenseV30, map[string]*bintree{}},
-			"GNU Lesser General Public License v2.1":  &bintree{confLicenseGnuLesserGeneralPublicLicenseV21, map[string]*bintree{}},
-			"GNU Lesser General Public License v3.0":  &bintree{confLicenseGnuLesserGeneralPublicLicenseV30, map[string]*bintree{}},
-			"GNU Library General Public License v2.0": &bintree{confLicenseGnuLibraryGeneralPublicLicenseV20, map[string]*bintree{}},
-			"ISC license":                             &bintree{confLicenseIscLicense, map[string]*bintree{}},
-			"MIT License":                             &bintree{confLicenseMitLicense, map[string]*bintree{}},
-			"Mozilla Public License 1.0":              &bintree{confLicenseMozillaPublicLicense10, map[string]*bintree{}},
-			"Mozilla Public License 1.1":              &bintree{confLicenseMozillaPublicLicense11, map[string]*bintree{}},
-			"Mozilla Public License 2.0":              &bintree{confLicenseMozillaPublicLicense20, map[string]*bintree{}},
+			"Abstyles License":                                                  &bintree{confLicenseAbstylesLicense, map[string]*bintree{}},
+			"Academic Free License v1.1":                                        &bintree{confLicenseAcademicFreeLicenseV11, map[string]*bintree{}},
+			"Academic Free License v1.2":                                        &bintree{confLicenseAcademicFreeLicenseV12, map[string]*bintree{}},
+			"Academic Free License v2.0":                                        &bintree{confLicenseAcademicFreeLicenseV20, map[string]*bintree{}},
+			"Academic Free License v2.1":                                        &bintree{confLicenseAcademicFreeLicenseV21, map[string]*bintree{}},
+			"Academic Free License v3.0":                                        &bintree{confLicenseAcademicFreeLicenseV30, map[string]*bintree{}},
+			"Affero General Public License v1.0":                                &bintree{confLicenseAfferoGeneralPublicLicenseV10, map[string]*bintree{}},
+			"Apache License 1.0":                                                &bintree{confLicenseApacheLicense10, map[string]*bintree{}},
+			"Apache License 1.1":                                                &bintree{confLicenseApacheLicense11, map[string]*bintree{}},
+			"Apache License 2.0":                                                &bintree{confLicenseApacheLicense20, map[string]*bintree{}},
+			"Artistic License 1.0":                                              &bintree{confLicenseArtisticLicense10, map[string]*bintree{}},
+			"Artistic License 2.0":                                              &bintree{confLicenseArtisticLicense20, map[string]*bintree{}},
+			"BSD 2-clause License":                                              &bintree{confLicenseBsd2ClauseLicense, map[string]*bintree{}},
+			"BSD 3-clause License":                                              &bintree{confLicenseBsd3ClauseLicense, map[string]*bintree{}},
+			"BSD 4-clause License":                                              &bintree{confLicenseBsd4ClauseLicense, map[string]*bintree{}},
+			"Creative Commons Attribution-ShareAlike 4.0 International License": &bintree{confLicenseCreativeCommonsAttributionSharealike40InternationalLicense, map[string]*bintree{}},
+			"Creative Commons CC0 1.0 Universal":                                &bintree{confLicenseCreativeCommonsCc010Universal, map[string]*bintree{}},
+			"Eclipse Public License 1.0":                                        &bintree{confLicenseEclipsePublicLicense10, map[string]*bintree{}},
+			"Educational Community License v1.0":                                &bintree{confLicenseEducationalCommunityLicenseV10, map[string]*bintree{}},
+			"Educational Community License v2.0":                                &bintree{confLicenseEducationalCommunityLicenseV20, map[string]*bintree{}},
+			"GNU Affero General Public License v3.0":                            &bintree{confLicenseGnuAfferoGeneralPublicLicenseV30, map[string]*bintree{}},
+			"GNU Free Documentation License v1.1":                               &bintree{confLicenseGnuFreeDocumentationLicenseV11, map[string]*bintree{}},
+			"GNU Free Documentation License v1.2":                               &bintree{confLicenseGnuFreeDocumentationLicenseV12, map[string]*bintree{}},
+			"GNU Free Documentation License v1.3":                               &bintree{confLicenseGnuFreeDocumentationLicenseV13, map[string]*bintree{}},
+			"GNU General Public License v1.0":                                   &bintree{confLicenseGnuGeneralPublicLicenseV10, map[string]*bintree{}},
+			"GNU General Public License v2.0":                                   &bintree{confLicenseGnuGeneralPublicLicenseV20, map[string]*bintree{}},
+			"GNU General Public License v3.0":                                   &bintree{confLicenseGnuGeneralPublicLicenseV30, map[string]*bintree{}},
+			"GNU Lesser General Public License v2.1":                            &bintree{confLicenseGnuLesserGeneralPublicLicenseV21, map[string]*bintree{}},
+			"GNU Lesser General Public License v3.0":                            &bintree{confLicenseGnuLesserGeneralPublicLicenseV30, map[string]*bintree{}},
+			"GNU Library General Public License v2.0":                           &bintree{confLicenseGnuLibraryGeneralPublicLicenseV20, map[string]*bintree{}},
+			"ISC license":                                                       &bintree{confLicenseIscLicense, map[string]*bintree{}},
+			"MIT License":                                                       &bintree{confLicenseMitLicense, map[string]*bintree{}},
+			"Mozilla Public License 1.0":                                        &bintree{confLicenseMozillaPublicLicense10, map[string]*bintree{}},
+			"Mozilla Public License 1.1":                                        &bintree{confLicenseMozillaPublicLicense11, map[string]*bintree{}},
+			"Mozilla Public License 2.0":                                        &bintree{confLicenseMozillaPublicLicense20, map[string]*bintree{}},
 		}},
 		"locale": &bintree{nil, map[string]*bintree{
 			"locale_bg-BG.ini": &bintree{confLocaleLocalebgBgIni, map[string]*bintree{}},
