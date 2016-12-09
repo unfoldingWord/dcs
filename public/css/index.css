@@ -2960,23 +2960,3 @@ table[data-table-type="yaml-metadata"] {
 .repository .header-wrapper .ui.tabular .fa {
   margin-right: 5px;
 }
-
-.togetherjs-button-container {
-  width: 100%;
-  text-align: right;
-}
-
-.togetherjs-button img {
-    width: 135px;
-    height: 34px;
-}
-
-.CodeMirror, .CodeMirror-scroll {
-    min-height: 200px;
-}
-
-.CodeMirror {
-    height: 400px;
-    resize: vertical;
-    overflow: vertical;
-}
