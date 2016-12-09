@@ -29,7 +29,7 @@ func Hashtags(ctx *context.Context) {
 	ctx.Data["reponame"] = ctx.Repo.Repository.Name
 	ctx.Data["RepoLink"] = ctx.Repo.Repository.Link()
 	ctx.Data["Title"] = ctx.Tr("repo.hashtag.all_hashtags", ctx.Repo.Repository.Owner.Name + "/" + repo_prefix)
-	results, err := models.GetHashtagSummary(repo_prefix)
+	results, err := models.GetHashtagSummary(repo_prefix, ctx.Repo.Repository.Owner.ID)
 
 	if err != nil {
 		log.Error(4, "Hashtags: %v", err)
