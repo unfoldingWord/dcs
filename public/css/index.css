@@ -2961,12 +2961,12 @@ table[data-table-type="yaml-metadata"] {
   margin-right: 5px;
 }
 
-a.togetherjs-button {
+.togetherjs-button-container {
   width: 100%;
   text-align: right;
 }
 
-a.togetherjs-button img {
+.togetherjs-button img {
     width: 135px;
     height: 34px;
 }
