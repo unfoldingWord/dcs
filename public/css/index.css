@@ -2503,6 +2503,9 @@ footer .ui.language .menu {
   tab-size: 16 !important;
   -moz-tab-size: 16 !important;
 }
+.repository .header-wrapper .ui.tabular .fa {
+  margin-right: 5px;
+}
 .CodeMirror {
   font: 14px Consolas, "Liberation Mono", Menlo, Courier, monospace;
 }
@@ -2512,6 +2515,48 @@ footer .ui.language .menu {
 }
 .CodeMirror .cm-comment {
   background: inherit !important;
+}
+markdown-body table {
+  display: block;
+  width: 100%;
+  overflow: auto;
+  word-break: keep-all;
+}
+.markdown-body > *:first-child {
+  margin-top: 0 !important;
+}
+table[data-table-type="yaml-metadata"] {
+  font-size: 12px;
+  line-height: 1;
+}
+.markdown-body table tr {
+  background-color: #fff;
+  border-top: 1px solid #ccc;
+}
+.markdown-body table th,
+.markdown-body table td {
+  padding: 6px 13px;
+  border: 1px solid #ddd;
+}
+.markdown-body table th {
+  font-weight: bold;
+}
+.togetherjs-button-container {
+  width: 100%;
+  text-align: right;
+}
+.togetherjs-button img {
+  width: 135px;
+  height: 34px;
+}
+.CodeMirror,
+.CodeMirror-scroll {
+  min-height: 200px;
+}
+.CodeMirror {
+  height: 400px;
+  resize: vertical;
+  overflow: vertical;
 }
 .organization {
   padding-top: 15px;
@@ -2931,32 +2976,4 @@ footer .ui.language .menu {
 }
 .ui.user.list .item .description a:hover {
   text-decoration: underline;
-}
-.markdown-body table {
-  display: block;
-  width: 100%;
-  overflow: auto;
-  word-break: keep-all;
-}
-.markdown-body>*:first-child {
-  margin-top: 0 !important;
-}
-table[data-table-type="yaml-metadata"] {
-  font-size: 12px;
-  line-height: 1;
-}
-.markdown-body table tr {
-  background-color: #fff;
-  border-top: 1px solid #ccc;
-}
-.markdown-body table th, .markdown-body table td {
-  padding: 6px 13px;
-  border: 1px solid #ddd;
-}
-.markdown-body table th {
-  font-weight: bold;
-}
-
-.repository .header-wrapper .ui.tabular .fa {
-  margin-right: 5px;
 }

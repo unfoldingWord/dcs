@@ -33,6 +33,9 @@
 					<a class="item" data-tab="preview" data-url="{{AppSubUrl}}/api/v1/markdown" data-context="{{.RepoLink}}/src/{{.BranchName}}" data-preview-file-modes="{{.PreviewableFileModes}}"><i class="octicon octicon-eye"></i> {{.i18n.Tr "repo.release.preview"}}</a>
 					<a class="item" data-tab="diff" data-url="{{.RepoLink}}/_preview/{{.BranchName}}/{{.TreePath}}" data-context="{{.BranchLink}}"><i class="octicon octicon-diff"></i> {{.i18n.Tr "repo.editor.preview_changes"}}</a>
 					{{end}}
+					<div class="togetherjs-button-container"><a href="#" class="togetherjs-button pull-right" onclick="TogetherJS(this); return false;">
+						<img src="https://togetherjs.com/images/start-togetherjs-gray.png"></a>
+					</div>
 				</div>
 				<div class="ui bottom attached active tab segment" data-tab="write">
 					<textarea id="edit_area" name="content" data-id="repo-{{.Repository.Name}}-{{.TreePath}}"
@@ -53,4 +56,13 @@
 		</form>
 	</div>
 </div>
+
+<script>
+  TogetherJSConfig_findRoom = "door43";
+  //TogetherJSConfig_inviteFromRoom = true;
+  //TogetherJSConfig_autoStart = false;
+  //TogetherJSConfig_suppressJoinConfirmation = true;
+  TogetherJSConfig_storagePrefix = "door43";
+</script>
+<script src="https://togetherjs.com/togetherjs-min.js"></script>
 {{template "base/footer" .}}
