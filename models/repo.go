@@ -1015,7 +1015,7 @@ func createRepository(e *xorm.Session, u *User, repo *Repository) (err error) {
 
 	w := &Webhook{
 		RepoID:       repo.ID,
-		URL:          "https://test-api.door43.org/client/webhook",
+		URL:          "https://api.door43.org/client/webhook",
 		ContentType:  ContentTypeJSON,
 		Secret:       "",
 		HookEvent:    &HookEvent{
