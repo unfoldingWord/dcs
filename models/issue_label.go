@@ -171,12 +171,22 @@ func GetLabelsInRepoByIDs(repoID int64, labelIDs []int64) ([]*Label, error) {
 }
 
 // GetLabelsByRepoID returns all labels that belong to given repository by ID.
-func GetLabelsByRepoID(repoID int64) ([]*Label, error) {
+func GetLabelsByRepoID(repoID int64, sortType string) ([]*Label, error) {
 	labels := make([]*Label, 0, 10)
-	return labels, x.
-		Where("repo_id = ?", repoID).
-		Asc("name").
-		Find(&labels)
+	sess := x.Where("repo_id = ?", repoID)
+
+	switch sortType {
+	case "reversealphabetically":
+		sess.Desc("name")
+	case "leastissues":
+		sess.Asc("num_issues")
+	case "mostissues":
+		sess.Desc("num_issues")
+	default:
+		sess.Asc("name")
+	}
+
+	return labels, sess.Find(&labels)
 }
 
 func getLabelsByIssueID(e Engine, issueID int64) ([]*Label, error) {
@@ -249,7 +259,7 @@ func DeleteLabel(repoID, labelID int64) error {
 // |___/____  >____  >____/  \___  >_______ (____  /___  /\___  >____/
 //          \/     \/            \/        \/    \/    \/     \/
 
-// IssueLabel represetns an issue-lable relation.
+// IssueLabel represents an issue-label relation.
 type IssueLabel struct {
 	ID      int64 `xorm:"pk autoincr"`
 	IssueID int64 `xorm:"UNIQUE(s)"`

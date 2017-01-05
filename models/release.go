@@ -15,12 +15,16 @@ import (
 	"code.gitea.io/git"
 
 	"code.gitea.io/gitea/modules/process"
+	"code.gitea.io/gitea/modules/setting"
+
+	api "code.gitea.io/sdk/gitea"
 )
 
 // Release represents a release of repository.
 type Release struct {
 	ID               int64 `xorm:"pk autoincr"`
 	RepoID           int64
+	Repo             *Repository `xorm:"-"`
 	PublisherID      int64
 	Publisher        *User `xorm:"-"`
 	TagName          string
@@ -50,6 +54,62 @@ func (r *Release) AfterSet(colName string, _ xorm.Cell) {
 	switch colName {
 	case "created_unix":
 		r.Created = time.Unix(r.CreatedUnix, 0).Local()
+	}
+}
+
+func (r *Release) loadAttributes(e Engine) error {
+	var err error
+	if r.Repo == nil {
+		r.Repo, err = GetRepositoryByID(r.RepoID)
+		if err != nil {
+			return err
+		}
+	}
+	if r.Publisher == nil {
+		r.Publisher, err = GetUserByID(r.PublisherID)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// LoadAttributes load repo and publisher attributes for a realease
+func (r *Release) LoadAttributes() error {
+	return r.loadAttributes(x)
+}
+
+// APIURL the api url for a release. release must have attributes loaded
+func (r *Release) APIURL() string {
+	return fmt.Sprintf("%sapi/v1/%s/releases/%d",
+		setting.AppURL, r.Repo.FullName(), r.ID)
+}
+
+// ZipURL the zip url for a release. release must have attributes loaded
+func (r *Release) ZipURL() string {
+	return fmt.Sprintf("%s/archive/%s.zip", r.Repo.HTMLURL(), r.TagName)
+}
+
+// TarURL the tar.gz url for a release. release must have attributes loaded
+func (r *Release) TarURL() string {
+	return fmt.Sprintf("%s/archive/%s.tar.gz", r.Repo.HTMLURL(), r.TagName)
+}
+
+// APIFormat convert a Release to api.Release
+func (r *Release) APIFormat() *api.Release {
+	return &api.Release{
+		ID:           r.ID,
+		TagName:      r.TagName,
+		Target:       r.Target,
+		Note:         r.Note,
+		URL:          r.APIURL(),
+		TarURL:       r.TarURL(),
+		ZipURL:       r.ZipURL(),
+		IsDraft:      r.IsDraft,
+		IsPrerelease: r.IsPrerelease,
+		CreatedAt:    r.Created,
+		PublishedAt:  r.Created,
+		Publisher:    r.Publisher.APIFormat(),
 	}
 }
 
@@ -189,7 +249,7 @@ func UpdateRelease(gitRepo *git.Repository, rel *Release) (err error) {
 }
 
 // DeleteReleaseByID deletes a release and corresponding Git tag by given ID.
-func DeleteReleaseByID(id int64) error {
+func DeleteReleaseByID(id int64, u *User, delTag bool) error {
 	rel, err := GetReleaseByID(id)
 	if err != nil {
 		return fmt.Errorf("GetReleaseByID: %v", err)
@@ -200,11 +260,20 @@ func DeleteReleaseByID(id int64) error {
 		return fmt.Errorf("GetRepositoryByID: %v", err)
 	}
 
-	_, stderr, err := process.ExecDir(-1, repo.RepoPath(),
-		fmt.Sprintf("DeleteReleaseByID (git tag -d): %d", rel.ID),
-		"git", "tag", "-d", rel.TagName)
-	if err != nil && !strings.Contains(stderr, "not found") {
-		return fmt.Errorf("git tag -d: %v - %s", err, stderr)
+	has, err := HasAccess(u, repo, AccessModeWrite)
+	if err != nil {
+		return fmt.Errorf("HasAccess: %v", err)
+	} else if !has {
+		return fmt.Errorf("DeleteReleaseByID: permission denied")
+	}
+
+	if delTag {
+		_, stderr, err := process.ExecDir(-1, repo.RepoPath(),
+			fmt.Sprintf("DeleteReleaseByID (git tag -d): %d", rel.ID),
+			"git", "tag", "-d", rel.TagName)
+		if err != nil && !strings.Contains(stderr, "not found") {
+			return fmt.Errorf("git tag -d: %v - %s", err, stderr)
+		}
 	}
 
 	if _, err = x.Id(rel.ID).Delete(new(Release)); err != nil {
