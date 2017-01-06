@@ -21,6 +21,9 @@ import (
 	// Needed for the Postgresql driver
 	_ "github.com/lib/pq"
 
+	// Needed for the MSSSQL driver
+	_ "github.com/denisenkom/go-mssqldb"
+
 	"code.gitea.io/gitea/models/migrations"
 	"code.gitea.io/gitea/modules/setting"
 )
@@ -68,16 +71,42 @@ var (
 
 func init() {
 	tables = append(tables,
-		new(User), new(PublicKey), new(AccessToken),
-		new(Repository), new(DeployKey), new(Collaboration), new(Access), new(Upload),
-		new(Watch), new(Star), new(Follow), new(Action),
-		new(Issue), new(PullRequest), new(Comment), new(Attachment), new(IssueUser),
-		new(Label), new(IssueLabel), new(Milestone),
-		new(Mirror), new(Release), new(LoginSource), new(Webhook),
-		new(UpdateTask), new(HookTask),
-		new(Team), new(OrgUser), new(TeamUser), new(TeamRepo),
-		new(Notice), new(EmailAddress),
-		new(Hashtag))
+		new(User),
+		new(PublicKey),
+		new(AccessToken),
+		new(Repository),
+		new(DeployKey),
+		new(Collaboration),
+		new(Access),
+		new(Upload),
+		new(Watch),
+		new(Star),
+		new(Follow),
+		new(Action),
+		new(Issue),
+		new(PullRequest),
+		new(Comment),
+		new(Attachment),
+		new(Label),
+		new(IssueLabel),
+		new(Milestone),
+		new(Mirror),
+		new(Release),
+		new(LoginSource),
+		new(Webhook),
+		new(UpdateTask),
+		new(HookTask),
+		new(Team),
+		new(OrgUser),
+		new(TeamUser),
+		new(TeamRepo),
+		new(Notice),
+		new(EmailAddress),
+		new(Notification),
+		new(IssueUser),
+		new(LFSMetaObject),
+		new(Hashtag),
+	)
 
 	gonicNames := []string{"SSL", "UID"}
 	for _, name := range gonicNames {
@@ -98,6 +127,8 @@ func LoadConfigs() {
 		setting.UsePostgreSQL = true
 	case "tidb":
 		setting.UseTiDB = true
+	case "mssql":
+		setting.UseMSSQL = true
 	}
 	DbCfg.Host = sec.Key("HOST").String()
 	DbCfg.Name = sec.Key("NAME").String()
@@ -118,6 +149,20 @@ func parsePostgreSQLHostPort(info string) (string, string) {
 		idx := strings.LastIndex(info, ":")
 		host = info[:idx]
 		port = info[idx+1:]
+	} else if len(info) > 0 {
+		host = info
+	}
+	return host, port
+}
+
+func parseMSSQLHostPort(info string) (string, string) {
+	host, port := "127.0.0.1", "1433"
+	if strings.Contains(info, ":") {
+		host = strings.Split(info, ":")[0]
+		port = strings.Split(info, ":")[1]
+	} else if strings.Contains(info, ",") {
+		host = strings.Split(info, ",")[0]
+		port = strings.TrimSpace(strings.Split(info, ",")[1])
 	} else if len(info) > 0 {
 		host = info
 	}
@@ -148,6 +193,9 @@ func getEngine() (*xorm.Engine, error) {
 			connStr = fmt.Sprintf("postgres://%s:%s@%s:%s/%s%ssslmode=%s",
 				url.QueryEscape(DbCfg.User), url.QueryEscape(DbCfg.Passwd), host, port, DbCfg.Name, Param, DbCfg.SSLMode)
 		}
+	case "mssql":
+		host, port := parseMSSQLHostPort(DbCfg.Host)
+		connStr = fmt.Sprintf("server=%s; port=%s; database=%s; user id=%s; password=%s;", host, port, DbCfg.Name, DbCfg.User, DbCfg.Passwd)
 	case "sqlite3":
 		if !EnableSQLite3 {
 			return nil, errors.New("this binary version does not build support for SQLite3")
@@ -272,7 +320,14 @@ func Ping() error {
 	return x.Ping()
 }
 
-// DumpDatabase dumps all data from database to file system.
-func DumpDatabase(filePath string) error {
-	return x.DumpAllToFile(filePath)
+// DumpDatabase dumps all data from database according the special database SQL syntax to file system.
+func DumpDatabase(filePath string, dbType string) error {
+	var tbs []*core.Table
+	for _, t := range tables {
+		tbs = append(tbs, x.TableInfo(t).Table)
+	}
+	if len(dbType) > 0 {
+		return x.DumpTablesToFile(tbs, filePath, core.DbType(dbType))
+	}
+	return x.DumpTablesToFile(tbs, filePath)
 }
