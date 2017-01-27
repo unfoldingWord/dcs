@@ -5,11 +5,11 @@
 package repo
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
-	"net/http"
 	"net/url"
 	"strings"
 	"time"
@@ -17,13 +17,16 @@ import (
 	"github.com/Unknwon/com"
 	"github.com/Unknwon/paginater"
 
+	"code.gitea.io/git"
 	"code.gitea.io/gitea/models"
 	"code.gitea.io/gitea/modules/auth"
 	"code.gitea.io/gitea/modules/base"
 	"code.gitea.io/gitea/modules/context"
 	"code.gitea.io/gitea/modules/log"
 	"code.gitea.io/gitea/modules/markdown"
+	"code.gitea.io/gitea/modules/notification"
 	"code.gitea.io/gitea/modules/setting"
+	"code.gitea.io/gitea/modules/util"
 )
 
 const (
@@ -48,8 +51,11 @@ var (
 	// IssueTemplateCandidates issue templates
 	IssueTemplateCandidates = []string{
 		"ISSUE_TEMPLATE.md",
-		".gogs/ISSUE_TEMPLATE.md",
+		"issue_template.md",
+		".gitea/ISSUE_TEMPLATE.md",
+		".gitea/issue_template.md",
 		".github/ISSUE_TEMPLATE.md",
+		".github/issue_template.md",
 	}
 )
 
@@ -82,7 +88,7 @@ func MustAllowPulls(ctx *context.Context) {
 
 // RetrieveLabels find all the labels of a repository
 func RetrieveLabels(ctx *context.Context) {
-	labels, err := models.GetLabelsByRepoID(ctx.Repo.Repository.ID)
+	labels, err := models.GetLabelsByRepoID(ctx.Repo.Repository.ID, ctx.Query("sort"))
 	if err != nil {
 		ctx.Handle(500, "RetrieveLabels.GetLabels", err)
 		return
@@ -92,6 +98,7 @@ func RetrieveLabels(ctx *context.Context) {
 	}
 	ctx.Data["Labels"] = labels
 	ctx.Data["NumLabels"] = len(labels)
+	ctx.Data["SortType"] = ctx.Query("sort")
 }
 
 // Issues render issues page
@@ -129,40 +136,63 @@ func Issues(ctx *context.Context) {
 	}
 
 	var (
-		assigneeID = ctx.QueryInt64("assignee")
-		posterID   int64
+		assigneeID  = ctx.QueryInt64("assignee")
+		posterID    int64
+		mentionedID int64
+		forceEmpty  bool
 	)
-	filterMode := models.FilterModeAll
 	switch viewType {
 	case "assigned":
-		filterMode = models.FilterModeAssign
-		assigneeID = ctx.User.ID
+		if assigneeID > 0 && ctx.User.ID != assigneeID {
+			// two different assignees, must be empty
+			forceEmpty = true
+		} else {
+			assigneeID = ctx.User.ID
+		}
 	case "created_by":
-		filterMode = models.FilterModeCreate
 		posterID = ctx.User.ID
 	case "mentioned":
-		filterMode = models.FilterModeMention
-	}
-
-	var uid int64 = -1
-	if ctx.IsSigned {
-		uid = ctx.User.ID
+		mentionedID = ctx.User.ID
 	}
 
 	repo := ctx.Repo.Repository
 	selectLabels := ctx.Query("labels")
 	milestoneID := ctx.QueryInt64("milestone")
 	isShowClosed := ctx.Query("state") == "closed"
-	issueStats := models.GetIssueStats(&models.IssueStatsOptions{
-		RepoID:      repo.ID,
-		UserID:      uid,
-		Labels:      selectLabels,
-		MilestoneID: milestoneID,
-		AssigneeID:  assigneeID,
-		FilterMode:  filterMode,
-		IsPull:      isPullList,
-	})
 
+	keyword := ctx.Query("q")
+	if bytes.Contains([]byte(keyword), []byte{0x00}) {
+		keyword = ""
+	}
+
+	var issueIDs []int64
+	var err error
+	if len(keyword) > 0 {
+		issueIDs, err = models.SearchIssuesByKeyword(repo.ID, keyword)
+		if len(issueIDs) == 0 {
+			forceEmpty = true
+		}
+	}
+
+	var issueStats *models.IssueStats
+	if forceEmpty {
+		issueStats = &models.IssueStats{}
+	} else {
+		var err error
+		issueStats, err = models.GetIssueStats(&models.IssueStatsOptions{
+			RepoID:      repo.ID,
+			Labels:      selectLabels,
+			MilestoneID: milestoneID,
+			AssigneeID:  assigneeID,
+			MentionedID: mentionedID,
+			IsPull:      isPullList,
+			IssueIDs:    issueIDs,
+		})
+		if err != nil {
+			ctx.Error(500, "GetSearchIssueStats")
+			return
+		}
+	}
 	page := ctx.QueryInt("page")
 	if page <= 1 {
 		page = 1
@@ -177,22 +207,27 @@ func Issues(ctx *context.Context) {
 	pager := paginater.New(total, setting.UI.IssuePagingNum, page, 5)
 	ctx.Data["Page"] = pager
 
-	issues, err := models.Issues(&models.IssuesOptions{
-		UserID:      uid,
-		AssigneeID:  assigneeID,
-		RepoID:      repo.ID,
-		PosterID:    posterID,
-		MilestoneID: milestoneID,
-		Page:        pager.Current(),
-		IsClosed:    isShowClosed,
-		IsMention:   filterMode == models.FilterModeMention,
-		IsPull:      isPullList,
-		Labels:      selectLabels,
-		SortType:    sortType,
-	})
-	if err != nil {
-		ctx.Handle(500, "Issues", err)
-		return
+	var issues []*models.Issue
+	if forceEmpty {
+		issues = []*models.Issue{}
+	} else {
+		issues, err = models.Issues(&models.IssuesOptions{
+			AssigneeID:  assigneeID,
+			RepoID:      repo.ID,
+			PosterID:    posterID,
+			MentionedID: mentionedID,
+			MilestoneID: milestoneID,
+			Page:        pager.Current(),
+			IsClosed:    util.OptionalBoolOf(isShowClosed),
+			IsPull:      util.OptionalBoolOf(isPullList),
+			Labels:      selectLabels,
+			SortType:    sortType,
+			IssueIDs:    issueIDs,
+		})
+		if err != nil {
+			ctx.Handle(500, "Issues", err)
+			return
+		}
 	}
 
 	// Get issue-user relations.
@@ -233,7 +268,7 @@ func Issues(ctx *context.Context) {
 		return
 	}
 
-	if viewType == "assigned" {
+	if ctx.QueryInt64("assignee") == 0 {
 		assigneeID = 0 // Reset ID to prevent unexpected selection of assignee.
 	}
 
@@ -244,6 +279,7 @@ func Issues(ctx *context.Context) {
 	ctx.Data["MilestoneID"] = milestoneID
 	ctx.Data["AssigneeID"] = assigneeID
 	ctx.Data["IsShowClosed"] = isShowClosed
+	ctx.Data["Keyword"] = keyword
 	if isShowClosed {
 		ctx.Data["State"] = "closed"
 	} else {
@@ -253,23 +289,15 @@ func Issues(ctx *context.Context) {
 	ctx.HTML(200, tplIssues)
 }
 
-func renderAttachmentSettings(ctx *context.Context) {
-	ctx.Data["RequireDropzone"] = true
-	ctx.Data["IsAttachmentEnabled"] = setting.AttachmentEnabled
-	ctx.Data["AttachmentAllowedTypes"] = setting.AttachmentAllowedTypes
-	ctx.Data["AttachmentMaxSize"] = setting.AttachmentMaxSize
-	ctx.Data["AttachmentMaxFiles"] = setting.AttachmentMaxFiles
-}
-
 // RetrieveRepoMilestonesAndAssignees find all the milestones and assignees of a repository
 func RetrieveRepoMilestonesAndAssignees(ctx *context.Context, repo *models.Repository) {
 	var err error
-	ctx.Data["OpenMilestones"], err = models.GetMilestones(repo.ID, -1, false)
+	ctx.Data["OpenMilestones"], err = models.GetMilestones(repo.ID, -1, false, "")
 	if err != nil {
 		ctx.Handle(500, "GetMilestones", err)
 		return
 	}
-	ctx.Data["ClosedMilestones"], err = models.GetMilestones(repo.ID, -1, true)
+	ctx.Data["ClosedMilestones"], err = models.GetMilestones(repo.ID, -1, true, "")
 	if err != nil {
 		ctx.Handle(500, "GetMilestones", err)
 		return
@@ -288,7 +316,7 @@ func RetrieveRepoMetas(ctx *context.Context, repo *models.Repository) []*models.
 		return nil
 	}
 
-	labels, err := models.GetLabelsByRepoID(repo.ID)
+	labels, err := models.GetLabelsByRepoID(repo.ID, "")
 	if err != nil {
 		ctx.Handle(500, "GetLabelsByRepoID", err)
 		return nil
@@ -374,7 +402,10 @@ func ValidateRepoMetas(ctx *context.Context, form auth.CreateIssueForm) ([]int64
 	}
 
 	// Check labels.
-	labelIDs := base.StringsToInt64s(strings.Split(form.LabelIDs, ","))
+	labelIDs, err := base.StringsToInt64s(strings.Split(form.LabelIDs, ","))
+	if err != nil {
+		return nil, 0, 0
+	}
 	labelIDMark := base.Int64sToMap(labelIDs)
 	hasSelected := false
 	for i := range labels {
@@ -453,56 +484,10 @@ func NewIssuePost(ctx *context.Context, form auth.CreateIssueForm) {
 		return
 	}
 
+	notification.Service.NotifyIssue(issue, ctx.User.ID)
+
 	log.Trace("Issue created: %d/%d", repo.ID, issue.ID)
 	ctx.Redirect(ctx.Repo.RepoLink + "/issues/" + com.ToStr(issue.Index))
-}
-
-// UploadIssueAttachment response for uploading issue's attachment
-func UploadIssueAttachment(ctx *context.Context) {
-	if !setting.AttachmentEnabled {
-		ctx.Error(404, "attachment is not enabled")
-		return
-	}
-
-	file, header, err := ctx.Req.FormFile("file")
-	if err != nil {
-		ctx.Error(500, fmt.Sprintf("FormFile: %v", err))
-		return
-	}
-	defer file.Close()
-
-	buf := make([]byte, 1024)
-	n, _ := file.Read(buf)
-	if n > 0 {
-		buf = buf[:n]
-	}
-	fileType := http.DetectContentType(buf)
-
-	allowedTypes := strings.Split(setting.AttachmentAllowedTypes, ",")
-	allowed := false
-	for _, t := range allowedTypes {
-		t := strings.Trim(t, " ")
-		if t == "*/*" || t == fileType {
-			allowed = true
-			break
-		}
-	}
-
-	if !allowed {
-		ctx.Error(400, ErrFileTypeForbidden.Error())
-		return
-	}
-
-	attach, err := models.NewAttachment(header.Filename, buf, file)
-	if err != nil {
-		ctx.Error(500, fmt.Sprintf("NewAttachment: %v", err))
-		return
-	}
-
-	log.Trace("New attachment uploaded: %s", attach.UUID)
-	ctx.JSON(200, map[string]string{
-		"uuid": attach.UUID,
-	})
 }
 
 // ViewIssue render issue view page
@@ -570,7 +555,7 @@ func ViewIssue(ctx *context.Context) {
 	for i := range issue.Labels {
 		labelIDMark[issue.Labels[i].ID] = true
 	}
-	labels, err := models.GetLabelsByRepoID(repo.ID)
+	labels, err := models.GetLabelsByRepoID(repo.ID, "")
 	if err != nil {
 		ctx.Handle(500, "GetLabelsByRepoID", err)
 		return
@@ -645,6 +630,25 @@ func ViewIssue(ctx *context.Context) {
 				participants = append(participants, comment.Poster)
 			}
 		}
+	}
+
+	if issue.IsPull {
+		pull := issue.PullRequest
+		canDelete := false
+
+		if ctx.IsSigned && pull.HeadBranch != "master" {
+
+			if err := pull.GetHeadRepo(); err != nil {
+				log.Error(4, "GetHeadRepo: %v", err)
+			} else if ctx.User.IsWriterOfRepo(pull.HeadRepo) {
+				canDelete = true
+				deleteBranchURL := pull.HeadRepo.Link() + "/branches/" + pull.HeadBranch + "/delete"
+				ctx.Data["DeleteBranchLink"] = fmt.Sprintf("%s?commit=%s&redirect_to=%s", deleteBranchURL, pull.MergedCommitID, ctx.Data["Link"])
+
+			}
+		}
+
+		ctx.Data["IsPullBranchDeletable"] = canDelete && git.IsBranchExist(pull.HeadRepo.RepoPath(), pull.HeadBranch)
 	}
 
 	ctx.Data["Participants"] = participants
@@ -898,6 +902,8 @@ func NewComment(ctx *context.Context, form auth.CreateCommentForm) {
 		return
 	}
 
+	notification.Service.NotifyIssue(issue, ctx.User.ID)
+
 	log.Trace("Comment created: %d/%d/%d", ctx.Repo.Repository.ID, issue.ID, comment.ID)
 }
 
@@ -950,7 +956,7 @@ func DeleteComment(ctx *context.Context) {
 		return
 	}
 
-	if err = models.DeleteCommentByID(comment.ID); err != nil {
+	if err = models.DeleteComment(comment); err != nil {
 		ctx.Handle(500, "DeleteCommentByID", err)
 		return
 	}
@@ -1066,6 +1072,7 @@ func Milestones(ctx *context.Context) {
 	ctx.Data["OpenCount"] = openCount
 	ctx.Data["ClosedCount"] = closedCount
 
+	sortType := ctx.Query("sort")
 	page := ctx.QueryInt("page")
 	if page <= 1 {
 		page = 1
@@ -1079,7 +1086,7 @@ func Milestones(ctx *context.Context) {
 	}
 	ctx.Data["Page"] = paginater.New(total, setting.UI.IssuePagingNum, page, 5)
 
-	miles, err := models.GetMilestones(ctx.Repo.Repository.ID, page, isShowClosed)
+	miles, err := models.GetMilestones(ctx.Repo.Repository.ID, page, isShowClosed, sortType)
 	if err != nil {
 		ctx.Handle(500, "GetMilestones", err)
 		return
@@ -1095,6 +1102,7 @@ func Milestones(ctx *context.Context) {
 		ctx.Data["State"] = "open"
 	}
 
+	ctx.Data["SortType"] = sortType
 	ctx.Data["IsShowClosed"] = isShowClosed
 	ctx.HTML(200, tplMilestone)
 }

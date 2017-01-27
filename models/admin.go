@@ -32,7 +32,7 @@ type Notice struct {
 	Type        NoticeType
 	Description string    `xorm:"TEXT"`
 	Created     time.Time `xorm:"-"`
-	CreatedUnix int64
+	CreatedUnix int64     `xorm:"INDEX"`
 }
 
 // BeforeInsert is invoked from XORM before inserting an object of this type.
@@ -103,7 +103,7 @@ func CountNotices() int64 {
 	return count
 }
 
-// Notices returns number of notices in given page.
+// Notices returns notices in given page.
 func Notices(page, pageSize int) ([]*Notice, error) {
 	notices := make([]*Notice, 0, pageSize)
 	return notices, x.

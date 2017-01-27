@@ -18,6 +18,7 @@ import (
 	"code.gitea.io/gitea/modules/setting"
 	"code.gitea.io/gitea/modules/ssh"
 	macaron "gopkg.in/macaron.v1"
+	"code.gitea.io/gitea/modules/indexer"
 )
 
 func checkRunMode() {
@@ -59,6 +60,7 @@ func GlobalInit() {
 
 		// Booting long running goroutines.
 		cron.NewContext()
+		indexer.NewContext()
 		models.InitSyncMirrors()
 		models.InitDeliverHooks()
 		models.InitTestPullRequests()
@@ -73,7 +75,7 @@ func GlobalInit() {
 	checkRunMode()
 
 	if setting.InstallLock && setting.SSH.StartBuiltinServer {
-		ssh.Listen(setting.SSH.ListenPort)
-		log.Info("SSH server started on :%v", setting.SSH.ListenPort)
+		ssh.Listen(setting.SSH.ListenHost, setting.SSH.ListenPort)
+		log.Info("SSH server started on %s:%v", setting.SSH.ListenHost, setting.SSH.ListenPort)
 	}
 }

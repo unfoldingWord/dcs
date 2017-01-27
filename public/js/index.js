@@ -123,10 +123,10 @@ function initCommentForm() {
             }
         }
 
-        var labelIds = "";
+        var labelIds = [];
         $(this).parent().find('.item').each(function () {
             if ($(this).hasClass('checked')) {
-                labelIds += $(this).data('id') + ",";
+                labelIds.push($(this).data('id'));
                 $($(this).data('id-selector')).removeClass('hide');
             } else {
                 $($(this).data('id-selector')).addClass('hide');
@@ -137,7 +137,7 @@ function initCommentForm() {
         } else {
             $noSelect.addClass('hide');
         }
-        $($(this).parent().data('id')).val(labelIds);
+        $($(this).parent().data('id')).val(labelIds.join(","));
         return false;
     });
     $labelMenu.find('.no-select.item').click(function () {
@@ -209,6 +209,12 @@ function initInstall() {
         return;
     }
 
+    if ($('#db_host').val()=="") {
+        $('#db_host').val("127.0.0.1:3306");
+        $('#db_user').val("gitea");
+        $('#db_name').val("gitea");
+    }
+
     // Database type change detection.
     $("#db_type").change(function () {
         var sqliteDefault = 'data/gitea.db';
@@ -228,22 +234,22 @@ function initInstall() {
             return;
         }
 
-        var mysqlDefault = '127.0.0.1:3306';
-        var postgresDefault = '127.0.0.1:5432';
+        var dbDefaults = {
+            "MySQL": "127.0.0.1:3306",
+            "PostgreSQL": "127.0.0.1:5432",
+            "MSSQL": "127.0.0.1:1433"
+        };
 
         $('#sqlite_settings').hide();
         $('#sql_settings').show();
-        if (dbType === "PostgreSQL") {
-            $('#pgsql_settings').show();
-            if ($('#db_host').val() == mysqlDefault) {
-                $('#db_host').val(postgresDefault);
+
+        $('#pgsql_settings').toggle(dbType === "PostgreSQL");
+        $.each(dbDefaults, function(type, defaultHost) {
+            if ($('#db_host').val() == defaultHost) {
+                $('#db_host').val(dbDefaults[dbType]);
+                return false;
             }
-        } else {
-            $('#pgsql_settings').hide();
-            if ($('#db_host').val() == postgresDefault) {
-                $('#db_host').val(mysqlDefault);
-            }
-        }
+        });
     });
 
     // TODO: better handling of exclusive relations.
@@ -963,26 +969,28 @@ function initAdmin() {
     // New authentication
     if ($('.admin.new.authentication').length > 0) {
         $('#auth_type').change(function () {
-            $('.ldap').hide();
-            $('.dldap').hide();
-            $('.smtp').hide();
-            $('.pam').hide();
-            $('.has-tls').hide();
+            $('.ldap, .dldap, .smtp, .pam, .has-tls').hide();
+
+            $('.ldap input[required], .dldap input[required], .smtp input[required], .pam input[required], .has-tls input[required]').removeAttr('required');
 
             var authType = $(this).val();
             switch (authType) {
                 case '2':     // LDAP
                     $('.ldap').show();
+                    $('.ldap div.required input').attr('required', 'required');
                     break;
                 case '3':     // SMTP
                     $('.smtp').show();
                     $('.has-tls').show();
+                    $('.smtp div.required input, .has-tls').attr('required', 'required');
                     break;
                 case '4':     // PAM
                     $('.pam').show();
+                    $('.pam input').attr('required', 'required');
                     break;
                 case '5':     // LDAP
                     $('.dldap').show();
+                    $('.dldap div.required input').attr('required', 'required');
                     break;
             }
 
@@ -990,6 +998,7 @@ function initAdmin() {
                 onSecurityProtocolChange()
             }
         });
+        $('#auth_type').change();
         $('#security_protocol').change(onSecurityProtocolChange)
     }
     // Edit authentication
@@ -1234,6 +1243,11 @@ $(document).ready(function () {
         $($(this).data('target')).slideToggle(100);
     });
 
+    // make table <tr> element clickable like a link
+    $('tr[data-href]').click(function(event) {
+        window.location = $(this).data('href');
+    });
+
     // Highlight JS
     if (typeof hljs != 'undefined') {
         hljs.initHighlightingOnLoad();
@@ -1347,7 +1361,7 @@ $(document).ready(function () {
         var headers = {};
         $(this).find('h1, h2, h3, h4, h5, h6').each(function () {
             var node = $(this);
-            var val = encodeURIComponent(node.text().toLowerCase().replace(/[^\w\- ]/g, '').replace(/[ ]/g, '-'));
+            var val = encodeURIComponent(node.text().toLowerCase().replace(/[^\u00C0-\u1FFF\u2C00-\uD7FF\w\- ]/g, '').replace(/[ ]/g, '-'));
             var name = val;
             if (headers[val] > 0) {
                 name = val + '-' + headers[val];

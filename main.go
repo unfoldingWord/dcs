@@ -1,5 +1,5 @@
-// Copyright 2016 The Gitea Authors. All rights reserved.
 // Copyright 2014 The Gogs Authors. All rights reserved.
+// Copyright 2016 The Gitea Authors. All rights reserved.
 // Use of this source code is governed by a MIT-style
 // license that can be found in the LICENSE file.
 
@@ -8,20 +8,17 @@ package main // import "code.gitea.io/gitea"
 
 import (
 	"os"
-	"runtime"
-
-	"code.gitea.io/gitea/modules/log"
 
 	"code.gitea.io/gitea/cmd"
+	"code.gitea.io/gitea/modules/log"
 	"code.gitea.io/gitea/modules/setting"
 	"github.com/urfave/cli"
 )
 
 // Version holds the current Gitea version
-const Version = "0.9.99.0915"
+var Version = "1.1.0+dev"
 
 func init() {
-	runtime.GOMAXPROCS(runtime.NumCPU())
 	setting.AppVer = Version
 }
 

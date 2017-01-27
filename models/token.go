@@ -21,11 +21,11 @@ type AccessToken struct {
 	Sha1 string `xorm:"UNIQUE VARCHAR(40)"`
 
 	Created           time.Time `xorm:"-"`
-	CreatedUnix       int64
+	CreatedUnix       int64     `xorm:"INDEX"`
 	Updated           time.Time `xorm:"-"` // Note: Updated must below Created for AfterSet.
-	UpdatedUnix       int64
-	HasRecentActivity bool `xorm:"-"`
-	HasUsed           bool `xorm:"-"`
+	UpdatedUnix       int64     `xorm:"INDEX"`
+	HasRecentActivity bool      `xorm:"-"`
+	HasUsed           bool      `xorm:"-"`
 }
 
 // BeforeInsert will be invoked by XORM before inserting a record representing this object.
@@ -88,7 +88,14 @@ func UpdateAccessToken(t *AccessToken) error {
 }
 
 // DeleteAccessTokenByID deletes access token by given ID.
-func DeleteAccessTokenByID(id int64) error {
-	_, err := x.Id(id).Delete(new(AccessToken))
-	return err
+func DeleteAccessTokenByID(id, userID int64) error {
+	cnt, err := x.Id(id).Delete(&AccessToken{
+		UID: userID,
+	})
+	if err != nil {
+		return err
+	} else if cnt != 1 {
+		return ErrAccessTokenNotExist{}
+	}
+	return nil
 }

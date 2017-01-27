@@ -53,7 +53,7 @@ const (
 type Comment struct {
 	ID              int64 `xorm:"pk autoincr"`
 	Type            CommentType
-	PosterID        int64
+	PosterID        int64 `xorm:"INDEX"`
 	Poster          *User `xorm:"-"`
 	IssueID         int64 `xorm:"INDEX"`
 	CommitID        int64
@@ -62,9 +62,9 @@ type Comment struct {
 	RenderedContent string `xorm:"-"`
 
 	Created     time.Time `xorm:"-"`
-	CreatedUnix int64
+	CreatedUnix int64     `xorm:"INDEX"`
 	Updated     time.Time `xorm:"-"`
-	UpdatedUnix int64
+	UpdatedUnix int64     `xorm:"INDEX"`
 
 	// Reference issue in commit message
 	CommitSHA string `xorm:"VARCHAR(40)"`
@@ -123,14 +123,55 @@ func (c *Comment) AfterDelete() {
 	}
 }
 
+// HTMLURL formats a URL-string to the issue-comment
+func (c *Comment) HTMLURL() string {
+	issue, err := GetIssueByID(c.IssueID)
+	if err != nil { // Silently dropping errors :unamused:
+		log.Error(4, "GetIssueByID(%d): %v", c.IssueID, err)
+		return ""
+	}
+	return fmt.Sprintf("%s#issuecomment-%d", issue.HTMLURL(), c.ID)
+}
+
+// IssueURL formats a URL-string to the issue
+func (c *Comment) IssueURL() string {
+	issue, err := GetIssueByID(c.IssueID)
+	if err != nil { // Silently dropping errors :unamused:
+		log.Error(4, "GetIssueByID(%d): %v", c.IssueID, err)
+		return ""
+	}
+
+	if issue.IsPull {
+		return ""
+	}
+	return issue.HTMLURL()
+}
+
+// PRURL formats a URL-string to the pull-request
+func (c *Comment) PRURL() string {
+	issue, err := GetIssueByID(c.IssueID)
+	if err != nil { // Silently dropping errors :unamused:
+		log.Error(4, "GetIssueByID(%d): %v", c.IssueID, err)
+		return ""
+	}
+
+	if !issue.IsPull {
+		return ""
+	}
+	return issue.HTMLURL()
+}
+
 // APIFormat converts a Comment to the api.Comment format
 func (c *Comment) APIFormat() *api.Comment {
 	return &api.Comment{
-		ID:      c.ID,
-		Poster:  c.Poster.APIFormat(),
-		Body:    c.Content,
-		Created: c.Created,
-		Updated: c.Updated,
+		ID:       c.ID,
+		Poster:   c.Poster.APIFormat(),
+		HTMLURL:  c.HTMLURL(),
+		IssueURL: c.IssueURL(),
+		PRURL:    c.PRURL(),
+		Body:     c.Content,
+		Created:  c.Created,
+		Updated:  c.Updated,
 	}
 }
 
@@ -146,9 +187,9 @@ func (c *Comment) EventTag() string {
 
 // MailParticipants sends new comment emails to repository watchers
 // and mentioned people.
-func (c *Comment) MailParticipants(opType ActionType, issue *Issue) (err error) {
+func (c *Comment) MailParticipants(e Engine, opType ActionType, issue *Issue) (err error) {
 	mentions := markdown.FindAllMentions(c.Content)
-	if err = UpdateIssueMentions(c.IssueID, mentions); err != nil {
+	if err = UpdateIssueMentions(e, c.IssueID, mentions); err != nil {
 		return fmt.Errorf("UpdateIssueMentions [%d]: %v", c.IssueID, err)
 	}
 
@@ -262,7 +303,9 @@ func createComment(e *xorm.Session, opts *CreateCommentOptions) (_ *Comment, err
 		if err = notifyWatchers(e, act); err != nil {
 			log.Error(4, "notifyWatchers: %v", err)
 		}
-		comment.MailParticipants(act.OpType, opts.Issue)
+		if err = comment.MailParticipants(e, act.OpType, opts.Issue); err != nil {
+			log.Error(4, "MailParticipants: %v", err)
+		}
 	}
 
 	return comment, nil
@@ -375,6 +418,17 @@ func getCommentsByIssueIDSince(e Engine, issueID, since int64) ([]*Comment, erro
 	return comments, sess.Find(&comments)
 }
 
+func getCommentsByRepoIDSince(e Engine, repoID, since int64) ([]*Comment, error) {
+	comments := make([]*Comment, 0, 10)
+	sess := e.Where("issue.repo_id = ?", repoID).
+		Join("INNER", "issue", "issue.id = comment.issue_id").
+		Asc("comment.created_unix")
+	if since > 0 {
+		sess.And("comment.updated_unix >= ?", since)
+	}
+	return comments, sess.Find(&comments)
+}
+
 func getCommentsByIssueID(e Engine, issueID int64) ([]*Comment, error) {
 	return getCommentsByIssueIDSince(e, issueID, -1)
 }
@@ -389,34 +443,33 @@ func GetCommentsByIssueIDSince(issueID, since int64) ([]*Comment, error) {
 	return getCommentsByIssueIDSince(x, issueID, since)
 }
 
+// GetCommentsByRepoIDSince returns a list of comments for all issues in a repo since a given time point.
+func GetCommentsByRepoIDSince(repoID, since int64) ([]*Comment, error) {
+	return getCommentsByRepoIDSince(x, repoID, since)
+}
+
 // UpdateComment updates information of comment.
 func UpdateComment(c *Comment) error {
 	_, err := x.Id(c.ID).AllCols().Update(c)
 	return err
 }
 
-// DeleteCommentByID deletes the comment by given ID.
-func DeleteCommentByID(id int64) error {
-	comment, err := GetCommentByID(id)
-	if err != nil {
-		if IsErrCommentNotExist(err) {
-			return nil
-		}
-		return err
-	}
-
+// DeleteComment deletes the comment
+func DeleteComment(comment *Comment) error {
 	sess := x.NewSession()
 	defer sessionRelease(sess)
-	if err = sess.Begin(); err != nil {
+	if err := sess.Begin(); err != nil {
 		return err
 	}
 
-	if _, err = sess.Id(comment.ID).Delete(new(Comment)); err != nil {
+	if _, err := sess.Delete(&Comment{
+		ID: comment.ID,
+	}); err != nil {
 		return err
 	}
 
 	if comment.Type == CommentTypeComment {
-		if _, err = sess.Exec("UPDATE `issue` SET num_comments = num_comments - 1 WHERE id = ?", comment.IssueID); err != nil {
+		if _, err := sess.Exec("UPDATE `issue` SET num_comments = num_comments - 1 WHERE id = ?", comment.IssueID); err != nil {
 			return err
 		}
 	}

@@ -67,7 +67,11 @@ func handleServerConn(keyID string, chans <-chan ssh.NewChannel) {
 					args := []string{"serv", "key-" + keyID, "--config=" + setting.CustomConf}
 					log.Trace("SSH: Arguments: %v", args)
 					cmd := exec.Command(setting.AppPath, args...)
-					cmd.Env = append(os.Environ(), "SSH_ORIGINAL_COMMAND="+cmdName)
+					cmd.Env = append(
+						os.Environ(),
+						"SSH_ORIGINAL_COMMAND="+cmdName,
+						"SKIP_MINWINSVC=1",
+					)
 
 					stdout, err := cmd.StdoutPipe()
 					if err != nil {
@@ -110,10 +114,10 @@ func handleServerConn(keyID string, chans <-chan ssh.NewChannel) {
 	}
 }
 
-func listen(config *ssh.ServerConfig, port int) {
-	listener, err := net.Listen("tcp", "0.0.0.0:"+com.ToStr(port))
+func listen(config *ssh.ServerConfig, host string, port int) {
+	listener, err := net.Listen("tcp", host+":"+com.ToStr(port))
 	if err != nil {
-		panic(err)
+		log.Fatal(4, "Fail to start SSH server: %v", err)
 	}
 	for {
 		// Once a ServerConfig has been configured, connections can be accepted.
@@ -148,7 +152,7 @@ func listen(config *ssh.ServerConfig, port int) {
 }
 
 // Listen starts a SSH server listens on given port.
-func Listen(port int) {
+func Listen(host string, port int) {
 	config := &ssh.ServerConfig{
 		PublicKeyCallback: func(conn ssh.ConnMetadata, key ssh.PublicKey) (*ssh.Permissions, error) {
 			pkey, err := models.SearchPublicKeyByContent(strings.TrimSpace(string(ssh.MarshalAuthorizedKey(key))))
@@ -185,5 +189,5 @@ func Listen(port int) {
 	}
 	config.AddHostKey(private)
 
-	go listen(config, port)
+	go listen(config, host, port)
 }

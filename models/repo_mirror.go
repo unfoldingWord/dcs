@@ -24,16 +24,16 @@ var MirrorQueue = sync.NewUniqueQueue(setting.Repository.MirrorQueueLength)
 
 // Mirror represents mirror information of a repository.
 type Mirror struct {
-	ID          int64 `xorm:"pk autoincr"`
-	RepoID      int64
+	ID          int64       `xorm:"pk autoincr"`
+	RepoID      int64       `xorm:"INDEX"`
 	Repo        *Repository `xorm:"-"`
 	Interval    int         // Hour.
 	EnablePrune bool        `xorm:"NOT NULL DEFAULT true"`
 
 	Updated        time.Time `xorm:"-"`
-	UpdatedUnix    int64
+	UpdatedUnix    int64     `xorm:"INDEX"`
 	NextUpdate     time.Time `xorm:"-"`
-	NextUpdateUnix int64
+	NextUpdateUnix int64     `xorm:"INDEX"`
 
 	address string `xorm:"-"`
 }
@@ -137,7 +137,7 @@ func (m *Mirror) runSync() bool {
 		gitArgs = append(gitArgs, "--prune")
 	}
 
-	if _, stderr, err := process.ExecDir(
+	if _, stderr, err := process.GetManager().ExecDir(
 		timeout, repoPath, fmt.Sprintf("Mirror.runSync: %s", repoPath),
 		"git", gitArgs...); err != nil {
 		desc := fmt.Sprintf("Fail to update mirror repository '%s': %s", repoPath, stderr)
@@ -148,7 +148,7 @@ func (m *Mirror) runSync() bool {
 		return false
 	}
 	if m.Repo.HasWiki() {
-		if _, stderr, err := process.ExecDir(
+		if _, stderr, err := process.GetManager().ExecDir(
 			timeout, wikiPath, fmt.Sprintf("Mirror.runSync: %s", wikiPath),
 			"git", "remote", "update", "--prune"); err != nil {
 			desc := fmt.Sprintf("Fail to update mirror wiki repository '%s': %s", wikiPath, stderr)
@@ -231,7 +231,7 @@ func SyncMirrors() {
 
 		m, err := GetMirrorByRepoID(com.StrTo(repoID).MustInt64())
 		if err != nil {
-			log.Error(4, "GetMirrorByRepoID [%d]: %v", repoID, err)
+			log.Error(4, "GetMirrorByRepoID [%s]: %v", repoID, err)
 			continue
 		}
 
@@ -241,13 +241,13 @@ func SyncMirrors() {
 
 		m.ScheduleNextUpdate()
 		if err = UpdateMirror(m); err != nil {
-			log.Error(4, "UpdateMirror [%d]: %v", repoID, err)
+			log.Error(4, "UpdateMirror [%s]: %v", repoID, err)
 			continue
 		}
 	}
 }
 
-// InitSyncMirrors initializes a go routine to sync the mirros
+// InitSyncMirrors initializes a go routine to sync the mirrors
 func InitSyncMirrors() {
 	go SyncMirrors()
 }

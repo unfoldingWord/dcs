@@ -5,7 +5,6 @@
 package cmd
 
 import (
-	"crypto/tls"
 	"fmt"
 	"net"
 	"net/http"
@@ -16,9 +15,10 @@ import (
 
 	"code.gitea.io/gitea/models"
 	"code.gitea.io/gitea/modules/auth"
-	"code.gitea.io/gitea/modules/bindata"
 	"code.gitea.io/gitea/modules/context"
+	"code.gitea.io/gitea/modules/lfs"
 	"code.gitea.io/gitea/modules/log"
+	"code.gitea.io/gitea/modules/options"
 	"code.gitea.io/gitea/modules/public"
 	"code.gitea.io/gitea/modules/setting"
 	"code.gitea.io/gitea/modules/templates"
@@ -29,6 +29,7 @@ import (
 	"code.gitea.io/gitea/routers/org"
 	"code.gitea.io/gitea/routers/repo"
 	"code.gitea.io/gitea/routers/user"
+
 	"github.com/go-macaron/binding"
 	"github.com/go-macaron/cache"
 	"github.com/go-macaron/captcha"
@@ -44,8 +45,8 @@ import (
 // CmdWeb represents the available web sub-command.
 var CmdWeb = cli.Command{
 	Name:  "web",
-	Usage: "Start Gogs web server",
-	Description: `Gogs web server is the only thing you need to run,
+	Usage: "Start Gitea web server",
+	Description: `Gitea web server is the only thing you need to run,
 and it takes care of all the other things for you`,
 	Action: runWeb,
 	Flags: []cli.Flag{
@@ -58,6 +59,11 @@ and it takes care of all the other things for you`,
 			Name:  "config, c",
 			Value: "custom/conf/app.ini",
 			Usage: "Custom configuration file path",
+		},
+		cli.StringFlag{
+			Name:  "pid, P",
+			Value: "/var/run/gitea.pid",
+			Usage: "Custom pid file path",
 		},
 	},
 }
@@ -93,28 +99,36 @@ func newMacaron() *macaron.Macaron {
 		macaron.StaticOptions{
 			Prefix:      "avatars",
 			SkipLogging: setting.DisableRouterLog,
+			ETag:        true,
 		},
 	))
 
 	m.Use(templates.Renderer())
 	models.InitMailRender(templates.Mailer())
 
-	localeNames, err := bindata.AssetDir("conf/locale")
+	localeNames, err := options.Dir("locale")
+
 	if err != nil {
 		log.Fatal(4, "Fail to list locale files: %v", err)
 	}
+
 	localFiles := make(map[string][]byte)
+
 	for _, name := range localeNames {
-		localFiles[name] = bindata.MustAsset("conf/locale/" + name)
+		localFiles[name], err = options.Locale(name)
+
+		if err != nil {
+			log.Fatal(4, "Failed to load %s locale file. %v", name, err)
+		}
 	}
+
 	m.Use(i18n.I18n(i18n.Options{
-		SubURL:          setting.AppSubURL,
-		Files:           localFiles,
-		CustomDirectory: path.Join(setting.CustomPath, "conf/locale"),
-		Langs:           setting.Langs,
-		Names:           setting.Names,
-		DefaultLang:     "en-US",
-		Redirect:        true,
+		SubURL:      setting.AppSubURL,
+		Files:       localFiles,
+		Langs:       setting.Langs,
+		Names:       setting.Names,
+		DefaultLang: "en-US",
+		Redirect:    true,
 	}))
 	m.Use(cache.Cacher(cache.Options{
 		Adapter:       setting.CacheAdapter,
@@ -148,6 +162,11 @@ func runWeb(ctx *cli.Context) error {
 	if ctx.IsSet("config") {
 		setting.CustomConf = ctx.String("config")
 	}
+
+	if ctx.IsSet("pid") {
+		setting.CustomPID = ctx.String("pid")
+	}
+
 	routers.GlobalInit()
 
 	m := newMacaron()
@@ -158,6 +177,8 @@ func runWeb(ctx *cli.Context) error {
 	reqSignOut := context.Toggle(&context.ToggleOptions{SignOutRequired: true})
 
 	bindIgnErr := binding.BindIgnErr
+
+	m.Use(user.GetNotificationCount)
 
 	// FIXME: not all routes need go through same middlewares.
 	// Especially some AJAX requests, we can reduce middleware number to improve performance.
@@ -183,6 +204,12 @@ func runWeb(ctx *cli.Context) error {
 		m.Post("/sign_up", bindIgnErr(auth.RegisterForm{}), user.SignUpPost)
 		m.Get("/reset_password", user.ResetPasswd)
 		m.Post("/reset_password", user.ResetPasswdPost)
+		m.Group("/two_factor", func() {
+			m.Get("", user.TwoFactor)
+			m.Post("", bindIgnErr(auth.TwoFactorAuthForm{}), user.TwoFactorPost)
+			m.Get("/scratch", user.TwoFactorScratch)
+			m.Post("/scratch", bindIgnErr(auth.TwoFactorScratchAuthForm{}), user.TwoFactorScratchPost)
+		})
 	}, reqSignOut)
 
 	m.Group("/user/settings", func() {
@@ -203,6 +230,13 @@ func runWeb(ctx *cli.Context) error {
 			Post(bindIgnErr(auth.NewAccessTokenForm{}), user.SettingsApplicationsPost)
 		m.Post("/applications/delete", user.SettingsDeleteApplication)
 		m.Route("/delete", "GET,POST", user.SettingsDelete)
+		m.Group("/two_factor", func() {
+			m.Get("", user.SettingsTwoFactor)
+			m.Post("/regenerate_scratch", user.SettingsTwoFactorRegenerateScratch)
+			m.Post("/disable", user.SettingsTwoFactorDisable)
+			m.Get("/enroll", user.SettingsTwoFactorEnroll)
+			m.Post("/enroll", bindIgnErr(auth.TwoFactorAuthForm{}), user.SettingsTwoFactorEnrollPost)
+		})
 	}, reqSignIn, func(ctx *context.Context) {
 		ctx.Data["PageIsUserSettings"] = true
 	})
@@ -264,7 +298,6 @@ func runWeb(ctx *cli.Context) error {
 			m.Get("", user.Profile)
 			m.Get("/followers", user.Followers)
 			m.Get("/following", user.Following)
-			m.Get("/stars", user.Stars)
 		})
 
 		m.Get("/attachments/:uuid", func(ctx *context.Context) {
@@ -290,7 +323,7 @@ func runWeb(ctx *cli.Context) error {
 				return
 			}
 		})
-		m.Post("/issues/attachments", repo.UploadIssueAttachment)
+		m.Post("/attachments", repo.UploadAttachment)
 	}, ignSignIn)
 
 	m.Group("/:username", func() {
@@ -458,13 +491,11 @@ func runWeb(ctx *cli.Context) error {
 			m.Get("/:id/:action", repo.ChangeMilestonStatus)
 			m.Post("/delete", repo.DeleteMilestone)
 		}, reqRepoWriter, context.RepoRef())
-
 		m.Group("/releases", func() {
 			m.Get("/new", repo.NewRelease)
 			m.Post("/new", bindIgnErr(auth.NewReleaseForm{}), repo.NewReleasePost)
 			m.Post("/delete", repo.DeleteRelease)
 		}, reqRepoWriter, context.RepoRef())
-
 		m.Group("/releases", func() {
 			m.Get("/edit/*", repo.EditRelease)
 			m.Post("/edit/*", bindIgnErr(auth.EditReleaseForm{}), repo.EditReleasePost)
@@ -525,6 +556,7 @@ func runWeb(ctx *cli.Context) error {
 		}, context.RepoRef())
 
 		// m.Get("/branches", repo.Branches)
+		m.Post("/branches/:name/delete", reqSignIn, reqRepoWriter, repo.DeleteBranchPost)
 
 		m.Group("/wiki", func() {
 			m.Get("/?:page", repo.Wiki)
@@ -551,6 +583,7 @@ func runWeb(ctx *cli.Context) error {
 			m.Get("/src/*", repo.SetEditorconfigIfExists, repo.Home)
 			m.Get("/raw/*", repo.SingleDownload)
 			m.Get("/commits/*", repo.RefCommits)
+			m.Get("/graph", repo.Graph)
 			m.Get("/commit/:sha([a-f0-9]{7,40})$", repo.SetEditorconfigIfExists, repo.SetDiffViewStyle, repo.Diff)
 			m.Get("/forks", repo.Forks)
 		}, context.RepoRef())
@@ -570,11 +603,22 @@ func runWeb(ctx *cli.Context) error {
 		}, ignSignIn, context.RepoAssignment(true), context.RepoRef())
 
 		m.Group("/:reponame", func() {
+			m.Group("/info/lfs", func() {
+				m.Post("/objects/batch", lfs.BatchHandler)
+				m.Get("/objects/:oid/:filename", lfs.ObjectOidHandler)
+				m.Any("/objects/:oid", lfs.ObjectOidHandler)
+				m.Post("/objects", lfs.PostHandler)
+			}, ignSignInAndCsrf)
 			m.Any("/*", ignSignInAndCsrf, repo.HTTP)
 			m.Head("/tasks/trigger", repo.TriggerTask)
 		})
 	})
 	// ***** END: Repository *****
+
+	m.Group("/notifications", func() {
+		m.Get("", user.Notifications)
+		m.Post("/status", user.NotificationStatusPost)
+	}, reqSignIn)
 
 	m.Group("/api", func() {
 		apiv1.RegisterRoutes(m)
@@ -606,13 +650,16 @@ func runWeb(ctx *cli.Context) error {
 	}
 	log.Info("Listen: %v://%s%s", setting.Protocol, listenAddr, setting.AppSubURL)
 
+	if setting.LFS.StartServer {
+		log.Info("LFS server enabled")
+	}
+
 	var err error
 	switch setting.Protocol {
 	case setting.HTTP:
-		err = http.ListenAndServe(listenAddr, m)
+		err = runHTTP(listenAddr, m)
 	case setting.HTTPS:
-		server := &http.Server{Addr: listenAddr, TLSConfig: &tls.Config{MinVersion: tls.VersionTLS10}, Handler: m}
-		err = server.ListenAndServeTLS(setting.CertFile, setting.KeyFile)
+		err = runHTTPS(listenAddr, setting.CertFile, setting.KeyFile, m)
 	case setting.FCGI:
 		err = fcgi.Serve(nil, m)
 	case setting.UnixSocket:

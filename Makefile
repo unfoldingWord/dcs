@@ -1,16 +1,17 @@
 DIST := dist
-EXECUTABLE := gitea
 IMPORT := code.gitea.io/gitea
 
-SHA := $(shell git rev-parse --short HEAD)
-DATE := $(shell date -u '+%Y-%m-%d %I:%M:%S %Z')
+ifeq ($(OS), Windows_NT)
+	EXECUTABLE := gitea.exe
+else
+	EXECUTABLE := gitea
+endif
 
-BINDATA := $(shell find conf | sed 's/ /\\ /g')
+BINDATA := modules/{options,public,templates}/bindata.go
 STYLESHEETS := $(wildcard public/less/index.less public/less/_*.less)
 JAVASCRIPTS :=
 
-LDFLAGS += -X "code.gitea.io/gitea/modules/setting.BuildTime=$(DATE)"
-LDFLAGS += -X "code.gitea.io/gitea/modules/setting.BuildGitHash=$(SHA)"
+LDFLAGS := -X "main.Version=$(shell git describe --tags --always | sed 's/-/+/' | sed 's/^v//')"
 
 TARGETS ?= linux/*,darwin/*,windows/*
 PACKAGES ?= $(shell go list ./... | grep -v /vendor/)
@@ -19,10 +20,10 @@ SOURCES ?= $(shell find . -name "*.go" -type f)
 TAGS ?=
 
 ifneq ($(DRONE_TAG),)
-	VERSION ?= $(DRONE_TAG)
+	VERSION ?= $(subst v,,$(DRONE_TAG))
 else
 	ifneq ($(DRONE_BRANCH),)
-		VERSION ?= $(DRONE_BRANCH)
+		VERSION ?= $(subst release/v,,$(DRONE_BRANCH))
 	else
 		VERSION ?= master
 	endif
@@ -34,11 +35,11 @@ all: build
 .PHONY: clean
 clean:
 	go clean -i ./...
-	rm -rf $(EXECUTABLE) $(DIST)
+	rm -rf $(EXECUTABLE) $(DIST) $(BINDATA)
 
 .PHONY: fmt
 fmt:
-	go fmt $(PACKAGES)
+	find . -name "*.go" -type f -not -path "./vendor/*" | xargs gofmt -s -w
 
 .PHONY: vet
 vet:
@@ -91,6 +92,11 @@ build: $(EXECUTABLE)
 $(EXECUTABLE): $(SOURCES)
 	go build -v -tags '$(TAGS)' -ldflags '-s -w $(LDFLAGS)' -o $@
 
+.PHONY: docker
+docker:
+	docker run -ti --rm -v $(CURDIR):/srv/app/src/code.gitea.io/gitea -w /srv/app/src/code.gitea.io/gitea -e TAGS="$(TAGS)" webhippie/golang:edge make clean generate build
+	docker build -t gitea/gitea:latest .
+
 .PHONY: release
 release: release-dirs release-build release-copy release-check
 
@@ -116,19 +122,6 @@ release-copy:
 release-check:
 	cd $(DIST)/release; $(foreach file,$(wildcard $(DIST)/release/$(EXECUTABLE)-*),sha256sum $(notdir $(file)) > $(notdir $(file)).sha256;)
 
-.PHONY: bindata
-bindata: modules/bindata/bindata.go
-
-.IGNORE: modules/bindata/bindata.go
-modules/bindata/bindata.go: $(BINDATA)
-	@which go-bindata > /dev/null; if [ $$? -ne 0 ]; then \
-		go get -u github.com/jteeuwen/go-bindata/...; \
-	fi
-	go-bindata -o=$@ -ignore="\\.go|README.md|TRANSLATORS" -pkg=bindata conf/...
-	go fmt $@
-	sed -i.bak 's/confLocaleLocale_/confLocaleLocale/' $@
-	rm $@.bak
-
 .PHONY: javascripts
 javascripts: public/js/index.js
 
@@ -144,4 +137,4 @@ public/css/index.css: $(STYLESHEETS)
 	lessc $< $@
 
 .PHONY: assets
-assets: bindata javascripts stylesheets
+assets: javascripts stylesheets

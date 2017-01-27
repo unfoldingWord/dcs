@@ -158,13 +158,13 @@ func (repo *Repository) UpdateRepoFile(doer *User, opts UpdateRepoFileOptions) (
 	}
 	oldCommitID := opts.LastCommitID
 	if opts.NewBranch != opts.OldBranch {
-		oldCommitID = git.EMPTY_SHA
+		oldCommitID = git.EmptySHA
 	}
 	if err := CommitRepoAction(CommitRepoActionOptions{
 		PusherName:  doer.Name,
 		RepoOwnerID: repo.MustOwner().ID,
 		RepoName:    repo.Name,
-		RefFullName: git.BRANCH_PREFIX + opts.NewBranch,
+		RefFullName: git.BranchPrefix + opts.NewBranch,
 		OldCommitID: oldCommitID,
 		NewCommitID: commit.ID.String(),
 		Commits:     pushCommits,
@@ -212,8 +212,8 @@ func (repo *Repository) GetDiffPreview(branch, treePath, content string) (diff *
 		return nil, fmt.Errorf("Start: %v", err)
 	}
 
-	pid := process.Add(fmt.Sprintf("GetDiffPreview [repo_path: %s]", repo.RepoPath()), cmd)
-	defer process.Remove(pid)
+	pid := process.GetManager().Add(fmt.Sprintf("GetDiffPreview [repo_path: %s]", repo.RepoPath()), cmd)
+	defer process.GetManager().Remove(pid)
 
 	diff, err = ParsePatch(setting.Git.MaxGitDiffLines, setting.Git.MaxGitDiffLineCharacters, setting.Git.MaxGitDiffFiles, stdout)
 	if err != nil {
@@ -297,7 +297,7 @@ func (repo *Repository) DeleteRepoFile(doer *User, opts DeleteRepoFileOptions) (
 		PusherName:  doer.Name,
 		RepoOwnerID: repo.MustOwner().ID,
 		RepoName:    repo.Name,
-		RefFullName: git.BRANCH_PREFIX + opts.NewBranch,
+		RefFullName: git.BranchPrefix + opts.NewBranch,
 		OldCommitID: opts.LastCommitID,
 		NewCommitID: commit.ID.String(),
 		Commits:     pushCommits,
@@ -533,7 +533,7 @@ func (repo *Repository) UploadRepoFiles(doer *User, opts UploadRepoFileOptions) 
 		PusherName:  doer.Name,
 		RepoOwnerID: repo.MustOwner().ID,
 		RepoName:    repo.Name,
-		RefFullName: git.BRANCH_PREFIX + opts.NewBranch,
+		RefFullName: git.BranchPrefix + opts.NewBranch,
 		OldCommitID: opts.LastCommitID,
 		NewCommitID: commit.ID.String(),
 		Commits:     pushCommits,

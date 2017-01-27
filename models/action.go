@@ -71,19 +71,19 @@ func init() {
 // used in template render.
 type Action struct {
 	ID           int64 `xorm:"pk autoincr"`
-	UserID       int64 // Receiver user id.
+	UserID       int64 `xorm:"INDEX"` // Receiver user id.
 	OpType       ActionType
-	ActUserID    int64  // Action user id.
+	ActUserID    int64  `xorm:"INDEX"` // Action user id.
 	ActUserName  string // Action user name.
 	ActAvatar    string `xorm:"-"`
-	RepoID       int64
+	RepoID       int64  `xorm:"INDEX"`
 	RepoUserName string
 	RepoName     string
 	RefName      string
-	IsPrivate    bool      `xorm:"NOT NULL DEFAULT false"`
+	IsPrivate    bool      `xorm:"INDEX NOT NULL DEFAULT false"`
 	Content      string    `xorm:"TEXT"`
 	Created      time.Time `xorm:"-"`
-	CreatedUnix  int64
+	CreatedUnix  int64     `xorm:"INDEX"`
 }
 
 // BeforeInsert will be invoked by XORM before inserting a record
@@ -145,7 +145,7 @@ func (a *Action) GetRepoPath() string {
 }
 
 // ShortRepoPath returns the virtual path to the action repository
-// trimed to max 20 + 1 + 33 chars.
+// trimmed to max 20 + 1 + 33 chars.
 func (a *Action) ShortRepoPath() string {
 	return path.Join(a.ShortRepoUserName(), a.ShortRepoName())
 }
@@ -418,7 +418,7 @@ func UpdateIssuesCommit(doer *User, repo *Repository, commits []*PushCommit) err
 			}
 		}
 
-		// It is conflict to have close and reopen at same time, so refsMarkd doesn't need to reinit here.
+		// It is conflict to have close and reopen at same time, so refsMarked doesn't need to reinit here.
 		for _, ref := range issueReopenKeywordsPat.FindAllString(c.Message, -1) {
 			ref = ref[strings.IndexByte(ref, byte(' '))+1:]
 			ref = strings.TrimRightFunc(ref, issueIndexTrimRight)
@@ -494,12 +494,12 @@ func CommitRepoAction(opts CommitRepoActionOptions) error {
 	isNewBranch := false
 	opType := ActionCommitRepo
 	// Check it's tag push or branch.
-	if strings.HasPrefix(opts.RefFullName, git.TAG_PREFIX) {
+	if strings.HasPrefix(opts.RefFullName, git.TagPrefix) {
 		opType = ActionPushTag
 		opts.Commits = &PushCommits{}
 	} else {
 		// if not the first commit, set the compare URL.
-		if opts.OldCommitID == git.EMPTY_SHA {
+		if opts.OldCommitID == git.EmptySHA {
 			isNewBranch = true
 		} else {
 			opts.Commits.CompareURL = repo.ComposeCompareURL(opts.OldCommitID, opts.NewCommitID)
@@ -562,7 +562,7 @@ func CommitRepoAction(opts CommitRepoActionOptions) error {
 			if err != nil {
 				log.Error(4, "OpenRepository[%s]: %v", repo.RepoPath(), err)
 			}
-			shaSum, err = gitRepo.GetBranchCommitID(opts.RefFullName)
+			shaSum, err = gitRepo.GetBranchCommitID(refName)
 			if err != nil {
 				log.Error(4, "GetBranchCommitID[%s]: %v", opts.RefFullName, err)
 			}
@@ -580,7 +580,7 @@ func CommitRepoAction(opts CommitRepoActionOptions) error {
 		if err != nil {
 			log.Error(4, "OpenRepository[%s]: %v", repo.RepoPath(), err)
 		}
-		shaSum, err = gitRepo.GetTagCommitID(opts.RefFullName)
+		shaSum, err = gitRepo.GetTagCommitID(refName)
 		if err != nil {
 			log.Error(4, "GetTagCommitID[%s]: %v", opts.RefFullName, err)
 		}
@@ -658,17 +658,14 @@ func GetFeeds(ctxUser *User, actorID, offset int64, isProfile bool) ([]*Action, 
 			And("is_private = ?", false).
 			And("act_user_id = ?", ctxUser.ID)
 	} else if actorID != -1 && ctxUser.IsOrganization() {
-		// FIXME: only need to get IDs here, not all fields of repository.
-		repos, _, err := ctxUser.GetUserRepositories(actorID, 1, ctxUser.NumRepos)
+		env, err := ctxUser.AccessibleReposEnv(actorID)
+		if err != nil {
+			return nil, fmt.Errorf("AccessibleReposEnv: %v", err)
+		}
+		repoIDs, err := env.RepoIDs(1, ctxUser.NumRepos)
 		if err != nil {
 			return nil, fmt.Errorf("GetUserRepositories: %v", err)
 		}
-
-		var repoIDs []int64
-		for _, repo := range repos {
-			repoIDs = append(repoIDs, repo.ID)
-		}
-
 		if len(repoIDs) > 0 {
 			sess.In("repo_id", repoIDs)
 		}

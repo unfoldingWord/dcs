@@ -15,6 +15,7 @@ import (
 	"code.gitea.io/gitea/modules/base"
 	"code.gitea.io/gitea/modules/context"
 	"code.gitea.io/gitea/modules/setting"
+	"code.gitea.io/gitea/modules/util"
 )
 
 const (
@@ -113,15 +114,20 @@ func Dashboard(ctx *context.Context) {
 	var err error
 	var repos, mirrors []*models.Repository
 	if ctxUser.IsOrganization() {
-		repos, _, err = ctxUser.GetUserRepositories(ctx.User.ID, 1, setting.UI.User.RepoPagingNum)
+		env, err := ctxUser.AccessibleReposEnv(ctx.User.ID)
 		if err != nil {
-			ctx.Handle(500, "GetUserRepositories", err)
+			ctx.Handle(500, "AccessibleReposEnv", err)
+			return
+		}
+		repos, err = env.Repos(1, setting.UI.User.RepoPagingNum)
+		if err != nil {
+			ctx.Handle(500, "env.Repos", err)
 			return
 		}
 
-		mirrors, err = ctxUser.GetUserMirrorRepositories(ctx.User.ID)
+		mirrors, err = env.MirrorRepos()
 		if err != nil {
-			ctx.Handle(500, "GetUserMirrorRepositories", err)
+			ctx.Handle(500, "env.MirrorRepos", err)
 			return
 		}
 	} else {
@@ -204,7 +210,12 @@ func Issues(ctx *context.Context) {
 	var err error
 	var repos []*models.Repository
 	if ctxUser.IsOrganization() {
-		repos, _, err = ctxUser.GetUserRepositories(ctx.User.ID, 1, ctxUser.NumRepos)
+		env, err := ctxUser.AccessibleReposEnv(ctx.User.ID)
+		if err != nil {
+			ctx.Handle(500, "AccessibleReposEnv", err)
+			return
+		}
+		repos, err = env.Repos(1, ctxUser.NumRepos)
 		if err != nil {
 			ctx.Handle(500, "GetRepositories", err)
 			return
@@ -250,6 +261,9 @@ func Issues(ctx *context.Context) {
 		}
 	}
 	ctx.Data["Repos"] = showRepos
+	if len(repoIDs) == 0 {
+		repoIDs = []int64{-1}
+	}
 
 	issueStats := models.GetUserIssueStats(repoID, ctxUser.ID, repoIDs, filterMode, isPullList)
 	issueStats.AllCount = int64(allCount)
@@ -269,14 +283,13 @@ func Issues(ctx *context.Context) {
 
 	// Get issues.
 	issues, err := models.Issues(&models.IssuesOptions{
-		UserID:     ctxUser.ID,
 		AssigneeID: assigneeID,
 		RepoID:     repoID,
 		PosterID:   posterID,
 		RepoIDs:    repoIDs,
 		Page:       page,
-		IsClosed:   isShowClosed,
-		IsPull:     isPullList,
+		IsClosed:   util.OptionalBoolOf(isShowClosed),
+		IsPull:     util.OptionalBoolOf(isPullList),
 		SortType:   sortType,
 	})
 	if err != nil {
@@ -350,9 +363,19 @@ func showOrgProfile(ctx *context.Context) {
 		err   error
 	)
 	if ctx.IsSigned && !ctx.User.IsAdmin {
-		repos, count, err = org.GetUserRepositories(ctx.User.ID, page, setting.UI.User.RepoPagingNum)
+		env, err := org.AccessibleReposEnv(ctx.User.ID)
 		if err != nil {
-			ctx.Handle(500, "GetUserRepositories", err)
+			ctx.Handle(500, "AccessibleReposEnv", err)
+			return
+		}
+		repos, err = env.Repos(page, setting.UI.User.RepoPagingNum)
+		if err != nil {
+			ctx.Handle(500, "env.Repos", err)
+			return
+		}
+		count, err = env.CountRepos()
+		if err != nil {
+			ctx.Handle(500, "env.CountRepos", err)
 			return
 		}
 		ctx.Data["Repos"] = repos

@@ -122,6 +122,17 @@ func NewFuncMap() []template.FuncMap {
 		"GATrackingID": func() string {
 			return setting.Google.GATrackingID
 		},
+		"SubJumpablePath": func(str string) []string {
+			var path []string
+			index := strings.LastIndex(str, "/")
+			if index != -1 && index != len(str) {
+				path = append(path, str[0:index+1])
+				path = append(path, str[index+1:])
+			} else {
+				path = append(path, str)
+			}
+			return path
+		},
 	}}
 }
 

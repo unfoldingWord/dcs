@@ -172,7 +172,7 @@ func parseKeyString(content string) (string, error) {
 // writeTmpKeyFile writes key content to a temporary file
 // and returns the name of that file, along with any possible errors.
 func writeTmpKeyFile(content string) (string, error) {
-	tmpFile, err := ioutil.TempFile(setting.SSH.KeyTestPath, "gogs_keytest")
+	tmpFile, err := ioutil.TempFile(setting.SSH.KeyTestPath, "gitea_keytest")
 	if err != nil {
 		return "", fmt.Errorf("TempFile: %v", err)
 	}
@@ -197,7 +197,7 @@ func SSHKeyGenParsePublicKey(key string) (string, int, error) {
 	}
 	defer os.Remove(tmpName)
 
-	stdout, stderr, err := process.Exec("SSHKeyGenParsePublicKey", setting.SSH.KeygenPath, "-lf", tmpName)
+	stdout, stderr, err := process.GetManager().Exec("SSHKeyGenParsePublicKey", setting.SSH.KeygenPath, "-lf", tmpName)
 	if err != nil {
 		return "", 0, fmt.Errorf("fail to parse public key: %s - %s", err, stderr)
 	}
@@ -219,7 +219,7 @@ func SSHKeyGenParsePublicKey(key string) (string, int, error) {
 func SSHNativeParsePublicKey(keyLine string) (string, int, error) {
 	fields := strings.Fields(keyLine)
 	if len(fields) < 2 {
-		return "", 0, fmt.Errorf("not enough fields in public key line: %s", string(keyLine))
+		return "", 0, fmt.Errorf("not enough fields in public key line: %s", keyLine)
 	}
 
 	raw, err := base64.StdEncoding.DecodeString(fields[1])
@@ -354,7 +354,7 @@ func appendAuthorizedKeysToFile(keys ...*PublicKey) error {
 	return nil
 }
 
-// checkKeyContent onlys checks if key content has been used as public key,
+// checkKeyContent only checks if key content has been used as public key,
 // it is OK to use same key as deploy key for multiple repositories/users.
 func checkKeyContent(content string) error {
 	has, err := x.Get(&PublicKey{
@@ -382,7 +382,7 @@ func addKey(e Engine, key *PublicKey) (err error) {
 	if err = ioutil.WriteFile(tmpPath, []byte(key.Content), 0644); err != nil {
 		return err
 	}
-	stdout, stderr, err := process.Exec("AddPublicKey", "ssh-keygen", "-lf", tmpPath)
+	stdout, stderr, err := process.GetManager().Exec("AddPublicKey", "ssh-keygen", "-lf", tmpPath)
 	if err != nil {
 		return fmt.Errorf("'ssh-keygen -lf %s' failed with error '%s': %s", tmpPath, err, stderr)
 	} else if len(stdout) < 2 {
@@ -526,7 +526,7 @@ func DeletePublicKey(doer *User, id int64) (err error) {
 
 // RewriteAllPublicKeys removes any authorized key and rewrite all keys from database again.
 // Note: x.Iterate does not get latest data after insert/delete, so we have to call this function
-// outsite any session scope independently.
+// outside any session scope independently.
 func RewriteAllPublicKeys() error {
 	sshOpLocker.Lock()
 	defer sshOpLocker.Unlock()

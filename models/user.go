@@ -25,6 +25,7 @@ import (
 	"github.com/Unknwon/com"
 	"github.com/go-xorm/xorm"
 	"github.com/nfnt/resize"
+	"golang.org/x/crypto/pbkdf2"
 
 	"code.gitea.io/git"
 	api "code.gitea.io/sdk/gitea"
@@ -74,26 +75,27 @@ type User struct {
 	Name      string `xorm:"UNIQUE NOT NULL"`
 	FullName  string
 	// Email is the primary email address (to be used for communication)
-	Email       string `xorm:"NOT NULL"`
-	Passwd      string `xorm:"NOT NULL"`
-	LoginType   LoginType
-	LoginSource int64 `xorm:"NOT NULL DEFAULT 0"`
-	LoginName   string
-	Type        UserType
-	OwnedOrgs   []*User       `xorm:"-"`
-	Orgs        []*User       `xorm:"-"`
-	Repos       []*Repository `xorm:"-"`
-	Location    string
-	Website     string
-	Rands       string `xorm:"VARCHAR(10)"`
-	Salt        string `xorm:"VARCHAR(10)"`
+	Email            string `xorm:"NOT NULL"`
+	KeepEmailPrivate bool
+	Passwd           string `xorm:"NOT NULL"`
+	LoginType        LoginType
+	LoginSource      int64 `xorm:"NOT NULL DEFAULT 0"`
+	LoginName        string
+	Type             UserType
+	OwnedOrgs        []*User       `xorm:"-"`
+	Orgs             []*User       `xorm:"-"`
+	Repos            []*Repository `xorm:"-"`
+	Location         string
+	Website          string
+	Rands            string `xorm:"VARCHAR(10)"`
+	Salt             string `xorm:"VARCHAR(10)"`
 
 	Created       time.Time `xorm:"-"`
-	CreatedUnix   int64
+	CreatedUnix   int64     `xorm:"INDEX"`
 	Updated       time.Time `xorm:"-"`
-	UpdatedUnix   int64
+	UpdatedUnix   int64     `xorm:"INDEX"`
 	LastLogin     time.Time `xorm:"-"`
-	LastLoginUnix int64
+	LastLoginUnix int64     `xorm:"INDEX"`
 
 	// Remember visibility choice for convenience, true for private
 	LastRepoVisibility bool
@@ -101,11 +103,12 @@ type User struct {
 	MaxRepoCreation int `xorm:"NOT NULL DEFAULT -1"`
 
 	// Permissions
-	IsActive         bool // Activate primary email
-	IsAdmin          bool
-	AllowGitHook     bool
-	AllowImportLocal bool // Allow migrate repository by local path
-	ProhibitLogin    bool
+	IsActive                bool `xorm:"INDEX"` // Activate primary email
+	IsAdmin                 bool
+	AllowGitHook            bool
+	AllowImportLocal        bool // Allow migrate repository by local path
+	AllowCreateOrganization bool `xorm:"DEFAULT true"`
+	ProhibitLogin           bool
 
 	// Avatar
 	Avatar          string `xorm:"VARCHAR(2048) NOT NULL"`
@@ -168,13 +171,22 @@ func (u *User) AfterSet(colName string, _ xorm.Cell) {
 	}
 }
 
+// getEmail returns an noreply email, if the user has set to keep his
+// email address private, otherwise the primary email address.
+func (u *User) getEmail() string {
+	if u.KeepEmailPrivate {
+		return fmt.Sprintf("%s@%s", u.LowerName, setting.Service.NoReplyAddress)
+	}
+	return u.Email
+}
+
 // APIFormat converts a User to api.User
 func (u *User) APIFormat() *api.User {
 	return &api.User{
 		ID:        u.ID,
 		UserName:  u.Name,
 		FullName:  u.FullName,
-		Email:     u.Email,
+		Email:     u.getEmail(),
 		AvatarURL: u.AvatarLink(),
 	}
 }
@@ -209,6 +221,11 @@ func (u *User) CanCreateRepo() bool {
 	return u.NumRepos < u.MaxRepoCreation
 }
 
+// CanCreateOrganization returns true if user can create organisation.
+func (u *User) CanCreateOrganization() bool {
+	return u.IsAdmin || u.AllowCreateOrganization
+}
+
 // CanEditGitHook returns true if user can edit Git hooks.
 func (u *User) CanEditGitHook() bool {
 	return u.IsAdmin || u.AllowGitHook
@@ -216,6 +233,9 @@ func (u *User) CanEditGitHook() bool {
 
 // CanImportLocal returns true if user can migrate repository by local path.
 func (u *User) CanImportLocal() bool {
+	if !setting.ImportLocalPaths {
+		return false
+	}
 	return u.IsAdmin || u.AllowImportLocal
 }
 
@@ -354,14 +374,14 @@ func (u *User) GetFollowing(page int) ([]*User, error) {
 func (u *User) NewGitSig() *git.Signature {
 	return &git.Signature{
 		Name:  u.DisplayName(),
-		Email: u.Email,
+		Email: u.getEmail(),
 		When:  time.Now(),
 	}
 }
 
 // EncodePasswd encodes password to safe format.
 func (u *User) EncodePasswd() {
-	newPasswd := base.PBKDF2([]byte(u.Passwd), []byte(u.Salt), 10000, 50, sha256.New)
+	newPasswd := pbkdf2.Key([]byte(u.Passwd), []byte(u.Salt), 10000, 50, sha256.New)
 	u.Passwd = fmt.Sprintf("%x", newPasswd)
 }
 
@@ -453,7 +473,7 @@ func (u *User) IsUserOrgOwner(orgID int64) bool {
 	return IsOrganizationOwner(orgID, u.ID)
 }
 
-// IsPublicMember returns true if user public his/her membership in give organization.
+// IsPublicMember returns true if user public his/her membership in given organization.
 func (u *User) IsPublicMember(orgID int64) bool {
 	return IsPublicMembership(orgID, u.ID)
 }
@@ -531,7 +551,7 @@ func IsUserExist(uid int64, name string) (bool, error) {
 }
 
 // GetUserSalt returns a ramdom user salt token.
-func GetUserSalt() string {
+func GetUserSalt() (string, error) {
 	return base.GetRandomString(10)
 }
 
@@ -593,6 +613,15 @@ func CreateUser(u *User) (err error) {
 	}
 
 	u.Email = strings.ToLower(u.Email)
+	has, err := x.
+		Where("email=?", u.Email).
+		Get(new(User))
+	if err != nil {
+		return err
+	} else if has {
+		return ErrEmailAlreadyUsed{u.Email}
+	}
+
 	isExist, err = IsEmailUsed(u.Email)
 	if err != nil {
 		return err
@@ -600,12 +629,19 @@ func CreateUser(u *User) (err error) {
 		return ErrEmailAlreadyUsed{u.Email}
 	}
 
+	u.KeepEmailPrivate = setting.Service.DefaultKeepEmailPrivate
+
 	u.LowerName = strings.ToLower(u.Name)
 	u.AvatarEmail = u.Email
 	u.Avatar = base.HashEmail(u.AvatarEmail)
-	u.Rands = GetUserSalt()
-	u.Salt = GetUserSalt()
+	if u.Rands, err = GetUserSalt(); err != nil {
+		return err
+	}
+	if u.Salt, err = GetUserSalt(); err != nil {
+		return err
+	}
 	u.EncodePasswd()
+	u.AllowCreateOrganization = true
 	u.MaxRepoCreation = -1
 
 	sess := x.NewSession()
@@ -636,16 +672,22 @@ func CountUsers() int64 {
 }
 
 // Users returns number of users in given page.
-func Users(page, pageSize int) ([]*User, error) {
-	users := make([]*User, 0, pageSize)
-	return users, x.
-		Limit(pageSize, (page-1)*pageSize).
-		Where("type=0").
-		Asc("name").
+func Users(opts *SearchUserOptions) ([]*User, error) {
+	if len(opts.OrderBy) == 0 {
+		opts.OrderBy = "name ASC"
+	}
+
+	users := make([]*User, 0, opts.PageSize)
+	sess := x.
+		Limit(opts.PageSize, (opts.Page-1)*opts.PageSize).
+		Where("type=0")
+
+	return users, sess.
+		OrderBy(opts.OrderBy).
 		Find(&users)
 }
 
-// get user by erify code
+// get user by verify code
 func getVerifyUser(code string) (user *User) {
 	if len(code) <= base.TimeLimitCodeLength {
 		return nil
@@ -880,8 +922,10 @@ func deleteUser(e *xorm.Session, u *User) error {
 	}
 
 	avatarPath := u.CustomAvatarPath()
-	if err := os.Remove(avatarPath); err != nil {
-		return fmt.Errorf("Fail to remove %s: %v", avatarPath, err)
+	if com.IsExist(avatarPath) {
+		if err := os.Remove(avatarPath); err != nil {
+			return fmt.Errorf("Fail to remove %s: %v", avatarPath, err)
+		}
 	}
 
 	return nil
@@ -1011,8 +1055,10 @@ func GetUserEmailsByNames(names []string) []string {
 // GetUsersByIDs returns all resolved users from a list of Ids.
 func GetUsersByIDs(ids []int64) ([]*User, error) {
 	ous := make([]*User, 0, len(ids))
-	err := x.
-		In("id", ids).
+	if len(ids) == 0 {
+		return ous, nil
+	}
+	err := x.In("id", ids).
 		Asc("name").
 		Find(&ous)
 	return ous, err
@@ -1037,7 +1083,7 @@ type UserCommit struct {
 	*git.Commit
 }
 
-// ValidateCommitWithEmail chceck if author's e-mail of commit is corresponsind to a user.
+// ValidateCommitWithEmail check if author's e-mail of commit is corresponding to a user.
 func ValidateCommitWithEmail(c *git.Commit) *User {
 	u, err := GetUserByEmail(c.Author.Email)
 	if err != nil {
@@ -1206,7 +1252,7 @@ func FollowUser(userID, followID int64) (err error) {
 	return sess.Commit()
 }
 
-// UnfollowUser unmarks someone be another's follower.
+// UnfollowUser unmarks someone as another's follower.
 func UnfollowUser(userID, followID int64) (err error) {
 	if userID == followID || !IsFollowing(userID, followID) {
 		return nil
