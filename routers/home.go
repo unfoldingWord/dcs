@@ -138,12 +138,13 @@ func ExploreRepos(ctx *context.Context) {
 
 // UserSearchOptions options when render search user page
 type UserSearchOptions struct {
-	Type     models.UserType
-	Counter  func() int64
-	Ranger   func(int, int) ([]*models.User, error)
-	PageSize int
-	OrderBy  string
-	TplName  base.TplName
+	Type          models.UserType
+	Counter       func() int64
+	Ranger        func(int, int) ([]*models.User, error)
+	PageSize      int
+	OrderBy       string
+	TplName       base.TplName
+	SearchByEmail bool // search by email as well as username/fullname
 }
 
 // RenderUserSearch render user search page
@@ -170,11 +171,12 @@ func RenderUserSearch(ctx *context.Context, opts *UserSearchOptions) {
 	} else {
 		if isKeywordValid(keyword) {
 			users, count, err = models.SearchUserByName(&models.SearchUserOptions{
-				Keyword:  keyword,
-				Type:     opts.Type,
-				OrderBy:  opts.OrderBy,
-				Page:     page,
-				PageSize: opts.PageSize,
+				Keyword:       keyword,
+				Type:          opts.Type,
+				OrderBy:       opts.OrderBy,
+				Page:          page,
+				PageSize:      opts.PageSize,
+				SearchByEmail: opts.SearchByEmail,
 			})
 			if err != nil {
 				ctx.Handle(500, "SearchUserByName", err)

@@ -1105,11 +1105,12 @@ func GetUserByEmail(email string) (*User, error) {
 
 // SearchUserOptions contains the options for searching
 type SearchUserOptions struct {
-	Keyword  string
-	Type     UserType
-	OrderBy  string
-	Page     int
-	PageSize int // Can be smaller than or equal to setting.UI.ExplorePagingNum
+	Keyword       string
+	Type          UserType
+	OrderBy       string
+	Page          int
+	PageSize      int  // Can be smaller than or equal to setting.UI.ExplorePagingNum
+	SearchByEmail bool // Search by email address as well as username/fullname
 }
 
 // SearchUserByName takes keyword and part of user name to search,
@@ -1129,11 +1130,20 @@ func SearchUserByName(opts *SearchUserOptions) (users []*User, _ int64, _ error)
 
 	searchQuery := "%" + opts.Keyword + "%"
 	users = make([]*User, 0, opts.PageSize)
+
 	// Append conditions
-	sess := x.
-		Where("LOWER(lower_name) LIKE ?", searchQuery).
-		Or("LOWER(full_name) LIKE ?", searchQuery).
-		And("type = ?", opts.Type)
+	// TODO someday use an indexer for this
+	var sess *xorm.Session
+	if opts.SearchByEmail {
+		sess = x.Where("LOWER(lower_name) LIKE ?", searchQuery).
+			Or("LOWER(full_name) LIKE ?", searchQuery).
+			Or("LOWER(email) LIKE ?", searchQuery).
+			And("type = ?", opts.Type)
+	} else {
+		sess = x.Where("LOWER(lower_name) LIKE ?", searchQuery).
+			Or("LOWER(full_name) LIKE ?", searchQuery).
+			And("type = ?", opts.Type)
+	}
 
 	var countSess xorm.Session
 	countSess = *sess

@@ -22,20 +22,20 @@ type Hashtag struct {
 }
 
 // GetHashtagSummary gets a summary of the hashtags for repositories with the specified prefix.
-func GetHashtagSummary(repoPrefix string) ([]map[string]string, error) {
-	return getHashtagSummary(x, repoPrefix)
+func GetHashtagSummary(repoPrefix string, ownerID int64) ([]map[string]string, error) {
+	return getHashtagSummary(x, repoPrefix, ownerID)
 }
 
-func getHashtagSummary(engine *xorm.Engine, repoPrefix string) ([]map[string]string, error) {
+func getHashtagSummary(engine *xorm.Engine, repoPrefix string, ownerID int64) ([]map[string]string, error) {
 
 	sql := `SELECT h.tag_name, COUNT(*) AS count_of_occurrences
 FROM repository AS r INNER JOIN hashtag AS h ON r.id = h.repo_id
-WHERE r.name LIKE ?
+WHERE r.owner_id = ? AND r.name LIKE ?
 GROUP BY h.tag_name
 ORDER BY LOWER(h.tag_name)`
 
 	// get the requested list of tags
-	results, err := engine.Query(sql, repoPrefix + "%")
+	results, err := engine.Query(sql, ownerID, repoPrefix + "%")
 
 	if err != nil {
 		return nil, err

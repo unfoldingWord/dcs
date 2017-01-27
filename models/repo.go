@@ -36,7 +36,8 @@ import (
 )
 
 const (
-	tplUpdateHook = "#!/usr/bin/env %s\n%s update $1 $2 $3 --config='%s'\n\"%s/custom/bin/update\" $1 $2 $3 \"%s\"\n"
+	tplUpdateHook = "#!/usr/bin/env %s\n%s update $1 $2 $3 --config='%s'\n"
+	tplPostUpdateHook = "#!/usr/bin/env %s\n\"%s/custom/bin/post-update\" \"%s\"\n"
 )
 
 var repoWorkingPool = sync.NewExclusivePool()
@@ -763,8 +764,13 @@ func cleanUpMigrateGitConfig(configPath string) error {
 }
 
 func createUpdateHook(repoPath string) error {
+	err := git.SetPostUpdateHook(repoPath,
+	       fmt.Sprintf(tplPostUpdateHook, setting.ScriptType, path.Dir(setting.AppPath), setting.CustomConf))
+	if err != nil {
+	       return err
+	}
 	return git.SetUpdateHook(repoPath,
-		fmt.Sprintf(tplUpdateHook, setting.ScriptType, "\""+setting.AppPath+"\"", setting.CustomConf, path.Dir(setting.AppPath), setting.CustomConf))
+		fmt.Sprintf(tplUpdateHook, setting.ScriptType, "\""+setting.AppPath+"\"", setting.CustomConf))
 }
 
 // CleanUpMigrateInfo finishes migrating repository and/or wiki with things that don't need to be done for mirrors.
@@ -892,7 +898,7 @@ func prepareRepoCommit(repo *Repository, tmpDir, repoPath string, opts CreateRep
 			return fmt.Errorf("getRepoInitFile[%s]: %v", opts.License, err)
 		}
 
-		if err = ioutil.WriteFile(filepath.Join(tmpDir, "LICENSE"), data, 0644); err != nil {
+		if err = ioutil.WriteFile(filepath.Join(tmpDir, "LICENSE.md"), data, 0644); err != nil {
 			return fmt.Errorf("write LICENSE: %v", err)
 		}
 	}
