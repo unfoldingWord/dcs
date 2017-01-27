@@ -4,7 +4,11 @@
 
 package models
 
-import "fmt"
+import (
+	"fmt"
+
+	"code.gitea.io/gitea/modules/log"
+)
 
 // AccessMode specifies the users access mode
 type AccessMode int
@@ -96,45 +100,29 @@ func HasAccess(user *User, repo *Repository, testMode AccessMode) (bool, error) 
 	return hasAccess(x, user, repo, testMode)
 }
 
-type repoAccess struct {
-	Access     `xorm:"extends"`
-	Repository `xorm:"extends"`
-}
-
-func (repoAccess) TableName() string {
-	return "access"
-}
-
 // GetRepositoryAccesses finds all repositories with their access mode where a user has access but does not own.
 func (user *User) GetRepositoryAccesses() (map[*Repository]AccessMode, error) {
-	rows, err := x.
-		Join("INNER", "repository", "repository.id = access.repo_id").
-		Where("access.user_id = ?", user.ID).
-		And("repository.owner_id <> ?", user.ID).
-		Rows(new(repoAccess))
-	if err != nil {
+	accesses := make([]*Access, 0, 10)
+	if err := x.Find(&accesses, &Access{UserID: user.ID}); err != nil {
 		return nil, err
 	}
-	defer rows.Close()
 
-	var repos = make(map[*Repository]AccessMode, 10)
-	var ownerCache = make(map[int64]*User, 10)
-	for rows.Next() {
-		var repo repoAccess
-		err = rows.Scan(&repo)
+	repos := make(map[*Repository]AccessMode, len(accesses))
+	for _, access := range accesses {
+		repo, err := GetRepositoryByID(access.RepoID)
 		if err != nil {
+			if IsErrRepoNotExist(err) {
+				log.Error(4, "GetRepositoryByID: %v", err)
+				continue
+			}
 			return nil, err
 		}
-
-		var ok bool
-		if repo.Owner, ok = ownerCache[repo.OwnerID]; !ok {
-			if err = repo.GetOwner(); err != nil {
-				return nil, err
-			}
-			ownerCache[repo.OwnerID] = repo.Owner
+		if err = repo.GetOwner(); err != nil {
+			return nil, err
+		} else if repo.OwnerID == user.ID {
+			continue
 		}
-
-		repos[&repo.Repository] = repo.Access.Mode
+		repos[repo] = access.Mode
 	}
 	return repos, nil
 }
@@ -166,7 +154,7 @@ func maxAccessMode(modes ...AccessMode) AccessMode {
 	return max
 }
 
-// FIXME: do cross-comparison so reduce deletions and additions to the minimum?
+// FIXME: do corss-comparison so reduce deletions and additions to the minimum?
 func (repo *Repository) refreshAccesses(e Engine, accessMap map[int64]AccessMode) (err error) {
 	minMode := AccessModeRead
 	if !repo.IsPrivate {

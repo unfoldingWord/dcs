@@ -76,10 +76,8 @@ var migrations = []Migration{
 
 	// v13 -> v14:v0.9.87
 	NewMigration("set comment updated with created", setCommentUpdatedWithCreated),
-	// v14
+
 	NewMigration("create user column diff view style", createUserColumnDiffViewStyle),
-	// v15
-	NewMigration("create user column allow create organization", createAllowCreateOrganizationColumn),
 }
 
 // Migrate database to current version
@@ -95,7 +93,6 @@ func Migrate(x *xorm.Engine) error {
 	} else if !has {
 		// If the version record does not exist we think
 		// it is a fresh installation and we can skip all migrations.
-		currentVersion.ID = 0
 		currentVersion.Version = int64(minDBVersion + len(migrations))
 
 		if _, err = x.InsertOne(currentVersion); err != nil {
@@ -105,13 +102,13 @@ func Migrate(x *xorm.Engine) error {
 
 	v := currentVersion.Version
 	if minDBVersion > v {
-		log.Fatal(4, `Gitea no longer supports auto-migration from your previously installed version.
+		log.Fatal(4, `Gogs no longer supports auto-migration from your previously installed version.
 Please try to upgrade to a lower version (>= v0.6.0) first, then upgrade to current version.`)
 		return nil
 	}
 
 	if int(v-minDBVersion) > len(migrations) {
-		// User downgraded Gitea.
+		// User downgraded Gogs.
 		currentVersion.Version = int64(len(migrations) + minDBVersion)
 		_, err = x.Id(1).Update(currentVersion)
 		return err
@@ -460,12 +457,8 @@ func generateOrgRandsAndSalt(x *xorm.Engine) (err error) {
 	}
 
 	for _, org := range orgs {
-		if org.Rands, err = base.GetRandomString(10); err != nil {
-			return err
-		}
-		if org.Salt, err = base.GetRandomString(10); err != nil {
-			return err
-		}
+		org.Rands = base.GetRandomString(10)
+		org.Salt = base.GetRandomString(10)
 		if _, err = sess.Id(org.ID).Update(org); err != nil {
 			return err
 		}

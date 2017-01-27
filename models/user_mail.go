@@ -5,14 +5,8 @@
 package models
 
 import (
-	"errors"
 	"fmt"
 	"strings"
-)
-
-var (
-	// ErrEmailAddressNotExist email address not exist
-	ErrEmailAddressNotExist = errors.New("Email address does not exist")
 )
 
 // EmailAddress is the list of all email addresses of a user. Can contain the
@@ -49,8 +43,8 @@ func GetEmailAddresses(uid int64) ([]*EmailAddress, error) {
 		}
 	}
 
-	// We always want the primary email address displayed, even if it's not in
-	// the email address table (yet).
+	// We alway want the primary email address displayed, even if it's not in
+	// the emailaddress table (yet).
 	if !isPrimaryFound {
 		emails = append(emails, &EmailAddress{
 			Email:       u.Email,
@@ -122,9 +116,7 @@ func (email *EmailAddress) Activate() error {
 	if err != nil {
 		return err
 	}
-	if user.Rands, err = GetUserSalt(); err != nil {
-		return err
-	}
+	user.Rands = GetUserSalt()
 
 	sess := x.NewSession()
 	defer sessionRelease(sess)
@@ -147,25 +139,14 @@ func (email *EmailAddress) Activate() error {
 
 // DeleteEmailAddress deletes an email address of given user.
 func DeleteEmailAddress(email *EmailAddress) (err error) {
-	var deleted int64
-	// ask to check UID
-	var address = EmailAddress{
-		UID: email.UID,
-	}
 	if email.ID > 0 {
-		deleted, err = x.Id(email.ID).Delete(&address)
+		_, err = x.Id(email.ID).Delete(new(EmailAddress))
 	} else {
-		deleted, err = x.
+		_, err = x.
 			Where("email=?", email.Email).
-			Delete(&address)
+			Delete(new(EmailAddress))
 	}
-
-	if err != nil {
-		return err
-	} else if deleted != 1 {
-		return ErrEmailAddressNotExist
-	}
-	return nil
+	return err
 }
 
 // DeleteEmailAddresses deletes multiple email addresses

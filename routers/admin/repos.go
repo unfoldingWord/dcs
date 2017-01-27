@@ -28,6 +28,7 @@ func Repos(ctx *context.Context) {
 		Ranger:   models.Repositories,
 		Private:  true,
 		PageSize: setting.UI.Admin.RepoPagingNum,
+		OrderBy:  "owner_id ASC, name ASC, id ASC",
 		TplName:  tplRepos,
 	})
 }

@@ -3,16 +3,16 @@
 	"ignore": "test",
 	"package": [
 		{
-			"checksumSHA1": "mIaKLz6373W+jDLjgE/Yzt/exeo=",
+			"checksumSHA1": "X4WaxEtgFkM4VHg6TcNk2xkrqCI=",
 			"path": "code.gitea.io/git",
-			"revision": "3d0fa331865619d2f3a7a0fcf23670a389310954",
-			"revisionTime": "2016-12-28T14:57:51Z"
+			"revision": "0807b517283977be34f0ff5510b21e676fc1527c",
+			"revisionTime": "2016-11-13T14:20:52Z"
 		},
 		{
-			"checksumSHA1": "BKj0haFTDebzdC2nACpoGzp3s8A=",
+			"checksumSHA1": "x5jr5+UwaMg861XyFWIoNzYmmMM=",
 			"path": "code.gitea.io/sdk/gitea",
-			"revision": "2064cc397bc48b0a46f8324a97421a824b11882e",
-			"revisionTime": "2016-12-31T14:43:27Z"
+			"revision": "140df7f34c05d0d7e5b03c2b4a7d38690b3a5152",
+			"revisionTime": "2016-11-29T07:37:12Z"
 		},
 		{
 			"checksumSHA1": "IyfS7Rbl6OgR83QR7TOfKdDCq+M=",
@@ -75,52 +75,10 @@
 			"revisionTime": "2016-09-25T22:06:09Z"
 		},
 		{
-			"checksumSHA1": "zJ5PJN6nh9CRhxfub9e7BNzekR0=",
-			"path": "github.com/denisenkom/go-mssqldb",
-			"revision": "e32ca5036449b7ea12c62ed761ea1ad7fc88a4e2",
-			"revisionTime": "2016-11-28T23:08:40Z"
-		},
-		{
-			"checksumSHA1": "2Fy1Y6Z3lRRX1891WF/+HT4XS2I=",
-			"path": "github.com/dgrijalva/jwt-go",
-			"revision": "9ed569b5d1ac936e6494082958d63a6aa4fff99a",
-			"revisionTime": "2016-11-01T19:39:35Z"
-		},
-		{
 			"checksumSHA1": "5ftkjfUwI9A6xCQ1PwIAd5+qlo0=",
 			"path": "github.com/elazarl/go-bindata-assetfs",
 			"revision": "57eb5e1fc594ad4b0b1dbea7b286d299e0cb43c2",
 			"revisionTime": "2015-12-24T04:54:52Z"
-		},
-		{
-			"checksumSHA1": "imR2wF388/0fBU6RRWx8RvTi8Q8=",
-			"path": "github.com/facebookgo/clock",
-			"revision": "600d898af40aa09a7a93ecb9265d87b0504b6f03",
-			"revisionTime": "2015-04-10T01:09:13Z"
-		},
-		{
-			"checksumSHA1": "j2O1k8Kvw6btFkJKt45nQQuAHM0=",
-			"path": "github.com/facebookgo/grace/gracehttp",
-			"revision": "5729e484473f52048578af1b80d0008c7024089b",
-			"revisionTime": "2016-09-26T23:17:15Z"
-		},
-		{
-			"checksumSHA1": "nj3ykV8Em7WOfvHNIo/XNTT9LOM=",
-			"path": "github.com/facebookgo/grace/gracenet",
-			"revision": "5729e484473f52048578af1b80d0008c7024089b",
-			"revisionTime": "2016-09-26T23:17:15Z"
-		},
-		{
-			"checksumSHA1": "8SgB/r3Cf+OvXmg8bIPnlEq03Bs=",
-			"path": "github.com/facebookgo/httpdown",
-			"revision": "a3b1354551a26449fbe05f5d855937f6e7acbd71",
-			"revisionTime": "2016-03-23T22:10:27Z"
-		},
-		{
-			"checksumSHA1": "SzXvrWxavFo8HD/2hnbdu17C3VE=",
-			"path": "github.com/facebookgo/stats",
-			"revision": "1b76add642e42c6ffba7211ad7b3939ce654526e",
-			"revisionTime": "2015-10-06T22:16:25Z"
 		},
 		{
 			"checksumSHA1": "qTJizMr1DBhDTZiRNmC+khEClz8=",
@@ -207,16 +165,16 @@
 			"revisionTime": "2016-11-01T11:13:14Z"
 		},
 		{
-			"checksumSHA1": "sDRC697KuCbpI+1i2VPhyqgAvjs=",
+			"checksumSHA1": "PPOvZWzZLvyb0lB4efMAHW9qkd8=",
 			"path": "github.com/go-xorm/builder",
-			"revision": "db75972580de4a7c6c20fff5b16a924c3de3fa12",
-			"revisionTime": "2016-12-14T02:05:24Z"
+			"revision": "cd42e8337f3031e737c3f415b6354793cf30f1c9",
+			"revisionTime": "2016-10-21T06:05:34Z"
 		},
 		{
-			"checksumSHA1": "T1DSQqU9e7oW0up0W55TkG4Cb7M=",
+			"checksumSHA1": "ex5USc7tJNNS0nW/O+/69/kMHtM=",
 			"path": "github.com/go-xorm/core",
-			"revision": "60b1704516c3af6ff969d81f359cf310ad43a2e0",
-			"revisionTime": "2017-01-03T06:17:17Z"
+			"revision": "2ec3936f8a8a3fb6397c6c10185acffa87488534",
+			"revisionTime": "2016-11-01T01:36:51Z"
 		},
 		{
 			"checksumSHA1": "k52lEKLp8j5M+jFpe+3u+bIFpxQ=",
@@ -225,10 +183,10 @@
 			"revisionTime": "2016-08-11T02:11:45Z"
 		},
 		{
-			"checksumSHA1": "eEVm8NprkjOX2HZVxIJwbOLD5Hg=",
+			"checksumSHA1": "eOdqyQnmqdF0VZpBgYoOaYQDaiw=",
 			"path": "github.com/go-xorm/xorm",
-			"revision": "44b70cccf417e3d4a565aaa3128853b5cd553767",
-			"revisionTime": "2017-01-03T05:31:47Z"
+			"revision": "f2610e02a1a1240d663ebe5bcde6c9ad4f1372cb",
+			"revisionTime": "2016-11-11T16:13:12Z"
 		},
 		{
 			"checksumSHA1": "1ft/4j5MFa7C9dPI9whL03HSUzk=",
@@ -807,12 +765,6 @@
 			"revisionTime": "2016-09-25T22:06:09Z"
 		},
 		{
-			"checksumSHA1": "2PpOCNkWnshDrXeCVH2kp3VHhIM=",
-			"path": "github.com/stretchr/testify/require",
-			"revision": "2402e8e7a02fc811447d11f881aa9746cdc57983",
-			"revisionTime": "2016-12-17T20:04:45Z"
-		},
-		{
 			"checksumSHA1": "MAnxhGyQfhoyoATeT1zJDPyWq7A=",
 			"path": "github.com/syndtr/goleveldb/leveldb",
 			"revision": "917f41c560270110ceb73c5b38be2a9127387071",
@@ -919,18 +871,6 @@
 			"path": "golang.org/x/crypto/ed25519/internal/edwards25519",
 			"revision": "9477e0b78b9ac3d0b03822fd95422e2fe07627cd",
 			"revisionTime": "2016-10-31T15:37:30Z"
-		},
-		{
-			"checksumSHA1": "MCeXr2RNeiG1XG6V+er1OR0qyeo=",
-			"path": "golang.org/x/crypto/md4",
-			"revision": "ede567c8e044a5913dad1d1af3696d9da953104c",
-			"revisionTime": "2016-11-04T19:41:44Z"
-		},
-		{
-			"checksumSHA1": "1MGpGDQqnUoRpv7VEcQrXOBydXE=",
-			"path": "golang.org/x/crypto/pbkdf2",
-			"revision": "8e06e8ddd9629eb88639aba897641bff8031f1d3",
-			"revisionTime": "2016-09-10T18:59:01Z"
 		},
 		{
 			"checksumSHA1": "LlElMHeTC34ng8eHzjvtUhAgrr8=",
@@ -1117,18 +1057,6 @@
 			"path": "gopkg.in/redis.v2",
 			"revision": "e6179049628164864e6e84e973cfb56335748dea",
 			"revisionTime": "2014-12-09T11:07:59Z"
-		},
-		{
-			"checksumSHA1": "LUbT9kZUJcQkU/6GSbnsai+b5t4=",
-			"path": "gopkg.in/testfixtures.v2",
-			"revision": "b9ef14dc461bf934d8df2dfc6f1f456be5664cca",
-			"revisionTime": "2016-10-15T20:31:37Z"
-		},
-		{
-			"checksumSHA1": "12GqsW8PiRPnezDDy0v4brZrndM=",
-			"path": "gopkg.in/yaml.v2",
-			"revision": "a5b47d31c556af34a302ce5d659e6fea44d90de0",
-			"revisionTime": "2016-09-28T15:37:09Z"
 		},
 		{
 			"checksumSHA1": "JQBqnAXO83ic7bwer/MwurhQMtg=",

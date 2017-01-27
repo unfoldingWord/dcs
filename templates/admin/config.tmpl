@@ -88,15 +88,15 @@
 						<dt>{{.i18n.Tr "admin.config.db_type"}}</dt>
 						<dd>{{.DbCfg.Type}}</dd>
 						<dt>{{.i18n.Tr "admin.config.db_host"}}</dt>
-						<dd>{{if .DbCfg.Host}}{{.DbCfg.Host}}{{else}}-{{end}}</dd>
+						<dd>{{.DbCfg.Host}}</dd>
 						<dt>{{.i18n.Tr "admin.config.db_name"}}</dt>
-						<dd>{{if .DbCfg.Name}}{{.DbCfg.Name}}{{else}}-{{end}}</dd>
+						<dd>{{.DbCfg.Name}}</dd>
 						<dt>{{.i18n.Tr "admin.config.db_user"}}</dt>
-						<dd>{{if .DbCfg.User}}{{.DbCfg.User}}{{else}}-{{end}}</dd>
+						<dd>{{.DbCfg.User}}</dd>
 						<dt>{{.i18n.Tr "admin.config.db_ssl_mode"}}</dt>
-						<dd><i class="fa fa{{if .DbCfg.SSLMode}}-check{{end}}-square-o"></i> {{.i18n.Tr "admin.config.db_ssl_mode_helper"}}</dd>
+						<dd>{{.DbCfg.SSLMode}} {{.i18n.Tr "admin.config.db_ssl_mode_helper"}}</dd>
 						<dt>{{.i18n.Tr "admin.config.db_path"}}</dt>
-						<dd>{{if .DbCfg.Path}}{{.DbCfg.Path}}{{else}}-{{end}} {{.i18n.Tr "admin.config.db_path_helper"}}</dd>
+						<dd>{{.DbCfg.Path}} {{.i18n.Tr "admin.config.db_path_helper"}}</dd>
 					</dl>
 				</div>
 
@@ -194,7 +194,7 @@
 						<dt>{{.i18n.Tr "admin.config.session_provider"}}</dt>
 						<dd>{{.SessionConfig.Provider}}</dd>
 						<dt>{{.i18n.Tr "admin.config.provider_config"}}</dt>
-						<dd><code>{{if .SessionConfig.ProviderConfig}}{{.SessionConfig.ProviderConfig}}{{else}}-{{end}}</code></dd>
+						<dd><code>{{.SessionConfig.ProviderConfig}}</code></dd>
 						<dt>{{.i18n.Tr "admin.config.cookie_name"}}</dt>
 						<dd>{{.SessionConfig.CookieName}}</dd>
 						<dt>{{.i18n.Tr "admin.config.gc_interval_time"}}</dt>

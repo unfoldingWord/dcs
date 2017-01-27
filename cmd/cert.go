@@ -137,7 +137,7 @@ func runCert(ctx *cli.Context) error {
 		SerialNumber: serialNumber,
 		Subject: pkix.Name{
 			Organization: []string{"Acme Co"},
-			CommonName:   "Gitea",
+			CommonName:   "Gogs",
 		},
 		NotBefore: notBefore,
 		NotAfter:  notAfter,

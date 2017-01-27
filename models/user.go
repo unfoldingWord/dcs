@@ -25,7 +25,6 @@ import (
 	"github.com/Unknwon/com"
 	"github.com/go-xorm/xorm"
 	"github.com/nfnt/resize"
-	"golang.org/x/crypto/pbkdf2"
 
 	"code.gitea.io/git"
 	api "code.gitea.io/sdk/gitea"
@@ -102,12 +101,11 @@ type User struct {
 	MaxRepoCreation int `xorm:"NOT NULL DEFAULT -1"`
 
 	// Permissions
-	IsActive                bool // Activate primary email
-	IsAdmin                 bool
-	AllowGitHook            bool
-	AllowImportLocal        bool // Allow migrate repository by local path
-	AllowCreateOrganization bool `xorm:"DEFAULT true"`
-	ProhibitLogin           bool
+	IsActive         bool // Activate primary email
+	IsAdmin          bool
+	AllowGitHook     bool
+	AllowImportLocal bool // Allow migrate repository by local path
+	ProhibitLogin    bool
 
 	// Avatar
 	Avatar          string `xorm:"VARCHAR(2048) NOT NULL"`
@@ -209,11 +207,6 @@ func (u *User) CanCreateRepo() bool {
 		return u.NumRepos < setting.Repository.MaxCreationLimit
 	}
 	return u.NumRepos < u.MaxRepoCreation
-}
-
-// CanCreateOrganization returns true if user can create organisation.
-func (u *User) CanCreateOrganization() bool {
-	return u.IsAdmin || u.AllowCreateOrganization
 }
 
 // CanEditGitHook returns true if user can edit Git hooks.
@@ -368,7 +361,7 @@ func (u *User) NewGitSig() *git.Signature {
 
 // EncodePasswd encodes password to safe format.
 func (u *User) EncodePasswd() {
-	newPasswd := pbkdf2.Key([]byte(u.Passwd), []byte(u.Salt), 10000, 50, sha256.New)
+	newPasswd := base.PBKDF2([]byte(u.Passwd), []byte(u.Salt), 10000, 50, sha256.New)
 	u.Passwd = fmt.Sprintf("%x", newPasswd)
 }
 
@@ -538,7 +531,7 @@ func IsUserExist(uid int64, name string) (bool, error) {
 }
 
 // GetUserSalt returns a ramdom user salt token.
-func GetUserSalt() (string, error) {
+func GetUserSalt() string {
 	return base.GetRandomString(10)
 }
 
@@ -600,15 +593,6 @@ func CreateUser(u *User) (err error) {
 	}
 
 	u.Email = strings.ToLower(u.Email)
-	has, err := x.
-		Where("email=?", u.Email).
-		Get(new(User))
-	if err != nil {
-		return err
-	} else if has {
-		return ErrEmailAlreadyUsed{u.Email}
-	}
-
 	isExist, err = IsEmailUsed(u.Email)
 	if err != nil {
 		return err
@@ -619,14 +603,9 @@ func CreateUser(u *User) (err error) {
 	u.LowerName = strings.ToLower(u.Name)
 	u.AvatarEmail = u.Email
 	u.Avatar = base.HashEmail(u.AvatarEmail)
-	if u.Rands, err = GetUserSalt(); err != nil {
-		return err
-	}
-	if u.Salt, err = GetUserSalt(); err != nil {
-		return err
-	}
+	u.Rands = GetUserSalt()
+	u.Salt = GetUserSalt()
 	u.EncodePasswd()
-	u.AllowCreateOrganization = true
 	u.MaxRepoCreation = -1
 
 	sess := x.NewSession()
@@ -657,22 +636,16 @@ func CountUsers() int64 {
 }
 
 // Users returns number of users in given page.
-func Users(opts *SearchUserOptions) ([]*User, error) {
-	if len(opts.OrderBy) == 0 {
-		opts.OrderBy = "name ASC"
-	}
-
-	users := make([]*User, 0, opts.PageSize)
-	sess := x.
-		Limit(opts.PageSize, (opts.Page-1)*opts.PageSize).
-		Where("type=0")
-
-	return users, sess.
-		OrderBy(opts.OrderBy).
+func Users(page, pageSize int) ([]*User, error) {
+	users := make([]*User, 0, pageSize)
+	return users, x.
+		Limit(pageSize, (page-1)*pageSize).
+		Where("type=0").
+		Asc("name").
 		Find(&users)
 }
 
-// get user by verify code
+// get user by erify code
 func getVerifyUser(code string) (user *User) {
 	if len(code) <= base.TimeLimitCodeLength {
 		return nil
@@ -907,10 +880,8 @@ func deleteUser(e *xorm.Session, u *User) error {
 	}
 
 	avatarPath := u.CustomAvatarPath()
-	if com.IsExist(avatarPath) {
-		if err := os.Remove(avatarPath); err != nil {
-			return fmt.Errorf("Fail to remove %s: %v", avatarPath, err)
-		}
+	if err := os.Remove(avatarPath); err != nil {
+		return fmt.Errorf("Fail to remove %s: %v", avatarPath, err)
 	}
 
 	return nil
@@ -1066,7 +1037,7 @@ type UserCommit struct {
 	*git.Commit
 }
 
-// ValidateCommitWithEmail check if author's e-mail of commit is corresponding to a user.
+// ValidateCommitWithEmail chceck if author's e-mail of commit is corresponsind to a user.
 func ValidateCommitWithEmail(c *git.Commit) *User {
 	u, err := GetUserByEmail(c.Author.Email)
 	if err != nil {
@@ -1235,7 +1206,7 @@ func FollowUser(userID, followID int64) (err error) {
 	return sess.Commit()
 }
 
-// UnfollowUser unmarks someone as another's follower.
+// UnfollowUser unmarks someone be another's follower.
 func UnfollowUser(userID, followID int64) (err error) {
 	if userID == followID || !IsFollowing(userID, followID) {
 		return nil

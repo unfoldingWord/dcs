@@ -31,12 +31,9 @@ const (
 
 var (
 	pullRequestTemplateCandidates = []string{
-		"PULL_REQUEST_TEMPLATE.md",
-		"pull_request_template.md",
-		".gitea/PULL_REQUEST_TEMPLATE.md",
-		".gitea/pull_request_template.md",
-		".github/PULL_REQUEST_TEMPLATE.md",
-		".github/pull_request_template.md",
+		"PULL_REQUEST.md",
+		".gogs/PULL_REQUEST.md",
+		".github/PULL_REQUEST.md",
 	}
 )
 
@@ -51,7 +48,7 @@ func getForkRepository(ctx *context.Context) *models.Repository {
 		return nil
 	}
 
-	if !forkRepo.CanBeForked() || !forkRepo.HasAccess(ctx.User) {
+	if !forkRepo.CanBeForked() {
 		ctx.Handle(404, "getForkRepository", nil)
 		return nil
 	}

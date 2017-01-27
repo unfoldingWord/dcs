@@ -20,45 +20,21 @@ const (
 
 var _ core.ILogger = DiscardLogger{}
 
-// DiscardLogger don't log implementation for core.ILogger
 type DiscardLogger struct{}
 
-// Debug empty implementation
-func (DiscardLogger) Debug(v ...interface{}) {}
-
-// Debugf empty implementation
+func (DiscardLogger) Debug(v ...interface{})                 {}
 func (DiscardLogger) Debugf(format string, v ...interface{}) {}
-
-// Error empty implementation
-func (DiscardLogger) Error(v ...interface{}) {}
-
-// Errorf empty implementation
+func (DiscardLogger) Error(v ...interface{})                 {}
 func (DiscardLogger) Errorf(format string, v ...interface{}) {}
-
-// Info empty implementation
-func (DiscardLogger) Info(v ...interface{}) {}
-
-// Infof empty implementation
-func (DiscardLogger) Infof(format string, v ...interface{}) {}
-
-// Warn empty implementation
-func (DiscardLogger) Warn(v ...interface{}) {}
-
-// Warnf empty implementation
-func (DiscardLogger) Warnf(format string, v ...interface{}) {}
-
-// Level empty implementation
+func (DiscardLogger) Info(v ...interface{})                  {}
+func (DiscardLogger) Infof(format string, v ...interface{})  {}
+func (DiscardLogger) Warn(v ...interface{})                  {}
+func (DiscardLogger) Warnf(format string, v ...interface{})  {}
 func (DiscardLogger) Level() core.LogLevel {
 	return core.LOG_UNKNOWN
 }
-
-// SetLevel empty implementation
 func (DiscardLogger) SetLevel(l core.LogLevel) {}
-
-// ShowSQL empty implementation
-func (DiscardLogger) ShowSQL(show ...bool) {}
-
-// IsShowSQL empty implementation
+func (DiscardLogger) ShowSQL(show ...bool)     {}
 func (DiscardLogger) IsShowSQL() bool {
 	return false
 }

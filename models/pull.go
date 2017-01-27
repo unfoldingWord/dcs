@@ -8,8 +8,6 @@ import (
 	"fmt"
 	"os"
 	"path"
-	"path/filepath"
-	"strconv"
 	"strings"
 	"time"
 
@@ -372,7 +370,7 @@ func (pr *PullRequest) Merge(doer *User, baseGitRepo *git.Repository) (err error
 
 	// TODO: when squash commits, no need to append merge commit.
 	// It is possible that head branch is not fully sync with base branch for merge commits,
-	// so we need to get latest head commit and append merge commit manually
+	// so we need to get latest head commit and append merge commit manully
 	// to avoid strange diff commits produced.
 	mergeCommit, err := baseGitRepo.GetBranchCommit(pr.BaseBranch)
 	if err != nil {
@@ -382,7 +380,7 @@ func (pr *PullRequest) Merge(doer *User, baseGitRepo *git.Repository) (err error
 	l.PushFront(mergeCommit)
 
 	p := &api.PushPayload{
-		Ref:        git.BranchPrefix + pr.BaseBranch,
+		Ref:        git.BRANCH_PREFIX + pr.BaseBranch,
 		Before:     pr.MergeBase,
 		After:      pr.MergedCommitID,
 		CompareURL: setting.AppURL + pr.BaseRepo.ComposeCompareURL(pr.MergeBase, pr.MergedCommitID),
@@ -406,6 +404,7 @@ var patchConflicts = []string{
 }
 
 // testPatch checks if patch can be merged to base repository without conflict.
+// FIXME: make a mechanism to clean up stable local copies.
 func (pr *PullRequest) testPatch() (err error) {
 	if pr.BaseRepo == nil {
 		pr.BaseRepo, err = GetRepositoryByID(pr.BaseRepoID)
@@ -419,9 +418,9 @@ func (pr *PullRequest) testPatch() (err error) {
 		return fmt.Errorf("BaseRepo.PatchPath: %v", err)
 	}
 
-	// Fast fail if patch does not exist, this assumes data is corrupted.
+	// Fast fail if patch does not exist, this assumes data is cruppted.
 	if !com.IsFile(patchPath) {
-		log.Trace("PullRequest[%d].testPatch: ignored corrupted data", pr.ID)
+		log.Trace("PullRequest[%d].testPatch: ignored cruppted data", pr.ID)
 		return nil
 	}
 
@@ -430,22 +429,14 @@ func (pr *PullRequest) testPatch() (err error) {
 
 	log.Trace("PullRequest[%d].testPatch (patchPath): %s", pr.ID, patchPath)
 
-	pr.Status = PullRequestStatusChecking
-
-	indexTmpPath := filepath.Join(os.TempDir(), "gitea-"+pr.BaseRepo.Name+"-"+strconv.Itoa(time.Now().Nanosecond()))
-	defer os.Remove(indexTmpPath)
-
-	var stderr string
-	_, stderr, err = process.ExecDirEnv(-1, "", fmt.Sprintf("testPatch (git read-tree): %d", pr.BaseRepo.ID),
-		[]string{"GIT_DIR=" + pr.BaseRepo.RepoPath(), "GIT_INDEX_FILE=" + indexTmpPath},
-		"git", "read-tree", pr.BaseBranch)
-	if err != nil {
-		return fmt.Errorf("git read-tree --index-output=%s %s: %v - %s", indexTmpPath, pr.BaseBranch, err, stderr)
+	if err := pr.BaseRepo.UpdateLocalCopyBranch(pr.BaseBranch); err != nil {
+		return fmt.Errorf("UpdateLocalCopy: %v", err)
 	}
 
-	_, stderr, err = process.ExecDirEnv(-1, "", fmt.Sprintf("testPatch (git apply --check): %d", pr.BaseRepo.ID),
-		[]string{"GIT_INDEX_FILE=" + indexTmpPath, "GIT_DIR=" + pr.BaseRepo.RepoPath()},
-		"git", "apply", "--check", "--cached", patchPath)
+	pr.Status = PullRequestStatusChecking
+	_, stderr, err := process.ExecDir(-1, pr.BaseRepo.LocalCopyPath(),
+		fmt.Sprintf("testPatch (git apply --check): %d", pr.BaseRepo.ID),
+		"git", "apply", "--check", patchPath)
 	if err != nil {
 		for i := range patchConflicts {
 			if strings.Contains(stderr, patchConflicts[i]) {
@@ -573,7 +564,7 @@ func PullRequests(baseRepoID int64, opts *PullRequestsOptions) ([]*PullRequest, 
 	return prs, maxResults, findSession.Find(&prs)
 }
 
-// GetUnmergedPullRequest returns a pull request that is open and has not been merged
+// GetUnmergedPullRequest returnss a pull request that is open and has not been merged
 // by given head/base and repo/branch.
 func GetUnmergedPullRequest(headRepoID, baseRepoID int64, headBranch, baseBranch string) (*PullRequest, error) {
 	pr := new(PullRequest)
@@ -591,7 +582,7 @@ func GetUnmergedPullRequest(headRepoID, baseRepoID int64, headBranch, baseBranch
 	return pr, nil
 }
 
-// GetUnmergedPullRequestsByHeadInfo returns all pull requests that are open and has not been merged
+// GetUnmergedPullRequestsByHeadInfo returnss all pull requests that are open and has not been merged
 // by given head information (repo and branch).
 func GetUnmergedPullRequestsByHeadInfo(repoID int64, branch string) ([]*PullRequest, error) {
 	prs := make([]*PullRequest, 0, 2)
@@ -602,7 +593,7 @@ func GetUnmergedPullRequestsByHeadInfo(repoID int64, branch string) ([]*PullRequ
 		Find(&prs)
 }
 
-// GetUnmergedPullRequestsByBaseInfo returns all pull requests that are open and has not been merged
+// GetUnmergedPullRequestsByBaseInfo returnss all pull requests that are open and has not been merged
 // by given base information (repo and branch).
 func GetUnmergedPullRequestsByBaseInfo(repoID int64, branch string) ([]*PullRequest, error) {
 	prs := make([]*PullRequest, 0, 2)
@@ -885,7 +876,7 @@ func ChangeUsernameInPullRequests(oldUserName, newUserName string) error {
 	return err
 }
 
-// checkAndUpdateStatus checks if pull request is possible to leaving checking status,
+// checkAndUpdateStatus checks if pull request is possible to levaing checking status,
 // and set to be either conflict or mergeable.
 func (pr *PullRequest) checkAndUpdateStatus() {
 	// Status is not changed to conflict means mergeable.
@@ -893,7 +884,7 @@ func (pr *PullRequest) checkAndUpdateStatus() {
 		pr.Status = PullRequestStatusMergeable
 	}
 
-	// Make sure there is no waiting test to process before leaving the checking status.
+	// Make sure there is no waiting test to process before levaing the checking status.
 	if !pullRequestQueue.Exist(pr.ID) {
 		if err := pr.UpdateCols("status"); err != nil {
 			log.Error(4, "Update[%d]: %v", pr.ID, err)
@@ -936,7 +927,7 @@ func TestPullRequests() {
 
 		pr, err := GetPullRequestByID(com.StrTo(prID).MustInt64())
 		if err != nil {
-			log.Error(4, "GetPullRequestByID[%s]: %v", prID, err)
+			log.Error(4, "GetPullRequestByID[%d]: %v", prID, err)
 			continue
 		} else if err = pr.testPatch(); err != nil {
 			log.Error(4, "testPatch[%d]: %v", pr.ID, err)

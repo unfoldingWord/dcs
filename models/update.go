@@ -91,10 +91,10 @@ type PushUpdateOptions struct {
 // PushUpdate must be called for any push actions in order to
 // generates necessary push action history feeds.
 func PushUpdate(opts PushUpdateOptions) (err error) {
-	isNewRef := opts.OldCommitID == git.EmptySHA
-	isDelRef := opts.NewCommitID == git.EmptySHA
+	isNewRef := opts.OldCommitID == git.EMPTY_SHA
+	isDelRef := opts.NewCommitID == git.EMPTY_SHA
 	if isNewRef && isDelRef {
-		return fmt.Errorf("Old and new revisions are both %s", git.EmptySHA)
+		return fmt.Errorf("Old and new revisions are both %s", git.EMPTY_SHA)
 	}
 
 	repoPath := RepoPath(opts.RepoUserName, opts.RepoName)
@@ -106,7 +106,7 @@ func PushUpdate(opts PushUpdateOptions) (err error) {
 	}
 
 	if isDelRef {
-		log.GitLogger.Info("Reference '%s' has been deleted from '%s/%s' by %s",
+		log.GitLogger.Info("Reference '%s' has been deleted from '%s/%s' by %d",
 			opts.RefFullName, opts.RepoUserName, opts.RepoName, opts.PusherName)
 		return nil
 	}
@@ -127,7 +127,7 @@ func PushUpdate(opts PushUpdateOptions) (err error) {
 	}
 
 	// Push tags.
-	if strings.HasPrefix(opts.RefFullName, git.TagPrefix) {
+	if strings.HasPrefix(opts.RefFullName, git.TAG_PREFIX) {
 		if err := CommitRepoAction(CommitRepoActionOptions{
 			PusherName:  opts.PusherName,
 			RepoOwnerID: owner.ID,

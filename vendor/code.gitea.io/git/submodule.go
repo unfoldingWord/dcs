@@ -6,7 +6,6 @@ package git
 
 import "strings"
 
-// SubModule submodule is a reference on git repository
 type SubModule struct {
 	Name string
 	URL  string
@@ -20,7 +19,6 @@ type SubModuleFile struct {
 	refID  string
 }
 
-// NewSubModuleFile create a new submodule file
 func NewSubModuleFile(c *Commit, refURL, refID string) *SubModuleFile {
 	return &SubModuleFile{
 		Commit: c,
@@ -66,8 +64,9 @@ func (sf *SubModuleFile) RefURL(urlPrefix string, parentPath string) string {
 		// fix problem with reverse proxy works only with local server
 		if strings.Contains(urlPrefix, url[i+1:j]) {
 			return urlPrefix + url[j+1:]
+		} else {
+			return "http://" + url[i+1:j] + "/" + url[j+1:]
 		}
-		return "http://" + url[i+1:j] + "/" + url[j+1:]
 	}
 
 	return url

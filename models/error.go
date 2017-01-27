@@ -123,20 +123,6 @@ func (err ErrUserHasOrgs) Error() string {
 	return fmt.Sprintf("user still has membership of organizations [uid: %d]", err.UID)
 }
 
-// ErrUserNotAllowedCreateOrg represents a "UserNotAllowedCreateOrg" kind of error.
-type ErrUserNotAllowedCreateOrg struct {
-}
-
-// IsErrUserNotAllowedCreateOrg checks if an error is an ErrUserNotAllowedCreateOrg.
-func IsErrUserNotAllowedCreateOrg(err error) bool {
-	_, ok := err.(ErrUserNotAllowedCreateOrg)
-	return ok
-}
-
-func (err ErrUserNotAllowedCreateOrg) Error() string {
-	return fmt.Sprintf("user is not allowed to create organizations")
-}
-
 // ErrReachLimitOfRepo represents a "ReachLimitOfRepo" kind of error.
 type ErrReachLimitOfRepo struct {
 	Limit int
@@ -583,7 +569,7 @@ type ErrPullRequestNotExist struct {
 	IssueID    int64
 	HeadRepoID int64
 	BaseRepoID int64
-	HeadBranch string
+	HeadBarcnh string
 	BaseBranch string
 }
 
@@ -595,7 +581,7 @@ func IsErrPullRequestNotExist(err error) bool {
 
 func (err ErrPullRequestNotExist) Error() string {
 	return fmt.Sprintf("pull request does not exist [id: %d, issue_id: %d, head_repo_id: %d, base_repo_id: %d, head_branch: %s, base_branch: %s]",
-		err.ID, err.IssueID, err.HeadRepoID, err.BaseRepoID, err.HeadBranch, err.BaseBranch)
+		err.ID, err.IssueID, err.HeadRepoID, err.BaseRepoID, err.HeadBarcnh, err.BaseBranch)
 }
 
 // ErrPullRequestAlreadyExists represents a "PullRequestAlreadyExists"-error

@@ -5,6 +5,7 @@
 package cmd
 
 import (
+	"crypto/tls"
 	"fmt"
 	"net"
 	"net/http"
@@ -15,10 +16,9 @@ import (
 
 	"code.gitea.io/gitea/models"
 	"code.gitea.io/gitea/modules/auth"
+	"code.gitea.io/gitea/modules/bindata"
 	"code.gitea.io/gitea/modules/context"
-	"code.gitea.io/gitea/modules/lfs"
 	"code.gitea.io/gitea/modules/log"
-	"code.gitea.io/gitea/modules/options"
 	"code.gitea.io/gitea/modules/public"
 	"code.gitea.io/gitea/modules/setting"
 	"code.gitea.io/gitea/modules/templates"
@@ -29,7 +29,6 @@ import (
 	"code.gitea.io/gitea/routers/org"
 	"code.gitea.io/gitea/routers/repo"
 	"code.gitea.io/gitea/routers/user"
-
 	"github.com/go-macaron/binding"
 	"github.com/go-macaron/cache"
 	"github.com/go-macaron/captcha"
@@ -45,8 +44,8 @@ import (
 // CmdWeb represents the available web sub-command.
 var CmdWeb = cli.Command{
 	Name:  "web",
-	Usage: "Start Gitea web server",
-	Description: `Gitea web server is the only thing you need to run,
+	Usage: "Start Gogs web server",
+	Description: `Gogs web server is the only thing you need to run,
 and it takes care of all the other things for you`,
 	Action: runWeb,
 	Flags: []cli.Flag{
@@ -100,29 +99,22 @@ func newMacaron() *macaron.Macaron {
 	m.Use(templates.Renderer())
 	models.InitMailRender(templates.Mailer())
 
-	localeNames, err := options.Dir("locale")
-
+	localeNames, err := bindata.AssetDir("conf/locale")
 	if err != nil {
 		log.Fatal(4, "Fail to list locale files: %v", err)
 	}
-
 	localFiles := make(map[string][]byte)
-
 	for _, name := range localeNames {
-		localFiles[name], err = options.Locale(name)
-
-		if err != nil {
-			log.Fatal(4, "Failed to load %s locale file. %v", name, err)
-		}
+		localFiles[name] = bindata.MustAsset("conf/locale/" + name)
 	}
-
 	m.Use(i18n.I18n(i18n.Options{
-		SubURL:      setting.AppSubURL,
-		Files:       localFiles,
-		Langs:       setting.Langs,
-		Names:       setting.Names,
-		DefaultLang: "en-US",
-		Redirect:    true,
+		SubURL:          setting.AppSubURL,
+		Files:           localFiles,
+		CustomDirectory: path.Join(setting.CustomPath, "conf/locale"),
+		Langs:           setting.Langs,
+		Names:           setting.Names,
+		DefaultLang:     "en-US",
+		Redirect:        true,
 	}))
 	m.Use(cache.Cacher(cache.Options{
 		Adapter:       setting.CacheAdapter,
@@ -166,8 +158,6 @@ func runWeb(ctx *cli.Context) error {
 	reqSignOut := context.Toggle(&context.ToggleOptions{SignOutRequired: true})
 
 	bindIgnErr := binding.BindIgnErr
-
-	m.Use(user.GetNotificationCount)
 
 	// FIXME: not all routes need go through same middlewares.
 	// Especially some AJAX requests, we can reduce middleware number to improve performance.
@@ -274,6 +264,7 @@ func runWeb(ctx *cli.Context) error {
 			m.Get("", user.Profile)
 			m.Get("/followers", user.Followers)
 			m.Get("/following", user.Following)
+			m.Get("/stars", user.Stars)
 		})
 
 		m.Get("/attachments/:uuid", func(ctx *context.Context) {
@@ -534,7 +525,6 @@ func runWeb(ctx *cli.Context) error {
 		}, context.RepoRef())
 
 		// m.Get("/branches", repo.Branches)
-		m.Post("/branches/:name/delete", reqSignIn, reqRepoWriter, repo.DeleteBranchPost)
 
 		m.Group("/wiki", func() {
 			m.Get("/?:page", repo.Wiki)
@@ -561,7 +551,6 @@ func runWeb(ctx *cli.Context) error {
 			m.Get("/src/*", repo.SetEditorconfigIfExists, repo.Home)
 			m.Get("/raw/*", repo.SingleDownload)
 			m.Get("/commits/*", repo.RefCommits)
-			m.Get("/graph", repo.Graph)
 			m.Get("/commit/:sha([a-f0-9]{7,40})$", repo.SetEditorconfigIfExists, repo.SetDiffViewStyle, repo.Diff)
 			m.Get("/forks", repo.Forks)
 		}, context.RepoRef())
@@ -581,19 +570,11 @@ func runWeb(ctx *cli.Context) error {
 		}, ignSignIn, context.RepoAssignment(true), context.RepoRef())
 
 		m.Group("/:reponame", func() {
-			m.Group("/info/lfs", func() {
-				m.Post("/objects/batch", lfs.BatchHandler)
-				m.Get("/objects/:oid/:filename", lfs.ObjectOidHandler)
-				m.Any("/objects/:oid", lfs.ObjectOidHandler)
-				m.Post("/objects", lfs.PostHandler)
-			}, ignSignInAndCsrf)
 			m.Any("/*", ignSignInAndCsrf, repo.HTTP)
 			m.Head("/tasks/trigger", repo.TriggerTask)
 		})
 	})
 	// ***** END: Repository *****
-
-	m.Get("/notifications", reqSignIn, user.Notifications)
 
 	m.Group("/api", func() {
 		apiv1.RegisterRoutes(m)
@@ -625,16 +606,13 @@ func runWeb(ctx *cli.Context) error {
 	}
 	log.Info("Listen: %v://%s%s", setting.Protocol, listenAddr, setting.AppSubURL)
 
-	if setting.LFS.StartServer {
-		log.Info("LFS server enabled")
-	}
-
 	var err error
 	switch setting.Protocol {
 	case setting.HTTP:
-		err = runHTTP(listenAddr, m)
+		err = http.ListenAndServe(listenAddr, m)
 	case setting.HTTPS:
-		err = runHTTPS(listenAddr, setting.CertFile, setting.KeyFile, m)
+		server := &http.Server{Addr: listenAddr, TLSConfig: &tls.Config{MinVersion: tls.VersionTLS10}, Handler: m}
+		err = server.ListenAndServeTLS(setting.CertFile, setting.KeyFile)
 	case setting.FCGI:
 		err = fcgi.Serve(nil, m)
 	case setting.UnixSocket:

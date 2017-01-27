@@ -19,12 +19,10 @@ type BeforeDeleteProcessor interface {
 	BeforeDelete()
 }
 
-// BeforeSetProcessor executed before data set to the struct fields
 type BeforeSetProcessor interface {
 	BeforeSet(string, Cell)
 }
 
-// AfterSetProcessor executed after data set to the struct fields
 type AfterSetProcessor interface {
 	AfterSet(string, Cell)
 }

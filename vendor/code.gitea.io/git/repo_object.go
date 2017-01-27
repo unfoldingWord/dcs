@@ -4,16 +4,11 @@
 
 package git
 
-// ObjectType git object type
 type ObjectType string
 
 const (
-	// ObjectCommit commit object type
-	ObjectCommit ObjectType = "commit"
-	// ObjectTree tree object type
-	ObjectTree ObjectType = "tree"
-	// ObjectBlob blob object type
-	ObjectBlob ObjectType = "blob"
-	// ObjectTag tag object type
-	ObjectTag ObjectType = "tag"
+	OBJECT_COMMIT ObjectType = "commit"
+	OBJECT_TREE   ObjectType = "tree"
+	OBJECT_BLOB   ObjectType = "blob"
+	OBJECT_TAG    ObjectType = "tag"
 )

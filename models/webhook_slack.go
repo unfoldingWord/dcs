@@ -16,7 +16,7 @@ import (
 	"code.gitea.io/gitea/modules/setting"
 )
 
-// SlackMeta contains the slack metadata
+// SlackMeta contains the slack metdata
 type SlackMeta struct {
 	Channel  string `json:"channel"`
 	Username string `json:"username"`
@@ -75,7 +75,7 @@ func SlackShortTextFormatter(s string) string {
 	return s
 }
 
-// SlackLinkFormatter creates a link compatible with slack
+// SlackLinkFormatter creates a link compatablie with slack
 func SlackLinkFormatter(url string, text string) string {
 	return fmt.Sprintf("<%s|%s>", url, SlackTextFormatter(text))
 }
