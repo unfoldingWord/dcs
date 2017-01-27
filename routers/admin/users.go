@@ -198,11 +198,7 @@ func EditUserPost(ctx *context.Context, form auth.AdminEditUserForm) {
 
 	if len(form.Password) > 0 {
 		u.Passwd = form.Password
-		var err error
-		if u.Salt, err = models.GetUserSalt(); err != nil {
-			ctx.Handle(500, "UpdateUser", err)
-			return
-		}
+		u.Salt = models.GetUserSalt()
 		u.EncodePasswd()
 	}
 
@@ -216,7 +212,6 @@ func EditUserPost(ctx *context.Context, form auth.AdminEditUserForm) {
 	u.IsAdmin = form.Admin
 	u.AllowGitHook = form.AllowGitHook
 	u.AllowImportLocal = form.AllowImportLocal
-	u.AllowCreateOrganization = form.AllowCreateOrganization
 	u.ProhibitLogin = form.ProhibitLogin
 
 	if err := models.UpdateUser(u); err != nil {

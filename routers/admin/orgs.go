@@ -27,6 +27,7 @@ func Organizations(ctx *context.Context) {
 		Counter:  models.CountOrganizations,
 		Ranger:   models.Organizations,
 		PageSize: setting.UI.Admin.OrgPagingNum,
+		OrderBy:  "id ASC",
 		TplName:  tplOrgs,
 	})
 }

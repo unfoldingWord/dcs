@@ -1,7 +1,3 @@
-// Copyright 2016 The Xorm Authors. All rights reserved.
-// Use of this source code is governed by a BSD-style
-// license that can be found in the LICENSE file.
-
 package builder
 
 import (
@@ -9,39 +5,31 @@ import (
 	"io"
 )
 
-// Writer defines the interface
 type Writer interface {
 	io.Writer
 	Append(...interface{})
 }
 
-var _ Writer = NewWriter()
-
-// BytesWriter implments Writer and save SQL in bytes.Buffer
-type BytesWriter struct {
+type stringWriter struct {
 	writer *bytes.Buffer
 	buffer []byte
 	args   []interface{}
 }
 
-// NewWriter creates a new string writer
-func NewWriter() *BytesWriter {
-	w := &BytesWriter{}
+func NewWriter() *stringWriter {
+	w := &stringWriter{}
 	w.writer = bytes.NewBuffer(w.buffer)
 	return w
 }
 
-// Write writes data to Writer
-func (s *BytesWriter) Write(buf []byte) (int, error) {
+func (s *stringWriter) Write(buf []byte) (int, error) {
 	return s.writer.Write(buf)
 }
 
-// Append appends args to Writer
-func (s *BytesWriter) Append(args ...interface{}) {
+func (s *stringWriter) Append(args ...interface{}) {
 	s.args = append(s.args, args...)
 }
 
-// Cond defines an interface
 type Cond interface {
 	WriteTo(Writer) error
 	And(...Cond) Cond
@@ -53,7 +41,6 @@ type condEmpty struct{}
 
 var _ Cond = condEmpty{}
 
-// NewCond creates an empty condition
 func NewCond() Cond {
 	return condEmpty{}
 }

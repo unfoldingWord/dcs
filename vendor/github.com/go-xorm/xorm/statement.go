@@ -258,7 +258,7 @@ func buildUpdates(engine *Engine, table *core.Table, bean interface{},
 		if col.IsDeleted && !unscoped {
 			continue
 		}
-		if use, ok := columnMap[strings.ToLower(col.Name)]; ok && !use {
+		if use, ok := columnMap[col.Name]; ok && !use {
 			continue
 		}
 
@@ -273,8 +273,9 @@ func buildUpdates(engine *Engine, table *core.Table, bean interface{},
 
 		requiredField := useAllCols
 		includeNil := useAllCols
+		lColName := strings.ToLower(col.Name)
 
-		if b, ok := getFlagForColumn(mustColumnMap, col); ok {
+		if b, ok := mustColumnMap[lColName]; ok {
 			if b {
 				requiredField = true
 			} else {
@@ -283,7 +284,7 @@ func buildUpdates(engine *Engine, table *core.Table, bean interface{},
 		}
 
 		// !evalphobia! set fieldValue as nil when column is nullable and zero-value
-		if b, ok := getFlagForColumn(nullableMap, col); ok {
+		if b, ok := nullableMap[lColName]; ok {
 			if b && col.Nullable && isZero(fieldValue.Interface()) {
 				var nilValue *int
 				fieldValue = reflect.ValueOf(nilValue)
@@ -497,7 +498,7 @@ func buildConds(engine *Engine, table *core.Table, bean interface{},
 			continue
 		}
 
-		if engine.dialect.DBType() == core.MSSQL && (col.SQLType.Name == core.Text || col.SQLType.IsBlob() || col.SQLType.Name == core.TimeStampz) {
+		if engine.dialect.DBType() == core.MSSQL && col.SQLType.Name == core.Text {
 			continue
 		}
 		if col.SQLType.IsJson() {
@@ -522,11 +523,7 @@ func buildConds(engine *Engine, table *core.Table, bean interface{},
 		}
 
 		if col.IsDeleted && !unscoped { // tag "deleted" is enabled
-			if engine.dialect.DBType() == core.MSSQL {
-				conds = append(conds, builder.IsNull{colName})
-			} else {
-				conds = append(conds, builder.IsNull{colName}.Or(builder.Eq{colName: "0001-01-01 00:00:00"}))
-			}
+			conds = append(conds, builder.IsNull{colName}.Or(builder.Eq{colName: "0001-01-01 00:00:00"}))
 		}
 
 		fieldValue := *fieldValuePtr
@@ -536,8 +533,7 @@ func buildConds(engine *Engine, table *core.Table, bean interface{},
 
 		fieldType := reflect.TypeOf(fieldValue.Interface())
 		requiredField := useAllCols
-
-		if b, ok := getFlagForColumn(mustColumnMap, col); ok {
+		if b, ok := mustColumnMap[strings.ToLower(col.Name)]; ok {
 			if b {
 				requiredField = true
 			} else {
@@ -707,14 +703,7 @@ func (statement *Statement) TableName() string {
 }
 
 // Id generate "where id = ? " statment or for composite key "where key1 = ? and key2 = ?"
-//
-// Deprecated: use ID instead
 func (statement *Statement) Id(id interface{}) *Statement {
-	return statement.ID(id)
-}
-
-// ID generate "where id = ? " statment or for composite key "where key1 = ? and key2 = ?"
-func (statement *Statement) ID(id interface{}) *Statement {
 	idValue := reflect.ValueOf(id)
 	idType := reflect.TypeOf(idValue.Interface())
 
@@ -996,16 +985,15 @@ func (statement *Statement) Unscoped() *Statement {
 }
 
 func (statement *Statement) genColumnStr() string {
+
 	var buf bytes.Buffer
-	if statement.RefTable == nil {
-		return ""
-	}
 
 	columns := statement.RefTable.Columns()
 
 	for _, col := range columns {
+
 		if statement.OmitStr != "" {
-			if _, ok := getFlagForColumn(statement.columnMap, col); ok {
+			if _, ok := statement.columnMap[strings.ToLower(col.Name)]; ok {
 				continue
 			}
 		}
@@ -1114,7 +1102,7 @@ func (statement *Statement) genConds(bean interface{}) (string, []interface{}, e
 		statement.cond = statement.cond.And(autoCond)
 	}
 
-	statement.processIDParam()
+	statement.processIdParam()
 
 	return builder.ToSQL(statement.cond)
 }
@@ -1156,15 +1144,14 @@ func (statement *Statement) genCountSQL(bean interface{}) (string, []interface{}
 
 	condSQL, condArgs, _ := statement.genConds(bean)
 
-	var selectSQL = statement.selectStr
-	if len(selectSQL) <= 0 {
+	var selectSql = statement.selectStr
+	if len(selectSql) <= 0 {
 		if statement.IsDistinct {
-			selectSQL = fmt.Sprintf("count(DISTINCT %s)", statement.ColumnStr)
-		} else {
-			selectSQL = "count(*)"
+			selectSql = fmt.Sprintf("count(DISTINCT %s)", statement.ColumnStr)
 		}
+		selectSql = "count(*)"
 	}
-	return statement.genSelectSQL(selectSQL, condSQL), append(statement.joinArgs, condArgs...)
+	return statement.genSelectSQL(selectSql, condSQL), append(statement.joinArgs, condArgs...)
 }
 
 func (statement *Statement) genSumSQL(bean interface{}, columns ...string) (string, []interface{}) {
@@ -1191,7 +1178,7 @@ func (statement *Statement) genSelectSQL(columnStr, condSQL string) (a string) {
 	var top string
 	var mssqlCondi string
 
-	statement.processIDParam()
+	statement.processIdParam()
 
 	var buf bytes.Buffer
 	if len(condSQL) > 0 {
@@ -1288,7 +1275,7 @@ func (statement *Statement) genSelectSQL(columnStr, condSQL string) (a string) {
 	return
 }
 
-func (statement *Statement) processIDParam() {
+func (statement *Statement) processIdParam() {
 	if statement.IdParam == nil {
 		return
 	}
@@ -1329,12 +1316,7 @@ func (statement *Statement) convertIDSQL(sqlStr string) string {
 			return ""
 		}
 
-		var top string
-		if statement.LimitN > 0 && statement.Engine.dialect.DBType() == core.MSSQL {
-			top = fmt.Sprintf("TOP %d ", statement.LimitN)
-		}
-
-		return fmt.Sprintf("SELECT %s%s FROM %v", top, colstrs, sqls[1])
+		return fmt.Sprintf("SELECT %s FROM %v", colstrs, sqls[1])
 	}
 	return ""
 }

@@ -287,21 +287,16 @@ func (b *Base) LogSQL(sql string, args []interface{}) {
 }
 
 var (
-	dialects = map[string]func() Dialect{}
+	dialects = map[DbType]func() Dialect{}
 )
 
-// RegisterDialect register database dialect
 func RegisterDialect(dbName DbType, dialectFunc func() Dialect) {
 	if dialectFunc == nil {
 		panic("core: Register dialect is nil")
 	}
-	dialects[strings.ToLower(string(dbName))] = dialectFunc // !nashtsai! allow override dialect
+	dialects[dbName] = dialectFunc // !nashtsai! allow override dialect
 }
 
-// QueryDialect query if registed database dialect
 func QueryDialect(dbName DbType) Dialect {
-	if d, ok := dialects[strings.ToLower(string(dbName))]; ok {
-		return d()
-	}
-	return nil
+	return dialects[dbName]()
 }

@@ -43,21 +43,8 @@
 					</td>
 				{{else}}
 					<td class="name">
-						{{if $entry.IsDir}}
-							{{$subJumpablePathName := $entry.GetSubJumpablePathName}}
-							{{$subJumpablePath := SubJumpablePath $subJumpablePathName}}
-							<span class="octicon octicon-file-directory"></span>
-							<a href="{{EscapePound $.TreeLink}}/{{EscapePound $subJumpablePathName}}">
-								{{if eq (len $subJumpablePath) 2}}
-									<span class="jumpable-path">{{index  $subJumpablePath 0}}</span>{{index  $subJumpablePath 1}}
-								{{else}}
-									{{index $subJumpablePath 0}}
-								{{end}}
-							</a>
-						{{else}}
-							<span class="octicon octicon-file-text"></span>
-							<a href="{{EscapePound $.TreeLink}}/{{EscapePound $entry.Name}}">{{$entry.Name}}</a>
-						{{end}}
+						<span class="octicon octicon-file-{{if or $entry.IsDir}}directory{{else}}text{{end}}"></span>
+						<a href="{{EscapePound $.TreeLink}}/{{EscapePound $entry.Name}}">{{$entry.Name}}</a>
 					</td>
 				{{end}}
 				<td class="message collapsing has-emoji">

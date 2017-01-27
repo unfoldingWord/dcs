@@ -25,7 +25,6 @@ func (b *Blob) Data() (io.Reader, error) {
 	return bytes.NewBuffer(stdout), nil
 }
 
-// DataPipeline gets content of blob and write the result or error to stdout or stderr
 func (b *Blob) DataPipeline(stdout, stderr io.Writer) error {
 	return NewCommand("show", b.ID.String()).RunInDirPipeline(b.repo.Path, stdout, stderr)
 }

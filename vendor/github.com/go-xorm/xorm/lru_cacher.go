@@ -13,7 +13,6 @@ import (
 	"github.com/go-xorm/core"
 )
 
-// LRUCacher implments cache object facilities
 type LRUCacher struct {
 	idList   *list.List
 	sqlList  *list.List
@@ -27,12 +26,10 @@ type LRUCacher struct {
 	GcInterval     time.Duration
 }
 
-// NewLRUCacher creates a cacher
 func NewLRUCacher(store core.CacheStore, maxElementSize int) *LRUCacher {
 	return NewLRUCacher2(store, 3600*time.Second, maxElementSize)
 }
 
-// NewLRUCacher2 creates a cache include different params
 func NewLRUCacher2(store core.CacheStore, expired time.Duration, maxElementSize int) *LRUCacher {
 	cacher := &LRUCacher{store: store, idList: list.New(),
 		sqlList: list.New(), Expired: expired,
@@ -43,6 +40,10 @@ func NewLRUCacher2(store core.CacheStore, expired time.Duration, maxElementSize 
 	cacher.RunGC()
 	return cacher
 }
+
+//func NewLRUCacher3(store CacheStore, expired time.Duration, maxSize int) *LRUCacher {
+//    return newLRUCacher(store, expired, maxSize, 0)
+//}
 
 // RunGC run once every m.GcInterval
 func (m *LRUCacher) RunGC() {
@@ -100,7 +101,7 @@ func (m *LRUCacher) GetIds(tableName, sql string) interface{} {
 	}
 	if v, err := m.store.Get(sql); err == nil {
 		if el, ok := m.sqlIndex[tableName][sql]; !ok {
-			el = m.sqlList.PushBack(newSQLNode(tableName, sql))
+			el = m.sqlList.PushBack(newSqlNode(tableName, sql))
 			m.sqlIndex[tableName][sql] = el
 		} else {
 			lastTime := el.Value.(*sqlNode).lastVisit
@@ -113,9 +114,9 @@ func (m *LRUCacher) GetIds(tableName, sql string) interface{} {
 			el.Value.(*sqlNode).lastVisit = time.Now()
 		}
 		return v
+	} else {
+		m.delIds(tableName, sql)
 	}
-
-	m.delIds(tableName, sql)
 
 	return nil
 }
@@ -127,7 +128,7 @@ func (m *LRUCacher) GetBean(tableName string, id string) interface{} {
 	if _, ok := m.idIndex[tableName]; !ok {
 		m.idIndex[tableName] = make(map[string]*list.Element)
 	}
-	tid := genID(tableName, id)
+	tid := genId(tableName, id)
 	if v, err := m.store.Get(tid); err == nil {
 		if el, ok := m.idIndex[tableName][id]; ok {
 			lastTime := el.Value.(*idNode).lastVisit
@@ -140,19 +141,19 @@ func (m *LRUCacher) GetBean(tableName string, id string) interface{} {
 			m.idList.MoveToBack(el)
 			el.Value.(*idNode).lastVisit = time.Now()
 		} else {
-			el = m.idList.PushBack(newIDNode(tableName, id))
+			el = m.idList.PushBack(newIdNode(tableName, id))
 			m.idIndex[tableName][id] = el
 		}
 		return v
+	} else {
+		// store bean is not exist, then remove memory's index
+		m.delBean(tableName, id)
+		//m.clearIds(tableName)
+		return nil
 	}
-
-	// store bean is not exist, then remove memory's index
-	m.delBean(tableName, id)
-	//m.clearIds(tableName)
-	return nil
 }
 
-// clearIds clears all sql-ids mapping on table tableName from cache
+// Clear all sql-ids mapping on table tableName from cache
 func (m *LRUCacher) clearIds(tableName string) {
 	if tis, ok := m.sqlIndex[tableName]; ok {
 		for sql, v := range tis {
@@ -163,7 +164,6 @@ func (m *LRUCacher) clearIds(tableName string) {
 	m.sqlIndex[tableName] = make(map[string]*list.Element)
 }
 
-// ClearIds clears all sql-ids mapping on table tableName from cache
 func (m *LRUCacher) ClearIds(tableName string) {
 	m.mutex.Lock()
 	defer m.mutex.Unlock()
@@ -174,21 +174,19 @@ func (m *LRUCacher) clearBeans(tableName string) {
 	if tis, ok := m.idIndex[tableName]; ok {
 		for id, v := range tis {
 			m.idList.Remove(v)
-			tid := genID(tableName, id)
+			tid := genId(tableName, id)
 			m.store.Del(tid)
 		}
 	}
 	m.idIndex[tableName] = make(map[string]*list.Element)
 }
 
-// ClearBeans clears all beans in some table
 func (m *LRUCacher) ClearBeans(tableName string) {
 	m.mutex.Lock()
 	defer m.mutex.Unlock()
 	m.clearBeans(tableName)
 }
 
-// PutIds pus ids into table
 func (m *LRUCacher) PutIds(tableName, sql string, ids interface{}) {
 	m.mutex.Lock()
 	defer m.mutex.Unlock()
@@ -196,7 +194,7 @@ func (m *LRUCacher) PutIds(tableName, sql string, ids interface{}) {
 		m.sqlIndex[tableName] = make(map[string]*list.Element)
 	}
 	if el, ok := m.sqlIndex[tableName][sql]; !ok {
-		el = m.sqlList.PushBack(newSQLNode(tableName, sql))
+		el = m.sqlList.PushBack(newSqlNode(tableName, sql))
 		m.sqlIndex[tableName][sql] = el
 	} else {
 		el.Value.(*sqlNode).lastVisit = time.Now()
@@ -209,7 +207,6 @@ func (m *LRUCacher) PutIds(tableName, sql string, ids interface{}) {
 	}
 }
 
-// PutBean puts beans into table
 func (m *LRUCacher) PutBean(tableName string, id string, obj interface{}) {
 	m.mutex.Lock()
 	defer m.mutex.Unlock()
@@ -217,13 +214,13 @@ func (m *LRUCacher) PutBean(tableName string, id string, obj interface{}) {
 	var ok bool
 
 	if el, ok = m.idIndex[tableName][id]; !ok {
-		el = m.idList.PushBack(newIDNode(tableName, id))
+		el = m.idList.PushBack(newIdNode(tableName, id))
 		m.idIndex[tableName][id] = el
 	} else {
 		el.Value.(*idNode).lastVisit = time.Now()
 	}
 
-	m.store.Put(genID(tableName, id), obj)
+	m.store.Put(genId(tableName, id), obj)
 	if m.idList.Len() > m.MaxElementSize {
 		e := m.idList.Front()
 		node := e.Value.(*idNode)
@@ -241,7 +238,6 @@ func (m *LRUCacher) delIds(tableName, sql string) {
 	m.store.Del(sql)
 }
 
-// DelIds deletes ids
 func (m *LRUCacher) DelIds(tableName, sql string) {
 	m.mutex.Lock()
 	defer m.mutex.Unlock()
@@ -249,7 +245,7 @@ func (m *LRUCacher) DelIds(tableName, sql string) {
 }
 
 func (m *LRUCacher) delBean(tableName string, id string) {
-	tid := genID(tableName, id)
+	tid := genId(tableName, id)
 	if el, ok := m.idIndex[tableName][id]; ok {
 		delete(m.idIndex[tableName], id)
 		m.idList.Remove(el)
@@ -258,7 +254,6 @@ func (m *LRUCacher) delBean(tableName string, id string) {
 	m.store.Del(tid)
 }
 
-// DelBean deletes beans in some table
 func (m *LRUCacher) DelBean(tableName string, id string) {
 	m.mutex.Lock()
 	defer m.mutex.Unlock()
@@ -277,18 +272,18 @@ type sqlNode struct {
 	lastVisit time.Time
 }
 
-func genSQLKey(sql string, args interface{}) string {
+func genSqlKey(sql string, args interface{}) string {
 	return fmt.Sprintf("%v-%v", sql, args)
 }
 
-func genID(prefix string, id string) string {
+func genId(prefix string, id string) string {
 	return fmt.Sprintf("%v-%v", prefix, id)
 }
 
-func newIDNode(tbName string, id string) *idNode {
+func newIdNode(tbName string, id string) *idNode {
 	return &idNode{tbName, id, time.Now()}
 }
 
-func newSQLNode(tbName, sql string) *sqlNode {
+func newSqlNode(tbName, sql string) *sqlNode {
 	return &sqlNode{tbName, sql, time.Now()}
 }

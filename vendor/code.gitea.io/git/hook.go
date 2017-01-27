@@ -22,7 +22,6 @@ var hookNames = []string{
 }
 
 var (
-	// ErrNotValidHook error when a git hook is not valid
 	ErrNotValidHook = errors.New("not a valid Git hook")
 )
 
@@ -71,7 +70,6 @@ func GetHook(repoPath, name string) (*Hook, error) {
 	return h, nil
 }
 
-// Name return the name of the hook
 func (h *Hook) Name() string {
 	return h.name
 }
@@ -104,7 +102,6 @@ func ListHooks(repoPath string) (_ []*Hook, err error) {
 }
 
 const (
-	// HookPathUpdate hook update path
 	HookPathUpdate = "hooks/update"
 	HookPathPostUpdate = "hooks/post-update"
 )

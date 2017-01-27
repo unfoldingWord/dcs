@@ -97,10 +97,6 @@ func (org *User) RemoveOrgRepo(repoID int64) error {
 
 // CreateOrganization creates record of a new organization.
 func CreateOrganization(org, owner *User) (err error) {
-	if !owner.CanCreateOrganization() {
-		return ErrUserNotAllowedCreateOrg{}
-	}
-
 	if err = IsUsableUsername(org.Name); err != nil {
 		return err
 	}
@@ -113,12 +109,8 @@ func CreateOrganization(org, owner *User) (err error) {
 	}
 
 	org.LowerName = strings.ToLower(org.Name)
-	if org.Rands, err = GetUserSalt(); err != nil {
-		return err
-	}
-	if org.Salt, err = GetUserSalt(); err != nil {
-		return err
-	}
+	org.Rands = GetUserSalt()
+	org.Salt = GetUserSalt()
 	org.UseCustomAvatar = true
 	org.MaxRepoCreation = -1
 	org.NumTeams = 1
@@ -199,27 +191,23 @@ func CountOrganizations() int64 {
 }
 
 // Organizations returns number of organizations in given page.
-func Organizations(opts *SearchUserOptions) ([]*User, error) {
-	orgs := make([]*User, 0, opts.PageSize)
-
-	if len(opts.OrderBy) == 0 {
-		opts.OrderBy = "name ASC"
-	}
-
-	sess := x.
-		Limit(opts.PageSize, (opts.Page-1)*opts.PageSize).
-		Where("type=1")
-
-	return orgs, sess.
-		OrderBy(opts.OrderBy).
+func Organizations(page, pageSize int) ([]*User, error) {
+	orgs := make([]*User, 0, pageSize)
+	return orgs, x.
+		Limit(pageSize, (page-1)*pageSize).
+		Where("type=1").
+		Asc("name").
 		Find(&orgs)
 }
 
 // DeleteOrganization completely and permanently deletes everything of organization.
 func DeleteOrganization(org *User) (err error) {
-	sess := x.NewSession()
-	defer sess.Close()
+	if err := DeleteUser(org); err != nil {
+		return err
+	}
 
+	sess := x.NewSession()
+	defer sessionRelease(sess)
 	if err = sess.Begin(); err != nil {
 		return err
 	}
@@ -236,11 +224,7 @@ func DeleteOrganization(org *User) (err error) {
 		return fmt.Errorf("deleteUser: %v", err)
 	}
 
-	if err = sess.Commit(); err != nil {
-		return err
-	}
-
-	return RewriteAllPublicKeys()
+	return sess.Commit()
 }
 
 // ________                ____ ___
@@ -540,28 +524,24 @@ func (org *User) GetUserTeams(userID int64) ([]*Team, error) {
 // that the user with the given userID has access to,
 // and total number of records based on given condition.
 func (org *User) GetUserRepositories(userID int64, page, pageSize int) ([]*Repository, int64, error) {
-	var cond builder.Cond = builder.Eq{
-		"`repository`.owner_id":   org.ID,
-		"`repository`.is_private": false,
-	}
-
 	teamIDs, err := org.GetUserTeamIDs(userID)
 	if err != nil {
 		return nil, 0, fmt.Errorf("GetUserTeamIDs: %v", err)
 	}
-
-	if len(teamIDs) > 0 {
-		cond = cond.Or(builder.In("team_repo.team_id", teamIDs))
+	if len(teamIDs) == 0 {
+		// user has no team but "IN ()" is invalid SQL
+		teamIDs = []int64{-1} // there is no repo with id=-1
 	}
 
 	if page <= 0 {
 		page = 1
 	}
 	repos := make([]*Repository, 0, pageSize)
-
-	if err := x.Select("`repository`.*").
+	if err := x.
+		Select("`repository`.*").
 		Join("INNER", "team_repo", "`team_repo`.repo_id=`repository`.id").
-		Where(cond).
+		Where("(`repository`.owner_id=? AND `repository`.is_private=?)", org.ID, false).
+		Or(builder.In("team_repo.team_id", teamIDs)).
 		GroupBy("`repository`.id").
 		OrderBy("updated_unix DESC").
 		Limit(pageSize, (page-1)*pageSize).
@@ -571,7 +551,8 @@ func (org *User) GetUserRepositories(userID int64, page, pageSize int) ([]*Repos
 
 	repoCount, err := x.
 		Join("INNER", "team_repo", "`team_repo`.repo_id=`repository`.id").
-		Where(cond).
+		Where("(`repository`.owner_id=? AND `repository`.is_private=?)", org.ID, false).
+		Or(builder.In("team_repo.team_id", teamIDs)).
 		GroupBy("`repository`.id").
 		Count(&Repository{})
 	if err != nil {
