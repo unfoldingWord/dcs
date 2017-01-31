@@ -60,6 +60,11 @@ and it takes care of all the other things for you`,
 			Value: "custom/conf/app.ini",
 			Usage: "Custom configuration file path",
 		},
+		cli.StringFlag{
+			Name:  "pid, P",
+			Value: "/var/run/gitea.pid",
+			Usage: "Custom pid file path",
+		},
 	},
 }
 
@@ -94,6 +99,7 @@ func newMacaron() *macaron.Macaron {
 		macaron.StaticOptions{
 			Prefix:      "avatars",
 			SkipLogging: setting.DisableRouterLog,
+			ETag:        true,
 		},
 	))
 
@@ -156,6 +162,11 @@ func runWeb(ctx *cli.Context) error {
 	if ctx.IsSet("config") {
 		setting.CustomConf = ctx.String("config")
 	}
+
+	if ctx.IsSet("pid") {
+		setting.CustomPID = ctx.String("pid")
+	}
+
 	routers.GlobalInit()
 
 	m := newMacaron()
@@ -193,6 +204,12 @@ func runWeb(ctx *cli.Context) error {
 		m.Post("/sign_up", bindIgnErr(auth.RegisterForm{}), user.SignUpPost)
 		m.Get("/reset_password", user.ResetPasswd)
 		m.Post("/reset_password", user.ResetPasswdPost)
+		m.Group("/two_factor", func() {
+			m.Get("", user.TwoFactor)
+			m.Post("", bindIgnErr(auth.TwoFactorAuthForm{}), user.TwoFactorPost)
+			m.Get("/scratch", user.TwoFactorScratch)
+			m.Post("/scratch", bindIgnErr(auth.TwoFactorScratchAuthForm{}), user.TwoFactorScratchPost)
+		})
 	}, reqSignOut)
 
 	m.Group("/user/settings", func() {
@@ -213,6 +230,13 @@ func runWeb(ctx *cli.Context) error {
 			Post(bindIgnErr(auth.NewAccessTokenForm{}), user.SettingsApplicationsPost)
 		m.Post("/applications/delete", user.SettingsDeleteApplication)
 		m.Route("/delete", "GET,POST", user.SettingsDelete)
+		m.Group("/two_factor", func() {
+			m.Get("", user.SettingsTwoFactor)
+			m.Post("/regenerate_scratch", user.SettingsTwoFactorRegenerateScratch)
+			m.Post("/disable", user.SettingsTwoFactorDisable)
+			m.Get("/enroll", user.SettingsTwoFactorEnroll)
+			m.Post("/enroll", bindIgnErr(auth.TwoFactorAuthForm{}), user.SettingsTwoFactorEnrollPost)
+		})
 	}, reqSignIn, func(ctx *context.Context) {
 		ctx.Data["PageIsUserSettings"] = true
 	})
@@ -299,7 +323,7 @@ func runWeb(ctx *cli.Context) error {
 				return
 			}
 		})
-		m.Post("/issues/attachments", repo.UploadIssueAttachment)
+		m.Post("/attachments", repo.UploadAttachment)
 	}, ignSignIn)
 
 	m.Group("/:username", func() {
@@ -467,13 +491,11 @@ func runWeb(ctx *cli.Context) error {
 			m.Get("/:id/:action", repo.ChangeMilestonStatus)
 			m.Post("/delete", repo.DeleteMilestone)
 		}, reqRepoWriter, context.RepoRef())
-
 		m.Group("/releases", func() {
 			m.Get("/new", repo.NewRelease)
 			m.Post("/new", bindIgnErr(auth.NewReleaseForm{}), repo.NewReleasePost)
 			m.Post("/delete", repo.DeleteRelease)
 		}, reqRepoWriter, context.RepoRef())
-
 		m.Group("/releases", func() {
 			m.Get("/edit/*", repo.EditRelease)
 			m.Post("/edit/*", bindIgnErr(auth.EditReleaseForm{}), repo.EditReleasePost)
@@ -593,7 +615,10 @@ func runWeb(ctx *cli.Context) error {
 	})
 	// ***** END: Repository *****
 
-	m.Get("/notifications", reqSignIn, user.Notifications)
+	m.Group("/notifications", func() {
+		m.Get("", user.Notifications)
+		m.Post("/status", user.NotificationStatusPost)
+	}, reqSignIn)
 
 	m.Group("/api", func() {
 		apiv1.RegisterRoutes(m)

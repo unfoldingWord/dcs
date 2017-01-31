@@ -27,6 +27,7 @@ import (
 	"code.gitea.io/gitea/modules/setting"
 	"code.gitea.io/gitea/modules/sync"
 	api "code.gitea.io/sdk/gitea"
+
 	"github.com/Unknwon/cae/zip"
 	"github.com/Unknwon/com"
 	"github.com/go-xorm/xorm"
@@ -148,10 +149,10 @@ func NewRepoContext() {
 
 	// Git requires setting user.name and user.email in order to commit changes.
 	for configKey, defaultValue := range map[string]string{"user.name": "Gitea", "user.email": "gitea@fake.local"} {
-		if stdout, stderr, err := process.Exec("NewRepoContext(get setting)", "git", "config", "--get", configKey); err != nil || strings.TrimSpace(stdout) == "" {
+		if stdout, stderr, err := process.GetManager().Exec("NewRepoContext(get setting)", "git", "config", "--get", configKey); err != nil || strings.TrimSpace(stdout) == "" {
 			// ExitError indicates this config is not set
 			if _, ok := err.(*exec.ExitError); ok || strings.TrimSpace(stdout) == "" {
-				if _, stderr, gerr := process.Exec("NewRepoContext(set "+configKey+")", "git", "config", "--global", configKey, defaultValue); gerr != nil {
+				if _, stderr, gerr := process.GetManager().Exec("NewRepoContext(set "+configKey+")", "git", "config", "--global", configKey, defaultValue); gerr != nil {
 					log.Fatal(4, "Fail to set git %s(%s): %s", configKey, gerr, stderr)
 				}
 				log.Info("Git config %s set to %s", configKey, defaultValue)
@@ -162,7 +163,7 @@ func NewRepoContext() {
 	}
 
 	// Set git some configurations.
-	if _, stderr, err := process.Exec("NewRepoContext(git config --global core.quotepath false)",
+	if _, stderr, err := process.GetManager().Exec("NewRepoContext(git config --global core.quotepath false)",
 		"git", "config", "--global", "core.quotepath", "false"); err != nil {
 		log.Fatal(4, "Fail to execute 'git config --global core.quotepath false': %s", stderr)
 	}
@@ -195,10 +196,10 @@ type Repository struct {
 	NumOpenMilestones   int `xorm:"-"`
 	NumTags             int `xorm:"-"`
 
-	IsPrivate bool
-	IsBare    bool
+	IsPrivate bool `xorm:"INDEX"`
+	IsBare    bool `xorm:"INDEX"`
 
-	IsMirror bool
+	IsMirror bool `xorm:"INDEX"`
 	*Mirror  `xorm:"-"`
 
 	// Advanced settings
@@ -213,14 +214,14 @@ type Repository struct {
 	ExternalMetas         map[string]string `xorm:"-"`
 	EnablePulls           bool              `xorm:"NOT NULL DEFAULT true"`
 
-	IsFork   bool `xorm:"NOT NULL DEFAULT false"`
-	ForkID   int64
+	IsFork   bool        `xorm:"INDEX NOT NULL DEFAULT false"`
+	ForkID   int64       `xorm:"INDEX"`
 	BaseRepo *Repository `xorm:"-"`
 
 	Created     time.Time `xorm:"-"`
-	CreatedUnix int64
+	CreatedUnix int64     `xorm:"INDEX"`
 	Updated     time.Time `xorm:"-"`
-	UpdatedUnix int64
+	UpdatedUnix int64     `xorm:"INDEX"`
 }
 
 // BeforeInsert is invoked from XORM before inserting an object of this type.
@@ -803,20 +804,20 @@ func CleanUpMigrateInfo(repo *Repository) (*Repository, error) {
 // initRepoCommit temporarily changes with work directory.
 func initRepoCommit(tmpPath string, sig *git.Signature) (err error) {
 	var stderr string
-	if _, stderr, err = process.ExecDir(-1,
+	if _, stderr, err = process.GetManager().ExecDir(-1,
 		tmpPath, fmt.Sprintf("initRepoCommit (git add): %s", tmpPath),
 		"git", "add", "--all"); err != nil {
 		return fmt.Errorf("git add: %s", stderr)
 	}
 
-	if _, stderr, err = process.ExecDir(-1,
+	if _, stderr, err = process.GetManager().ExecDir(-1,
 		tmpPath, fmt.Sprintf("initRepoCommit (git commit): %s", tmpPath),
 		"git", "commit", fmt.Sprintf("--author='%s <%s>'", sig.Name, sig.Email),
 		"-m", "Initial commit"); err != nil {
 		return fmt.Errorf("git commit: %s", stderr)
 	}
 
-	if _, stderr, err = process.ExecDir(-1,
+	if _, stderr, err = process.GetManager().ExecDir(-1,
 		tmpPath, fmt.Sprintf("initRepoCommit (git push): %s", tmpPath),
 		"git", "push", "origin", "master"); err != nil {
 		return fmt.Errorf("git push: %s", stderr)
@@ -862,8 +863,10 @@ func getRepoInitFile(tp, name string) ([]byte, error) {
 
 func prepareRepoCommit(repo *Repository, tmpDir, repoPath string, opts CreateRepoOptions) error {
 	// Clone to temporary path and do the init commit.
-	_, stderr, err := process.Exec(
-		fmt.Sprintf("initRepository(git clone): %s", repoPath), "git", "clone", repoPath, tmpDir)
+	_, stderr, err := process.GetManager().Exec(
+		fmt.Sprintf("initRepository(git clone): %s", repoPath),
+		"git", "clone", repoPath, tmpDir,
+	)
 	if err != nil {
 		return fmt.Errorf("git clone: %v - %s", err, stderr)
 	}
@@ -1095,7 +1098,7 @@ func CreateRepository(u *User, opts CreateRepoOptions) (_ *Repository, err error
 			return nil, fmt.Errorf("initRepository: %v", err)
 		}
 
-		_, stderr, err := process.ExecDir(-1,
+		_, stderr, err := process.GetManager().ExecDir(-1,
 			repoPath, fmt.Sprintf("CreateRepository(git update-server-info): %s", repoPath),
 			"git", "update-server-info")
 		if err != nil {
@@ -1400,7 +1403,7 @@ func UpdateRepository(repo *Repository, visibilityChanged bool) (err error) {
 		return err
 	}
 
-	if err = updateRepository(x, repo, visibilityChanged); err != nil {
+	if err = updateRepository(sess, repo, visibilityChanged); err != nil {
 		return fmt.Errorf("updateRepository: %v", err)
 	}
 
@@ -1542,14 +1545,14 @@ func DeleteRepository(uid, repoID int64) error {
 		return err
 	}
 
-	if err = sess.Commit(); err != nil {
-		return fmt.Errorf("Commit: %v", err)
-	}
-
 	if repo.NumForks > 0 {
-		if _, err = x.Exec("UPDATE `repository` SET fork_id=0,is_fork=? WHERE fork_id=?", false, repo.ID); err != nil {
+		if _, err = sess.Exec("UPDATE `repository` SET fork_id=0,is_fork=? WHERE fork_id=?", false, repo.ID); err != nil {
 			log.Error(4, "reset 'fork_id' and 'is_fork': %v", err)
 		}
+	}
+
+	if err = sess.Commit(); err != nil {
+		return fmt.Errorf("Commit: %v", err)
 	}
 
 	return nil
@@ -1868,7 +1871,7 @@ func GitGcRepos() error {
 				if err := repo.GetOwner(); err != nil {
 					return err
 				}
-				_, stderr, err := process.ExecDir(
+				_, stderr, err := process.GetManager().ExecDir(
 					time.Duration(setting.Git.Timeout.GC)*time.Second,
 					RepoPath(repo.Owner.Name, repo.Name), "Repository garbage collection",
 					"git", args...)
@@ -2202,13 +2205,10 @@ func GetWatchers(repoID int64) ([]*Watch, error) {
 // GetWatchers returns range of users watching given repository.
 func (repo *Repository) GetWatchers(page int) ([]*User, error) {
 	users := make([]*User, 0, ItemsPerPage)
-	sess := x.
-		Limit(ItemsPerPage, (page-1)*ItemsPerPage).
-		Where("watch.repo_id=?", repo.ID)
-	if setting.UsePostgreSQL {
-		sess = sess.Join("LEFT", "watch", `"user".id=watch.user_id`)
-	} else {
-		sess = sess.Join("LEFT", "watch", "user.id=watch.user_id")
+	sess := x.Where("watch.repo_id=?", repo.ID).
+		Join("LEFT", "watch", "`user`.id=`watch`.user_id")
+	if page > 0 {
+		sess = sess.Limit(ItemsPerPage, (page-1)*ItemsPerPage)
 	}
 	return users, sess.Find(&users)
 }
@@ -2290,14 +2290,14 @@ func ForkRepository(u *User, oldRepo *Repository, name, desc string) (_ *Reposit
 	}
 
 	repoPath := RepoPath(u.Name, repo.Name)
-	_, stderr, err := process.ExecTimeout(10*time.Minute,
+	_, stderr, err := process.GetManager().ExecTimeout(10*time.Minute,
 		fmt.Sprintf("ForkRepository(git clone): %s/%s", u.Name, repo.Name),
 		"git", "clone", "--bare", oldRepo.RepoPath(), repoPath)
 	if err != nil {
 		return nil, fmt.Errorf("git clone: %v", stderr)
 	}
 
-	_, stderr, err = process.ExecDir(-1,
+	_, stderr, err = process.GetManager().ExecDir(-1,
 		repoPath, fmt.Sprintf("ForkRepository(git update-server-info): %s", repoPath),
 		"git", "update-server-info")
 	if err != nil {
@@ -2313,30 +2313,29 @@ func ForkRepository(u *User, oldRepo *Repository, name, desc string) (_ *Reposit
 	if err != nil {
 		return nil, err
 	}
-	sessionRelease(sess)
 
 	// Copy LFS meta objects in new session
-	sess = x.NewSession()
-	defer sessionRelease(sess)
-	if err = sess.Begin(); err != nil {
+	sess2 := x.NewSession()
+	defer sessionRelease(sess2)
+	if err = sess2.Begin(); err != nil {
 		return nil, err
 	}
 
 	var lfsObjects []*LFSMetaObject
 
-	if err = sess.Where("repository_id=?", oldRepo.ID).Find(&lfsObjects); err != nil {
+	if err = sess2.Where("repository_id=?", oldRepo.ID).Find(&lfsObjects); err != nil {
 		return nil, err
 	}
 
 	for _, v := range lfsObjects {
 		v.ID = 0
 		v.RepositoryID = repo.ID
-		if _, err = sess.Insert(v); err != nil {
+		if _, err = sess2.Insert(v); err != nil {
 			return nil, err
 		}
 	}
 
-	return repo, sess.Commit()
+	return repo, sess2.Commit()
 }
 
 // GetForks returns all the forks of the repository

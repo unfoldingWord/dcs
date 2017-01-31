@@ -123,10 +123,10 @@ function initCommentForm() {
             }
         }
 
-        var labelIds = "";
+        var labelIds = [];
         $(this).parent().find('.item').each(function () {
             if ($(this).hasClass('checked')) {
-                labelIds += $(this).data('id') + ",";
+                labelIds.push($(this).data('id'));
                 $($(this).data('id-selector')).removeClass('hide');
             } else {
                 $($(this).data('id-selector')).addClass('hide');
@@ -137,7 +137,7 @@ function initCommentForm() {
         } else {
             $noSelect.addClass('hide');
         }
-        $($(this).parent().data('id')).val(labelIds);
+        $($(this).parent().data('id')).val(labelIds.join(","));
         return false;
     });
     $labelMenu.find('.no-select.item').click(function () {
@@ -207,6 +207,12 @@ function initCommentForm() {
 function initInstall() {
     if ($('.install').length == 0) {
         return;
+    }
+
+    if ($('#db_host').val()=="") {
+        $('#db_host').val("127.0.0.1:3306");
+        $('#db_user').val("gitea");
+        $('#db_name').val("gitea");
     }
 
     // Database type change detection.
@@ -963,26 +969,28 @@ function initAdmin() {
     // New authentication
     if ($('.admin.new.authentication').length > 0) {
         $('#auth_type').change(function () {
-            $('.ldap').hide();
-            $('.dldap').hide();
-            $('.smtp').hide();
-            $('.pam').hide();
-            $('.has-tls').hide();
+            $('.ldap, .dldap, .smtp, .pam, .has-tls').hide();
+
+            $('.ldap input[required], .dldap input[required], .smtp input[required], .pam input[required], .has-tls input[required]').removeAttr('required');
 
             var authType = $(this).val();
             switch (authType) {
                 case '2':     // LDAP
                     $('.ldap').show();
+                    $('.ldap div.required input').attr('required', 'required');
                     break;
                 case '3':     // SMTP
                     $('.smtp').show();
                     $('.has-tls').show();
+                    $('.smtp div.required input, .has-tls').attr('required', 'required');
                     break;
                 case '4':     // PAM
                     $('.pam').show();
+                    $('.pam input').attr('required', 'required');
                     break;
                 case '5':     // LDAP
                     $('.dldap').show();
+                    $('.dldap div.required input').attr('required', 'required');
                     break;
             }
 
@@ -990,6 +998,7 @@ function initAdmin() {
                 onSecurityProtocolChange()
             }
         });
+        $('#auth_type').change();
         $('#security_protocol').change(onSecurityProtocolChange)
     }
     // Edit authentication
@@ -1232,6 +1241,11 @@ $(document).ready(function () {
 
     $('.toggle.button').click(function () {
         $($(this).data('target')).slideToggle(100);
+    });
+
+    // make table <tr> element clickable like a link
+    $('tr[data-href]').click(function(event) {
+        window.location = $(this).data('href');
     });
 
     // Highlight JS

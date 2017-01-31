@@ -71,19 +71,19 @@ func init() {
 // used in template render.
 type Action struct {
 	ID           int64 `xorm:"pk autoincr"`
-	UserID       int64 // Receiver user id.
+	UserID       int64 `xorm:"INDEX"` // Receiver user id.
 	OpType       ActionType
-	ActUserID    int64  // Action user id.
+	ActUserID    int64  `xorm:"INDEX"` // Action user id.
 	ActUserName  string // Action user name.
 	ActAvatar    string `xorm:"-"`
-	RepoID       int64
+	RepoID       int64  `xorm:"INDEX"`
 	RepoUserName string
 	RepoName     string
 	RefName      string
-	IsPrivate    bool      `xorm:"NOT NULL DEFAULT false"`
+	IsPrivate    bool      `xorm:"INDEX NOT NULL DEFAULT false"`
 	Content      string    `xorm:"TEXT"`
 	Created      time.Time `xorm:"-"`
-	CreatedUnix  int64
+	CreatedUnix  int64     `xorm:"INDEX"`
 }
 
 // BeforeInsert will be invoked by XORM before inserting a record
@@ -658,17 +658,14 @@ func GetFeeds(ctxUser *User, actorID, offset int64, isProfile bool) ([]*Action, 
 			And("is_private = ?", false).
 			And("act_user_id = ?", ctxUser.ID)
 	} else if actorID != -1 && ctxUser.IsOrganization() {
-		// FIXME: only need to get IDs here, not all fields of repository.
-		repos, _, err := ctxUser.GetUserRepositories(actorID, 1, ctxUser.NumRepos)
+		env, err := ctxUser.AccessibleReposEnv(actorID)
+		if err != nil {
+			return nil, fmt.Errorf("AccessibleReposEnv: %v", err)
+		}
+		repoIDs, err := env.RepoIDs(1, ctxUser.NumRepos)
 		if err != nil {
 			return nil, fmt.Errorf("GetUserRepositories: %v", err)
 		}
-
-		var repoIDs []int64
-		for _, repo := range repos {
-			repoIDs = append(repoIDs, repo.ID)
-		}
-
 		if len(repoIDs) > 0 {
 			sess.In("repo_id", repoIDs)
 		}

@@ -17,16 +17,16 @@ import (
 	"code.gitea.io/gitea/models"
 	"code.gitea.io/gitea/modules/base"
 	"code.gitea.io/gitea/modules/context"
-	"code.gitea.io/gitea/modules/hashtag"
 	"code.gitea.io/gitea/modules/highlight"
 	"code.gitea.io/gitea/modules/lfs"
 	"code.gitea.io/gitea/modules/log"
 	"code.gitea.io/gitea/modules/markdown"
 	"code.gitea.io/gitea/modules/setting"
 	"code.gitea.io/gitea/modules/templates"
-	"code.gitea.io/gitea/modules/yaml"
 	"encoding/base64"
 	"github.com/Unknwon/paginater"
+	"code.gitea.io/gitea/modules/yaml"
+	"code.gitea.io/gitea/modules/hashtag"
 )
 
 const (

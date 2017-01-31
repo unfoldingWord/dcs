@@ -22,13 +22,14 @@ import (
 
 	"code.gitea.io/git"
 	"code.gitea.io/gitea/modules/log"
+	_ "code.gitea.io/gitea/modules/minwinsvc" // import minwinsvc for windows services
 	"code.gitea.io/gitea/modules/user"
+
 	"github.com/Unknwon/com"
 	_ "github.com/go-macaron/cache/memcache" // memcache plugin for cache
 	_ "github.com/go-macaron/cache/redis"
 	"github.com/go-macaron/session"
 	_ "github.com/go-macaron/session/redis" // redis plugin for store session
-	_ "github.com/kardianos/minwinsvc"      // import minwinsvc for windows services
 	"gopkg.in/ini.v1"
 	"strk.kbt.io/projects/go/libravatar"
 )
@@ -114,6 +115,7 @@ var (
 	CookieRememberName   string
 	ReverseProxyAuthUser string
 	MinPasswordLength    int
+	ImportLocalPaths     bool
 
 	// Database settings
 	UseSQLite3    bool
@@ -121,6 +123,12 @@ var (
 	UseMSSQL      bool
 	UsePostgreSQL bool
 	UseTiDB       bool
+
+	// Indexer settings
+	Indexer struct {
+		IssuePath         string
+		UpdateQueueLength int
+	}
 
 	// Webhook settings
 	Webhook = struct {
@@ -392,6 +400,7 @@ var (
 	Cfg          *ini.File
 	CustomPath   string // Custom directory path
 	CustomConf   string
+	CustomPID    string
 	ProdMode     bool
 	RunUser      string
 	IsWindows    bool
@@ -474,6 +483,22 @@ func IsRunUserMatchCurrentUser(runUser string) (string, bool) {
 	return currentUser, runUser == currentUser
 }
 
+func createPIDFile(pidPath string) {
+	currentPid := os.Getpid()
+	if err := os.MkdirAll(filepath.Dir(pidPath), os.ModePerm); err != nil {
+		log.Fatal(4, "Can't create PID folder on %s", err)
+	}
+
+	file, err := os.Create(pidPath)
+	if err != nil {
+		log.Fatal(4, "Can't create PID file: %v", err)
+	}
+	defer file.Close()
+	if _, err := file.WriteString(strconv.FormatInt(int64(currentPid), 10)); err != nil {
+		log.Fatal(4, "Can'write PID information on %s", err)
+	}
+}
+
 // NewContext initializes configuration context.
 // NOTE: do not print any log except error.
 func NewContext() {
@@ -499,6 +524,10 @@ func NewContext() {
 			log.Warn(`Usage of GOGS_CUSTOM is deprecated and will be *removed* in a future release,
 please consider changing to GITEA_CUSTOM`)
 		}
+	}
+
+	if len(CustomPID) > 0 {
+		createPIDFile(CustomPID)
 	}
 
 	if len(CustomConf) == 0 {
@@ -581,6 +610,7 @@ please consider changing to GITEA_CUSTOM`)
 
 	SSH.KeygenPath = sec.Key("SSH_KEYGEN_PATH").MustString("ssh-keygen")
 	SSH.Port = sec.Key("SSH_PORT").MustInt(22)
+	SSH.ListenPort = sec.Key("SSH_LISTEN_PORT").MustInt(SSH.Port)
 
 	// When disable SSH, start builtin server value is ignored.
 	if SSH.Disabled {
@@ -639,7 +669,9 @@ please consider changing to GITEA_CUSTOM`)
 
 			cfg.Section("server").Key("LFS_JWT_SECRET").SetValue(LFS.JWTSecretBase64)
 
-			os.MkdirAll(filepath.Dir(CustomConf), os.ModePerm)
+			if err := os.MkdirAll(filepath.Dir(CustomConf), os.ModePerm); err != nil {
+				log.Fatal(4, "Fail to create '%s': %v", CustomConf, err)
+			}
 			if err := cfg.SaveTo(CustomConf); err != nil {
 				log.Fatal(4, "Error saving generated JWT Secret to custom config: %v", err)
 				return
@@ -691,13 +723,14 @@ please consider changing to GITEA_CUSTOM`)
 	CookieRememberName = sec.Key("COOKIE_REMEMBER_NAME").MustString("gitea_incredible")
 	ReverseProxyAuthUser = sec.Key("REVERSE_PROXY_AUTHENTICATION_USER").MustString("X-WEBAUTH-USER")
 	MinPasswordLength = sec.Key("MIN_PASSWORD_LENGTH").MustInt(6)
+	ImportLocalPaths = sec.Key("IMPORT_LOCAL_PATHS").MustBool(false)
 
 	sec = Cfg.Section("attachment")
 	AttachmentPath = sec.Key("PATH").MustString(path.Join(AppDataPath, "attachments"))
 	if !filepath.IsAbs(AttachmentPath) {
 		AttachmentPath = path.Join(workDir, AttachmentPath)
 	}
-	AttachmentAllowedTypes = strings.Replace(sec.Key("ALLOWED_TYPES").MustString("image/jpeg,image/png"), "|", ",", -1)
+	AttachmentAllowedTypes = strings.Replace(sec.Key("ALLOWED_TYPES").MustString("image/jpeg,image/png,application/zip,application/gzip"), "|", ",", -1)
 	AttachmentMaxSize = sec.Key("MAX_SIZE").MustInt64(4)
 	AttachmentMaxFiles = sec.Key("MAX_FILES").MustInt(5)
 	AttachmentEnabled = sec.Key("ENABLE").MustBool(true)
@@ -820,17 +853,13 @@ please consider changing to GITEA_CUSTOM`)
 	}
 	dateLangs = Cfg.Section("i18n.datelang").KeysHash()
 
-	ShowFooterBranding = Cfg.Section("other").Key("SHOW_FOOTER_BRANDING").MustBool()
-	ShowFooterVersion = Cfg.Section("other").Key("SHOW_FOOTER_VERSION").MustBool()
-	ShowFooterTemplateLoadTime = Cfg.Section("other").Key("SHOW_FOOTER_TEMPLATE_LOAD_TIME").MustBool()
-
 	ShowFooterBranding = Cfg.Section("other").Key("SHOW_FOOTER_BRANDING").MustBool(false)
 	ShowFooterVersion = Cfg.Section("other").Key("SHOW_FOOTER_VERSION").MustBool(true)
 	ShowFooterTemplateLoadTime = Cfg.Section("other").Key("SHOW_FOOTER_TEMPLATE_LOAD_TIME").MustBool(true)
-	Google.GATrackingID = Cfg.Section("other").Key("GA_TRACKING_ID").String()
 
 	UI.ShowUserEmail = Cfg.Section("ui").Key("SHOW_USER_EMAIL").MustBool(true)
 
+	Google.GATrackingID = Cfg.Section("other").Key("GA_TRACKING_ID").String()
 
 	HasRobotsTxt = com.IsFile(path.Join(CustomPath, "robots.txt"))
 }
@@ -847,6 +876,8 @@ var Service struct {
 	EnableReverseProxyAuth         bool
 	EnableReverseProxyAutoRegister bool
 	EnableCaptcha                  bool
+	DefaultKeepEmailPrivate        bool
+	NoReplyAddress                 string
 }
 
 func newService() {
@@ -859,6 +890,8 @@ func newService() {
 	Service.EnableReverseProxyAuth = sec.Key("ENABLE_REVERSE_PROXY_AUTHENTICATION").MustBool()
 	Service.EnableReverseProxyAutoRegister = sec.Key("ENABLE_REVERSE_PROXY_AUTO_REGISTRATION").MustBool()
 	Service.EnableCaptcha = sec.Key("ENABLE_CAPTCHA").MustBool()
+	Service.DefaultKeepEmailPrivate = sec.Key("DEFAULT_KEEP_EMAIL_PRIVATE").MustBool()
+	Service.NoReplyAddress = sec.Key("NO_REPLY_ADDRESS").MustString("noreply.example.org")
 }
 
 var logLevels = map[string]string{
@@ -875,6 +908,16 @@ func newLogService() {
 
 	LogModes = strings.Split(Cfg.Section("log").Key("MODE").MustString("console"), ",")
 	LogConfigs = make([]string, len(LogModes))
+
+	useConsole := false
+	for _, mode := range LogModes {
+		if mode == "console" {
+			useConsole = true
+		}
+	}
+	if !useConsole {
+		log.DelLogger("console")
+	}
 
 	for i, mode := range LogModes {
 		mode = strings.TrimSpace(mode)
@@ -900,7 +943,7 @@ func newLogService() {
 		case "console":
 			LogConfigs[i] = fmt.Sprintf(`{"level":%s}`, level)
 		case "file":
-			logPath := sec.Key("FILE_NAME").MustString(path.Join(LogRootPath, "gogs.log"))
+			logPath := sec.Key("FILE_NAME").MustString(path.Join(LogRootPath, "gitea.log"))
 			if err = os.MkdirAll(path.Dir(logPath), os.ModePerm); err != nil {
 				panic(err.Error())
 			}

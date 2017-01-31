@@ -163,9 +163,8 @@ func ExploreRepos(ctx *context.Context) {
 type UserSearchOptions struct {
 	Type          models.UserType
 	Counter       func() int64
-	Ranger   func(*models.SearchUserOptions) ([]*models.User, error)
+	Ranger        func(*models.SearchUserOptions) ([]*models.User, error)
 	PageSize      int
-	OrderBy       string
 	TplName       base.TplName
 	SearchByEmail bool // search by email as well as username/fullname
 }
@@ -217,7 +216,7 @@ func RenderUserSearch(ctx *context.Context, opts *UserSearchOptions) {
 			users, count, err = models.SearchUserByName(&models.SearchUserOptions{
 				Keyword:       keyword,
 				Type:          opts.Type,
-				OrderBy:       opts.OrderBy,
+				OrderBy:       orderBy,
 				Page:          page,
 				PageSize:      opts.PageSize,
 				SearchByEmail: opts.SearchByEmail,

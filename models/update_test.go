@@ -23,13 +23,7 @@ func TestAddUpdateTask(t *testing.T) {
 		NewCommitID: "newCommitId4",
 	}
 	assert.NoError(t, AddUpdateTask(task))
-
-	sess := x.NewSession()
-	defer sess.Close()
-	has, err := sess.Get(task)
-	assert.NoError(t, err)
-	assert.True(t, has)
-	assert.Equal(t, "uuid4", task.UUID)
+	AssertExistsAndLoadBean(t, task)
 }
 
 func TestGetUpdateTaskByUUID(t *testing.T) {
@@ -40,16 +34,16 @@ func TestGetUpdateTaskByUUID(t *testing.T) {
 	assert.Equal(t, "refName1", task.RefName)
 	assert.Equal(t, "oldCommitId1", task.OldCommitID)
 	assert.Equal(t, "newCommitId1", task.NewCommitID)
+
+	_, err = GetUpdateTaskByUUID("invalid")
+	assert.Error(t, err)
+	assert.True(t, IsErrUpdateTaskNotExist(err))
 }
 
 func TestDeleteUpdateTaskByUUID(t *testing.T) {
 	assert.NoError(t, PrepareTestDatabase())
 	assert.NoError(t, DeleteUpdateTaskByUUID("uuid1"))
-	sess := x.NewSession()
-	defer sess.Close()
-	has, err := sess.Get(&UpdateTask{UUID: "uuid1"})
-	assert.NoError(t, err)
-	assert.False(t, has)
+	AssertNotExistsBean(t, &UpdateTask{UUID: "uuid1"})
 
 	assert.NoError(t, DeleteUpdateTaskByUUID("invalid"))
 }
@@ -122,3 +116,5 @@ func TestListToPushCommits(t *testing.T) {
 	assert.Equal(t, "example@example.com", pushCommits.Commits[1].AuthorEmail)
 	assert.Equal(t, now, pushCommits.Commits[1].Timestamp)
 }
+
+// TODO TestPushUpdate

@@ -21,6 +21,7 @@ import (
 	api "code.gitea.io/sdk/gitea"
 	"github.com/Unknwon/com"
 	"github.com/go-xorm/xorm"
+	"code.gitea.io/gitea/modules/base"
 )
 
 var pullRequestQueue = sync.NewUniqueQueue(setting.Repository.PullRequestQueueLength)
@@ -54,21 +55,21 @@ type PullRequest struct {
 	Issue   *Issue `xorm:"-"`
 	Index   int64
 
-	HeadRepoID   int64
+	HeadRepoID   int64       `xorm:"INDEX"`
 	HeadRepo     *Repository `xorm:"-"`
-	BaseRepoID   int64
+	BaseRepoID   int64       `xorm:"INDEX"`
 	BaseRepo     *Repository `xorm:"-"`
 	HeadUserName string
 	HeadBranch   string
 	BaseBranch   string
 	MergeBase    string `xorm:"VARCHAR(40)"`
 
-	HasMerged      bool
-	MergedCommitID string `xorm:"VARCHAR(40)"`
-	MergerID       int64
+	HasMerged      bool      `xorm:"INDEX"`
+	MergedCommitID string    `xorm:"VARCHAR(40)"`
+	MergerID       int64     `xorm:"INDEX"`
 	Merger         *User     `xorm:"-"`
 	Merged         time.Time `xorm:"-"`
-	MergedUnix     int64
+	MergedUnix     int64     `xorm:"INDEX"`
 }
 
 // BeforeUpdate is invoked from XORM before updating an object of this type.
@@ -280,41 +281,41 @@ func (pr *PullRequest) Merge(doer *User, baseGitRepo *git.Repository) (err error
 	defer os.RemoveAll(path.Dir(tmpBasePath))
 
 	var stderr string
-	if _, stderr, err = process.ExecTimeout(5*time.Minute,
+	if _, stderr, err = process.GetManager().ExecTimeout(5*time.Minute,
 		fmt.Sprintf("PullRequest.Merge (git clone): %s", tmpBasePath),
 		"git", "clone", baseGitRepo.Path, tmpBasePath); err != nil {
 		return fmt.Errorf("git clone: %s", stderr)
 	}
 
 	// Check out base branch.
-	if _, stderr, err = process.ExecDir(-1, tmpBasePath,
+	if _, stderr, err = process.GetManager().ExecDir(-1, tmpBasePath,
 		fmt.Sprintf("PullRequest.Merge (git checkout): %s", tmpBasePath),
 		"git", "checkout", pr.BaseBranch); err != nil {
 		return fmt.Errorf("git checkout: %s", stderr)
 	}
 
 	// Add head repo remote.
-	if _, stderr, err = process.ExecDir(-1, tmpBasePath,
+	if _, stderr, err = process.GetManager().ExecDir(-1, tmpBasePath,
 		fmt.Sprintf("PullRequest.Merge (git remote add): %s", tmpBasePath),
 		"git", "remote", "add", "head_repo", headRepoPath); err != nil {
 		return fmt.Errorf("git remote add [%s -> %s]: %s", headRepoPath, tmpBasePath, stderr)
 	}
 
 	// Merge commits.
-	if _, stderr, err = process.ExecDir(-1, tmpBasePath,
+	if _, stderr, err = process.GetManager().ExecDir(-1, tmpBasePath,
 		fmt.Sprintf("PullRequest.Merge (git fetch): %s", tmpBasePath),
 		"git", "fetch", "head_repo"); err != nil {
 		return fmt.Errorf("git fetch [%s -> %s]: %s", headRepoPath, tmpBasePath, stderr)
 	}
 
-	if _, stderr, err = process.ExecDir(-1, tmpBasePath,
+	if _, stderr, err = process.GetManager().ExecDir(-1, tmpBasePath,
 		fmt.Sprintf("PullRequest.Merge (git merge --no-ff --no-commit): %s", tmpBasePath),
 		"git", "merge", "--no-ff", "--no-commit", "head_repo/"+pr.HeadBranch); err != nil {
 		return fmt.Errorf("git merge --no-ff --no-commit [%s]: %v - %s", tmpBasePath, err, stderr)
 	}
 
 	sig := doer.NewGitSig()
-	if _, stderr, err = process.ExecDir(-1, tmpBasePath,
+	if _, stderr, err = process.GetManager().ExecDir(-1, tmpBasePath,
 		fmt.Sprintf("PullRequest.Merge (git merge): %s", tmpBasePath),
 		"git", "commit", fmt.Sprintf("--author='%s <%s>'", sig.Name, sig.Email),
 		"-m", fmt.Sprintf("Merge branch '%s' of %s/%s into %s", pr.HeadBranch, pr.HeadUserName, pr.HeadRepo.Name, pr.BaseBranch)); err != nil {
@@ -322,7 +323,7 @@ func (pr *PullRequest) Merge(doer *User, baseGitRepo *git.Repository) (err error
 	}
 
 	// Push back to upstream.
-	if _, stderr, err = process.ExecDir(-1, tmpBasePath,
+	if _, stderr, err = process.GetManager().ExecDir(-1, tmpBasePath,
 		fmt.Sprintf("PullRequest.Merge (git push): %s", tmpBasePath),
 		"git", "push", baseGitRepo.Path, pr.BaseBranch); err != nil {
 		return fmt.Errorf("git push: %s", stderr)
@@ -436,14 +437,14 @@ func (pr *PullRequest) testPatch() (err error) {
 	defer os.Remove(indexTmpPath)
 
 	var stderr string
-	_, stderr, err = process.ExecDirEnv(-1, "", fmt.Sprintf("testPatch (git read-tree): %d", pr.BaseRepo.ID),
+	_, stderr, err = process.GetManager().ExecDirEnv(-1, "", fmt.Sprintf("testPatch (git read-tree): %d", pr.BaseRepo.ID),
 		[]string{"GIT_DIR=" + pr.BaseRepo.RepoPath(), "GIT_INDEX_FILE=" + indexTmpPath},
 		"git", "read-tree", pr.BaseBranch)
 	if err != nil {
 		return fmt.Errorf("git read-tree --index-output=%s %s: %v - %s", indexTmpPath, pr.BaseBranch, err, stderr)
 	}
 
-	_, stderr, err = process.ExecDirEnv(-1, "", fmt.Sprintf("testPatch (git apply --check): %d", pr.BaseRepo.ID),
+	_, stderr, err = process.GetManager().ExecDirEnv(-1, "", fmt.Sprintf("testPatch (git apply --check): %d", pr.BaseRepo.ID),
 		[]string{"GIT_INDEX_FILE=" + indexTmpPath, "GIT_DIR=" + pr.BaseRepo.RepoPath()},
 		"git", "apply", "--check", "--cached", patchPath)
 	if err != nil {
@@ -542,7 +543,7 @@ type PullRequestsOptions struct {
 	MilestoneID int64
 }
 
-func listPullRequestStatement(baseRepoID int64, opts *PullRequestsOptions) *xorm.Session {
+func listPullRequestStatement(baseRepoID int64, opts *PullRequestsOptions) (*xorm.Session, error) {
 	sess := x.Where("pull_request.base_repo_id=?", baseRepoID)
 
 	sess.Join("INNER", "issue", "pull_request.issue_id = issue.id")
@@ -551,7 +552,20 @@ func listPullRequestStatement(baseRepoID int64, opts *PullRequestsOptions) *xorm
 		sess.And("issue.is_closed=?", opts.State == "closed")
 	}
 
-	return sess
+	sortIssuesSession(sess, opts.SortType)
+
+	if labelIDs, err := base.StringsToInt64s(opts.Labels); err != nil {
+		return nil, err
+	} else if len(labelIDs) > 0 {
+		sess.Join("INNER", "issue_label", "issue.id = issue_label.issue_id").
+			In("issue_label.label_id", labelIDs)
+	}
+
+	if opts.MilestoneID > 0 {
+		sess.And("issue.milestone_id=?", opts.MilestoneID)
+	}
+
+	return sess, nil
 }
 
 // PullRequests returns all pull requests for a base Repo by the given conditions
@@ -560,7 +574,11 @@ func PullRequests(baseRepoID int64, opts *PullRequestsOptions) ([]*PullRequest, 
 		opts.Page = 1
 	}
 
-	countSession := listPullRequestStatement(baseRepoID, opts)
+	countSession, err := listPullRequestStatement(baseRepoID, opts)
+	if err != nil {
+		log.Error(4, "listPullRequestStatement", err)
+		return nil, 0, err
+	}
 	maxResults, err := countSession.Count(new(PullRequest))
 	if err != nil {
 		log.Error(4, "Count PRs", err)
@@ -568,7 +586,11 @@ func PullRequests(baseRepoID int64, opts *PullRequestsOptions) ([]*PullRequest, 
 	}
 
 	prs := make([]*PullRequest, 0, ItemsPerPage)
-	findSession := listPullRequestStatement(baseRepoID, opts)
+	findSession, err := listPullRequestStatement(baseRepoID, opts)
+	if err != nil {
+		log.Error(4, "listPullRequestStatement", err)
+		return nil, maxResults, err
+	}
 	findSession.Limit(ItemsPerPage, (opts.Page-1)*ItemsPerPage)
 	return prs, maxResults, findSession.Find(&prs)
 }
@@ -624,7 +646,7 @@ func GetPullRequestByIndex(repoID int64, index int64) (*PullRequest, error) {
 	if err != nil {
 		return nil, err
 	} else if !has {
-		return nil, ErrPullRequestNotExist{0, repoID, index, 0, "", ""}
+		return nil, ErrPullRequestNotExist{0, 0, 0, repoID, "", ""}
 	}
 
 	if err = pr.LoadAttributes(); err != nil {

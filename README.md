@@ -1,12 +1,12 @@
-[简体中文](https://github.com/go-gitea/gitea/blob/master/README_ZH.md)
 # Gitea - Git with a cup of tea - Door43 Version
 
 [![Build Status](https://travis-ci.org/unfoldingWord-dev/gogs.svg?branch=master)](https://travis-ci.org/unfoldingWord-dev/gogs)
 [![Join the chat at https://gitter.im/go-gitea/gitea](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/go-gitea/gitea?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+[![](https://images.microbadger.com/badges/image/gitea/gitea.svg)](https://microbadger.com/images/gitea/gitea "Get your own image badge on microbadger.com")
 [![Coverage Status](https://codecov.io/gh/unfoldingWord-dev/gogs/branch/master/graph/badge.svg)](https://codecov.io/gh/unfoldingWord-dev/gogs)
 [![Go Report Card](https://goreportcard.com/badge/github.com/unfoldingWord-dev)](https://goreportcard.com/report/github.com/unfoldingWord-dev/gogs)
 [![GoDoc](https://godoc.org/code.gitea.io/gitea?status.svg)](https://godoc.org/code.gitea.io/gitea)
-[![Release](http://github-release-version.herokuapp.com/github/go-gitea/gitea/release.svg?style=flat)](https://github.com/go-gitea/gitea/releases/latest)
+[![Release](https://github-release-version.herokuapp.com/github/go-gitea/gitea/release.svg?style=flat)](https://github.com/go-gitea/gitea/releases/latest)
 
 [![](public/img/door43.png)](https://git.door43.org)
 

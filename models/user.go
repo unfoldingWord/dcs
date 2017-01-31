@@ -75,26 +75,27 @@ type User struct {
 	Name      string `xorm:"UNIQUE NOT NULL"`
 	FullName  string
 	// Email is the primary email address (to be used for communication)
-	Email       string `xorm:"NOT NULL"`
-	Passwd      string `xorm:"NOT NULL"`
-	LoginType   LoginType
-	LoginSource int64 `xorm:"NOT NULL DEFAULT 0"`
-	LoginName   string
-	Type        UserType
-	OwnedOrgs   []*User       `xorm:"-"`
-	Orgs        []*User       `xorm:"-"`
-	Repos       []*Repository `xorm:"-"`
-	Location    string
-	Website     string
-	Rands       string `xorm:"VARCHAR(10)"`
-	Salt        string `xorm:"VARCHAR(10)"`
+	Email            string `xorm:"NOT NULL"`
+	KeepEmailPrivate bool
+	Passwd           string `xorm:"NOT NULL"`
+	LoginType        LoginType
+	LoginSource      int64 `xorm:"NOT NULL DEFAULT 0"`
+	LoginName        string
+	Type             UserType
+	OwnedOrgs        []*User       `xorm:"-"`
+	Orgs             []*User       `xorm:"-"`
+	Repos            []*Repository `xorm:"-"`
+	Location         string
+	Website          string
+	Rands            string `xorm:"VARCHAR(10)"`
+	Salt             string `xorm:"VARCHAR(10)"`
 
 	Created       time.Time `xorm:"-"`
-	CreatedUnix   int64
+	CreatedUnix   int64     `xorm:"INDEX"`
 	Updated       time.Time `xorm:"-"`
-	UpdatedUnix   int64
+	UpdatedUnix   int64     `xorm:"INDEX"`
 	LastLogin     time.Time `xorm:"-"`
-	LastLoginUnix int64
+	LastLoginUnix int64     `xorm:"INDEX"`
 
 	// Remember visibility choice for convenience, true for private
 	LastRepoVisibility bool
@@ -102,7 +103,7 @@ type User struct {
 	MaxRepoCreation int `xorm:"NOT NULL DEFAULT -1"`
 
 	// Permissions
-	IsActive                bool // Activate primary email
+	IsActive                bool `xorm:"INDEX"` // Activate primary email
 	IsAdmin                 bool
 	AllowGitHook            bool
 	AllowImportLocal        bool // Allow migrate repository by local path
@@ -170,13 +171,22 @@ func (u *User) AfterSet(colName string, _ xorm.Cell) {
 	}
 }
 
+// getEmail returns an noreply email, if the user has set to keep his
+// email address private, otherwise the primary email address.
+func (u *User) getEmail() string {
+	if u.KeepEmailPrivate {
+		return fmt.Sprintf("%s@%s", u.LowerName, setting.Service.NoReplyAddress)
+	}
+	return u.Email
+}
+
 // APIFormat converts a User to api.User
 func (u *User) APIFormat() *api.User {
 	return &api.User{
 		ID:        u.ID,
 		UserName:  u.Name,
 		FullName:  u.FullName,
-		Email:     u.Email,
+		Email:     u.getEmail(),
 		AvatarURL: u.AvatarLink(),
 	}
 }
@@ -223,6 +233,9 @@ func (u *User) CanEditGitHook() bool {
 
 // CanImportLocal returns true if user can migrate repository by local path.
 func (u *User) CanImportLocal() bool {
+	if !setting.ImportLocalPaths {
+		return false
+	}
 	return u.IsAdmin || u.AllowImportLocal
 }
 
@@ -361,7 +374,7 @@ func (u *User) GetFollowing(page int) ([]*User, error) {
 func (u *User) NewGitSig() *git.Signature {
 	return &git.Signature{
 		Name:  u.DisplayName(),
-		Email: u.Email,
+		Email: u.getEmail(),
 		When:  time.Now(),
 	}
 }
@@ -460,7 +473,7 @@ func (u *User) IsUserOrgOwner(orgID int64) bool {
 	return IsOrganizationOwner(orgID, u.ID)
 }
 
-// IsPublicMember returns true if user public his/her membership in give organization.
+// IsPublicMember returns true if user public his/her membership in given organization.
 func (u *User) IsPublicMember(orgID int64) bool {
 	return IsPublicMembership(orgID, u.ID)
 }
@@ -615,6 +628,8 @@ func CreateUser(u *User) (err error) {
 	} else if isExist {
 		return ErrEmailAlreadyUsed{u.Email}
 	}
+
+	u.KeepEmailPrivate = setting.Service.DefaultKeepEmailPrivate
 
 	u.LowerName = strings.ToLower(u.Name)
 	u.AvatarEmail = u.Email
@@ -1040,8 +1055,10 @@ func GetUserEmailsByNames(names []string) []string {
 // GetUsersByIDs returns all resolved users from a list of Ids.
 func GetUsersByIDs(ids []int64) ([]*User, error) {
 	ous := make([]*User, 0, len(ids))
-	err := x.
-		In("id", ids).
+	if len(ids) == 0 {
+		return ous, nil
+	}
+	err := x.In("id", ids).
 		Asc("name").
 		Find(&ous)
 	return ous, err

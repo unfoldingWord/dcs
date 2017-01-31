@@ -91,24 +91,24 @@ const (
 
 // Webhook represents a web hook object.
 type Webhook struct {
-	ID           int64 `xorm:"pk autoincr"`
-	RepoID       int64
-	OrgID        int64
+	ID           int64  `xorm:"pk autoincr"`
+	RepoID       int64  `xorm:"INDEX"`
+	OrgID        int64  `xorm:"INDEX"`
 	URL          string `xorm:"url TEXT"`
 	ContentType  HookContentType
 	Secret       string `xorm:"TEXT"`
 	Events       string `xorm:"TEXT"`
 	*HookEvent   `xorm:"-"`
 	IsSSL        bool `xorm:"is_ssl"`
-	IsActive     bool
+	IsActive     bool `xorm:"INDEX"`
 	HookTaskType HookTaskType
 	Meta         string     `xorm:"TEXT"` // store hook-specific attributes
 	LastStatus   HookStatus // Last delivery status
 
 	Created     time.Time `xorm:"-"`
-	CreatedUnix int64
+	CreatedUnix int64     `xorm:"INDEX"`
 	Updated     time.Time `xorm:"-"`
-	UpdatedUnix int64
+	UpdatedUnix int64     `xorm:"INDEX"`
 }
 
 // BeforeInsert will be invoked by XORM before inserting a record
@@ -231,16 +231,29 @@ func GetWebhookByOrgID(orgID, id int64) (*Webhook, error) {
 // GetActiveWebhooksByRepoID returns all active webhooks of repository.
 func GetActiveWebhooksByRepoID(repoID int64) ([]*Webhook, error) {
 	webhooks := make([]*Webhook, 0, 5)
-	return webhooks, x.Find(&webhooks, &Webhook{
-		RepoID:   repoID,
-		IsActive: true,
-	})
+	return webhooks, x.Where("is_active=?", true).
+		Find(&webhooks, &Webhook{RepoID: repoID})
 }
 
 // GetWebhooksByRepoID returns all webhooks of a repository.
 func GetWebhooksByRepoID(repoID int64) ([]*Webhook, error) {
 	webhooks := make([]*Webhook, 0, 5)
 	return webhooks, x.Find(&webhooks, &Webhook{RepoID: repoID})
+}
+
+// GetActiveWebhooksByOrgID returns all active webhooks for an organization.
+func GetActiveWebhooksByOrgID(orgID int64) (ws []*Webhook, err error) {
+	err = x.
+		Where("org_id=?", orgID).
+		And("is_active=?", true).
+		Find(&ws)
+	return ws, err
+}
+
+// GetWebhooksByOrgID returns all webhooks for an organization.
+func GetWebhooksByOrgID(orgID int64) (ws []*Webhook, err error) {
+	err = x.Find(&ws, &Webhook{OrgID: orgID})
+	return ws, err
 }
 
 // UpdateWebhook updates information of webhook.
@@ -258,8 +271,10 @@ func deleteWebhook(bean *Webhook) (err error) {
 		return err
 	}
 
-	if _, err = sess.Delete(bean); err != nil {
+	if count, err := sess.Delete(bean); err != nil {
 		return err
+	} else if count == 0 {
+		return ErrWebhookNotExist{ID: bean.ID}
 	} else if _, err = sess.Delete(&HookTask{HookID: bean.ID}); err != nil {
 		return err
 	}
@@ -281,21 +296,6 @@ func DeleteWebhookByOrgID(orgID, id int64) error {
 		ID:    id,
 		OrgID: orgID,
 	})
-}
-
-// GetWebhooksByOrgID returns all webhooks for an organization.
-func GetWebhooksByOrgID(orgID int64) (ws []*Webhook, err error) {
-	err = x.Find(&ws, &Webhook{OrgID: orgID})
-	return ws, err
-}
-
-// GetActiveWebhooksByOrgID returns all active webhooks for an organization.
-func GetActiveWebhooksByOrgID(orgID int64) (ws []*Webhook, err error) {
-	err = x.
-		Where("org_id=?", orgID).
-		And("is_active=?", true).
-		Find(&ws)
-	return ws, err
 }
 
 //   ___ ___                __   ___________              __
@@ -503,7 +503,7 @@ func PrepareWebhooks(repo *Repository, event HookEventType, p api.Payloader) err
 			}
 		}
 
-		// Use separate objects so modifcations won't be made on payload on non-Gogs type hooks.
+		// Use separate objects so modifications won't be made on payload on non-Gogs type hooks.
 		switch w.HookTaskType {
 		case SLACK:
 			payloader, err = GetSlackPayload(p, event, w.Meta)

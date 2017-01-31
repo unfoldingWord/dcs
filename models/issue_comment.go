@@ -53,7 +53,7 @@ const (
 type Comment struct {
 	ID              int64 `xorm:"pk autoincr"`
 	Type            CommentType
-	PosterID        int64
+	PosterID        int64 `xorm:"INDEX"`
 	Poster          *User `xorm:"-"`
 	IssueID         int64 `xorm:"INDEX"`
 	CommitID        int64
@@ -62,9 +62,9 @@ type Comment struct {
 	RenderedContent string `xorm:"-"`
 
 	Created     time.Time `xorm:"-"`
-	CreatedUnix int64
+	CreatedUnix int64     `xorm:"INDEX"`
 	Updated     time.Time `xorm:"-"`
-	UpdatedUnix int64
+	UpdatedUnix int64     `xorm:"INDEX"`
 
 	// Reference issue in commit message
 	CommitSHA string `xorm:"VARCHAR(40)"`
@@ -420,9 +420,11 @@ func getCommentsByIssueIDSince(e Engine, issueID, since int64) ([]*Comment, erro
 
 func getCommentsByRepoIDSince(e Engine, repoID, since int64) ([]*Comment, error) {
 	comments := make([]*Comment, 0, 10)
-	sess := e.Where("issue.repo_id = ?", repoID).Join("INNER", "issue", "issue.id = comment.issue_id", repoID).Asc("created_unix")
+	sess := e.Where("issue.repo_id = ?", repoID).
+		Join("INNER", "issue", "issue.id = comment.issue_id").
+		Asc("comment.created_unix")
 	if since > 0 {
-		sess.And("updated_unix >= ?", since)
+		sess.And("comment.updated_unix >= ?", since)
 	}
 	return comments, sess.Find(&comments)
 }
@@ -452,28 +454,22 @@ func UpdateComment(c *Comment) error {
 	return err
 }
 
-// DeleteCommentByID deletes the comment by given ID.
-func DeleteCommentByID(id int64) error {
-	comment, err := GetCommentByID(id)
-	if err != nil {
-		if IsErrCommentNotExist(err) {
-			return nil
-		}
-		return err
-	}
-
+// DeleteComment deletes the comment
+func DeleteComment(comment *Comment) error {
 	sess := x.NewSession()
 	defer sessionRelease(sess)
-	if err = sess.Begin(); err != nil {
+	if err := sess.Begin(); err != nil {
 		return err
 	}
 
-	if _, err = sess.Id(comment.ID).Delete(new(Comment)); err != nil {
+	if _, err := sess.Delete(&Comment{
+		ID: comment.ID,
+	}); err != nil {
 		return err
 	}
 
 	if comment.Type == CommentTypeComment {
-		if _, err = sess.Exec("UPDATE `issue` SET num_comments = num_comments - 1 WHERE id = ?", comment.IssueID); err != nil {
+		if _, err := sess.Exec("UPDATE `issue` SET num_comments = num_comments - 1 WHERE id = ?", comment.IssueID); err != nil {
 			return err
 		}
 	}
