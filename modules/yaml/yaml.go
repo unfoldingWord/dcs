@@ -100,29 +100,21 @@ func renderVerticalHtmlTable(m []yaml.MapSlice) string {
 	return table
 }
 
-func RenderYaml(data []byte) []byte {
+func RenderYaml(data []byte) ([]byte, error) {
 	mss := []yaml.MapSlice{}
 
 	if len(data) < 1 {
-		return data
-	}
-
-	lines := strings.Split(string(data), "\r\n")
-	if len(lines) == 1 {
-		lines = strings.Split(string(data), "\n")
-	}
-	if len(lines) < 1 {
-		return data
+		return data, nil
 	}
 
 	if err := yaml.Unmarshal(data, &mss); err != nil {
 		ms := yaml.MapSlice{}
 		if err := yaml.Unmarshal(data, &ms); err != nil {
-			return data
+			return nil, err
 		}
-		return []byte(renderHorizontalHtmlTable(ms))
-	}  else {
-		return []byte(renderVerticalHtmlTable(mss))
+		return []byte(renderHorizontalHtmlTable(ms)), nil
+	} else {
+		return []byte(renderVerticalHtmlTable(mss)), nil
 	}
 }
 
@@ -183,14 +175,10 @@ func StripYamlFromText(data []byte) []byte {
 	return []byte(body)
 }
 
-func Render(rawBytes []byte) []byte {
-	result := RenderYaml(rawBytes)
-	result = Sanitizer.SanitizeBytes(result)
-	return result
+func Render(rawBytes []byte) ([]byte, error) {
+	result, err := RenderYaml(rawBytes)
+	if err != nil {
+		return nil, err
+	}
+	return Sanitizer.SanitizeBytes(result), nil
 }
-
-// Renders the YAML and text as a string
-func RenderString(rawBytes []byte) string {
-	return string(Render(rawBytes))
-}
-

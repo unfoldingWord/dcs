@@ -22,7 +22,10 @@ func Yaml(ctx *context.APIContext, form api.YamlOption) {
 		ctx.Write([]byte(""))
 		return
 	}
-
-	ctx.Write(yaml.Render([]byte(form.Text)))
+	if rendered, err := yaml.Render([]byte(form.Text)); err != nil {
+		ctx.Error(400, "Unable to parse YAML", err)
+	} else {
+		ctx.Write(rendered)
+	}
 }
 

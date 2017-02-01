@@ -191,15 +191,24 @@ func renderFile(ctx *context.Context, entry *git.TreeEntry, treeLink, rawLink st
 		ctx.Data["ReadmeExist"] = readmeExist
 		isYaml := yaml.IsYamlFile(blob.Name())
 		ctx.Data["IsYaml"] = isYaml
-		if readmeExist && isMarkdown {
+		switch {
+		case readmeExist && isMarkdown:
 			// TODO: don't need to render if it's a README but not Markdown file.
 			yamlHtml := yaml.RenderMarkdownYaml(buf)
 			markdownBody := markdown.Render(yaml.StripYamlFromText(buf), path.Dir(treeLink), ctx.Repo.Repository.ComposeMetas())
 			markdownBody = hashtag.ConvertHashtagsToLinks(ctx.Repo.Repository, markdownBody)
 			ctx.Data["FileContent"] = string(append(yamlHtml, markdownBody...))
-		} else if isYaml {
-			ctx.Data["FileContent"] = string(yaml.RenderYaml(buf))
-		} else {
+		case isYaml:
+			rendered, err := yaml.RenderYaml(buf)
+			if err == nil {
+				ctx.Data["FileContent"] = string(rendered)
+				break
+			}
+			ctx.Flash.ErrorMsg = fmt.Sprintf("Unable to parse YAML: %v", err)
+			ctx.Data["Flash"] = ctx.Flash
+			ctx.Data["IsYaml"] = false
+			fallthrough
+		default:
 			// Building code view blocks with line number on server side.
 			var fileContent string
 			if content, err := templates.ToUTF8WithErr(buf); err != nil {
