@@ -133,6 +133,9 @@ func NewFuncMap() []template.FuncMap {
 			}
 			return path
 		},
+		"ThisYear": func() string {
+			return time.Now().Format("2006")
+		},
 	}}
 }
 
