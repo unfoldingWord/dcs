@@ -7,6 +7,7 @@ package repo
 import (
 	"container/list"
 	"path"
+	"strings"
 
 	"code.gitea.io/git"
 	"code.gitea.io/gitea/models"
@@ -106,13 +107,14 @@ func Graph(ctx *context.Context) {
 func SearchCommits(ctx *context.Context) {
 	ctx.Data["PageIsCommits"] = true
 
-	keyword := ctx.Query("q")
+	keyword := strings.Trim(ctx.Query("q"), " ")
 	if len(keyword) == 0 {
 		ctx.Redirect(ctx.Repo.RepoLink + "/commits/" + ctx.Repo.BranchName)
 		return
 	}
+	all := ctx.QueryBool("all")
 
-	commits, err := ctx.Repo.Commit.SearchCommits(keyword)
+	commits, err := ctx.Repo.Commit.SearchCommits(keyword, all)
 	if err != nil {
 		ctx.Handle(500, "SearchCommits", err)
 		return
@@ -122,6 +124,9 @@ func SearchCommits(ctx *context.Context) {
 	ctx.Data["Commits"] = commits
 
 	ctx.Data["Keyword"] = keyword
+	if all {
+		ctx.Data["All"] = "checked"
+	}
 	ctx.Data["Username"] = ctx.Repo.Owner.Name
 	ctx.Data["Reponame"] = ctx.Repo.Repository.Name
 	ctx.Data["CommitCount"] = commits.Len()

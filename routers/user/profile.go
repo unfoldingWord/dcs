@@ -78,8 +78,9 @@ func Profile(ctx *context.Context) {
 	ctx.Data["Title"] = ctxUser.DisplayName()
 	ctx.Data["PageIsUserProfile"] = true
 	ctx.Data["Owner"] = ctxUser
+	showPrivate := ctx.IsSigned && (ctx.User.IsAdmin || ctx.User.ID == ctxUser.ID)
 
-	orgs, err := models.GetOrgsByUserID(ctxUser.ID, ctx.IsSigned && (ctx.User.IsAdmin || ctx.User.ID == ctxUser.ID))
+	orgs, err := models.GetOrgsByUserID(ctxUser.ID, showPrivate)
 	if err != nil {
 		ctx.Handle(500, "GetOrgsByUserIDDesc", err)
 		return
@@ -91,30 +92,111 @@ func Profile(ctx *context.Context) {
 	ctx.Data["TabName"] = tab
 	switch tab {
 	case "activity":
-		retrieveFeeds(ctx, ctxUser, -1, 0, true)
+		retrieveFeeds(ctx, ctxUser, -1, 0, !showPrivate)
 		if ctx.Written() {
 			return
 		}
 	case "stars":
-		showPrivateRepos := ctx.IsSigned && ctx.User.ID == ctxUser.ID
-		starredRepos, err := ctxUser.GetStarredRepos(showPrivateRepos)
+		page := ctx.QueryInt("page")
+		if page <= 0 {
+			page = 1
+		}
+
+		repos, err := ctxUser.GetStarredRepos(showPrivate, page, setting.UI.User.RepoPagingNum, "")
 		if err != nil {
 			ctx.Handle(500, "GetStarredRepos", err)
 			return
 		}
-		ctx.Data["Repos"] = starredRepos
+
+		counts, err := ctxUser.GetStarredRepoCount(showPrivate)
+		if err != nil {
+			ctx.Handle(500, "GetStarredRepoCount", err)
+			return
+		}
+
+		ctx.Data["Repos"] = repos
+		ctx.Data["Page"] = paginater.New(int(counts), setting.UI.User.RepoPagingNum, page, 5)
+		ctx.Data["Total"] = int(counts)
+		ctx.Data["Tabs"] = "stars"
 	default:
 		page := ctx.QueryInt("page")
 		if page <= 0 {
 			page = 1
 		}
 
-		ctx.Data["Repos"], err = models.GetUserRepositories(ctxUser.ID, ctx.IsSigned && ctx.User.ID == ctxUser.ID, page, setting.UI.User.RepoPagingNum)
-		if err != nil {
-			ctx.Handle(500, "GetRepositories", err)
-			return
+		var (
+			repos   []*models.Repository
+			count   int64
+			err     error
+			orderBy string
+		)
+
+		ctx.Data["SortType"] = ctx.Query("sort")
+		switch ctx.Query("sort") {
+		case "newest":
+			orderBy = "created_unix DESC"
+		case "oldest":
+			orderBy = "created_unix ASC"
+		case "recentupdate":
+			orderBy = "updated_unix DESC"
+		case "leastupdate":
+			orderBy = "updated_unix ASC"
+		case "reversealphabetically":
+			orderBy = "name DESC"
+		case "alphabetically":
+			orderBy = "name ASC"
+		default:
+			ctx.Data["SortType"] = "recentupdate"
+			orderBy = "updated_unix DESC"
 		}
-		ctx.Data["Page"] = paginater.New(ctxUser.NumRepos, setting.UI.User.RepoPagingNum, page, 5)
+
+		// set default sort value if sort is empty.
+		if ctx.Query("sort") == "" {
+			ctx.Data["SortType"] = "recentupdate"
+		}
+
+		keyword := strings.Trim(ctx.Query("q"), " ")
+		ctx.Data["Keyword"] = keyword
+		if len(keyword) == 0 {
+			var total int
+			repos, err = models.GetUserRepositories(ctxUser.ID, showPrivate, page, setting.UI.User.RepoPagingNum, orderBy)
+			if err != nil {
+				ctx.Handle(500, "GetRepositories", err)
+				return
+			}
+			ctx.Data["Repos"] = repos
+
+			if showPrivate {
+				total = ctxUser.NumRepos
+			} else {
+				count, err := models.GetPublicRepositoryCount(ctxUser)
+				if err != nil {
+					ctx.Handle(500, "GetPublicRepositoryCount", err)
+					return
+				}
+				total = int(count)
+			}
+
+			ctx.Data["Page"] = paginater.New(total, setting.UI.User.RepoPagingNum, page, 5)
+			ctx.Data["Total"] = total
+		} else {
+			repos, count, err = models.SearchRepositoryByName(&models.SearchRepoOptions{
+				Keyword:  keyword,
+				OwnerID:  ctxUser.ID,
+				OrderBy:  orderBy,
+				Private:  showPrivate,
+				Page:     page,
+				PageSize: setting.UI.User.RepoPagingNum,
+			})
+			if err != nil {
+				ctx.Handle(500, "SearchRepositoryByName", err)
+				return
+			}
+
+			ctx.Data["Repos"] = repos
+			ctx.Data["Page"] = paginater.New(int(count), setting.UI.User.RepoPagingNum, page, 5)
+			ctx.Data["Total"] = count
+		}
 	}
 
 	ctx.HTML(200, tplProfile)

@@ -158,7 +158,7 @@ func Releases(ctx *context.Context) {
 		}
 	}
 
-	pager := paginater.New(ctx.Repo.Repository.NumTags, limit, page, 5)
+	pager := paginater.New(len(rawTags), limit, page, 5)
 	ctx.Data["Page"] = pager
 	ctx.Data["Releases"] = releaseTags
 	ctx.HTML(200, tplReleases)
@@ -169,7 +169,7 @@ func NewRelease(ctx *context.Context) {
 	ctx.Data["Title"] = ctx.Tr("repo.release.new_release")
 	ctx.Data["PageIsReleaseList"] = true
 	ctx.Data["tag_target"] = ctx.Repo.Repository.DefaultBranch
-	renderAttachmentSettings(ctx);
+	renderAttachmentSettings(ctx)
 	ctx.HTML(200, tplReleaseNew)
 }
 
@@ -250,7 +250,7 @@ func EditRelease(ctx *context.Context) {
 	ctx.Data["Title"] = ctx.Tr("repo.release.edit_release")
 	ctx.Data["PageIsReleaseList"] = true
 	ctx.Data["PageIsEditRelease"] = true
-	renderAttachmentSettings(ctx);
+	renderAttachmentSettings(ctx)
 
 	tagName := ctx.Params("*")
 	rel, err := models.GetRelease(ctx.Repo.Repository.ID, tagName)

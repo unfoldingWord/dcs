@@ -3,10 +3,10 @@
 	"ignore": "test",
 	"package": [
 		{
-			"checksumSHA1": "P2wIRW07gnEgqLZAcg7bz+Jw9Oc=",
+			"checksumSHA1": "km1AOUs34DCwgXT55fh6PrkPdiU=",
 			"path": "code.gitea.io/git",
-			"revision": "7477742b3c79d36d099baaf614864b6bbdfdecca",
-			"revisionTime": "2017-01-09T15:46:57Z"
+			"revision": "dd951bf625ebf5c16ef403f681aaec6c34324bca",
+			"revisionTime": "2017-02-05T02:50:57Z"
 		},
 		{
 			"checksumSHA1": "BKj0haFTDebzdC2nACpoGzp3s8A=",
@@ -443,10 +443,10 @@
 			"revisionTime": "2016-12-14T02:05:24Z"
 		},
 		{
-			"checksumSHA1": "T1DSQqU9e7oW0up0W55TkG4Cb7M=",
+			"checksumSHA1": "OCcksAYN5m0kc5yJF/Ba4VVHqeA=",
 			"path": "github.com/go-xorm/core",
-			"revision": "60b1704516c3af6ff969d81f359cf310ad43a2e0",
-			"revisionTime": "2017-01-03T06:17:17Z"
+			"revision": "e9e84b6f94ace6dec682a39034de56abffb964dd",
+			"revisionTime": "2017-02-06T14:57:10Z"
 		},
 		{
 			"checksumSHA1": "k52lEKLp8j5M+jFpe+3u+bIFpxQ=",
@@ -455,10 +455,10 @@
 			"revisionTime": "2016-08-11T02:11:45Z"
 		},
 		{
-			"checksumSHA1": "pbmrxOvDzdm40iRgnsS25Ig+33o=",
+			"checksumSHA1": "BGWfs63vC5cJuxhVRrj+7YJKz7A=",
 			"path": "github.com/go-xorm/xorm",
-			"revision": "445a934d32ed0934aedf0ef99b4b7c69b22f8e58",
-			"revisionTime": "2017-01-25T11:54:21Z"
+			"revision": "19f6dfc2e8c069adc624ca56cf8127444159d5c1",
+			"revisionTime": "2017-02-10T01:55:37Z"
 		},
 		{
 			"checksumSHA1": "1ft/4j5MFa7C9dPI9whL03HSUzk=",
@@ -1007,12 +1007,6 @@
 			"revisionTime": "2016-09-18T04:11:01Z"
 		},
 		{
-			"checksumSHA1": "6AYg4fjEvFuAVN3wHakGApjhZAM=",
-			"path": "github.com/smartystreets/assertions",
-			"revision": "2063fd1cc7c975db70502811a34b06ad034ccdf2",
-			"revisionTime": "2016-07-07T19:03:55Z"
-		},
-		{
 			"checksumSHA1": "Vzb+dEH/LTYbvr8RXHmt6xJHz04=",
 			"path": "github.com/smartystreets/assertions/internal/go-render/render",
 			"revision": "2063fd1cc7c975db70502811a34b06ad034ccdf2",
@@ -1023,12 +1017,6 @@
 			"path": "github.com/smartystreets/assertions/internal/oglematchers",
 			"revision": "2063fd1cc7c975db70502811a34b06ad034ccdf2",
 			"revisionTime": "2016-07-07T19:03:55Z"
-		},
-		{
-			"checksumSHA1": "/mwAihy9AmznMzmbPQ5nWJXBiRU=",
-			"path": "github.com/smartystreets/goconvey/convey",
-			"revision": "019319c870f8f1d61dc9c34291abff5cd128b6e8",
-			"revisionTime": "2016-11-03T17:15:00Z"
 		},
 		{
 			"checksumSHA1": "9LakndErFi5uCXtY1KWl0iRnT4c=",

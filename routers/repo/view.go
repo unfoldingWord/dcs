@@ -6,6 +6,7 @@ package repo
 
 import (
 	"bytes"
+	"encoding/base64"
 	"fmt"
 	gotemplate "html/template"
 	"io/ioutil"
@@ -17,16 +18,15 @@ import (
 	"code.gitea.io/gitea/models"
 	"code.gitea.io/gitea/modules/base"
 	"code.gitea.io/gitea/modules/context"
+	"code.gitea.io/gitea/modules/hashtag"
 	"code.gitea.io/gitea/modules/highlight"
 	"code.gitea.io/gitea/modules/lfs"
 	"code.gitea.io/gitea/modules/log"
 	"code.gitea.io/gitea/modules/markdown"
 	"code.gitea.io/gitea/modules/setting"
 	"code.gitea.io/gitea/modules/templates"
-	"encoding/base64"
-	"github.com/Unknwon/paginater"
 	"code.gitea.io/gitea/modules/yaml"
-	"code.gitea.io/gitea/modules/hashtag"
+	"github.com/Unknwon/paginater"
 )
 
 const (
@@ -213,7 +213,7 @@ func renderFile(ctx *context.Context, entry *git.TreeEntry, treeLink, rawLink st
 			var fileContent string
 			if content, err := templates.ToUTF8WithErr(buf); err != nil {
 				if err != nil {
-					log.Error(4, "ToUTF8WithErr: %s", err)
+					log.Error(4, "ToUTF8WithErr: %v", err)
 				}
 				fileContent = string(buf)
 			} else {
