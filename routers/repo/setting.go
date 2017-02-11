@@ -359,18 +359,22 @@ func SettingsPost(ctx *context.Context, form auth.RepoSettingForm) {
 		}
 
 		if err := repo.ScrubSensitiveData(ctx.User, models.ScrubSensitiveDataOptions{
-			LastCommitID: ctx.Repo.CommitID,
+			LastCommitID:  ctx.Repo.CommitID,
 			CommitMessage: ctx.Tr("repo.settings.scrub_commit_mesage")}); err != nil {
 			ctx.Flash.Error(ctx.Tr("repo.settings.scrub_nothing_to_scurb"))
 		} else {
 			log.Trace("Repository scrubbed: %s/%s", ctx.Repo.Owner.Name, repo.Name)
 
-			repo.EnableWiki = false
-			if err := models.UpdateRepository(repo, false); err != nil {
-				ctx.Handle(500, "UpdateRepository", err)
+			units := make([]models.RepoUnit, 0, len(repo.Units))
+			for _, unit := range repo.Units {
+				if unit.Type != models.UnitTypeWiki {
+					units = append(units, *unit)
+				}
+			}
+			if err := models.UpdateRepositoryUnits(repo, units); err != nil {
+				ctx.Handle(500, "UpdateRepositoryUnits", err)
 				return
 			}
-
 			ctx.Flash.Success(ctx.Tr("repo.settings.scrub_success"))
 		}
 		ctx.Redirect(ctx.Repo.RepoLink + "/settings")
