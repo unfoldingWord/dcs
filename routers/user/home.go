@@ -65,7 +65,9 @@ func retrieveFeeds(ctx *context.Context, ctxUser *models.User, userID, offset in
 
 	// Check access of private repositories.
 	feeds := make([]*models.Action, 0, len(actions))
-	unameAvatars := make(map[string]string)
+	unameAvatars := map[string]string{
+		ctxUser.Name: ctxUser.RelAvatarLink(),
+	}
 	for _, act := range actions {
 		// Cache results to reduce queries.
 		_, ok := unameAvatars[act.ActUserName]
@@ -234,7 +236,7 @@ func Issues(ctx *context.Context) {
 	for _, repo := range repos {
 		if (isPullList && repo.NumPulls == 0) ||
 			(!isPullList &&
-				(!repo.EnableIssues || repo.EnableExternalTracker || repo.NumIssues == 0)) {
+				(!repo.EnableUnit(models.UnitTypeIssues) || repo.NumIssues == 0)) {
 			continue
 		}
 
@@ -381,7 +383,7 @@ func showOrgProfile(ctx *context.Context) {
 		ctx.Data["Repos"] = repos
 	} else {
 		showPrivate := ctx.IsSigned && ctx.User.IsAdmin
-		repos, err = models.GetUserRepositories(org.ID, showPrivate, page, setting.UI.User.RepoPagingNum)
+		repos, err = models.GetUserRepositories(org.ID, showPrivate, page, setting.UI.User.RepoPagingNum, "")
 		if err != nil {
 			ctx.Handle(500, "GetRepositories", err)
 			return

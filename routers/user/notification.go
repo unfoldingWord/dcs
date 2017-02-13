@@ -28,7 +28,7 @@ func GetNotificationCount(c *context.Context) {
 		return
 	}
 
-	count, err := models.GetNotificationUnreadCount(c.User)
+	count, err := models.GetNotificationCount(c.User, models.NotificationStatusUnread)
 	if err != nil {
 		c.Handle(500, "GetNotificationCount", err)
 		return
@@ -40,7 +40,7 @@ func GetNotificationCount(c *context.Context) {
 // Notifications is the notifications page
 func Notifications(c *context.Context) {
 	var (
-		keyword = c.Query("q")
+		keyword = strings.Trim(c.Query("q"), " ")
 		status  models.NotificationStatus
 		page    = c.QueryInt("page")
 		perPage = c.QueryInt("perPage")

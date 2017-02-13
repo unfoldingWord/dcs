@@ -5,7 +5,7 @@
 package repo
 
 import (
-	"path"
+	"strings"
 
 	api "code.gitea.io/sdk/gitea"
 
@@ -21,7 +21,7 @@ import (
 // see https://github.com/gogits/go-gogs-client/wiki/Repositories#search-repositories
 func Search(ctx *context.APIContext) {
 	opts := &models.SearchRepoOptions{
-		Keyword:  path.Base(ctx.Query("q")),
+		Keyword:  strings.Trim(ctx.Query("q"), " "),
 		OwnerID:  ctx.QueryInt64("uid"),
 		PageSize: convert.ToCorrectPageSize(ctx.QueryInt("limit")),
 	}
@@ -56,18 +56,22 @@ func Search(ctx *context.APIContext) {
 	}
 
 	results := make([]*api.Repository, len(repos))
-	for i := range repos {
-		if err = repos[i].GetOwner(); err != nil {
+	for i, repo := range repos {
+		if err = repo.GetOwner(); err != nil {
 			ctx.JSON(500, map[string]interface{}{
 				"ok":    false,
 				"error": err.Error(),
 			})
 			return
 		}
-		results[i] = &api.Repository{
-			ID:       repos[i].ID,
-			FullName: path.Join(repos[i].Owner.Name, repos[i].Name),
+		accessMode, err := models.AccessLevel(ctx.User, repo)
+		if err != nil {
+			ctx.JSON(500, map[string]interface{}{
+				"ok":    false,
+				"error": err.Error(),
+			})
 		}
+		results[i] = repo.APIFormat(accessMode)
 	}
 
 	ctx.SetLinkHeader(int(count), setting.API.MaxResponseItems)
@@ -80,7 +84,7 @@ func Search(ctx *context.APIContext) {
 // ListMyRepos list all my repositories
 // see https://github.com/gogits/go-gogs-client/wiki/Repositories#list-your-repositories
 func ListMyRepos(ctx *context.APIContext) {
-	ownRepos, err := models.GetUserRepositories(ctx.User.ID, true, 1, ctx.User.NumRepos)
+	ownRepos, err := models.GetUserRepositories(ctx.User.ID, true, 1, ctx.User.NumRepos, "")
 	if err != nil {
 		ctx.Error(500, "GetRepositories", err)
 		return

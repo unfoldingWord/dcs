@@ -52,15 +52,20 @@ func repoAssignment() macaron.Handler {
 		repo, err := models.GetRepositoryByName(owner.ID, repoName)
 		if err != nil {
 			if models.IsErrRepoNotExist(err) {
-				ctx.Status(404)
+				redirectRepoID, err := models.LookupRepoRedirect(owner.ID, repoName)
+				if err == nil {
+					context.RedirectToRepo(ctx.Context, redirectRepoID)
+				} else if models.IsErrRepoRedirectNotExist(err) {
+					ctx.Status(404)
+				} else {
+					ctx.Error(500, "LookupRepoRedirect", err)
+				}
 			} else {
 				ctx.Error(500, "GetRepositoryByName", err)
 			}
 			return
-		} else if err = repo.GetOwner(); err != nil {
-			ctx.Error(500, "GetOwner", err)
-			return
 		}
+		repo.Owner = owner
 
 		if ctx.IsSigned && ctx.User.IsAdmin {
 			ctx.Repo.AccessMode = models.AccessModeOwner
@@ -207,7 +212,7 @@ func orgAssignment(args ...bool) macaron.Handler {
 }
 
 func mustEnableIssues(ctx *context.APIContext) {
-	if !ctx.Repo.Repository.EnableIssues || ctx.Repo.Repository.EnableExternalTracker {
+	if !ctx.Repo.Repository.EnableUnit(models.UnitTypeIssues) {
 		ctx.Status(404)
 		return
 	}
