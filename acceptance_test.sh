@@ -50,7 +50,7 @@ echo -n "Testing $HOST"
 # Show commands being executed and exit upon any error
 set -xe
 
-code.gitea.io/gitea web &
+$HOME/gopath/src/code.gitea.io/gitea/gitea web &
 
 wget -q -O - http://$HOST
 
