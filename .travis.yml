@@ -26,6 +26,7 @@ script:
 
   - make test
   - make build
+  - make accept
 
 after_success:
   - bash <(curl -s https://codecov.io/bash)
