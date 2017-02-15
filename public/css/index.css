@@ -4,8 +4,14 @@
   display: inline-block;
   background-size: contain;
 }
+@font-face {
+  font-family: "SBL Hebrew";
+  src: url(themes/default/assets/fonts/SBL_Hbrw.ttf) format("truetype"),
+       url(themes/default/assets/fonts/SBL_Hbrw.woff) format("woff");
+  unicode-range: U+0590-05FF; /* only applies to Hebrew characters */
+}
 body {
-  font-family: "Helvetica Neue", "Microsoft YaHei", Arial, Helvetica, sans-serif !important;
+  font-family: "SBL Hebrew", "Helvetica Neue", "Microsoft YaHei", Arial, Helvetica, sans-serif !important;
   background-color: #fff;
   overflow-y: scroll;
   -webkit-font-smoothing: antialiased;
@@ -422,7 +428,7 @@ footer .ui.language .menu {
 }
 .markdown:not(code) {
   overflow: hidden;
-  font-family: "Helvetica Neue", Helvetica, "Segoe UI", Arial, freesans, sans-serif;
+  font-family: "SBL Hebrew", "Helvetica Neue", Helvetica, "Segoe UI", Arial, freesans, sans-serif;
   font-size: 16px;
   line-height: 1.6 !important;
   word-wrap: break-word;
