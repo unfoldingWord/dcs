@@ -1,27 +1,28 @@
 package scrub_test
 
 import (
-	"testing"
-	"os"
-	"io"
 	"fmt"
+	"io"
+	"io/ioutil"
+	"os"
 	"path"
 	"path/filepath"
-	"io/ioutil"
-
-	. "github.com/smartystreets/goconvey/convey"
-	"code.gitea.io/gitea/modules/scrub"
-	"code.gitea.io/git"
+	"testing"
 	"time"
+
+	"code.gitea.io/git"
+	"code.gitea.io/gitea/modules/scrub"
+
+	"github.com/stretchr/testify/assert"
 )
 
 // The repos to be tested and the "success" result that should be expected
 var TESTING_REPOS = map[string]bool{
-	"all_json_files": true,
-	"bad_json_file": false,
+	"all_json_files":            true,
+	"bad_json_file":             false,
 	"multiple_sensitive_fields": true,
-	"no_json_files": false,
-	"no_sensitive_data": true,
+	"no_json_files":             false,
+	"no_sensitive_data":         true,
 }
 
 func TestScrubJsonFiles(t *testing.T) {
@@ -36,20 +37,18 @@ func TestScrubJsonFiles(t *testing.T) {
 		git.AddChanges(repoDir, true)
 		git.CommitChanges(repoDir, git.CommitChangesOptions{
 			Committer: &git.Signature{
-				Name: "John Smith",
+				Name:  "John Smith",
 				Email: "john@smith.com",
-				When: time.Now(),
+				When:  time.Now(),
 			},
 			Author: &git.Signature{
-				Name: "John Smith",
+				Name:  "John Smith",
 				Email: "john@smith.com",
-				When: time.Now(),
+				When:  time.Now(),
 			},
 			Message: "Initial Commit",
 		})
-		Convey(fmt.Sprintf("The repo %s should return %v", repoName, expectedResult), t, func() {
-			So(scrub.ScrubJsonFiles(repoDir), ShouldEqual, expectedResult)
-		})
+		assert.Equal(t, expectedResult, scrub.ScrubJsonFiles(repoDir))
 	}
 }
 

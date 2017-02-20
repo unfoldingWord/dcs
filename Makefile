@@ -68,8 +68,7 @@ lint:
 
 .PHONY: test
 test:
-#	for PKG in $(PACKAGES); do go test -cover -coverprofile $$GOPATH/src/$$PKG/coverage.out $$PKG || exit 1; done;
-	./test-coverage.sh
+	go test -cover $(PACKAGES)
 
 .PHONY: test-mysql
 test-mysql:
