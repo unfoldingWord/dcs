@@ -10,15 +10,14 @@ env:
   TAGS: cert sqlite pam miniwinsvc
 
 before_install:
-  - sudo apt-get update -qq
   - sudo apt-get install -y libpam-dev
 
 install:
   - go get golang.org/x/tools/cmd/cover
   - go get github.com/mattn/goveralls
-  
+  - go get github.com/wadey/gocovmerge
+
 script:
-  - go get ./...
   - make clean
   - make vet
 
@@ -28,4 +27,4 @@ script:
   - make build
 
 after_success:
-  - bash <(curl -s https://codecov.io/bash)
+  - ./test-coverage.sh
