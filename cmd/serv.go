@@ -30,6 +30,7 @@ import (
 const (
 	accessDenied        = "Repository does not exist or you do not have access"
 	lfsAuthenticateVerb = "git-lfs-authenticate"
+	envUpdateTaskUUID   = "GITEA_UUID"
 )
 
 // CmdServ represents the available serv sub-command.
@@ -47,10 +48,9 @@ var CmdServ = cli.Command{
 	},
 }
 
-func setup(logPath string) {
+func setup(logPath string) error {
 	setting.NewContext()
 	log.NewGitLogger(filepath.Join(setting.LogRootPath, logPath))
-
 	models.LoadConfigs()
 
 	if setting.UseSQLite3 || setting.UseTiDB {
@@ -60,7 +60,8 @@ func setup(logPath string) {
 		}
 	}
 
-	models.SetEngine()
+	setting.NewXORMLogService(true)
+	return models.SetEngine()
 }
 
 func parseCmd(cmd string) (string, string) {
@@ -146,7 +147,9 @@ func runServ(c *cli.Context) error {
 		setting.CustomConf = c.String("config")
 	}
 
-	setup("serv.log")
+	if err := setup("serv.log"); err != nil {
+		fail("System init failed", fmt.Sprintf("setup: %v", err))
+	}
 
 	if setting.SSH.Disabled {
 		println("Gitea: SSH has been disabled")
@@ -168,7 +171,6 @@ func runServ(c *cli.Context) error {
 
 	var lfsVerb string
 	if verb == lfsAuthenticateVerb {
-
 		if !setting.LFS.StartServer {
 			fail("Unknown git command", "LFS authentication request over SSH denied, LFS support is disabled")
 		}
@@ -289,9 +291,7 @@ func runServ(c *cli.Context) error {
 	}
 
 	//LFS token authentication
-
 	if verb == lfsAuthenticateVerb {
-
 		url := fmt.Sprintf("%s%s/%s.git/info/lfs", setting.AppURL, repoUser.Name, repo.Name)
 
 		now := time.Now()
@@ -324,7 +324,7 @@ func runServ(c *cli.Context) error {
 	}
 
 	uuid := gouuid.NewV4().String()
-	os.Setenv("GITEA_UUID", uuid)
+	os.Setenv(envUpdateTaskUUID, uuid)
 	// Keep the old env variable name for backward compability
 	os.Setenv("uuid", uuid)
 
@@ -340,6 +340,10 @@ func runServ(c *cli.Context) error {
 	} else {
 		gitcmd = exec.Command(verb, repoPath)
 	}
+
+	os.Setenv(models.ProtectedBranchAccessMode, requestedMode.String())
+	os.Setenv(models.ProtectedBranchRepoID, fmt.Sprintf("%d", repo.ID))
+
 	gitcmd.Dir = setting.RepoRootPath
 	gitcmd.Stdout = os.Stdout
 	gitcmd.Stdin = os.Stdin

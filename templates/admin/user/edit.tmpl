@@ -43,7 +43,7 @@
 							<input id="email" name="email" type="email" value="{{.User.Email}}" autofocus required>
 						</div>
 						<input class="fake" type="password">
-						<div class="local field {{if .Err_Password}}error{{end}} {{if not (eq .User.LoginSource 0)}}hide{{end}}">
+						<div class="local field {{if .Err_Password}}error{{end}} {{if not (or (.User.IsLocal) (.User.IsOAuth2))}}hide{{end}}">
 							<label for="password">{{.i18n.Tr "password"}}</label>
 							<input id="password" name="password" type="password">
 							<p class="help">{{.i18n.Tr "admin.users.password_helper"}}</p>
@@ -97,12 +97,14 @@
 								<input name="allow_import_local" type="checkbox" {{if .User.CanImportLocal}}checked{{end}}>
 							</div>
 						</div>
+						{{if not .DisableRegularOrgCreation}}
 						<div class="inline field">
 							<div class="ui checkbox">
 								<label><strong>{{.i18n.Tr "admin.users.allow_create_organization"}}</strong></label>
 								<input name="allow_create_organization" type="checkbox" {{if .User.CanCreateOrganization}}checked{{end}}>
 							</div>
 						</div>
+						{{end}}
 
 						<div class="ui divider"></div>
 

@@ -15,6 +15,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/microcosm-cc/bluemonday"
 	"golang.org/x/net/html/charset"
 	"golang.org/x/text/transform"
 	"gopkg.in/editorconfig/editorconfig-core-go.v1"
@@ -62,6 +63,7 @@ func NewFuncMap() []template.FuncMap {
 		},
 		"AvatarLink":   base.AvatarLink,
 		"Safe":         Safe,
+		"Sanitize":     bluemonday.UGCPolicy().Sanitize,
 		"Str2html":     Str2html,
 		"TimeSince":    base.TimeSince,
 		"RawTimeSince": base.RawTimeSince,

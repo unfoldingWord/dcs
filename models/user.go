@@ -196,6 +196,11 @@ func (u *User) IsLocal() bool {
 	return u.LoginType <= LoginPlain
 }
 
+// IsOAuth2 returns true if user login type is LoginOAuth2.
+func (u *User) IsOAuth2() bool {
+	return u.LoginType == LoginOAuth2
+}
+
 // HasForkedRepo checks if user has already forked a repository with given ID.
 func (u *User) HasForkedRepo(repoID int64) bool {
 	_, has := HasForkedRepo(u.ID, repoID)
@@ -223,7 +228,7 @@ func (u *User) CanCreateRepo() bool {
 
 // CanCreateOrganization returns true if user can create organisation.
 func (u *User) CanCreateOrganization() bool {
-	return u.IsAdmin || u.AllowCreateOrganization
+	return u.IsAdmin || (u.AllowCreateOrganization && !setting.Admin.DisableRegularOrgCreation)
 }
 
 // CanEditGitHook returns true if user can edit Git hooks.
@@ -397,6 +402,11 @@ func (u *User) ValidatePassword(passwd string) bool {
 	return subtle.ConstantTimeCompare([]byte(u.Passwd), []byte(newUser.Passwd)) == 1
 }
 
+// IsPasswordSet checks if the password is set or left empty
+func (u *User) IsPasswordSet() bool {
+	return !u.ValidatePassword("")
+}
+
 // UploadAvatar saves custom avatar for user.
 // FIXME: split uploads to different subdirs in case we have massive users.
 func (u *User) UploadAvatar(data []byte) error {
@@ -498,6 +508,34 @@ func (u *User) GetOrganizationCount() (int64, error) {
 func (u *User) GetRepositories(page, pageSize int) (err error) {
 	u.Repos, err = GetUserRepositories(u.ID, true, page, pageSize, "")
 	return err
+}
+
+// GetRepositoryIDs returns repositories IDs where user owned
+func (u *User) GetRepositoryIDs() ([]int64, error) {
+	var ids []int64
+	return ids, x.Table("repository").Cols("id").Where("owner_id = ?", u.ID).Find(&ids)
+}
+
+// GetOrgRepositoryIDs returns repositories IDs where user's team owned
+func (u *User) GetOrgRepositoryIDs() ([]int64, error) {
+	var ids []int64
+	return ids, x.Table("repository").
+		Cols("repository.id").
+		Join("INNER", "team_user", "repository.owner_id = team_user.org_id AND team_user.uid = ?", u.ID).
+		GroupBy("repository.id").Find(&ids)
+}
+
+// GetAccessRepoIDs returns all repsitories IDs where user's or user is a team member orgnizations
+func (u *User) GetAccessRepoIDs() ([]int64, error) {
+	ids, err := u.GetRepositoryIDs()
+	if err != nil {
+		return nil, err
+	}
+	ids2, err := u.GetOrgRepositoryIDs()
+	if err != nil {
+		return nil, err
+	}
+	return append(ids, ids2...), nil
 }
 
 // GetMirrorRepositories returns mirror repositories that user owns, including private repositories.
@@ -919,6 +957,12 @@ func deleteUser(e *xorm.Session, u *User) error {
 		return fmt.Errorf("clear assignee: %v", err)
 	}
 
+	// ***** START: ExternalLoginUser *****
+	if err = RemoveAllAccountLinks(u); err != nil {
+		return fmt.Errorf("ExternalLoginUser: %v", err)
+	}
+	// ***** END: ExternalLoginUser *****
+
 	if _, err = e.Id(u.ID).Delete(new(User)); err != nil {
 		return fmt.Errorf("Delete: %v", err)
 	}
@@ -1160,6 +1204,11 @@ func GetUserByEmail(email string) (*User, error) {
 	}
 
 	return nil, ErrUserNotExist{0, email, 0}
+}
+
+// GetUser checks if a user already exists
+func GetUser(user *User) (bool, error) {
+	return x.Get(user)
 }
 
 // SearchUserOptions contains the options for searching
