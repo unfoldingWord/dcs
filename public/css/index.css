@@ -608,7 +608,7 @@ footer .ui.language .menu {
   list-style-type: lower-roman;
 }
 .markdown:not(code) li > p {
-  margin-top: 16px;
+  margin-top: 0;
 }
 .markdown:not(code) dl {
   padding: 0;
@@ -636,8 +636,7 @@ footer .ui.language .menu {
   margin-bottom: 0;
 }
 .markdown:not(code) table {
-  display: block;
-  width: 100%;
+  width: auto;
   overflow: auto;
   word-break: normal;
   word-break: keep-all;
@@ -846,6 +845,11 @@ footer .ui.language .menu {
   font-weight: bold;
   background: #f8f8f8;
   border-top: 0;
+}
+.markdown:not(code) .ui.list .list,
+.markdown:not(code) ol.ui.list ol,
+.markdown:not(code) ul.ui.list ul {
+  padding-left: 2em;
 }
 .home {
   padding-bottom: 80px;
@@ -3029,4 +3033,25 @@ table[data-table-type="yaml-metadata"] {
 }
 .ui.user.list .item .description a:hover {
   text-decoration: underline;
+}
+.user.link-account:not(.icon) {
+  padding-top: 15px;
+  padding-bottom: 5px;
+}
+.signin .oauth2 div {
+  display: inline-block;
+}
+.signin .oauth2 div p {
+  margin: 10px 5px 0 0;
+  float: left;
+}
+.signin .oauth2 a {
+  margin-right: 5px;
+}
+.signin .oauth2 a:last-child {
+  margin-right: 0px;
+}
+.signin .oauth2 img {
+  width: 32px;
+  height: 32px;
 }

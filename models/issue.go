@@ -775,14 +775,12 @@ func (issue *Issue) ChangeAssignee(doer *User, assigneeID int64) (err error) {
 		} else {
 			apiPullRequest.Action = api.HookIssueAssigned
 		}
-		err = PrepareWebhooks(issue.Repo, HookEventPullRequest, apiPullRequest)
+		if err := PrepareWebhooks(issue.Repo, HookEventPullRequest, apiPullRequest); err != nil {
+			log.Error(4, "PrepareWebhooks [is_pull: %v, remove_assignee: %v]: %v", issue.IsPull, isRemoveAssignee, err)
+			return nil
+		}
 	}
-	if err != nil {
-		log.Error(4, "PrepareWebhooks [is_pull: %v, remove_assignee: %v]: %v", issue.IsPull, isRemoveAssignee, err)
-	} else {
-		go HookQueue.Add(issue.RepoID)
-	}
-
+	go HookQueue.Add(issue.RepoID)
 	return nil
 }
 
@@ -1130,11 +1128,8 @@ func Issues(opts *IssuesOptions) ([]*Issue, error) {
 		return nil, fmt.Errorf("Find: %v", err)
 	}
 
-	// FIXME: use IssueList to improve performance.
-	for i := range issues {
-		if err := issues[i].LoadAttributes(); err != nil {
-			return nil, fmt.Errorf("LoadAttributes [%d]: %v", issues[i].ID, err)
-		}
+	if err := IssueList(issues).LoadAttributes(); err != nil {
+		return nil, fmt.Errorf("LoadAttributes: %v", err)
 	}
 
 	return issues, nil
@@ -1186,7 +1181,7 @@ func UpdateIssueMentions(e Engine, issueID int64, mentions []string) error {
 // IssueStats represents issue statistic information.
 type IssueStats struct {
 	OpenCount, ClosedCount int64
-	AllCount               int64
+	YourRepositoriesCount  int64
 	AssignCount            int64
 	CreateCount            int64
 	MentionCount           int64
@@ -1212,6 +1207,7 @@ func parseCountResult(results []map[string][]byte) int64 {
 
 // IssueStatsOptions contains parameters accepted by GetIssueStats.
 type IssueStatsOptions struct {
+	FilterMode  int
 	RepoID      int64
 	Labels      string
 	MilestoneID int64
@@ -1267,19 +1263,41 @@ func GetIssueStats(opts *IssueStatsOptions) (*IssueStats, error) {
 	}
 
 	var err error
-	stats.OpenCount, err = countSession(opts).
-		And("is_closed = ?", false).
-		Count(&Issue{})
-	if err != nil {
-		return nil, err
+	switch opts.FilterMode {
+	case FilterModeAll, FilterModeAssign:
+		stats.OpenCount, err = countSession(opts).
+			And("is_closed = ?", false).
+			Count(new(Issue))
+
+		stats.ClosedCount, err = countSession(opts).
+			And("is_closed = ?", true).
+			Count(new(Issue))
+	case FilterModeCreate:
+		stats.OpenCount, err = countSession(opts).
+			And("poster_id = ?", opts.PosterID).
+			And("is_closed = ?", false).
+			Count(new(Issue))
+
+		stats.ClosedCount, err = countSession(opts).
+			And("poster_id = ?", opts.PosterID).
+			And("is_closed = ?", true).
+			Count(new(Issue))
+	case FilterModeMention:
+		stats.OpenCount, err = countSession(opts).
+			Join("INNER", "issue_user", "issue.id = issue_user.issue_id").
+			And("issue_user.uid = ?", opts.PosterID).
+			And("issue_user.is_mentioned = ?", true).
+			And("issue.is_closed = ?", false).
+			Count(new(Issue))
+
+		stats.ClosedCount, err = countSession(opts).
+			Join("INNER", "issue_user", "issue.id = issue_user.issue_id").
+			And("issue_user.uid = ?", opts.PosterID).
+			And("issue_user.is_mentioned = ?", true).
+			And("issue.is_closed = ?", true).
+			Count(new(Issue))
 	}
-	stats.ClosedCount, err = countSession(opts).
-		And("is_closed = ?", true).
-		Count(&Issue{})
-	if err != nil {
-		return nil, err
-	}
-	return stats, nil
+	return stats, err
 }
 
 // GetUserIssueStats returns issue statistic information for dashboard by given conditions.
@@ -1300,28 +1318,38 @@ func GetUserIssueStats(repoID, uid int64, repoIDs []int64, filterMode int, isPul
 		return sess
 	}
 
-	stats.AssignCount, _ = countSession(false, isPull, repoID, repoIDs).
+	stats.AssignCount, _ = countSession(false, isPull, repoID, nil).
 		And("assignee_id = ?", uid).
-		Count(&Issue{})
+		Count(new(Issue))
 
-	stats.CreateCount, _ = countSession(false, isPull, repoID, repoIDs).
+	stats.CreateCount, _ = countSession(false, isPull, repoID, nil).
 		And("poster_id = ?", uid).
-		Count(&Issue{})
+		Count(new(Issue))
 
-	openCountSession := countSession(false, isPull, repoID, repoIDs)
-	closedCountSession := countSession(true, isPull, repoID, repoIDs)
+	stats.YourRepositoriesCount, _ = countSession(false, isPull, repoID, repoIDs).
+		Count(new(Issue))
 
 	switch filterMode {
+	case FilterModeAll:
+		stats.OpenCount, _ = countSession(false, isPull, repoID, repoIDs).
+			Count(new(Issue))
+		stats.ClosedCount, _ = countSession(true, isPull, repoID, repoIDs).
+			Count(new(Issue))
 	case FilterModeAssign:
-		openCountSession.And("assignee_id = ?", uid)
-		closedCountSession.And("assignee_id = ?", uid)
+		stats.OpenCount, _ = countSession(false, isPull, repoID, nil).
+			And("assignee_id = ?", uid).
+			Count(new(Issue))
+		stats.ClosedCount, _ = countSession(true, isPull, repoID, nil).
+			And("assignee_id = ?", uid).
+			Count(new(Issue))
 	case FilterModeCreate:
-		openCountSession.And("poster_id = ?", uid)
-		closedCountSession.And("poster_id = ?", uid)
+		stats.OpenCount, _ = countSession(false, isPull, repoID, nil).
+			And("poster_id = ?", uid).
+			Count(new(Issue))
+		stats.ClosedCount, _ = countSession(true, isPull, repoID, nil).
+			And("poster_id = ?", uid).
+			Count(new(Issue))
 	}
-
-	stats.OpenCount, _ = openCountSession.Count(&Issue{})
-	stats.ClosedCount, _ = closedCountSession.Count(&Issue{})
 
 	return stats
 }
@@ -1349,8 +1377,8 @@ func GetRepoIssueStats(repoID, uid int64, filterMode int, isPull bool) (numOpen 
 		closedCountSession.And("poster_id = ?", uid)
 	}
 
-	openResult, _ := openCountSession.Count(&Issue{})
-	closedResult, _ := closedCountSession.Count(&Issue{})
+	openResult, _ := openCountSession.Count(new(Issue))
+	closedResult, _ := closedCountSession.Count(new(Issue))
 
 	return openResult, closedResult
 }

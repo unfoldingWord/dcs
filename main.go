@@ -30,7 +30,7 @@ func main() {
 	app.Commands = []cli.Command{
 		cmd.CmdWeb,
 		cmd.CmdServ,
-		cmd.CmdUpdate,
+		cmd.CmdHook,
 		cmd.CmdDump,
 		cmd.CmdCert,
 		cmd.CmdAdmin,
@@ -40,5 +40,4 @@ func main() {
 	if err != nil {
 		log.Fatal(4, "Failed to run app with %s: %v", os.Args, err)
 	}
-
 }
