@@ -1,0 +1,27 @@
+{{template "base/head" .}}
+<div class="repository hashtag page">
+	{{template "repo/header" .}}
+	<div class="ui container">
+		{{template "base/alert" .}}
+		<div class="ui container">
+			<a href="{{.Repo.HTMLURL}}/hashtags" class="pull-right">&laquo; {{.i18n.Tr "repo.hashtag.return_to_hashtag_list"}}</a>
+			<h1><i>#{{ .Hashtag }}</i></h1>
+			<div class="glossary-article-box">
+				<ul>
+					<li><a href="{{AppSubUrl}}/{{.Repo.Owner.Name}}/{{.Repo.GetUBNRepoName}}/src/master/content/{{.Hashtag}}/01.md">{{.i18n.Tr "repo.hashtag.glossary"}}</a></li>
+					<li><a href="{{AppSubUrl}}/{{.Repo.Owner.Name}}/{{.Repo.GetUBNRepoName}}/src/master/content/{{.Hashtag}}/02.md">{{.i18n.Tr "repo.hashtag.article"}}</a></li>
+				</ul>
+			</div>
+				
+			<div class="appears-in-block">
+				<h2>Appears in:</h2>
+				<ul>
+				{{ range .Tags }}
+					<li><a href="{{.FileURL}}">{{.Repo.Name}}/{{.FilePath}}</a></li>
+				{{end}}
+				</ul>
+			</div>
+		</div>
+	</div>
+</div>
+{{template "base/footer" .}}
