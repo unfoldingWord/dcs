@@ -58,11 +58,7 @@
 </div>
 
 <script>
-  TogetherJSConfig_findRoom = "door43";
-  //TogetherJSConfig_inviteFromRoom = true;
-  //TogetherJSConfig_autoStart = false;
-  //TogetherJSConfig_suppressJoinConfirmation = true;
-  TogetherJSConfig_storagePrefix = "door43";
+  var TogetherJSConfig_ignoreForms = [':password','select','input'];
 </script>
 <script src="https://togetherjs.com/togetherjs-min.js"></script>
 {{template "base/footer" .}}

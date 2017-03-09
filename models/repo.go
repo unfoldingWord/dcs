@@ -2181,6 +2181,15 @@ func (repo *Repository) ScrubSensitiveData(doer *User, opts ScrubSensitiveDataOp
 	return nil
 }
 
+func (repo *Repository) GetUBNRepoName() string {
+	if strings.HasSuffix(repo.LowerName, "-ubn") {
+		return repo.LowerName
+	} else if strings.Index(repo.LowerName, "-ubn-") > 0 {
+		return repo.LowerName[:strings.Index(repo.LowerName , "-ubn-")+len("-ubn")]
+	}
+	return ""
+}
+
 // ___________           __
 // \_   _____/__________|  | __
 //  |    __)/  _ \_  __ \  |/ /

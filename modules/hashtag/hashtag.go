@@ -7,7 +7,6 @@ package hashtag
 import (
 	"regexp"
 	"strings"
-	"code.gitea.io/gitea/modules/setting"
 	"code.gitea.io/gitea/models"
 )
 
@@ -15,10 +14,9 @@ func ConvertHashtagsToLinks(repo *models.Repository, html []byte) []byte {
 	repoName := repo.LowerName
 	indexOfUbn := strings.Index(repoName, "-ubn-")
 	if indexOfUbn > 0 {
-		ubnRepo := repoName[0:indexOfUbn+4]
-		hashtagsUrl := setting.AppSubURL + "/" + repo.Owner.LowerName + "/" + ubnRepo + "/hashtags"
-		re, _ := regexp.Compile(`(^|\n|<p>)#([A-Za-uw-z0-9_-][\w-]+|v\d+[A-Za-z_-][\w-]*|v[A-Za-z_-][^\w-]*)`)
-		html = re.ReplaceAll(html, []byte("$1<a href=\"" + hashtagsUrl +"/$2\">#$2</a>$3"))
+		hashtagsUrl := repo.HTMLURL() + "/hashtags"
+		re, _ := regexp.Compile(`(^|\n|<p>)#([A-Za-uw-z0-9:_-][\w:-]+|v[A-Za-z:_-][\w:-]*)`)
+		html = re.ReplaceAll(html, []byte("$1<a href=\""+hashtagsUrl+"/$2\">#$2</a>$3"))
 	}
 	return html
 }
