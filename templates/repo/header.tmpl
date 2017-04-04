@@ -98,11 +98,7 @@
 					<i class="octicon octicon-book"></i> {{.i18n.Tr "repo.wiki"}}
 				</a>
 			{{end}}
-			{{if .RepoIsUBN}}
-			<a class="{{if .PageIsHashtags}}active{{end}} item" href="{{.RepoLink}}/hashtags">
-				<i class="fa fa-hashtag"></i> {{.i18n.Tr "repo.hashtags"}}
-			</a>
-			{{end}}
+
 			{{if .IsRepositoryAdmin}}
 				<div class="right menu">
 					<a class="{{if .PageIsSettings}}active{{end}} item" href="{{.RepoLink}}/settings">

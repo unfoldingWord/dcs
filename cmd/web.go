@@ -414,20 +414,6 @@ func runWeb(ctx *cli.Context) error {
 			Post(bindIgnErr(auth.CreateRepoForm{}), repo.ForkPost)
 	}, reqSignIn)
 
-	// Check for hashtag requests in UBN repositories.
-	// => repo name must contain `-ubn-` or end with `-ubn`.
-	m.Group("/:username/:reponame(.+-ubn-.+|.+-ubn$)", func() {
-		m.Get("/hashtags", repo.Hashtags)
-		m.Get("/hashtags/:hashtag", repo.HashtagDisambiguation)
-	}, ignSignIn, context.RepoAssignment(), context.RepoRef())
-
-	// Redirect hashtag requests for ineligible repositories
-	m.Group("/:username/:reponame", func() {
-		m.Get("/hashtags/*.*", func(ctx *macaron.Context) {
-			ctx.Redirect(setting.AppSubURL + "/" + ctx.Params(":username")+ "/" + ctx.Params(":reponame"), 301)
-		})
-	}, ignSignIn)
-
 	m.Group("/:username/:reponame", func() {
 		m.Group("/settings", func() {
 			m.Combo("").Get(repo.Settings).
