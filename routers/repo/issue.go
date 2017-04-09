@@ -865,11 +865,8 @@ func NewComment(ctx *context.Context, form auth.CreateCommentForm) {
 		if issue.IsPull {
 			typeName = "pulls"
 		}
-		if comment != nil {
-			ctx.Redirect(fmt.Sprintf("%s/%s/%d#%s", ctx.Repo.RepoLink, typeName, issue.Index, comment.HashTag()))
-		} else {
-			ctx.Redirect(fmt.Sprintf("%s/%s/%d", ctx.Repo.RepoLink, typeName, issue.Index))
-		}
+
+		ctx.Redirect(fmt.Sprintf("%s/%s/%d", ctx.Repo.RepoLink, typeName, issue.Index))
 	}()
 
 	// Fix #321: Allow empty comments, as long as we have attachments.

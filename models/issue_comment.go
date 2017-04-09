@@ -198,11 +198,6 @@ func (c *Comment) APIFormat() *api.Comment {
 	}
 }
 
-// HashTag returns unique hash tag for comment.
-func (c *Comment) HashTag() string {
-	return "issuecomment-" + com.ToStr(c.ID)
-}
-
 // EventTag returns unique event hash tag for comment.
 func (c *Comment) EventTag() string {
 	return "event-" + com.ToStr(c.ID)
