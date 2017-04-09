@@ -161,3 +161,7 @@ public/css/index.css: $(STYLESHEETS)
 
 .PHONY: assets
 assets: javascripts stylesheets
+
+.PHONY: accept
+accept:
+	./acceptance_test.sh
