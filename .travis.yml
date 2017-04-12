@@ -24,7 +24,7 @@ script:
   # - make lint
 
   - make test
-  - make build
+  - make build TAGS=redis
 
 after_success:
   - ./test-coverage.sh
