@@ -11,7 +11,12 @@ BINDATA := modules/{options,public,templates}/bindata.go
 STYLESHEETS := $(wildcard public/less/index.less public/less/_*.less)
 JAVASCRIPTS :=
 
-LDFLAGS := -X "main.Version=$(shell git describe --tags --always | sed 's/-/+/' | sed 's/^v//')" -X "main.Tags=$(TAGS)"
+GOFLAGS := -i -v
+EXTRA_GOFLAGS ?=
+
+VERSION := $(shell git describe --tags --always | sed 's/-/+/' | sed 's/^v//')
+
+LDFLAGS := -X "main.Version=$(VERSION)" -X "main.Tags=$(TAGS)"
 
 PACKAGES ?= $(filter-out code.gitea.io/gitea/integrations,$(shell go list ./... | grep -v /vendor/))
 SOURCES ?= $(shell find . -name "*.go" -type f)
@@ -74,13 +79,34 @@ integrations: build
 test:
 	go test -cover $(PACKAGES)
 
+.PHONY: test-vendor
+test-vendor:
+	@hash govendor > /dev/null 2>&1; if [ $$? -ne 0 ]; then \
+		go get -u github.com/kardianos/govendor; \
+	fi
+	govendor status +outside +unused  || exit 1
+
+.PHONY: test-sqlite
+test-sqlite: integrations.test integrations/gitea-integration
+	GITEA_CONF=integrations/sqlite.ini ./integrations.test
+
 .PHONY: test-mysql
-test-mysql:
-	@echo "Not integrated yet!"
+test-mysql: integrations.test integrations/gitea-integration
+	echo "CREATE DATABASE IF NOT EXISTS testgitea" | mysql -u root
+	GITEA_CONF=integrations/mysql.ini ./integrations.test
 
 .PHONY: test-pgsql
-test-pgsql:
-	@echo "Not integrated yet!"
+test-pgsql: integrations.test integrations/gitea-integration
+	GITEA_CONF=integrations/pgsql.ini ./integrations.test
+
+integrations.test: $(SOURCES)
+	go test -c code.gitea.io/gitea/integrations -tags 'sqlite'
+
+integrations/gitea-integration:
+	curl -L https://github.com/ethantkoenig/gitea-integration/archive/v2.tar.gz > integrations/gitea-integration.tar.gz
+	mkdir -p integrations/gitea-integration
+	tar -xf integrations/gitea-integration.tar.gz -C integrations/gitea-integration --strip-components 1
+
 
 .PHONY: check
 check: test
@@ -93,7 +119,7 @@ install: $(wildcard *.go)
 build: $(EXECUTABLE)
 
 $(EXECUTABLE): $(SOURCES)
-	go build -i -v -tags '$(TAGS)' -ldflags '-s -w $(LDFLAGS)' -o $@
+	go build $(GOFLAGS) $(EXTRA_GOFLAGS) -tags '$(TAGS)' -ldflags '-s -w $(LDFLAGS)' -o $@
 
 .PHONY: docker
 docker:

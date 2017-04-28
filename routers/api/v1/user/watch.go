@@ -5,24 +5,12 @@
 package user
 
 import (
-	"time"
-
 	api "code.gitea.io/sdk/gitea"
 
 	"code.gitea.io/gitea/models"
 	"code.gitea.io/gitea/modules/context"
 	"code.gitea.io/gitea/modules/setting"
 )
-
-// WatchInfo contains information about a watched repository
-type WatchInfo struct {
-	Subscribed    bool        `json:"subscribed"`
-	Ignored       bool        `json:"ignored"`
-	Reason        interface{} `json:"reason"`
-	CreatedAt     time.Time   `json:"created_at"`
-	URL           string      `json:"url"`
-	RepositoryURL string      `json:"repository_url"`
-}
 
 // getWatchedRepos returns the repos that the user with the specified userID is
 // watching
@@ -31,14 +19,10 @@ func getWatchedRepos(userID int64, private bool) ([]*api.Repository, error) {
 	if err != nil {
 		return nil, err
 	}
-	user, err := models.GetUserByID(userID)
-	if err != nil {
-		return nil, err
-	}
 
 	repos := make([]*api.Repository, len(watchedRepos))
 	for i, watched := range watchedRepos {
-		access, err := models.AccessLevel(user, watched)
+		access, err := models.AccessLevel(userID, watched)
 		if err != nil {
 			return nil, err
 		}
@@ -71,7 +55,7 @@ func GetMyWatchedRepos(ctx *context.APIContext) {
 // specified in ctx
 func IsWatching(ctx *context.APIContext) {
 	if models.IsWatching(ctx.User.ID, ctx.Repo.Repository.ID) {
-		ctx.JSON(200, WatchInfo{
+		ctx.JSON(200, api.WatchInfo{
 			Subscribed:    true,
 			Ignored:       false,
 			Reason:        nil,
@@ -91,7 +75,7 @@ func Watch(ctx *context.APIContext) {
 		ctx.Error(500, "WatchRepo", err)
 		return
 	}
-	ctx.JSON(200, WatchInfo{
+	ctx.JSON(200, api.WatchInfo{
 		Subscribed:    true,
 		Ignored:       false,
 		Reason:        nil,

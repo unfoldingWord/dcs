@@ -15,6 +15,7 @@ import (
 	"os/exec"
 	"path"
 	"path/filepath"
+	"regexp"
 	"runtime"
 	"strconv"
 	"strings"
@@ -26,6 +27,7 @@ import (
 	"code.gitea.io/gitea/modules/user"
 
 	"github.com/Unknwon/com"
+	"github.com/dgrijalva/jwt-go"
 	_ "github.com/go-macaron/cache/memcache" // memcache plugin for cache
 	_ "github.com/go-macaron/cache/redis"
 	"github.com/go-macaron/session"
@@ -225,6 +227,11 @@ var (
 		User struct {
 			RepoPagingNum int
 		} `ini:"ui.user"`
+		Meta struct {
+			Author      string
+			Description string
+			Keywords    string
+		} `ini:"ui.meta"`
 	}{
 		ExplorePagingNum:   20,
 		IssuePagingNum:     10,
@@ -247,9 +254,18 @@ var (
 		}{
 			RepoPagingNum: 15,
 		},
+		Meta: struct {
+			Author      string
+			Description string
+			Keywords    string
+		}{
+			Author:      "Gitea - Git with a cup of tea",
+			Description: "Gitea (Git with a cup of tea) is a painless self-hosted Git service written in Go",
+			Keywords:    "go,git,self-hosted,gitea",
+		},
 	}
 
-	// Markdown sttings
+	// Markdown settings
 	Markdown = struct {
 		EnableHardLineBreak bool
 		CustomURLSchemes    []string `ini:"CUSTOM_URL_SCHEMES"`
@@ -402,10 +418,9 @@ var (
 	}
 
 	// Mirror settings
-	Mirror = struct {
-		DefaultInterval int
-	}{
-		DefaultInterval: 8,
+	Mirror struct {
+		DefaultInterval time.Duration
+		MinInterval     time.Duration
 	}
 
 	// API settings
@@ -420,7 +435,7 @@ var (
 	Names     []string
 	dateLangs map[string]string
 
-	// Highlight settings are loaded in modules/template/hightlight.go
+	// Highlight settings are loaded in modules/template/highlight.go
 
 	// Other settings
 	ShowFooterBranding         bool
@@ -428,14 +443,15 @@ var (
 	ShowFooterTemplateLoadTime bool
 
 	// Global setting objects
-	Cfg          *ini.File
-	CustomPath   string // Custom directory path
-	CustomConf   string
-	CustomPID    string
-	ProdMode     bool
-	RunUser      string
-	IsWindows    bool
-	HasRobotsTxt bool
+	Cfg           *ini.File
+	CustomPath    string // Custom directory path
+	CustomConf    string
+	CustomPID     string
+	ProdMode      bool
+	RunUser       string
+	IsWindows     bool
+	HasRobotsTxt  bool
+	InternalToken string // internal access token
 	Google struct {
 		GATrackingID   string
 	}
@@ -539,10 +555,6 @@ func NewContext() {
 	}
 
 	Cfg = ini.Empty()
-
-	if err != nil {
-		log.Fatal(4, "Failed to parse 'app.ini': %v", err)
-	}
 
 	CustomPath = os.Getenv("GITEA_CUSTOM")
 	if len(CustomPath) == 0 {
@@ -757,6 +769,43 @@ please consider changing to GITEA_CUSTOM`)
 	ReverseProxyAuthUser = sec.Key("REVERSE_PROXY_AUTHENTICATION_USER").MustString("X-WEBAUTH-USER")
 	MinPasswordLength = sec.Key("MIN_PASSWORD_LENGTH").MustInt(6)
 	ImportLocalPaths = sec.Key("IMPORT_LOCAL_PATHS").MustBool(false)
+	InternalToken = sec.Key("INTERNAL_TOKEN").String()
+	if len(InternalToken) == 0 {
+		secretBytes := make([]byte, 32)
+		_, err := io.ReadFull(rand.Reader, secretBytes)
+		if err != nil {
+			log.Fatal(4, "Error reading random bytes: %v", err)
+		}
+
+		secretKey := base64.RawURLEncoding.EncodeToString(secretBytes)
+
+		now := time.Now()
+		InternalToken, err = jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
+			"nbf": now.Unix(),
+		}).SignedString([]byte(secretKey))
+
+		if err != nil {
+			log.Fatal(4, "Error generate internal token: %v", err)
+		}
+
+		// Save secret
+		cfgSave := ini.Empty()
+		if com.IsFile(CustomConf) {
+			// Keeps custom settings if there is already something.
+			if err := cfgSave.Append(CustomConf); err != nil {
+				log.Error(4, "Failed to load custom conf '%s': %v", CustomConf, err)
+			}
+		}
+
+		cfgSave.Section("security").Key("INTERNAL_TOKEN").SetValue(InternalToken)
+
+		if err := os.MkdirAll(filepath.Dir(CustomConf), os.ModePerm); err != nil {
+			log.Fatal(4, "Failed to create '%s': %v", CustomConf, err)
+		}
+		if err := cfgSave.SaveTo(CustomConf); err != nil {
+			log.Fatal(4, "Error saving generated JWT Secret to custom config: %v", err)
+		}
+	}
 
 	sec = Cfg.Section("attachment")
 	AttachmentPath = sec.Key("PATH").MustString(path.Join(AppDataPath, "attachments"))
@@ -878,14 +927,20 @@ please consider changing to GITEA_CUSTOM`)
 		log.Fatal(4, "Failed to map Cron settings: %v", err)
 	} else if err = Cfg.Section("git").MapTo(&Git); err != nil {
 		log.Fatal(4, "Failed to map Git settings: %v", err)
-	} else if err = Cfg.Section("mirror").MapTo(&Mirror); err != nil {
-		log.Fatal(4, "Failed to map Mirror settings: %v", err)
 	} else if err = Cfg.Section("api").MapTo(&API); err != nil {
 		log.Fatal(4, "Failed to map API settings: %v", err)
 	}
 
-	if Mirror.DefaultInterval <= 0 {
-		Mirror.DefaultInterval = 24
+	sec = Cfg.Section("mirror")
+	Mirror.MinInterval = sec.Key("MIN_INTERVAL").MustDuration(10 * time.Minute)
+	Mirror.DefaultInterval = sec.Key("DEFAULT_INTERVAL").MustDuration(8 * time.Hour)
+	if Mirror.MinInterval.Minutes() < 1 {
+		log.Warn("Mirror.MinInterval is too low")
+		Mirror.MinInterval = 1 * time.Minute
+	}
+	if Mirror.DefaultInterval < Mirror.MinInterval {
+		log.Warn("Mirror.DefaultInterval is less than Mirror.MinInterval")
+		Mirror.DefaultInterval = time.Hour * 8
 	}
 
 	Langs = Cfg.Section("i18n").Key("LANGS").Strings(",")
@@ -923,6 +978,12 @@ var Service struct {
 	EnableCaptcha                  bool
 	DefaultKeepEmailPrivate        bool
 	NoReplyAddress                 string
+
+	// OpenID settings
+	EnableOpenIDSignIn bool
+	EnableOpenIDSignUp bool
+	OpenIDWhitelist    []*regexp.Regexp
+	OpenIDBlacklist    []*regexp.Regexp
 }
 
 func newService() {
@@ -937,6 +998,25 @@ func newService() {
 	Service.EnableCaptcha = sec.Key("ENABLE_CAPTCHA").MustBool()
 	Service.DefaultKeepEmailPrivate = sec.Key("DEFAULT_KEEP_EMAIL_PRIVATE").MustBool()
 	Service.NoReplyAddress = sec.Key("NO_REPLY_ADDRESS").MustString("noreply.example.org")
+
+	sec = Cfg.Section("openid")
+	Service.EnableOpenIDSignIn = sec.Key("ENABLE_OPENID_SIGNIN").MustBool(true)
+	Service.EnableOpenIDSignUp = sec.Key("ENABLE_OPENID_SIGNUP").MustBool(!Service.DisableRegistration)
+	pats := sec.Key("WHITELISTED_URIS").Strings(" ")
+	if len(pats) != 0 {
+		Service.OpenIDWhitelist = make([]*regexp.Regexp, len(pats))
+		for i, p := range pats {
+			Service.OpenIDWhitelist[i] = regexp.MustCompilePOSIX(p)
+		}
+	}
+	pats = sec.Key("BLACKLISTED_URIS").Strings(" ")
+	if len(pats) != 0 {
+		Service.OpenIDBlacklist = make([]*regexp.Regexp, len(pats))
+		for i, p := range pats {
+			Service.OpenIDBlacklist[i] = regexp.MustCompilePOSIX(p)
+		}
+	}
+
 }
 
 var logLevels = map[string]string{

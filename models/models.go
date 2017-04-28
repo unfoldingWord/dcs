@@ -111,10 +111,14 @@ func init() {
 		new(IssueUser),
 		new(LFSMetaObject),
 		new(TwoFactor),
+		new(GPGKey),
 		new(RepoUnit),
 		new(RepoRedirect),
 		new(ExternalLoginUser),
 		new(ProtectedBranch),
+		new(UserOpenID),
+		new(IssueWatch),
+		new(CommitStatus),
 	)
 
 	gonicNames := []string{"SSL", "UID"}

@@ -500,6 +500,22 @@ func UpdatePublicKey(key *PublicKey) error {
 	return err
 }
 
+// UpdatePublicKeyUpdated updates public key use time.
+func UpdatePublicKeyUpdated(id int64) error {
+	now := time.Now()
+	cnt, err := x.ID(id).Cols("updated_unix").Update(&PublicKey{
+		Updated:     now,
+		UpdatedUnix: now.Unix(),
+	})
+	if err != nil {
+		return err
+	}
+	if cnt != 1 {
+		return ErrKeyNotExist{id}
+	}
+	return nil
+}
+
 // deletePublicKeys does the actual key deletion but does not update authorized_keys file.
 func deletePublicKeys(e *xorm.Session, keyIDs ...int64) error {
 	if len(keyIDs) == 0 {
@@ -794,7 +810,7 @@ func DeleteDeployKey(doer *User, id int64) error {
 		if err != nil {
 			return fmt.Errorf("GetRepositoryByID: %v", err)
 		}
-		yes, err := HasAccess(doer, repo, AccessModeAdmin)
+		yes, err := HasAccess(doer.ID, repo, AccessModeAdmin)
 		if err != nil {
 			return fmt.Errorf("HasAccess: %v", err)
 		} else if !yes {

@@ -45,6 +45,4 @@ coverage.out
 /indexers
 /log
 /public/img/avatar
-
-acc.out
-profile.out
+/integrations/gitea-integration*

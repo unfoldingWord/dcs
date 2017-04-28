@@ -83,6 +83,9 @@ func NewFuncMap() []template.FuncMap {
 		"DateFmtShort": func(t time.Time) string {
 			return t.Format("Jan 02, 2006")
 		},
+		"SizeFmt": func(s int64) string {
+			return base.FileSize(s)
+		},
 		"List": List,
 		"SubStr": func(str string, start, length int) string {
 			if len(str) == 0 {
@@ -111,6 +114,15 @@ func NewFuncMap() []template.FuncMap {
 		"RenderCommitMessage": RenderCommitMessage,
 		"ThemeColorMetaTag": func() string {
 			return setting.UI.ThemeColorMetaTag
+		},
+		"MetaAuthor": func() string {
+			return setting.UI.Meta.Author
+		},
+		"MetaDescription": func() string {
+			return setting.UI.Meta.Description
+		},
+		"MetaKeywords": func() string {
+			return setting.UI.Meta.Keywords
 		},
 		"FilenameIsImage": func(filename string) bool {
 			mimeType := mime.TypeByExtension(filepath.Ext(filename))
@@ -160,7 +172,7 @@ func Safe(raw string) template.HTML {
 
 // Str2html render Markdown text to HTML
 func Str2html(raw string) template.HTML {
-	return template.HTML(markdown.Sanitizer.Sanitize(raw))
+	return template.HTML(markdown.Sanitize(raw))
 }
 
 // List traversings the list

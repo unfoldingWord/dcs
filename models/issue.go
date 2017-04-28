@@ -369,7 +369,7 @@ func (issue *Issue) RemoveLabel(doer *User, label *Label) error {
 		return err
 	}
 
-	if has, err := HasAccess(doer, issue.Repo, AccessModeWrite); err != nil {
+	if has, err := HasAccess(doer.ID, issue.Repo, AccessModeWrite); err != nil {
 		return err
 	} else if !has {
 		return ErrLabelNotExist{}
@@ -410,7 +410,7 @@ func (issue *Issue) ClearLabels(doer *User) (err error) {
 		return err
 	}
 
-	if has, err := hasAccess(sess, doer, issue.Repo, AccessModeWrite); err != nil {
+	if has, err := hasAccess(sess, doer.ID, issue.Repo, AccessModeWrite); err != nil {
 		return err
 	} else if !has {
 		return ErrLabelNotExist{}
@@ -728,7 +728,7 @@ func (issue *Issue) ChangeContent(doer *User, content string) (err error) {
 	return nil
 }
 
-// ChangeAssignee changes the Asssignee field of this issue.
+// ChangeAssignee changes the Assignee field of this issue.
 func (issue *Issue) ChangeAssignee(doer *User, assigneeID int64) (err error) {
 	var oldAssigneeID = issue.AssigneeID
 	issue.AssigneeID = assigneeID
@@ -804,23 +804,14 @@ func newIssue(e *xorm.Session, doer *User, opts NewIssueOptions) (err error) {
 		}
 	}
 
-	if opts.Issue.AssigneeID > 0 {
-		assignee, err := getUserByID(e, opts.Issue.AssigneeID)
-		if err != nil && !IsErrUserNotExist(err) {
-			return fmt.Errorf("getUserByID: %v", err)
+	if assigneeID := opts.Issue.AssigneeID; assigneeID > 0 {
+		valid, err := hasAccess(e, assigneeID, opts.Repo, AccessModeWrite)
+		if err != nil {
+			return fmt.Errorf("hasAccess [user_id: %d, repo_id: %d]: %v", assigneeID, opts.Repo.ID, err)
 		}
-
-		// Assume assignee is invalid and drop silently.
-		opts.Issue.AssigneeID = 0
-		if assignee != nil {
-			valid, err := hasAccess(e, assignee, opts.Repo, AccessModeWrite)
-			if err != nil {
-				return fmt.Errorf("hasAccess [user_id: %d, repo_id: %d]: %v", assignee.ID, opts.Repo.ID, err)
-			}
-			if valid {
-				opts.Issue.AssigneeID = assignee.ID
-				opts.Issue.Assignee = assignee
-			}
+		if !valid {
+			opts.Issue.AssigneeID = 0
+			opts.Issue.Assignee = nil
 		}
 	}
 
@@ -1136,6 +1127,24 @@ func Issues(opts *IssuesOptions) ([]*Issue, error) {
 	}
 
 	return issues, nil
+}
+
+// GetParticipantsByIssueID returns all users who are participated in comments of an issue.
+func GetParticipantsByIssueID(issueID int64) ([]*User, error) {
+	userIDs := make([]int64, 0, 5)
+	if err := x.Table("comment").Cols("poster_id").
+		Where("issue_id = ?", issueID).
+		And("type = ?", CommentTypeComment).
+		Distinct("poster_id").
+		Find(&userIDs); err != nil {
+		return nil, fmt.Errorf("get poster IDs: %v", err)
+	}
+	if len(userIDs) == 0 {
+		return nil, nil
+	}
+
+	users := make([]*User, 0, len(userIDs))
+	return users, x.In("id", userIDs).Find(&users)
 }
 
 // UpdateIssueMentions extracts mentioned people from content and

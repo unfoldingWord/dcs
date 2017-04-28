@@ -208,6 +208,7 @@ type Repository struct {
 	IsFork   bool        `xorm:"INDEX NOT NULL DEFAULT false"`
 	ForkID   int64       `xorm:"INDEX"`
 	BaseRepo *Repository `xorm:"-"`
+	Size     int64       `xorm:"NOT NULL DEFAULT 0"`
 
 	Created     time.Time `xorm:"-"`
 	CreatedUnix int64     `xorm:"INDEX"`
@@ -532,7 +533,7 @@ func (repo *Repository) ComposeCompareURL(oldCommitID, newCommitID string) strin
 
 // HasAccess returns true when user has access to this repository
 func (repo *Repository) HasAccess(u *User) bool {
-	has, _ := HasAccess(u, repo, AccessModeRead)
+	has, _ := HasAccess(u.ID, repo, AccessModeRead)
 	return has
 }
 
@@ -547,6 +548,18 @@ func (repo *Repository) IsOwnedBy(userID int64) bool {
 	return repo.OwnerID == userID
 }
 
+// UpdateSize updates the repository size, calculating it using git.GetRepoSize
+func (repo *Repository) UpdateSize() error {
+	repoInfoSize, err := git.GetRepoSize(repo.RepoPath())
+	if err != nil {
+		return fmt.Errorf("UpdateSize: %v", err)
+	}
+
+	repo.Size = repoInfoSize.Size + repoInfoSize.SizePack
+	_, err = x.ID(repo.ID).Cols("size").Update(repo)
+	return err
+}
+
 // CanBeForked returns true if repository meets the requirements of being forked.
 func (repo *Repository) CanBeForked() bool {
 	return !repo.IsBare
@@ -554,7 +567,7 @@ func (repo *Repository) CanBeForked() bool {
 
 // CanEnablePulls returns true if repository meets the requirements of accepting pulls.
 func (repo *Repository) CanEnablePulls() bool {
-	return !repo.IsMirror
+	return !repo.IsMirror && !repo.IsBare
 }
 
 // AllowsPulls returns true if repository meets the requirements of accepting pulls and has them enabled.
@@ -583,7 +596,7 @@ func (repo *Repository) DescriptionHTML() template.HTML {
 	sanitize := func(s string) string {
 		return fmt.Sprintf(`<a href="%[1]s" target="_blank" rel="noopener">%[1]s</a>`, s)
 	}
-	return template.HTML(descPattern.ReplaceAllStringFunc(markdown.Sanitizer.Sanitize(repo.Description), sanitize))
+	return template.HTML(descPattern.ReplaceAllStringFunc(markdown.Sanitize(repo.Description), sanitize))
 }
 
 // LocalCopyPath returns the local repository copy path
@@ -811,12 +824,16 @@ func MigrateRepository(u *User, opts MigrateRepoOptions) (*Repository, error) {
 		}
 	}
 
+	if err = repo.UpdateSize(); err != nil {
+		log.Error(4, "Failed to update size for repository: %v", err)
+	}
+
 	if opts.IsMirror {
 		if _, err = x.InsertOne(&Mirror{
 			RepoID:      repo.ID,
 			Interval:    setting.Mirror.DefaultInterval,
 			EnablePrune: true,
-			NextUpdate:  time.Now().Add(time.Duration(setting.Mirror.DefaultInterval) * time.Hour),
+			NextUpdate:  time.Now().Add(setting.Mirror.DefaultInterval),
 		}); err != nil {
 			return repo, fmt.Errorf("InsertOne: %v", err)
 		}
@@ -845,12 +862,8 @@ func cleanUpMigrateGitConfig(configPath string) error {
 // createDelegateHooks creates all the hooks scripts for the repo
 func createDelegateHooks(repoPath string) (err error) {
 	var (
-		hookNames = []string{"pre-receive", "update", "post-receive"}
-		hookTpls  = []string{
-			fmt.Sprintf("#!/usr/bin/env %s\nORI_DIR=`pwd`\nSHELL_FOLDER=$(cd \"$(dirname \"$0\")\";pwd)\ncd \"$ORI_DIR\"\nfor i in `ls \"$SHELL_FOLDER/pre-receive.d\"`; do\n    sh \"$SHELL_FOLDER/pre-receive.d/$i\"\ndone", setting.ScriptType),
-			fmt.Sprintf("#!/usr/bin/env %s\nORI_DIR=`pwd`\nSHELL_FOLDER=$(cd \"$(dirname \"$0\")\";pwd)\ncd \"$ORI_DIR\"\nfor i in `ls \"$SHELL_FOLDER/update.d\"`; do\n    sh \"$SHELL_FOLDER/update.d/$i\" $1 $2 $3\ndone", setting.ScriptType),
-			fmt.Sprintf("#!/usr/bin/env %s\nORI_DIR=`pwd`\nSHELL_FOLDER=$(cd \"$(dirname \"$0\")\";pwd)\ncd \"$ORI_DIR\"\nfor i in `ls \"$SHELL_FOLDER/post-receive.d\"`; do\n    sh \"$SHELL_FOLDER/post-receive.d/$i\"\ndone", setting.ScriptType),
-		}
+		hookNames     = []string{"pre-receive", "update", "post-receive"}
+		hookTpl       = fmt.Sprintf("#!/usr/bin/env %s\ndata=$(cat)\nexitcodes=\"\"\nhookname=$(basename $0)\nGIT_DIR=${GIT_DIR:-$(dirname $0)}\n\nfor hook in ${GIT_DIR}/hooks/${hookname}.d/*; do\ntest -x \"${hook}\" || continue\necho \"${data}\" | \"${hook}\"\nexitcodes=\"${exitcodes} $?\"\ndone\n\nfor i in ${exitcodes}; do\n[ ${i} -eq 0 ] || exit ${i}\ndone\n", setting.ScriptType)
 		giteaHookTpls = []string{
 			fmt.Sprintf("#!/usr/bin/env %s\n\"%s\" hook --config='%s' pre-receive\n", setting.ScriptType, setting.AppPath, setting.CustomConf),
 			fmt.Sprintf("#!/usr/bin/env %s\n\"%s\" hook --config='%s' update $1 $2 $3\n", setting.ScriptType, setting.AppPath, setting.CustomConf),
@@ -869,7 +882,7 @@ func createDelegateHooks(repoPath string) (err error) {
 		}
 
 		// WARNING: This will override all old server-side hooks
-		if err = ioutil.WriteFile(oldHookPath, []byte(hookTpls[i]), 0777); err != nil {
+		if err = ioutil.WriteFile(oldHookPath, []byte(hookTpl), 0777); err != nil {
 			return fmt.Errorf("write old hook file '%s': %v", oldHookPath, err)
 		}
 
@@ -1492,6 +1505,10 @@ func updateRepository(e Engine, repo *Repository, visibilityChanged bool) (err e
 				return fmt.Errorf("updateRepository[%d]: %v", forkRepos[i].ID, err)
 			}
 		}
+
+		if err = repo.UpdateSize(); err != nil {
+			log.Error(4, "Failed to update size for repository: %v", err)
+		}
 	}
 
 	return nil
@@ -1609,7 +1626,7 @@ func DeleteRepository(uid, repoID int64) error {
 
 		attachments := make([]*Attachment, 0, 5)
 		if err = sess.
-			In("issue_id=?", issueIDs).
+			In("issue_id", issueIDs).
 			Find(&attachments); err != nil {
 			return err
 		}
@@ -1933,6 +1950,11 @@ func SyncRepositoryHooks() error {
 			if err := createDelegateHooks(bean.(*Repository).RepoPath()); err != nil {
 				return fmt.Errorf("SyncRepositoryHook: %v", err)
 			}
+			if bean.(*Repository).HasWiki() {
+				if err := createDelegateHooks(bean.(*Repository).WikiPath()); err != nil {
+					return fmt.Errorf("SyncRepositoryHook: %v", err)
+				}
+			}
 			return nil
 		})
 }
@@ -2192,6 +2214,10 @@ func ForkRepository(u *User, oldRepo *Repository, name, desc string) (_ *Reposit
 	err = sess.Commit()
 	if err != nil {
 		return nil, err
+	}
+
+	if err = repo.UpdateSize(); err != nil {
+		log.Error(4, "Failed to update size for repository: %v", err)
 	}
 
 	// Copy LFS meta objects in new session

@@ -54,9 +54,9 @@
 		</div><!-- end grid -->
 	</div><!-- end container -->
 {{end}}
-{{if not (or .IsBareRepo .IsDiffCompare)}}
+{{if not .IsDiffCompare}}
 	<div class="ui tabs container">
-		<div class="ui tabular menu navbar">
+		<div class="ui tabular stackable menu navbar">
 			{{if .Repository.EnableUnit $.UnitTypeCode}}
 			<a class="{{if .PageIsViewCode}}active{{end}} item" href="{{.RepoLink}}">
 				<i class="octicon octicon-file-text"></i> {{.i18n.Tr "repo.code"}}
@@ -81,13 +81,13 @@
 				</a>
 			{{end}}
 
-			{{if .Repository.EnableUnit $.UnitTypeCommits}}
+			{{if and (.Repository.EnableUnit $.UnitTypeCommits) (not .IsBareRepo)}}
 			<a class="{{if (or (.PageIsCommits) (.PageIsDiff))}}active{{end}} item" href="{{.RepoLink}}/commits/{{EscapePound .BranchName}}">
 				<i class="octicon octicon-history"></i> {{.i18n.Tr "repo.commits"}} <span class="ui {{if not .CommitsCount}}gray{{else}}blue{{end}} small label">{{.CommitsCount}}</span>
 			</a>
 			{{end}}
 
-			{{if .Repository.EnableUnit $.UnitTypeReleases}}
+			{{if and (.Repository.EnableUnit $.UnitTypeReleases) (not .IsBareRepo) }}
 			<a class="{{if .PageIsReleaseList}}active{{end}} item" href="{{.RepoLink}}/releases">
 				<i class="octicon octicon-tag"></i> {{.i18n.Tr "repo.releases"}} <span class="ui {{if not .Repository.NumTags}}gray{{else}}blue{{end}} small label">{{.Repository.NumTags}}</span>
 			</a>
