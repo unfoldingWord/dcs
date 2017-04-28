@@ -37,6 +37,7 @@ coverage.out
 *.log
 
 /gitea
+/integrations.test
 
 /bin
 /dist
@@ -45,4 +46,4 @@ coverage.out
 /indexers
 /log
 /public/img/avatar
-/integrations/gitea-integration*
+/integrations/gitea-integration
