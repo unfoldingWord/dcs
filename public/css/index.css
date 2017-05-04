@@ -2558,7 +2558,7 @@ footer .ui.language .menu {
 .CodeMirror .cm-comment {
   background: inherit !important;
 }
-markdown-body table {
+.markdown-body table {
   display: block;
   width: 100%;
   overflow: auto;
@@ -2598,7 +2598,8 @@ table[data-table-type="yaml-metadata"] {
 .CodeMirror {
   height: 400px;
   resize: vertical;
-  overflow: vertical;
+  overflow-y: visible;
+}
 .repository.file.editor .tab[data-tab="write"] {
   padding: 0 !important;
 }
