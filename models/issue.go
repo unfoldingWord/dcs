@@ -282,6 +282,11 @@ func (issue *Issue) APIFormat() *api.Issue {
 	return apiIssue
 }
 
+// HashTag returns unique hash tag for issue.
+func (issue *Issue) HashTag() string {
+	return "issue-" + com.ToStr(issue.ID)
+}
+
 // IsPoster returns true if given user by ID is the poster.
 func (issue *Issue) IsPoster(uid int64) bool {
 	return issue.PosterID == uid
