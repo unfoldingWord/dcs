@@ -1,18 +1,18 @@
 {
 	"comment": "",
-	"ignore": "test",
+	"ignore": "test appengine",
 	"package": [
 		{
-			"checksumSHA1": "spqE5xUEPQp8YV67McMTMAUIilY=",
+			"checksumSHA1": "wvujc6YaEoP3g2K+USjIcZcrRgQ=",
 			"path": "code.gitea.io/git",
-			"revision": "3f99247c0da807afc967c7e12b14f4109b7490ff",
-			"revisionTime": "2017-04-26T13:12:33Z"
+			"revision": "ed175468f8debc8cdb2fa495fc157f1b9d046628",
+			"revisionTime": "2017-05-04T06:58:26Z"
 		},
 		{
-			"checksumSHA1": "xACJysFK1sK/D5655EpU48mw2vo=",
+			"checksumSHA1": "vdziKobpPIkU/dLvSI8n7eWrIIE=",
 			"path": "code.gitea.io/sdk/gitea",
-			"revision": "0c3a0b0b5ea6edfb5bf3a4c81ebda6d207ecdfad",
-			"revisionTime": "2017-04-27T00:40:26Z"
+			"revision": "d2f87fd3f9f2887b9f15112cec8d7f53b2825147",
+			"revisionTime": "2017-04-30T15:33:16Z"
 		},
 		{
 			"checksumSHA1": "IyfS7Rbl6OgR83QR7TOfKdDCq+M=",
@@ -438,10 +438,10 @@
 			"revisionTime": "2016-11-01T11:13:14Z"
 		},
 		{
-			"checksumSHA1": "Fh6Svimt+QyXHbaVxgSV7qwUHL8=",
+			"checksumSHA1": "HHB+Jna1wv0cXLxtCyOnQqFwvn4=",
 			"path": "github.com/go-xorm/builder",
-			"revision": "9c357861b643b7dd1023551fdf116b8d42030146",
-			"revisionTime": "2017-02-16T03:03:40Z"
+			"revision": "c6e604e9c7b7461715091e14ad0c242ec44c26e4",
+			"revisionTime": "2017-02-24T04:30:50Z"
 		},
 		{
 			"checksumSHA1": "vt2CGANHLNXPAZ01ve3UlsgQ0uU=",
@@ -456,10 +456,10 @@
 			"revisionTime": "2016-08-11T02:11:45Z"
 		},
 		{
-			"checksumSHA1": "/vlyLLStrbfErk/rR3SPuBGQeqk=",
+			"checksumSHA1": "Ka4hFMvc75Fb57ZNLALyYSM7CCE=",
 			"path": "github.com/go-xorm/xorm",
-			"revision": "a5cb21c44305815170d0d72563e47d585e8dcabf",
-			"revisionTime": "2017-04-05T10:17:41Z"
+			"revision": "d52a762fba17a2ed265463c1c7b608c14836eaaf",
+			"revisionTime": "2017-04-20T16:02:48Z"
 		},
 		{
 			"checksumSHA1": "1ft/4j5MFa7C9dPI9whL03HSUzk=",
@@ -542,20 +542,62 @@
 		{
 			"checksumSHA1": "O3KUfEXQPfdQ+tCMpP2RAIRJJqY=",
 			"path": "github.com/markbates/goth",
-			"revision": "450379d2950a65070b23cc93c53436553add4484",
-			"revisionTime": "2017-02-06T19:46:32Z"
+			"revision": "90362394a367f9d77730911973462a53d69662ba",
+			"revisionTime": "2017-02-23T14:12:10Z"
 		},
 		{
 			"checksumSHA1": "MkFKwLV3icyUo4oP0BgEs+7+R1Y=",
 			"path": "github.com/markbates/goth/gothic",
-			"revision": "450379d2950a65070b23cc93c53436553add4484",
-			"revisionTime": "2017-02-06T19:46:32Z"
+			"revision": "90362394a367f9d77730911973462a53d69662ba",
+			"revisionTime": "2017-02-23T14:12:10Z"
 		},
 		{
-			"checksumSHA1": "ZFqznX3/ZW65I4QeepiHQdE69nA=",
+			"checksumSHA1": "crNSlQADjX6hcxykON2tFCqY4iw=",
+			"path": "github.com/markbates/goth/providers/bitbucket",
+			"revision": "90362394a367f9d77730911973462a53d69662ba",
+			"revisionTime": "2017-02-23T14:12:10Z"
+		},
+		{
+			"checksumSHA1": "1Kp4DKkJNVn135Xg8H4a6CFBNy8=",
+			"path": "github.com/markbates/goth/providers/dropbox",
+			"revision": "90362394a367f9d77730911973462a53d69662ba",
+			"revisionTime": "2017-02-23T14:12:10Z"
+		},
+		{
+			"checksumSHA1": "cGs1da29iOBJh5EAH0icKDbN8CA=",
+			"path": "github.com/markbates/goth/providers/facebook",
+			"revision": "90362394a367f9d77730911973462a53d69662ba",
+			"revisionTime": "2017-02-23T14:12:10Z"
+		},
+		{
+			"checksumSHA1": "P6nBZ850aaekpOcoXNdRhK86bH8=",
 			"path": "github.com/markbates/goth/providers/github",
-			"revision": "450379d2950a65070b23cc93c53436553add4484",
-			"revisionTime": "2017-02-06T19:46:32Z"
+			"revision": "90362394a367f9d77730911973462a53d69662ba",
+			"revisionTime": "2017-02-23T14:12:10Z"
+		},
+		{
+			"checksumSHA1": "o/109paSRy9HqV87gR4zUZMMSzs=",
+			"path": "github.com/markbates/goth/providers/gitlab",
+			"revision": "90362394a367f9d77730911973462a53d69662ba",
+			"revisionTime": "2017-02-23T14:12:10Z"
+		},
+		{
+			"checksumSHA1": "cX6kR9y94BWFZvI/7UFrsFsP3FQ=",
+			"path": "github.com/markbates/goth/providers/gplus",
+			"revision": "90362394a367f9d77730911973462a53d69662ba",
+			"revisionTime": "2017-02-23T14:12:10Z"
+		},
+		{
+			"checksumSHA1": "sMYKhqAUZXM1+T/TjlMhWh8Vveo=",
+			"path": "github.com/markbates/goth/providers/openidConnect",
+			"revision": "90362394a367f9d77730911973462a53d69662ba",
+			"revisionTime": "2017-02-23T14:12:10Z"
+		},
+		{
+			"checksumSHA1": "1w0V6jYXaGlEtZcMeYTOAAucvgw=",
+			"path": "github.com/markbates/goth/providers/twitter",
+			"revision": "90362394a367f9d77730911973462a53d69662ba",
+			"revisionTime": "2017-02-23T14:12:10Z"
 		},
 		{
 			"checksumSHA1": "9FJUwn3EIgASVki+p8IHgWVC5vQ=",
@@ -574,6 +616,12 @@
 			"path": "github.com/microcosm-cc/bluemonday",
 			"revision": "f77f16ffc87a6a58814e64ae72d55f9c41374e6d",
 			"revisionTime": "2016-10-12T08:37:05Z"
+		},
+		{
+			"checksumSHA1": "hQcIDtbilIlkJaYhl2faWIFL8uY=",
+			"path": "github.com/mrjones/oauth",
+			"revision": "3f67d9c274355678b2f9844b08d643e2f9213340",
+			"revisionTime": "2017-02-25T17:57:52Z"
 		},
 		{
 			"checksumSHA1": "lfOuMiAdiqc/dalUSBTvD5ZMSzA=",

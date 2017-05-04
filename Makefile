@@ -21,6 +21,8 @@ SOURCES ?= $(shell find . -name "*.go" -type f)
 
 TAGS ?=
 
+TMPDIR := $(shell mktemp -d)
+
 ifneq ($(DRONE_TAG),)
 	VERSION ?= $(subst v,,$(DRONE_TAG))
 else
@@ -52,6 +54,9 @@ generate:
 	@hash go-bindata > /dev/null 2>&1; if [ $$? -ne 0 ]; then \
 		go get -u github.com/jteeuwen/go-bindata/...; \
 	fi
+	@hash swagger > /dev/null 2>&1; if [ $$? -ne 0 ]; then \
+		go get -u github.com/go-swagger/go-swagger/cmd/swagger; \
+	fi
 	go generate $(PACKAGES)
 
 .PHONY: errcheck
@@ -82,19 +87,25 @@ test-vendor:
 	@hash govendor > /dev/null 2>&1; if [ $$? -ne 0 ]; then \
 		go get -u github.com/kardianos/govendor; \
 	fi
-	govendor status +outside +unused  || exit 1
+	govendor list +unused | tee "$(TMPDIR)/wc-gitea-unused"
+	[ $$(cat "$(TMPDIR)/wc-gitea-unused" | wc -l) -eq 0 ] || echo "Warning: /!\\ Some vendor are not used /!\\"
+
+	govendor list +outside | tee "$(TMPDIR)/wc-gitea-outside"
+	[ $$(cat "$(TMPDIR)/wc-gitea-outside" | wc -l) -eq 0 ] || exit 1
+
+	govendor status || exit 1
 
 .PHONY: test-sqlite
 test-sqlite: integrations.test
-	GITEA_CONF=integrations/sqlite.ini ./integrations.test
+	GITEA_ROOT=${CURDIR} GITEA_CONF=integrations/sqlite.ini ./integrations.test
 
 .PHONY: test-mysql
 test-mysql: integrations.test
-	GITEA_CONF=integrations/mysql.ini ./integrations.test
+	GITEA_ROOT=${CURDIR} GITEA_CONF=integrations/mysql.ini ./integrations.test
 
 .PHONY: test-pgsql
 test-pgsql: integrations.test
-	GITEA_CONF=integrations/pgsql.ini ./integrations.test
+	GITEA_ROOT=${CURDIR} GITEA_CONF=integrations/pgsql.ini ./integrations.test
 
 integrations.test: $(SOURCES)
 	go test -c code.gitea.io/gitea/integrations -tags 'sqlite'
@@ -175,6 +186,14 @@ stylesheets: public/css/index.css
 .IGNORE: public/css/index.css
 public/css/index.css: $(STYLESHEETS)
 	lessc $< $@
+
+.PHONY: swagger-ui
+swagger-ui:
+	rm -Rf public/assets/swagger-ui
+	git clone --depth=10 -b v3.0.7 --single-branch https://github.com/swagger-api/swagger-ui.git /tmp/swagger-ui
+	mv /tmp/swagger-ui/dist public/assets/swagger-ui
+	rm -Rf /tmp/swagger-ui
+	sed -i "s;http://petstore.swagger.io/v2/swagger.json;../../swagger.v1.json;g" public/assets/swagger-ui/index.html
 
 .PHONY: assets
 assets: javascripts stylesheets

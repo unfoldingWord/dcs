@@ -971,7 +971,7 @@ footer .ui.language .menu {
   float: left;
 }
 .signin .oauth2 a {
-  margin-right: 5px;
+  margin-right: 3px;
 }
 .signin .oauth2 a:last-child {
   margin-right: 0px;
@@ -979,6 +979,9 @@ footer .ui.language .menu {
 .signin .oauth2 img {
   width: 32px;
   height: 32px;
+}
+.signin .oauth2 img.openidConnect {
+  width: auto;
 }
 .user.activate form,
 .user.forgot.password form,
@@ -2230,15 +2233,15 @@ footer .ui.language .menu {
 .repository.wiki.view .ui.sub.header {
   text-transform: none;
 }
-.repository.wiki.view .markdown {
+.repository.wiki.view > .markdown {
   padding: 15px 30px;
 }
-.repository.wiki.view .markdown h1:first-of-type,
-.repository.wiki.view .markdown h2:first-of-type,
-.repository.wiki.view .markdown h3:first-of-type,
-.repository.wiki.view .markdown h4:first-of-type,
-.repository.wiki.view .markdown h5:first-of-type,
-.repository.wiki.view .markdown h6:first-of-type {
+.repository.wiki.view > .markdown h1:first-of-type,
+.repository.wiki.view > .markdown h2:first-of-type,
+.repository.wiki.view > .markdown h3:first-of-type,
+.repository.wiki.view > .markdown h4:first-of-type,
+.repository.wiki.view > .markdown h5:first-of-type,
+.repository.wiki.view > .markdown h6:first-of-type {
   margin-top: 0;
 }
 .repository.settings.collaboration .collaborator.list {
