@@ -7,6 +7,7 @@ import (
 	"code.gitea.io/git"
 	"reflect"
 	"code.gitea.io/gitea/modules/log"
+	"os"
 )
 
 var JSON_FILES_TO_SCRUB = [...]string{
@@ -16,24 +17,34 @@ var JSON_FILES_TO_SCRUB = [...]string{
 	"status.json",
 }
 
-func ScrubJsonFiles(localPath string) bool {
-	success := false
-	for _, fileName := range JSON_FILES_TO_SCRUB {
-		success = ScrubJsonFile(localPath, fileName) || success
-	}
-	return success
+var JSON_FIELDS_TO_SCRUB = [...]string{
+	"translators",
+	"contributors",
+	"checking_entity",
 }
 
-func ScrubJsonFile(localPath, fileName string) bool {
+func ScrubJsonFiles(localPath string) error {
+	for _, fileName := range JSON_FILES_TO_SCRUB {
+		if err := ScrubJsonFile(localPath, fileName); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func ScrubJsonFile(localPath, fileName string) error {
 	jsonPath := path.Join(localPath, fileName)
 
 	var jsonData interface{}
-	if fileContent, err := ioutil.ReadFile(jsonPath); err != nil {
-		return false
+	if _, err := os.Stat(jsonPath); os.IsNotExist(err) {
+		return nil // path does not exist, nothing to scrub!
+	} else if fileContent, err := ioutil.ReadFile(jsonPath); err != nil {
+		log.Error(3, "%v", err)
+		return err // error reading file
 	} else {
 		if err = json.Unmarshal(fileContent, &jsonData); err != nil {
 			log.Error(3, "%v", err)
-			return false
+			return err // error unmarhalling file
 		}
 	}
 
@@ -41,37 +52,34 @@ func ScrubJsonFile(localPath, fileName string) bool {
 	ScrubMap(m)
 
 	if fileContent, err := json.MarshalIndent(m, "", "  "); err != nil {
-		return false
+		return err
 	} else {
 		if err := git.ScrubFile(localPath, fileName); err != nil {
-			log.Error(3, "%v", err)
-			return false
+			return err
 		}
 		if err := ioutil.WriteFile(jsonPath, []byte(fileContent), 0666); err != nil {
-			log.Error(3, "%v", err)
-			return false
+			return err
 		}
 	}
 
-	return true
+	return nil
 }
 
-func ScrubMap(m map[string]interface{}) bool {
-	success := false
-	fieldsToScrub := [...]string{"translators", "contributors", "checking_entity"}
-	for _, field := range fieldsToScrub {
+func ScrubMap(m map[string]interface{}) {
+	for _, field := range JSON_FIELDS_TO_SCRUB {
 		if _, ok := m[field]; ok {
-			m[field] = map[string]interface{}{}
-			success = true
+			m[field] = []string{}
 		}
 	}
-
 	for _, v := range m {
 		if reflect.ValueOf(v).Kind() == reflect.Map {
 			vm := v.(map[string]interface{})
-			success = ScrubMap(vm) || success
+			ScrubMap(vm)
 		}
 	}
+}
 
-	return success
+func ScrubCommitNameAndEmail(localPath, newName, newEmail string) error {
+	err := git.ScrubCommitNameAndEmail(localPath, newName, newEmail);
+	return err
 }

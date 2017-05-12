@@ -3,7 +3,6 @@ package git
 import (
 	"os"
 	"path"
-	"fmt"
 	"os/exec"
 )
 
@@ -17,15 +16,29 @@ func ScrubFile(repoPath string, fileName string) error {
 	if err != nil && err.Error() == "exit status 1" {
 		os.RemoveAll(path.Join(repoPath, ".git/refs/original/"))
 		cmd = NewCommand("reflog", "expire", "--all")
-		fmt.Println("CMD: ", cmd)
-		_, err = cmd.Run();
+		_, err = cmd.RunInDir(repoPath);
 		if err != nil && err.Error() == "exit status 1" {
 			cmd = NewCommand("gc", "--aggressive", "--prune")
-			fmt.Println("CMD: ", cmd)
 			_, err = cmd.RunInDir(repoPath);
-			return nil
+			return err
 		}
 	}
 	return err
 }
 
+// ScrubRepo changes all names and emails in history
+func ScrubCommitNameAndEmail(repoPath, newName, newEmail string) error {
+	os.RemoveAll(path.Join(repoPath, ".git/refs/original/"))
+	if _, err := NewCommand("filter-branch", "-f", "--env-filter", `
+export GIT_COMMITTER_NAME="`+newName+`"
+export GIT_COMMITTER_EMAIL="`+newEmail+`"
+export GIT_AUTHOR_NAME="`+newName+`"
+export GIT_AUTHOR_EMAIL="`+newEmail+`"
+`, "--tag-name-filter", "cat", "--", "--branches", "--tags").RunInDir(repoPath); err != nil {
+		return err
+	}
+	if _, err := NewCommand("push", "--force", "--tags", "origin", "refs/heads/*").RunInDir(repoPath); err != nil {
+		return err
+	}
+	return nil
+}
