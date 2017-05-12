@@ -16,20 +16,20 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-// The repos to be tested and the "success" result that should be expected
+// The repos to be tested and if they show throw an error (return nil if no error)
 var TESTING_REPOS = map[string]bool{
-	"all_json_files":            true,
-	"bad_json_file":             false,
-	"multiple_sensitive_fields": true,
-	"no_json_files":             false,
-	"no_sensitive_data":         true,
+	"all_json_files":              false,
+	"bad_json_file":               true,
+	"multiple_sensitive_fields": false,
+	"no_json_files":               true,
+	"no_sensitive_data":          false,
 }
 
 func TestScrubJsonFiles(t *testing.T) {
 	myDir, _ := os.Getwd()
 	testFilesDir := path.Join(myDir, "scrub_test_files")
 	tempDir, _ := ioutil.TempDir(os.TempDir(), "scrub_test")
-	for repoName, expectedResult := range TESTING_REPOS {
+	for repoName, throwsError := range TESTING_REPOS {
 		repoDir := path.Join(tempDir, repoName)
 		fmt.Println("Copying ", path.Join(testFilesDir, repoName), "==>", repoDir)
 		CopyDir(path.Join(testFilesDir, repoName), repoDir)
@@ -48,7 +48,11 @@ func TestScrubJsonFiles(t *testing.T) {
 			},
 			Message: "Initial Commit",
 		})
-		assert.Equal(t, expectedResult, scrub.ScrubJsonFiles(repoDir))
+		if throwsError {
+			assert.NotNil(t, scrub.ScrubJsonFiles(repoDir))
+		} else {
+			assert.Nil(t, scrub.ScrubJsonFiles(repoDir))
+		}
 	}
 }
 
