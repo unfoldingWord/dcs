@@ -12,17 +12,18 @@ import (
 )
 
 func TestHashtagUBN(t *testing.T) {
-	user := &models.User{ID: 1, LowerName: "username"}
-	setting.AppSubURL = "http://example.com"
+	user := &models.User{ID: 1, LowerName: "username", Name: "username"}
+	setting.AppURL = "http://example.com/"
 
 	repo := &models.Repository{
 		ID:        1,
 		LowerName: "en-ubn-act",
+		Name:      "en-ubn-act",
 		Owner:     user,
 	}
 
 	assert.Equal(t,
-		`<a href="http://example.com/username/en-ubn/hashtags/testtag">#testtag</a>`,
+		`<a href="http://example.com/username/en-ubn-act/hashtags/testtag">#testtag</a>`,
 		string(ConvertHashtagsToLinks(repo, []byte(`#testtag`))))
 
 	markdownContent := []byte(
@@ -35,28 +36,30 @@ following should be rendered as links except for #v12 which should not be a link
 #kingdomofgod
 #da-god
 `)
+
 	htmlContent := markdown.Render(markdownContent, "content/01.md", nil)
 	convertedHashtags := ConvertHashtagsToLinks(repo, htmlContent)
 	assert.Equal(t,
 		`<h1>Acts 1</h1>
 
-<p><a href="http://example.com/username/en-ubn/hashtags/author-luke">#author-luke</a></p>
+<p><a href="http://example.com/username/en-ubn-act/hashtags/author-luke">#author-luke</a></p>
 
 <p>A hashtag in this line such as #test should not be rendered, but the
 following should be rendered as links except for #v12 which should not be a link:
 #v12
-<a href="http://example.com/username/en-ubn/hashtags/kingdomofgod">#kingdomofgod</a>
-<a href="http://example.com/username/en-ubn/hashtags/da-god">#da-god</a></p>
+<a href="http://example.com/username/en-ubn-act/hashtags/kingdomofgod">#kingdomofgod</a>
+<a href="http://example.com/username/en-ubn-act/hashtags/da-god">#da-god</a></p>
 `, string(convertedHashtags))
 }
 
 func TestHashtagNonUBN(t *testing.T) {
-	user := &models.User{ID: 1, LowerName: "username"}
-	setting.AppSubURL = "http://example.com"
+	user := &models.User{ID: 1, LowerName: "username", Name: "username"}
+	setting.AppURL = "http://example.com/"
 
 	repo := &models.Repository{
 		ID:        1,
 		LowerName: "en-act",
+		Name: 	   "en-act",
 		Owner:     user,
 	}
 

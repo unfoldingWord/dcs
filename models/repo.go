@@ -33,7 +33,6 @@ import (
 	"github.com/go-xorm/xorm"
 	version "github.com/mcuadros/go-version"
 	ini "gopkg.in/ini.v1"
-	"code.gitea.io/gitea/modules/scrub"
 )
 
 const (
