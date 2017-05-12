@@ -28,12 +28,12 @@ import (
 	"code.gitea.io/gitea/modules/sync"
 	api "code.gitea.io/sdk/gitea"
 
-	"code.gitea.io/gitea/modules/scrub"
 	"github.com/Unknwon/cae/zip"
 	"github.com/Unknwon/com"
 	"github.com/go-xorm/xorm"
 	version "github.com/mcuadros/go-version"
 	ini "gopkg.in/ini.v1"
+	"code.gitea.io/gitea/modules/scrub"
 )
 
 const (
@@ -264,6 +264,11 @@ func (repo *Repository) FullName() string {
 // HTMLURL returns the repository HTML URL
 func (repo *Repository) HTMLURL() string {
 	return setting.AppURL + repo.FullName()
+}
+
+// APIURL returns the repository API URL
+func (repo *Repository) APIURL() string {
+	return setting.AppURL + path.Join("api/v1/repos", repo.FullName())
 }
 
 // APIFormat converts a Repository to api.Repository
@@ -1529,14 +1534,6 @@ func UpdateRepositoryUnits(repo *Repository, units []RepoUnit) (err error) {
 
 // DeleteRepository deletes a repository for a user or organization.
 func DeleteRepository(uid, repoID int64) error {
-	repo := &Repository{ID: repoID, OwnerID: uid}
-	has, err := x.Get(repo)
-	if err != nil {
-		return err
-	} else if !has {
-		return ErrRepoNotExist{repoID, uid, ""}
-	}
-
 	// In case is a organization.
 	org, err := GetUserByID(uid)
 	if err != nil {
@@ -1554,6 +1551,20 @@ func DeleteRepository(uid, repoID int64) error {
 		return err
 	}
 
+	repo := &Repository{ID: repoID, OwnerID: uid}
+	has, err := sess.Get(repo)
+	if err != nil {
+		return err
+	} else if !has {
+		return ErrRepoNotExist{repoID, uid, ""}
+	}
+
+	if cnt, err := sess.Id(repoID).Delete(&Repository{}); err != nil {
+		return err
+	} else if cnt != 1 {
+		return ErrRepoNotExist{repoID, uid, ""}
+	}
+
 	if org.IsOrganization() {
 		for _, t := range org.Teams {
 			if !t.hasRepository(sess, repoID) {
@@ -1565,7 +1576,6 @@ func DeleteRepository(uid, repoID int64) error {
 	}
 
 	if err = deleteBeans(sess,
-		&Repository{ID: repoID},
 		&Access{RepoID: repo.ID},
 		&Action{RepoID: repo.ID},
 		&Watch{RepoID: repoID},
@@ -1580,24 +1590,27 @@ func DeleteRepository(uid, repoID int64) error {
 	}
 
 	// Delete comments and attachments.
-	issues := make([]*Issue, 0, 25)
-	attachmentPaths := make([]string, 0, len(issues))
+	issueIDs := make([]int64, 0, 25)
+	attachmentPaths := make([]string, 0, len(issueIDs))
 	if err = sess.
+		Table("issue").
+		Cols("id").
 		Where("repo_id=?", repoID).
-		Find(&issues); err != nil {
+		Find(&issueIDs); err != nil {
 		return err
 	}
-	for i := range issues {
-		if _, err = sess.Delete(&Comment{IssueID: issues[i].ID}); err != nil {
+
+	if len(issueIDs) > 0 {
+		if _, err = sess.In("issue_id", issueIDs).Delete(&Comment{}); err != nil {
 			return err
 		}
-		if _, err = sess.Delete(&IssueUser{IssueID: issues[i].ID}); err != nil {
+		if _, err = sess.In("issue_id", issueIDs).Delete(&IssueUser{}); err != nil {
 			return err
 		}
 
 		attachments := make([]*Attachment, 0, 5)
 		if err = sess.
-			Where("issue_id=?", issues[i].ID).
+			In("issue_id=?", issueIDs).
 			Find(&attachments); err != nil {
 			return err
 		}
@@ -1605,13 +1618,13 @@ func DeleteRepository(uid, repoID int64) error {
 			attachmentPaths = append(attachmentPaths, attachments[j].LocalPath())
 		}
 
-		if _, err = sess.Delete(&Attachment{IssueID: issues[i].ID}); err != nil {
+		if _, err = sess.In("issue_id", issueIDs).Delete(&Attachment{}); err != nil {
 			return err
 		}
-	}
 
-	if _, err = sess.Delete(&Issue{RepoID: repoID}); err != nil {
-		return err
+		if _, err = sess.Delete(&Issue{RepoID: repoID}); err != nil {
+			return err
+		}
 	}
 
 	if _, err = sess.Where("repo_id = ?", repoID).Delete(new(RepoUnit)); err != nil {
@@ -2100,72 +2113,6 @@ func CheckRepoStats() {
 		}
 	}
 	// ***** END: Repository.NumForks *****
-}
-
-type ScrubSensitiveDataOptions struct {
-	LastCommitID  string
-	CommitMessage string
-}
-
-// ScrubSensitiveData removes names and email addresses from the manifest|project|package|status.json files and scrubs previous history.
-func (repo *Repository) ScrubSensitiveData(doer *User, opts ScrubSensitiveDataOptions) error {
-	repoWorkingPool.CheckIn(com.ToStr(repo.ID))
-	defer repoWorkingPool.CheckOut(com.ToStr(repo.ID))
-
-	localPath := repo.LocalCopyPath()
-
-	if err := repo.DiscardLocalRepoBranchChanges("master"); err != nil {
-		return fmt.Errorf("DiscardLocalRepoBranchChanges [branch: master]: %v", err)
-	} else if err = repo.UpdateLocalCopyBranch("master"); err != nil {
-		return fmt.Errorf("UpdateLocalCopyBranch [branch: master]: %v", err)
-	}
-
-	if success := scrub.ScrubJsonFiles(localPath); !success {
-		return fmt.Errorf("Nothing to scrub")
-	}
-
-	if err := git.AddChanges(localPath, true); err != nil {
-		return fmt.Errorf("git add --all: %v", err)
-	} else if err := git.CommitChanges(localPath, git.CommitChangesOptions{
-		Committer: doer.NewGitSig(),
-		Message:   opts.CommitMessage,
-	}); err != nil {
-		return fmt.Errorf("CommitChanges: %v", err)
-	} else if err := git.PushForce(localPath, "origin", "master"); err != nil {
-		return fmt.Errorf("git push --force --all origin %s: %v", "master", err)
-	}
-
-	gitRepo, err := git.OpenRepository(repo.RepoPath())
-	if err != nil {
-		log.Error(4, "OpenRepository: %v", err)
-		return nil
-	}
-	commit, err := gitRepo.GetBranchCommit("master")
-	if err != nil {
-		log.Error(4, "GetBranchCommit [branch: %s]: %v", "master", err)
-		return nil
-	}
-
-	// Simulate push event.
-	pushCommits := &PushCommits{
-		Len:     1,
-		Commits: []*PushCommit{CommitToPushCommit(commit)},
-	}
-	oldCommitID := opts.LastCommitID
-	if err := CommitRepoAction(CommitRepoActionOptions{
-		PusherName:  doer.Name,
-		RepoOwnerID: repo.MustOwner().ID,
-		RepoName:    repo.Name,
-		RefFullName: git.BranchPrefix + "master",
-		OldCommitID: oldCommitID,
-		NewCommitID: commit.ID.String(),
-		Commits:     pushCommits,
-	}); err != nil {
-		log.Error(4, "CommitRepoAction: %v", err)
-		return nil
-	}
-
-	return nil
 }
 
 func (repo *Repository) GetUBNRepoName() string {

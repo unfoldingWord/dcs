@@ -11,10 +11,10 @@ BINDATA := modules/{options,public,templates}/bindata.go
 STYLESHEETS := $(wildcard public/less/index.less public/less/_*.less)
 JAVASCRIPTS :=
 
-LDFLAGS := -X "main.Version=$(shell git describe --tags --always | sed 's/-/+/' | sed 's/^v//')"
+LDFLAGS := -X "main.Version=$(shell git describe --tags --always | sed 's/-/+/' | sed 's/^v//')" -X "main.Tags=$(TAGS)"
 
 TARGETS ?= linux/*,darwin/*,windows/*
-PACKAGES ?= $(shell go list ./... | grep -v /vendor/)
+PACKAGES ?= $(filter-out code.gitea.io/gitea/integrations,$(shell go list ./... | grep -v /vendor/))
 SOURCES ?= $(shell find . -name "*.go" -type f)
 
 TAGS ?=
@@ -65,6 +65,11 @@ lint:
 		go get -u github.com/golang/lint/golint; \
 	fi
 	for PKG in $(PACKAGES); do golint -set_exit_status $$PKG || exit 1; done;
+
+.PHONY: integrations
+integrations: TAGS=bindata sqlite
+integrations: build
+	go test code.gitea.io/gitea/integrations
 
 .PHONY: test
 test:

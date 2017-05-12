@@ -16,3 +16,13 @@ type YamlOption struct {
       Text    string
 }
 
+// ServerVersion wraps the version of the server
+type ServerVersion struct {
+	Version string
+}
+
+// ServerVersion returns the version of the server
+func (c *Client) ServerVersion() (string, error) {
+	v := ServerVersion{}
+	return v.Version, c.getParsedResponse("GET", "/api/v1/version", nil, nil, &v)
+}
