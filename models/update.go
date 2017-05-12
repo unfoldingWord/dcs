@@ -15,40 +15,15 @@ import (
 	"code.gitea.io/gitea/modules/log"
 )
 
-// UpdateTask defines an UpdateTask
-type UpdateTask struct {
-	ID          int64  `xorm:"pk autoincr"`
-	UUID        string `xorm:"index"`
-	RefName     string
-	OldCommitID string
-	NewCommitID string
-}
-
-// AddUpdateTask adds an UpdateTask
-func AddUpdateTask(task *UpdateTask) error {
-	_, err := x.Insert(task)
-	return err
-}
-
-// GetUpdateTaskByUUID returns update task by given UUID.
-func GetUpdateTaskByUUID(uuid string) (*UpdateTask, error) {
-	task := &UpdateTask{
-		UUID: uuid,
-	}
-	has, err := x.Get(task)
-	if err != nil {
-		return nil, err
-	} else if !has {
-		return nil, ErrUpdateTaskNotExist{uuid}
-	}
-	return task, nil
-}
-
-// DeleteUpdateTaskByUUID deletes an UpdateTask from the database
-func DeleteUpdateTaskByUUID(uuid string) error {
-	_, err := x.Delete(&UpdateTask{UUID: uuid})
-	return err
-}
+// env keys for git hooks need
+const (
+	EnvRepoName     = "GITEA_REPO_NAME"
+	EnvRepoUsername = "GITEA_REPO_USER_NAME"
+	EnvRepoUserSalt = "GITEA_REPO_USER_SALT"
+	EnvRepoIsWiki   = "GITEA_REPO_IS_WIKI"
+	EnvPusherName   = "GITEA_PUSHER_NAME"
+	EnvPusherID     = "GITEA_PUSHER_ID"
+)
 
 // CommitToPushCommit transforms a git.Commit to PushCommit type.
 func CommitToPushCommit(commit *git.Commit) *PushCommit {
@@ -90,11 +65,11 @@ type PushUpdateOptions struct {
 
 // PushUpdate must be called for any push actions in order to
 // generates necessary push action history feeds.
-func PushUpdate(opts PushUpdateOptions) (err error) {
+func PushUpdate(opts PushUpdateOptions) (repo *Repository, err error) {
 	isNewRef := opts.OldCommitID == git.EmptySHA
 	isDelRef := opts.NewCommitID == git.EmptySHA
 	if isNewRef && isDelRef {
-		return fmt.Errorf("Old and new revisions are both %s", git.EmptySHA)
+		return nil, fmt.Errorf("Old and new revisions are both %s", git.EmptySHA)
 	}
 
 	repoPath := RepoPath(opts.RepoUserName, opts.RepoName)
@@ -102,28 +77,32 @@ func PushUpdate(opts PushUpdateOptions) (err error) {
 	gitUpdate := exec.Command("git", "update-server-info")
 	gitUpdate.Dir = repoPath
 	if err = gitUpdate.Run(); err != nil {
-		return fmt.Errorf("Failed to call 'git update-server-info': %v", err)
+		return nil, fmt.Errorf("Failed to call 'git update-server-info': %v", err)
+	}
+
+	owner, err := GetUserByName(opts.RepoUserName)
+	if err != nil {
+		return nil, fmt.Errorf("GetUserByName: %v", err)
+	}
+
+	repo, err = GetRepositoryByName(owner.ID, opts.RepoName)
+	if err != nil {
+		return nil, fmt.Errorf("GetRepositoryByName: %v", err)
 	}
 
 	if isDelRef {
 		log.GitLogger.Info("Reference '%s' has been deleted from '%s/%s' by %s",
 			opts.RefFullName, opts.RepoUserName, opts.RepoName, opts.PusherName)
-		return nil
+		return repo, nil
 	}
 
 	gitRepo, err := git.OpenRepository(repoPath)
 	if err != nil {
-		return fmt.Errorf("OpenRepository: %v", err)
+		return nil, fmt.Errorf("OpenRepository: %v", err)
 	}
 
-	owner, err := GetUserByName(opts.RepoUserName)
-	if err != nil {
-		return fmt.Errorf("GetUserByName: %v", err)
-	}
-
-	repo, err := GetRepositoryByName(owner.ID, opts.RepoName)
-	if err != nil {
-		return fmt.Errorf("GetRepositoryByName: %v", err)
+	if err = repo.UpdateSize(); err != nil {
+		log.Error(4, "Failed to update size for repository: %v", err)
 	}
 
 	// Push tags.
@@ -137,14 +116,14 @@ func PushUpdate(opts PushUpdateOptions) (err error) {
 			NewCommitID: opts.NewCommitID,
 			Commits:     &PushCommits{},
 		}); err != nil {
-			return fmt.Errorf("CommitRepoAction (tag): %v", err)
+			return nil, fmt.Errorf("CommitRepoAction (tag): %v", err)
 		}
-		return nil
+		return repo, nil
 	}
 
 	newCommit, err := gitRepo.GetCommit(opts.NewCommitID)
 	if err != nil {
-		return fmt.Errorf("gitRepo.GetCommit: %v", err)
+		return nil, fmt.Errorf("gitRepo.GetCommit: %v", err)
 	}
 
 	// Push new branch.
@@ -152,12 +131,12 @@ func PushUpdate(opts PushUpdateOptions) (err error) {
 	if isNewRef {
 		l, err = newCommit.CommitsBeforeLimit(10)
 		if err != nil {
-			return fmt.Errorf("newCommit.CommitsBeforeLimit: %v", err)
+			return nil, fmt.Errorf("newCommit.CommitsBeforeLimit: %v", err)
 		}
 	} else {
 		l, err = newCommit.CommitsBeforeUntil(opts.OldCommitID)
 		if err != nil {
-			return fmt.Errorf("newCommit.CommitsBeforeUntil: %v", err)
+			return nil, fmt.Errorf("newCommit.CommitsBeforeUntil: %v", err)
 		}
 	}
 
@@ -170,7 +149,7 @@ func PushUpdate(opts PushUpdateOptions) (err error) {
 		NewCommitID: opts.NewCommitID,
 		Commits:     ListToPushCommits(l),
 	}); err != nil {
-		return fmt.Errorf("CommitRepoAction (branch): %v", err)
+		return nil, fmt.Errorf("CommitRepoAction (branch): %v", err)
 	}
-	return nil
+	return repo, nil
 }

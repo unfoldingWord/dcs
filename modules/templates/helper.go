@@ -5,6 +5,7 @@
 package templates
 
 import (
+	"bytes"
 	"container/list"
 	"encoding/json"
 	"fmt"
@@ -15,6 +16,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/microcosm-cc/bluemonday"
 	"golang.org/x/net/html/charset"
 	"golang.org/x/text/transform"
 	"gopkg.in/editorconfig/editorconfig-core-go.v1"
@@ -48,6 +50,9 @@ func NewFuncMap() []template.FuncMap {
 		"AppVer": func() string {
 			return setting.AppVer
 		},
+		"AppBuiltWith": func() string {
+			return setting.AppBuiltWith
+		},
 		"AppDomain": func() string {
 			return setting.Domain
 		},
@@ -62,6 +67,7 @@ func NewFuncMap() []template.FuncMap {
 		},
 		"AvatarLink":   base.AvatarLink,
 		"Safe":         Safe,
+		"Sanitize":     bluemonday.UGCPolicy().Sanitize,
 		"Str2html":     Str2html,
 		"TimeSince":    base.TimeSince,
 		"RawTimeSince": base.RawTimeSince,
@@ -76,6 +82,9 @@ func NewFuncMap() []template.FuncMap {
 		},
 		"DateFmtShort": func(t time.Time) string {
 			return t.Format("Jan 02, 2006")
+		},
+		"SizeFmt": func(s int64) string {
+			return base.FileSize(s)
 		},
 		"List": List,
 		"SubStr": func(str string, start, length int) string {
@@ -106,6 +115,15 @@ func NewFuncMap() []template.FuncMap {
 		"ThemeColorMetaTag": func() string {
 			return setting.UI.ThemeColorMetaTag
 		},
+		"MetaAuthor": func() string {
+			return setting.UI.Meta.Author
+		},
+		"MetaDescription": func() string {
+			return setting.UI.Meta.Description
+		},
+		"MetaKeywords": func() string {
+			return setting.UI.Meta.Keywords
+		},
 		"FilenameIsImage": func(filename string) bool {
 			mimeType := mime.TypeByExtension(filepath.Ext(filename))
 			return strings.HasPrefix(mimeType, "image/")
@@ -135,6 +153,14 @@ func NewFuncMap() []template.FuncMap {
 		},
 		"ThisYear": func() string {
 			return time.Now().Format("2006")
+                },
+		"JsonPrettyPrint": func(in string) string {
+			var out bytes.Buffer
+			err := json.Indent(&out, []byte(in), "", "  ")
+			if err != nil {
+				return ""
+			}
+			return out.String()
 		},
 	}}
 }
@@ -146,7 +172,7 @@ func Safe(raw string) template.HTML {
 
 // Str2html render Markdown text to HTML
 func Str2html(raw string) template.HTML {
-	return template.HTML(markdown.Sanitizer.Sanitize(raw))
+	return template.HTML(markdown.Sanitize(raw))
 }
 
 // List traversings the list

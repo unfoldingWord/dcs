@@ -1,6 +1,6 @@
 .markdown:not(code) {
 	overflow: hidden;
-	font-family: "Helvetica Neue", Helvetica, "Segoe UI", Arial, freesans, sans-serif;
+	font-family: "SBL Hebrew", "Helvetica Neue", Helvetica, "Segoe UI", Arial, freesans, sans-serif;
 	font-size: 16px;
 	line-height: 1.6 !important;
 	word-wrap: break-word;
@@ -205,7 +205,7 @@
 	}
 
 	li>p {
-		margin-top:16px;
+		margin-top:0;
 	}
 
 	dl {
@@ -240,8 +240,7 @@
 	}
 
 	table {
-		display:block;
-		width:100%;
+		width:auto;
 		overflow:auto;
 		word-break:normal;
 		word-break:keep-all;
@@ -485,5 +484,9 @@
 	.csv-data th {
 		font-weight:bold;
 		background:#f8f8f8;border-top:0;
+	}
+
+	.ui.list .list, ol.ui.list ol, ul.ui.list ul {
+		padding-left: 2em;
 	}
 }

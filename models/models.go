@@ -25,11 +25,13 @@ import (
 	_ "github.com/denisenkom/go-mssqldb"
 
 	"code.gitea.io/gitea/models/migrations"
+	"code.gitea.io/gitea/modules/log"
 	"code.gitea.io/gitea/modules/setting"
 )
 
 // Engine represents a xorm engine or session.
 type Engine interface {
+	Table(tableNameOrBean interface{}) *xorm.Session
 	Count(interface{}) (int64, error)
 	Decr(column string, arg ...interface{}) *xorm.Session
 	Delete(interface{}) (int64, error)
@@ -42,7 +44,8 @@ type Engine interface {
 	Insert(...interface{}) (int64, error)
 	InsertOne(interface{}) (int64, error)
 	Iterate(interface{}, xorm.IterFunc) error
-	Sql(string, ...interface{}) *xorm.Session
+	Join(joinOperator string, tablename interface{}, condition string, args ...interface{}) *xorm.Session
+	SQL(interface{}, ...interface{}) *xorm.Session
 	Where(interface{}, ...interface{}) *xorm.Session
 }
 
@@ -97,7 +100,6 @@ func init() {
 		new(Release),
 		new(LoginSource),
 		new(Webhook),
-		new(UpdateTask),
 		new(HookTask),
 		new(Team),
 		new(OrgUser),
@@ -109,9 +111,14 @@ func init() {
 		new(IssueUser),
 		new(LFSMetaObject),
 		new(TwoFactor),
+		new(GPGKey),
 		new(RepoUnit),
 		new(RepoRedirect),
-		new(Hashtag),
+		new(ExternalLoginUser),
+		new(ProtectedBranch),
+		new(UserOpenID),
+		new(IssueWatch),
+		new(CommitStatus),
 	)
 
 	gonicNames := []string{"SSL", "UID"}
@@ -225,6 +232,7 @@ func getEngine() (*xorm.Engine, error) {
 	default:
 		return nil, fmt.Errorf("Unknown database type: %s", DbCfg.Type)
 	}
+
 	return xorm.NewEngine(DbCfg.Type, connStr)
 }
 
@@ -236,6 +244,7 @@ func NewTestEngine(x *xorm.Engine) (err error) {
 	}
 
 	x.SetMapper(core.GonicMapper{})
+	x.SetLogger(log.XORMLogger)
 	return x.StoreEngine("InnoDB").Sync2(tables...)
 }
 
@@ -247,20 +256,9 @@ func SetEngine() (err error) {
 	}
 
 	x.SetMapper(core.GonicMapper{})
-
 	// WARNING: for serv command, MUST remove the output to os.stdout,
 	// so use log file to instead print to stdout.
-	logPath := path.Join(setting.LogRootPath, "xorm.log")
-
-	if err := os.MkdirAll(path.Dir(logPath), os.ModePerm); err != nil {
-		return fmt.Errorf("Failed to create dir %s: %v", logPath, err)
-	}
-
-	f, err := os.Create(logPath)
-	if err != nil {
-		return fmt.Errorf("Failed to create xorm.log: %v", err)
-	}
-	x.SetLogger(xorm.NewSimpleLogger(f))
+	x.SetLogger(log.XORMLogger)
 	x.ShowSQL(true)
 	return nil
 }
@@ -320,7 +318,6 @@ func GetStatistic() (stats Statistic) {
 	stats.Counter.Label, _ = x.Count(new(Label))
 	stats.Counter.HookTask, _ = x.Count(new(HookTask))
 	stats.Counter.Team, _ = x.Count(new(Team))
-	stats.Counter.UpdateTask, _ = x.Count(new(UpdateTask))
 	stats.Counter.Attachment, _ = x.Count(new(Attachment))
 	return
 }

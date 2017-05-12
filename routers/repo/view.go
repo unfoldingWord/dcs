@@ -18,11 +18,10 @@ import (
 	"code.gitea.io/gitea/models"
 	"code.gitea.io/gitea/modules/base"
 	"code.gitea.io/gitea/modules/context"
-	"code.gitea.io/gitea/modules/hashtag"
 	"code.gitea.io/gitea/modules/highlight"
 	"code.gitea.io/gitea/modules/lfs"
 	"code.gitea.io/gitea/modules/log"
-	"code.gitea.io/gitea/modules/markdown"
+	"code.gitea.io/gitea/modules/markup"
 	"code.gitea.io/gitea/modules/setting"
 	"code.gitea.io/gitea/modules/templates"
 	"code.gitea.io/gitea/modules/yaml"
@@ -30,6 +29,7 @@ import (
 )
 
 const (
+	tplRepoBARE base.TplName = "repo/bare"
 	tplRepoHome base.TplName = "repo/home"
 	tplWatchers base.TplName = "repo/watchers"
 	tplForks    base.TplName = "repo/forks"
@@ -57,13 +57,19 @@ func renderDirectory(ctx *context.Context, treeLink string) {
 
 	var readmeFile *git.Blob
 	for _, entry := range entries {
-		if entry.IsDir() || !markdown.IsReadmeFile(entry.Name()) {
+		if entry.IsDir() {
 			continue
 		}
 
-		// TODO: collect all possible README files and show with priority.
+		tp, ok := markup.ReadmeFileType(entry.Name())
+		if !ok {
+			continue
+		}
+
 		readmeFile = entry.Blob()
-		break
+		if tp != "" {
+			break
+		}
 	}
 
 	if readmeFile != nil {
@@ -88,18 +94,16 @@ func renderDirectory(ctx *context.Context, treeLink string) {
 		if isTextFile {
 			d, _ := ioutil.ReadAll(dataRc)
 			buf = append(buf, d...)
-			switch {
-			case markdown.IsMarkdownFile(readmeFile.Name()):
+			newbuf := markup.Render(readmeFile.Name(), buf, treeLink, ctx.Repo.Repository.ComposeMetas())
+			if newbuf != nil {
 				ctx.Data["IsMarkdown"] = true
-				buf = markdown.Render(buf, treeLink, ctx.Repo.Repository.ComposeMetas())
-				buf = hashtag.ConvertHashtagsToLinks(ctx.Repo.Repository, buf)
-			default:
+			} else {
 				// FIXME This is the only way to show non-markdown files
 				// instead of a broken "View Raw" link
 				ctx.Data["IsMarkdown"] = true
-				buf = bytes.Replace(buf, []byte("\n"), []byte(`<br>`), -1)
+				newbuf = bytes.Replace(buf, []byte("\n"), []byte(`<br>`), -1)
 			}
-			ctx.Data["FileContent"] = string(buf)
+			ctx.Data["FileContent"] = string(newbuf)
 		}
 	}
 
@@ -184,21 +188,20 @@ func renderFile(ctx *context.Context, entry *git.TreeEntry, treeLink, rawLink st
 		d, _ := ioutil.ReadAll(dataRc)
 		buf = append(buf, d...)
 
-		isMarkdown := markdown.IsMarkdownFile(blob.Name())
-		ctx.Data["IsMarkdown"] = isMarkdown
+		tp := markup.Type(blob.Name())
+		isSupportedMarkup := tp != ""
+		// FIXME: currently set IsMarkdown for compitable
+		ctx.Data["IsMarkdown"] = isSupportedMarkup
 
-		readmeExist := isMarkdown || markdown.IsReadmeFile(blob.Name())
+		readmeExist := isSupportedMarkup || markup.IsReadmeFile(blob.Name())
 		ctx.Data["ReadmeExist"] = readmeExist
 		isYaml := yaml.IsYamlFile(blob.Name())
 		ctx.Data["IsYaml"] = isYaml
-		switch {
-		case readmeExist && isMarkdown:
-			// TODO: don't need to render if it's a README but not Markdown file.
+		if readmeExist && isSupportedMarkup {
 			yamlHtml := yaml.RenderMarkdownYaml(buf)
-			markdownBody := markdown.Render(yaml.StripYamlFromText(buf), path.Dir(treeLink), ctx.Repo.Repository.ComposeMetas())
-			markdownBody = hashtag.ConvertHashtagsToLinks(ctx.Repo.Repository, markdownBody)
-			ctx.Data["FileContent"] = string(append(yamlHtml, markdownBody...))
-		case isYaml:
+                        markupBody := markup.Render(blob.Name(), yaml.StripYamlFromText(buf), path.Dir(treeLink), ctx.Repo.Repository.ComposeMetas())
+			ctx.Data["FileContent"] = string(append(yamlHtml, markupBody...)) 
+		} else if isYaml {
 			rendered, err := yaml.RenderYaml(buf)
 			if err == nil {
 				ctx.Data["FileContent"] = string(rendered)
@@ -206,9 +209,7 @@ func renderFile(ctx *context.Context, entry *git.TreeEntry, treeLink, rawLink st
 			}
 			ctx.Flash.ErrorMsg = fmt.Sprintf("Unable to parse YAML: %v", err)
 			ctx.Data["Flash"] = ctx.Flash
-			ctx.Data["IsYaml"] = false
-			fallthrough
-		default:
+		} else {
 			// Building code view blocks with line number on server side.
 			var fileContent string
 			if content, err := templates.ToUTF8WithErr(buf); err != nil {
@@ -263,12 +264,18 @@ func renderFile(ctx *context.Context, entry *git.TreeEntry, treeLink, rawLink st
 
 // Home render repository home page
 func Home(ctx *context.Context) {
+	ctx.Data["PageIsViewCode"] = true
+
+	if ctx.Repo.Repository.IsBare {
+		ctx.HTML(200, tplRepoBARE)
+		return
+	}
+
 	title := ctx.Repo.Repository.Owner.Name + "/" + ctx.Repo.Repository.Name
 	if len(ctx.Repo.Repository.Description) > 0 {
 		title += ": " + ctx.Repo.Repository.Description
 	}
 	ctx.Data["Title"] = title
-	ctx.Data["PageIsViewCode"] = true
 	ctx.Data["RequireHighlightJS"] = true
 
 	ctx.Data["RepoIsUBN"] = strings.HasSuffix(ctx.Repo.Repository.LowerName, "-ubn") || strings.Index(ctx.Repo.Repository.LowerName, "-ubn-") > 0
@@ -318,7 +325,7 @@ func Home(ctx *context.Context) {
 	ctx.HTML(200, tplRepoHome)
 }
 
-// RenderUserCards render a page show users accroding the input templaet
+// RenderUserCards render a page show users according the input templaet
 func RenderUserCards(ctx *context.Context, total int, getter func(page int) ([]*models.User, error), tpl base.TplName) {
 	page := ctx.QueryInt("page")
 	if page <= 0 {

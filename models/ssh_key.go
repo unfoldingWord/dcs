@@ -5,6 +5,7 @@
 package models
 
 import (
+	"bufio"
 	"encoding/base64"
 	"encoding/binary"
 	"errors"
@@ -28,7 +29,8 @@ import (
 )
 
 const (
-	tplPublicKey = `command="%s serv key-%d --config='%s'",no-port-forwarding,no-X11-forwarding,no-agent-forwarding,no-pty %s` + "\n"
+	tplCommentPrefix = `# gitea public key`
+	tplPublicKey     = tplCommentPrefix + "\n" + `command="%s serv key-%d --config='%s'",no-port-forwarding,no-X11-forwarding,no-agent-forwarding,no-pty %s` + "\n"
 )
 
 var sshOpLocker sync.Mutex
@@ -354,41 +356,50 @@ func appendAuthorizedKeysToFile(keys ...*PublicKey) error {
 	return nil
 }
 
-// checkKeyContent only checks if key content has been used as public key,
+// checkKeyFingerprint only checks if key fingerprint has been used as public key,
 // it is OK to use same key as deploy key for multiple repositories/users.
-func checkKeyContent(content string) error {
-	has, err := x.Get(&PublicKey{
-		Content: content,
-		Type:    KeyTypeUser,
+func checkKeyFingerprint(e Engine, fingerprint string) error {
+	has, err := e.Get(&PublicKey{
+		Fingerprint: fingerprint,
+		Type:        KeyTypeUser,
 	})
 	if err != nil {
 		return err
 	} else if has {
-		return ErrKeyAlreadyExist{0, content}
+		return ErrKeyAlreadyExist{0, fingerprint, ""}
 	}
 	return nil
 }
 
-func addKey(e Engine, key *PublicKey) (err error) {
+func calcFingerprint(publicKeyContent string) (string, error) {
 	// Calculate fingerprint.
 	tmpPath := strings.Replace(path.Join(os.TempDir(), fmt.Sprintf("%d", time.Now().Nanosecond()),
 		"id_rsa.pub"), "\\", "/", -1)
 	dir := path.Dir(tmpPath)
 
 	if err := os.MkdirAll(dir, os.ModePerm); err != nil {
-		return fmt.Errorf("Failed to create dir %s: %v", dir, err)
+		return "", fmt.Errorf("Failed to create dir %s: %v", dir, err)
 	}
 
-	if err = ioutil.WriteFile(tmpPath, []byte(key.Content), 0644); err != nil {
-		return err
+	if err := ioutil.WriteFile(tmpPath, []byte(publicKeyContent), 0644); err != nil {
+		return "", err
 	}
 	stdout, stderr, err := process.GetManager().Exec("AddPublicKey", "ssh-keygen", "-lf", tmpPath)
 	if err != nil {
-		return fmt.Errorf("'ssh-keygen -lf %s' failed with error '%s': %s", tmpPath, err, stderr)
+		return "", fmt.Errorf("'ssh-keygen -lf %s' failed with error '%s': %s", tmpPath, err, stderr)
 	} else if len(stdout) < 2 {
-		return errors.New("not enough output for calculating fingerprint: " + stdout)
+		return "", errors.New("not enough output for calculating fingerprint: " + stdout)
 	}
-	key.Fingerprint = strings.Split(stdout, " ")[1]
+	return strings.Split(stdout, " ")[1], nil
+}
+
+func addKey(e Engine, key *PublicKey) (err error) {
+	if len(key.Fingerprint) <= 0 {
+		key.Fingerprint, err = calcFingerprint(key.Content)
+		if err != nil {
+			return err
+		}
+	}
 
 	// Save SSH key.
 	if _, err = e.Insert(key); err != nil {
@@ -405,7 +416,13 @@ func addKey(e Engine, key *PublicKey) (err error) {
 // AddPublicKey adds new public key to database and authorized_keys file.
 func AddPublicKey(ownerID int64, name, content string) (*PublicKey, error) {
 	log.Trace(content)
-	if err := checkKeyContent(content); err != nil {
+
+	fingerprint, err := calcFingerprint(content)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := checkKeyFingerprint(x, fingerprint); err != nil {
 		return nil, err
 	}
 
@@ -426,11 +443,12 @@ func AddPublicKey(ownerID int64, name, content string) (*PublicKey, error) {
 	}
 
 	key := &PublicKey{
-		OwnerID: ownerID,
-		Name:    name,
-		Content: content,
-		Mode:    AccessModeWrite,
-		Type:    KeyTypeUser,
+		OwnerID:     ownerID,
+		Name:        name,
+		Fingerprint: fingerprint,
+		Content:     content,
+		Mode:        AccessModeWrite,
+		Type:        KeyTypeUser,
 	}
 	if err = addKey(sess, key); err != nil {
 		return nil, fmt.Errorf("addKey: %v", err)
@@ -480,6 +498,22 @@ func ListPublicKeys(uid int64) ([]*PublicKey, error) {
 func UpdatePublicKey(key *PublicKey) error {
 	_, err := x.Id(key.ID).AllCols().Update(key)
 	return err
+}
+
+// UpdatePublicKeyUpdated updates public key use time.
+func UpdatePublicKeyUpdated(id int64) error {
+	now := time.Now()
+	cnt, err := x.ID(id).Cols("updated_unix").Update(&PublicKey{
+		Updated:     now,
+		UpdatedUnix: now.Unix(),
+	})
+	if err != nil {
+		return err
+	}
+	if cnt != 1 {
+		return ErrKeyNotExist{id}
+	}
+	return nil
 }
 
 // deletePublicKeys does the actual key deletion but does not update authorized_keys file.
@@ -537,22 +571,46 @@ func RewriteAllPublicKeys() error {
 	if err != nil {
 		return err
 	}
-	defer os.Remove(tmpPath)
+	defer func() {
+		f.Close()
+		os.Remove(tmpPath)
+	}()
 
 	err = x.Iterate(new(PublicKey), func(idx int, bean interface{}) (err error) {
 		_, err = f.WriteString((bean.(*PublicKey)).AuthorizedString())
 		return err
 	})
-	f.Close()
 	if err != nil {
 		return err
 	}
 
 	if com.IsExist(fpath) {
-		if err = os.Remove(fpath); err != nil {
+		bakPath := fpath + fmt.Sprintf("_%d.gitea_bak", time.Now().Unix())
+		if err = com.Copy(fpath, bakPath); err != nil {
 			return err
 		}
+
+		p, err := os.Open(bakPath)
+		if err != nil {
+			return err
+		}
+		defer p.Close()
+
+		scanner := bufio.NewScanner(p)
+		for scanner.Scan() {
+			line := scanner.Text()
+			if strings.HasPrefix(line, tplCommentPrefix) {
+				scanner.Scan()
+				continue
+			}
+			_, err = f.WriteString(line + "\n")
+			if err != nil {
+				return err
+			}
+		}
 	}
+
+	f.Close()
 	if err = os.Rename(tmpPath, fpath); err != nil {
 		return err
 	}
@@ -665,14 +723,15 @@ func HasDeployKey(keyID, repoID int64) bool {
 
 // AddDeployKey add new deploy key to database and authorized_keys file.
 func AddDeployKey(repoID int64, name, content string) (*DeployKey, error) {
-	if err := checkKeyContent(content); err != nil {
+	fingerprint, err := calcFingerprint(content)
+	if err != nil {
 		return nil, err
 	}
 
 	pkey := &PublicKey{
-		Content: content,
-		Mode:    AccessModeRead,
-		Type:    KeyTypeDeploy,
+		Fingerprint: fingerprint,
+		Mode:        AccessModeRead,
+		Type:        KeyTypeDeploy,
 	}
 	has, err := x.Get(pkey)
 	if err != nil {
@@ -687,6 +746,8 @@ func AddDeployKey(repoID int64, name, content string) (*DeployKey, error) {
 
 	// First time use this deploy key.
 	if !has {
+		pkey.Content = content
+		pkey.Name = name
 		if err = addKey(sess, pkey); err != nil {
 			return nil, fmt.Errorf("addKey: %v", err)
 		}
@@ -749,7 +810,7 @@ func DeleteDeployKey(doer *User, id int64) error {
 		if err != nil {
 			return fmt.Errorf("GetRepositoryByID: %v", err)
 		}
-		yes, err := HasAccess(doer, repo, AccessModeAdmin)
+		yes, err := HasAccess(doer.ID, repo, AccessModeAdmin)
 		if err != nil {
 			return fmt.Errorf("HasAccess: %v", err)
 		} else if !yes {

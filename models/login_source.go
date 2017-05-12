@@ -20,6 +20,7 @@ import (
 	"github.com/go-xorm/xorm"
 
 	"code.gitea.io/gitea/modules/auth/ldap"
+	"code.gitea.io/gitea/modules/auth/oauth2"
 	"code.gitea.io/gitea/modules/auth/pam"
 	"code.gitea.io/gitea/modules/log"
 )
@@ -35,14 +36,16 @@ const (
 	LoginSMTP             // 3
 	LoginPAM              // 4
 	LoginDLDAP            // 5
+	LoginOAuth2           // 6
 )
 
 // LoginNames contains the name of LoginType values.
 var LoginNames = map[LoginType]string{
-	LoginLDAP:  "LDAP (via BindDN)",
-	LoginDLDAP: "LDAP (simple auth)", // Via direct bind
-	LoginSMTP:  "SMTP",
-	LoginPAM:   "PAM",
+	LoginLDAP:   "LDAP (via BindDN)",
+	LoginDLDAP:  "LDAP (simple auth)", // Via direct bind
+	LoginSMTP:   "SMTP",
+	LoginPAM:    "PAM",
+	LoginOAuth2: "OAuth2",
 }
 
 // SecurityProtocolNames contains the name of SecurityProtocol values.
@@ -57,6 +60,7 @@ var (
 	_ core.Conversion = &LDAPConfig{}
 	_ core.Conversion = &SMTPConfig{}
 	_ core.Conversion = &PAMConfig{}
+	_ core.Conversion = &OAuth2Config{}
 )
 
 // LDAPConfig holds configuration for LDAP login source.
@@ -115,6 +119,25 @@ func (cfg *PAMConfig) ToDB() ([]byte, error) {
 	return json.Marshal(cfg)
 }
 
+// OAuth2Config holds configuration for the OAuth2 login source.
+type OAuth2Config struct {
+	Provider                      string
+	ClientID                      string
+	ClientSecret                  string
+	OpenIDConnectAutoDiscoveryURL string
+	CustomURLMapping              *oauth2.CustomURLMapping
+}
+
+// FromDB fills up an OAuth2Config from serialized format.
+func (cfg *OAuth2Config) FromDB(bs []byte) error {
+	return json.Unmarshal(bs, cfg)
+}
+
+// ToDB exports an SMTPConfig to a serialized format.
+func (cfg *OAuth2Config) ToDB() ([]byte, error) {
+	return json.Marshal(cfg)
+}
+
 // LoginSource represents an external way for authorizing users.
 type LoginSource struct {
 	ID        int64 `xorm:"pk autoincr"`
@@ -162,6 +185,8 @@ func (source *LoginSource) BeforeSet(colName string, val xorm.Cell) {
 			source.Cfg = new(SMTPConfig)
 		case LoginPAM:
 			source.Cfg = new(PAMConfig)
+		case LoginOAuth2:
+			source.Cfg = new(OAuth2Config)
 		default:
 			panic("unrecognized login source type: " + com.ToStr(*val))
 		}
@@ -201,6 +226,11 @@ func (source *LoginSource) IsSMTP() bool {
 // IsPAM returns true of this source is of the PAM type.
 func (source *LoginSource) IsPAM() bool {
 	return source.Type == LoginPAM
+}
+
+// IsOAuth2 returns true of this source is of the OAuth2 type.
+func (source *LoginSource) IsOAuth2() bool {
+	return source.Type == LoginOAuth2
 }
 
 // HasTLS returns true of this source supports TLS.
@@ -250,6 +280,11 @@ func (source *LoginSource) PAM() *PAMConfig {
 	return source.Cfg.(*PAMConfig)
 }
 
+// OAuth2 returns OAuth2Config for this source, if of OAuth2 type.
+func (source *LoginSource) OAuth2() *OAuth2Config {
+	return source.Cfg.(*OAuth2Config)
+}
+
 // CreateLoginSource inserts a LoginSource in the DB if not already
 // existing with the given name.
 func CreateLoginSource(source *LoginSource) error {
@@ -261,12 +296,22 @@ func CreateLoginSource(source *LoginSource) error {
 	}
 
 	_, err = x.Insert(source)
+	if err == nil && source.IsOAuth2() && source.IsActived {
+		oAuth2Config := source.OAuth2()
+		err = oauth2.RegisterProvider(source.Name, oAuth2Config.Provider, oAuth2Config.ClientID, oAuth2Config.ClientSecret, oAuth2Config.OpenIDConnectAutoDiscoveryURL, oAuth2Config.CustomURLMapping)
+		err = wrapOpenIDConnectInitializeError(err, source.Name, oAuth2Config)
+
+		if err != nil {
+			// remove the LoginSource in case of errors while registering OAuth2 providers
+			x.Delete(source)
+		}
+	}
 	return err
 }
 
 // LoginSources returns a slice of all login sources found in DB.
 func LoginSources() ([]*LoginSource, error) {
-	auths := make([]*LoginSource, 0, 5)
+	auths := make([]*LoginSource, 0, 6)
 	return auths, x.Find(&auths)
 }
 
@@ -284,7 +329,26 @@ func GetLoginSourceByID(id int64) (*LoginSource, error) {
 
 // UpdateSource updates a LoginSource record in DB.
 func UpdateSource(source *LoginSource) error {
+	var originalLoginSource *LoginSource
+	if source.IsOAuth2() {
+		// keep track of the original values so we can restore in case of errors while registering OAuth2 providers
+		var err error
+		if originalLoginSource, err = GetLoginSourceByID(source.ID); err != nil {
+			return err
+		}
+	}
+
 	_, err := x.Id(source.ID).AllCols().Update(source)
+	if err == nil && source.IsOAuth2() && source.IsActived {
+		oAuth2Config := source.OAuth2()
+		err = oauth2.RegisterProvider(source.Name, oAuth2Config.Provider, oAuth2Config.ClientID, oAuth2Config.ClientSecret, oAuth2Config.OpenIDConnectAutoDiscoveryURL, oAuth2Config.CustomURLMapping)
+		err = wrapOpenIDConnectInitializeError(err, source.Name, oAuth2Config)
+
+		if err != nil {
+			// restore original values since we cannot update the provider it self
+			x.Id(source.ID).AllCols().Update(originalLoginSource)
+		}
+	}
 	return err
 }
 
@@ -296,6 +360,18 @@ func DeleteSource(source *LoginSource) error {
 	} else if count > 0 {
 		return ErrLoginSourceInUse{source.ID}
 	}
+
+	count, err = x.Count(&ExternalLoginUser{LoginSourceID: source.ID})
+	if err != nil {
+		return err
+	} else if count > 0 {
+		return ErrLoginSourceInUse{source.ID}
+	}
+
+	if source.IsOAuth2() {
+		oauth2.RemoveProvider(source.Name)
+	}
+
 	_, err = x.Id(source.ID).Delete(new(LoginSource))
 	return err
 }
@@ -549,6 +625,16 @@ func UserSignIn(username, password string) (*User, error) {
 	var user *User
 	if strings.Contains(username, "@") {
 		user = &User{Email: strings.ToLower(strings.TrimSpace(username))}
+		// check same email
+		cnt, err := x.Count(user)
+		if err != nil {
+			return nil, err
+		}
+		if cnt > 1 {
+			return nil, ErrEmailAlreadyUsed{
+				Email: user.Email,
+			}
+		}
 	} else {
 		user = &User{LowerName: strings.ToLower(strings.TrimSpace(username))}
 	}
@@ -560,7 +646,7 @@ func UserSignIn(username, password string) (*User, error) {
 
 	if hasUser {
 		switch user.LoginType {
-		case LoginNoType, LoginPlain:
+		case LoginNoType, LoginPlain, LoginOAuth2:
 			if user.ValidatePassword(password) {
 				return user, nil
 			}
@@ -580,12 +666,16 @@ func UserSignIn(username, password string) (*User, error) {
 		}
 	}
 
-	sources := make([]*LoginSource, 0, 3)
+	sources := make([]*LoginSource, 0, 5)
 	if err = x.UseBool().Find(&sources, &LoginSource{IsActived: true}); err != nil {
 		return nil, err
 	}
 
 	for _, source := range sources {
+		if source.IsOAuth2() {
+			// don't try to authenticate against OAuth2 sources
+			continue
+		}
 		authUser, err := ExternalUserLogin(nil, username, password, source, true)
 		if err == nil {
 			return authUser, nil

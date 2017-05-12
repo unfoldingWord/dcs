@@ -7,7 +7,7 @@
 	<meta name="theme-color" content="{{ThemeColorMetaTag}}">
 	<meta name="author" content="{{if .Repository}}{{.Owner.Name}}{{else}}Door43 - open-licensed biblical content{{end}}" />
 	<meta name="description" content="{{if .Repository}}{{.Repository.Name}}{{if .Repository.Description}} - {{.Repository.Description}}{{end}}{{else}}Door43 is an open-access translation platform for open-licensed discipleship resources in any language. Contributors from all over the world work together on this website to create, translate, and distribute legally unrestricted discipleship resources.{{end}}" />
-	<meta name="keywords" content="go, git, self-hosted, gitea">
+	<meta name="keywords" content="{{MetaKeywords}}">
 	<meta name="referrer" content="no-referrer" />
 	<meta name="_csrf" content="{{.CsrfToken}}" />
 	<meta name="_suburl" content="{{AppSubUrl}}" />
@@ -66,9 +66,9 @@
 {{else}}
 	<meta property="og:title" content="{{AppName}}">
 	<meta property="og:type" content="website" />
-	<meta property="og:image" content="{{AppSubUrl}}/img/gitea-lg.png" />
+	<meta property="og:image" content="{{AppSubUrl}}/img/door43.png" />
 	<meta property="og:url" content="{{AppUrl}}" />
-	<meta property="og:description" content="Gitea (Git with a cup of tea) is a painless self-hosted Git service written in Go">
+	<meta property="og:description" content="{{MetaDescription}}">
 {{end}}
 </head>
 <body>

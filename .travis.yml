@@ -3,8 +3,8 @@ language: go
 go_import_path: code.gitea.io/gitea
 
 go:
-  - 1.6
   - 1.7
+  - 1.8
 
 env:
   TAGS: cert sqlite pam miniwinsvc
@@ -24,7 +24,7 @@ script:
   # - make lint
 
   - make test
-  - make build
+  - make build TAGS=redis
 
 after_success:
   - ./test-coverage.sh

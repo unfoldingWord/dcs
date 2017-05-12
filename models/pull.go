@@ -115,11 +115,15 @@ func (pr *PullRequest) LoadAttributes() error {
 
 // LoadIssue loads issue information from database
 func (pr *PullRequest) LoadIssue() (err error) {
+	return pr.loadIssue(x)
+}
+
+func (pr *PullRequest) loadIssue(e Engine) (err error) {
 	if pr.Issue != nil {
 		return nil
 	}
 
-	pr.Issue, err = GetIssueByID(pr.IssueID)
+	pr.Issue, err = getIssueByID(e, pr.IssueID)
 	return err
 }
 
@@ -193,6 +197,8 @@ func (pr *PullRequest) APIFormat() *api.PullRequest {
 		Base:      apiBaseBranchInfo,
 		Head:      apiHeadBranchInfo,
 		MergeBase: pr.MergeBase,
+		Created:   &pr.Issue.Created,
+		Updated:   &pr.Issue.Updated,
 	}
 
 	if pr.Status != PullRequestStatusChecking {
@@ -405,14 +411,15 @@ func (pr *PullRequest) setMerged() (err error) {
 		return err
 	}
 
-	if err = pr.LoadIssue(); err != nil {
+	if err = pr.loadIssue(sess); err != nil {
 		return err
 	}
 
-	if pr.Issue.Repo.Owner == nil {
-		if err = pr.Issue.Repo.GetOwner(); err != nil {
-			return err
-		}
+	if err = pr.Issue.loadRepo(sess); err != nil {
+		return err
+	}
+	if err = pr.Issue.Repo.getOwner(sess); err != nil {
+		return err
 	}
 
 	if err = pr.Issue.changeStatus(sess, pr.Merger, pr.Issue.Repo, true); err != nil {
@@ -502,7 +509,9 @@ func (pr *PullRequest) getMergeCommit() (*git.Commit, error) {
 	mergeCommit, stderr, err := process.GetManager().ExecDirEnv(-1, "", fmt.Sprintf("isMerged (git rev-list --ancestry-path --merges --reverse): %d", pr.BaseRepo.ID),
 		[]string{"GIT_INDEX_FILE=" + indexTmpPath, "GIT_DIR=" + pr.BaseRepo.RepoPath()},
 		"git", "rev-list", "--ancestry-path", "--merges", "--reverse", cmd)
-
+	if err == nil && len(mergeCommit) != 40 {
+		err = fmt.Errorf("unexpected length of output (got:%d bytes) '%s'", len(mergeCommit), mergeCommit)
+	}
 	if err != nil {
 		return nil, fmt.Errorf("git rev-list --ancestry-path --merges --reverse: %v %v", stderr, err)
 	}
@@ -595,7 +604,7 @@ func NewPullRequest(repo *Repository, pull *Issue, labelIDs []int64, uuids []str
 	if err = newIssue(sess, pull.Poster, NewIssueOptions{
 		Repo:        repo,
 		Issue:       pull,
-		LableIDs:    labelIDs,
+		LabelIDs:    labelIDs,
 		Attachments: uuids,
 		IsPull:      true,
 	}); err != nil {

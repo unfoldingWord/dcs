@@ -10,7 +10,7 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
-	"net/url"
+	"strconv"
 	"strings"
 	"time"
 
@@ -108,16 +108,9 @@ func Issues(ctx *context.Context) {
 
 	viewType := ctx.Query("type")
 	sortType := ctx.Query("sort")
-	types := []string{"assigned", "created_by", "mentioned"}
+	types := []string{"all", "assigned", "created_by", "mentioned"}
 	if !com.IsSliceContainsStr(types, viewType) {
 		viewType = "all"
-	}
-
-	// Must sign in to see issues about you.
-	if viewType != "all" && !ctx.IsSigned {
-		ctx.SetCookie("redirect_to", "/"+url.QueryEscape(setting.AppSubURL+ctx.Req.RequestURI), 0, setting.AppSubURL)
-		ctx.Redirect(setting.AppSubURL + "/user/login")
-		return
 	}
 
 	var (
@@ -126,19 +119,6 @@ func Issues(ctx *context.Context) {
 		mentionedID int64
 		forceEmpty  bool
 	)
-	switch viewType {
-	case "assigned":
-		if assigneeID > 0 && ctx.User.ID != assigneeID {
-			// two different assignees, must be empty
-			forceEmpty = true
-		} else {
-			assigneeID = ctx.User.ID
-		}
-	case "created_by":
-		posterID = ctx.User.ID
-	case "mentioned":
-		mentionedID = ctx.User.ID
-	}
 
 	repo := ctx.Repo.Repository
 	selectLabels := ctx.Query("labels")
@@ -485,6 +465,24 @@ func ViewIssue(ctx *context.Context) {
 	}
 	ctx.Data["Title"] = fmt.Sprintf("#%d - %s", issue.Index, issue.Title)
 
+	var iw *models.IssueWatch
+	var exists bool
+	if ctx.User != nil {
+		iw, exists, err = models.GetIssueWatch(ctx.User.ID, issue.ID)
+		if err != nil {
+			ctx.Handle(500, "GetIssueWatch", err)
+			return
+		}
+		if !exists {
+			iw = &models.IssueWatch{
+				UserID:     ctx.User.ID,
+				IssueID:    issue.ID,
+				IsWatching: models.IsWatching(ctx.User.ID, ctx.Repo.Repository.ID),
+			}
+		}
+	}
+	ctx.Data["IssueWatch"] = iw
+
 	// Make sure type and URL matches.
 	if ctx.Params(":type") == "issues" && issue.IsPull {
 		ctx.Redirect(ctx.Repo.RepoLink + "/pulls/" + com.ToStr(issue.Index))
@@ -665,6 +663,28 @@ func getActionIssue(ctx *context.Context) *models.Issue {
 	return issue
 }
 
+func getActionIssues(ctx *context.Context) []*models.Issue {
+	commaSeparatedIssueIDs := ctx.Query("issue_ids")
+	if len(commaSeparatedIssueIDs) == 0 {
+		return nil
+	}
+	issueIDs := make([]int64, 0, 10)
+	for _, stringIssueID := range strings.Split(commaSeparatedIssueIDs, ",") {
+		issueID, err := strconv.ParseInt(stringIssueID, 10, 64)
+		if err != nil {
+			ctx.Handle(500, "ParseInt", err)
+			return nil
+		}
+		issueIDs = append(issueIDs, issueID)
+	}
+	issues, err := models.GetIssuesByIDs(issueIDs)
+	if err != nil {
+		ctx.Handle(500, "GetIssuesByIDs", err)
+		return nil
+	}
+	return issues
+}
+
 // UpdateIssueTitle change issue's title
 func UpdateIssueTitle(ctx *context.Context) {
 	issue := getActionIssue(ctx)
@@ -718,25 +738,22 @@ func UpdateIssueContent(ctx *context.Context) {
 
 // UpdateIssueMilestone change issue's milestone
 func UpdateIssueMilestone(ctx *context.Context) {
-	issue := getActionIssue(ctx)
+	issues := getActionIssues(ctx)
 	if ctx.Written() {
 		return
 	}
 
-	oldMilestoneID := issue.MilestoneID
 	milestoneID := ctx.QueryInt64("id")
-	if oldMilestoneID == milestoneID {
-		ctx.JSON(200, map[string]interface{}{
-			"ok": true,
-		})
-		return
-	}
-
-	// Not check for invalid milestone id and give responsibility to owners.
-	issue.MilestoneID = milestoneID
-	if err := models.ChangeMilestoneAssign(issue, ctx.User, oldMilestoneID); err != nil {
-		ctx.Handle(500, "ChangeMilestoneAssign", err)
-		return
+	for _, issue := range issues {
+		oldMilestoneID := issue.MilestoneID
+		if oldMilestoneID == milestoneID {
+			continue
+		}
+		issue.MilestoneID = milestoneID
+		if err := models.ChangeMilestoneAssign(issue, ctx.User, oldMilestoneID); err != nil {
+			ctx.Handle(500, "ChangeMilestoneAssign", err)
+			return
+		}
 	}
 
 	ctx.JSON(200, map[string]interface{}{
@@ -746,24 +763,53 @@ func UpdateIssueMilestone(ctx *context.Context) {
 
 // UpdateIssueAssignee change issue's assignee
 func UpdateIssueAssignee(ctx *context.Context) {
-	issue := getActionIssue(ctx)
+	issues := getActionIssues(ctx)
 	if ctx.Written() {
 		return
 	}
 
 	assigneeID := ctx.QueryInt64("id")
-	if issue.AssigneeID == assigneeID {
-		ctx.JSON(200, map[string]interface{}{
-			"ok": true,
-		})
+	for _, issue := range issues {
+		if issue.AssigneeID == assigneeID {
+			continue
+		}
+		if err := issue.ChangeAssignee(ctx.User, assigneeID); err != nil {
+			ctx.Handle(500, "ChangeAssignee", err)
+			return
+		}
+	}
+	ctx.JSON(200, map[string]interface{}{
+		"ok": true,
+	})
+}
+
+// UpdateIssueStatus change issue's status
+func UpdateIssueStatus(ctx *context.Context) {
+	issues := getActionIssues(ctx)
+	if ctx.Written() {
 		return
 	}
 
-	if err := issue.ChangeAssignee(ctx.User, assigneeID); err != nil {
-		ctx.Handle(500, "ChangeAssignee", err)
-		return
+	var isClosed bool
+	switch action := ctx.Query("action"); action {
+	case "open":
+		isClosed = false
+	case "close":
+		isClosed = true
+	default:
+		log.Warn("Unrecognized action: %s", action)
 	}
 
+	if _, err := models.IssueList(issues).LoadRepositories(); err != nil {
+		ctx.Handle(500, "LoadRepositories", err)
+		return
+	}
+	for _, issue := range issues {
+		if err := issue.ChangeStatus(ctx.User, issue.Repo, isClosed); err != nil {
+			ctx.Handle(500, "ChangeStatus", err)
+			return
+		}
+	}
 	ctx.JSON(200, map[string]interface{}{
 		"ok": true,
 	})
@@ -837,11 +883,8 @@ func NewComment(ctx *context.Context, form auth.CreateCommentForm) {
 		if issue.IsPull {
 			typeName = "pulls"
 		}
-		if comment != nil {
-			ctx.Redirect(fmt.Sprintf("%s/%s/%d#%s", ctx.Repo.RepoLink, typeName, issue.Index, comment.HashTag()))
-		} else {
-			ctx.Redirect(fmt.Sprintf("%s/%s/%d", ctx.Repo.RepoLink, typeName, issue.Index))
-		}
+
+		ctx.Redirect(fmt.Sprintf("%s/%s/%d", ctx.Repo.RepoLink, typeName, issue.Index))
 	}()
 
 	// Fix #321: Allow empty comments, as long as we have attachments.

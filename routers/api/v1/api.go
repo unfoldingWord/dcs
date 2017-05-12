@@ -2,6 +2,31 @@
 // Use of this source code is governed by a MIT-style
 // license that can be found in the LICENSE file.
 
+//go:generate swagger generate spec -o ../../../public/swagger.v1.json
+//go:generate sed -i "s;\".ref\": \"#/definitions/GPGKey\";\"type\": \"object\";g" ../../../public/swagger.v1.json
+
+// Package v1 Gitea API.
+//
+// This provide API interface to communicate with this Gitea instance.
+//
+// Terms Of Service:
+//
+// there are no TOS at this moment, use at your own risk we take no responsibility
+//
+//     Schemes: http, https
+//     BasePath: /api/v1
+//     Version: 1.1.1
+//     License: MIT http://opensource.org/licenses/MIT
+//
+//     Consumes:
+//     - application/json
+//     - text/plain
+//
+//     Produces:
+//     - application/json
+//     - text/html
+//
+// swagger:meta
 package v1
 
 import (
@@ -70,7 +95,7 @@ func repoAssignment() macaron.Handler {
 		if ctx.IsSigned && ctx.User.IsAdmin {
 			ctx.Repo.AccessMode = models.AccessModeOwner
 		} else {
-			mode, err := models.AccessLevel(ctx.User, repo)
+			mode, err := models.AccessLevel(ctx.User.ID, repo)
 			if err != nil {
 				ctx.Error(500, "AccessLevel", err)
 				return
@@ -232,6 +257,7 @@ func RegisterRoutes(m *macaron.Macaron) {
 
 	m.Group("/v1", func() {
 		// Miscellaneous
+		m.Get("/version", misc.Version)
 		m.Post("/markdown", bind(api.MarkdownOption{}), misc.Markdown)
 		m.Post("/markdown/raw", misc.MarkdownRaw)
 		m.Post("/yaml", bind(api.YamlOption{}), misc.Yaml)
@@ -244,6 +270,7 @@ func RegisterRoutes(m *macaron.Macaron) {
 			m.Group("/:username", func() {
 				m.Get("", user.GetInfo)
 
+				m.Get("/repos", user.ListUserRepos)
 				m.Group("/tokens", func() {
 					m.Combo("").Get(user.ListAccessTokens).
 						Post(bind(api.CreateAccessTokenOption{}), user.CreateAccessToken)
@@ -254,6 +281,7 @@ func RegisterRoutes(m *macaron.Macaron) {
 		m.Group("/users", func() {
 			m.Group("/:username", func() {
 				m.Get("/keys", user.ListPublicKeys)
+				m.Get("/gpg_keys", user.ListGPGKeys)
 
 				m.Get("/followers", user.ListFollowers)
 				m.Group("/following", func() {
@@ -286,6 +314,16 @@ func RegisterRoutes(m *macaron.Macaron) {
 					Delete(user.DeletePublicKey)
 			})
 
+			m.Group("/gpg_keys", func() {
+				m.Combo("").Get(user.ListMyGPGKeys).
+					Post(bind(api.CreateGPGKeyOption{}), user.CreateGPGKey)
+				m.Combo("/:id").Get(user.GetGPGKey).
+					Delete(user.DeleteGPGKey)
+			})
+
+			m.Combo("/repos").Get(user.ListMyRepos).
+				Post(bind(api.CreateRepoOption{}), repo.Create)
+
 			m.Group("/starred", func() {
 				m.Get("", user.GetMyStarredRepos)
 				m.Group("/:username/:reponame", func() {
@@ -299,8 +337,6 @@ func RegisterRoutes(m *macaron.Macaron) {
 		}, reqToken())
 
 		// Repositories
-		m.Combo("/user/repos", reqToken()).Get(repo.ListMyRepos).
-			Post(bind(api.CreateRepoOption{}), repo.Create)
 		m.Post("/org/:org/repos", reqToken(), bind(api.CreateRepoOption{}), repo.CreateOrgRepo)
 
 		m.Group("/repos", func() {
@@ -393,6 +429,7 @@ func RegisterRoutes(m *macaron.Macaron) {
 						Patch(bind(api.EditReleaseOption{}), repo.EditRelease).
 						Delete(repo.DeleteRelease)
 				})
+				m.Post("/mirror-sync", repo.MirrorSync)
 				m.Get("/editorconfig/:filename", context.RepoRef(), repo.GetEditorconfig)
 				m.Group("/pulls", func() {
 					m.Combo("").Get(bind(api.ListPullRequestsOptions{}), repo.ListPullRequests).Post(reqRepoWriter(), bind(api.CreatePullRequestOption{}), repo.CreatePullRequest)
@@ -402,6 +439,13 @@ func RegisterRoutes(m *macaron.Macaron) {
 					})
 
 				}, mustAllowPulls, context.ReferencesGitRepo())
+				m.Group("/statuses", func() {
+					m.Combo("/:sha").Get(repo.GetCommitStatuses).Post(reqRepoWriter(), bind(api.CreateStatusOption{}), repo.NewCommitStatus)
+				})
+				m.Group("/commits/:ref", func() {
+					m.Get("/status", repo.GetCombinedCommitStatus)
+					m.Get("/statuses", repo.GetCommitStatuses)
+				})
 			}, repoAssignment())
 		}, reqToken())
 

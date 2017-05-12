@@ -11,13 +11,17 @@ BINDATA := modules/{options,public,templates}/bindata.go
 STYLESHEETS := $(wildcard public/less/index.less public/less/_*.less)
 JAVASCRIPTS :=
 
-LDFLAGS := -X "main.Version=$(shell git describe --tags --always | sed 's/-/+/' | sed 's/^v//')"
+GOFLAGS := -i -v
+EXTRA_GOFLAGS ?=
 
-TARGETS ?= linux/*,darwin/*,windows/*
-PACKAGES ?= $(shell go list ./... | grep -v /vendor/)
+LDFLAGS := -X "main.Version=$(shell git describe --tags --always | sed 's/-/+/' | sed 's/^v//')" -X "main.Tags=$(TAGS)"
+
+PACKAGES ?= $(filter-out code.gitea.io/gitea/integrations,$(shell go list ./... | grep -v /vendor/))
 SOURCES ?= $(shell find . -name "*.go" -type f)
 
 TAGS ?=
+
+TMPDIR := $(shell mktemp -d)
 
 ifneq ($(DRONE_TAG),)
 	VERSION ?= $(subst v,,$(DRONE_TAG))
@@ -47,36 +51,64 @@ vet:
 
 .PHONY: generate
 generate:
-	@which go-bindata > /dev/null; if [ $$? -ne 0 ]; then \
+	@hash go-bindata > /dev/null 2>&1; if [ $$? -ne 0 ]; then \
 		go get -u github.com/jteeuwen/go-bindata/...; \
+	fi
+	@hash swagger > /dev/null 2>&1; if [ $$? -ne 0 ]; then \
+		go get -u github.com/go-swagger/go-swagger/cmd/swagger; \
 	fi
 	go generate $(PACKAGES)
 
 .PHONY: errcheck
 errcheck:
-	@which errcheck > /dev/null; if [ $$? -ne 0 ]; then \
+	@hash errcheck > /dev/null 2>&1; if [ $$? -ne 0 ]; then \
 		go get -u github.com/kisielk/errcheck; \
 	fi
 	errcheck $(PACKAGES)
 
 .PHONY: lint
 lint:
-	@which golint > /dev/null; if [ $$? -ne 0 ]; then \
+	@hash golint > /dev/null 2>&1; if [ $$? -ne 0 ]; then \
 		go get -u github.com/golang/lint/golint; \
 	fi
 	for PKG in $(PACKAGES); do golint -set_exit_status $$PKG || exit 1; done;
+
+.PHONY: integrations
+integrations: TAGS=bindata sqlite
+integrations: build
+	go test code.gitea.io/gitea/integrations
 
 .PHONY: test
 test:
 	go test -cover $(PACKAGES)
 
+.PHONY: test-vendor
+test-vendor:
+	@hash govendor > /dev/null 2>&1; if [ $$? -ne 0 ]; then \
+		go get -u github.com/kardianos/govendor; \
+	fi
+	govendor list +unused | tee "$(TMPDIR)/wc-gitea-unused"
+	[ $$(cat "$(TMPDIR)/wc-gitea-unused" | wc -l) -eq 0 ] || echo "Warning: /!\\ Some vendor are not used /!\\"
+
+	govendor list +outside | tee "$(TMPDIR)/wc-gitea-outside"
+	[ $$(cat "$(TMPDIR)/wc-gitea-outside" | wc -l) -eq 0 ] || exit 1
+
+	govendor status || exit 1
+
+.PHONY: test-sqlite
+test-sqlite: integrations.test
+	GITEA_ROOT=${CURDIR} GITEA_CONF=integrations/sqlite.ini ./integrations.test
+
 .PHONY: test-mysql
-test-mysql:
-	@echo "Not integrated yet!"
+test-mysql: integrations.test
+	GITEA_ROOT=${CURDIR} GITEA_CONF=integrations/mysql.ini ./integrations.test
 
 .PHONY: test-pgsql
-test-pgsql:
-	@echo "Not integrated yet!"
+test-pgsql: integrations.test
+	GITEA_ROOT=${CURDIR} GITEA_CONF=integrations/pgsql.ini ./integrations.test
+
+integrations.test: $(SOURCES)
+	go test -c code.gitea.io/gitea/integrations -tags 'sqlite'
 
 .PHONY: check
 check: test
@@ -89,26 +121,46 @@ install: $(wildcard *.go)
 build: $(EXECUTABLE)
 
 $(EXECUTABLE): $(SOURCES)
-	go build -i -v -tags '$(TAGS)' -ldflags '-s -w $(LDFLAGS)' -o $@
+	go build $(GOFLAGS) $(EXTRA_GOFLAGS) -tags '$(TAGS)' -ldflags '-s -w $(LDFLAGS)' -o $@
 
 .PHONY: docker
 docker:
-	docker run -ti --rm -v $(CURDIR):/srv/app/src/code.gitea.io/gitea -w /srv/app/src/code.gitea.io/gitea -e TAGS="$(TAGS)" webhippie/golang:edge make clean generate build
+	docker run -ti --rm -v $(CURDIR):/srv/app/src/code.gitea.io/gitea -w /srv/app/src/code.gitea.io/gitea -e TAGS="bindata $(TAGS)" webhippie/golang:edge make clean generate build
 	docker build -t gitea/gitea:latest .
 
 .PHONY: release
-release: release-dirs release-build release-copy release-check
+release: release-dirs release-windows release-linux release-darwin release-copy release-check
 
 .PHONY: release-dirs
 release-dirs:
 	mkdir -p $(DIST)/binaries $(DIST)/release
 
-.PHONY: release-build
-release-build:
-	@which xgo > /dev/null; if [ $$? -ne 0 ]; then \
+.PHONY: release-windows
+release-windows:
+	@hash xgo > /dev/null 2>&1; if [ $$? -ne 0 ]; then \
 		go get -u github.com/karalabe/xgo; \
 	fi
-	xgo -dest $(DIST)/binaries -tags '$(TAGS)' -ldflags '-s -w $(LDFLAGS)' -targets '$(TARGETS)' -out $(EXECUTABLE)-$(VERSION) .
+	xgo -dest $(DIST)/binaries -tags '$(TAGS)' -ldflags '-linkmode external -extldflags "-static" $(LDFLAGS)' -targets 'windows/*' -out gitea-$(VERSION) .
+ifeq ($(CI),drone)
+	mv /build/* $(DIST)/binaries
+endif
+
+.PHONY: release-linux
+release-linux:
+	@hash xgo > /dev/null 2>&1; if [ $$? -ne 0 ]; then \
+		go get -u github.com/karalabe/xgo; \
+	fi
+	xgo -dest $(DIST)/binaries -tags '$(TAGS)' -ldflags '-linkmode external -extldflags "-static" $(LDFLAGS)' -targets 'linux/*' -out gitea-$(VERSION) .
+ifeq ($(CI),drone)
+	mv /build/* $(DIST)/binaries
+endif
+
+.PHONY: release-darwin
+release-darwin:
+	@hash xgo > /dev/null 2>&1; if [ $$? -ne 0 ]; then \
+		go get -u github.com/karalabe/xgo; \
+	fi
+	xgo -dest $(DIST)/binaries -tags '$(TAGS)' -ldflags '$(LDFLAGS)' -targets 'darwin/*' -out gitea-$(VERSION) .
 ifeq ($(CI),drone)
 	mv /build/* $(DIST)/binaries
 endif
@@ -134,6 +186,14 @@ stylesheets: public/css/index.css
 .IGNORE: public/css/index.css
 public/css/index.css: $(STYLESHEETS)
 	lessc $< $@
+
+.PHONY: swagger-ui
+swagger-ui:
+	rm -Rf public/assets/swagger-ui
+	git clone --depth=10 -b v3.0.7 --single-branch https://github.com/swagger-api/swagger-ui.git /tmp/swagger-ui
+	mv /tmp/swagger-ui/dist public/assets/swagger-ui
+	rm -Rf /tmp/swagger-ui
+	sed -i "s;http://petstore.swagger.io/v2/swagger.json;../../swagger.v1.json;g" public/assets/swagger-ui/index.html
 
 .PHONY: assets
 assets: javascripts stylesheets
