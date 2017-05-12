@@ -1,12 +1,16 @@
 {{template "base/head" .}}
-<div class="repository hashtags">
+<div class="repository hashtag list">
+	{{template "repo/header" .}}
 	<div class="ui container">
-		<h1>{{ .Title }}</h1>
-		<ul>
-			{{ range .Tags }}
-			<li><a href="{{ AppSubUrl }}{{ $.RepoLink }}/hashtags/{{ .tag_name|QueryEscape }}">{{ .tag_name }}</a> [{{ .count_of_occurrences }}]</li>
-			{{end}}
-		</ul>
+		{{template "base/alert" .}}
+		<div class="ui container">
+			<h1>{{ .Title }}</h1>
+			<ul>
+				{{ range .Tags }}
+				<li><a href="{{$.RepoLink}}/hashtags/{{ .tag_name|QueryEscape }}">{{ .tag_name }}</a> [{{ .count_of_occurrences }}]</li>
+				{{end}}
+			</ul>
+		</div>
 	</div>
 </div>
 {{template "base/footer" .}}

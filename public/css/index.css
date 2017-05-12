@@ -2534,6 +2534,20 @@ footer .ui.language .menu {
 .repository .header-wrapper .ui.tabular .fa {
   margin-right: 5px;
 }
+.hashtag.page .glossary-article-box {
+  float: right;
+  border: solid grey thin;
+  padding: 5px;
+  margin: 5px;
+}
+.hashtag.page .glossary-article-box ul {
+  padding: 0;
+  margin: 0;
+}
+.hashtag.page .glossary-article-box ul li {
+  list-style-type: none;
+  padding: 5px;
+}
 .CodeMirror {
   font: 14px Consolas, "Liberation Mono", Menlo, Courier, monospace;
 }
