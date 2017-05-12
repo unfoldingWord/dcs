@@ -21,7 +21,7 @@ var TESTING_REPOS = map[string]bool{
 	"all_json_files":              false,
 	"bad_json_file":               true,
 	"multiple_sensitive_fields": false,
-	"no_json_files":               true,
+	"no_json_files":               false,
 	"no_sensitive_data":          false,
 }
 
