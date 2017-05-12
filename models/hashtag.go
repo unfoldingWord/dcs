@@ -92,12 +92,12 @@ ORDER BY LOWER(h.tag_name)`
 }
 
 // GetHashtags gets all hashtags by the repo prefix, UserID, and TagName
-func GetHashtags(repoPrefix string, userID int64, tagName string) ([]Hashtag, error) {
+func GetHashtags(repoPrefix string, userID int64, tagName string) ([]*Hashtag, error) {
 	return getHashtags(x, repoPrefix, userID, tagName)
 }
 
-func getHashtags(engine *xorm.Engine, repoPrefix string, userID int64, tagName string) ([]Hashtag, error) {
-	hashtags := []Hashtag{}
+func getHashtags(engine *xorm.Engine, repoPrefix string, userID int64, tagName string) ([]*Hashtag, error) {
+	hashtags := []*Hashtag{}
 	if err := engine.
 		Join("INNER", "repository", "hashtag.repo_id = repository.id").
 		Where("tag_name = ?", tagName).
