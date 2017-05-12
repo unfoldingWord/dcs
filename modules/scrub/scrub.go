@@ -7,6 +7,7 @@ import (
 	"code.gitea.io/git"
 	"reflect"
 	"code.gitea.io/gitea/modules/log"
+	"os"
 )
 
 var JSON_FILES_TO_SCRUB = [...]string{
@@ -35,12 +36,15 @@ func ScrubJsonFile(localPath, fileName string) error {
 	jsonPath := path.Join(localPath, fileName)
 
 	var jsonData interface{}
-	if fileContent, err := ioutil.ReadFile(jsonPath); err != nil {
-		return err
+	if _, err := os.Stat(jsonPath); os.IsNotExist(err) {
+		return nil // path does not exist, nothing to scrub!
+	} else if fileContent, err := ioutil.ReadFile(jsonPath); err != nil {
+		log.Error(3, "%v", err)
+		return err // error reading file
 	} else {
 		if err = json.Unmarshal(fileContent, &jsonData); err != nil {
 			log.Error(3, "%v", err)
-			return err
+			return err // error unmarhalling file
 		}
 	}
 
