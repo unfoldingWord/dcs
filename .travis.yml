@@ -24,6 +24,7 @@ script:
   # - make lint
 
   - make test
+  - make test-vendor
   - make build TAGS=redis
 
 after_success:

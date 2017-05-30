@@ -34,7 +34,11 @@ func (repo *Repository) ScrubSensitiveData(doer *User, opts ScrubSensitiveDataOp
 			Message: opts.CommitMessage,
 		}); err != nil {
 			return fmt.Errorf("CommitChanges: %v", err)
-		} else if err := git.PushForce(localPath, "origin", "master"); err != nil {
+		} else if err := git.Push(localPath, git.PushOptions{
+			Remote: "origin",
+			Branch: "master",
+			Force: true,
+		}); err != nil {
 			return fmt.Errorf("PushForce: %v", err)
 		}
 		gitRepo, err := git.OpenRepository(repo.RepoPath())
