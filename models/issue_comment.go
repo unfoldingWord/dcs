@@ -153,7 +153,7 @@ func (c *Comment) HTMLURL() string {
 		log.Error(4, "GetIssueByID(%d): %v", c.IssueID, err)
 		return ""
 	}
-	return fmt.Sprintf("%s#issuecomment-%d", issue.HTMLURL(), c.ID)
+	return fmt.Sprintf("%s#%s", issue.HTMLURL(), c.HashTag())
 }
 
 // IssueURL formats a URL-string to the issue
@@ -289,7 +289,7 @@ func (c *Comment) MailParticipants(e Engine, opType ActionType, issue *Issue) (e
 	case ActionReopenIssue:
 		issue.Content = fmt.Sprintf("Reopened #%d", issue.Index)
 	}
-	if err = mailIssueCommentToParticipants(issue, c.Poster, mentions); err != nil {
+	if err = mailIssueCommentToParticipants(issue, c.Poster, c, mentions); err != nil {
 		log.Error(4, "mailIssueCommentToParticipants: %v", err)
 	}
 
@@ -329,13 +329,12 @@ func createComment(e *xorm.Session, opts *CreateCommentOptions) (_ *Comment, err
 	// Compose comment action, could be plain comment, close or reopen issue/pull request.
 	// This object will be used to notify watchers in the end of function.
 	act := &Action{
-		ActUserID:    opts.Doer.ID,
-		ActUserName:  opts.Doer.Name,
-		Content:      fmt.Sprintf("%d|%s", opts.Issue.Index, strings.Split(opts.Content, "\n")[0]),
-		RepoID:       opts.Repo.ID,
-		RepoUserName: opts.Repo.Owner.Name,
-		RepoName:     opts.Repo.Name,
-		IsPrivate:    opts.Repo.IsPrivate,
+		ActUserID: opts.Doer.ID,
+		ActUser:   opts.Doer,
+		Content:   fmt.Sprintf("%d|%s", opts.Issue.Index, strings.Split(opts.Content, "\n")[0]),
+		RepoID:    opts.Repo.ID,
+		Repo:      opts.Repo,
+		IsPrivate: opts.Repo.IsPrivate,
 	}
 
 	// Check comment type.

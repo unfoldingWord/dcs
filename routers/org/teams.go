@@ -88,6 +88,12 @@ func TeamsAction(ctx *context.Context) {
 			return
 		}
 
+		if u.IsOrganization() {
+			ctx.Flash.Error(ctx.Tr("form.cannot_add_org_to_team"))
+			ctx.Redirect(ctx.Org.OrgLink + "/teams/" + ctx.Org.Team.LowerName)
+			return
+		}
+
 		err = ctx.Org.Team.AddMember(u.ID)
 		page = "team"
 	}
@@ -156,6 +162,7 @@ func NewTeam(ctx *context.Context) {
 	ctx.Data["PageIsOrgTeams"] = true
 	ctx.Data["PageIsOrgTeamsNew"] = true
 	ctx.Data["Team"] = &models.Team{}
+	ctx.Data["Units"] = models.Units
 	ctx.HTML(200, tplTeamNew)
 }
 
@@ -170,6 +177,7 @@ func NewTeamPost(ctx *context.Context, form auth.CreateTeamForm) {
 		Name:        form.TeamName,
 		Description: form.Description,
 		Authorize:   models.ParseAccessMode(form.Permission),
+		UnitTypes:   form.Units,
 	}
 	ctx.Data["Team"] = t
 
@@ -220,6 +228,7 @@ func EditTeam(ctx *context.Context) {
 	ctx.Data["PageIsOrgTeams"] = true
 	ctx.Data["team_name"] = ctx.Org.Team.Name
 	ctx.Data["desc"] = ctx.Org.Team.Description
+	ctx.Data["Units"] = models.Units
 	ctx.HTML(200, tplTeamNew)
 }
 
@@ -258,6 +267,7 @@ func EditTeamPost(ctx *context.Context, form auth.CreateTeamForm) {
 		}
 	}
 	t.Description = form.Description
+	t.UnitTypes = form.Units
 	if err := models.UpdateTeam(t, isAuthChanged); err != nil {
 		ctx.Data["Err_TeamName"] = true
 		switch {

@@ -50,6 +50,8 @@ const (
 	UserTypeOrganization
 )
 
+const syncExternalUsers = "sync_external_users"
+
 var (
 	// ErrUserNotKeyOwner user does not own this key error
 	ErrUserNotKeyOwner = errors.New("User does not own this public key")
@@ -209,8 +211,8 @@ func (u *User) HasForkedRepo(repoID int64) bool {
 	return has
 }
 
-// RepoCreationNum returns the number of repositories created by the user
-func (u *User) RepoCreationNum() int {
+// MaxCreationLimit returns the number of repositories a user is allowed to create
+func (u *User) MaxCreationLimit() int {
 	if u.MaxRepoCreation <= -1 {
 		return setting.Repository.MaxCreationLimit
 	}
@@ -219,6 +221,9 @@ func (u *User) RepoCreationNum() int {
 
 // CanCreateRepo returns if user login can create a repository
 func (u *User) CanCreateRepo() bool {
+	if u.IsAdmin {
+		return true
+	}
 	if u.MaxRepoCreation <= -1 {
 		if setting.Repository.MaxCreationLimit <= -1 {
 			return true
@@ -919,38 +924,41 @@ func deleteUser(e *xorm.Session, u *User) error {
 	}
 
 	// ***** START: Watch *****
-	watches := make([]*Watch, 0, 10)
-	if err = e.Find(&watches, &Watch{UserID: u.ID}); err != nil {
+	watchedRepoIDs := make([]int64, 0, 10)
+	if err = e.Table("watch").Cols("watch.repo_id").
+		Where("watch.user_id = ?", u.ID).Find(&watchedRepoIDs); err != nil {
 		return fmt.Errorf("get all watches: %v", err)
 	}
-	for i := range watches {
-		if _, err = e.Exec("UPDATE `repository` SET num_watches=num_watches-1 WHERE id=?", watches[i].RepoID); err != nil {
-			return fmt.Errorf("decrease repository watch number[%d]: %v", watches[i].RepoID, err)
-		}
+	if _, err = e.Decr("num_watches").In("id", watchedRepoIDs).Update(new(Repository)); err != nil {
+		return fmt.Errorf("decrease repository num_watches: %v", err)
 	}
 	// ***** END: Watch *****
 
 	// ***** START: Star *****
-	stars := make([]*Star, 0, 10)
-	if err = e.Find(&stars, &Star{UID: u.ID}); err != nil {
+	starredRepoIDs := make([]int64, 0, 10)
+	if err = e.Table("star").Cols("star.repo_id").
+		Where("star.uid = ?", u.ID).Find(&starredRepoIDs); err != nil {
 		return fmt.Errorf("get all stars: %v", err)
-	}
-	for i := range stars {
-		if _, err = e.Exec("UPDATE `repository` SET num_stars=num_stars-1 WHERE id=?", stars[i].RepoID); err != nil {
-			return fmt.Errorf("decrease repository star number[%d]: %v", stars[i].RepoID, err)
-		}
+	} else if _, err = e.Decr("num_watches").In("id", starredRepoIDs).Update(new(Repository)); err != nil {
+		return fmt.Errorf("decrease repository num_stars: %v", err)
 	}
 	// ***** END: Star *****
 
 	// ***** START: Follow *****
-	followers := make([]*Follow, 0, 10)
-	if err = e.Find(&followers, &Follow{UserID: u.ID}); err != nil {
-		return fmt.Errorf("get all followers: %v", err)
+	followeeIDs := make([]int64, 0, 10)
+	if err = e.Table("follow").Cols("follow.follow_id").
+		Where("follow.user_id = ?", u.ID).Find(&followeeIDs); err != nil {
+		return fmt.Errorf("get all followees: %v", err)
+	} else if _, err = e.Decr("num_followers").In("id", followeeIDs).Update(new(User)); err != nil {
+		return fmt.Errorf("decrease user num_followers: %v", err)
 	}
-	for i := range followers {
-		if _, err = e.Exec("UPDATE `user` SET num_followers=num_followers-1 WHERE id=?", followers[i].UserID); err != nil {
-			return fmt.Errorf("decrease user follower number[%d]: %v", followers[i].UserID, err)
-		}
+
+	followerIDs := make([]int64, 0, 10)
+	if err = e.Table("follow").Cols("follow.user_id").
+		Where("follow.follow_id = ?", u.ID).Find(&followerIDs); err != nil {
+		return fmt.Errorf("get all followers: %v", err)
+	} else if _, err = e.Decr("num_following").In("id", followerIDs).Update(new(User)); err != nil {
+		return fmt.Errorf("decrease user num_following: %v", err)
 	}
 	// ***** END: Follow *****
 
@@ -960,6 +968,7 @@ func deleteUser(e *xorm.Session, u *User) error {
 		&Access{UserID: u.ID},
 		&Watch{UserID: u.ID},
 		&Star{UID: u.ID},
+		&Follow{UserID: u.ID},
 		&Follow{FollowID: u.ID},
 		&Action{UserID: u.ID},
 		&IssueUser{UID: u.ID},
@@ -1325,4 +1334,129 @@ func GetWatchedRepos(userID int64, private bool) ([]*Repository, error) {
 		return nil, err
 	}
 	return repos, nil
+}
+
+// SyncExternalUsers is used to synchronize users with external authorization source
+func SyncExternalUsers() {
+	if taskStatusTable.IsRunning(syncExternalUsers) {
+		return
+	}
+	taskStatusTable.Start(syncExternalUsers)
+	defer taskStatusTable.Stop(syncExternalUsers)
+
+	log.Trace("Doing: SyncExternalUsers")
+
+	ls, err := LoginSources()
+	if err != nil {
+		log.Error(4, "SyncExternalUsers: %v", err)
+		return
+	}
+
+	updateExisting := setting.Cron.SyncExternalUsers.UpdateExisting
+
+	for _, s := range ls {
+		if !s.IsActived || !s.IsSyncEnabled {
+			continue
+		}
+		if s.IsLDAP() {
+			log.Trace("Doing: SyncExternalUsers[%s]", s.Name)
+
+			var existingUsers []int64
+
+			// Find all users with this login type
+			var users []User
+			x.Where("login_type = ?", LoginLDAP).
+				And("login_source = ?", s.ID).
+				Find(&users)
+
+			sr := s.LDAP().SearchEntries()
+
+			for _, su := range sr {
+				if len(su.Username) == 0 {
+					continue
+				}
+
+				if len(su.Mail) == 0 {
+					su.Mail = fmt.Sprintf("%s@localhost", su.Username)
+				}
+
+				var usr *User
+				// Search for existing user
+				for _, du := range users {
+					if du.LowerName == strings.ToLower(su.Username) {
+						usr = &du
+						break
+					}
+				}
+
+				fullName := composeFullName(su.Name, su.Surname, su.Username)
+				// If no existing user found, create one
+				if usr == nil {
+					log.Trace("SyncExternalUsers[%s]: Creating user %s", s.Name, su.Username)
+
+					usr = &User{
+						LowerName:   strings.ToLower(su.Username),
+						Name:        su.Username,
+						FullName:    fullName,
+						LoginType:   s.Type,
+						LoginSource: s.ID,
+						LoginName:   su.Username,
+						Email:       su.Mail,
+						IsAdmin:     su.IsAdmin,
+						IsActive:    true,
+					}
+
+					err = CreateUser(usr)
+					if err != nil {
+						log.Error(4, "SyncExternalUsers[%s]: Error creating user %s: %v", s.Name, su.Username, err)
+					}
+				} else if updateExisting {
+					existingUsers = append(existingUsers, usr.ID)
+					// Check if user data has changed
+					if (len(s.LDAP().AdminFilter) > 0 && usr.IsAdmin != su.IsAdmin) ||
+						strings.ToLower(usr.Email) != strings.ToLower(su.Mail) ||
+						usr.FullName != fullName ||
+						!usr.IsActive {
+
+						log.Trace("SyncExternalUsers[%s]: Updating user %s", s.Name, usr.Name)
+
+						usr.FullName = fullName
+						usr.Email = su.Mail
+						// Change existing admin flag only if AdminFilter option is set
+						if len(s.LDAP().AdminFilter) > 0 {
+							usr.IsAdmin = su.IsAdmin
+						}
+						usr.IsActive = true
+
+						err = UpdateUser(usr)
+						if err != nil {
+							log.Error(4, "SyncExternalUsers[%s]: Error updating user %s: %v", s.Name, usr.Name, err)
+						}
+					}
+				}
+			}
+
+			// Deactivate users not present in LDAP
+			if updateExisting {
+				for _, usr := range users {
+					found := false
+					for _, uid := range existingUsers {
+						if usr.ID == uid {
+							found = true
+							break
+						}
+					}
+					if !found {
+						log.Trace("SyncExternalUsers[%s]: Deactivating user %s", s.Name, usr.Name)
+
+						usr.IsActive = false
+						err = UpdateUser(&usr)
+						if err != nil {
+							log.Error(4, "SyncExternalUsers[%s]: Error deactivating user %s: %v", s.Name, usr.Name, err)
+						}
+					}
+				}
+			}
+		}
+	}
 }

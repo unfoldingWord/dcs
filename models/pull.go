@@ -328,7 +328,7 @@ func (pr *PullRequest) Merge(doer *User, baseGitRepo *git.Repository) (err error
 		return fmt.Errorf("git push: %s", stderr)
 	}
 
-	pr.MergedCommitID, err = headGitRepo.GetBranchCommitID(pr.HeadBranch)
+	pr.MergedCommitID, err = headGitRepo.GetBranchCommitID(pr.BaseBranch)
 	if err != nil {
 		return fmt.Errorf("GetBranchCommit: %v", err)
 	}
@@ -635,14 +635,13 @@ func NewPullRequest(repo *Repository, pull *Issue, labelIDs []int64, uuids []str
 	}
 
 	if err = NotifyWatchers(&Action{
-		ActUserID:    pull.Poster.ID,
-		ActUserName:  pull.Poster.Name,
-		OpType:       ActionCreatePullRequest,
-		Content:      fmt.Sprintf("%d|%s", pull.Index, pull.Title),
-		RepoID:       repo.ID,
-		RepoUserName: repo.Owner.Name,
-		RepoName:     repo.Name,
-		IsPrivate:    repo.IsPrivate,
+		ActUserID: pull.Poster.ID,
+		ActUser:   pull.Poster,
+		OpType:    ActionCreatePullRequest,
+		Content:   fmt.Sprintf("%d|%s", pull.Index, pull.Title),
+		RepoID:    repo.ID,
+		Repo:      repo,
+		IsPrivate: repo.IsPrivate,
 	}); err != nil {
 		log.Error(4, "NotifyWatchers: %v", err)
 	} else if err = pull.MailParticipants(); err != nil {
@@ -908,7 +907,10 @@ func (pr *PullRequest) PushToBaseRepo() (err error) {
 
 	_ = os.Remove(file)
 
-	if err = git.Push(headRepoPath, tmpRemoteName, fmt.Sprintf("%s:%s", pr.HeadBranch, headFile)); err != nil {
+	if err = git.Push(headRepoPath, git.PushOptions{
+		Remote: tmpRemoteName,
+		Branch: fmt.Sprintf("%s:%s", pr.HeadBranch, headFile),
+	}); err != nil {
 		return fmt.Errorf("Push: %v", err)
 	}
 

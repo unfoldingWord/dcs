@@ -73,14 +73,13 @@ lint:
 	fi
 	for PKG in $(PACKAGES); do golint -set_exit_status $$PKG || exit 1; done;
 
-.PHONY: integrations
-integrations: TAGS=bindata sqlite
-integrations: build
-	go test code.gitea.io/gitea/integrations
-
 .PHONY: test
 test:
-	go test -cover $(PACKAGES)
+	go test $(PACKAGES)
+
+.PHONY: test-coverage
+test-coverage:
+	for PKG in $(PACKAGES); do go test -cover -coverprofile $$GOPATH/src/$$PKG/coverage.out $$PKG || exit 1; done;
 
 .PHONY: test-vendor
 test-vendor:
@@ -96,7 +95,8 @@ test-vendor:
 	govendor status || exit 1
 
 .PHONY: test-sqlite
-test-sqlite: integrations.test
+test-sqlite:
+	go test -c code.gitea.io/gitea/integrations -tags 'sqlite'
 	GITEA_ROOT=${CURDIR} GITEA_CONF=integrations/sqlite.ini ./integrations.test
 
 .PHONY: test-mysql
@@ -108,7 +108,7 @@ test-pgsql: integrations.test
 	GITEA_ROOT=${CURDIR} GITEA_CONF=integrations/pgsql.ini ./integrations.test
 
 integrations.test: $(SOURCES)
-	go test -c code.gitea.io/gitea/integrations -tags 'sqlite'
+	go test -c code.gitea.io/gitea/integrations
 
 .PHONY: check
 check: test

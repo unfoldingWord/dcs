@@ -3,16 +3,16 @@
 	"ignore": "test appengine",
 	"package": [
 		{
-			"checksumSHA1": "wvujc6YaEoP3g2K+USjIcZcrRgQ=",
+			"checksumSHA1": "iqK8QebzwEcNL2iIRpMAOYwb7Zg=",
 			"path": "code.gitea.io/git",
-			"revision": "ed175468f8debc8cdb2fa495fc157f1b9d046628",
-			"revisionTime": "2017-05-04T06:58:26Z"
+			"revision": "c98a6f353a13546ae13e7391020cadd750181585",
+			"revisionTime": "2017-05-29T11:48:12Z"
 		},
 		{
-			"checksumSHA1": "L58DGmGw5eZThPkaHEaY9vuz42g=",
+			"checksumSHA1": "nLhT+bLMj8uLICP+EZbrdoQe6mM=",
 			"path": "code.gitea.io/sdk/gitea",
-			"revision": "1350cdb0d049083453c93dcabfcac2e7ba553951",
-			"revisionTime": "2017-05-04T17:35:58Z"
+			"revision": "8cff72208aa458f4efa8fdfbad29b03aee485b8c",
+			"revisionTime": "2017-05-06T01:37:21Z"
 		},
 		{
 			"checksumSHA1": "bOODD4Gbw3GfcuQPU2dI40crxxk=",
@@ -450,10 +450,10 @@
 			"revisionTime": "2016-11-01T11:13:14Z"
 		},
 		{
-			"checksumSHA1": "HHB+Jna1wv0cXLxtCyOnQqFwvn4=",
+			"checksumSHA1": "9SXbj96wb1PgppBZzxMIN0axbFQ=",
 			"path": "github.com/go-xorm/builder",
-			"revision": "c6e604e9c7b7461715091e14ad0c242ec44c26e4",
-			"revisionTime": "2017-02-24T04:30:50Z"
+			"revision": "043186300e9b2c22abdfc83567a979e3af04d9ae",
+			"revisionTime": "2017-05-18T21:58:56Z"
 		},
 		{
 			"checksumSHA1": "vt2CGANHLNXPAZ01ve3UlsgQ0uU=",

@@ -1,4 +1,5 @@
 // Copyright 2014 The Gogs Authors. All rights reserved.
+// Copyright 2017 The Gitea Authors. All rights reserved.
 // Use of this source code is governed by a MIT-style
 // license that can be found in the LICENSE file.
 
@@ -336,6 +337,12 @@ var (
 			Schedule   string
 			OlderThan  time.Duration
 		} `ini:"cron.archive_cleanup"`
+		SyncExternalUsers struct {
+			Enabled        bool
+			RunAtStart     bool
+			Schedule       string
+			UpdateExisting bool
+		} `ini:"cron.sync_external_users"`
 	}{
 		UpdateMirror: struct {
 			Enabled    bool
@@ -378,6 +385,17 @@ var (
 			RunAtStart: true,
 			Schedule:   "@every 24h",
 			OlderThan:  24 * time.Hour,
+		},
+		SyncExternalUsers: struct {
+			Enabled        bool
+			RunAtStart     bool
+			Schedule       string
+			UpdateExisting bool
+		}{
+			Enabled:        true,
+			RunAtStart:     false,
+			Schedule:       "@every 24h",
+			UpdateExisting: true,
 		},
 	}
 
@@ -857,6 +875,7 @@ please consider changing to GITEA_CUSTOM`)
 	// Determine and create root git repository path.
 	sec = Cfg.Section("repository")
 	Repository.DisableHTTPGit = sec.Key("DISABLE_HTTP_GIT").MustBool()
+	Repository.MaxCreationLimit = sec.Key("MAX_CREATION_LIMIT").MustInt(-1)
 	RepoRootPath = sec.Key("ROOT").MustString(path.Join(homeDir, "gitea-repositories"))
 	forcePathSeparator(RepoRootPath)
 	if !filepath.IsAbs(RepoRootPath) {
@@ -1312,7 +1331,7 @@ func newWebhookService() {
 	Webhook.QueueLength = sec.Key("QUEUE_LENGTH").MustInt(1000)
 	Webhook.DeliverTimeout = sec.Key("DELIVER_TIMEOUT").MustInt(5)
 	Webhook.SkipTLSVerify = sec.Key("SKIP_TLS_VERIFY").MustBool()
-	Webhook.Types = []string{"gogs", "slack"}
+	Webhook.Types = []string{"gitea", "gogs", "slack"}
 	Webhook.PagingNum = sec.Key("PAGING_NUM").MustInt(10)
 }
 

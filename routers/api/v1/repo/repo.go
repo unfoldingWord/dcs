@@ -33,6 +33,9 @@ func Search(ctx *context.APIContext) {
 		OwnerID:  ctx.QueryInt64("uid"),
 		PageSize: convert.ToCorrectPageSize(ctx.QueryInt("limit")),
 	}
+	if ctx.User != nil && ctx.User.ID == opts.OwnerID {
+		opts.Searcher = ctx.User
+	}
 
 	// Check visibility.
 	if ctx.IsSigned && opts.OwnerID > 0 {
@@ -337,6 +340,15 @@ func Delete(ctx *context.APIContext) {
 
 // MirrorSync adds a mirrored repository to the sync queue
 func MirrorSync(ctx *context.APIContext) {
+	// swagger:route POST /repos/{username}/{reponame}/mirror-sync repoMirrorSync
+	//
+	//     Produces:
+	//     - application/json
+	//
+	//     Responses:
+	//       200: empty
+	//       403: forbidden
+
 	repo := ctx.Repo.Repository
 
 	if !ctx.Repo.IsWriter() {

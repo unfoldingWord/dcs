@@ -14,6 +14,9 @@
 	{{if .IsSigned}}
 		<meta name="_uid" content="{{.SignedUser.ID}}" />
 	{{end}}
+	{{if .ContextUser}}
+		<meta name="_context_uid" content="{{.ContextUser.ID}}" />
+	{{end}}
 {{if .GoGetImport}}
 	<meta name="go-import" content="{{.GoGetImport}} git {{.CloneLink.HTTPS}}">
 	<meta name="go-source" content="{{.GoGetImport}} _ {{.GoDocDirectory}} {{.GoDocFile}}">
@@ -37,7 +40,7 @@
 	<link rel="stylesheet" href="{{AppSubUrl}}/css/index.css?v={{MD5 AppVer}}">
 
 {{if .RequireHighlightJS}}
-	<link rel="stylesheet" href="{{AppSubUrl}}/plugins/highlight-9.6.0/github.css">
+	<link rel="stylesheet" href="{{AppSubUrl}}/plugins/highlight-9.11.0/github.css">
 {{end}}
 {{if .RequireMinicolors}}
 	<link rel="stylesheet" href="{{AppSubUrl}}/plugins/jquery.minicolors-2.2.3/jquery.minicolors.css">
