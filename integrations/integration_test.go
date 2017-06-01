@@ -96,10 +96,11 @@ func initIntegrationTest() {
 		}
 		defer rows.Close()
 
-		if !rows.Next() {
-			if _, err = db.Exec("CREATE DATABASE testgitea"); err != nil {
-				log.Fatalf("db.Exec: %v", err)
-			}
+		if rows.Next() {
+			break
+		}
+		if _, err = db.Exec("CREATE DATABASE testgitea"); err != nil {
+			log.Fatalf("db.Exec: %v", err)
 		}
 	}
 	routers.GlobalInit()

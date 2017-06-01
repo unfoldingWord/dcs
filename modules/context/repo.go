@@ -332,13 +332,11 @@ func RepoAssignment() macaron.Handler {
 		if ctx.Repo.IsWriter() || (ctx.IsSigned && ctx.User.HasForkedRepo(ctx.Repo.Repository.ID)) {
 			// Pull request is allowed if this is a fork repository
 			// and base repository accepts pull requests.
-			if repo.BaseRepo != nil {
-				if repo.BaseRepo.AllowsPulls() {
-					ctx.Data["BaseRepo"] = repo.BaseRepo
-					ctx.Repo.PullRequest.BaseRepo = repo.BaseRepo
-					ctx.Repo.PullRequest.Allowed = true
-					ctx.Repo.PullRequest.HeadInfo = ctx.Repo.Owner.Name + ":" + ctx.Repo.BranchName
-				}
+			if repo.BaseRepo != nil && repo.BaseRepo.AllowsPulls() {
+				ctx.Data["BaseRepo"] = repo.BaseRepo
+				ctx.Repo.PullRequest.BaseRepo = repo.BaseRepo
+				ctx.Repo.PullRequest.Allowed = true
+				ctx.Repo.PullRequest.HeadInfo = ctx.Repo.Owner.Name + ":" + ctx.Repo.BranchName
 			} else {
 				// Or, this is repository accepts pull requests between branches.
 				if repo.AllowsPulls() {
@@ -489,6 +487,42 @@ func RequireRepoWriter() macaron.Handler {
 		if !ctx.IsSigned || (!ctx.Repo.IsWriter() && !ctx.User.IsAdmin) {
 			ctx.Handle(404, ctx.Req.RequestURI, nil)
 			return
+		}
+	}
+}
+
+// LoadRepoUnits loads repsitory's units, it should be called after repository and user loaded
+func LoadRepoUnits() macaron.Handler {
+	return func(ctx *Context) {
+		var isAdmin bool
+		if ctx.User != nil && ctx.User.IsAdmin {
+			isAdmin = true
+		}
+
+		var userID int64
+		if ctx.User != nil {
+			userID = ctx.User.ID
+		}
+		err := ctx.Repo.Repository.LoadUnitsByUserID(userID, isAdmin)
+		if err != nil {
+			ctx.Handle(500, "LoadUnitsByUserID", err)
+			return
+		}
+	}
+}
+
+// CheckUnit will check whether
+func CheckUnit(unitType models.UnitType) macaron.Handler {
+	return func(ctx *Context) {
+		var find bool
+		for _, unit := range ctx.Repo.Repository.Units {
+			if unit.Type == unitType {
+				find = true
+				break
+			}
+		}
+		if !find {
+			ctx.Handle(404, "CheckUnit", fmt.Errorf("%s: %v", ctx.Tr("units.error.unit_not_allowed"), unitType))
 		}
 	}
 }

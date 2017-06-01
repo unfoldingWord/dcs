@@ -273,11 +273,26 @@ func (repo *Repository) APIURL() string {
 
 // APIFormat converts a Repository to api.Repository
 func (repo *Repository) APIFormat(mode AccessMode) *api.Repository {
+	return repo.innerAPIFormat(mode, false)
+}
+
+func (repo *Repository) innerAPIFormat(mode AccessMode, isParent bool) *api.Repository {
+	var parent *api.Repository
+
 	cloneLink := repo.CloneLink()
 	permission := &api.Permission{
 		Admin: mode >= AccessModeAdmin,
 		Push:  mode >= AccessModeWrite,
 		Pull:  mode >= AccessModeRead,
+	}
+	if !isParent {
+		err := repo.GetBaseRepo()
+		if err != nil {
+			log.Error(4, "APIFormat: %v", err)
+		}
+		if repo.BaseRepo != nil {
+			parent = repo.BaseRepo.innerAPIFormat(mode, true)
+		}
 	}
 	return &api.Repository{
 		ID:            repo.ID,
@@ -287,8 +302,9 @@ func (repo *Repository) APIFormat(mode AccessMode) *api.Repository {
 		Description:   repo.Description,
 		Private:       repo.IsPrivate,
 		Empty:         repo.IsBare,
-		Size:          int(repo.Size/1024),
+		Size:          int(repo.Size / 1024),
 		Fork:          repo.IsFork,
+		Parent:        parent,
 		Mirror:        repo.IsMirror,
 		HTMLURL:       repo.HTMLURL(),
 		SSHURL:        cloneLink.SSH,
@@ -314,8 +330,62 @@ func (repo *Repository) getUnits(e Engine) (err error) {
 	return err
 }
 
-func getUnitsByRepoID(e Engine, repoID int64) (units []*RepoUnit, err error) {
-	return units, e.Where("repo_id = ?", repoID).Find(&units)
+// CheckUnitUser check whether user could visit the unit of this repository
+func (repo *Repository) CheckUnitUser(userID int64, isAdmin bool, unitType UnitType) bool {
+	if err := repo.getUnitsByUserID(x, userID, isAdmin); err != nil {
+		return false
+	}
+
+	for _, unit := range repo.Units {
+		if unit.Type == unitType {
+			return true
+		}
+	}
+	return false
+}
+
+// LoadUnitsByUserID loads units according userID's permissions
+func (repo *Repository) LoadUnitsByUserID(userID int64, isAdmin bool) error {
+	return repo.getUnitsByUserID(x, userID, isAdmin)
+}
+
+func (repo *Repository) getUnitsByUserID(e Engine, userID int64, isAdmin bool) (err error) {
+	if repo.Units != nil {
+		return nil
+	}
+
+	if err = repo.getUnits(e); err != nil {
+		return err
+	} else if err = repo.getOwner(e); err != nil {
+		return err
+	}
+
+	if !repo.Owner.IsOrganization() || userID == 0 || isAdmin {
+		return nil
+	}
+
+	teams, err := getUserTeams(e, repo.OwnerID, userID)
+	if err != nil {
+		return err
+	}
+
+	var allTypes = make(map[UnitType]struct{}, len(allRepUnitTypes))
+	for _, team := range teams {
+		for _, unitType := range team.UnitTypes {
+			allTypes[unitType] = struct{}{}
+		}
+	}
+
+	// unique
+	var newRepoUnits = make([]*RepoUnit, 0, len(repo.Units))
+	for _, u := range repo.Units {
+		if _, ok := allTypes[u.Type]; ok {
+			newRepoUnits = append(newRepoUnits, u)
+		}
+	}
+
+	repo.Units = newRepoUnits
+	return nil
 }
 
 // EnableUnit if this repository enabled some unit
@@ -550,16 +620,20 @@ func (repo *Repository) IsOwnedBy(userID int64) bool {
 	return repo.OwnerID == userID
 }
 
-// UpdateSize updates the repository size, calculating it using git.GetRepoSize
-func (repo *Repository) UpdateSize() error {
+func (repo *Repository) updateSize(e Engine) error {
 	repoInfoSize, err := git.GetRepoSize(repo.RepoPath())
 	if err != nil {
 		return fmt.Errorf("UpdateSize: %v", err)
 	}
 
 	repo.Size = repoInfoSize.Size + repoInfoSize.SizePack
-	_, err = x.ID(repo.ID).Cols("size").Update(repo)
+	_, err = e.Id(repo.ID).Cols("size").Update(repo)
 	return err
+}
+
+// UpdateSize updates the repository size, calculating it using git.GetRepoSize
+func (repo *Repository) UpdateSize() error {
+	return repo.updateSize(x)
 }
 
 // CanBeForked returns true if repository meets the requirements of being forked.
@@ -1508,7 +1582,7 @@ func updateRepository(e Engine, repo *Repository, visibilityChanged bool) (err e
 			}
 		}
 
-		if err = repo.UpdateSize(); err != nil {
+		if err = repo.updateSize(e); err != nil {
 			log.Error(4, "Failed to update size for repository: %v", err)
 		}
 	}
@@ -1603,6 +1677,8 @@ func DeleteRepository(uid, repoID int64) error {
 		&Release{RepoID: repoID},
 		&Collaboration{RepoID: repoID},
 		&PullRequest{BaseRepoID: repoID},
+		&RepoUnit{RepoID: repoID},
+		&RepoRedirect{RedirectRepoID: repoID},
 	); err != nil {
 		return fmt.Errorf("deleteBeans: %v", err)
 	}
@@ -2290,7 +2366,10 @@ func (repo *Repository) CreateNewBranch(doer *User, oldBranchName, branchName st
 		return fmt.Errorf("CreateNewBranch: %v", err)
 	}
 
-	if err = git.Push(localPath, "origin", branchName); err != nil {
+	if err = git.Push(localPath, git.PushOptions{
+		Remote: "origin",
+		Branch: branchName,
+	}); err != nil {
 		return fmt.Errorf("Push: %v", err)
 	}
 
