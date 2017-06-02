@@ -39,10 +39,6 @@ type MarkdownOption struct {
 	Wiki bool
 }
 
-type YamlOption struct {
-      Text    string
-}
-
 // MarkdownRender is a rendered markdown document
 // swagger:response MarkdownRender
 type MarkdownRender string

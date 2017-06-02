@@ -108,28 +108,12 @@ func ListHooks(repoPath string) (_ []*Hook, err error) {
 const (
 	// HookPathUpdate hook update path
 	HookPathUpdate = "hooks/update"
-	HookPathPostUpdate = "hooks/post-update"
 )
 
 // SetUpdateHook writes given content to update hook of the reposiotry.
 func SetUpdateHook(repoPath, content string) (err error) {
 	log("Setting update hook: %s", repoPath)
 	hookPath := path.Join(repoPath, HookPathUpdate)
-	if com.IsExist(hookPath) {
-		err = os.Remove(hookPath)
-	} else {
-		err = os.MkdirAll(path.Dir(hookPath), os.ModePerm)
-	}
-	if err != nil {
-		return err
-	}
-	return ioutil.WriteFile(hookPath, []byte(content), 0777)
-}
-
-// SetPostUpdateHook writes given content to post-update hook of the reposiotry.
-func SetPostUpdateHook(repoPath, content string) (err error) {
-	log("Setting post-update hook: %s", repoPath)
-	hookPath := path.Join(repoPath, HookPathPostUpdate)
 	if com.IsExist(hookPath) {
 		err = os.Remove(hookPath)
 	} else {

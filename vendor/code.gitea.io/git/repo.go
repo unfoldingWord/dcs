@@ -171,17 +171,6 @@ func Push(repoPath string, opts PushOptions) error {
 	return err
 }
 
-// PushForce pushes local commits to given remote branch and forces any changes.
-func PushForce(repoPath, remote, branch string) error {
-	if _, err := NewCommand("push", "--force", remote, branch).RunInDir(repoPath); err != nil {
-		return err
-	}
-	if _, err := NewCommand("push", "--force", "--tags", remote, branch).RunInDir(repoPath); err != nil {
-		return err
-	}
-	return nil
-}
-
 // CheckoutOptions options when heck out some branch
 type CheckoutOptions struct {
 	Timeout   time.Duration

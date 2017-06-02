@@ -1,13 +1,15 @@
 package scrub
 
 import (
-	"path"
-	"io/ioutil"
 	"encoding/json"
-	"code.gitea.io/git"
-	"reflect"
-	"code.gitea.io/gitea/modules/log"
+	"io/ioutil"
 	"os"
+	"os/exec"
+	"path"
+	"reflect"
+
+	"code.gitea.io/git"
+	"code.gitea.io/gitea/modules/log"
 )
 
 var JSON_FILES_TO_SCRUB = [...]string{
@@ -54,7 +56,7 @@ func ScrubJsonFile(localPath, fileName string) error {
 	if fileContent, err := json.MarshalIndent(m, "", "  "); err != nil {
 		return err
 	} else {
-		if err := git.ScrubFile(localPath, fileName); err != nil {
+		if err := ScrubFile(localPath, fileName); err != nil {
 			return err
 		}
 		if err := ioutil.WriteFile(jsonPath, []byte(fileContent), 0666); err != nil {
@@ -79,7 +81,38 @@ func ScrubMap(m map[string]interface{}) {
 	}
 }
 
-func ScrubCommitNameAndEmail(localPath, newName, newEmail string) error {
-	err := git.ScrubCommitNameAndEmail(localPath, newName, newEmail);
+// ScrubFile completely removes a file from a repository's history
+func ScrubFile(repoPath string, fileName string) error {
+	gitPath, _ := exec.LookPath("git")
+	cmd := git.NewCommand("filter-branch", "--force", "--prune-empty", "--tag-name-filter", "cat",
+		"--index-filter", "\""+gitPath+"\" rm --cached --ignore-unmatch "+fileName,
+		"--", "--all")
+	_, err := cmd.RunInDir(repoPath)
+	if err != nil && err.Error() == "exit status 1" {
+		os.RemoveAll(path.Join(repoPath, ".git/refs/original/"))
+		cmd = git.NewCommand("reflog", "expire", "--all")
+		_, err = cmd.RunInDir(repoPath)
+		if err != nil && err.Error() == "exit status 1" {
+			cmd = git.NewCommand("gc", "--aggressive", "--prune")
+			_, err = cmd.RunInDir(repoPath)
+			return err
+		}
+	}
 	return err
+}
+
+func ScrubCommitNameAndEmail(localPath, newName, newEmail string) error {
+	os.RemoveAll(path.Join(localPath, ".git/refs/original/"))
+	if _, err := git.NewCommand("filter-branch", "-f", "--env-filter", `
+export GIT_COMMITTER_NAME="`+newName+`"
+export GIT_COMMITTER_EMAIL="`+newEmail+`"
+export GIT_AUTHOR_NAME="`+newName+`"
+export GIT_AUTHOR_EMAIL="`+newEmail+`"
+`, "--tag-name-filter", "cat", "--", "--branches", "--tags").RunInDir(localPath); err != nil {
+		return err
+	}
+	if _, err := git.NewCommand("push", "--force", "--tags", "origin", "refs/heads/*").RunInDir(localPath); err != nil {
+		return err
+	}
+	return nil
 }

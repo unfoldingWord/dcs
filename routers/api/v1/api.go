@@ -260,7 +260,7 @@ func RegisterRoutes(m *macaron.Macaron) {
 		m.Get("/version", misc.Version)
 		m.Post("/markdown", bind(api.MarkdownOption{}), misc.Markdown)
 		m.Post("/markdown/raw", misc.MarkdownRaw)
-		m.Post("/yaml", bind(api.YamlOption{}), misc.Yaml)
+		m.Post("/yaml", bind(misc.YamlOption{}), misc.Yaml)
 
 
 		// Users

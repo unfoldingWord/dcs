@@ -5,14 +5,16 @@
 package misc
 
 import (
-        api "code.gitea.io/sdk/gitea"
-
 	"code.gitea.io/gitea/modules/context"
 	"code.gitea.io/gitea/modules/yaml"
 )
 
+type YamlOption struct {
+	Text string
+}
+
 // https://github.com/gogits/go-gogs-client/wiki/Miscellaneous#render-an-arbitrary-markdown-document
-func Yaml(ctx *context.APIContext, form api.YamlOption) {
+func Yaml(ctx *context.APIContext, form YamlOption) {
 	if ctx.HasAPIError() {
 		ctx.Error(422, "", ctx.GetErrMsg())
 		return
@@ -28,4 +30,3 @@ func Yaml(ctx *context.APIContext, form api.YamlOption) {
 		ctx.Write(rendered)
 	}
 }
-

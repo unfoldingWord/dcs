@@ -13,7 +13,7 @@ import (
 // swagger:response User
 type User struct {
 	ID        int64  `json:"id"`
-	UserName  string `json:"username"`
+	UserName  string `json:"login"`
 	FullName  string `json:"full_name"`
 	Email     string `json:"email"`
 	AvatarURL string `json:"avatar_url"`
