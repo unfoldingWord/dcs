@@ -18,11 +18,11 @@ import (
 
 // The repos to be tested and if they show throw an error (return nil if no error)
 var TESTING_REPOS = map[string]bool{
-	"all_json_files":              false,
-	"bad_json_file":               true,
+	"all_json_files":            false,
+	"bad_json_file":             true,
 	"multiple_sensitive_fields": false,
-	"no_json_files":               false,
-	"no_sensitive_data":          false,
+	"no_json_files":             false,
+	"no_sensitive_data":         false,
 }
 
 func TestScrubJsonFiles(t *testing.T) {

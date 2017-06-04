@@ -110,7 +110,7 @@ func NewFuncMap() []template.FuncMap {
 		"EscapePound": func(str string) string {
 			return strings.NewReplacer("%", "%25", "#", "%23", " ", "%20", "?", "%3F").Replace(str)
 		},
-		"QueryEscape": url.QueryEscape,
+		"QueryEscape":         url.QueryEscape,
 		"RenderCommitMessage": RenderCommitMessage,
 		"ThemeColorMetaTag": func() string {
 			return setting.UI.ThemeColorMetaTag
@@ -153,7 +153,7 @@ func NewFuncMap() []template.FuncMap {
 		},
 		"ThisYear": func() string {
 			return time.Now().Format("2006")
-                },
+		},
 		"JsonPrettyPrint": func(in string) string {
 			var out bytes.Buffer
 			err := json.Indent(&out, []byte(in), "", "  ")

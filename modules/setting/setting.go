@@ -470,8 +470,8 @@ var (
 	IsWindows     bool
 	HasRobotsTxt  bool
 	InternalToken string // internal access token
-	Google struct {
-		GATrackingID   string
+	Google        struct {
+		GATrackingID string
 	}
 )
 
