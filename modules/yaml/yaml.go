@@ -6,13 +6,14 @@ package yaml
 
 import (
 	"fmt"
-	"strings"
-	"reflect"
 	"path/filepath"
+	"reflect"
+	"strings"
 
-	"gopkg.in/yaml.v2"
-	"github.com/microcosm-cc/bluemonday"
 	"code.gitea.io/gitea/modules/log"
+
+	"github.com/microcosm-cc/bluemonday"
+	"gopkg.in/yaml.v2"
 )
 
 var Sanitizer = bluemonday.UGCPolicy()
@@ -34,7 +35,7 @@ func renderHorizontalHtmlTable(m yaml.MapSlice) string {
 		key := mi.Key
 		value := mi.Value
 
-		if  key != nil && reflect.TypeOf(key).String() == "yaml.MapSlice" {
+		if key != nil && reflect.TypeOf(key).String() == "yaml.MapSlice" {
 			key = renderHorizontalHtmlTable(key.(yaml.MapSlice))
 		}
 		thead += fmt.Sprintf("<th>%v</th>", key)
@@ -68,7 +69,7 @@ func renderVerticalHtmlTable(m []yaml.MapSlice) string {
 				key = renderHorizontalHtmlTable(key.(yaml.MapSlice))
 			} else if key != nil && reflect.TypeOf(key).String() == "[]interface {}" {
 				var ks string
-				for _, ki := range key.([]interface {}) {
+				for _, ki := range key.([]interface{}) {
 					log.Info("KI: %v", ki)
 					log.Info("Type: %s", reflect.TypeOf(ki).String())
 					ks += renderHorizontalHtmlTable(ki.(yaml.MapSlice))
@@ -169,7 +170,7 @@ func StripYamlFromText(data []byte) []byte {
 		if line == "---" {
 			atBody = true
 		} else if atBody {
-			body += line+"\n"
+			body += line + "\n"
 		}
 	}
 	return []byte(body)
