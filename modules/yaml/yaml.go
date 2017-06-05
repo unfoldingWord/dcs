@@ -35,16 +35,16 @@ func renderHorizontalHtmlTable(m yaml.MapSlice) string {
 		key := mi.Key
 		value := mi.Value
 
-		switch reflect.TypeOf(key).String() {
-		case "yaml.MapSlice":
+		switch key.(type) {
+		case yaml.MapSlice:
 			key = renderHorizontalHtmlTable(key.(yaml.MapSlice))
 		}
 		thead += fmt.Sprintf("<th>%v</th>", key)
 
-		switch reflect.TypeOf(value).String(){
-		case "yaml.MapSlice":
+		switch value.(type) {
+		case yaml.MapSlice:
 			value = renderHorizontalHtmlTable(value.(yaml.MapSlice))
-		case "[]interface {}":
+		case []interface {}:
 			value = value.([]interface{})
 			v := make([]yaml.MapSlice, len(value.([]interface{})))
 			for i, vs := range value.([]interface{}) {
@@ -74,10 +74,10 @@ func renderVerticalHtmlTable(m []yaml.MapSlice) string {
 			value := mi.Value
 
 			table += `<tr>`
-			switch reflect.TypeOf(key).String() {
-			case "yaml.MapSlice":
+			switch key.(type) {
+			case yaml.MapSlice:
 				key = renderHorizontalHtmlTable(key.(yaml.MapSlice))
-			case "[]interface {}":
+			case []interface {}:
 				var ks string
 				for _, ki := range key.([]interface{}) {
 					log.Info("KI: %v", ki)
@@ -88,10 +88,10 @@ func renderVerticalHtmlTable(m []yaml.MapSlice) string {
 			}
 			table += fmt.Sprintf("<td>%v</td>", key)
 
-			switch reflect.TypeOf(value).String() {
-			case "yaml.MapSlice":
+			switch value.(type) {
+			case yaml.MapSlice:
 				value = renderHorizontalHtmlTable(value.(yaml.MapSlice))
-			case "[]interface {}":
+			case []interface {}:
 				value = value.([]interface{})
 				v := make([]yaml.MapSlice, len(value.([]interface{})))
 				for i, vs := range value.([]interface{}) {
