@@ -84,4 +84,3 @@ func TestGetParticipantsByIssueID(t *testing.T) {
 	checkPartecipants(1, []int{3, 5})
 
 }
-

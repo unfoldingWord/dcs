@@ -83,13 +83,19 @@ func ScrubMap(m map[string]interface{}) {
 
 // ScrubFile completely removes a file from a repository's history
 func ScrubFile(repoPath string, fileName string) error {
-	gitPath, _ := exec.LookPath("git")
+	gitPath, err := exec.LookPath("git")
+	if err != nil {
+		return err
+	}
 	cmd := git.NewCommand("filter-branch", "--force", "--prune-empty", "--tag-name-filter", "cat",
 		"--index-filter", "\""+gitPath+"\" rm --cached --ignore-unmatch "+fileName,
 		"--", "--all")
-	_, err := cmd.RunInDir(repoPath)
+	_, err = cmd.RunInDir(repoPath)
 	if err != nil && err.Error() == "exit status 1" {
-		os.RemoveAll(path.Join(repoPath, ".git/refs/original/"))
+		err := os.RemoveAll(path.Join(repoPath, ".git/refs/original/"))
+		if err != nil {
+			return err
+		}
 		cmd = git.NewCommand("reflog", "expire", "--all")
 		_, err = cmd.RunInDir(repoPath)
 		if err != nil && err.Error() == "exit status 1" {
@@ -102,7 +108,9 @@ func ScrubFile(repoPath string, fileName string) error {
 }
 
 func ScrubCommitNameAndEmail(localPath, newName, newEmail string) error {
-	os.RemoveAll(path.Join(localPath, ".git/refs/original/"))
+	if err := os.RemoveAll(path.Join(localPath, ".git/refs/original/")); err != nil {
+		return err
+	}
 	if _, err := git.NewCommand("filter-branch", "-f", "--env-filter", `
 export GIT_COMMITTER_NAME="`+newName+`"
 export GIT_COMMITTER_EMAIL="`+newEmail+`"

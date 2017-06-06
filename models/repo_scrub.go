@@ -2,19 +2,21 @@ package models
 
 import (
 	"fmt"
+
 	"code.gitea.io/git"
 	"code.gitea.io/gitea/modules/scrub"
+
 	"github.com/Unknwon/com"
 )
 
 // ScrubSensitiveDataOptions options for scrubbing sensitive data
 type ScrubSensitiveDataOptions struct {
-	LastCommitID	string
-	CommitMessage	string
+	LastCommitID  string
+	CommitMessage string
 }
 
 // ScrubSensitiveData removes names and email addresses from the manifest|project|package|status.json files and scrubs previous history.
-func (repo *Repository) ScrubSensitiveData(doer *User, opts ScrubSensitiveDataOptions)  error {
+func (repo *Repository) ScrubSensitiveData(doer *User, opts ScrubSensitiveDataOptions) error {
 	repoWorkingPool.CheckIn(com.ToStr(repo.ID))
 	defer repoWorkingPool.CheckOut(com.ToStr(repo.ID))
 
@@ -31,13 +33,13 @@ func (repo *Repository) ScrubSensitiveData(doer *User, opts ScrubSensitiveDataOp
 			return fmt.Errorf("AddChanges: %v", err)
 		} else if err := git.CommitChanges(localPath, git.CommitChangesOptions{
 			Committer: doer.NewGitSig(),
-			Message: opts.CommitMessage,
+			Message:   opts.CommitMessage,
 		}); err != nil {
 			return fmt.Errorf("CommitChanges: %v", err)
 		} else if err := git.Push(localPath, git.PushOptions{
 			Remote: "origin",
 			Branch: "master",
-			Force: true,
+			Force:  true,
 		}); err != nil {
 			return fmt.Errorf("PushForce: %v", err)
 		}
