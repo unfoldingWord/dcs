@@ -196,20 +196,20 @@ func renderFile(ctx *context.Context, entry *git.TreeEntry, treeLink, rawLink st
 
 		readmeExist := isSupportedMarkup || markup.IsReadmeFile(blob.Name())
 		ctx.Data["ReadmeExist"] = readmeExist
-		isYaml := yaml.IsYamlFile(blob.Name())
-		ctx.Data["IsYaml"] = isYaml
+		isTocYaml := blob.Name() == "toc.yaml"
+		ctx.Data["IsTocYaml"] = isTocYaml
 		if readmeExist && isSupportedMarkup {
 			yamlHtml := yaml.RenderMarkdownYaml(buf)
 			markupBody := markup.Render(blob.Name(), yaml.StripYamlFromText(buf), path.Dir(treeLink), ctx.Repo.Repository.ComposeMetas())
 			ctx.Data["FileContent"] = string(append(yamlHtml, markupBody...))
-		} else if isYaml {
-			rendered, err := yaml.RenderYaml(buf)
-			if err == nil {
+		} else if isTocYaml {
+			if rendered, err := yaml.RenderYaml(buf); err != nil {
+				ctx.Flash.ErrorMsg = fmt.Sprintf("Unable to parse %v", err)
+				ctx.Data["Flash"] = ctx.Flash
+                                ctx.Data["FileContent"] = string(buf)
+			} else {
 				ctx.Data["FileContent"] = string(rendered)
-				break
 			}
-			ctx.Flash.ErrorMsg = fmt.Sprintf("Unable to parse YAML: %v", err)
-			ctx.Data["Flash"] = ctx.Flash
 		} else {
 			// Building code view blocks with line number on server side.
 			var fileContent string

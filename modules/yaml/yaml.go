@@ -35,13 +35,22 @@ func renderHorizontalHtmlTable(m yaml.MapSlice) string {
 		key := mi.Key
 		value := mi.Value
 
-		if key != nil && reflect.TypeOf(key).String() == "yaml.MapSlice" {
+		switch key.(type) {
+		case yaml.MapSlice:
 			key = renderHorizontalHtmlTable(key.(yaml.MapSlice))
 		}
 		thead += fmt.Sprintf("<th>%v</th>", key)
 
-		if value != nil && reflect.TypeOf(value).String() == "yaml.MapSlice" {
+		switch value.(type) {
+		case yaml.MapSlice:
 			value = renderHorizontalHtmlTable(value.(yaml.MapSlice))
+		case []interface {}:
+			value = value.([]interface{})
+			v := make([]yaml.MapSlice, len(value.([]interface{})))
+			for i, vs := range value.([]interface{}) {
+				v[i] = vs.(yaml.MapSlice)
+			}
+			value = renderVerticalHtmlTable(v)
 		}
 		tbody += fmt.Sprintf("<td>%v</td>", value)
 	}
@@ -65,9 +74,10 @@ func renderVerticalHtmlTable(m []yaml.MapSlice) string {
 			value := mi.Value
 
 			table += `<tr>`
-			if key != nil && reflect.TypeOf(key).String() == "yaml.MapSlice" {
+			switch key.(type) {
+			case yaml.MapSlice:
 				key = renderHorizontalHtmlTable(key.(yaml.MapSlice))
-			} else if key != nil && reflect.TypeOf(key).String() == "[]interface {}" {
+			case []interface {}:
 				var ks string
 				for _, ki := range key.([]interface{}) {
 					log.Info("KI: %v", ki)
@@ -78,9 +88,10 @@ func renderVerticalHtmlTable(m []yaml.MapSlice) string {
 			}
 			table += fmt.Sprintf("<td>%v</td>", key)
 
-			if value != nil && reflect.TypeOf(value).String() == "yaml.MapSlice" {
+			switch value.(type) {
+			case yaml.MapSlice:
 				value = renderHorizontalHtmlTable(value.(yaml.MapSlice))
-			} else if value != nil && reflect.TypeOf(value).String() == "[]interface {}" {
+			case []interface {}:
 				value = value.([]interface{})
 				v := make([]yaml.MapSlice, len(value.([]interface{})))
 				for i, vs := range value.([]interface{}) {
@@ -88,11 +99,14 @@ func renderVerticalHtmlTable(m []yaml.MapSlice) string {
 				}
 				value = renderVerticalHtmlTable(v)
 			}
-			if key == "slug" {
+
+			switch key {
+			case "slug":
 				value = fmt.Sprintf(`<a href="content/%v.md">%v</a>`, value, value)
+			case "link":
+				value = fmt.Sprintf(`<a href="%v/01.md">%v</a>`, value, value)
 			}
 			table += fmt.Sprintf("<td>%v</td>", value)
-
 			table += `</tr>`
 		}
 		table += "</table>"
