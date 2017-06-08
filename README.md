@@ -1,4 +1,4 @@
-# Gitea - Git with a cup of tea - Door43 Version
+# Gitea - Git with a cup of tea - DCS Version
 
 [![Build Status](https://travis-ci.org/unfoldingWord-dev/gogs.svg?branch=master)](https://travis-ci.org/unfoldingWord-dev/gogs)
 [![Join the chat at https://gitter.im/go-gitea/gitea](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/go-gitea/gitea?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)

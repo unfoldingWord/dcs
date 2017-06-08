@@ -5,8 +5,8 @@
 	<meta http-equiv="x-ua-compatible" content="ie=edge">
 	<title>{{if .Title}}{{.Title}} - {{end}}{{AppName}}</title>
 	<meta name="theme-color" content="{{ThemeColorMetaTag}}">
-	<meta name="author" content="{{if .Repository}}{{.Owner.Name}}{{else}}Door43 - open-licensed biblical content{{end}}" />
-	<meta name="description" content="{{if .Repository}}{{.Repository.Name}}{{if .Repository.Description}} - {{.Repository.Description}}{{end}}{{else}}Door43 is an open-access translation platform for open-licensed discipleship resources in any language. Contributors from all over the world work together on this website to create, translate, and distribute legally unrestricted discipleship resources.{{end}}" />
+	<meta name="author" content="{{if .Repository}}{{.Owner.Name}}{{else}}DCS - open-licensed biblical content{{end}}" />
+	<meta name="description" content="{{if .Repository}}{{.Repository.Name}}{{if .Repository.Description}} - {{.Repository.Description}}{{end}}{{else}}Door43 Content Service (DCS) is an open-access translation platform for open-licensed discipleship resources in any language. Contributors from all over the world work together on this website to create, translate, and distribute legally unrestricted discipleship resources.{{end}}" />
 	<meta name="keywords" content="{{MetaKeywords}}">
 	<meta name="referrer" content="no-referrer" />
 	<meta name="_csrf" content="{{.CsrfToken}}" />
@@ -100,7 +100,7 @@
 								{{else}}
 									<a class="item{{if .PageIsHome}} active{{end}}" href="{{AppSubUrl}}/">{{.i18n.Tr "home"}}</a>
 								{{end}}
-								<a class="item" href="{{AppSubUrl}}/Door43/pages/wiki/Welcome-to-Door43%21" rel="noreferrer">About Door43</a>
+								<a class="item" href="{{AppSubUrl}}/Door43/pages/wiki/Welcome-to-Door43-Content-Service%21" rel="noreferrer">About DCS</a>
 								<a class="item" href="http://ufw.io/team43" rel="noreferrer">{{.i18n.Tr "help"}}</a>
 
 								{{/*<div class="item">
