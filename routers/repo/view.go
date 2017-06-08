@@ -206,7 +206,7 @@ func renderFile(ctx *context.Context, entry *git.TreeEntry, treeLink, rawLink st
 			if rendered, err := yaml.RenderYaml(buf); err != nil {
 				ctx.Flash.ErrorMsg = fmt.Sprintf("Unable to parse %v", err)
 				ctx.Data["Flash"] = ctx.Flash
-                                ctx.Data["FileContent"] = string(buf)
+				ctx.Data["FileContent"] = string(buf)
 			} else {
 				ctx.Data["FileContent"] = string(rendered)
 			}

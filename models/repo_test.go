@@ -13,7 +13,6 @@ import (
 
 	"github.com/Unknwon/com"
 	"github.com/stretchr/testify/assert"
-	"github.com/Unknwon/com"
 )
 
 func TestRepo(t *testing.T) {
