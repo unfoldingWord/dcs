@@ -8,12 +8,6 @@
 [![GoDoc](https://godoc.org/code.gitea.io/gitea?status.svg)](https://godoc.org/code.gitea.io/gitea)
 [![Release](https://github-release-version.herokuapp.com/github/go-gitea/gitea/release.svg?style=flat)](https://github.com/go-gitea/gitea/releases/latest)
 
-[![](public/img/door43.png)](https://git.door43.org)
-
-##### Status
-
-**Current version**: (see [Releases](https://github.com/unfoldingword-dev/gogs/releases))
-
 | | | |
 |:---:|:---:|:---:|
 |![Dashboard](https://i.imgur.com/3iEQsux.jpg)|![Repository](https://i.imgur.com/glqFnj8.jpg)|![Commits History](https://i.imgur.com/ad1FEpi.jpg)|
@@ -32,7 +26,7 @@ The goal of this project is to make the easiest, fastest, and most painless way 
 
 ## Docs
 
-For more information and instructions about how to install Gitea please look at our [documentation](https://docs.gitea.io/en-us/). If you cannot find some specific information, then head over to our [Gitter](https://gitter.im/go-gitea/gitea) channel to chat with us.
+For more information and instructions about how to install Gitea please look at our [documentation](https://docs.gitea.io/en-us/). If you cannot find some specific information, then head over to our [Discord](https://discord.gg/NsatcWJ) server to chat with us.
 
 ## Contributing
 
