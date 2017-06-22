@@ -7,6 +7,7 @@ package integrations
 import (
 	"bytes"
 	"database/sql"
+	"encoding/json"
 	"fmt"
 	"io"
 	"log"
@@ -115,7 +116,7 @@ func initIntegrationTest() {
 	routers.GlobalInit()
 }
 
-func prepareTestEnv(t *testing.T) {
+func prepareTestEnv(t testing.TB) {
 	assert.NoError(t, models.LoadFixtures())
 	assert.NoError(t, os.RemoveAll("integrations/gitea-integration"))
 	assert.NoError(t, com.CopyDir("integrations/gitea-integration-meta", "integrations/gitea-integration"))
@@ -139,7 +140,7 @@ func (s *TestSession) GetCookie(name string) *http.Cookie {
 	return nil
 }
 
-func (s *TestSession) MakeRequest(t *testing.T, req *http.Request) *TestResponse {
+func (s *TestSession) MakeRequest(t testing.TB, req *http.Request) *TestResponse {
 	baseURL, err := url.Parse(setting.AppURL)
 	assert.NoError(t, err)
 	for _, c := range s.jar.Cookies(baseURL) {
@@ -155,21 +156,23 @@ func (s *TestSession) MakeRequest(t *testing.T, req *http.Request) *TestResponse
 	return resp
 }
 
-func loginUser(t *testing.T, userName, password string) *TestSession {
+const userPassword = "password"
+
+func loginUser(t testing.TB, userName string) *TestSession {
+	return loginUserWithPassword(t, userName, userPassword)
+}
+
+func loginUserWithPassword(t testing.TB, userName, password string) *TestSession {
 	req := NewRequest(t, "GET", "/user/login")
 	resp := MakeRequest(req)
 	assert.EqualValues(t, http.StatusOK, resp.HeaderCode)
 
-	doc, err := NewHtmlParser(resp.Body)
-	assert.NoError(t, err)
-
-	req = NewRequestBody(t, "POST", "/user/login",
-		bytes.NewBufferString(url.Values{
-			"_csrf":     []string{doc.GetInputValueByName("_csrf")},
-			"user_name": []string{userName},
-			"password":  []string{password},
-		}.Encode()),
-	)
+	doc := NewHTMLParser(t, resp.Body)
+	req = NewRequestWithValues(t, "POST", "/user/login", map[string]string{
+		"_csrf":     doc.GetCSRF(),
+		"user_name": userName,
+		"password":  password,
+	})
 	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
 	resp = MakeRequest(req)
 	assert.EqualValues(t, http.StatusFound, resp.HeaderCode)
@@ -211,14 +214,28 @@ type TestResponse struct {
 	Headers    http.Header
 }
 
-func NewRequest(t *testing.T, method, url string) *http.Request {
-	return NewRequestBody(t, method, url, nil)
+func NewRequest(t testing.TB, method, urlStr string) *http.Request {
+	return NewRequestWithBody(t, method, urlStr, nil)
 }
 
-func NewRequestBody(t *testing.T, method, url string, body io.Reader) *http.Request {
-	request, err := http.NewRequest(method, url, body)
+func NewRequestWithValues(t testing.TB, method, urlStr string, values map[string]string) *http.Request {
+	urlValues := url.Values{}
+	for key, value := range values {
+		urlValues[key] = []string{value}
+	}
+	return NewRequestWithBody(t, method, urlStr, bytes.NewBufferString(urlValues.Encode()))
+}
+
+func NewRequestWithJSON(t testing.TB, method, urlStr string, v interface{}) *http.Request {
+	jsonBytes, err := json.Marshal(v)
 	assert.NoError(t, err)
-	request.RequestURI = url
+	return NewRequestWithBody(t, method, urlStr, bytes.NewBuffer(jsonBytes))
+}
+
+func NewRequestWithBody(t testing.TB, method, urlStr string, body io.Reader) *http.Request {
+	request, err := http.NewRequest(method, urlStr, body)
+	assert.NoError(t, err)
+	request.RequestURI = urlStr
 	return request
 }
 
@@ -234,4 +251,9 @@ func MakeRequest(req *http.Request) *TestResponse {
 		Body:       buffer.Bytes(),
 		Headers:    respWriter.Headers,
 	}
+}
+
+func DecodeJSON(t testing.TB, resp *TestResponse, v interface{}) {
+	decoder := json.NewDecoder(bytes.NewBuffer(resp.Body))
+	assert.NoError(t, decoder.Decode(v))
 }

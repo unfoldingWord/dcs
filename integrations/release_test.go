@@ -14,8 +14,16 @@ import (
 func TestViewReleases(t *testing.T) {
 	prepareTestEnv(t)
 
-	session := loginUser(t, "user2", "password")
+	session := loginUser(t, "user2")
 	req := NewRequest(t, "GET", "/user2/repo1/releases")
 	resp := session.MakeRequest(t, req)
+	assert.EqualValues(t, http.StatusOK, resp.HeaderCode)
+}
+
+func TestViewReleasesNoLogin(t *testing.T) {
+	prepareTestEnv(t)
+
+	req := NewRequest(t, "GET", "/user2/repo1/releases")
+	resp := MakeRequest(req)
 	assert.EqualValues(t, http.StatusOK, resp.HeaderCode)
 }
