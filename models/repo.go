@@ -360,7 +360,14 @@ func (repo *Repository) getUnitsByUserID(e Engine, userID int64, isAdmin bool) (
 		return err
 	}
 
-	if !repo.Owner.IsOrganization() || userID == 0 || isAdmin {
+	if !repo.Owner.IsOrganization() || userID == 0 || isAdmin || !repo.IsPrivate {
+		return nil
+	}
+
+	// Collaborators will not be limited
+	if isCollaborator, err := repo.isCollaborator(e, userID); err != nil {
+		return err
+	} else if isCollaborator {
 		return nil
 	}
 
@@ -1288,7 +1295,7 @@ func CreateRepository(u *User, opts CreateRepoOptions) (_ *Repository, err error
 	}
 
 	sess := x.NewSession()
-	defer sessionRelease(sess)
+	defer sess.Close()
 	if err = sess.Begin(); err != nil {
 		return nil, err
 	}
@@ -1372,7 +1379,7 @@ func TransferOwnership(doer *User, newOwnerName string, repo *Repository) error 
 	}
 
 	sess := x.NewSession()
-	defer sessionRelease(sess)
+	defer sess.Close()
 	if err = sess.Begin(); err != nil {
 		return fmt.Errorf("sess.Begin: %v", err)
 	}
@@ -1597,7 +1604,7 @@ func updateRepository(e Engine, repo *Repository, visibilityChanged bool) (err e
 // UpdateRepository updates a repository
 func UpdateRepository(repo *Repository, visibilityChanged bool) (err error) {
 	sess := x.NewSession()
-	defer sessionRelease(sess)
+	defer sess.Close()
 	if err = sess.Begin(); err != nil {
 		return err
 	}
@@ -1642,7 +1649,7 @@ func DeleteRepository(uid, repoID int64) error {
 	}
 
 	sess := x.NewSession()
-	defer sessionRelease(sess)
+	defer sess.Close()
 	if err = sess.Begin(); err != nil {
 		return err
 	}
@@ -2257,7 +2264,7 @@ func ForkRepository(u *User, oldRepo *Repository, name, desc string) (_ *Reposit
 	}
 
 	sess := x.NewSession()
-	defer sessionRelease(sess)
+	defer sess.Close()
 	if err = sess.Begin(); err != nil {
 		return nil, err
 	}
@@ -2301,7 +2308,7 @@ func ForkRepository(u *User, oldRepo *Repository, name, desc string) (_ *Reposit
 
 	// Copy LFS meta objects in new session
 	sess2 := x.NewSession()
-	defer sessionRelease(sess2)
+	defer sess2.Close()
 	if err = sess2.Begin(); err != nil {
 		return nil, err
 	}

@@ -46,6 +46,7 @@ pipeline:
       GOPATH: /srv/app
     commands:
       - apk -U add openssh-client
+      - go get github.com/wadey/gocovmerge
       - make test-coverage
     when:
       event: [ push ]
@@ -164,8 +165,13 @@ pipeline:
       event: [ tag ]
       branch: [ refs/tags/* ]
 
-  gitter:
-    image: plugins/gitter
+  discord:
+    image: appleboy/drone-discord:0.0.4
+    webhook_id: ${WEBHOOK_ID}
+    webhook_token: ${WEBHOOK_TOKEN}
+    when:
+      event: [ push, tag, pull_request ]
+      status: [ changed, failure ]
 
 services:
   mysql:
