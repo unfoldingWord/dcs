@@ -1,6 +1,7 @@
 @door43-logo-size: 20px;
 
 .no-padding-button {
+    display: inline-flex;
     padding: 0px !important;
 }
 
@@ -8,6 +9,15 @@
     height: @door43-logo-size;
     width: @door43-logo-size;
     margin-top: -@door43-logo-size/2;
-    margin-bottom: -@door43-logo-size / 2;
+    margin-bottom: -@door43-logo-size/2;
     vertical-align: middle;
+    display: inline-block;
+}
+
+.empty-icon {
+    width: 0px !important;
+    margin: 0 0 0 0 !important;
+    &:before {
+        content: "\200b"; // zero-width space
+    }
 }

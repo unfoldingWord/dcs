@@ -3112,6 +3112,7 @@ table[data-table-type="yaml-metadata"] {
   text-decoration: underline;
 }
 .no-padding-button {
+  display: inline-flex;
   padding: 0px !important;
 }
 .door43-logo {
@@ -3120,4 +3121,12 @@ table[data-table-type="yaml-metadata"] {
   margin-top: -10px;
   margin-bottom: -10px;
   vertical-align: middle;
+  display: inline-block;
+}
+.empty-icon {
+  width: 0px !important;
+  margin: 0 0 0 0 !important;
+}
+.empty-icon:before {
+  content: "\200b";
 }

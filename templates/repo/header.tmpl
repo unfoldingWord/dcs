@@ -14,15 +14,17 @@
 					</div>
 
 					<div class="ui right">
-						<div class="ui button no-padding-button" tabindex="0">
+						<div class="no-padding-button" tabindex="0">
 							<a class="ui button" target="_blank" href="https://live.door43.org/u/{{.Owner.Name}}/{{.Name}}/">
-								<i class="icon fa-book"></i>
-								View this on <img class="door43-logo" src="/img/door43.png"/>
+								<!-- empty icon ensures that this button is same size as Watch/Star/Fork buttons -->
+								<i class="icon empty-icon"></i>
+								<img class="door43-logo" src="/img/door43.png"/>
+								<span>{{$.i18n.Tr "repo.see_on_door43"}}</span>
 							</a>
 						</div>
 						<div class="ui labeled button" tabindex="0">
 							<a class="ui button" href="{{$.RepoLink}}/action/{{if $.IsWatchingRepo}}un{{end}}watch?redirect_to={{$.Link}}">
-								<i class="icon fa-eye{{if not $.IsWatchingRepo}}-slash{{end}}"></i>{{if $.IsWatchingRepo}}{{$.i18n.Tr "repo.unwatch"}}{{else}}{{$.i18n.Tr "repo.watch"}}{{end}}
+								<i class="icon fa-eye{{if not $.IsWatchingRepo}}-slash{{end}}"></i><span>{{if $.IsWatchingRepo}}{{$.i18n.Tr "repo.unwatch"}}{{else}}{{$.i18n.Tr "repo.watch"}}{{end}}</span>
 							</a>
 							<a class="ui basic label" href="{{.Link}}/watchers">
 								{{.NumWatches}}
