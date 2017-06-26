@@ -5,9 +5,7 @@
 package integrations
 
 import (
-	"bytes"
 	"net/http"
-	"net/url"
 	"testing"
 
 	"code.gitea.io/gitea/modules/setting"
@@ -20,15 +18,12 @@ func TestSignup(t *testing.T) {
 
 	setting.Service.EnableCaptcha = false
 
-	req := NewRequestBody(t, "POST", "/user/sign_up",
-		bytes.NewBufferString(url.Values{
-			"user_name": []string{"exampleUser"},
-			"email":     []string{"exampleUser@example.com"},
-			"password":  []string{"examplePassword"},
-			"retype":    []string{"examplePassword"},
-		}.Encode()),
-	)
-	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
+	req := NewRequestWithValues(t, "POST", "/user/sign_up", map[string]string{
+		"user_name": "exampleUser",
+		"email":     "exampleUser@example.com",
+		"password":  "examplePassword",
+		"retype":    "examplePassword",
+	})
 	resp := MakeRequest(req)
 	assert.EqualValues(t, http.StatusFound, resp.HeaderCode)
 
