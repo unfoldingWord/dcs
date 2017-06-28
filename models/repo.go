@@ -1260,7 +1260,7 @@ func createRepository(e *xorm.Session, u *User, repo *Repository) (err error) {
 		Secret:      "",
 		HookEvent: &HookEvent{
 			PushOnly:       true,
-			SendEverything: false,
+			SendEverything: true,
 			ChooseEvents:   false,
 			HookEvents: HookEvents{
 				Create:      false,
@@ -1269,7 +1269,7 @@ func createRepository(e *xorm.Session, u *User, repo *Repository) (err error) {
 			},
 		},
 		IsActive:     true,
-		HookTaskType: GOGS,
+		HookTaskType: GITEA,
 		OrgID:        0,
 	}
 	if err := w.UpdateEvent(); err == nil {
