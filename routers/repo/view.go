@@ -199,11 +199,15 @@ func renderFile(ctx *context.Context, entry *git.TreeEntry, treeLink, rawLink st
 		isTocYaml := blob.Name() == "toc.yaml"
 		ctx.Data["IsTocYaml"] = isTocYaml
 		if readmeExist && isSupportedMarkup {
-			yamlHtml := yaml.RenderMarkdownYaml(buf)
+			yamlHtml, err := yaml.RenderMarkdownYaml(buf)
+			if err != nil {
+				log.Error(4, "RenderMarkdownYaml: %v", err)
+			}
 			markupBody := markup.Render(blob.Name(), yaml.StripYamlFromText(buf), path.Dir(treeLink), ctx.Repo.Repository.ComposeMetas())
 			ctx.Data["FileContent"] = string(append(yamlHtml, markupBody...))
 		} else if isTocYaml {
 			if rendered, err := yaml.RenderYaml(buf); err != nil {
+				log.Error(4, "RenderYaml: %v", err)
 				ctx.Flash.ErrorMsg = fmt.Sprintf("Unable to parse %v", err)
 				ctx.Data["Flash"] = ctx.Flash
 				ctx.Data["FileContent"] = string(buf)

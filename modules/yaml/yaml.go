@@ -7,10 +7,7 @@ package yaml
 import (
 	"fmt"
 	"path/filepath"
-	"reflect"
 	"strings"
-
-	"code.gitea.io/gitea/modules/log"
 
 	"github.com/microcosm-cc/bluemonday"
 	"gopkg.in/yaml.v2"
@@ -28,29 +25,43 @@ func IsYamlFile(name string) bool {
 	return false
 }
 
-func renderHorizontalHtmlTable(m yaml.MapSlice) string {
+func renderHorizontalHtmlTable(m yaml.MapSlice) (string, error) {
+	var err error
 	var thead, tbody, table string
 	var mi yaml.MapItem
 	for _, mi = range m {
 		key := mi.Key
 		value := mi.Value
 
-		switch key.(type) {
+		switch slice := key.(type) {
 		case yaml.MapSlice:
-			key = renderHorizontalHtmlTable(key.(yaml.MapSlice))
+			key, err = renderHorizontalHtmlTable(slice)
+			if err != nil {
+				return "", err
+			}
 		}
 		thead += fmt.Sprintf("<th>%v</th>", key)
 
-		switch value.(type) {
+		switch switchedValue := value.(type) {
 		case yaml.MapSlice:
-			value = renderHorizontalHtmlTable(value.(yaml.MapSlice))
-		case []interface{}:
-			value = value.([]interface{})
-			v := make([]yaml.MapSlice, len(value.([]interface{})))
-			for i, vs := range value.([]interface{}) {
-				v[i] = vs.(yaml.MapSlice)
+			value, err = renderHorizontalHtmlTable(switchedValue)
+			if err != nil {
+				return "", err
 			}
-			value = renderVerticalHtmlTable(v)
+		case []interface{}:
+			v := make([]yaml.MapSlice, len(switchedValue))
+			for i, vs := range switchedValue {
+				switch vs := vs.(type) {
+				case yaml.MapSlice:
+					v[i] = vs
+				default:
+					return "", fmt.Errorf("Unexpected type %T, expected MapSlice", vs)
+				}
+			}
+			value, err = renderVerticalHtmlTable(v)
+			if err != nil {
+				return "", err
+			}
 		}
 		tbody += fmt.Sprintf("<td>%v</td>", value)
 	}
@@ -59,10 +70,11 @@ func renderHorizontalHtmlTable(m yaml.MapSlice) string {
 	if len(thead) > 0 {
 		table = fmt.Sprintf(`<table data="yaml-metadata"><thead><tr>%s</tr></thead><tbody><tr>%s</tr></table>`, thead, tbody)
 	}
-	return table
+	return table, nil
 }
 
-func renderVerticalHtmlTable(m []yaml.MapSlice) string {
+func renderVerticalHtmlTable(m []yaml.MapSlice) (string, error) {
+	var err error
 	var ms yaml.MapSlice
 	var mi yaml.MapItem
 	var table string
@@ -74,30 +86,50 @@ func renderVerticalHtmlTable(m []yaml.MapSlice) string {
 			value := mi.Value
 
 			table += `<tr>`
-			switch key.(type) {
+			switch switchedKey := key.(type) {
 			case yaml.MapSlice:
-				key = renderHorizontalHtmlTable(key.(yaml.MapSlice))
+				key, err = renderHorizontalHtmlTable(switchedKey)
+				if err != nil {
+					return "", err
+				}
 			case []interface{}:
 				var ks string
-				for _, ki := range key.([]interface{}) {
-					log.Info("KI: %v", ki)
-					log.Info("Type: %s", reflect.TypeOf(ki).String())
-					ks += renderHorizontalHtmlTable(ki.(yaml.MapSlice))
+				for _, ki := range switchedKey {
+					switch ki := ki.(type) {
+					case yaml.MapSlice:
+						horiz, err := renderHorizontalHtmlTable(ki)
+						if err != nil {
+							return "", err
+						}
+						ks += horiz
+					default:
+						return "", fmt.Errorf("Unexpected type %T, expected MapSlice", ki)
+					}
 				}
 				key = ks
 			}
 			table += fmt.Sprintf("<td>%v</td>", key)
 
-			switch value.(type) {
+			switch switchedValue := value.(type) {
 			case yaml.MapSlice:
-				value = renderHorizontalHtmlTable(value.(yaml.MapSlice))
-			case []interface{}:
-				value = value.([]interface{})
-				v := make([]yaml.MapSlice, len(value.([]interface{})))
-				for i, vs := range value.([]interface{}) {
-					v[i] = vs.(yaml.MapSlice)
+				value, err = renderHorizontalHtmlTable(switchedValue)
+				if err != nil {
+					return "", err
 				}
-				value = renderVerticalHtmlTable(v)
+			case []interface{}:
+				v := make([]yaml.MapSlice, len(switchedValue))
+				for i, vs := range switchedValue {
+					switch vs := vs.(type) {
+					case yaml.MapSlice:
+						v[i] = vs
+					default:
+						return "", fmt.Errorf("Unexpected type %T, expected MapSlice", vs)
+					}
+				}
+				value, err = renderVerticalHtmlTable(v)
+				if err != nil {
+					return "", err
+				}
 			}
 
 			switch key {
@@ -112,7 +144,7 @@ func renderVerticalHtmlTable(m []yaml.MapSlice) string {
 		table += "</table>"
 	}
 
-	return table
+	return table, nil
 }
 
 func RenderYaml(data []byte) ([]byte, error) {
@@ -127,17 +159,18 @@ func RenderYaml(data []byte) ([]byte, error) {
 		if err := yaml.Unmarshal(data, &ms); err != nil {
 			return nil, err
 		}
-		return []byte(renderHorizontalHtmlTable(ms)), nil
-	} else {
-		return []byte(renderVerticalHtmlTable(mss)), nil
+		table, err := renderHorizontalHtmlTable(ms)
+		return []byte(table), err
 	}
+	table, err := renderVerticalHtmlTable(mss)
+	return []byte(table), err
 }
 
-func RenderMarkdownYaml(data []byte) []byte {
+func RenderMarkdownYaml(data []byte) ([]byte, error) {
 	mss := []yaml.MapSlice{}
 
 	if len(data) < 1 {
-		return []byte("")
+		return []byte(""), nil
 	}
 
 	lines := strings.Split(string(data), "\r\n")
@@ -145,18 +178,19 @@ func RenderMarkdownYaml(data []byte) []byte {
 		lines = strings.Split(string(data), "\n")
 	}
 	if len(lines) < 1 || lines[0] != "---" {
-		return []byte("")
+		return []byte(""), nil
 	}
 
 	if err := yaml.Unmarshal(data, &mss); err != nil {
 		ms := yaml.MapSlice{}
 		if err := yaml.Unmarshal(data, &ms); err != nil {
-			return []byte("")
+			return []byte(""), nil
 		}
-		return []byte(renderHorizontalHtmlTable(ms))
-	} else {
-		return []byte(renderVerticalHtmlTable(mss))
+		table, err := renderHorizontalHtmlTable(ms)
+		return []byte(table), err
 	}
+	table, err := renderVerticalHtmlTable(mss)
+	return []byte(table), err
 }
 
 func StripYamlFromText(data []byte) []byte {
