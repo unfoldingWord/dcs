@@ -3111,16 +3111,11 @@ table[data-table-type="yaml-metadata"] {
 .ui.user.list .item .description a:hover {
   text-decoration: underline;
 }
-.no-padding-button {
-  display: inline-flex;
-  padding: 0px !important;
-  margin: 0 .25em 0 0;
-}
-.door43-logo {
-  height: 20px;
-  width: 20px;
-  margin-top: -12px;
-  margin-bottom: -8px;
+#door43-logo {
+  height: 20px !important;
+  width: 20px !important;
+  margin-top: -10px !important;
+  margin-bottom: -10px !important;
   vertical-align: middle;
   display: inline-block;
 }
@@ -3130,4 +3125,8 @@ table[data-table-type="yaml-metadata"] {
 }
 .empty-icon:before {
   content: "\200b";
+}
+.repo-button-separator {
+  display: inline-flex;
+  width: 5px;
 }
