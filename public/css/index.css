@@ -3114,6 +3114,7 @@ table[data-table-type="yaml-metadata"] {
 .no-padding-button {
   display: inline-flex;
   padding: 0px !important;
+  margin: 0 .25em 0 0;
 }
 .door43-logo {
   height: 20px;
