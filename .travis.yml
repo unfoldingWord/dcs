@@ -10,7 +10,9 @@ env:
   TAGS: cert sqlite pam miniwinsvc
 
 before_install:
-  - sudo apt-get install -y libpam-dev
+  - sudo add-apt-repository -y ppa:git-core/ppa
+  - sudo apt-get update -y
+  - sudo apt-get install -y git libpam-dev
 
 install:
   - go get golang.org/x/tools/cmd/cover
@@ -26,6 +28,9 @@ script:
   - make test
   - make test-vendor
   - make build TAGS=redis
+  - make test-mysql
 
 after_success:
-  - ./test-coverage.sh
+  - make test-coverage
+  - gocovmerge $(find -type f -name "coverage.out") > coverage.final;
+  - goveralls -coverprofile=coverage.final;
