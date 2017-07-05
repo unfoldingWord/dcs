@@ -26,6 +26,9 @@ script:
   - make test
   - make test-vendor
   - make build TAGS=redis
+  - make test-mysql
 
 after_success:
-  - ./test-coverage.sh
+  - make test-coverage
+  - gocovmerge $(find -type f -name "coverage.out") > coverage.final;
+  - goveralls -coverprofile=coverage.final;
