@@ -24,7 +24,7 @@ func Yaml(ctx *context.APIContext, form YamlOption) {
 		ctx.Write([]byte(""))
 		return
 	}
-	if rendered, err := yaml.Render([]byte(form.Text)); err != nil {
+	if rendered, err := yaml.RenderSanitized([]byte(form.Text)); err != nil {
 		ctx.Error(400, "Unable to parse YAML", err)
 	} else {
 		ctx.Write(rendered)

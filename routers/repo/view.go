@@ -201,7 +201,7 @@ func renderFile(ctx *context.Context, entry *git.TreeEntry, treeLink, rawLink st
 		if readmeExist && isSupportedMarkup {
 			ctx.Data["FileContent"] = string(markup.Render(blob.Name(), buf, path.Dir(treeLink), ctx.Repo.Repository.ComposeMetas()))
 		} else if isTocYaml {
-			if rendered, err := yaml.RenderYaml(buf); err != nil {
+			if rendered, err := yaml.Render(buf); err != nil {
 				log.Error(4, "RenderYaml: %v", err)
 				ctx.Flash.ErrorMsg = fmt.Sprintf("Unable to parse %v", err)
 				ctx.Data["Flash"] = ctx.Flash

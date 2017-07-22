@@ -14,17 +14,17 @@ import (
 func TestRenderYaml(t *testing.T) {
 	// LF line endings
 	contents := "a: 1\nb: 2\n"
-	rendered, err := RenderYaml([]byte(contents))
+	rendered, err := Render([]byte(contents))
 	assert.NoError(t, err)
 	assert.True(t, strings.HasSuffix(string(rendered), "</table>"))
 
 	// CRLF line endings
 	contents = "a: 1\r\nb: 2\r\n"
-	_, err = RenderYaml([]byte(contents))
+	_, err = Render([]byte(contents))
 	assert.NoError(t, err)
 	assert.True(t, strings.HasSuffix(string(rendered), "</table>"))
 
 	contents = "misformatted&"
-	_, err = RenderYaml([]byte(contents))
+	_, err = Render([]byte(contents))
 	assert.Error(t, err)
 }
