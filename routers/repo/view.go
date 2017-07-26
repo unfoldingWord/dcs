@@ -199,14 +199,9 @@ func renderFile(ctx *context.Context, entry *git.TreeEntry, treeLink, rawLink st
 		isTocYaml := blob.Name() == "toc.yaml"
 		ctx.Data["IsTocYaml"] = isTocYaml
 		if readmeExist && isSupportedMarkup {
-			yamlHtml, err := yaml.RenderMarkdownYaml(buf)
-			if err != nil {
-				log.Error(4, "RenderMarkdownYaml: %v", err)
-			}
-			markupBody := markup.Render(blob.Name(), yaml.StripYamlFromText(buf), path.Dir(treeLink), ctx.Repo.Repository.ComposeMetas())
-			ctx.Data["FileContent"] = string(append(yamlHtml, markupBody...))
+			ctx.Data["FileContent"] = string(markup.Render(blob.Name(), buf, path.Dir(treeLink), ctx.Repo.Repository.ComposeMetas()))
 		} else if isTocYaml {
-			if rendered, err := yaml.RenderYaml(buf); err != nil {
+			if rendered, err := yaml.Render(buf); err != nil {
 				log.Error(4, "RenderYaml: %v", err)
 				ctx.Flash.ErrorMsg = fmt.Sprintf("Unable to parse %v", err)
 				ctx.Data["Flash"] = ctx.Flash
@@ -305,8 +300,6 @@ func renderCode(ctx *context.Context) {
 	}
 	ctx.Data["Title"] = title
 	ctx.Data["RequireHighlightJS"] = true
-
-	ctx.Data["RepoIsUBN"] = strings.HasSuffix(ctx.Repo.Repository.LowerName, "-ubn") || strings.Index(ctx.Repo.Repository.LowerName, "-ubn-") > 0
 
 	branchLink := ctx.Repo.RepoLink + "/src/" + ctx.Repo.BranchName
 	treeLink := branchLink

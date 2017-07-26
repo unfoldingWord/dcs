@@ -6,24 +6,12 @@ package yaml
 
 import (
 	"fmt"
-	"path/filepath"
-	"strings"
 
 	"github.com/microcosm-cc/bluemonday"
 	"gopkg.in/yaml.v2"
 )
 
-var Sanitizer = bluemonday.UGCPolicy()
-
-// IsYamlFile reports whether name looks like a Yaml file
-// based on its extension.
-func IsYamlFile(name string) bool {
-	name = strings.ToLower(name)
-	if ".yaml" == filepath.Ext(name) {
-		return true
-	}
-	return false
-}
+var sanitizer = bluemonday.UGCPolicy()
 
 func renderHorizontalHtmlTable(m yaml.MapSlice) (string, error) {
 	var err error
@@ -147,7 +135,8 @@ func renderVerticalHtmlTable(m []yaml.MapSlice) (string, error) {
 	return table, nil
 }
 
-func RenderYaml(data []byte) ([]byte, error) {
+// Render render yaml contents as html
+func Render(data []byte) ([]byte, error) {
 	mss := []yaml.MapSlice{}
 
 	if len(data) < 1 {
@@ -166,68 +155,11 @@ func RenderYaml(data []byte) ([]byte, error) {
 	return []byte(table), err
 }
 
-func RenderMarkdownYaml(data []byte) ([]byte, error) {
-	mss := []yaml.MapSlice{}
-
-	if len(data) < 1 {
-		return []byte(""), nil
-	}
-
-	lines := strings.Split(string(data), "\r\n")
-	if len(lines) == 1 {
-		lines = strings.Split(string(data), "\n")
-	}
-	if len(lines) < 1 || lines[0] != "---" {
-		return []byte(""), nil
-	}
-
-	if err := yaml.Unmarshal(data, &mss); err != nil {
-		ms := yaml.MapSlice{}
-		if err := yaml.Unmarshal(data, &ms); err != nil {
-			return []byte(""), nil
-		}
-		table, err := renderHorizontalHtmlTable(ms)
-		return []byte(table), err
-	}
-	table, err := renderVerticalHtmlTable(mss)
-	return []byte(table), err
-}
-
-func StripYamlFromText(data []byte) []byte {
-	mss := []yaml.MapSlice{}
-	if err := yaml.Unmarshal(data, &mss); err != nil {
-		ms := yaml.MapSlice{}
-		if err := yaml.Unmarshal(data, &ms); err != nil {
-			return data
-		}
-	}
-
-	lines := strings.Split(string(data), "\r\n")
-	if len(lines) == 1 {
-		lines = strings.Split(string(data), "\n")
-	}
-	if len(lines) < 1 || lines[0] != "---" {
-		return data
-	}
-	body := ""
-	atBody := false
-	for i, line := range lines {
-		if i == 0 {
-			continue
-		}
-		if line == "---" {
-			atBody = true
-		} else if atBody {
-			body += line + "\n"
-		}
-	}
-	return []byte(body)
-}
-
-func Render(rawBytes []byte) ([]byte, error) {
-	result, err := RenderYaml(rawBytes)
+// RenderSanitized render yaml as sanitized html
+func RenderSanitized(rawBytes []byte) ([]byte, error) {
+	result, err := Render(rawBytes)
 	if err != nil {
 		return nil, err
 	}
-	return Sanitizer.SanitizeBytes(result), nil
+	return sanitizer.SanitizeBytes(result), nil
 }
