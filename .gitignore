@@ -11,6 +11,9 @@ _test
 .idea
 *.iml
 
+# MS VSCode
+.vscode
+
 # Architecture specific extensions/prefixes
 *.[568vq]
 [568vq].out
@@ -28,6 +31,7 @@ _testmain.go
 *.prof
 
 *coverage.out
+coverage.all
 
 /modules/options/bindata.go
 /modules/public/bindata.go
@@ -37,6 +41,7 @@ _testmain.go
 *.log
 
 /gitea
+/debug
 /integrations.test
 
 /bin
@@ -46,4 +51,8 @@ _testmain.go
 /indexers
 /log
 /public/img/avatar
-/integrations/gitea-integration
+/integrations/gitea-integration-mysql
+/integrations/gitea-integration-pgsql
+/integrations/gitea-integration-sqlite
+/integrations/mysql.ini
+/integrations/pgsql.ini

@@ -55,21 +55,11 @@ type PublicKey struct {
 	Type        KeyType    `xorm:"NOT NULL DEFAULT 1"`
 
 	Created           time.Time `xorm:"-"`
-	CreatedUnix       int64
+	CreatedUnix       int64     `xorm:"created"`
 	Updated           time.Time `xorm:"-"` // Note: Updated must below Created for AfterSet.
-	UpdatedUnix       int64
-	HasRecentActivity bool `xorm:"-"`
-	HasUsed           bool `xorm:"-"`
-}
-
-// BeforeInsert will be invoked by XORM before inserting a record
-func (key *PublicKey) BeforeInsert() {
-	key.CreatedUnix = time.Now().Unix()
-}
-
-// BeforeUpdate is invoked from XORM before updating this object.
-func (key *PublicKey) BeforeUpdate() {
-	key.UpdatedUnix = time.Now().Unix()
+	UpdatedUnix       int64     `xorm:"updated"`
+	HasRecentActivity bool      `xorm:"-"`
+	HasUsed           bool      `xorm:"-"`
 }
 
 // AfterSet is invoked from XORM after setting the value of a field of this object.
@@ -496,15 +486,20 @@ func UpdatePublicKey(key *PublicKey) error {
 // UpdatePublicKeyUpdated updates public key use time.
 func UpdatePublicKeyUpdated(id int64) error {
 	now := time.Now()
-	cnt, err := x.ID(id).Cols("updated_unix").Update(&PublicKey{
+	// Check if key exists before update as affected rows count is unreliable
+	//    and will return 0 affected rows if two updates are made at the same time
+	if cnt, err := x.ID(id).Count(&PublicKey{}); err != nil {
+		return err
+	} else if cnt != 1 {
+		return ErrKeyNotExist{id}
+	}
+
+	_, err := x.ID(id).Cols("updated_unix").Update(&PublicKey{
 		Updated:     now,
 		UpdatedUnix: now.Unix(),
 	})
 	if err != nil {
 		return err
-	}
-	if cnt != 1 {
-		return ErrKeyNotExist{id}
 	}
 	return nil
 }
@@ -628,21 +623,11 @@ type DeployKey struct {
 	Content     string `xorm:"-"`
 
 	Created           time.Time `xorm:"-"`
-	CreatedUnix       int64
+	CreatedUnix       int64     `xorm:"created"`
 	Updated           time.Time `xorm:"-"` // Note: Updated must below Created for AfterSet.
-	UpdatedUnix       int64
-	HasRecentActivity bool `xorm:"-"`
-	HasUsed           bool `xorm:"-"`
-}
-
-// BeforeInsert will be invoked by XORM before inserting a record
-func (key *DeployKey) BeforeInsert() {
-	key.CreatedUnix = time.Now().Unix()
-}
-
-// BeforeUpdate is invoked from XORM before updating this object.
-func (key *DeployKey) BeforeUpdate() {
-	key.UpdatedUnix = time.Now().Unix()
+	UpdatedUnix       int64     `xorm:"updated"`
+	HasRecentActivity bool      `xorm:"-"`
+	HasUsed           bool      `xorm:"-"`
 }
 
 // AfterSet is invoked from XORM after setting the value of a field of this object.
