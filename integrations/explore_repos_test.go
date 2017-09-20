@@ -12,6 +12,8 @@ import (
 func TestExploreRepos(t *testing.T) {
 	prepareTestEnv(t)
 
+	// we (Door43) require authentication to view /explore/... pages
+	sess := loginUser(t, "user2")
 	req := NewRequest(t, "GET", "/explore/repos")
-	MakeRequest(t, req, http.StatusOK)
+	sess.MakeRequest(t, req, http.StatusOK)
 }
