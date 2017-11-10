@@ -16,6 +16,7 @@ import (
 	"net/url"
 	"os"
 	"path"
+	"path/filepath"
 	"strings"
 	"testing"
 
@@ -51,13 +52,24 @@ func TestMain(m *testing.M) {
 
 	err := models.InitFixtures(
 		helper,
-		"models/fixtures/",
+		path.Join(filepath.Dir(setting.AppPath), "models/fixtures/"),
 	)
 	if err != nil {
 		fmt.Printf("Error initializing test database: %v\n", err)
 		os.Exit(1)
 	}
-	os.Exit(m.Run())
+	exitCode := m.Run()
+
+	if err = os.RemoveAll(setting.Indexer.IssuePath); err != nil {
+		fmt.Printf("os.RemoveAll: %v\n", err)
+		os.Exit(1)
+	}
+	if err = os.RemoveAll(setting.Indexer.RepoPath); err != nil {
+		fmt.Printf("Unable to remove repo indexer: %v\n", err)
+		os.Exit(1)
+	}
+
+	os.Exit(exitCode)
 }
 
 func initIntegrationTest() {
@@ -67,6 +79,10 @@ func initIntegrationTest() {
 		os.Exit(1)
 	}
 	setting.AppPath = path.Join(giteaRoot, "gitea")
+	if _, err := os.Stat(setting.AppPath); err != nil {
+		fmt.Printf("Could not find gitea binary at %s\n", setting.AppPath)
+		os.Exit(1)
+	}
 
 	giteaConf := os.Getenv("GITEA_CONF")
 	if giteaConf == "" {
@@ -119,7 +135,9 @@ func initIntegrationTest() {
 func prepareTestEnv(t testing.TB) {
 	assert.NoError(t, models.LoadFixtures())
 	assert.NoError(t, os.RemoveAll(setting.RepoRootPath))
-	assert.NoError(t, com.CopyDir("integrations/gitea-repositories-meta", setting.RepoRootPath))
+
+	assert.NoError(t, com.CopyDir(path.Join(filepath.Dir(setting.AppPath), "integrations/gitea-repositories-meta"),
+		setting.RepoRootPath))
 }
 
 type TestSession struct {
@@ -269,7 +287,7 @@ func MakeRequest(t testing.TB, req *http.Request, expectedStatus int) *TestRespo
 	mac.ServeHTTP(respWriter, req)
 	if expectedStatus != NoExpectedStatus {
 		assert.EqualValues(t, expectedStatus, respWriter.HeaderCode,
-			"Request URL: %s %s", req.URL.String(), buffer.String())
+			"Request: %s %s", req.Method, req.URL.String())
 	}
 	return &TestResponse{
 		HeaderCode: respWriter.HeaderCode,
