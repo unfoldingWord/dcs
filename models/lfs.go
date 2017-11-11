@@ -3,8 +3,6 @@ package models
 import (
 	"errors"
 	"time"
-
-	"github.com/go-xorm/xorm"
 )
 
 // LFSMetaObject stores metadata for LFS tracked files.
@@ -72,12 +70,12 @@ func NewLFSMetaObject(m *LFSMetaObject) (*LFSMetaObject, error) {
 // GetLFSMetaObjectByOid selects a LFSMetaObject entry from database by its OID.
 // It may return ErrLFSObjectNotExist or a database error. If the error is nil,
 // the returned pointer is a valid LFSMetaObject.
-func GetLFSMetaObjectByOid(oid string) (*LFSMetaObject, error) {
+func (repo *Repository) GetLFSMetaObjectByOid(oid string) (*LFSMetaObject, error) {
 	if len(oid) == 0 {
 		return nil, ErrLFSObjectNotExist
 	}
 
-	m := &LFSMetaObject{Oid: oid}
+	m := &LFSMetaObject{Oid: oid, RepositoryID: repo.ID}
 	has, err := x.Get(m)
 	if err != nil {
 		return nil, err
@@ -89,7 +87,7 @@ func GetLFSMetaObjectByOid(oid string) (*LFSMetaObject, error) {
 
 // RemoveLFSMetaObjectByOid removes a LFSMetaObject entry from database by its OID.
 // It may return ErrLFSObjectNotExist or a database error.
-func RemoveLFSMetaObjectByOid(oid string) error {
+func (repo *Repository) RemoveLFSMetaObjectByOid(oid string) error {
 	if len(oid) == 0 {
 		return ErrLFSObjectNotExist
 	}
@@ -100,8 +98,7 @@ func RemoveLFSMetaObjectByOid(oid string) error {
 		return err
 	}
 
-	m := &LFSMetaObject{Oid: oid}
-
+	m := &LFSMetaObject{Oid: oid, RepositoryID: repo.ID}
 	if _, err := sess.Delete(m); err != nil {
 		return err
 	}
@@ -109,10 +106,7 @@ func RemoveLFSMetaObjectByOid(oid string) error {
 	return sess.Commit()
 }
 
-// AfterSet stores the LFSMetaObject creation time in the database as local time.
-func (m *LFSMetaObject) AfterSet(colName string, _ xorm.Cell) {
-	switch colName {
-	case "created_unix":
-		m.Created = time.Unix(m.CreatedUnix, 0).Local()
-	}
+// AfterLoad stores the LFSMetaObject creation time in the database as local time.
+func (m *LFSMetaObject) AfterLoad() {
+	m.Created = time.Unix(m.CreatedUnix, 0).Local()
 }
