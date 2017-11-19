@@ -25,6 +25,7 @@ import (
 	"code.gitea.io/gitea/routers/org"
 	"code.gitea.io/gitea/routers/private"
 	"code.gitea.io/gitea/routers/repo"
+	"code.gitea.io/gitea/routers/ufw"
 	"code.gitea.io/gitea/routers/user"
 
 	"github.com/go-macaron/binding"
@@ -696,6 +697,9 @@ func RegisterRoutes(m *macaron.Macaron) {
 		m.Get("", user.Notifications)
 		m.Post("/status", user.NotificationStatusPost)
 	}, reqSignIn)
+
+	// unfoldingWord (ufw) routes
+	m.Get("/about", ufw.About)
 
 	m.Group("/api", func() {
 		apiv1.RegisterRoutes(m)
