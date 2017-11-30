@@ -1277,7 +1277,7 @@ type SearchUserOptions struct {
 	Page          int
 	PageSize      int // Can be smaller than or equal to setting.UI.ExplorePagingNum
 	IsActive      util.OptionalBool
-	SearchByEmail bool // Search by email address as well as username/fullname
+	SearchByEmail bool // Search by email as well as username/full name
 }
 
 func (opts *SearchUserOptions) toConds() builder.Cond {
