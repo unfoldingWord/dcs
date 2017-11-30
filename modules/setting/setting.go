@@ -56,8 +56,9 @@ type LandingPage string
 
 // enumerates all the landing page types
 const (
-	LandingPageHome    LandingPage = "/"
-	LandingPageExplore LandingPage = "/explore"
+	LandingPageHome          LandingPage = "/"
+	LandingPageExplore       LandingPage = "/explore"
+	LandingPageOrganizations LandingPage = "/explore/organizations"
 )
 
 // MarkupParser defines the external parser configured in ini
@@ -565,13 +566,9 @@ func getAppPath() (string, error) {
 func getWorkPath(appPath string) string {
 	workPath := ""
 	giteaWorkPath := os.Getenv("GITEA_WORK_DIR")
-	gogsWorkPath := os.Getenv("GOGS_WORK_DIR")
 
 	if len(giteaWorkPath) > 0 {
 		workPath = giteaWorkPath
-	} else if len(gogsWorkPath) > 0 {
-		log.Warn(`Usage of GOGS_WORK_DIR is deprecated and will be *removed* in a future release, please consider changing to GITEA_WORK_DIR`)
-		workPath = gogsWorkPath
 	} else {
 		i := strings.LastIndex(appPath, "/")
 		if i == -1 {
@@ -741,6 +738,8 @@ func NewContext() {
 	switch sec.Key("LANDING_PAGE").MustString("home") {
 	case "explore":
 		LandingPageURL = LandingPageExplore
+	case "organizations":
+		LandingPageURL = LandingPageOrganizations
 	default:
 		LandingPageURL = LandingPageHome
 	}
@@ -1172,7 +1171,7 @@ func newService() {
 	Service.NoReplyAddress = sec.Key("NO_REPLY_ADDRESS").MustString("noreply.example.org")
 
 	sec = Cfg.Section("openid")
-	Service.EnableOpenIDSignIn = sec.Key("ENABLE_OPENID_SIGNIN").MustBool(false)
+	Service.EnableOpenIDSignIn = sec.Key("ENABLE_OPENID_SIGNIN").MustBool(!InstallLock)
 	Service.EnableOpenIDSignUp = sec.Key("ENABLE_OPENID_SIGNUP").MustBool(!Service.DisableRegistration && Service.EnableOpenIDSignIn)
 	pats := sec.Key("WHITELISTED_URIS").Strings(" ")
 	if len(pats) != 0 {
@@ -1516,7 +1515,7 @@ func newWebhookService() {
 	Webhook.QueueLength = sec.Key("QUEUE_LENGTH").MustInt(1000)
 	Webhook.DeliverTimeout = sec.Key("DELIVER_TIMEOUT").MustInt(5)
 	Webhook.SkipTLSVerify = sec.Key("SKIP_TLS_VERIFY").MustBool()
-	Webhook.Types = []string{"gitea", "gogs", "slack", "discord"}
+	Webhook.Types = []string{"gitea", "gogs", "slack", "discord", "dingtalk"}
 	Webhook.PagingNum = sec.Key("PAGING_NUM").MustInt(10)
 }
 
