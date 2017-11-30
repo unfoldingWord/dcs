@@ -31,5 +31,7 @@ script:
   - make test-mysql TEST_MYSQL_HOST=127.0.0.1:3306
 
 after_success:
+  - make unit-test-coverage
+  - make integration-test-coverage TEST_MYSQL_HOST=127.0.0.1:3306
   - make coverage
   - goveralls -coverprofile=coverage.all;
