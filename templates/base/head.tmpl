@@ -134,7 +134,9 @@
 						<div class="column">
 							<div class="ui top secondary menu">
 								<a class="item brand" href="{{AppSubUrl}}/">
-									<img class="ui mini image" src="{{AppSubUrl}}/img/gitea-sm.png">
+								    <!-- unfoldingWord intentionally uses /img/favicon.png here,
+								      -- instead of following upstream -->
+									<img class="ui mini image" src="{{AppSubUrl}}/img/favicon.png">
 								</a>
 
 								{{if .IsSigned}}
