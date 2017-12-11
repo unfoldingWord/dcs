@@ -256,6 +256,7 @@ var (
 		IssuePagingNum      int
 		RepoSearchPagingNum int
 		FeedMaxCommitNum    int
+		ReactionMaxUserNum  int
 		ThemeColorMetaTag   string
 		MaxDisplayFileSize  int64
 		ShowUserEmail       bool
@@ -279,6 +280,7 @@ var (
 		IssuePagingNum:      10,
 		RepoSearchPagingNum: 10,
 		FeedMaxCommitNum:    5,
+		ReactionMaxUserNum:  10,
 		ThemeColorMetaTag:   `#6cc644`,
 		MaxDisplayFileSize:  8388608,
 		Admin: struct {
@@ -326,11 +328,13 @@ var (
 	// Picture settings
 	AvatarUploadPath      string
 	GravatarSource        string
+	GravatarSourceURL     *url.URL
 	DisableGravatar       bool
 	EnableFederatedAvatar bool
 	LibravatarService     *libravatar.Libravatar
 
 	// Log settings
+	LogLevel    string
 	LogRootPath string
 	LogModes    []string
 	LogConfigs  []string
@@ -663,6 +667,7 @@ func NewContext() {
 	}
 	homeDir = strings.Replace(homeDir, "\\", "/", -1)
 
+	LogLevel = getLogLevel("log", "LEVEL", "Info")
 	LogRootPath = Cfg.Section("log").Key("ROOT_PATH").MustString(path.Join(AppWorkPath, "log"))
 	forcePathSeparator(LogRootPath)
 
@@ -1029,18 +1034,22 @@ func NewContext() {
 	if DisableGravatar {
 		EnableFederatedAvatar = false
 	}
+	if EnableFederatedAvatar || !DisableGravatar {
+		GravatarSourceURL, err = url.Parse(GravatarSource)
+		if err != nil {
+			log.Fatal(4, "Failed to parse Gravatar URL(%s): %v",
+				GravatarSource, err)
+		}
+	}
 
 	if EnableFederatedAvatar {
 		LibravatarService = libravatar.New()
-		parts := strings.Split(GravatarSource, "/")
-		if len(parts) >= 3 {
-			if parts[0] == "https:" {
-				LibravatarService.SetUseHTTPS(true)
-				LibravatarService.SetSecureFallbackHost(parts[2])
-			} else {
-				LibravatarService.SetUseHTTPS(false)
-				LibravatarService.SetFallbackHost(parts[2])
-			}
+		if GravatarSourceURL.Scheme == "https" {
+			LibravatarService.SetUseHTTPS(true)
+			LibravatarService.SetSecureFallbackHost(GravatarSourceURL.Host)
+		} else {
+			LibravatarService.SetUseHTTPS(false)
+			LibravatarService.SetFallbackHost(GravatarSourceURL.Host)
 		}
 	}
 
@@ -1198,6 +1207,11 @@ var logLevels = map[string]string{
 	"Critical": "5",
 }
 
+func getLogLevel(section string, key string, defaultValue string) string {
+	validLevels := []string{"Trace", "Debug", "Info", "Warn", "Error", "Critical"}
+	return Cfg.Section(section).Key(key).In(defaultValue, validLevels)
+}
+
 func newLogService() {
 	log.Info("Gitea v%s%s", AppVer, AppBuiltWith)
 
@@ -1222,11 +1236,8 @@ func newLogService() {
 			sec, _ = Cfg.NewSection("log." + mode)
 		}
 
-		validLevels := []string{"Trace", "Debug", "Info", "Warn", "Error", "Critical"}
 		// Log level.
-		levelName := Cfg.Section("log."+mode).Key("LEVEL").In(
-			Cfg.Section("log").Key("LEVEL").In("Trace", validLevels),
-			validLevels)
+		levelName := getLogLevel("log."+mode, "LEVEL", LogLevel)
 		level, ok := logLevels[levelName]
 		if !ok {
 			log.Fatal(4, "Unknown log level: %s", levelName)
@@ -1290,11 +1301,8 @@ func NewXORMLogService(disableConsole bool) {
 			sec, _ = Cfg.NewSection("log." + mode)
 		}
 
-		validLevels := []string{"Trace", "Debug", "Info", "Warn", "Error", "Critical"}
 		// Log level.
-		levelName := Cfg.Section("log."+mode).Key("LEVEL").In(
-			Cfg.Section("log").Key("LEVEL").In("Trace", validLevels),
-			validLevels)
+		levelName := getLogLevel("log."+mode, "LEVEL", LogLevel)
 		level, ok := logLevels[levelName]
 		if !ok {
 			log.Fatal(4, "Unknown log level: %s", levelName)
@@ -1397,7 +1405,7 @@ func newSessionService() {
 	SessionConfig.Provider = Cfg.Section("session").Key("PROVIDER").In("memory",
 		[]string{"memory", "file", "redis", "mysql"})
 	SessionConfig.ProviderConfig = strings.Trim(Cfg.Section("session").Key("PROVIDER_CONFIG").MustString(path.Join(AppDataPath, "sessions")), "\" ")
-	if !filepath.IsAbs(SessionConfig.ProviderConfig) {
+	if SessionConfig.Provider == "file" && !filepath.IsAbs(SessionConfig.ProviderConfig) {
 		SessionConfig.ProviderConfig = path.Join(AppWorkPath, SessionConfig.ProviderConfig)
 	}
 	SessionConfig.CookieName = Cfg.Section("session").Key("COOKIE_NAME").MustString("i_like_gitea")

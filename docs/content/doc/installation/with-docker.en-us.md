@@ -39,8 +39,8 @@ services:
     volumes:
       - ./gitea:/data
     ports:
-      - 3000:3000
-      - 222:22
+      - "3000:3000"
+      - "222:22"
 ```
 
 ## Custom port
@@ -63,10 +63,10 @@ services:
     volumes:
       - ./gitea:/data
     ports:
--      - 3000:3000
--      - 222:22
-+      - 8080:3000
-+      - 2221:22
+-      - "3000:3000"
+-      - "222:22"
++      - "8080:3000"
++      - "2221:22"
 ```
 
 ## MySQL database
@@ -89,8 +89,8 @@ services:
     volumes:
       - ./gitea:/data
      ports:
-       - 3000:3000
-       - 222:22
+       - "3000:3000"
+       - "222:22"
 +    depends_on:
 +      - db
 +
@@ -128,8 +128,8 @@ services:
     volumes:
       - ./gitea:/data
      ports:
-       - 3000:3000
-       - 222:22
+       - "3000:3000"
+       - "222:22"
 +    depends_on:
 +      - db
 +
@@ -171,8 +171,8 @@ services:
 -      - ./gitea:/data
 +      - gitea:/data
     ports:
-      - 3000:3000
-      - 222:22
+      - "3000:3000"
+      - "222:22"
 ```
 
 If you are using MySQL or PostgreSQL it's up to you to create named volumes for these containers as well.
@@ -182,6 +182,8 @@ If you are using MySQL or PostgreSQL it's up to you to create named volumes for 
 To start this setup based on `docker-compose` you just have to execute `docker-compose up -d` to launch Gitea in the background. You can see if it started properly via `docker-compose ps`, and you can tail the log output via `docker-compose logs`.
 
 If you want to shutdown the setup again just execute `docker-compose down`, this will stop and kill the containers, the volumes will still exist.
+
+Notice: if you use a non 3000 port on http, you need change app.ini `LOCAL_ROOT_URL  = http://localhost:3000/`.
 
 ## Install
 

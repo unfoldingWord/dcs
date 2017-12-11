@@ -8,6 +8,7 @@ import (
 	"bytes"
 	"container/list"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"html/template"
 	"mime"
@@ -64,14 +65,15 @@ func NewFuncMap() []template.FuncMap {
 		"LoadTimes": func(startTime time.Time) string {
 			return fmt.Sprint(time.Since(startTime).Nanoseconds()/1e6) + "ms"
 		},
-		"AvatarLink":   base.AvatarLink,
-		"Safe":         Safe,
-		"SafeJS":       SafeJS,
-		"Str2html":     Str2html,
-		"TimeSince":    base.TimeSince,
-		"RawTimeSince": base.RawTimeSince,
-		"FileSize":     base.FileSize,
-		"Subtract":     base.Subtract,
+		"AvatarLink":    base.AvatarLink,
+		"Safe":          Safe,
+		"SafeJS":        SafeJS,
+		"Str2html":      Str2html,
+		"TimeSince":     base.TimeSince,
+		"TimeSinceUnix": base.TimeSinceUnix,
+		"RawTimeSince":  base.RawTimeSince,
+		"FileSize":      base.FileSize,
+		"Subtract":      base.Subtract,
 		"Add": func(a, b int) int {
 			return a + b
 		},
@@ -110,8 +112,10 @@ func NewFuncMap() []template.FuncMap {
 		"EscapePound": func(str string) string {
 			return strings.NewReplacer("%", "%25", "#", "%23", " ", "%20", "?", "%3F").Replace(str)
 		},
-		"RenderCommitMessage":     RenderCommitMessage,
-		"RenderCommitMessageLink": RenderCommitMessageLink,
+		"RenderCommitMessage":      RenderCommitMessage,
+		"RenderCommitMessageLink":  RenderCommitMessageLink,
+		"RenderCommitBody":         RenderCommitBody,
+		"IsMultilineCommitMessage": IsMultilineCommitMessage,
 		"ThemeColorMetaTag": func() string {
 			return setting.UI.ThemeColorMetaTag
 		},
@@ -166,6 +170,21 @@ func NewFuncMap() []template.FuncMap {
 			return setting.DisableGitHooks
 		},
 		"TrN": TrN,
+		"Dict": func(values ...interface{}) (map[string]interface{}, error) {
+			if len(values)%2 != 0 {
+				return nil, errors.New("invalid dict call")
+			}
+			dict := make(map[string]interface{}, len(values)/2)
+			for i := 0; i < len(values); i += 2 {
+				key, ok := values[i].(string)
+				if !ok {
+					return nil, errors.New("dict keys must be strings")
+				}
+				dict[key] = values[i+1]
+			}
+			return dict, nil
+		},
+		"Printf": fmt.Sprintf,
 	}}
 }
 
@@ -284,6 +303,29 @@ func renderCommitMessage(msg string, opts markup.RenderIssueIndexPatternOptions)
 		return template.HTML("")
 	}
 	return template.HTML(msgLines[0])
+}
+
+// RenderCommitBody extracts the body of a commit message without its title.
+func RenderCommitBody(msg, urlPrefix string, metas map[string]string) template.HTML {
+	return renderCommitBody(msg, markup.RenderIssueIndexPatternOptions{
+		URLPrefix: urlPrefix,
+		Metas:     metas,
+	})
+}
+
+func renderCommitBody(msg string, opts markup.RenderIssueIndexPatternOptions) template.HTML {
+	cleanMsg := template.HTMLEscapeString(msg)
+	fullMessage := string(markup.RenderIssueIndexPattern([]byte(cleanMsg), opts))
+	body := strings.Split(strings.TrimSpace(fullMessage), "\n")
+	if len(body) == 0 {
+		return template.HTML("")
+	}
+	return template.HTML(strings.Join(body[1:], "\n"))
+}
+
+// IsMultilineCommitMessage checks to see if a commit message contains multiple lines.
+func IsMultilineCommitMessage(msg string) bool {
+	return strings.Count(strings.TrimSpace(msg), "\n") > 1
 }
 
 // Actioner describes an action
