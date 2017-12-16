@@ -143,6 +143,9 @@ func (r *Repository) GetEditorconfig() (*editorconfig.Editorconfig, error) {
 	if err != nil {
 		return nil, err
 	}
+	if treeEntry.Blob().Size() >= setting.UI.MaxDisplayFileSize {
+		return nil, git.ErrNotExist{ID: "", RelPath: ".editorconfig"}
+	}
 	reader, err := treeEntry.Blob().Data()
 	if err != nil {
 		return nil, err
@@ -453,7 +456,7 @@ func RepoAssignment() macaron.Handler {
 
 		if ctx.Query("go-get") == "1" {
 			ctx.Data["GoGetImport"] = ComposeGoGetImport(owner.Name, repo.Name)
-			prefix := setting.AppURL + path.Join(owner.Name, repo.Name, "src", ctx.Repo.BranchName)
+			prefix := setting.AppURL + path.Join(owner.Name, repo.Name, "src", "branch", ctx.Repo.BranchName)
 			ctx.Data["GoDocDirectory"] = prefix + "{/dir}"
 			ctx.Data["GoDocFile"] = prefix + "{/dir}/{file}#L{line}"
 		}
@@ -615,7 +618,11 @@ func RepoRefByType(refType RepoRefType) macaron.Handler {
 
 			if refType == RepoRefLegacy {
 				// redirect from old URL scheme to new URL scheme
-				ctx.Redirect(path.Join(setting.AppSubURL, strings.TrimSuffix(ctx.Req.URL.String(), ctx.Params("*")), ctx.Repo.BranchNameSubURL()))
+				ctx.Redirect(path.Join(
+					setting.AppSubURL,
+					strings.TrimSuffix(ctx.Req.URL.String(), ctx.Params("*")),
+					ctx.Repo.BranchNameSubURL(),
+					ctx.Repo.TreePath))
 				return
 			}
 		}

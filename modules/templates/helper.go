@@ -16,17 +16,15 @@ import (
 	"strings"
 	"time"
 
-	"github.com/microcosm-cc/bluemonday"
-	"golang.org/x/net/html/charset"
-	"golang.org/x/text/transform"
-	"gopkg.in/editorconfig/editorconfig-core-go.v1"
-
 	"code.gitea.io/gitea/models"
 	"code.gitea.io/gitea/modules/base"
 	"code.gitea.io/gitea/modules/log"
 	"code.gitea.io/gitea/modules/markup"
 	"code.gitea.io/gitea/modules/setting"
-	"net/url"
+
+	"golang.org/x/net/html/charset"
+	"golang.org/x/text/transform"
+	"gopkg.in/editorconfig/editorconfig-core-go.v1"
 )
 
 // NewFuncMap returns functions for injecting to templates
@@ -68,7 +66,6 @@ func NewFuncMap() []template.FuncMap {
 		"AvatarLink":   base.AvatarLink,
 		"Safe":         Safe,
 		"SafeJS":       SafeJS,
-		"Sanitize":     bluemonday.UGCPolicy().Sanitize,
 		"Str2html":     Str2html,
 		"TimeSince":    base.TimeSince,
 		"RawTimeSince": base.RawTimeSince,
@@ -111,8 +108,8 @@ func NewFuncMap() []template.FuncMap {
 		"EscapePound": func(str string) string {
 			return strings.NewReplacer("%", "%25", "#", "%23", " ", "%20", "?", "%3F").Replace(str)
 		},
-		"QueryEscape":         url.QueryEscape,
-		"RenderCommitMessage": RenderCommitMessage,
+		"RenderCommitMessage":     RenderCommitMessage,
+		"RenderCommitMessageLink": RenderCommitMessageLink,
 		"ThemeColorMetaTag": func() string {
 			return setting.UI.ThemeColorMetaTag
 		},
@@ -167,6 +164,10 @@ func NewFuncMap() []template.FuncMap {
 			return setting.DisableGitHooks
 		},
 		"TrN": TrN,
+		// TODO: Remove this once go-ini parser supports unescaping comment characters
+		"UnescapeLocale": func(str string) string {
+			return strings.NewReplacer("\\;", ";", "\\#", "#").Replace(str)
+		},
 	}}
 }
 
@@ -260,28 +261,31 @@ func ReplaceLeft(s, old, new string) string {
 }
 
 // RenderCommitMessage renders commit message with XSS-safe and special links.
-func RenderCommitMessage(full bool, msg, urlPrefix string, metas map[string]string) template.HTML {
+func RenderCommitMessage(msg, urlPrefix string, metas map[string]string) template.HTML {
+	return renderCommitMessage(msg, markup.RenderIssueIndexPatternOptions{
+		URLPrefix: urlPrefix,
+		Metas:     metas,
+	})
+}
+
+// RenderCommitMessageLink renders commit message as a XXS-safe link to the provided
+// default url, handling for special links.
+func RenderCommitMessageLink(msg, urlPrefix string, urlDefault string, metas map[string]string) template.HTML {
+	return renderCommitMessage(msg, markup.RenderIssueIndexPatternOptions{
+		DefaultURL: urlDefault,
+		URLPrefix:  urlPrefix,
+		Metas:      metas,
+	})
+}
+
+func renderCommitMessage(msg string, opts markup.RenderIssueIndexPatternOptions) template.HTML {
 	cleanMsg := template.HTMLEscapeString(msg)
-	fullMessage := string(markup.RenderIssueIndexPattern([]byte(cleanMsg), urlPrefix, metas))
+	fullMessage := string(markup.RenderIssueIndexPattern([]byte(cleanMsg), opts))
 	msgLines := strings.Split(strings.TrimSpace(fullMessage), "\n")
-	numLines := len(msgLines)
-	if numLines == 0 {
+	if len(msgLines) == 0 {
 		return template.HTML("")
-	} else if !full {
-		return template.HTML(msgLines[0])
-	} else if numLines == 1 || (numLines >= 2 && len(msgLines[1]) == 0) {
-		// First line is a header, standalone or followed by empty line
-		header := fmt.Sprintf("<h3>%s</h3>", msgLines[0])
-		if numLines >= 2 {
-			fullMessage = header + fmt.Sprintf("\n<pre>%s</pre>", strings.Join(msgLines[2:], "\n"))
-		} else {
-			fullMessage = header
-		}
-	} else {
-		// Non-standard git message, there is no header line
-		fullMessage = fmt.Sprintf("<h4>%s</h4>", strings.Join(msgLines, "<br>"))
 	}
-	return template.HTML(fullMessage)
+	return template.HTML(msgLines[0])
 }
 
 // Actioner describes an action
