@@ -6,11 +6,11 @@
 				<div class="ui card">
 					{{if eq .SignedUserName .Owner.Name}}
 						<a class="image poping up" href="{{AppSubUrl}}/user/settings/avatar" id="profile-avatar" data-content="{{.i18n.Tr "user.change_avatar"}}" data-variation="inverted tiny" data-position="bottom center">
-							<img src="{{.Owner.RelAvatarLink}}?s=290" title="{{.Owner.Name}}"/>
+							<img src="{{.Owner.SizedRelAvatarLink 290}}" title="{{.Owner.Name}}"/>
 						</a>
 					{{else}}
 						<span class="image">
-							<img src="{{.Owner.RelAvatarLink}}?s=290" title="{{.Owner.Name}}"/>
+							<img src="{{.Owner.SizedRelAvatarLink 290}}" title="{{.Owner.Name}}"/>
 						</span>
 					{{end}}
 					<div class="content">
@@ -42,7 +42,7 @@
 									</li>
 								{{end}}
 							{{end}}
-							<li><i class="octicon octicon-clock"></i> {{.i18n.Tr "user.join_on"}} {{DateFmtShort .Owner.Created}}</li>
+							<li><i class="octicon octicon-clock"></i> {{.i18n.Tr "user.join_on"}} {{.Owner.CreatedUnix.FormatShort}}</li>
 							<li>
 								<i class="octicon octicon-person"></i>
 								<a href="{{.Owner.HomeLink}}/followers">

@@ -68,12 +68,12 @@ type ObjectError struct {
 
 // ObjectLink builds a URL linking to the object.
 func (v *RequestVars) ObjectLink() string {
-	return setting.AppURL + path.Join(v.User, v.Repo, "info/lfs/objects", v.Oid)
+	return setting.AppURL + path.Join(v.User, v.Repo+".git", "info/lfs/objects", v.Oid)
 }
 
 // VerifyLink builds a URL for verifying the object.
 func (v *RequestVars) VerifyLink() string {
-	return setting.AppURL + path.Join(v.User, v.Repo, "info/lfs/verify")
+	return setting.AppURL + path.Join(v.User, v.Repo+".git", "info/lfs/verify")
 }
 
 // link provides a structure used to build a hypermedia representation of an HTTP link.
@@ -108,10 +108,9 @@ func ObjectOidHandler(ctx *context.Context) {
 }
 
 func getAuthenticatedRepoAndMeta(ctx *context.Context, rv *RequestVars, requireWrite bool) (*models.LFSMetaObject, *models.Repository) {
-	repositoryString := rv.User + "/" + rv.Repo
-	repository, err := models.GetRepositoryByRef(repositoryString)
+	repository, err := models.GetRepositoryByOwnerAndName(rv.User, rv.Repo)
 	if err != nil {
-		log.Debug("Could not find repository: %s - %s", repositoryString, err)
+		log.Debug("Could not find repository: %s/%s - %s", rv.User, rv.Repo, err)
 		writeStatus(ctx, 404)
 		return nil, nil
 	}
@@ -197,7 +196,6 @@ func getMetaHandler(ctx *context.Context) {
 
 // PostHandler instructs the client how to upload data
 func PostHandler(ctx *context.Context) {
-
 	if !setting.LFS.StartServer {
 		writeStatus(ctx, 404)
 		return
@@ -210,10 +208,9 @@ func PostHandler(ctx *context.Context) {
 
 	rv := unpack(ctx)
 
-	repositoryString := rv.User + "/" + rv.Repo
-	repository, err := models.GetRepositoryByRef(repositoryString)
+	repository, err := models.GetRepositoryByOwnerAndName(rv.User, rv.Repo)
 	if err != nil {
-		log.Debug("Could not find repository: %s - %s", repositoryString, err)
+		log.Debug("Could not find repository: %s/%s - %s", rv.User, rv.Repo, err)
 		writeStatus(ctx, 404)
 		return
 	}
@@ -261,12 +258,10 @@ func BatchHandler(ctx *context.Context) {
 
 	// Create a response object
 	for _, object := range bv.Objects {
-
-		repositoryString := object.User + "/" + object.Repo
-		repository, err := models.GetRepositoryByRef(repositoryString)
+		repository, err := models.GetRepositoryByOwnerAndName(object.User, object.Repo)
 
 		if err != nil {
-			log.Debug("Could not find repository: %s - %s", repositoryString, err)
+			log.Debug("Could not find repository: %s/%s - %s", object.User, object.Repo, err)
 			writeStatus(ctx, 404)
 			return
 		}

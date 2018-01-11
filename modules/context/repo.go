@@ -407,7 +407,7 @@ func RepoAssignment() macaron.Handler {
 			return
 		}
 		ctx.Data["Branches"] = brs
-		ctx.Data["BrancheCount"] = len(brs)
+		ctx.Data["BranchesCount"] = len(brs)
 
 		// If not branch selected, try default one.
 		// If default branch doesn't exists, fall back to some other branch.
@@ -618,7 +618,11 @@ func RepoRefByType(refType RepoRefType) macaron.Handler {
 
 			if refType == RepoRefLegacy {
 				// redirect from old URL scheme to new URL scheme
-				ctx.Redirect(path.Join(setting.AppSubURL, strings.TrimSuffix(ctx.Req.URL.String(), ctx.Params("*")), ctx.Repo.BranchNameSubURL()))
+				ctx.Redirect(path.Join(
+					setting.AppSubURL,
+					strings.TrimSuffix(ctx.Req.URL.String(), ctx.Params("*")),
+					ctx.Repo.BranchNameSubURL(),
+					ctx.Repo.TreePath))
 				return
 			}
 		}

@@ -153,6 +153,21 @@ pre, code {
         }
     }
 
+    &.menu,
+    &.vertical.menu,
+    &.segment {
+        box-shadow: none;
+    }
+
+    /* Overide semantic selector '.ui.menu:not(.vertical) .item > .button' */
+    /* This fixes the commit graph button on the commits page */
+    .menu:not(.vertical) .item > .button.compact {
+        padding: .58928571em 1.125em;
+    }
+    .menu:not(.vertical) .item > .button.small {
+        font-size: .92857143rem;
+    }
+
     .text {
         &.red {
             color: #d95c5c !important;
