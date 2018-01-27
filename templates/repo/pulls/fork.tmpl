@@ -26,12 +26,6 @@
 									</div>
 								{{end}}
 								{{range .Orgs}}
-									{{if .IsOwnedBy $.SignedUser.ID}}
-										<div class="item" data-value="{{.ID}}">
-											<img class="ui mini image" src="{{.RelAvatarLink}}">
-											{{.ShortName 20}}
-										</div>
-									{{end}}
 									<div class="item" data-value="{{.ID}}">
 										<img class="ui mini image" src="{{.RelAvatarLink}}">
 										{{.ShortName 20}}
