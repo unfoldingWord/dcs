@@ -160,6 +160,8 @@ func TestGit(t *testing.T) {
 			sshWrapper.Close()
 			defer os.RemoveAll(sshWrapper.Name())
 
+			os.Setenv("GIT_SSH_VARIANT", "ssh")
+
 			//Setup clone folder
 			dstPath, err := ioutil.TempDir("", "repo-tmp-18")
 			assert.NoError(t, err)
