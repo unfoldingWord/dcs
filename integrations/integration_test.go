@@ -138,6 +138,7 @@ func prepareTestEnv(t testing.TB) {
 	assert.NoError(t, models.LoadFixtures())
 	assert.NoError(t, os.RemoveAll(setting.RepoRootPath))
 	assert.NoError(t, os.RemoveAll(models.LocalCopyPath()))
+	assert.NoError(t, os.RemoveAll(models.LocalWikiPath()))
 
 	assert.NoError(t, com.CopyDir(path.Join(filepath.Dir(setting.AppPath), "integrations/gitea-repositories-meta"),
 		setting.RepoRootPath))
@@ -302,10 +303,4 @@ func GetCSRF(t testing.TB, session *TestSession, urlStr string) string {
 	resp := session.MakeRequest(t, req, http.StatusOK)
 	doc := NewHTMLParser(t, resp.Body)
 	return doc.GetCSRF()
-}
-
-func RedirectURL(t testing.TB, resp *httptest.ResponseRecorder) string {
-	urlSlice := resp.HeaderMap["Location"]
-	assert.NotEmpty(t, urlSlice, "No redirect URL founds")
-	return urlSlice[0]
 }

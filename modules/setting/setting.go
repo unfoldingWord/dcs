@@ -70,6 +70,13 @@ type MarkupParser struct {
 	IsInputFile    bool
 }
 
+// enumerates all the policy repository creating
+const (
+	RepoCreatingLastUserVisibility = "last"
+	RepoCreatingPrivate            = "private"
+	RepoCreatingPublic             = "public"
+)
+
 // settings
 var (
 	// AppVer settings
@@ -89,6 +96,8 @@ var (
 	HTTPAddr             string
 	HTTPPort             string
 	LocalURL             string
+	RedirectOtherPort    bool
+	PortToRedirect       string
 	OfflineMode          bool
 	DisableRouterLog     bool
 	CertFile             string
@@ -180,6 +189,7 @@ var (
 	Repository = struct {
 		AnsiCharset            string
 		ForcePrivate           bool
+		DefaultPrivate         string
 		MaxCreationLimit       int
 		MirrorQueueLength      int
 		PullRequestQueueLength int
@@ -205,10 +215,12 @@ var (
 		// Repository local settings
 		Local struct {
 			LocalCopyPath string
+			LocalWikiPath string
 		} `ini:"-"`
 	}{
 		AnsiCharset:            "",
 		ForcePrivate:           false,
+		DefaultPrivate:         RepoCreatingLastUserVisibility,
 		MaxCreationLimit:       -1,
 		MirrorQueueLength:      1000,
 		PullRequestQueueLength: 1000,
@@ -243,8 +255,10 @@ var (
 		// Repository local settings
 		Local: struct {
 			LocalCopyPath string
+			LocalWikiPath string
 		}{
 			LocalCopyPath: "tmp/local-repo",
+			LocalWikiPath: "tmp/local-wiki",
 		},
 	}
 	RepoRootPath string
@@ -532,6 +546,10 @@ var (
 
 	ExternalMarkupParsers []MarkupParser
 
+	// UILocation is the location on the UI, so that we can display the time on UI.
+	// Currently only show the default time.Local, it could be added to app.ini after UI is ready
+	UILocation = time.Local
+
 	Google struct {
 		GATrackingID string
 	}
@@ -733,6 +751,8 @@ func NewContext() {
 		defaultLocalURL += ":" + HTTPPort + "/"
 	}
 	LocalURL = sec.Key("LOCAL_ROOT_URL").MustString(defaultLocalURL)
+	RedirectOtherPort = sec.Key("REDIRECT_OTHER_PORT").MustBool(false)
+	PortToRedirect = sec.Key("PORT_TO_REDIRECT").MustString("80")
 	OfflineMode = sec.Key("OFFLINE_MODE").MustBool()
 	DisableRouterLog = sec.Key("DISABLE_ROUTER_LOG").MustBool()
 	StaticRootPath = sec.Key("STATIC_ROOT_PATH").MustString(AppWorkPath)
@@ -1026,7 +1046,7 @@ func NewContext() {
 		GravatarSource = source
 	}
 	DisableGravatar = sec.Key("DISABLE_GRAVATAR").MustBool()
-	EnableFederatedAvatar = sec.Key("ENABLE_FEDERATED_AVATAR").MustBool()
+	EnableFederatedAvatar = sec.Key("ENABLE_FEDERATED_AVATAR").MustBool(!InstallLock)
 	if OfflineMode {
 		DisableGravatar = true
 		EnableFederatedAvatar = false

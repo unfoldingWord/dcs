@@ -530,21 +530,24 @@ func (err ErrLFSLockNotExist) Error() string {
 	return fmt.Sprintf("lfs lock does not exist [id: %d, rid: %d, path: %s]", err.ID, err.RepoID, err.Path)
 }
 
-// ErrLFSLockUnauthorizedAction represents a "LFSLockUnauthorizedAction" kind of error.
-type ErrLFSLockUnauthorizedAction struct {
+// ErrLFSUnauthorizedAction represents a "LFSUnauthorizedAction" kind of error.
+type ErrLFSUnauthorizedAction struct {
 	RepoID   int64
 	UserName string
-	Action   string
+	Mode     AccessMode
 }
 
-// IsErrLFSLockUnauthorizedAction checks if an error is a ErrLFSLockUnauthorizedAction.
-func IsErrLFSLockUnauthorizedAction(err error) bool {
-	_, ok := err.(ErrLFSLockUnauthorizedAction)
+// IsErrLFSUnauthorizedAction checks if an error is a ErrLFSUnauthorizedAction.
+func IsErrLFSUnauthorizedAction(err error) bool {
+	_, ok := err.(ErrLFSUnauthorizedAction)
 	return ok
 }
 
-func (err ErrLFSLockUnauthorizedAction) Error() string {
-	return fmt.Sprintf("User %s doesn't have rigth to %s for lfs lock [rid: %d]", err.UserName, err.Action, err.RepoID)
+func (err ErrLFSUnauthorizedAction) Error() string {
+	if err.Mode == AccessModeWrite {
+		return fmt.Sprintf("User %s doesn't have write access for lfs lock [rid: %d]", err.UserName, err.RepoID)
+	}
+	return fmt.Sprintf("User %s doesn't have read access for lfs lock [rid: %d]", err.UserName, err.RepoID)
 }
 
 // ErrLFSLockAlreadyExist represents a "LFSLockAlreadyExist" kind of error.
@@ -876,6 +879,23 @@ func IsErrPullRequestAlreadyExists(err error) bool {
 func (err ErrPullRequestAlreadyExists) Error() string {
 	return fmt.Sprintf("pull request already exists for these targets [id: %d, issue_id: %d, head_repo_id: %d, base_repo_id: %d, head_branch: %s, base_branch: %s]",
 		err.ID, err.IssueID, err.HeadRepoID, err.BaseRepoID, err.HeadBranch, err.BaseBranch)
+}
+
+// ErrInvalidMergeStyle represents an error if merging with disabled merge strategy
+type ErrInvalidMergeStyle struct {
+	ID    int64
+	Style MergeStyle
+}
+
+// IsErrInvalidMergeStyle checks if an error is a ErrInvalidMergeStyle.
+func IsErrInvalidMergeStyle(err error) bool {
+	_, ok := err.(ErrInvalidMergeStyle)
+	return ok
+}
+
+func (err ErrInvalidMergeStyle) Error() string {
+	return fmt.Sprintf("merge strategy is not allowed or is invalid [repo_id: %d, strategy: %s]",
+		err.ID, err.Style)
 }
 
 // _________                                       __
