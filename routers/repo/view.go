@@ -45,14 +45,14 @@ func renderDirectory(ctx *context.Context, treeLink string) {
 
 	entries, err := tree.ListEntries()
 	if err != nil {
-		ctx.Handle(500, "ListEntries", err)
+		ctx.ServerError("ListEntries", err)
 		return
 	}
 	entries.CustomSort(base.NaturalSortLess)
 
 	ctx.Data["Files"], err = entries.GetCommitsInfo(ctx.Repo.Commit, ctx.Repo.TreePath)
 	if err != nil {
-		ctx.Handle(500, "GetCommitsInfo", err)
+		ctx.ServerError("GetCommitsInfo", err)
 		return
 	}
 
@@ -79,7 +79,7 @@ func renderDirectory(ctx *context.Context, treeLink string) {
 
 		dataRc, err := readmeFile.DataAsync()
 		if err != nil {
-			ctx.Handle(500, "Data", err)
+			ctx.ServerError("Data", err)
 			return
 		}
 		defer dataRc.Close()
@@ -118,7 +118,7 @@ func renderDirectory(ctx *context.Context, treeLink string) {
 	if len(ctx.Repo.TreePath) > 0 {
 		latestCommit, err = ctx.Repo.Commit.GetCommitByPath(ctx.Repo.TreePath)
 		if err != nil {
-			ctx.Handle(500, "GetCommitByPath", err)
+			ctx.ServerError("GetCommitByPath", err)
 			return
 		}
 	}
@@ -146,7 +146,7 @@ func renderFile(ctx *context.Context, entry *git.TreeEntry, treeLink, rawLink st
 	blob := entry.Blob()
 	dataRc, err := blob.DataAsync()
 	if err != nil {
-		ctx.Handle(500, "DataAsync", err)
+		ctx.ServerError("DataAsync", err)
 		return
 	}
 	defer dataRc.Close()
@@ -301,7 +301,7 @@ func Home(ctx *context.Context) {
 		}
 	}
 
-	ctx.Handle(404, "Home", fmt.Errorf(ctx.Tr("units.error.no_unit_allowed_repo")))
+	ctx.NotFound("Home", fmt.Errorf(ctx.Tr("units.error.no_unit_allowed_repo")))
 }
 
 func renderCode(ctx *context.Context) {
@@ -375,7 +375,7 @@ func RenderUserCards(ctx *context.Context, total int, getter func(page int) ([]*
 
 	items, err := getter(pager.Current())
 	if err != nil {
-		ctx.Handle(500, "getter", err)
+		ctx.ServerError("getter", err)
 		return
 	}
 	ctx.Data["Cards"] = items
@@ -405,13 +405,13 @@ func Forks(ctx *context.Context) {
 
 	forks, err := ctx.Repo.Repository.GetForks()
 	if err != nil {
-		ctx.Handle(500, "GetForks", err)
+		ctx.ServerError("GetForks", err)
 		return
 	}
 
 	for _, fork := range forks {
 		if err = fork.GetOwner(); err != nil {
-			ctx.Handle(500, "GetOwner", err)
+			ctx.ServerError("GetOwner", err)
 			return
 		}
 	}

@@ -37,25 +37,11 @@ import (
 	"gopkg.in/ini.v1"
 )
 
-const (
-	tplUpdateHook     = "#!/usr/bin/env %s\n%s update $1 $2 $3 --config='%s'\n"
-	tplPostUpdateHook = "#!/usr/bin/env %s\n\"%s/custom/bin/post-update\" \"%s\"\n"
-)
-
 var repoWorkingPool = sync.NewExclusivePool()
 
 var (
-	// ErrRepoFileNotExist repository file does not exist error
-	ErrRepoFileNotExist = errors.New("Repository file does not exist")
-
-	// ErrRepoFileNotLoaded repository file not loaded error
-	ErrRepoFileNotLoaded = errors.New("Repository file not loaded")
-
 	// ErrMirrorNotExist mirror does not exist error
 	ErrMirrorNotExist = errors.New("Mirror does not exist")
-
-	// ErrInvalidReference invalid reference specified error
-	ErrInvalidReference = errors.New("Invalid reference specified")
 
 	// ErrNameEmpty name is empty error
 	ErrNameEmpty = errors.New("Name is empty")
@@ -441,6 +427,11 @@ func (repo *Repository) MustGetUnit(tp UnitType) *RepoUnit {
 			Type:   tp,
 			Config: new(ExternalTrackerConfig),
 		}
+	} else if tp == UnitTypePullRequests {
+		return &RepoUnit{
+			Type:   tp,
+			Config: new(PullRequestsConfig),
+		}
 	}
 	return &RepoUnit{
 		Type:   tp,
@@ -584,7 +575,9 @@ func (repo *Repository) GetMirror() (err error) {
 	return err
 }
 
-// GetBaseRepo returns the base repository
+// GetBaseRepo populates repo.BaseRepo for a fork repository and
+// returns an error on failure (NOTE: no error is returned for
+// non-fork repositories, and BaseRepo will be left untouched)
 func (repo *Repository) GetBaseRepo() (err error) {
 	if !repo.IsFork {
 		return nil
@@ -781,17 +774,17 @@ func UpdateLocalCopyBranch(repoPath, localPath, branch string) error {
 			return fmt.Errorf("git clone %s: %v", branch, err)
 		}
 	} else {
-		if err := git.Checkout(localPath, git.CheckoutOptions{
-			Branch: branch,
-		}); err != nil {
-			return fmt.Errorf("git checkout %s: %v", branch, err)
-		}
-
 		_, err := git.NewCommand("fetch", "origin").RunInDir(localPath)
 		if err != nil {
 			return fmt.Errorf("git fetch origin: %v", err)
 		}
 		if len(branch) > 0 {
+			if err := git.Checkout(localPath, git.CheckoutOptions{
+				Branch: branch,
+			}); err != nil {
+				return fmt.Errorf("git checkout %s: %v", branch, err)
+			}
+
 			if err := git.ResetHEAD(localPath, true, "origin/"+branch); err != nil {
 				return fmt.Errorf("git reset --hard origin/%s: %v", branch, err)
 			}
@@ -1517,30 +1510,22 @@ func TransferOwnership(doer *User, newOwnerName string, repo *Repository) error 
 	// Dummy object.
 	collaboration := &Collaboration{RepoID: repo.ID}
 	for _, c := range collaborators {
-		collaboration.UserID = c.ID
-		if c.ID == newOwner.ID || newOwner.IsOrgMember(c.ID) {
-			if _, err = sess.Delete(collaboration); err != nil {
-				return fmt.Errorf("remove collaborator '%d': %v", c.ID, err)
+		if c.ID != newOwner.ID {
+			isMember, err := newOwner.IsOrgMember(c.ID)
+			if err != nil {
+				return fmt.Errorf("IsOrgMember: %v", err)
+			} else if !isMember {
+				continue
 			}
+		}
+		collaboration.UserID = c.ID
+		if _, err = sess.Delete(collaboration); err != nil {
+			return fmt.Errorf("remove collaborator '%d': %v", c.ID, err)
 		}
 	}
 
 	// Remove old team-repository relations.
 	if owner.IsOrganization() {
-		if err = owner.getTeams(sess); err != nil {
-			return fmt.Errorf("getTeams: %v", err)
-		}
-		for _, t := range owner.Teams {
-			if !t.hasRepository(sess, repo.ID) {
-				continue
-			}
-
-			t.NumRepos--
-			if _, err := sess.ID(t.ID).Cols("num_repos").Update(t); err != nil {
-				return fmt.Errorf("decrease team repository count '%d': %v", t.ID, err)
-			}
-		}
-
 		if err = owner.removeOrgRepo(sess, repo.ID); err != nil {
 			return fmt.Errorf("removeOrgRepo: %v", err)
 		}
@@ -1617,9 +1602,23 @@ func ChangeRepositoryName(u *User, oldRepoName, newRepoName string) (err error) 
 		return fmt.Errorf("GetRepositoryByName: %v", err)
 	}
 
-	// Change repository directory name.
-	if err = os.Rename(repo.RepoPath(), RepoPath(u.Name, newRepoName)); err != nil {
+	// Change repository directory name. We must lock the local copy of the
+	// repo so that we can atomically rename the repo path and updates the
+	// local copy's origin accordingly.
+	repoWorkingPool.CheckIn(com.ToStr(repo.ID))
+	defer repoWorkingPool.CheckOut(com.ToStr(repo.ID))
+
+	newRepoPath := RepoPath(u.Name, newRepoName)
+	if err = os.Rename(repo.RepoPath(), newRepoPath); err != nil {
 		return fmt.Errorf("rename repository directory: %v", err)
+	}
+
+	localPath := repo.LocalCopyPath()
+	if com.IsExist(localPath) {
+		_, err := git.NewCommand("remote", "set-url", "origin", newRepoPath).RunInDir(localPath)
+		if err != nil {
+			return fmt.Errorf("git remote set-url origin %s: %v", newRepoPath, err)
+		}
 	}
 
 	wikiPath := repo.WikiPath()

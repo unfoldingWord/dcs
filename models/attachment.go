@@ -31,11 +31,8 @@ type Attachment struct {
 
 // IncreaseDownloadCount is update download count + 1
 func (a *Attachment) IncreaseDownloadCount() error {
-	sess := x.NewSession()
-	defer sess.Close()
-
 	// Update download count.
-	if _, err := sess.Exec("UPDATE `attachment` SET download_count=download_count+1 WHERE id=?", a.ID); err != nil {
+	if _, err := x.Exec("UPDATE `attachment` SET download_count=download_count+1 WHERE id=?", a.ID); err != nil {
 		return fmt.Errorf("increase attachment count: %v", err)
 	}
 
@@ -138,19 +135,28 @@ func DeleteAttachment(a *Attachment, remove bool) error {
 
 // DeleteAttachments deletes the given attachments and optionally the associated files.
 func DeleteAttachments(attachments []*Attachment, remove bool) (int, error) {
-	for i, a := range attachments {
-		if remove {
+	if len(attachments) == 0 {
+		return 0, nil
+	}
+
+	var ids = make([]int64, 0, len(attachments))
+	for _, a := range attachments {
+		ids = append(ids, a.ID)
+	}
+
+	cnt, err := x.In("id", ids).NoAutoCondition().Delete(attachments[0])
+	if err != nil {
+		return 0, err
+	}
+
+	if remove {
+		for i, a := range attachments {
 			if err := os.Remove(a.LocalPath()); err != nil {
 				return i, err
 			}
 		}
-
-		if _, err := x.Delete(a); err != nil {
-			return i, err
-		}
 	}
-
-	return len(attachments), nil
+	return int(cnt), nil
 }
 
 // DeleteAttachmentsByIssue deletes all attachments associated with the given issue.

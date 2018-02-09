@@ -11,6 +11,7 @@ import (
 	"testing"
 
 	"code.gitea.io/gitea/modules/setting"
+	"code.gitea.io/gitea/modules/test"
 	api "code.gitea.io/sdk/gitea"
 
 	"github.com/stretchr/testify/assert"
@@ -51,7 +52,7 @@ func TestLinksRequireLogin(t *testing.T) {
 	for _, link := range links {
 		req := NewRequest(t, "GET", link)
 		resp := MakeRequest(t, req, http.StatusFound)
-		assert.EqualValues(t, "/user/login", RedirectURL(t, resp))
+		assert.EqualValues(t, "/user/login", test.RedirectURL(resp))
 	}
 }
 
@@ -67,7 +68,7 @@ func TestRedirectsNoLogin(t *testing.T) {
 	for link, redirectLink := range redirects {
 		req := NewRequest(t, "GET", link)
 		resp := MakeRequest(t, req, http.StatusFound)
-		assert.EqualValues(t, path.Join(setting.AppSubURL, redirectLink), RedirectURL(t, resp))
+		assert.EqualValues(t, path.Join(setting.AppSubURL, redirectLink), test.RedirectURL(resp))
 	}
 }
 
