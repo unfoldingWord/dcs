@@ -2,7 +2,7 @@
 {{with .Repository}}
 	<div class="ui container">
 		<div class="ui stackable grid header-grid">
-			<div class="eight wide column">
+			<div class="six wide column">
 				<div class="ui huge breadcrumb">
 					<i class="mega-octicon octicon-{{if .IsPrivate}}lock{{else if .IsMirror}}repo-clone{{else if .IsFork}}repo-forked{{else}}repo{{end}}"></i>
 					<a href="{{AppSubUrl}}/{{.Owner.Name}}">{{.Owner.Name}}</a>
@@ -13,7 +13,7 @@
 				</div>
 			</div>
 
-			<div class="ui eight wide right aligned column">
+			<div class="ui ten wide right aligned column">
 				<div class="ui compact labeled button" id="see-on-door43-button" tabindex="0">
 					<a class="ui compact button" target="_blank" href="https://door43.org/u/{{.Owner.Name}}/{{.Name}}/">
 						<!-- empty icon ensures that this button is same size as Watch/Star/Fork buttons -->
