@@ -2,7 +2,7 @@
 
 # Gitea - Git with a cup of tea - DCS Fork
 
-[![DCS Build Status](https://travis-ci.org/unfoldingWord-dev/dcs.svg?branch=master)](https://travis-ci.org/unfoldingWord-dev/dcs)
+[![DCS Build Status](https://travis-ci.org/unfoldingWord-dev/dcs.svg?branch=develop)](https://travis-ci.org/unfoldingWord-dev/dcs)
 [![Gitea Build Status](https://drone.gitea.io/api/badges/go-gitea/gitea/status.svg)](https://drone.gitea.io/go-gitea/gitea)
 [![Join the Discord chat at https://discord.gg/NsatcWJ](https://img.shields.io/discord/322538954119184384.svg)](https://discord.gg/NsatcWJ)
 [![](https://images.microbadger.com/badges/image/gitea/gitea.svg)](https://microbadger.com/images/gitea/gitea "Get your own image badge on microbadger.com")
