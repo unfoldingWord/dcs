@@ -1,8 +1,9 @@
 [简体中文](https://github.com/go-gitea/gitea/blob/master/README_ZH.md)
 
-# Gitea - Git with a cup of tea
+# Gitea - Git with a cup of tea - DCS Fork
 
-[![Build Status](https://drone.gitea.io/api/badges/go-gitea/gitea/status.svg)](https://drone.gitea.io/go-gitea/gitea)
+[![DCS Build Status](https://travis-ci.org/unfoldingWord-dev/gogs.svg?branch=master)](https://travis-ci.org/unfoldingWord-dev/gogs)
+[![Gitea Build Status](https://drone.gitea.io/api/badges/go-gitea/gitea/status.svg)](https://drone.gitea.io/go-gitea/gitea)
 [![Join the Discord chat at https://discord.gg/NsatcWJ](https://img.shields.io/discord/322538954119184384.svg)](https://discord.gg/NsatcWJ)
 [![](https://images.microbadger.com/badges/image/gitea/gitea.svg)](https://microbadger.com/images/gitea/gitea "Get your own image badge on microbadger.com")
 [![codecov](https://codecov.io/gh/go-gitea/gitea/branch/master/graph/badge.svg)](https://codecov.io/gh/go-gitea/gitea)
