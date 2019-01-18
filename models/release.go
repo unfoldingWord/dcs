@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"code.gitea.io/git"
+	"code.gitea.io/gitea/modules/log"
 	"code.gitea.io/gitea/modules/process"
 	"code.gitea.io/gitea/modules/setting"
 	"code.gitea.io/gitea/modules/util"
@@ -36,7 +37,7 @@ type Release struct {
 	IsPrerelease     bool           `xorm:"NOT NULL DEFAULT false"`
 	IsTag            bool           `xorm:"NOT NULL DEFAULT false"`
 	Attachments      []*Attachment  `xorm:"-"`
-	CreatedUnix      util.TimeStamp `xorm:"created INDEX"`
+	CreatedUnix      util.TimeStamp `xorm:"INDEX"`
 }
 
 func (r *Release) loadAttributes(e Engine) error {
@@ -53,7 +54,7 @@ func (r *Release) loadAttributes(e Engine) error {
 			return err
 		}
 	}
-	return nil
+	return GetReleaseAttachments(r)
 }
 
 // LoadAttributes load repo and publisher attributes for a release
@@ -79,10 +80,15 @@ func (r *Release) TarURL() string {
 
 // APIFormat convert a Release to api.Release
 func (r *Release) APIFormat() *api.Release {
+	assets := make([]*api.Attachment, 0)
+	for _, att := range r.Attachments {
+		assets = append(assets, att.APIFormat())
+	}
 	return &api.Release{
 		ID:           r.ID,
 		TagName:      r.TagName,
 		Target:       r.Target,
+		Title:        r.Title,
 		Note:         r.Note,
 		URL:          r.APIURL(),
 		TarURL:       r.TarURL(),
@@ -92,6 +98,7 @@ func (r *Release) APIFormat() *api.Release {
 		CreatedAt:    r.CreatedUnix.AsTime(),
 		PublishedAt:  r.CreatedUnix.AsTime(),
 		Publisher:    r.Publisher.APIFormat(),
+		Attachments:  assets,
 	}
 }
 
@@ -108,9 +115,9 @@ func createTag(gitRepo *git.Repository, rel *Release) error {
 	// Only actual create when publish.
 	if !rel.IsDraft {
 		if !gitRepo.IsTagExist(rel.TagName) {
-			commit, err := gitRepo.GetBranchCommit(rel.Target)
+			commit, err := gitRepo.GetCommit(rel.Target)
 			if err != nil {
-				return fmt.Errorf("GetBranchCommit: %v", err)
+				return fmt.Errorf("GetCommit: %v", err)
 			}
 
 			// Trim '--' prefix to prevent command line argument vulnerability.
@@ -134,6 +141,8 @@ func createTag(gitRepo *git.Repository, rel *Release) error {
 		if err != nil {
 			return fmt.Errorf("CommitsCount: %v", err)
 		}
+	} else {
+		rel.CreatedUnix = util.TimeStampNow()
 	}
 	return nil
 }
@@ -183,8 +192,29 @@ func CreateRelease(gitRepo *git.Repository, rel *Release, attachmentUUIDs []stri
 	}
 
 	err = addReleaseAttachments(rel.ID, attachmentUUIDs)
+	if err != nil {
+		return err
+	}
 
-	return err
+	if !rel.IsDraft {
+		if err := rel.LoadAttributes(); err != nil {
+			log.Error(2, "LoadAttributes: %v", err)
+		} else {
+			mode, _ := AccessLevel(rel.Publisher, rel.Repo)
+			if err := PrepareWebhooks(rel.Repo, HookEventRelease, &api.ReleasePayload{
+				Action:     api.HookReleasePublished,
+				Release:    rel.APIFormat(),
+				Repository: rel.Repo.APIFormat(mode),
+				Sender:     rel.Publisher.APIFormat(),
+			}); err != nil {
+				log.Error(2, "PrepareWebhooks: %v", err)
+			} else {
+				go HookQueue.Add(rel.Repo.ID)
+			}
+		}
+	}
+
+	return nil
 }
 
 // GetRelease returns release by given ID.
@@ -344,7 +374,7 @@ func SortReleases(rels []*Release) {
 }
 
 // UpdateRelease updates information of a release.
-func UpdateRelease(gitRepo *git.Repository, rel *Release, attachmentUUIDs []string) (err error) {
+func UpdateRelease(doer *User, gitRepo *git.Repository, rel *Release, attachmentUUIDs []string) (err error) {
 	if err = createTag(gitRepo, rel); err != nil {
 		return err
 	}
@@ -355,7 +385,24 @@ func UpdateRelease(gitRepo *git.Repository, rel *Release, attachmentUUIDs []stri
 		return err
 	}
 
+	err = rel.loadAttributes(x)
+	if err != nil {
+		return err
+	}
+
 	err = addReleaseAttachments(rel.ID, attachmentUUIDs)
+
+	mode, _ := AccessLevel(doer, rel.Repo)
+	if err1 := PrepareWebhooks(rel.Repo, HookEventRelease, &api.ReleasePayload{
+		Action:     api.HookReleaseUpdated,
+		Release:    rel.APIFormat(),
+		Repository: rel.Repo.APIFormat(mode),
+		Sender:     rel.Publisher.APIFormat(),
+	}); err1 != nil {
+		log.Error(2, "PrepareWebhooks: %v", err)
+	} else {
+		go HookQueue.Add(rel.Repo.ID)
+	}
 
 	return err
 }
@@ -370,13 +417,6 @@ func DeleteReleaseByID(id int64, u *User, delTag bool) error {
 	repo, err := GetRepositoryByID(rel.RepoID)
 	if err != nil {
 		return fmt.Errorf("GetRepositoryByID: %v", err)
-	}
-
-	has, err := HasAccess(u.ID, repo, AccessModeWrite)
-	if err != nil {
-		return fmt.Errorf("HasAccess: %v", err)
-	} else if !has {
-		return fmt.Errorf("DeleteReleaseByID: permission denied")
 	}
 
 	if delTag {
@@ -402,6 +442,23 @@ func DeleteReleaseByID(id int64, u *User, delTag bool) error {
 		}
 	}
 
+	rel.Repo = repo
+	if err = rel.LoadAttributes(); err != nil {
+		return fmt.Errorf("LoadAttributes: %v", err)
+	}
+
+	mode, _ := AccessLevel(u, rel.Repo)
+	if err := PrepareWebhooks(rel.Repo, HookEventRelease, &api.ReleasePayload{
+		Action:     api.HookReleaseDeleted,
+		Release:    rel.APIFormat(),
+		Repository: rel.Repo.APIFormat(mode),
+		Sender:     rel.Publisher.APIFormat(),
+	}); err != nil {
+		log.Error(2, "PrepareWebhooks: %v", err)
+	} else {
+		go HookQueue.Add(rel.Repo.ID)
+	}
+
 	return nil
 }
 
@@ -422,10 +479,10 @@ func SyncReleasesWithTags(repo *Repository, gitRepo *git.Repository) error {
 				continue
 			}
 			commitID, err := gitRepo.GetTagCommitID(rel.TagName)
-			if err != nil {
+			if err != nil && !git.IsErrNotExist(err) {
 				return fmt.Errorf("GetTagCommitID: %v", err)
 			}
-			if !gitRepo.IsTagExist(rel.TagName) || commitID != rel.Sha1 {
+			if git.IsErrNotExist(err) || commitID != rel.Sha1 {
 				if err := pushUpdateDeleteTag(repo, gitRepo, rel.TagName); err != nil {
 					return fmt.Errorf("pushUpdateDeleteTag: %v", err)
 				}

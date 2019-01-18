@@ -10,32 +10,8 @@
 
 	{{template "custom/body_outer_post" .}}
 
-	<footer>
-		<div class="ui container">
-			<div class="ui left">
-				<span class="license">Except where otherwise noted, content on DCS is licensed under a <bdi><a href="https://door43.org/en/copyright-and-licensing/" target="_blank">CC BY-SA 4.0 License</a></bdi></span>
-			</div>
-			<div class="ui right links">
-				{{if (or .ShowFooterVersion .PageIsAdmin)}}{{.i18n.Tr "version"}}: {{AppVer}} {{.i18n.Tr "page"}}: <strong>{{LoadTimes .PageStartTime}}</strong> {{.i18n.Tr "template"}}: <strong>{{call .TmplLoadTimes}}</strong>{{end}}
-				{{if .ShowFooterBranding}}
-					<a target="_blank" rel="noopener" href="https://github.com/unfoldingWord-dev/gogs"><i class="fa fa-github-square"></i><span class="sr-only">GitHub</span></a>
-				{{end}}
-				<div class="ui language bottom floating slide up dropdown link item">
-					<i class="world icon"></i>
-					<div class="text">{{.LangName}}</div>
-					<div class="menu">
-						{{range .AllLangs}}
-							<a class="item {{if eq $.Lang .Lang}}active selected{{end}}" href="{{if eq $.Lang .Lang}}#{{else}}{{$.Link}}?lang={{.Lang}}{{end}}">{{.Name}}</a>
-						{{end}}
-					</div>
-				</div>
-				<a href="{{AppSubUrl}}/vendor/librejs.html" data-jslicense="1">JavaScript licenses</a>
-				<a href="https://api-info.readthedocs.io/en/latest/">API</a>
-				<a target="_blank" rel="noopener" href="https://unfoldingword.org">unfoldingWord</a>
-				{{if (or .ShowFooterVersion .PageIsAdmin)}}<span class="version">{{GoVer}}</span>{{end}}
-			</div>
-		</div>
-	</footer>
+	{{template "base/footer_content" .}}
+
 	<script src="{{AppSubUrl}}/vendor/plugins/jquery/jquery.min.js"></script>
 	<script src="{{AppSubUrl}}/vendor/plugins/jquery.areyousure/jquery.are-you-sure.js"></script>
 {{if .RequireSimpleMDE}}
@@ -65,10 +41,16 @@
 {{if .RequireDropzone}}
 	<script src="{{AppSubUrl}}/vendor/plugins/dropzone/dropzone.js"></script>
 {{end}}
+{{if .RequireU2F}}
+	<script src="{{AppSubUrl}}/vendor/plugins/u2f/index.js"></script>
+{{end}}
+{{if .EnableCaptcha}}
+	{{if eq .CaptchaType "recaptcha"}}
+		<script src="https://www.google.com/recaptcha/api.js" async></script>
+	{{end}}
+{{end}}
 {{if .RequireTribute}}
 	<script src="{{AppSubUrl}}/vendor/plugins/tribute/tribute.min.js"></script>
-
-	{{if .Assignees}}
 	<script>
 		var issuesTribute = new Tribute({
 			values: [
@@ -89,9 +71,39 @@
 		})
 		issuesTribute.attach(document.getElementById('content'))
 	</script>
-	{{end}}
+	<script>
+		var emojiTribute = new Tribute({
+			collection: [{
+				trigger: ':',
+				requireLeadingSpace: true,
+				values: function (text, cb) {
+					var array = emojify.emojiNames;
+					var data = [];
+					for(var j=0; j<array.length; j++) {
+						if(array[j].indexOf(text) !== -1) {
+							data.push(array[j]);
+							if(data.length > 5) {
+								break;
+							}
+						}
+					}
+					cb(data);
+				},
+				lookup: function (item) {
+					return item;
+				},
+				selectTemplate: function (item) {
+					if (typeof item === 'undefinied') return null;
+					return ':' + item.original + ':';
+				},
+				menuItemTemplate: function (item) {
+					return '<img class="emoji" src="{{AppSubUrl}}/vendor/plugins/emojify/images/' + item.original + '.png"/>' + item.original;
+				}
+			}]
+		});
+		emojiTribute.attach(document.getElementById('content'))
+	</script>
 {{end}}
-	<script src="{{AppSubUrl}}/vendor/plugins/autolink/autolink.js"></script>
 	<script src="{{AppSubUrl}}/vendor/plugins/emojify/emojify.min.js"></script>
 	<script src="{{AppSubUrl}}/vendor/plugins/clipboard/clipboard.min.js"></script>
 	<script src="{{AppSubUrl}}/vendor/plugins/vue/vue.min.js"></script>
@@ -99,16 +111,13 @@
 	<!-- JavaScript -->
 	<script src="{{AppSubUrl}}/vendor/plugins/semantic/semantic.min.js"></script>
 	<script src="{{AppSubUrl}}/js/index.js?v={{MD5 AppVer}}"></script>
-
-{{if GATrackingID}}
-<script>
-(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
-(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
-m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
-})(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
-ga('create', '{{GATrackingID}}', 'auto');
-ga('send', 'pageview');
-</script>
+{{if .EnableHeatmap}}
+	<script src="{{AppSubUrl}}/vendor/plugins/moment/moment.min.js" charset="utf-8"></script>
+	<script src="{{AppSubUrl}}/vendor/plugins/vue-calendar-heatmap/vue-calendar-heatmap.browser.js" charset="utf-8"></script>
+	<script type="text/javascript">
+		initHeatmap('user-heatmap', '{{.HeatmapUser}}');
+	</script>
 {{end}}
+{{template "custom/footer" .}}
 </body>
 </html>

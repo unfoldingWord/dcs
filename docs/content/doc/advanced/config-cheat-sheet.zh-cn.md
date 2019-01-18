@@ -80,6 +80,7 @@ menu:
 - `PASSWD`: 数据库用户密码。
 - `SSL_MODE`: PostgreSQL数据库是否启用SSL模式。
 - `PATH`: Tidb 或者 SQLite3 数据文件存放路径。
+- `LOG_SQL`: **true**: 显示生成的SQL，默认为真。
 
 ## Security (`security`)
 
@@ -185,6 +186,13 @@ menu:
 - `MAX_GIT_DIFF_LINE_CHARACTERS`: 比较视图中一行最大字符数。
 - `MAX_GIT_DIFF_FILES`: 比较视图中的最大现实文件数目。
 - `GC_ARGS`: 执行 `git gc` 命令的参数, 比如： `--aggressive --auto`。
+
+## Git - 超时设置 (`git.timeout`)
+- `MIGRATE`: **600**: 迁移外部仓库时的超时时间，单位秒
+- `MIRROR`: **300**: 镜像外部仓库的超时时间，单位秒
+- `CLONE`: **300**: 内部仓库间克隆的超时时间，单位秒
+- `PULL`: **300**: 内部仓库间拉取的超时时间，单位秒
+- `GC`: **60**: git仓库GC的超时时间，单位秒
 
 ## markup (`markup`)
 

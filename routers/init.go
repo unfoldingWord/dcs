@@ -45,6 +45,7 @@ func NewServices() {
 // GlobalInit is for global configuration reload-able.
 func GlobalInit() {
 	setting.NewContext()
+	setting.CheckLFSVersion()
 	log.Trace("AppPath: %s", setting.AppPath)
 	log.Trace("AppWorkPath: %s", setting.AppWorkPath)
 	log.Trace("Custom path: %s", setting.CustomPath)
@@ -60,7 +61,9 @@ func GlobalInit() {
 			log.Fatal(4, "Failed to initialize ORM engine: %v", err)
 		}
 		models.HasEngine = true
-		models.InitOAuth2()
+		if err := models.InitOAuth2(); err != nil {
+			log.Fatal(4, "Failed to initialize OAuth2 support: %v", err)
+		}
 
 		models.LoadRepoConfig()
 		models.NewRepoContext()

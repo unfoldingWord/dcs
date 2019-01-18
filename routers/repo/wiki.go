@@ -1,4 +1,5 @@
 // Copyright 2015 The Gogs Authors. All rights reserved.
+// Copyright 2018 The Gitea Authors. All rights reserved.
 // Use of this source code is governed by a MIT-style
 // license that can be found in the LICENSE file.
 
@@ -30,8 +31,8 @@ const (
 
 // MustEnableWiki check if wiki is enabled, if external then redirect
 func MustEnableWiki(ctx *context.Context) {
-	if !ctx.Repo.Repository.UnitEnabled(models.UnitTypeWiki) &&
-		!ctx.Repo.Repository.UnitEnabled(models.UnitTypeExternalWiki) {
+	if !ctx.Repo.CanRead(models.UnitTypeWiki) &&
+		!ctx.Repo.CanRead(models.UnitTypeExternalWiki) {
 		ctx.NotFound("MustEnableWiki", nil)
 		return
 	}
@@ -73,7 +74,6 @@ func findWikiRepoCommit(ctx *context.Context) (*git.Repository, *git.Commit, err
 
 	commit, err := wikiRepo.GetBranchCommit("master")
 	if err != nil {
-		ctx.ServerError("GetBranchCommit", err)
 		return wikiRepo, nil, err
 	}
 	return wikiRepo, commit, nil
@@ -111,6 +111,9 @@ func wikiContentsByName(ctx *context.Context, commit *git.Commit, wikiName strin
 func renderWikiPage(ctx *context.Context, isViewPage bool) (*git.Repository, *git.TreeEntry) {
 	wikiRepo, commit, err := findWikiRepoCommit(ctx)
 	if err != nil {
+		if !git.IsErrNotExist(err) {
+			ctx.ServerError("GetBranchCommit", err)
+		}
 		return nil, nil
 	}
 
@@ -128,6 +131,9 @@ func renderWikiPage(ctx *context.Context, isViewPage bool) (*git.Repository, *gi
 			}
 			wikiName, err := models.WikiFilenameToName(entry.Name())
 			if err != nil {
+				if models.IsErrWikiInvalidFileName(err) {
+					continue
+				}
 				ctx.ServerError("WikiFilenameToName", err)
 				return nil, nil
 			} else if wikiName == "_Sidebar" || wikiName == "_Footer" {
@@ -197,6 +203,7 @@ func renderWikiPage(ctx *context.Context, isViewPage bool) (*git.Repository, *gi
 // Wiki renders single wiki page
 func Wiki(ctx *context.Context) {
 	ctx.Data["PageIsWiki"] = true
+	ctx.Data["CanWriteWiki"] = ctx.Repo.CanWrite(models.UnitTypeWiki)
 
 	if !ctx.Repo.Repository.HasWiki() {
 		ctx.Data["Title"] = ctx.Tr("repo.wiki")
@@ -232,13 +239,14 @@ func Wiki(ctx *context.Context) {
 
 // WikiPages render wiki pages list page
 func WikiPages(ctx *context.Context) {
-	ctx.Data["Title"] = ctx.Tr("repo.wiki.pages")
-	ctx.Data["PageIsWiki"] = true
-
 	if !ctx.Repo.Repository.HasWiki() {
 		ctx.Redirect(ctx.Repo.RepoLink + "/wiki")
 		return
 	}
+
+	ctx.Data["Title"] = ctx.Tr("repo.wiki.pages")
+	ctx.Data["PageIsWiki"] = true
+	ctx.Data["CanWriteWiki"] = ctx.Repo.CanWrite(models.UnitTypeWiki)
 
 	wikiRepo, commit, err := findWikiRepoCommit(ctx)
 	if err != nil {
@@ -262,6 +270,9 @@ func WikiPages(ctx *context.Context) {
 		}
 		wikiName, err := models.WikiFilenameToName(entry.Name())
 		if err != nil {
+			if models.IsErrWikiInvalidFileName(err) {
+				continue
+			}
 			ctx.ServerError("WikiFilenameToName", err)
 			return
 		}
@@ -344,7 +355,7 @@ func NewWikiPost(ctx *context.Context, form auth.NewWikiForm) {
 		return
 	}
 
-	ctx.Redirect(ctx.Repo.RepoLink + "/wiki/" + models.WikiNameToFilename(wikiName))
+	ctx.Redirect(ctx.Repo.RepoLink + "/wiki/" + models.WikiNameToSubURL(wikiName))
 }
 
 // EditWiki render wiki modify page
@@ -385,7 +396,7 @@ func EditWikiPost(ctx *context.Context, form auth.NewWikiForm) {
 		return
 	}
 
-	ctx.Redirect(ctx.Repo.RepoLink + "/wiki/" + models.WikiNameToFilename(newWikiName))
+	ctx.Redirect(ctx.Repo.RepoLink + "/wiki/" + models.WikiNameToSubURL(newWikiName))
 }
 
 // DeleteWikiPagePost delete wiki page

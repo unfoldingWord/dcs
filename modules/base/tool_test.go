@@ -107,12 +107,6 @@ func TestBasicAuthEncode(t *testing.T) {
 	assert.Equal(t, "Zm9vOmJhcg==", BasicAuthEncode("foo", "bar"))
 }
 
-func TestGetRandomString(t *testing.T) {
-	randomString, err := GetRandomString(4)
-	assert.NoError(t, err)
-	assert.Len(t, randomString, 4)
-}
-
 // TODO: Test PBKDF2()
 // TODO: Test VerifyTimeLimitCode()
 // TODO: Test CreateTimeLimitCode()
@@ -305,21 +299,21 @@ func TestFileSize(t *testing.T) {
 
 func TestSubtract(t *testing.T) {
 	toFloat64 := func(n interface{}) float64 {
-		switch n.(type) {
+		switch n := n.(type) {
 		case int:
-			return float64(n.(int))
+			return float64(n)
 		case int8:
-			return float64(n.(int8))
+			return float64(n)
 		case int16:
-			return float64(n.(int16))
+			return float64(n)
 		case int32:
-			return float64(n.(int32))
+			return float64(n)
 		case int64:
-			return float64(n.(int64))
+			return float64(n)
 		case float32:
-			return float64(n.(float32))
+			return float64(n)
 		case float64:
-			return n.(float64)
+			return n
 		default:
 			return 0.0
 		}

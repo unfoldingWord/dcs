@@ -14,7 +14,6 @@ import (
 	"html/template"
 	"io"
 	"math"
-	"math/big"
 	"net/http"
 	"net/url"
 	"path"
@@ -24,6 +23,7 @@ import (
 	"unicode"
 	"unicode/utf8"
 
+	"code.gitea.io/git"
 	"code.gitea.io/gitea/modules/log"
 	"code.gitea.io/gitea/modules/setting"
 	"code.gitea.io/gitea/modules/util"
@@ -59,7 +59,22 @@ func DetectEncoding(content []byte) (string, error) {
 		return "UTF-8", nil
 	}
 
-	result, err := chardet.NewTextDetector().DetectBest(content)
+	textDetector := chardet.NewTextDetector()
+	var detectContent []byte
+	if len(content) < 1024 {
+		// Check if original content is valid
+		if _, err := textDetector.DetectBest(content); err != nil {
+			return "", err
+		}
+		times := 1024 / len(content)
+		detectContent = make([]byte, 0, times*len(content))
+		for i := 0; i < times; i++ {
+			detectContent = append(detectContent, content...)
+		}
+	} else {
+		detectContent = content
+	}
+	result, err := textDetector.DetectBest(detectContent)
 	if err != nil {
 		return "", err
 	}
@@ -88,25 +103,6 @@ func BasicAuthEncode(username, password string) string {
 	return base64.StdEncoding.EncodeToString([]byte(username + ":" + password))
 }
 
-// GetRandomString generate random string by specify chars.
-func GetRandomString(n int) (string, error) {
-	const alphanum = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
-
-	buffer := make([]byte, n)
-	max := big.NewInt(int64(len(alphanum)))
-
-	for i := 0; i < n; i++ {
-		index, err := randomInt(max)
-		if err != nil {
-			return "", err
-		}
-
-		buffer[i] = alphanum[index]
-	}
-
-	return string(buffer), nil
-}
-
 // GetRandomBytesAsBase64 generates a random base64 string from n bytes
 func GetRandomBytesAsBase64(n int) string {
 	bytes := make([]byte, 32)
@@ -117,15 +113,6 @@ func GetRandomBytesAsBase64(n int) string {
 	}
 
 	return base64.RawURLEncoding.EncodeToString(bytes)
-}
-
-func randomInt(max *big.Int) (int, error) {
-	rand, err := rand.Int(rand.Reader, max)
-	if err != nil {
-		return 0, err
-	}
-
-	return int(rand.Int64()), nil
 }
 
 // VerifyTimeLimitCode verify time limit code
@@ -454,41 +441,41 @@ func Subtract(left interface{}, right interface{}) interface{} {
 	var rleft, rright int64
 	var fleft, fright float64
 	var isInt = true
-	switch left.(type) {
+	switch left := left.(type) {
 	case int:
-		rleft = int64(left.(int))
+		rleft = int64(left)
 	case int8:
-		rleft = int64(left.(int8))
+		rleft = int64(left)
 	case int16:
-		rleft = int64(left.(int16))
+		rleft = int64(left)
 	case int32:
-		rleft = int64(left.(int32))
+		rleft = int64(left)
 	case int64:
-		rleft = left.(int64)
+		rleft = left
 	case float32:
-		fleft = float64(left.(float32))
+		fleft = float64(left)
 		isInt = false
 	case float64:
-		fleft = left.(float64)
+		fleft = left
 		isInt = false
 	}
 
-	switch right.(type) {
+	switch right := right.(type) {
 	case int:
-		rright = int64(right.(int))
+		rright = int64(right)
 	case int8:
-		rright = int64(right.(int8))
+		rright = int64(right)
 	case int16:
-		rright = int64(right.(int16))
+		rright = int64(right)
 	case int32:
-		rright = int64(right.(int32))
+		rright = int64(right)
 	case int64:
-		rright = right.(int64)
+		rright = right
 	case float32:
-		fright = float64(right.(float32))
+		fright = float64(right)
 		isInt = false
 	case float64:
-		fright = right.(float64)
+		fright = right
 		isInt = false
 	}
 
@@ -587,4 +574,31 @@ func IsPDFFile(data []byte) bool {
 // IsVideoFile detects if data is an video format
 func IsVideoFile(data []byte) bool {
 	return strings.Index(http.DetectContentType(data), "video/") != -1
+}
+
+// IsAudioFile detects if data is an video format
+func IsAudioFile(data []byte) bool {
+	return strings.Index(http.DetectContentType(data), "audio/") != -1
+}
+
+// EntryIcon returns the octicon class for displaying files/directories
+func EntryIcon(entry *git.TreeEntry) string {
+	switch {
+	case entry.IsLink():
+		te, err := entry.FollowLink()
+		if err != nil {
+			log.Debug(err.Error())
+			return "file-symlink-file"
+		}
+		if te.IsDir() {
+			return "file-symlink-directory"
+		}
+		return "file-symlink-file"
+	case entry.IsDir():
+		return "file-directory"
+	case entry.IsSubModule():
+		return "file-submodule"
+	}
+
+	return "file-text"
 }

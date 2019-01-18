@@ -7,10 +7,12 @@ package models
 import (
 	"fmt"
 	"io/ioutil"
+	"math"
 	"net/url"
 	"os"
 	"path/filepath"
 	"testing"
+	"time"
 
 	"code.gitea.io/gitea/modules/setting"
 
@@ -22,10 +24,15 @@ import (
 )
 
 // NonexistentID an ID that will never exist
-const NonexistentID = 9223372036854775807
+const NonexistentID = int64(math.MaxInt64)
 
 // giteaRoot a path to the gitea root
 var giteaRoot string
+
+func fatalTestError(fmtStr string, args ...interface{}) {
+	fmt.Fprintf(os.Stderr, fmtStr, args...)
+	os.Exit(1)
+}
 
 // MainTest a reusable TestMain(..) function for unit tests that need to use a
 // test database. Creates the test database, and sets necessary settings.
@@ -34,33 +41,37 @@ func MainTest(m *testing.M, pathToGiteaRoot string) {
 	giteaRoot = pathToGiteaRoot
 	fixturesDir := filepath.Join(pathToGiteaRoot, "models", "fixtures")
 	if err = createTestEngine(fixturesDir); err != nil {
-		fmt.Fprintf(os.Stderr, "Error creating test engine: %v\n", err)
-		os.Exit(1)
+		fatalTestError("Error creating test engine: %v\n", err)
 	}
 
 	setting.AppURL = "https://try.gitea.io/"
 	setting.RunUser = "runuser"
 	setting.SSH.Port = 3000
 	setting.SSH.Domain = "try.gitea.io"
+	setting.UseSQLite3 = true
 	setting.RepoRootPath, err = ioutil.TempDir(os.TempDir(), "repos")
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "TempDir: %v\n", err)
-		os.Exit(1)
+		fatalTestError("TempDir: %v\n", err)
 	}
 	setting.AppDataPath, err = ioutil.TempDir(os.TempDir(), "appdata")
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "TempDir: %v\n", err)
-		os.Exit(1)
+		fatalTestError("TempDir: %v\n", err)
 	}
 	setting.AppWorkPath = pathToGiteaRoot
 	setting.StaticRootPath = pathToGiteaRoot
 	setting.GravatarSourceURL, err = url.Parse("https://secure.gravatar.com/avatar/")
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error url.Parse: %v\n", err)
-		os.Exit(1)
+		fatalTestError("url.Parse: %v\n", err)
 	}
 
-	os.Exit(m.Run())
+	exitStatus := m.Run()
+	if err = removeAllWithRetry(setting.RepoRootPath); err != nil {
+		fatalTestError("os.RemoveAll: %v\n", err)
+	}
+	if err = removeAllWithRetry(setting.AppDataPath); err != nil {
+		fatalTestError("os.RemoveAll: %v\n", err)
+	}
+	os.Exit(exitStatus)
 }
 
 func createTestEngine(fixturesDir string) error {
@@ -81,6 +92,18 @@ func createTestEngine(fixturesDir string) error {
 	return InitFixtures(&testfixtures.SQLite{}, fixturesDir)
 }
 
+func removeAllWithRetry(dir string) error {
+	var err error
+	for i := 0; i < 20; i++ {
+		err = os.RemoveAll(dir)
+		if err == nil {
+			break
+		}
+		time.Sleep(100 * time.Millisecond)
+	}
+	return err
+}
+
 // PrepareTestDatabase load test fixtures into test database
 func PrepareTestDatabase() error {
 	return LoadFixtures()
@@ -90,7 +113,7 @@ func PrepareTestDatabase() error {
 // by tests that use the above MainTest(..) function.
 func PrepareTestEnv(t testing.TB) {
 	assert.NoError(t, PrepareTestDatabase())
-	assert.NoError(t, os.RemoveAll(setting.RepoRootPath))
+	assert.NoError(t, removeAllWithRetry(setting.RepoRootPath))
 	metaPath := filepath.Join(giteaRoot, "integrations", "gitea-repositories-meta")
 	assert.NoError(t, com.CopyDir(metaPath, setting.RepoRootPath))
 }

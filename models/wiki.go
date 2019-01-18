@@ -45,7 +45,7 @@ func WikiNameToFilename(name string) string {
 // WikiFilenameToName converts a wiki filename to its corresponding page name.
 func WikiFilenameToName(filename string) (string, error) {
 	if !strings.HasSuffix(filename, ".md") {
-		return "", fmt.Errorf("Invalid wiki filename: %s", filename)
+		return "", ErrWikiInvalidFileName{filename}
 	}
 	basename := filename[:len(filename)-3]
 	unescaped, err := url.QueryUnescape(basename)
@@ -57,7 +57,7 @@ func WikiFilenameToName(filename string) (string, error) {
 
 // WikiCloneLink returns clone URLs of repository wiki.
 func (repo *Repository) WikiCloneLink() *CloneLink {
-	return repo.cloneLink(true)
+	return repo.cloneLink(x, true)
 }
 
 // WikiPath returns wiki data path by given user and repository name.
@@ -67,7 +67,7 @@ func WikiPath(userName, repoName string) string {
 
 // WikiPath returns wiki data path for given repository.
 func (repo *Repository) WikiPath() string {
-	return WikiPath(repo.MustOwner().Name, repo.Name)
+	return WikiPath(repo.MustOwnerName(), repo.Name)
 }
 
 // HasWiki returns true if repository has wiki.
