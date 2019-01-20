@@ -60,7 +60,7 @@
 		<div class="ui tabular stackable menu navbar">
 			{{if .Permission.CanRead $.UnitTypeCode}}
 			<a class="{{if .PageIsViewCode}}active{{end}} item" href="{{.RepoLink}}{{if (ne .BranchName .Repository.DefaultBranch)}}/src/{{.BranchNameSubURL | EscapePound}}{{end}}">
-				<i class="octicon octicon-code"></i> {{.i18n.Tr "repo.code"}}
+				<i class="octicon octicon-file-text"></i> {{.i18n.Tr "repo.code"}}
 			</a>
 			{{end}}
 
