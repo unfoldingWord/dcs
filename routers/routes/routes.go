@@ -107,7 +107,7 @@ func NewMacaron() *macaron.Macaron {
 		Langs:       setting.Langs,
 		Names:       setting.Names,
 		DefaultLang: "en-US",
-		Redirect:    true,
+		Redirect:    false,
 	}))
 	m.Use(cache.Cacher(cache.Options{
 		Adapter:       setting.CacheService.Adapter,
@@ -644,7 +644,7 @@ func RegisterRoutes(m *macaron.Macaron) {
 			}
 			ctx.Data["CommitsCount"] = ctx.Repo.CommitsCount
 		})
-	}, context.RepoAssignment(), context.UnitTypes(), reqRepoReleaseReader)
+	}, ignSignIn, context.RepoAssignment(), context.UnitTypes(), reqRepoReleaseReader)
 
 	m.Group("/:username/:reponame", func() {
 		m.Post("/topics", repo.TopicsPost)
