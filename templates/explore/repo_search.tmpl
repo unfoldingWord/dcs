@@ -1,4 +1,4 @@
-<div class="ui right floated secondary filter menu">
+	<div class="ui right floated secondary filter menu">
     <!-- Sort -->
     <div class="ui right dropdown type jump item">
 		<span class="text">
@@ -24,6 +24,7 @@
         <input name="q" value="{{.Keyword}}" placeholder="{{.i18n.Tr "explore.search"}}..." autofocus>
         <input type="hidden" name="tab" value="{{$.TabName}}">
         <button class="ui blue button">{{.i18n.Tr "explore.search"}}</button>
+		{{template "explore/info_icon" .}}
     </div>
 </form>
 <div class="ui divider"></div>
