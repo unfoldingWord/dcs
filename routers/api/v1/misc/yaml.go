@@ -9,11 +9,12 @@ import (
 	"code.gitea.io/gitea/modules/yaml"
 )
 
+// YamlOption options for YAML
 type YamlOption struct {
 	Text string
 }
 
-// https://github.com/gogits/go-gogs-client/wiki/Miscellaneous#render-an-arbitrary-markdown-document
+// Yaml https://github.com/gogits/go-gogs-client/wiki/Miscellaneous#render-an-arbitrary-markdown-document
 func Yaml(ctx *context.APIContext, form YamlOption) {
 	if ctx.HasAPIError() {
 		ctx.Error(422, "", ctx.GetErrMsg())

@@ -1,4 +1,4 @@
-package scrub
+package scrubber
 
 import (
 	"encoding/json"
@@ -12,29 +12,30 @@ import (
 	"code.gitea.io/gitea/modules/log"
 )
 
-var JSON_FILES_TO_SCRUB = [...]string{
+var jsonFilesToScrub = [...]string{
 	"project.json",
 	"package.json",
 	"manifest.json",
 	"status.json",
 }
 
-var JSON_FIELDS_TO_SCRUB = [...]string{
+var jsonFieldsToScrub = [...]string{
 	"translators",
 	"contributors",
 	"checking_entity",
 }
 
-func ScrubJsonFiles(localPath string) error {
-	for _, fileName := range JSON_FILES_TO_SCRUB {
-		if err := ScrubJsonFile(localPath, fileName); err != nil {
+// ScrubJSONFiles will scrub all JSON files
+func ScrubJSONFiles(localPath string) error {
+	for _, fileName := range jsonFilesToScrub {
+		if err := scrubJSONFile(localPath, fileName); err != nil {
 			return err
 		}
 	}
 	return nil
 }
 
-func ScrubJsonFile(localPath, fileName string) error {
+func scrubJSONFile(localPath, fileName string) error {
 	jsonPath := path.Join(localPath, fileName)
 
 	var jsonData interface{}
@@ -55,20 +56,18 @@ func ScrubJsonFile(localPath, fileName string) error {
 
 	if fileContent, err := json.MarshalIndent(m, "", "  "); err != nil {
 		return err
-	} else {
-		if err := ScrubFile(localPath, fileName); err != nil {
-			return err
-		}
-		if err := ioutil.WriteFile(jsonPath, []byte(fileContent), 0666); err != nil {
-			return err
-		}
+	} else if err := ScrubFile(localPath, fileName); err != nil {
+		return err
+	} else if err := ioutil.WriteFile(jsonPath, []byte(fileContent), 0666); err != nil {
+		return err
 	}
 
 	return nil
 }
 
+// ScrubMap will scrub a map
 func ScrubMap(m map[string]interface{}) {
-	for _, field := range JSON_FIELDS_TO_SCRUB {
+	for _, field := range jsonFieldsToScrub {
 		if _, ok := m[field]; ok {
 			m[field] = []string{}
 		}
@@ -107,6 +106,7 @@ func ScrubFile(repoPath string, fileName string) error {
 	return err
 }
 
+// ScrubCommitNameAndEmail scrubs all commit names and emails
 func ScrubCommitNameAndEmail(localPath, newName, newEmail string) error {
 	if err := os.RemoveAll(path.Join(localPath, ".git/refs/original/")); err != nil {
 		return err

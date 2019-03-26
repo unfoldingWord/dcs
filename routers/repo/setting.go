@@ -427,6 +427,7 @@ func SettingsPost(ctx *context.Context, form auth.RepoSettingForm) {
 			}
 			ctx.Flash.Success(ctx.Tr("repo.settings.scrub_success"))
 		}
+		ctx.Redirect(ctx.Repo.RepoLink + "/settings")
 
 	case "archive":
 		if !ctx.Repo.IsOwner() {

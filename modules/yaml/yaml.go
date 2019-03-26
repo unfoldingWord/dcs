@@ -13,7 +13,7 @@ import (
 
 var sanitizer = bluemonday.UGCPolicy()
 
-func renderHorizontalHtmlTable(m yaml.MapSlice) (string, error) {
+func renderHorizontalHTMLTable(m yaml.MapSlice) (string, error) {
 	var err error
 	var thead, tbody, table string
 	var mi yaml.MapItem
@@ -23,7 +23,7 @@ func renderHorizontalHtmlTable(m yaml.MapSlice) (string, error) {
 
 		switch slice := key.(type) {
 		case yaml.MapSlice:
-			key, err = renderHorizontalHtmlTable(slice)
+			key, err = renderHorizontalHTMLTable(slice)
 			if err != nil {
 				return "", err
 			}
@@ -32,7 +32,7 @@ func renderHorizontalHtmlTable(m yaml.MapSlice) (string, error) {
 
 		switch switchedValue := value.(type) {
 		case yaml.MapSlice:
-			value, err = renderHorizontalHtmlTable(switchedValue)
+			value, err = renderHorizontalHTMLTable(switchedValue)
 			if err != nil {
 				return "", err
 			}
@@ -46,7 +46,7 @@ func renderHorizontalHtmlTable(m yaml.MapSlice) (string, error) {
 					return "", fmt.Errorf("Unexpected type %T, expected MapSlice", vs)
 				}
 			}
-			value, err = renderVerticalHtmlTable(v)
+			value, err = renderVerticalHTMLTable(v)
 			if err != nil {
 				return "", err
 			}
@@ -61,7 +61,7 @@ func renderHorizontalHtmlTable(m yaml.MapSlice) (string, error) {
 	return table, nil
 }
 
-func renderVerticalHtmlTable(m []yaml.MapSlice) (string, error) {
+func renderVerticalHTMLTable(m []yaml.MapSlice) (string, error) {
 	var err error
 	var ms yaml.MapSlice
 	var mi yaml.MapItem
@@ -76,7 +76,7 @@ func renderVerticalHtmlTable(m []yaml.MapSlice) (string, error) {
 			table += `<tr>`
 			switch switchedKey := key.(type) {
 			case yaml.MapSlice:
-				key, err = renderHorizontalHtmlTable(switchedKey)
+				key, err = renderHorizontalHTMLTable(switchedKey)
 				if err != nil {
 					return "", err
 				}
@@ -85,7 +85,7 @@ func renderVerticalHtmlTable(m []yaml.MapSlice) (string, error) {
 				for _, ki := range switchedKey {
 					switch ki := ki.(type) {
 					case yaml.MapSlice:
-						horiz, err := renderHorizontalHtmlTable(ki)
+						horiz, err := renderHorizontalHTMLTable(ki)
 						if err != nil {
 							return "", err
 						}
@@ -100,7 +100,7 @@ func renderVerticalHtmlTable(m []yaml.MapSlice) (string, error) {
 
 			switch switchedValue := value.(type) {
 			case yaml.MapSlice:
-				value, err = renderHorizontalHtmlTable(switchedValue)
+				value, err = renderHorizontalHTMLTable(switchedValue)
 				if err != nil {
 					return "", err
 				}
@@ -114,7 +114,7 @@ func renderVerticalHtmlTable(m []yaml.MapSlice) (string, error) {
 						return "", fmt.Errorf("Unexpected type %T, expected MapSlice", vs)
 					}
 				}
-				value, err = renderVerticalHtmlTable(v)
+				value, err = renderVerticalHTMLTable(v)
 				if err != nil {
 					return "", err
 				}
@@ -148,10 +148,10 @@ func Render(data []byte) ([]byte, error) {
 		if err := yaml.Unmarshal(data, &ms); err != nil {
 			return nil, err
 		}
-		table, err := renderHorizontalHtmlTable(ms)
+		table, err := renderHorizontalHTMLTable(ms)
 		return []byte(table), err
 	}
-	table, err := renderVerticalHtmlTable(mss)
+	table, err := renderVerticalHTMLTable(mss)
 	return []byte(table), err
 }
 

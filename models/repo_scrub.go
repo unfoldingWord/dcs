@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"code.gitea.io/git"
-	"code.gitea.io/gitea/modules/scrub"
+	"code.gitea.io/gitea/modules/scrubber"
 
 	"github.com/Unknwon/com"
 )
@@ -28,7 +28,7 @@ func (repo *Repository) ScrubSensitiveData(doer *User, opts ScrubSensitiveDataOp
 		return fmt.Errorf("UpdateLocalCopyBranch: %v", err)
 	}
 
-	if err := scrub.ScrubJsonFiles(localPath); err == nil {
+	if err := scrubber.ScrubJSONFiles(localPath); err == nil {
 		if err := git.AddChanges(localPath, true); err != nil {
 			return fmt.Errorf("AddChanges: %v", err)
 		} else if err := git.CommitChanges(localPath, git.CommitChangesOptions{
@@ -78,9 +78,5 @@ func (repo *Repository) ScrubSensitiveData(doer *User, opts ScrubSensitiveDataOp
 		return fmt.Errorf("UpdateLocalCopyBranch: %v", err)
 	}
 
-	if err := scrub.ScrubCommitNameAndEmail(localPath, "Door43", "commit@door43.org"); err != nil {
-		return err
-	}
-
-	return nil
+	return scrubber.ScrubCommitNameAndEmail(localPath, "Door43", "commit@door43.org")
 }

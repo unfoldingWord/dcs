@@ -1,4 +1,4 @@
-package scrub_test
+package scrubber_test
 
 import (
 	"fmt"
@@ -11,7 +11,7 @@ import (
 	"time"
 
 	"code.gitea.io/git"
-	"code.gitea.io/gitea/modules/scrub"
+	"code.gitea.io/gitea/modules/scrubber"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -49,9 +49,9 @@ func TestScrubJsonFiles(t *testing.T) {
 			Message: "Initial Commit",
 		})
 		if throwsError {
-			assert.NotNil(t, scrub.ScrubJsonFiles(repoDir))
+			assert.NotNil(t, scrubber.ScrubJSONFiles(repoDir))
 		} else {
-			assert.Nil(t, scrub.ScrubJsonFiles(repoDir))
+			assert.Nil(t, scrubber.ScrubJSONFiles(repoDir))
 		}
 	}
 }
