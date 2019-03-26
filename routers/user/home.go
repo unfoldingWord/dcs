@@ -288,7 +288,10 @@ func Issues(ctx *context.Context) {
 	if repoID > 0 {
 		if _, ok := showReposMap[repoID]; !ok {
 			repo, err := models.GetRepositoryByID(repoID)
-			if err != nil {
+			if models.IsErrRepoNotExist(err) {
+				ctx.NotFound("GetRepositoryByID", err)
+				return
+			} else if err != nil {
 				ctx.ServerError("GetRepositoryByID", fmt.Errorf("[%d]%v", repoID, err))
 				return
 			}
@@ -383,6 +386,12 @@ func showOrgProfile(ctx *context.Context) {
 	}
 
 	org := ctx.Org.Organization
+
+	if !models.HasOrgVisible(org, ctx.User) {
+		ctx.NotFound("HasOrgVisible", nil)
+		return
+	}
+
 	ctx.Data["Title"] = org.DisplayName()
 
 	var orderBy models.SearchOrderBy

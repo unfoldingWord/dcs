@@ -1,4 +1,5 @@
 // Copyright 2014 The Gogs Authors. All rights reserved.
+// Copyright 2019 The Gitea Authors. All rights reserved.
 // Use of this source code is governed by a MIT-style
 // license that can be found in the LICENSE file.
 
@@ -11,6 +12,7 @@ import (
 	"strings"
 
 	"code.gitea.io/gitea/modules/log"
+	"code.gitea.io/gitea/modules/structs"
 
 	"github.com/Unknwon/com"
 	"github.com/go-xorm/builder"
@@ -314,7 +316,11 @@ func IsOrganizationOwner(orgID, uid int64) (bool, error) {
 
 // IsOrganizationMember returns true if given user is member of organization.
 func IsOrganizationMember(orgID, uid int64) (bool, error) {
-	return x.
+	return isOrganizationMember(x, orgID, uid)
+}
+
+func isOrganizationMember(e Engine, orgID, uid int64) (bool, error) {
+	return e.
 		Where("uid=?", uid).
 		And("org_id=?", orgID).
 		Table("org_user").
@@ -360,6 +366,40 @@ func getOwnedOrgsByUserID(sess *xorm.Session, userID int64) ([]*User, error) {
 		And("`team`.authorize=?", AccessModeOwner).
 		Asc("`user`.name").
 		Find(&orgs)
+}
+
+// HasOrgVisible tells if the given user can see the given org
+func HasOrgVisible(org *User, user *User) bool {
+	// Not SignedUser
+	if user == nil {
+		if org.Visibility == structs.VisibleTypePublic {
+			return true
+		}
+		return false
+	}
+
+	if user.IsAdmin {
+		return true
+	}
+
+	if org.Visibility == structs.VisibleTypePrivate && !org.IsUserPartOfOrg(user.ID) {
+		return false
+	}
+	return true
+}
+
+// HasOrgsVisible tells if the given user can see at least one of the orgs provided
+func HasOrgsVisible(orgs []*User, user *User) bool {
+	if len(orgs) == 0 {
+		return false
+	}
+
+	for _, org := range orgs {
+		if HasOrgVisible(org, user) {
+			return true
+		}
+	}
+	return false
 }
 
 // GetOwnedOrgsByUserID returns a list of organizations are owned by given user ID.
@@ -518,7 +558,7 @@ func removeOrgUser(sess *xorm.Session, orgID, userID int64) error {
 	}
 
 	// Delete member in his/her teams.
-	teams, err := getUserTeams(sess, org.ID, userID)
+	teams, err := getUserOrgTeams(sess, org.ID, userID)
 	if err != nil {
 		return err
 	}

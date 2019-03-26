@@ -377,7 +377,7 @@ func EditPullRequest(ctx *context.APIContext, form api.EditPullRequestOption) {
 
 	// Add/delete assignees
 
-	// Deleting is done the Github way (quote from their api documentation):
+	// Deleting is done the GitHub way (quote from their api documentation):
 	// https://developer.github.com/v3/issues/#edit-an-issue
 	// "assignees" (array): Logins for Users to assign to this issue.
 	// Pass one or more user logins to replace the set of assignees on this Issue.
@@ -518,6 +518,10 @@ func MergePullRequest(ctx *context.APIContext, form auth.MergePullRequestForm) {
 	//   type: integer
 	//   format: int64
 	//   required: true
+	// - name: body
+	//   in: body
+	//   schema:
+	//     $ref: "#/definitions/MergePullRequestOption"
 	// responses:
 	//   "200":
 	//     "$ref": "#/responses/empty"

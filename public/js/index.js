@@ -216,17 +216,19 @@ function initBranchSelector() {
     });
 }
 
-function updateIssuesMeta(url, action, issueIds, elementId, afterSuccess) {
-    $.ajax({
-        type: "POST",
-        url: url,
-        data: {
-            "_csrf": csrf,
-            "action": action,
-            "issue_ids": issueIds,
-            "id": elementId
-        },
-        success: afterSuccess
+function updateIssuesMeta(url, action, issueIds, elementId) {
+    return new Promise(function(resolve) {
+        $.ajax({
+            type: "POST",
+            url: url,
+            data: {
+                "_csrf": csrf,
+                "action": action,
+                "issue_ids": issueIds,
+                "id": elementId
+            },
+            success: resolve
+        })
     })
 }
 
@@ -348,6 +350,10 @@ function uploadFile(file, callback) {
     xhr.send(formData);
 }
 
+function reload() {
+    window.location.reload();
+}
+
 function initImagePaste(target) {
     target.each(function(i, field) {
         field.addEventListener('paste', function(event){
@@ -380,11 +386,25 @@ function initCommentForm() {
         var $noSelect = $list.find('.no-select');
         var $listMenu = $('.' + selector + ' .menu');
         var hasLabelUpdateAction = $listMenu.data('action') == 'update';
+        var labels = {};
 
         $('.' + selector).dropdown('setting', 'onHide', function(){
             hasLabelUpdateAction = $listMenu.data('action') == 'update'; // Update the var
             if (hasLabelUpdateAction) {
-                location.reload();
+                var promises = [];
+                for (var elementId in labels) {
+                    if (labels.hasOwnProperty(elementId)) {
+                        var label = labels[elementId];
+                        var promise = updateIssuesMeta(
+                            label["update-url"],
+                            label["action"],
+                            label["issue-id"],
+                            elementId
+                        );
+                        promises.push(promise);
+                    }
+                }
+                Promise.all(promises).then(reload);
             }
         });
 
@@ -417,23 +437,29 @@ function initCommentForm() {
                 $(this).removeClass('checked');
                 $(this).find('.octicon').removeClass('octicon-check');
                 if (hasLabelUpdateAction) {
-                    updateIssuesMeta(
-                        $listMenu.data('update-url'),
-                        "detach",
-                        $listMenu.data('issue-id'),
-                        $(this).data('id')
-                    );
+                    if (!($(this).data('id') in labels)) {
+                        labels[$(this).data('id')] = {
+                            "update-url": $listMenu.data('update-url'),
+                            "action": "detach",
+                            "issue-id": $listMenu.data('issue-id'),
+                        };
+                    } else {
+                        delete labels[$(this).data('id')];
+                    }
                 }
             } else {
                 $(this).addClass('checked');
                 $(this).find('.octicon').addClass('octicon-check');
                 if (hasLabelUpdateAction) {
-                    updateIssuesMeta(
-                        $listMenu.data('update-url'),
-                        "attach",
-                        $listMenu.data('issue-id'),
-                        $(this).data('id')
-                    );
+                    if (!($(this).data('id') in labels)) {
+                        labels[$(this).data('id')] = {
+                            "update-url": $listMenu.data('update-url'),
+                            "action": "attach",
+                            "issue-id": $listMenu.data('issue-id'),
+                        };
+                    } else {
+                        delete labels[$(this).data('id')];
+                    }
                 }
             }
 
@@ -461,8 +487,7 @@ function initCommentForm() {
                     "clear",
                     $listMenu.data('issue-id'),
                     ""
-                );
-                $listMenu.data('action', 'update'); // Update to reload the page when we updated items
+                ).then(reload);
             }
 
             $(this).parent().find('.item').each(function () {
@@ -500,9 +525,8 @@ function initCommentForm() {
                     $menu.data('update-url'),
                     "",
                     $menu.data('issue-id'),
-                    $(this).data('id'),
-                    function() { location.reload(); }
-                );
+                    $(this).data('id')
+                ).then(reload);
             }
             switch (input_id) {
                 case '#milestone_id':
@@ -527,9 +551,8 @@ function initCommentForm() {
                     $menu.data('update-url'),
                     "",
                     $menu.data('issue-id'),
-                    $(this).data('id'),
-                    function() { location.reload(); }
-                );
+                    $(this).data('id')
+                ).then(reload);
             }
 
             $list.find('.selected').html('');
@@ -670,7 +693,7 @@ function initRepository() {
     if ($('.repository.settings.options').length > 0) {
         $('#repo_name').keyup(function () {
             var $prompt = $('#repo-name-change-prompt');
-            if ($(this).val().toString().toLowerCase() != $(this).data('repo-name').toString().toLowerCase()) {
+            if ($(this).val().toString().toLowerCase() != $(this).data('name').toString().toLowerCase()) {
                 $prompt.show();
             } else {
                 $prompt.hide();
@@ -783,7 +806,7 @@ function initRepository() {
                 function (data) {
                     $editInput.val(data.title);
                     $issueTitle.text(data.title);
-                    location.reload();
+                    reload();
                 });
             return false;
         });
@@ -1711,9 +1734,9 @@ function initCodeView() {
                 $("html, body").scrollTop($first.offset().top - 200);
                 return;
             }
-            m = window.location.hash.match(/^#(L\d+)$/);
+            m = window.location.hash.match(/^#(L|n)(\d+)$/);
             if (m) {
-                $first = $list.filter('.' + m[1]);
+                $first = $list.filter('.L' + m[2]);
                 selectRange($list, $first);
                 $("html, body").scrollTop($first.offset().top - 200);
             }
@@ -1768,7 +1791,7 @@ function u2fRegistered(resp) {
         data: JSON.stringify(resp),
         contentType: "application/json; charset=utf-8",
         success: function(){
-            window.location.reload();
+            reload();
         },
         fail: function (xhr, textStatus) {
             u2fError(1);
@@ -2040,11 +2063,11 @@ $(document).ready(function () {
     $('.issue-checkbox').click(function() {
         var numChecked = $('.issue-checkbox').children('input:checked').length;
         if (numChecked > 0) {
-            $('#issue-filters').hide();
-            $('#issue-actions').show();
+            $('#issue-filters').addClass("hide");
+            $('#issue-actions').removeClass("hide");
         } else {
-            $('#issue-filters').show();
-            $('#issue-actions').hide();
+            $('#issue-filters').removeClass("hide");
+            $('#issue-actions').addClass("hide");
         }
     });
 
@@ -2055,9 +2078,7 @@ $(document).ready(function () {
             return this.dataset.issueId;
         }).get().join();
         var url = this.dataset.url
-        updateIssuesMeta(url, action, issueIDs, elementId, function() {
-            location.reload();
-        });
+        updateIssuesMeta(url, action, issueIDs, elementId).then(reload);
     });
 
     buttonsClickOnEnter();
@@ -2180,7 +2201,7 @@ function showDeletePopup() {
     }
 
     var dialog = $('.delete.modal' + filter);
-    dialog.find('.repo-name').text($this.data('repo-name'));
+    dialog.find('.name').text($this.data('name'));
 
     dialog.modal({
         closable: false,
@@ -2280,7 +2301,9 @@ function initVueComponents(){
                 return this.repos.length > 0 && this.repos.length < this.repoTypes[this.reposFilter].count;
             },
             searchURL: function() {
-                return this.suburl + '/api/v1/repos/search?uid=' + this.uid + '&q=' + this.searchQuery + '&limit=' + this.searchLimit + '&mode=' + this.repoTypes[this.reposFilter].searchMode + (this.reposFilter !== 'all' ? '&exclusive=1' : '');
+                return this.suburl + '/api/v1/repos/search?sort=updated&order=desc&uid=' + this.uid + '&q=' + this.searchQuery
+                                   + '&limit=' + this.searchLimit + '&mode=' + this.repoTypes[this.reposFilter].searchMode
+                                   + (this.reposFilter !== 'all' ? '&exclusive=1' : '');
             },
             repoTypeCount: function() {
                 return this.repoTypes[this.reposFilter].count;
@@ -2713,7 +2736,7 @@ function initNavbarContentToggle() {
 function initTopicbar() {
     var mgrBtn = $("#manage_topic"),
         editDiv = $("#topic_edit"),
-        viewDiv = $("#repo-topic"),
+        viewDiv = $("#repo-topics"),
         saveBtn = $("#save_topic"),
         topicDropdown = $('#topic_edit .dropdown'),
         topicForm = $('#topic_edit.ui.form'),
@@ -2743,16 +2766,15 @@ function initTopicbar() {
         }, function(data, textStatus, xhr){
             if (xhr.responseJSON.status === 'ok') {
                 viewDiv.children(".topic").remove();
-                if (topics.length === 0) {
-                    return
-                }
-                var topicArray = topics.split(",");
+                if (topics.length) {
+                    var topicArray = topics.split(",");
 
-                var last = viewDiv.children("a").last();
-                for (var i=0; i < topicArray.length; i++) {
-                    $('<div class="ui green basic label topic" style="cursor:pointer;">'+topicArray[i]+'</div>').insertBefore(last)
+                    var last = viewDiv.children("a").last();
+                    for (var i=0; i < topicArray.length; i++) {
+                        $('<div class="ui green basic label topic" style="cursor:pointer;">'+topicArray[i]+'</div>').insertBefore(last)
+                    }
                 }
-                editDiv.css('display', 'none'); // hide Semantic UI Grid
+                editDiv.css('display', 'none');
                 viewDiv.show();
             }
         }).fail(function(xhr){
@@ -2893,7 +2915,7 @@ function updateDeadline(deadlineString) {
         contentType: 'application/json',
         type: 'POST',
         success: function () {
-            window.location.reload();
+            reload();
         },
         error: function () {
             $('#deadline-loader').removeClass('loading');
@@ -2918,14 +2940,19 @@ function deleteDependencyModal(id, type) {
 
 function initIssueList() {
     var repolink = $('#repolink').val();
-    $('.new-dependency-drop-list')
+    $('#new-dependency-drop-list')
         .dropdown({
             apiSettings: {
                 url: suburl + '/api/v1/repos/' + repolink + '/issues?q={query}',
                 onResponse: function(response) {
                     var filteredResponse = {'success': true, 'results': []};
+                    var currIssueId = $('#new-dependency-drop-list').data('issue-id');
                     // Parse the response from the api to work with our dropdown
                     $.each(response, function(index, issue) {
+                        // Don't list current issue in the dependency list.
+                        if(issue.id === currIssueId) {
+                            return;
+                        }
                         filteredResponse.results.push({
                             'name'  : '#' + issue.number + '&nbsp;' + htmlEncode(issue.title),
                             'value' : issue.id
@@ -2933,6 +2960,7 @@ function initIssueList() {
                     });
                     return filteredResponse;
                 },
+                cache: false,
             },
 
             fullTextSearch: true
