@@ -3,19 +3,11 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:c298eea5ff7f6ab40cda6fe75d2224e2dd271941abe2f66276063b39e43e5687"
-  name = "code.gitea.io/git"
-  packages = ["."]
-  pruneopts = "NUT"
-  revision = "63b74d438b29bb272fa9b4010abe3f50a832e7ef"
-
-[[projects]]
-  branch = "master"
   digest = "1:dbf849e6552740945ac1c6c6acba590fbc594e4efa80cf05568dec8579ae0dab"
   name = "code.gitea.io/sdk"
   packages = ["gitea"]
   pruneopts = "NUT"
-  revision = "e4effe4df2b895ca51482d24edb8748704326f1a"
+  revision = "a669487e86e0cc5833a2867e6476da6327244a1a"
 
 [[projects]]
   digest = "1:5d72bbcc9c8667b11c3dc3cbe681c5a6f71e5096744c0bf7726ab5c6425d5dc4"
@@ -887,9 +879,12 @@
   revision = "0abe01ef9be25c4aedc174758ec2d917314d6d70"
 
 [[projects]]
-  digest = "1:a852b1ad03ca063d2c57866d9f94dcb1cb2e111415c5902ce0586fc2d207221b"
+  digest = "1:0d3d375df794ab11a192668f4eacdb116ccd99aa574fe357185a2d463e07f2fb"
   name = "github.com/stretchr/testify"
-  packages = ["assert"]
+  packages = [
+    "assert",
+    "require",
+  ]
   pruneopts = "NUT"
   revision = "12b6f73e6084dad08a7c6e575284b177ecafbc71"
   version = "v1.2.1"
@@ -1231,7 +1226,6 @@
   analyzer-name = "dep"
   analyzer-version = 1
   input-imports = [
-    "code.gitea.io/git",
     "code.gitea.io/sdk/gitea",
     "github.com/PuerkitoBio/goquery",
     "github.com/Unknwon/cae/zip",
@@ -1313,6 +1307,7 @@
     "github.com/satori/go.uuid",
     "github.com/sergi/go-diff/diffmatchpatch",
     "github.com/stretchr/testify/assert",
+    "github.com/stretchr/testify/require",
     "github.com/tstranex/u2f",
     "github.com/urfave/cli",
     "github.com/yohcop/openid-go",
