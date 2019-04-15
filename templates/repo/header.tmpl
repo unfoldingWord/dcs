@@ -12,12 +12,6 @@
 				{{if .IsFork}}<div class="fork-flag">{{$.i18n.Tr "repo.forked_from"}} <a href="{{.BaseRepo.Link}}">{{SubStr .BaseRepo.RelLink 1 -1}}</a></div>{{end}}
 			</div>
 			<div class="repo-buttons">
-				<div class="ui button" id="door43-preview-button" tabindex="0">
-					<a class="ui compact basic button" target="_blank" href="https://door43.org/u/{{.Owner.Name}}/{{.Name}}/">
-						<i class="icon fa-file"></i>{{$.i18n.Tr "preview"}}
-					</a>
-				</div>
-
 				<div class="ui labeled button" tabindex="0">
 					<a class="ui compact basic button" href="{{$.RepoLink}}/action/{{if $.IsWatchingRepo}}un{{end}}watch?redirect_to={{$.Link}}">
 						<i class="icon fa-eye{{if not $.IsWatchingRepo}}-slash{{end}}"></i>{{if $.IsWatchingRepo}}{{$.i18n.Tr "repo.unwatch"}}{{else}}{{$.i18n.Tr "repo.watch"}}{{end}}
