@@ -22,6 +22,7 @@ import (
 	"testing"
 
 	"code.gitea.io/gitea/models"
+	"code.gitea.io/gitea/modules/base"
 	"code.gitea.io/gitea/modules/setting"
 	"code.gitea.io/gitea/routers"
 	"code.gitea.io/gitea/routers/routes"
@@ -94,7 +95,7 @@ func TestMain(m *testing.M) {
 }
 
 func initIntegrationTest() {
-	giteaRoot := os.Getenv("GITEA_ROOT")
+	giteaRoot := base.SetupGiteaRoot()
 	if giteaRoot == "" {
 		fmt.Println("Environment variable $GITEA_ROOT not set")
 		os.Exit(1)

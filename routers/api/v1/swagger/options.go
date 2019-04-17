@@ -94,6 +94,7 @@ type swaggerParameterBodies struct {
 
 	// in:body
 	CreateUserOption api.CreateUserOption
+
 	// in:body
 	EditUserOption api.EditUserOption
 
@@ -102,4 +103,13 @@ type swaggerParameterBodies struct {
 
 	// in:body
 	EditAttachmentOptions api.EditAttachmentOptions
+
+	// in:body
+	CreateFileOptions api.CreateFileOptions
+
+	// in:body
+	UpdateFileOptions api.UpdateFileOptions
+
+	// in:body
+	DeleteFileOptions api.DeleteFileOptions
 }

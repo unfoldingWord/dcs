@@ -3,7 +3,7 @@ package models
 import (
 	"fmt"
 
-	"code.gitea.io/git"
+	"code.gitea.io/gitea/modules/git"
 	"code.gitea.io/gitea/modules/scrubber"
 
 	"github.com/Unknwon/com"
