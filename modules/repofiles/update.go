@@ -318,12 +318,12 @@ func CreateOrUpdateRepoFile(repo *models.Repository, doer *models.User, opts *Up
 			result, _, err := transform.String(charsetEncoding.NewEncoder(), string(content))
 			if err != nil {
 				// Look if we can't encode back in to the original we should just stick with utf-8
-				log.Error("Error re-encoding %s (%s) as %s - will stay as UTF-8: %v", opts.TreePath, opts.FromTreePath, encoding, err)
+				log.Error(1, "Error re-encoding %s (%s) as %s - will stay as UTF-8: %v", opts.TreePath, opts.FromTreePath, encoding, err)
 				result = content
 			}
 			content = result
 		} else {
-			log.Error("Unknown encoding: %s", encoding)
+			log.Error(1, "Unknown encoding: %s", encoding)
 		}
 	}
 	// Reset the opts.Content to our adjusted content to ensure that LFS gets the correct content
