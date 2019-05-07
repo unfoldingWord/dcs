@@ -33,7 +33,7 @@ mkdir -p ${RELEASE_PATH}
 
 # COPY IN gitea and make custom dir from $CUSTOM_REPO
 cp ${GITEA_PATH}/gitea ${RELEASE_PATH}
-cp -r ${GITEA_PATH}/gitea/custom ${RELEASE_PATH}
+cp -r ${GITEA_PATH}/custom ${RELEASE_PATH}
 
 # TAR IT UP
 tar -cvzf ${RELEASES_DIR}/linux_amd64_${version}.tar.gz -C ${RELEASES_DIR}/${version} gitea
