@@ -496,10 +496,6 @@ func UploadFilePost(ctx *context.Context, form auth.UploadRepoFileForm) {
 	}
 
 	form.TreePath = cleanUploadFileName(form.TreePath)
-	if len(form.TreePath) == 0 {
-		ctx.Error(500, "Upload file name is invalid")
-		return
-	}
 
 	treeNames, treePaths := getParentTreeFields(form.TreePath)
 	if len(treeNames) == 0 {
