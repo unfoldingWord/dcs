@@ -26,7 +26,7 @@ jobs:
   include:
     - stage: coverage
       if: type = push
-      go: 1.8
+      go: 1.12
       install:
         - go get github.com/wadey/gocovmerge
         - go get golang.org/x/tools/cmd/cover
