@@ -1344,31 +1344,6 @@ func createRepository(e *xorm.Session, doer, u *User, repo *Repository) (err err
 		return fmt.Errorf("copyDefaultWebhooksToRepo: %v", err)
 	}
 
-	/*** DCS Custom Code - Add Webhook to every repo for the Door43 client ***/
-	w := &Webhook{
-		RepoID:      repo.ID,
-		URL:         "https://git.door43.org/client/webhook",
-		ContentType: ContentTypeJSON,
-		Secret:      "",
-		HookEvent: &HookEvent{
-			PushOnly:       true,
-			SendEverything: true,
-			ChooseEvents:   false,
-			HookEvents: HookEvents{
-				Create:      false,
-				Push:        false,
-				PullRequest: false,
-			},
-		},
-		IsActive:     true,
-		HookTaskType: GITEA,
-		OrgID:        0,
-	}
-	if err := w.UpdateEvent(); err == nil {
-		CreateWebhook(w)
-	}
-	/*** END DCS Custom Code ***/
-
 	return nil
 }
 
