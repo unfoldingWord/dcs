@@ -45,7 +45,6 @@ coverage.all
 
 /bin
 /dist
-/custom
 /data
 /indexers
 /log

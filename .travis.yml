@@ -1,0 +1,36 @@
+language: go
+
+go_import_path: code.gitea.io/gitea
+
+go:
+  - 1.12
+
+env:
+  TAGS: cert sqlite pam miniwinsvc
+
+before_install:
+  - sudo add-apt-repository -y ppa:git-core/ppa
+  - sudo apt-get update -y
+  - sudo apt-get install -y git libpam-dev
+
+install:
+  - go get golang.org/x/tools/cmd/cover
+  - go get github.com/mattn/goveralls
+  - go get github.com/wadey/gocovmerge
+
+script:
+  - make clean
+  - make vet
+
+  # - make lint
+
+  - make test
+  - make test-vendor
+  - make build TAGS=redis
+  - make test-mysql TEST_MYSQL_HOST=127.0.0.1:3306
+
+after_success:
+  - make unit-test-coverage
+  - make integration-test-coverage TEST_MYSQL_HOST=127.0.0.1:3306
+  - make coverage
+  - goveralls -coverprofile=coverage.all;

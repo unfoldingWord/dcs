@@ -22,9 +22,9 @@ RUN if [ -n "${GITEA_VERSION}" ]; then git checkout "${GITEA_VERSION}"; fi \
  && make clean generate build
 
 FROM alpine:3.10
-LABEL maintainer="maintainers@gitea.io"
+LABEL maintainer="admin@door43.org"
 
-EXPOSE 22 3000
+EXPOSE 22 80
 
 RUN apk --no-cache add \
     bash \
