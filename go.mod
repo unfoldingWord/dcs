@@ -7,7 +7,7 @@ require (
 	github.com/PuerkitoBio/goquery v0.0.0-20170324135448-ed7d758e9a34
 	github.com/RoaringBitmap/roaring v0.4.7 // indirect
 	github.com/Unknwon/cae v0.0.0-20160715032808-c6aac99ea2ca
-	github.com/Unknwon/com v0.0.0-20190321035513-0fed4efef755
+	github.com/unknwon/com v0.0.0-20190321035513-0fed4efef755
 	github.com/Unknwon/i18n v0.0.0-20171114194641-b64d33658966
 	github.com/Unknwon/paginater v0.0.0-20151104151617-7748a72e0141
 	github.com/andybalholm/cascadia v0.0.0-20161224141413-349dd0209470 // indirect
