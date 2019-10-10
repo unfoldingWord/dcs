@@ -39,6 +39,7 @@ import (
 	"github.com/go-macaron/binding"
 	"github.com/go-macaron/cache"
 	"github.com/go-macaron/captcha"
+	"github.com/go-macaron/cors"
 	"github.com/go-macaron/csrf"
 	"github.com/go-macaron/i18n"
 	"github.com/go-macaron/session"
@@ -437,17 +438,19 @@ func RegisterRoutes(m *macaron.Macaron) {
 			m.Post("/delete", admin.DeleteDefaultWebhook)
 			m.Get("/:type/new", repo.WebhooksNew)
 			m.Post("/gitea/new", bindIgnErr(auth.NewWebhookForm{}), repo.WebHooksNewPost)
-			m.Post("/gogs/new", bindIgnErr(auth.NewWebhookForm{}), repo.GogsHooksNewPost)
+			m.Post("/gogs/new", bindIgnErr(auth.NewGogshookForm{}), repo.GogsHooksNewPost)
 			m.Post("/slack/new", bindIgnErr(auth.NewSlackHookForm{}), repo.SlackHooksNewPost)
 			m.Post("/discord/new", bindIgnErr(auth.NewDiscordHookForm{}), repo.DiscordHooksNewPost)
 			m.Post("/dingtalk/new", bindIgnErr(auth.NewDingtalkHookForm{}), repo.DingtalkHooksNewPost)
+			m.Post("/telegram/new", bindIgnErr(auth.NewTelegramHookForm{}), repo.TelegramHooksNewPost)
 			m.Post("/msteams/new", bindIgnErr(auth.NewMSTeamsHookForm{}), repo.MSTeamsHooksNewPost)
 			m.Get("/:id", repo.WebHooksEdit)
 			m.Post("/gitea/:id", bindIgnErr(auth.NewWebhookForm{}), repo.WebHooksEditPost)
-			m.Post("/gogs/:id", bindIgnErr(auth.NewWebhookForm{}), repo.GogsHooksEditPost)
+			m.Post("/gogs/:id", bindIgnErr(auth.NewGogshookForm{}), repo.GogsHooksEditPost)
 			m.Post("/slack/:id", bindIgnErr(auth.NewSlackHookForm{}), repo.SlackHooksEditPost)
 			m.Post("/discord/:id", bindIgnErr(auth.NewDiscordHookForm{}), repo.DiscordHooksEditPost)
 			m.Post("/dingtalk/:id", bindIgnErr(auth.NewDingtalkHookForm{}), repo.DingtalkHooksEditPost)
+			m.Post("/telegram/:id", bindIgnErr(auth.NewTelegramHookForm{}), repo.TelegramHooksEditPost)
 			m.Post("/msteams/:id", bindIgnErr(auth.NewMSTeamsHookForm{}), repo.MSTeamsHooksNewPost)
 		})
 
@@ -576,7 +579,7 @@ func RegisterRoutes(m *macaron.Macaron) {
 					m.Post("/delete", org.DeleteWebhook)
 					m.Get("/:type/new", repo.WebhooksNew)
 					m.Post("/gitea/new", bindIgnErr(auth.NewWebhookForm{}), repo.WebHooksNewPost)
-					m.Post("/gogs/new", bindIgnErr(auth.NewWebhookForm{}), repo.GogsHooksNewPost)
+					m.Post("/gogs/new", bindIgnErr(auth.NewGogshookForm{}), repo.GogsHooksNewPost)
 					m.Post("/slack/new", bindIgnErr(auth.NewSlackHookForm{}), repo.SlackHooksNewPost)
 					m.Post("/discord/new", bindIgnErr(auth.NewDiscordHookForm{}), repo.DiscordHooksNewPost)
 					m.Post("/dingtalk/new", bindIgnErr(auth.NewDingtalkHookForm{}), repo.DingtalkHooksNewPost)
@@ -634,7 +637,7 @@ func RegisterRoutes(m *macaron.Macaron) {
 				m.Post("/delete", repo.DeleteWebhook)
 				m.Get("/:type/new", repo.WebhooksNew)
 				m.Post("/gitea/new", bindIgnErr(auth.NewWebhookForm{}), repo.WebHooksNewPost)
-				m.Post("/gogs/new", bindIgnErr(auth.NewWebhookForm{}), repo.GogsHooksNewPost)
+				m.Post("/gogs/new", bindIgnErr(auth.NewGogshookForm{}), repo.GogsHooksNewPost)
 				m.Post("/slack/new", bindIgnErr(auth.NewSlackHookForm{}), repo.SlackHooksNewPost)
 				m.Post("/discord/new", bindIgnErr(auth.NewDiscordHookForm{}), repo.DiscordHooksNewPost)
 				m.Post("/dingtalk/new", bindIgnErr(auth.NewDingtalkHookForm{}), repo.DingtalkHooksNewPost)
@@ -946,9 +949,14 @@ func RegisterRoutes(m *macaron.Macaron) {
 		m.Get("/swagger.v1.json", templates.JSONRenderer(), routers.SwaggerV1Json)
 	}
 
+	var handlers []macaron.Handler
+	if setting.EnableCORS {
+		handlers = append(handlers, cors.CORS(setting.CORSConfig))
+	}
+	handlers = append(handlers, ignSignIn)
 	m.Group("/api", func() {
 		apiv1.RegisterRoutes(m)
-	}, ignSignIn)
+	}, handlers...)
 
 	m.Group("/api/internal", func() {
 		// package name internal is ideal but Golang is not allowed, so we use private as package name.

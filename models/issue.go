@@ -755,7 +755,7 @@ func (issue *Issue) changeStatus(e *xorm.Session, doer *User, isClosed bool) (er
 	}
 
 	// Update issue count of milestone
-	if err = changeMilestoneIssueStats(e, issue); err != nil {
+	if err := updateMilestoneClosedNum(e, issue.MilestoneID); err != nil {
 		return err
 	}
 
@@ -1099,7 +1099,7 @@ func newIssue(e *xorm.Session, doer *User, opts NewIssueOptions) (err error) {
 	}
 
 	if opts.Issue.MilestoneID > 0 {
-		if err = changeMilestoneAssign(e, doer, opts.Issue, -1); err != nil {
+		if _, err = e.Exec("UPDATE `milestone` SET num_issues=num_issues+1 WHERE id=?", opts.Issue.MilestoneID); err != nil {
 			return err
 		}
 	}
@@ -1446,7 +1446,7 @@ func getParticipantsByIssueID(e Engine, issueID int64) ([]*User, error) {
 	userIDs := make([]int64, 0, 5)
 	if err := e.Table("comment").Cols("poster_id").
 		Where("`comment`.issue_id = ?", issueID).
-		And("`comment`.type = ?", CommentTypeComment).
+		And("`comment`.type in (?,?,?)", CommentTypeComment, CommentTypeCode, CommentTypeReview).
 		And("`user`.is_active = ?", true).
 		And("`user`.prohibit_login = ?", false).
 		Join("INNER", "`user`", "`user`.id = `comment`.poster_id").
