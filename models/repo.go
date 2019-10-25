@@ -1063,7 +1063,7 @@ func CleanUpMigrateInfo(repo *Repository) (*Repository, error) {
 		}
 	}
 
-	_, err := git.NewCommand("remote", "remove", "origin").RunInDir(repoPath)
+	_, err := git.NewCommand("remote", "rm", "origin").RunInDir(repoPath)
 	if err != nil && !strings.HasPrefix(err.Error(), "exit status 128 - fatal: No such remote ") {
 		return repo, fmt.Errorf("CleanUpMigrateInfo: %v", err)
 	}
@@ -1487,6 +1487,13 @@ func TransferOwnership(doer *User, newOwnerName string, repo *Repository) error 
 		return fmt.Errorf("update owner: %v", err)
 	}
 
+	// Update pull request headusername
+	if _, err := sess.Where("head_repo_id = ?", repo.ID).Update(&PullRequest{
+		HeadUserName: newOwner.LowerName,
+	}); err != nil {
+		return fmt.Errorf("update pull request: %v", err)
+	}
+
 	// Remove redundant collaborators.
 	collaborators, err := repo.getCollaborators(sess)
 	if err != nil {
@@ -1896,12 +1903,11 @@ func DeleteRepository(doer *User, uid, repoID int64) error {
 		if err != nil {
 			return err
 		}
-
 		if count > 1 {
 			continue
 		}
 
-		oidPath := filepath.Join(v.Oid[0:2], v.Oid[2:4], v.Oid[4:len(v.Oid)])
+		oidPath := filepath.Join(setting.LFS.ContentPath, v.Oid[0:2], v.Oid[2:4], v.Oid[4:len(v.Oid)])
 		removeAllWithNotice(sess, "Delete orphaned LFS file", oidPath)
 	}
 
