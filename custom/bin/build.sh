@@ -9,7 +9,7 @@ GITEA_REPO=https://github.com/unfoldingWord-dev/dcs.git
 version=$1 # THIS NEEDS TO BE THE VERSION WE ARE MAKING WITHOUT the "v", e.g. 1.0.0
 
 # MAKE A TEMP go DIRECTORY
-cd $(mktemp -d /tmp/go-XXXX)
+cd $(mktemp -d ~/tmp/go-XXXX)
 
 # SET GO PATHS FOR COMPILING
 export GOPATH=$(pwd)
