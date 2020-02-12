@@ -54,6 +54,7 @@ coverage.all
 !/custom/conf
 /custom/conf/*
 !/custom/conf/app.ini.sample
+!/custom/bin
 /data
 /indexers
 /log
