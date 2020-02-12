@@ -1,13 +1,16 @@
 <div class="ui container" id="navbar">
 	<div class="item brand" style="justify-content: space-between;">
 		<a href="{{AppSubUrl}}/">
-			<img class="ui mini image" src="{{StaticUrlPrefix}}/img/gitea-sm.png">
+			<!-- DCS Custom Modifications -  intentionally uses /img/favicon.png here -->
+			<img class="ui mini image" src="{{AppSubUrl}}/img/favicon.png">
+			<!-- END DCS Custom Modifications -->
 		</a>
 		<div class="ui basic icon button mobile-only" id="navbar-expand-toggle">
 			<i class="sidebar icon"></i>
 		</div>
 	</div>
 
+        <!-- DCS Custom Modifications - Removed explore if not logged in -->
 	{{if .IsSigned}}
 		<a class="item {{if .PageIsDashboard}}active{{end}}" href="{{AppSubUrl}}/">{{.i18n.Tr "dashboard"}}</a>
 		<a class="item {{if .PageIsIssues}}active{{end}}" href="{{AppSubUrl}}/issues">{{.i18n.Tr "issues"}}</a>
@@ -16,12 +19,8 @@
 		<a class="item {{if .PageIsExplore}}active{{end}}" href="{{AppSubUrl}}/explore/repos">{{.i18n.Tr "explore"}}</a>
 	{{else if .IsLandingPageHome}}
 		<a class="item {{if .PageIsHome}}active{{end}}" href="{{AppSubUrl}}/">{{.i18n.Tr "home"}}</a>
-		<a class="item {{if .PageIsExplore}}active{{end}}" href="{{AppSubUrl}}/explore/repos">{{.i18n.Tr "explore"}}</a>
-	{{else if .IsLandingPageExplore}}
-		<a class="item {{if .PageIsExplore}}active{{end}}" href="{{AppSubUrl}}/explore/repos">{{.i18n.Tr "home"}}</a>
-	{{else if .IsLandingPageOrganizations}}
-		<a class="item {{if .PageIsExplore}}active{{end}}" href="{{AppSubUrl}}/explore/organizations">{{.i18n.Tr "home"}}</a>
 	{{end}}
+	<!-- END DCS Custom Modifications -->
 
 	{{template "custom/extra_links" .}}
 
@@ -119,7 +118,6 @@
 
 	{{else}}
 
-		<a class="item" target="_blank" rel="noopener noreferrer" href="https://docs.gitea.io">{{.i18n.Tr "help"}}</a>
 		<div class="right stackable menu">
 			{{if .ShowRegistrationButton}}
 				<a class="item{{if .PageIsSignUp}} active{{end}}" href="{{AppSubUrl}}/user/sign_up">

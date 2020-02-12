@@ -1,0 +1,80 @@
+name: Deploy DCS to Docker
+
+on:
+  push:
+    branches:
+      - master
+      - beta
+      - develop
+    tags:
+      - 'v*'
+      - 'release/v*'
+
+jobs:
+  deploy-docker:
+    name: Build & Deploy DCS to Docker Hub
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          path: ${{ env.RELATIVE_GITEA_ROOT }}
+          fetch-depth: 0
+          lfs: true
+
+      - name: Fetch tags
+        shell: bash
+        run: |
+          git fetch --all
+          git fetch --tags --force
+          git fetch --depth=1 origin +refs/tags/*:refs/tags/*
+        working-directory: ${{ env.GITEA_ROOT }}
+
+      - name: Get Docker tags based on branch and branch tag
+        shell: bash
+        run: |
+          BRANCH=$(git rev-parse --abbrev-ref HEAD)
+          echo "BRANCH: ${BRANCH}"
+          DOCKER_TAGS="${BRANCH},"
+          CLOSEST_TAG=$(git describe --abbrev=0)
+          echo "CLOSEST_TAG: ${CLOSEST_TAG}"
+          COMMIT_TAG=$(git describe)
+          echo "COMMIT_TAG: ${COMMIT_TAG}"
+          if [[ "${BRANCH}" == "master" ]]; then
+            echo "BRANCH: master (prod/master tags)"
+            if [[ "${CLOSEST_TAG}" == "${COMMIT_TAG}" || ${CLOSEST_TAG} == *"-dcs" ]]; then
+              TAG="${CLOSEST_TAG}"
+            else
+              TAG="${CLOSEST_TAG}-dcs"
+            fi
+            echo "TAG: ${TAG}"
+            DOCKER_TAGS="${BRANCH},latest,latest-prod,${TAG}"
+          elif [[ "${BRANCH}" == "beta" ]]; then
+            echo "BRANCH: beta (beta tags)"
+            DOCKER_TAGS="${BRANCH},latest-beta,${CLOSEST_TAG}"
+          else
+            echo "BRANCH: ${BRANCH} (develop tags)"
+            DOCKER_TAGS="${BRANCH},${CLOSEST_TAG}-dev,${COMMIT_TAG},latest-dev"
+          fi
+          echo "DOCKER_TAGS: ${DOCKER_TAGS}"
+          echo "::set-env name=DOCKER_TAGS::$DOCKER_TAGS"
+        working-directory: ${{ env.GITEA_ROOT }}
+
+      - name: Debug
+        shell: bash
+        run: |
+          echo "GITHUB_REF:" ${GITHUB_REF}
+          echo "BRANCH CHECKED OUT:" $(git rev-parse --abbrev-ref HEAD)
+          echo "LATEST TAG:" $(git describe --abbrev=0)
+          echo "DOCKER_TAGS:" ${{ env.DOCKER_TAGS }}
+        working-directory: ${{ env.GITEA_ROOT }}
+
+      - name: Publish DCS to Docker Hub
+        uses: elgohr/Publish-Docker-Github-Action@master
+        with:
+          name: unfoldingword/dcs
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+          workdir: ${{ env.GITEA_ROOT }}
+          dockerfile: Dockerfile
+          tags: ${{ env.DOCKER_TAGS }}
