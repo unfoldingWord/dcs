@@ -13,5 +13,5 @@ func TestExploreRepos(t *testing.T) {
 	defer prepareTestEnv(t)()
 
 	req := NewRequest(t, "GET", "/explore/repos")
-	MakeRequest(t, req, http.StatusOK)
+	MakeRequest(t, req, http.StatusFound)
 }
