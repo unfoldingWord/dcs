@@ -1,0 +1,41 @@
+language: go
+
+go_import_path: code.gitea.io/gitea
+
+services:
+  - mysql
+
+go:
+  - 1.13
+
+env:
+  TAGS: cert sqlite pam miniwinsvc
+
+before_install:
+  - sudo add-apt-repository -y ppa:git-core/ppa
+  - sudo apt-get update -y
+  - sudo apt-get install -y git libpam-dev
+  - mysql -e 'CREATE DATABASE gitea;'
+
+install:
+  - go get golang.org/x/tools/cmd/cover
+  - go get github.com/mattn/goveralls
+  - go get github.com/wadey/gocovmerge
+
+script:
+  - make clean
+  - make generate
+  - make golangci-lint
+  - make revive
+  - make swagger-check
+  - make swagger-validate
+  - make test-vendor
+  - make test
+  - make build TAGS=redis
+  - make test-mysql TEST_MYSQL_HOST=127.0.0.1:3306
+
+after_success:
+  - make unit-test-coverage
+  - make integration-test-coverage TEST_MYSQL_HOST=127.0.0.1:3306
+  - make coverage
+  - goveralls -coverprofile=coverage.all;
