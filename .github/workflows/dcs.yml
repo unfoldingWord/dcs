@@ -189,7 +189,6 @@ jobs:
           fi
           echo "::set-output name=DOCKER_TAGS::$DOCKER_TAGS"
           echo "::set-env name=DOCKER_TAGS::$DOCKER_TAGS"
-        id: get_docker_tags
         working-directory: ${{ env.GITEA_ROOT }}
 
       - name: Debug
@@ -200,12 +199,9 @@ jobs:
           ls -l ${GOPATH}
           ls -l ${GITEA_ROOT}
           echo "REF:" ${GITHUB_REF}
-          echo "HEAD_REF:" ${GITHUB_HEAD_REF}
-          echo "BASE_REF:" ${GITHUB_BASE_REF}
           echo "BRANCH CHECKED OUT:" $(git rev-parse --abbrev-ref HEAD)
-          echo "LATEST TAG:" $(git tag --sort=committerdate | tail -1)
-          echo "DOCKER_TAGS: " ${DOCKER_TAGS}
-          echo "steps.get_docker_tags.docker_tag:" ${{ steps.get_docker_tags.DOCKER_TAGS }}
+          echo "LATEST TAG:" $(git for-each-ref --sort=creatordate --format '%(refname)'git for-each-ref --sort=taggerdate --format '%(tag)' refs/tags | tail -1)
+          echo "DOCKER_TAGS: ${{ env.DOCKER_TAGS }}
         working-directory: ${{ env.GITEA_ROOT }}
 
       - name: Publish DCS to Docker Hub
@@ -216,4 +212,4 @@ jobs:
           password: ${{ secrets.DOCKER_PASSWORD }}
           workdir: ${{ env.GITEA_ROOT }}
           dockerfile: Dockerfile
-          tags: ${{ steps.get_docker_tags.DOCKER_TAGS }}
+          tags: ${{ env.DOCKER_TAGS }}
