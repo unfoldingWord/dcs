@@ -156,6 +156,7 @@ jobs:
         with:
           path: ${{ env.RELATIVE_GITEA_ROOT }}
           lfs: true
+          depth: 0
 
       - name: Fetch tags
         shell: bash
