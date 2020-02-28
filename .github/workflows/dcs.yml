@@ -171,20 +171,20 @@ jobs:
         run: |
           BRANCH=$(git rev-parse --abbrev-ref HEAD)
           echo "BRANCH: ${BRANCH}"
+          DOCKER_TAGS="${BRANCH},"
           LATEST_TAG=$(git for-each-ref --sort=creatordate --format '%(refname)'git for-each-ref --sort=taggerdate --format '%(tag)' refs/tags | tail -1)
           echo LATEST_TAG: $LATEST_TAG
           if [[ "$BRANCH" == "master" ]]; then
-            DOCKER_TAGS="latest,latest-prod,$LATEST_TAG"
             echo "${BRANCH} = master"
+            DOCKER_TAGS="${DOCKER_TAGS}latest,latest-prod,$LATEST_TAG"
           else
             DESCRIBE=$(git describe)
             echo "DESCRIBE = ${DESCRIBE}"
             if [[ "$LATEST_TAG" == "$DESCRIBE" ]]; then
-              DOCKER_TAGS="beta,${LATEST_TAG}-beta,latest-beta,${LATEST_TAG}-dev,"
+              DOCKER_TAGS="${DOCKER_TAGS}beta,${LATEST_TAG}-beta,latest-beta,${LATEST_TAG}-dev,latest-dev"
             else
-              DOCKER_TAGS="${LATEST_TAG}-dev,${DESCRIBE},"
+              DOCKER_TAGS="${DOCKER_TAGS}${LATEST_TAG}-dev,${DESCRIBE},latest-dev"
             fi
-            DOCKER_TAGS="${DOCKER_TAGS}develop,latest-dev"
             echo "DOCKER_TAGS: ${DOCKER_TAGS}"
           fi
           echo "::set-output name=DOCKER_TAGS::$DOCKER_TAGS"
