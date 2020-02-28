@@ -201,7 +201,7 @@ jobs:
           echo "REF:" ${GITHUB_REF}
           echo "BRANCH CHECKED OUT:" $(git rev-parse --abbrev-ref HEAD)
           echo "LATEST TAG:" $(git for-each-ref --sort=creatordate --format '%(refname)'git for-each-ref --sort=taggerdate --format '%(tag)' refs/tags | tail -1)
-          echo "DOCKER_TAGS: ${{ env.DOCKER_TAGS }}
+          echo "DOCKER_TAGS:" ${{ env.DOCKER_TAGS }}
         working-directory: ${{ env.GITEA_ROOT }}
 
       - name: Publish DCS to Docker Hub
