@@ -41,7 +41,7 @@ jobs:
             echo "BRANCH: ${BRANCH} (develop tags)"
             COMMIT_TAG=$(git describe)
             echo "COMMIT_TAG: ${COMMIT_TAG}"
-            DOCKER_TAGS="${BRANCH},${CLOSET_TAG}-dev,${COMMIT_TAG},latest-dev"
+            DOCKER_TAGS="${BRANCH},${CLOSEST_TAG}-dev,${COMMIT_TAG},latest-dev"
             if [[ "${CLOSEST_TAG}" == "${COMMIT_TAG}" ]]; then
               echo "${BRANCH}'s latest commit's name is a tag (beta tags)"
               DOCKER_TAGS="${DOCKER_TAGS},beta,${COMMIT_TAG}-beta,latest-beta"
