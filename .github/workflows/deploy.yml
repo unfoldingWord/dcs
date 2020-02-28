@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - master
+      - beta
       - develop
     tags:
       - 'v*'
@@ -37,20 +38,25 @@ jobs:
           DOCKER_TAGS="${BRANCH},"
           CLOSEST_TAG=$(git describe --abbrev=0)
           echo "CLOSEST_TAG: ${CLOSEST_TAG}"
+          COMMIT_TAG=$(git describe)
+          echo "COMMIT_TAG: ${COMMIT_TAG}"
           if [[ "${BRANCH}" == "master" ]]; then
             echo "BRANCH: master (prod/master tags)"
-            DOCKER_TAGS="${BRANCH},latest,latest-prod,${CLOSEST_TAG}"
+            if [[ "${CLOSEST_TAG}" == "${COMMIT_TAG}" || ${CLOSEST_TAG} == *"-dcs" ]]; then
+              TAG="${CLOSEST_TAG}"
+            else
+              TAG="${CLOSEST_TAG}-dcs"
+            fi
+            echo "TAG: ${TAG}"
+            DOCKER_TAGS="${BRANCH},latest,latest-prod,${TAG}"
+          elif [[ "${BRANCH}" == "beta" ]]; then
+            echo "BRANCH: beta (beta tags)"
+            DOCKER_TAGS="${BRANCH},latest-beta,${CLOSEST_TAG}"
           else
             echo "BRANCH: ${BRANCH} (develop tags)"
-            COMMIT_TAG=$(git describe)
-            echo "COMMIT_TAG: ${COMMIT_TAG}"
             DOCKER_TAGS="${BRANCH},${CLOSEST_TAG}-dev,${COMMIT_TAG},latest-dev"
-            if [[ "${CLOSEST_TAG}" == "${COMMIT_TAG}" ]]; then
-              echo "${BRANCH}'s latest commit's name is a tag (beta tags)"
-              DOCKER_TAGS="${DOCKER_TAGS},beta,${COMMIT_TAG}-beta,latest-beta"
-            fi
-            echo "DOCKER_TAGS: ${DOCKER_TAGS}"
           fi
+          echo "DOCKER_TAGS: ${DOCKER_TAGS}"
           echo "::set-env name=DOCKER_TAGS::$DOCKER_TAGS"
         working-directory: ${{ env.GITEA_ROOT }}
 
