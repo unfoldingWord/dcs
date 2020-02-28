@@ -178,7 +178,7 @@ jobs:
             echo "${BRANCH} = master"
           else
             DESCRIBE=$(git describe)
-            echo "DESCRIBE = ${DESCIBE}"
+            echo "DESCRIBE = ${DESCRIBE}"
             if [[ "$LATEST_TAG" == "$DESCRIBE" ]]; then
               DOCKER_TAGS="beta,${LATEST_TAG}-beta,latest-beta,${LATEST_TAG}-dev,"
             else
