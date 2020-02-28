@@ -1,4 +1,4 @@
-name: DCS
+name: DCS Tests
 
 on:
 # Commented out in favor of all testing done on pull requests, not pushes as already should be tested
