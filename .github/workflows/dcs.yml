@@ -155,15 +155,15 @@ jobs:
         uses: actions/checkout@v2
         with:
           path: ${{ env.RELATIVE_GITEA_ROOT }}
+          fetch-depth: 0
           lfs: true
-          depth: 0
 
       - name: Fetch tags
         shell: bash
         run: |
-          git remote add upstream https://github.com/go-gitea/gitea
           git fetch --all
           git fetch --tags --force
+          git fetch --depth=1 origin +refs/tags/*:refs/tags/*
         working-directory: ${{ env.GITEA_ROOT }}
 
       - name: Get Docker tags
