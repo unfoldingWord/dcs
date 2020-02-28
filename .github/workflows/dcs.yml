@@ -174,7 +174,7 @@ jobs:
           LATEST_TAG=$(git for-each-ref --sort=creatordate --format '%(refname)'git for-each-ref --sort=taggerdate --format '%(tag)' refs/tags | tail -1)
           echo LATEST_TAG: $LATEST_TAG
           if [[ "$BRANCH" == "master" ]]; then
-            DOCKER_TAGS="latest,$LATEST_TAG"
+            DOCKER_TAGS="latest,latest-prod,$LATEST_TAG"
             echo "${BRANCH} = master"
           else
             DESCRIBE=$(git describe)
