@@ -14,136 +14,18 @@ on:
       - release-*
 
 jobs:
-#  test:
-#    name: Build & Test DCS
-#    runs-on: ubuntu-latest
-#    env:
-#      GOPATH: /home/runner/work/dcs/dcs/go
-#      RELATIVE_GITEA_ROOT: go/src/code.gitea.io/gitea
-#      GITEA_ROOT: /home/runner/work/dcs/dcs/go/src/code.gitea.io/gitea
-#      GOPROXY: off
-#      GOSUMDB: sum.golang.org
-#      TAGS: bindata sqlite sqlite_unlock_notify
-#      TEST_LDAP: 0
-#
-#    steps:
-#      - name: Set up Go 1.13
-#        uses: actions/setup-go@v1
-#        with:
-#          go-version: 1.13
-#        id: go
-#
-#      - name: Checkout
-#        uses: actions/checkout@v2
-#        with:
-#          path: ${{ env.RELATIVE_GITEA_ROOT }}
-#          lfs: true
-#
-#      - name: Debug - pre-build
-#        shell: bash
-#        run: |
-#          pwd
-#          go version
-#          ls -l ${GOPATH}
-#          ls -l ${GITEA_ROOT}
-#
-#      - name: Setup node
-#        if: always()
-#        uses: actions/setup-node@v1
-#        with:
-#          node-version: 10.x
-#
-#      - name: Make css and js with node
-#        shell: bash
-#        run: |
-#          make css
-#          make js
-#        working-directory: ${{ env.GITEA_ROOT }}
-#
-#      - name: Fetch tags
-#        shell: bash
-#        run: git fetch --tags --force
-#        working-directory: ${{ env.GITEA_ROOT }}
-#
-#      - name: Build gitea binary
-#        shell: bash
-#        run: make build
-#        working-directory: ${{ env.GITEA_ROOT }}
-#
-#      - name: Build without GCC
-#        shell: bash
-#        run: go build -mod=vendor -o gitea_no_gcc # test if build succeeds without the sqlite tag
-#        env:
-#          GO111MODULE: on
-#        working-directory: ${{ env.GITEA_ROOT }}
-#
-#      - name: Debug - post-build
-#        shell: bash
-#        run: ls -l ${GITEA_ROOT}
-#
-#      - name: tag-pre-condition
-#        shell: bash
-#        run: git update-ref refs/heads/tag_test ${GITHUB_SHA}
-#        working-directory: ${{ env.GITEA_ROOT }}
-#
-#      - name: Swagger
-#        shell: bash
-#        run: |
-#          make swagger-check
-#          make swagger-validate
-#        env:
-#          GOPROXY: https://proxy.golang.org
-#        working-directory: ${{ env.GITEA_ROOT }}
-#
-#      - name: GolangCI-Linter
-#        uses: Mushus/golangci-linter@v1.1.2
-#        with:
-#          basePath: ${{ env.GITEA_ROOT }}
-#
-#      - name: Revive
-#        uses: morphy2k/revive-action@v1.3.1
-#        with:
-#          path: ${{ env.GITEA_ROOT }}
-#
-#      - name: Test Vendor
-#        shell: bash
-#        run: make test-vendor
-#        env:
-#          GOPROXY: https://proxy.golang.org
-#        working-directory: ${{ env.GITEA_ROOT }}
-#
-#      - name: Unit Tests
-#        shell: bash
-#        run: make unit-test-coverage
-#        working-directory: ${{ env.GITEA_ROOT }}
-#
-#      - name: Test SQLite
-#        shell: bash
-#        run: |
-#          make test-sqlite-migration
-#          make test-sqlite
-#        working-directory: ${{ env.GITEA_ROOT }}
-#
-#      - name: Setup MySQL Test DBs
-#        shell: bash
-#        run: |
-#          mysqladmin -u root -proot password ''
-#          mysql -e 'CREATE DATABASE gitea; CREATE DATABASE test; CREATE DATABASE testgitea;' -u root
-#          mysql -e 'show databases;' -u root
-#
-#      - name: Test MySQL
-#        shell: bash
-#        run: |
-#          sudo echo "127.0.0.1  mysql" | sudo tee -a /etc/hosts
-#          make test-mysql
-#          make integration-test-coverage
-#        working-directory: ${{ env.GITEA_ROOT }}
-
-  deploy-docker:
-    name: Build & Deply DCS to Docker Hub
+  test:
+    name: Build & Test DCS
     runs-on: ubuntu-latest
-#    needs: test
-    if: github.event_name == 'push' || (github.ref == 'refs/heads/master' || github.ref == 'refs/heads/develop')
+    env:
+      GOPATH: /home/runner/work/dcs/dcs/go
+      RELATIVE_GITEA_ROOT: go/src/code.gitea.io/gitea
+      GITEA_ROOT: /home/runner/work/dcs/dcs/go/src/code.gitea.io/gitea
+      GOPROXY: off
+      GOSUMDB: sum.golang.org
+      TAGS: bindata sqlite sqlite_unlock_notify
+      TEST_LDAP: 0
+
     steps:
       - name: Set up Go 1.13
         uses: actions/setup-go@v1
@@ -157,35 +39,150 @@ jobs:
           path: ${{ env.RELATIVE_GITEA_ROOT }}
           lfs: true
 
+      - name: Debug - pre-build
+        shell: bash
+        run: |
+          pwd
+          go version
+          ls -l ${GOPATH}
+          ls -l ${GITEA_ROOT}
+
+      - name: Setup node
+        if: always()
+        uses: actions/setup-node@v1
+        with:
+          node-version: 10.x
+
+      - name: Make css and js with node
+        shell: bash
+        run: |
+          make css
+          make js
+        working-directory: ${{ env.GITEA_ROOT }}
+
+      - name: Fetch tags
+        shell: bash
+        run: git fetch --tags --force
+        working-directory: ${{ env.GITEA_ROOT }}
+
+      - name: Build gitea binary
+        shell: bash
+        run: make build
+        working-directory: ${{ env.GITEA_ROOT }}
+
+      - name: Build without GCC
+        shell: bash
+        run: go build -mod=vendor -o gitea_no_gcc # test if build succeeds without the sqlite tag
+        env:
+          GO111MODULE: on
+        working-directory: ${{ env.GITEA_ROOT }}
+
+      - name: Debug - post-build
+        shell: bash
+        run: ls -l ${GITEA_ROOT}
+
+      - name: tag-pre-condition
+        shell: bash
+        run: git update-ref refs/heads/tag_test ${GITHUB_SHA}
+        working-directory: ${{ env.GITEA_ROOT }}
+
+      - name: Swagger
+        shell: bash
+        run: |
+          make swagger-check
+          make swagger-validate
+        env:
+          GOPROXY: https://proxy.golang.org
+        working-directory: ${{ env.GITEA_ROOT }}
+
+      - name: GolangCI-Linter
+        uses: Mushus/golangci-linter@v1.1.2
+        with:
+          basePath: ${{ env.GITEA_ROOT }}
+
+      - name: Revive
+        uses: morphy2k/revive-action@v1.3.1
+        with:
+          path: ${{ env.GITEA_ROOT }}
+
+      - name: Test Vendor
+        shell: bash
+        run: make test-vendor
+        env:
+          GOPROXY: https://proxy.golang.org
+        working-directory: ${{ env.GITEA_ROOT }}
+
+      - name: Unit Tests
+        shell: bash
+        run: make unit-test-coverage
+        working-directory: ${{ env.GITEA_ROOT }}
+
+      - name: Test SQLite
+        shell: bash
+        run: |
+          make test-sqlite-migration
+          make test-sqlite
+        working-directory: ${{ env.GITEA_ROOT }}
+
+      - name: Setup MySQL Test DBs
+        shell: bash
+        run: |
+          mysqladmin -u root -proot password ''
+          mysql -e 'CREATE DATABASE gitea; CREATE DATABASE test; CREATE DATABASE testgitea;' -u root
+          mysql -e 'show databases;' -u root
+
+      - name: Test MySQL
+        shell: bash
+        run: |
+          sudo echo "127.0.0.1  mysql" | sudo tee -a /etc/hosts
+          make test-mysql
+          make integration-test-coverage
+        working-directory: ${{ env.GITEA_ROOT }}
+
+  deploy-docker:
+    name: Build & Deply DCS to Docker Hub
+    runs-on: ubuntu-latest
+    needs: test
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/master' || github.ref == 'refs/heads/develop')
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          path: ${{ env.RELATIVE_GITEA_ROOT }}
+          fetch-depth: 0
+          lfs: true
+
       - name: Fetch tags
         shell: bash
         run: |
-          git remote add upstream https://github.com/go-gitea/gitea
           git fetch --all
           git fetch --tags --force
+          git fetch --depth=1 origin +refs/tags/*:refs/tags/*
         working-directory: ${{ env.GITEA_ROOT }}
 
-      - name: Get Docker tags
+      - name: Get Docker tags based on branch and branch tag
         shell: bash
         run: |
           BRANCH=$(git rev-parse --abbrev-ref HEAD)
-          LATEST_TAG=$(git for-each-ref --sort=creatordate --format '%(refname)'git for-each-ref --sort=taggerdate --format '%(tag)' refs/tags | tail -1)
-          if [[ "$BRANCH" == "master" ]]; then
-            DOCKER_TAGS="latest,$LATEST_TAG"
+          echo "BRANCH: ${BRANCH}"
+          DOCKER_TAGS="${BRANCH},"
+          CLOSEST_TAG=$(git describe --abbrev=0)
+          echo "CLOSEST_TAG: ${CLOSEST_TAG}"
+          if [[ "${BRANCH}" == "master" ]]; then
+            echo "BRANCH: master (prod/master tags)"
+            DOCKER_TAGS="${BRANCH},latest,latest-prod,${CLOSEST_TAG}"
           else
-            DESCRIBE=$(git describe)
-            if [[ "$LATEST_TAG" == "$DESCRIBE" ]]; then
-              DOCKER_TAGS="beta,${LATEST_TAG}-beta,latest-beta,${LATEST_TAG}-dev,"
-            else
-              DOCKER_TAGS="${LATEST_TAG}-dev,${DESCRIBE},"
+            echo "BRANCH: ${BRANCH} (develop tags)"
+            COMMIT_NAME=$(git describe)
+            echo "COMMIT_NAME: ${COMMIT_NAME}"
+            DOCKER_TAGS="${BRANCH},${BRANCH_TAG}-dev,${COMMIT_NAME},latest-dev"
+            if [[ "${CLOSEST_TAG}" == "${COMMIT_NAME}" ]]; then
+              echo "${BRANCH} latest commit's name is a tag (beta tags)"
+              DOCKER_TAGS="${DOCKER_TAGS},beta,${CLOSEST_TAG}-beta,latest-beta"
             fi
-            DOCKER_TAGS="${DOCKER_TAGS}develop,latest-dev"
+            echo "DOCKER_TAGS: ${DOCKER_TAGS}"
           fi
-          echo "::set-output name=DOCKER_TAGS::$DOCKER_TAGS"
-          echo BRANCH: $BRANCH
-          echo LATEST_TAG: $LATEST_TAG
-          echo DOCKER_TAGS: $DOCKER_TAGS
-        id: get_docker_tags
+          echo "::set-env name=DOCKER_TAGS::$DOCKER_TAGS"
         working-directory: ${{ env.GITEA_ROOT }}
 
       - name: Debug
@@ -196,12 +193,9 @@ jobs:
           ls -l ${GOPATH}
           ls -l ${GITEA_ROOT}
           echo "REF:" ${GITHUB_REF}
-          echo "HEAD_REF:" ${GITHUB_HEAD_REF}
-          echo "BASE_REF:" ${GITHUB_BASE_REF}
           echo "BRANCH CHECKED OUT:" $(git rev-parse --abbrev-ref HEAD)
-          echo "LATEST TAG:" $(git tag --sort=committerdate | tail -1)
-          echo "DOCKER_TAGS: " ${DOCKER_TAGS}
-          echo "steps.get_docker_tags.docker_tag:" ${{ steps.get_docker_tags.DOCKER_TAGS }}
+          echo "LATEST TAG:" $(git describe --abbrev=0)
+          echo "DOCKER_TAGS:" ${{ env.DOCKER_TAGS }}
         working-directory: ${{ env.GITEA_ROOT }}
 
       - name: Publish DCS to Docker Hub
@@ -212,4 +206,4 @@ jobs:
           password: ${{ secrets.DOCKER_PASSWORD }}
           workdir: ${{ env.GITEA_ROOT }}
           dockerfile: Dockerfile
-          tags: ${{ steps.get_docker_tags.DOCKER_TAGS }}
+          tags: ${{ env.DOCKER_TAGS }}
