@@ -31,11 +31,11 @@ jobs:
       - name: Get Docker tags based on branch and branch tag
         shell: bash
         run: |
-          BRANCH=$(git rev-parse --abbrev-ref HEAD)
+          BRANCH=`git rev-parse --abbrev-ref HEAD`
           echo "BRANCH: ${BRANCH}"
-          CLOSEST_TAG=$(git describe --abbrev=0)
+          CLOSEST_TAG=`git describe --abbrev=0`
           echo "CLOSEST_TAG: ${CLOSEST_TAG}"
-          COMMIT_TAG=$(git describe)
+          COMMIT_TAG=`git describe --tags`
           echo "COMMIT_TAG: ${COMMIT_TAG}"
           DOCKER_TAGS="${BRANCH//\//-}"
           if [[ "${BRANCH}" == "release/dcs/v"* ]]; then
@@ -62,8 +62,8 @@ jobs:
         shell: bash
         run: |
           echo "GITHUB_REF:" ${GITHUB_REF}
-          echo "BRANCH CHECKED OUT:" $(git rev-parse --abbrev-ref HEAD)
-          echo "LATEST TAG:" $(git describe --abbrev=0)
+          echo "BRANCH CHECKED OUT:" `git rev-parse --abbrev-ref HEAD`
+          echo "LATEST TAG:" `git describe --abbrev=0`
           echo "DOCKER_TAGS:" ${{ env.DOCKER_TAGS }}
         working-directory: ${{ env.GITEA_ROOT }}
 
