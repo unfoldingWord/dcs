@@ -520,12 +520,14 @@ func SettingsPost(ctx *context.Context, form auth.RepoSettingForm) {
 			log.Trace("Repository scrubbed: %s/%s", ctx.Repo.Owner.Name, repo.Name)
 
 			units := make([]models.RepoUnit, 0, len(repo.Units))
+			var deleteUnitTypes []models.UnitType
+
 			for _, unit := range repo.Units {
 				if unit.Type != models.UnitTypeWiki {
 					units = append(units, *unit)
 				}
 			}
-			if err := models.UpdateRepositoryUnits(repo, units); err != nil {
+			if err := models.UpdateRepositoryUnits(repo, units, deleteUnitTypes); err != nil {
 				ctx.ServerError("UpdateRepositoryUnits", err)
 				return
 			}
