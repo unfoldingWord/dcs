@@ -7,6 +7,7 @@
 package scrubber
 
 import (
+	"code.gitea.io/gitea/modules/repository"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -81,18 +82,20 @@ func ScrubSensitiveData(repo *models.Repository, doer *models.User, opts ScrubSe
 			return fmt.Errorf("GetBranchCommit [branch: %s]: %v", "master", err)
 		}
 		// Simulate push event.
-		pushCommits := &models.PushCommits{
+		pushCommits := &repository.PushCommits{
 			Len:     1,
-			Commits: []*models.PushCommit{models.CommitToPushCommit(commit)},
+			Commits: []*repository.PushCommit{repository.CommitToPushCommit(commit)},
 		}
 		oldCommitID := opts.LastCommitID
 		if err := repofiles.CommitRepoAction(&repofiles.CommitRepoActionOptions{
-			PusherName:  doer.Name,
+			PushUpdateOptions: repofiles.PushUpdateOptions{
+				PusherName: doer.Name,
+				RepoName:    repo.Name,
+				RefFullName: git.BranchPrefix + "master",
+				OldCommitID: oldCommitID,
+				NewCommitID: commit.ID.String(),
+			},
 			RepoOwnerID: repo.MustOwner().ID,
-			RepoName:    repo.Name,
-			RefFullName: git.BranchPrefix + "master",
-			OldCommitID: oldCommitID,
-			NewCommitID: commit.ID.String(),
 			Commits:     pushCommits,
 		}); err != nil {
 			return fmt.Errorf("CommitRepoAction: %v", err)
