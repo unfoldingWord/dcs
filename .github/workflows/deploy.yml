@@ -33,7 +33,7 @@ jobs:
         run: |
           BRANCH=`git rev-parse --abbrev-ref HEAD`
           echo "BRANCH: ${BRANCH}"
-          CLOSEST_TAG=`git describe --abbrev=0`
+          CLOSEST_TAG=`git describe --abbrev=0 --tags`
           echo "CLOSEST_TAG: ${CLOSEST_TAG}"
           COMMIT_TAG=`git describe --tags`
           echo "COMMIT_TAG: ${COMMIT_TAG}"
