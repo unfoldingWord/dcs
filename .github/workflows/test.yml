@@ -16,7 +16,7 @@ on:
   push:
     branches:
       - '!master'
-      - '!develop'
+      - '!release/dcs/v*'
   pull_request:
     branches:
       - '**'
