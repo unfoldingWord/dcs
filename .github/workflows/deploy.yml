@@ -20,25 +20,27 @@ jobs:
           fetch-depth: 0
           lfs: true
 
-      - uses: nelonoel/branch-name@v1
-
-      - name: SET DOCKER_TAGS from BRANCH_NAME (will be branch or tag of push event)
+      - name: SET DOCKER_TAGS from GITHUB_REF (will be branch or tag of push event)
         shell: bash
         run: |
-          DOCKER_TAGS="${BRANCH_NAME}"
-          if [[ "${BRANCH_NAME}" == "master" ]]; then
-            DOCKER_TAGS="${DOCKER_TAGS},latest"
+          REF=`echo ${GITHUB_REF} | cut -d "/" -f3-`
+          DOCKER_TAGS="${REF}"
+          if [[ "${REF}" == "v"*"-dcs" ]]; then
+            PATCH_VERSION=${REF#v}
+            MINOR_VERSION=`echo ${PATCH_VERSION%-dcs} | cut -f1,2 -d'.'`-dcs
+            MAJOR_VERSION=`echo ${MINOR_VERSION%-dcs} | cut -f1 -d'.'`-dcs
+            DOCKER_TAGS="${DOCKER_TAGS},latest-prod,${MAJOR_VERSION}-dcs,${MINOR_VERSION}-dcs,${PATCH_VERSION}"
+          elif [[ "${REF}" == "master" ]]; then
+            DOCKER_TAGS="${DOCKER_TAGS},latest,latest-dev"
           fi
+          echo "DOCKER_TAGS: ${DOCKER_TAGS}"
           echo "::set-env name=DOCKER_TAGS::$DOCKER_TAGS"
-        working-directory: ${{ env.GITEA_ROOT }}
 
       - name: Debug
         shell: bash
         run: |
           echo "GITHUB_REF:" ${GITHUB_REF}
-          echo "BRANCH_NAME:" ${BRANCH_NAME}
           echo "DOCKER_TAGS:" ${{ env.DOCKER_TAGS }}
-        working-directory: ${{ env.GITEA_ROOT }}
 
       - name: Publish DCS to Docker Hub
         uses: elgohr/Publish-Docker-Github-Action@master
