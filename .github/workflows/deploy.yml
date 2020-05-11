@@ -27,16 +27,19 @@ jobs:
           echo "REF=${REF}"
           DOCKER_TAGS="${REF//\//-}"
           if [[ "${REF}" == "v"*"-dcs" ]]; then
-            PATCH_VERSION=${REF#v}
-            MINOR_VERSION=`echo ${PATCH_VERSION%-dcs} | cut -f1,2 -d'.'`
-            MAJOR_VERSION=`echo ${MINOR_VERSION%-dcs} | cut -f1 -d'.'`
+            # REF is a tag so we create tags for patch, minor and major versions and is the latest production
+            PATCH_VERSION=${REF%-dcs}
+            MINOR_VERSION=`echo ${PATCH_VERSION} | cut -f1,2 -d'.'`
+            MAJOR_VERSION=`echo ${MINOR_VERSION} | cut -f1 -d'.'`
             DOCKER_TAGS="${DOCKER_TAGS},latest-prod,${MAJOR_VERSION},${MINOR_VERSION},${PATCH_VERSION}"
           elif [[ "${REF}" == "master" ]]; then
-            DOCKER_TAGS="${DOCKER_TAGS},latest,latest-dev"
+            # REF is the master branch which is the develop branch so is the lastest develop
+            DOCKER_TAGS="${DOCKER_TAGS},latest,latest-dev,develop"
           else
+            # REF is a release branch so is a beta or latest of this minor version
             VERSION=`echo ${REF} | cut -f3 -d'/'`
             VERSION=${VERSION#v}
-            DOCKER_TAGS="${DOCKER_TAGS},beta,${VERSION}-beta,latest-${VERSION}"
+            DOCKER_TAGS="${DOCKER_TAGS},beta,${VERSION}-beta,latest-${VERSION},latest-beta"
           fi
           echo "DOCKER_TAGS: ${DOCKER_TAGS}"
           echo "::set-env name=DOCKER_TAGS::$DOCKER_TAGS"
