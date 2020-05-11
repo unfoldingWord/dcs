@@ -9,8 +9,6 @@ on:
       - v*-dcs
 
 jobs:
-  get-docker-tags:
-
   deploy-docker:
     name: Build & Deploy DCS to Docker Hub
     runs-on: ubuntu-latest
@@ -24,7 +22,7 @@ jobs:
 
       - uses: nelonoel/branch-name@v1
 
-      - name: Get Docker tags from BRANCH_NAME (branch of tag)
+      - name: SET DOCKER_TAGS from BRANCH_NAME (will be branch or tag of push event)
         shell: bash
         run: |
           DOCKER_TAGS="${BRANCH_NAME}"
