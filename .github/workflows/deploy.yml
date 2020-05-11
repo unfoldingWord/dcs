@@ -24,7 +24,8 @@ jobs:
         shell: bash
         run: |
           REF=`echo ${GITHUB_REF} | cut -d "/" -f3-`
-          DOCKER_TAGS="${REFF//\//-}"
+          echo "REF=${REF}"
+          DOCKER_TAGS="${REF//\//-}"
           if [[ "${REF}" == "v"*"-dcs" ]]; then
             PATCH_VERSION=${REF#v}
             MINOR_VERSION=`echo ${PATCH_VERSION%-dcs} | cut -f1,2 -d'.'`-dcs
