@@ -36,7 +36,7 @@ jobs:
           else
             VERSION=`echo ${REF} | cut -f3 -d'/'`
             VERSION=${VERSION#v}
-            DOCKER_TAGS="${DOCKER_TAGS},beta,${VERSION}-beta,latest-${VERISON}"
+            DOCKER_TAGS="${DOCKER_TAGS},beta,${VERSION}-beta,latest-${VERSION}"
           fi
           echo "DOCKER_TAGS: ${DOCKER_TAGS}"
           echo "::set-env name=DOCKER_TAGS::$DOCKER_TAGS"
