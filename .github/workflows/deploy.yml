@@ -28,11 +28,15 @@ jobs:
           DOCKER_TAGS="${REF//\//-}"
           if [[ "${REF}" == "v"*"-dcs" ]]; then
             PATCH_VERSION=${REF#v}
-            MINOR_VERSION=`echo ${PATCH_VERSION%-dcs} | cut -f1,2 -d'.'`-dcs
-            MAJOR_VERSION=`echo ${MINOR_VERSION%-dcs} | cut -f1 -d'.'`-dcs
+            MINOR_VERSION=`echo ${PATCH_VERSION%-dcs} | cut -f1,2 -d'.'`
+            MAJOR_VERSION=`echo ${MINOR_VERSION%-dcs} | cut -f1 -d'.'`
             DOCKER_TAGS="${DOCKER_TAGS},latest-prod,${MAJOR_VERSION},${MINOR_VERSION},${PATCH_VERSION}"
           elif [[ "${REF}" == "master" ]]; then
             DOCKER_TAGS="${DOCKER_TAGS},latest,latest-dev"
+          else
+            VERSION=`echo ${REF} | cut -f3 -d'/'`
+            VERSION=${VERSION#v}
+            DOCKER_TAGS="${DOCKER_TAGS},beta,${VERSION}-beta,latest-${VERISON}"
           fi
           echo "DOCKER_TAGS: ${DOCKER_TAGS}"
           echo "::set-env name=DOCKER_TAGS::$DOCKER_TAGS"
