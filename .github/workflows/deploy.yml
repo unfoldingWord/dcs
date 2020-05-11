@@ -6,7 +6,7 @@ on:
       - master
       - release/dcs/v*
     tags:
-      - 'v*-dcs'
+      - v*-dcs
 
 jobs:
   deploy-docker:
@@ -20,52 +20,32 @@ jobs:
           fetch-depth: 0
           lfs: true
 
-      - name: Fetch tags
+      - name: SET DOCKER_TAGS from GITHUB_REF (will be branch or tag of push event)
         shell: bash
         run: |
-          git fetch --all
-          git fetch --tags --force
-          git fetch --depth=1 origin +refs/tags/*:refs/tags/*
-        working-directory: ${{ env.GITEA_ROOT }}
-
-      - name: Get Docker tags based on branch and branch tag
-        shell: bash
-        run: |
-          BRANCH=`git rev-parse --abbrev-ref HEAD`
-          echo "BRANCH: ${BRANCH}"
-          CLOSEST_TAG=`git describe --abbrev=0 --tags`
-          echo "CLOSEST_TAG: ${CLOSEST_TAG}"
-          COMMIT_TAG=`git describe --tags`
-          echo "COMMIT_TAG: ${COMMIT_TAG}"
-          DOCKER_TAGS="${BRANCH//\//-}"
-          if [[ "${BRANCH}" == "release/dcs/v"* ]]; then
-            if [[ "${CLOSEST_TAG}" == "${COMMIT_TAG}" && "${COMMIT_TAG}" == "v"*"-dcs" ]]; then
-              echo "BRANCH: ${BRANCH} (tagged release)"
-              PATCH_VERSION=${COMMIT_TAG#v}
-              MINOR_VERSION=`echo ${VERSION%-dcs} | cut -f1,2 -d'.'`-dcs
-              MAJOR_VERSION=`echo ${MINOR_VERSION%-dcs} | cut -f1 -d'.'`-dcs
-              DOCKER_TAGS="${DOCKER_TAGS},latest-prod,${MAJOR_VERSION}-dcs,${MINOR_VERSION}-dcs,${PATCH_VERSION}"
-            else
-              echo "BRANCH: ${BRANCH} (release in development)"
-            fi
-          elif [[ "${BRANCH}" == "master" ]]; then
-            echo "BRANCH: master (development branch)"
+          REF=`echo ${GITHUB_REF} | cut -d "/" -f3-`
+          echo "REF=${REF}"
+          DOCKER_TAGS="${REF//\//-}"
+          if [[ "${REF}" == "v"*"-dcs" ]]; then
+            PATCH_VERSION=${REF#v}
+            MINOR_VERSION=`echo ${PATCH_VERSION%-dcs} | cut -f1,2 -d'.'`
+            MAJOR_VERSION=`echo ${MINOR_VERSION%-dcs} | cut -f1 -d'.'`
+            DOCKER_TAGS="${DOCKER_TAGS},latest-prod,${MAJOR_VERSION},${MINOR_VERSION},${PATCH_VERSION}"
+          elif [[ "${REF}" == "master" ]]; then
             DOCKER_TAGS="${DOCKER_TAGS},latest,latest-dev"
           else
-            echo "BRANCH: ${BRANCH} (other branch)"
+            VERSION=`echo ${REF} | cut -f3 -d'/'`
+            VERSION=${VERSION#v}
+            DOCKER_TAGS="${DOCKER_TAGS},beta,${VERSION}-beta,latest-${VERSION}"
           fi
           echo "DOCKER_TAGS: ${DOCKER_TAGS}"
           echo "::set-env name=DOCKER_TAGS::$DOCKER_TAGS"
-        working-directory: ${{ env.GITEA_ROOT }}
 
       - name: Debug
         shell: bash
         run: |
           echo "GITHUB_REF:" ${GITHUB_REF}
-          echo "BRANCH CHECKED OUT:" `git rev-parse --abbrev-ref HEAD`
-          echo "LATEST TAG:" `git describe --abbrev=0`
           echo "DOCKER_TAGS:" ${{ env.DOCKER_TAGS }}
-        working-directory: ${{ env.GITEA_ROOT }}
 
       - name: Publish DCS to Docker Hub
         uses: elgohr/Publish-Docker-Github-Action@master
