@@ -37,11 +37,11 @@ jobs:
             # REF is the master branch which is the develop branch so is the lastest develop
             DOCKER_TAGS="${DOCKER_TAGS},latest,latest-dev,develop"
           else
-            # REF is a release branch so is a beta or latest of this minor version
+            # REF is a release branch so is a beta, qa or latest of this minor version
             MINOR_VERSION=`echo ${REF} | cut -f3 -d'/'`
             MINOR_VERSION=${MINOR_VERSION#v}
             MAJOR_VERSION=`echo ${MINOR_VERSION} | cut -f1 -d'.'`
-            DOCKER_TAGS="${DOCKER_TAGS},beta,${MAJOR_VERSION}-beta,${MINOR_VERSION}-beta,latest-${MINOR_VERSION},latest-beta"
+            DOCKER_TAGS="${DOCKER_TAGS},beta,latest-beta,qa,latest-qa,${MAJOR_VERSION}-beta,${MINOR_VERSION}-beta,${MINOR_VERSION}-qa,latest-${MINOR_VERSION}"
           fi
           echo "DOCKER_TAGS: ${DOCKER_TAGS}"
           echo "::set-env name=DOCKER_TAGS::$DOCKER_TAGS"
