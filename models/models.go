@@ -125,6 +125,7 @@ func init() {
 		new(Task),
 		new(LanguageStat),
 		new(EmailHash),
+		new(Door43Metadata),
 	)
 
 	gonicNames := []string{"SSL", "UID"}
@@ -212,7 +213,7 @@ type Statistic struct {
 		Issue, Comment, Oauth, Follow,
 		Mirror, Release, LoginSource, Webhook,
 		Milestone, Label, HookTask,
-		Team, UpdateTask, Attachment int64
+		Team, UpdateTask, Attachment, Door43Metadata int64
 	}
 }
 
@@ -239,6 +240,7 @@ func GetStatistic() (stats Statistic) {
 	stats.Counter.HookTask, _ = x.Count(new(HookTask))
 	stats.Counter.Team, _ = x.Count(new(Team))
 	stats.Counter.Attachment, _ = x.Count(new(Attachment))
+	stats.Counter.Door43Metadata, _ = x.Count(new(Door43Metadata))
 	return
 }
 

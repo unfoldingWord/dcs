@@ -465,7 +465,7 @@ func renderFile(ctx *context.Context, entry *git.TreeEntry, treeLink, rawLink st
 			ctx.Data["IsMarkup"] = true
 			ctx.Data["MarkupType"] = markupType
 			ctx.Data["FileContent"] = string(markup.Render(blob.Name(), buf, path.Dir(treeLink), ctx.Repo.Repository.ComposeMetas()))
-		/*** DCS Custom Code ***/
+			/*** DCS Custom Code ***/
 		} else if isTocYaml {
 			ctx.Data["IsRenderedHTML"] = true
 			if rendered, err := yaml.Render(buf); err != nil {
@@ -476,7 +476,7 @@ func renderFile(ctx *context.Context, entry *git.TreeEntry, treeLink, rawLink st
 			} else {
 				ctx.Data["FileContent"] = string(rendered)
 			}
-		/*** END DCS Custom Code ***/
+			/*** END DCS Custom Code ***/
 		} else if readmeExist {
 			ctx.Data["IsRenderedHTML"] = true
 			ctx.Data["FileContent"] = strings.Replace(
