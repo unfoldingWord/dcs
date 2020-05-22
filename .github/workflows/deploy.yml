@@ -32,15 +32,16 @@ jobs:
             PATCH_VERSION=${PATCH_VERSION%-dcs}
             MINOR_VERSION=`echo ${PATCH_VERSION} | cut -f1,2 -d'.'`
             MAJOR_VERSION=`echo ${MINOR_VERSION} | cut -f1 -d'.'`
-            DOCKER_TAGS="${DOCKER_TAGS},latest-prod,${MAJOR_VERSION},${MINOR_VERSION},${PATCH_VERSION}"
+            DOCKER_TAGS="${DOCKER_TAGS},latest-prod,prod,${MAJOR_VERSION},${MINOR_VERSION},${PATCH_VERSION}"
           elif [[ "${REF}" == "master" ]]; then
             # REF is the master branch which is the develop branch so is the lastest develop
             DOCKER_TAGS="${DOCKER_TAGS},latest,latest-dev,develop"
           else
-            # REF is a release branch so is a beta or latest of this minor version
-            VERSION=`echo ${REF} | cut -f3 -d'/'`
-            VERSION=${VERSION#v}
-            DOCKER_TAGS="${DOCKER_TAGS},beta,${VERSION}-beta,latest-${VERSION},latest-beta"
+            # REF is a release branch so is a beta, qa or latest of this minor version
+            MINOR_VERSION=`echo ${REF} | cut -f3 -d'/'`
+            MINOR_VERSION=${MINOR_VERSION#v}
+            MAJOR_VERSION=`echo ${MINOR_VERSION} | cut -f1 -d'.'`
+            DOCKER_TAGS="${DOCKER_TAGS},beta,latest-beta,qa,latest-qa,${MAJOR_VERSION}-beta,${MINOR_VERSION}-beta,${MINOR_VERSION}-qa,latest-${MINOR_VERSION}"
           fi
           echo "DOCKER_TAGS: ${DOCKER_TAGS}"
           echo "::set-env name=DOCKER_TAGS::$DOCKER_TAGS"
