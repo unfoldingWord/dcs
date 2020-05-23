@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - master
+      - develop
       - release/dcs/v*
     tags:
       - v*-dcs
@@ -33,9 +34,12 @@ jobs:
             MINOR_VERSION=`echo ${PATCH_VERSION} | cut -f1,2 -d'.'`
             MAJOR_VERSION=`echo ${MINOR_VERSION} | cut -f1 -d'.'`
             DOCKER_TAGS="${DOCKER_TAGS},latest-prod,prod,${MAJOR_VERSION},${MINOR_VERSION},${PATCH_VERSION}"
+          elif [[ "${REF}" == "develop" ]]; then
+            # REF is the develop branch so is the lastest develop
+            DOCKER_TAGS="${DOCKER_TAGS},latest,latest-dev"
           elif [[ "${REF}" == "master" ]]; then
-            # REF is the master branch which is the develop branch so is the lastest develop
-            DOCKER_TAGS="${DOCKER_TAGS},latest,latest-dev,develop"
+            # REF is the master branch so is the lastest of the gitea upstream develop with DCS changes
+            DOCKER_TAGS="${DOCKER_TAGS},latest-gitea-dev"
           else
             # REF is a release branch so is a beta, qa or latest of this minor version
             MINOR_VERSION=`echo ${REF} | cut -f3 -d'/'`
