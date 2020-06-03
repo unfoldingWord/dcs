@@ -120,6 +120,12 @@ func Releases(ctx *context.Context) {
 			return
 		}
 		r.Note = markdown.RenderString(r.Note, ctx.Repo.RepoLink, ctx.Repo.Repository.ComposeMetas())
+
+		r.Door43Metadata, err = models.GetDoor43Metadata(r.RepoID, r.ID)
+		if err != nil && ! models.IsErrDoor43MetadataNotExist(err) {
+			ctx.ServerError("GetDoor43Metadata", err)
+			return
+		}
 	}
 
 	ctx.Data["Releases"] = releases

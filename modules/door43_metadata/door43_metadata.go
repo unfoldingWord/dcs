@@ -6,12 +6,15 @@ package door43_metadata
 
 import (
 	"fmt"
+	"github.com/ghodss/yaml"
 	"github.com/unknwon/com"
-	"gopkg.in/yaml.v2"
+	"io/ioutil"
 	"time"
 
 	"code.gitea.io/gitea/models"
 	"code.gitea.io/gitea/modules/git"
+
+	"github.com/xeipuuv/gojsonschema"
 	"xorm.io/xorm"
 )
 
@@ -44,12 +47,18 @@ func GenerateDoor43Metadata(x *xorm.Engine) error {
 		"  LEFT JOIN `door43_metadata` dm2 ON r2.id = dm2.repo_id " +
 		"  AND dm2.release_id = 0 " +
 		"  WHERE dm2.id IS NULL " +
-		"ORDER BY id ASC")
+		"ORDER BY repo_id ASC, release_id ASC")
 	if err != nil {
 		return err
 	}
 
 	cacheRepos := make(map[int64]*models.Repository)
+
+	schema, err := models.GetRepoInitFile("schema", "rc.schema.json")
+	if err != nil {
+		return err
+	}
+	schemaLoader := gojsonschema.NewBytesLoader(schema)
 
 	for _, record := range records {
 		release_id := com.StrTo(record["release_id"]).MustInt64()
@@ -57,22 +66,22 @@ func GenerateDoor43Metadata(x *xorm.Engine) error {
 		if cacheRepos[repo_id] == nil {
 			cacheRepos[repo_id], err = models.GetRepositoryByID(repo_id)
 			if err != nil {
+				fmt.Printf("Error: %v\n", err)
 				return err
 			}
 		}
 		repo := cacheRepos[repo_id]
-		fmt.Printf("ID: %d, %d", repo_id, release_id)
 		var release *models.Release
 		if release_id > 0 {
 			release, err = models.GetReleaseByID(release_id)
 			if err != nil {
 				return err
 			}
-			fmt.Printf("%v", release)
 		}
 
 		gitRepo, err := git.OpenRepository(repo.RepoPath())
 		if err != nil {
+			fmt.Printf("Error: %v\n", err)
 			return err
 		}
 		defer gitRepo.Close()
@@ -84,6 +93,7 @@ func GenerateDoor43Metadata(x *xorm.Engine) error {
 			commit, err = gitRepo.GetTagCommit(release.TagName)
 		}
 		if err != nil {
+			fmt.Printf("Error: %v\n", err)
 			return err
 		}
 
@@ -91,24 +101,56 @@ func GenerateDoor43Metadata(x *xorm.Engine) error {
 		if err != nil {
 			continue
 		}
-
-		gitBlob, err := gitRepo.GetBlob(entry.ID.String())
+		dataRc, err := entry.Blob().DataAsync()
 		if err != nil {
 			return err
 		}
-		content, err := gitBlob.GetBlobContent()
-		if err != nil {
-			return err
-		}
-		fmt.Printf("content: %s", content)
+		defer dataRc.Close()
+		content, _ := ioutil.ReadAll(dataRc)
+		//fmt.Printf("content: %s", content)
 
 		var manifest map[string]interface{}
-		if err := yaml.Unmarshal([]byte(content), &manifest); err != nil {
+		if err := yaml.Unmarshal(content, &manifest); err != nil {
+			fmt.Printf("Error: %v", err)
 			return err
 		}
-		fmt.Printf("manifest: %v", manifest)
 
-		if
+		documentLoader := gojsonschema.NewGoLoader(manifest)
+
+		result, err := gojsonschema.Validate(schemaLoader, documentLoader)
+		if err != nil {
+			fmt.Printf("Error: %v", err)
+			continue
+		}
+
+		if result.Valid() {
+			fmt.Printf("The document is valid\n")
+			dm := &models.Door43Metadata{
+				RepoID:    repo_id,
+				ReleaseID: release_id,
+				MetadataVersion: "rc0.2",
+				Metadata: manifest,
+			}
+
+			if err = models.InsertDoor43Metadata(dm); err != nil {
+				fmt.Printf("Error: %v", err)
+				continue
+			}
+		} else {
+			fmt.Printf("==========\nREPO: %s\n", repo.Name)
+			fmt.Printf("REPO ID: %d, RELEASE ID: %d\n", repo_id, release_id)
+			fmt.Printf("The document is not valid. see errors :\n")
+			if release_id > 0 {
+				fmt.Printf("RELEASE: %v\n", release.TagName)
+			} else {
+				fmt.Printf("BRANCH: %s\n", repo.DefaultBranch)
+			}
+			for _, desc := range result.Errors() {
+				fmt.Printf("- %s\n", desc.Description())
+				fmt.Printf("- %s = %s\n", desc.Field(), desc.Value())
+			}
+			continue;
+		}
 	}
 
 	fmt.Printf("%v", reposWithoutMetadata)

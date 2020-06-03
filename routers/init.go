@@ -155,7 +155,7 @@ func GlobalInit(ctx context.Context) {
 		mirror_service.InitSyncMirrors()
 		webhook.InitDeliverHooks()
 
-		if err := models.NewEngine(ctx, door43_metadata.GenerateDoor43Metadata); err == nil {
+		if err := models.NewEngine(ctx, door43_metadata.GenerateDoor43Metadata); err != nil {
 			log.Fatal("Failed to generate Door43 Metadata: %v", err)
 		}
 

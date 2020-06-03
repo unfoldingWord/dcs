@@ -1015,6 +1015,8 @@ func GetRepoInitFile(tp, name string) ([]byte, error) {
 		return options.License(cleanedName)
 	case "label":
 		return options.Labels(cleanedName)
+	case "schema":
+		return options.Schemas(cleanedName)
 	default:
 		return []byte{}, fmt.Errorf("Invalid init file type")
 	}
