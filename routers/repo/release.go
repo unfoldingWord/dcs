@@ -172,6 +172,11 @@ func SingleRelease(ctx *context.Context) {
 	}
 	release.Note = markdown.RenderString(release.Note, ctx.Repo.RepoLink, ctx.Repo.Repository.ComposeMetas())
 
+	if err := release.LoadAttributes(); err != nil {
+		ctx.ServerError("LoadAttributes", err)
+		return
+	}
+
 	ctx.Data["Releases"] = []*models.Release{release}
 	ctx.HTML(200, tplReleases)
 }
