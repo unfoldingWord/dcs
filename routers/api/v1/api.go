@@ -512,6 +512,9 @@ func RegisterRoutes(m *macaron.Macaron) {
 		m.Get("/signing-key.gpg", misc.SigningKey)
 		m.Post("/markdown", bind(api.MarkdownOption{}), misc.Markdown)
 		m.Post("/markdown/raw", misc.MarkdownRaw)
+		m.Group("/settings", func() {
+			m.Get("/allowed_reactions", misc.SettingGetsAllowedReactions)
+		})
 		/*** DCS Custom Code ***/
 		m.Post("/yaml", bind(misc.YamlOption{}), misc.Yaml)
 		/*** END DCS Custom Code ***/
@@ -668,6 +671,7 @@ func RegisterRoutes(m *macaron.Macaron) {
 					m.Get("", repo.ListBranches)
 					m.Get("/*", context.RepoRefByType(context.RepoRefBranch), repo.GetBranch)
 					m.Delete("/*", reqRepoWriter(models.UnitTypeCode), context.RepoRefByType(context.RepoRefBranch), repo.DeleteBranch)
+					m.Post("", reqRepoWriter(models.UnitTypeCode), bind(api.CreateBranchRepoOption{}), repo.CreateBranch)
 				}, reqRepoReader(models.UnitTypeCode))
 				m.Group("/branch_protections", func() {
 					m.Get("", repo.ListBranchProtections)
