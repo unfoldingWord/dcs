@@ -43,6 +43,7 @@ func GenerateDoor43Metadata(x *xorm.Engine) error {
 
 	schema, err := models.GetRepoInitFile("schema", "rc.schema.json")
 	if err != nil {
+		fmt.Printf("GetRepoInitFile Error: %v\n", err)
 		return err
 	}
 	schemaLoader := gojsonschema.NewBytesLoader(schema)
@@ -53,8 +54,8 @@ func GenerateDoor43Metadata(x *xorm.Engine) error {
 		if cacheRepos[repoID] == nil {
 			cacheRepos[repoID], err = models.GetRepositoryByID(repoID)
 			if err != nil {
-				fmt.Printf("Error: %v\n", err)
-				return err
+				fmt.Printf("GetRepositoryByID Error: %v\n", err)
+				continue
 			}
 		}
 		repo := cacheRepos[repoID]
@@ -62,35 +63,43 @@ func GenerateDoor43Metadata(x *xorm.Engine) error {
 		if releaseID > 0 {
 			release, err = models.GetReleaseByID(releaseID)
 			if err != nil {
-				return err
+				fmt.Printf("GetReleaseByID Error: %v\n", err)
+				continue
 			}
 		}
 
 		gitRepo, err := git.OpenRepository(repo.RepoPath())
 		if err != nil {
-			fmt.Printf("Error: %v\n", err)
-			return err
+			fmt.Printf("OpenRepository Error: %v\n", err)
+			continue
 		}
 		defer gitRepo.Close()
 
 		var commit *git.Commit
 		if release == nil {
-			commit, err = gitRepo.GetBranchCommit("master")
+			commit, err = gitRepo.GetBranchCommit(repo.DefaultBranch)
+			if err != nil {
+				fmt.Printf("GetBranchCommit Error: %v\n", err)
+				continue
+			}
 		} else {
 			commit, err = gitRepo.GetTagCommit(release.TagName)
+			if err != nil {
+				fmt.Printf("GetTagCommit Error: %v\n", err)
+				continue
+			}
 		}
-		if err != nil {
-			fmt.Printf("Error: %v\n", err)
-			return err
-		}
+
 
 		entry, err := commit.GetTreeEntryByPath("manifest.yaml")
 		if err != nil {
+			fmt.Printf("GetTreeEntryByPath Error: %v\n", err)
 			continue
 		}
 		dataRc, err := entry.Blob().DataAsync()
 		if err != nil {
-			return err
+			fmt.Printf("DataAsync Error: %v\n", err)
+			continue
 		}
 		defer dataRc.Close()
 		content, _ := ioutil.ReadAll(dataRc)
@@ -98,8 +107,8 @@ func GenerateDoor43Metadata(x *xorm.Engine) error {
 
 		var manifest map[string]interface{}
 		if err := yaml.Unmarshal(content, &manifest); err != nil {
-			fmt.Printf("Error: %v", err)
-			return err
+			fmt.Printf("yaml.Unmarshal Error: %v", err)
+			continue
 		}
 
 		documentLoader := gojsonschema.NewGoLoader(manifest)
