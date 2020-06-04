@@ -122,7 +122,7 @@ func Releases(ctx *context.Context) {
 		r.Note = markdown.RenderString(r.Note, ctx.Repo.RepoLink, ctx.Repo.Repository.ComposeMetas())
 
 		r.Door43Metadata, err = models.GetDoor43Metadata(r.RepoID, r.ID)
-		if err != nil && ! models.IsErrDoor43MetadataNotExist(err) {
+		if err != nil && !models.IsErrDoor43MetadataNotExist(err) {
 			ctx.ServerError("GetDoor43Metadata", err)
 			return
 		}

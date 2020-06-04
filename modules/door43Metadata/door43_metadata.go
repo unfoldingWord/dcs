@@ -2,34 +2,21 @@
 // Use of this source code is governed by a MIT-style
 // license that can be found in the LICENSE file.
 
-package door43_metadata
+package door43Metadata
 
 import (
+	"code.gitea.io/gitea/models"
+	"code.gitea.io/gitea/modules/git"
 	"fmt"
 	"github.com/ghodss/yaml"
 	"github.com/unknwon/com"
 	"io/ioutil"
-	"time"
-
-	"code.gitea.io/gitea/models"
-	"code.gitea.io/gitea/modules/git"
 
 	"github.com/xeipuuv/gojsonschema"
 	"xorm.io/xorm"
 )
 
-type RC020 struct {
-	ID            int                    `json:"id"`
-	Name          string                 `json:"name" jsonschema:"title=the name,description=The name of a friend,example=joe,example=lucy,default=alex"`
-	Friends       []int                  `json:"friends,omitempty" jsonschema_description:"The list of IDs, omitted when empty"`
-	Tags          map[string]interface{} `json:"tags,omitempty" jsonschema_extras:"a=b,foo=bar,foo=bar1"`
-	BirthDate     time.Time              `json:"birth_date,omitempty" jsonschema:"oneof_required=date"`
-	YearOfBirth   string                 `json:"year_of_birth,omitempty" jsonschema:"oneof_required=year"`
-	Metadata      interface{}            `json:"metadata,omitempty" jsonschema:"oneof_type=string;array"`
-	FavColor      string                 `json:"fav_color,omitempty" jsonschema:"enum=red,enum=green,enum=blue"`
-}
-
-// Generate door43 metadata for valid repos not in the door43_metadata table
+// GenerateDoor43Metadata Generate door43 metadata for valid repos not in the door43_metadata table
 func GenerateDoor43Metadata(x *xorm.Engine) error {
 	sess := x.NewSession()
 	defer sess.Close()
@@ -61,19 +48,19 @@ func GenerateDoor43Metadata(x *xorm.Engine) error {
 	schemaLoader := gojsonschema.NewBytesLoader(schema)
 
 	for _, record := range records {
-		release_id := com.StrTo(record["release_id"]).MustInt64()
-		repo_id := com.StrTo(record["repo_id"]).MustInt64()
-		if cacheRepos[repo_id] == nil {
-			cacheRepos[repo_id], err = models.GetRepositoryByID(repo_id)
+		releaseID := com.StrTo(record["releaseID"]).MustInt64()
+		repoID := com.StrTo(record["repoID"]).MustInt64()
+		if cacheRepos[repoID] == nil {
+			cacheRepos[repoID], err = models.GetRepositoryByID(repoID)
 			if err != nil {
 				fmt.Printf("Error: %v\n", err)
 				return err
 			}
 		}
-		repo := cacheRepos[repo_id]
+		repo := cacheRepos[repoID]
 		var release *models.Release
-		if release_id > 0 {
-			release, err = models.GetReleaseByID(release_id)
+		if releaseID > 0 {
+			release, err = models.GetReleaseByID(releaseID)
 			if err != nil {
 				return err
 			}
@@ -126,10 +113,10 @@ func GenerateDoor43Metadata(x *xorm.Engine) error {
 		if result.Valid() {
 			fmt.Printf("The document is valid\n")
 			dm := &models.Door43Metadata{
-				RepoID:    repo_id,
-				ReleaseID: release_id,
+				RepoID:          repoID,
+				ReleaseID:       releaseID,
 				MetadataVersion: "rc0.2",
-				Metadata: manifest,
+				Metadata:        manifest,
 			}
 
 			if err = models.InsertDoor43Metadata(dm); err != nil {
@@ -138,9 +125,9 @@ func GenerateDoor43Metadata(x *xorm.Engine) error {
 			}
 		} else {
 			fmt.Printf("==========\nREPO: %s\n", repo.Name)
-			fmt.Printf("REPO ID: %d, RELEASE ID: %d\n", repo_id, release_id)
+			fmt.Printf("REPO ID: %d, RELEASE ID: %d\n", repoID, releaseID)
 			fmt.Printf("The document is not valid. see errors :\n")
-			if release_id > 0 {
+			if releaseID > 0 {
 				fmt.Printf("RELEASE: %v\n", release.TagName)
 			} else {
 				fmt.Printf("BRANCH: %s\n", repo.DefaultBranch)
@@ -149,7 +136,7 @@ func GenerateDoor43Metadata(x *xorm.Engine) error {
 				fmt.Printf("- %s\n", desc.Description())
 				fmt.Printf("- %s = %s\n", desc.Field(), desc.Value())
 			}
-			continue;
+			continue
 		}
 	}
 

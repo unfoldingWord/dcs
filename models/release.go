@@ -40,7 +40,7 @@ type Release struct {
 	IsTag            bool               `xorm:"NOT NULL DEFAULT false"`
 	Attachments      []*Attachment      `xorm:"-"`
 	CreatedUnix      timeutil.TimeStamp `xorm:"INDEX"`
-	Door43Metadata   *Door43Metadata     `xorm:"-"`
+	Door43Metadata   *Door43Metadata    `xorm:"-"`
 }
 
 func (r *Release) loadAttributes(e Engine) error {
@@ -53,7 +53,7 @@ func (r *Release) loadAttributes(e Engine) error {
 	}
 	if r.Door43Metadata == nil {
 		r.Door43Metadata, err = GetDoor43Metadata(r.RepoID, r.ID)
-		if err != nil && ! IsErrDoor43MetadataNotExist(err) {
+		if err != nil && !IsErrDoor43MetadataNotExist(err) {
 			return err
 		}
 	}
