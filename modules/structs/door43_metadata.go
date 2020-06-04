@@ -8,7 +8,7 @@ import (
 	"time"
 )
 
-// Door43 Metadata represents a repository's metadata of a tag or default branch
+// Door43Metadata represents a repository's metadata of a tag or default branch
 type Door43Metadata struct {
 	ID int64 `json:"id"`
 	// swagger:strfmt date-time

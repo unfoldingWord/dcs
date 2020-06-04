@@ -21,16 +21,18 @@
 				{{end}}
 				<li class="ui grid">
 					<div class="ui four wide column meta">
-						<span class="tag text blue">
-							<a href="{{$.RepoLink}}/release/tag/{{$tagName | EscapePound}}" rel="nofollow">{{svg "octicon-tag" 16}} {{$tagName}}</a>
-						</span>
-						<span class="release">
 						{{if .Release}}
-							<a href="{{$.RepoLink}}/release/tag/{{$tagName | EscapePound}}" rel="nofollow"><i class="tag icon"></i>  {{$tagName}}</a>
+							<span class="tag text blue">
+								<a href="{{$.RepoLink}}/releases/tag/{{$tagName | EscapePound}}" rel="nofollow">{{svg "octicon-tag" 16}} {{$tagName}}</a>
+							</span>
+							<span class="release">
+								<a href="{{$.RepoLink}}/releases/tag/{{$tagName | EscapePound}}" rel="nofollow"><i class="tag icon"></i>  {{$tagName}}</a>
+							</span>
 						{{else}}
-							<a href="{{$.RepoLink}}/src/branch/{{.Repo.DefaultBranch | EscapePound}}" rel="nofollow"><i class="branch icon"></i> {{.Repo.DefaultBranch}}</a>
+							<span class="release">
+								<a href="{{$.RepoLink}}/src/branch/{{.Repo.DefaultBranch | EscapePound}}" rel="nofollow"><i class="branch icon"></i> {{.Repo.DefaultBranch}}</a>
+							</span>
 						{{end}}
-						</span>
 					</div>
 				</li>
 			{{end}}

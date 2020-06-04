@@ -1965,6 +1965,7 @@ func (err ErrOAuthApplicationNotFound) Error() string {
 }
 
 // DCS Customizations
+
 // ErrDoor43MetadataAlreadyExist represents a "Door43MetadataAlreadyExist" kind of error.
 type ErrDoor43MetadataAlreadyExist struct {
 	ReleaseID int64

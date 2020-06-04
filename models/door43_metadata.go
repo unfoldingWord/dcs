@@ -70,8 +70,8 @@ func (dm *Door43Metadata) APIFormat() *api.Door43Metadata {
 }
 
 // IsDoor43MetadataExist returns true if door43 metadata with given release ID already exists.
-func IsDoor43MetadataExist(repoID, releaseId int64) (bool, error) {
-	return x.Get(&Door43Metadata{RepoID: repoID, ReleaseID: releaseId})
+func IsDoor43MetadataExist(repoID, releaseID int64) (bool, error) {
+	return x.Get(&Door43Metadata{RepoID: repoID, ReleaseID: releaseID})
 }
 
 // InsertDoor43Metadata inserts a door43 metadata
@@ -106,7 +106,7 @@ func GetDoor43Metadata(repoID, releaseID int64) (*Door43Metadata, error) {
 	return rel, err
 }
 
-// GetDoor43Metadata returns metadata by given repo ID and release ID.
+// GetDoor43MetadataByRepoIDAndTagName returns metadata by given repo ID and tag name.
 func GetDoor43MetadataByRepoIDAndTagName(repoID int64, tagName string) (*Door43Metadata, error) {
 	var releaseID int64
 
@@ -175,7 +175,7 @@ func GetDoor43MetadatasByRepoID(repoID int64, opts FindDoor43MetadatasOptions) (
 	return dms, sess.Find(&dms)
 }
 
-// GetLatestMetadataByRepoID returns the latest metadata for a repository
+// GetLatestDoor43MetadataByRepoID returns the latest metadata for a repository
 func GetLatestDoor43MetadataByRepoID(repoID int64) (*Door43Metadata, error) {
 	cond := builder.NewCond().
 		And(builder.Eq{"repo_id": repoID}).
@@ -196,7 +196,7 @@ func GetLatestDoor43MetadataByRepoID(repoID int64) (*Door43Metadata, error) {
 }
 
 // GetDoor43MetadatasByRepoIDAndReleaseIDs returns a list of door43 metadatas of repository according repoID and releaseIDs.
-func GetDoor43MetadatasRepoIDAndReleaseIDs(ctx DBContext, repoID int64, releaseIDs []int64) (dms []*Door43Metadata, err error) {
+func GetDoor43MetadatasByRepoIDAndReleaseIDs(ctx DBContext, repoID int64, releaseIDs []int64) (dms []*Door43Metadata, err error) {
 	err = ctx.e.
 		In("release_id", releaseIDs).
 		Desc("created_unix").
@@ -236,4 +236,3 @@ func DeleteDoor43MetadataByID(id int64) error {
 	_, err := x.ID(id).Delete(new(Door43Metadata))
 	return err
 }
-
