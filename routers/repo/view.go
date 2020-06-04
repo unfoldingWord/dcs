@@ -459,7 +459,7 @@ func renderFile(ctx *context.Context, entry *git.TreeEntry, treeLink, rawLink st
 		ctx.Data["ReadmeExist"] = readmeExist
 		/*** DCS Custom Code ***/
 		isTocYaml := blob.Name() == "toc.yaml"
-		ctx.Data["IsTocYaml"] = isTocYaml
+		ctx.Data["IsTocreaYaml"] = isTocYaml
 		/*** END DCS Custom Code ***/
 		if markupType := markup.Type(blob.Name()); markupType != "" {
 			ctx.Data["IsMarkup"] = true
@@ -476,7 +476,7 @@ func renderFile(ctx *context.Context, entry *git.TreeEntry, treeLink, rawLink st
 			} else {
 				ctx.Data["FileContent"] = string(rendered)
 			}
-		/*** END DCS Custom Code ***/
+			/*** END DCS Custom Code ***/
 		} else if readmeExist {
 			ctx.Data["IsRenderedHTML"] = true
 			ctx.Data["FileContent"] = strings.Replace(

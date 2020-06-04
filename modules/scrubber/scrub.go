@@ -89,7 +89,7 @@ func ScrubSensitiveData(repo *models.Repository, doer *models.User, opts ScrubSe
 		oldCommitID := opts.LastCommitID
 		if err := repofiles.CommitRepoAction(&repofiles.CommitRepoActionOptions{
 			PushUpdateOptions: repofiles.PushUpdateOptions{
-				PusherName: doer.Name,
+				PusherName:  doer.Name,
 				RepoName:    repo.Name,
 				RefFullName: git.BranchPrefix + "master",
 				OldCommitID: oldCommitID,

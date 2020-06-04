@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - master
+      - master-release-branched
       - release/dcs/v*
     tags:
       - v*-dcs
@@ -34,8 +35,11 @@ jobs:
             MAJOR_VERSION=`echo ${MINOR_VERSION} | cut -f1 -d'.'`
             DOCKER_TAGS="${DOCKER_TAGS},latest-prod,prod,${MAJOR_VERSION},${MINOR_VERSION},${PATCH_VERSION}"
           elif [[ "${REF}" == "master" ]]; then
-            # REF is the master branch which is the develop branch so is the lastest develop
-            DOCKER_TAGS="${DOCKER_TAGS},latest,latest-dev,develop"
+            # REF is the master development branch so is the lastest master/dev
+            DOCKER_TAGS="${DOCKER_TAGS},latest,latest-dev"
+          elif [[ "${REF}" == "master-release-branched" ]]; then
+            # REF is the commit where the release/v#.# branch and the master branch split. Should contain all our DCS changes
+            DOCKER_TAGS="${DOCKER_TAGS},latest-master-release-branched"
           else
             # REF is a release branch so is a beta, qa or latest of this minor version
             MINOR_VERSION=`echo ${REF} | cut -f3 -d'/'`
