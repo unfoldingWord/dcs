@@ -34,9 +34,9 @@
 								<a href="{{$.RepoLink}}/src/commit/{{.Sha1}}" rel="nofollow"><i class="code icon"></i> {{ShortSha .Sha1}}</a>
 							</span>
 							{{if .Door43Metadata}}
-								<span class="ui green label"><a href="{{$.RepoLink}}/src/tag/{{.TagName | EscapePound}}" rel="nofollow">{{$.i18n.Tr "repo.metadata.catalog"}} ({{.Door43Metadata.MetadataVersion}}</a></span>
+								<span class="ui green label"><a href="{{$.RepoLink}}/src/tag/{{.TagName | EscapePound}}/manifest.yaml" rel="nofollow">{{$.i18n.Tr "repo.metadata.catalog"}} ({{.Door43Metadata.MetadataVersion}})</a></span>
 							{{else}}
-								<span class="ui red label"><a href="{{$.RepoLink}}/src/tag/{{.TagName | EscapePound}}/manifest.yaml" rel="nofollow">{{$.i18n.Tr "repo.metadata.not_valid_rc"}})</a></span>
+								<span class="ui red label">{{$.i18n.Tr "repo.metadata.not_valid_rc"}}</span>
 							{{end}}
 						{{end}}
 					</div>
