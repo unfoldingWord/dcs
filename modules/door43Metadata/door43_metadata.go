@@ -49,9 +49,11 @@ func GenerateDoor43Metadata(x *xorm.Engine) error {
 	}
 	schemaLoader := gojsonschema.NewBytesLoader(schema)
 
+	fmt.Printf("RECORDS: %v\n", records)
 	for _, record := range records {
 		releaseID := com.StrTo(record["releaseID"]).MustInt64()
 		repoID := com.StrTo(record["repoID"]).MustInt64()
+		fmt.Printf("HERE ====> Repo: %d, Release: %d\n", repoID, releaseID)
 		if cacheRepos[repoID] == nil {
 			cacheRepos[repoID], err = models.GetRepositoryByID(repoID)
 			if err != nil {
