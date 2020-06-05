@@ -16,6 +16,118 @@ import (
 	"xorm.io/xorm"
 )
 
+var rc02Schema []byte
+
+// GetRC02Schema Returns the schema for RC v0.2, retrieving it from file if not already done
+func GetRC02Schema() ([]byte, error) {
+	if rc02Schema == nil {
+		var err error
+		rc02Schema, err = models.GetRepoInitFile("schema", "rc.schema.json")
+		if err != nil {
+			return nil, err
+		}
+	}
+	return rc02Schema, nil
+}
+
+func generateDoor43MetadataForRepoRelease(repo *models.Repository, release *models.Release) error {
+	if repo == nil {
+		return fmt.Errorf("no repository provided")
+	}
+
+	gitRepo, err := git.OpenRepository(repo.RepoPath())
+	if err != nil {
+		fmt.Printf("OpenRepository Error: %v\n", err)
+		return err
+	}
+	defer gitRepo.Close()
+
+	var commit *git.Commit
+	if release == nil {
+		commit, err = gitRepo.GetBranchCommit(repo.DefaultBranch)
+		if err != nil {
+			fmt.Printf("GetBranchCommit Error: %v\n", err)
+			return err
+		}
+	} else {
+		commit, err = gitRepo.GetTagCommit(release.TagName)
+		if err != nil {
+			fmt.Printf("GetTagCommit Error: %v\n", err)
+			return err
+		}
+	}
+
+	entry, err := commit.GetTreeEntryByPath("manifest.yaml")
+	if err != nil {
+		fmt.Printf("GetTreeEntryByPath Error: %v\n", err)
+		return err
+	}
+	dataRc, err := entry.Blob().DataAsync()
+	if err != nil {
+		fmt.Printf("DataAsync Error: %v\n", err)
+		return err
+	}
+	defer dataRc.Close()
+
+	content, _ := ioutil.ReadAll(dataRc)
+	//fmt.Printf("content: %s", content)
+
+	var manifest map[string]interface{}
+	if err := yaml.Unmarshal(content, &manifest); err != nil {
+		fmt.Printf("yaml.Unmarshal Error: %v", err)
+		return err
+	}
+
+	schema, err := GetRC02Schema()
+	if err != nil {
+		return err
+	}
+	schemaLoader := gojsonschema.NewBytesLoader(schema)
+	documentLoader := gojsonschema.NewGoLoader(manifest)
+
+	result, err := gojsonschema.Validate(schemaLoader, documentLoader)
+	if err != nil {
+		fmt.Printf("Error: %v", err)
+		return err
+	}
+
+	var releaseID int64
+	if release != nil {
+		releaseID = release.ID
+	}
+
+	if result.Valid() {
+		fmt.Printf("The document is valid\n")
+		dm := &models.Door43Metadata{
+			RepoID:          repo.ID,
+			ReleaseID:       releaseID,
+			MetadataVersion: "rc0.2",
+			Metadata:        manifest,
+		}
+
+		if err = models.InsertDoor43Metadata(dm); err != nil {
+			fmt.Printf("Error: %v", err)
+			return err
+		}
+
+		return nil
+	} else {
+		fmt.Printf("==========\nREPO: %s\n", repo.Name)
+		fmt.Printf("REPO ID: %d, RELEASE ID: %d\n", repo.ID, releaseID)
+		fmt.Printf("The document is not valid. see errors :\n")
+		if release != nil {
+			fmt.Printf("RELEASE: %v\n", release.TagName)
+		} else {
+			fmt.Printf("BRANCH: %s\n", repo.DefaultBranch)
+		}
+		for _, desc := range result.Errors() {
+			fmt.Printf("- %s\n", desc.Description())
+			fmt.Printf("- %s = %s\n", desc.Field(), desc.Value())
+		}
+		return nil
+	}
+}
+
 // GenerateDoor43Metadata Generate door43 metadata for valid repos not in the door43_metadata table
 func GenerateDoor43Metadata(x *xorm.Engine) error {
 	sess := x.NewSession()
@@ -41,16 +153,7 @@ func GenerateDoor43Metadata(x *xorm.Engine) error {
 
 	cacheRepos := make(map[int64]*models.Repository)
 
-	schema, err := models.GetRepoInitFile("schema", "rc.schema.json")
-	if err != nil {
-		fmt.Printf("GetRepoInitFile Error: %v\n", err)
-		return err
-	}
-	schemaLoader := gojsonschema.NewBytesLoader(schema)
-
-	fmt.Printf("RECORDS: %v\n", records)
 	for _, record := range records {
-		fmt.Printf("RECORD: %v\n", record)
 		releaseID := com.StrTo(record["release_id"]).MustInt64()
 		repoID := com.StrTo(record["repo_id"]).MustInt64()
 		fmt.Printf("HERE ====> Repo: %d, Release: %d\n", repoID, releaseID)
@@ -70,84 +173,7 @@ func GenerateDoor43Metadata(x *xorm.Engine) error {
 				continue
 			}
 		}
-
-		gitRepo, err := git.OpenRepository(repo.RepoPath())
-		if err != nil {
-			fmt.Printf("OpenRepository Error: %v\n", err)
-			continue
-		}
-		defer gitRepo.Close()
-
-		var commit *git.Commit
-		if release == nil {
-			commit, err = gitRepo.GetBranchCommit(repo.DefaultBranch)
-			if err != nil {
-				fmt.Printf("GetBranchCommit Error: %v\n", err)
-				continue
-			}
-		} else {
-			commit, err = gitRepo.GetTagCommit(release.TagName)
-			if err != nil {
-				fmt.Printf("GetTagCommit Error: %v\n", err)
-				continue
-			}
-		}
-
-
-		entry, err := commit.GetTreeEntryByPath("manifest.yaml")
-		if err != nil {
-			fmt.Printf("GetTreeEntryByPath Error: %v\n", err)
-			continue
-		}
-		dataRc, err := entry.Blob().DataAsync()
-		if err != nil {
-			fmt.Printf("DataAsync Error: %v\n", err)
-			continue
-		}
-		defer dataRc.Close()
-		content, _ := ioutil.ReadAll(dataRc)
-		//fmt.Printf("content: %s", content)
-
-		var manifest map[string]interface{}
-		if err := yaml.Unmarshal(content, &manifest); err != nil {
-			fmt.Printf("yaml.Unmarshal Error: %v", err)
-			continue
-		}
-
-		documentLoader := gojsonschema.NewGoLoader(manifest)
-
-		result, err := gojsonschema.Validate(schemaLoader, documentLoader)
-		if err != nil {
-			fmt.Printf("Error: %v", err)
-			continue
-		}
-
-		if result.Valid() {
-			fmt.Printf("The document is valid\n")
-			dm := &models.Door43Metadata{
-				RepoID:          repoID,
-				ReleaseID:       releaseID,
-				MetadataVersion: "rc0.2",
-				Metadata:        manifest,
-			}
-
-			if err = models.InsertDoor43Metadata(dm); err != nil {
-				fmt.Printf("Error: %v", err)
-				continue
-			}
-		} else {
-			fmt.Printf("==========\nREPO: %s\n", repo.Name)
-			fmt.Printf("REPO ID: %d, RELEASE ID: %d\n", repoID, releaseID)
-			fmt.Printf("The document is not valid. see errors :\n")
-			if releaseID > 0 {
-				fmt.Printf("RELEASE: %v\n", release.TagName)
-			} else {
-				fmt.Printf("BRANCH: %s\n", repo.DefaultBranch)
-			}
-			for _, desc := range result.Errors() {
-				fmt.Printf("- %s\n", desc.Description())
-				fmt.Printf("- %s = %s\n", desc.Field(), desc.Value())
-			}
+		if err = generateDoor43MetadataForRepoRelease(repo, release); err == nil {
 			continue
 		}
 	}
