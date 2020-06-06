@@ -6,12 +6,17 @@ package models
 
 import (
 	"fmt"
+	"io/ioutil"
+	"reflect"
 	"sort"
 
+	"code.gitea.io/gitea/modules/git"
 	"code.gitea.io/gitea/modules/setting"
 	api "code.gitea.io/gitea/modules/structs"
 	"code.gitea.io/gitea/modules/timeutil"
 
+	"github.com/ghodss/yaml"
+	"github.com/xeipuuv/gojsonschema"
 	"xorm.io/builder"
 )
 
@@ -86,9 +91,13 @@ func InsertDoor43MetadatasContext(ctx DBContext, dms []*Door43Metadata) error {
 	return err
 }
 
-// UpdateDoor43Metadata updates all columns of a door43 metadata
-func UpdateDoor43Metadata(ctx DBContext, dm *Door43Metadata) error {
-	_, err := ctx.e.ID(dm.ID).AllCols().Update(dm)
+// UpdateDoor43MetadataCols update door43 metadata according special columns
+func UpdateDoor43MetadataCols(dm *Door43Metadata, cols ...string) error {
+	return updateDoor43MetadataCols(x, dm, cols...)
+}
+
+func updateDoor43MetadataCols(e Engine, dm *Door43Metadata, cols ...string) error {
+	_, err := e.ID(dm.ID).Cols(cols...).Update(dm)
 	return err
 }
 
@@ -235,4 +244,134 @@ func SortDoorMetadatas(dms []*Door43Metadata) {
 func DeleteDoor43MetadataByID(id int64) error {
 	_, err := x.ID(id).Delete(new(Door43Metadata))
 	return err
+}
+
+// DeleteDoor43MetadataByRelease deletes a metadata from database by given release.
+func DeleteDoor43MetadataByRelease(release *Release) error {
+	dm, err := GetDoor43Metadata(release.RepoID, release.ID)
+	if err != nil {
+		return err
+	}
+	_, err = x.ID(dm.ID).Delete(dm)
+	return err
+}
+
+var rc02Schema []byte
+
+// GetRC02Schema Returns the schema for RC v0.2, retrieving it from file if not already done
+func GetRC02Schema() ([]byte, error) {
+	if rc02Schema == nil {
+		var err error
+		rc02Schema, err = GetRepoInitFile("schema", "rc.schema.json")
+		if err != nil {
+			return nil, err
+		}
+	}
+	return rc02Schema, nil
+}
+
+// ProcessDoor43MetadataForRepoRelease handles the metadata for a given repo by release based on if the container is a valid RC or not
+func ProcessDoor43MetadataForRepoRelease(repo *Repository, release *Release) error {
+	if repo == nil {
+		return fmt.Errorf("no repository provided")
+	}
+
+	gitRepo, err := git.OpenRepository(repo.RepoPath())
+	if err != nil {
+		fmt.Printf("OpenRepository Error: %v\n", err)
+		return err
+	}
+	defer gitRepo.Close()
+
+	var commit *git.Commit
+	if release == nil {
+		commit, err = gitRepo.GetBranchCommit(repo.DefaultBranch)
+		if err != nil {
+			fmt.Printf("GetBranchCommit Error: %v\n", err)
+			return err
+		}
+	} else {
+		commit, err = gitRepo.GetTagCommit(release.TagName)
+		if err != nil {
+			fmt.Printf("GetTagCommit Error: %v\n", err)
+			return err
+		}
+	}
+
+	entry, err := commit.GetTreeEntryByPath("manifest.yaml")
+	if err != nil {
+		fmt.Printf("GetTreeEntryByPath Error: %v\n", err)
+		return err
+	}
+	dataRc, err := entry.Blob().DataAsync()
+	if err != nil {
+		fmt.Printf("DataAsync Error: %v\n", err)
+		return err
+	}
+	defer dataRc.Close()
+
+	content, _ := ioutil.ReadAll(dataRc)
+	//fmt.Printf("content: %s", content)
+
+	var manifest map[string]interface{}
+	if err := yaml.Unmarshal(content, &manifest); err != nil {
+		fmt.Printf("yaml.Unmarshal Error: %v", err)
+		return err
+	}
+
+	schema, err := GetRC02Schema()
+	if err != nil {
+		return err
+	}
+	schemaLoader := gojsonschema.NewBytesLoader(schema)
+	documentLoader := gojsonschema.NewGoLoader(manifest)
+
+	result, err := gojsonschema.Validate(schemaLoader, documentLoader)
+	if err != nil {
+		fmt.Printf("Error: %v", err)
+		return err
+	}
+
+	var releaseID int64
+	if release != nil {
+		releaseID = release.ID
+	}
+
+	dm, err := GetDoor43Metadata(repo.ID, releaseID)
+	if err != nil && !IsErrDoor43MetadataNotExist(err) {
+		return err
+	}
+
+	if result.Valid() {
+		fmt.Printf("The document is valid\n")
+		if dm == nil {
+			dm = &Door43Metadata{
+				RepoID:          repo.ID,
+				ReleaseID:       releaseID,
+				MetadataVersion: "rc0.2",
+				Metadata:        manifest,
+			}
+			return InsertDoor43Metadata(dm)
+		} else if reflect.DeepEqual(dm.Metadata, manifest) {
+			dm.Metadata = manifest
+			return UpdateDoor43MetadataCols(dm, "metadata")
+		}
+	}
+
+	fmt.Printf("==========\nREPO: %s\n", repo.Name)
+	fmt.Printf("REPO ID: %d, RELEASE ID: %d\n", repo.ID, releaseID)
+	fmt.Printf("The document is not valid. see errors :\n")
+	if release != nil {
+		fmt.Printf("RELEASE: %v\n", release.TagName)
+	} else {
+		fmt.Printf("BRANCH: %s\n", repo.DefaultBranch)
+	}
+	for _, desc := range result.Errors() {
+		fmt.Printf("- %s\n", desc.Description())
+		fmt.Printf("- %s = %s\n", desc.Field(), desc.Value())
+	}
+	if dm != nil {
+		return DeleteDoor43MetadataByID(dm.ID)
+	}
+	return nil
 }

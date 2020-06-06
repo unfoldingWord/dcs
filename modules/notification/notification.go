@@ -14,6 +14,7 @@ import (
 	"code.gitea.io/gitea/modules/notification/webhook"
 	"code.gitea.io/gitea/modules/repository"
 	"code.gitea.io/gitea/modules/setting"
+	door43Metadata "code.gitea.io/gitea/modules/notification/door43_metadata"  // DCS Customizations
 )
 
 var (
@@ -35,6 +36,9 @@ func NewContext() {
 	RegisterNotifier(indexer.NewNotifier())
 	RegisterNotifier(webhook.NewNotifier())
 	RegisterNotifier(action.NewNotifier())
+	/*** DCS Customizations ***/
+	RegisterNotifier(door43Metadata.NewNotifier())
+	/*** END DCS Customizations ***/
 }
 
 // NotifyCreateIssueComment notifies issue comment related message to notifiers

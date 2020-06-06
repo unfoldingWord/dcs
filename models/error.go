@@ -1964,7 +1964,7 @@ func (err ErrOAuthApplicationNotFound) Error() string {
 	return fmt.Sprintf("OAuth application not found [ID: %d]", err.ID)
 }
 
-// DCS Customizations
+/*** DCS Customizations ***/
 
 // ErrDoor43MetadataAlreadyExist represents a "Door43MetadataAlreadyExist" kind of error.
 type ErrDoor43MetadataAlreadyExist struct {
@@ -2012,4 +2012,4 @@ func (err ErrInvalidRelease) Error() string {
 	return fmt.Sprintf("metadata release id is not valid [release_id: %d]", err.ReleaseID)
 }
 
-// END DCS Customizations
+/*** END DCS Customizations ***/

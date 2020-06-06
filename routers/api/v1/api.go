@@ -512,9 +512,9 @@ func RegisterRoutes(m *macaron.Macaron) {
 		m.Get("/signing-key.gpg", misc.SigningKey)
 		m.Post("/markdown", bind(api.MarkdownOption{}), misc.Markdown)
 		m.Post("/markdown/raw", misc.MarkdownRaw)
-		/*** DCS Custom Code ***/
+		/*** DCS Customizations ***/
 		m.Post("/yaml", bind(misc.YamlOption{}), misc.Yaml)
-		/*** END DCS Custom Code ***/
+		/*** END DCS Customizations ***/
 
 		// Notifications
 		m.Group("/notifications", func() {

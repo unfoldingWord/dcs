@@ -177,11 +177,11 @@ func NewFuncMap() []template.FuncMap {
 			}
 			return "tab-size-8"
 		},
-		/*** DCS Custom Code ***/
+		/*** DCS Customizations ***/
 		"GATrackingID": func() string {
 			return setting.Google.GATrackingID
 		},
-		/*** END DCS Custom Code ***/
+		/*** END DCS Customizations ***/
 		"SubJumpablePath": func(str string) []string {
 			var path []string
 			index := strings.LastIndex(str, "/")

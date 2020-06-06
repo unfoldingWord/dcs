@@ -113,9 +113,9 @@ func SettingsPost(ctx *context.Context, form auth.RepoSettingForm) {
 			return
 		}
 
-		/*** DCS Custom Modification - Must be admin ***/
+		/*** DCS Customizations - Must be admin ***/
 		repo.IsPrivate = form.Private && ctx.User.IsAdmin
-		/*** END DCS Custom Modification ***/
+		/*** END DCS Customizations ***/
 		if err := models.UpdateRepository(repo, visibilityChanged); err != nil {
 			ctx.ServerError("UpdateRepository", err)
 			return
@@ -480,7 +480,7 @@ func SettingsPost(ctx *context.Context, form auth.RepoSettingForm) {
 		log.Trace("Repository was un-archived: %s/%s", ctx.Repo.Owner.Name, repo.Name)
 		ctx.Redirect(ctx.Repo.RepoLink + "/settings")
 
-	/*** DCS Custom Code ***/
+	/*** DCS Customizations ***/
 	case "scrub":
 		if !ctx.Repo.IsOwner() {
 			ctx.Error(404)
@@ -525,7 +525,7 @@ func SettingsPost(ctx *context.Context, form auth.RepoSettingForm) {
 			ctx.Flash.Success(ctx.Tr("repo.settings.scrub_success"))
 		}
 		ctx.Redirect(ctx.Repo.RepoLink + "/settings")
-	/*** END DCS Custom Code ***/
+	/*** END DCS Customizations ***/
 
 	default:
 		ctx.NotFound("", nil)
