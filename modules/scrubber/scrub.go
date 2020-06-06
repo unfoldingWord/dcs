@@ -2,7 +2,7 @@
 // Use of this source code is governed by a MIT-style
 // license that can be found in the LICENSE file.
 
-/*** DCS Custom Code - Module for scrubbing repos ***/
+/*** DCS Customizations - Module for scrubbing repos ***/
 
 package scrubber
 
@@ -207,4 +207,4 @@ export GIT_AUTHOR_EMAIL="`+newEmail+`"
 	return nil
 }
 
-/*** END DCS Custom Code ***/
+/*** END DCS Customizations ***/

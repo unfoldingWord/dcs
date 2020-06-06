@@ -237,7 +237,7 @@ func EditDoor43MetadataPost(ctx *context.Context, form auth.EditDoor43MetadataFo
 	if err = json.Unmarshal(form.Metadata, &dm.Metadata); err != nil {
 		ctx.RenderWithErr(ctx.Tr("repo.metadata.metadata_not_proper_json"), tplDoor43MetadataNew, &form)
 	}
-	if err = models.UpdateDoor43Metadata(models.DefaultDBContext(), dm); err != nil {
+	if err = models.UpdateDoor43MetadataCols(dm, "metadata"); err != nil {
 		ctx.ServerError("UpdateDoor43Metadata", err)
 		return
 	}

@@ -27,7 +27,7 @@
 					</div>
 				</div>
 				{{if not .Repository.IsFork}}
-					{{if .SignedUser.IsAdmin}}<!--- DCS Custom Code -- Adds if .SignedUser.IsAdmin -->
+					{{if .SignedUser.IsAdmin}}<!--- DCS Customizations -- Adds if .SignedUser.IsAdmin -->
 					<div class="inline field">
 						<label>{{.i18n.Tr "repo.visibility"}}</label>
 						<div class="ui checkbox">
@@ -431,9 +431,9 @@
 						{{end}}
 					</div>
 				</div>
-				
+
 				<div class="ui divider"></div>
-				
+
 				<div class="item">
 					<div class="ui right">
 						<button class="ui basic red show-modal button" data-modal="#scrub-repo-modal">{{.i18n.Tr "repo.settings.scrub"}}</button>
@@ -643,7 +643,7 @@
 				</form>
 			</div>
 		</div>
-		<!-- END DCS Custom Code -->
+		<!-- END DCS Customizations -->
 	{{end}}
 {{end}}
 

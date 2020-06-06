@@ -1,9 +1,9 @@
 <div class="ui container" id="navbar">
 	<div class="item brand" style="justify-content: space-between;">
 		<a href="{{AppSubUrl}}/">
-			<!-- DCS Custom Modifications -  intentionally uses /img/favicon.png here -->
+			<!-- DCS Customizations -  intentionally uses /img/favicon.png here -->
 			<img class="ui mini image" src="{{AppSubUrl}}/img/favicon.png">
-			<!-- END DCS Custom Modifications -->
+			<!-- END DCS Customizations -->
 		</a>
 		<div class="ui basic icon button mobile-only" id="navbar-expand-toggle">
 			<i class="sidebar icon"></i>
@@ -12,7 +12,7 @@
 
 	{{if and .IsSigned .MustChangePassword}}
 		{{/* No links */}}
-    <!-- DCS Custom Modifications - Removed explore if not logged in -->
+    <!-- DCS Customizations - Removed explore if not logged in -->
 	{{else if .IsSigned}}
 		<a class="item {{if .PageIsDashboard}}active{{end}}" href="{{AppSubUrl}}/">{{.i18n.Tr "dashboard"}}</a>
 		{{if not .UnitIssuesGlobalDisabled}}
@@ -28,7 +28,7 @@
 	{{else if .IsLandingPageHome}}
 		<a class="item {{if .PageIsHome}}active{{end}}" href="{{AppSubUrl}}/">{{.i18n.Tr "home"}}</a>
 	{{end}}
-	<!-- END DCS Custom Modifications -->
+	<!-- END DCS Customizations -->
 
 	{{template "custom/extra_links" .}}
 

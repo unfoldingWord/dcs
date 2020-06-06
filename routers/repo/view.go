@@ -26,7 +26,7 @@ import (
 	"code.gitea.io/gitea/modules/log"
 	"code.gitea.io/gitea/modules/markup"
 	"code.gitea.io/gitea/modules/setting"
-	"code.gitea.io/gitea/modules/yaml" // For DCS Custom Code
+	"code.gitea.io/gitea/modules/yaml" // DCS Customizations
 )
 
 const (
@@ -457,15 +457,15 @@ func renderFile(ctx *context.Context, entry *git.TreeEntry, treeLink, rawLink st
 
 		readmeExist := markup.IsReadmeFile(blob.Name())
 		ctx.Data["ReadmeExist"] = readmeExist
-		/*** DCS Custom Code ***/
+		/*** DCS Customizations ***/
 		isTocYaml := blob.Name() == "toc.yaml"
 		ctx.Data["IsTocreaYaml"] = isTocYaml
-		/*** END DCS Custom Code ***/
+		/*** END DCS Customizations ***/
 		if markupType := markup.Type(blob.Name()); markupType != "" {
 			ctx.Data["IsMarkup"] = true
 			ctx.Data["MarkupType"] = markupType
-			ctx.Data["FileContent"] = string(markup.Render(blob.Name(), buf, path.Dir(treeLink), ctx.Repo.Repository.ComposeDocumentMetas()))
-		/*** DCS Custom Code ***/
+			ctx.Data["FileContent"] = string(markup.Render(blob.Name(), buf, path.Dir(treeLink), ctx.Repo.Repository.ComposeMetas()))
+		/*** DCS Customizations ***/
 		} else if isTocYaml {
 			ctx.Data["IsRenderedHTML"] = true
 			if rendered, err := yaml.Render(buf); err != nil {
@@ -476,7 +476,7 @@ func renderFile(ctx *context.Context, entry *git.TreeEntry, treeLink, rawLink st
 			} else {
 				ctx.Data["FileContent"] = string(rendered)
 			}
-			/*** END DCS Custom Code ***/
+			/*** END DCS Customizations ***/
 		} else if readmeExist {
 			ctx.Data["IsRenderedHTML"] = true
 			ctx.Data["FileContent"] = strings.Replace(

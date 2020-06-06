@@ -520,6 +520,9 @@ func HookPostReceive(ctx *macaron.Context, opts private.HookOptions) {
 			}
 		}
 	}
+
+	fmt.Printf("\n\n\n+============================+\n\n\nHERE IN POST RECEIVE:\n\n\n%d %v\n============\n\n", repo.ID, opts.RefFullNames)
+
 	ctx.JSON(http.StatusOK, private.HookPostReceiveResult{
 		Results:      results,
 		RepoWasEmpty: wasEmpty,
@@ -568,5 +571,15 @@ func SetDefaultBranch(ctx *macaron.Context) {
 		})
 		return
 	}
+
+	/*** DCS Customizations ***/
+	if err := models.ProcessDoor43MetadataForRepoRelease(repo, nil); err != nil {
+		ctx.JSON(http.StatusInternalServerError, map[string]interface{}{
+			"Err": fmt.Sprintf("Unable to process default branch on repository: %s/%s Error: %v", ownerName, repoName, err),
+		})
+		return
+	}
+	/*** END DCS Customizations ***/
+
 	ctx.PlainText(200, []byte("success"))
 }

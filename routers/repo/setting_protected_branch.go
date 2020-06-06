@@ -80,6 +80,12 @@ func ProtectedBranchPost(ctx *context.Context) {
 				ctx.ServerError("SetDefaultBranch", err)
 				return
 			}
+			/*** DCS Customizations ***/
+			if err := models.ProcessDoor43MetadataForRepoRelease(repo, nil); err != nil {
+				ctx.ServerError("ProcessDoor43MetadataForRepoRelease", err)
+				return
+			}
+			/*** END DCS Customizations ***/
 		}
 
 		log.Trace("Repository basic settings updated: %s/%s", ctx.Repo.Owner.Name, repo.Name)
