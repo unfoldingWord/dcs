@@ -256,6 +256,11 @@ func DeleteDoor43MetadataByRelease(release *Release) error {
 	return err
 }
 
+// DeleteAllDoor43MetadatasByRepoID deletes all metadatas from database for a repo by given repo ID.
+func DeleteAllDoor43MetadatasByRepoID(repoID int64) (int64, error) {
+	return x.Delete(Door43Metadata{RepoID: repoID})
+}
+
 var rc02Schema []byte
 
 // GetRC02Schema Returns the schema for RC v0.2, retrieving it from file if not already done

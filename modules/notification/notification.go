@@ -8,13 +8,13 @@ import (
 	"code.gitea.io/gitea/models"
 	"code.gitea.io/gitea/modules/notification/action"
 	"code.gitea.io/gitea/modules/notification/base"
+	door43Metadata "code.gitea.io/gitea/modules/notification/door43_metadata" // DCS Customizations
 	"code.gitea.io/gitea/modules/notification/indexer"
 	"code.gitea.io/gitea/modules/notification/mail"
 	"code.gitea.io/gitea/modules/notification/ui"
 	"code.gitea.io/gitea/modules/notification/webhook"
 	"code.gitea.io/gitea/modules/repository"
 	"code.gitea.io/gitea/modules/setting"
-	door43Metadata "code.gitea.io/gitea/modules/notification/door43_metadata"  // DCS Customizations
 )
 
 var (

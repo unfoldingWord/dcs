@@ -5,12 +5,13 @@
 package door43Metadata
 
 import (
+	"fmt"
+	"strings"
+
 	"code.gitea.io/gitea/models"
 	"code.gitea.io/gitea/modules/git"
 	"code.gitea.io/gitea/modules/notification/base"
 	"code.gitea.io/gitea/modules/repository"
-	"fmt"
-	"strings"
 )
 
 type metadataNotifier struct {
@@ -49,5 +50,11 @@ func (m *metadataNotifier) NotifyPushCommits(pusher *models.User, repo *models.R
 		if err := models.ProcessDoor43MetadataForRepoRelease(repo, nil); err != nil {
 			fmt.Printf("ProcessDoor43MetadataForRepoRelease: %v\n", err)
 		}
+	}
+}
+
+func (m *metadataNotifier) NotifyDeleteRepository(doer *models.User, repo *models.Repository) {
+	if _, err := models.DeleteAllDoor43MetadatasByRepoID(repo.ID); err != nil {
+		fmt.Printf("DeleteAllDoor43MetadatasByRepoID: %v\n", err)
 	}
 }
