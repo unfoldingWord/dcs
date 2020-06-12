@@ -29,7 +29,7 @@ func NewNotifier() base.Notifier {
 }
 
 func (m *metadataNotifier) NotifyNewRelease(rel *models.Release) {
-	if ! rel.IsTag {
+	if !rel.IsTag {
 		if err := door43metadata.ProcessDoor43MetadataForRepoRelease(rel.Repo, rel); err != nil {
 			fmt.Printf("ProcessDoor43MetadataForRepoRelease: %v\n", err)
 		}
@@ -37,7 +37,7 @@ func (m *metadataNotifier) NotifyNewRelease(rel *models.Release) {
 }
 
 func (m *metadataNotifier) NotifyUpdateRelease(doer *models.User, rel *models.Release) {
-	if ! rel.IsTag {
+	if !rel.IsTag {
 		if err := door43metadata.ProcessDoor43MetadataForRepoRelease(rel.Repo, rel); err != nil {
 			fmt.Printf("ProcessDoor43MetadataForRepoRelease: %v\n", err)
 		}

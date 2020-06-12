@@ -70,44 +70,6 @@ func Door43Metadatas(ctx *context.Context) {
 	ctx.HTML(200, tplDoor43Metadatas)
 }
 
-// SingleDoor43Metadata renders a single door43 metadata's page
-func SingleDoor43Metadata(ctx *context.Context) {
-	ctx.Data["Title"] = ctx.Tr("repo.metadata.metadatas")
-	ctx.Data["PageIsDoor43MetadataList"] = true
-
-	writeAccess := ctx.Repo.CanWrite(models.UnitTypeReleases)
-	ctx.Data["CanCreateMetadata"] = writeAccess && !ctx.Repo.Repository.IsArchived
-
-	metadata, err := models.GetDoor43MetadataByRepoIDAndTagName(ctx.Repo.Repository.ID, ctx.Params("tag"))
-	if err != nil {
-		ctx.ServerError("GetDoor43MetadataByRepoIDAndTagName", err)
-		return
-	}
-
-	ctx.Data["Door43Metadatas"] = []*models.Door43Metadata{metadata}
-	ctx.HTML(200, tplDoor43Metadatas)
-}
-
-// LatestDoor43Metadata redirects to the latest door43 metadata
-func LatestDoor43Metadata(ctx *context.Context) {
-	metadata, err := models.GetLatestDoor43MetadataInCatalogByRepoID(ctx.Repo.Repository.ID)
-	if err != nil {
-		if models.IsErrDoor43MetadataNotExist(err) {
-			ctx.NotFound("LatestDoor43Metadata", err)
-			return
-		}
-		ctx.ServerError("GetLatestDoor43MetadataByRepoID", err)
-		return
-	}
-
-	if err := metadata.LoadAttributes(); err != nil {
-		ctx.ServerError("LoadAttributes", err)
-		return
-	}
-
-	ctx.Redirect(metadata.HTMLURL())
-}
-
 // NewDoor43Metadata render creating door43 metadata page
 func NewDoor43Metadata(ctx *context.Context) {
 	latestRelease, err := models.GetLatestReleaseByRepoID(ctx.Repo.Repository.ID)
