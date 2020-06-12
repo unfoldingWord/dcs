@@ -52,14 +52,14 @@
 			{{if not .IsBeingCreated}}
 				<div class="repo-buttons">
 	                <!--- DCS Customizations --->
-					{{$dm := .GetLatestDoor43MetadataInCatalog}}
-					{{if $dm}}
+					{{$prodDM := .GetLatestProdCatalogMetadata}}
+					{{if $prodDM}}
 					<div class="ui labeled button" tabindex="0">
-						<a type="submit" class="ui compact basic button" href="{{.Link}}/releases/tag/{{$dm.Release.TagName | EscapePound}}">
-							<i class="icon fa-file-text"></i>Catalog
+						<a type="submit" class="ui compact basic button" href="{{.Link}}/releases/tag/{{$prodDM.Release.TagName | EscapePound}}">
+							<i class="icon fa-file-text"></i>{{$.i18n.Tr "repo.metadata.catalog"}}
 						</a>
-						<a class="ui basic label" href="{{.Link}}/releases/tag/{{$dm.Release.TagName | EscapePound}}">
-							{{$dm.Release.TagName}}
+						<a class="ui basic label" href="{{.Link}}/releases/tag/{{$prodDM.Release.TagName | EscapePound}}">
+							{{$prodDM.Release.TagName}}
 						</a>
 					</div>
 					{{end}}

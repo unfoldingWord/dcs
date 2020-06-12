@@ -102,7 +102,7 @@ func GetDoor43Metadata(repoID, releaseID int64) (*Door43Metadata, error) {
 	if err != nil {
 		return nil, err
 	} else if !isExist {
-		return nil, ErrDoor43MetadataNotExist{0, repoID,releaseID}
+		return nil, ErrDoor43MetadataNotExist{0, repoID, releaseID}
 	}
 
 	rel := &Door43Metadata{RepoID: repoID, ReleaseID: releaseID}
@@ -143,7 +143,7 @@ func GetDoor43MetadataByID(id int64) (*Door43Metadata, error) {
 	if err != nil {
 		return nil, err
 	} else if !has {
-		return nil, ErrDoor43MetadataNotExist{id,0, 0}
+		return nil, ErrDoor43MetadataNotExist{id, 0, 0}
 	}
 
 	return rel, nil
@@ -179,13 +179,16 @@ func GetDoor43MetadatasByRepoID(repoID int64, opts FindDoor43MetadatasOptions) (
 	return dms, sess.Find(&dms)
 }
 
-// GetLatestDoor43MetadataInCatalogByRepoID returns the latest door43 metadata for a repository in the catalog
-func GetLatestDoor43MetadataInCatalogByRepoID(repoID int64) (*Door43Metadata, error) {
+// GetLatestCatalogMetadataByRepoID returns the latest door43 metadata in the catalog by repoID, if CanBePrerelease, a prerelease entry can match
+func GetLatestCatalogMetadataByRepoID(repoID int64, CanBePrerelease bool) (*Door43Metadata, error) {
 	cond := builder.NewCond().
 		And(builder.Eq{"`door43_metadata`.repo_id": repoID}).
 		And(builder.Eq{"`release`.is_tag": 0}).
-		And(builder.Eq{"`release`.is_draft": 0}).
-		And(builder.Eq{"`release`.is_prerelease": 0})
+		And(builder.Eq{"`release`.is_draft": 0})
+
+	if !CanBePrerelease {
+		cond = cond.And(builder.Eq{"`release`.is_prerelease": 0})
+	}
 
 	dm := new(Door43Metadata)
 	has, err := x.

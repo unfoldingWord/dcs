@@ -845,9 +845,7 @@ func RegisterRoutes(m *macaron.Macaron) {
 	// Door43 Metadata
 	m.Group("/:username/:reponame", func() {
 		m.Group("/metadatas", func() {
-			m.Get("/", repo.Door43Metadatas)
-			m.Get("/tag/:tag", repo.SingleDoor43Metadata)
-			m.Get("/latest", repo.LatestDoor43Metadata)
+			m.Get("", repo.Door43Metadatas)
 		}, repo.MustBeNotEmpty, context.RepoRef())
 		m.Group("/metadatas", func() {
 			m.Get("/new", repo.NewDoor43Metadata)

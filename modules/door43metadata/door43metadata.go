@@ -97,6 +97,7 @@ func ValidateBlobByRC020Schema(manifest map[string]interface{}) (*gojsonschema.R
 	return gojsonschema.Validate(schemaLoader, documentLoader)
 }
 
+// ReadManifestFromBlob reads a yaml file from a blob and unmarshals it
 func ReadManifestFromBlob(blob *git.Blob) (map[string]interface{}, error) {
 	dataRc, err := blob.DataAsync()
 	if err != nil {
@@ -206,7 +207,7 @@ func ProcessDoor43MetadataForRepoRelease(repo *models.Repository, release *model
 	return nil
 }
 
-// ValidatesManifestTreeEntry validates a tree entry that is a manifest file and returns the results
+// ValidateManifestTreeEntry validates a tree entry that is a manifest file and returns the results
 func ValidateManifestTreeEntry(entry *git.TreeEntry) (*gojsonschema.Result, error) {
 	manifest, err := ReadManifestFromBlob(entry.Blob())
 	if err != nil {

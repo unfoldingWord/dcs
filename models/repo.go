@@ -2317,14 +2317,28 @@ func (repo *Repository) GetTreePathLock(treePath string) (*LFSLock, error) {
 	return nil, nil
 }
 
-// GetLatestDoor43MetadataInCatalog gets the latest door43 metadata for the repo that's in the catalog
-func (repo *Repository) GetLatestDoor43MetadataInCatalog() (*Door43Metadata, error) {
-	dm, err := GetLatestDoor43MetadataInCatalogByRepoID(repo.ID)
-	if err != nil && ! IsErrDoor43MetadataNotExist(err) {
+/*** DCS Customizations ***/
+// GetLatestProdCatalogMetadata gets the latest Door43 Metadata that is in the prod catalog.
+func (repo *Repository) GetLatestProdCatalogMetadata() (*Door43Metadata, error) {
+	dm, err := GetLatestCatalogMetadataByRepoID(repo.ID, false)
+	if err != nil && !IsErrDoor43MetadataNotExist(err) {
 		return nil, err
 	}
 	return dm, nil
 }
+
+// GetLatestPreProdCatalogMetadata gets the latest Door43 Metadata that is in the pre-prod catalog.
+func (repo *Repository) GetLatestPreProdCatalogMetadata() (*Door43Metadata, error) {
+	dm, err := GetLatestCatalogMetadataByRepoID(repo.ID, true)
+	if err != nil && !IsErrDoor43MetadataNotExist(err) {
+		return nil, err
+	}
+	if dm != nil && !dm.Release.IsPrerelease {
+		dm = nil
+	}
+	return dm, nil
+}
+/*** END DCS Customizations ***/
 
 func updateRepositoryCols(e Engine, repo *Repository, cols ...string) error {
 	_, err := e.ID(repo.ID).Cols(cols...).Update(repo)
