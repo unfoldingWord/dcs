@@ -7,6 +7,7 @@
 package repo
 
 import (
+	"code.gitea.io/gitea/modules/door43metadata"
 	"container/list"
 	"crypto/subtle"
 	"fmt"
@@ -649,6 +650,20 @@ func ViewPullFiles(ctx *context.Context) {
 	getBranchData(ctx, issue)
 	ctx.Data["IsIssuePoster"] = ctx.IsSigned && issue.IsPoster(ctx.User.ID)
 	ctx.Data["HasIssuesOrPullsWritePermission"] = ctx.Repo.CanWriteIssuesOrPulls(issue.IsPull)
+
+	for _, file := range diff.Files {
+		if file.Name == "manifest.yaml" {
+			if entry, _ := commit.GetTreeEntryByPath(file.Name); entry != nil {
+				if result, err := door43metadata.ValidateManifestTreeEntry(entry); err != nil {
+					fmt.Printf("ValidateManifestTreeEntry: %v\n", err)
+				} else {
+					ctx.Data["ValidateManifestResult"] = result
+					ctx.Data["ValidateManifestResultErrors"] = door43metadata.StringifyValidationErrors(result)
+				}
+			}
+		}
+	}
+
 	ctx.HTML(200, tplPullFiles)
 }
 

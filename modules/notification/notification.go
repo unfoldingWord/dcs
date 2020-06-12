@@ -8,7 +8,7 @@ import (
 	"code.gitea.io/gitea/models"
 	"code.gitea.io/gitea/modules/notification/action"
 	"code.gitea.io/gitea/modules/notification/base"
-	door43Metadata "code.gitea.io/gitea/modules/notification/door43_metadata" // DCS Customizations
+	"code.gitea.io/gitea/modules/notification/door43metadata" // DCS Customizations
 	"code.gitea.io/gitea/modules/notification/indexer"
 	"code.gitea.io/gitea/modules/notification/mail"
 	"code.gitea.io/gitea/modules/notification/ui"
@@ -37,7 +37,7 @@ func NewContext() {
 	RegisterNotifier(webhook.NewNotifier())
 	RegisterNotifier(action.NewNotifier())
 	/*** DCS Customizations ***/
-	RegisterNotifier(door43Metadata.NewNotifier())
+	RegisterNotifier(door43metadata.NewNotifier())
 	/*** END DCS Customizations ***/
 }
 

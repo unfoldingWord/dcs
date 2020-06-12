@@ -90,7 +90,7 @@ func SingleDoor43Metadata(ctx *context.Context) {
 
 // LatestDoor43Metadata redirects to the latest door43 metadata
 func LatestDoor43Metadata(ctx *context.Context) {
-	metadata, err := models.GetLatestDoor43MetadataByRepoID(ctx.Repo.Repository.ID)
+	metadata, err := models.GetLatestDoor43MetadataInCatalogByRepoID(ctx.Repo.Repository.ID)
 	if err != nil {
 		if models.IsErrDoor43MetadataNotExist(err) {
 			ctx.NotFound("LatestDoor43Metadata", err)

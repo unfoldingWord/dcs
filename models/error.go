@@ -1984,6 +1984,7 @@ func (err ErrDoor43MetadataAlreadyExist) Error() string {
 // ErrDoor43MetadataNotExist represents a "Door43MetadataNotExist" kind of error.
 type ErrDoor43MetadataNotExist struct {
 	ID        int64
+	RepoID    int64
 	ReleaseID int64
 }
 
