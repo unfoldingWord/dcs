@@ -6,17 +6,12 @@ package models
 
 import (
 	"fmt"
-	"io/ioutil"
-	"reflect"
 	"sort"
 
-	"code.gitea.io/gitea/modules/git"
 	"code.gitea.io/gitea/modules/setting"
 	api "code.gitea.io/gitea/modules/structs"
 	"code.gitea.io/gitea/modules/timeutil"
 
-	"github.com/ghodss/yaml"
-	"github.com/xeipuuv/gojsonschema"
 	"xorm.io/builder"
 )
 
@@ -107,7 +102,7 @@ func GetDoor43Metadata(repoID, releaseID int64) (*Door43Metadata, error) {
 	if err != nil {
 		return nil, err
 	} else if !isExist {
-		return nil, ErrDoor43MetadataNotExist{0, releaseID}
+		return nil, ErrDoor43MetadataNotExist{0, repoID,releaseID}
 	}
 
 	rel := &Door43Metadata{RepoID: repoID, ReleaseID: releaseID}
@@ -131,7 +126,7 @@ func GetDoor43MetadataByRepoIDAndTagName(repoID int64, tagName string) (*Door43M
 	if err != nil {
 		return nil, err
 	} else if !isExist {
-		return nil, ErrDoor43MetadataNotExist{0, releaseID}
+		return nil, ErrDoor43MetadataNotExist{0, repoID, releaseID}
 	}
 
 	dm := &Door43Metadata{RepoID: repoID, ReleaseID: releaseID}
@@ -148,7 +143,7 @@ func GetDoor43MetadataByID(id int64) (*Door43Metadata, error) {
 	if err != nil {
 		return nil, err
 	} else if !has {
-		return nil, ErrDoor43MetadataNotExist{id, 0}
+		return nil, ErrDoor43MetadataNotExist{id,0, 0}
 	}
 
 	return rel, nil
@@ -176,7 +171,7 @@ func GetDoor43MetadatasByRepoID(repoID int64, opts FindDoor43MetadatasOptions) (
 		Desc("created_unix", "id").
 		Where(opts.toConds(repoID))
 
-	if opts.PageSize != 0 {
+	if opts.PageSize > 0 {
 		sess = opts.setSessionPagination(sess)
 	}
 
@@ -184,23 +179,26 @@ func GetDoor43MetadatasByRepoID(repoID int64, opts FindDoor43MetadatasOptions) (
 	return dms, sess.Find(&dms)
 }
 
-// GetLatestDoor43MetadataByRepoID returns the latest metadata for a repository
-func GetLatestDoor43MetadataByRepoID(repoID int64) (*Door43Metadata, error) {
+// GetLatestDoor43MetadataInCatalogByRepoID returns the latest door43 metadata for a repository in the catalog
+func GetLatestDoor43MetadataInCatalogByRepoID(repoID int64) (*Door43Metadata, error) {
 	cond := builder.NewCond().
-		And(builder.Eq{"repo_id": repoID}).
-		And(builder.Eq{"release_id": 0})
+		And(builder.Eq{"`door43_metadata`.repo_id": repoID}).
+		And(builder.Eq{"`release`.is_tag": 0}).
+		And(builder.Eq{"`release`.is_draft": 0}).
+		And(builder.Eq{"`release`.is_prerelease": 0})
 
 	dm := new(Door43Metadata)
 	has, err := x.
-		Desc("created_unix", "id").
+		Desc("`release`.created_unix", "`release`.id").
+		Join("INNER", "release", "`release`.id = `door43_metadata`.release_id").
 		Where(cond).
 		Get(dm)
 	if err != nil {
 		return nil, err
 	} else if !has {
-		return nil, ErrReleaseNotExist{0, "latest"}
+		return nil, ErrDoor43MetadataNotExist{0, repoID, 0}
 	}
-
+	dm.LoadAttributes()
 	return dm, nil
 }
 
@@ -259,124 +257,4 @@ func DeleteDoor43MetadataByRelease(release *Release) error {
 // DeleteAllDoor43MetadatasByRepoID deletes all metadatas from database for a repo by given repo ID.
 func DeleteAllDoor43MetadatasByRepoID(repoID int64) (int64, error) {
 	return x.Delete(Door43Metadata{RepoID: repoID})
-}
-
-var rc02Schema []byte
-
-// GetRC02Schema Returns the schema for RC v0.2, retrieving it from file if not already done
-func GetRC02Schema() ([]byte, error) {
-	if rc02Schema == nil {
-		var err error
-		rc02Schema, err = GetRepoInitFile("schema", "rc.schema.json")
-		if err != nil {
-			return nil, err
-		}
-	}
-	return rc02Schema, nil
-}
-
-// ProcessDoor43MetadataForRepoRelease handles the metadata for a given repo by release based on if the container is a valid RC or not
-func ProcessDoor43MetadataForRepoRelease(repo *Repository, release *Release) error {
-	if repo == nil {
-		return fmt.Errorf("no repository provided")
-	}
-
-	gitRepo, err := git.OpenRepository(repo.RepoPath())
-	if err != nil {
-		fmt.Printf("OpenRepository Error: %v\n", err)
-		return err
-	}
-	defer gitRepo.Close()
-
-	var commit *git.Commit
-	if release == nil {
-		commit, err = gitRepo.GetBranchCommit(repo.DefaultBranch)
-		if err != nil {
-			fmt.Printf("GetBranchCommit Error: %v\n", err)
-			return err
-		}
-	} else {
-		commit, err = gitRepo.GetTagCommit(release.TagName)
-		if err != nil {
-			fmt.Printf("GetTagCommit Error: %v\n", err)
-			return err
-		}
-	}
-
-	entry, err := commit.GetTreeEntryByPath("manifest.yaml")
-	if err != nil {
-		fmt.Printf("GetTreeEntryByPath Error: %v\n", err)
-		return err
-	}
-	dataRc, err := entry.Blob().DataAsync()
-	if err != nil {
-		fmt.Printf("DataAsync Error: %v\n", err)
-		return err
-	}
-	defer dataRc.Close()
-
-	content, _ := ioutil.ReadAll(dataRc)
-	//fmt.Printf("content: %s", content)
-
-	var manifest map[string]interface{}
-	if err := yaml.Unmarshal(content, &manifest); err != nil {
-		fmt.Printf("yaml.Unmarshal Error: %v", err)
-		return err
-	}
-
-	schema, err := GetRC02Schema()
-	if err != nil {
-		return err
-	}
-	schemaLoader := gojsonschema.NewBytesLoader(schema)
-	documentLoader := gojsonschema.NewGoLoader(manifest)
-
-	result, err := gojsonschema.Validate(schemaLoader, documentLoader)
-	if err != nil {
-		fmt.Printf("Error: %v", err)
-		return err
-	}
-
-	var releaseID int64
-	if release != nil {
-		releaseID = release.ID
-	}
-
-	dm, err := GetDoor43Metadata(repo.ID, releaseID)
-	if err != nil && !IsErrDoor43MetadataNotExist(err) {
-		return err
-	}
-
-	if result.Valid() {
-		fmt.Printf("The document is valid\n")
-		if dm == nil {
-			dm = &Door43Metadata{
-				RepoID:          repo.ID,
-				ReleaseID:       releaseID,
-				MetadataVersion: "rc0.2",
-				Metadata:        manifest,
-			}
-			return InsertDoor43Metadata(dm)
-		} else if reflect.DeepEqual(dm.Metadata, manifest) {
-			dm.Metadata = manifest
-			return UpdateDoor43MetadataCols(dm, "metadata")
-		}
-	}
-
-	fmt.Printf("==========\nREPO: %s\n", repo.Name)
-	fmt.Printf("REPO ID: %d, RELEASE ID: %d\n", repo.ID, releaseID)
-	fmt.Printf("The document is not valid. see errors :\n")
-	if release != nil {
-		fmt.Printf("RELEASE: %v\n", release.TagName)
-	} else {
-		fmt.Printf("BRANCH: %s\n", repo.DefaultBranch)
-	}
-	for _, desc := range result.Errors() {
-		fmt.Printf("- %s\n", desc.Description())
-		fmt.Printf("- %s = %s\n", desc.Field(), desc.Value())
-	}
-	if dm != nil {
-		return DeleteDoor43MetadataByID(dm.ID)
-	}
-	return nil
 }

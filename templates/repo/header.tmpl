@@ -51,6 +51,19 @@
 			</div>
 			{{if not .IsBeingCreated}}
 				<div class="repo-buttons">
+	                <!--- DCS Customizations --->
+					{{$dm := .GetLatestDoor43MetadataInCatalog}}
+					{{if $dm}}
+					<div class="ui labeled button" tabindex="0">
+						<a type="submit" class="ui compact basic button" href="{{.Link}}/releases/tag/{{$dm.Release.TagName | EscapePound}}">
+							<i class="icon fa-file-text"></i>Catalog
+						</a>
+						<a class="ui basic label" href="{{.Link}}/releases/tag/{{$dm.Release.TagName | EscapePound}}">
+							{{$dm.Release.TagName}}
+						</a>
+					</div>
+					{{end}}
+				    <!--- END DCS Customizations --->
 					<form method="post" action="{{$.RepoLink}}/action/{{if $.IsWatchingRepo}}un{{end}}watch?redirect_to={{$.Link}}">
 						{{$.CsrfTokenHtml}}
 						<div class="ui labeled button" tabindex="0">

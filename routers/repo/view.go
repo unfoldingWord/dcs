@@ -20,6 +20,7 @@ import (
 	"code.gitea.io/gitea/modules/cache"
 	"code.gitea.io/gitea/modules/charset"
 	"code.gitea.io/gitea/modules/context"
+	"code.gitea.io/gitea/modules/door43metadata"
 	"code.gitea.io/gitea/modules/git"
 	"code.gitea.io/gitea/modules/highlight"
 	"code.gitea.io/gitea/modules/lfs"
@@ -356,6 +357,19 @@ func renderDirectory(ctx *context.Context, treeLink string) {
 		ctx.Data["CanAddFile"] = !ctx.Repo.Repository.IsArchived
 		ctx.Data["CanUploadFile"] = setting.Repository.Upload.Enabled && !ctx.Repo.Repository.IsArchived
 	}
+
+	/*** DCS Customizations ***/
+	if ctx.Repo.TreePath == "" {
+		if entry, _ := tree.GetTreeEntryByPath("manifest.yaml"); entry != nil {
+			if result, err := door43metadata.ValidateManifestTreeEntry(entry); err != nil {
+				fmt.Printf("ValidateManifestTreeEntry: %v\n", err)
+			} else {
+				ctx.Data["ValidateManifestResult"] = result
+				ctx.Data["ValidateManifestResultErrors"] = door43metadata.StringifyValidationErrors(result)
+			}
+		}
+	}
+	/*** END DCS Customizations ***/
 }
 
 func renderFile(ctx *context.Context, entry *git.TreeEntry, treeLink, rawLink string) {
@@ -573,6 +587,17 @@ func renderFile(ctx *context.Context, entry *git.TreeEntry, treeLink, rawLink st
 	} else if !ctx.Repo.CanWrite(models.UnitTypeCode) {
 		ctx.Data["DeleteFileTooltip"] = ctx.Tr("repo.editor.must_have_write_access")
 	}
+
+	/*** DCS Customizations ***/
+	if ctx.Repo.TreePath == "manifest.yaml" {
+		if result, err := door43metadata.ValidateManifestTreeEntry(entry); err != nil {
+			fmt.Printf("ValidateManifestTreeEntry: %v\n", err)
+		} else {
+			ctx.Data["ValidateManifestResult"] = result
+			ctx.Data["ValidateManifestResultErrors"] = door43metadata.StringifyValidationErrors(result)
+		}
+	}
+	/*** END DCS Customizations ***/
 }
 
 func safeURL(address string) string {

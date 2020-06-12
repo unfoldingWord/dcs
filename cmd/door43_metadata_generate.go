@@ -8,7 +8,7 @@ import (
 	"context"
 
 	"code.gitea.io/gitea/models"
-	"code.gitea.io/gitea/modules/door43Metadata"
+	"code.gitea.io/gitea/modules/door43metadata"
 	"code.gitea.io/gitea/modules/log"
 	"code.gitea.io/gitea/modules/setting"
 
@@ -34,7 +34,7 @@ func runDoor43MetadataGenerate(ctx *cli.Context) error {
 	log.Trace("Log path: %s", setting.LogRootPath)
 	setting.InitDBConfig()
 
-	if err := models.NewEngine(context.Background(), door43Metadata.GenerateDoor43Metadata); err != nil {
+	if err := models.NewEngine(context.Background(), door43metadata.GenerateDoor43Metadata); err != nil {
 		log.Fatal("Failed to initialize ORM engine: %v", err)
 		return err
 	}
