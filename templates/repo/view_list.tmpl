@@ -91,21 +91,21 @@
 								<a href="{{EscapePound $.TreeLink}}/{{EscapePound $entry.Name}}" title="{{$entry.Name}}">{{$entry.Name}}</a>
 							{{end}}
 						</span>
+						<!-- DCS Customizations -->
+						{{if and (eq $.TreePath "") (eq $entry.Name "manifest.yaml") ($.ValidateManifestResult)}}
+							{{if $.ValidateManifestResult.Valid}}
+								<span class="ui label green green" title="This is a valid RC v0.2.0 manfiest file">Valid</span>
+							{{else}}
+								<span class="ui label red" title="{{$.ValidateManifestResultErrors}}">Invalid</span>
+							{{end}}
+						{{end}}
+						<!-- END DCS Customizations -->
 					</td>
 				{{end}}
 				<td class="message nine wide">
 					<span class="truncate">
 						<a href="{{$.RepoLink}}/commit/{{$commit.ID}}" title="{{$commit.Summary}}">{{$commit.Summary | RenderEmoji}}</a>
 					</span>
-					<!-- DCS Customizations -->
-					{{if and (eq $.TreePath "") (eq $entry.Name "manifest.yaml") ($.ValidateManifestResult)}}
-						{{if $.ValidateManifestResult.Valid}}
-							<span class="ui label green green" title="This is a valid RC v0.2.0 manfiest file">Valid</span>
-						{{else}}
-							<span class="ui label red" title="{{$.ValidateManifestResultErrors}}">Invalid</span>
-						{{end}}
-					{{end}}
-					<!-- END DCS Customizations -->
 				</td>
 				<td class="text right age three wide">{{TimeSince $commit.Committer.When $.Lang}}</td>
 			</tr>
