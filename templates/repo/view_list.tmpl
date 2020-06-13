@@ -94,9 +94,9 @@
 						<!-- DCS Customizations -->
 						{{if and (eq $.TreePath "") (eq $entry.Name "manifest.yaml") ($.ValidateManifestResult)}}
 							{{if $.ValidateManifestResult.Valid}}
-								<span class="ui label green green" title="This is a valid RC v0.2.0 manfiest file">Valid</span>
+								<span class="ui label green green" title="{{$.i18n.Tr "repo.metadata.valid_manifest_tooltip"}}">{{$.i18n.Tr "repo.metadata.valid"}}</span>
 							{{else}}
-								<span class="ui label red" title="{{$.ValidateManifestResultErrors}}">Invalid</span>
+								<span class="ui label red" title="{{$.ValidateManifestResultErrors}}">{{$.i18n.Tr "repo.metadata.invalid"}}</span>
 							{{end}}
 						{{end}}
 						<!-- END DCS Customizations -->
