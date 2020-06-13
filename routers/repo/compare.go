@@ -15,6 +15,7 @@ import (
 	"code.gitea.io/gitea/models"
 	"code.gitea.io/gitea/modules/base"
 	"code.gitea.io/gitea/modules/context"
+	"code.gitea.io/gitea/modules/door43metadata"
 	"code.gitea.io/gitea/modules/git"
 	"code.gitea.io/gitea/modules/highlight"
 	"code.gitea.io/gitea/modules/log"
@@ -489,6 +490,21 @@ func PrepareCompareDiff(
 	setImageCompareContext(ctx, baseCommit, headCommit)
 	headTarget := path.Join(headUser.Name, repo.Name)
 	setPathsCompareContext(ctx, baseCommit, headCommit, headTarget)
+
+	/*** DCS Customizations ***/
+	for _, file := range diff.Files {
+		if file.Name == "manifest.yaml" {
+			if entry, _ := headCommit.GetTreeEntryByPath(file.Name); entry != nil {
+				if result, err := door43metadata.ValidateManifestTreeEntry(entry); err != nil {
+					fmt.Printf("ValidateManifestTreeEntry: %v\n", err)
+				} else {
+					ctx.Data["ValidateManifestResult"] = result
+					ctx.Data["ValidateManifestResultErrors"] = door43metadata.StringifyValidationErrors(result)
+				}
+			}
+		}
+	}
+	/*** END DCS Customizations ***/
 
 	return false
 }

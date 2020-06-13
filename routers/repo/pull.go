@@ -7,7 +7,6 @@
 package repo
 
 import (
-	"code.gitea.io/gitea/modules/door43metadata"
 	"container/list"
 	"crypto/subtle"
 	"fmt"
@@ -20,6 +19,7 @@ import (
 	"code.gitea.io/gitea/modules/auth"
 	"code.gitea.io/gitea/modules/base"
 	"code.gitea.io/gitea/modules/context"
+	"code.gitea.io/gitea/modules/door43metadata"
 	"code.gitea.io/gitea/modules/git"
 	"code.gitea.io/gitea/modules/log"
 	"code.gitea.io/gitea/modules/notification"
@@ -651,6 +651,7 @@ func ViewPullFiles(ctx *context.Context) {
 	ctx.Data["IsIssuePoster"] = ctx.IsSigned && issue.IsPoster(ctx.User.ID)
 	ctx.Data["HasIssuesOrPullsWritePermission"] = ctx.Repo.CanWriteIssuesOrPulls(issue.IsPull)
 
+	/*** DCS Customizations ***/
 	for _, file := range diff.Files {
 		if file.Name == "manifest.yaml" {
 			if entry, _ := commit.GetTreeEntryByPath(file.Name); entry != nil {
@@ -663,6 +664,7 @@ func ViewPullFiles(ctx *context.Context) {
 			}
 		}
 	}
+	/*** END DCS Customizations ***/
 
 	ctx.HTML(200, tplPullFiles)
 }

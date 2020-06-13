@@ -68,6 +68,17 @@
 							{{end}}
 						</div>
 						<span class="file">{{$file.Name}}</span>
+						<!-- DCS Customizations -->
+						{{if and (eq $file.Name "manifest.yaml") ($.ValidateManifestResult)}}
+							<div class="fitted item">
+							{{if $.ValidateManifestResult.Valid}}
+								<span class="ui label green green" title="This is a valid RC v0.2.0 manfiest file">Valid</span>
+							{{else}}
+								<span class="ui label red" title="{{$.ValidateManifestResultErrors}}">Invalid</span>
+							{{end}}
+							</div>
+						{{end}}
+						<!-- END DCS Customizations -->
 						<div>{{$.i18n.Tr "repo.diff.file_suppressed"}}</div>
 						{{if and (not $file.IsSubmodule) (not $.PageIsWiki)}}
 							{{if $file.IsDeleted}}
