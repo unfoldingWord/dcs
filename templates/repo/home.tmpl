@@ -75,7 +75,7 @@
 				{{if $.ValidateManifestResult}}
 					<div class="fitted item">
 					{{if $.ValidateManifestResult.Valid}}
-						<span class="ui label green green" title="This is a valid RC v0.2.0 manfiest file">Valid</span>
+						<span class="ui label green green" title="{{$.i18n.Tr "repo.metadata.valid_manifest_tooltip"}}">Valid</span>
 					{{else}}
 						<span class="ui label red" title="{{$.ValidateManifestResultErrors}}">Invalid</span>
 					{{end}}
