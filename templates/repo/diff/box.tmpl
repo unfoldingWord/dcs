@@ -72,9 +72,9 @@
 						{{if and (eq $file.Name "manifest.yaml") ($.ValidateManifestResult)}}
 							<div class="fitted item">
 							{{if $.ValidateManifestResult.Valid}}
-								<span class="ui label green green" title="This is a valid RC v0.2.0 manfiest file">Valid</span>
+								<span class="ui label green green" title="This is a valid RC v0.2 manifest file">{{$.i18n.Tr "repo.metadata.valid"}}</span>
 							{{else}}
-								<span class="ui label red" title="{{$.ValidateManifestResultErrors}}">Invalid</span>
+								<span class="ui label red" title="{{$.ValidateManifestResultErrors}}">{{$.i18n.Tr "repo.metadata.invalid"}}</span>
 							{{end}}
 							</div>
 						{{end}}
@@ -118,9 +118,9 @@
 						{{if and (eq $file.Name "manifest.yaml") ($.ValidateManifestResult)}}
 							<div class="fitted item">
 							{{if $.ValidateManifestResult.Valid}}
-								<span class="ui label green green" title="This is a valid RC v0.2.0 manfiest file">Valid</span>
+								<span class="ui label green green" title="This is a valid RC v0.2 manifest file">{{$.i18n.Tr "repo.metadata.valid"}}</span>
 							{{else}}
-								<span class="ui label red" title="{{$.ValidateManifestResultErrors}}">Invalid</span>
+								<span class="ui label red" title="{{$.ValidateManifestResultErrors}}">{{$.i18n.Tr "repo.metadata.invalid"}}</span>
 							{{end}}
 							</div>
 						{{end}}

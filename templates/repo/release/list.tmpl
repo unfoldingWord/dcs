@@ -35,9 +35,9 @@
 							</span>
 							 <!-- DCS Customizations -->
 							{{if .Door43Metadata}}
-								<span class="ui {{if .IsPrerelease}}orange{{else}}green{{end}} label"><a href="{{$.RepoLink}}/src/tag/{{.TagName | EscapePound}}/manifest.yaml" rel="nofollow">{{$.i18n.Tr "repo.metadata.catalog"}} ({{if .IsPrerelease}}pre-prod{{else}}prod{{end}} | {{.Door43Metadata.MetadataVersion}})</a></span>
+								<span class="ui {{if .IsPrerelease}}orange{{else}}green{{end}} label"><a href="{{$.RepoLink}}/src/tag/{{.TagName | EscapePound}}/manifest.yaml" rel="nofollow">{{$.i18n.Tr "repo.metadata.catalog"}} ({{if .IsPrerelease}}pre-{{end}}prod | {{.Door43Metadata.MetadataVersion}})</a></span>
 							{{else if (and (not .IsTag) (not .IsDraft)) }}
-								<span class="ui red label">{{$.i18n.Tr "repo.metadata.invalid_rc"}}</span>
+								<span class="ui red label"><a href="{{$.RepoLink}}/src/tag/{{.TagName | EscapePound}}/manifest.yaml" rel="nofollow">{{$.i18n.Tr "repo.metadata.invalid"}} (rc0.2)</a></span>
 							{{end}}
 							 <!-- END DCS Customizations -->
 						{{end}}
