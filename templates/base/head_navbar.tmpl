@@ -25,6 +25,7 @@
 		{{if .ShowMilestonesDashboardPage}}<a class="item {{if .PageIsMilestonesDashboard}}active{{end}}" href="{{AppSubUrl}}/milestones">{{.i18n.Tr "milestones"}}</a>{{end}}
 		{{end}}
 		<a class="item {{if .PageIsExplore}}active{{end}}" href="{{AppSubUrl}}/explore/repos">{{.i18n.Tr "explore"}}</a>
+		<a class="item {{if .PageIsCatalog}}active{{end}}" href="{{AppSubUrl}}/catalog">{{.i18n.Tr "catalog"}}</a>
 	{{else if .IsLandingPageHome}}
 		<a class="item {{if .PageIsHome}}active{{end}}" href="{{AppSubUrl}}/">{{.i18n.Tr "home"}}</a>
 	{{end}}
@@ -100,10 +101,6 @@
 					<a class="{{if .PageIsUserSettings}}active{{end}} item" href="{{AppSubUrl}}/user/settings">
 						{{svg "octicon-settings" 16}}
 						{{.i18n.Tr "your_settings"}}<!-- Your settings -->
-					</a>
-					<a class="item" target="_blank" rel="noopener noreferrer" href="https://docs.gitea.io">
-						{{svg "octicon-question" 16}}
-						{{.i18n.Tr "help"}}<!-- Help -->
 					</a>
 					{{if .IsAdmin}}
 						<div class="divider"></div>

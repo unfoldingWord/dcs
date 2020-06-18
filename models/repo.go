@@ -2382,6 +2382,7 @@ func (repo *Repository) GetLatestPreProdCatalogMetadata() (*Door43Metadata, erro
 	}
 	return dm, nil
 }
+
 /*** END DCS Customizations ***/
 
 func updateRepositoryCols(e Engine, repo *Repository, cols ...string) error {
