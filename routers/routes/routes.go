@@ -1088,6 +1088,9 @@ func RegisterRoutes(m *macaron.Macaron) {
 
 	/*** DCS Customizations ***/
 	m.Get("/about", dcs.About)
+	m.Group("/catalog", func() {
+		m.Get("", dcs.Catalog)
+	}, reqSignIn)
 	/*** END DCS Customizations ***/
 
 	// Not found handler.

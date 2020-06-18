@@ -5,12 +5,11 @@
 package models
 
 import (
-	"fmt"
-	"sort"
-
 	"code.gitea.io/gitea/modules/setting"
 	api "code.gitea.io/gitea/modules/structs"
 	"code.gitea.io/gitea/modules/timeutil"
+	"fmt"
+	"sort"
 
 	"xorm.io/builder"
 )
@@ -192,10 +191,11 @@ func GetLatestCatalogMetadataByRepoID(repoID int64, CanBePrerelease bool) (*Door
 
 	dm := new(Door43Metadata)
 	has, err := x.
-		Desc("`release`.created_unix", "`release`.id").
 		Join("INNER", "release", "`release`.id = `door43_metadata`.release_id").
 		Where(cond).
+		Desc("`release`.created_unix", "`release`.id").
 		Get(dm)
+
 	if err != nil {
 		return nil, err
 	} else if !has {
