@@ -219,6 +219,18 @@ func GetDoor43MetadataCountByRepoID(repoID int64, opts FindDoor43MetadatasOption
 	return x.Where(opts.toConds(repoID)).Count(&Door43Metadata{})
 }
 
+// GetDoor43MetadataReleaseCountByRepoID returns the count of metadatas of repository that are releases
+func GetDoor43MetadataReleaseCountByRepoID(repoID int64, includePreproduction bool) (int64, error) {
+	releaseCondition := "`release`.id = `door43_metadata`.release_id"
+	if includePreproduction {
+		releaseCondition += "`release`.is_prerelease = 0"
+	}
+	return x.
+		Join("INNER", "release", releaseCondition).
+		Where(builder.And(builder.Eq{"`door43_metadata`.repo_id": repoID})).
+		Count(&Door43Metadata{})
+}
+
 type door43MetadataSorter struct {
 	dms []*Door43Metadata
 }

@@ -8,8 +8,8 @@
         <div class="menu">
             <a class="{{if eq .SortType "newest"}}active{{end}} item" href="{{$.Link}}?sort=newest&q={{$.Keyword}}">{{.i18n.Tr "repo.issues.filter_sort.latest"}}</a>
             <a class="{{if eq .SortType "oldest"}}active{{end}} item" href="{{$.Link}}?sort=oldest&q={{$.Keyword}}">{{.i18n.Tr "repo.issues.filter_sort.oldest"}}</a>
-            <a class="{{if eq .SortType "reponame"}}active{{end}} item" href="{{$.Link}}?sort=reponame&q={{$.Keyword}}">{{.i18n.Tr "repo.metadata.label.filter_sort.reponame"}}</a>
-            <a class="{{if eq .SortType "reversereponame"}}active{{end}} item" href="{{$.Link}}?sort=reversereponame&q={{$.Keyword}}">{{.i18n.Tr "repo.metadata.label.filter_sort.reverse_reponame"}}</a>
+            <a class="{{if eq .SortType "title"}}active{{end}} item" href="{{$.Link}}?sort=title&q={{$.Keyword}}">{{.i18n.Tr "repo.metadata.label.filter_sort.title"}}</a>
+            <a class="{{if eq .SortType "reversetitle"}}active{{end}} item" href="{{$.Link}}?sort=reversetitle&q={{$.Keyword}}">{{.i18n.Tr "repo.metadata.label.filter_sort.reverse_title"}}</a>
             <a class="{{if eq .SortType "subject"}}active{{end}} item" href="{{$.Link}}?sort=subject&q={{$.Keyword}}">{{.i18n.Tr "repo.metadata.label.filter_sort.subject"}}</a>
             <a class="{{if eq .SortType "reversesubject"}}active{{end}} item" href="{{$.Link}}?sort=reversesubject&q={{$.Keyword}}">{{.i18n.Tr "repo.metadata.label.filter_sort.reverse_subject"}}</a>
             <a class="{{if eq .SortType "langname"}}active{{end}} item" href="{{$.Link}}?sort=langname&q={{$.Keyword}}">{{.i18n.Tr "repo.metadata.label.filter_sort.langname"}}</a>

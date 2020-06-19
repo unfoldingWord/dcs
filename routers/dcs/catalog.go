@@ -55,10 +55,10 @@ func RenderCatalogSearch(ctx *context.Context, opts *CatalogSearchOptions) {
 		orderBy = models.CatalogOrderByNewest
 	case "oldest":
 		orderBy = models.CatalogOrderByOldest
-	case "reversereponame":
-		orderBy = models.CatalogOrderByRepoNameReverse
-	case "reponame":
-		orderBy = models.CatalogOrderByRepoName
+	case "reversetitle":
+		orderBy = models.CatalogOrderByTitleReverse
+	case "title":
+		orderBy = models.CatalogOrderByTitle
 	case "reversesubject":
 		orderBy = models.CatalogOrderBySubjectReverse
 	case "subject":
@@ -89,6 +89,8 @@ func RenderCatalogSearch(ctx *context.Context, opts *CatalogSearchOptions) {
 	}
 
 	keyword := strings.Trim(ctx.Query("q"), " ")
+	topicOnly := ctx.QueryBool("topic")
+	ctx.Data["TopicOnly"] = topicOnly
 
 	dms, count, err = models.SearchCatalog(&models.SearchCatalogOptions{
 		ListOptions: models.ListOptions{
@@ -97,6 +99,8 @@ func RenderCatalogSearch(ctx *context.Context, opts *CatalogSearchOptions) {
 		},
 		OrderBy: orderBy,
 		Keyword: keyword,
+		TopicOnly: topicOnly,
+		IncludeAllMetadata: true,
 	})
 	if err != nil {
 		ctx.ServerError("SearchCatalog", err)
