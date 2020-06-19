@@ -33,7 +33,7 @@
 					</div>
 				{{end}}
 				<p class="time">Subject: {{.Metadata.dublin_core.subject}}</p>
-				<p class="time">Released: {{.Metadata.dublin_core.issued}}</p>
+				<p class="time">Released: {{.Release.CreatedUnix.Format "2006-01-02"}}</p>
 				<p class="time">Language: {{.Metadata.dublin_core.language.title}} ({{.Metadata.dublin_core.language.identifier}})</p>
 			</div>
 		</div>
