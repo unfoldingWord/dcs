@@ -97,9 +97,9 @@ func RenderCatalogSearch(ctx *context.Context, opts *CatalogSearchOptions) {
 			Page:     page,
 			PageSize: opts.PageSize,
 		},
-		OrderBy: orderBy,
-		Keyword: keyword,
-		TopicOnly: topicOnly,
+		OrderBy:            orderBy,
+		Keyword:            keyword,
+		TopicOnly:          topicOnly,
 		IncludeAllMetadata: true,
 	})
 	if err != nil {

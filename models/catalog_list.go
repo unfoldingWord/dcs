@@ -20,8 +20,8 @@ func (s CatalogOrderBy) String() string {
 
 // Strings for sorting result
 const (
-	CatalogOrderByTitle        CatalogOrderBy = "JSON_EXTRACT(`door43_metadata`.metadata, '$.dublin_core.title') ASC"
-	CatalogOrderByTitleReverse        CatalogOrderBy = "JSON_EXTRACT(`door43_metadata`.metadata, '$.dublin_core.title') DESC"
+	CatalogOrderByTitle           CatalogOrderBy = "JSON_EXTRACT(`door43_metadata`.metadata, '$.dublin_core.title') ASC"
+	CatalogOrderByTitleReverse    CatalogOrderBy = "JSON_EXTRACT(`door43_metadata`.metadata, '$.dublin_core.title') DESC"
 	CatalogOrderBySubject         CatalogOrderBy = "JSON_EXTRACT(`door43_metadata`.metadata, '$.dublin_core.subject') ASC"
 	CatalogOrderBySubjectReverse  CatalogOrderBy = "JSON_EXTRACT(`door43_metadata`.metadata, '$.dublin_core.subject') DESC"
 	CatalogOrderByLangName        CatalogOrderBy = "JSON_EXTRACT(`door43_metadata`.metadata, '$.dublin_core.langauge.title') ASC"
@@ -93,9 +93,9 @@ func valuesDoor43Metadata(m map[int64]*Door43Metadata) []*Door43Metadata {
 // SearchCatalogOptions holds the search options
 type SearchCatalogOptions struct {
 	ListOptions
-	Keyword string
-	OrderBy CatalogOrderBy
-	TopicOnly bool
+	Keyword            string
+	OrderBy            CatalogOrderBy
+	TopicOnly          bool
 	IncludeAllMetadata bool
 }
 
