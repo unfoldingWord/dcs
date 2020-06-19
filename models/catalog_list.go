@@ -20,18 +20,18 @@ func (s CatalogOrderBy) String() string {
 
 // Strings for sorting result
 const (
-	CatalogOrderByRepoName        CatalogOrderBy = "`repository`.name ASC"
-	CatalogOrderByRepoNameReverse CatalogOrderBy = "`repository`.name DESC"
+	CatalogOrderByTitle        CatalogOrderBy = "JSON_EXTRACT(`door43_metadata`.metadata, '$.dublin_core.title') ASC"
+	CatalogOrderByTitleReverse        CatalogOrderBy = "JSON_EXTRACT(`door43_metadata`.metadata, '$.dublin_core.title') DESC"
 	CatalogOrderBySubject         CatalogOrderBy = "JSON_EXTRACT(`door43_metadata`.metadata, '$.dublin_core.subject') ASC"
 	CatalogOrderBySubjectReverse  CatalogOrderBy = "JSON_EXTRACT(`door43_metadata`.metadata, '$.dublin_core.subject') DESC"
 	CatalogOrderByLangName        CatalogOrderBy = "JSON_EXTRACT(`door43_metadata`.metadata, '$.dublin_core.langauge.title') ASC"
 	CatalogOrderByLangNameReverse CatalogOrderBy = "JSON_EXTRACT(`door43_metadata`.metadata, '$.dublin_core.language.title') DESC"
 	CatalogOrderByLangCode        CatalogOrderBy = "JSON_EXTRACT(`door43_metadata`.metadata, '$.dublin_core.language.identifier') ASC"
 	CatalogOrderByLangCodeReverse CatalogOrderBy = "JSON_EXTRACT(`door43_metadata`.metadata, '$.dublin_core.language.identifier') DESC"
-	CatalogOrderByOldest          CatalogOrderBy = "JSON_EXTRACT(`door43_metadata`.metadata, '$.dublin_core.issued') ASC"
-	CatalogOrderByNewest          CatalogOrderBy = "JSON_EXTRACT(`door43_metadata`.metadata, '$.dublin_core.issued') DESC"
-	CatalogOrderByReleases        CatalogOrderBy = "num_releases ASC"
-	CatalogOrderByReleasesReverse CatalogOrderBy = "num_releases DESC"
+	CatalogOrderByOldest          CatalogOrderBy = "`release_info`.latest_created_unix ASC"
+	CatalogOrderByNewest          CatalogOrderBy = "`release_info`.latest_created_unix DESC"
+	CatalogOrderByReleases        CatalogOrderBy = "`release_info`.num_releases ASC"
+	CatalogOrderByReleasesReverse CatalogOrderBy = "`release_info`.num_releases DESC"
 	CatalogOrderByStars           CatalogOrderBy = "`repository`.num_stars ASC"
 	CatalogOrderByStarsReverse    CatalogOrderBy = "`repository`.num_stars DESC"
 	CatalogOrderByForks           CatalogOrderBy = "`repository`.num_forks ASC"
@@ -95,6 +95,8 @@ type SearchCatalogOptions struct {
 	ListOptions
 	Keyword string
 	OrderBy CatalogOrderBy
+	TopicOnly bool
+	IncludeAllMetadata bool
 }
 
 // SearchCatalogCondition creates a query condition according search repository options
@@ -108,19 +110,28 @@ func SearchCatalogCondition(opts *SearchCatalogOptions) builder.Cond {
 		// separate keyword
 		var subQueryCond = builder.NewCond()
 		for _, v := range strings.Split(opts.Keyword, ",") {
-			subQueryCond = subQueryCond.Or(builder.Like{"topic.name", strings.TrimSpace(strings.ToLower(v))})
+			if opts.TopicOnly {
+				subQueryCond = subQueryCond.Or(builder.Eq{"topic.name": strings.ToLower(v)})
+			} else {
+				subQueryCond = subQueryCond.Or(builder.Like{"topic.name", strings.ToLower(v)})
+			}
 		}
 		subQuery := builder.Select("repo_topic.repo_id").From("repo_topic").
 			Join("INNER", "topic", "topic.id = repo_topic.topic_id").
 			Where(subQueryCond).
 			GroupBy("repo_topic.repo_id")
-		var keywordCond = builder.In("id", subQuery)
-		var likes = builder.NewCond()
-		for _, v := range strings.Split(opts.Keyword, ",") {
-			likes = likes.Or(builder.Like{"lower_name", strings.ToLower(v)})
-			likes = likes.Or(builder.Like{"LOWER(description)", strings.ToLower(v)})
+		var keywordCond = builder.In("`repository`.id", subQuery)
+		if !opts.TopicOnly {
+			var likes = builder.NewCond()
+			for _, v := range strings.Split(opts.Keyword, ",") {
+				likes = likes.Or(builder.Like{"LOWER(JSON_EXTRACT(`door43_metadata`.metadata, '$.dublin_core.title'))", strings.ToLower(v)})
+				likes = likes.Or(builder.Like{"LOWER(JSON_EXTRACT(`door43_metadata`.metadata, '$.dublin_core.subject'))", strings.ToLower(v)})
+				if opts.IncludeAllMetadata {
+					likes = likes.Or(builder.Expr("JSON_SEARCH(LOWER(`door43_metadata`.metadata), 'one', ?) IS NOT NULL", "%"+strings.ToLower(v)+"%"))
+				}
+			}
+			keywordCond = keywordCond.Or(likes)
 		}
-		keywordCond = keywordCond.Or(likes)
 		cond = cond.And(keywordCond)
 	}
 
@@ -159,7 +170,7 @@ func SearchCatalogByCondition(opts *SearchCatalogOptions, cond builder.Cond, loa
 
 	dms := make(Door43MetadataList, 0, opts.PageSize)
 	sess.
-		Join("INNER", "(SELECT repo_id, COUNT(*) AS num_releases, MAX(created_unix) AS latest_created_unix FROM `release` WHERE is_prerelease = 0 GROUP BY repo_id) `release_info`", "`release_info`.repo_id = `door43_metadata`.repo_id").
+		Join("INNER", "(SELECT `release`.repo_id, COUNT(*) AS num_releases, MAX(`release`.created_unix) AS latest_created_unix FROM `release` JOIN `door43_metadata` ON `door43_metadata`.release_id = `release`.id WHERE `release`.is_prerelease = 0 GROUP BY `release`.repo_id) `release_info`", "`release_info`.repo_id = `door43_metadata`.repo_id").
 		Join("INNER", "release", "`release`.id = `door43_metadata`.release_id AND `release`.created_unix = `release_info`.latest_created_unix AND `release`.is_prerelease = 0").
 		Join("INNER", "repository", "`repository`.id = `door43_metadata`.repo_id").
 		Where(cond).
