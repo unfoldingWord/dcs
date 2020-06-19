@@ -5,12 +5,11 @@
 package models
 
 import (
-	"fmt"
-	"sort"
-
 	"code.gitea.io/gitea/modules/setting"
 	api "code.gitea.io/gitea/modules/structs"
 	"code.gitea.io/gitea/modules/timeutil"
+	"fmt"
+	"sort"
 
 	"xorm.io/builder"
 )
@@ -86,9 +85,13 @@ func InsertDoor43MetadatasContext(ctx DBContext, dms []*Door43Metadata) error {
 	return err
 }
 
-// UpdateDoor43Metadata updates all columns of a door43 metadata
-func UpdateDoor43Metadata(ctx DBContext, dm *Door43Metadata) error {
-	_, err := ctx.e.ID(dm.ID).AllCols().Update(dm)
+// UpdateDoor43MetadataCols update door43 metadata according special columns
+func UpdateDoor43MetadataCols(dm *Door43Metadata, cols ...string) error {
+	return updateDoor43MetadataCols(x, dm, cols...)
+}
+
+func updateDoor43MetadataCols(e Engine, dm *Door43Metadata, cols ...string) error {
+	_, err := e.ID(dm.ID).Cols(cols...).Update(dm)
 	return err
 }
 
@@ -98,7 +101,7 @@ func GetDoor43Metadata(repoID, releaseID int64) (*Door43Metadata, error) {
 	if err != nil {
 		return nil, err
 	} else if !isExist {
-		return nil, ErrDoor43MetadataNotExist{0, releaseID}
+		return nil, ErrDoor43MetadataNotExist{0, repoID, releaseID}
 	}
 
 	rel := &Door43Metadata{RepoID: repoID, ReleaseID: releaseID}
@@ -122,7 +125,7 @@ func GetDoor43MetadataByRepoIDAndTagName(repoID int64, tagName string) (*Door43M
 	if err != nil {
 		return nil, err
 	} else if !isExist {
-		return nil, ErrDoor43MetadataNotExist{0, releaseID}
+		return nil, ErrDoor43MetadataNotExist{0, repoID, releaseID}
 	}
 
 	dm := &Door43Metadata{RepoID: repoID, ReleaseID: releaseID}
@@ -139,7 +142,7 @@ func GetDoor43MetadataByID(id int64) (*Door43Metadata, error) {
 	if err != nil {
 		return nil, err
 	} else if !has {
-		return nil, ErrDoor43MetadataNotExist{id, 0}
+		return nil, ErrDoor43MetadataNotExist{id, 0, 0}
 	}
 
 	return rel, nil
@@ -167,7 +170,7 @@ func GetDoor43MetadatasByRepoID(repoID int64, opts FindDoor43MetadatasOptions) (
 		Desc("created_unix", "id").
 		Where(opts.toConds(repoID))
 
-	if opts.PageSize != 0 {
+	if opts.PageSize > 0 {
 		sess = opts.setSessionPagination(sess)
 	}
 
@@ -175,23 +178,30 @@ func GetDoor43MetadatasByRepoID(repoID int64, opts FindDoor43MetadatasOptions) (
 	return dms, sess.Find(&dms)
 }
 
-// GetLatestDoor43MetadataByRepoID returns the latest metadata for a repository
-func GetLatestDoor43MetadataByRepoID(repoID int64) (*Door43Metadata, error) {
+// GetLatestCatalogMetadataByRepoID returns the latest door43 metadata in the catalog by repoID, if CanBePrerelease, a prerelease entry can match
+func GetLatestCatalogMetadataByRepoID(repoID int64, CanBePrerelease bool) (*Door43Metadata, error) {
 	cond := builder.NewCond().
-		And(builder.Eq{"repo_id": repoID}).
-		And(builder.Eq{"release_id": 0})
+		And(builder.Eq{"`door43_metadata`.repo_id": repoID}).
+		And(builder.Eq{"`release`.is_tag": 0}).
+		And(builder.Eq{"`release`.is_draft": 0})
+
+	if !CanBePrerelease {
+		cond = cond.And(builder.Eq{"`release`.is_prerelease": 0})
+	}
 
 	dm := new(Door43Metadata)
 	has, err := x.
-		Desc("created_unix", "id").
+		Join("INNER", "release", "`release`.id = `door43_metadata`.release_id").
 		Where(cond).
+		Desc("`release`.created_unix", "`release`.id").
 		Get(dm)
+
 	if err != nil {
 		return nil, err
 	} else if !has {
-		return nil, ErrReleaseNotExist{0, "latest"}
+		return nil, ErrDoor43MetadataNotExist{0, repoID, 0}
 	}
-
+	dm.LoadAttributes()
 	return dm, nil
 }
 
@@ -235,4 +245,19 @@ func SortDoorMetadatas(dms []*Door43Metadata) {
 func DeleteDoor43MetadataByID(id int64) error {
 	_, err := x.ID(id).Delete(new(Door43Metadata))
 	return err
+}
+
+// DeleteDoor43MetadataByRelease deletes a metadata from database by given release.
+func DeleteDoor43MetadataByRelease(release *Release) error {
+	dm, err := GetDoor43Metadata(release.RepoID, release.ID)
+	if err != nil {
+		return err
+	}
+	_, err = x.ID(dm.ID).Delete(dm)
+	return err
+}
+
+// DeleteAllDoor43MetadatasByRepoID deletes all metadatas from database for a repo by given repo ID.
+func DeleteAllDoor43MetadatasByRepoID(repoID int64) (int64, error) {
+	return x.Delete(Door43Metadata{RepoID: repoID})
 }

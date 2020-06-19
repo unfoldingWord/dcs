@@ -1,9 +1,9 @@
 <div class="ui container" id="navbar">
 	<div class="item brand" style="justify-content: space-between;">
 		<a href="{{AppSubUrl}}/">
-			<!-- DCS Custom Modifications -  intentionally uses /img/favicon.png here -->
+			<!-- DCS Customizations -  intentionally uses /img/favicon.png here -->
 			<img class="ui mini image" src="{{AppSubUrl}}/img/favicon.png">
-			<!-- END DCS Custom Modifications -->
+			<!-- END DCS Customizations -->
 		</a>
 		<div class="ui basic icon button mobile-only" id="navbar-expand-toggle">
 			<i class="sidebar icon"></i>
@@ -12,8 +12,8 @@
 
 	{{if and .IsSigned .MustChangePassword}}
 		{{/* No links */}}
+    <!-- DCS Customizations - Removed explore if not logged in -->
 	{{else if .IsSigned}}
-	    <!-- DCS Custom Modifications - Removed explore if not logged in -->
 		<a class="item {{if .PageIsDashboard}}active{{end}}" href="{{AppSubUrl}}/">{{.i18n.Tr "dashboard"}}</a>
 		{{if not .UnitIssuesGlobalDisabled}}
 		<a class="item {{if .PageIsIssues}}active{{end}}" href="{{AppSubUrl}}/issues">{{.i18n.Tr "issues"}}</a>
@@ -25,10 +25,11 @@
 		{{if .ShowMilestonesDashboardPage}}<a class="item {{if .PageIsMilestonesDashboard}}active{{end}}" href="{{AppSubUrl}}/milestones">{{.i18n.Tr "milestones"}}</a>{{end}}
 		{{end}}
 		<a class="item {{if .PageIsExplore}}active{{end}}" href="{{AppSubUrl}}/explore/repos">{{.i18n.Tr "explore"}}</a>
+		<a class="item {{if .PageIsCatalog}}active{{end}}" href="{{AppSubUrl}}/catalog">{{.i18n.Tr "catalog"}}</a>
 	{{else if .IsLandingPageHome}}
 		<a class="item {{if .PageIsHome}}active{{end}}" href="{{AppSubUrl}}/">{{.i18n.Tr "home"}}</a>
 	{{end}}
-	<!-- END DCS Custom Modifications -->
+	<!-- END DCS Customizations -->
 
 	{{template "custom/extra_links" .}}
 
@@ -123,10 +124,6 @@
 					<a class="{{if .PageIsUserSettings}}active{{end}} item" href="{{AppSubUrl}}/user/settings">
 						{{svg "octicon-settings" 16}}
 						{{.i18n.Tr "your_settings"}}<!-- Your settings -->
-					</a>
-					<a class="item" target="_blank" rel="noopener noreferrer" href="https://docs.gitea.io">
-						{{svg "octicon-question" 16}}
-						{{.i18n.Tr "help"}}<!-- Help -->
 					</a>
 					{{if .IsAdmin}}
 						<div class="divider"></div>

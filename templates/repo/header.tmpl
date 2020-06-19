@@ -15,12 +15,35 @@
 					{{template "repo/header_icon" .}}
 				{{end}}
 				{{if .IsArchived}}<i class="archive icon archived-icon"></i>{{end}}
+				<!--- DCS Customizations --->
+				{{$prodDM := .GetLatestProdCatalogMetadata}}
+				{{if $prodDM}}
+					<span class="ui green label" title="Catalog: Production"><a href="{{.Link}}/releases/tag/{{$prodDM.Release.TagName | EscapePound}}" rel="nofollow">{{$prodDM.Release.TagName}}</a></span>
+				{{end}}
+				{{$preProdDM := .GetLatestPreProdCatalogMetadata}}
+				{{if $preProdDM}}
+					<span class="ui orange label" title="Catalog: Pre-Production"><a href="{{.Link}}/releases/tag/{{$preProdDM.Release.TagName | EscapePound}}" rel="nofollow">{{$preProdDM.Release.TagName}}</a></span>
+				{{end}}
+				<!--- END DCS Customizations --->
 				{{if .IsMirror}}<div class="fork-flag">{{$.i18n.Tr "repo.mirror_from"}} <a target="_blank" rel="noopener noreferrer" href="{{if .SanitizedOriginalURL}}{{.SanitizedOriginalURL}}{{else}}{{MirrorAddress $.Mirror}}{{end}}">{{if .SanitizedOriginalURL}}{{.SanitizedOriginalURL}}{{else}}{{MirrorAddress $.Mirror}}{{end}}</a></div>{{end}}
 				{{if .IsFork}}<div class="fork-flag">{{$.i18n.Tr "repo.forked_from"}} <a href="{{.BaseRepo.Link}}">{{SubStr .BaseRepo.RelLink 1 -1}}</a></div>{{end}}
 				{{if .IsGenerated}}<div class="fork-flag">{{$.i18n.Tr "repo.generated_from"}} <a href="{{.TemplateRepo.Link}}">{{SubStr .TemplateRepo.RelLink 1 -1}}</a></div>{{end}}
 			</div>
 			{{if not .IsBeingCreated}}
 				<div class="repo-buttons">
+					<!--- DCS Customizations --->
+					{{$prodDM := .GetLatestProdCatalogMetadata}}
+					{{if $prodDM}}
+					<div class="ui labeled button" tabindex="0">
+						<a type="submit" class="ui compact basic button" href="{{.Link}}/releases/tag/{{$prodDM.Release.TagName | EscapePound}}">
+							<i class="icon fa-file-text"></i>{{$.i18n.Tr "repo.metadata.catalog"}}
+						</a>
+						<a class="ui basic label" href="{{.Link}}/releases/tag/{{$prodDM.Release.TagName | EscapePound}}">
+							{{$prodDM.Release.TagName}}
+						</a>
+					</div>
+					{{end}}
+					<!--- END DCS Customizations --->
 					<form method="post" action="{{$.RepoLink}}/action/{{if $.IsWatchingRepo}}un{{end}}watch?redirect_to={{$.Link}}">
 						{{$.CsrfTokenHtml}}
 						<div class="ui labeled button" tabindex="0">

@@ -91,7 +91,7 @@ func prepareRepoCommit(ctx models.DBContext, repo *models.Repository, tmpDir, re
 			return fmt.Errorf("GetRepoInitFile[%s]: %v", opts.License, err)
 		}
 
-		/*** DCS Custom Modification - LICENSE => LICENSE.md ***/
+		/*** DCS Customizations - LICENSE => LICENSE.md ***/
 		if err = ioutil.WriteFile(filepath.Join(tmpDir, "LICENSE.md"), data, 0644); err != nil {
 			return fmt.Errorf("write LICENSE: %v", err)
 		}

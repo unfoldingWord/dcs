@@ -1,0 +1,45 @@
+<div class="ui repository list">
+	{{range .Door43Metadatas}}
+		<div class="item">
+			<div class="ui header">
+				{{if .Repo.RelAvatarLink}}
+					<img class="ui avatar image" src="{{.Repo.RelAvatarLink}}">
+				{{end}}
+				<a class="name" href="{{.Repo.Link}}">
+					{{if or $.PageIsExplore $.PageIsProfileStarList }}{{if .Repo.Owner}}{{.Repo.Owner.Name}} / {{end}}{{end}}{{.Repo.Name}}
+				</a>
+				{{if .Repo.IsFork}}
+					<span class="middle">{{svg "octicon-repo-forked" 16}}</span>
+				{{else if .Repo.IsMirror}}
+					<span class="middle">{{svg "octicon-repo-clone" 16}}</span>
+				{{end}}
+				<span class="ui green label" title="Catalog: Production"><a href="{{.Repo.Link}}/releases/tag/{{.Release.TagName | EscapePound}}" rel="nofollow">{{.Release.TagName}}</a></span>
+				{{$preProdDM := .Repo.GetLatestPreProdCatalogMetadata}}
+				{{if $preProdDM}}
+					<span class="ui orange label" title="Catalog: Pre-Production"><a href="{{.Repo.Link}}/releases/tag/{{$preProdDM.Release.TagName | EscapePound}}" rel="nofollow">{{$preProdDM.Release.TagName}}</a></span>
+				{{end}}
+				<div class="ui right metas">
+					<span class="text grey">{{svg "octicon-star" 16}} {{.Repo.NumStars}}</span>
+					<span class="text grey">{{svg "octicon-git-branch" 16}} {{.Repo.NumForks}}</span>
+				</div>
+			</div>
+			<div class="description">
+				{{if .Repo.DescriptionHTML}}<p>{{.Repo.DescriptionHTML}}</p>{{end}}
+				{{if .Repo.Topics }}
+					<div class="ui tags">
+					{{range .Repo.Topics}}
+						{{if ne . "" }}<a href="{{AppSubUrl}}/explore/repos?q={{.}}&topic=1"><div class="ui small label topic">{{.}}</div></a>{{end}}
+					{{end}}
+					</div>
+				{{end}}
+				<p class="time">Subject: {{.Metadata.dublin_core.subject}}</p>
+				<p class="time">Released: {{.Metadata.dublin_core.issued}}</p>
+				<p class="time">Language: {{.Metadata.dublin_core.language.title}} ({{.Metadata.dublin_core.language.identifier}})</p>
+			</div>
+		</div>
+	{{else}}
+	<div>
+		{{$.i18n.Tr "explore.repo_no_results"}}
+	</div>
+	{{end}}
+</div>

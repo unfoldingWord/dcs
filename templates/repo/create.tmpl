@@ -39,9 +39,9 @@
 						<input id="repo_name" name="repo_name" value="{{.repo_name}}" autofocus required>
 						<span class="help">{{.i18n.Tr "repo.repo_name_helper"}}</span>
 					</div>
-					<!-- DCS Custom Code -->
+					<!-- DCS Customizations -->
 					{{if .SignedUser.IsAdmin}}
-					<!-- END DCS Custom Code -->
+					<!-- END DCS Customizations -->
 					<div class="inline field">
 						<label>{{.i18n.Tr "repo.visibility"}}</label>
 						<div class="ui checkbox">
@@ -55,9 +55,9 @@
 						</div>
 						<span class="help">{{.i18n.Tr "repo.visibility_description"}}</span>
 					</div>
-					<!-- DCS Custom Code -->
+					<!-- DCS Customizations -->
 					{{end}}
-					<!-- END DCS Custom Code -->
+					<!-- END DCS Customizations -->
 					<div class="inline field {{if .Err_Description}}error{{end}}">
 						<label for="description">{{.i18n.Tr "repo.repo_desc"}}</label>
 						<textarea id="description" name="description">{{.description}}</textarea>
@@ -125,7 +125,7 @@
 
 						<div class="ui divider"></div>
 
-						<!-- DCS Custom Modification -->
+						<!-- DCS Customizations -->
 						<div class="inline field hidden">
 							<label>.gitignore</label>
 							<div class="ui multiple search normal selection dropdown">
@@ -155,7 +155,7 @@
 								</div>
 							</div>
 						</div>
-						<!-- END DCS Custom Modification -->
+						<!-- END DCS Customizations -->
 						<div class="inline field">
 							<div class="ui checkbox" id="auto-init">
 								<input class="hidden" name="auto_init" type="checkbox" tabindex="0" {{if .auto_init}}checked{{end}}>

@@ -516,9 +516,9 @@ func RegisterRoutes(m *macaron.Macaron) {
 			m.Get("/allowed_reactions", misc.SettingGetsAllowedReactions)
 			m.Get("/repository", misc.GetGeneralRepoSettings)
 		})
-		/*** DCS Custom Code ***/
+		/*** DCS Customizations ***/
 		m.Post("/yaml", bind(misc.YamlOption{}), misc.Yaml)
-		/*** END DCS Custom Code ***/
+		/*** END DCS Customizations ***/
 
 		// Notifications
 		m.Group("/notifications", func() {

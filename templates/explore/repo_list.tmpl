@@ -18,6 +18,16 @@
 				{{else if .IsMirror}}
 					<span class="middle">{{svg "octicon-repo-clone" 16}}</span>
 				{{end}}
+				<!--- DCS Customizations --->
+				{{$prodDM := .GetLatestProdCatalogMetadata}}
+				{{if $prodDM}}
+					<span class="ui green label" title="Catalog: Production"><a href="{{.Link}}/releases/tag/{{$prodDM.Release.TagName | EscapePound}}" rel="nofollow">{{$prodDM.Release.TagName}}</a></span>
+				{{end}}
+				{{$preProdDM := .GetLatestPreProdCatalogMetadata}}
+				{{if $preProdDM}}
+					<span class="ui orange label" title="Catalog: Pre-Production"><a href="{{.Link}}/releases/tag/{{$preProdDM.Release.TagName | EscapePound}}" rel="nofollow">{{$preProdDM.Release.TagName}}</a></span>
+				{{end}}
+				<!--- END DCS Customizations --->
 				<div class="ui right metas">
 					{{if .PrimaryLanguage }}
 					<span class="text grey"><i class="color-icon" style="background-color: {{.PrimaryLanguage.Color}}"></i>{{ .PrimaryLanguage.Language }}</span>

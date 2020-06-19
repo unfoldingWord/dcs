@@ -26,7 +26,7 @@ import (
 	"code.gitea.io/gitea/routers"
 	"code.gitea.io/gitea/routers/admin"
 	apiv1 "code.gitea.io/gitea/routers/api/v1"
-	"code.gitea.io/gitea/routers/dcs" // For DCS Custom Routes
+	"code.gitea.io/gitea/routers/dcs" // DCS Customizations
 	"code.gitea.io/gitea/routers/dev"
 	"code.gitea.io/gitea/routers/events"
 	"code.gitea.io/gitea/routers/org"
@@ -294,7 +294,7 @@ func RegisterRoutes(m *macaron.Macaron) {
 		m.Get("/users", routers.ExploreUsers)
 		m.Get("/organizations", routers.ExploreOrganizations)
 		m.Get("/code", routers.ExploreCode)
-	}, reqSignIn) // DCS Custom Code - changed ignSignIn to reqSignIn
+	}, reqSignIn) // DCS Customizations - changed ignSignIn to reqSignIn
 	m.Combo("/install", routers.InstallInit).Get(routers.Install).
 		Post(bindIgnErr(auth.InstallForm{}), routers.InstallPost)
 	m.Get("/^:type(issues|pulls)$", reqSignIn, user.Issues)
@@ -845,9 +845,7 @@ func RegisterRoutes(m *macaron.Macaron) {
 	// Door43 Metadata
 	m.Group("/:username/:reponame", func() {
 		m.Group("/metadatas", func() {
-			m.Get("/", repo.Door43Metadatas)
-			m.Get("/tag/:tag", repo.SingleDoor43Metadata)
-			m.Get("/latest", repo.LatestDoor43Metadata)
+			m.Get("", repo.Door43Metadatas)
 		}, repo.MustBeNotEmpty, context.RepoRef())
 		m.Group("/metadatas", func() {
 			m.Get("/new", repo.NewDoor43Metadata)
@@ -1088,9 +1086,12 @@ func RegisterRoutes(m *macaron.Macaron) {
 		m.Get("/metrics", routers.Metrics)
 	}
 
-	/*** DCS Custom Routes ***/
+	/*** DCS Customizations ***/
 	m.Get("/about", dcs.About)
-	/*** END DCS Custom Routes ***/
+	m.Group("/catalog", func() {
+		m.Get("", dcs.Catalog)
+	}, reqSignIn)
+	/*** END DCS Customizations ***/
 
 	// Not found handler.
 	m.NotFound(routers.NotFound)

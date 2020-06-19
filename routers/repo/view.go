@@ -20,13 +20,14 @@ import (
 	"code.gitea.io/gitea/modules/cache"
 	"code.gitea.io/gitea/modules/charset"
 	"code.gitea.io/gitea/modules/context"
+	"code.gitea.io/gitea/modules/door43metadata"
 	"code.gitea.io/gitea/modules/git"
 	"code.gitea.io/gitea/modules/highlight"
 	"code.gitea.io/gitea/modules/lfs"
 	"code.gitea.io/gitea/modules/log"
 	"code.gitea.io/gitea/modules/markup"
 	"code.gitea.io/gitea/modules/setting"
-	"code.gitea.io/gitea/modules/yaml" // For DCS Custom Code
+	"code.gitea.io/gitea/modules/yaml" // DCS Customizations
 )
 
 const (
@@ -356,6 +357,19 @@ func renderDirectory(ctx *context.Context, treeLink string) {
 		ctx.Data["CanAddFile"] = !ctx.Repo.Repository.IsArchived
 		ctx.Data["CanUploadFile"] = setting.Repository.Upload.Enabled && !ctx.Repo.Repository.IsArchived
 	}
+
+	/*** DCS Customizations ***/
+	if ctx.Repo.TreePath == "" {
+		if entry, _ := tree.GetTreeEntryByPath("manifest.yaml"); entry != nil {
+			if result, err := door43metadata.ValidateManifestTreeEntry(entry); err != nil {
+				fmt.Printf("ValidateManifestTreeEntry: %v\n", err)
+			} else {
+				ctx.Data["ValidateManifestResult"] = result
+				ctx.Data["ValidateManifestResultErrors"] = door43metadata.StringifyValidationErrors(result)
+			}
+		}
+	}
+	/*** END DCS Customizations ***/
 }
 
 func renderFile(ctx *context.Context, entry *git.TreeEntry, treeLink, rawLink string) {
@@ -457,16 +471,15 @@ func renderFile(ctx *context.Context, entry *git.TreeEntry, treeLink, rawLink st
 
 		readmeExist := markup.IsReadmeFile(blob.Name())
 		ctx.Data["ReadmeExist"] = readmeExist
-		/*** DCS Custom Code ***/
+		/*** DCS Customizations ***/
 		isTocYaml := blob.Name() == "toc.yaml"
 		ctx.Data["IsTocreaYaml"] = isTocYaml
-		/*** END DCS Custom Code ***/
+		/*** END DCS Customizations ***/
 		if markupType := markup.Type(blob.Name()); markupType != "" {
 			ctx.Data["IsMarkup"] = true
 			ctx.Data["MarkupType"] = markupType
-			ctx.Data["FileContent"] = string(markup.Render(blob.Name(), buf, path.Dir(treeLink), ctx.Repo.Repository.ComposeMetas()))
 			ctx.Data["FileContent"] = string(markup.Render(blob.Name(), buf, path.Dir(treeLink), ctx.Repo.Repository.ComposeDocumentMetas()))
-			/*** DCS Custom Code ***/
+			/*** DCS Customizations ***/
 		} else if isTocYaml {
 			ctx.Data["IsRenderedHTML"] = true
 			if rendered, err := yaml.Render(buf); err != nil {
@@ -477,7 +490,7 @@ func renderFile(ctx *context.Context, entry *git.TreeEntry, treeLink, rawLink st
 			} else {
 				ctx.Data["FileContent"] = string(rendered)
 			}
-			/*** END DCS Custom Code ***/
+			/*** END DCS Customizations ***/
 		} else if readmeExist {
 			ctx.Data["IsRenderedHTML"] = true
 			ctx.Data["FileContent"] = strings.Replace(
@@ -574,6 +587,17 @@ func renderFile(ctx *context.Context, entry *git.TreeEntry, treeLink, rawLink st
 	} else if !ctx.Repo.CanWrite(models.UnitTypeCode) {
 		ctx.Data["DeleteFileTooltip"] = ctx.Tr("repo.editor.must_have_write_access")
 	}
+
+	/*** DCS Customizations ***/
+	if ctx.Repo.TreePath == "manifest.yaml" {
+		if result, err := door43metadata.ValidateManifestTreeEntry(entry); err != nil {
+			fmt.Printf("ValidateManifestTreeEntry: %v\n", err)
+		} else {
+			ctx.Data["ValidateManifestResult"] = result
+			ctx.Data["ValidateManifestResultErrors"] = door43metadata.StringifyValidationErrors(result)
+		}
+	}
+	/*** END DCS Customizations ***/
 }
 
 func safeURL(address string) string {
