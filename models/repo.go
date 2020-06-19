@@ -2351,8 +2351,9 @@ func (repo *Repository) GetCatalogReleaseCount() (int64, error) {
 }
 
 func (repo *Repository) GetProdCatalogReleaseCount() (int64, error) {
-	return GetDoor43MetadataReleaseCountByRepoID(repo.ID,false)
+	return GetDoor43MetadataReleaseCountByRepoID(repo.ID, false)
 }
+
 /*** END DCS Customizations ***/
 
 func updateRepositoryCols(e Engine, repo *Repository, cols ...string) error {
