@@ -159,7 +159,8 @@ func SearchCatalogByCondition(opts *SearchCatalogOptions, cond builder.Cond, loa
 	defer sess.Close()
 
 	count, err := sess.
-		Join("INNER", "release", "`release`.id = `door43_metadata`.release_id AND `release`.is_prerelease = 0").
+		Join("INNER", "(SELECT `release`.repo_id, COUNT(*) AS num_releases, MAX(`release`.created_unix) AS latest_created_unix FROM `release` JOIN `door43_metadata` ON `door43_metadata`.release_id = `release`.id WHERE `release`.is_prerelease = 0 GROUP BY `release`.repo_id) `release_info`", "`release_info`.repo_id = `door43_metadata`.repo_id").
+		Join("INNER", "release", "`release`.id = `door43_metadata`.release_id AND `release`.created_unix = `release_info`.latest_created_unix AND `release`.is_prerelease = 0").
 		Join("INNER", "repository", "`repository`.id = `door43_metadata`.repo_id").
 		Where(cond).
 		Count(new(Door43Metadata))
