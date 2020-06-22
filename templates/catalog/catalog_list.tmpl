@@ -29,8 +29,8 @@
 					{{end}}
 					</div>
 				{{end}}
-				<p class="time">Released: {{.Release.CreatedUnix.FormatShort}}</p>
-				<p class="time">Language: {{.Metadata.dublin_core.language.title}} ({{.Metadata.dublin_core.language.identifier}})</p>
+				<p class="time">{{$.i18n.Tr "explore.released"}}: {{.Release.CreatedUnix.Format "2006-01-02"}}</p>
+				<p class="time">{{$.i18n.Tr "explore.language"}}: {{.Metadata.dublin_core.language.title}} ({{.Metadata.dublin_core.language.identifier}})</p>
 			</div>
 		</div>
 	{{else}}
