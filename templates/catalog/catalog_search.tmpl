@@ -12,8 +12,6 @@
             <a class="{{if eq .SortType "reversetitle"}}active{{end}} item" href="{{$.Link}}?sort=reversetitle&q={{$.Keyword}}">{{.i18n.Tr "repo.metadata.label.filter_sort.reverse_title"}}</a>
             <a class="{{if eq .SortType "subject"}}active{{end}} item" href="{{$.Link}}?sort=subject&q={{$.Keyword}}">{{.i18n.Tr "repo.metadata.label.filter_sort.subject"}}</a>
             <a class="{{if eq .SortType "reversesubject"}}active{{end}} item" href="{{$.Link}}?sort=reversesubject&q={{$.Keyword}}">{{.i18n.Tr "repo.metadata.label.filter_sort.reverse_subject"}}</a>
-            <a class="{{if eq .SortType "langname"}}active{{end}} item" href="{{$.Link}}?sort=langname&q={{$.Keyword}}">{{.i18n.Tr "repo.metadata.label.filter_sort.langname"}}</a>
-            <a class="{{if eq .SortType "reverselangname"}}active{{end}} item" href="{{$.Link}}?sort=reverselangname&q={{$.Keyword}}">{{.i18n.Tr "repo.metadata.label.filter_sort.reverse_langname"}}</a>
             <a class="{{if eq .SortType "langcode"}}active{{end}} item" href="{{$.Link}}?sort=langcode&q={{$.Keyword}}">{{.i18n.Tr "repo.metadata.label.filter_sort.langcode"}}</a>
             <a class="{{if eq .SortType "reverselangcode"}}active{{end}} item" href="{{$.Link}}?sort=reverselangcode&q={{$.Keyword}}">{{.i18n.Tr "repo.metadata.label.filter_sort.reverse_langcode"}}</a>
             <a class="{{if eq .SortType "mostreleases"}}active{{end}} item" href="{{$.Link}}?sort=mostreleases&q={{$.Keyword}}">{{.i18n.Tr "repo.metadata.label.filter_sort.mostreleases"}}</a>

@@ -63,10 +63,6 @@ func RenderCatalogSearch(ctx *context.Context, opts *CatalogSearchOptions) {
 		orderBy = models.CatalogOrderBySubjectReverse
 	case "subject":
 		orderBy = models.CatalogOrderBySubject
-	case "reverselangname":
-		orderBy = models.CatalogOrderByLangNameReverse
-	case "langname":
-		orderBy = models.CatalogOrderByLangName
 	case "reverselangcode":
 		orderBy = models.CatalogOrderByLangCodeReverse
 	case "langcode":
