@@ -12,6 +12,7 @@ import (
 
 	"code.gitea.io/gitea/models"
 	"code.gitea.io/gitea/modules/git"
+	"code.gitea.io/gitea/modules/structs"
 
 	"github.com/ghodss/yaml"
 	"github.com/unknwon/com"
@@ -63,7 +64,7 @@ func GenerateDoor43Metadata(x *xorm.Engine) error {
 				continue
 			}
 		}
-		if err = ProcessDoor43MetadataForRepoRelease(repo, release); err == nil {
+		if err = ProcessDoor43MetadataForRepoRelease(repo, release); err != nil {
 			continue
 		}
 	}
@@ -86,7 +87,7 @@ func GetRC020Schema() ([]byte, error) {
 }
 
 // ValidateBlobByRC020Schema Validates a blob by the RC v0.2.0 schema and returns the result
-func ValidateBlobByRC020Schema(manifest map[string]interface{}) (*gojsonschema.Result, error) {
+func ValidateBlobByRC020Schema(manifest *structs.RC020Manifest) (*gojsonschema.Result, error) {
 	schema, err := GetRC020Schema()
 	if err != nil {
 		return nil, err
@@ -98,7 +99,7 @@ func ValidateBlobByRC020Schema(manifest map[string]interface{}) (*gojsonschema.R
 }
 
 // ReadManifestFromBlob reads a yaml file from a blob and unmarshals it
-func ReadManifestFromBlob(blob *git.Blob) (map[string]interface{}, error) {
+func ReadManifestFromBlob(blob *git.Blob) (*structs.RC020Manifest, error) {
 	dataRc, err := blob.DataAsync()
 	if err != nil {
 		fmt.Printf("DataAsync Error: %v\n", err)
@@ -108,7 +109,7 @@ func ReadManifestFromBlob(blob *git.Blob) (map[string]interface{}, error) {
 	content, _ := ioutil.ReadAll(dataRc)
 	//fmt.Printf("content: %s", content)
 
-	var manifest map[string]interface{}
+	var manifest *structs.RC020Manifest
 	if err := yaml.Unmarshal(content, &manifest); err != nil {
 		fmt.Printf("yaml.Unmarshal Error: %v", err)
 		return nil, err
@@ -148,9 +149,8 @@ func ProcessDoor43MetadataForRepoRelease(repo *models.Repository, release *model
 	}
 
 	blob, err := commit.GetBlobByPath("manifest.yaml")
-	if err != nil {
-		fmt.Printf("GetTreeEntryByPath Error: %v\n", err)
-		return err
+	if blob == nil {
+		return nil
 	}
 
 	manifest, err := ReadManifestFromBlob(blob)
@@ -168,7 +168,7 @@ func ProcessDoor43MetadataForRepoRelease(repo *models.Repository, release *model
 		releaseID = release.ID
 	}
 
-	dm, err := models.GetDoor43Metadata(repo.ID, releaseID)
+	dm, err := models.GetDoor43MetadataByRepoIDAndReleaseID(repo.ID, releaseID)
 	if err != nil && !models.IsErrDoor43MetadataNotExist(err) {
 		return err
 	}

@@ -11,6 +11,7 @@ import (
 	"code.gitea.io/gitea/modules/context"
 	"code.gitea.io/gitea/modules/convert"
 	"code.gitea.io/gitea/modules/log"
+	"code.gitea.io/gitea/modules/structs"
 	"encoding/json"
 	"fmt"
 )
@@ -110,7 +111,7 @@ func NewDoor43MetadataPost(ctx *context.Context, form auth.NewDoor43MetadataForm
 		releaseID = release.ID
 	}
 
-	var metadata map[string]interface{}
+	var metadata *structs.RC020Manifest
 	err := json.Unmarshal([]byte(form.Metadata), &metadata)
 	if err != nil {
 		ctx.RenderWithErr(ctx.Tr("repo.metadata.metadata_not_proper_json", err), tplDoor43MetadataNew, &form)

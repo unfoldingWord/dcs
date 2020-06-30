@@ -6,7 +6,7 @@
 					<img class="ui avatar image" src="{{.Repo.RelAvatarLink}}">
 				{{end}}
 				<a class="name" href="{{.Repo.Link}}/releases/tag/{{.Release.TagName | EscapePound}}">
-					{{.Metadata.dublin_core.title}}
+					{{.Metadata.DublinCore.Title}}
 				</a>
 				{{if .Repo.IsFork}}
 					<span class="middle">{{svg "octicon-repo-forked" 16}}</span>
@@ -21,7 +21,7 @@
 				</div>
 			</div>
 			<div class="description">
-				<p>{{.Metadata.dublin_core.subject}}</p>
+				<p>{{.Metadata.DublinCore.Subject}}</p>
 				{{if .Repo.Topics }}
 					<div class="ui tags">
 					{{range .Repo.Topics}}
@@ -30,7 +30,7 @@
 					</div>
 				{{end}}
 				<p class="time">{{$.i18n.Tr "explore.released"}}: {{.Release.CreatedUnix.Format "2006-01-02"}}</p>
-				<p class="time">{{$.i18n.Tr "explore.language"}}: {{.Metadata.dublin_core.language.title}} ({{.Metadata.dublin_core.language.identifier}})</p>
+				<p class="time">{{$.i18n.Tr "explore.language"}}: {{.Metadata.DublinCore.Language.Title}} ({{.Metadata.DublinCore.Language.Identifier}})</p>
 			</div>
 		</div>
 	{{else}}
