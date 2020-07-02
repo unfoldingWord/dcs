@@ -366,7 +366,7 @@ func (repo *Repository) innerAPIFormat(e Engine, mode AccessMode, isParent bool)
 	}
 
 	metadata, err := repo.GetDefaultBranchMetadata()
-	if err != nil {
+	if err != nil && ! IsErrDoor43MetadataNotExist(err) {
 		log.Error("APIFormat: %v", err)
 	}
 	if metadata == nil {
@@ -376,18 +376,18 @@ func (repo *Repository) innerAPIFormat(e Engine, mode AccessMode, isParent bool)
 		}
 	}
 
-	var language, title, subject, checking_level string
+	var language, title, subject, checkingLevel string
 	var books []string
 	if metadata != nil {
-		language = string(metadata.Metadata.DublinCore.Language.Identifier)
-		title = metadata.Metadata.DublinCore.Title
-		subject = string(metadata.Metadata.DublinCore.Subject)
-		if len(metadata.Metadata.Projects) > 0 {
-			for _, prod := range metadata.Metadata.Projects {
-				books = append(books, string(prod.Identifier))
+		language = (*metadata.Metadata)["dublin_core"].(map[string]interface{})["language"].(map[string]string)["identifier"]
+		title = (*metadata.Metadata)["dublin_core"].(map[string]string)["title"]
+		subject = (*metadata.Metadata)["dublin_core"].(map[string]string)["subject"]
+		if len((*metadata.Metadata)["projects"].([]map[string]interface{})) > 0 {
+			for _, prod := range (*metadata.Metadata)["projects"].([]map[string]string) {
+				books = append(books, prod["identifier"])
 			}
 		}
-		checking_level = string(metadata.Metadata.Checking.CheckingLevel)
+		checkingLevel = (*metadata.Metadata)["checking"].(map[string]interface{})["checking_level"].(string)
 	}
 	/* END DCS Customizations */
 
@@ -436,7 +436,7 @@ func (repo *Repository) innerAPIFormat(e Engine, mode AccessMode, isParent bool)
 		Title:         title,
 		Subject:    subject,
 		Books:         books,
-		CheckingLevel: checking_level,
+		CheckingLevel: checkingLevel,
 		Catalog:       catalog,
 		/* END DCS Customizations */
 	}

@@ -23,7 +23,8 @@ type Door43Metadata struct {
 	ReleaseID       int64                  `xorm:"INDEX UNIQUE(n)"`
 	Release         *Release               `xorm:"-"`
 	MetadataVersion string                 `xorm:"NOT NULL"`
-	Metadata        *structs.RC020Manifest `xorm:"JSON NOT NULL"`
+	//Metadata        *structs.RC020Manifest `xorm:"JSON NOT NULL"`
+	Metadata *map[string]interface{} `xorm:"JSON NOT NULL"`
 	CreatedUnix     timeutil.TimeStamp     `xorm:"INDEX created NOT NULL"`
 	UpdatedUnix     timeutil.TimeStamp     `xorm:"INDEX updated"`
 }

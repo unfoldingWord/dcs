@@ -347,204 +347,75 @@ func (j *RC020DublinCoreConformsto) UnmarshalJSON(b []byte) error {
 
 // ProjectIdentifier identifies a project
 type ProjectIdentifier string
-
-// ProjectIdentifierA1Th A1Th
-const ProjectIdentifierA1Th ProjectIdentifier = "1th"
-
-// ProjectIdentifierA1Ti A1Ti
-const ProjectIdentifierA1Ti ProjectIdentifier = "1ti"
-
-// ProjectIdentifierA2Ch A2Ch
-const ProjectIdentifierA2Ch ProjectIdentifier = "2ch"
-
-// ProjectIdentifierA2Co A2Co
-const ProjectIdentifierA2Co ProjectIdentifier = "2co"
-
-// ProjectIdentifierA2Jn A2Jn
-const ProjectIdentifierA2Jn ProjectIdentifier = "2jn"
-
-// ProjectIdentifierA2Ki A2Ki
-const ProjectIdentifierA2Ki ProjectIdentifier = "2ki"
-
-// ProjectIdentifierA2Pe A2Pe
-const ProjectIdentifierA2Pe ProjectIdentifier = "2pe"
-
-// ProjectIdentifierA2Sa A2Sa
-const ProjectIdentifierA2Sa ProjectIdentifier = "2sa"
-
-// ProjectIdentifierA2Th A2Th
-const ProjectIdentifierA2Th ProjectIdentifier = "2th"
-
-// ProjectIdentifierA2Ti A2Ti
-const ProjectIdentifierA2Ti ProjectIdentifier = "2ti"
-
-// ProjectIdentifierA3Jn A3Jn
-const ProjectIdentifierA3Jn ProjectIdentifier = "3jn"
-
-// ProjectIdentifierAct Act
-const ProjectIdentifierAct ProjectIdentifier = "act"
-
-// ProjectIdentifierAmo Amo
-const ProjectIdentifierAmo ProjectIdentifier = "amo"
-
-// ProjectIdentifierBible Bible
-const ProjectIdentifierBible ProjectIdentifier = "bible"
-
-// ProjectIdentifierChecking Checking
-const ProjectIdentifierChecking ProjectIdentifier = "checking"
-
-// ProjectIdentifierCol Col
-const ProjectIdentifierCol ProjectIdentifier = "col"
-
-// ProjectIdentifierDan Dan
-const ProjectIdentifierDan ProjectIdentifier = "dan"
-
-// ProjectIdentifierDeu Deu
-const ProjectIdentifierDeu ProjectIdentifier = "deu"
-
-// ProjectIdentifierEcc Ecc
-const ProjectIdentifierEcc ProjectIdentifier = "ecc"
-
-// ProjectIdentifierEph Eph
-const ProjectIdentifierEph ProjectIdentifier = "eph"
-
-// ProjectIdentifierEst Est
-const ProjectIdentifierEst ProjectIdentifier = "est"
-
-// ProjectIdentifierExo Exo
-const ProjectIdentifierExo ProjectIdentifier = "exo"
-
-// ProjectIdentifierEzk Ezk
-const ProjectIdentifierEzk ProjectIdentifier = "ezk"
-
-// ProjectIdentifierEzr Ezr
-const ProjectIdentifierEzr ProjectIdentifier = "ezr"
-
-// ProjectIdentifierGal Gal
-const ProjectIdentifierGal ProjectIdentifier = "gal"
-
-// ProjectIdentifierGen Gen
-const ProjectIdentifierGen ProjectIdentifier = "gen"
-
-// ProjectIdentifierHab Hab
-const ProjectIdentifierHab ProjectIdentifier = "hab"
-
-// ProjectIdentifierHag Hag
-const ProjectIdentifierHag ProjectIdentifier = "hag"
-
-// ProjectIdentifierHeb Heb
-const ProjectIdentifierHeb ProjectIdentifier = "heb"
-
-// ProjectIdentifierHos Hos
-const ProjectIdentifierHos ProjectIdentifier = "hos"
-
-// ProjectIdentifierIntro Intro
-const ProjectIdentifierIntro ProjectIdentifier = "intro"
-
-// ProjectIdentifierIsa Isa
-const ProjectIdentifierIsa ProjectIdentifier = "isa"
-
-// ProjectIdentifierJas Jas
-const ProjectIdentifierJas ProjectIdentifier = "jas"
-
-// ProjectIdentifierJdg Jdg
-const ProjectIdentifierJdg ProjectIdentifier = "jdg"
-
-// ProjectIdentifierJer Jer
-const ProjectIdentifierJer ProjectIdentifier = "jer"
-
-// ProjectIdentifierJhn Jhn
-const ProjectIdentifierJhn ProjectIdentifier = "jhn"
-
-// ProjectIdentifierJob Job
-const ProjectIdentifierJob ProjectIdentifier = "job"
-
-// ProjectIdentifierJol Jol
-const ProjectIdentifierJol ProjectIdentifier = "jol"
-
-// ProjectIdentifierJon Jon
-const ProjectIdentifierJon ProjectIdentifier = "jon"
-
-// ProjectIdentifierJos Jos
-const ProjectIdentifierJos ProjectIdentifier = "jos"
-
-// ProjectIdentifierJud Jud
-const ProjectIdentifierJud ProjectIdentifier = "jud"
-
-// ProjectIdentifierLam Lam
-const ProjectIdentifierLam ProjectIdentifier = "lam"
-
-// ProjectIdentifierLev Lev
-const ProjectIdentifierLev ProjectIdentifier = "lev"
-
-// ProjectIdentifierLuk Luk
-const ProjectIdentifierLuk ProjectIdentifier = "luk"
-
-// ProjectIdentifierMal Mal
-const ProjectIdentifierMal ProjectIdentifier = "mal"
-
-// ProjectIdentifierMat Mat
-const ProjectIdentifierMat ProjectIdentifier = "mat"
-
-// ProjectIdentifierMic Mic
-const ProjectIdentifierMic ProjectIdentifier = "mic"
-
-// ProjectIdentifierMrk Mrk
-const ProjectIdentifierMrk ProjectIdentifier = "mrk"
-
-// ProjectIdentifierNam Nam
-const ProjectIdentifierNam ProjectIdentifier = "nam"
-
-// ProjectIdentifierNeh Neh
-const ProjectIdentifierNeh ProjectIdentifier = "neh"
-
-// ProjectIdentifierNum Num
-const ProjectIdentifierNum ProjectIdentifier = "num"
-
-// ProjectIdentifierOba Oba
-const ProjectIdentifierOba ProjectIdentifier = "oba"
-
-// ProjectIdentifierObs Obs
-const ProjectIdentifierObs ProjectIdentifier = "obs"
-
-// ProjectIdentifierPhm Phm
-const ProjectIdentifierPhm ProjectIdentifier = "phm"
-
-// ProjectIdentifierPhp Php
-const ProjectIdentifierPhp ProjectIdentifier = "php"
-
-// ProjectIdentifierPro Pro
-const ProjectIdentifierPro ProjectIdentifier = "pro"
-
-// ProjectIdentifierProcess Process
-const ProjectIdentifierProcess ProjectIdentifier = "process"
-
-// ProjectIdentifierPsa Psa
-const ProjectIdentifierPsa ProjectIdentifier = "psa"
-
-// ProjectIdentifierRev Rev
-const ProjectIdentifierRev ProjectIdentifier = "rev"
-
-// ProjectIdentifierRom Rom
-const ProjectIdentifierRom ProjectIdentifier = "rom"
-
-// ProjectIdentifierRut Rut
-const ProjectIdentifierRut ProjectIdentifier = "rut"
-
-// ProjectIdentifierSng Sng
-const ProjectIdentifierSng ProjectIdentifier = "sng"
-
-// ProjectIdentifierTit Tit
-const ProjectIdentifierTit ProjectIdentifier = "tit"
-
-// ProjectIdentifierTranslate Translate
-const ProjectIdentifierTranslate ProjectIdentifier = "translate"
-
-// ProjectIdentifierZec Zec
-const ProjectIdentifierZec ProjectIdentifier = "zec"
-
-// ProjectIdentifierZep Zep
-const ProjectIdentifierZep ProjectIdentifier = "zep"
+// ProjectIdentifier possible values
+const (
+    ProjectIdentifierA1Th ProjectIdentifier = "1th"
+    ProjectIdentifierA1Ti ProjectIdentifier = "1ti"
+    ProjectIdentifierA2Ch ProjectIdentifier = "2ch"
+    ProjectIdentifierA2Co ProjectIdentifier = "2co"
+    ProjectIdentifierA2Jn ProjectIdentifier = "2jn"
+    ProjectIdentifierA2Ki ProjectIdentifier = "2ki"
+    ProjectIdentifierA2Pe ProjectIdentifier = "2pe"
+    ProjectIdentifierA2Sa ProjectIdentifier = "2sa"
+    ProjectIdentifierA2Th ProjectIdentifier = "2th"
+    ProjectIdentifierA2Ti ProjectIdentifier = "2ti"
+    ProjectIdentifierA3Jn ProjectIdentifier = "3jn"
+    ProjectIdentifierAct ProjectIdentifier = "act"
+    ProjectIdentifierAmo ProjectIdentifier = "amo"
+    ProjectIdentifierBible ProjectIdentifier = "bible"
+    ProjectIdentifierChecking ProjectIdentifier = "checking"
+    ProjectIdentifierCol ProjectIdentifier = "col"
+    ProjectIdentifierDan ProjectIdentifier = "dan"
+    ProjectIdentifierDeu ProjectIdentifier = "deu"
+    ProjectIdentifierEcc ProjectIdentifier = "ecc"
+    ProjectIdentifierEph ProjectIdentifier = "eph"
+    ProjectIdentifierEst ProjectIdentifier = "est"
+    ProjectIdentifierExo ProjectIdentifier = "exo"
+    ProjectIdentifierEzk ProjectIdentifier = "ezk"
+    ProjectIdentifierEzr ProjectIdentifier = "ezr"
+    ProjectIdentifierGal ProjectIdentifier = "gal"
+    ProjectIdentifierGen ProjectIdentifier = "gen"
+    ProjectIdentifierHab ProjectIdentifier = "hab"
+    ProjectIdentifierHag ProjectIdentifier = "hag"
+    ProjectIdentifierHeb ProjectIdentifier = "heb"
+    ProjectIdentifierHos ProjectIdentifier = "hos"
+    ProjectIdentifierIntro ProjectIdentifier = "intro"
+    ProjectIdentifierIsa ProjectIdentifier = "isa"
+    ProjectIdentifierJas ProjectIdentifier = "jas"
+    ProjectIdentifierJdg ProjectIdentifier = "jdg"
+    ProjectIdentifierJer ProjectIdentifier = "jer"
+    ProjectIdentifierJhn ProjectIdentifier = "jhn"
+    ProjectIdentifierJob ProjectIdentifier = "job"
+    ProjectIdentifierJol ProjectIdentifier = "jol"
+    ProjectIdentifierJon ProjectIdentifier = "jon"
+    ProjectIdentifierJos ProjectIdentifier = "jos"
+    ProjectIdentifierJud ProjectIdentifier = "jud"
+    ProjectIdentifierLam ProjectIdentifier = "lam"
+    ProjectIdentifierLev ProjectIdentifier = "lev"
+    ProjectIdentifierLuk ProjectIdentifier = "luk"
+    ProjectIdentifierMal ProjectIdentifier = "mal"
+    ProjectIdentifierMat ProjectIdentifier = "mat"
+    ProjectIdentifierMic ProjectIdentifier = "mic"
+    ProjectIdentifierMrk ProjectIdentifier = "mrk"
+    ProjectIdentifierNam ProjectIdentifier = "nam"
+    ProjectIdentifierNeh ProjectIdentifier = "neh"
+    ProjectIdentifierNum ProjectIdentifier = "num"
+    ProjectIdentifierOba ProjectIdentifier = "oba"
+    ProjectIdentifierObs ProjectIdentifier = "obs"
+    ProjectIdentifierPhm ProjectIdentifier = "phm"
+    ProjectIdentifierPhp ProjectIdentifier = "php"
+    ProjectIdentifierPro ProjectIdentifier = "pro"
+    ProjectIdentifierProcess ProjectIdentifier = "process"
+    ProjectIdentifierPsa ProjectIdentifier = "psa"
+    ProjectIdentifierRev ProjectIdentifier = "rev"
+    ProjectIdentifierRom ProjectIdentifier = "rom"
+    ProjectIdentifierRut ProjectIdentifier = "rut"
+    ProjectIdentifierSng ProjectIdentifier = "sng"
+    ProjectIdentifierTit ProjectIdentifier = "tit"
+    ProjectIdentifierTranslate ProjectIdentifier = "translate"
+    ProjectIdentifierZec ProjectIdentifier = "zec"
+    ProjectIdentifierZep ProjectIdentifier = "zep"
+)
 
 // UnmarshalJSON implements json.Unmarshaler.
 func (j *RC020DublinCoreType) UnmarshalJSON(b []byte) error {
@@ -569,263 +440,206 @@ func (j *RC020DublinCoreType) UnmarshalJSON(b []byte) error {
 // RC020Manifest Manifest
 type RC020Manifest struct {
 	// Checking corresponds to the JSON schema field "checking".
-	Checking RC020Checking `json:"checking"`
+	Checking RC020Checking `json:"checking" mapstructure:"checking"`
 
 	// DublinCore corresponds to the JSON schema field "dublin_core".
-	DublinCore RC020DublinCore `json:"dublin_core"`
+	DublinCore RC020DublinCore `json:"dublin_core" mapstructure:"dublin_core"`
 
 	// Projects corresponds to the JSON schema field "projects".
-	Projects []RC020ProjectsElem `json:"projects"`
+	Projects []RC020ProjectsElem `json:"projects" mapstructure:"projects"`
 }
 
 // RC020Checking Checking
 type RC020Checking struct {
 	// CheckingEntity corresponds to the JSON schema field "checking_entity".
-	CheckingEntity []string `json:"checking_entity"`
+	CheckingEntity []string `json:"checking_entity" mapstructure:"checking_entity"`
 
 	// CheckingLevel corresponds to the JSON schema field "checking_level".
-	CheckingLevel RC020CheckingCheckingLevel `json:"checking_level"`
+	CheckingLevel RC020CheckingCheckingLevel `json:"checking_level" mapstructure:"checking_level"`
 }
 
 // RC020CheckingCheckingLevel CheckingCheckingLevel
 type RC020CheckingCheckingLevel string
-
-// RC020CheckingCheckingLevelA1 CheckingLevelA1
-const RC020CheckingCheckingLevelA1 RC020CheckingCheckingLevel = "1"
-
-// RC020CheckingCheckingLevelA2 CheckingLevelA2
-const RC020CheckingCheckingLevelA2 RC020CheckingCheckingLevel = "2"
-
-// RC020CheckingCheckingLevelA3 CheckingLevelA3
-const RC020CheckingCheckingLevelA3 RC020CheckingCheckingLevel = "3"
+// RC020CheckingCheckingLevel possible values
+const (
+    RC020CheckingCheckingLevelA1 RC020CheckingCheckingLevel = "1"
+    RC020CheckingCheckingLevelA2 RC020CheckingCheckingLevel = "2"
+    RC020CheckingCheckingLevelA3 RC020CheckingCheckingLevel = "3"
+)
 
 // RC020DublinCore DublinCore
 type RC020DublinCore struct {
 	// Conformsto corresponds to the JSON schema field "conformsto".
-	Conformsto RC020DublinCoreConformsto `json:"conformsto"`
+	Conformsto RC020DublinCoreConformsto `json:"conformsto" mapstructure:"conformsto"`
 
 	// Contributor corresponds to the JSON schema field "contributor".
-	Contributor []string `json:"contributor"`
+	Contributor []string `json:"contributor" mapstructure:"contributor"`
 
 	// Creator corresponds to the JSON schema field "creator".
-	Creator string `json:"creator"`
+	Creator string `json:"creator" mapstructure:"creator"`
 
 	// Description corresponds to the JSON schema field "description".
-	Description string `json:"description"`
+	Description string `json:"description" mapstructure:"description"`
 
 	// Format corresponds to the JSON schema field "format".
-	Format MimeType `json:"format"`
+	Format MimeType `json:"format" mapstructure:"format"`
 
 	// Identifier corresponds to the JSON schema field "identifier".
-	Identifier string `json:"identifier"`
+	Identifier string `json:"identifier" mapstructure:"identifier"`
 
 	// Issued corresponds to the JSON schema field "issued".
-	Issued Timestamp `json:"issued"`
+	Issued Timestamp `json:"issued" mapstructure:"issued"`
 
 	// Language corresponds to the JSON schema field "language".
-	Language RC020DublinCoreLanguage `json:"language"`
+	Language RC020DublinCoreLanguage `json:"language" mapstructure:"language"`
 
 	// Modified corresponds to the JSON schema field "modified".
-	Modified Timestamp `json:"modified"`
+	Modified Timestamp `json:"modified" mapstructure:"modified"`
 
 	// Publisher corresponds to the JSON schema field "publisher".
-	Publisher string `json:"publisher"`
+	Publisher string `json:"publisher" mapstructure:"publisher"`
 
 	// Relation corresponds to the JSON schema field "relation".
-	Relation []RelationItem `json:"relation"`
+	Relation []RelationItem `json:"relation" mapstructure:"relation"`
 
 	// Rights corresponds to the JSON schema field "rights".
-	Rights RC020DublinCoreRights `json:"rights"`
+	Rights RC020DublinCoreRights `json:"rights" mapstructure:"rights"`
 
 	// Source corresponds to the JSON schema field "source".
-	Source []RC020DublinCoreSourceElem `json:"source"`
+	Source []RC020DublinCoreSourceElem `json:"source" mapstructure:"source"`
 
 	// Subject corresponds to the JSON schema field "subject".
-	Subject RC020DublinCoreSubject `json:"subject"`
+	Subject RC020DublinCoreSubject `json:"subject" mapstructure:"subject"`
 
 	// Title corresponds to the JSON schema field "title".
-	Title string `json:"title"`
+	Title string `json:"title" mapstructure:"title"`
 
 	// Type corresponds to the JSON schema field "type".
-	Type RC020DublinCoreType `json:"type"`
+	Type RC020DublinCoreType `json:"type" mapstructure:"type"`
 
 	// Version corresponds to the JSON schema field "version".
-	Version string `json:"version"`
+	Version string `json:"version" mapstructure:"version"`
 }
 
 // RC020DublinCoreConformsto DublinCoreConformsto
 type RC020DublinCoreConformsto string
-
-// RC020DublinCoreConformstoRc02 ConformstoRc02
-const RC020DublinCoreConformstoRc02 RC020DublinCoreConformsto = "rc0.2"
+// RC020DublinCoreConformsto possiblie values
+const (
+    RC020DublinCoreConformstoRc02 RC020DublinCoreConformsto = "rc0.2"
+)
 
 // RC020DublinCoreLanguage DublinCoreLanguage
 type RC020DublinCoreLanguage struct {
 	// Direction corresponds to the JSON schema field "direction".
-	Direction RC020DublinCoreLanguageDirection `json:"direction"`
+	Direction RC020DublinCoreLanguageDirection `json:"direction" mapstructure:"direction"`
 
 	// Identifier corresponds to the JSON schema field "identifier".
-	Identifier LanguageTag `json:"identifier"`
+	Identifier LanguageTag `json:"identifier" mapstructure:"identifier"`
 
 	// Title corresponds to the JSON schema field "title".
-	Title string `json:"title"`
+	Title string `json:"title" mapstructure:"title"`
 }
 
 // RC020DublinCoreLanguageDirection DublinCoreLanguageDirection
 type RC020DublinCoreLanguageDirection string
-
-// RC020DublinCoreLanguageDirectionLtr LanguageDirectionLtr
-const RC020DublinCoreLanguageDirectionLtr RC020DublinCoreLanguageDirection = "ltr"
-
-// RC020DublinCoreLanguageDirectionRtl LanguageDirectionRtl
-const RC020DublinCoreLanguageDirectionRtl RC020DublinCoreLanguageDirection = "rtl"
+// RC020DublinCoreLanguageDirection possible values
+const (
+    RC020DublinCoreLanguageDirectionLtr RC020DublinCoreLanguageDirection = "ltr"
+    RC020DublinCoreLanguageDirectionRtl RC020DublinCoreLanguageDirection = "rtl"
+)
 
 // RC020DublinCoreRights DublinCoreRights
 type RC020DublinCoreRights string
-
-// RC020DublinCoreRightsCCBY30 RightsCCBY30
-const RC020DublinCoreRightsCCBY30 RC020DublinCoreRights = "CC BY 3.0"
-
-// RC020DublinCoreRightsCCBYSA30 RightsCCBYSA30
-const RC020DublinCoreRightsCCBYSA30 RC020DublinCoreRights = "CC BY-SA 3.0"
-
-// RC020DublinCoreRightsCCBYSA40 RightsCCBYSA40
-const RC020DublinCoreRightsCCBYSA40 RC020DublinCoreRights = "CC BY-SA 4.0"
-
-// RC020DublinCoreRightsFreeTranslate20InternationalPublicLicense RightsFreeTranslate20InternationalPublicLicense
-const RC020DublinCoreRightsFreeTranslate20InternationalPublicLicense RC020DublinCoreRights = "Free Translate 2.0 International Public License"
-
-// RC020DublinCoreRightsPublicDomain RightsPublicDomain
-const RC020DublinCoreRightsPublicDomain RC020DublinCoreRights = "Public Domain"
+// RC020DublinCoreRights possible values
+const (
+    RC020DublinCoreRightsCCBY30 RC020DublinCoreRights = "CC BY 3.0"
+    RC020DublinCoreRightsCCBYSA30 RC020DublinCoreRights = "CC BY-SA 3.0"
+    RC020DublinCoreRightsCCBYSA40 RC020DublinCoreRights = "CC BY-SA 4.0"
+    RC020DublinCoreRightsFreeTranslate20InternationalPublicLicense RC020DublinCoreRights = "Free Translate 2.0 International Public License"
+	RC020DublinCoreRightsPublicDomain RC020DublinCoreRights = "Public Domain"
+)
 
 // RC020DublinCoreSourceElem DublinCoreSourceElem
 type RC020DublinCoreSourceElem struct {
 	// Identifier corresponds to the JSON schema field "identifier".
-	Identifier string `json:"identifier"`
+	Identifier string `json:"identifier" mapstructure:"identifier"`
 
 	// Language corresponds to the JSON schema field "language".
-	Language LanguageTag `json:"language"`
+	Language LanguageTag `json:"language" mapstructure:"language"`
 
 	// Version corresponds to the JSON schema field "version".
-	Version string `json:"version"`
+	Version string `json:"version" mapstructure:"version"`
 }
 
 // RC020DublinCoreSubject DublinCoreSubject
 type RC020DublinCoreSubject string
-
-// RC020DublinCoreSubjectAlignedBible SubjectAlignedBible
-const RC020DublinCoreSubjectAlignedBible RC020DublinCoreSubject = "Aligned Bible"
-
-// RC020DublinCoreSubjectBible SubjectBible
-const RC020DublinCoreSubjectBible RC020DublinCoreSubject = "Bible"
-
-// RC020DublinCoreSubjectGreekNewTestament SubjectGreekNewTestament
-const RC020DublinCoreSubjectGreekNewTestament RC020DublinCoreSubject = "Greek New Testament"
-
-// RC020DublinCoreSubjectHebrewOldTestament SubjectHebrewOldTestament
-const RC020DublinCoreSubjectHebrewOldTestament RC020DublinCoreSubject = "Hebrew Old Testament"
-
-// RC020DublinCoreSubjectOBSTranslationNotes SubjectOBSTranslationNotes
-const RC020DublinCoreSubjectOBSTranslationNotes RC020DublinCoreSubject = "OBS Translation Notes"
-
-// RC020DublinCoreSubjectOBSTranslationQuestions SubjectOBSTranslationQuestions
-const RC020DublinCoreSubjectOBSTranslationQuestions RC020DublinCoreSubject = "OBS Translation Questions"
-
-// RC020DublinCoreSubjectOpenBibleStories SubjectOpenBibleStories
-const RC020DublinCoreSubjectOpenBibleStories RC020DublinCoreSubject = "Open Bible Stories"
-
-// RC020DublinCoreSubjectTSVTranslationNotes SubjectTSVTranslationNotes
-const RC020DublinCoreSubjectTSVTranslationNotes RC020DublinCoreSubject = "TSV Translation Notes"
-
-// RC020DublinCoreSubjectTranslationAcademy SubjectTranslationAcademy
-const RC020DublinCoreSubjectTranslationAcademy RC020DublinCoreSubject = "Translation Academy"
-
-// RC020DublinCoreSubjectTranslationNotes SubjectTranslationNotes
-const RC020DublinCoreSubjectTranslationNotes RC020DublinCoreSubject = "Translation Notes"
-
-// RC020DublinCoreSubjectTranslationQuestions SubjectTranslationQuestions
-const RC020DublinCoreSubjectTranslationQuestions RC020DublinCoreSubject = "Translation Questions"
-
-// RC020DublinCoreSubjectTranslationWords SubjectTranslationWords
-const RC020DublinCoreSubjectTranslationWords RC020DublinCoreSubject = "Translation Words"
+// RC020DublinCoreSubject possible values
+const (
+	RC020DublinCoreSubjectAlignedBible RC020DublinCoreSubject = "Aligned Bible"
+	RC020DublinCoreSubjectBible RC020DublinCoreSubject = "Bible"
+    RC020DublinCoreSubjectGreekNewTestament RC020DublinCoreSubject = "Greek New Testament"
+    RC020DublinCoreSubjectHebrewOldTestament RC020DublinCoreSubject = "Hebrew Old Testament"
+    RC020DublinCoreSubjectOBSStudyNotes RC020DublinCoreSubject = "OBS Study Notes"
+    RC020DublinCoreSubjectOBSStudyQuestions RC020DublinCoreSubject = "OBS Study Questions"
+    RC020DublinCoreSubjectOBSTranslationNotes RC020DublinCoreSubject = "OBS Translation Notes"
+    RC020DublinCoreSubjectOBSTranslationQuestions RC020DublinCoreSubject = "OBS Translation Questions"
+    RC020DublinCoreSubjectOpenBibleStories RC020DublinCoreSubject = "Open Bible Stories"
+    RC020DublinCoreSubjectTSVTranslationNotes RC020DublinCoreSubject = "TSV Translation Notes"
+    RC020DublinCoreSubjectTranslationAcademy RC020DublinCoreSubject = "Translation Academy"
+    RC020DublinCoreSubjectTranslationNotes RC020DublinCoreSubject = "Translation Notes"
+    RC020DublinCoreSubjectTranslationQuestions RC020DublinCoreSubject = "Translation Questions"
+    RC020DublinCoreSubjectTranslationWords RC020DublinCoreSubject = "Translation Words"
+)
 
 // RC020DublinCoreType DublinCoreType
 type RC020DublinCoreType string
-
-// RC020DublinCoreTypeBook TypeBook
-const RC020DublinCoreTypeBook RC020DublinCoreType = "book"
-
-// RC020DublinCoreTypeBundle TypeBundle
-const RC020DublinCoreTypeBundle RC020DublinCoreType = "bundle"
-
-// RC020DublinCoreTypeDict TypeDict
-const RC020DublinCoreTypeDict RC020DublinCoreType = "dict"
-
-// RC020DublinCoreTypeHelp TypeHelp
-const RC020DublinCoreTypeHelp RC020DublinCoreType = "help"
-
-// RC020DublinCoreTypeMan TypeMan
-const RC020DublinCoreTypeMan RC020DublinCoreType = "man"
+// RC020DublinCoreType possible values
+const (
+    RC020DublinCoreTypeBook RC020DublinCoreType = "book"
+    RC020DublinCoreTypeBundle RC020DublinCoreType = "bundle"
+    RC020DublinCoreTypeDict RC020DublinCoreType = "dict"
+    RC020DublinCoreTypeHelp RC020DublinCoreType = "help"
+    RC020DublinCoreTypeMan RC020DublinCoreType = "man"
+)
 
 // RC020ProjectsElem ProjectsElem
 type RC020ProjectsElem struct {
 	// Categories corresponds to the JSON schema field "categories".
-	Categories interface{} `json:"categories,omitempty"`
+	Categories interface{} `json:"categories,omitempty" mapstructure:"categories,omitempty"`
 
 	// Identifier corresponds to the JSON schema field "identifier".
-	Identifier ProjectIdentifier `json:"identifier"`
+	Identifier ProjectIdentifier `json:"identifier" mapstructure:"identifier"`
 
 	// Path corresponds to the JSON schema field "path".
-	Path Path `json:"path"`
+	Path Path `json:"path" mapstructure:"path"`
 
 	// Sort corresponds to the JSON schema field "sort".
-	Sort int `json:"sort,omitempty"`
+	Sort int `json:"sort,omitempty" mapstructure:"sort,omitempty"`
 
 	// Title corresponds to the JSON schema field "title".
-	Title string `json:"title"`
+	Title string `json:"title" mapstructure:"title"`
 
 	// Versification corresponds to the JSON schema field "versification".
-	Versification *RC020ProjectsElemVersification `json:"versification,omitempty"`
+	Versification *RC020ProjectsElemVersification `json:"versification,omitempty" mapstructure:"versification,omitempty"`
 }
 
 // RC020ProjectsElemVersification ProjectsElemVersification
 type RC020ProjectsElemVersification string
-
-// RC020ProjectsElemVersificationAvd Avd
-const RC020ProjectsElemVersificationAvd RC020ProjectsElemVersification = "avd"
-
-// RC020ProjectsElemVersificationBlank Blank
-const RC020ProjectsElemVersificationBlank RC020ProjectsElemVersification = ""
-
-// RC020ProjectsElemVersificationObs Obs
-const RC020ProjectsElemVersificationObs RC020ProjectsElemVersification = "obs"
-
-// RC020ProjectsElemVersificationOdx Odx
-const RC020ProjectsElemVersificationOdx RC020ProjectsElemVersification = "odx"
-
-// RC020ProjectsElemVersificationOdxHr OdxHr
-const RC020ProjectsElemVersificationOdxHr RC020ProjectsElemVersification = "odx-hr"
-
-// RC020ProjectsElemVersificationOther Other
-const RC020ProjectsElemVersificationOther RC020ProjectsElemVersification = "other"
-
-// RC020ProjectsElemVersificationRsc Rsc
-const RC020ProjectsElemVersificationRsc RC020ProjectsElemVersification = "rsc"
-
-// RC020ProjectsElemVersificationUfw Ufw
-const RC020ProjectsElemVersificationUfw RC020ProjectsElemVersification = "ufw"
-
-// RC020ProjectsElemVersificationUfwBn UfwBn
-const RC020ProjectsElemVersificationUfwBn RC020ProjectsElemVersification = "ufw-bn"
-
-// RC020ProjectsElemVersificationUfwMl UfwMl
-const RC020ProjectsElemVersificationUfwMl RC020ProjectsElemVersification = "ufw-ml"
-
-// RC020ProjectsElemVersificationUfwOdx UfwOdx
-const RC020ProjectsElemVersificationUfwOdx RC020ProjectsElemVersification = "ufw-odx"
-
-// RC020ProjectsElemVersificationUfwRev UfwRev
-const RC020ProjectsElemVersificationUfwRev RC020ProjectsElemVersification = "ufw-rev"
+// RC020ProjectsElemVersification possible values
+const (
+	RC020ProjectsElemVersificationBlank RC020ProjectsElemVersification = ""
+    RC020ProjectsElemVersificationAvd RC020ProjectsElemVersification = "avd"
+    RC020ProjectsElemVersificationObs RC020ProjectsElemVersification = "obs"
+    RC020ProjectsElemVersificationOdx RC020ProjectsElemVersification = "odx"
+    RC020ProjectsElemVersificationOdxHr RC020ProjectsElemVersification = "odx-hr"
+    RC020ProjectsElemVersificationOther RC020ProjectsElemVersification = "other"
+    RC020ProjectsElemVersificationRsc RC020ProjectsElemVersification = "rsc"
+    RC020ProjectsElemVersificationUfw RC020ProjectsElemVersification = "ufw"
+    RC020ProjectsElemVersificationUfwBn RC020ProjectsElemVersification = "ufw-bn"
+    RC020ProjectsElemVersificationUfwMl RC020ProjectsElemVersification = "ufw-ml"
+    RC020ProjectsElemVersificationUfwOdx RC020ProjectsElemVersification = "ufw-odx"
+    RC020ProjectsElemVersificationUfwRev RC020ProjectsElemVersification = "ufw-rev"
+)
 
 // RelationItem A relation has valid IETF language tag as specified by BCP 47 and a valid
 // resource, separated with a slash.
@@ -915,6 +729,7 @@ var enumValuesProjectIdentifier = []interface{}{
 	"bible",
 }
 var enumValuesRC020CheckingCheckingLevel = []interface{}{
+	"",
 	"1",
 	"2",
 	"3",
@@ -936,8 +751,11 @@ var enumValuesRC020DublinCoreRights = []interface{}{
 var enumValuesRC020DublinCoreSubject = []interface{}{
 	"Aligned Bible",
 	"Bible",
+	"Bible stories",
 	"Greek New Testament",
 	"Hebrew Old Testament",
+	"OBS Study Notes",
+	"OBS Study Questions",
 	"OBS Translation Notes",
 	"OBS Translation Questions",
 	"Open Bible Stories",

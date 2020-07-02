@@ -172,6 +172,11 @@ type SearchRepoOptions struct {
 	// True -> include just has milestones
 	// False -> include just has no milestone
 	HasMilestones util.OptionalBool
+	Subject string
+	Books []string
+	Languages []string
+	CheckingLevel string
+	IncludeAllMetadata bool
 }
 
 //SearchOrderBy is used to sort the result
@@ -298,6 +303,11 @@ func SearchRepositoryCondition(opts *SearchRepoOptions) builder.Cond {
 				if opts.IncludeDescription {
 					likes = likes.Or(builder.Like{"LOWER(description)", strings.ToLower(v)})
 				}
+				likes = likes.Or(builder.Like{"LOWER(JSON_EXTRACT(`door43_metadata`.metadata, '$.dublin_core.title'))", strings.ToLower(v)})
+				likes = likes.Or(builder.Like{"LOWER(JSON_EXTRACT(`door43_metadata`.metadata, '$.dublin_core.subject'))", strings.ToLower(v)})
+				if opts.IncludeAllMetadata {
+					likes = likes.Or(builder.Expr("JSON_SEARCH(LOWER(`door43_metadata`.metadata), 'one', ?) IS NOT NULL", "%"+strings.ToLower(v)+"%"))
+				}
 			}
 			keywordCond = keywordCond.Or(likes)
 		}
@@ -325,6 +335,33 @@ func SearchRepositoryCondition(opts *SearchRepoOptions) builder.Cond {
 		cond = cond.And(builder.Gt{"num_milestones": 0})
 	case util.OptionalBoolFalse:
 		cond = cond.And(builder.Eq{"num_milestones": 0}.Or(builder.IsNull{"num_milestones"}))
+	}
+	
+	if opts.Subject != "" {
+		cond.And(builder.Like{"LOWER(JSON_EXTRACT(`door43_metadata`.metadata, '$.dublin_core.subject'))", strings.ToLower(opts.Subject)})
+	}
+	if len(opts.Languages) > 0 {
+		var langCond = builder.NewCond()
+		for _, lang := range opts.Languages {
+			// separate languages in case they used a comma
+			for _, v := range strings.Split(lang, ",") {
+				langCond = langCond.Or(builder.Like{"LOWER(JSON_EXTRACT(`door43_metadata`.metadata, '$.dublin_core.language.identifier'))", strings.ToLower(v)})
+			}
+		}
+		cond = cond.And(langCond)
+	}
+	if len(opts.Books) > 0 {
+		var bookCond = builder.NewCond()
+		for _, book := range opts.Books {
+			// separate books in case they used a comma
+			for _, v := range strings.Split(book, ",") {
+				bookCond = bookCond.Or(builder.Expr("JSON_CONTAINS(LOWER(JSON_EXTRACT(`door43_metadata`.metadata, '$.projects')), JSON_OBJECT('identifier', ?))", strings.ToLower(v)))
+			}
+		}
+		cond = cond.And(bookCond)
+	}
+	if opts.CheckingLevel != "" {
+		cond.And(builder.Like{"JSON_EXTRACT(`door43_metadata`.metadata, '$.checking.checking_level')", strings.ToLower(opts.CheckingLevel)})
 	}
 
 	return cond
@@ -355,6 +392,7 @@ func SearchRepositoryByCondition(opts *SearchRepoOptions, cond builder.Cond, loa
 	defer sess.Close()
 
 	count, err := sess.
+		Join("INNER", "door43_metadata", "`door43_metadata`.repo_id = `repository`.id AND `door43_metadata`.release_id = 0").
 		Where(cond).
 		Count(new(Repository))
 
