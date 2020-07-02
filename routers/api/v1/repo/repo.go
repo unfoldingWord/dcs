@@ -153,10 +153,10 @@ func Search(ctx *context.APIContext) {
 		Template:           util.OptionalBoolNone,
 		StarredByID:        ctx.QueryInt64("starredBy"),
 		IncludeDescription: ctx.QueryBool("includeDesc"),
-		Subject: ctx.Query("subject"),
-		Books: ctx.QueryStrings("book"),
-		Languages: ctx.QueryStrings("lang"),
-		CheckingLevel: ctx.Query("checking_level"),
+		Subject:            ctx.Query("subject"),
+		Books:              ctx.QueryStrings("book"),
+		Languages:          ctx.QueryStrings("lang"),
+		CheckingLevel:      ctx.Query("checking_level"),
 		IncludeAllMetadata: true,
 	}
 

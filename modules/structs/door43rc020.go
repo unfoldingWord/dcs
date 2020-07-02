@@ -347,74 +347,75 @@ func (j *RC020DublinCoreConformsto) UnmarshalJSON(b []byte) error {
 
 // ProjectIdentifier identifies a project
 type ProjectIdentifier string
+
 // ProjectIdentifier possible values
 const (
-    ProjectIdentifierA1Th ProjectIdentifier = "1th"
-    ProjectIdentifierA1Ti ProjectIdentifier = "1ti"
-    ProjectIdentifierA2Ch ProjectIdentifier = "2ch"
-    ProjectIdentifierA2Co ProjectIdentifier = "2co"
-    ProjectIdentifierA2Jn ProjectIdentifier = "2jn"
-    ProjectIdentifierA2Ki ProjectIdentifier = "2ki"
-    ProjectIdentifierA2Pe ProjectIdentifier = "2pe"
-    ProjectIdentifierA2Sa ProjectIdentifier = "2sa"
-    ProjectIdentifierA2Th ProjectIdentifier = "2th"
-    ProjectIdentifierA2Ti ProjectIdentifier = "2ti"
-    ProjectIdentifierA3Jn ProjectIdentifier = "3jn"
-    ProjectIdentifierAct ProjectIdentifier = "act"
-    ProjectIdentifierAmo ProjectIdentifier = "amo"
-    ProjectIdentifierBible ProjectIdentifier = "bible"
-    ProjectIdentifierChecking ProjectIdentifier = "checking"
-    ProjectIdentifierCol ProjectIdentifier = "col"
-    ProjectIdentifierDan ProjectIdentifier = "dan"
-    ProjectIdentifierDeu ProjectIdentifier = "deu"
-    ProjectIdentifierEcc ProjectIdentifier = "ecc"
-    ProjectIdentifierEph ProjectIdentifier = "eph"
-    ProjectIdentifierEst ProjectIdentifier = "est"
-    ProjectIdentifierExo ProjectIdentifier = "exo"
-    ProjectIdentifierEzk ProjectIdentifier = "ezk"
-    ProjectIdentifierEzr ProjectIdentifier = "ezr"
-    ProjectIdentifierGal ProjectIdentifier = "gal"
-    ProjectIdentifierGen ProjectIdentifier = "gen"
-    ProjectIdentifierHab ProjectIdentifier = "hab"
-    ProjectIdentifierHag ProjectIdentifier = "hag"
-    ProjectIdentifierHeb ProjectIdentifier = "heb"
-    ProjectIdentifierHos ProjectIdentifier = "hos"
-    ProjectIdentifierIntro ProjectIdentifier = "intro"
-    ProjectIdentifierIsa ProjectIdentifier = "isa"
-    ProjectIdentifierJas ProjectIdentifier = "jas"
-    ProjectIdentifierJdg ProjectIdentifier = "jdg"
-    ProjectIdentifierJer ProjectIdentifier = "jer"
-    ProjectIdentifierJhn ProjectIdentifier = "jhn"
-    ProjectIdentifierJob ProjectIdentifier = "job"
-    ProjectIdentifierJol ProjectIdentifier = "jol"
-    ProjectIdentifierJon ProjectIdentifier = "jon"
-    ProjectIdentifierJos ProjectIdentifier = "jos"
-    ProjectIdentifierJud ProjectIdentifier = "jud"
-    ProjectIdentifierLam ProjectIdentifier = "lam"
-    ProjectIdentifierLev ProjectIdentifier = "lev"
-    ProjectIdentifierLuk ProjectIdentifier = "luk"
-    ProjectIdentifierMal ProjectIdentifier = "mal"
-    ProjectIdentifierMat ProjectIdentifier = "mat"
-    ProjectIdentifierMic ProjectIdentifier = "mic"
-    ProjectIdentifierMrk ProjectIdentifier = "mrk"
-    ProjectIdentifierNam ProjectIdentifier = "nam"
-    ProjectIdentifierNeh ProjectIdentifier = "neh"
-    ProjectIdentifierNum ProjectIdentifier = "num"
-    ProjectIdentifierOba ProjectIdentifier = "oba"
-    ProjectIdentifierObs ProjectIdentifier = "obs"
-    ProjectIdentifierPhm ProjectIdentifier = "phm"
-    ProjectIdentifierPhp ProjectIdentifier = "php"
-    ProjectIdentifierPro ProjectIdentifier = "pro"
-    ProjectIdentifierProcess ProjectIdentifier = "process"
-    ProjectIdentifierPsa ProjectIdentifier = "psa"
-    ProjectIdentifierRev ProjectIdentifier = "rev"
-    ProjectIdentifierRom ProjectIdentifier = "rom"
-    ProjectIdentifierRut ProjectIdentifier = "rut"
-    ProjectIdentifierSng ProjectIdentifier = "sng"
-    ProjectIdentifierTit ProjectIdentifier = "tit"
-    ProjectIdentifierTranslate ProjectIdentifier = "translate"
-    ProjectIdentifierZec ProjectIdentifier = "zec"
-    ProjectIdentifierZep ProjectIdentifier = "zep"
+	ProjectIdentifierA1Th      ProjectIdentifier = "1th"
+	ProjectIdentifierA1Ti      ProjectIdentifier = "1ti"
+	ProjectIdentifierA2Ch      ProjectIdentifier = "2ch"
+	ProjectIdentifierA2Co      ProjectIdentifier = "2co"
+	ProjectIdentifierA2Jn      ProjectIdentifier = "2jn"
+	ProjectIdentifierA2Ki      ProjectIdentifier = "2ki"
+	ProjectIdentifierA2Pe      ProjectIdentifier = "2pe"
+	ProjectIdentifierA2Sa      ProjectIdentifier = "2sa"
+	ProjectIdentifierA2Th      ProjectIdentifier = "2th"
+	ProjectIdentifierA2Ti      ProjectIdentifier = "2ti"
+	ProjectIdentifierA3Jn      ProjectIdentifier = "3jn"
+	ProjectIdentifierAct       ProjectIdentifier = "act"
+	ProjectIdentifierAmo       ProjectIdentifier = "amo"
+	ProjectIdentifierBible     ProjectIdentifier = "bible"
+	ProjectIdentifierChecking  ProjectIdentifier = "checking"
+	ProjectIdentifierCol       ProjectIdentifier = "col"
+	ProjectIdentifierDan       ProjectIdentifier = "dan"
+	ProjectIdentifierDeu       ProjectIdentifier = "deu"
+	ProjectIdentifierEcc       ProjectIdentifier = "ecc"
+	ProjectIdentifierEph       ProjectIdentifier = "eph"
+	ProjectIdentifierEst       ProjectIdentifier = "est"
+	ProjectIdentifierExo       ProjectIdentifier = "exo"
+	ProjectIdentifierEzk       ProjectIdentifier = "ezk"
+	ProjectIdentifierEzr       ProjectIdentifier = "ezr"
+	ProjectIdentifierGal       ProjectIdentifier = "gal"
+	ProjectIdentifierGen       ProjectIdentifier = "gen"
+	ProjectIdentifierHab       ProjectIdentifier = "hab"
+	ProjectIdentifierHag       ProjectIdentifier = "hag"
+	ProjectIdentifierHeb       ProjectIdentifier = "heb"
+	ProjectIdentifierHos       ProjectIdentifier = "hos"
+	ProjectIdentifierIntro     ProjectIdentifier = "intro"
+	ProjectIdentifierIsa       ProjectIdentifier = "isa"
+	ProjectIdentifierJas       ProjectIdentifier = "jas"
+	ProjectIdentifierJdg       ProjectIdentifier = "jdg"
+	ProjectIdentifierJer       ProjectIdentifier = "jer"
+	ProjectIdentifierJhn       ProjectIdentifier = "jhn"
+	ProjectIdentifierJob       ProjectIdentifier = "job"
+	ProjectIdentifierJol       ProjectIdentifier = "jol"
+	ProjectIdentifierJon       ProjectIdentifier = "jon"
+	ProjectIdentifierJos       ProjectIdentifier = "jos"
+	ProjectIdentifierJud       ProjectIdentifier = "jud"
+	ProjectIdentifierLam       ProjectIdentifier = "lam"
+	ProjectIdentifierLev       ProjectIdentifier = "lev"
+	ProjectIdentifierLuk       ProjectIdentifier = "luk"
+	ProjectIdentifierMal       ProjectIdentifier = "mal"
+	ProjectIdentifierMat       ProjectIdentifier = "mat"
+	ProjectIdentifierMic       ProjectIdentifier = "mic"
+	ProjectIdentifierMrk       ProjectIdentifier = "mrk"
+	ProjectIdentifierNam       ProjectIdentifier = "nam"
+	ProjectIdentifierNeh       ProjectIdentifier = "neh"
+	ProjectIdentifierNum       ProjectIdentifier = "num"
+	ProjectIdentifierOba       ProjectIdentifier = "oba"
+	ProjectIdentifierObs       ProjectIdentifier = "obs"
+	ProjectIdentifierPhm       ProjectIdentifier = "phm"
+	ProjectIdentifierPhp       ProjectIdentifier = "php"
+	ProjectIdentifierPro       ProjectIdentifier = "pro"
+	ProjectIdentifierProcess   ProjectIdentifier = "process"
+	ProjectIdentifierPsa       ProjectIdentifier = "psa"
+	ProjectIdentifierRev       ProjectIdentifier = "rev"
+	ProjectIdentifierRom       ProjectIdentifier = "rom"
+	ProjectIdentifierRut       ProjectIdentifier = "rut"
+	ProjectIdentifierSng       ProjectIdentifier = "sng"
+	ProjectIdentifierTit       ProjectIdentifier = "tit"
+	ProjectIdentifierTranslate ProjectIdentifier = "translate"
+	ProjectIdentifierZec       ProjectIdentifier = "zec"
+	ProjectIdentifierZep       ProjectIdentifier = "zep"
 )
 
 // UnmarshalJSON implements json.Unmarshaler.
@@ -460,11 +461,12 @@ type RC020Checking struct {
 
 // RC020CheckingCheckingLevel CheckingCheckingLevel
 type RC020CheckingCheckingLevel string
+
 // RC020CheckingCheckingLevel possible values
 const (
-    RC020CheckingCheckingLevelA1 RC020CheckingCheckingLevel = "1"
-    RC020CheckingCheckingLevelA2 RC020CheckingCheckingLevel = "2"
-    RC020CheckingCheckingLevelA3 RC020CheckingCheckingLevel = "3"
+	RC020CheckingCheckingLevelA1 RC020CheckingCheckingLevel = "1"
+	RC020CheckingCheckingLevelA2 RC020CheckingCheckingLevel = "2"
+	RC020CheckingCheckingLevelA3 RC020CheckingCheckingLevel = "3"
 )
 
 // RC020DublinCore DublinCore
@@ -523,9 +525,10 @@ type RC020DublinCore struct {
 
 // RC020DublinCoreConformsto DublinCoreConformsto
 type RC020DublinCoreConformsto string
+
 // RC020DublinCoreConformsto possiblie values
 const (
-    RC020DublinCoreConformstoRc02 RC020DublinCoreConformsto = "rc0.2"
+	RC020DublinCoreConformstoRc02 RC020DublinCoreConformsto = "rc0.2"
 )
 
 // RC020DublinCoreLanguage DublinCoreLanguage
@@ -542,21 +545,23 @@ type RC020DublinCoreLanguage struct {
 
 // RC020DublinCoreLanguageDirection DublinCoreLanguageDirection
 type RC020DublinCoreLanguageDirection string
+
 // RC020DublinCoreLanguageDirection possible values
 const (
-    RC020DublinCoreLanguageDirectionLtr RC020DublinCoreLanguageDirection = "ltr"
-    RC020DublinCoreLanguageDirectionRtl RC020DublinCoreLanguageDirection = "rtl"
+	RC020DublinCoreLanguageDirectionLtr RC020DublinCoreLanguageDirection = "ltr"
+	RC020DublinCoreLanguageDirectionRtl RC020DublinCoreLanguageDirection = "rtl"
 )
 
 // RC020DublinCoreRights DublinCoreRights
 type RC020DublinCoreRights string
+
 // RC020DublinCoreRights possible values
 const (
-    RC020DublinCoreRightsCCBY30 RC020DublinCoreRights = "CC BY 3.0"
-    RC020DublinCoreRightsCCBYSA30 RC020DublinCoreRights = "CC BY-SA 3.0"
-    RC020DublinCoreRightsCCBYSA40 RC020DublinCoreRights = "CC BY-SA 4.0"
-    RC020DublinCoreRightsFreeTranslate20InternationalPublicLicense RC020DublinCoreRights = "Free Translate 2.0 International Public License"
-	RC020DublinCoreRightsPublicDomain RC020DublinCoreRights = "Public Domain"
+	RC020DublinCoreRightsCCBY30                                    RC020DublinCoreRights = "CC BY 3.0"
+	RC020DublinCoreRightsCCBYSA30                                  RC020DublinCoreRights = "CC BY-SA 3.0"
+	RC020DublinCoreRightsCCBYSA40                                  RC020DublinCoreRights = "CC BY-SA 4.0"
+	RC020DublinCoreRightsFreeTranslate20InternationalPublicLicense RC020DublinCoreRights = "Free Translate 2.0 International Public License"
+	RC020DublinCoreRightsPublicDomain                              RC020DublinCoreRights = "Public Domain"
 )
 
 // RC020DublinCoreSourceElem DublinCoreSourceElem
@@ -573,33 +578,35 @@ type RC020DublinCoreSourceElem struct {
 
 // RC020DublinCoreSubject DublinCoreSubject
 type RC020DublinCoreSubject string
+
 // RC020DublinCoreSubject possible values
 const (
-	RC020DublinCoreSubjectAlignedBible RC020DublinCoreSubject = "Aligned Bible"
-	RC020DublinCoreSubjectBible RC020DublinCoreSubject = "Bible"
-    RC020DublinCoreSubjectGreekNewTestament RC020DublinCoreSubject = "Greek New Testament"
-    RC020DublinCoreSubjectHebrewOldTestament RC020DublinCoreSubject = "Hebrew Old Testament"
-    RC020DublinCoreSubjectOBSStudyNotes RC020DublinCoreSubject = "OBS Study Notes"
-    RC020DublinCoreSubjectOBSStudyQuestions RC020DublinCoreSubject = "OBS Study Questions"
-    RC020DublinCoreSubjectOBSTranslationNotes RC020DublinCoreSubject = "OBS Translation Notes"
-    RC020DublinCoreSubjectOBSTranslationQuestions RC020DublinCoreSubject = "OBS Translation Questions"
-    RC020DublinCoreSubjectOpenBibleStories RC020DublinCoreSubject = "Open Bible Stories"
-    RC020DublinCoreSubjectTSVTranslationNotes RC020DublinCoreSubject = "TSV Translation Notes"
-    RC020DublinCoreSubjectTranslationAcademy RC020DublinCoreSubject = "Translation Academy"
-    RC020DublinCoreSubjectTranslationNotes RC020DublinCoreSubject = "Translation Notes"
-    RC020DublinCoreSubjectTranslationQuestions RC020DublinCoreSubject = "Translation Questions"
-    RC020DublinCoreSubjectTranslationWords RC020DublinCoreSubject = "Translation Words"
+	RC020DublinCoreSubjectAlignedBible            RC020DublinCoreSubject = "Aligned Bible"
+	RC020DublinCoreSubjectBible                   RC020DublinCoreSubject = "Bible"
+	RC020DublinCoreSubjectGreekNewTestament       RC020DublinCoreSubject = "Greek New Testament"
+	RC020DublinCoreSubjectHebrewOldTestament      RC020DublinCoreSubject = "Hebrew Old Testament"
+	RC020DublinCoreSubjectOBSStudyNotes           RC020DublinCoreSubject = "OBS Study Notes"
+	RC020DublinCoreSubjectOBSStudyQuestions       RC020DublinCoreSubject = "OBS Study Questions"
+	RC020DublinCoreSubjectOBSTranslationNotes     RC020DublinCoreSubject = "OBS Translation Notes"
+	RC020DublinCoreSubjectOBSTranslationQuestions RC020DublinCoreSubject = "OBS Translation Questions"
+	RC020DublinCoreSubjectOpenBibleStories        RC020DublinCoreSubject = "Open Bible Stories"
+	RC020DublinCoreSubjectTSVTranslationNotes     RC020DublinCoreSubject = "TSV Translation Notes"
+	RC020DublinCoreSubjectTranslationAcademy      RC020DublinCoreSubject = "Translation Academy"
+	RC020DublinCoreSubjectTranslationNotes        RC020DublinCoreSubject = "Translation Notes"
+	RC020DublinCoreSubjectTranslationQuestions    RC020DublinCoreSubject = "Translation Questions"
+	RC020DublinCoreSubjectTranslationWords        RC020DublinCoreSubject = "Translation Words"
 )
 
 // RC020DublinCoreType DublinCoreType
 type RC020DublinCoreType string
+
 // RC020DublinCoreType possible values
 const (
-    RC020DublinCoreTypeBook RC020DublinCoreType = "book"
-    RC020DublinCoreTypeBundle RC020DublinCoreType = "bundle"
-    RC020DublinCoreTypeDict RC020DublinCoreType = "dict"
-    RC020DublinCoreTypeHelp RC020DublinCoreType = "help"
-    RC020DublinCoreTypeMan RC020DublinCoreType = "man"
+	RC020DublinCoreTypeBook   RC020DublinCoreType = "book"
+	RC020DublinCoreTypeBundle RC020DublinCoreType = "bundle"
+	RC020DublinCoreTypeDict   RC020DublinCoreType = "dict"
+	RC020DublinCoreTypeHelp   RC020DublinCoreType = "help"
+	RC020DublinCoreTypeMan    RC020DublinCoreType = "man"
 )
 
 // RC020ProjectsElem ProjectsElem
@@ -625,20 +632,21 @@ type RC020ProjectsElem struct {
 
 // RC020ProjectsElemVersification ProjectsElemVersification
 type RC020ProjectsElemVersification string
+
 // RC020ProjectsElemVersification possible values
 const (
-	RC020ProjectsElemVersificationBlank RC020ProjectsElemVersification = ""
-    RC020ProjectsElemVersificationAvd RC020ProjectsElemVersification = "avd"
-    RC020ProjectsElemVersificationObs RC020ProjectsElemVersification = "obs"
-    RC020ProjectsElemVersificationOdx RC020ProjectsElemVersification = "odx"
-    RC020ProjectsElemVersificationOdxHr RC020ProjectsElemVersification = "odx-hr"
-    RC020ProjectsElemVersificationOther RC020ProjectsElemVersification = "other"
-    RC020ProjectsElemVersificationRsc RC020ProjectsElemVersification = "rsc"
-    RC020ProjectsElemVersificationUfw RC020ProjectsElemVersification = "ufw"
-    RC020ProjectsElemVersificationUfwBn RC020ProjectsElemVersification = "ufw-bn"
-    RC020ProjectsElemVersificationUfwMl RC020ProjectsElemVersification = "ufw-ml"
-    RC020ProjectsElemVersificationUfwOdx RC020ProjectsElemVersification = "ufw-odx"
-    RC020ProjectsElemVersificationUfwRev RC020ProjectsElemVersification = "ufw-rev"
+	RC020ProjectsElemVersificationBlank  RC020ProjectsElemVersification = ""
+	RC020ProjectsElemVersificationAvd    RC020ProjectsElemVersification = "avd"
+	RC020ProjectsElemVersificationObs    RC020ProjectsElemVersification = "obs"
+	RC020ProjectsElemVersificationOdx    RC020ProjectsElemVersification = "odx"
+	RC020ProjectsElemVersificationOdxHr  RC020ProjectsElemVersification = "odx-hr"
+	RC020ProjectsElemVersificationOther  RC020ProjectsElemVersification = "other"
+	RC020ProjectsElemVersificationRsc    RC020ProjectsElemVersification = "rsc"
+	RC020ProjectsElemVersificationUfw    RC020ProjectsElemVersification = "ufw"
+	RC020ProjectsElemVersificationUfwBn  RC020ProjectsElemVersification = "ufw-bn"
+	RC020ProjectsElemVersificationUfwMl  RC020ProjectsElemVersification = "ufw-ml"
+	RC020ProjectsElemVersificationUfwOdx RC020ProjectsElemVersification = "ufw-odx"
+	RC020ProjectsElemVersificationUfwRev RC020ProjectsElemVersification = "ufw-rev"
 )
 
 // RelationItem A relation has valid IETF language tag as specified by BCP 47 and a valid
