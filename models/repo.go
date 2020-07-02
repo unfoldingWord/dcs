@@ -366,7 +366,7 @@ func (repo *Repository) innerAPIFormat(e Engine, mode AccessMode, isParent bool)
 	}
 
 	metadata, err := repo.GetDefaultBranchMetadata()
-	if err != nil && ! IsErrDoor43MetadataNotExist(err) {
+	if err != nil && !IsErrDoor43MetadataNotExist(err) {
 		log.Error("APIFormat: %v", err)
 	}
 	if metadata == nil {
@@ -434,7 +434,7 @@ func (repo *Repository) innerAPIFormat(e Engine, mode AccessMode, isParent bool)
 		/* DCS Customizations */
 		Language:      language,
 		Title:         title,
-		Subject:    subject,
+		Subject:       subject,
 		Books:         books,
 		CheckingLevel: checkingLevel,
 		Catalog:       catalog,

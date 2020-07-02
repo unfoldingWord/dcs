@@ -171,11 +171,11 @@ type SearchRepoOptions struct {
 	// None -> include has milestones AND has no milestone
 	// True -> include just has milestones
 	// False -> include just has no milestone
-	HasMilestones util.OptionalBool
-	Subject string
-	Books []string
-	Languages []string
-	CheckingLevel string
+	HasMilestones      util.OptionalBool
+	Subject            string
+	Books              []string
+	Languages          []string
+	CheckingLevel      string
 	IncludeAllMetadata bool
 }
 
@@ -336,7 +336,7 @@ func SearchRepositoryCondition(opts *SearchRepoOptions) builder.Cond {
 	case util.OptionalBoolFalse:
 		cond = cond.And(builder.Eq{"num_milestones": 0}.Or(builder.IsNull{"num_milestones"}))
 	}
-	
+
 	if opts.Subject != "" {
 		cond.And(builder.Like{"LOWER(JSON_EXTRACT(`door43_metadata`.metadata, '$.dublin_core.subject'))", strings.ToLower(opts.Subject)})
 	}

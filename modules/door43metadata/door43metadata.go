@@ -127,11 +127,11 @@ func ConvertGenericMapToRC020Manifest(manifest *map[string]interface{}) (*struct
 		CheckingLevel string `mapstructure:"checking_level"`
 	}
 	type Language struct {
-		Identifier string
+		Identifier    string
 		LangDirection string `mapstructure:"lang_direction"`
 	}
 	type DublinCore struct {
-		Subject string
+		Subject  string
 		Language Language
 		TestThis string `mapstructure:"test_this"`
 	}
@@ -140,19 +140,19 @@ func ConvertGenericMapToRC020Manifest(manifest *map[string]interface{}) (*struct
 	}
 	type Person struct {
 		Checking
-		DublinCore  `mapstructure:"dublin_core"`
-		Projects []Project
+		DublinCore `mapstructure:"dublin_core"`
+		Projects   []Project
 	}
 
 	book1 := map[string]interface{}{"identifier": "gen"}
 	book2 := map[string]interface{}{"identifier": "exo"}
 	input := map[string]interface{}{
 		"dublin_core": map[string]interface{}{
-			"subject": "test", 
+			"subject": "test",
 			"language": map[string]interface{}{
-				"identifier": "en", 
+				"identifier":     "en",
 				"lang_direction": "ltr",
-			}, 
+			},
 			"test_this": "ok",
 		},
 		"checking": map[string]interface{}{"checking_level": "1"},
@@ -223,7 +223,7 @@ func ProcessDoor43MetadataForRepoRelease(repo *models.Repository, release *model
 	if err != nil && !models.IsErrDoor43MetadataNotExist(err) {
 		return err
 	}
-	
+
 	//metadata, err := ConvertGenericMapToRC020Manifest(manifest)
 	//if err != nil {
 	//	return err
