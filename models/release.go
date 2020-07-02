@@ -52,7 +52,7 @@ func (r *Release) loadAttributes(e Engine) error {
 		}
 	}
 	if r.Door43Metadata == nil {
-		r.Door43Metadata, err = GetDoor43Metadata(r.RepoID, r.ID)
+		r.Door43Metadata, err = GetDoor43MetadataByRepoIDAndReleaseID(r.RepoID, r.ID)
 		if err != nil && !IsErrDoor43MetadataNotExist(err) {
 			return err
 		}

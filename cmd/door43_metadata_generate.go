@@ -17,7 +17,7 @@ import (
 
 // CmdDoor43MetadataGenerate represents the available door43-metadata-generate sub-command.
 var CmdDoor43MetadataGenerate = cli.Command{
-	Name:        "door43-metadata-generate",
+	Name:        "generate-door43-metadata",
 	Usage:       "Generate Door43 Metadata",
 	Description: "This is a command for generating door43 metadata, making sure all valid repos have metadata in the door43_metadata table.",
 	Action:      runDoor43MetadataGenerate,

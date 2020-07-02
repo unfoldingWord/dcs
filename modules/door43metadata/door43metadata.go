@@ -12,8 +12,10 @@ import (
 
 	"code.gitea.io/gitea/models"
 	"code.gitea.io/gitea/modules/git"
+	"code.gitea.io/gitea/modules/structs"
 
 	"github.com/ghodss/yaml"
+	"github.com/mitchellh/mapstructure"
 	"github.com/unknwon/com"
 	"github.com/xeipuuv/gojsonschema"
 	"xorm.io/xorm"
@@ -63,7 +65,7 @@ func GenerateDoor43Metadata(x *xorm.Engine) error {
 				continue
 			}
 		}
-		if err = ProcessDoor43MetadataForRepoRelease(repo, release); err == nil {
+		if err = ProcessDoor43MetadataForRepoRelease(repo, release); err != nil {
 			continue
 		}
 	}
@@ -86,7 +88,7 @@ func GetRC020Schema() ([]byte, error) {
 }
 
 // ValidateBlobByRC020Schema Validates a blob by the RC v0.2.0 schema and returns the result
-func ValidateBlobByRC020Schema(manifest map[string]interface{}) (*gojsonschema.Result, error) {
+func ValidateBlobByRC020Schema(manifest *map[string]interface{}) (*gojsonschema.Result, error) {
 	schema, err := GetRC020Schema()
 	if err != nil {
 		return nil, err
@@ -98,7 +100,7 @@ func ValidateBlobByRC020Schema(manifest map[string]interface{}) (*gojsonschema.R
 }
 
 // ReadManifestFromBlob reads a yaml file from a blob and unmarshals it
-func ReadManifestFromBlob(blob *git.Blob) (map[string]interface{}, error) {
+func ReadManifestFromBlob(blob *git.Blob) (*map[string]interface{}, error) {
 	dataRc, err := blob.DataAsync()
 	if err != nil {
 		fmt.Printf("DataAsync Error: %v\n", err)
@@ -108,12 +110,62 @@ func ReadManifestFromBlob(blob *git.Blob) (map[string]interface{}, error) {
 	content, _ := ioutil.ReadAll(dataRc)
 	//fmt.Printf("content: %s", content)
 
-	var manifest map[string]interface{}
+	var manifest *map[string]interface{}
 	if err := yaml.Unmarshal(content, &manifest); err != nil {
 		fmt.Printf("yaml.Unmarshal Error: %v", err)
 		return nil, err
 	}
 	return manifest, nil
+}
+
+// ConvertGenericMapToRC020Manifest converts a generic map to a RC020Manifest object
+func ConvertGenericMapToRC020Manifest(manifest *map[string]interface{}) (*structs.RC020Manifest, error) {
+	var rc020manifest structs.RC020Manifest
+	err := mapstructure.Decode(*manifest, &rc020manifest)
+
+	type Checking struct {
+		CheckingLevel string `mapstructure:"checking_level"`
+	}
+	type Language struct {
+		Identifier string
+		LangDirection string `mapstructure:"lang_direction"`
+	}
+	type DublinCore struct {
+		Subject string
+		Language Language
+		TestThis string `mapstructure:"test_this"`
+	}
+	type Project struct {
+		Identifier string
+	}
+	type Person struct {
+		Checking
+		DublinCore  `mapstructure:"dublin_core"`
+		Projects []Project
+	}
+
+	book1 := map[string]interface{}{"identifier": "gen"}
+	book2 := map[string]interface{}{"identifier": "exo"}
+	input := map[string]interface{}{
+		"dublin_core": map[string]interface{}{
+			"subject": "test", 
+			"language": map[string]interface{}{
+				"identifier": "en", 
+				"lang_direction": "ltr",
+			}, 
+			"test_this": "ok",
+		},
+		"checking": map[string]interface{}{"checking_level": "1"},
+		"projects": []map[string]interface{}{book1, book2},
+	}
+
+	var result Person
+	err = mapstructure.Decode(input, &result)
+	if err != nil {
+		panic(err)
+	}
+
+	return &rc020manifest, err
 }
 
 // ProcessDoor43MetadataForRepoRelease handles the metadata for a given repo by release based on if the container is a valid RC or not
@@ -148,9 +200,8 @@ func ProcessDoor43MetadataForRepoRelease(repo *models.Repository, release *model
 	}
 
 	blob, err := commit.GetBlobByPath("manifest.yaml")
-	if err != nil {
-		fmt.Printf("GetTreeEntryByPath Error: %v\n", err)
-		return err
+	if blob == nil {
+		return nil
 	}
 
 	manifest, err := ReadManifestFromBlob(blob)
@@ -168,10 +219,15 @@ func ProcessDoor43MetadataForRepoRelease(repo *models.Repository, release *model
 		releaseID = release.ID
 	}
 
-	dm, err := models.GetDoor43Metadata(repo.ID, releaseID)
+	dm, err := models.GetDoor43MetadataByRepoIDAndReleaseID(repo.ID, releaseID)
 	if err != nil && !models.IsErrDoor43MetadataNotExist(err) {
 		return err
 	}
+	
+	//metadata, err := ConvertGenericMapToRC020Manifest(manifest)
+	//if err != nil {
+	//	return err
+	//}
 
 	if result.Valid() {
 		fmt.Printf("The document is valid\n")

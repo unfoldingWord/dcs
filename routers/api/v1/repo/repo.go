@@ -118,6 +118,23 @@ func Search(ctx *context.APIContext) {
 	//   in: query
 	//   description: page size of results, maximum page size is 50
 	//   type: integer
+	// - name: subject
+	//   in: query
+	//   description: resource subject
+	//   type: string
+	// - name: lang
+	//   in: query
+	//   description: language code of the repo. Can specify lang=<lang> for multiple langauges
+	//   type: string
+	// - name: book
+	//   in: query
+	//   description: book (project id) that exist in a resource. If the resource contains the
+	//                the book, its repository will be included in the results
+	//   type: string
+	// - name: checking_level
+	//   in: query
+	//   description: Checking level of the resource: 1, 2 or 3
+	//   type: string
 	// responses:
 	//   "200":
 	//     "$ref": "#/responses/SearchResults"
@@ -136,6 +153,11 @@ func Search(ctx *context.APIContext) {
 		Template:           util.OptionalBoolNone,
 		StarredByID:        ctx.QueryInt64("starredBy"),
 		IncludeDescription: ctx.QueryBool("includeDesc"),
+		Subject: ctx.Query("subject"),
+		Books: ctx.QueryStrings("book"),
+		Languages: ctx.QueryStrings("lang"),
+		CheckingLevel: ctx.Query("checking_level"),
+		IncludeAllMetadata: true,
 	}
 
 	if ctx.Query("template") != "" {
