@@ -1822,6 +1822,30 @@
             "description": "page size of results, maximum page size is 50",
             "name": "limit",
             "in": "query"
+          },
+          {
+            "type": "string",
+            "description": "resource subject",
+            "name": "subject",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "description": "language code of the repo. Can specify lang=\u003clang\u003e for multiple langauges",
+            "name": "lang",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "description": "book (project id) that exist in a resource. If the resource contains the the book, its repository will be included in the results",
+            "name": "book",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "description": "Checking level of the resource can be 1, 2 or 3",
+            "name": "checking_level",
+            "in": "query"
           }
         ],
         "responses": {
@@ -10566,6 +10590,16 @@
       },
       "x-go-package": "code.gitea.io/gitea/modules/structs"
     },
+    "Catalog": {
+      "description": "Catalog represents a repository release",
+      "type": "object",
+      "properties": {
+        "release": {
+          "$ref": "#/definitions/Release"
+        }
+      },
+      "x-go-package": "code.gitea.io/gitea/modules/structs"
+    },
     "Comment": {
       "description": "Comment represents a comment on a commit or issue",
       "type": "object",
@@ -13785,6 +13819,20 @@
           "type": "string",
           "x-go-name": "AvatarURL"
         },
+        "books": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "x-go-name": "Books"
+        },
+        "catalog": {
+          "$ref": "#/definitions/Catalog"
+        },
+        "checking_level": {
+          "type": "string",
+          "x-go-name": "CheckingLevel"
+        },
         "clone_url": {
           "type": "string",
           "x-go-name": "CloneURL"
@@ -13853,6 +13901,11 @@
         "internal_tracker": {
           "$ref": "#/definitions/InternalTracker"
         },
+        "language": {
+          "description": "DCS Customizations */",
+          "type": "string",
+          "x-go-name": "Language"
+        },
         "mirror": {
           "type": "boolean",
           "x-go-name": "Mirror"
@@ -13907,9 +13960,17 @@
           "format": "int64",
           "x-go-name": "Stars"
         },
+        "subject": {
+          "type": "string",
+          "x-go-name": "Subject"
+        },
         "template": {
           "type": "boolean",
           "x-go-name": "Template"
+        },
+        "title": {
+          "type": "string",
+          "x-go-name": "Title"
         },
         "updated_at": {
           "type": "string",
