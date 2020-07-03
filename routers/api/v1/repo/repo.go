@@ -133,7 +133,7 @@ func Search(ctx *context.APIContext) {
 	//   type: string
 	// - name: checking_level
 	//   in: query
-	//   description: Checking level of the resource: 1, 2 or 3
+	//   description: Checking level of the resource can be 1, 2 or 3
 	//   type: string
 	// responses:
 	//   "200":
