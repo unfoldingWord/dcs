@@ -357,7 +357,7 @@ func (repo *Repository) innerAPIFormat(e Engine, mode AccessMode, isParent bool)
 
 	/* DCS Customizations */
 	var catalog *api.Catalog
-	latestReleaseMetadata, err := GetLatestCatalogMetadataByRepoID(repo.ID, false)
+	latestReleaseMetadata, err := getLatestCatalogMetadataByRepoID(e, repo.ID, false)
 	if err != nil {
 		log.Error("APIFormat: %v", err)
 	} else if latestReleaseMetadata != nil {
@@ -366,12 +366,12 @@ func (repo *Repository) innerAPIFormat(e Engine, mode AccessMode, isParent bool)
 		}
 	}
 
-	metadata, err := repo.GetDefaultBranchMetadata()
+	metadata, err := getDoor43MetadataByRepoIDAndReleaseID(e, repo.ID, 0)
 	if err != nil && !IsErrDoor43MetadataNotExist(err) {
 		log.Error("APIFormat: %v", err)
 	}
 	if metadata == nil {
-		metadata, err = repo.GetLatestPreProdCatalogMetadata()
+		metadata, err = repo.getLatestPreProdCatalogMetadata(e)
 		if err != nil {
 			log.Error("APIFormat: %v", err)
 		}
@@ -2373,6 +2373,10 @@ func (repo *Repository) GetTreePathLock(treePath string) (*LFSLock, error) {
 
 // GetLatestProdCatalogMetadata gets the latest Door43 Metadata that is in the prod catalog.
 func (repo *Repository) GetLatestProdCatalogMetadata() (*Door43Metadata, error) {
+	return repo.getLatestProdCatalogMetadata(x)
+}
+
+func (repo *Repository) getLatestProdCatalogMetadata(e Engine) (*Door43Metadata, error) {
 	dm, err := GetLatestCatalogMetadataByRepoID(repo.ID, false)
 	if err != nil && !IsErrDoor43MetadataNotExist(err) {
 		return nil, err
@@ -2382,7 +2386,11 @@ func (repo *Repository) GetLatestProdCatalogMetadata() (*Door43Metadata, error) 
 
 // GetLatestPreProdCatalogMetadata gets the latest Door43 Metadata that is in the pre-prod catalog.
 func (repo *Repository) GetLatestPreProdCatalogMetadata() (*Door43Metadata, error) {
-	dm, err := GetLatestCatalogMetadataByRepoID(repo.ID, true)
+	return repo.getLatestPreProdCatalogMetadata(x)
+}
+
+func (repo *Repository) getLatestPreProdCatalogMetadata(e Engine) (*Door43Metadata, error) {
+	dm, err := getLatestCatalogMetadataByRepoID(e, repo.ID, true)
 	if err != nil && !IsErrDoor43MetadataNotExist(err) {
 		return nil, err
 	}
