@@ -5,12 +5,11 @@
 package models
 
 import (
-	"fmt"
-	"sort"
-
 	"code.gitea.io/gitea/modules/setting"
 	"code.gitea.io/gitea/modules/structs"
 	"code.gitea.io/gitea/modules/timeutil"
+	"fmt"
+	"sort"
 
 	"xorm.io/builder"
 )
@@ -171,6 +170,10 @@ func GetDoor43MetadatasByRepoID(repoID int64, opts FindDoor43MetadatasOptions) (
 
 // GetLatestCatalogMetadataByRepoID returns the latest door43 metadata in the catalog by repoID, if CanBePrerelease, a prerelease entry can match
 func GetLatestCatalogMetadataByRepoID(repoID int64, CanBePrerelease bool) (*Door43Metadata, error) {
+	return getLatestCatalogMetadataByRepoID(x, repoID, CanBePrerelease)
+}
+
+func getLatestCatalogMetadataByRepoID(e Engine, repoID int64, CanBePrerelease bool) (*Door43Metadata, error) {
 	cond := builder.NewCond().
 		And(builder.Eq{"`door43_metadata`.repo_id": repoID}).
 		And(builder.Eq{"`release`.is_tag": 0}).
@@ -181,7 +184,7 @@ func GetLatestCatalogMetadataByRepoID(repoID int64, CanBePrerelease bool) (*Door
 	}
 
 	dm := new(Door43Metadata)
-	has, err := x.
+	has, err := e.
 		Join("INNER", "release", "`release`.id = `door43_metadata`.release_id").
 		Where(cond).
 		Desc("`release`.created_unix", "`release`.id").
@@ -192,7 +195,7 @@ func GetLatestCatalogMetadataByRepoID(repoID int64, CanBePrerelease bool) (*Door
 	} else if !has {
 		return nil, ErrDoor43MetadataNotExist{0, repoID, 0}
 	}
-	dm.LoadAttributes()
+	dm.loadAttributes(e)
 	return dm, nil
 }
 
@@ -222,8 +225,12 @@ func GetDoor43MetadataReleaseCountByRepoID(repoID int64, includePreproduction bo
 
 // GetDoor43MetadataByRepoIDAndReleaseID returns the metadata of a given release ID (0 = default branch).
 func GetDoor43MetadataByRepoIDAndReleaseID(repoID, releaseID int64) (*Door43Metadata, error) {
+	return getDoor43MetadataByRepoIDAndReleaseID(x, repoID, releaseID)
+}
+
+func getDoor43MetadataByRepoIDAndReleaseID(e Engine, repoID, releaseID int64) (*Door43Metadata, error) {
 	dm := &Door43Metadata{RepoID: repoID, ReleaseID: releaseID}
-	has, err := x.Get(dm)
+	has, err := e.Get(dm)
 	if err != nil {
 		return nil, err
 	}
