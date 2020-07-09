@@ -12,6 +12,7 @@ import (
 
 	"code.gitea.io/gitea/models"
 	"code.gitea.io/gitea/modules/git"
+	"code.gitea.io/gitea/modules/log"
 	"code.gitea.io/gitea/modules/structs"
 
 	"github.com/ghodss/yaml"
@@ -168,6 +169,38 @@ func ConvertGenericMapToRC020Manifest(manifest *map[string]interface{}) (*struct
 	return &rc020manifest, err
 }
 
+// ProcessDoor43MetadataForRepo handles the metadata for a given repo for all its releases
+func ProcessDoor43MetadataForRepo(repo *models.Repository) error {
+	if repo == nil {
+		return fmt.Errorf("no repository provided")
+	}
+
+	relIDs, err := repo.GetReleaseIDsNeedingDoor43Metadata()
+	if err != nil {
+		fmt.Printf("GetReleaseIDsNeedingDoor43Metadata Error: %v\n", err)
+		return err
+	}
+
+	for _, releaseID := range relIDs {
+		var release *models.Release
+		releaseRef := repo.DefaultBranch
+		if releaseID > 0 {
+			release, err = models.GetReleaseByID(releaseID)
+			if err != nil {
+				fmt.Printf("GetReleaseByID Error: %v\n", err)
+				continue
+			}
+			releaseRef = release.TagName
+		}
+		if err = ProcessDoor43MetadataForRepoRelease(repo, release); err != nil {
+			log.Warn("Error processing metadata for repo %s (%d), %s (%d): %v\n", repo.Name, repo.ID, releaseRef, releaseID, err)
+		} else {
+			log.Info("Processed Metadata for repo %s (%d), %s (%d)\n", repo.Name, repo.ID, releaseRef, releaseID)
+		}
+	}
+	return nil
+}
+
 // ProcessDoor43MetadataForRepoRelease handles the metadata for a given repo by release based on if the container is a valid RC or not
 func ProcessDoor43MetadataForRepoRelease(repo *models.Repository, release *models.Release) error {
 	if repo == nil {
@@ -234,7 +267,9 @@ func ProcessDoor43MetadataForRepoRelease(repo *models.Repository, release *model
 		if dm == nil {
 			dm = &models.Door43Metadata{
 				RepoID:          repo.ID,
+				Repo: repo,
 				ReleaseID:       releaseID,
+				Release: release,
 				MetadataVersion: "rc0.2",
 				Metadata:        manifest,
 			}
@@ -258,7 +293,7 @@ func ProcessDoor43MetadataForRepoRelease(repo *models.Repository, release *model
 		fmt.Printf("- %s = %s\n", desc.Field(), desc.Value())
 	}
 	if dm != nil {
-		return models.DeleteDoor43MetadataByID(dm.ID)
+		return models.DeleteDoor43Metadata(dm)
 	}
 	return nil
 }

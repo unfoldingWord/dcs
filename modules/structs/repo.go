@@ -88,14 +88,12 @@ type Repository struct {
 	AllowRebaseMerge          bool             `json:"allow_rebase_explicit"`
 	AllowSquash               bool             `json:"allow_squash_merge"`
 	AvatarURL                 string           `json:"avatar_url"`
-	/* DCS Customizations */
-	Language      string   `json:"language"`
-	Subject       string   `json:"subject"`
-	Books         []string `json:"books"`
-	Title         string   `json:"title"`
-	CheckingLevel string   `json:"checking_level"`
-	Catalog       *Catalog `json:"catalog"`
-	/* END DCS Customizations */
+	Language                  string           `json:"language"`
+	Subject                   string           `json:"subject"`
+	Books                     []string         `json:"books"`
+	Title                     string           `json:"title"`
+	CheckingLevel             string           `json:"checking_level"`
+	Catalog                   *Catalog         `json:"catalog"`
 }
 
 // CreateRepoOption options when creating repository
