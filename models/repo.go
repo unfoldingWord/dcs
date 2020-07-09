@@ -380,12 +380,12 @@ func (repo *Repository) innerAPIFormat(e Engine, mode AccessMode, isParent bool)
 	var language, title, subject, checkingLevel string
 	var books []string
 	if metadata != nil {
-		language = (*metadata.Metadata)["dublin_core"].(map[string]interface{})["language"].(map[string]string)["identifier"]
-		title = (*metadata.Metadata)["dublin_core"].(map[string]string)["title"]
-		subject = (*metadata.Metadata)["dublin_core"].(map[string]string)["subject"]
-		if len((*metadata.Metadata)["projects"].([]map[string]interface{})) > 0 {
-			for _, prod := range (*metadata.Metadata)["projects"].([]map[string]string) {
-				books = append(books, prod["identifier"])
+		language = (*metadata.Metadata)["dublin_core"].(map[string]interface{})["language"].(map[string]interface{})["identifier"].(string)
+		title = (*metadata.Metadata)["dublin_core"].(map[string]interface{})["title"].(string)
+		subject = (*metadata.Metadata)["dublin_core"].(map[string]interface{})["subject"].(string)
+		if len((*metadata.Metadata)["projects"].([]interface{})) > 0 {
+			for _, prod := range (*metadata.Metadata)["projects"].([]interface{}) {
+				books = append(books, prod.(map[string]interface{})["identifier"].(string))
 			}
 		}
 		checkingLevel = (*metadata.Metadata)["checking"].(map[string]interface{})["checking_level"].(string)
@@ -432,14 +432,12 @@ func (repo *Repository) innerAPIFormat(e Engine, mode AccessMode, isParent bool)
 		AllowRebaseMerge:          allowRebaseMerge,
 		AllowSquash:               allowSquash,
 		AvatarURL:                 repo.avatarLink(e),
-		/* DCS Customizations */
-		Language:      language,
-		Title:         title,
-		Subject:       subject,
-		Books:         books,
-		CheckingLevel: checkingLevel,
-		Catalog:       catalog,
-		/* END DCS Customizations */
+		Language:                  language,
+		Title:                     title,
+		Subject:                   subject,
+		Books:                     books,
+		CheckingLevel:             checkingLevel,
+		Catalog:                   catalog,
 	}
 }
 
@@ -2368,54 +2366,6 @@ func (repo *Repository) GetTreePathLock(treePath string) (*LFSLock, error) {
 	}
 	return nil, nil
 }
-
-/*** DCS Customizations ***/
-
-// GetLatestProdCatalogMetadata gets the latest Door43 Metadata that is in the prod catalog.
-func (repo *Repository) GetLatestProdCatalogMetadata() (*Door43Metadata, error) {
-	return repo.getLatestProdCatalogMetadata(x)
-}
-
-func (repo *Repository) getLatestProdCatalogMetadata(e Engine) (*Door43Metadata, error) {
-	dm, err := GetLatestCatalogMetadataByRepoID(repo.ID, false)
-	if err != nil && !IsErrDoor43MetadataNotExist(err) {
-		return nil, err
-	}
-	return dm, nil
-}
-
-// GetLatestPreProdCatalogMetadata gets the latest Door43 Metadata that is in the pre-prod catalog.
-func (repo *Repository) GetLatestPreProdCatalogMetadata() (*Door43Metadata, error) {
-	return repo.getLatestPreProdCatalogMetadata(x)
-}
-
-func (repo *Repository) getLatestPreProdCatalogMetadata(e Engine) (*Door43Metadata, error) {
-	dm, err := getLatestCatalogMetadataByRepoID(e, repo.ID, true)
-	if err != nil && !IsErrDoor43MetadataNotExist(err) {
-		return nil, err
-	}
-	if dm != nil && !dm.Release.IsPrerelease {
-		dm = nil
-	}
-	return dm, nil
-}
-
-// GetCatalogReleaseCount gets the number of all valid releases for a repo
-func (repo *Repository) GetCatalogReleaseCount() (int64, error) {
-	return GetDoor43MetadataReleaseCountByRepoID(repo.ID, true)
-}
-
-// GetProdCatalogReleaseCount gets the number of valid prod releases for a repo
-func (repo *Repository) GetProdCatalogReleaseCount() (int64, error) {
-	return GetDoor43MetadataReleaseCountByRepoID(repo.ID, false)
-}
-
-// GetDefaultBranchMetadata gets the default branch's Door43 Metadata.
-func (repo *Repository) GetDefaultBranchMetadata() (*Door43Metadata, error) {
-	return GetDoor43MetadataByRepoIDAndReleaseID(repo.ID, 0)
-}
-
-/*** END DCS Customizations ***/
 
 func updateRepositoryCols(e Engine, repo *Repository, cols ...string) error {
 	_, err := e.ID(repo.ID).Cols(cols...).Update(repo)

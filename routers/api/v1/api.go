@@ -5,7 +5,7 @@
 
 // Package v1 Gitea API.
 //
-// This documentation describes the Gitea API.
+// This documentation describes the DCS (Gitea) API.
 //
 //     Schemes: http, https
 //     BasePath: /api/v1

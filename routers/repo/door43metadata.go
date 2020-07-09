@@ -208,7 +208,11 @@ func EditDoor43MetadataPost(ctx *context.Context, form auth.EditDoor43MetadataFo
 
 // DeleteDoor43Metadata delete a door43 metadata
 func DeleteDoor43Metadata(ctx *context.Context) {
-	if err := models.DeleteDoor43MetadataByID(ctx.QueryInt64("id")); err != nil {
+	dm, err := models.GetDoor43MetadataByID(ctx.QueryInt64("id"))
+	if err != nil {
+		ctx.Flash.Error("GetDoor43MetadataByID: " + err.Error())
+	}
+	if err := models.DeleteDoor43Metadata(dm); err != nil {
 		ctx.Flash.Error("DeleteDoor43MetadataByID: " + err.Error())
 	} else {
 		ctx.Flash.Success(ctx.Tr("repo.metadata.deletion_success"))
