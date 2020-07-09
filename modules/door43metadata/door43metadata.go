@@ -267,9 +267,9 @@ func ProcessDoor43MetadataForRepoRelease(repo *models.Repository, release *model
 		if dm == nil {
 			dm = &models.Door43Metadata{
 				RepoID:          repo.ID,
-				Repo: repo,
+				Repo:            repo,
 				ReleaseID:       releaseID,
-				Release: release,
+				Release:         release,
 				MetadataVersion: "rc0.2",
 				Metadata:        manifest,
 			}

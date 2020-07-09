@@ -16,7 +16,7 @@ import (
 // UpdateDoor43Metadata generates door43_metadata table entries for valid repos/releases that don't have them
 func UpdateDoor43Metadata(ctx context.Context) error {
 	log.Trace("Doing: UpdateDoor43Metadata")
-	
+
 	repoIDs, _ := models.GetRepoIDsNeedingDoor43Metadata()
 
 	if err := models.Iterate(

@@ -314,11 +314,11 @@ func DeleteAllDoor43MetadatasByRepoID(repoID int64) (int64, error) {
 	return x.Delete(Door43Metadata{RepoID: repoID})
 }
 
-// Door43MetadatasIterate iterates all mirror repositories.
+// GetRepoIDsNeedingDoor43Metadata gets the IDs of all the repos that may have releases or default branch not in the door43_metadata table.
 func GetRepoIDsNeedingDoor43Metadata() ([]int64, error) {
 	sess := x.NewSession()
 	defer sess.Close()
-	
+
 	records, err := sess.Query("SELECT r.id FROM `repository` r " +
 		"JOIN `release` rel ON rel.repo_id = r.id " +
 		"LEFT JOIN `door43_metadata` dm ON r.id = dm.repo_id " +
@@ -339,7 +339,7 @@ func GetRepoIDsNeedingDoor43Metadata() ([]int64, error) {
 	for idx, record := range records {
 		repoIDs[idx] = com.StrTo(record["id"]).MustInt64()
 	}
-	
+
 	return repoIDs, nil
 }
 
@@ -348,16 +348,16 @@ func (r *Repository) GetReleaseIDsNeedingDoor43Metadata() ([]int64, error) {
 	sess := x.NewSession()
 	defer sess.Close()
 
-	records, err := sess.Query("SELECT rel.id as id FROM `repository` r " +
-		"JOIN `release` rel ON rel.repo_id = r.id " +
-		"LEFT JOIN `door43_metadata` dm ON r.id = dm.repo_id " +
-		"AND rel.id = dm.release_id " +
-		"WHERE dm.id IS NULL AND rel.is_tag = 0 AND r.id=? " +
-		"UNION " +
-		"SELECT 0 as id FROM `repository` r2 " +
-		"LEFT JOIN `door43_metadata` dm2 ON r2.id = dm2.repo_id " +
-		"AND dm2.release_id = 0 " +
-		"WHERE dm2.id IS NULL AND r2.id=? " +
+	records, err := sess.Query("SELECT rel.id as id FROM `repository` r "+
+		"JOIN `release` rel ON rel.repo_id = r.id "+
+		"LEFT JOIN `door43_metadata` dm ON r.id = dm.repo_id "+
+		"AND rel.id = dm.release_id "+
+		"WHERE dm.id IS NULL AND rel.is_tag = 0 AND r.id=? "+
+		"UNION "+
+		"SELECT 0 as id FROM `repository` r2 "+
+		"LEFT JOIN `door43_metadata` dm2 ON r2.id = dm2.repo_id "+
+		"AND dm2.release_id = 0 "+
+		"WHERE dm2.id IS NULL AND r2.id=? "+
 		"ORDER BY id ASC", r.ID, r.ID)
 	log.Trace(sess.LastSQL())
 	if err != nil {
@@ -374,12 +374,12 @@ func (r *Repository) GetReleaseIDsNeedingDoor43Metadata() ([]int64, error) {
 }
 
 // GetLatestProdCatalogMetadata gets the latest Door43 Metadata that is in the prod catalog.
-func (repo *Repository) GetLatestProdCatalogMetadata() (*Door43Metadata, error) {
-	return repo.getLatestProdCatalogMetadata(x)
+func (r *Repository) GetLatestProdCatalogMetadata() (*Door43Metadata, error) {
+	return r.getLatestProdCatalogMetadata(x)
 }
 
-func (repo *Repository) getLatestProdCatalogMetadata(e Engine) (*Door43Metadata, error) {
-	dm, err := GetLatestCatalogMetadataByRepoID(repo.ID, false)
+func (r *Repository) getLatestProdCatalogMetadata(e Engine) (*Door43Metadata, error) {
+	dm, err := GetLatestCatalogMetadataByRepoID(r.ID, false)
 	if err != nil && !IsErrDoor43MetadataNotExist(err) {
 		return nil, err
 	}
@@ -387,12 +387,12 @@ func (repo *Repository) getLatestProdCatalogMetadata(e Engine) (*Door43Metadata,
 }
 
 // GetLatestPreProdCatalogMetadata gets the latest Door43 Metadata that is in the pre-prod catalog.
-func (repo *Repository) GetLatestPreProdCatalogMetadata() (*Door43Metadata, error) {
-	return repo.getLatestPreProdCatalogMetadata(x)
+func (r *Repository) GetLatestPreProdCatalogMetadata() (*Door43Metadata, error) {
+	return r.getLatestPreProdCatalogMetadata(x)
 }
 
-func (repo *Repository) getLatestPreProdCatalogMetadata(e Engine) (*Door43Metadata, error) {
-	dm, err := getLatestCatalogMetadataByRepoID(e, repo.ID, true)
+func (r *Repository) getLatestPreProdCatalogMetadata(e Engine) (*Door43Metadata, error) {
+	dm, err := getLatestCatalogMetadataByRepoID(e, r.ID, true)
 	if err != nil && !IsErrDoor43MetadataNotExist(err) {
 		return nil, err
 	}
@@ -403,18 +403,18 @@ func (repo *Repository) getLatestPreProdCatalogMetadata(e Engine) (*Door43Metada
 }
 
 // GetCatalogReleaseCount gets the number of all valid releases for a repo
-func (repo *Repository) GetCatalogReleaseCount() (int64, error) {
-	return GetDoor43MetadataReleaseCountByRepoID(repo.ID, true)
+func (r *Repository) GetCatalogReleaseCount() (int64, error) {
+	return GetDoor43MetadataReleaseCountByRepoID(r.ID, true)
 }
 
 // GetProdCatalogReleaseCount gets the number of valid prod releases for a repo
-func (repo *Repository) GetProdCatalogReleaseCount() (int64, error) {
-	return GetDoor43MetadataReleaseCountByRepoID(repo.ID, false)
+func (r *Repository) GetProdCatalogReleaseCount() (int64, error) {
+	return GetDoor43MetadataReleaseCountByRepoID(r.ID, false)
 }
 
 // GetDefaultBranchMetadata gets the default branch's Door43 Metadata.
-func (repo *Repository) GetDefaultBranchMetadata() (*Door43Metadata, error) {
-	return GetDoor43MetadataByRepoIDAndReleaseID(repo.ID, 0)
+func (r *Repository) GetDefaultBranchMetadata() (*Door43Metadata, error) {
+	return GetDoor43MetadataByRepoIDAndReleaseID(r.ID, 0)
 }
 
 /*** Error Structs & Functions ***/

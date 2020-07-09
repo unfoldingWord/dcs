@@ -7,6 +7,7 @@ package base
 import "code.gitea.io/gitea/models"
 
 /*** DCS Customizations ***/
+
 // NotifyNewDoor43Metadata places a place holder function
 func (*NullNotifier) NotifyNewDoor43Metadata(doer *models.User, repo *models.Repository, refType, refFullName string) {
 }

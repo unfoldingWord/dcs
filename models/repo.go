@@ -431,12 +431,12 @@ func (repo *Repository) innerAPIFormat(e Engine, mode AccessMode, isParent bool)
 		AllowRebaseMerge:          allowRebaseMerge,
 		AllowSquash:               allowSquash,
 		AvatarURL:                 repo.avatarLink(e),
-		Language:      language,
-		Title:         title,
-		Subject:       subject,
-		Books:         books,
-		CheckingLevel: checkingLevel,
-		Catalog:       catalog,
+		Language:                  language,
+		Title:                     title,
+		Subject:                   subject,
+		Books:                     books,
+		CheckingLevel:             checkingLevel,
+		Catalog:                   catalog,
 	}
 }
 
