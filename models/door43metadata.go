@@ -85,7 +85,7 @@ func InsertDoor43Metadata(dm *Door43Metadata) error {
 	id, err := x.Insert(dm)
 	if id > 0 && dm.ReleaseID > 0 {
 		dm.LoadAttributes()
-		if err := CreateRepositoryNotice("Door43 Metadata created for repo: %s, ref: %s\n", dm.Repo.Name, dm.RepoID, dm.Release.TagName, dm.ReleaseID); err != nil {
+		if err := CreateRepositoryNotice("Door43 Metadata created for repo: %s, ref: %s\n", dm.Repo.Name, dm.Release.TagName); err != nil {
 			log.Error("CreateRepositoryNotice: %v", err)
 		}
 	}
@@ -107,7 +107,7 @@ func updateDoor43MetadataCols(e Engine, dm *Door43Metadata, cols ...string) erro
 	id, err := e.ID(dm.ID).Cols(cols...).Update(dm)
 	if id > 0 && dm.ReleaseID > 0 {
 		dm.LoadAttributes()
-		if err := CreateRepositoryNotice("Door43 Metadata updated for repo: %s, ref: %s\n", dm.Repo.Name, dm.RepoID, dm.Release.TagName, dm.ReleaseID); err != nil {
+		if err := CreateRepositoryNotice("Door43 Metadata updated for repo: %s, ref: %s\n", dm.Repo.Name, dm.Release.TagName); err != nil {
 			log.Error("CreateRepositoryNotice: %v", err)
 		}
 	}
@@ -292,7 +292,7 @@ func DeleteDoor43Metadata(dm *Door43Metadata) error {
 	id, err := x.Delete(dm)
 	if id > 0 && dm.ReleaseID > 0 {
 		dm.LoadAttributes()
-		if err := CreateRepositoryNotice("Door43 Metadata deleted for repo: %s, ref: %s\n", dm.Repo.Name, dm.RepoID, dm.Release.TagName, dm.ReleaseID); err != nil {
+		if err := CreateRepositoryNotice("Door43 Metadata deleted for repo: %s, ref: %s\n", dm.Repo.Name, dm.Release.TagName); err != nil {
 			log.Error("CreateRepositoryNotice: %v", err)
 		}
 	}
