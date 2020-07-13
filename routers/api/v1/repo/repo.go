@@ -124,7 +124,7 @@ func Search(ctx *context.APIContext) {
 	//   type: string
 	// - name: lang
 	//   in: query
-	//   description: language code of the repo. Can specify lang=<lang> for multiple langauges
+	//   description: If the repo is a resource of the given language(s), the repo will be in the results. Multiple lang's are ORed.
 	//   type: string
 	// - name: book
 	//   in: query
@@ -156,9 +156,11 @@ func Search(ctx *context.APIContext) {
 		IncludeDescription: ctx.QueryBool("includeDesc"),
 		Subject:            ctx.Query("subject"),
 		Books:              ctx.QueryStrings("book"),
-		Languages:          ctx.QueryStrings("lang"),
 		CheckingLevel:      ctx.Query("checking_level"),
 		IncludeAllMetadata: true,
+		/*** DCS Customizations ***/
+		Languages: ctx.QueryStrings("lang"),
+		/*** END DCS Customizations ***/
 	}
 
 	if ctx.Query("template") != "" {

@@ -19,16 +19,15 @@ import (
 
 // Door43Metadata represents the metadata of repository's release or default branch (ReleaseID = 0).
 type Door43Metadata struct {
-	ID              int64       `xorm:"pk autoincr"`
-	RepoID          int64       `xorm:"INDEX UNIQUE(n) NOT NULL"`
-	Repo            *Repository `xorm:"-"`
-	ReleaseID       int64       `xorm:"INDEX UNIQUE(n)"`
-	Release         *Release    `xorm:"-"`
-	MetadataVersion string      `xorm:"NOT NULL"`
-	//Metadata        *structs.RC020Manifest `xorm:"JSON NOT NULL"`
-	Metadata    *map[string]interface{} `xorm:"JSON NOT NULL"`
-	CreatedUnix timeutil.TimeStamp      `xorm:"INDEX created NOT NULL"`
-	UpdatedUnix timeutil.TimeStamp      `xorm:"INDEX updated"`
+	ID              int64                   `xorm:"pk autoincr"`
+	RepoID          int64                   `xorm:"INDEX UNIQUE(n) NOT NULL"`
+	Repo            *Repository             `xorm:"-"`
+	ReleaseID       int64                   `xorm:"INDEX UNIQUE(n)"`
+	Release         *Release                `xorm:"-"`
+	MetadataVersion string                  `xorm:"NOT NULL"`
+	Metadata        *map[string]interface{} `xorm:"JSON NOT NULL"`
+	CreatedUnix     timeutil.TimeStamp      `xorm:"INDEX created NOT NULL"`
+	UpdatedUnix     timeutil.TimeStamp      `xorm:"INDEX updated"`
 }
 
 func (dm *Door43Metadata) loadAttributes(e Engine) error {
@@ -414,7 +413,11 @@ func (r *Repository) GetProdCatalogReleaseCount() (int64, error) {
 
 // GetDefaultBranchMetadata gets the default branch's Door43 Metadata.
 func (r *Repository) GetDefaultBranchMetadata() (*Door43Metadata, error) {
-	return GetDoor43MetadataByRepoIDAndReleaseID(r.ID, 0)
+	dm, err := GetDoor43MetadataByRepoIDAndReleaseID(r.ID, 0)
+	if err != nil && !IsErrDoor43MetadataNotExist(err) {
+		return nil, err
+	}
+	return dm, nil
 }
 
 /*** Error Structs & Functions ***/

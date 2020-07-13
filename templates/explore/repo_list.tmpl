@@ -38,14 +38,21 @@
 					<span class="text grey">{{svg "octicon-git-branch" 16}} {{.NumForks}}</span>
 				</div>
 			</div>
+			{{ $dm := .GetDefaultBranchMetadata }}
 			<div class="description">
 				{{if .DescriptionHTML}}<p>{{.DescriptionHTML}}</p>{{end}}
+				{{ if $dm }}
+					<p>{{$dm.Metadata.dublin_core.subject}}</p>
+				{{ end }}
 				{{if .Topics }}
 					<div class="ui tags">
 					{{range .Topics}}
 						{{if ne . "" }}<a href="{{AppSubUrl}}/explore/repos?q={{.}}&topic=1"><div class="ui small label topic">{{.}}</div></a>{{end}}
 					{{end}}
 					</div>
+				{{end}}
+				{{ if $dm }}
+					<p class="time">{{$.i18n.Tr "explore.language"}}: {{$dm.Metadata.dublin_core.language.title}} ({{$dm.Metadata.dublin_core.language.identifier}})</p>
 				{{end}}
 				<p class="time">{{$.i18n.Tr "org.repo_updated"}} {{TimeSinceUnix .UpdatedUnix $.i18n.Lang}}</p>
 			</div>

@@ -311,6 +311,7 @@ func ToOrganization(org *models.User) *api.Organization {
 		Location:                  org.Location,
 		Visibility:                org.Visibility.String(),
 		RepoAdminChangeTeamAccess: org.RepoAdminChangeTeamAccess,
+		RepoLanguages:             org.GetRepoLanguages(),
 	}
 }
 
@@ -335,6 +336,9 @@ func ToUser(user *models.User, signed, authed bool) *api.User {
 		AvatarURL: user.AvatarLink(),
 		FullName:  markup.Sanitize(user.FullName),
 		Created:   user.CreatedUnix.AsTime(),
+		/*** DCS Customizations ***/
+		RepoLanguages: user.GetRepoLanguages(),
+		/*** END DCS Customizations ***/
 	}
 	// hide primary email if API caller is anonymous or user keep email private
 	if signed && (!user.KeepEmailPrivate || authed) {

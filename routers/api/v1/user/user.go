@@ -35,6 +35,10 @@ func Search(ctx *context.APIContext) {
 	//   description: ID of the user to search for
 	//   type: integer
 	//   format: int64
+	// - name: lang
+	//   in: query
+	//   description: If the user has one or more repos with the given language(s), the org will be in the results. Multiple lang's are ORed.
+	//   type: string
 	// - name: page
 	//   in: query
 	//   description: page number of results to return (1-based)
@@ -61,6 +65,9 @@ func Search(ctx *context.APIContext) {
 		UID:         com.StrTo(ctx.Query("uid")).MustInt64(),
 		Type:        models.UserTypeIndividual,
 		ListOptions: utils.GetListOptions(ctx),
+		/*** DCS Customizations ***/
+		RepoLanguages: ctx.QueryStrings("lang"),
+		/*** END DCS Customizations ***/
 	}
 
 	users, _, err := models.SearchUsers(opts)
