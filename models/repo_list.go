@@ -177,9 +177,9 @@ type SearchRepoOptions struct {
 	HasMilestones      util.OptionalBool
 	Subject            string
 	Books              []string
-	Languages          []string
 	CheckingLevel      string
 	IncludeAllMetadata bool
+	Languages          []string
 }
 
 //SearchOrderBy is used to sort the result
@@ -409,7 +409,7 @@ func SearchRepositoryByCondition(opts *SearchRepoOptions, cond builder.Cond, loa
 	defer sess.Close()
 
 	count, err := sess.
-		Join("INNER", "door43_metadata", "`door43_metadata`.repo_id = `repository`.id AND `door43_metadata`.release_id = 0").
+		Join("LEFT", "door43_metadata", "`door43_metadata`.repo_id = `repository`.id AND `door43_metadata`.release_id = 0").
 		Where(cond).
 		Count(new(Repository))
 
@@ -418,7 +418,8 @@ func SearchRepositoryByCondition(opts *SearchRepoOptions, cond builder.Cond, loa
 	}
 
 	repos := make(RepositoryList, 0, opts.PageSize)
-	sess.Where(cond).OrderBy(opts.OrderBy.String())
+	sess.Where(cond).OrderBy(opts.OrderBy.String()).
+		Join("LEFT", "door43_metadata", "`door43_metadata`.repo_id = `repository`.id AND `door43_metadata`.release_id = 0")
 	if opts.PageSize > 0 {
 		sess.Limit(opts.PageSize, (opts.Page-1)*opts.PageSize)
 	}

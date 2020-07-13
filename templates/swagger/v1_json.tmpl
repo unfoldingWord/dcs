@@ -35,6 +35,12 @@
         "operationId": "adminGetAllOrgs",
         "parameters": [
           {
+            "type": "string",
+            "description": "If the org has one or more repos with the given language(s), the org will be in the results. Multiple lang's are ORed.",
+            "name": "lang",
+            "in": "query"
+          },
+          {
             "type": "integer",
             "description": "page number of results to return (1-based)",
             "name": "page",
@@ -68,6 +74,12 @@
         "summary": "List all users",
         "operationId": "adminGetAllUsers",
         "parameters": [
+          {
+            "type": "string",
+            "description": "If the user has one or more repos with the given language(s), the org will be in the results. Multiple lang's are ORed.",
+            "name": "lang",
+            "in": "query"
+          },
           {
             "type": "integer",
             "description": "page number of results to return (1-based)",
@@ -656,6 +668,12 @@
         "summary": "Get list of organizations",
         "operationId": "orgGetAll",
         "parameters": [
+          {
+            "type": "string",
+            "description": "If the org has one or more repos with the given language(s), the org will be in the results. Multiple lang's are ORed.",
+            "name": "lang",
+            "in": "query"
+          },
           {
             "type": "integer",
             "description": "page number of results to return (1-based)",
@@ -1831,7 +1849,7 @@
           },
           {
             "type": "string",
-            "description": "language code of the repo. Can specify lang=\u003clang\u003e for multiple langauges",
+            "description": "If the repo is a resource of the given language(s), the repo will be in the results. Multiple lang's are ORed.",
             "name": "lang",
             "in": "query"
           },
@@ -9718,6 +9736,12 @@
             "in": "query"
           },
           {
+            "type": "string",
+            "description": "If the user has one or more repos with the given language(s), the org will be in the results. Multiple lang's are ORed.",
+            "name": "lang",
+            "in": "query"
+          },
+          {
             "type": "integer",
             "description": "page number of results to return (1-based)",
             "name": "page",
@@ -13209,6 +13233,13 @@
           "type": "boolean",
           "x-go-name": "RepoAdminChangeTeamAccess"
         },
+        "repo_languages": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "x-go-name": "RepoLanguages"
+        },
         "username": {
           "type": "string",
           "x-go-name": "UserName"
@@ -14461,6 +14492,14 @@
           "description": "the user's username",
           "type": "string",
           "x-go-name": "UserName"
+        },
+        "repo_languages": {
+          "description": "Repo languages",
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "x-go-name": "RepoLanguages"
         }
       },
       "x-go-package": "code.gitea.io/gitea/modules/structs"
