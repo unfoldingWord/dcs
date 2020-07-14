@@ -5,6 +5,14 @@
 		{{template "base/alert" .}}
 		<div class="ui repo-description">
 			<div id="repo-desc">
+				<!-- DCS Customizations -->
+				{{$dm := .Repository.GetDefaultBranchMetadata}}
+        		{{ if $dm }}
+		    	<div id="repo-metadata" style="margin-bottom: 10px">
+    		    	{{$dm.Metadata.dublin_core.subject}}: {{$dm.Metadata.dublin_core.language.title}} ({{$dm.Metadata.dublin_core.language.identifier}})
+        		</div>
+        		{{ end }}
+				<!-- END DCS Customizations -->
 				{{if .Repository.DescriptionHTML}}<span class="description">{{.Repository.DescriptionHTML}}</span>{{else if .IsRepositoryAdmin}}<span class="no-description text-italic">{{.i18n.Tr "repo.no_desc"}}</span>{{end}}
 				<a class="link" href="{{.Repository.Website}}">{{.Repository.Website}}</a>
 			</div>

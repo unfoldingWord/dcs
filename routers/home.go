@@ -77,6 +77,7 @@ type RepoSearchOptions struct {
 	Restricted bool
 	PageSize   int
 	TplName    base.TplName
+	Languages  []string
 }
 
 var (
@@ -150,6 +151,7 @@ func RenderRepoSearch(ctx *context.Context, opts *RepoSearchOptions) {
 		AllLimited:         true,
 		TopicOnly:          topicOnly,
 		IncludeDescription: setting.UI.SearchRepoDescription,
+		Languages:          opts.Languages,
 	})
 	if err != nil {
 		ctx.ServerError("SearchRepository", err)
@@ -185,6 +187,7 @@ func ExploreRepos(ctx *context.Context) {
 		OwnerID:  ownerID,
 		Private:  ctx.User != nil,
 		TplName:  tplExploreRepos,
+		Languages: ctx.QueryStrings("lang"),
 	})
 }
 
