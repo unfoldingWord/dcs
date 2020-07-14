@@ -8,8 +8,10 @@
 				<!-- DCS Customizations -->
 				{{$dm := .Repository.GetDefaultBranchMetadata}}
         		{{ if $dm }}
-		    	<div id="repo-metadata" style="margin-bottom: 10px">
-    		    	{{$dm.Metadata.dublin_core.subject}}: {{$dm.Metadata.dublin_core.language.title}} ({{$dm.Metadata.dublin_core.language.identifier}})
+		    	<div id="repo-metadata" style="margin-bottom:10px">
+    		    	<div class="text">{{$dm.Metadata.dublin_core.title}}</div>
+    		    	<div class="text italic">{{$dm.Metadata.dublin_core.subject}}</div>
+    		    	<div class="text italic small">{{$dm.Metadata.dublin_core.language.title}} ({{$dm.Metadata.dublin_core.language.identifier}})</div>
         		</div>
         		{{ end }}
 				<!-- END DCS Customizations -->

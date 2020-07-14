@@ -99,6 +99,19 @@ func Search(ctx *context.APIContext) {
 	//   in: query
 	//   description: if `uid` is given, search only for repos that the user owns
 	//   type: boolean
+	// - name: lang
+	//   in: query
+	//   description: If the repo is a resource of the given language(s), the repo will be in the results. Multiple lang's are ORed.
+	//   type: string
+	// - name: book
+	//   in: query
+	//   description: book (project id) that exist in a resource. If the resource contains the
+	//                the book, its repository will be included in the results
+	//   type: string
+	// - name: checking_level
+	//   in: query
+	//   description: Checking level of the resource can be 1, 2 or 3
+	//   type: string
 	// - name: sort
 	//   in: query
 	//   description: sort repos by attribute. Supported values are
@@ -121,19 +134,6 @@ func Search(ctx *context.APIContext) {
 	// - name: subject
 	//   in: query
 	//   description: resource subject
-	//   type: string
-	// - name: lang
-	//   in: query
-	//   description: If the repo is a resource of the given language(s), the repo will be in the results. Multiple lang's are ORed.
-	//   type: string
-	// - name: book
-	//   in: query
-	//   description: book (project id) that exist in a resource. If the resource contains the
-	//                the book, its repository will be included in the results
-	//   type: string
-	// - name: checking_level
-	//   in: query
-	//   description: Checking level of the resource can be 1, 2 or 3
 	//   type: string
 	// responses:
 	//   "200":

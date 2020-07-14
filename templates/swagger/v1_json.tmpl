@@ -1858,6 +1858,24 @@
           },
           {
             "type": "string",
+            "description": "If the repo is a resource of the given language(s), the repo will be in the results. Multiple lang's are ORed.",
+            "name": "lang",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "description": "book (project id) that exist in a resource. If the resource contains the the book, its repository will be included in the results",
+            "name": "book",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "description": "Checking level of the resource can be 1, 2 or 3",
+            "name": "checking_level",
+            "in": "query"
+          },
+          {
+            "type": "string",
             "description": "sort repos by attribute. Supported values are \"alpha\", \"created\", \"updated\", \"size\", and \"id\". Default is \"alpha\"",
             "name": "sort",
             "in": "query"
@@ -1884,24 +1902,6 @@
             "type": "string",
             "description": "resource subject",
             "name": "subject",
-            "in": "query"
-          },
-          {
-            "type": "string",
-            "description": "If the repo is a resource of the given language(s), the repo will be in the results. Multiple lang's are ORed.",
-            "name": "lang",
-            "in": "query"
-          },
-          {
-            "type": "string",
-            "description": "book (project id) that exist in a resource. If the resource contains the the book, its repository will be included in the results",
-            "name": "book",
-            "in": "query"
-          },
-          {
-            "type": "string",
-            "description": "Checking level of the resource can be 1, 2 or 3",
-            "name": "checking_level",
             "in": "query"
           }
         ],
