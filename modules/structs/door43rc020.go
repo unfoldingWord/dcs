@@ -164,7 +164,7 @@ func (j *RC020ProjectsElem) UnmarshalJSON(b []byte) error {
 		return err
 	}
 	if v, ok := raw["categories"]; !ok || v == nil {
-		plain.Categories = []interface{}{}
+		plain.Categories = []string{}
 
 	}
 	if v, ok := raw["identifier"]; !ok || v == nil {
@@ -612,7 +612,7 @@ const (
 // RC020ProjectsElem ProjectsElem
 type RC020ProjectsElem struct {
 	// Categories corresponds to the JSON schema field "categories".
-	Categories interface{} `json:"categories,omitempty" mapstructure:"categories,omitempty"`
+	Categories []string `json:"categories,omitempty" mapstructure:"categories,omitempty"`
 
 	// Identifier corresponds to the JSON schema field "identifier".
 	Identifier ProjectIdentifier `json:"identifier" mapstructure:"identifier"`
@@ -627,7 +627,7 @@ type RC020ProjectsElem struct {
 	Title string `json:"title" mapstructure:"title"`
 
 	// Versification corresponds to the JSON schema field "versification".
-	Versification *RC020ProjectsElemVersification `json:"versification,omitempty" mapstructure:"versification,omitempty"`
+	Versification RC020ProjectsElemVersification `json:"versification,omitempty" mapstructure:"versification,omitempty"`
 }
 
 // RC020ProjectsElemVersification ProjectsElemVersification

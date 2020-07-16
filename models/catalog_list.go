@@ -1,4 +1,4 @@
-// Copyright 202 unfoldingWord. All rights reserved.
+// Copyright 2020 unfoldingWord. All rights reserved.
 // Use of this source code is governed by a MIT-style
 // license that can be found in the LICENSE file.
 
@@ -26,10 +26,10 @@ const (
 	CatalogOrderBySubjectReverse  CatalogOrderBy = "JSON_EXTRACT(`door43_metadata`.metadata, '$.dublin_core.subject') DESC"
 	CatalogOrderByLangCode        CatalogOrderBy = "JSON_EXTRACT(`door43_metadata`.metadata, '$.dublin_core.language.identifier') ASC"
 	CatalogOrderByLangCodeReverse CatalogOrderBy = "JSON_EXTRACT(`door43_metadata`.metadata, '$.dublin_core.language.identifier') DESC"
-	CatalogOrderByOldest          CatalogOrderBy = "`release_info`.latest_created_unix ASC"
-	CatalogOrderByNewest          CatalogOrderBy = "`release_info`.latest_created_unix DESC"
-	CatalogOrderByReleases        CatalogOrderBy = "`release_info`.num_releases ASC"
-	CatalogOrderByReleasesReverse CatalogOrderBy = "`release_info`.num_releases DESC"
+	CatalogOrderByOldest          CatalogOrderBy = "`release`.created_unix ASC"
+	CatalogOrderByNewest          CatalogOrderBy = "`release`.created_unix DESC"
+	CatalogOrderByReleases        CatalogOrderBy = "prod_count ASC"
+	CatalogOrderByReleasesReverse CatalogOrderBy = "prod_count DESC"
 	CatalogOrderByStars           CatalogOrderBy = "`repository`.num_stars ASC"
 	CatalogOrderByStarsReverse    CatalogOrderBy = "`repository`.num_stars DESC"
 	CatalogOrderByForks           CatalogOrderBy = "`repository`.num_forks ASC"
@@ -91,44 +91,120 @@ func valuesDoor43Metadata(m map[int64]*Door43Metadata) []*Door43Metadata {
 // SearchCatalogOptions holds the search options
 type SearchCatalogOptions struct {
 	ListOptions
-	Keyword            string
-	OrderBy            CatalogOrderBy
-	TopicOnly          bool
-	IncludeAllMetadata bool
+	Keywords          []string
+	Owner             string
+	Repo              string
+	RepoID            int64
+	Tags              []string
+	OrderBy           CatalogOrderBy
+	Stages            []string
+	IncludeHistory    bool
+	Subject           string
+	Books             []string
+	CheckingLevel     string
+	SearchAllMetadata bool
+	Languages         []string
 }
+
+// Stage values
+const (
+	StageProd        string = "prod"
+	StagePreProd     string = "preprod"
+	StagePreDashProd string = "pre-prod"
+	StagePrerelease  string = "prerelease"
+	StageDraft       string = "draft"
+	StageLatest      string = "latest"
+)
 
 // SearchCatalogCondition creates a query condition according search repository options
 func SearchCatalogCondition(opts *SearchCatalogOptions) builder.Cond {
 	var cond = builder.NewCond()
-	cond = cond.And(
-		builder.Eq{"`repository`.is_private": false},
-		builder.Eq{"`repository`.is_archived": false},
-		builder.Eq{"`release`.is_prerelease": false})
-	if opts.Keyword != "" {
-		// separate keyword
-		var subQueryCond = builder.NewCond()
-		for _, v := range strings.Split(opts.Keyword, ",") {
-			if opts.TopicOnly {
-				subQueryCond = subQueryCond.Or(builder.Eq{"topic.name": strings.ToLower(v)})
-			} else {
-				subQueryCond = subQueryCond.Or(builder.Like{"topic.name", strings.ToLower(v)})
-			}
+	cond = cond.And(builder.Eq{"`repository`.is_private": false},
+		builder.Eq{"`repository`.is_archived": false})
+
+	if opts.RepoID > 0 {
+		cond = cond.And(builder.Eq{"`repository`.ID": opts.RepoID})
+	} else {
+		if opts.Repo != "" {
+			cond = cond.And(builder.Eq{"`repository`.lower_name": strings.ToLower(opts.Repo)})
 		}
-		subQuery := builder.Select("repo_topic.repo_id").From("repo_topic").
-			Join("INNER", "topic", "topic.id = repo_topic.topic_id").
-			Where(subQueryCond).
-			GroupBy("repo_topic.repo_id")
-		var keywordCond = builder.In("`repository`.id", subQuery)
-		if !opts.TopicOnly {
-			var likes = builder.NewCond()
-			for _, v := range strings.Split(opts.Keyword, ",") {
-				likes = likes.Or(builder.Like{"LOWER(JSON_EXTRACT(`door43_metadata`.metadata, '$.dublin_core.title'))", strings.ToLower(v)})
-				likes = likes.Or(builder.Like{"LOWER(JSON_EXTRACT(`door43_metadata`.metadata, '$.dublin_core.subject'))", strings.ToLower(v)})
-				if opts.IncludeAllMetadata {
-					likes = likes.Or(builder.Expr("JSON_SEARCH(LOWER(`door43_metadata`.metadata), 'one', ?) IS NOT NULL", "%"+strings.ToLower(v)+"%"))
+		if opts.Owner != "" {
+			cond = cond.And(builder.Eq{"`user`.lower_name": strings.ToLower(opts.Owner)})
+		}
+	}
+
+	if len(opts.Stages) == 0 {
+		cond = cond.And(builder.Eq{"`release`.is_prerelease": false})
+	} else {
+		var subStageCond = builder.NewCond()
+		var subHistoryCond = builder.NewCond()
+		for _, stage := range opts.Stages {
+			switch stage {
+			case StageDraft:
+				subStageCond = subStageCond.Or(builder.Eq{"`release`.is_draft": true})
+				if !opts.IncludeHistory {
+					subHistoryCond = subHistoryCond.Or(builder.Expr("`release`.created_unix = latest_draft_created_unix"))
+				}
+			case StagePreProd, StagePreDashProd, StagePrerelease:
+				subStageCond = subStageCond.Or(builder.Eq{"`release`.is_prerelease": true})
+				if !opts.IncludeHistory {
+					subHistoryCond = subHistoryCond.Or(builder.Expr("`release`.created_unix = latest_preprod_created_unix"))
+				}
+			case StageLatest:
+				subStageCond = subStageCond.Or(builder.Eq{"`door43_metadata`.release_id": 0})
+			case StageProd:
+				subStageCond = subStageCond.Or(builder.And(
+					builder.Eq{"`release`.is_draft": false},
+					builder.Eq{"`release`.is_prerelease": false},
+					builder.Neq{"`door43_metadata`.release_id": 0}))
+				if !opts.IncludeHistory {
+					subHistoryCond = subHistoryCond.Or(builder.Expr("`release`.created_unix = latest_prod_created_unix"))
 				}
 			}
-			keywordCond = keywordCond.Or(likes)
+		}
+		cond = cond.And(subStageCond).And(subHistoryCond)
+	}
+
+	if opts.Subject != "" {
+		cond = cond.And(builder.Eq{"LOWER(JSON_EXTRACT(`door43_metadata`.metadata, '$.dublin_core.subject')": strings.ToLower(opts.Subject)})
+	}
+	if len(opts.Languages) > 0 {
+		var langCond = builder.NewCond()
+		for _, lang := range opts.Languages {
+			// separate languages in case they used a comma
+			for _, v := range strings.Split(lang, ",") {
+				langCond = langCond.Or(builder.Like{"LOWER(JSON_EXTRACT(`door43_metadata`.metadata, '$.dublin_core.language.identifier'))", strings.ToLower(v)})
+			}
+		}
+		cond = cond.And(langCond)
+	}
+	if len(opts.Books) > 0 {
+		var bookCond = builder.NewCond()
+		for _, book := range opts.Books {
+			// separate books in case they used a comma
+			for _, v := range strings.Split(book, ",") {
+				bookCond = bookCond.Or(builder.Expr("JSON_CONTAINS(LOWER(JSON_EXTRACT(`door43_metadata`.metadata, '$.projects')), JSON_OBJECT('identifier', ?))", strings.ToLower(v)))
+			}
+		}
+		cond = cond.And(bookCond)
+	}
+	if opts.CheckingLevel != "" {
+		cond = cond.And(builder.Eq{"JSON_EXTRACT(`door43_metadata`.metadata, '$.checking.checking_level')": opts.CheckingLevel})
+	}
+	if len(opts.Tags) > 0 {
+		cond = cond.And(builder.In("`release`.tag_name", opts.Tags))
+	}
+
+	if len(opts.Keywords) > 0 {
+		keywordCond := builder.NewCond()
+		for _, keyword := range opts.Keywords {
+			keywordCond = keywordCond.Or(builder.Like{"`repository`.lower_name", strings.ToLower(keyword)})
+			keywordCond = keywordCond.Or(builder.Like{"`user`.lower_name", strings.ToLower(keyword)})
+			keywordCond = keywordCond.Or(builder.Like{"LOWER(JSON_EXTRACT(`door43_metadata`.metadata, '$.dublin_core.title'))", strings.ToLower(keyword)})
+			keywordCond = keywordCond.Or(builder.Like{"LOWER(JSON_EXTRACT(`door43_metadata`.metadata, '$.dublin_core.subject'))", strings.ToLower(keyword)})
+			if opts.SearchAllMetadata {
+				keywordCond = keywordCond.Or(builder.Expr("JSON_SEARCH(LOWER(`door43_metadata`.metadata), 'one', ?) IS NOT NULL", "%"+strings.ToLower(keyword)+"%"))
+			}
 		}
 		cond = cond.And(keywordCond)
 	}
@@ -157,11 +233,22 @@ func SearchCatalogByCondition(opts *SearchCatalogOptions, cond builder.Cond, loa
 	defer sess.Close()
 
 	dms := make(Door43MetadataList, 0, opts.PageSize)
-	sess.Join("INNER", "(SELECT `release`.repo_id, COUNT(*) AS num_releases, MAX(`release`.created_unix) AS latest_created_unix FROM `release` JOIN `door43_metadata` ON `door43_metadata`.release_id = `release`.id WHERE `release`.is_prerelease = 0 GROUP BY `release`.repo_id) `release_info`", "`release_info`.repo_id = `door43_metadata`.repo_id").
-		Join("INNER", "release", "`release`.id = `door43_metadata`.release_id AND `release`.created_unix = `release_info`.latest_created_unix AND `release`.is_prerelease = 0").
-		Join("INNER", "repository", "`repository`.id = `door43_metadata`.repo_id").
+	sess.Join("INNER", "repository", "`repository`.id = `door43_metadata`.repo_id").
+		Join("INNER", "user", "`repository`.owner_id = `user`.id").
+		Join("LEFT", "release", "`release`.id = `door43_metadata`.release_id").
 		Where(cond).
 		OrderBy(opts.OrderBy.String())
+
+	if len(opts.Stages) == 0 || contains(opts.Stages, "prod") {
+		sess.Join("LEFT", "(SELECT `release`.repo_id, COUNT(*) AS prod_count, MAX(`release`.created_unix) AS latest_prod_created_unix FROM `release` JOIN `door43_metadata` ON `door43_metadata`.release_id = `release`.id WHERE `release`.is_prerelease = 0 GROUP BY `release`.repo_id) `prod_info`", "`prod_info`.repo_id = `door43_metadata`.repo_id")
+	}
+	if contains(opts.Stages, StagePreDashProd) || contains(opts.Stages, StagePreProd) || contains(opts.Stages, StagePrerelease) {
+		sess.Join("LEFT", "(SELECT `release`.repo_id, COUNT(*) AS preprod_count, MAX(`release`.created_unix) AS latest_preprod_created_unix FROM `release` JOIN `door43_metadata` ON `door43_metadata`.release_id = `release`.id WHERE `release`.is_prerelease = 1 AND `release`.is_draft = 0 GROUP BY `release`.repo_id) `preprod_info`", "`preprod_info`.repo_id = `door43_metadata`.repo_id")
+	}
+	if contains(opts.Stages, StageDraft) {
+		sess.Join("LEFT", "(SELECT `release`.repo_id, COUNT(*) AS draft_count, MAX(`release`.created_unix) AS latest_draft_created_unix FROM `release` JOIN `door43_metadata` ON `door43_metadata`.release_id = `release`.id WHERE `release`.is_draft = 1 GROUP BY `release`.repo_id) `draft_info`", "`draft_info`.repo_id = `door43_metadata`.repo_id")
+	}
+
 	if opts.PageSize > 0 {
 		sess.Limit(opts.PageSize, (opts.Page-1)*opts.PageSize)
 	}

@@ -384,11 +384,7 @@ func (repo *Repository) innerAPIFormat(e Engine, mode AccessMode, isParent bool)
 		language = (*metadata.Metadata)["dublin_core"].(map[string]interface{})["language"].(map[string]interface{})["identifier"].(string)
 		title = (*metadata.Metadata)["dublin_core"].(map[string]interface{})["title"].(string)
 		subject = (*metadata.Metadata)["dublin_core"].(map[string]interface{})["subject"].(string)
-		if len((*metadata.Metadata)["projects"].([]interface{})) > 0 {
-			for _, prod := range (*metadata.Metadata)["projects"].([]interface{}) {
-				books = append(books, prod.(map[string]interface{})["identifier"].(string))
-			}
-		}
+		books = metadata.GetBooks()
 		checkingLevel = (*metadata.Metadata)["checking"].(map[string]interface{})["checking_level"].(string)
 	}
 	/* END DCS Customizations */

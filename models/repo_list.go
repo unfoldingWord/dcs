@@ -174,12 +174,13 @@ type SearchRepoOptions struct {
 	// None -> include has milestones AND has no milestone
 	// True -> include just has milestones
 	// False -> include just has no milestone
-	HasMilestones      util.OptionalBool
-	Subject            string
-	Books              []string
-	CheckingLevel      string
-	IncludeAllMetadata bool
-	Languages          []string
+	HasMilestones util.OptionalBool
+	Subject       string
+	Books         []string
+	CheckingLevel string
+	// include all metadata in keyword search
+	SearchAllMetadata bool
+	Languages         []string
 }
 
 //SearchOrderBy is used to sort the result
@@ -322,7 +323,7 @@ func SearchRepositoryCondition(opts *SearchRepoOptions) builder.Cond {
 				}
 				likes = likes.Or(builder.Like{"LOWER(JSON_EXTRACT(`door43_metadata`.metadata, '$.dublin_core.title'))", strings.ToLower(v)})
 				likes = likes.Or(builder.Like{"LOWER(JSON_EXTRACT(`door43_metadata`.metadata, '$.dublin_core.subject'))", strings.ToLower(v)})
-				if opts.IncludeAllMetadata {
+				if opts.SearchAllMetadata {
 					likes = likes.Or(builder.Expr("JSON_SEARCH(LOWER(`door43_metadata`.metadata), 'one', ?) IS NOT NULL", "%"+strings.ToLower(v)+"%"))
 				}
 			}
@@ -378,7 +379,7 @@ func SearchRepositoryCondition(opts *SearchRepoOptions) builder.Cond {
 		cond = cond.And(bookCond)
 	}
 	if opts.CheckingLevel != "" {
-		cond.And(builder.Like{"JSON_EXTRACT(`door43_metadata`.metadata, '$.checking.checking_level')", strings.ToLower(opts.CheckingLevel)})
+		cond.And(builder.Eq{"JSON_EXTRACT(`door43_metadata`.metadata, '$.checking.checking_level')": opts.CheckingLevel})
 	}
 
 	return cond

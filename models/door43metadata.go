@@ -7,6 +7,7 @@ package models
 import (
 	"fmt"
 	"sort"
+	"xorm.io/xorm"
 
 	"code.gitea.io/gitea/modules/log"
 	"code.gitea.io/gitea/modules/setting"
@@ -57,8 +58,12 @@ func (dm *Door43Metadata) LoadAttributes() error {
 
 // APIURL the api url for a door43 metadata. door43 metadata must have attributes loaded
 func (dm *Door43Metadata) APIURL() string {
-	return fmt.Sprintf("%sapi/v1/repos/%s/metadata/%d",
-		setting.AppURL, dm.Repo.FullName(), dm.ID)
+	ref := dm.Repo.DefaultBranch
+	if dm.ReleaseID > 0 {
+		ref = dm.Release.TagName
+	}
+	return fmt.Sprintf("%sapi/v1/catalog/%s/%s",
+		setting.AppURL, dm.Repo.FullName(), ref)
 }
 
 // HTMLURL the url for a door43 metadata on the web UI. door43 metadata must have attributes loaded
@@ -68,10 +73,63 @@ func (dm *Door43Metadata) HTMLURL() string {
 
 // APIFormat convert a Door43Metadata to structs.Door43Metadata
 func (dm *Door43Metadata) APIFormat() *structs.Door43Metadata {
-	return &structs.Door43Metadata{
-		ID:        dm.ID,
-		CreatedAt: dm.CreatedUnix.AsTime(),
+	return dm.innerAPIFormat(x)
+}
+
+func (dm *Door43Metadata) innerAPIFormat(e *xorm.Engine) *structs.Door43Metadata {
+	dm.loadAttributes(e)
+	tag := ""
+	stage := ""
+	released := ""
+	releaseURL := ""
+	metadataURL := ""
+	if dm.ReleaseID > 0 {
+		tag = dm.Release.TagName
+		releaseURL = dm.Release.APIURL()
+		if dm.Release.IsDraft {
+			stage = StageDraft
+		} else {
+			released = (*dm.Metadata)["dublin_core"].(map[string]interface{})["issued"].(string)
+			if dm.Release.IsPrerelease {
+				stage = StagePreProd
+			} else {
+				stage = StageProd
+			}
+		}
+		metadataURL = dm.Repo.APIURL() + "/raw/tag/" + dm.Release.TagName + "/manifest.yaml"
+	} else {
+		tag = dm.Repo.DefaultBranch
+		stage = StageLatest
+		metadataURL = dm.Repo.APIURL() + "/raw/branch/" + dm.Repo.DefaultBranch + "/manifest.yaml"
 	}
+	return &structs.Door43Metadata{
+		ID:              dm.ID,
+		Self:            dm.APIURL(),
+		RepoURL:         dm.Repo.APIURL(),
+		ReleaseURL:      releaseURL,
+		Language:        (*dm.Metadata)["dublin_core"].(map[string]interface{})["language"].(map[string]interface{})["identifier"].(string),
+		Subject:         (*dm.Metadata)["dublin_core"].(map[string]interface{})["subject"].(string),
+		Title:           (*dm.Metadata)["dublin_core"].(map[string]interface{})["title"].(string),
+		Books:           dm.GetBooks(),
+		Tag:             tag,
+		Stage:           stage,
+		Released:        released,
+		MetadataVersion: dm.MetadataVersion,
+		MetadataURL:     metadataURL,
+		MetadataAPIURL:  dm.APIURL() + "/metadata",
+		Ingredients:     (*dm.Metadata)["projects"].([]interface{}),
+	}
+}
+
+// GetBooks get the books of the resource
+func (dm *Door43Metadata) GetBooks() []string {
+	var books []string
+	if len((*dm.Metadata)["projects"].([]interface{})) > 0 {
+		for _, prod := range (*dm.Metadata)["projects"].([]interface{}) {
+			books = append(books, prod.(map[string]interface{})["identifier"].(string))
+		}
+	}
+	return books
 }
 
 // IsDoor43MetadataExist returns true if door43 metadata with given release ID already exists.

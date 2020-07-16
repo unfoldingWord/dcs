@@ -22,13 +22,6 @@
 			</div>
 			<div class="description">
 				<p>{{.Metadata.dublin_core.subject}}</p>
-				{{if .Repo.Topics }}
-					<div class="ui tags">
-					{{range .Repo.Topics}}
-						{{if ne . "" }}<a href="{{AppSubUrl}}/catalog?q={{.}}&topic=1"><div class="ui small label topic">{{.}}</div></a>{{end}}
-					{{end}}
-					</div>
-				{{end}}
 				<p class="time">{{$.i18n.Tr "explore.released"}}: {{.Release.CreatedUnix.Format "2006-01-02"}}</p>
 				<p class="time">{{$.i18n.Tr "explore.language"}}: {{.Metadata.dublin_core.language.title}} ({{.Metadata.dublin_core.language.identifier}})</p>
 			</div>
