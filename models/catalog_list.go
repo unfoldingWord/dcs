@@ -179,7 +179,7 @@ func SearchCatalogCondition(opts *SearchCatalogOptions) builder.Cond {
 	if len(opts.Subjects) > 0 {
 		var subjectCond = builder.NewCond()
 		for _, subject := range opts.Subjects {
-			subjectCond = subjectCond.Or(builder.Eq{"LOWER(JSON_EXTRACT(`door43_metadata`.metadata, '$.dublin_core.subject'))": strings.ToLower(subject)})
+			subjectCond = subjectCond.Or(builder.Like{"LOWER(JSON_EXTRACT(`door43_metadata`.metadata, '$.dublin_core.subject'))", strings.ToLower(subject)})
 		}
 		cond = cond.And(subjectCond)
 	}
