@@ -145,7 +145,10 @@ func SearchCatalogCondition(opts *SearchCatalogOptions) builder.Cond {
 	}
 
 	if len(opts.Stages) == 0 {
-		cond = cond.And(builder.Eq{"`release`.is_prerelease": false})
+		cond = cond.And(builder.Eq{"`release`.is_prerelease": false}, builder.Eq{"`release`.is_draft": false})
+		if !opts.IncludeHistory {
+			cond = cond.And(builder.Expr("`release`.created_unix = latest_prod_created_unix"))
+		}
 	} else {
 		var subStageCond = builder.NewCond()
 		var subHistoryCond = builder.NewCond()
@@ -158,11 +161,14 @@ func SearchCatalogCondition(opts *SearchCatalogOptions) builder.Cond {
 				}
 			case StagePreProd, StagePreDashProd, StagePrerelease:
 				subStageCond = subStageCond.Or(builder.Eq{"`release`.is_prerelease": true})
-				if !opts.IncludeHistory {
+				if ! opts.IncludeHistory {
 					subHistoryCond = subHistoryCond.Or(builder.Expr("`release`.created_unix = latest_preprod_created_unix"))
 				}
 			case StageLatest:
 				subStageCond = subStageCond.Or(builder.Eq{"`door43_metadata`.release_id": 0})
+				if ! opts.IncludeHistory {
+					subHistoryCond = subHistoryCond.Or(builder.Expr("`release`.created_unix IS NULL"))
+				}
 			case StageProd:
 				subStageCond = subStageCond.Or(builder.And(
 					builder.Eq{"`release`.is_draft": false},
@@ -270,7 +276,7 @@ func SearchCatalogByCondition(opts *SearchCatalogOptions, cond builder.Cond, loa
 	if contains(opts.Stages, StageDraft) {
 		sess.Join("LEFT", "(SELECT `release`.repo_id, COUNT(*) AS draft_count, MAX(`release`.created_unix) AS latest_draft_created_unix FROM `release` JOIN `door43_metadata` ON `door43_metadata`.release_id = `release`.id WHERE `release`.is_draft = 1 GROUP BY `release`.repo_id) `draft_info`", "`draft_info`.repo_id = `door43_metadata`.repo_id")
 	}
-
+	
 	if opts.PageSize > 0 {
 		sess.Limit(opts.PageSize, (opts.Page-1)*opts.PageSize)
 	}
