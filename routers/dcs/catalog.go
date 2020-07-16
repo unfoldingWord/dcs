@@ -8,7 +8,6 @@ package dcs
 
 import (
 	"bytes"
-	"encoding/csv"
 	"strings"
 
 	"code.gitea.io/gitea/models"
@@ -34,6 +33,27 @@ var (
 
 func isKeywordValid(keyword string) bool {
 	return !bytes.Contains([]byte(keyword), nullByte)
+}
+
+// SplitAtCommas split s at commas, ignoring commas in strings.
+func SplitAtCommas(s string) []string {
+	res := []string{}
+	var beg int
+	var inString bool
+
+	for i := 0; i < len(s); i++ {
+		if s[i] == ',' && !inString {
+			res = append(res, strings.TrimSpace(s[beg:i]))
+			beg = i + 1
+		} else if s[i] == '"' {
+			if !inString {
+				inString = true
+			} else if i > 0 && s[i-1] != '\\' {
+				inString = false
+			}
+		}
+	}
+	return append(res, strings.TrimSpace(s[beg:]))
 }
 
 // RenderCatalogSearch render catalog search page
@@ -64,6 +84,10 @@ func RenderCatalogSearch(ctx *context.Context, opts *CatalogSearchOptions) {
 		orderBy = models.CatalogOrderBySubjectReverse
 	case "subject":
 		orderBy = models.CatalogOrderBySubject
+	case "reversetag":
+		orderBy = models.CatalogOrderByTagReverse
+	case "tag":
+		orderBy = models.CatalogOrderByTag
 	case "reverselangcode":
 		orderBy = models.CatalogOrderByLangCodeReverse
 	case "langcode":
@@ -85,35 +109,23 @@ func RenderCatalogSearch(ctx *context.Context, opts *CatalogSearchOptions) {
 		orderBy = models.CatalogOrderByNewest
 	}
 
-	books := []string{}
-	langs := []string{}
-	keywords := []string{}
-	subject := ""
-	repo := ""
-	owner := ""
+	var books, langs, keywords, subjects, repos, owners []string
 	query := strings.Trim(ctx.Query("q"), " ")
 	if query != "" {
-		// Split keyword, keeping words in quotes
-		r := csv.NewReader(strings.NewReader(query))
-		r.Comma = ' ' // space
-		tokens, err := r.Read()
-		if err != nil {
-			keywords = append(keywords, query)
-		} else {
-			for _, token := range tokens {
-				if strings.HasPrefix(token, "book:") {
-					books = append(books, strings.TrimLeft(token, "book:"))
-				} else if strings.HasPrefix(token, "lang:") {
-					langs = append(langs, strings.TrimLeft(token, "lang:"))
-				} else if strings.HasPrefix(token, "subject:") {
-					subject = strings.TrimLeft(token, "subject:")
-				} else if strings.HasPrefix(token, "repo:") {
-					repo = strings.TrimLeft(token, "repo:")
-				} else if strings.HasPrefix(token, "owner:") {
-					owner = strings.TrimLeft(token, "owner:")
-				} else {
-					keywords = append(keywords, token)
-				}
+		tokens := SplitAtCommas(query)
+		for _, token := range tokens {
+			if strings.HasPrefix(token, "book:") {
+				books = append(books, strings.TrimLeft(token, "book:"))
+			} else if strings.HasPrefix(token, "lang:") {
+				langs = append(langs, strings.TrimLeft(token, "lang:"))
+			} else if strings.HasPrefix(token, "subject:") {
+				subjects = append(subjects, strings.Trim(strings.TrimLeft(token, "subject:"), `"`))
+			} else if strings.HasPrefix(token, "repo:") {
+				repos = append(repos, strings.TrimLeft(token, "repo:"))
+			} else if strings.HasPrefix(token, "owner:") {
+				owners = append(owners, strings.TrimLeft(token, "owner:"))
+			} else {
+				keywords = append(keywords, token)
 			}
 		}
 	}
@@ -123,16 +135,16 @@ func RenderCatalogSearch(ctx *context.Context, opts *CatalogSearchOptions) {
 			Page:     page,
 			PageSize: opts.PageSize,
 		},
-		OrderBy:           orderBy,
+		OrderBy:           []models.CatalogOrderBy{orderBy},
 		Keywords:          keywords,
 		SearchAllMetadata: true,
 		Stages:            []string{models.StageProd},
 		IncludeHistory:    false,
 		Books:             books,
-		Subject:           subject,
+		Subjects:          subjects,
 		Languages:         langs,
-		Repo:              repo,
-		Owner:             owner,
+		Repos:             repos,
+		Owners:            owners,
 	})
 	if err != nil {
 		ctx.ServerError("SearchCatalog", err)

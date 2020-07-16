@@ -398,74 +398,80 @@
         "parameters": [
           {
             "type": "string",
-            "description": "keyword",
+            "description": "keyword(s). Can use multiple `q=\u003ckeyword\u003e`s or commas for more than one keyword",
             "name": "q",
             "in": "query"
           },
           {
-            "type": "boolean",
-            "description": "Limit search to repositories with keyword as topic",
-            "name": "topic",
-            "in": "query"
-          },
-          {
-            "type": "boolean",
-            "description": "include search of keyword within repository description",
-            "name": "includeDesc",
+            "type": "string",
+            "description": "search only for entries with the given owner name(s).",
+            "name": "owner",
             "in": "query"
           },
           {
             "type": "string",
-            "description": "One ore more stages to return. Supported values are \"prod\" (production releases), \"preprod\" (pre-production releases), \"draft\" (draft releases), and \"latest\" (the default branch if it is a valid RC). Can have multiple stages given.",
-            "name": "stage",
-            "in": "query"
-          },
-          {
-            "type": "bool",
-            "description": "If true, all releases, not just the latest, are included",
-            "name": "includeHistory",
-            "in": "query"
-          },
-          {
-            "type": "bool",
-            "description": "If true, all metadata in the manifest file gets searched with the search query",
-            "name": "searchAllMetadata",
+            "description": "search only for entries with the given repo name(s).",
+            "name": "repo",
             "in": "query"
           },
           {
             "type": "string",
-            "description": "If the repo is a resource of the given language(s), the repo will be in the results. Multiple lang's are ORed.",
+            "description": "search only for entries with the given release tag(s)",
+            "name": "tag",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "description": "search only for entries with the given language(s)",
             "name": "lang",
             "in": "query"
           },
           {
             "type": "string",
-            "description": "resource subject",
+            "description": "search only for entries with the given stage(s). Supported values are \"prod\" (production releases), \"preprod\" (pre-production releases), \"draft\" (draft releases), and \"latest\" (the default branch if it is a valid RC)",
+            "name": "stage",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "description": "search only for entries with the given subject(s). Must match the entire string (case insensitive)",
             "name": "subject",
             "in": "query"
           },
           {
             "type": "string",
-            "description": "book (project id) that exist in a resource. If the resource contains the the book, its repository will be included in the results",
-            "name": "book",
-            "in": "query"
-          },
-          {
-            "type": "string",
-            "description": "Checking level of the resource can be 1, 2 or 3",
+            "description": "search only for entries with the given checking level(s). Can be 1, 2 or 3",
             "name": "checking_level",
             "in": "query"
           },
           {
             "type": "string",
-            "description": "sort repos by attribute. Supported values are \"alpha\", \"created\", \"updated\", \"size\", and \"id\". Default is \"alpha\"",
-            "name": "sort",
+            "description": "search only for entries with the given book(s) (project ids)",
+            "name": "book",
+            "in": "query"
+          },
+          {
+            "type": "bool",
+            "description": "if true, all releases, not just the latest, are included. Default is false",
+            "name": "includeHistory",
+            "in": "query"
+          },
+          {
+            "type": "bool",
+            "description": "if false, only subject and title are searched with query terms, if true all metadata values are searched. Default is true",
+            "name": "searchAllMetadata",
+            "in": "query"
+          },
+          {
+            "type": "bool",
+            "description": "if true, a list of the projects in the resource and their file paths will be listed for each entry. Default is false",
+            "name": "showIngredients",
             "in": "query"
           },
           {
             "type": "string",
-            "description": "A release tag that the catalog entry has to have. Useful with `subject` and `searchAllHistory` options.",
-            "name": "tag",
+            "description": "sort repos alphanumerically by attribute. Supported values are \"subject\", \"title\", \"tag\", \"released\", \"lang\", \"releases\", \"stars\", \"forks\". Default is by \"language\", \"subject\" and then \"tag\"",
+            "name": "sort",
             "in": "query"
           },
           {
@@ -489,7 +495,7 @@
         ],
         "responses": {
           "200": {
-            "$ref": "#/responses/SearchResults"
+            "$ref": "#/responses/CatalogSearchResults"
           },
           "422": {
             "$ref": "#/responses/validationError"
@@ -510,92 +516,81 @@
         "parameters": [
           {
             "type": "string",
-            "description": "keyword",
+            "description": "owner of entries",
+            "name": "owner",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "description": "keyword(s). Can use multiple `q=\u003ckeyword\u003e`s or commas for more than one keyword",
             "name": "q",
             "in": "query"
           },
           {
-            "type": "boolean",
-            "description": "Limit search to repositories with keyword as topic",
-            "name": "topic",
-            "in": "query"
-          },
-          {
-            "type": "boolean",
-            "description": "include search of keyword within repository description",
-            "name": "includeDesc",
-            "in": "query"
-          },
-          {
             "type": "string",
-            "description": "search only for repos with the given owner name.",
-            "name": "owner",
-            "in": "query"
-          },
-          {
-            "type": "string",
-            "description": "search only for repos with the given repo name.",
+            "description": "search only for entries with the given repo name(s).",
             "name": "repo",
             "in": "query"
           },
           {
             "type": "string",
-            "description": "search only for catalog entries with the given ref (branch or tag)",
-            "name": "ref",
+            "description": "search only for entries with the given release tag(s)",
+            "name": "tag",
             "in": "query"
           },
           {
             "type": "string",
-            "description": "One ore more stages to return. Supported values are \"prod\" (production releases), \"preprod\" (pre-production releases), \"draft\" (draft releases), and \"latest\" (the default branch if it is a valid RC). Can have multiple stages given.",
-            "name": "stage",
-            "in": "query"
-          },
-          {
-            "type": "bool",
-            "description": "If true, all releases, not just the latest, are included",
-            "name": "includeHistory",
-            "in": "query"
-          },
-          {
-            "type": "bool",
-            "description": "If true, all metadata in the manifest file gets searched with the search query",
-            "name": "searchAllMetadata",
-            "in": "query"
-          },
-          {
-            "type": "string",
-            "description": "If the repo is a resource of the given language(s), the repo will be in the results. Multiple lang's are ORed.",
+            "description": "search only for entries with the given language(s)",
             "name": "lang",
             "in": "query"
           },
           {
             "type": "string",
-            "description": "resource subject",
+            "description": "search only for entries with the given stage(s). Supported values are \"prod\" (production releases), \"preprod\" (pre-production releases), \"draft\" (draft releases), and \"latest\" (the default branch if it is a valid RC)",
+            "name": "stage",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "description": "search only for entries with the given subject(s). Must match the entire string (case insensitive)",
             "name": "subject",
             "in": "query"
           },
           {
             "type": "string",
-            "description": "book (project id) that exist in a resource. If the resource contains the the book, its repository will be included in the results",
-            "name": "book",
-            "in": "query"
-          },
-          {
-            "type": "string",
-            "description": "Checking level of the resource can be 1, 2 or 3",
+            "description": "search only for entries with the given checking level(s). Can be 1, 2 or 3",
             "name": "checking_level",
             "in": "query"
           },
           {
             "type": "string",
-            "description": "sort repos by attribute. Supported values are \"alpha\", \"created\", \"updated\", \"size\", and \"id\". Default is \"alpha\"",
-            "name": "sort",
+            "description": "search only for entries with the given book(s) (project ids)",
+            "name": "book",
+            "in": "query"
+          },
+          {
+            "type": "bool",
+            "description": "if true, all releases, not just the latest, are included. Default is false",
+            "name": "includeHistory",
+            "in": "query"
+          },
+          {
+            "type": "bool",
+            "description": "if false, only subject and title are searched with query terms, if true all metadata values are searched. Default is true",
+            "name": "searchAllMetadata",
+            "in": "query"
+          },
+          {
+            "type": "bool",
+            "description": "if true, a list of the projects in the resource and their file paths will be listed for each entry. Default is false",
+            "name": "showIngredients",
             "in": "query"
           },
           {
             "type": "string",
-            "description": "A release tag that the catalog entry has to have. Useful with `subject` and `searchAllHistory` options.",
-            "name": "tag",
+            "description": "sort repos alphanumerically by attribute. Supported values are \"subject\", \"title\", \"tag\", \"released\", \"lang\", \"releases\", \"stars\", \"forks\". Default is by \"language\", \"subject\" and then \"tag\"",
+            "name": "sort",
             "in": "query"
           },
           {
@@ -619,7 +614,7 @@
         ],
         "responses": {
           "200": {
-            "$ref": "#/responses/SearchResults"
+            "$ref": "#/responses/CatalogSearchResults"
           },
           "422": {
             "$ref": "#/responses/validationError"
@@ -640,74 +635,82 @@
         "parameters": [
           {
             "type": "string",
-            "description": "keyword",
+            "description": "name of the owner",
+            "name": "owner",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "description": "name of the repo",
+            "name": "repo",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "description": "keyword(s). Can use multiple `q=\u003ckeyword\u003e`s or commas for more than one keyword",
             "name": "q",
             "in": "query"
           },
           {
-            "type": "boolean",
-            "description": "Limit search to repositories with keyword as topic",
-            "name": "topic",
-            "in": "query"
-          },
-          {
-            "type": "boolean",
-            "description": "include search of keyword within repository description",
-            "name": "includeDesc",
+            "type": "string",
+            "description": "search only for entries with the given release tag(s)",
+            "name": "tag",
             "in": "query"
           },
           {
             "type": "string",
-            "description": "One ore more stages to return. Supported values are \"prod\" (production releases), \"preprod\" (pre-production releases), \"draft\" (draft releases), and \"latest\" (the default branch if it is a valid RC). Can have multiple stages given.",
-            "name": "stage",
-            "in": "query"
-          },
-          {
-            "type": "bool",
-            "description": "If true, all releases, not just the latest, are included",
-            "name": "includeHistory",
-            "in": "query"
-          },
-          {
-            "type": "bool",
-            "description": "If true, all metadata in the manifest file gets searched with the search query",
-            "name": "searchAllMetadata",
-            "in": "query"
-          },
-          {
-            "type": "string",
-            "description": "If the repo is a resource of the given language(s), the repo will be in the results. Multiple lang's are ORed.",
+            "description": "search only for entries with the given language(s)",
             "name": "lang",
             "in": "query"
           },
           {
             "type": "string",
-            "description": "resource subject",
+            "description": "search only for entries with the given stage(s). Supported values are \"prod\" (production releases), \"preprod\" (pre-production releases), \"draft\" (draft releases), and \"latest\" (the default branch if it is a valid RC)",
+            "name": "stage",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "description": "search only for entries with the given subject(s). Must match the entire string (case insensitive)",
             "name": "subject",
             "in": "query"
           },
           {
             "type": "string",
-            "description": "book (project id) that exist in a resource. If the resource contains the the book, its repository will be included in the results",
-            "name": "book",
-            "in": "query"
-          },
-          {
-            "type": "string",
-            "description": "Checking level of the resource can be 1, 2 or 3",
+            "description": "search only for entries with the given checking level(s). Can be 1, 2 or 3",
             "name": "checking_level",
             "in": "query"
           },
           {
             "type": "string",
-            "description": "sort repos by attribute. Supported values are \"alpha\", \"created\", \"updated\", \"size\", and \"id\". Default is \"alpha\"",
-            "name": "sort",
+            "description": "search only for entries with the given book(s) (project ids)",
+            "name": "book",
+            "in": "query"
+          },
+          {
+            "type": "bool",
+            "description": "if true, all releases, not just the latest, are included. Default is false",
+            "name": "includeHistory",
+            "in": "query"
+          },
+          {
+            "type": "bool",
+            "description": "if false, only subject and title are searched with query terms, if true all metadata values are searched. Default is true",
+            "name": "searchAllMetadata",
+            "in": "query"
+          },
+          {
+            "type": "bool",
+            "description": "if true, a list of the projects in the resource and their file paths will be listed for each entry. Default is false",
+            "name": "showIngredients",
             "in": "query"
           },
           {
             "type": "string",
-            "description": "A release tag that the catalog entry has to have. Useful with `subject` and `searchAllHistory` options.",
-            "name": "tag",
+            "description": "sort repos alphanumerically by attribute. Supported values are \"subject\", \"title\", \"tag\", \"released\", \"lang\", \"releases\", \"stars\", \"forks\". Default is language,subject,tag",
+            "name": "sort",
             "in": "query"
           },
           {
@@ -731,7 +734,7 @@
         ],
         "responses": {
           "200": {
-            "$ref": "#/responses/SearchResults"
+            "$ref": "#/responses/CatalogSearchResults"
           },
           "422": {
             "$ref": "#/responses/validationError"
@@ -748,10 +751,76 @@
           "catalog"
         ],
         "summary": "Catalog entry",
-        "operationId": "catalogGetEntry",
+        "operationId": "catalogGetCatalogEntry",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "name of the owner",
+            "name": "owner",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "description": "name of the repo",
+            "name": "repo",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "description": "release tag or default branch",
+            "name": "tag",
+            "in": "path",
+            "required": true
+          }
+        ],
         "responses": {
           "200": {
-            "$ref": "#/responses/SearchResults"
+            "$ref": "#/responses/CatalogEntry"
+          },
+          "422": {
+            "$ref": "#/responses/validationError"
+          }
+        }
+      }
+    },
+    "/catalog/{owner}/{repo}/{tag}/metadata": {
+      "get": {
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "catalog"
+        ],
+        "summary": "Catalog entry metadata",
+        "operationId": "catalogGetMetadata",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "name of the owner",
+            "name": "owner",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "description": "name of the repo",
+            "name": "repo",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "description": "release tag or default branch",
+            "name": "tag",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/CatalogMetadata"
           },
           "422": {
             "$ref": "#/responses/validationError"
@@ -10998,6 +11067,24 @@
       },
       "x-go-package": "code.gitea.io/gitea/modules/structs"
     },
+    "CatalogSearchResults": {
+      "description": "CatalogSearchResults results of a successful search",
+      "type": "object",
+      "properties": {
+        "data": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Door43Metadata"
+          },
+          "x-go-name": "Data"
+        },
+        "ok": {
+          "type": "boolean",
+          "x-go-name": "OK"
+        }
+      },
+      "x-go-package": "code.gitea.io/gitea/modules/structs"
+    },
     "Comment": {
       "description": "Comment represents a comment on a commit or issue",
       "type": "object",
@@ -12057,6 +12144,80 @@
         "url": {
           "type": "string",
           "x-go-name": "URL"
+        }
+      },
+      "x-go-package": "code.gitea.io/gitea/modules/structs"
+    },
+    "Door43Metadata": {
+      "description": "Door43Metadata represents a repository's metadata of a tag or default branch",
+      "type": "object",
+      "properties": {
+        "books": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "x-go-name": "Books"
+        },
+        "branch_or_tag_name": {
+          "type": "string",
+          "x-go-name": "Tag"
+        },
+        "id": {
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "ID"
+        },
+        "ingredients": {
+          "type": "array",
+          "items": {
+            "type": "object"
+          },
+          "x-go-name": "Ingredients"
+        },
+        "lang_code": {
+          "type": "string",
+          "x-go-name": "Language"
+        },
+        "metadata_api_url": {
+          "type": "string",
+          "x-go-name": "MetadataAPIURL"
+        },
+        "metadata_url": {
+          "type": "string",
+          "x-go-name": "MetadataURL"
+        },
+        "metadata_version": {
+          "type": "string",
+          "x-go-name": "MetadataVersion"
+        },
+        "release_url": {
+          "type": "string",
+          "x-go-name": "ReleaseURL"
+        },
+        "released": {
+          "type": "string",
+          "x-go-name": "Released"
+        },
+        "repo_url": {
+          "type": "string",
+          "x-go-name": "RepoURL"
+        },
+        "stage": {
+          "type": "string",
+          "x-go-name": "Stage"
+        },
+        "subject": {
+          "type": "string",
+          "x-go-name": "Subject"
+        },
+        "title": {
+          "type": "string",
+          "x-go-name": "Title"
+        },
+        "url": {
+          "type": "string",
+          "x-go-name": "Self"
         }
       },
       "x-go-package": "code.gitea.io/gitea/modules/structs"
@@ -14972,6 +15133,27 @@
         "items": {
           "$ref": "#/definitions/BranchProtection"
         }
+      }
+    },
+    "CatalogEntry": {
+      "description": "CatalogEntry",
+      "schema": {
+        "$ref": "#/definitions/Door43Metadata"
+      }
+    },
+    "CatalogMetadata": {
+      "description": "CatalogMetadata",
+      "schema": {
+        "type": "object",
+        "additionalProperties": {
+          "type": "object"
+        }
+      }
+    },
+    "CatalogSearchResults": {
+      "description": "CatalogSearchResults",
+      "schema": {
+        "$ref": "#/definitions/CatalogSearchResults"
       }
     },
     "Comment": {

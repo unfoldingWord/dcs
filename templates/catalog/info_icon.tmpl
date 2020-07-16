@@ -1,0 +1,19 @@
+<span id="search-info-icon" class="ui text grey"
+  style="position: absolute; right: 90px; top: 10px; font-size: 1.2em;"
+  data-html="Catalog search is case insensitive.
+             Multiple phrases can be searched by separating with commas.<br/>
+             The following fields can be search for exact match (separate with a comma):<br/>
+             subject, lang, book, owner, repo, tag. Example: subject:"obs study notes", lang:en<br/>
+             Wildcards: Use _ for any character;<br/>
+                        % for any # of characters;<br/>
+                        Use \_ and \% to search for _ and %."
+  data-variation="wide">
+  <i class="ui fa fa-question-circle-o"></i>
+</span>
+
+<script src="{{StaticUrlPrefix}}/js/jquery.js?v={{MD5 AppVer}}"></script>
+<script>
+  $(document).ready(function() {
+    $('#search-info-icon').popup();
+  });
+</script>

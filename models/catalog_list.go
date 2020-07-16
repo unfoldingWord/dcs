@@ -24,6 +24,8 @@ const (
 	CatalogOrderByTitleReverse    CatalogOrderBy = "JSON_EXTRACT(`door43_metadata`.metadata, '$.dublin_core.title') DESC"
 	CatalogOrderBySubject         CatalogOrderBy = "JSON_EXTRACT(`door43_metadata`.metadata, '$.dublin_core.subject') ASC"
 	CatalogOrderBySubjectReverse  CatalogOrderBy = "JSON_EXTRACT(`door43_metadata`.metadata, '$.dublin_core.subject') DESC"
+	CatalogOrderByTag             CatalogOrderBy = "`release`.tag_name ASC"
+	CatalogOrderByTagReverse      CatalogOrderBy = "`release`.tag_name DESC"
 	CatalogOrderByLangCode        CatalogOrderBy = "JSON_EXTRACT(`door43_metadata`.metadata, '$.dublin_core.language.identifier') ASC"
 	CatalogOrderByLangCodeReverse CatalogOrderBy = "JSON_EXTRACT(`door43_metadata`.metadata, '$.dublin_core.language.identifier') DESC"
 	CatalogOrderByOldest          CatalogOrderBy = "`release`.created_unix ASC"
@@ -91,19 +93,20 @@ func valuesDoor43Metadata(m map[int64]*Door43Metadata) []*Door43Metadata {
 // SearchCatalogOptions holds the search options
 type SearchCatalogOptions struct {
 	ListOptions
-	Keywords          []string
-	Owner             string
-	Repo              string
 	RepoID            int64
+	Keywords          []string
+	Owners            []string
+	Repos             []string
 	Tags              []string
-	OrderBy           CatalogOrderBy
 	Stages            []string
-	IncludeHistory    bool
-	Subject           string
+	Subjects          []string
+	CheckingLevels    []string
 	Books             []string
-	CheckingLevel     string
+	IncludeHistory    bool
 	SearchAllMetadata bool
+	ShowIngredients   bool
 	Languages         []string
+	OrderBy           []CatalogOrderBy
 }
 
 // Stage values
@@ -125,11 +128,19 @@ func SearchCatalogCondition(opts *SearchCatalogOptions) builder.Cond {
 	if opts.RepoID > 0 {
 		cond = cond.And(builder.Eq{"`repository`.ID": opts.RepoID})
 	} else {
-		if opts.Repo != "" {
-			cond = cond.And(builder.Eq{"`repository`.lower_name": strings.ToLower(opts.Repo)})
+		if len(opts.Repos) > 0 {
+			var repoCond = builder.NewCond()
+			for _, repo := range opts.Repos {
+				repoCond = repoCond.Or(builder.Eq{"`repository`.lower_name": strings.ToLower(repo)})
+			}
+			cond.And(repoCond)
 		}
-		if opts.Owner != "" {
-			cond = cond.And(builder.Eq{"`user`.lower_name": strings.ToLower(opts.Owner)})
+		if len(opts.Owners) > 0 {
+			var ownerCond = builder.NewCond()
+			for _, owner := range opts.Owners {
+				ownerCond = ownerCond.Or(builder.Eq{"`user`.lower_name": strings.ToLower(owner)})
+			}
+			cond.And(ownerCond)
 		}
 	}
 
@@ -165,8 +176,12 @@ func SearchCatalogCondition(opts *SearchCatalogOptions) builder.Cond {
 		cond = cond.And(subStageCond).And(subHistoryCond)
 	}
 
-	if opts.Subject != "" {
-		cond = cond.And(builder.Eq{"LOWER(JSON_EXTRACT(`door43_metadata`.metadata, '$.dublin_core.subject')": strings.ToLower(opts.Subject)})
+	if len(opts.Subjects) > 0 {
+		var subjectCond = builder.NewCond()
+		for _, subject := range opts.Subjects {
+			subjectCond = subjectCond.Or(builder.Eq{"LOWER(JSON_EXTRACT(`door43_metadata`.metadata, '$.dublin_core.subject'))": strings.ToLower(subject)})
+		}
+		cond = cond.And(subjectCond)
 	}
 	if len(opts.Languages) > 0 {
 		var langCond = builder.NewCond()
@@ -188,8 +203,12 @@ func SearchCatalogCondition(opts *SearchCatalogOptions) builder.Cond {
 		}
 		cond = cond.And(bookCond)
 	}
-	if opts.CheckingLevel != "" {
-		cond = cond.And(builder.Eq{"JSON_EXTRACT(`door43_metadata`.metadata, '$.checking.checking_level')": opts.CheckingLevel})
+	if len(opts.CheckingLevels) > 0 {
+		var checkingCond = builder.NewCond()
+		for _, checking := range opts.CheckingLevels {
+			checkingCond = checkingCond.Or(builder.Eq{"JSON_EXTRACT(`door43_metadata`.metadata, '$.checking.checking_level')": checking})
+		}
+		cond.And(checkingCond)
 	}
 	if len(opts.Tags) > 0 {
 		cond = cond.And(builder.In("`release`.tag_name", opts.Tags))
@@ -226,7 +245,7 @@ func SearchCatalogByCondition(opts *SearchCatalogOptions, cond builder.Cond, loa
 	}
 
 	if len(opts.OrderBy) == 0 {
-		opts.OrderBy = CatalogOrderByNewest
+		opts.OrderBy = []CatalogOrderBy{CatalogOrderByNewest}
 	}
 
 	sess := x.NewSession()
@@ -236,8 +255,11 @@ func SearchCatalogByCondition(opts *SearchCatalogOptions, cond builder.Cond, loa
 	sess.Join("INNER", "repository", "`repository`.id = `door43_metadata`.repo_id").
 		Join("INNER", "user", "`repository`.owner_id = `user`.id").
 		Join("LEFT", "release", "`release`.id = `door43_metadata`.release_id").
-		Where(cond).
-		OrderBy(opts.OrderBy.String())
+		Where(cond)
+
+	for _, orderBy := range opts.OrderBy {
+		sess.OrderBy(orderBy.String())
+	}
 
 	if len(opts.Stages) == 0 || contains(opts.Stages, "prod") {
 		sess.Join("LEFT", "(SELECT `release`.repo_id, COUNT(*) AS prod_count, MAX(`release`.created_unix) AS latest_prod_created_unix FROM `release` JOIN `door43_metadata` ON `door43_metadata`.release_id = `release`.id WHERE `release`.is_prerelease = 0 GROUP BY `release`.repo_id) `prod_info`", "`prod_info`.repo_id = `door43_metadata`.repo_id")
