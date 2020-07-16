@@ -82,7 +82,7 @@ func (dm *Door43Metadata) innerAPIFormat(e *xorm.Engine) *structs.Door43Metadata
 	stage := ""
 	released := ""
 	releaseURL := ""
-	metadataURL := ""
+	metadataFile := ""
 	if dm.ReleaseID > 0 {
 		tag = dm.Release.TagName
 		releaseURL = dm.Release.APIURL()
@@ -96,11 +96,11 @@ func (dm *Door43Metadata) innerAPIFormat(e *xorm.Engine) *structs.Door43Metadata
 				stage = StageProd
 			}
 		}
-		metadataURL = dm.Repo.HTMLURL() + "/raw/tag/" + dm.Release.TagName + "/manifest.yaml"
+		metadataFile = dm.Repo.HTMLURL() + "/raw/tag/" + dm.Release.TagName + "/manifest.yaml"
 	} else {
 		tag = dm.Repo.DefaultBranch
 		stage = StageLatest
-		metadataURL = dm.Repo.HTMLURL() + "/raw/branch/" + dm.Repo.DefaultBranch + "/manifest.yaml"
+		metadataFile = dm.Repo.HTMLURL() + "/raw/branch/" + dm.Repo.DefaultBranch + "/manifest.yaml"
 	}
 	return &structs.Door43Metadata{
 		ID:              dm.ID,
@@ -117,8 +117,8 @@ func (dm *Door43Metadata) innerAPIFormat(e *xorm.Engine) *structs.Door43Metadata
 		Stage:           stage,
 		Released:        released,
 		MetadataVersion: dm.MetadataVersion,
-		MetadataURL:     metadataURL,
-		MetadataAPIURL:  dm.APIURL() + "/metadata",
+		MetadataURL:     dm.APIURL() + "/metadata",
+		MetadataFile:    metadataFile,
 		Ingredients:     (*dm.Metadata)["projects"].([]interface{}),
 	}
 }
