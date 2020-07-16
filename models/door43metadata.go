@@ -105,6 +105,8 @@ func (dm *Door43Metadata) innerAPIFormat(e *xorm.Engine) *structs.Door43Metadata
 	return &structs.Door43Metadata{
 		ID:              dm.ID,
 		Self:            dm.APIURL(),
+		Repo:            dm.Repo.Name,
+		Owner:           dm.Repo.OwnerName,
 		RepoURL:         dm.Repo.APIURL(),
 		ReleaseURL:      releaseURL,
 		Language:        (*dm.Metadata)["dublin_core"].(map[string]interface{})["language"].(map[string]interface{})["identifier"].(string),

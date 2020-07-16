@@ -8,6 +8,8 @@ package structs
 type Door43Metadata struct {
 	ID              int64         `json:"id"`
 	Self            string        `json:"url"`
+	Repo            string        `json:"repo"`
+	Owner           string        `json:"owner"`
 	RepoURL         string        `json:"repo_url"`
 	ReleaseURL      string        `json:"release_url"`
 	Language        string        `json:"lang_code"`
