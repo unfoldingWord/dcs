@@ -183,10 +183,10 @@ func ExploreRepos(ctx *context.Context) {
 	}
 
 	RenderRepoSearch(ctx, &RepoSearchOptions{
-		PageSize: setting.UI.ExplorePagingNum,
-		OwnerID:  ownerID,
-		Private:  ctx.User != nil,
-		TplName:  tplExploreRepos,
+		PageSize:  setting.UI.ExplorePagingNum,
+		OwnerID:   ownerID,
+		Private:   ctx.User != nil,
+		TplName:   tplExploreRepos,
 		Languages: ctx.QueryStrings("lang"),
 	})
 }

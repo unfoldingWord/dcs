@@ -59,6 +59,7 @@
 package v1
 
 import (
+	"code.gitea.io/gitea/routers/api/v1/catalog"
 	"net/http"
 	"strings"
 
@@ -512,9 +513,6 @@ func RegisterRoutes(m *macaron.Macaron) {
 		m.Get("/signing-key.gpg", misc.SigningKey)
 		m.Post("/markdown", bind(api.MarkdownOption{}), misc.Markdown)
 		m.Post("/markdown/raw", misc.MarkdownRaw)
-		/*** DCS Customizations ***/
-		m.Post("/yaml", bind(misc.YamlOption{}), misc.Yaml)
-		/*** END DCS Customizations ***/
 
 		// Notifications
 		m.Group("/notifications", func() {
@@ -942,6 +940,24 @@ func RegisterRoutes(m *macaron.Macaron) {
 		m.Group("/topics", func() {
 			m.Get("/search", repo.TopicSearch)
 		})
+
+		/*** DCS Customizations ***/
+		m.Post("/yaml", bind(misc.YamlOption{}), misc.Yaml)
+		// Catalog
+		m.Group("/catalog", func() {
+			m.Get("", catalog.Search)
+			m.Group("/:ownername", func() {
+				m.Get("", catalog.SearchOwner)
+				m.Group("/:reponame", func() {
+					m.Get("", catalog.SearchRepo)
+					m.Group("/:tag", func() {
+						m.Get("", catalog.GetCatalogEntry)
+						m.Get("/metadata", catalog.GetCatalogMetadata)
+					})
+				}, repoAssignment())
+			})
+		})
+		/*** END DCS Customizations ***/
 	}, securityHeaders(), context.APIContexter(), sudo())
 }
 

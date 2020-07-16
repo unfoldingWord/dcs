@@ -8,6 +8,7 @@ package dcs
 
 import (
 	"bytes"
+	"encoding/csv"
 	"strings"
 
 	"code.gitea.io/gitea/models"
@@ -84,25 +85,60 @@ func RenderCatalogSearch(ctx *context.Context, opts *CatalogSearchOptions) {
 		orderBy = models.CatalogOrderByNewest
 	}
 
-	keyword := strings.Trim(ctx.Query("q"), " ")
-	topicOnly := ctx.QueryBool("topic")
-	ctx.Data["TopicOnly"] = topicOnly
+	books := []string{}
+	langs := []string{}
+	keywords := []string{}
+	subject := ""
+	repo := ""
+	owner := ""
+	query := strings.Trim(ctx.Query("q"), " ")
+	if query != "" {
+		// Split keyword, keeping words in quotes
+		r := csv.NewReader(strings.NewReader(query))
+		r.Comma = ' ' // space
+		tokens, err := r.Read()
+		if err != nil {
+			keywords = append(keywords, query)
+		} else {
+			for _, token := range tokens {
+				if strings.HasPrefix(token, "book:") {
+					books = append(books, strings.TrimLeft(token, "book:"))
+				} else if strings.HasPrefix(token, "lang:") {
+					langs = append(langs, strings.TrimLeft(token, "lang:"))
+				} else if strings.HasPrefix(token, "subject:") {
+					subject = strings.TrimLeft(token, "subject:")
+				} else if strings.HasPrefix(token, "repo:") {
+					repo = strings.TrimLeft(token, "repo:")
+				} else if strings.HasPrefix(token, "owner:") {
+					owner = strings.TrimLeft(token, "owner:")
+				} else {
+					keywords = append(keywords, token)
+				}
+			}
+		}
+	}
 
 	dms, count, err = models.SearchCatalog(&models.SearchCatalogOptions{
 		ListOptions: models.ListOptions{
 			Page:     page,
 			PageSize: opts.PageSize,
 		},
-		OrderBy:            orderBy,
-		Keyword:            keyword,
-		TopicOnly:          topicOnly,
-		IncludeAllMetadata: true,
+		OrderBy:           orderBy,
+		Keywords:          keywords,
+		SearchAllMetadata: true,
+		Stages:            []string{models.StageProd},
+		IncludeHistory:    false,
+		Books:             books,
+		Subject:           subject,
+		Languages:         langs,
+		Repo:              repo,
+		Owner:             owner,
 	})
 	if err != nil {
 		ctx.ServerError("SearchCatalog", err)
 		return
 	}
-	ctx.Data["Keyword"] = keyword
+	ctx.Data["Keyword"] = query
 	ctx.Data["Total"] = count
 	ctx.Data["Door43Metadatas"] = dms
 	ctx.Data["IsRepoIndexerEnabled"] = setting.Indexer.RepoIndexerEnabled

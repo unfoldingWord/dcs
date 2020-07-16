@@ -103,6 +103,10 @@ func Search(ctx *context.APIContext) {
 	//   in: query
 	//   description: If the repo is a resource of the given language(s), the repo will be in the results. Multiple lang's are ORed.
 	//   type: string
+	// - name: subject
+	//   in: query
+	//   description: resource subject
+	//   type: string
 	// - name: book
 	//   in: query
 	//   description: book (project id) that exist in a resource. If the resource contains the
@@ -131,10 +135,6 @@ func Search(ctx *context.APIContext) {
 	//   in: query
 	//   description: page size of results, maximum page size is 50
 	//   type: integer
-	// - name: subject
-	//   in: query
-	//   description: resource subject
-	//   type: string
 	// responses:
 	//   "200":
 	//     "$ref": "#/responses/SearchResults"
@@ -154,12 +154,12 @@ func Search(ctx *context.APIContext) {
 		Template:           util.OptionalBoolNone,
 		StarredByID:        ctx.QueryInt64("starredBy"),
 		IncludeDescription: ctx.QueryBool("includeDesc"),
-		Subject:            ctx.Query("subject"),
-		Books:              ctx.QueryStrings("book"),
-		CheckingLevel:      ctx.Query("checking_level"),
-		IncludeAllMetadata: true,
 		/*** DCS Customizations ***/
-		Languages: ctx.QueryStrings("lang"),
+		Languages:         ctx.QueryStrings("lang"),
+		Subject:           ctx.Query("subject"),
+		Books:             ctx.QueryStrings("book"),
+		CheckingLevel:     ctx.Query("checking_level"),
+		SearchAllMetadata: true,
 		/*** END DCS Customizations ***/
 	}
 
