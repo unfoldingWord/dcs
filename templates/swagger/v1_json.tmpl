@@ -441,7 +441,7 @@
           {
             "type": "string",
             "description": "search only for entries with the given checking level(s). Can be 1, 2 or 3",
-            "name": "checking_level",
+            "name": "checkingLevel",
             "in": "query"
           },
           {
@@ -560,7 +560,7 @@
           {
             "type": "string",
             "description": "search only for entries with the given checking level(s). Can be 1, 2 or 3",
-            "name": "checking_level",
+            "name": "checkingLevel",
             "in": "query"
           },
           {
@@ -680,7 +680,7 @@
           {
             "type": "string",
             "description": "search only for entries with the given checking level(s). Can be 1, 2 or 3",
-            "name": "checking_level",
+            "name": "checkingLevel",
             "in": "query"
           },
           {
@@ -12277,9 +12277,9 @@
           "type": "string",
           "x-go-name": "Language"
         },
-        "metadata_api_url": {
+        "metadata_file": {
           "type": "string",
-          "x-go-name": "MetadataAPIURL"
+          "x-go-name": "MetadataFile"
         },
         "metadata_url": {
           "type": "string",
@@ -12289,6 +12289,10 @@
           "type": "string",
           "x-go-name": "MetadataVersion"
         },
+        "owner": {
+          "type": "string",
+          "x-go-name": "Owner"
+        },
         "release_url": {
           "type": "string",
           "x-go-name": "ReleaseURL"
@@ -12296,6 +12300,10 @@
         "released": {
           "type": "string",
           "x-go-name": "Released"
+        },
+        "repo": {
+          "type": "string",
+          "x-go-name": "Repo"
         },
         "repo_url": {
           "type": "string",
