@@ -81,7 +81,7 @@ func Search(ctx *context.APIContext) {
 	//   in: query
 	//   description: search only for entries with the given subject(s). Must match the entire string (case insensitive)
 	//   type: string
-	// - name: checking_level
+	// - name: checkingLevel
 	//   in: query
 	//   description: search only for entries with the given checking level(s). Can be 1, 2 or 3
 	//   type: string
@@ -171,7 +171,7 @@ func SearchOwner(ctx *context.APIContext) {
 	//   in: query
 	//   description: search only for entries with the given subject(s). Must match the entire string (case insensitive)
 	//   type: string
-	// - name: checking_level
+	// - name: checkingLevel
 	//   in: query
 	//   description: search only for entries with the given checking level(s). Can be 1, 2 or 3
 	//   type: string
@@ -262,7 +262,7 @@ func SearchRepo(ctx *context.APIContext) {
 	//   in: query
 	//   description: search only for entries with the given subject(s). Must match the entire string (case insensitive)
 	//   type: string
-	// - name: checking_level
+	// - name: checkingLevel
 	//   in: query
 	//   description: search only for entries with the given checking level(s). Can be 1, 2 or 3
 	//   type: string
@@ -437,10 +437,10 @@ func searchCatalog(ctx *context.APIContext) {
 		Stages:            queryStrings(ctx, "stage"),
 		Languages:         queryStrings(ctx, "lang"),
 		Subjects:          queryStrings(ctx, "subject"),
-		CheckingLevels:    queryStrings(ctx, "checking_level"),
+		CheckingLevels:    queryStrings(ctx, "checkingLevel"),
 		Books:             queryStrings(ctx, "book"),
 		IncludeHistory:    ctx.QueryBool("includeHistory"),
-		ShowIngredients:   ctx.QueryBool("show_ingredients"),
+		ShowIngredients:   ctx.QueryBool("showIngredients"),
 		SearchAllMetadata: searchAllMetadata,
 	}
 
