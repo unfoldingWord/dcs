@@ -100,7 +100,7 @@ func (dm *Door43Metadata) innerAPIFormat(e *xorm.Engine) *structs.Door43Metadata
 	} else {
 		tag = dm.Repo.DefaultBranch
 		stage = StageLatest
-		metadataURL = dm.Repo.APIURL() + "/raw/branch/" + dm.Repo.DefaultBranch + "/manifest.yaml"
+		metadataURL = dm.Repo.HTMLURL() + "/raw/branch/" + dm.Repo.DefaultBranch + "/manifest.yaml"
 	}
 	return &structs.Door43Metadata{
 		ID:              dm.ID,
