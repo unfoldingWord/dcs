@@ -96,7 +96,7 @@ func (dm *Door43Metadata) innerAPIFormat(e *xorm.Engine) *structs.Door43Metadata
 				stage = StageProd
 			}
 		}
-		metadataURL = dm.Repo.APIURL() + "/raw/tag/" + dm.Release.TagName + "/manifest.yaml"
+		metadataURL = dm.Repo.HTMLURL() + "/raw/tag/" + dm.Release.TagName + "/manifest.yaml"
 	} else {
 		tag = dm.Repo.DefaultBranch
 		stage = StageLatest
