@@ -946,7 +946,7 @@ func RegisterRoutes(m *macaron.Macaron) {
 		// Catalog
 		m.Group("/catalog", func() {
 			m.Get("", catalog.Search)
-			m.Group("/:ownername", func() {
+			m.Group("/:username", func() {
 				m.Get("", catalog.SearchOwner)
 				m.Group("/:reponame", func() {
 					m.Get("", catalog.SearchRepo)

@@ -13,14 +13,14 @@ type Door43Metadata struct {
 	Language        string        `json:"lang_code"`
 	Subject         string        `json:"subject"`
 	Title           string        `json:"title"`
-	Books           []string      `json:"books"`
 	Tag             string        `json:"branch_or_tag_name"`
 	Stage           string        `json:"stage"`
-	Ingredients     []interface{} `json:"ingredients"`
 	MetadataURL     string        `json:"metadata_url"`
 	MetadataAPIURL  string        `json:"metadata_api_url"`
 	MetadataVersion string        `json:"metadata_version"`
 	Released        string        `json:"released"`
+	Books           []string      `json:"books"`
+	Ingredients     []interface{} `json:"ingredients,omitempty"`
 }
 
 // CatalogSearchResults results of a successful search

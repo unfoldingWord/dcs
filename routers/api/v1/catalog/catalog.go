@@ -6,27 +6,27 @@
 package catalog
 
 import (
-	"encoding/csv"
+	"code.gitea.io/gitea/routers/dcs"
 	"fmt"
 	"net/http"
 	"strings"
 
 	"code.gitea.io/gitea/models"
 	"code.gitea.io/gitea/modules/context"
-	"code.gitea.io/gitea/modules/log"
 	api "code.gitea.io/gitea/modules/structs"
 	"code.gitea.io/gitea/routers/api/v1/utils"
 )
 
 var searchOrderByMap = map[string]map[string]models.CatalogOrderBy{
 	"asc": {
-		"title":    models.CatalogOrderByTitle,
 		"subject":  models.CatalogOrderBySubject,
-		"created":  models.CatalogOrderByOldest,
+		"title":    models.CatalogOrderByTitle,
+		"released": models.CatalogOrderByOldest,
 		"lang":     models.CatalogOrderByLangCode,
 		"releases": models.CatalogOrderByReleases,
 		"stars":    models.CatalogOrderByStars,
 		"forks":    models.CatalogOrderByForks,
+		"tag":      models.CatalogOrderByTag,
 	},
 	"desc": {
 		"title":    models.CatalogOrderByTitleReverse,
@@ -36,6 +36,7 @@ var searchOrderByMap = map[string]map[string]models.CatalogOrderBy{
 		"releases": models.CatalogOrderByReleasesReverse,
 		"stars":    models.CatalogOrderByStarsReverse,
 		"forks":    models.CatalogOrderByForksReverse,
+		"tag":      models.CatalogOrderByTagReverse,
 	},
 }
 
@@ -49,59 +50,62 @@ func Search(ctx *context.APIContext) {
 	// parameters:
 	// - name: q
 	//   in: query
-	//   description: keyword
+	//   description: keyword(s). Can use multiple `q=<keyword>`s or commas for more than one keyword
 	//   type: string
-	// - name: topic
+	// - name: owner
 	//   in: query
-	//   description: Limit search to repositories with keyword as topic
-	//   type: boolean
-	// - name: includeDesc
-	//   in: query
-	//   description: include search of keyword within repository description
-	//   type: boolean
-	// - name: stage
-	//   in: query
-	//   description: One ore more stages to return. Supported values are
-	//                "prod" (production releases),
-	//                "preprod" (pre-production releases),
-	//                "draft" (draft releases), and
-	//                "latest" (the default branch if it is a valid RC).
-	//                Can have multiple stages given.
+	//   description: search only for entries with the given owner name(s).
 	//   type: string
-	// - name: includeHistory
+	// - name: repo
 	//   in: query
-	//   description: If true, all releases, not just the latest, are included
-	//   type: bool
-	// - name: searchAllMetadata
-	//   in: query
-	//   description: By default is true. If false, not all metadata values are searched, only subject and title
-	//   type: bool
-	// - name: lang
-	//   in: query
-	//   description: If the repo is a resource of the given language(s), the repo will be in the results. Multiple lang's are ORed.
-	//   type: string
-	// - name: subject
-	//   in: query
-	//   description: resource subject
-	//   type: string
-	// - name: book
-	//   in: query
-	//   description: book (project id) that exist in a resource. If the resource contains the
-	//                the book, its repository will be included in the results
-	//   type: string
-	// - name: checking_level
-	//   in: query
-	//   description: Checking level of the resource can be 1, 2 or 3
-	//   type: string
-	// - name: sort
-	//   in: query
-	//   description: sort repos by attribute. Supported values are
-	//                "alpha", "created", "updated", "size", and "id".
-	//                Default is "alpha"
+	//   description: search only for entries with the given repo name(s).
 	//   type: string
 	// - name: tag
 	//   in: query
-	//   description: A release tag that the catalog entry has to have. Useful with `subject` and `searchAllHistory` options.
+	//   description: search only for entries with the given release tag(s)
+	//   type: string
+	// - name: lang
+	//   in: query
+	//   description: search only for entries with the given language(s)
+	//   type: string
+	// - name: stage
+	//   in: query
+	//   description: search only for entries with the given stage(s).
+	//                Supported values are
+	//                "prod" (production releases),
+	//                "preprod" (pre-production releases),
+	//                "draft" (draft releases), and
+	//                "latest" (the default branch if it is a valid RC)
+	//   type: string
+	// - name: subject
+	//   in: query
+	//   description: search only for entries with the given subject(s). Must match the entire string (case insensitive)
+	//   type: string
+	// - name: checking_level
+	//   in: query
+	//   description: search only for entries with the given checking level(s). Can be 1, 2 or 3
+	//   type: string
+	// - name: book
+	//   in: query
+	//   description: search only for entries with the given book(s) (project ids)
+	//   type: string
+	// - name: includeHistory
+	//   in: query
+	//   description: if true, all releases, not just the latest, are included. Default is false
+	//   type: bool
+	// - name: searchAllMetadata
+	//   in: query
+	//   description: if false, only subject and title are searched with query terms, if true all metadata values are searched. Default is true
+	//   type: bool
+	// - name: showIngredients
+	//   in: query
+	//   description: if true, a list of the projects in the resource and their file paths will be listed for each entry. Default is false
+	//   type: bool
+	// - name: sort
+	//   in: query
+	//   description: sort repos alphanumerically by attribute. Supported values are
+	//                "subject", "title", "tag", "released", "lang", "releases", "stars", "forks".
+	//                Default is by "language", "subject" and then "tag"
 	//   type: string
 	// - name: order
 	//   in: query
@@ -121,6 +125,7 @@ func Search(ctx *context.APIContext) {
 	//     "$ref": "#/responses/CatalogSearchResults"
 	//   "422":
 	//     "$ref": "#/responses/validationError"
+
 	searchCatalog(ctx)
 }
 
@@ -132,73 +137,65 @@ func SearchOwner(ctx *context.APIContext) {
 	// produces:
 	// - application/json
 	// parameters:
+	// - name: owner
+	//   in: path
+	//   description: owner of entries
+	//   type: string
+	//   required: true
 	// - name: q
 	//   in: query
-	//   description: keyword
-	//   type: string
-	// - name: topic
-	//   in: query
-	//   description: Limit search to repositories with keyword as topic
-	//   type: boolean
-	// - name: includeDesc
-	//   in: query
-	//   description: include search of keyword within repository description
-	//   type: boolean
-	// - name: owner
-	//   in: query
-	//   description: search only for repos with the given owner name.
+	//   description: keyword(s). Can use multiple `q=<keyword>`s or commas for more than one keyword
 	//   type: string
 	// - name: repo
 	//   in: query
-	//   description: search only for repos with the given repo name.
-	//   type: string
-	// - name: ref
-	//   in: query
-	//   description: search only for catalog entries with the given ref (branch or tag)
-	//   type: string
-	// - name: stage
-	//   in: query
-	//   description: One ore more stages to return. Supported values are
-	//                "prod" (production releases),
-	//                "preprod" (pre-production releases),
-	//                "draft" (draft releases), and
-	//                "latest" (the default branch if it is a valid RC).
-	//                Can have multiple stages given.
-	//   type: string
-	// - name: includeHistory
-	//   in: query
-	//   description: If true, all releases, not just the latest, are included
-	//   type: bool
-	// - name: searchAllMetadata
-	//   in: query
-	//   description: By default is true. If false, not all metadata values are searched, only subject and title
-	//   type: bool
-	// - name: lang
-	//   in: query
-	//   description: If the repo is a resource of the given language(s), the repo will be in the results. Multiple lang's are ORed.
-	//   type: string
-	// - name: subject
-	//   in: query
-	//   description: resource subject
-	//   type: string
-	// - name: book
-	//   in: query
-	//   description: book (project id) that exist in a resource. If the resource contains the
-	//                the book, its repository will be included in the results
-	//   type: string
-	// - name: checking_level
-	//   in: query
-	//   description: Checking level of the resource can be 1, 2 or 3
-	//   type: string
-	// - name: sort
-	//   in: query
-	//   description: sort repos by attribute. Supported values are
-	//                "alpha", "created", "updated", "size", and "id".
-	//                Default is "alpha"
+	//   description: search only for entries with the given repo name(s).
 	//   type: string
 	// - name: tag
 	//   in: query
-	//   description: A release tag that the catalog entry has to have. Useful with `subject` and `searchAllHistory` options.
+	//   description: search only for entries with the given release tag(s)
+	//   type: string
+	// - name: lang
+	//   in: query
+	//   description: search only for entries with the given language(s)
+	//   type: string
+	// - name: stage
+	//   in: query
+	//   description: search only for entries with the given stage(s).
+	//                Supported values are
+	//                "prod" (production releases),
+	//                "preprod" (pre-production releases),
+	//                "draft" (draft releases), and
+	//                "latest" (the default branch if it is a valid RC)
+	//   type: string
+	// - name: subject
+	//   in: query
+	//   description: search only for entries with the given subject(s). Must match the entire string (case insensitive)
+	//   type: string
+	// - name: checking_level
+	//   in: query
+	//   description: search only for entries with the given checking level(s). Can be 1, 2 or 3
+	//   type: string
+	// - name: book
+	//   in: query
+	//   description: search only for entries with the given book(s) (project ids)
+	//   type: string
+	// - name: includeHistory
+	//   in: query
+	//   description: if true, all releases, not just the latest, are included. Default is false
+	//   type: bool
+	// - name: searchAllMetadata
+	//   in: query
+	//   description: if false, only subject and title are searched with query terms, if true all metadata values are searched. Default is true
+	//   type: bool
+	// - name: showIngredients
+	//   in: query
+	//   description: if true, a list of the projects in the resource and their file paths will be listed for each entry. Default is false
+	//   type: bool
+	// - name: sort
+	//   in: query
+	//   description: sort repos alphanumerically by attribute. Supported values are
+	//                "subject", "title", "tag", "released", "lang", "releases", "stars", "forks".
+	//                Default is by "language", "subject" and then "tag"
 	//   type: string
 	// - name: order
 	//   in: query
@@ -218,6 +215,7 @@ func SearchOwner(ctx *context.APIContext) {
 	//     "$ref": "#/responses/CatalogSearchResults"
 	//   "422":
 	//     "$ref": "#/responses/validationError"
+
 	searchCatalog(ctx)
 }
 
@@ -229,61 +227,66 @@ func SearchRepo(ctx *context.APIContext) {
 	// produces:
 	// - application/json
 	// parameters:
+	// - name: owner
+	//   in: path
+	//   description: name of the owner
+	//   type: string
+	//   required: true
+	// - name: repo
+	//   in: path
+	//   description: name of the repo
+	//   type: string
+	//   required: true
 	// - name: q
 	//   in: query
-	//   description: keyword
-	//   type: string
-	// - name: topic
-	//   in: query
-	//   description: Limit search to repositories with keyword as topic
-	//   type: boolean
-	// - name: includeDesc
-	//   in: query
-	//   description: include search of keyword within repository description
-	//   type: boolean
-	// - name: stage
-	//   in: query
-	//   description: One ore more stages to return. Supported values are
-	//                "prod" (production releases),
-	//                "preprod" (pre-production releases),
-	//                "draft" (draft releases), and
-	//                "latest" (the default branch if it is a valid RC).
-	//                Can have multiple stages given.
-	//   type: string
-	// - name: includeHistory
-	//   in: query
-	//   description: If true, all releases, not just the latest, are included
-	//   type: bool
-	// - name: searchAllMetadata
-	//   in: query
-	//   description: By default is true. If false, not all metadata values are searched, only subject and title
-	//   type: bool
-	// - name: lang
-	//   in: query
-	//   description: If the repo is a resource of the given language(s), the repo will be in the results. Multiple lang's are ORed.
-	//   type: string
-	// - name: subject
-	//   in: query
-	//   description: resource subject
-	//   type: string
-	// - name: book
-	//   in: query
-	//   description: book (project id) that exist in a resource. If the resource contains the
-	//                the book, its repository will be included in the results
-	//   type: string
-	// - name: checking_level
-	//   in: query
-	//   description: Checking level of the resource can be 1, 2 or 3
-	//   type: string
-	// - name: sort
-	//   in: query
-	//   description: sort repos by attribute. Supported values are
-	//                "alpha", "created", "updated", "size", and "id".
-	//                Default is "alpha"
+	//   description: keyword(s). Can use multiple `q=<keyword>`s or commas for more than one keyword
 	//   type: string
 	// - name: tag
 	//   in: query
-	//   description: A release tag that the catalog entry has to have. Useful with `subject` and `searchAllHistory` options.
+	//   description: search only for entries with the given release tag(s)
+	//   type: string
+	// - name: lang
+	//   in: query
+	//   description: search only for entries with the given language(s)
+	//   type: string
+	// - name: stage
+	//   in: query
+	//   description: search only for entries with the given stage(s).
+	//                Supported values are
+	//                "prod" (production releases),
+	//                "preprod" (pre-production releases),
+	//                "draft" (draft releases), and
+	//                "latest" (the default branch if it is a valid RC)
+	//   type: string
+	// - name: subject
+	//   in: query
+	//   description: search only for entries with the given subject(s). Must match the entire string (case insensitive)
+	//   type: string
+	// - name: checking_level
+	//   in: query
+	//   description: search only for entries with the given checking level(s). Can be 1, 2 or 3
+	//   type: string
+	// - name: book
+	//   in: query
+	//   description: search only for entries with the given book(s) (project ids)
+	//   type: string
+	// - name: includeHistory
+	//   in: query
+	//   description: if true, all releases, not just the latest, are included. Default is false
+	//   type: bool
+	// - name: searchAllMetadata
+	//   in: query
+	//   description: if false, only subject and title are searched with query terms, if true all metadata values are searched. Default is true
+	//   type: bool
+	// - name: showIngredients
+	//   in: query
+	//   description: if true, a list of the projects in the resource and their file paths will be listed for each entry. Default is false
+	//   type: bool
+	// - name: sort
+	//   in: query
+	//   description: sort repos alphanumerically by attribute. Supported values are
+	//                "subject", "title", "tag", "released", "lang", "releases", "stars", "forks".
+	//                Default is language,subject,tag
 	//   type: string
 	// - name: order
 	//   in: query
@@ -303,7 +306,6 @@ func SearchRepo(ctx *context.APIContext) {
 	//     "$ref": "#/responses/CatalogSearchResults"
 	//   "422":
 	//     "$ref": "#/responses/validationError"
-
 	searchCatalog(ctx)
 }
 
@@ -314,13 +316,36 @@ func GetCatalogEntry(ctx *context.APIContext) {
 	// summary: Catalog entry
 	// produces:
 	// - application/json
+	// parameters:
+	// - name: owner
+	//   in: path
+	//   description: name of the owner
+	//   type: string
+	//   required: true
+	// - name: repo
+	//   in: path
+	//   description: name of the repo
+	//   type: string
+	//   required: true
+	// - name: tag
+	//   in: path
+	//   description: release tag or default branch
+	//   type: string
+	//   required: true
 	// responses:
 	//   "200":
 	//     "$ref": "#/responses/CatalogEntry"
 	//   "422":
 	//     "$ref": "#/responses/validationError"
 
-	dm, err := models.GetDoor43MetadataByRepoIDAndTagName(ctx.Repo.Repository.ID, ctx.Repo.TagName)
+	tag := ctx.Params("tag")
+	var dm *models.Door43Metadata
+	var err error
+	if tag == ctx.Repo.Repository.DefaultBranch {
+		dm, err = models.GetDoor43MetadataByRepoIDAndReleaseID(ctx.Repo.Repository.ID, 0)
+	} else {
+		dm, err = models.GetDoor43MetadataByRepoIDAndTagName(ctx.Repo.Repository.ID, tag)
+	}
 	if err != nil {
 		ctx.Error(http.StatusInternalServerError, "GetDoor43MetadataByRepoIDAndTagName", err)
 		return
@@ -335,6 +360,22 @@ func GetCatalogMetadata(ctx *context.APIContext) {
 	// summary: Catalog entry metadata
 	// produces:
 	// - application/json
+	// parameters:
+	// - name: owner
+	//   in: path
+	//   description: name of the owner
+	//   type: string
+	//   required: true
+	// - name: repo
+	//   in: path
+	//   description: name of the repo
+	//   type: string
+	//   required: true
+	// - name: tag
+	//   in: path
+	//   description: release tag or default branch
+	//   type: string
+	//   required: true
 	// responses:
 	//   "200":
 	//     "$ref": "#/responses/CatalogMetadata"
@@ -349,19 +390,32 @@ func GetCatalogMetadata(ctx *context.APIContext) {
 	ctx.JSON(http.StatusOK, dm.Metadata)
 }
 
+// After doing QueryStrings on the context, it also separates strings that have commas into substrings
+func queryStrings(ctx *context.APIContext, name string) []string {
+	strs := ctx.QueryStrings(name)
+	if len(strs) == 0 {
+		return strs
+	}
+	var newStrs []string
+	for _, str := range strs {
+		newStrs = append(newStrs, dcs.SplitAtCommas(str)...)
+	}
+	return newStrs
+}
+
 func searchCatalog(ctx *context.APIContext) {
 	var repoID int64
-	var owner, repo string
+	var owners, repos []string
 	searchAllMetadata := true
 	if ctx.Repo.Repository != nil {
 		repoID = ctx.Repo.Repository.ID
 	} else {
-		if ctx.Params("ownername") != "" {
-			owner = ctx.Params("ownername")
+		if ctx.Params("username") != "" {
+			owners = []string{ctx.Params("username")}
 		} else {
-			owner = ctx.Query("owner")
+			owners = queryStrings(ctx, "owner")
 		}
-		repo = ctx.Query("repo")
+		repos = queryStrings(ctx, "repo")
 	}
 	if ctx.Query("searchAllMetadata") != "" {
 		searchAllMetadata = ctx.QueryBool("searchAllMetadata")
@@ -370,49 +424,47 @@ func searchCatalog(ctx *context.APIContext) {
 	keywords := []string{}
 	query := strings.Trim(ctx.Query("q"), " ")
 	if query != "" {
-		// Split keyword, keeping words in quotes
-		r := csv.NewReader(strings.NewReader(query))
-		r.Comma = ' ' // space
-		keywords, err := r.Read()
-		if err != nil {
-			log.Error("Read: %v", err)
-			keywords = append(keywords, query)
-		}
+		keywords = dcs.SplitAtCommas(query)
 	}
 
 	opts := &models.SearchCatalogOptions{
 		ListOptions:       utils.GetListOptions(ctx),
 		Keywords:          keywords,
-		Owner:             owner,
-		Repo:              repo,
+		Owners:            owners,
+		Repos:             repos,
 		RepoID:            repoID,
-		Tags:              ctx.QueryStrings("tag"),
-		Stages:            ctx.QueryStrings("stage"),
+		Tags:              queryStrings(ctx, "tag"),
+		Stages:            queryStrings(ctx, "stage"),
+		Languages:         queryStrings(ctx, "lang"),
+		Subjects:          queryStrings(ctx, "subject"),
+		CheckingLevels:    queryStrings(ctx, "checking_level"),
+		Books:             queryStrings(ctx, "book"),
 		IncludeHistory:    ctx.QueryBool("includeHistory"),
-		Languages:         ctx.QueryStrings("lang"),
-		Subject:           ctx.Query("subject"),
-		Books:             ctx.QueryStrings("book"),
-		CheckingLevel:     ctx.Query("checking_level"),
+		ShowIngredients:   ctx.QueryBool("show_ingredients"),
 		SearchAllMetadata: searchAllMetadata,
 	}
 
-	var sortMode = ctx.Query("sort")
-	if len(sortMode) > 0 {
+	var sortModes = queryStrings(ctx, "sort")
+	if len(sortModes) > 0 {
 		var sortOrder = ctx.Query("order")
-		if len(sortOrder) == 0 {
+		if sortOrder == "" {
 			sortOrder = "asc"
 		}
 		if searchModeMap, ok := searchOrderByMap[sortOrder]; ok {
-			if orderBy, ok := searchModeMap[sortMode]; ok {
-				opts.OrderBy = orderBy
-			} else {
-				ctx.Error(http.StatusUnprocessableEntity, "", fmt.Errorf("Invalid sort mode: \"%s\"", sortMode))
-				return
+			for _, sortMode := range sortModes {
+				if orderBy, ok := searchModeMap[sortMode]; ok {
+					opts.OrderBy = append(opts.OrderBy, orderBy)
+				} else {
+					ctx.Error(http.StatusUnprocessableEntity, "", fmt.Errorf("Invalid sort mode: \"%s\"", sortMode))
+					return
+				}
 			}
 		} else {
 			ctx.Error(http.StatusUnprocessableEntity, "", fmt.Errorf("Invalid sort order: \"%s\"", sortOrder))
 			return
 		}
+	} else {
+		opts.OrderBy = []models.CatalogOrderBy{models.CatalogOrderByLangCode, models.CatalogOrderBySubject, models.CatalogOrderByTag}
 	}
 
 	dms, count, err := models.SearchCatalog(opts)
@@ -427,6 +479,9 @@ func searchCatalog(ctx *context.APIContext) {
 	results := make([]*api.Door43Metadata, len(dms))
 	for i, dm := range dms {
 		results[i] = dm.APIFormat()
+		if !opts.ShowIngredients {
+			results[i].Ingredients = nil
+		}
 	}
 
 	ctx.SetLinkHeader(int(count), opts.PageSize)

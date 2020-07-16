@@ -89,7 +89,7 @@ func (dm *Door43Metadata) innerAPIFormat(e *xorm.Engine) *structs.Door43Metadata
 		if dm.Release.IsDraft {
 			stage = StageDraft
 		} else {
-			released = (*dm.Metadata)["dublin_core"].(map[string]interface{})["issued"].(string)
+			released = dm.Release.CreatedUnix.FormatDate()
 			if dm.Release.IsPrerelease {
 				stage = StagePreProd
 			} else {
