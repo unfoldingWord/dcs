@@ -5,7 +5,7 @@
 
 // Package v1 Gitea API.
 //
-// This documentation describes the Gitea API.
+// This documentation describes the DCS (Gitea) API.
 //
 //     Schemes: http, https
 //     BasePath: /api/v1
@@ -68,6 +68,7 @@ import (
 	"code.gitea.io/gitea/modules/log"
 	"code.gitea.io/gitea/modules/setting"
 	api "code.gitea.io/gitea/modules/structs"
+	catalog "code.gitea.io/gitea/routers/api/catalog/v4"
 	"code.gitea.io/gitea/routers/api/v1/admin"
 	"code.gitea.io/gitea/routers/api/v1/misc"
 	"code.gitea.io/gitea/routers/api/v1/notify"
@@ -516,9 +517,6 @@ func RegisterRoutes(m *macaron.Macaron) {
 			m.Get("/allowed_reactions", misc.SettingGetsAllowedReactions)
 			m.Get("/repository", misc.GetGeneralRepoSettings)
 		})
-		/*** DCS Customizations ***/
-		m.Post("/yaml", bind(misc.YamlOption{}), misc.Yaml)
-		/*** END DCS Customizations ***/
 
 		// Notifications
 		m.Group("/notifications", func() {
@@ -950,6 +948,24 @@ func RegisterRoutes(m *macaron.Macaron) {
 		m.Group("/topics", func() {
 			m.Get("/search", repo.TopicSearch)
 		})
+
+		/*** DCS Customizations ***/
+		m.Post("/yaml", bind(misc.YamlOption{}), misc.Yaml)
+		// Catalog
+		m.Group("/catalog", func() {
+			m.Get("", catalog.Search)
+			m.Group("/:username", func() {
+				m.Get("", catalog.SearchOwner)
+				m.Group("/:reponame", func() {
+					m.Get("", catalog.SearchRepo)
+					m.Group("/:tag", func() {
+						m.Get("", catalog.GetCatalogEntry)
+						m.Get("/metadata", catalog.GetCatalogMetadata)
+					})
+				}, repoAssignment())
+			})
+		})
+		/*** END DCS Customizations ***/
 	}, securityHeaders(), context.APIContexter(), sudo())
 }
 

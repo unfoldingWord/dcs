@@ -25,6 +25,7 @@ import (
 	"code.gitea.io/gitea/modules/validation"
 	"code.gitea.io/gitea/routers"
 	"code.gitea.io/gitea/routers/admin"
+	apicatalogv4 "code.gitea.io/gitea/routers/api/catalog/v4" // DCS Customizations
 	apiv1 "code.gitea.io/gitea/routers/api/v1"
 	"code.gitea.io/gitea/routers/dcs" // DCS Customizations
 	"code.gitea.io/gitea/routers/dev"
@@ -1091,6 +1092,9 @@ func RegisterRoutes(m *macaron.Macaron) {
 	m.Group("/catalog", func() {
 		m.Get("", dcs.Catalog)
 	}, reqSignIn)
+	m.Group("/api/catalog", func() {
+		apicatalogv4.RegisterRoutes(m)
+	}, handlers...)
 	/*** END DCS Customizations ***/
 
 	// Not found handler.

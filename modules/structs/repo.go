@@ -89,6 +89,12 @@ type Repository struct {
 	AllowSquash               bool             `json:"allow_squash_merge"`
 	AvatarURL                 string           `json:"avatar_url"`
 	Internal                  bool             `json:"internal"`
+	Language                  string           `json:"language"`
+	Subject                   string           `json:"subject"`
+	Books                     []string         `json:"books"`
+	Title                     string           `json:"title"`
+	CheckingLevel             string           `json:"checking_level"`
+	Catalog                   *Catalog         `json:"catalog"`
 }
 
 // CreateRepoOption options when creating repository

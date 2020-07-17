@@ -6,15 +6,16 @@ package structs
 
 // Organization represents an organization
 type Organization struct {
-	ID                        int64  `json:"id"`
-	UserName                  string `json:"username"`
-	FullName                  string `json:"full_name"`
-	AvatarURL                 string `json:"avatar_url"`
-	Description               string `json:"description"`
-	Website                   string `json:"website"`
-	Location                  string `json:"location"`
-	Visibility                string `json:"visibility"`
-	RepoAdminChangeTeamAccess bool   `json:"repo_admin_change_team_access"`
+	ID                        int64    `json:"id"`
+	UserName                  string   `json:"username"`
+	FullName                  string   `json:"full_name"`
+	AvatarURL                 string   `json:"avatar_url"`
+	Description               string   `json:"description"`
+	Website                   string   `json:"website"`
+	Location                  string   `json:"location"`
+	Visibility                string   `json:"visibility"`
+	RepoAdminChangeTeamAccess bool     `json:"repo_admin_change_team_access"`
+	RepoLanguages             []string `json:"repo_languages"`
 }
 
 // CreateOrgOption options for creating an organization

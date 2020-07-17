@@ -18,6 +18,7 @@ import (
 	api "code.gitea.io/gitea/modules/structs"
 	"code.gitea.io/gitea/modules/util"
 	"code.gitea.io/gitea/modules/validation"
+	catalog "code.gitea.io/gitea/routers/api/catalog/v4"
 	"code.gitea.io/gitea/routers/api/v1/utils"
 	repo_service "code.gitea.io/gitea/services/repository"
 )
@@ -99,6 +100,23 @@ func Search(ctx *context.APIContext) {
 	//   in: query
 	//   description: if `uid` is given, search only for repos that the user owns
 	//   type: boolean
+	// - name: lang
+	//   in: query
+	//   description: If the repo is a resource of the given language(s), the repo will be in the results. Multiple lang's are ORed.
+	//   type: string
+	// - name: subject
+	//   in: query
+	//   description: resource subject
+	//   type: string
+	// - name: book
+	//   in: query
+	//   description: book (project id) that exist in a resource. If the resource contains the
+	//                the book, its repository will be included in the results
+	//   type: string
+	// - name: checking_level
+	//   in: query
+	//   description: Checking level of the resource can be 1, 2 or 3
+	//   type: string
 	// - name: sort
 	//   in: query
 	//   description: sort repos by attribute. Supported values are
@@ -136,6 +154,14 @@ func Search(ctx *context.APIContext) {
 		Template:           util.OptionalBoolNone,
 		StarredByID:        ctx.QueryInt64("starredBy"),
 		IncludeDescription: ctx.QueryBool("includeDesc"),
+		/*** DCS Customizations ***/
+		Languages:         catalog.QueryStrings(ctx, "lang"),
+		Repos:             catalog.QueryStrings(ctx, "repo"),
+		Owners:            catalog.QueryStrings(ctx, "owner"),
+		Subjects:          catalog.QueryStrings(ctx, "subject"),
+		Books:             catalog.QueryStrings(ctx, "book"),
+		SearchAllMetadata: true,
+		/*** END DCS Customizations ***/
 	}
 
 	if ctx.Query("template") != "" {

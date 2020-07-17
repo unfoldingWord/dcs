@@ -136,6 +136,26 @@ func RenderRepoSearch(ctx *context.Context, opts *RepoSearchOptions) {
 	topicOnly := ctx.QueryBool("topic")
 	ctx.Data["TopicOnly"] = topicOnly
 
+	var books, langs, keywords, subjects, repoNames, owners []string
+	query := strings.Trim(ctx.Query("q"), " ")
+	if query != "" {
+		for _, token := range models.SplitAtCommaNotInString(query, true) {
+			if strings.HasPrefix(token, "book:") {
+				books = append(books, strings.TrimLeft(token, "book:"))
+			} else if strings.HasPrefix(token, "lang:") {
+				langs = append(langs, strings.TrimLeft(token, "lang:"))
+			} else if strings.HasPrefix(token, "subject:") {
+				subjects = append(subjects, strings.Trim(strings.TrimLeft(token, "subject:"), `"`))
+			} else if strings.HasPrefix(token, "repo:") {
+				repoNames = append(repoNames, strings.TrimLeft(token, "repo:"))
+			} else if strings.HasPrefix(token, "owner:") {
+				owners = append(owners, strings.TrimLeft(token, "owner:"))
+			} else {
+				keywords = append(keywords, token)
+			}
+		}
+	}
+
 	repos, count, err = models.SearchRepository(&models.SearchRepoOptions{
 		ListOptions: models.ListOptions{
 			Page:     page,
@@ -144,12 +164,18 @@ func RenderRepoSearch(ctx *context.Context, opts *RepoSearchOptions) {
 		Actor:              ctx.User,
 		OrderBy:            orderBy,
 		Private:            opts.Private,
-		Keyword:            keyword,
+		Keyword:            strings.Join(keywords, ","),
 		OwnerID:            opts.OwnerID,
 		AllPublic:          true,
 		AllLimited:         true,
 		TopicOnly:          topicOnly,
 		IncludeDescription: setting.UI.SearchRepoDescription,
+		Books:              books,
+		Languages:          langs,
+		Subjects:           subjects,
+		Repos:              repoNames,
+		Owners:             owners,
+		SearchAllMetadata:  true,
 	})
 	if err != nil {
 		ctx.ServerError("SearchRepository", err)
@@ -205,20 +231,20 @@ func RenderUserSearch(ctx *context.Context, opts *models.SearchUserOptions, tplN
 	ctx.Data["SortType"] = ctx.Query("sort")
 	switch ctx.Query("sort") {
 	case "newest":
-		orderBy = models.SearchOrderByIDReverse
+		orderBy = models.SearchUserOrderByIDReverse
 	case "oldest":
-		orderBy = models.SearchOrderByID
+		orderBy = models.SearchUserOrderByID
 	case "recentupdate":
-		orderBy = models.SearchOrderByRecentUpdated
+		orderBy = models.SearchUserOrderByRecentUpdated
 	case "leastupdate":
-		orderBy = models.SearchOrderByLeastUpdated
+		orderBy = models.SearchUserOrderByLeastUpdated
 	case "reversealphabetically":
-		orderBy = models.SearchOrderByAlphabeticallyReverse
+		orderBy = models.SearchUserOrderByAlphabeticallyReverse
 	case "alphabetically":
-		orderBy = models.SearchOrderByAlphabetically
+		orderBy = models.SearchUserOrderByAlphabetically
 	default:
 		ctx.Data["SortType"] = "alphabetically"
-		orderBy = models.SearchOrderByAlphabetically
+		orderBy = models.SearchUserOrderByAlphabetically
 	}
 
 	opts.Keyword = strings.Trim(ctx.Query("q"), " ")

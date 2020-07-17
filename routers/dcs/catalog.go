@@ -55,18 +55,18 @@ func RenderCatalogSearch(ctx *context.Context, opts *CatalogSearchOptions) {
 		orderBy = models.CatalogOrderByNewest
 	case "oldest":
 		orderBy = models.CatalogOrderByOldest
-	case "reversereponame":
-		orderBy = models.CatalogOrderByRepoNameReverse
-	case "reponame":
-		orderBy = models.CatalogOrderByRepoName
+	case "reversetitle":
+		orderBy = models.CatalogOrderByTitleReverse
+	case "title":
+		orderBy = models.CatalogOrderByTitle
 	case "reversesubject":
 		orderBy = models.CatalogOrderBySubjectReverse
 	case "subject":
 		orderBy = models.CatalogOrderBySubject
-	case "reverselangname":
-		orderBy = models.CatalogOrderByLangNameReverse
-	case "langname":
-		orderBy = models.CatalogOrderByLangName
+	case "reversetag":
+		orderBy = models.CatalogOrderByTagReverse
+	case "tag":
+		orderBy = models.CatalogOrderByTag
 	case "reverselangcode":
 		orderBy = models.CatalogOrderByLangCodeReverse
 	case "langcode":
@@ -88,21 +88,55 @@ func RenderCatalogSearch(ctx *context.Context, opts *CatalogSearchOptions) {
 		orderBy = models.CatalogOrderByNewest
 	}
 
-	keyword := strings.Trim(ctx.Query("q"), " ")
+	var keywords, books, langs, subjects, repos, owners, tags, checkingLevels, stages []string
+	query := strings.Trim(ctx.Query("q"), " ")
+	if query != "" {
+		for _, token := range models.SplitAtCommaNotInString(query, true) {
+			if strings.HasPrefix(token, "book:") {
+				books = append(books, strings.TrimLeft(token, "book:"))
+			} else if strings.HasPrefix(token, "lang:") {
+				langs = append(langs, strings.TrimLeft(token, "lang:"))
+			} else if strings.HasPrefix(token, "subject:") {
+				subjects = append(subjects, strings.Trim(strings.TrimLeft(token, "subject:"), `"`))
+			} else if strings.HasPrefix(token, "repo:") {
+				repos = append(repos, strings.TrimLeft(token, "repo:"))
+			} else if strings.HasPrefix(token, "owner:") {
+				owners = append(owners, strings.TrimLeft(token, "owner:"))
+			} else if strings.HasPrefix(token, "tag:") {
+				tags = append(tags, strings.TrimLeft(token, "tag:"))
+			} else if strings.HasPrefix(token, "checkinglevel:") {
+				checkingLevels = append(checkingLevels, strings.TrimLeft(token, "checkinglevel:"))
+			} else if strings.HasPrefix(token, "stage:") {
+				stages = append(stages, strings.Trim(strings.TrimLeft(token, "stage:"), `"`))
+			} else {
+				keywords = append(keywords, token)
+			}
+		}
+	}
 
 	dms, count, err = models.SearchCatalog(&models.SearchCatalogOptions{
 		ListOptions: models.ListOptions{
 			Page:     page,
 			PageSize: opts.PageSize,
 		},
-		OrderBy: orderBy,
-		Keyword: keyword,
+		OrderBy:           []models.CatalogOrderBy{orderBy},
+		Keywords:          keywords,
+		SearchAllMetadata: true,
+		Stages:            stages,
+		IncludeHistory:    false,
+		Books:             books,
+		Subjects:          subjects,
+		Languages:         langs,
+		Repos:             repos,
+		Owners:            owners,
+		Tags:              tags,
+		CheckingLevels:    checkingLevels,
 	})
 	if err != nil {
 		ctx.ServerError("SearchCatalog", err)
 		return
 	}
-	ctx.Data["Keyword"] = keyword
+	ctx.Data["Keyword"] = query
 	ctx.Data["Total"] = count
 	ctx.Data["Door43Metadatas"] = dms
 	ctx.Data["IsRepoIndexerEnabled"] = setting.Indexer.RepoIndexerEnabled

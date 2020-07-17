@@ -110,7 +110,7 @@ func NewDoor43MetadataPost(ctx *context.Context, form auth.NewDoor43MetadataForm
 		releaseID = release.ID
 	}
 
-	var metadata map[string]interface{}
+	var metadata *map[string]interface{}
 	err := json.Unmarshal([]byte(form.Metadata), &metadata)
 	if err != nil {
 		ctx.RenderWithErr(ctx.Tr("repo.metadata.metadata_not_proper_json", err), tplDoor43MetadataNew, &form)
@@ -208,7 +208,11 @@ func EditDoor43MetadataPost(ctx *context.Context, form auth.EditDoor43MetadataFo
 
 // DeleteDoor43Metadata delete a door43 metadata
 func DeleteDoor43Metadata(ctx *context.Context) {
-	if err := models.DeleteDoor43MetadataByID(ctx.QueryInt64("id")); err != nil {
+	dm, err := models.GetDoor43MetadataByID(ctx.QueryInt64("id"))
+	if err != nil {
+		ctx.Flash.Error("GetDoor43MetadataByID: " + err.Error())
+	}
+	if err := models.DeleteDoor43Metadata(dm); err != nil {
 		ctx.Flash.Error("DeleteDoor43MetadataByID: " + err.Error())
 	} else {
 		ctx.Flash.Success(ctx.Tr("repo.metadata.deletion_success"))

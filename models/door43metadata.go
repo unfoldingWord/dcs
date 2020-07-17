@@ -5,26 +5,30 @@
 package models
 
 import (
-	"code.gitea.io/gitea/modules/setting"
-	api "code.gitea.io/gitea/modules/structs"
-	"code.gitea.io/gitea/modules/timeutil"
 	"fmt"
 	"sort"
+	"xorm.io/xorm"
+
+	"code.gitea.io/gitea/modules/log"
+	"code.gitea.io/gitea/modules/setting"
+	"code.gitea.io/gitea/modules/structs"
+	"code.gitea.io/gitea/modules/timeutil"
+	"github.com/unknwon/com"
 
 	"xorm.io/builder"
 )
 
 // Door43Metadata represents the metadata of repository's release or default branch (ReleaseID = 0).
 type Door43Metadata struct {
-	ID              int64                  `xorm:"pk autoincr"`
-	RepoID          int64                  `xorm:"INDEX UNIQUE(n) NOT NULL"`
-	Repo            *Repository            `xorm:"-"`
-	ReleaseID       int64                  `xorm:"INDEX UNIQUE(n)"`
-	Release         *Release               `xorm:"-"`
-	MetadataVersion string                 `xorm:"NOT NULL"`
-	Metadata        map[string]interface{} `xorm:"JSON NOT NULL"`
-	CreatedUnix     timeutil.TimeStamp     `xorm:"INDEX created NOT NULL"`
-	UpdatedUnix     timeutil.TimeStamp     `xorm:"INDEX updated"`
+	ID              int64                   `xorm:"pk autoincr"`
+	RepoID          int64                   `xorm:"INDEX UNIQUE(n) NOT NULL"`
+	Repo            *Repository             `xorm:"-"`
+	ReleaseID       int64                   `xorm:"INDEX UNIQUE(n)"`
+	Release         *Release                `xorm:"-"`
+	MetadataVersion string                  `xorm:"NOT NULL"`
+	Metadata        *map[string]interface{} `xorm:"JSON NOT NULL"`
+	CreatedUnix     timeutil.TimeStamp      `xorm:"INDEX created NOT NULL"`
+	UpdatedUnix     timeutil.TimeStamp      `xorm:"INDEX updated"`
 }
 
 func (dm *Door43Metadata) loadAttributes(e Engine) error {
@@ -40,6 +44,9 @@ func (dm *Door43Metadata) loadAttributes(e Engine) error {
 		if err != nil {
 			return err
 		}
+		dm.Release.Door43Metadata = dm
+		dm.Release.Repo = dm.Repo
+		dm.Release.loadAttributes(e)
 	}
 	return nil
 }
@@ -49,10 +56,14 @@ func (dm *Door43Metadata) LoadAttributes() error {
 	return dm.loadAttributes(x)
 }
 
-// APIURL the api url for a door43 metadata. door43 metadata must have attributes loaded
-func (dm *Door43Metadata) APIURL() string {
-	return fmt.Sprintf("%sapi/v1/repos/%s/metadata/%d",
-		setting.AppURL, dm.Repo.FullName(), dm.ID)
+// APIURLV4 the api url for a door43 metadata. door43 metadata must have attributes loaded
+func (dm *Door43Metadata) APIURLV4() string {
+	ref := dm.Repo.DefaultBranch
+	if dm.ReleaseID > 0 {
+		ref = dm.Release.TagName
+	}
+	return fmt.Sprintf("%sapi/catalog/v4/%s/%s",
+		setting.AppURL, dm.Repo.FullName(), ref)
 }
 
 // HTMLURL the url for a door43 metadata on the web UI. door43 metadata must have attributes loaded
@@ -60,12 +71,67 @@ func (dm *Door43Metadata) HTMLURL() string {
 	return fmt.Sprintf("%s/metadata/tag/%s", dm.Repo.HTMLURL(), dm.Release.TagName)
 }
 
-// APIFormat convert a Door43Metadata to api.Door43Metadata
-func (dm *Door43Metadata) APIFormat() *api.Door43Metadata {
-	return &api.Door43Metadata{
-		ID:        dm.ID,
-		CreatedAt: dm.CreatedUnix.AsTime(),
+// APIFormatV4 convert a Door43Metadata to structs.Door43MetadataV4
+func (dm *Door43Metadata) APIFormatV4() *structs.Door43MetadataV4 {
+	return dm.innerAPIFormatV4(x)
+}
+
+func (dm *Door43Metadata) innerAPIFormatV4(e *xorm.Engine) *structs.Door43MetadataV4 {
+	dm.loadAttributes(e)
+	tag := ""
+	stage := ""
+	released := ""
+	releaseURL := ""
+	metadataFile := ""
+	if dm.ReleaseID > 0 {
+		tag = dm.Release.TagName
+		releaseURL = dm.Release.APIURL()
+		if dm.Release.IsDraft {
+			stage = StageDraft
+		} else {
+			released = dm.Release.CreatedUnix.FormatDate()
+			if dm.Release.IsPrerelease {
+				stage = StagePreProd
+			} else {
+				stage = StageProd
+			}
+		}
+		metadataFile = dm.Repo.HTMLURL() + "/raw/tag/" + dm.Release.TagName + "/manifest.yaml"
+	} else {
+		tag = dm.Repo.DefaultBranch
+		stage = StageLatest
+		metadataFile = dm.Repo.HTMLURL() + "/raw/branch/" + dm.Repo.DefaultBranch + "/manifest.yaml"
 	}
+	return &structs.Door43MetadataV4{
+		ID:              dm.ID,
+		Self:            dm.APIURLV4(),
+		Repo:            dm.Repo.Name,
+		Owner:           dm.Repo.OwnerName,
+		RepoURL:         dm.Repo.APIURL(),
+		ReleaseURL:      releaseURL,
+		Language:        (*dm.Metadata)["dublin_core"].(map[string]interface{})["language"].(map[string]interface{})["identifier"].(string),
+		Subject:         (*dm.Metadata)["dublin_core"].(map[string]interface{})["subject"].(string),
+		Title:           (*dm.Metadata)["dublin_core"].(map[string]interface{})["title"].(string),
+		Books:           dm.GetBooks(),
+		Tag:             tag,
+		Stage:           stage,
+		Released:        released,
+		MetadataVersion: dm.MetadataVersion,
+		MetadataURL:     dm.APIURLV4() + "/metadata",
+		MetadataFile:    metadataFile,
+		Ingredients:     (*dm.Metadata)["projects"].([]interface{}),
+	}
+}
+
+// GetBooks get the books of the resource
+func (dm *Door43Metadata) GetBooks() []string {
+	var books []string
+	if len((*dm.Metadata)["projects"].([]interface{})) > 0 {
+		for _, prod := range (*dm.Metadata)["projects"].([]interface{}) {
+			books = append(books, prod.(map[string]interface{})["identifier"].(string))
+		}
+	}
+	return books
 }
 
 // IsDoor43MetadataExist returns true if door43 metadata with given release ID already exists.
@@ -75,7 +141,13 @@ func IsDoor43MetadataExist(repoID, releaseID int64) (bool, error) {
 
 // InsertDoor43Metadata inserts a door43 metadata
 func InsertDoor43Metadata(dm *Door43Metadata) error {
-	_, err := x.Insert(dm)
+	id, err := x.Insert(dm)
+	if id > 0 && dm.ReleaseID > 0 {
+		dm.LoadAttributes()
+		if err := CreateRepositoryNotice("Door43 Metadata created for repo: %s, tag: %s", dm.Repo.Name, dm.Release.TagName); err != nil {
+			log.Error("CreateRepositoryNotice: %v", err)
+		}
+	}
 	return err
 }
 
@@ -91,22 +163,14 @@ func UpdateDoor43MetadataCols(dm *Door43Metadata, cols ...string) error {
 }
 
 func updateDoor43MetadataCols(e Engine, dm *Door43Metadata, cols ...string) error {
-	_, err := e.ID(dm.ID).Cols(cols...).Update(dm)
-	return err
-}
-
-// GetDoor43Metadata returns metadata by given repo ID and release ID.
-func GetDoor43Metadata(repoID, releaseID int64) (*Door43Metadata, error) {
-	isExist, err := IsDoor43MetadataExist(repoID, releaseID)
-	if err != nil {
-		return nil, err
-	} else if !isExist {
-		return nil, ErrDoor43MetadataNotExist{0, repoID, releaseID}
+	id, err := e.ID(dm.ID).Cols(cols...).Update(dm)
+	if id > 0 && dm.ReleaseID > 0 {
+		dm.LoadAttributes()
+		if err := CreateRepositoryNotice("Door43 Metadata updated for repo: %s, tag: %s", dm.Repo.Name, dm.Release.TagName); err != nil {
+			log.Error("CreateRepositoryNotice: %v", err)
+		}
 	}
-
-	rel := &Door43Metadata{RepoID: repoID, ReleaseID: releaseID}
-	_, err = x.Get(rel)
-	return rel, err
+	return err
 }
 
 // GetDoor43MetadataByRepoIDAndTagName returns metadata by given repo ID and tag name.
@@ -180,6 +244,10 @@ func GetDoor43MetadatasByRepoID(repoID int64, opts FindDoor43MetadatasOptions) (
 
 // GetLatestCatalogMetadataByRepoID returns the latest door43 metadata in the catalog by repoID, if CanBePrerelease, a prerelease entry can match
 func GetLatestCatalogMetadataByRepoID(repoID int64, CanBePrerelease bool) (*Door43Metadata, error) {
+	return getLatestCatalogMetadataByRepoID(x, repoID, CanBePrerelease)
+}
+
+func getLatestCatalogMetadataByRepoID(e Engine, repoID int64, CanBePrerelease bool) (*Door43Metadata, error) {
 	cond := builder.NewCond().
 		And(builder.Eq{"`door43_metadata`.repo_id": repoID}).
 		And(builder.Eq{"`release`.is_tag": 0}).
@@ -190,7 +258,7 @@ func GetLatestCatalogMetadataByRepoID(repoID int64, CanBePrerelease bool) (*Door
 	}
 
 	dm := new(Door43Metadata)
-	has, err := x.
+	has, err := e.
 		Join("INNER", "release", "`release`.id = `door43_metadata`.release_id").
 		Where(cond).
 		Desc("`release`.created_unix", "`release`.id").
@@ -201,14 +269,13 @@ func GetLatestCatalogMetadataByRepoID(repoID int64, CanBePrerelease bool) (*Door
 	} else if !has {
 		return nil, ErrDoor43MetadataNotExist{0, repoID, 0}
 	}
-	dm.LoadAttributes()
+	dm.loadAttributes(e)
 	return dm, nil
 }
 
 // GetDoor43MetadatasByRepoIDAndReleaseIDs returns a list of door43 metadatas of repository according repoID and releaseIDs.
-func GetDoor43MetadatasByRepoIDAndReleaseIDs(ctx DBContext, repoID int64, releaseIDs []int64) (dms []*Door43Metadata, err error) {
-	err = ctx.e.
-		In("release_id", releaseIDs).
+func GetDoor43MetadatasByRepoIDAndReleaseIDs(repoID int64, releaseIDs []int64) (dms []*Door43Metadata, err error) {
+	err = x.In("release_id", releaseIDs).
 		Desc("created_unix").
 		Find(&dms, Door43Metadata{RepoID: repoID})
 	return dms, err
@@ -217,6 +284,34 @@ func GetDoor43MetadatasByRepoIDAndReleaseIDs(ctx DBContext, repoID int64, releas
 // GetDoor43MetadataCountByRepoID returns the count of metadatas of repository
 func GetDoor43MetadataCountByRepoID(repoID int64, opts FindDoor43MetadatasOptions) (int64, error) {
 	return x.Where(opts.toConds(repoID)).Count(&Door43Metadata{})
+}
+
+// GetDoor43MetadataReleaseCountByRepoID returns the count of metadatas of repository that are releases
+func GetDoor43MetadataReleaseCountByRepoID(repoID int64, includePreproduction bool) (int64, error) {
+	releaseCondition := "`release`.id = `door43_metadata`.release_id"
+	if includePreproduction {
+		releaseCondition += "`release`.is_prerelease = 0"
+	}
+	return x.Join("INNER", "release", releaseCondition).
+		Where(builder.And(builder.Eq{"`door43_metadata`.repo_id": repoID})).
+		Count(&Door43Metadata{})
+}
+
+// GetDoor43MetadataByRepoIDAndReleaseID returns the metadata of a given release ID (0 = default branch).
+func GetDoor43MetadataByRepoIDAndReleaseID(repoID, releaseID int64) (*Door43Metadata, error) {
+	return getDoor43MetadataByRepoIDAndReleaseID(x, repoID, releaseID)
+}
+
+func getDoor43MetadataByRepoIDAndReleaseID(e Engine, repoID, releaseID int64) (*Door43Metadata, error) {
+	dm := &Door43Metadata{RepoID: repoID, ReleaseID: releaseID}
+	has, err := e.Get(dm)
+	if err != nil {
+		return nil, err
+	}
+	if !has {
+		return nil, ErrDoor43MetadataNotExist{0, repoID, releaseID}
+	}
+	return dm, err
 }
 
 type door43MetadataSorter struct {
@@ -243,15 +338,34 @@ func SortDoorMetadatas(dms []*Door43Metadata) {
 
 // DeleteDoor43MetadataByID deletes a metadata from database by given ID.
 func DeleteDoor43MetadataByID(id int64) error {
-	_, err := x.ID(id).Delete(new(Door43Metadata))
+	dm, err := GetDoor43MetadataByID(id)
+	if err != nil {
+		return err
+	}
+	dm.LoadAttributes()
+	return DeleteDoor43Metadata(dm)
+}
+
+// DeleteDoor43Metadata deletes a metadata from database by given ID.
+func DeleteDoor43Metadata(dm *Door43Metadata) error {
+	id, err := x.Delete(dm)
+	if id > 0 && dm.ReleaseID > 0 {
+		dm.LoadAttributes()
+		if err := CreateRepositoryNotice("Door43 Metadata deleted for repo: %s, tag: %s", dm.Repo.Name, dm.Release.TagName); err != nil {
+			log.Error("CreateRepositoryNotice: %v", err)
+		}
+	}
 	return err
 }
 
 // DeleteDoor43MetadataByRelease deletes a metadata from database by given release.
 func DeleteDoor43MetadataByRelease(release *Release) error {
-	dm, err := GetDoor43Metadata(release.RepoID, release.ID)
+	dm, err := GetDoor43MetadataByRepoIDAndReleaseID(release.RepoID, release.ID)
 	if err != nil {
-		return err
+		if !IsErrDoor43MetadataNotExist(err) {
+			return err
+		}
+		return nil
 	}
 	_, err = x.ID(dm.ID).Delete(dm)
 	return err
@@ -261,3 +375,161 @@ func DeleteDoor43MetadataByRelease(release *Release) error {
 func DeleteAllDoor43MetadatasByRepoID(repoID int64) (int64, error) {
 	return x.Delete(Door43Metadata{RepoID: repoID})
 }
+
+// GetRepoIDsNeedingDoor43Metadata gets the IDs of all the repos that may have releases or default branch not in the door43_metadata table.
+func GetRepoIDsNeedingDoor43Metadata() ([]int64, error) {
+	sess := x.NewSession()
+	defer sess.Close()
+
+	records, err := sess.Query("SELECT r.id FROM `repository` r " +
+		"JOIN `release` rel ON rel.repo_id = r.id " +
+		"LEFT JOIN `door43_metadata` dm ON r.id = dm.repo_id " +
+		"AND rel.id = dm.release_id " +
+		"WHERE dm.id IS NULL AND rel.is_tag = 0 " +
+		"UNION " +
+		"SELECT r2.id FROM `repository` r2 " +
+		"LEFT JOIN `door43_metadata` dm2 ON r2.id = dm2.repo_id " +
+		"AND dm2.release_id = 0 " +
+		"WHERE dm2.id IS NULL " +
+		"ORDER BY id ASC")
+	if err != nil {
+		return nil, err
+	}
+
+	repoIDs := make([]int64, len(records))
+
+	for idx, record := range records {
+		repoIDs[idx] = com.StrTo(record["id"]).MustInt64()
+	}
+
+	return repoIDs, nil
+}
+
+// GetReleaseIDsNeedingDoor43Metadata gets the releases needing door43 metadata
+func (r *Repository) GetReleaseIDsNeedingDoor43Metadata() ([]int64, error) {
+	sess := x.NewSession()
+	defer sess.Close()
+
+	records, err := sess.Query("SELECT rel.id as id FROM `repository` r "+
+		"JOIN `release` rel ON rel.repo_id = r.id "+
+		"LEFT JOIN `door43_metadata` dm ON r.id = dm.repo_id "+
+		"AND rel.id = dm.release_id "+
+		"WHERE dm.id IS NULL AND rel.is_tag = 0 AND r.id=? "+
+		"UNION "+
+		"SELECT 0 as id FROM `repository` r2 "+
+		"LEFT JOIN `door43_metadata` dm2 ON r2.id = dm2.repo_id "+
+		"AND dm2.release_id = 0 "+
+		"WHERE dm2.id IS NULL AND r2.id=? "+
+		"ORDER BY id ASC", r.ID, r.ID)
+	log.Trace(sess.LastSQL())
+	if err != nil {
+		return nil, err
+	}
+
+	relIDs := make([]int64, len(records))
+
+	for idx, record := range records {
+		relIDs[idx] = com.StrTo(record["id"]).MustInt64()
+	}
+
+	return relIDs, nil
+}
+
+// GetLatestProdCatalogMetadata gets the latest Door43 Metadata that is in the prod catalog.
+func (r *Repository) GetLatestProdCatalogMetadata() (*Door43Metadata, error) {
+	return r.getLatestProdCatalogMetadata(x)
+}
+
+func (r *Repository) getLatestProdCatalogMetadata(e Engine) (*Door43Metadata, error) {
+	dm, err := GetLatestCatalogMetadataByRepoID(r.ID, false)
+	if err != nil && !IsErrDoor43MetadataNotExist(err) {
+		return nil, err
+	}
+	return dm, nil
+}
+
+// GetLatestPreProdCatalogMetadata gets the latest Door43 Metadata that is in the pre-prod catalog.
+func (r *Repository) GetLatestPreProdCatalogMetadata() (*Door43Metadata, error) {
+	return r.getLatestPreProdCatalogMetadata(x)
+}
+
+func (r *Repository) getLatestPreProdCatalogMetadata(e Engine) (*Door43Metadata, error) {
+	dm, err := getLatestCatalogMetadataByRepoID(e, r.ID, true)
+	if err != nil && !IsErrDoor43MetadataNotExist(err) {
+		return nil, err
+	}
+	if dm != nil && !dm.Release.IsPrerelease {
+		dm = nil
+	}
+	return dm, nil
+}
+
+// GetCatalogReleaseCount gets the number of all valid releases for a repo
+func (r *Repository) GetCatalogReleaseCount() (int64, error) {
+	return GetDoor43MetadataReleaseCountByRepoID(r.ID, true)
+}
+
+// GetProdCatalogReleaseCount gets the number of valid prod releases for a repo
+func (r *Repository) GetProdCatalogReleaseCount() (int64, error) {
+	return GetDoor43MetadataReleaseCountByRepoID(r.ID, false)
+}
+
+// GetDefaultBranchMetadata gets the default branch's Door43 Metadata.
+func (r *Repository) GetDefaultBranchMetadata() (*Door43Metadata, error) {
+	dm, err := GetDoor43MetadataByRepoIDAndReleaseID(r.ID, 0)
+	if err != nil && !IsErrDoor43MetadataNotExist(err) {
+		return nil, err
+	}
+	return dm, nil
+}
+
+/*** Error Structs & Functions ***/
+
+// ErrDoor43MetadataAlreadyExist represents a "Door43MetadataAlreadyExist" kind of error.
+type ErrDoor43MetadataAlreadyExist struct {
+	ReleaseID int64
+}
+
+// IsErrDoor43MetadataAlreadyExist checks if an error is a ErrDoor43MetadataAlreadyExist.
+func IsErrDoor43MetadataAlreadyExist(err error) bool {
+	_, ok := err.(ErrDoor43MetadataAlreadyExist)
+	return ok
+}
+
+func (err ErrDoor43MetadataAlreadyExist) Error() string {
+	return fmt.Sprintf("Metadata for release already exists [release: %d]", err.ReleaseID)
+}
+
+// ErrDoor43MetadataNotExist represents a "Door43MetadataNotExist" kind of error.
+type ErrDoor43MetadataNotExist struct {
+	ID        int64
+	RepoID    int64
+	ReleaseID int64
+}
+
+// IsErrDoor43MetadataNotExist checks if an error is a ErrDoor43MetadataNotExist.
+func IsErrDoor43MetadataNotExist(err error) bool {
+	_, ok := err.(ErrDoor43MetadataNotExist)
+	return ok
+}
+
+func (err ErrDoor43MetadataNotExist) Error() string {
+	return fmt.Sprintf("metadata release id does not exist [id: %d, release_id: %s]", err.ID, err.ReleaseID)
+}
+
+// ErrInvalidRelease represents a "InvalidRelease" kind of error.
+type ErrInvalidRelease struct {
+	ReleaseID int64
+}
+
+// IsErrInvalidRelease checks if an error is a ErrInvalidRelease.
+func IsErrInvalidRelease(err error) bool {
+	_, ok := err.(ErrInvalidRelease)
+	return ok
+}
+
+func (err ErrInvalidRelease) Error() string {
+	return fmt.Sprintf("metadata release id is not valid [release_id: %d]", err.ReleaseID)
+}
+
+/*** END Error Structs & Functions ***/
