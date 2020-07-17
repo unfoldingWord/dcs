@@ -136,10 +136,10 @@ func RenderRepoSearch(ctx *context.Context, opts *RepoSearchOptions) {
 	topicOnly := ctx.QueryBool("topic")
 	ctx.Data["TopicOnly"] = topicOnly
 
+	/*** DCS Customizations ***/
 	var books, langs, keywords, subjects, repoNames, owners []string
-	query := strings.Trim(ctx.Query("q"), " ")
-	if query != "" {
-		for _, token := range models.SplitAtCommaNotInString(query, true) {
+	if keyword != "" {
+		for _, token := range models.SplitAtCommaNotInString(keyword, true) {
 			if strings.HasPrefix(token, "book:") {
 				books = append(books, strings.TrimLeft(token, "book:"))
 			} else if strings.HasPrefix(token, "lang:") {
@@ -155,6 +155,7 @@ func RenderRepoSearch(ctx *context.Context, opts *RepoSearchOptions) {
 			}
 		}
 	}
+	/*** END DCS Customizations ***/
 
 	repos, count, err = models.SearchRepository(&models.SearchRepoOptions{
 		ListOptions: models.ListOptions{
@@ -164,7 +165,7 @@ func RenderRepoSearch(ctx *context.Context, opts *RepoSearchOptions) {
 		Actor:              ctx.User,
 		OrderBy:            orderBy,
 		Private:            opts.Private,
-		Keyword:            strings.Join(keywords, ","),
+		Keyword:            strings.Join(keywords, ", "),
 		OwnerID:            opts.OwnerID,
 		AllPublic:          true,
 		AllLimited:         true,

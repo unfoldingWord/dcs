@@ -70,6 +70,27 @@ func Home(ctx *context.Context) {
 		page = 1
 	}
 
+	/*** DCS Customizations ***/
+	var books, langs, keywords, subjects, repoNames, owners []string
+	if keyword != "" {
+		for _, token := range models.SplitAtCommaNotInString(keyword, true) {
+			if strings.HasPrefix(token, "book:") {
+				books = append(books, strings.TrimLeft(token, "book:"))
+			} else if strings.HasPrefix(token, "lang:") {
+				langs = append(langs, strings.TrimLeft(token, "lang:"))
+			} else if strings.HasPrefix(token, "subject:") {
+				subjects = append(subjects, strings.Trim(strings.TrimLeft(token, "subject:"), `"`))
+			} else if strings.HasPrefix(token, "repo:") {
+				repoNames = append(repoNames, strings.TrimLeft(token, "repo:"))
+			} else if strings.HasPrefix(token, "owner:") {
+				owners = append(owners, strings.TrimLeft(token, "owner:"))
+			} else {
+				keywords = append(keywords, token)
+			}
+		}
+	}
+	/*** END DCS Customizations ***/
+	
 	var (
 		repos []*models.Repository
 		count int64
@@ -80,12 +101,17 @@ func Home(ctx *context.Context) {
 			PageSize: setting.UI.User.RepoPagingNum,
 			Page:     page,
 		},
-		Keyword:            keyword,
+		Keyword:            strings.Join(keywords, ", "),
 		OwnerID:            org.ID,
 		OrderBy:            orderBy,
 		Private:            ctx.IsSigned,
 		Actor:              ctx.User,
 		IncludeDescription: setting.UI.SearchRepoDescription,
+		Books: books,
+		Languages: langs,
+		Subjects: subjects,
+		Repos: repoNames,
+		Owners: owners,
 	})
 	if err != nil {
 		ctx.ServerError("SearchRepository", err)
