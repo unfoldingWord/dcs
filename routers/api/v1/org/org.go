@@ -122,7 +122,7 @@ func GetAll(ctx *context.APIContext) {
 
 	listOptions := utils.GetListOptions(ctx)
 
-	publicOrgs, _, err := models.SearchUsers(&models.SearchUserOptions{
+	publicOrgs, maxResults, err := models.SearchUsers(&models.SearchUserOptions{
 		ListOptions: listOptions,
 		Type:          models.UserTypeOrganization,
 		OrderBy:       models.SearchOrderByAlphabetically,
