@@ -88,10 +88,10 @@ func RenderCatalogSearch(ctx *context.Context, opts *CatalogSearchOptions) {
 		orderBy = models.CatalogOrderByNewest
 	}
 
-	var keywords, books, langs, subjects, repos, owners, tags, checkingLevels []string
+	var keywords, books, langs, subjects, repos, owners, tags, checkingLevels, stages []string
 	query := strings.Trim(ctx.Query("q"), " ")
 	if query != "" {
-		for _, token := range models.SplitAtCommas(query) {
+		for _, token := range models.SplitAtCommaNotInString(query, true) {
 			if strings.HasPrefix(token, "book:") {
 				books = append(books, strings.TrimLeft(token, "book:"))
 			} else if strings.HasPrefix(token, "lang:") {
@@ -106,6 +106,8 @@ func RenderCatalogSearch(ctx *context.Context, opts *CatalogSearchOptions) {
 				tags = append(tags, strings.TrimLeft(token, "tag:"))
 			} else if strings.HasPrefix(token, "checkinglevel:") {
 				checkingLevels = append(checkingLevels, strings.TrimLeft(token, "checkinglevel:"))
+			} else if strings.HasPrefix(token, "stage:") {
+				stages = append(stages, strings.Trim(strings.TrimLeft(token, "stage:"), `"`))
 			} else {
 				keywords = append(keywords, token)
 			}
@@ -120,7 +122,7 @@ func RenderCatalogSearch(ctx *context.Context, opts *CatalogSearchOptions) {
 		OrderBy:           []models.CatalogOrderBy{orderBy},
 		Keywords:          keywords,
 		SearchAllMetadata: true,
-		Stages:            []string{models.StageProd},
+		Stages:            stages,
 		IncludeHistory:    false,
 		Books:             books,
 		Subjects:          subjects,

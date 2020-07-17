@@ -11165,14 +11165,14 @@
       },
       "x-go-package": "code.gitea.io/gitea/modules/structs"
     },
-    "CatalogSearchResults": {
-      "description": "CatalogSearchResults results of a successful search",
+    "CatalogSearchResultsV4": {
+      "description": "CatalogSearchResultsV4 results of a successful search",
       "type": "object",
       "properties": {
         "data": {
           "type": "array",
           "items": {
-            "$ref": "#/definitions/Door43Metadata"
+            "$ref": "#/definitions/Door43MetadataV4"
           },
           "x-go-name": "Data"
         },
@@ -12246,8 +12246,8 @@
       },
       "x-go-package": "code.gitea.io/gitea/modules/structs"
     },
-    "Door43Metadata": {
-      "description": "Door43Metadata represents a repository's metadata of a tag or default branch",
+    "Door43MetadataV4": {
+      "description": "Door43MetadataV4 represents a repository's metadata of a tag or default branch",
       "type": "object",
       "properties": {
         "books": {
@@ -15248,7 +15248,7 @@
     "CatalogEntry": {
       "description": "CatalogEntry",
       "schema": {
-        "$ref": "#/definitions/Door43Metadata"
+        "$ref": "#/definitions/Door43MetadataV4"
       }
     },
     "CatalogMetadata": {
@@ -15263,7 +15263,7 @@
     "CatalogSearchResults": {
       "description": "CatalogSearchResults",
       "schema": {
-        "$ref": "#/definitions/CatalogSearchResults"
+        "$ref": "#/definitions/CatalogSearchResultsV4"
       }
     },
     "Comment": {

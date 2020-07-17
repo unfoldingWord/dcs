@@ -49,11 +49,10 @@ func GenerateDoor43Metadata(x *xorm.Engine) error {
 	for _, record := range records {
 		releaseID := com.StrTo(record["release_id"]).MustInt64()
 		repoID := com.StrTo(record["repo_id"]).MustInt64()
-		fmt.Printf("HERE ====> Repo: %d, Release: %d\n", repoID, releaseID)
 		if cacheRepos[repoID] == nil {
 			cacheRepos[repoID], err = models.GetRepositoryByID(repoID)
 			if err != nil {
-				fmt.Printf("GetRepositoryByID Error: %v\n", err)
+				log.Warn("GetRepositoryByID Error: %v\n", err)
 				continue
 			}
 		}
@@ -62,7 +61,7 @@ func GenerateDoor43Metadata(x *xorm.Engine) error {
 		if releaseID > 0 {
 			release, err = models.GetReleaseByID(releaseID)
 			if err != nil {
-				fmt.Printf("GetReleaseByID Error: %v\n", err)
+				log.Warn("GetReleaseByID Error: %v\n", err)
 				continue
 			}
 		}
@@ -104,16 +103,15 @@ func ValidateBlobByRC020Schema(manifest *map[string]interface{}) (*gojsonschema.
 func ReadManifestFromBlob(blob *git.Blob) (*map[string]interface{}, error) {
 	dataRc, err := blob.DataAsync()
 	if err != nil {
-		fmt.Printf("DataAsync Error: %v\n", err)
+		log.Warn("DataAsync Error: %v\n", err)
 		return nil, err
 	}
 	defer dataRc.Close()
 	content, _ := ioutil.ReadAll(dataRc)
-	//fmt.Printf("content: %s", content)
 
 	var manifest *map[string]interface{}
 	if err := yaml.Unmarshal(content, &manifest); err != nil {
-		fmt.Printf("yaml.Unmarshal Error: %v", err)
+		log.Error("yaml.Unmarshal Error: %v", err)
 		return nil, err
 	}
 	return manifest, nil
@@ -177,7 +175,7 @@ func ProcessDoor43MetadataForRepo(repo *models.Repository) error {
 
 	relIDs, err := repo.GetReleaseIDsNeedingDoor43Metadata()
 	if err != nil {
-		fmt.Printf("GetReleaseIDsNeedingDoor43Metadata Error: %v\n", err)
+		log.Error("GetReleaseIDsNeedingDoor43Metadata Error: %v\n", err)
 		return err
 	}
 
@@ -221,13 +219,19 @@ func ProcessDoor43MetadataForRepoRelease(repo *models.Repository, release *model
 	if release == nil {
 		commit, err = gitRepo.GetBranchCommit(repo.DefaultBranch)
 		if err != nil {
-			fmt.Printf("GetBranchCommit Error: %v\n", err)
+			log.Error("GetBranchCommit Error: %v\n", err)
+			return err
+		}
+	} else if !release.IsDraft {
+		commit, err = gitRepo.GetTagCommit(release.TagName)
+		if err != nil {
+			log.Error("GetTagCommit Error: %v\n", err)
 			return err
 		}
 	} else {
-		commit, err = gitRepo.GetTagCommit(release.TagName)
+		commit, err = gitRepo.GetBranchCommit(release.Target)
 		if err != nil {
-			fmt.Printf("GetTagCommit Error: %v\n", err)
+			log.Error("GetBranchCommit Error: %v\n", err)
 			return err
 		}
 	}
@@ -263,7 +267,7 @@ func ProcessDoor43MetadataForRepoRelease(repo *models.Repository, release *model
 	//}
 
 	if result.Valid() {
-		fmt.Printf("The document is valid\n")
+		log.Info("The document is valid\n")
 		if dm == nil {
 			dm = &models.Door43Metadata{
 				RepoID:          repo.ID,
@@ -280,17 +284,16 @@ func ProcessDoor43MetadataForRepoRelease(repo *models.Repository, release *model
 		}
 	}
 
-	fmt.Printf("==========\nREPO: %s\n", repo.Name)
-	fmt.Printf("REPO ID: %d, RELEASE ID: %d\n", repo.ID, releaseID)
-	fmt.Printf("The document is not valid. see errors :\n")
+	log.Warn("The document is not valid. see errors :\n")
+	log.Warn("REPO ID: %d, RELEASE ID: %d\n", repo.ID, releaseID)
 	if release != nil {
-		fmt.Printf("RELEASE: %v\n", release.TagName)
+		log.Warn("RELEASE: %v\n", release.TagName)
 	} else {
-		fmt.Printf("BRANCH: %s\n", repo.DefaultBranch)
+		log.Warn("BRANCH: %s\n", repo.DefaultBranch)
 	}
 	for _, desc := range result.Errors() {
-		fmt.Printf("- %s\n", desc.Description())
-		fmt.Printf("- %s = %s\n", desc.Field(), desc.Value())
+		log.Warn("- %s\n", desc.Description())
+		log.Warn("- %s = %s\n", desc.Field(), desc.Value())
 	}
 	if dm != nil {
 		return models.DeleteDoor43Metadata(dm)

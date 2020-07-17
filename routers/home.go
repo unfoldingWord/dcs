@@ -139,7 +139,7 @@ func RenderRepoSearch(ctx *context.Context, opts *RepoSearchOptions) {
 	var books, langs, keywords, subjects, repoNames, owners []string
 	query := strings.Trim(ctx.Query("q"), " ")
 	if query != "" {
-		for _, token := range models.SplitAtCommas(query) {
+		for _, token := range models.SplitAtCommaNotInString(query, true) {
 			if strings.HasPrefix(token, "book:") {
 				books = append(books, strings.TrimLeft(token, "book:"))
 			} else if strings.HasPrefix(token, "lang:") {

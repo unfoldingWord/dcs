@@ -4,8 +4,8 @@
 
 package structs
 
-// Door43Metadata represents a repository's metadata of a tag or default branch
-type Door43Metadata struct {
+// Door43MetadataV4 represents a repository's metadata of a tag or default branch
+type Door43MetadataV4 struct {
 	ID              int64         `json:"id"`
 	Self            string        `json:"url"`
 	Repo            string        `json:"repo"`
@@ -25,8 +25,8 @@ type Door43Metadata struct {
 	Ingredients     []interface{} `json:"ingredients,omitempty"`
 }
 
-// CatalogSearchResults results of a successful search
-type CatalogSearchResults struct {
-	OK   bool              `json:"ok"`
-	Data []*Door43Metadata `json:"data"`
+// CatalogSearchResultsV4 results of a successful search
+type CatalogSearchResultsV4 struct {
+	OK   bool                `json:"ok"`
+	Data []*Door43MetadataV4 `json:"data"`
 }

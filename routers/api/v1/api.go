@@ -59,7 +59,6 @@
 package v1
 
 import (
-	"code.gitea.io/gitea/routers/api/v1/catalog"
 	"net/http"
 	"strings"
 
@@ -69,6 +68,7 @@ import (
 	"code.gitea.io/gitea/modules/log"
 	"code.gitea.io/gitea/modules/setting"
 	api "code.gitea.io/gitea/modules/structs"
+	catalog "code.gitea.io/gitea/routers/api/catalog/v4"
 	"code.gitea.io/gitea/routers/api/v1/admin"
 	"code.gitea.io/gitea/routers/api/v1/misc"
 	"code.gitea.io/gitea/routers/api/v1/notify"
