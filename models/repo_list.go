@@ -207,6 +207,12 @@ const (
 	SearchOrderByStarsReverse          SearchOrderBy = "`repository`.num_stars DESC"
 	SearchOrderByForks                 SearchOrderBy = "`repository`.num_forks ASC"
 	SearchOrderByForksReverse          SearchOrderBy = "`repository`.num_forks DESC"
+	SearchUserOrderByAlphabetically        SearchOrderBy = "name ASC"
+	SearchUserOrderByAlphabeticallyReverse SearchOrderBy = "name DESC"
+	SearchUserOrderByLeastUpdated          SearchOrderBy = "updated_unix ASC"
+	SearchUserOrderByRecentUpdated         SearchOrderBy = "updated_unix DESC"
+	SearchUserOrderByID                    SearchOrderBy = "id ASC"
+	SearchUserOrderByIDReverse             SearchOrderBy = "id DESC"
 )
 
 // SearchRepositoryCondition creates a query condition according search repository options

@@ -1653,7 +1653,7 @@ func SearchUsers(opts *SearchUserOptions) (users []*User, _ int64, _ error) {
 	}
 
 	if len(opts.OrderBy) == 0 {
-		opts.OrderBy = SearchOrderByAlphabetically
+		opts.OrderBy = SearchUserOrderByAlphabetically
 	}
 
 	sess := x.Where(cond).OrderBy(opts.OrderBy.String())

@@ -231,20 +231,20 @@ func RenderUserSearch(ctx *context.Context, opts *models.SearchUserOptions, tplN
 	ctx.Data["SortType"] = ctx.Query("sort")
 	switch ctx.Query("sort") {
 	case "newest":
-		orderBy = models.SearchOrderByIDReverse
+		orderBy = models.SearchUserOrderByIDReverse
 	case "oldest":
-		orderBy = models.SearchOrderByID
+		orderBy = models.SearchUserOrderByID
 	case "recentupdate":
-		orderBy = models.SearchOrderByRecentUpdated
+		orderBy = models.SearchUserOrderByRecentUpdated
 	case "leastupdate":
-		orderBy = models.SearchOrderByLeastUpdated
+		orderBy = models.SearchUserOrderByLeastUpdated
 	case "reversealphabetically":
-		orderBy = models.SearchOrderByAlphabeticallyReverse
+		orderBy = models.SearchUserOrderByAlphabeticallyReverse
 	case "alphabetically":
-		orderBy = models.SearchOrderByAlphabetically
+		orderBy = models.SearchUserOrderByAlphabetically
 	default:
 		ctx.Data["SortType"] = "alphabetically"
-		orderBy = models.SearchOrderByAlphabetically
+		orderBy = models.SearchUserOrderByAlphabetically
 	}
 
 	opts.Keyword = strings.Trim(ctx.Query("q"), " ")
