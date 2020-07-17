@@ -6,6 +6,7 @@
 package org
 
 import (
+	"fmt"
 	"net/http"
 
 	"code.gitea.io/gitea/models"
@@ -119,8 +120,10 @@ func GetAll(ctx *context.APIContext) {
 		}
 	}
 
+	listOptions := utils.GetListOptions(ctx)
+
 	publicOrgs, _, err := models.SearchUsers(&models.SearchUserOptions{
-		ListOptions:   utils.GetListOptions(ctx),
+		ListOptions: listOptions,
 		Type:          models.UserTypeOrganization,
 		OrderBy:       models.SearchOrderByAlphabetically,
 		Visible:       vMode,
@@ -135,6 +138,8 @@ func GetAll(ctx *context.APIContext) {
 		orgs[i] = convert.ToOrganization(publicOrgs[i])
 	}
 
+	ctx.SetLinkHeader(int(maxResults), listOptions.PageSize)
+	ctx.Header().Set("X-Total-Count", fmt.Sprintf("%d", maxResults))
 	ctx.JSON(http.StatusOK, &orgs)
 }
 

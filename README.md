@@ -2,7 +2,7 @@
 
 <h1> <img src="https://raw.githubusercontent.com/go-gitea/gitea/master/public/img/gitea-192.png" alt="logo" width="30" height="30"> Gitea - Git with a cup of tea - DCS Version</h1>
 
-[![Build Status](https://drone.gitea.io/api/badges/go-gitea/gitea/status.svg)](https://drone.gitea.io/go-gitea/gitea)
+[![Build Status](https://drone.gitea.io/api/badges/go-gitea/gitea/status.svg?ref=refs/heads/master)](https://drone.gitea.io/go-gitea/gitea)
 [![Join the Discord chat at https://discord.gg/Gitea](https://img.shields.io/discord/322538954119184384.svg)](https://discord.gg/Gitea)
 [![](https://images.microbadger.com/badges/image/gitea/gitea.svg)](https://microbadger.com/images/gitea/gitea "Get your own image badge on microbadger.com")
 [![Coverage Status](https://coveralls.io/repos/github/unfoldingWord-dev/gogs/badge.svg?branch=develop)](https://coveralls.io/github/unfoldingWord-dev/gogs?branch=develop)
@@ -12,6 +12,7 @@
 [![Become a backer/sponsor of gitea](https://opencollective.com/gitea/tiers/backers/badge.svg?label=backers&color=brightgreen)](https://opencollective.com/gitea)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 [![Crowdin](https://badges.crowdin.net/gitea/localized.svg)](https://crowdin.com/project/gitea)
+[![TODOs](https://badgen.net/https/api.tickgit.com/badgen/github.com/go-gitea/gitea)](https://www.tickgit.com/browse?repo=github.com/go-gitea/gitea)
 
 ## Purpose
 
