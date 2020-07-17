@@ -35,27 +35,6 @@ func isKeywordValid(keyword string) bool {
 	return !bytes.Contains([]byte(keyword), nullByte)
 }
 
-// SplitAtCommas split s at commas, ignoring commas in strings.
-func SplitAtCommas(s string) []string {
-	res := []string{}
-	var beg int
-	var inString bool
-
-	for i := 0; i < len(s); i++ {
-		if s[i] == ',' && !inString {
-			res = append(res, strings.TrimSpace(s[beg:i]))
-			beg = i + 1
-		} else if s[i] == '"' {
-			if !inString {
-				inString = true
-			} else if i > 0 && s[i-1] != '\\' {
-				inString = false
-			}
-		}
-	}
-	return append(res, strings.TrimSpace(s[beg:]))
-}
-
 // RenderCatalogSearch render catalog search page
 func RenderCatalogSearch(ctx *context.Context, opts *CatalogSearchOptions) {
 	page := ctx.QueryInt("page")
@@ -109,11 +88,10 @@ func RenderCatalogSearch(ctx *context.Context, opts *CatalogSearchOptions) {
 		orderBy = models.CatalogOrderByNewest
 	}
 
-	var books, langs, keywords, subjects, repos, owners []string
+	var keywords, books, langs, subjects, repos, owners, tags, checkingLevels []string
 	query := strings.Trim(ctx.Query("q"), " ")
 	if query != "" {
-		tokens := SplitAtCommas(query)
-		for _, token := range tokens {
+		for _, token := range models.SplitAtCommas(query) {
 			if strings.HasPrefix(token, "book:") {
 				books = append(books, strings.TrimLeft(token, "book:"))
 			} else if strings.HasPrefix(token, "lang:") {
@@ -124,6 +102,10 @@ func RenderCatalogSearch(ctx *context.Context, opts *CatalogSearchOptions) {
 				repos = append(repos, strings.TrimLeft(token, "repo:"))
 			} else if strings.HasPrefix(token, "owner:") {
 				owners = append(owners, strings.TrimLeft(token, "owner:"))
+			} else if strings.HasPrefix(token, "tag:") {
+				tags = append(tags, strings.TrimLeft(token, "tag:"))
+			} else if strings.HasPrefix(token, "checkinglevel:") {
+				checkingLevels = append(checkingLevels, strings.TrimLeft(token, "checkinglevel:"))
 			} else {
 				keywords = append(keywords, token)
 			}
@@ -145,6 +127,8 @@ func RenderCatalogSearch(ctx *context.Context, opts *CatalogSearchOptions) {
 		Languages:         langs,
 		Repos:             repos,
 		Owners:            owners,
+		Tags:              tags,
+		CheckingLevels:    checkingLevels,
 	})
 	if err != nil {
 		ctx.ServerError("SearchCatalog", err)

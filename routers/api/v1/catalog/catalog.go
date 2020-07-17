@@ -6,7 +6,6 @@
 package catalog
 
 import (
-	"code.gitea.io/gitea/routers/dcs"
 	"fmt"
 	"net/http"
 	"strings"
@@ -390,15 +389,15 @@ func GetCatalogMetadata(ctx *context.APIContext) {
 	ctx.JSON(http.StatusOK, dm.Metadata)
 }
 
-// After doing QueryStrings on the context, it also separates strings that have commas into substrings
-func queryStrings(ctx *context.APIContext, name string) []string {
+// QueryStrings After calling QueryStrings on the context, it also separates strings that have commas into substrings
+func QueryStrings(ctx *context.APIContext, name string) []string {
 	strs := ctx.QueryStrings(name)
 	if len(strs) == 0 {
 		return strs
 	}
 	var newStrs []string
 	for _, str := range strs {
-		newStrs = append(newStrs, dcs.SplitAtCommas(str)...)
+		newStrs = append(newStrs, models.SplitAtCommas(str)...)
 	}
 	return newStrs
 }
@@ -413,9 +412,9 @@ func searchCatalog(ctx *context.APIContext) {
 		if ctx.Params("username") != "" {
 			owners = []string{ctx.Params("username")}
 		} else {
-			owners = queryStrings(ctx, "owner")
+			owners = QueryStrings(ctx, "owner")
 		}
-		repos = queryStrings(ctx, "repo")
+		repos = QueryStrings(ctx, "repo")
 	}
 	if ctx.Query("searchAllMetadata") != "" {
 		searchAllMetadata = ctx.QueryBool("searchAllMetadata")
@@ -424,7 +423,7 @@ func searchCatalog(ctx *context.APIContext) {
 	keywords := []string{}
 	query := strings.Trim(ctx.Query("q"), " ")
 	if query != "" {
-		keywords = dcs.SplitAtCommas(query)
+		keywords = models.SplitAtCommas(query)
 	}
 
 	opts := &models.SearchCatalogOptions{
@@ -433,18 +432,18 @@ func searchCatalog(ctx *context.APIContext) {
 		Owners:            owners,
 		Repos:             repos,
 		RepoID:            repoID,
-		Tags:              queryStrings(ctx, "tag"),
-		Stages:            queryStrings(ctx, "stage"),
-		Languages:         queryStrings(ctx, "lang"),
-		Subjects:          queryStrings(ctx, "subject"),
-		CheckingLevels:    queryStrings(ctx, "checkingLevel"),
-		Books:             queryStrings(ctx, "book"),
+		Tags:              QueryStrings(ctx, "tag"),
+		Stages:            QueryStrings(ctx, "stage"),
+		Languages:         QueryStrings(ctx, "lang"),
+		Subjects:          QueryStrings(ctx, "subject"),
+		CheckingLevels:    QueryStrings(ctx, "checkingLevel"),
+		Books:             QueryStrings(ctx, "book"),
 		IncludeHistory:    ctx.QueryBool("includeHistory"),
 		ShowIngredients:   ctx.QueryBool("showIngredients"),
 		SearchAllMetadata: searchAllMetadata,
 	}
 
-	var sortModes = queryStrings(ctx, "sort")
+	var sortModes = QueryStrings(ctx, "sort")
 	if len(sortModes) > 0 {
 		var sortOrder = ctx.Query("order")
 		if sortOrder == "" {

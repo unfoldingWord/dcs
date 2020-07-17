@@ -161,12 +161,12 @@ func SearchCatalogCondition(opts *SearchCatalogOptions) builder.Cond {
 				}
 			case StagePreProd, StagePreDashProd, StagePrerelease:
 				subStageCond = subStageCond.Or(builder.Eq{"`release`.is_prerelease": true})
-				if ! opts.IncludeHistory {
+				if !opts.IncludeHistory {
 					subHistoryCond = subHistoryCond.Or(builder.Expr("`release`.created_unix = latest_preprod_created_unix"))
 				}
 			case StageLatest:
 				subStageCond = subStageCond.Or(builder.Eq{"`door43_metadata`.release_id": 0})
-				if ! opts.IncludeHistory {
+				if !opts.IncludeHistory {
 					subHistoryCond = subHistoryCond.Or(builder.Expr("`release`.created_unix IS NULL"))
 				}
 			case StageProd:
@@ -276,7 +276,7 @@ func SearchCatalogByCondition(opts *SearchCatalogOptions, cond builder.Cond, loa
 	if contains(opts.Stages, StageDraft) {
 		sess.Join("LEFT", "(SELECT `release`.repo_id, COUNT(*) AS draft_count, MAX(`release`.created_unix) AS latest_draft_created_unix FROM `release` JOIN `door43_metadata` ON `door43_metadata`.release_id = `release`.id WHERE `release`.is_draft = 1 GROUP BY `release`.repo_id) `draft_info`", "`draft_info`.repo_id = `door43_metadata`.repo_id")
 	}
-	
+
 	if opts.PageSize > 0 {
 		sess.Limit(opts.PageSize, (opts.Page-1)*opts.PageSize)
 	}
@@ -292,4 +292,25 @@ func SearchCatalogByCondition(opts *SearchCatalogOptions, cond builder.Cond, loa
 	}
 
 	return dms, count, nil
+}
+
+// SplitAtCommas split s at commas, ignoring commas in strings.
+func SplitAtCommas(s string) []string {
+	var res []string
+	var beg int
+	var inString bool
+
+	for i := 0; i < len(s); i++ {
+		if s[i] == ',' && !inString {
+			res = append(res, strings.TrimSpace(s[beg:i]))
+			beg = i + 1
+		} else if s[i] == '"' {
+			if !inString {
+				inString = true
+			} else if i > 0 && s[i-1] != '\\' {
+				inString = false
+			}
+		}
+	}
+	return append(res, strings.TrimSpace(s[beg:]))
 }

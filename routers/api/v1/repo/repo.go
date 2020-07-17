@@ -6,6 +6,7 @@
 package repo
 
 import (
+	"code.gitea.io/gitea/routers/api/v1/catalog"
 	"fmt"
 	"net/http"
 	"strings"
@@ -154,10 +155,11 @@ func Search(ctx *context.APIContext) {
 		StarredByID:        ctx.QueryInt64("starredBy"),
 		IncludeDescription: ctx.QueryBool("includeDesc"),
 		/*** DCS Customizations ***/
-		Languages:         ctx.QueryStrings("lang"),
-		Subject:           ctx.Query("subject"),
-		Books:             ctx.QueryStrings("book"),
-		CheckingLevel:     ctx.Query("checking_level"),
+		Languages:         catalog.QueryStrings(ctx, "lang"),
+		Repos:             catalog.QueryStrings(ctx, "repo"),
+		Owners:            catalog.QueryStrings(ctx, "owner"),
+		Subjects:          catalog.QueryStrings(ctx, "subject"),
+		Books:             catalog.QueryStrings(ctx, "book"),
 		SearchAllMetadata: true,
 		/*** END DCS Customizations ***/
 	}
