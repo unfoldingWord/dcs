@@ -107,7 +107,7 @@ func GetAllOrgs(ctx *context.APIContext) {
 
 	users, _, err := models.SearchUsers(&models.SearchUserOptions{
 		Type:        models.UserTypeOrganization,
-		OrderBy:     models.SearchOrderByAlphabetically,
+		OrderBy:     models.SearchUserOrderByAlphabetically,
 		ListOptions: utils.GetListOptions(ctx),
 		Visible:     []api.VisibleType{api.VisibleTypePublic, api.VisibleTypeLimited, api.VisibleTypePrivate},
 		/*** DCS CUSTOMIZATIONS ***/

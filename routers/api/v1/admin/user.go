@@ -357,7 +357,7 @@ func GetAllUsers(ctx *context.APIContext) {
 
 	users, _, err := models.SearchUsers(&models.SearchUserOptions{
 		Type:        models.UserTypeIndividual,
-		OrderBy:     models.SearchOrderByAlphabetically,
+		OrderBy:     models.SearchUserOrderByAlphabetically,
 		ListOptions: utils.GetListOptions(ctx),
 	})
 	if err != nil {
