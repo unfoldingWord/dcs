@@ -77,7 +77,6 @@ type RepoSearchOptions struct {
 	Restricted bool
 	PageSize   int
 	TplName    base.TplName
-	Languages  []string
 }
 
 var (
@@ -137,6 +136,26 @@ func RenderRepoSearch(ctx *context.Context, opts *RepoSearchOptions) {
 	topicOnly := ctx.QueryBool("topic")
 	ctx.Data["TopicOnly"] = topicOnly
 
+	var books, langs, keywords, subjects, repoNames, owners []string
+	query := strings.Trim(ctx.Query("q"), " ")
+	if query != "" {
+		for _, token := range models.SplitAtCommas(query) {
+			if strings.HasPrefix(token, "book:") {
+				books = append(books, strings.TrimLeft(token, "book:"))
+			} else if strings.HasPrefix(token, "lang:") {
+				langs = append(langs, strings.TrimLeft(token, "lang:"))
+			} else if strings.HasPrefix(token, "subject:") {
+				subjects = append(subjects, strings.Trim(strings.TrimLeft(token, "subject:"), `"`))
+			} else if strings.HasPrefix(token, "repo:") {
+				repoNames = append(repoNames, strings.TrimLeft(token, "repo:"))
+			} else if strings.HasPrefix(token, "owner:") {
+				owners = append(owners, strings.TrimLeft(token, "owner:"))
+			} else {
+				keywords = append(keywords, token)
+			}
+		}
+	}
+
 	repos, count, err = models.SearchRepository(&models.SearchRepoOptions{
 		ListOptions: models.ListOptions{
 			Page:     page,
@@ -145,13 +164,18 @@ func RenderRepoSearch(ctx *context.Context, opts *RepoSearchOptions) {
 		Actor:              ctx.User,
 		OrderBy:            orderBy,
 		Private:            opts.Private,
-		Keyword:            keyword,
+		Keyword:            strings.Join(keywords, ","),
 		OwnerID:            opts.OwnerID,
 		AllPublic:          true,
 		AllLimited:         true,
 		TopicOnly:          topicOnly,
 		IncludeDescription: setting.UI.SearchRepoDescription,
-		Languages:          opts.Languages,
+		Books:              books,
+		Languages:          langs,
+		Subjects:           subjects,
+		Repos:              repoNames,
+		Owners:             owners,
+		SearchAllMetadata:  true,
 	})
 	if err != nil {
 		ctx.ServerError("SearchRepository", err)
@@ -183,11 +207,10 @@ func ExploreRepos(ctx *context.Context) {
 	}
 
 	RenderRepoSearch(ctx, &RepoSearchOptions{
-		PageSize:  setting.UI.ExplorePagingNum,
-		OwnerID:   ownerID,
-		Private:   ctx.User != nil,
-		TplName:   tplExploreRepos,
-		Languages: ctx.QueryStrings("lang"),
+		PageSize: setting.UI.ExplorePagingNum,
+		OwnerID:  ownerID,
+		Private:  ctx.User != nil,
+		TplName:  tplExploreRepos,
 	})
 }
 
