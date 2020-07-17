@@ -8,16 +8,16 @@ import (
 	api "code.gitea.io/gitea/modules/structs"
 )
 
-// CatalogSearchResults
-// swagger:response CatalogSearchResults
-type swaggerResponseCatalogSearchResults struct {
+// CatalogSearchResultsV4
+// swagger:response CatalogSearchResultsV4
+type swaggerResponseCatalogSearchResultsV4 struct {
 	// in:body
 	Body api.CatalogSearchResultsV4 `json:"body"`
 }
 
-// CatalogEntry
-// swagger:response CatalogEntry
-type swaggerResponseCatalogEntry struct {
+// CatalogEntryV4
+// swagger:response CatalogEntryV4
+type swaggerResponseCatalogEntryV4 struct {
 	// in:body
 	Body api.Door43MetadataV4 `json:"body"`
 }

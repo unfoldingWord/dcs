@@ -329,8 +329,8 @@ func SearchRepositoryCondition(opts *SearchRepoOptions) builder.Cond {
 					likes = likes.Or(builder.Like{"LOWER(`repository`.description)", strings.ToLower(v)})
 				}
 				/*** DCS Customizations ***/
-				likes = likes.Or(builder.Like{"LOWER(JSON_EXTRACT(`door43_metadata`.metadata, '$.dublin_core.title'))", strings.ToLower(v)})
-				likes = likes.Or(builder.Like{"LOWER(JSON_EXTRACT(`door43_metadata`.metadata, '$.dublin_core.subject'))", strings.ToLower(v)})
+				likes = likes.Or(builder.Like{"LOWER(JSON_UNQUOTE(JSON_EXTRACT(`door43_metadata`.metadata, '$.dublin_core.title')))", strings.ToLower(v)})
+				likes = likes.Or(builder.Like{"LOWER(JSON_UNQUOTE(JSON_EXTRACT(`door43_metadata`.metadata, '$.dublin_core.subject')))", strings.ToLower(v)})
 				if opts.SearchAllMetadata {
 					likes = likes.Or(builder.Expr("JSON_SEARCH(LOWER(`door43_metadata`.metadata), 'one', ?) IS NOT NULL", "%"+strings.ToLower(v)+"%"))
 				}
