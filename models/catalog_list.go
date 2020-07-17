@@ -138,8 +138,8 @@ func SearchCatalogCondition(opts *SearchCatalogOptions) builder.Cond {
 	for _, keyword := range opts.Keywords {
 		keywordCond = keywordCond.Or(builder.Like{"`repository`.lower_name", strings.ToLower(keyword)})
 		keywordCond = keywordCond.Or(builder.Like{"`user`.lower_name", strings.ToLower(keyword)})
-		keywordCond = keywordCond.Or(builder.Like{"LOWER(JSON_EXTRACT(`door43_metadata`.metadata, '$.dublin_core.title'))", strings.ToLower(keyword)})
-		keywordCond = keywordCond.Or(builder.Like{"LOWER(JSON_EXTRACT(`door43_metadata`.metadata, '$.dublin_core.subject'))", strings.ToLower(keyword)})
+		keywordCond = keywordCond.Or(builder.Like{"LOWER(JSON_UNQUOTE(JSON_EXTRACT(`door43_metadata`.metadata, '$.dublin_core.title')))", strings.ToLower(keyword)})
+		keywordCond = keywordCond.Or(builder.Like{"LOWER(JSON_UNQUOTE(JSON_EXTRACT(`door43_metadata`.metadata, '$.dublin_core.subject')))", strings.ToLower(keyword)})
 		if opts.SearchAllMetadata {
 			keywordCond = keywordCond.Or(builder.Expr("JSON_SEARCH(LOWER(`door43_metadata`.metadata), 'one', ?) IS NOT NULL", "%"+strings.ToLower(keyword)+"%"))
 		}
@@ -195,7 +195,7 @@ func SearchCatalogByCondition(opts *SearchCatalogOptions, cond builder.Cond, loa
 
 	stages := FilterStages(opts.Stages)
 	if contains(stages, StageProd) {
-		sess.Join("LEFT", "(SELECT `release`.repo_id, COUNT(*) AS prod_count, MAX(`release`.created_unix) AS latest_prod_created_unix FROM `release` JOIN `door43_metadata` ON `door43_metadata`.release_id = `release`.id WHERE `release`.is_prerelease = 0 GROUP BY `release`.repo_id) `prod_info`", "`prod_info`.repo_id = `door43_metadata`.repo_id")
+		sess.Join("LEFT", "(SELECT `release`.repo_id, COUNT(*) AS prod_count, MAX(`release`.created_unix) AS latest_prod_created_unix FROM `release` JOIN `door43_metadata` ON `door43_metadata`.release_id = `release`.id WHERE `release`.is_prerelease = 0 AND `release`.is_draft = 0 GROUP BY `release`.repo_id) `prod_info`", "`prod_info`.repo_id = `door43_metadata`.repo_id")
 	}
 	if contains(stages, StagePreProd) {
 		sess.Join("LEFT", "(SELECT `release`.repo_id, COUNT(*) AS preprod_count, MAX(`release`.created_unix) AS latest_preprod_created_unix FROM `release` JOIN `door43_metadata` ON `door43_metadata`.release_id = `release`.id WHERE `release`.is_prerelease = 1 AND `release`.is_draft = 0 GROUP BY `release`.repo_id) `preprod_info`", "`preprod_info`.repo_id = `door43_metadata`.repo_id")
@@ -326,7 +326,7 @@ func getStageAndHistoryCond(stages []string, includeHistory bool) (builder.Cond,
 func GetSubjectCond(subjects []string) builder.Cond {
 	var subjectCond = builder.NewCond()
 	for _, subject := range subjects {
-		subjectCond = subjectCond.Or(builder.Like{"LOWER(JSON_EXTRACT(`door43_metadata`.metadata, '$.dublin_core.subject'))", strings.ToLower(subject)})
+		subjectCond = subjectCond.Or(builder.Eq{"LOWER(JSON_UNQUOTE(JSON_EXTRACT(`door43_metadata`.metadata, '$.dublin_core.subject')))": strings.ToLower(subject)})
 	}
 	return subjectCond
 }
@@ -336,7 +336,7 @@ func GetLanguageCond(languages []string) builder.Cond {
 	var langCond = builder.NewCond()
 	for _, lang := range languages {
 		for _, v := range strings.Split(lang, ",") {
-			langCond = langCond.Or(builder.Like{"LOWER(JSON_EXTRACT(`door43_metadata`.metadata, '$.dublin_core.language.identifier'))", strings.ToLower(v)})
+			langCond = langCond.Or(builder.Eq{"LOWER(JSON_UNQUOTE(JSON_EXTRACT(`door43_metadata`.metadata, '$.dublin_core.language.identifier')))": strings.ToLower(v)})
 		}
 	}
 	return langCond
@@ -358,7 +358,7 @@ func GetCheckingLevelCond(checkingLevels []string) builder.Cond {
 	var checkingCond = builder.NewCond()
 	for _, checking := range checkingLevels {
 		for _, v := range strings.Split(checking, ",") {
-			checkingCond = checkingCond.Or(builder.Eq{"JSON_EXTRACT(`door43_metadata`.metadata, '$.checking.checking_level')": v})
+			checkingCond = checkingCond.Or(builder.Eq{"JSON_UNQUOTE(JSON_EXTRACT(`door43_metadata`.metadata, '$.checking.checking_level'))": v})
 		}
 	}
 	return checkingCond

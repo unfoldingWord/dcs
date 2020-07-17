@@ -1,5 +1,4 @@
-// Copyright 2014 The Gogs Authors. All rights reserved.
-// Copyright 2018 The Gitea Authors. All rights reserved.
+// Copyright 2020 unfoldingWord. All rights reserved.
 // Use of this source code is governed by a MIT-style
 // license that can be found in the LICENSE file.
 
@@ -121,7 +120,7 @@ func Search(ctx *context.APIContext) {
 	//   type: integer
 	// responses:
 	//   "200":
-	//     "$ref": "#/responses/CatalogSearchResults"
+	//     "$ref": "#/responses/CatalogSearchResultsV4"
 	//   "422":
 	//     "$ref": "#/responses/validationError"
 
@@ -211,7 +210,7 @@ func SearchOwner(ctx *context.APIContext) {
 	//   type: integer
 	// responses:
 	//   "200":
-	//     "$ref": "#/responses/CatalogSearchResults"
+	//     "$ref": "#/responses/CatalogSearchResultsV4"
 	//   "422":
 	//     "$ref": "#/responses/validationError"
 
@@ -302,7 +301,7 @@ func SearchRepo(ctx *context.APIContext) {
 	//   type: integer
 	// responses:
 	//   "200":
-	//     "$ref": "#/responses/CatalogSearchResults"
+	//     "$ref": "#/responses/CatalogSearchResultsV4"
 	//   "422":
 	//     "$ref": "#/responses/validationError"
 	searchCatalog(ctx)
@@ -333,7 +332,7 @@ func GetCatalogEntry(ctx *context.APIContext) {
 	//   required: true
 	// responses:
 	//   "200":
-	//     "$ref": "#/responses/CatalogEntry"
+	//     "$ref": "#/responses/CatalogEntryV4"
 	//   "422":
 	//     "$ref": "#/responses/validationError"
 
