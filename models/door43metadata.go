@@ -56,13 +56,13 @@ func (dm *Door43Metadata) LoadAttributes() error {
 	return dm.loadAttributes(x)
 }
 
-// APIURL the api url for a door43 metadata. door43 metadata must have attributes loaded
-func (dm *Door43Metadata) APIURL() string {
+// APIURLV4 the api url for a door43 metadata. door43 metadata must have attributes loaded
+func (dm *Door43Metadata) APIURLV4() string {
 	ref := dm.Repo.DefaultBranch
 	if dm.ReleaseID > 0 {
 		ref = dm.Release.TagName
 	}
-	return fmt.Sprintf("%sapi/v1/catalog/%s/%s",
+	return fmt.Sprintf("%sapi/catalog/v4/%s/%s",
 		setting.AppURL, dm.Repo.FullName(), ref)
 }
 
@@ -71,12 +71,12 @@ func (dm *Door43Metadata) HTMLURL() string {
 	return fmt.Sprintf("%s/metadata/tag/%s", dm.Repo.HTMLURL(), dm.Release.TagName)
 }
 
-// APIFormat convert a Door43Metadata to structs.Door43Metadata
-func (dm *Door43Metadata) APIFormat() *structs.Door43Metadata {
-	return dm.innerAPIFormat(x)
+// APIFormatV4 convert a Door43Metadata to structs.Door43MetadataV4
+func (dm *Door43Metadata) APIFormatV4() *structs.Door43MetadataV4 {
+	return dm.innerAPIFormatV4(x)
 }
 
-func (dm *Door43Metadata) innerAPIFormat(e *xorm.Engine) *structs.Door43Metadata {
+func (dm *Door43Metadata) innerAPIFormatV4(e *xorm.Engine) *structs.Door43MetadataV4 {
 	dm.loadAttributes(e)
 	tag := ""
 	stage := ""
@@ -102,9 +102,9 @@ func (dm *Door43Metadata) innerAPIFormat(e *xorm.Engine) *structs.Door43Metadata
 		stage = StageLatest
 		metadataFile = dm.Repo.HTMLURL() + "/raw/branch/" + dm.Repo.DefaultBranch + "/manifest.yaml"
 	}
-	return &structs.Door43Metadata{
+	return &structs.Door43MetadataV4{
 		ID:              dm.ID,
-		Self:            dm.APIURL(),
+		Self:            dm.APIURLV4(),
 		Repo:            dm.Repo.Name,
 		Owner:           dm.Repo.OwnerName,
 		RepoURL:         dm.Repo.APIURL(),
@@ -117,7 +117,7 @@ func (dm *Door43Metadata) innerAPIFormat(e *xorm.Engine) *structs.Door43Metadata
 		Stage:           stage,
 		Released:        released,
 		MetadataVersion: dm.MetadataVersion,
-		MetadataURL:     dm.APIURL() + "/metadata",
+		MetadataURL:     dm.APIURLV4() + "/metadata",
 		MetadataFile:    metadataFile,
 		Ingredients:     (*dm.Metadata)["projects"].([]interface{}),
 	}
@@ -362,7 +362,10 @@ func DeleteDoor43Metadata(dm *Door43Metadata) error {
 func DeleteDoor43MetadataByRelease(release *Release) error {
 	dm, err := GetDoor43MetadataByRepoIDAndReleaseID(release.RepoID, release.ID)
 	if err != nil {
-		return err
+		if !IsErrDoor43MetadataNotExist(err) {
+			return err
+		}
+		return nil
 	}
 	_, err = x.ID(dm.ID).Delete(dm)
 	return err

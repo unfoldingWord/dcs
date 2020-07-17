@@ -5,7 +5,11 @@
 				{{if .Repo.RelAvatarLink}}
 					<img class="ui avatar image" src="{{.Repo.RelAvatarLink}}">
 				{{end}}
+				{{if .Release}}
 				<a class="name" href="{{.Repo.Link}}/releases/tag/{{.Release.TagName | EscapePound}}">
+				{{else}}
+				<a class="name" href="{{.Repo.Link}}/src/branch/{{.Repo.DefaultBranch | EscapePound}}">
+				{{end}}
 					{{.Metadata.dublin_core.title}}
 				</a>
 				{{if .Repo.IsFork}}
@@ -13,7 +17,17 @@
 				{{else if .Repo.IsMirror}}
 					<span class="middle">{{svg "octicon-repo-clone" 16}}</span>
 				{{end}}
-				<span class="ui green label" title="Catalog: Production">{{.Release.TagName}}</span>
+				{{if .Release}}
+					{{if .Release.IsDraft}}
+					<span class="ui yellow label" title="Catalog: Draft">
+					{{else if .Release.IsPrerelease}}
+					<span class="ui orange label" title="Catalog: Pre-Production">
+					{{else}}
+					<span class="ui green label" title="Catalog: Production">
+					{{end}}
+						{{.Release.TagName}}
+					</span>
+				{{end}}
 				<div class="ui right metas">
 					<span class="text grey">{{svg "octicon-star" 16}} {{.Repo.NumStars}}</span>
 					<span class="text grey">{{svg "octicon-git-branch" 16}} {{.Repo.NumForks}}</span>
@@ -22,7 +36,9 @@
 			</div>
 			<div class="description">
 				<p>{{.Metadata.dublin_core.subject}}</p>
+				{{if .Release}}
 				<p class="time">{{$.i18n.Tr "explore.released"}}: {{.Release.CreatedUnix.Format "2006-01-02"}}</p>
+				{{end}}
 				<p class="time">{{$.i18n.Tr "explore.language"}}: {{.Metadata.dublin_core.language.title}} ({{.Metadata.dublin_core.language.identifier}})</p>
 			</div>
 		</div>

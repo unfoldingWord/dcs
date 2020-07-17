@@ -5,6 +5,7 @@
 package release
 
 import (
+	"code.gitea.io/gitea/modules/door43metadata"
 	"fmt"
 	"os"
 	"strings"
@@ -91,6 +92,13 @@ func CreateRelease(gitRepo *git.Repository, rel *models.Release, attachmentUUIDs
 	if !rel.IsDraft {
 		notification.NotifyNewRelease(rel)
 	}
+	/*** DCS Customizations ***/
+	if rel.IsDraft {
+		{
+			door43metadata.ProcessDoor43MetadataForRepoRelease(rel.Repo, rel)
+		}
+	}
+	/*** END DCS Customizations ***/
 
 	return nil
 }

@@ -6,7 +6,6 @@
 package repo
 
 import (
-	"code.gitea.io/gitea/routers/api/v1/catalog"
 	"fmt"
 	"net/http"
 	"strings"
@@ -19,6 +18,7 @@ import (
 	api "code.gitea.io/gitea/modules/structs"
 	"code.gitea.io/gitea/modules/util"
 	"code.gitea.io/gitea/modules/validation"
+	catalog "code.gitea.io/gitea/routers/api/catalog/v4"
 	"code.gitea.io/gitea/routers/api/v1/utils"
 	repo_service "code.gitea.io/gitea/services/repository"
 )

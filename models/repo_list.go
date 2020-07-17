@@ -190,20 +190,20 @@ func (s SearchOrderBy) String() string {
 
 // Strings for sorting result
 const (
-	SearchOrderByAlphabetically        SearchOrderBy = "`repository`.name ASC"
-	SearchOrderByAlphabeticallyReverse SearchOrderBy = "`repository`.name DESC"
-	SearchOrderByLeastUpdated          SearchOrderBy = "`repository`.updated_unix ASC"
-	SearchOrderByRecentUpdated         SearchOrderBy = "`repository`.updated_unix DESC"
-	SearchOrderByOldest                SearchOrderBy = "`repository`.created_unix ASC"
-	SearchOrderByNewest                SearchOrderBy = "`repository`.created_unix DESC"
-	SearchOrderBySize                  SearchOrderBy = "`repository`.size ASC"
-	SearchOrderBySizeReverse           SearchOrderBy = "`repository`.size DESC"
-	SearchOrderByID                    SearchOrderBy = "`repository`.id ASC"
-	SearchOrderByIDReverse             SearchOrderBy = "`repository`.id DESC"
-	SearchOrderByStars                 SearchOrderBy = "`repository`.num_stars ASC"
-	SearchOrderByStarsReverse          SearchOrderBy = "`repository`.num_stars DESC"
-	SearchOrderByForks                 SearchOrderBy = "`repository`.num_forks ASC"
-	SearchOrderByForksReverse          SearchOrderBy = "`repository`.num_forks DESC"
+	SearchOrderByAlphabetically            SearchOrderBy = "`repository`.name ASC"
+	SearchOrderByAlphabeticallyReverse     SearchOrderBy = "`repository`.name DESC"
+	SearchOrderByLeastUpdated              SearchOrderBy = "`repository`.updated_unix ASC"
+	SearchOrderByRecentUpdated             SearchOrderBy = "`repository`.updated_unix DESC"
+	SearchOrderByOldest                    SearchOrderBy = "`repository`.created_unix ASC"
+	SearchOrderByNewest                    SearchOrderBy = "`repository`.created_unix DESC"
+	SearchOrderBySize                      SearchOrderBy = "`repository`.size ASC"
+	SearchOrderBySizeReverse               SearchOrderBy = "`repository`.size DESC"
+	SearchOrderByID                        SearchOrderBy = "`repository`.id ASC"
+	SearchOrderByIDReverse                 SearchOrderBy = "`repository`.id DESC"
+	SearchOrderByStars                     SearchOrderBy = "`repository`.num_stars ASC"
+	SearchOrderByStarsReverse              SearchOrderBy = "`repository`.num_stars DESC"
+	SearchOrderByForks                     SearchOrderBy = "`repository`.num_forks ASC"
+	SearchOrderByForksReverse              SearchOrderBy = "`repository`.num_forks DESC"
 	SearchUserOrderByAlphabetically        SearchOrderBy = "name ASC"
 	SearchUserOrderByAlphabeticallyReverse SearchOrderBy = "name DESC"
 	SearchUserOrderByLeastUpdated          SearchOrderBy = "updated_unix ASC"
@@ -348,47 +348,11 @@ func SearchRepositoryCondition(opts *SearchRepoOptions) builder.Cond {
 	}
 
 	/*** DCS Customizations ***/
-	if len(opts.Subjects) > 0 {
-		var subjectCond = builder.NewCond()
-		for _, subject := range opts.Subjects {
-			subjectCond = subjectCond.Or(builder.Like{"LOWER(JSON_EXTRACT(`door43_metadata`.metadata, '$.dublin_core.subject'))", strings.ToLower(subject)})
-		}
-		cond = cond.And(subjectCond)
-	}
-	if len(opts.Languages) > 0 {
-		var langCond = builder.NewCond()
-		for _, lang := range opts.Languages {
-			// separate languages in case they used a comma
-			for _, v := range strings.Split(lang, ",") {
-				langCond = langCond.Or(builder.Like{"LOWER(JSON_EXTRACT(`door43_metadata`.metadata, '$.dublin_core.language.identifier'))", strings.ToLower(v)})
-			}
-		}
-		cond = cond.And(langCond)
-	}
-	if len(opts.Books) > 0 {
-		var bookCond = builder.NewCond()
-		for _, book := range opts.Books {
-			// separate books in case they used a comma
-			for _, v := range strings.Split(book, ",") {
-				bookCond = bookCond.Or(builder.Expr("JSON_CONTAINS(LOWER(JSON_EXTRACT(`door43_metadata`.metadata, '$.projects')), JSON_OBJECT('identifier', ?))", strings.ToLower(v)))
-			}
-		}
-		cond = cond.And(bookCond)
-	}
-	if len(opts.Repos) > 0 {
-		var repoCond = builder.NewCond()
-		for _, repo := range opts.Repos {
-			repoCond = repoCond.Or(builder.Eq{"`repository`.lower_name": strings.ToLower(repo)})
-		}
-		cond.And(repoCond)
-	}
-	if len(opts.Owners) > 0 {
-		var ownerCond = builder.NewCond()
-		for _, owner := range opts.Owners {
-			ownerCond = ownerCond.Or(builder.Eq{"`user`.lower_name": strings.ToLower(owner)})
-		}
-		cond.And(ownerCond)
-	}
+	cond = cond.And(GetRepoCond(opts.Repos),
+		GetOwnerCond(opts.Owners),
+		GetSubjectCond(opts.Subjects),
+		GetBookCond(opts.Books),
+		GetLanguageCond(opts.Languages))
 	/*** EMD DCS Customizations ***/
 
 	return cond

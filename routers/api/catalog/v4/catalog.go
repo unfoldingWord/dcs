@@ -3,7 +3,7 @@
 // Use of this source code is governed by a MIT-style
 // license that can be found in the LICENSE file.
 
-package catalog
+package v4
 
 import (
 	"fmt"
@@ -349,7 +349,7 @@ func GetCatalogEntry(ctx *context.APIContext) {
 		ctx.Error(http.StatusInternalServerError, "GetDoor43MetadataByRepoIDAndTagName", err)
 		return
 	}
-	ctx.JSON(http.StatusOK, dm.APIFormat())
+	ctx.JSON(http.StatusOK, dm.APIFormatV4())
 }
 
 // GetCatalogMetadata Get the metadata (RC 0.2.0 manifest) in JSON format for the given ownername, reponame and ref
@@ -397,7 +397,7 @@ func QueryStrings(ctx *context.APIContext, name string) []string {
 	}
 	var newStrs []string
 	for _, str := range strs {
-		newStrs = append(newStrs, models.SplitAtCommas(str)...)
+		newStrs = append(newStrs, models.SplitAtCommaNotInString(str, false)...)
 	}
 	return newStrs
 }
@@ -423,7 +423,7 @@ func searchCatalog(ctx *context.APIContext) {
 	keywords := []string{}
 	query := strings.Trim(ctx.Query("q"), " ")
 	if query != "" {
-		keywords = models.SplitAtCommas(query)
+		keywords = models.SplitAtCommaNotInString(query, false)
 	}
 
 	opts := &models.SearchCatalogOptions{
@@ -475,9 +475,9 @@ func searchCatalog(ctx *context.APIContext) {
 		return
 	}
 
-	results := make([]*api.Door43Metadata, len(dms))
+	results := make([]*api.Door43MetadataV4, len(dms))
 	for i, dm := range dms {
-		results[i] = dm.APIFormat()
+		results[i] = dm.APIFormatV4()
 		if !opts.ShowIngredients {
 			results[i].Ingredients = nil
 		}
@@ -485,7 +485,7 @@ func searchCatalog(ctx *context.APIContext) {
 
 	ctx.SetLinkHeader(int(count), opts.PageSize)
 	ctx.Header().Set("X-Total-Count", fmt.Sprintf("%d", count))
-	ctx.JSON(http.StatusOK, api.CatalogSearchResults{
+	ctx.JSON(http.StatusOK, api.CatalogSearchResultsV4{
 		OK:   true,
 		Data: results,
 	})
