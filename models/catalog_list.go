@@ -331,7 +331,7 @@ func GetSubjectCond(subjects []string) builder.Cond {
 	return subjectCond
 }
 
-// GetLanguageCond gets the laguage condition
+// GetLanguageCond gets the language condition
 func GetLanguageCond(languages []string) builder.Cond {
 	var langCond = builder.NewCond()
 	for _, lang := range languages {
