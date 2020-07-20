@@ -178,17 +178,19 @@ func RegisterRoutes(m *macaron.Macaron) {
 
 		m.Get("", Search)
 
-		m.Group("/:username", func() {
-			m.Get("", SearchOwner)
-			m.Group("/:reponame", func() {
-				m.Get("", SearchRepo)
-				m.Group("/:tag", func() {
-					m.Get("", GetCatalogEntry)
-					m.Get("/metadata", GetCatalogMetadata)
-				})
-			}, repoAssignment())
+		m.Group("/search", func() {
+			m.Get("", Search)
+			m.Group("/:username", func() {
+				m.Get("", SearchOwner)
+				m.Group("/:reponame", func() {
+					m.Get("", SearchRepo)
+				}, repoAssignment())
+			})
 		})
-		/*** END DCS Customizations ***/
+		m.Group("/entry/:username/:reponame/:tag", func() {
+			m.Get("", GetCatalogEntry)
+			m.Get("/metadata", GetCatalogMetadata)
+		}, repoAssignment())
 	}, securityHeaders(), context.APIContexter(), sudo())
 }
 
