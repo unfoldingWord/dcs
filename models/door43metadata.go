@@ -62,7 +62,7 @@ func (dm *Door43Metadata) APIURLV4() string {
 	if dm.ReleaseID > 0 {
 		ref = dm.Release.TagName
 	}
-	return fmt.Sprintf("%sapi/catalog/v4/%s/%s",
+	return fmt.Sprintf("%sapi/catalog/v4/entry/%s/%s",
 		setting.AppURL, dm.Repo.FullName(), ref)
 }
 
