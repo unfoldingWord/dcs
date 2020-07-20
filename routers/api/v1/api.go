@@ -965,8 +965,8 @@ func RegisterRoutes(m *macaron.Macaron) {
 				})
 			})
 			m.Group("/entry/:username/:reponame/:tag", func() {
-					m.Get("", catalog.GetCatalogEntry)
-					m.Get("/metadata", catalog.GetCatalogMetadata)
+				m.Get("", catalog.GetCatalogEntry)
+				m.Get("/metadata", catalog.GetCatalogMetadata)
 			}, repoAssignment())
 		})
 		/*** END DCS Customizations ***/

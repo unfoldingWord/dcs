@@ -385,7 +385,93 @@
         }
       }
     },
-    "/catalog": {
+    "/catalog/entry/{owner}/{repo}/{tag}": {
+      "get": {
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "catalog"
+        ],
+        "summary": "Catalog entry",
+        "operationId": "catalogGetCatalogEntry",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "name of the owner",
+            "name": "owner",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "description": "name of the repo",
+            "name": "repo",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "description": "release tag or default branch",
+            "name": "tag",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/CatalogEntryV4"
+          },
+          "422": {
+            "$ref": "#/responses/validationError"
+          }
+        }
+      }
+    },
+    "/catalog/entry/{owner}/{repo}/{tag}/metadata": {
+      "get": {
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "catalog"
+        ],
+        "summary": "Catalog entry metadata",
+        "operationId": "catalogGetMetadata",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "name of the owner",
+            "name": "owner",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "description": "name of the repo",
+            "name": "repo",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "description": "release tag or default branch",
+            "name": "tag",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/CatalogMetadata"
+          },
+          "422": {
+            "$ref": "#/responses/validationError"
+          }
+        }
+      }
+    },
+    "/catalog/search": {
       "get": {
         "produces": [
           "application/json"
@@ -503,7 +589,7 @@
         }
       }
     },
-    "/catalog/{owner}": {
+    "/catalog/search/{owner}": {
       "get": {
         "produces": [
           "application/json"
@@ -622,7 +708,7 @@
         }
       }
     },
-    "/catalog/{owner}/{repo}": {
+    "/catalog/search/{owner}/{repo}": {
       "get": {
         "produces": [
           "application/json"
@@ -735,92 +821,6 @@
         "responses": {
           "200": {
             "$ref": "#/responses/CatalogSearchResultsV4"
-          },
-          "422": {
-            "$ref": "#/responses/validationError"
-          }
-        }
-      }
-    },
-    "/catalog/{owner}/{repo}/{tag}": {
-      "get": {
-        "produces": [
-          "application/json"
-        ],
-        "tags": [
-          "catalog"
-        ],
-        "summary": "Catalog entry",
-        "operationId": "catalogGetCatalogEntry",
-        "parameters": [
-          {
-            "type": "string",
-            "description": "name of the owner",
-            "name": "owner",
-            "in": "path",
-            "required": true
-          },
-          {
-            "type": "string",
-            "description": "name of the repo",
-            "name": "repo",
-            "in": "path",
-            "required": true
-          },
-          {
-            "type": "string",
-            "description": "release tag or default branch",
-            "name": "tag",
-            "in": "path",
-            "required": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "$ref": "#/responses/CatalogEntryV4"
-          },
-          "422": {
-            "$ref": "#/responses/validationError"
-          }
-        }
-      }
-    },
-    "/catalog/{owner}/{repo}/{tag}/metadata": {
-      "get": {
-        "produces": [
-          "application/json"
-        ],
-        "tags": [
-          "catalog"
-        ],
-        "summary": "Catalog entry metadata",
-        "operationId": "catalogGetMetadata",
-        "parameters": [
-          {
-            "type": "string",
-            "description": "name of the owner",
-            "name": "owner",
-            "in": "path",
-            "required": true
-          },
-          {
-            "type": "string",
-            "description": "name of the repo",
-            "name": "repo",
-            "in": "path",
-            "required": true
-          },
-          {
-            "type": "string",
-            "description": "release tag or default branch",
-            "name": "tag",
-            "in": "path",
-            "required": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "$ref": "#/responses/CatalogMetadata"
           },
           "422": {
             "$ref": "#/responses/validationError"
