@@ -90,7 +90,7 @@ func Home(ctx *context.Context) {
 		}
 	}
 	/*** END DCS Customizations ***/
-	
+
 	var (
 		repos []*models.Repository
 		count int64
@@ -107,11 +107,11 @@ func Home(ctx *context.Context) {
 		Private:            ctx.IsSigned,
 		Actor:              ctx.User,
 		IncludeDescription: setting.UI.SearchRepoDescription,
-		Books: books,
-		Languages: langs,
-		Subjects: subjects,
-		Repos: repoNames,
-		Owners: owners,
+		Books:              books,
+		Languages:          langs,
+		Subjects:           subjects,
+		Repos:              repoNames,
+		Owners:             owners,
 	})
 	if err != nil {
 		ctx.ServerError("SearchRepository", err)
