@@ -946,16 +946,19 @@ func RegisterRoutes(m *macaron.Macaron) {
 		// Catalog
 		m.Group("/catalog", func() {
 			m.Get("", catalog.Search)
-			m.Group("/:username", func() {
-				m.Get("", catalog.SearchOwner)
-				m.Group("/:reponame", func() {
-					m.Get("", catalog.SearchRepo)
-					m.Group("/:tag", func() {
-						m.Get("", catalog.GetCatalogEntry)
-						m.Get("/metadata", catalog.GetCatalogMetadata)
-					})
-				}, repoAssignment())
+			m.Group("/search", func() {
+				m.Get("", catalog.Search)
+				m.Group("/:username", func() {
+					m.Get("", catalog.SearchOwner)
+					m.Group("/:reponame", func() {
+						m.Get("", catalog.SearchRepo)
+					}, repoAssignment())
+				})
 			})
+			m.Group("/entry/:username/:reponame/:tag", func() {
+					m.Get("", catalog.GetCatalogEntry)
+					m.Get("/metadata", catalog.GetCatalogMetadata)
+			}, repoAssignment())
 		})
 		/*** END DCS Customizations ***/
 	}, securityHeaders(), context.APIContexter(), sudo())
