@@ -40,7 +40,7 @@ var searchOrderByMap = map[string]map[string]models.CatalogOrderBy{
 
 // Search search the catalog via options
 func Search(ctx *context.APIContext) {
-	// swagger:operation GET /catalog/search catalog catalogSearch
+	// swagger:operation GET /catalog catalog catalogSearch
 	// ---
 	// summary: Catalog search
 	// produces:
