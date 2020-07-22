@@ -287,14 +287,11 @@ func GetDoor43MetadataCountByRepoID(repoID int64, opts FindDoor43MetadatasOption
 	return x.Where(opts.toConds(repoID)).Count(&Door43Metadata{})
 }
 
-// GetDoor43MetadataReleaseCountByRepoID returns the count of metadatas of repository that are releases
-func GetDoor43MetadataReleaseCountByRepoID(repoID int64, includePreproduction bool) (int64, error) {
-	releaseCondition := "`release`.id = `door43_metadata`.release_id"
-	if includePreproduction {
-		releaseCondition += "`release`.is_prerelease = 0"
-	}
-	return x.Join("INNER", "release", releaseCondition).
-		Where(builder.And(builder.Eq{"`door43_metadata`.repo_id": repoID})).
+// GetReleaseCount returns the count of releases of repository of the Door43Metadata's stage
+func (dm *Door43Metadata) GetReleaseCount() (int64, error) {
+	stageCond := GetStageCond(dm.GetStage())
+	return x.Join("LEFT", "release", "`release`.id = `door43_metadata`.release_id").
+		Where(builder.And(builder.Eq{"`door43_metadata`.repo_id": dm.RepoID}, stageCond)).
 		Count(&Door43Metadata{})
 }
 
@@ -463,16 +460,6 @@ func (r *Repository) getLatestPreProdCatalogMetadata(e Engine) (*Door43Metadata,
 		dm = nil
 	}
 	return dm, nil
-}
-
-// GetCatalogReleaseCount gets the number of all valid releases for a repo
-func (r *Repository) GetCatalogReleaseCount() (int64, error) {
-	return GetDoor43MetadataReleaseCountByRepoID(r.ID, true)
-}
-
-// GetProdCatalogReleaseCount gets the number of valid prod releases for a repo
-func (r *Repository) GetProdCatalogReleaseCount() (int64, error) {
-	return GetDoor43MetadataReleaseCountByRepoID(r.ID, false)
 }
 
 // GetDefaultBranchMetadata gets the default branch's Door43 Metadata.

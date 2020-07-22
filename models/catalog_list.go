@@ -181,7 +181,8 @@ func SearchCatalogByCondition(opts *SearchCatalogOptions, cond builder.Cond, loa
 		return nil, 0, err
 	}
 
-	sess.Join("INNER", "repository", "`repository`.id = `door43_metadata`.repo_id").
+	sess.Select("`door43_metadata`.*, release_count").
+		Join("INNER", "repository", "`repository`.id = `door43_metadata`.repo_id").
 		Join("INNER", "user", "`repository`.owner_id = `user`.id").
 		Join("LEFT", "release", "`release`.id = `door43_metadata`.release_id").
 		Join("INNER", "("+releaseInfoTable+") release_info", "release_info.repo_id = `door43_metadata`.repo_id").
