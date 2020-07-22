@@ -29,9 +29,9 @@
 					</span>
 				{{end}}
 				<div class="ui right metas">
-					<span class="text grey">{{svg "octicon-star" 16}} {{.Repo.NumStars}}</span>
-					<span class="text grey">{{svg "octicon-git-branch" 16}} {{.Repo.NumForks}}</span>
-					<span class="text grey">{{svg "octicon-tag" 16}} {{.Repo.GetProdCatalogReleaseCount}}</span>
+					<span class="text grey" title="# stars">{{svg "octicon-star" 16}} {{.Repo.NumStars}}</span>
+					<span class="text grey" title="# forks">{{svg "octicon-git-branch" 16}} {{.Repo.NumForks}}</span>
+					<span class="text grey" title="# releases">{{svg "octicon-tag" 16}} {{.GetReleaseCount}}</span>
 				</div>
 			</div>
 			<div class="description">
