@@ -88,7 +88,8 @@ func RenderCatalogSearch(ctx *context.Context, opts *CatalogSearchOptions) {
 		orderBy = models.CatalogOrderByNewest
 	}
 
-	var keywords, books, langs, subjects, repos, owners, tags, checkingLevels, stages []string
+	var keywords, books, langs, subjects, repos, owners, tags, checkingLevels []string
+	var stage models.Stage
 	query := strings.Trim(ctx.Query("q"), " ")
 	if query != "" {
 		for _, token := range models.SplitAtCommaNotInString(query, true) {
@@ -107,7 +108,9 @@ func RenderCatalogSearch(ctx *context.Context, opts *CatalogSearchOptions) {
 			} else if strings.HasPrefix(token, "checkinglevel:") {
 				checkingLevels = append(checkingLevels, strings.TrimLeft(token, "checkinglevel:"))
 			} else if strings.HasPrefix(token, "stage:") {
-				stages = append(stages, strings.Trim(strings.TrimLeft(token, "stage:"), `"`))
+				if s, ok := models.StageMap[strings.Trim(strings.TrimLeft(token, "stage:"), `"`)]; ok {
+					stage = s
+				}
 			} else {
 				keywords = append(keywords, token)
 			}
@@ -122,7 +125,7 @@ func RenderCatalogSearch(ctx *context.Context, opts *CatalogSearchOptions) {
 		OrderBy:           []models.CatalogOrderBy{orderBy},
 		Keywords:          keywords,
 		SearchAllMetadata: true,
-		Stages:            stages,
+		Stage:             stage,
 		IncludeHistory:    false,
 		Books:             books,
 		Subjects:          subjects,

@@ -79,10 +79,11 @@ func (dm *Door43Metadata) APIFormatV4() *structs.Door43MetadataV4 {
 func (dm *Door43Metadata) innerAPIFormatV4(e *xorm.Engine) *structs.Door43MetadataV4 {
 	dm.loadAttributes(e)
 	tag := ""
-	stage := ""
+	stage := StageProd
 	released := ""
 	releaseURL := ""
 	metadataFile := ""
+	dm.GetStage()
 	if dm.ReleaseID > 0 {
 		tag = dm.Release.TagName
 		releaseURL = dm.Release.APIURL()
@@ -114,7 +115,7 @@ func (dm *Door43Metadata) innerAPIFormatV4(e *xorm.Engine) *structs.Door43Metada
 		Title:           (*dm.Metadata)["dublin_core"].(map[string]interface{})["title"].(string),
 		Books:           dm.GetBooks(),
 		Tag:             tag,
-		Stage:           stage,
+		Stage:           stage.String(),
 		Released:        released,
 		MetadataVersion: dm.MetadataVersion,
 		MetadataURL:     dm.APIURLV4() + "/metadata",
@@ -533,3 +534,54 @@ func (err ErrInvalidRelease) Error() string {
 }
 
 /*** END Error Structs & Functions ***/
+
+/*** Stage ***/
+
+// Stage type for choosing which level of stage to return in the Catalog results
+type Stage int
+
+// Stage values
+const (
+	StageProd    Stage = 1
+	StagePreProd Stage = 2
+	StageDraft   Stage = 3
+	StageLatest  Stage = 4
+)
+
+// StageMap map from string to Stage (int)
+var StageMap = map[string]Stage{
+	"prod":    StageProd,
+	"preprod": StagePreProd,
+	"draft":   StageDraft,
+	"latest":  StageLatest,
+}
+
+// StageToStringMap map from stage (int) to string
+var StageToStringMap = map[Stage]string{
+	StageProd:    "prod",
+	StagePreProd: "preprod",
+	StageDraft:   "draft",
+	StageLatest:  "latest",
+}
+
+// String returns string repensation of a Stage (int)
+func (s *Stage) String() string {
+	return StageToStringMap[*s]
+}
+
+// GetStage gets the Stage (int) for a given Door43Metadata
+func (dm *Door43Metadata) GetStage() Stage {
+	dm.LoadAttributes()
+	if dm.ReleaseID > 0 {
+		if dm.Release.IsDraft {
+			return StageDraft
+		} else if dm.Release.IsPrerelease {
+			return StagePreProd
+		} else {
+			return StageProd
+		}
+	}
+	return StageLatest
+}
+
+/*** END Stage ***/
