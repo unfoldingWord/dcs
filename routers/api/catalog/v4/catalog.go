@@ -68,12 +68,11 @@ func Search(ctx *context.APIContext) {
 	//   type: string
 	// - name: stage
 	//   in: query
-	//   description: search only for entries with the given stage(s).
-	//                Supported values are
-	//                "prod" (production releases),
-	//                "preprod" (pre-production releases),
-	//                "draft" (draft releases), and
-	//                "latest" (the default branch if it is a valid RC)
+	//   description: 'specifies which release stage to be return of these stages:
+	//                "prod" - return only the production releases (default);
+	//                "preprod" - return the pre-production release if it exists instead of the production release;
+	//                "draft" - return the draft release if it exists instead of pre-production or production release;
+	//                "latest" -return the default branch (e.g. master) if it is a valid RC instead of the above'
 	//   type: string
 	// - name: subject
 	//   in: query
@@ -158,12 +157,11 @@ func SearchOwner(ctx *context.APIContext) {
 	//   type: string
 	// - name: stage
 	//   in: query
-	//   description: search only for entries with the given stage(s).
-	//                Supported values are
-	//                "prod" (production releases),
-	//                "preprod" (pre-production releases),
-	//                "draft" (draft releases), and
-	//                "latest" (the default branch if it is a valid RC)
+	//   description: 'specifies which release stage to be return of these stages:
+	//                "prod" - return only the production releases (default);
+	//                "preprod" - return the pre-production release if it exists instead of the production release;
+	//                "draft" - return the draft release if it exists instead of pre-production or production release;
+	//                "latest" -return the default branch (e.g. master) if it is a valid RC instead of the above'
 	//   type: string
 	// - name: subject
 	//   in: query
@@ -249,12 +247,11 @@ func SearchRepo(ctx *context.APIContext) {
 	//   type: string
 	// - name: stage
 	//   in: query
-	//   description: search only for entries with the given stage(s).
-	//                Supported values are
-	//                "prod" (production releases),
-	//                "preprod" (pre-production releases),
-	//                "draft" (draft releases), and
-	//                "latest" (the default branch if it is a valid RC)
+	//   description: 'specifies which release stage to be return of these stages:
+	//                "prod" - return only the production releases (default);
+	//                "preprod" - return the pre-production release if it exists instead of the production release;
+	//                "draft" - return the draft release if it exists instead of pre-production or production release;
+	//                "latest" -return the default branch (e.g. master) if it is a valid RC instead of the above'
 	//   type: string
 	// - name: subject
 	//   in: query
@@ -419,20 +416,29 @@ func searchCatalog(ctx *context.APIContext) {
 		searchAllMetadata = ctx.QueryBool("searchAllMetadata")
 	}
 
+	stage, ok := models.StageMap[ctx.Query("stage")]
+	if !ok {
+		stage = models.StageProd
+	}
+
 	keywords := []string{}
 	query := strings.Trim(ctx.Query("q"), " ")
 	if query != "" {
 		keywords = models.SplitAtCommaNotInString(query, false)
 	}
+	listOptions := utils.GetListOptions(ctx)
+	if ctx.Query("limit") == "" {
+		listOptions.PageSize = 0
+	}
 
 	opts := &models.SearchCatalogOptions{
-		ListOptions:       utils.GetListOptions(ctx),
+		ListOptions:       listOptions,
 		Keywords:          keywords,
 		Owners:            owners,
 		Repos:             repos,
 		RepoID:            repoID,
 		Tags:              QueryStrings(ctx, "tag"),
-		Stages:            QueryStrings(ctx, "stage"),
+		Stage:             stage,
 		Languages:         QueryStrings(ctx, "lang"),
 		Subjects:          QueryStrings(ctx, "subject"),
 		CheckingLevels:    QueryStrings(ctx, "checkingLevel"),
@@ -450,19 +456,19 @@ func searchCatalog(ctx *context.APIContext) {
 		}
 		if searchModeMap, ok := searchOrderByMap[sortOrder]; ok {
 			for _, sortMode := range sortModes {
-				if orderBy, ok := searchModeMap[sortMode]; ok {
+				if orderBy, ok := searchModeMap[strings.ToLower(sortMode)]; ok {
 					opts.OrderBy = append(opts.OrderBy, orderBy)
 				} else {
-					ctx.Error(http.StatusUnprocessableEntity, "", fmt.Errorf("Invalid sort mode: \"%s\"", sortMode))
+					ctx.Error(http.StatusUnprocessableEntity, "", fmt.Errorf("invalid sort mode: \"%s\"", sortMode))
 					return
 				}
 			}
 		} else {
-			ctx.Error(http.StatusUnprocessableEntity, "", fmt.Errorf("Invalid sort order: \"%s\"", sortOrder))
+			ctx.Error(http.StatusUnprocessableEntity, "", fmt.Errorf("invalid sort order: \"%s\"", sortOrder))
 			return
 		}
 	} else {
-		opts.OrderBy = []models.CatalogOrderBy{models.CatalogOrderByLangCode, models.CatalogOrderBySubject, models.CatalogOrderByTag}
+		opts.OrderBy = []models.CatalogOrderBy{models.CatalogOrderByLangCode, models.CatalogOrderBySubject, models.CatalogOrderByTagReverse}
 	}
 
 	dms, count, err := models.SearchCatalog(opts)

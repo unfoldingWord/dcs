@@ -30,8 +30,8 @@ const (
 	CatalogOrderByLangCodeReverse CatalogOrderBy = "JSON_EXTRACT(`door43_metadata`.metadata, '$.dublin_core.language.identifier') DESC"
 	CatalogOrderByOldest          CatalogOrderBy = "`release`.created_unix ASC"
 	CatalogOrderByNewest          CatalogOrderBy = "`release`.created_unix DESC"
-	CatalogOrderByReleases        CatalogOrderBy = "prod_count ASC"
-	CatalogOrderByReleasesReverse CatalogOrderBy = "prod_count DESC"
+	CatalogOrderByReleases        CatalogOrderBy = "release_count ASC"
+	CatalogOrderByReleasesReverse CatalogOrderBy = "release_count DESC"
 	CatalogOrderByStars           CatalogOrderBy = "`repository`.num_stars ASC"
 	CatalogOrderByStarsReverse    CatalogOrderBy = "`repository`.num_stars DESC"
 	CatalogOrderByForks           CatalogOrderBy = "`repository`.num_forks ASC"
@@ -98,7 +98,7 @@ type SearchCatalogOptions struct {
 	Owners            []string
 	Repos             []string
 	Tags              []string
-	Stages            []string
+	Stage             Stage
 	Subjects          []string
 	CheckingLevels    []string
 	Books             []string
@@ -108,21 +108,6 @@ type SearchCatalogOptions struct {
 	Languages         []string
 	OrderBy           []CatalogOrderBy
 }
-
-// Stage values
-const (
-	StageProd        string = "prod"
-	StagePreProd     string = "preprod"
-	StagePreDashProd string = "pre-prod"
-	StagePrerelease  string = "prerelease"
-	StageDraft       string = "draft"
-	StageLatest      string = "latest"
-	StageAll         string = "all"
-	StageInvalid     string = "invalid"
-)
-
-// AllStages list of all stages
-var AllStages = []string{StageProd, StagePreProd, StageDraft, StageLatest}
 
 // SearchCatalogCondition creates a query condition according search repository options
 func SearchCatalogCondition(opts *SearchCatalogOptions) builder.Cond {
@@ -145,7 +130,8 @@ func SearchCatalogCondition(opts *SearchCatalogOptions) builder.Cond {
 		}
 	}
 
-	stageCond, historyCond := getStageAndHistoryCond(opts.Stages, opts.IncludeHistory)
+	stageCond := GetStageCond(opts.Stage)
+	historyCond := GetHistoryCond(opts.Stage, opts.IncludeHistory)
 
 	cond := builder.NewCond().And(GetSubjectCond(opts.Subjects),
 		GetBookCond(opts.Books),
@@ -184,24 +170,25 @@ func SearchCatalogByCondition(opts *SearchCatalogOptions, cond builder.Cond, loa
 	defer sess.Close()
 
 	dms := make(Door43MetadataList, 0, opts.PageSize)
+
+	releaseInfoTable, err := builder.Select("`door43_metadata`.repo_id", "COUNT(*) AS release_count", "MAX(IF(release_id = 0, `door43_metadata`.updated_unix, `release`.created_unix)) AS latest_unix").
+		From("door43_metadata").
+		Join("LEFT", "`release`", "`release`.id = `door43_metadata`.release_id").
+		GroupBy("`door43_metadata`.repo_id").
+		Where(GetStageCond(opts.Stage)).
+		ToBoundSQL()
+	if err != nil {
+		return nil, 0, err
+	}
+
 	sess.Join("INNER", "repository", "`repository`.id = `door43_metadata`.repo_id").
 		Join("INNER", "user", "`repository`.owner_id = `user`.id").
 		Join("LEFT", "release", "`release`.id = `door43_metadata`.release_id").
+		Join("INNER", "("+releaseInfoTable+") release_info", "release_info.repo_id = `door43_metadata`.repo_id").
 		Where(cond)
 
 	for _, orderBy := range opts.OrderBy {
 		sess.OrderBy(orderBy.String())
-	}
-
-	stages := FilterStages(opts.Stages)
-	if contains(stages, StageProd) {
-		sess.Join("LEFT", "(SELECT `release`.repo_id, COUNT(*) AS prod_count, MAX(`release`.created_unix) AS latest_prod_created_unix FROM `release` JOIN `door43_metadata` ON `door43_metadata`.release_id = `release`.id WHERE `release`.is_prerelease = 0 AND `release`.is_draft = 0 GROUP BY `release`.repo_id) `prod_info`", "`prod_info`.repo_id = `door43_metadata`.repo_id")
-	}
-	if contains(stages, StagePreProd) {
-		sess.Join("LEFT", "(SELECT `release`.repo_id, COUNT(*) AS preprod_count, MAX(`release`.created_unix) AS latest_preprod_created_unix FROM `release` JOIN `door43_metadata` ON `door43_metadata`.release_id = `release`.id WHERE `release`.is_prerelease = 1 AND `release`.is_draft = 0 GROUP BY `release`.repo_id) `preprod_info`", "`preprod_info`.repo_id = `door43_metadata`.repo_id")
-	}
-	if contains(stages, StageDraft) {
-		sess.Join("LEFT", "(SELECT `release`.repo_id, COUNT(*) AS draft_count, MAX(`release`.created_unix) AS latest_draft_created_unix FROM `release` JOIN `door43_metadata` ON `door43_metadata`.release_id = `release`.id WHERE `release`.is_draft = 1 GROUP BY `release`.repo_id) `draft_info`", "`draft_info`.repo_id = `door43_metadata`.repo_id")
 	}
 
 	if opts.PageSize > 0 {
@@ -249,77 +236,34 @@ func SplitAtCommaNotInString(s string, requireSpaceAfterComma bool) []string {
 	return append(res, strings.TrimSpace(s[beg:]))
 }
 
-// FilterStages filters an array of strings to contain the right stages. If empty, returns StageProd in the array
-func FilterStages(stages []string) []string {
-	var filtered []string
-	for _, stage := range stages {
-		for _, v := range strings.Split(stage, ",") {
-			switch v {
-			case StageProd:
-				if !contains(filtered, StageProd) {
-					filtered = append(filtered, StageProd)
-				}
-			case StagePreProd, StagePreDashProd, StagePrerelease:
-				if !contains(filtered, StagePreProd) {
-					filtered = append(filtered, StagePreProd)
-				}
-			case StageDraft:
-				if !contains(filtered, StageDraft) {
-					filtered = append(filtered, StageDraft)
-				}
-			case StageLatest:
-				if !contains(filtered, StageLatest) {
-					filtered = append(filtered, StageLatest)
-				}
-			case StageAll:
-				filtered = AllStages
-				return filtered
-			default:
-				if !contains(filtered, StageInvalid) {
-					filtered = append(filtered, StageInvalid)
-				}
+// GetStageCond gets the condition for the given stage
+func GetStageCond(stage Stage) builder.Cond {
+	stageCond := builder.And(
+		builder.Eq{"`release`.is_draft": false},
+		builder.Eq{"`release`.is_prerelease": false},
+		builder.Neq{"`door43_metadata`.release_id": 0})
+	if stage >= StagePreProd {
+		stageCond = stageCond.Or(builder.And(builder.Eq{"`release`.is_prerelease": true}, builder.Eq{"`release`.is_draft": false}))
+		if stage >= StageDraft {
+			stageCond = stageCond.Or(builder.Eq{"`release`.is_draft": true})
+			if stage >= StageLatest {
+				stageCond = stageCond.Or(builder.Eq{"`door43_metadata`.release_id": 0})
 			}
 		}
 	}
-	if len(filtered) == 0 {
-		filtered = append(filtered, StageProd)
-	}
-	return filtered
+	return stageCond
 }
 
-func getStageAndHistoryCond(stages []string, includeHistory bool) (builder.Cond, builder.Cond) {
-	stageCond := builder.NewCond()
-	historyCond := builder.NewCond()
-	for _, stage := range FilterStages(stages) {
-		switch stage {
-		case StageDraft:
-			stageCond = stageCond.Or(builder.Eq{"`release`.is_draft": true})
-			if !includeHistory {
-				historyCond = historyCond.Or(builder.Expr("`release`.created_unix = latest_draft_created_unix"))
-			}
-		case StagePreProd, StagePreDashProd, StagePrerelease:
-			stageCond = stageCond.Or(builder.Eq{"`release`.is_prerelease": true})
-			if !includeHistory {
-				historyCond = historyCond.Or(builder.Expr("`release`.created_unix = latest_preprod_created_unix"))
-			}
-		case StageLatest:
-			stageCond = stageCond.Or(builder.Eq{"`door43_metadata`.release_id": 0})
-			if !includeHistory {
-				historyCond = historyCond.Or(builder.Expr("`release`.created_unix IS NULL"))
-			}
-		case StageProd:
-			stageCond = stageCond.Or(builder.And(
-				builder.Eq{"`release`.is_draft": false},
-				builder.Eq{"`release`.is_prerelease": false},
-				builder.Neq{"`door43_metadata`.release_id": 0}))
-			if !includeHistory {
-				historyCond = historyCond.Or(builder.Expr("`release`.created_unix = latest_prod_created_unix"))
-			}
-		case StageInvalid:
-			stageCond = stageCond.Or(builder.Expr("0 = 1"))
-		}
+// GetHistoryCond gets the conditions if IncludeHistory is true based on stage
+func GetHistoryCond(stage Stage, includeHistory bool) builder.Cond {
+	if includeHistory {
+		return nil
 	}
-	return stageCond, historyCond
+	historyCond := builder.Expr("`release`.created_unix = latest_unix")
+	if stage >= StageLatest {
+		historyCond = historyCond.Or(builder.Expr("`door43_metadata`.updated_unix = latest_unix"))
+	}
+	return historyCond
 }
 
 // GetSubjectCond gets the subject condition
@@ -358,7 +302,7 @@ func GetCheckingLevelCond(checkingLevels []string) builder.Cond {
 	var checkingCond = builder.NewCond()
 	for _, checking := range checkingLevels {
 		for _, v := range strings.Split(checking, ",") {
-			checkingCond = checkingCond.Or(builder.Eq{"JSON_UNQUOTE(JSON_EXTRACT(`door43_metadata`.metadata, '$.checking.checking_level'))": v})
+			checkingCond = checkingCond.Or(builder.Gte{"JSON_UNQUOTE(JSON_EXTRACT(`door43_metadata`.metadata, '$.checking.checking_level'))": v})
 		}
 	}
 	return checkingCond
