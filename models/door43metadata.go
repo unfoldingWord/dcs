@@ -73,7 +73,7 @@ func (dm *Door43Metadata) HTMLURL() string {
 
 // GetTarballURL get the tarball URL of the tag or branch
 func (dm *Door43Metadata) GetTarballURL() string {
-	return fmt.Sprintf("%s/archive/%s.tar.gz", dm.Repo.HTMLURL(), dm.GetRef())
+	return fmt.Sprintf("%s/archive/%s.tar.gz", dm.Repo.HTMLURL(), dm.GetBranchOrTagName())
 }
 
 // GetZipballURL get the zipball URL of the tag or branch
