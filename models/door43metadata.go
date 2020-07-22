@@ -71,6 +71,50 @@ func (dm *Door43Metadata) HTMLURL() string {
 	return fmt.Sprintf("%s/metadata/tag/%s", dm.Repo.HTMLURL(), dm.Release.TagName)
 }
 
+// GetTarballURL get the tarball URL of the tag or branch
+func (dm *Door43Metadata) GetTarballURL() string {
+	return fmt.Sprintf("%s/archive/%s.tar.gz", dm.Repo.HTMLURL(), dm.GetRef())
+}
+
+// GetZipballURL get the zipball URL of the tag or branch
+func (dm *Door43Metadata) GetZipballURL() string {
+	return fmt.Sprintf("%s/archive/%s.zip", dm.Repo.HTMLURL(), dm.GetBranchOrTagName())
+}
+
+// GetBranchOrTagName get tag if a release, default branch if latest
+func (dm *Door43Metadata) GetBranchOrTagName() string {
+	if dm.ReleaseID > 0 {
+		return dm.Release.TagName
+	}
+	return dm.Repo.DefaultBranch
+}
+
+// GetReleaseURL get the URL the release API
+func (dm *Door43Metadata) GetReleaseURL() string {
+	if dm.ReleaseID > 0 {
+		return dm.Release.APIURL()
+	}
+	return ""
+}
+
+// GetReleasedDate gets the released date of the release in string format, or if a branch, gets the date of the commit
+func (dm *Door43Metadata) GetReleasedDate() string {
+	if dm.ReleaseID > 0 {
+		return dm.Release.CreatedUnix.FormatDate()
+	}
+	return dm.UpdatedUnix.FormatDate()
+}
+
+// GetMetadataJSONURL gets the json representation of the contents of the manifest.yaml file
+func (dm *Door43Metadata) GetMetadataJSONURL() string {
+	return fmt.Sprintf("%s/metadata", dm.APIURLV4())
+}
+
+// GetMetadataAndContentsURL gets the metadata and contents of the manifest.yaml file
+func (dm *Door43Metadata) GetMetadataAndContentsURL() string {
+	return fmt.Sprintf("%s/contents/manifest.yaml?ref=%s", dm.Repo.APIURL(), dm.GetBranchOrTagName())
+}
+
 // APIFormatV4 convert a Door43Metadata to structs.Door43MetadataV4
 func (dm *Door43Metadata) APIFormatV4() *structs.Door43MetadataV4 {
 	return dm.innerAPIFormatV4(x)
@@ -78,49 +122,28 @@ func (dm *Door43Metadata) APIFormatV4() *structs.Door43MetadataV4 {
 
 func (dm *Door43Metadata) innerAPIFormatV4(e *xorm.Engine) *structs.Door43MetadataV4 {
 	dm.loadAttributes(e)
-	tag := ""
 	stage := StageProd
-	released := ""
-	releaseURL := ""
-	metadataFile := ""
 	dm.GetStage()
-	if dm.ReleaseID > 0 {
-		tag = dm.Release.TagName
-		releaseURL = dm.Release.APIURL()
-		if dm.Release.IsDraft {
-			stage = StageDraft
-		} else {
-			released = dm.Release.CreatedUnix.FormatDate()
-			if dm.Release.IsPrerelease {
-				stage = StagePreProd
-			} else {
-				stage = StageProd
-			}
-		}
-		metadataFile = dm.Repo.HTMLURL() + "/raw/tag/" + dm.Release.TagName + "/manifest.yaml"
-	} else {
-		tag = dm.Repo.DefaultBranch
-		stage = StageLatest
-		metadataFile = dm.Repo.HTMLURL() + "/raw/branch/" + dm.Repo.DefaultBranch + "/manifest.yaml"
-	}
 	return &structs.Door43MetadataV4{
-		ID:              dm.ID,
-		Self:            dm.APIURLV4(),
-		Repo:            dm.Repo.Name,
-		Owner:           dm.Repo.OwnerName,
-		RepoURL:         dm.Repo.APIURL(),
-		ReleaseURL:      releaseURL,
-		Language:        (*dm.Metadata)["dublin_core"].(map[string]interface{})["language"].(map[string]interface{})["identifier"].(string),
-		Subject:         (*dm.Metadata)["dublin_core"].(map[string]interface{})["subject"].(string),
-		Title:           (*dm.Metadata)["dublin_core"].(map[string]interface{})["title"].(string),
-		Books:           dm.GetBooks(),
-		Tag:             tag,
-		Stage:           stage.String(),
-		Released:        released,
-		MetadataVersion: dm.MetadataVersion,
-		MetadataURL:     dm.APIURLV4() + "/metadata",
-		MetadataFile:    metadataFile,
-		Ingredients:     (*dm.Metadata)["projects"].([]interface{}),
+		ID:                     dm.ID,
+		Self:                   dm.APIURLV4(),
+		Repo:                   dm.Repo.Name,
+		Owner:                  dm.Repo.OwnerName,
+		RepoURL:                dm.Repo.APIURL(),
+		ReleaseURL:             dm.GetReleaseURL(),
+		TarballURL:             dm.GetTarballURL(),
+		ZipballURL:             dm.GetZipballURL(),
+		Language:               (*dm.Metadata)["dublin_core"].(map[string]interface{})["language"].(map[string]interface{})["identifier"].(string),
+		Subject:                (*dm.Metadata)["dublin_core"].(map[string]interface{})["subject"].(string),
+		Title:                  (*dm.Metadata)["dublin_core"].(map[string]interface{})["title"].(string),
+		Books:                  dm.GetBooks(),
+		BranchOrTag:            dm.GetBranchOrTagName(),
+		Stage:                  stage.String(),
+		Released:               dm.GetReleasedDate(),
+		MetadataVersion:        dm.MetadataVersion,
+		MetadataJSONURL:        dm.GetMetadataJSONURL(),
+		MetadataAndContentsURL: dm.GetMetadataAndContentsURL(),
+		Ingredients:            (*dm.Metadata)["projects"].([]interface{}),
 	}
 }
 
@@ -502,7 +525,7 @@ func IsErrDoor43MetadataNotExist(err error) bool {
 }
 
 func (err ErrDoor43MetadataNotExist) Error() string {
-	return fmt.Sprintf("metadata release id does not exist [id: %d, release_id: %s]", err.ID, err.ReleaseID)
+	return fmt.Sprintf("metadata release id does not exist [id: %d, release_id: %d]", err.ID, err.ReleaseID)
 }
 
 // ErrInvalidRelease represents a "InvalidRelease" kind of error.
