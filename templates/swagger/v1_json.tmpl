@@ -1125,7 +1125,7 @@
           },
           {
             "type": "integer",
-            "description": "page size of results, maximum page size is 50",
+            "description": "page size of results",
             "name": "limit",
             "in": "query"
           }
@@ -9801,7 +9801,7 @@
           },
           {
             "type": "integer",
-            "description": "page size of results, maximum page size is 50",
+            "description": "page size of results",
             "name": "limit",
             "in": "query"
           }
@@ -10466,7 +10466,7 @@
           },
           {
             "type": "integer",
-            "description": "page size of results, maximum page size is 50",
+            "description": "page size of results",
             "name": "limit",
             "in": "query"
           }
@@ -12161,7 +12161,7 @@
         },
         "branch_or_tag_name": {
           "type": "string",
-          "x-go-name": "Tag"
+          "x-go-name": "BranchOrTag"
         },
         "id": {
           "type": "integer",
@@ -12179,13 +12179,13 @@
           "type": "string",
           "x-go-name": "Language"
         },
-        "metadata_file": {
+        "metadata_and_contents_url": {
           "type": "string",
-          "x-go-name": "MetadataFile"
+          "x-go-name": "MetadataAndContentsURL"
         },
-        "metadata_url": {
+        "metadata_json_url": {
           "type": "string",
-          "x-go-name": "MetadataURL"
+          "x-go-name": "MetadataJSONURL"
         },
         "metadata_version": {
           "type": "string",
@@ -12219,6 +12219,10 @@
           "type": "string",
           "x-go-name": "Subject"
         },
+        "tarbar_url": {
+          "type": "string",
+          "x-go-name": "TarballURL"
+        },
         "title": {
           "type": "string",
           "x-go-name": "Title"
@@ -12226,6 +12230,10 @@
         "url": {
           "type": "string",
           "x-go-name": "Self"
+        },
+        "zipball_url": {
+          "type": "string",
+          "x-go-name": "ZipballURL"
         }
       },
       "x-go-package": "code.gitea.io/gitea/modules/structs"
