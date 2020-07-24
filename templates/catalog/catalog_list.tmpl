@@ -37,7 +37,7 @@
 			<div class="description">
 				<p>{{.Metadata.dublin_core.subject}}</p>
 				{{if .Release}}
-				<p class="time">{{$.i18n.Tr "explore.released"}}: {{.Release.CreatedUnix.Format "2006-01-02"}}</p>
+				<p class="time">{{$.i18n.Tr "explore.released"}}: {{.ReleaseDateUnix.FormatDate}}</p>
 				{{end}}
 				<p class="time">{{$.i18n.Tr "explore.language"}}: {{.Metadata.dublin_core.language.title}} ({{.Metadata.dublin_core.language.identifier}})</p>
 			</div>

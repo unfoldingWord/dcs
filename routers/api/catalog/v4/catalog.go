@@ -29,7 +29,7 @@ var searchOrderByMap = map[string]map[string]models.CatalogOrderBy{
 	"desc": {
 		"title":    models.CatalogOrderByTitleReverse,
 		"subject":  models.CatalogOrderBySubjectReverse,
-		"created":  models.CatalogOrderByNewest,
+		"released": models.CatalogOrderByNewest,
 		"lang":     models.CatalogOrderByLangCodeReverse,
 		"releases": models.CatalogOrderByReleasesReverse,
 		"stars":    models.CatalogOrderByStarsReverse,
@@ -416,9 +416,11 @@ func searchCatalog(ctx *context.APIContext) {
 		searchAllMetadata = ctx.QueryBool("searchAllMetadata")
 	}
 
-	stage, ok := models.StageMap[ctx.Query("stage")]
+	stageStr := ctx.Query("stage")
+	stage, ok := models.StageMap[stageStr]
 	if !ok {
-		stage = models.StageProd
+		ctx.Error(http.StatusUnprocessableEntity, "", fmt.Errorf("invalid stage: \"%s\"", stageStr))
+		return
 	}
 
 	keywords := []string{}

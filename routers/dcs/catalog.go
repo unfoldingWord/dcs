@@ -89,7 +89,7 @@ func RenderCatalogSearch(ctx *context.Context, opts *CatalogSearchOptions) {
 	}
 
 	var keywords, books, langs, subjects, repos, owners, tags, checkingLevels []string
-	var stage models.Stage
+	stage := models.StageProd
 	query := strings.Trim(ctx.Query("q"), " ")
 	if query != "" {
 		for _, token := range models.SplitAtCommaNotInString(query, true) {
@@ -110,6 +110,8 @@ func RenderCatalogSearch(ctx *context.Context, opts *CatalogSearchOptions) {
 			} else if strings.HasPrefix(token, "stage:") {
 				if s, ok := models.StageMap[strings.Trim(strings.TrimLeft(token, "stage:"), `"`)]; ok {
 					stage = s
+				} else {
+					stage = 0 // Makes it invalid, return no results
 				}
 			} else {
 				keywords = append(keywords, token)
