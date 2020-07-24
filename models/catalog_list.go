@@ -24,12 +24,12 @@ const (
 	CatalogOrderByTitleReverse    CatalogOrderBy = "JSON_EXTRACT(`door43_metadata`.metadata, '$.dublin_core.title') DESC"
 	CatalogOrderBySubject         CatalogOrderBy = "JSON_EXTRACT(`door43_metadata`.metadata, '$.dublin_core.subject') ASC"
 	CatalogOrderBySubjectReverse  CatalogOrderBy = "JSON_EXTRACT(`door43_metadata`.metadata, '$.dublin_core.subject') DESC"
-	CatalogOrderByTag             CatalogOrderBy = "CAST(TRIM(LEADING 'v' FROM `release`.tag_name) AS unsigned) ASC, `release`.tag_name ASC, `release`.created_unix ASC"
-	CatalogOrderByTagReverse      CatalogOrderBy = "CAST(TRIM(LEADING 'v' FROM `release`.tag_name) AS unsigned) DESC, `release`.tag_name DESC, `release`.created_unix DESC"
+	CatalogOrderByTag             CatalogOrderBy = "CAST(TRIM(LEADING 'v' FROM `release`.tag_name) AS unsigned) ASC, `door43_metadata`.branch_or_tag ASC, `door43_metadata`.release_date_unix ASC"
+	CatalogOrderByTagReverse      CatalogOrderBy = "CAST(TRIM(LEADING 'v' FROM `release`.tag_name) AS unsigned) DESC, `door43_metadata`.branch_or_tag DESC, `door43_metadata`.release_date_unix DESC"
 	CatalogOrderByLangCode        CatalogOrderBy = "JSON_EXTRACT(`door43_metadata`.metadata, '$.dublin_core.language.identifier') ASC"
 	CatalogOrderByLangCodeReverse CatalogOrderBy = "JSON_EXTRACT(`door43_metadata`.metadata, '$.dublin_core.language.identifier') DESC"
-	CatalogOrderByOldest          CatalogOrderBy = "`release`.created_unix ASC"
-	CatalogOrderByNewest          CatalogOrderBy = "`release`.created_unix DESC"
+	CatalogOrderByOldest          CatalogOrderBy = "`door43_metadata`.release_date_unix ASC"
+	CatalogOrderByNewest          CatalogOrderBy = "`door43_metadata`.release_date_unix DESC"
 	CatalogOrderByReleases        CatalogOrderBy = "release_count ASC"
 	CatalogOrderByReleasesReverse CatalogOrderBy = "release_count DESC"
 	CatalogOrderByStars           CatalogOrderBy = "`repository`.num_stars ASC"
@@ -171,9 +171,8 @@ func SearchCatalogByCondition(opts *SearchCatalogOptions, cond builder.Cond, loa
 
 	dms := make(Door43MetadataList, 0, opts.PageSize)
 
-	releaseInfoTable, err := builder.Select("`door43_metadata`.repo_id", "COUNT(*) AS release_count", "MAX(IF(release_id = 0, `door43_metadata`.updated_unix, `release`.created_unix)) AS latest_unix").
+	releaseInfoInner, err := builder.Select("`door43_metadata`.repo_id", "COUNT(*) AS release_count", "MAX(`door43_metadata`.release_date_unix) AS latest_unix").
 		From("door43_metadata").
-		Join("LEFT", "`release`", "`release`.id = `door43_metadata`.release_id").
 		GroupBy("`door43_metadata`.repo_id").
 		Where(GetStageCond(opts.Stage)).
 		ToBoundSQL()
@@ -181,11 +180,20 @@ func SearchCatalogByCondition(opts *SearchCatalogOptions, cond builder.Cond, loa
 		return nil, 0, err
 	}
 
-	sess.Select("`door43_metadata`.*, release_count").
+	releaseInfoOuter, err := builder.Select("`door43_metadata`.repo_id", "MAX(release_count) AS release_count", "MAX(latest_unix) AS latest_unix", "MIN(stage) AS latest_stage").
+		From("door43_metadata").
+		Join("INNER", "("+releaseInfoInner+") release_info_inner", "`release_info_inner`.repo_id = `door43_metadata`.repo_id AND `door43_metadata`.release_date_unix = `release_info_inner`.latest_unix").
+		GroupBy("`door43_metadata`.repo_id").
+		ToBoundSQL()
+	if err != nil {
+		return nil, 0, err
+	}
+
+	sess.
 		Join("INNER", "repository", "`repository`.id = `door43_metadata`.repo_id").
 		Join("INNER", "user", "`repository`.owner_id = `user`.id").
 		Join("LEFT", "release", "`release`.id = `door43_metadata`.release_id").
-		Join("INNER", "("+releaseInfoTable+") release_info", "release_info.repo_id = `door43_metadata`.repo_id").
+		Join("INNER", "("+releaseInfoOuter+") release_info", "release_info.repo_id = `door43_metadata`.repo_id").
 		Where(cond)
 
 	for _, orderBy := range opts.OrderBy {
@@ -219,40 +227,32 @@ func SplitAtCommaNotInString(s string, requireSpaceAfterComma bool) []string {
 	for i := 0; i < len(s); i++ {
 		if requireSpaceAfterComma && s[i] == ',' && !inString {
 			prevIsComma = true
-		} else if s[i] == ' ' && prevIsComma {
-			res = append(res, strings.TrimSpace(s[beg:i-1]))
-			beg = i + 1
+			continue
+		} else if s[i] == ' ' {
+			if prevIsComma {
+				res = append(res, strings.TrimSpace(s[beg:i-1]))
+				beg = i + 1
+			} else {
+				continue
+			}
 		} else if !requireSpaceAfterComma && s[i] == ',' && !inString {
 			res = append(res, strings.TrimSpace(s[beg:i]))
 			beg = i + 1
 		} else if s[i] == '"' {
-			prevIsComma = false
 			if !inString {
 				inString = true
 			} else if i > 0 && s[i-1] != '\\' {
 				inString = false
 			}
 		}
+		prevIsComma = false
 	}
 	return append(res, strings.TrimSpace(s[beg:]))
 }
 
 // GetStageCond gets the condition for the given stage
 func GetStageCond(stage Stage) builder.Cond {
-	stageCond := builder.And(
-		builder.Eq{"`release`.is_draft": false},
-		builder.Eq{"`release`.is_prerelease": false},
-		builder.Neq{"`door43_metadata`.release_id": 0})
-	if stage >= StagePreProd {
-		stageCond = stageCond.Or(builder.And(builder.Eq{"`release`.is_prerelease": true}, builder.Eq{"`release`.is_draft": false}))
-		if stage >= StageDraft {
-			stageCond = stageCond.Or(builder.Eq{"`release`.is_draft": true})
-			if stage >= StageLatest {
-				stageCond = stageCond.Or(builder.Eq{"`door43_metadata`.release_id": 0})
-			}
-		}
-	}
-	return stageCond
+	return builder.Lte{"`door43_metadata`.stage": stage}
 }
 
 // GetHistoryCond gets the conditions if IncludeHistory is true based on stage
@@ -260,11 +260,7 @@ func GetHistoryCond(stage Stage, includeHistory bool) builder.Cond {
 	if includeHistory {
 		return nil
 	}
-	historyCond := builder.Expr("`release`.created_unix = latest_unix")
-	if stage >= StageLatest {
-		historyCond = historyCond.Or(builder.Expr("`door43_metadata`.updated_unix = latest_unix"))
-	}
-	return historyCond
+	return builder.And(builder.Expr("`door43_metadata`.release_date_unix = latest_unix"), builder.Expr("`door43_metadata`.stage = latest_stage"))
 }
 
 // GetSubjectCond gets the subject condition
