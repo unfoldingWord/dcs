@@ -5,6 +5,7 @@
 package door43metadata
 
 import (
+	"code.gitea.io/gitea/modules/timeutil"
 	"fmt"
 	"io/ioutil"
 	"reflect"
@@ -111,7 +112,7 @@ func ReadManifestFromBlob(blob *git.Blob) (*map[string]interface{}, error) {
 
 	var manifest *map[string]interface{}
 	if err := yaml.Unmarshal(content, &manifest); err != nil {
-		log.Error("yaml.Unmarshal Error: %v", err)
+		log.Error("yaml.Unmarshal: %v", err)
 		return nil, err
 	}
 	return manifest, nil
@@ -173,9 +174,17 @@ func ProcessDoor43MetadataForRepo(repo *models.Repository) error {
 		return fmt.Errorf("no repository provided")
 	}
 
-	relIDs, err := repo.GetReleaseIDsNeedingDoor43Metadata()
+	if repo.IsArchived || repo.IsPrivate {
+		_, err := models.DeleteAllDoor43MetadatasByRepoID(repo.ID)
+		if err != nil {
+			log.Error("DeleteAllDoor43MetadatasByRepoID: %v", err)
+		}
+		return err
+	}
+
+	relIDs, err := models.GetRepoReleaseIDsForMetadata(repo.ID)
 	if err != nil {
-		log.Error("GetReleaseIDsNeedingDoor43Metadata Error: %v\n", err)
+		log.Error("GetReleaseIDsNeedingDoor43Metadata: %v", err)
 		return err
 	}
 
@@ -219,19 +228,19 @@ func ProcessDoor43MetadataForRepoRelease(repo *models.Repository, release *model
 	if release == nil {
 		commit, err = gitRepo.GetBranchCommit(repo.DefaultBranch)
 		if err != nil {
-			log.Error("GetBranchCommit Error: %v\n", err)
+			log.Error("GetBranchCommit: %v\n", err)
 			return err
 		}
 	} else if !release.IsDraft {
 		commit, err = gitRepo.GetTagCommit(release.TagName)
 		if err != nil {
-			log.Error("GetTagCommit Error: %v\n", err)
+			log.Error("GetTagCommit: %v\n", err)
 			return err
 		}
 	} else {
 		commit, err = gitRepo.GetBranchCommit(release.Target)
 		if err != nil {
-			log.Error("GetBranchCommit Error: %v\n", err)
+			log.Error("GetBranchCommit: %v\n", err)
 			return err
 		}
 	}
@@ -252,8 +261,18 @@ func ProcessDoor43MetadataForRepoRelease(repo *models.Repository, release *model
 	}
 
 	var releaseID int64
+	var stage models.Stage
 	if release != nil {
 		releaseID = release.ID
+		if release.IsDraft {
+			stage = models.StageDraft
+		} else if release.IsPrerelease {
+			stage = models.StagePreProd
+		} else {
+			stage = models.StageProd
+		}
+	} else {
+		stage = models.StageLatest
 	}
 
 	dm, err := models.GetDoor43MetadataByRepoIDAndReleaseID(repo.ID, releaseID)
@@ -266,38 +285,60 @@ func ProcessDoor43MetadataForRepoRelease(repo *models.Repository, release *model
 	//	return err
 	//}
 
-	if result.Valid() {
-		log.Info("The document is valid\n")
-		if dm == nil {
-			dm = &models.Door43Metadata{
-				RepoID:          repo.ID,
-				Repo:            repo,
-				ReleaseID:       releaseID,
-				Release:         release,
-				MetadataVersion: "rc0.2",
-				Metadata:        manifest,
+	var releaseDateUnix timeutil.TimeStamp
+	var branchOrTag string
+	if release != nil && !release.IsDraft {
+		releaseDateUnix = release.CreatedUnix
+		branchOrTag = release.TagName
+	} else {
+		releaseDateUnix = timeutil.TimeStamp(commit.Author.When.Unix())
+		branchOrTag = repo.DefaultBranch
+	}
+
+	if dm == nil ||
+		releaseDateUnix != dm.ReleaseDateUnix ||
+		dm.Stage != stage ||
+		dm.BranchOrTag != branchOrTag ||
+		!reflect.DeepEqual(dm.Metadata, manifest) {
+		if !result.Valid() {
+			log.Warn("%s/%s: manifest.yaml is not valid. see errors:", repo.FullName(), branchOrTag)
+			log.Warn("REPO ID: %d, RELEASE ID: %d", repo.ID, releaseID)
+			if release != nil {
+				log.Warn("RELEASE: %v", release.TagName)
+			} else {
+				log.Warn("BRANCH: %s", repo.DefaultBranch)
 			}
-			return models.InsertDoor43Metadata(dm)
-		} else if reflect.DeepEqual(dm.Metadata, manifest) {
+			for _, desc := range result.Errors() {
+				log.Warn("- %s", desc.Description())
+				log.Warn("- %s = %s", desc.Field(), desc.Value())
+			}
+			if dm != nil {
+				return models.DeleteDoor43Metadata(dm)
+			}
+		} else {
+			log.Warn("%s/%s: manifest.yaml is valid.", repo.FullName(), branchOrTag)
+			if dm == nil {
+				dm = &models.Door43Metadata{
+					RepoID:          repo.ID,
+					Repo:            repo,
+					ReleaseID:       releaseID,
+					Release:         release,
+					ReleaseDateUnix: releaseDateUnix,
+					MetadataVersion: "rc0.2",
+					Metadata:        manifest,
+					Stage:           stage,
+					BranchOrTag:     branchOrTag,
+				}
+				return models.InsertDoor43Metadata(dm)
+			}
 			dm.Metadata = manifest
-			return models.UpdateDoor43MetadataCols(dm, "metadata")
+			dm.ReleaseDateUnix = releaseDateUnix
+			dm.Stage = stage
+			dm.BranchOrTag = branchOrTag
+			return models.UpdateDoor43MetadataCols(dm, "metadata", "release_date_unix", "stage", "branch_or_tag")
 		}
 	}
 
-	log.Warn("The document is not valid. see errors :\n")
-	log.Warn("REPO ID: %d, RELEASE ID: %d\n", repo.ID, releaseID)
-	if release != nil {
-		log.Warn("RELEASE: %v\n", release.TagName)
-	} else {
-		log.Warn("BRANCH: %s\n", repo.DefaultBranch)
-	}
-	for _, desc := range result.Errors() {
-		log.Warn("- %s\n", desc.Description())
-		log.Warn("- %s = %s\n", desc.Field(), desc.Value())
-	}
-	if dm != nil {
-		return models.DeleteDoor43Metadata(dm)
-	}
 	return nil
 }
 

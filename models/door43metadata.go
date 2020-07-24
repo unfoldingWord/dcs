@@ -27,6 +27,9 @@ type Door43Metadata struct {
 	Release         *Release                `xorm:"-"`
 	MetadataVersion string                  `xorm:"NOT NULL"`
 	Metadata        *map[string]interface{} `xorm:"JSON NOT NULL"`
+	Stage           Stage                   `xorm:"NOT NULL"`
+	BranchOrTag     string                  `xorm:"NOT NULL"`
+	ReleaseDateUnix timeutil.TimeStamp      `xorm:"NOT NULL"`
 	CreatedUnix     timeutil.TimeStamp      `xorm:"INDEX created NOT NULL"`
 	UpdatedUnix     timeutil.TimeStamp      `xorm:"INDEX updated"`
 }
@@ -73,20 +76,12 @@ func (dm *Door43Metadata) HTMLURL() string {
 
 // GetTarballURL get the tarball URL of the tag or branch
 func (dm *Door43Metadata) GetTarballURL() string {
-	return fmt.Sprintf("%s/archive/%s.tar.gz", dm.Repo.HTMLURL(), dm.GetBranchOrTagName())
+	return fmt.Sprintf("%s/archive/%s.tar.gz", dm.Repo.HTMLURL(), dm.BranchOrTag)
 }
 
 // GetZipballURL get the zipball URL of the tag or branch
 func (dm *Door43Metadata) GetZipballURL() string {
-	return fmt.Sprintf("%s/archive/%s.zip", dm.Repo.HTMLURL(), dm.GetBranchOrTagName())
-}
-
-// GetBranchOrTagName get tag if a release, default branch if latest
-func (dm *Door43Metadata) GetBranchOrTagName() string {
-	if dm.ReleaseID > 0 {
-		return dm.Release.TagName
-	}
-	return dm.Repo.DefaultBranch
+	return fmt.Sprintf("%s/archive/%s.zip", dm.Repo.HTMLURL(), dm.BranchOrTag)
 }
 
 // GetReleaseURL get the URL the release API
@@ -97,14 +92,6 @@ func (dm *Door43Metadata) GetReleaseURL() string {
 	return ""
 }
 
-// GetReleasedDate gets the released date of the release in string format, or if a branch, gets the date of the commit
-func (dm *Door43Metadata) GetReleasedDate() string {
-	if dm.ReleaseID > 0 {
-		return dm.Release.CreatedUnix.FormatDate()
-	}
-	return dm.UpdatedUnix.FormatDate()
-}
-
 // GetMetadataJSONURL gets the json representation of the contents of the manifest.yaml file
 func (dm *Door43Metadata) GetMetadataJSONURL() string {
 	return fmt.Sprintf("%s/metadata", dm.APIURLV4())
@@ -112,7 +99,7 @@ func (dm *Door43Metadata) GetMetadataJSONURL() string {
 
 // GetMetadataAndContentsURL gets the metadata and contents of the manifest.yaml file
 func (dm *Door43Metadata) GetMetadataAndContentsURL() string {
-	return fmt.Sprintf("%s/contents/manifest.yaml?ref=%s", dm.Repo.APIURL(), dm.GetBranchOrTagName())
+	return fmt.Sprintf("%s/contents/manifest.yaml?ref=%s", dm.Repo.APIURL(), dm.BranchOrTag)
 }
 
 // APIFormatV4 convert a Door43Metadata to structs.Door43MetadataV4
@@ -122,8 +109,6 @@ func (dm *Door43Metadata) APIFormatV4() *structs.Door43MetadataV4 {
 
 func (dm *Door43Metadata) innerAPIFormatV4(e *xorm.Engine) *structs.Door43MetadataV4 {
 	dm.loadAttributes(e)
-	stage := StageProd
-	dm.GetStage()
 	return &structs.Door43MetadataV4{
 		ID:                     dm.ID,
 		Self:                   dm.APIURLV4(),
@@ -137,9 +122,9 @@ func (dm *Door43Metadata) innerAPIFormatV4(e *xorm.Engine) *structs.Door43Metada
 		Subject:                (*dm.Metadata)["dublin_core"].(map[string]interface{})["subject"].(string),
 		Title:                  (*dm.Metadata)["dublin_core"].(map[string]interface{})["title"].(string),
 		Books:                  dm.GetBooks(),
-		BranchOrTag:            dm.GetBranchOrTagName(),
-		Stage:                  stage.String(),
-		Released:               dm.GetReleasedDate(),
+		BranchOrTag:            dm.BranchOrTag,
+		Stage:                  dm.Stage.String(),
+		Released:               dm.ReleaseDateUnix.FormatDate(),
 		MetadataVersion:        dm.MetadataVersion,
 		MetadataJSONURL:        dm.GetMetadataJSONURL(),
 		MetadataAndContentsURL: dm.GetMetadataAndContentsURL(),
@@ -312,7 +297,7 @@ func GetDoor43MetadataCountByRepoID(repoID int64, opts FindDoor43MetadatasOption
 
 // GetReleaseCount returns the count of releases of repository of the Door43Metadata's stage
 func (dm *Door43Metadata) GetReleaseCount() (int64, error) {
-	stageCond := GetStageCond(dm.GetStage())
+	stageCond := GetStageCond(dm.Stage)
 	return x.Join("LEFT", "release", "`release`.id = `door43_metadata`.release_id").
 		Where(builder.And(builder.Eq{"`door43_metadata`.repo_id": dm.RepoID}, stageCond)).
 		Count(&Door43Metadata{})
@@ -397,22 +382,26 @@ func DeleteAllDoor43MetadatasByRepoID(repoID int64) (int64, error) {
 	return x.Delete(Door43Metadata{RepoID: repoID})
 }
 
-// GetRepoIDsNeedingDoor43Metadata gets the IDs of all the repos that may have releases or default branch not in the door43_metadata table.
-func GetRepoIDsNeedingDoor43Metadata() ([]int64, error) {
+// GetReposForMetadata gets the IDs of all the repos to process for metadata
+func GetReposForMetadata() ([]int64, error) {
 	sess := x.NewSession()
 	defer sess.Close()
 
-	records, err := sess.Query("SELECT r.id FROM `repository` r " +
-		"JOIN `release` rel ON rel.repo_id = r.id " +
-		"LEFT JOIN `door43_metadata` dm ON r.id = dm.repo_id " +
-		"AND rel.id = dm.release_id " +
-		"WHERE dm.id IS NULL AND rel.is_tag = 0 " +
-		"UNION " +
-		"SELECT r2.id FROM `repository` r2 " +
-		"LEFT JOIN `door43_metadata` dm2 ON r2.id = dm2.repo_id " +
-		"AND dm2.release_id = 0 " +
-		"WHERE dm2.id IS NULL " +
-		"ORDER BY id ASC")
+	//records, err := sess.Query("SELECT r.id FROM `repository` r " +
+	//	"JOIN `release` rel ON rel.repo_id = r.id " +
+	//	"LEFT JOIN `door43_metadata` dm ON r.id = dm.repo_id " +
+	//	"AND rel.id = dm.release_id " +
+	//	"WHERE dm.id IS NULL AND rel.is_tag = 0 " +
+	//	"UNION " +
+	//	"SELECT r2.id FROM `repository` r2 " +
+	//	"LEFT JOIN `door43_metadata` dm2 ON r2.id = dm2.repo_id " +
+	//	"AND dm2.release_id = 0 " +
+	//	"WHERE dm2.id IS NULL " +
+	//	"ORDER BY id ASC")
+	//records, err := sess.Query("SELECT r.id FROM `repository` r " +
+	//	"ORDER BY id ASC")
+	//records, err := sess.Query("SELECT r.id FROM `repository` r WHERE r.is_private = 0 AND r.is_archived = 0 ORDER BY id ASC")
+	records, err := sess.Query("SELECT id FROM `repository` ORDER BY id ASC")
 	if err != nil {
 		return nil, err
 	}
@@ -426,22 +415,29 @@ func GetRepoIDsNeedingDoor43Metadata() ([]int64, error) {
 	return repoIDs, nil
 }
 
-// GetReleaseIDsNeedingDoor43Metadata gets the releases needing door43 metadata
-func (r *Repository) GetReleaseIDsNeedingDoor43Metadata() ([]int64, error) {
+// GetRepoReleaseIDsForMetadata gets the releases ids for a repo
+func GetRepoReleaseIDsForMetadata(repoID int64) ([]int64, error) {
 	sess := x.NewSession()
 	defer sess.Close()
 
+	//records, err := sess.Query("SELECT rel.id as id FROM `repository` r "+
+	//	"INNER JOIN `release` rel ON rel.repo_id = r.id "+
+	//	"LEFT JOIN `door43_metadata` dm ON r.id = dm.repo_id "+
+	//	"AND rel.id = dm.release_id "+
+	//	"WHERE dm.id IS NULL AND rel.is_tag = 0 AND r.id=? "+
+	//	"UNION "+
+	//	"SELECT 0 as id FROM `repository` r2 "+
+	//	"LEFT JOIN `door43_metadata` dm2 ON r2.id = dm2.repo_id "+
+	//	"AND dm2.release_id = 0 "+
+	//	"WHERE dm2.id IS NULL AND r2.id=? "+
+	//	"ORDER BY id ASC", r.ID, r.ID)
 	records, err := sess.Query("SELECT rel.id as id FROM `repository` r "+
-		"JOIN `release` rel ON rel.repo_id = r.id "+
-		"LEFT JOIN `door43_metadata` dm ON r.id = dm.repo_id "+
-		"AND rel.id = dm.release_id "+
-		"WHERE dm.id IS NULL AND rel.is_tag = 0 AND r.id=? "+
+		"INNER JOIN `release` rel ON rel.repo_id = r.id "+
+		"WHERE rel.is_tag = 0 AND r.id=? "+
 		"UNION "+
 		"SELECT 0 as id FROM `repository` r2 "+
-		"LEFT JOIN `door43_metadata` dm2 ON r2.id = dm2.repo_id "+
-		"AND dm2.release_id = 0 "+
-		"WHERE dm2.id IS NULL AND r2.id=? "+
-		"ORDER BY id ASC", r.ID, r.ID)
+		"WHERE r2.id=? "+
+		"ORDER BY id ASC", repoID, repoID)
 	log.Trace(sess.LastSQL())
 	if err != nil {
 		return nil, err
@@ -577,21 +573,6 @@ var StageToStringMap = map[Stage]string{
 // String returns string repensation of a Stage (int)
 func (s *Stage) String() string {
 	return StageToStringMap[*s]
-}
-
-// GetStage gets the Stage (int) for a given Door43Metadata
-func (dm *Door43Metadata) GetStage() Stage {
-	dm.LoadAttributes()
-	if dm.ReleaseID > 0 {
-		if dm.Release.IsDraft {
-			return StageDraft
-		} else if dm.Release.IsPrerelease {
-			return StagePreProd
-		} else {
-			return StageProd
-		}
-	}
-	return StageLatest
 }
 
 /*** END Stage ***/

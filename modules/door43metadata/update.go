@@ -17,9 +17,12 @@ import (
 func UpdateDoor43Metadata(ctx context.Context) error {
 	log.Trace("Doing: UpdateDoor43Metadata")
 
-	repoIDs, _ := models.GetRepoIDsNeedingDoor43Metadata()
+	repoIDs, err := models.GetReposForMetadata()
+	if err != nil {
+		log.Error("GetReposForMetadata: %v", err)
+	}
 
-	if err := models.Iterate(
+	if err = models.Iterate(
 		models.DefaultDBContext(),
 		new(models.Repository),
 		builder.In("id", repoIDs),
