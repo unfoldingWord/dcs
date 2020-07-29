@@ -65,8 +65,7 @@ jobs:
       - name: Make css and js with node
         shell: bash
         run: |
-          make css
-          make js
+          make webpack
         working-directory: ${{ env.GITEA_ROOT }}
 
       - name: Fetch tags
