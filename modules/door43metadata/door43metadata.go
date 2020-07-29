@@ -5,7 +5,6 @@
 package door43metadata
 
 import (
-	"code.gitea.io/gitea/modules/timeutil"
 	"fmt"
 	"io/ioutil"
 	"reflect"
@@ -15,6 +14,7 @@ import (
 	"code.gitea.io/gitea/modules/git"
 	"code.gitea.io/gitea/modules/log"
 	"code.gitea.io/gitea/modules/structs"
+	"code.gitea.io/gitea/modules/timeutil"
 
 	"github.com/ghodss/yaml"
 	"github.com/mitchellh/mapstructure"
