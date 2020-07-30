@@ -89,15 +89,15 @@ func Search(ctx *context.APIContext) {
 	// - name: includeHistory
 	//   in: query
 	//   description: if true, all releases, not just the latest, are included. Default is false
-	//   type: bool
+	//   type: boolean
 	// - name: searchAllMetadata
 	//   in: query
 	//   description: if false, only subject and title are searched with query terms, if true all metadata values are searched. Default is true
-	//   type: bool
+	//   type: boolean
 	// - name: showIngredients
 	//   in: query
 	//   description: if true, a list of the projects in the resource and their file paths will be listed for each entry. Default is false
-	//   type: bool
+	//   type: boolean
 	// - name: sort
 	//   in: query
 	//   description: sort repos alphanumerically by attribute. Supported values are
@@ -178,15 +178,15 @@ func SearchOwner(ctx *context.APIContext) {
 	// - name: includeHistory
 	//   in: query
 	//   description: if true, all releases, not just the latest, are included. Default is false
-	//   type: bool
+	//   type: boolean
 	// - name: searchAllMetadata
 	//   in: query
 	//   description: if false, only subject and title are searched with query terms, if true all metadata values are searched. Default is true
-	//   type: bool
+	//   type: boolean
 	// - name: showIngredients
 	//   in: query
 	//   description: if true, a list of the projects in the resource and their file paths will be listed for each entry. Default is false
-	//   type: bool
+	//   type: boolean
 	// - name: sort
 	//   in: query
 	//   description: sort repos alphanumerically by attribute. Supported values are
@@ -268,15 +268,15 @@ func SearchRepo(ctx *context.APIContext) {
 	// - name: includeHistory
 	//   in: query
 	//   description: if true, all releases, not just the latest, are included. Default is false
-	//   type: bool
+	//   type: boolean
 	// - name: searchAllMetadata
 	//   in: query
 	//   description: if false, only subject and title are searched with query terms, if true all metadata values are searched. Default is true
-	//   type: bool
+	//   type: boolean
 	// - name: showIngredients
 	//   in: query
 	//   description: if true, a list of the projects in the resource and their file paths will be listed for each entry. Default is false
-	//   type: bool
+	//   type: boolean
 	// - name: sort
 	//   in: query
 	//   description: sort repos alphanumerically by attribute. Supported values are
@@ -301,6 +301,7 @@ func SearchRepo(ctx *context.APIContext) {
 	//     "$ref": "#/responses/CatalogSearchResultsV4"
 	//   "422":
 	//     "$ref": "#/responses/validationError"
+
 	searchCatalog(ctx)
 }
 
