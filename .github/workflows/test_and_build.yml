@@ -65,8 +65,7 @@ jobs:
       - name: Make css and js with node
         shell: bash
         run: |
-          make css
-          make js
+          make webpack
         working-directory: ${{ env.GITEA_ROOT }}
 
       - name: Fetch tags
@@ -128,9 +127,8 @@ jobs:
 
       - name: Upload coverage report
         uses: codecov/codecov-action@v1
-        working-directory: ${{ env.GITEA_ROOT }}
         with:
-          file: ./coverage.out
+          file: ${{ env.GITEA_ROOT }}/coverage.out
           flags: unittests
           name: codecov-umbrella
           
