@@ -15,6 +15,7 @@ import (
 	"code.gitea.io/gitea/modules/auth/sso"
 	"code.gitea.io/gitea/modules/cache"
 	"code.gitea.io/gitea/modules/cron"
+	"code.gitea.io/gitea/modules/door43metadata"
 	"code.gitea.io/gitea/modules/eventsource"
 	"code.gitea.io/gitea/modules/git"
 	"code.gitea.io/gitea/modules/highlight"
@@ -151,10 +152,6 @@ func GlobalInit(ctx context.Context) {
 		mirror_service.InitSyncMirrors()
 		webhook.InitDeliverHooks()
 
-		//if err := models.NewEngine(ctx, door43metadata.GenerateDoor43Metadata); err != nil {
-		//	log.Fatal("Failed to generate Door43 Metadata: %v", err)
-		//}
-
 		if err := pull_service.Init(); err != nil {
 			log.Fatal("Failed to initialize test pull requests queue: %v", err)
 		}
@@ -162,6 +159,12 @@ func GlobalInit(ctx context.Context) {
 			log.Fatal("Failed to initialize task scheduler: %v", err)
 		}
 		eventsource.GetManager().Init()
+
+		/*** DCS Customizations ***/
+		if err := models.NewEngine(ctx, door43metadata.InitDoor43Metadata); err != nil {
+			log.Error("InitDoor43Metadata: %v", err)
+		}
+		/*** END DCS Customizations ***/
 	}
 	if setting.EnableSQLite3 {
 		log.Info("SQLite3 Supported")

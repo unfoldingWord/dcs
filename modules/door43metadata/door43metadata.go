@@ -9,8 +9,10 @@ import (
 	"io/ioutil"
 	"reflect"
 	"strings"
+	"xorm.io/xorm/schemas"
 
 	"code.gitea.io/gitea/models"
+	"code.gitea.io/gitea/models/migrations"
 	"code.gitea.io/gitea/modules/git"
 	"code.gitea.io/gitea/modules/log"
 	"code.gitea.io/gitea/modules/structs"
@@ -22,6 +24,32 @@ import (
 	"github.com/xeipuuv/gojsonschema"
 	"xorm.io/xorm"
 )
+
+func changeDoor43MetadataToJSONType(x *xorm.Engine) error {
+	var err error
+
+	switch x.Dialect().URI().DBType {
+	case schemas.MYSQL:
+		_, err = x.Exec("ALTER TABLE `door43_metadata` MODIFY `metadata` JSON")
+	}
+
+	if err != nil {
+		return fmt.Errorf("Error changing door43_metadata metadata column type: %v", err)
+	}
+
+	return nil
+}
+
+func InitDoor43Metadata(x *xorm.Engine) error {
+	if version, err := migrations.GetCurrentDBVersion(x); err != nil {
+		return err
+	} else if version == 142 {
+		if err = changeDoor43MetadataToJSONType(x); err != nil {
+			return fmt.Errorf("do migrate: %v", err)
+		}
+	}
+	return nil
+}
 
 // GenerateDoor43Metadata Generate door43 metadata for valid repos not in the door43_metadata table
 func GenerateDoor43Metadata(x *xorm.Engine) error {
