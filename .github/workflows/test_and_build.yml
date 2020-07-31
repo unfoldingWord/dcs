@@ -35,10 +35,10 @@ jobs:
       TEST_LDAP: 0
 
     steps:
-      - name: Set up Go 1.13
-        uses: actions/setup-go@v1
+      - name: Set up Go 1.14
+        uses: actions/setup-go@v2
         with:
-          go-version: 1.13
+          go-version: '^1.14.5'
         id: go
 
       - name: Checkout
@@ -126,6 +126,14 @@ jobs:
         run: make unit-test-coverage
         working-directory: ${{ env.GITEA_ROOT }}
 
+      - name: Upload coverage report
+        uses: codecov/codecov-action@v1
+        working-directory: ${{ env.GITEA_ROOT }}
+        with:
+          file: ./coverage.out
+          flags: unittests
+          name: codecov-umbrella
+          
       - name: Test SQLite
         shell: bash
         run: |
