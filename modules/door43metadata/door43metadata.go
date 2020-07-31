@@ -43,7 +43,7 @@ func changeDoor43MetadataToJSONType(x *xorm.Engine) error {
 func InitDoor43Metadata(x *xorm.Engine) error {
 	if version, err := migrations.GetCurrentDBVersion(x); err != nil {
 		return err
-	} else if version == 142 {
+	} else if version == 141 {
 		if err = changeDoor43MetadataToJSONType(x); err != nil {
 			return fmt.Errorf("do migrate: %v", err)
 		}
