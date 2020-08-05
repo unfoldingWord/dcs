@@ -1,0 +1,4 @@
+include Makefile
+
+.PHONY: lint-backend
+lint-backend: golangci-lint revive swagger-check swagger-validate test-vendor
