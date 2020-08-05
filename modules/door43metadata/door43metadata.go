@@ -9,7 +9,6 @@ import (
 	"io/ioutil"
 	"reflect"
 	"strings"
-	"xorm.io/xorm/schemas"
 
 	"code.gitea.io/gitea/models"
 	"code.gitea.io/gitea/models/migrations"
@@ -23,6 +22,7 @@ import (
 	"github.com/unknwon/com"
 	"github.com/xeipuuv/gojsonschema"
 	"xorm.io/xorm"
+	"xorm.io/xorm/schemas"
 )
 
 func changeDoor43MetadataToJSONType(x *xorm.Engine) error {
@@ -40,6 +40,7 @@ func changeDoor43MetadataToJSONType(x *xorm.Engine) error {
 	return nil
 }
 
+// InitDoor43Metadata does some db management
 func InitDoor43Metadata(x *xorm.Engine) error {
 	if version, err := migrations.GetCurrentDBVersion(x); err != nil {
 		return err
@@ -150,6 +151,9 @@ func ReadManifestFromBlob(blob *git.Blob) (*map[string]interface{}, error) {
 func ConvertGenericMapToRC020Manifest(manifest *map[string]interface{}) (*structs.RC020Manifest, error) {
 	var rc020manifest structs.RC020Manifest
 	err := mapstructure.Decode(*manifest, &rc020manifest)
+	if err != nil {
+		return nil, err
+	}
 
 	type Checking struct {
 		CheckingLevel string `mapstructure:"checking_level"`
@@ -274,6 +278,9 @@ func ProcessDoor43MetadataForRepoRelease(repo *models.Repository, release *model
 	}
 
 	blob, err := commit.GetBlobByPath("manifest.yaml")
+	if err != nil {
+		return err
+	}
 	if blob == nil {
 		return nil
 	}

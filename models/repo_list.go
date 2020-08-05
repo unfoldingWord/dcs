@@ -7,12 +7,12 @@ package models
 import (
 	"fmt"
 	"strings"
-	"xorm.io/xorm/schemas"
 
 	"code.gitea.io/gitea/modules/structs"
 	"code.gitea.io/gitea/modules/util"
 
 	"xorm.io/builder"
+	"xorm.io/xorm/schemas"
 )
 
 // RepositoryListDefaultPageSize is the default number of repositories

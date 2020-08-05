@@ -5,14 +5,15 @@
 package repo
 
 import (
+	"encoding/json"
+	"fmt"
+
 	"code.gitea.io/gitea/models"
 	"code.gitea.io/gitea/modules/auth"
 	"code.gitea.io/gitea/modules/base"
 	"code.gitea.io/gitea/modules/context"
 	"code.gitea.io/gitea/modules/convert"
 	"code.gitea.io/gitea/modules/log"
-	"encoding/json"
-	"fmt"
 )
 
 const (

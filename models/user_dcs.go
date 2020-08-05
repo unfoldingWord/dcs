@@ -1,9 +1,10 @@
 package models
 
 import (
-	"code.gitea.io/gitea/modules/log"
 	"sort"
 	"strings"
+
+	"code.gitea.io/gitea/modules/log"
 )
 
 func contains(strings []string, str string) bool {

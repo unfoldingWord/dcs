@@ -24,12 +24,15 @@ func Yaml(ctx *context.APIContext, form YamlOption) {
 	}
 
 	if len(form.Text) == 0 {
-		ctx.Write([]byte(""))
+		_, err := ctx.Write([]byte(""))
+		if err != nil {
+			ctx.Error(400, "Unable to write YAML", err)
+		}
 		return
 	}
 	if rendered, err := yaml.RenderSanitized([]byte(form.Text)); err != nil {
 		ctx.Error(400, "Unable to parse YAML", err)
-	} else {
-		ctx.Write(rendered)
+	} else if _, err := ctx.Write(rendered); err != nil {
+		ctx.Error(400, "Unable to write YAML", err)
 	}
 }
