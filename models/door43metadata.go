@@ -7,15 +7,15 @@ package models
 import (
 	"fmt"
 	"sort"
-	"xorm.io/xorm"
 
 	"code.gitea.io/gitea/modules/log"
 	"code.gitea.io/gitea/modules/setting"
 	"code.gitea.io/gitea/modules/structs"
 	"code.gitea.io/gitea/modules/timeutil"
-	"github.com/unknwon/com"
 
+	"github.com/unknwon/com"
 	"xorm.io/builder"
+	"xorm.io/xorm"
 )
 
 // Door43Metadata represents the metadata of repository's release or default branch (ReleaseID = 0).
@@ -49,7 +49,7 @@ func (dm *Door43Metadata) loadAttributes(e Engine) error {
 		}
 		dm.Release.Door43Metadata = dm
 		dm.Release.Repo = dm.Repo
-		dm.Release.loadAttributes(e)
+		return dm.Release.loadAttributes(e)
 	}
 	return nil
 }
@@ -108,7 +108,11 @@ func (dm *Door43Metadata) APIFormatV4() *structs.Door43MetadataV4 {
 }
 
 func (dm *Door43Metadata) innerAPIFormatV4(e *xorm.Engine) *structs.Door43MetadataV4 {
-	dm.loadAttributes(e)
+	err := dm.loadAttributes(e)
+	if err != nil {
+		log.Error("loadAttributes: %v", err)
+		return nil
+	}
 	return &structs.Door43MetadataV4{
 		ID:                     dm.ID,
 		Self:                   dm.APIURLV4(),
@@ -150,14 +154,17 @@ func IsDoor43MetadataExist(repoID, releaseID int64) (bool, error) {
 
 // InsertDoor43Metadata inserts a door43 metadata
 func InsertDoor43Metadata(dm *Door43Metadata) error {
-	id, err := x.Insert(dm)
-	if id > 0 && dm.ReleaseID > 0 {
-		dm.LoadAttributes()
+	if id, err := x.Insert(dm); err != nil {
+		return err
+	} else if id > 0 && dm.ReleaseID > 0 {
+		if err := dm.LoadAttributes(); err != nil {
+			return err
+		}
 		if err := CreateRepositoryNotice("Door43 Metadata created for repo: %s, tag: %s", dm.Repo.Name, dm.Release.TagName); err != nil {
-			log.Error("CreateRepositoryNotice: %v", err)
+			return err
 		}
 	}
-	return err
+	return nil
 }
 
 // InsertDoor43MetadatasContext inserts door43 metadatas
@@ -174,7 +181,10 @@ func UpdateDoor43MetadataCols(dm *Door43Metadata, cols ...string) error {
 func updateDoor43MetadataCols(e Engine, dm *Door43Metadata, cols ...string) error {
 	id, err := e.ID(dm.ID).Cols(cols...).Update(dm)
 	if id > 0 && dm.ReleaseID > 0 {
-		dm.LoadAttributes()
+		err := dm.LoadAttributes()
+		if err != nil {
+			return err
+		}
 		if err := CreateRepositoryNotice("Door43 Metadata updated for repo: %s, tag: %s", dm.Repo.Name, dm.Release.TagName); err != nil {
 			log.Error("CreateRepositoryNotice: %v", err)
 		}
@@ -251,18 +261,18 @@ func GetDoor43MetadatasByRepoID(repoID int64, opts FindDoor43MetadatasOptions) (
 	return dms, sess.Find(&dms)
 }
 
-// GetLatestCatalogMetadataByRepoID returns the latest door43 metadata in the catalog by repoID, if CanBePrerelease, a prerelease entry can match
-func GetLatestCatalogMetadataByRepoID(repoID int64, CanBePrerelease bool) (*Door43Metadata, error) {
-	return getLatestCatalogMetadataByRepoID(x, repoID, CanBePrerelease)
+// GetLatestCatalogMetadataByRepoID returns the latest door43 metadata in the catalog by repoID, if canBePrerelease, a prerelease entry can match
+func GetLatestCatalogMetadataByRepoID(repoID int64, canBePrerelease bool) (*Door43Metadata, error) {
+	return getLatestCatalogMetadataByRepoID(x, repoID, canBePrerelease)
 }
 
-func getLatestCatalogMetadataByRepoID(e Engine, repoID int64, CanBePrerelease bool) (*Door43Metadata, error) {
+func getLatestCatalogMetadataByRepoID(e Engine, repoID int64, canBePrerelease bool) (*Door43Metadata, error) {
 	cond := builder.NewCond().
 		And(builder.Eq{"`door43_metadata`.repo_id": repoID}).
 		And(builder.Eq{"`release`.is_tag": 0}).
 		And(builder.Eq{"`release`.is_draft": 0})
 
-	if !CanBePrerelease {
+	if !canBePrerelease {
 		cond = cond.And(builder.Eq{"`release`.is_prerelease": 0})
 	}
 
@@ -278,8 +288,8 @@ func getLatestCatalogMetadataByRepoID(e Engine, repoID int64, CanBePrerelease bo
 	} else if !has {
 		return nil, ErrDoor43MetadataNotExist{0, repoID, 0}
 	}
-	dm.loadAttributes(e)
-	return dm, nil
+
+	return dm, dm.loadAttributes(e)
 }
 
 // GetDoor43MetadatasByRepoIDAndReleaseIDs returns a list of door43 metadatas of repository according repoID and releaseIDs.
@@ -344,20 +354,22 @@ func SortDoorMetadatas(dms []*Door43Metadata) {
 
 // DeleteDoor43MetadataByID deletes a metadata from database by given ID.
 func DeleteDoor43MetadataByID(id int64) error {
-	dm, err := GetDoor43MetadataByID(id)
-	if err != nil {
+	if dm, err := GetDoor43MetadataByID(id); err != nil {
 		return err
+	} else if err := dm.LoadAttributes(); err != nil {
+		return err
+	} else {
+		return DeleteDoor43Metadata(dm)
 	}
-	dm.LoadAttributes()
-	return DeleteDoor43Metadata(dm)
 }
 
 // DeleteDoor43Metadata deletes a metadata from database by given ID.
 func DeleteDoor43Metadata(dm *Door43Metadata) error {
 	id, err := x.Delete(dm)
 	if id > 0 && dm.ReleaseID > 0 {
-		dm.LoadAttributes()
-		if err := CreateRepositoryNotice("Door43 Metadata deleted for repo: %s, tag: %s", dm.Repo.Name, dm.Release.TagName); err != nil {
+		if err := dm.LoadAttributes(); err != nil {
+			return err
+		} else if err := CreateRepositoryNotice("Door43 Metadata deleted for repo: %s, tag: %s", dm.Repo.Name, dm.Release.TagName); err != nil {
 			log.Error("CreateRepositoryNotice: %v", err)
 		}
 	}
