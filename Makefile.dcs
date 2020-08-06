@@ -1,4 +1,12 @@
 include Makefile
 
+.PHONY: vet
+vet:
+	# Default vet
+	$(GO) vet $(GO_PACKAGES)
+	# Custom vet
+	$(GO) build -mod=vendor gitea.com/unfoldingword/gitea-vet
+	$(GO) vet -vettool=gitea-vet $(GO_PACKAGES)
+
 .PHONY: lint-backend
 lint-backend: golangci-lint revive swagger-check swagger-validate test-vendor
