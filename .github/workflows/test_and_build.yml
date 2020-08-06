@@ -79,7 +79,7 @@ jobs:
 
       - name: build-frontend
         shell: bash
-        run: make build-frontend
+        run: make frontend
         working-directory: ${{ env.GITEA_ROOT }}
 
       - name: build-backend-no-gcc
