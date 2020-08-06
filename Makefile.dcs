@@ -8,5 +8,6 @@ vet:
 	$(GO) build -mod=vendor gitea.com/unfoldingword/gitea-vet
 	$(GO) vet -vettool=gitea-vet $(GO_PACKAGES)
 
-.PHONY: lint-backend
-lint-backend: golangci-lint revive swagger-check swagger-validate test-vendor
+## Remove the following so it uses the main Makefile's lint-backend to add vet when v1.13 or higher
+.PHONY: lint-backend-without-vet
+lint-backend-without-vet: golangci-lint revive swagger-check swagger-validate test-vendor
