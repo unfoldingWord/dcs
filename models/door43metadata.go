@@ -16,6 +16,7 @@ import (
 	"github.com/unknwon/com"
 	"xorm.io/builder"
 	"xorm.io/xorm"
+	"xorm.io/xorm/schemas"
 )
 
 // Door43Metadata represents the metadata of repository's release or default branch (ReleaseID = 0).
@@ -588,3 +589,19 @@ func (s *Stage) String() string {
 }
 
 /*** END Stage ***/
+
+/*** INIT DB ***/
+
+// InitDoor43Metadata does some db management
+func InitDoor43Metadata() error {
+	switch x.Dialect().URI().DBType {
+	case schemas.MYSQL:
+		_, err := x.Exec("ALTER TABLE `door43_metadata` MODIFY `metadata` JSON")
+		if err != nil {
+			return fmt.Errorf("Error changing door43_metadata metadata column type: %v", err)
+		}
+	}
+	return nil
+}
+
+/*** END INIT DB ***/

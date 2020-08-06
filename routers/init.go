@@ -15,7 +15,6 @@ import (
 	"code.gitea.io/gitea/modules/auth/sso"
 	"code.gitea.io/gitea/modules/cache"
 	"code.gitea.io/gitea/modules/cron"
-	"code.gitea.io/gitea/modules/door43metadata"
 	"code.gitea.io/gitea/modules/eventsource"
 	"code.gitea.io/gitea/modules/git"
 	"code.gitea.io/gitea/modules/highlight"
@@ -161,7 +160,7 @@ func GlobalInit(ctx context.Context) {
 		eventsource.GetManager().Init()
 
 		/*** DCS Customizations ***/
-		if err := models.NewEngine(ctx, door43metadata.InitDoor43Metadata); err != nil {
+		if err := models.InitDoor43Metadata(); err != nil {
 			log.Error("InitDoor43Metadata: %v", err)
 		}
 		/*** END DCS Customizations ***/

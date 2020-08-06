@@ -12,14 +12,14 @@ import (
 )
 
 var (
-	header     = regexp.MustCompile(`.*Copyright.*\d{4}.*(Gitea|Gogs)`)
+	header     = regexp.MustCompile(`.*Copyright.*\d{4}.*(Gitea|Gogs|unfoldingWord)`)
 	goGenerate = "//go:generate"
 	buildTag   = "// +build"
 )
 
 var License = &analysis.Analyzer{
 	Name: "license",
-	Doc:  "check for a copyright header.",
+	Doc:  "check for a copyright header",
 	Run:  runLicense,
 }
 
