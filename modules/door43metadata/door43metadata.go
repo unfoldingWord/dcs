@@ -249,7 +249,7 @@ func ProcessDoor43MetadataForRepoRelease(repo *models.Repository, release *model
 	}
 
 	blob, err := commit.GetBlobByPath("manifest.yaml")
-	if err != nil && ! git.IsErrNotExist(err) {
+	if err != nil && !git.IsErrNotExist(err) {
 		return err
 	}
 	if blob == nil {
