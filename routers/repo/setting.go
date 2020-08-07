@@ -21,6 +21,7 @@ import (
 	"code.gitea.io/gitea/modules/git"
 	"code.gitea.io/gitea/modules/log"
 	"code.gitea.io/gitea/modules/repository"
+	"code.gitea.io/gitea/modules/scrubber"
 	"code.gitea.io/gitea/modules/setting"
 	"code.gitea.io/gitea/modules/structs"
 	"code.gitea.io/gitea/modules/timeutil"
@@ -32,8 +33,6 @@ import (
 
 	"github.com/unknwon/com"
 	"mvdan.cc/xurls/v2"
-
-	"code.gitea.io/gitea/modules/scrubber"
 )
 
 const (

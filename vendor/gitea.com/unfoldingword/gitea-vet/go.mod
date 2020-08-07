@@ -1,4 +1,4 @@
-module gitea.com/jolheiser/gitea-vet
+module gitea.com/unfoldingword/gitea-vet
 
 go 1.14
 

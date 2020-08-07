@@ -7,7 +7,6 @@
 package scrubber
 
 import (
-	"code.gitea.io/gitea/modules/repository"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -20,6 +19,7 @@ import (
 	"code.gitea.io/gitea/modules/git"
 	"code.gitea.io/gitea/modules/log"
 	"code.gitea.io/gitea/modules/repofiles"
+	"code.gitea.io/gitea/modules/repository"
 )
 
 var jsonFilesToScrub = [...]string{
@@ -126,11 +126,9 @@ func scrubJSONFile(localPath, fileName string) error {
 	} else if fileContent, err := ioutil.ReadFile(jsonPath); err != nil {
 		log.Error("%v", err)
 		return err // error reading file
-	} else {
-		if err = json.Unmarshal(fileContent, &jsonData); err != nil {
-			log.Error("%v", err)
-			return err // error unmarhalling file
-		}
+	} else if err = json.Unmarshal(fileContent, &jsonData); err != nil {
+		log.Error("%v", err)
+		return err // error unmarhalling file
 	}
 
 	m := jsonData.(map[string]interface{})

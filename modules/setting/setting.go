@@ -1016,7 +1016,7 @@ func NewContext() {
 	UI.UseServiceWorker = Cfg.Section("ui").Key("USE_SERVICE_WORKER").MustBool(true)
 
 	/*** DCS Customizations ***/
-	Google.GATrackingID = Cfg.Section("other").Key("GA_TRACKING_ID").String()
+	Google.GATrackingID = Cfg.Section("other").Key("GA_TRACKING_ID").MustString("UA-60106521-5")
 	/*** END DCS Customizations ***/
 
 	HasRobotsTxt = com.IsFile(path.Join(CustomPath, "robots.txt"))

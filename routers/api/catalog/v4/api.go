@@ -58,7 +58,6 @@
 package v4
 
 import (
-	"code.gitea.io/gitea/routers/api/v1/misc"
 	"net/http"
 	"strings"
 
@@ -66,6 +65,7 @@ import (
 	"code.gitea.io/gitea/modules/context"
 	"code.gitea.io/gitea/modules/log"
 	"code.gitea.io/gitea/modules/setting"
+	"code.gitea.io/gitea/routers/api/v1/misc"
 	_ "code.gitea.io/gitea/routers/api/v1/swagger" // for swagger generation
 
 	"gitea.com/macaron/macaron"

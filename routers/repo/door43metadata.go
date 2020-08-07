@@ -1,18 +1,19 @@
-// Copyright 2020 The DCS Authors. All rights reserved.
+// Copyright 2020 unfoldingWord. All rights reserved.
 // Use of this source code is governed by a MIT-style
 // license that can be found in the LICENSE file.
 
 package repo
 
 import (
+	"encoding/json"
+	"fmt"
+
 	"code.gitea.io/gitea/models"
 	"code.gitea.io/gitea/modules/auth"
 	"code.gitea.io/gitea/modules/base"
 	"code.gitea.io/gitea/modules/context"
 	"code.gitea.io/gitea/modules/convert"
 	"code.gitea.io/gitea/modules/log"
-	"encoding/json"
-	"fmt"
 )
 
 const (

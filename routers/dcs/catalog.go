@@ -7,7 +7,6 @@
 package dcs
 
 import (
-	"bytes"
 	"strings"
 
 	"code.gitea.io/gitea/models"
@@ -25,14 +24,6 @@ const (
 type CatalogSearchOptions struct {
 	PageSize int
 	TplName  base.TplName
-}
-
-var (
-	nullByte = []byte{0x00}
-)
-
-func isKeywordValid(keyword string) bool {
-	return !bytes.Contains([]byte(keyword), nullByte)
 }
 
 // RenderCatalogSearch render catalog search page
@@ -94,21 +85,21 @@ func RenderCatalogSearch(ctx *context.Context, opts *CatalogSearchOptions) {
 	if query != "" {
 		for _, token := range models.SplitAtCommaNotInString(query, true) {
 			if strings.HasPrefix(token, "book:") {
-				books = append(books, strings.TrimLeft(token, "book:"))
+				books = append(books, strings.TrimPrefix(token, "book:"))
 			} else if strings.HasPrefix(token, "lang:") {
-				langs = append(langs, strings.TrimLeft(token, "lang:"))
+				langs = append(langs, strings.TrimPrefix(token, "lang:"))
 			} else if strings.HasPrefix(token, "subject:") {
-				subjects = append(subjects, strings.Trim(strings.TrimLeft(token, "subject:"), `"`))
+				subjects = append(subjects, strings.Trim(strings.TrimPrefix(token, "subject:"), `"`))
 			} else if strings.HasPrefix(token, "repo:") {
-				repos = append(repos, strings.TrimLeft(token, "repo:"))
+				repos = append(repos, strings.TrimPrefix(token, "repo:"))
 			} else if strings.HasPrefix(token, "owner:") {
-				owners = append(owners, strings.TrimLeft(token, "owner:"))
+				owners = append(owners, strings.TrimPrefix(token, "owner:"))
 			} else if strings.HasPrefix(token, "tag:") {
-				tags = append(tags, strings.TrimLeft(token, "tag:"))
+				tags = append(tags, strings.TrimPrefix(token, "tag:"))
 			} else if strings.HasPrefix(token, "checkinglevel:") {
-				checkingLevels = append(checkingLevels, strings.TrimLeft(token, "checkinglevel:"))
+				checkingLevels = append(checkingLevels, strings.TrimPrefix(token, "checkinglevel:"))
 			} else if strings.HasPrefix(token, "stage:") {
-				if s, ok := models.StageMap[strings.Trim(strings.TrimLeft(token, "stage:"), `"`)]; ok {
+				if s, ok := models.StageMap[strings.Trim(strings.TrimPrefix(token, "stage:"), `"`)]; ok {
 					stage = s
 				} else {
 					stage = 0 // Makes it invalid, return no results

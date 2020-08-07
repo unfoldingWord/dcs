@@ -8,16 +8,11 @@ import (
 	"strings"
 
 	"code.gitea.io/gitea/models"
-	template "code.gitea.io/gitea/modules/base"
 	"code.gitea.io/gitea/modules/door43metadata"
 	"code.gitea.io/gitea/modules/git"
 	"code.gitea.io/gitea/modules/log"
 	"code.gitea.io/gitea/modules/notification/base"
 	"code.gitea.io/gitea/modules/repository"
-)
-
-const (
-	mailGeneric template.TplName = "notify/generic"
 )
 
 type metadataNotifier struct {

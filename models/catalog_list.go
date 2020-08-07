@@ -70,11 +70,14 @@ func (dms Door43MetadataList) loadAttributes(e Engine) error {
 		return nil
 	}
 
+	var lastErr error
 	for _, dm := range dms {
-		dm.loadAttributes(e)
+		if err := dm.loadAttributes(e); err != nil && lastErr == nil {
+			lastErr = err
+		}
 	}
 
-	return nil
+	return lastErr
 }
 
 // LoadAttributes loads the attributes for the given Door43MetadataList

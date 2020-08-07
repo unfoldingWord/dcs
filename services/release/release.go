@@ -5,12 +5,12 @@
 package release
 
 import (
-	"code.gitea.io/gitea/modules/door43metadata"
 	"fmt"
 	"os"
 	"strings"
 
 	"code.gitea.io/gitea/models"
+	"code.gitea.io/gitea/modules/door43metadata"
 	"code.gitea.io/gitea/modules/git"
 	"code.gitea.io/gitea/modules/log"
 	"code.gitea.io/gitea/modules/notification"
@@ -95,7 +95,10 @@ func CreateRelease(gitRepo *git.Repository, rel *models.Release, attachmentUUIDs
 	/*** DCS Customizations ***/
 	if rel.IsDraft {
 		{
-			door43metadata.ProcessDoor43MetadataForRepoRelease(rel.Repo, rel)
+			if err := rel.LoadAttributes(); err != nil {
+				return err
+			}
+			return door43metadata.ProcessDoor43MetadataForRepoRelease(rel.Repo, rel)
 		}
 	}
 	/*** END DCS Customizations ***/

@@ -1,9 +1,14 @@
+// Copyright 2020 unfoldingWord. All rights reserved.
+// Use of this source code is governed by a MIT-style
+// license that can be found in the LICENSE file.
+
 package models
 
 import (
-	"code.gitea.io/gitea/modules/log"
 	"sort"
 	"strings"
+
+	"code.gitea.io/gitea/modules/log"
 )
 
 func contains(strings []string, str string) bool {
