@@ -356,9 +356,8 @@ func (repo *Repository) innerAPIFormat(e Engine, mode AccessMode, isParent bool)
 
 	/* DCS Customizations */
 	var catalog *api.Catalog
-	latestReleaseMetadata, err := getLatestCatalogMetadataByRepoID(e, repo.ID, false)
-	if err != nil {
-		log.Error("APIFormat: %v", err)
+	if latestReleaseMetadata, err := getLatestCatalogMetadataByRepoID(e, repo.ID, false); err != nil && ! IsErrDoor43MetadataNotExist(err) {
+		log.Error("getLatestCatalogMetadataByRepoID: %v", err)
 	} else if latestReleaseMetadata != nil {
 		catalog = &api.Catalog{
 			Release: latestReleaseMetadata.Release.APIFormat(),
@@ -367,12 +366,12 @@ func (repo *Repository) innerAPIFormat(e Engine, mode AccessMode, isParent bool)
 
 	metadata, err := getDoor43MetadataByRepoIDAndReleaseID(e, repo.ID, 0)
 	if err != nil && !IsErrDoor43MetadataNotExist(err) {
-		log.Error("APIFormat: %v", err)
+		log.Error("getDoor43MetadataByRepoIDAndReleaseID: %v", err)
 	}
 	if metadata == nil {
 		metadata, err = repo.getLatestPreProdCatalogMetadata(e)
 		if err != nil {
-			log.Error("APIFormat: %v", err)
+			log.Error("getLatestPreProdCatalogMetadata: %v", err)
 		}
 	}
 
