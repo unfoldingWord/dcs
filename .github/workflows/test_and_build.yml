@@ -142,11 +142,6 @@ jobs:
           go-version: '^1.14.5'
         id: go
 
-      - name: Setup ElasticSearch
-        uses: getong/elasticsearch-action@v1.2
-        with:
-          elasticsearch version: 7.5.0
-
       - name: Checkout
         uses: actions/checkout@v2
         with:
