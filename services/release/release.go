@@ -95,6 +95,9 @@ func CreateRelease(gitRepo *git.Repository, rel *models.Release, attachmentUUIDs
 	/*** DCS Customizations ***/
 	if rel.IsDraft {
 		{
+			if err := rel.LoadAttributes(); err != nil {
+				return err
+			}
 			return door43metadata.ProcessDoor43MetadataForRepoRelease(rel.Repo, rel)
 		}
 	}
