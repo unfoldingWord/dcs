@@ -124,6 +124,7 @@ jobs:
 
       - name: build
         run: make backend
+        working-directory: ${{ env.GITEA_ROOT }}
         env:
           GOPROXY: https://goproxy.cn # proxy.golang.org is blocked in China, this proxy is not
           GOSUMDB: sum.golang.org
@@ -131,6 +132,7 @@ jobs:
 
       - name: tag-pre-condition
         run: git update-ref refs/heads/tag_test ${GITHUB_SHA}
+        working-directory: ${{ env.GITEA_ROOT }}
 
       - name: deps-frontend
         shell: bash
@@ -144,10 +146,12 @@ jobs:
 
       - name: Debug - post-build
         shell: bash
-        run: ls -l ${GITEA_ROOT}
+        run: ls -l
+        working-directory: ${{ env.GITEA_ROOT }}
 
       - name: unit-test
         run: make unit-test-coverage test-check
+        working-directory: ${{ env.GITEA_ROOT }}
         env:
           GOPROXY: off
           TAGS: bindata sqlite sqlite_unlock_notify
