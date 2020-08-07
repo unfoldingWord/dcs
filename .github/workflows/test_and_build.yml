@@ -206,7 +206,7 @@ jobs:
         shell: bash
         run: |
           sudo curl -s "https://packagecloud.io/install/repositories/github/git-lfs/script.deb.sh" | sudo os=ubuntu dist=trusty bash
-          apt-get install -y git-lfs
+          sudo apt-get install -y git-lfs
           timeout -s ABRT 40m make test-sqlite-migration test-sqlite
         working-directory: ${{ env.GITEA_ROOT }}
         env:
