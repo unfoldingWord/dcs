@@ -23,7 +23,7 @@ import (
 )
 
 // The repos to be tested and if they show throw an error (return nil if no error)
-var TESTING_REPOS = map[string]bool{
+var TestingRepos = map[string]bool{
 	"all_json_files":            false,
 	"bad_json_file":             true,
 	"multiple_sensitive_fields": false,
@@ -35,7 +35,7 @@ func TestScrubJsonFiles(t *testing.T) {
 	myDir, _ := os.Getwd()
 	testFilesDir := path.Join(myDir, "scrub_test_files")
 	tempDir, _ := ioutil.TempDir(os.TempDir(), "scrub_test")
-	for repoName, throwsError := range TESTING_REPOS {
+	for repoName, throwsError := range TestingRepos {
 		repoDir := path.Join(tempDir, repoName)
 		fmt.Println("Copying ", path.Join(testFilesDir, repoName), "==>", repoDir)
 		CopyDir(path.Join(testFilesDir, repoName), repoDir)

@@ -12,6 +12,7 @@ import (
 	"code.gitea.io/gitea/modules/util"
 
 	"xorm.io/builder"
+	"xorm.io/xorm/schemas"
 )
 
 // RepositoryListDefaultPageSize is the default number of repositories
@@ -193,20 +194,20 @@ func (s SearchOrderBy) String() string {
 
 // Strings for sorting result
 const (
-	SearchOrderByAlphabetically            SearchOrderBy = "`repository`.name ASC"
-	SearchOrderByAlphabeticallyReverse     SearchOrderBy = "`repository`.name DESC"
-	SearchOrderByLeastUpdated              SearchOrderBy = "`repository`.updated_unix ASC"
-	SearchOrderByRecentUpdated             SearchOrderBy = "`repository`.updated_unix DESC"
-	SearchOrderByOldest                    SearchOrderBy = "`repository`.created_unix ASC"
-	SearchOrderByNewest                    SearchOrderBy = "`repository`.created_unix DESC"
-	SearchOrderBySize                      SearchOrderBy = "`repository`.size ASC"
-	SearchOrderBySizeReverse               SearchOrderBy = "`repository`.size DESC"
-	SearchOrderByID                        SearchOrderBy = "`repository`.id ASC"
-	SearchOrderByIDReverse                 SearchOrderBy = "`repository`.id DESC"
-	SearchOrderByStars                     SearchOrderBy = "`repository`.num_stars ASC"
-	SearchOrderByStarsReverse              SearchOrderBy = "`repository`.num_stars DESC"
-	SearchOrderByForks                     SearchOrderBy = "`repository`.num_forks ASC"
-	SearchOrderByForksReverse              SearchOrderBy = "`repository`.num_forks DESC"
+	SearchOrderByAlphabetically            SearchOrderBy = "name ASC"
+	SearchOrderByAlphabeticallyReverse     SearchOrderBy = "name DESC"
+	SearchOrderByLeastUpdated              SearchOrderBy = "updated_unix ASC"
+	SearchOrderByRecentUpdated             SearchOrderBy = "updated_unix DESC"
+	SearchOrderByOldest                    SearchOrderBy = "created_unix ASC"
+	SearchOrderByNewest                    SearchOrderBy = "created_unix DESC"
+	SearchOrderBySize                      SearchOrderBy = "size ASC"
+	SearchOrderBySizeReverse               SearchOrderBy = "size DESC"
+	SearchOrderByID                        SearchOrderBy = "id ASC"
+	SearchOrderByIDReverse                 SearchOrderBy = "id DESC"
+	SearchOrderByStars                     SearchOrderBy = "num_stars ASC"
+	SearchOrderByStarsReverse              SearchOrderBy = "num_stars DESC"
+	SearchOrderByForks                     SearchOrderBy = "num_forks ASC"
+	SearchOrderByForksReverse              SearchOrderBy = "num_forks DESC"
 	SearchUserOrderByAlphabetically        SearchOrderBy = "name ASC"
 	SearchUserOrderByAlphabeticallyReverse SearchOrderBy = "name DESC"
 	SearchUserOrderByLeastUpdated          SearchOrderBy = "updated_unix ASC"
@@ -329,10 +330,19 @@ func SearchRepositoryCondition(opts *SearchRepoOptions) builder.Cond {
 					likes = likes.Or(builder.Like{"LOWER(`repository`.description)", strings.ToLower(v)})
 				}
 				/*** DCS Customizations ***/
-				likes = likes.Or(builder.Like{"LOWER(JSON_UNQUOTE(JSON_EXTRACT(`door43_metadata`.metadata, '$.dublin_core.title')))", strings.ToLower(v)})
-				likes = likes.Or(builder.Like{"LOWER(JSON_UNQUOTE(JSON_EXTRACT(`door43_metadata`.metadata, '$.dublin_core.subject')))", strings.ToLower(v)})
-				if opts.SearchAllMetadata {
-					likes = likes.Or(builder.Expr("JSON_SEARCH(LOWER(`door43_metadata`.metadata), 'one', ?) IS NOT NULL", "%"+strings.ToLower(v)+"%"))
+				switch x.Dialect().URI().DBType {
+				case schemas.MYSQL:
+					likes = likes.Or(builder.Like{"LOWER(JSON_UNQUOTE(JSON_EXTRACT(`door43_metadata`.metadata, '$.dublin_core.title')))", strings.ToLower(v)})
+					likes = likes.Or(builder.Like{"LOWER(JSON_UNQUOTE(JSON_EXTRACT(`door43_metadata`.metadata, '$.dublin_core.subject')))", strings.ToLower(v)})
+					if opts.SearchAllMetadata {
+						likes = likes.Or(builder.Expr("JSON_SEARCH(LOWER(`door43_metadata`.metadata), 'one', ?) IS NOT NULL", "%"+strings.ToLower(v)+"%"))
+					}
+				default:
+					likes = likes.Or(builder.Like{"`door43_metadata`.metadata", `"title": "%` + strings.ToLower(v) + `%"`})
+					likes = likes.Or(builder.Like{"`door43_metadata`.metadata", `"subject": "%` + strings.ToLower(v) + `%"`})
+					if opts.SearchAllMetadata {
+						likes = likes.Or(builder.Like{"`door43_metadata`.metadata", `": "%` + strings.ToLower(v) + `%"`})
+					}
 				}
 				/*** END DCS Customizations ***/
 			}
@@ -414,7 +424,7 @@ func SearchRepositoryByCondition(opts *SearchRepoOptions, cond builder.Cond, loa
 		Join("INNER", "user", "`user`.id = `repository`.owner_id").
 		Join("LEFT", "door43_metadata", "`door43_metadata`.repo_id = `repository`.id AND `door43_metadata`.release_id = 0").
 		Where(cond).
-		OrderBy(opts.OrderBy.String())
+		OrderBy("`repository`." + opts.OrderBy.String())
 	if opts.PageSize > 0 {
 		sess.Limit(opts.PageSize, (opts.Page-1)*opts.PageSize)
 	}

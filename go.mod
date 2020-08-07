@@ -4,7 +4,6 @@ go 1.14
 
 require (
 	cloud.google.com/go v0.45.0 // indirect
-	gitea.com/jolheiser/gitea-vet v0.1.0
 	gitea.com/lunny/levelqueue v0.3.0
 	gitea.com/macaron/binding v0.0.0-20190822013154-a5f53841ed2b
 	gitea.com/macaron/cache v0.0.0-20190822004001-a6e7fee4ee76
@@ -17,6 +16,7 @@ require (
 	gitea.com/macaron/macaron v1.4.0
 	gitea.com/macaron/session v0.0.0-20191207215012-613cebf0674d
 	gitea.com/macaron/toolbox v0.0.0-20190822013122-05ff0fc766b7
+	gitea.com/unfoldingword/gitea-vet v0.2.4
 	github.com/BurntSushi/toml v0.3.1
 	github.com/PuerkitoBio/goquery v1.5.0
 	github.com/RoaringBitmap/roaring v0.4.23 // indirect
@@ -49,7 +49,7 @@ require (
 	github.com/gogs/chardet v0.0.0-20191104214054-4b6791f73a28
 	github.com/gogs/cron v0.0.0-20171120032916-9f6c956d3e14
 	github.com/golang/protobuf v1.4.1 // indirect
-	github.com/google/go-github/v24 v24.0.1
+	github.com/google/go-github/v32 v32.1.0
 	github.com/google/uuid v1.1.1
 	github.com/gorilla/context v1.1.1
 	github.com/hashicorp/go-retryablehttp v0.6.6 // indirect

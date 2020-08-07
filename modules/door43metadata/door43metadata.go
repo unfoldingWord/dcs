@@ -122,6 +122,9 @@ func ReadManifestFromBlob(blob *git.Blob) (*map[string]interface{}, error) {
 func ConvertGenericMapToRC020Manifest(manifest *map[string]interface{}) (*structs.RC020Manifest, error) {
 	var rc020manifest structs.RC020Manifest
 	err := mapstructure.Decode(*manifest, &rc020manifest)
+	if err != nil {
+		return nil, err
+	}
 
 	type Checking struct {
 		CheckingLevel string `mapstructure:"checking_level"`
@@ -246,6 +249,9 @@ func ProcessDoor43MetadataForRepoRelease(repo *models.Repository, release *model
 	}
 
 	blob, err := commit.GetBlobByPath("manifest.yaml")
+	if err != nil && ! git.IsErrNotExist(err) {
+		return err
+	}
 	if blob == nil {
 		return nil
 	}
