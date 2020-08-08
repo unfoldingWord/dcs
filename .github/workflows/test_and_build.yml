@@ -118,6 +118,7 @@ jobs:
       mysql:
         image: mysql:5.7
         env:
+          MYSQL_ROOT_PASSWORD: password
           MYSQL_ALLOW_EMPTY_PASSWORD: yes
           MYSQL_DATABASE: testgitea
         ports:
@@ -217,6 +218,7 @@ jobs:
         shell: bash
         run: |
           sudo /etc/init.d/mysql start
+          mysqladmin -u root -proot password ''
           mysql -u root -e 'show databases;'
 
       - name: test-mysql
