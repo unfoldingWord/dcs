@@ -114,16 +114,16 @@ jobs:
     name: DCS Unit & Integration Tests
     runs-on: ubuntu-latest
 
-    services:
-      mysql:
-        image: mysql:5.7
-        env:
-          MYSQL_ROOT_PASSWORD:
-          MYSQL_ALLOW_EMPTY_PASSWORD: yes
-          MYSQL_DATABASE: testgitea
-        ports:
-          - 3306
-        options: --health-cmd "mysqladmin ping" --health-interval 10s --health-timeout 5s --health-retries 10
+#    services:
+#      mysql:
+#        image: mysql:5.7
+#        env:
+#          MYSQL_ROOT_PASSWORD: password
+#          MYSQL_ALLOW_EMPTY_PASSWORD: yes
+#          MYSQL_DATABASE: testgitea
+#        ports:
+#          - 3306
+#        options: --health-cmd "mysqladmin ping" --health-interval 10s --health-timeout 5s --health-retries 10
 
     env:
       GOPATH: /home/runner/work/dcs/dcs/go
@@ -214,24 +214,25 @@ jobs:
           TAGS: bindata
           USE_REPO_TEST_DIR: 1
 
-      - name: Start MySQL
-        shell: bash
-        run: |
-          sudo /etc/init.d/mysql start
-          mysql -u root -e 'show databases;'
-
-      - name: test-mysql
-        shell: bash
-        run: |
-          sudo apt-get install -y git-lfs
-          sudo apt-get install -y curl
-          sudo apt-get install -y bash
-          sudo echo "127.0.0.1  mysql" | sudo tee -a /etc/hosts
-          sudo curl -s "https://packagecloud.io/install/repositories/github/git-lfs/script.deb.sh" | sudo os=ubuntu dist=trusty bash
-          make test-mysql-migration integration-test-coverage
-        working-directory: ${{ env.GITEA_ROOT }}
-        env:
-          GOPROXY: off
-          TAGS: bindata
-          TEST_LDAP: 1
-          USE_REPO_TEST_DIR: 1
+#      - name: Start MySQL
+#        shell: bash
+#        run: |
+#          sudo /etc/init.d/mysql start
+#          mysqladmin -u root -proot password ''
+#          mysql -u root -e 'show databases;'
+#
+#      - name: test-mysql
+#        shell: bash
+#        run: |
+#          sudo apt-get install -y git-lfs
+#          sudo apt-get install -y curl
+#          sudo apt-get install -y bash
+#          sudo echo "127.0.0.1  mysql" | sudo tee -a /etc/hosts
+#          sudo curl -s "https://packagecloud.io/install/repositories/github/git-lfs/script.deb.sh" | sudo os=ubuntu dist=trusty bash
+#          make test-mysql-migration integration-test-coverage
+#        working-directory: ${{ env.GITEA_ROOT }}
+#        env:
+#          GOPROXY: off
+#          TAGS: bindata
+#          TEST_LDAP: 1
+#          USE_REPO_TEST_DIR: 1
