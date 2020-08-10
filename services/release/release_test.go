@@ -7,6 +7,7 @@ package release
 import (
 	"path/filepath"
 	"testing"
+	"time"
 
 	"code.gitea.io/gitea/models"
 	"code.gitea.io/gitea/modules/git"
@@ -101,8 +102,6 @@ func TestRelease_Create(t *testing.T) {
 		IsTag:        true,
 	}, nil))
 }
-<<<<<<< Updated upstream
-=======
 
 func TestRelease_Update(t *testing.T) {
 	assert.NoError(t, models.PrepareTestDatabase())
@@ -253,4 +252,3 @@ func TestRelease_createTag(t *testing.T) {
 	assert.NoError(t, createTag(gitRepo, release))
 	assert.Equal(t, int64(releaseCreatedUnix), int64(release.CreatedUnix))
 }
->>>>>>> Stashed changes
