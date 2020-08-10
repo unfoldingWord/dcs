@@ -418,10 +418,14 @@ func searchCatalog(ctx *context.APIContext) {
 	}
 
 	stageStr := ctx.Query("stage")
-	stage, ok := models.StageMap[stageStr]
-	if !ok {
-		ctx.Error(http.StatusUnprocessableEntity, "", fmt.Errorf("invalid stage: \"%s\"", stageStr))
-		return
+	var stage models.Stage
+	if stageStr != "" {
+		var ok bool
+		stage, ok = models.StageMap[stageStr]
+		if !ok {
+			ctx.Error(http.StatusUnprocessableEntity, "", fmt.Errorf("invalid stage: \"%s\"", stageStr))
+			return
+		}
 	}
 
 	keywords := []string{}
