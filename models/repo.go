@@ -360,7 +360,7 @@ func (repo *Repository) innerAPIFormat(e Engine, mode AccessMode, isParent bool)
 
 	/* DCS Customizations */
 	var catalog *api.Catalog
-	if latestReleaseMetadata, err := getLatestCatalogMetadataByRepoID(e, repo.ID, false); err != nil && ! IsErrDoor43MetadataNotExist(err) {
+	if latestReleaseMetadata, err := getLatestCatalogMetadataByRepoID(e, repo.ID, false); err != nil && !IsErrDoor43MetadataNotExist(err) {
 		log.Error("getLatestCatalogMetadataByRepoID: %v", err)
 	} else if latestReleaseMetadata != nil {
 		catalog = &api.Catalog{
