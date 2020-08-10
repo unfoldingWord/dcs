@@ -561,10 +561,10 @@ type Stage int
 
 // Stage values
 const (
-	StageProd    Stage = 1
-	StagePreProd Stage = 2
-	StageDraft   Stage = 3
-	StageLatest  Stage = 4
+	StageProd    Stage = iota // 0
+	StagePreProd Stage = 1
+	StageDraft   Stage = 2
+	StageLatest  Stage = 3
 )
 
 // StageMap map from string to Stage (int)
