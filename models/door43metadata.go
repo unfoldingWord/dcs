@@ -64,9 +64,8 @@ func (dm *Door43Metadata) LoadAttributes() error {
 func (dm *Door43Metadata) GetBranchOrTagType() string {
 	if dm.Stage < StageDraft {
 		return "tag"
-	} else {
-		return "branch"
 	}
+	return "branch"
 }
 
 // APIURLV4 the api url for a door43 metadata. door43 metadata must have attributes loaded
