@@ -60,6 +60,15 @@ func (dm *Door43Metadata) LoadAttributes() error {
 	return dm.loadAttributes(x)
 }
 
+// GetBranchOrTagType gets the type of the DM entry, "branch" or "tag"
+func (dm *Door43Metadata) GetBranchOrTagType() string {
+	if dm.Stage < StageDraft {
+		return "tag"
+	} else {
+		return "branch"
+	}
+}
+
 // APIURLV4 the api url for a door43 metadata. door43 metadata must have attributes loaded
 func (dm *Door43Metadata) APIURLV4() string {
 	ref := dm.Repo.DefaultBranch
@@ -93,13 +102,18 @@ func (dm *Door43Metadata) GetReleaseURL() string {
 	return ""
 }
 
+// GetMetadataURL gets the url to the raw manifest.yaml file
+func (dm *Door43Metadata) GetMetadataURL() string {
+	return fmt.Sprintf("%s/raw/%s/%s/manifest.yaml", dm.Repo.HTMLURL(), dm.GetBranchOrTagType(), dm.BranchOrTag)
+}
+
 // GetMetadataJSONURL gets the json representation of the contents of the manifest.yaml file
 func (dm *Door43Metadata) GetMetadataJSONURL() string {
 	return fmt.Sprintf("%s/metadata", dm.APIURLV4())
 }
 
-// GetMetadataAndContentsURL gets the metadata and contents of the manifest.yaml file
-func (dm *Door43Metadata) GetMetadataAndContentsURL() string {
+// GetMetadataAPIContentsURL gets the metadata API contents URL of the manifest.yaml file
+func (dm *Door43Metadata) GetMetadataAPIContentsURL() string {
 	return fmt.Sprintf("%s/contents/manifest.yaml?ref=%s", dm.Repo.APIURL(), dm.BranchOrTag)
 }
 
@@ -131,8 +145,9 @@ func (dm *Door43Metadata) innerAPIFormatV4(e *xorm.Engine) *structs.Door43Metada
 		Stage:                  dm.Stage.String(),
 		Released:               dm.ReleaseDateUnix.FormatDate(),
 		MetadataVersion:        dm.MetadataVersion,
+		MetadataURL:            dm.GetMetadataURL(),
 		MetadataJSONURL:        dm.GetMetadataJSONURL(),
-		MetadataAndContentsURL: dm.GetMetadataAndContentsURL(),
+		MetadataAPIContentsURL: dm.GetMetadataAPIContentsURL(),
 		Ingredients:            (*dm.Metadata)["projects"].([]interface{}),
 	}
 }

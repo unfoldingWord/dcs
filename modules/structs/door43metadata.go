@@ -19,8 +19,9 @@ type Door43MetadataV4 struct {
 	Title                  string        `json:"title"`
 	BranchOrTag            string        `json:"branch_or_tag_name"`
 	Stage                  string        `json:"stage"`
+	MetadataURL            string        `json:"metadata_url"`
 	MetadataJSONURL        string        `json:"metadata_json_url"`
-	MetadataAndContentsURL string        `json:"metadata_and_contents_url"`
+	MetadataAPIContentsURL string        `json:"metadata_api_contents_url"`
 	MetadataVersion        string        `json:"metadata_version"`
 	Released               string        `json:"released"`
 	Books                  []string      `json:"books"`
