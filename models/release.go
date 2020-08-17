@@ -57,7 +57,7 @@ func (r *Release) loadAttributes(e Engine) error {
 			return err
 		}
 	}
-	if r.Publisher == nil {
+	if r.Publisher == nil && r.PublisherID > 0 {
 		r.Publisher, err = getUserByID(e, r.PublisherID)
 		if err != nil {
 			return err
