@@ -382,7 +382,8 @@ var (
 	Cfg           *ini.File
 	CustomPath    string // Custom directory path
 	CustomConf    string
-	CustomPID     string
+	PIDFile       = "/var/run/gitea.pid"
+	WritePIDFile  bool
 	ProdMode      bool
 	RunUser       string
 	IsWindows     bool
@@ -541,8 +542,8 @@ func SetCustomPathAndConf(providedCustom, providedConf, providedWorkPath string)
 func NewContext() {
 	Cfg = ini.Empty()
 
-	if len(CustomPID) > 0 {
-		createPIDFile(CustomPID)
+	if WritePIDFile && len(PIDFile) > 0 {
+		createPIDFile(PIDFile)
 	}
 
 	if com.IsFile(CustomConf) {
@@ -1133,4 +1134,5 @@ func NewServices() {
 	newIndexerService()
 	newTaskService()
 	NewQueueService()
+	newProject()
 }
