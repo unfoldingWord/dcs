@@ -65,20 +65,20 @@
 								{{else}}
 									{{index $subJumpablePath 0}}
 								{{end}}
+								<!-- DCS Customizations -->
+								{{if and (eq $.TreePath "") (eq $entry.Name "manifest.yaml") ($.ValidateManifestResult)}}
+									{{if $.ValidateManifestResult.Valid}}
+										<span class="ui label green green" title="{{$.i18n.Tr "repo.metadata.valid_manifest_tooltip"}}" style="margin-left: 5px">{{$.i18n.Tr "repo.metadata.valid"}}</span>
+									{{else}}
+										<span class="ui label red" title="{{$.ValidateManifestResultErrors}}" style="margin-left: 5px">{{$.i18n.Tr "repo.metadata.invalid"}}</span>
+									{{end}}
+								{{end}}
+								<!-- END DCS Customizations -->
 							</a>
 						{{else}}
 							{{svg (printf "octicon-%s" (EntryIcon $entry)) 16}}
 							<a href="{{EscapePound $.TreeLink}}/{{EscapePound $entry.Name}}" title="{{$entry.Name}}">{{$entry.Name}}</a>
 						{{end}}
-						<!-- DCS Customizations -->
-						{{if and (eq $.TreePath "") (eq $entry.Name "manifest.yaml") ($.ValidateManifestResult)}}
-							{{if $.ValidateManifestResult.Valid}}
-								<span class="ui label green green" title="{{$.i18n.Tr "repo.metadata.valid_manifest_tooltip"}}">{{$.i18n.Tr "repo.metadata.valid"}}</span>
-							{{else}}
-								<span class="ui label red" title="{{$.ValidateManifestResultErrors}}">{{$.i18n.Tr "repo.metadata.invalid"}}</span>
-							{{end}}
-						{{end}}
-						<!-- END DCS Customizations -->
 					</td>
 				{{end}}
 				<td class="message nine wide">
