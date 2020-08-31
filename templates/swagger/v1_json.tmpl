@@ -11126,9 +11126,8 @@
             "required": true
           },
           {
-            "type": "integer",
-            "format": "int64",
-            "description": "token to be deleted",
+            "type": "string",
+            "description": "token to be deleted, identified by ID and if not available by name",
             "name": "token",
             "in": "path",
             "required": true
@@ -11137,6 +11136,9 @@
         "responses": {
           "204": {
             "$ref": "#/responses/empty"
+          },
+          "422": {
+            "$ref": "#/responses/error"
           }
         }
       }
@@ -14055,6 +14057,10 @@
           "type": "string",
           "x-go-name": "AuthPassword"
         },
+        "auth_token": {
+          "type": "string",
+          "x-go-name": "AuthToken"
+        },
         "auth_username": {
           "type": "string",
           "x-go-name": "AuthUsername"
@@ -14098,6 +14104,11 @@
         "repo_name": {
           "type": "string",
           "x-go-name": "RepoName"
+        },
+        "service": {
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "Service"
         },
         "uid": {
           "type": "integer",

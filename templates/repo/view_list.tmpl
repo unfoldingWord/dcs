@@ -43,48 +43,50 @@
 			{{$entry := index $item 0}}
 			{{$commit := index $item 1}}
 			<tr>
-				{{if $entry.IsSubModule}}
-					<td>
-						{{svg "octicon-file-submodule" 16}}
-						{{$refURL := $commit.RefURL AppUrl $.Repository.FullName}}
-						{{if $refURL}}
-							<a href="{{$refURL}}">{{$entry.Name}}</a> @ <a href="{{$refURL}}/commit/{{$commit.RefID}}">{{ShortSha $commit.RefID}}</a>
+				<td class="name four wide">
+					<span class="truncate">
+						{{if $entry.IsSubModule}}
+							{{svg "octicon-file-submodule" 16}}
+							{{$refURL := $commit.RefURL AppUrl $.Repository.FullName}}
+							{{if $refURL}}
+								<a href="{{$refURL}}">{{$entry.Name}}</a><span class="at">@</span><a href="{{$refURL}}/commit/{{$commit.RefID}}">{{ShortSha $commit.RefID}}</a>
+							{{else}}
+								{{$entry.Name}}<span class="at">@</span>{{ShortSha $commit.RefID}}
+							{{end}}
 						{{else}}
-							{{$entry.Name}} @ {{ShortSha $commit.RefID}}
-						{{end}}
-					</td>
-				{{else}}
-					<td class="name four wide">
-						{{if $entry.IsDir}}
-							{{$subJumpablePathName := $entry.GetSubJumpablePathName}}
-							{{$subJumpablePath := SubJumpablePath $subJumpablePathName}}
-							{{svg "octicon-file-directory" 16}}
-							<a href="{{EscapePound $.TreeLink}}/{{EscapePound $subJumpablePathName}}" title="{{$subJumpablePathName}}">
-								{{if eq (len $subJumpablePath) 2}}
-									<span class="jumpable-path">{{index  $subJumpablePath 0}}</span>{{index  $subJumpablePath 1}}
-								{{else}}
-									{{index $subJumpablePath 0}}
-								{{end}}
-							</a>
-						{{else}}
-							{{svg (printf "octicon-%s" (EntryIcon $entry)) 16}}
-							<a href="{{EscapePound $.TreeLink}}/{{EscapePound $entry.Name}}" title="{{$entry.Name}}">
-								{{$entry.Name}}
-								<!-- DCS Customizations -->
-								{{if and (eq $.TreePath "") (eq $entry.Name "manifest.yaml") ($.ValidateManifestResult)}}
-									{{if $.ValidateManifestResult.Valid}}
-										<span class="ui label green green" title="{{$.i18n.Tr "repo.metadata.valid_manifest_tooltip"}}" style="margin-left: 5px">{{$.i18n.Tr "repo.metadata.valid"}}</span>
+							{{if $entry.IsDir}}
+								{{$subJumpablePathName := $entry.GetSubJumpablePathName}}
+								{{$subJumpablePath := SubJumpablePath $subJumpablePathName}}
+								{{svg "octicon-file-directory" 16}}
+								<a href="{{EscapePound $.TreeLink}}/{{EscapePound $subJumpablePathName}}" title="{{$subJumpablePathName}}">
+									{{if eq (len $subJumpablePath) 2}}
+										<span class="jumpable-path">{{index  $subJumpablePath 0}}</span>{{index  $subJumpablePath 1}}
 									{{else}}
-										<span class="ui label red" title="{{$.ValidateManifestResultErrors}}" style="margin-left: 5px">{{$.i18n.Tr "repo.metadata.invalid"}}</span>
+										{{index $subJumpablePath 0}}
 									{{end}}
-								{{end}}
-								<!-- END DCS Customizations -->
-							</a>
+								</a>
+							{{else}}
+								{{svg (printf "octicon-%s" (EntryIcon $entry)) 16}}
+								<a href="{{EscapePound $.TreeLink}}/{{EscapePound $entry.Name}}" title="{{$entry.Name}}">
+									{{$entry.Name}}
+									<!-- DCS Customizations -->
+									{{if and (eq $.TreePath "") (eq $entry.Name "manifest.yaml") ($.ValidateManifestResult)}}
+										{{if $.ValidateManifestResult.Valid}}
+											<span class="ui label green green" title="{{$.i18n.Tr "repo.metadata.valid_manifest_tooltip"}}" style="margin-left: 5px">{{$.i18n.Tr "repo.metadata.valid"}}</span>
+										{{else}}
+											<span class="ui label red" title="{{$.ValidateManifestResultErrors}}" style="margin-left: 5px">{{$.i18n.Tr "repo.metadata.invalid"}}</span>
+										{{end}}
+									{{end}}
+									<!-- END DCS Customizations -->
+								</a>
+							{{end}}
 						{{end}}
-					</td>
-				{{end}}
+					</span>
+				</td>
 				<td class="message nine wide">
-					<a href="{{$.RepoLink}}/commit/{{$commit.ID}}" title="{{$commit.Summary}}">{{$commit.Summary | RenderEmoji}}</a>
+					<span class="truncate">
+						<a href="{{$.RepoLink}}/commit/{{$commit.ID}}" title="{{$commit.Summary}}">{{$commit.Summary | RenderEmoji}}</a>
+					</span>
 				</td>
 				<td class="text right age three wide">{{TimeSince $commit.Committer.When $.Lang}}</td>
 			</tr>
