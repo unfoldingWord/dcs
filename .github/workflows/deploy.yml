@@ -4,7 +4,6 @@ on:
   push:
     branches:
       - master
-      - master-release-branched
       - release/dcs/v*
     tags:
       - v*-dcs
