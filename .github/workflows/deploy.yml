@@ -27,8 +27,6 @@ jobs:
         run: |
           REF=`echo ${GITHUB_REF} | cut -d "/" -f3-`
           echo "REF=${REF}"
-          RELEASE_VERSION=`echo ${GITHUB_REF:10}`
-          echo "RELEASE_VERSION=${RELEASE_VERSION}"
           DOCKER_TAGS="${REF//\//-}"
           if [[ "${REF}" == "v"*"-dcs" ]]; then
             # REF is a tag so we create tags for patch, minor and major versions and is the latest production
