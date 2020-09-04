@@ -2199,7 +2199,7 @@
           },
           {
             "type": "boolean",
-            "description": "include search of keyword within repository description",
+            "description": "include search of keyword within repository description (defaults to false)",
             "name": "includeDesc",
             "in": "query"
           },
@@ -2291,10 +2291,8 @@
             "in": "query"
           },
           {
-            "type": "string",
-            "description": "Checking level of the resource can be 1, 2 or 3",
-            "name": "checking_level",
-            "in": "query"
+            "description": "if false, q value will only be searched for in the repo name, owner, description and title and subject; otherwise search all values of the manifest file. (defaults to false)",
+            "name": "includeMetadata"
           },
           {
             "type": "string",

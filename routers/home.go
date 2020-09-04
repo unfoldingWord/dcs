@@ -176,7 +176,7 @@ func RenderRepoSearch(ctx *context.Context, opts *RepoSearchOptions) {
 		Subjects:           subjects,
 		Repos:              repoNames,
 		Owners:             owners,
-		SearchAllMetadata:  true,
+		IncludeMetadata:    true,
 	})
 	if err != nil {
 		ctx.ServerError("SearchRepository", err)

@@ -179,7 +179,7 @@ type SearchRepoOptions struct {
 	Books         []string
 	Languages     []string
 	// include all metadata in keyword search
-	SearchAllMetadata bool
+	IncludeMetadata bool
 }
 
 //SearchOrderBy is used to sort the result
@@ -317,13 +317,13 @@ func SearchRepositoryCondition(opts *SearchRepoOptions) builder.Cond {
 				case schemas.MYSQL:
 					likes = likes.Or(builder.Like{"LOWER(JSON_UNQUOTE(JSON_EXTRACT(`door43_metadata`.metadata, '$.dublin_core.title')))", strings.ToLower(v)})
 					likes = likes.Or(builder.Like{"LOWER(JSON_UNQUOTE(JSON_EXTRACT(`door43_metadata`.metadata, '$.dublin_core.subject')))", strings.ToLower(v)})
-					if opts.SearchAllMetadata {
+					if opts.IncludeMetadata {
 						likes = likes.Or(builder.Expr("JSON_SEARCH(LOWER(`door43_metadata`.metadata), 'one', ?) IS NOT NULL", "%"+strings.ToLower(v)+"%"))
 					}
 				default:
 					likes = likes.Or(builder.Like{"`door43_metadata`.metadata", `"title": "%` + strings.ToLower(v) + `%"`})
 					likes = likes.Or(builder.Like{"`door43_metadata`.metadata", `"subject": "%` + strings.ToLower(v) + `%"`})
-					if opts.SearchAllMetadata {
+					if opts.IncludeMetadata {
 						likes = likes.Or(builder.Like{"`door43_metadata`.metadata", `": "%` + strings.ToLower(v) + `%"`})
 					}
 				}
