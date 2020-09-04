@@ -2262,19 +2262,31 @@
           },
           {
             "type": "string",
+            "description": "name of the repo. Multiple repo's are ORed.",
+            "name": "repo",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "description": "owner of the repo. Multiple owner's are ORed.",
+            "name": "owner",
+            "in": "query"
+          },
+          {
+            "type": "string",
             "description": "If the repo is a resource of the given language(s), the repo will be in the results. Multiple lang's are ORed.",
             "name": "lang",
             "in": "query"
           },
           {
             "type": "string",
-            "description": "resource subject",
+            "description": "resource subject. Multiple subject's are ORed.",
             "name": "subject",
             "in": "query"
           },
           {
             "type": "string",
-            "description": "book (project id) that exist in a resource. If the resource contains the the book, its repository will be included in the results",
+            "description": "book (project id) that exist in a resource. If the resource contains the the book, its repository will be included in the results. Multiple book's are ORed.",
             "name": "book",
             "in": "query"
           },
@@ -12179,13 +12191,17 @@
           "type": "string",
           "x-go-name": "Language"
         },
-        "metadata_and_contents_url": {
+        "metadata_api_contents_url": {
           "type": "string",
-          "x-go-name": "MetadataAndContentsURL"
+          "x-go-name": "MetadataAPIContentsURL"
         },
         "metadata_json_url": {
           "type": "string",
           "x-go-name": "MetadataJSONURL"
+        },
+        "metadata_url": {
+          "type": "string",
+          "x-go-name": "MetadataURL"
         },
         "metadata_version": {
           "type": "string",

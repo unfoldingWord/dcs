@@ -100,18 +100,26 @@ func Search(ctx *context.APIContext) {
 	//   in: query
 	//   description: if `uid` is given, search only for repos that the user owns
 	//   type: boolean
+	// - name: repo
+	//   in: query
+	//   description: name of the repo. Multiple repo's are ORed.
+	//   type: string
+	// - name: owner
+	//   in: query
+	//   description: owner of the repo. Multiple owner's are ORed.
+	//   type: string
 	// - name: lang
 	//   in: query
 	//   description: If the repo is a resource of the given language(s), the repo will be in the results. Multiple lang's are ORed.
 	//   type: string
 	// - name: subject
 	//   in: query
-	//   description: resource subject
+	//   description: resource subject. Multiple subject's are ORed.
 	//   type: string
 	// - name: book
 	//   in: query
 	//   description: book (project id) that exist in a resource. If the resource contains the
-	//                the book, its repository will be included in the results
+	//                the book, its repository will be included in the results. Multiple book's are ORed.
 	//   type: string
 	// - name: checking_level
 	//   in: query
