@@ -6,7 +6,6 @@
 package user
 
 import (
-	"errors"
 	"fmt"
 	"net/http"
 	"strconv"
