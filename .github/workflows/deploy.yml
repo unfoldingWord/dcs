@@ -27,8 +27,6 @@ jobs:
         run: |
           REF=`echo ${GITHUB_REF} | cut -d "/" -f3-`
           echo "REF=${REF}"
-          RELEASE_VERSION=`echo ${GITHUB_REF:10}`
-          echo "RELEASE_VERSION=${RELEASE_VERSION}"
           DOCKER_TAGS="${REF//\//-}"
           if [[ "${REF}" == "v"*"-dcs" ]]; then
             # REF is a tag so we create tags for patch, minor and major versions and is the latest production
@@ -48,7 +46,7 @@ jobs:
             MINOR_VERSION=`echo ${REF} | cut -f3 -d'/'`
             MINOR_VERSION=${MINOR_VERSION#v}
             MAJOR_VERSION=`echo ${MINOR_VERSION} | cut -f1 -d'.'`
-            DOCKER_TAGS="${DOCKER_TAGS},beta,latest-beta,qa,latest-qa,${MAJOR_VERSION}-beta,${MINOR_VERSION}-beta,${MINOR_VERSION}-qa,latest-${MINOR_VERSION}"
+            DOCKER_TAGS="${DOCKER_TAGS},beta,latest-beta,qa,latest-qa,${MAJOR_VERSION}-beta,${MINOR_VERSION}-beta,${MINOR_VERSION}-qa"
           fi
           echo "DOCKER_TAGS: ${DOCKER_TAGS}"
           echo "::set-env name=DOCKER_TAGS::$DOCKER_TAGS"
