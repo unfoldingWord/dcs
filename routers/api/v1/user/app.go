@@ -99,8 +99,10 @@ func CreateAccessToken(ctx *context.APIContext, form api.CreateAccessTokenOption
 		return
 	}
 	if exist {
-		ctx.Error(http.StatusBadRequest, "AccessTokenByNameExists", errors.New("access token name has been used already"))
-		return
+		/*** DCS Customizations - Commented out so tokens can have the same name for translationCore ***/
+		//ctx.Error(http.StatusBadRequest, "AccessTokenByNameExists", errors.New("access token name has been used already"))
+		//return
+		/*** END DCS Customizations ***/
 	}
 
 	if err := models.NewAccessToken(t); err != nil {

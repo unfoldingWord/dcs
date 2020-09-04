@@ -58,7 +58,7 @@ func Search(ctx *context.APIContext) {
 	//   type: boolean
 	// - name: includeDesc
 	//   in: query
-	//   description: include search of keyword within repository description
+	//   description: include search of keyword within repository description (defaults to false)
 	//   type: boolean
 	// - name: uid
 	//   in: query
@@ -100,23 +100,30 @@ func Search(ctx *context.APIContext) {
 	//   in: query
 	//   description: if `uid` is given, search only for repos that the user owns
 	//   type: boolean
+	// - name: repo
+	//   in: query
+	//   description: name of the repo. Multiple repo's are ORed.
+	//   type: string
+	// - name: owner
+	//   in: query
+	//   description: owner of the repo. Multiple owner's are ORed.
+	//   type: string
 	// - name: lang
 	//   in: query
 	//   description: If the repo is a resource of the given language(s), the repo will be in the results. Multiple lang's are ORed.
 	//   type: string
 	// - name: subject
 	//   in: query
-	//   description: resource subject
+	//   description: resource subject. Multiple subject's are ORed.
 	//   type: string
 	// - name: book
 	//   in: query
 	//   description: book (project id) that exist in a resource. If the resource contains the
-	//                the book, its repository will be included in the results
+	//                the book, its repository will be included in the results. Multiple book's are ORed.
 	//   type: string
-	// - name: checking_level
-	//   in: query
-	//   description: Checking level of the resource can be 1, 2 or 3
-	//   type: string
+	// - name: includeMetadata
+	//   description: if false, q value will only be searched for in the repo name, owner, description and title and
+	//                subject; otherwise search all values of the manifest file. (defaults to false)
 	// - name: sort
 	//   in: query
 	//   description: sort repos by attribute. Supported values are
@@ -155,12 +162,12 @@ func Search(ctx *context.APIContext) {
 		StarredByID:        ctx.QueryInt64("starredBy"),
 		IncludeDescription: ctx.QueryBool("includeDesc"),
 		/*** DCS Customizations ***/
-		Languages:         catalog.QueryStrings(ctx, "lang"),
-		Repos:             catalog.QueryStrings(ctx, "repo"),
-		Owners:            catalog.QueryStrings(ctx, "owner"),
-		Subjects:          catalog.QueryStrings(ctx, "subject"),
-		Books:             catalog.QueryStrings(ctx, "book"),
-		SearchAllMetadata: true,
+		Languages:       catalog.QueryStrings(ctx, "lang"),
+		Repos:           catalog.QueryStrings(ctx, "repo"),
+		Owners:          catalog.QueryStrings(ctx, "owner"),
+		Subjects:        catalog.QueryStrings(ctx, "subject"),
+		Books:           catalog.QueryStrings(ctx, "book"),
+		IncludeMetadata: ctx.Query("includeMetadata") == "" || ctx.QueryBool("includeMetadata"),
 		/*** END DCS Customizations ***/
 	}
 
