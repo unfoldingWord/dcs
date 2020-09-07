@@ -112,6 +112,7 @@ func Home(ctx *context.Context) {
 		Subjects:           subjects,
 		Repos:              repoNames,
 		Owners:             owners,
+		IncludeMetadata:    true,
 	})
 	if err != nil {
 		ctx.ServerError("SearchRepository", err)
