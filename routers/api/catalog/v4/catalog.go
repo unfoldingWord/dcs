@@ -90,7 +90,7 @@ func Search(ctx *context.APIContext) {
 	//   in: query
 	//   description: if true, all releases, not just the latest, are included. Default is false
 	//   type: boolean
-	// - name: searchAllMetadata
+	// - name: includeMetadata
 	//   in: query
 	//   description: if false, only subject and title are searched with query terms, if true all metadata values are searched. Default is true
 	//   type: boolean
@@ -179,7 +179,7 @@ func SearchOwner(ctx *context.APIContext) {
 	//   in: query
 	//   description: if true, all releases, not just the latest, are included. Default is false
 	//   type: boolean
-	// - name: searchAllMetadata
+	// - name: includeMetadata
 	//   in: query
 	//   description: if false, only subject and title are searched with query terms, if true all metadata values are searched. Default is true
 	//   type: boolean
@@ -269,7 +269,7 @@ func SearchRepo(ctx *context.APIContext) {
 	//   in: query
 	//   description: if true, all releases, not just the latest, are included. Default is false
 	//   type: boolean
-	// - name: searchAllMetadata
+	// - name: includeMetadata
 	//   in: query
 	//   description: if false, only subject and title are searched with query terms, if true all metadata values are searched. Default is true
 	//   type: boolean
@@ -402,7 +402,7 @@ func QueryStrings(ctx *context.APIContext, name string) []string {
 func searchCatalog(ctx *context.APIContext) {
 	var repoID int64
 	var owners, repos []string
-	searchAllMetadata := true
+	includeMetadata := true
 	if ctx.Repo.Repository != nil {
 		repoID = ctx.Repo.Repository.ID
 	} else {
@@ -413,8 +413,8 @@ func searchCatalog(ctx *context.APIContext) {
 		}
 		repos = QueryStrings(ctx, "repo")
 	}
-	if ctx.Query("searchAllMetadata") != "" {
-		searchAllMetadata = ctx.QueryBool("searchAllMetadata")
+	if ctx.Query("includeMetadata") != "" {
+		includeMetadata = ctx.QueryBool("includeMetadata")
 	}
 
 	stageStr := ctx.Query("stage")
@@ -439,20 +439,20 @@ func searchCatalog(ctx *context.APIContext) {
 	}
 
 	opts := &models.SearchCatalogOptions{
-		ListOptions:       listOptions,
-		Keywords:          keywords,
-		Owners:            owners,
-		Repos:             repos,
-		RepoID:            repoID,
-		Tags:              QueryStrings(ctx, "tag"),
-		Stage:             stage,
-		Languages:         QueryStrings(ctx, "lang"),
-		Subjects:          QueryStrings(ctx, "subject"),
-		CheckingLevels:    QueryStrings(ctx, "checkingLevel"),
-		Books:             QueryStrings(ctx, "book"),
-		IncludeHistory:    ctx.QueryBool("includeHistory"),
-		ShowIngredients:   ctx.QueryBool("showIngredients"),
-		SearchAllMetadata: searchAllMetadata,
+		ListOptions:     listOptions,
+		Keywords:        keywords,
+		Owners:          owners,
+		Repos:           repos,
+		RepoID:          repoID,
+		Tags:            QueryStrings(ctx, "tag"),
+		Stage:           stage,
+		Languages:       QueryStrings(ctx, "lang"),
+		Subjects:        QueryStrings(ctx, "subject"),
+		CheckingLevels:  QueryStrings(ctx, "checkingLevel"),
+		Books:           QueryStrings(ctx, "book"),
+		IncludeHistory:  ctx.QueryBool("includeHistory"),
+		ShowIngredients: ctx.QueryBool("showIngredients"),
+		IncludeMetadata: includeMetadata,
 	}
 
 	var sortModes = QueryStrings(ctx, "sort")
