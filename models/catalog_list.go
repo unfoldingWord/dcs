@@ -96,20 +96,20 @@ func valuesDoor43Metadata(m map[int64]*Door43Metadata) []*Door43Metadata {
 // SearchCatalogOptions holds the search options
 type SearchCatalogOptions struct {
 	ListOptions
-	RepoID            int64
-	Keywords          []string
-	Owners            []string
-	Repos             []string
-	Tags              []string
-	Stage             Stage
-	Subjects          []string
-	CheckingLevels    []string
-	Books             []string
-	IncludeHistory    bool
-	SearchAllMetadata bool
-	ShowIngredients   bool
-	Languages         []string
-	OrderBy           []CatalogOrderBy
+	RepoID          int64
+	Keywords        []string
+	Owners          []string
+	Repos           []string
+	Tags            []string
+	Stage           Stage
+	Subjects        []string
+	CheckingLevels  []string
+	Books           []string
+	IncludeHistory  bool
+	IncludeMetadata bool
+	ShowIngredients bool
+	Languages       []string
+	OrderBy         []CatalogOrderBy
 }
 
 // SearchCatalogCondition creates a query condition according search repository options
@@ -128,7 +128,7 @@ func SearchCatalogCondition(opts *SearchCatalogOptions) builder.Cond {
 		keywordCond = keywordCond.Or(builder.Like{"`user`.lower_name", strings.ToLower(keyword)})
 		keywordCond = keywordCond.Or(builder.Like{"LOWER(JSON_UNQUOTE(JSON_EXTRACT(`door43_metadata`.metadata, '$.dublin_core.title')))", strings.ToLower(keyword)})
 		keywordCond = keywordCond.Or(builder.Like{"LOWER(JSON_UNQUOTE(JSON_EXTRACT(`door43_metadata`.metadata, '$.dublin_core.subject')))", strings.ToLower(keyword)})
-		if opts.SearchAllMetadata {
+		if opts.IncludeMetadata {
 			keywordCond = keywordCond.Or(builder.Expr("JSON_SEARCH(LOWER(`door43_metadata`.metadata), 'one', ?) IS NOT NULL", "%"+strings.ToLower(keyword)+"%"))
 		}
 	}
