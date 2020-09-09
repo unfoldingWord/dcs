@@ -380,6 +380,8 @@ func renderDirectory(ctx *context.Context, treeLink string) {
 		}
 	}
 	/*** END DCS Customizations ***/
+
+	ctx.Data["SSHDomain"] = setting.SSH.Domain
 }
 
 func renderFile(ctx *context.Context, entry *git.TreeEntry, treeLink, rawLink string) {
