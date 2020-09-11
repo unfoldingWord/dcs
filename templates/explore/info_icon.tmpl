@@ -1,21 +1,22 @@
-<span id="search-info-icon" class="ui text grey"
-  style="position: absolute; right: 90px; top: 10px; font-size: 1.2em;"
-  data-html='<pre style="text-align:left">Repository search is case insensitive.
-Multiple phrases/fields can be searched by separating with a comma and a space.
-The following fields can be used to search specific metadata:
-    <em>subject:, lang:, book:, owner:, repo:</em>
-    Example: <em>subject:obs study notes, lang:en,fr, Larry</em>
-             Returns all "OBS Study Notes" entries that are in English & French
-             with the keyword "Larry" (matches "contributor")
-Wildcards: Use _ for any character
-           % for any # of characters
-           Use \_ and \% to search for literal _ and %</pre>' data-variation="wide">
-  <i class="ui fa fa-question-circle-o"></i>
-</span>
+a<p><a href="#" title="That&apos;s what this widget is">Tooltips</a> can be attached to any element. When you hover
+the element with your mouse, the title attribute is displayed in a little box next to the element, just like a native tooltip.</p>
+<p>But as it's not a native tooltip, it can be styled. Any themes built with
+<a href="http://jqueryui.com/themeroller/" title="ThemeRoller: jQuery UI&apos;s theme builder application">ThemeRoller</a>
+will also style tooltips accordingly.</p>
+<p>Tooltips are also useful for form elements, to show some additional information in the context of each field.</p>
+<p><label for="age">Your age:</label><input id="age" title="We ask for your age only for statistical purposes."></p>
+<p>Hover the field to see the tooltip.</p>
 
-<script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+<script src="https://code.jquery.com/jquery-1.12.4.js"></script>
+	<script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
 <script>
-  $(document).ready(function() {
-    $('#search-info-icon').popup();
-  });
-</script>
+  $( function() {
+    $( document ).tooltip();
+  } );
+  </script>
+  <style>
+  label {
+    display: inline-block;
+    width: 5em;
+  }
+</style>

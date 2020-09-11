@@ -18,8 +18,7 @@ import (
 	"code.gitea.io/gitea/models"
 	"code.gitea.io/gitea/modules/git"
 	"code.gitea.io/gitea/modules/log"
-	"code.gitea.io/gitea/modules/repofiles"
-	"code.gitea.io/gitea/modules/repository"
+	repo_service "code.gitea.io/gitea/services/repository"
 )
 
 var jsonFilesToScrub = [...]string{
@@ -81,24 +80,18 @@ func ScrubSensitiveData(repo *models.Repository, doer *models.User, opts ScrubSe
 		if err != nil {
 			return fmt.Errorf("GetBranchCommit [branch: %s]: %v", "master", err)
 		}
-		// Simulate push event.
-		pushCommits := &repository.PushCommits{
-			Len:     1,
-			Commits: []*repository.PushCommit{repository.CommitToPushCommit(commit)},
-		}
 		oldCommitID := opts.LastCommitID
-		if err := repofiles.CommitRepoAction(&repofiles.CommitRepoActionOptions{
-			PushUpdateOptions: repofiles.PushUpdateOptions{
-				PusherName:  doer.Name,
-				RepoName:    repo.Name,
-				RefFullName: git.BranchPrefix + "master",
-				OldCommitID: oldCommitID,
-				NewCommitID: commit.ID.String(),
-			},
-			RepoOwnerID: repo.MustOwner().ID,
-			Commits:     pushCommits,
-		}); err != nil {
-			return fmt.Errorf("CommitRepoAction: %v", err)
+		if err := repo_service.PushUpdate(
+			&repo_service.PushUpdateOptions{
+			PusherID: doer.ID,
+			PusherName:  doer.Name,
+			RepoUserName: repo.MustOwner().Name,
+			RepoName:    repo.Name,
+			RefFullName: git.BranchPrefix + "master",
+			OldCommitID: oldCommitID,
+			NewCommitID: commit.ID.String(),
+		}); err!= nil {
+			return fmt.Errorf("PushCommits: %v", err)
 		}
 	} else {
 		return err
