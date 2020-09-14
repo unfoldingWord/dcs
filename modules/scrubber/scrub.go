@@ -83,14 +83,14 @@ func ScrubSensitiveData(repo *models.Repository, doer *models.User, opts ScrubSe
 		oldCommitID := opts.LastCommitID
 		if err := repo_service.PushUpdate(
 			&repo_service.PushUpdateOptions{
-			PusherID: doer.ID,
-			PusherName:  doer.Name,
-			RepoUserName: repo.MustOwner().Name,
-			RepoName:    repo.Name,
-			RefFullName: git.BranchPrefix + "master",
-			OldCommitID: oldCommitID,
-			NewCommitID: commit.ID.String(),
-		}); err!= nil {
+				PusherID:     doer.ID,
+				PusherName:   doer.Name,
+				RepoUserName: repo.MustOwner().Name,
+				RepoName:     repo.Name,
+				RefFullName:  git.BranchPrefix + "master",
+				OldCommitID:  oldCommitID,
+				NewCommitID:  commit.ID.String(),
+			}); err != nil {
 			return fmt.Errorf("PushCommits: %v", err)
 		}
 	} else {
