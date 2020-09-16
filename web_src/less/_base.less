@@ -1072,7 +1072,6 @@ i.icon.centerlock {
 }
 
 .lines-num {
-    vertical-align: top;
     text-align: right !important;
     color: #999999;
     background: #f5f5f5;
@@ -1080,7 +1079,13 @@ i.icon.centerlock {
     user-select: none;
 
     span {
-        &:before {
+        &.bottom-line {
+            &:after {
+                border-bottom: 1px solid #eaecef;
+            }
+        }
+
+        &:after {
             content: attr(data-line-number);
             line-height: 20px !important;
             padding: 0 10px;
@@ -1093,6 +1098,7 @@ i.icon.centerlock {
 .lines-num,
 .lines-code {
     padding: 0 !important;
+    vertical-align: top;
 
     pre,
     ol,
