@@ -169,9 +169,9 @@ func GlobalInit(ctx context.Context) {
 		eventsource.GetManager().Init()
 
 		/*** DCS Customizations ***/
-		if err := models.InitDoor43Metadata(); err != nil {
-			log.Error("InitDoor43Metadata: %v", err)
-		}
+		//if err := models.InitDoor43Metadata(); err != nil {
+		//	log.Error("InitDoor43Metadata: %v", err)
+		//}
 		/*** END DCS Customizations ***/
 	}
 	if setting.EnableSQLite3 {
