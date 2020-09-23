@@ -5,10 +5,9 @@
 package door43metadata
 
 import (
+	"code.gitea.io/gitea/modules/base"
 	"fmt"
-	"io/ioutil"
 	"reflect"
-	"strings"
 
 	"code.gitea.io/gitea/models"
 	"code.gitea.io/gitea/modules/git"
@@ -16,10 +15,8 @@ import (
 	"code.gitea.io/gitea/modules/structs"
 	"code.gitea.io/gitea/modules/timeutil"
 
-	"github.com/ghodss/yaml"
 	"github.com/mitchellh/mapstructure"
 	"github.com/unknwon/com"
-	"github.com/xeipuuv/gojsonschema"
 	"xorm.io/xorm"
 )
 
@@ -72,50 +69,6 @@ func GenerateDoor43Metadata(x *xorm.Engine) error {
 	}
 
 	return nil
-}
-
-var rc02Schema []byte
-
-// GetRC020Schema Returns the schema for RC v0.2, retrieving it from file if not already done
-func GetRC020Schema() ([]byte, error) {
-	if rc02Schema == nil {
-		var err error
-		rc02Schema, err = models.GetRepoInitFile("schema", "rc.schema.json")
-		if err != nil {
-			return nil, err
-		}
-	}
-	return rc02Schema, nil
-}
-
-// ValidateBlobByRC020Schema Validates a blob by the RC v0.2.0 schema and returns the result
-func ValidateBlobByRC020Schema(manifest *map[string]interface{}) (*gojsonschema.Result, error) {
-	schema, err := GetRC020Schema()
-	if err != nil {
-		return nil, err
-	}
-	schemaLoader := gojsonschema.NewBytesLoader(schema)
-	documentLoader := gojsonschema.NewGoLoader(manifest)
-
-	return gojsonschema.Validate(schemaLoader, documentLoader)
-}
-
-// ReadManifestFromBlob reads a yaml file from a blob and unmarshals it
-func ReadManifestFromBlob(blob *git.Blob) (*map[string]interface{}, error) {
-	dataRc, err := blob.DataAsync()
-	if err != nil {
-		log.Warn("DataAsync Error: %v\n", err)
-		return nil, err
-	}
-	defer dataRc.Close()
-	content, _ := ioutil.ReadAll(dataRc)
-
-	var manifest *map[string]interface{}
-	if err := yaml.Unmarshal(content, &manifest); err != nil {
-		log.Error("yaml.Unmarshal: %v", err)
-		return nil, err
-	}
-	return manifest, nil
 }
 
 // ConvertGenericMapToRC020Manifest converts a generic map to a RC020Manifest object
@@ -256,12 +209,12 @@ func ProcessDoor43MetadataForRepoRelease(repo *models.Repository, release *model
 		return nil
 	}
 
-	manifest, err := ReadManifestFromBlob(blob)
+	manifest, err := base.ReadYamlFromBlob(blob)
 	if err != nil {
 		return err
 	}
 
-	result, err := ValidateBlobByRC020Schema(manifest)
+	result, err := base.ValidateBlobByRC020Schema(manifest)
 	if err != nil {
 		return err
 	}
@@ -346,25 +299,4 @@ func ProcessDoor43MetadataForRepoRelease(repo *models.Repository, release *model
 	}
 
 	return nil
-}
-
-// ValidateManifestTreeEntry validates a tree entry that is a manifest file and returns the results
-func ValidateManifestTreeEntry(entry *git.TreeEntry) (*gojsonschema.Result, error) {
-	manifest, err := ReadManifestFromBlob(entry.Blob())
-	if err != nil {
-		return nil, err
-	}
-	return ValidateBlobByRC020Schema(manifest)
-}
-
-// StringifyValidationErrors returns a semi-colon & new line separated string of the errors
-func StringifyValidationErrors(result *gojsonschema.Result) string {
-	if result.Valid() {
-		return ""
-	}
-	errStrings := make([]string, len(result.Errors()))
-	for i, v := range result.Errors() {
-		errStrings[i] = v.String()
-	}
-	return " * " + strings.Join(errStrings, ";\n * ")
 }
