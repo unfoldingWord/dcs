@@ -52,7 +52,7 @@ func ValidateJSONFile(entry *git.TreeEntry) string {
 			readBytes += int64(len(scanner.Bytes()) + 1)
 			line++
 			if readBytes >= err.Offset {
-				erhelperrors += fmt.Sprintf("error: json: line %d: %s\n", line, err.Error())
+				errors += fmt.Sprintf("error: json: line %d: %s\n", line, err.Error())
 			}
 		}
 		return errors

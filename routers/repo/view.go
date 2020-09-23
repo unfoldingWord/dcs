@@ -360,11 +360,11 @@ func renderDirectory(ctx *context.Context, treeLink string) {
 	/*** DCS Customizations ***/
 	if ctx.Repo.TreePath == "" {
 		if entry, _ := tree.GetTreeEntryByPath("manifest.yaml"); entry != nil {
-			if result, err := door43metadata.ValidateManifestTreeEntry(entry); err != nil {
+			if result, err := base.ValidateManifestTreeEntry(entry); err != nil {
 				fmt.Printf("ValidateManifestTreeEntry: %v\n", err)
 			} else {
 				ctx.Data["ValidateManifestResult"] = result
-				ctx.Data["ValidateManifestResultErrors"] = door43metadata.StringifyValidationErrors(result)
+				ctx.Data["ValidateManifestResultErrors"] = base.StringifyValidationErrors(result)
 			}
 		}
 	}
