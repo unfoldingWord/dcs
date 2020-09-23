@@ -209,7 +209,7 @@ func ProcessDoor43MetadataForRepoRelease(repo *models.Repository, release *model
 		return nil
 	}
 
-	manifest, err := base.ReadYamlFromBlob(blob)
+	manifest, err := base.ReadYAMLFromBlob(blob)
 	if err != nil {
 		return err
 	}
