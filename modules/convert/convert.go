@@ -1,4 +1,5 @@
 // Copyright 2015 The Gogs Authors. All rights reserved.
+// Copyright 2018 The Gitea Authors. All rights reserved.
 // Use of this source code is governed by a MIT-style
 // license that can be found in the LICENSE file.
 
@@ -336,9 +337,11 @@ func ToTeam(team *models.Team) *api.Team {
 // signed shall only be set if requester is logged in. authed shall only be set if user is site admin or user himself
 func ToUser(user *models.User, signed, authed bool) *api.User {
 	result := &api.User{
+		ID:        user.ID,
 		UserName:  user.Name,
-		AvatarURL: user.AvatarLink(),
 		FullName:  markup.Sanitize(user.FullName),
+		Email:     user.GetEmail(),
+		AvatarURL: user.AvatarLink(),
 		Created:   user.CreatedUnix.AsTime(),
 		/*** DCS Customizations ***/
 		RepoLanguages: user.GetRepoLanguages(),
@@ -350,7 +353,6 @@ func ToUser(user *models.User, signed, authed bool) *api.User {
 	}
 	// only site admin will get these information and possibly user himself
 	if authed {
-		result.ID = user.ID
 		result.IsAdmin = user.IsAdmin
 		result.LastLogin = user.LastLoginUnix.AsTime()
 		result.Language = user.Language
