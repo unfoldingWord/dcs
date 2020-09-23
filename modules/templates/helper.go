@@ -86,20 +86,28 @@ func NewFuncMap() []template.FuncMap {
 		"AllowedReactions": func() []string {
 			return setting.UI.Reactions
 		},
-		"AvatarLink":    models.AvatarLink,
-		"Safe":          Safe,
-		"SafeJS":        SafeJS,
-		"Str2html":      Str2html,
-		"TimeSince":     timeutil.TimeSince,
-		"TimeSinceUnix": timeutil.TimeSinceUnix,
-		"RawTimeSince":  timeutil.RawTimeSince,
-		"FileSize":      base.FileSize,
-		"PrettyNumber":  base.PrettyNumber,
-		"Subtract":      base.Subtract,
-		"EntryIcon":     base.EntryIcon,
-		"MigrationIcon": MigrationIcon,
-		"Add": func(a, b int) int {
-			return a + b
+		"AvatarLink":           models.AvatarLink,
+		"Safe":                 Safe,
+		"SafeJS":               SafeJS,
+		"Str2html":             Str2html,
+		"TimeSince":            timeutil.TimeSince,
+		"TimeSinceUnix":        timeutil.TimeSinceUnix,
+		"RawTimeSince":         timeutil.RawTimeSince,
+		"FileSize":             base.FileSize,
+		"PrettyNumber":         base.PrettyNumber,
+		"Subtract":             base.Subtract,
+		"EntryIcon":            base.EntryIcon,
+		"StringHasSuffix":      base.StringHasSuffix,
+		"ValidateJSONFile":     base.ValidateJSONFile,
+		"ValidateYAMLFile":     base.ValidateYAMLFile,
+		"ValidateManifestFile": base.ValidateManifestFile,
+		"MigrationIcon":        MigrationIcon,
+		"Add": func(a ...int) int {
+			sum := 0
+			for _, val := range a {
+				sum += val
+			}
+			return sum
 		},
 		"ActionIcon": ActionIcon,
 		"DateFmtLong": func(t time.Time) string {
