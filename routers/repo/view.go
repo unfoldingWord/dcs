@@ -333,8 +333,8 @@ func renderDirectory(ctx *context.Context, treeLink string) {
 					ctx.Data["FileContent"] = string(markup.Render(readmeFile.name, buf, readmeTreelink, ctx.Repo.Repository.ComposeDocumentMetas()))
 				} else {
 					ctx.Data["IsRenderedHTML"] = true
-					ctx.Data["FileContent"] = strings.Replace(
-						gotemplate.HTMLEscapeString(string(buf)), "\n", `<br>`, -1,
+					ctx.Data["FileContent"] = strings.ReplaceAll(
+						gotemplate.HTMLEscapeString(string(buf)), "\n", `<br>`,
 					)
 				}
 			}
@@ -500,8 +500,8 @@ func renderFile(ctx *context.Context, entry *git.TreeEntry, treeLink, rawLink st
 			/*** END DCS Customizations ***/
 		} else if readmeExist {
 			ctx.Data["IsRenderedHTML"] = true
-			ctx.Data["FileContent"] = strings.Replace(
-				gotemplate.HTMLEscapeString(string(buf)), "\n", `<br>`, -1,
+			ctx.Data["FileContent"] = strings.ReplaceAll(
+				gotemplate.HTMLEscapeString(string(buf)), "\n", `<br>`,
 			)
 		} else {
 			buf = charset.ToUTF8WithFallback(buf)

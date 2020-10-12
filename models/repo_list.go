@@ -176,11 +176,13 @@ type SearchRepoOptions struct {
 	// True -> include just has milestones
 	// False -> include just has no milestone
 	HasMilestones util.OptionalBool
-	Owners        []string
-	Repos         []string
-	Subjects      []string
-	Books         []string
-	Languages     []string
+	// LowerNames represents valid lower names to restrict to
+	LowerNames []string
+	Owners     []string
+	Repos      []string
+	Subjects   []string
+	Books      []string
+	Languages  []string
 	// include all metadata in keyword search
 	IncludeMetadata bool
 }

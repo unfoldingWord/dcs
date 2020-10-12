@@ -9,6 +9,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"strings"
+	"time"
 
 	"code.gitea.io/gitea/models"
 	"code.gitea.io/gitea/modules/cache"
@@ -29,7 +30,7 @@ type PushUpdateOptions struct {
 	PusherName   string
 	RepoUserName string
 	RepoName     string
-	RefFullName  string
+	RefFullName  string // branch, tag or other name to push
 	OldCommitID  string
 	NewCommitID  string
 }
@@ -94,9 +95,34 @@ func (opts PushUpdateOptions) BranchName() string {
 	return opts.RefFullName[len(git.BranchPrefix):]
 }
 
+// RefName returns simple name for ref
+func (opts PushUpdateOptions) RefName() string {
+	if strings.HasPrefix(opts.RefFullName, git.TagPrefix) {
+		return opts.RefFullName[len(git.TagPrefix):]
+	} else if strings.HasPrefix(opts.RefFullName, git.BranchPrefix) {
+		return opts.RefFullName[len(git.BranchPrefix):]
+	}
+	return ""
+}
+
 // RepoFullName returns repo full name
 func (opts PushUpdateOptions) RepoFullName() string {
 	return opts.RepoUserName + "/" + opts.RepoName
+}
+
+// isForcePush detect if a push is a force push
+func isForcePush(repoPath string, opts *PushUpdateOptions) (bool, error) {
+	if !opts.IsUpdateBranch() {
+		return false, nil
+	}
+
+	output, err := git.NewCommand("rev-list", "--max-count=1", opts.OldCommitID, "^"+opts.NewCommitID).RunInDir(repoPath)
+	if err != nil {
+		return false, err
+	} else if len(output) > 0 {
+		return true, nil
+	}
+	return false, nil
 }
 
 // pushQueue represents a queue to handle update pull request tests
@@ -183,7 +209,6 @@ func pushUpdates(optsList []*PushUpdateOptions) error {
 			if opts.IsDelRef() {
 				delTags = append(delTags, tagName)
 			} else { // is new tag
-				cache.Remove(repo.GetCommitsCountCacheKey(tagName, true))
 				addTags = append(addTags, tagName)
 			}
 		} else if opts.IsBranch() { // If is branch reference
@@ -196,8 +221,8 @@ func pushUpdates(optsList []*PushUpdateOptions) error {
 
 			branch := opts.BranchName()
 			if !opts.IsDelRef() {
-				// Clear cache for branch commit count
-				cache.Remove(repo.GetCommitsCountCacheKey(opts.BranchName(), true))
+				log.Trace("TriggerTask '%s/%s' by %s", repo.Name, branch, pusher.Name)
+				go pull_service.AddTestPullRequestTask(pusher, repo.ID, branch, true, opts.OldCommitID, opts.NewCommitID)
 
 				newCommit, err := gitRepo.GetCommit(opts.NewCommitID)
 				if err != nil {
@@ -216,6 +241,20 @@ func pushUpdates(optsList []*PushUpdateOptions) error {
 					if err != nil {
 						return fmt.Errorf("newCommit.CommitsBeforeUntil: %v", err)
 					}
+
+					isForce, err := isForcePush(repo.RepoPath(), opts)
+					if err != nil {
+						log.Error("isForcePush %s/%s failed: %v", repo.ID, branch, err)
+					}
+
+					if isForce {
+						log.Trace("Push %s is a force push", opts.NewCommitID)
+
+						cache.Remove(repo.GetCommitsCountCacheKey(opts.RefName(), true))
+					} else {
+						// TODO: increment update the commit count cache but not remove
+						cache.Remove(repo.GetCommitsCountCacheKey(opts.RefName(), true))
+					}
 				}
 
 				commits = repo_module.ListToPushCommits(l)
@@ -224,9 +263,10 @@ func pushUpdates(optsList []*PushUpdateOptions) error {
 					log.Error("models.RemoveDeletedBranch %s/%s failed: %v", repo.ID, branch, err)
 				}
 
-				log.Trace("TriggerTask '%s/%s' by %s", repo.Name, branch, pusher.Name)
-
-				go pull_service.AddTestPullRequestTask(pusher, repo.ID, branch, true, opts.OldCommitID, opts.NewCommitID)
+				// Cache for big repository
+				if err := repo_module.CacheRef(repo, gitRepo, opts.RefFullName); err != nil {
+					log.Error("repo_module.CacheRef %s/%s failed: %v", repo.ID, branch, err)
+				}
 			} else if err = pull_service.CloseBranchPulls(pusher, repo.ID, branch); err != nil {
 				// close all related pulls
 				log.Error("close related pull request failed: %v", err)
@@ -290,6 +330,10 @@ func commitRepoAction(repo *models.Repository, gitRepo *git.Repository, optsList
 						return err
 					}
 				}
+			}
+			// Update the is empty and default_branch columns
+			if err := models.UpdateRepositoryCols(repo, "default_branch", "is_empty"); err != nil {
+				return fmt.Errorf("UpdateRepositoryCols: %v", err)
 			}
 		}
 
@@ -359,9 +403,9 @@ func commitRepoAction(repo *models.Repository, gitRepo *git.Repository, optsList
 		}
 	}
 
-	// Change repository empty status and update last updated time.
-	if err := models.UpdateRepository(repo, false); err != nil {
-		return fmt.Errorf("UpdateRepository: %v", err)
+	// Change repository last updated time.
+	if err := models.UpdateRepositoryUpdatedTime(repo.ID, time.Now()); err != nil {
+		return fmt.Errorf("UpdateRepositoryUpdatedTime: %v", err)
 	}
 
 	if err := models.NotifyWatchers(actions...); err != nil {
