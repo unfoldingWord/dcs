@@ -79,6 +79,9 @@
 						{{end}}
 						<!-- END DCS Customizations -->
 						<div>{{$.i18n.Tr "repo.diff.file_suppressed"}}</div>
+						{{if $file.IsProtected}}
+							<span class="ui right basic label">{{$.i18n.Tr "repo.diff.protected"}}</span>
+						{{end}}
 						{{if and (not $file.IsSubmodule) (not $.PageIsWiki)}}
 							{{if $file.IsDeleted}}
 								<a class="ui basic grey tiny button" rel="nofollow" href="{{EscapePound $.BeforeSourcePath}}/{{EscapePound .Name}}">{{$.i18n.Tr "repo.diff.view_file"}}</a>
@@ -125,6 +128,9 @@
 						{{end}}
 						<!-- END DCS Customizations -->
 						</span>
+						{{if $file.IsProtected}}
+							<span class="ui right basic label">{{$.i18n.Tr "repo.diff.protected"}}</span>
+						{{end}}
 						{{if and (not $file.IsSubmodule) (not $.PageIsWiki)}}
 							{{if $file.IsDeleted}}
 								<a class="ui basic grey tiny button" rel="nofollow" href="{{EscapePound $.BeforeSourcePath}}/{{EscapePound .Name}}">{{$.i18n.Tr "repo.diff.view_file"}}</a>

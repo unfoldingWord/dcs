@@ -1,5 +1,8 @@
 # cloud.google.com/go v0.46.3
 cloud.google.com/go/compute/metadata
+# code.gitea.io/sdk/gitea v0.13.1
+## explicit
+code.gitea.io/sdk/gitea
 # gitea.com/lunny/levelqueue v0.3.0
 ## explicit
 gitea.com/lunny/levelqueue
@@ -426,7 +429,7 @@ github.com/hashicorp/go-cleanhttp
 # github.com/hashicorp/go-retryablehttp v0.6.7
 ## explicit
 github.com/hashicorp/go-retryablehttp
-# github.com/hashicorp/go-version v0.0.0-00010101000000-000000000000 => github.com/6543/go-version v1.2.3
+# github.com/hashicorp/go-version v1.2.1 => github.com/6543/go-version v1.2.3
 ## explicit
 github.com/hashicorp/go-version
 # github.com/hashicorp/hcl v1.0.0

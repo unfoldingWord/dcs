@@ -281,5 +281,6 @@ var (
 	SupportedFullGitService = []GitServiceType{
 		GithubService,
 		GitlabService,
+		GiteaService,
 	}
 )
