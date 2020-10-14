@@ -858,35 +858,6 @@ func RegisterRoutes(m *macaron.Macaron) {
 		})
 	}, ignSignIn, context.RepoAssignment(), context.UnitTypes(), reqRepoReleaseReader)
 
-	// Door43 Metadata
-	m.Group("/:username/:reponame", func() {
-		m.Group("/metadatas", func() {
-			m.Get("", repo.Door43Metadatas)
-		}, repo.MustBeNotEmpty, context.RepoRef())
-		m.Group("/metadatas", func() {
-			m.Get("/new", repo.NewDoor43Metadata)
-			m.Post("/new", bindIgnErr(auth.NewDoor43MetadataForm{}), repo.NewDoor43MetadataPost)
-			m.Post("/delete", repo.DeleteDoor43Metadata)
-		}, reqSignIn, repo.MustBeNotEmpty, context.RepoMustNotBeArchived(), reqRepoReleaseWriter, context.RepoRef())
-		m.Group("/metadatas", func() {
-			m.Get("/edit/*", repo.EditDoor43Metadata)
-			m.Post("/edit/*", bindIgnErr(auth.EditDoor43MetadataForm{}), repo.EditDoor43MetadataPost)
-		}, reqSignIn, repo.MustBeNotEmpty, context.RepoMustNotBeArchived(), reqRepoReleaseWriter, func(ctx *context.Context) {
-			var err error
-			ctx.Repo.Commit, err = ctx.Repo.GitRepo.GetBranchCommit(ctx.Repo.Repository.DefaultBranch)
-			if err != nil {
-				ctx.ServerError("GetBranchCommit", err)
-				return
-			}
-			ctx.Repo.CommitsCount, err = ctx.Repo.GetCommitsCount()
-			if err != nil {
-				ctx.ServerError("GetCommitsCount", err)
-				return
-			}
-			ctx.Data["CommitsCount"] = ctx.Repo.CommitsCount
-		})
-	}, ignSignIn, context.RepoAssignment(), context.UnitTypes(), reqRepoReleaseReader)
-
 	m.Group("/:username/:reponame", func() {
 		m.Post("/topics", repo.TopicsPost)
 	}, context.RepoAssignment(), context.RepoMustNotBeArchived(), reqRepoAdmin)
