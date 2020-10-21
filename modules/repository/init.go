@@ -132,7 +132,7 @@ func initRepoCommit(tmpPath string, repo *models.Repository, u *models.User, def
 		"-m", "Initial commit",
 	}
 
-	if git.CheckGitVersionConstraint(">= 1.7.9") == nil {
+	if git.CheckGitVersionAtLeast("1.7.9") == nil {
 		sign, keyID, signer, _ := models.SignInitialCommit(tmpPath, u)
 		if sign {
 			args = append(args, "-S"+keyID)
@@ -142,7 +142,7 @@ func initRepoCommit(tmpPath string, repo *models.Repository, u *models.User, def
 				committerName = signer.Name
 				committerEmail = signer.Email
 			}
-		} else if git.CheckGitVersionConstraint(">= 2.0.0") == nil {
+		} else if git.CheckGitVersionAtLeast("2.0.0") == nil {
 			args = append(args, "--no-gpg-sign")
 		}
 	}
