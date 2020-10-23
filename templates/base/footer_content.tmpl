@@ -6,10 +6,10 @@
 		<div class="ui right links">
 			{{if (or .ShowFooterVersion .PageIsAdmin)}}{{.i18n.Tr "version"}}: {{AppVer}} {{.i18n.Tr "page"}}: <strong>{{LoadTimes .PageStartTime}}</strong> {{.i18n.Tr "template"}}: <strong>{{call .TmplLoadTimes}}</strong>{{end}}
 			{{if .ShowFooterBranding}}
-				<a target="_blank" rel="noopener noreferrer" href="https://github.com/unfoldingWord-dev/dcs"><i class="fa fa-github-square"></i><span class="sr-only">GitHub</span></a>
+				<a target="_blank" rel="noopener noreferrer" href="https://github.com/unfoldingword/dcs">{{svg "octicon-mark-github"}}<span class="sr-only">GitHub</span></a>
 			{{end}}
 			<div class="ui language bottom floating slide up dropdown link item">
-				<i class="world icon"></i>
+				{{svg "octicon-globe"}}
 				<div class="text">{{.LangName}}</div>
 				<div class="menu language-menu">
 					{{range .AllLangs}}
