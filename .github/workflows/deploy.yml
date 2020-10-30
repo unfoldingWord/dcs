@@ -27,6 +27,7 @@ jobs:
         run: |
           REF=`echo ${GITHUB_REF} | cut -d "/" -f3-`
           echo "REF=${REF}"
+          # Be default, we use the branch or tag name as the Docker tag
           DOCKER_TAGS="${REF//\//-}"
           if [[ "${REF}" == "v"*"-dcs" ]]; then
             # REF is a tag so we create tags for patch, minor and major versions and is the latest production
@@ -34,19 +35,13 @@ jobs:
             PATCH_VERSION=${PATCH_VERSION%-dcs}
             MINOR_VERSION=`echo ${PATCH_VERSION} | cut -f1,2 -d'.'`
             MAJOR_VERSION=`echo ${MINOR_VERSION} | cut -f1 -d'.'`
-            DOCKER_TAGS="${DOCKER_TAGS},latest,latest-prod,prod,${MAJOR_VERSION},${MINOR_VERSION},${PATCH_VERSION}"
+            DOCKER_TAGS="${DOCKER_TAGS},latest,${MAJOR_VERSION},${MINOR_VERSION},${PATCH_VERSION}"
           elif [[ "${REF}" == "master" ]]; then
-            # REF is the master development branch so is the lastest master/dev
-            DOCKER_TAGS="${DOCKER_TAGS},latest-dev,develop"
-          elif [[ "${REF}" == "master-release-branched" ]]; then
-            # REF is the commit where the release/v#.# branch and the master branch split. Should contain all our DCS changes
-            DOCKER_TAGS="${DOCKER_TAGS},latest-master-release-branched"
-          else
+            # REF is the master development branch so is the lastest development code
+            DOCKER_TAGS="${DOCKER_TAGS}"
+          elif [[ "${REF}" == "release/dcs/"* ]]; then
             # REF is a release branch so is a beta, qa or latest of this minor version
-            MINOR_VERSION=`echo ${REF} | cut -f3 -d'/'`
-            MINOR_VERSION=${MINOR_VERSION#v}
-            MAJOR_VERSION=`echo ${MINOR_VERSION} | cut -f1 -d'.'`
-            DOCKER_TAGS="${DOCKER_TAGS},beta,latest-beta,qa,latest-qa,${MAJOR_VERSION}-beta,${MINOR_VERSION}-beta,${MINOR_VERSION}-qa"
+            DOCKER_TAGS="${DOCKER_TAGS},latest-qa"
           fi
           echo "DOCKER_TAGS: ${DOCKER_TAGS}"
           echo "::set-env name=DOCKER_TAGS::$DOCKER_TAGS"
