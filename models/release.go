@@ -60,7 +60,11 @@ func (r *Release) loadAttributes(e Engine) error {
 	if r.Publisher == nil && r.PublisherID > 0 {
 		r.Publisher, err = getUserByID(e, r.PublisherID)
 		if err != nil {
-			return err
+			if IsErrUserNotExist(err) {
+				r.Publisher = NewGhostUser()
+			} else {
+				return err
+			}
 		}
 	}
 	return getReleaseAttachments(e, r)
