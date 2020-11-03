@@ -7,6 +7,7 @@
 package scrubber
 
 import (
+	repo_module "code.gitea.io/gitea/modules/repository"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -82,7 +83,7 @@ func ScrubSensitiveData(repo *models.Repository, doer *models.User, opts ScrubSe
 		}
 		oldCommitID := opts.LastCommitID
 		if err := repo_service.PushUpdate(
-			&repo_service.PushUpdateOptions{
+			&repo_module.PushUpdateOptions{
 				PusherID:     doer.ID,
 				PusherName:   doer.Name,
 				RepoUserName: repo.MustOwner().Name,

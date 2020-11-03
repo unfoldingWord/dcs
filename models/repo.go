@@ -414,8 +414,34 @@ func (repo *Repository) innerAPIFormat(e Engine, mode AccessMode, isParent bool)
 	if latestReleaseMetadata, err := getLatestCatalogMetadataByRepoID(e, repo.ID, false); err != nil && !IsErrDoor43MetadataNotExist(err) {
 		log.Error("getLatestCatalogMetadataByRepoID: %v", err)
 	} else if latestReleaseMetadata != nil {
+		r := latestReleaseMetadata.Release
 		catalog = &api.Catalog{
-			Release: latestReleaseMetadata.Release.APIFormat(),
+			Release: &api.Release{
+				ID:           r.ID,
+				TagName:      r.TagName,
+				Target:       r.Target,
+				Title:        r.Title,
+				Note:         r.Note,
+				URL:          r.APIURL(),
+				HTMLURL:      r.HTMLURL(),
+				TarURL:       r.TarURL(),
+				ZipURL:       r.ZipURL(),
+				IsDraft:      r.IsDraft,
+				IsPrerelease: r.IsPrerelease,
+				CreatedAt:    r.CreatedUnix.AsTime(),
+				PublishedAt:  r.CreatedUnix.AsTime(),
+				Publisher:    &api.User{
+					ID:        r.Publisher.ID,
+					UserName:  r.Publisher.Name,
+					FullName:  markup.Sanitize(r.Publisher.FullName),
+					Email:     r.Publisher.GetEmail(),
+					AvatarURL: r.Publisher.AvatarLink(),
+					Created:   r.Publisher.CreatedUnix.AsTime(),
+					/*** DCS Customizations ***/
+					RepoLanguages: r.Publisher.GetRepoLanguages(),
+					/*** END DCS Customizations ***/
+				},
+			},
 		}
 	}
 

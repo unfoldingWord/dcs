@@ -50,8 +50,8 @@ func (m *metadataNotifier) NotifyDeleteRelease(doer *models.User, rel *models.Re
 	}
 }
 
-func (m *metadataNotifier) NotifyPushCommits(pusher *models.User, repo *models.Repository, refName, oldCommitID, newCommitID string, commits *repository.PushCommits) {
-	if strings.HasPrefix(refName, git.BranchPrefix) && strings.TrimPrefix(refName, git.BranchPrefix) == repo.DefaultBranch {
+func (m *metadataNotifier) NotifyPushCommits(pusher *models.User, repo *models.Repository, opts *repository.PushUpdateOptions, commits *repository.PushCommits) {
+	if strings.HasPrefix(opts.RefFullName, git.BranchPrefix) && strings.TrimPrefix(opts.RefFullName, git.BranchPrefix) == repo.DefaultBranch {
 		if err := door43metadata.ProcessDoor43MetadataForRepoRelease(repo, nil); err != nil {
 			log.Info("ProcessDoor43MetadataForRepoRelease: %v\n", err)
 		}
