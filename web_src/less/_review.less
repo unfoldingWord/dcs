@@ -42,10 +42,14 @@
 }
 
 .comment-code-cloud {
-  padding: 4px;
+  padding: .5rem;
   padding-left: 0;
   position: relative;
   margin: 0 auto;
+
+  .comments .comment {
+    margin: 0;
+  }
 
   .attached {
     &.tab {
@@ -82,7 +86,7 @@
   }
 
   .footer {
-    border-top: 1px solid #f1f1f1;
+    border-top: 1px solid var(--color-secondary);
     padding: 10px 0;
 
     .markdown-info {
@@ -96,7 +100,7 @@
       padding-top: 6px;
     }
 
-    &:after {
+    &::after {
       clear: both;
       content: "";
       display: block;

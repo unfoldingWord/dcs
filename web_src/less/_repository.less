@@ -111,25 +111,32 @@
         display: none !important;
       }
 
-      .item {
+      .dependency {
         padding: 0;
+        white-space: nowrap;
+      }
+
+      .title {
+        max-width: 200px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      @media (max-width: 1200px) {
+        .title {
+          max-width: 150px;
+        }
+      }
+
+      @media (max-width: 1000px) {
+        .title {
+          max-width: 100px;
+        }
       }
 
       .label.color {
         padding: 0 8px;
         margin-right: 5px;
-      }
-
-      a {
-        margin: 2px 0;
-
-        .text {
-          color: #444444;
-
-          &:hover {
-            color: #000000;
-          }
-        }
       }
     }
 
@@ -425,7 +432,7 @@
           }
 
           .btn-octicon:hover {
-            color: #4078c0;
+            color: var(--color-primary);
           }
 
           .btn-octicon-danger:hover {
@@ -516,12 +523,12 @@
         position: relative;
         padding: 15px;
         margin-bottom: 10px;
-        border: 1px solid #dddddd;
+        border: 1px solid var(--color-secondary);
         border-radius: 3px;
         #avatar-arrow;
 
-        &:after {
-          border-right-color: #ffffff;
+        &::after {
+          border-right-color: var(--color-box-header);
         }
 
         .quick-pull-choice {
@@ -590,8 +597,8 @@
         margin-left: 4em;
         #avatar-arrow;
 
-        &:after {
-          border-right-color: #ffffff;
+        &::after {
+          border-right-color: var(--color-box-body);
         }
 
         .markdown {
@@ -771,7 +778,7 @@
     }
 
     .comment-list {
-      &:not(.prevent-before-timeline):before {
+      &:not(.prevent-before-timeline)::before {
         display: block;
         content: "";
         position: absolute;
@@ -791,7 +798,7 @@
         margin-left: 40px;
         padding-left: 16px;
 
-        &:before { //ciara
+        &::before { //ciara
           display: block;
           content: "";
           position: absolute;
@@ -852,14 +859,13 @@
         }
 
         .badge {
-          width: 32px;
-          height: 32px;
+          width: 34px;
+          height: 34px;
           background-color: var(--color-timeline);
-          border: 2px solid var(--color-timeline);
           border-radius: 50%;
           display: flex;
           float: left;
-          margin-left: -32px;
+          margin-left: -34px;
           margin-right: 8px;
           color: #666;
           align-items: center;
@@ -869,14 +875,6 @@
             width: 22px;
             height: 22px;
             padding: 3px;
-
-            &.octicon-circle-slash {
-              color: #bd2c00;
-            }
-
-            &.octicon-dot-fill {
-              color: #6cc644;
-            }
 
             &.octicon-comment {
               margin-top: 2px;
@@ -976,7 +974,7 @@
         }
 
         .author {
-          font-weight: 700;
+          font-weight: 500;
         }
 
         .comment-form-reply .footer {
@@ -1026,6 +1024,10 @@
 
             &.no-header {
               #avatar-arrow;
+
+              &::after {
+                border-right-color: var(--color-box-body);
+              }
             }
 
             @media only screen and (max-width: 767px) {
@@ -1049,7 +1051,7 @@
           }
 
           > .bottom.segment {
-            background: #f3f4f5;
+            background: var(--color-box-body);
 
             .ui.images::after {
               clear: both;
@@ -1063,12 +1065,12 @@
               margin: 5px;
               padding: 5px;
               height: 150px;
-              border: solid 1px #eeeeee;
+              border: solid 1px var(--color-secondary);
               border-radius: 3px;
               max-width: 150px;
-              background-color: #ffffff;
+              background-color: var(--color-body);
 
-              &:before {
+              &::before {
                 content: ' ';
                 display: inline-block;
                 height: 100%;
@@ -1222,8 +1224,8 @@
       .form {
         #avatar-arrow;
 
-        &:after {
-          border-right-color: #ffffff;
+        &::after {
+          border-right-color: var(--color-box-body);
         }
       }
 
@@ -1243,7 +1245,7 @@
       margin-right: -14px;
       margin-left: -14px;
       padding: 10px;
-      border-bottom: 1px solid #e1e4e8;
+      border-bottom: 1px solid var(--color-secondary);
       border-top: none;
 
       a {
@@ -1292,7 +1294,7 @@
         color: #000000;
 
         &:hover {
-          color: #4078c0;
+          color: var(--color-primary);
         }
       }
 
@@ -1316,7 +1318,7 @@
         }
 
         .overdue {
-          color: red;
+          color: var(--color-red);
         }
       }
 
@@ -1362,8 +1364,8 @@
       .content {
         #avatar-arrow;
 
-        &:after {
-          border-right-color: #ffffff;
+        &::after {
+          border-right-color: var(--color-box-body);
         }
       }
     }
@@ -1391,7 +1393,7 @@
         max-width: 90px;
 
         &:last-child {
-          border-left: 1px solid #b4b4b4;
+          border-left: 1px solid var(--color-secondary);
         }
       }
 
@@ -1596,7 +1598,7 @@
       padding-right: 2px;
     }
 
-    > div:after {
+    > div::after {
       clear: both;
       content: "";
       display: block;
@@ -1651,7 +1653,7 @@
       flex: 0 0 auto;
 
       .bar {
-        background-color: #bd2c00;
+        background-color: var(--color-red);
         height: 12px;
         width: 40px;
         display: inline-block;
@@ -1659,7 +1661,7 @@
         vertical-align: text-top;
 
         .add {
-          background-color: #55a532;
+          background-color: var(--color-green);
           height: 12px;
         }
       }
@@ -1855,10 +1857,10 @@
       margin-right: 15px;
 
       .del {
-        color: red;
+        color: var(--color-red);
       }
       .add {
-        color: green;
+        color: var(--color-green);
       }
     }
   }
@@ -1900,7 +1902,7 @@
 
   &.release {
     #release-list {
-      border-top: 1px solid #dddddd;
+      border-top: 1px solid var(--color-secondary);
       margin-top: 20px;
       padding-top: 15px;
 
@@ -1935,7 +1937,7 @@
         }
 
         .detail {
-          border-left: 2px solid #dddddd;
+          border-left: 2px solid var(--color-secondary);
 
           .author {
             img {
@@ -1955,14 +1957,14 @@
 
             .list {
               padding-left: 0;
-              border-top: 1px solid #eeeeee;
+              border-top: 1px solid var(--color-secondary);
 
               li {
                 list-style: none;
                 display: block;
                 padding-top: 8px;
                 padding-bottom: 8px;
-                border-bottom: 1px solid #eeeeee;
+                border-bottom: 1px solid var(--color-secondary);
 
                 a > .text.right {
                   margin-right: 5px;
@@ -2042,7 +2044,7 @@
       .item {
         padding-top: 10px;
         padding-bottom: 10px;
-        border-bottom: 1px solid #dddddd;
+        border-bottom: 1px solid var(--color-secondary);
 
         .ui.avatar {
           float: left;
@@ -2131,7 +2133,7 @@
           line-height: 2em;
 
           &:not(:last-child) {
-            border-bottom: 1px solid #dddddd;
+            border-bottom: 1px solid var(--color-secondary);
           }
         }
       }
@@ -2170,7 +2172,7 @@
         }
 
         .item {
-          border: 1px solid #eaeaea;
+          border: 1px solid var(--color-secondary);
           padding: 10px 15px;
 
           &:not(:last-child) {
@@ -2612,7 +2614,7 @@
     .title {
       color: #444444;
       font-size: 15px;
-      font-weight: bold;
+      font-weight: 500;
       margin: 0 6px;
 
       &:hover {
@@ -2692,7 +2694,7 @@
       }
 
       .overdue {
-        color: red;
+        color: var(--color-red);
       }
     }
   }
@@ -2704,7 +2706,8 @@
 
 .ui.form {
   .dropzone {
-    border: 2px dashed #0087f5;
+    border: 2px dashed var(--color-secondary);
+    background: none;
     box-shadow: none !important;
     padding: 0;
     min-height: 5rem;
@@ -2737,11 +2740,11 @@
   .list {
     > .item {
       .green:not(.ui.button) {
-        color: #21ba45;
+        color: var(--color-green);
       }
 
       &:not(:first-child) {
-        border-top: 1px solid #eaeaea;
+        border-top: 1px solid var(--color-secondary);
         padding: 1rem;
         margin: 15px -1rem -1rem;
       }
@@ -2799,7 +2802,7 @@
   box-shadow: 0 0 0 3px var(--color-primary-alpha-30) !important;
 }
 
-.comment:target .header:before {
+.comment:target .header::before {
   border-right-color: var(--color-primary) !important;
   filter: drop-shadow(-3px 0 0 var(--color-primary-alpha-30)) !important;
 }
@@ -2916,9 +2919,8 @@
 }
 
 #avatar-arrow {
-
-  &:before,
-  &:after {
+  &::before,
+  &::after {
     right: 100%;
     top: 20px;
     border: solid transparent;
@@ -2929,13 +2931,13 @@
     pointer-events: none;
   }
 
-  &:before {
+  &::before {
     border-right-color: var(--color-secondary);
     border-width: 9px;
     margin-top: -9px;
   }
 
-  &:after {
+  &::after {
     border-right-color: var(--color-box-header);
     border-width: 8px;
     margin-top: -8px;
@@ -2958,6 +2960,7 @@
 .generate-tab-size(@n, @i: 1) when (@i =< @n) {
   .tab-size-@{i} {
     tab-size: @i !important;
+    -moz-tab-size: @i !important;
   }
 
   .generate-tab-size(@n, (@i + 1));
@@ -2974,6 +2977,20 @@
       height: .5em;
     }
   }
+}
+
+.labels.list {
+  display: flex;
+  flex-wrap: wrap;
+}
+
+.labels.list .item {
+  padding: 0 !important;
+  margin-bottom: 2px;
+}
+
+.labels.list .item + .item {
+  margin-left: 2px;
 }
 
 tbody.commit-list {
@@ -3323,7 +3340,7 @@ td.blob-excerpt {
   background: none !important;
 
   @media only screen and (max-width: 1200px) {
-    &:after {
+    &::after {
       background: none !important;
     }
   }
