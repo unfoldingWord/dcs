@@ -28,7 +28,9 @@
 						{{end}}
 					{{end}}
 				{{end}}
-				{{if .IsArchived}}<span class="ui compact label">{{$.i18n.Tr "repo.desc.archived"}}</span>{{end}}
+				{{if .IsArchived}}
+          <span class="ui basic label">{{$.i18n.Tr "repo.desc.archived"}}</span>
+        {{end}}
 				<!--- DCS Customizations --->
 				{{$prodDM := .GetLatestProdCatalogMetadata}}
 				{{if $prodDM}}
