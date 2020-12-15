@@ -166,6 +166,7 @@ func innerToRepo(repo *models.Repository, mode models.AccessMode, isParent bool)
 		HTMLURL:                   repo.HTMLURL(),
 		SSHURL:                    cloneLink.SSH,
 		CloneURL:                  cloneLink.HTTPS,
+		OriginalURL:               repo.SanitizedOriginalURL(),
 		Website:                   repo.Website,
 		Stars:                     repo.NumStars,
 		Forks:                     repo.NumForks,

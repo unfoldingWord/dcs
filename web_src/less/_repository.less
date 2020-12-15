@@ -8,38 +8,9 @@
       margin-top: 0;
     }
 
-    .ui.huge.breadcrumb {
-      font-weight: 400;
-      font-size: 1.5rem;
-
-      .label {
-        vertical-align: middle;
-        margin-top: -.29165em;
-      }
-
-      &.repo-title .repo-header-icon {
-        display: inline-block;
-        position: relative;
-
-        .avatar {
-          position: absolute;
-          right: 0;
-          bottom: 0;
-          width: 16px;
-          height: 16px;
-          color: #fafafa;
-          box-shadow: 0 0 0 2px;
-          margin: 0;
-        }
-      }
-    }
-
     .fork-flag {
-      margin-left: 36px;
-      margin-top: 3px;
-      display: block;
       font-size: 12px;
-      white-space: nowrap;
+      margin-top: 2px;
     }
 
     .repo-buttons .svg {
@@ -622,6 +593,10 @@
   }
 
   &.view.issue {
+    .instruct-toggle {
+      display: inline-block;
+    }
+
     .title {
       padding-bottom: 0 !important;
 
@@ -826,8 +801,8 @@
           position: absolute;
           left: -72px;
           img {
-            width: 40px;
-            height: 40px;
+            width: 40px !important;
+            height: 40px !important;
           }
         }
 
@@ -969,7 +944,7 @@
         }
 
         .author {
-          font-weight: 500;
+          font-weight: 600;
         }
 
         .comment-form-reply .footer {
@@ -1045,50 +1020,10 @@
             font-style: italic;
           }
 
-          > .bottom.segment {
-            background: var(--color-box-body);
-
-            .ui.images::after {
-              clear: both;
-              content: ' ';
-              display: block;
-            }
-
-            a {
-              display: block;
-              float: left;
-              margin: 5px;
-              padding: 5px;
-              height: 150px;
-              border: solid 1px var(--color-secondary);
-              border-radius: 3px;
-              max-width: 150px;
-              background-color: var(--color-body);
-
-              &::before {
-                content: ' ';
-                display: inline-block;
-                height: 100%;
-                vertical-align: middle;
-              }
-            }
-
-            .ui.image {
-              max-height: 100%;
-              width: auto;
-              margin: 0;
-              vertical-align: middle;
-            }
-
-            span.ui.image {
-              font-size: 128px;
-              color: var(--color-text);
-            }
-
-            span.ui.image:hover {
-              color: var(--color-text);
-            }
+          .dropzone-attachments .thumbnails .ui.image {
+            max-height: 150px;
           }
+
         }
 
         .ui.form {
@@ -1186,13 +1121,6 @@
             margin-left: 6px;
           }
         }
-      }
-    }
-
-    .ui.participants {
-      img {
-        margin-top: 5px;
-        margin-right: 5px;
       }
     }
 
@@ -1599,29 +1527,8 @@
     display: flex;
     align-items: center;
 
-    .count {
-      margin-right: 12px;
-      font-size: 13px;
-      flex: 0 0 auto;
-
-      .bar {
-        background-color: var(--color-red);
-        height: 12px;
-        width: 40px;
-        display: inline-block;
-        margin: 2px 4px 0;
-        vertical-align: text-top;
-
-        .add {
-          background-color: var(--color-green);
-          height: 12px;
-        }
-      }
-    }
-
     .file {
       flex: 1;
-      color: var(--color-text-light-2);
       word-break: break-all;
     }
 
@@ -1803,17 +1710,6 @@
       margin-bottom: 4px;
       border-bottom: 1px dashed #dddddd;
       padding-left: 6px;
-    }
-
-    .diff-counter {
-      margin-right: 15px;
-
-      .del {
-        color: var(--color-red);
-      }
-      .add {
-        color: var(--color-green);
-      }
     }
   }
 
@@ -2992,6 +2888,7 @@ tbody.commit-list {
   align-items: center;
   justify-content: space-between;
   flex-wrap: wrap;
+  word-break: break-all;
 }
 
 .repo-header .repo-buttons {
@@ -3177,6 +3074,25 @@ td.blob-excerpt {
   border-radius: var(--border-radius) !important;
 }
 
+.diff-counter {
+  font-weight: 600;
+  margin-right: 8px;
+}
+
+.diff-stats-bar {
+  display: inline-block;
+  background-color: var(--color-red);
+  height: 12px;
+  width: 40px;
+  position: relative;
+  top: 2px;
+
+  .diff-stats-add-bar {
+    background-color: var(--color-green);
+    height: 100%;
+  }
+}
+
 /* prevent page shaking on language bar click */
 .repository-summary-language-stats {
   height: 48px;
@@ -3206,6 +3122,13 @@ td.blob-excerpt {
   }
 }
 
-.migrate .cards .card {
-  text-align: center;
+.repository.migrate .card {
+  transition: all .1s ease-in-out;
+  box-shadow: none !important;
+  border: 1px solid var(--color-secondary);
+}
+
+.repository.migrate .card:hover {
+  transform: scale(105%);
+  box-shadow: 0 .5rem 1rem var(--color-shadow) !important;
 }
