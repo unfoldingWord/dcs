@@ -78,7 +78,7 @@
 					{{$message := $.i18n.Tr "repo.metadata.valid"}}
 					{{if StringHasSuffix $.Entry.Name ".yaml"}}
 						{{$errors = ValidateYAMLFile $.Entry}}
-						{{if and (eq $errors "") (eq $.TreePath "") (eq $.Entry.Name "manifest.yaml")}}
+						{{if and (eq $errors "") (eq $.TreePath "manifest.yaml")}}
 							{{$errors = ValidateManifestFile $.Entry}}
 							{{$message = $.i18n.Tr "repo.metadata.valid_manifest_tooltip"}}
 						{{end}}
@@ -87,8 +87,8 @@
 						{{$errors = ValidateJSONFile $.Entry}}
 					{{end}}
 					{{if eq $errors ""}}
-						{{if and (eq $errors "") (eq $.TreePath "") (eq $.Entry.Name "manifest.yaml")}}
-						<span class="ui label green" title="{{$message}}" style="margin-left: 5px">{{$.i18n.Tr "repo.metadata.valid"}}</span>
+						{{if and (eq $errors "") (eq $.TreePath "manifest.yaml")}}
+							<span class="ui label green" title="{{$message}}" style="margin-left: 5px">{{$.i18n.Tr "repo.metadata.valid"}}</span>
 						{{end}}
 					{{else}}
 						<span class="ui label red" title="{{$errors}}" style="margin-left: 5px">{{$.i18n.Tr "repo.metadata.invalid"}}</span>
