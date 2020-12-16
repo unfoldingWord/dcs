@@ -43,8 +43,8 @@ jobs:
             # REF is a release branch so is a beta, qa or latest of this minor version
             DOCKER_TAGS="${DOCKER_TAGS},latest-qa"
           fi
-          echo "DOCKER_TAGS: ${DOCKER_TAGS}"
-          echo "::set-env name=DOCKER_TAGS::$DOCKER_TAGS"
+          echo "SETTING DOCKER_TAGS: ${DOCKER_TAGS}"
+          echo "DOCKER_TAGS=${DOCKER_TAGS}" >> $GITHUB_ENV
 
       - name: Debug
         shell: bash
