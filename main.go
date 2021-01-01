@@ -73,6 +73,8 @@ arguments - which can alternatively be run by running the subcommand web.`
 		cmd.CmdDoor43MetadataGenerate,
 		cmd.CmdMigrateStorage,
 		cmd.CmdDocs,
+		cmd.CmdDumpRepository,
+		cmd.CmdRestoreRepository,
 	}
 	// Now adjust these commands to add our global configuration options
 
