@@ -502,8 +502,8 @@ func CloseRepoBranchesPulls(doer *models.User, repo *models.Repository) error {
 	return nil
 }
 
-// GetCommitMessages returns the commit messages between head and merge base (if there is one)
-func GetCommitMessages(pr *models.PullRequest) string {
+// GetSquashMergeCommitMessages returns the commit messages between head and merge base (if there is one)
+func GetSquashMergeCommitMessages(pr *models.PullRequest) string {
 	if err := pr.LoadIssue(); err != nil {
 		log.Error("Cannot load issue %d for PR id %d: Error: %v", pr.IssueID, pr.ID, err)
 		return ""
@@ -550,34 +550,22 @@ func GetCommitMessages(pr *models.PullRequest) string {
 		return ""
 	}
 
-	maxSize := setting.Repository.PullRequest.DefaultMergeMessageSize
-
 	posterSig := pr.Issue.Poster.NewGitSig().String()
 
 	authorsMap := map[string]bool{}
 	authors := make([]string, 0, list.Len())
 	stringBuilder := strings.Builder{}
+
+	stringBuilder.WriteString(pr.Issue.Content)
+	if stringBuilder.Len() > 0 {
+		stringBuilder.WriteRune('\n')
+		stringBuilder.WriteRune('\n')
+	}
+
 	// commits list is in reverse chronological order
 	element := list.Back()
 	for element != nil {
 		commit := element.Value.(*git.Commit)
-
-		if maxSize < 0 || stringBuilder.Len() < maxSize {
-			toWrite := []byte(commit.CommitMessage)
-			if len(toWrite) > maxSize-stringBuilder.Len() && maxSize > -1 {
-				toWrite = append(toWrite[:maxSize-stringBuilder.Len()], "..."...)
-			}
-			if _, err := stringBuilder.Write(toWrite); err != nil {
-				log.Error("Unable to write commit message Error: %v", err)
-				return ""
-			}
-
-			if _, err := stringBuilder.WriteRune('\n'); err != nil {
-				log.Error("Unable to write commit message Error: %v", err)
-				return ""
-			}
-		}
-
 		authorString := commit.Author.String()
 		if !authorsMap[authorString] && authorString != posterSig {
 			authors = append(authors, authorString)
@@ -640,8 +628,8 @@ func GetCommitMessages(pr *models.PullRequest) string {
 	return stringBuilder.String()
 }
 
-// GetLastCommitStatus returns the last commit status for this pull request.
-func GetLastCommitStatus(pr *models.PullRequest) (status *models.CommitStatus, err error) {
+// GetLastCommitStatus returns list of commit statuses for latest commit on this pull request.
+func GetLastCommitStatus(pr *models.PullRequest) (status []*models.CommitStatus, err error) {
 	if err = pr.LoadBaseRepo(); err != nil {
 		return nil, err
 	}
@@ -666,7 +654,7 @@ func GetLastCommitStatus(pr *models.PullRequest) (status *models.CommitStatus, e
 	if err != nil {
 		return nil, err
 	}
-	return models.CalcCommitStatus(statusList), nil
+	return statusList, nil
 }
 
 // IsHeadEqualWithBranch returns if the commits of branchName are available in pull request head
