@@ -64,9 +64,11 @@ func createTag(gitRepo *git.Repository, rel *models.Release) error {
 			return fmt.Errorf("CommitsCount: %v", err)
 		}
 
-		u, err := models.GetUserByEmail(commit.Author.Email)
-		if err == nil {
-			rel.PublisherID = u.ID
+		if rel.PublisherID <= 0 {
+			u, err := models.GetUserByEmail(commit.Author.Email)
+			if err == nil {
+				rel.PublisherID = u.ID
+			}
 		}
 
 	} else {
