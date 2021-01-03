@@ -43,16 +43,16 @@ func NewContext() {
 
 // NotifyCreateIssueComment notifies issue comment related message to notifiers
 func NotifyCreateIssueComment(doer *models.User, repo *models.Repository,
-	issue *models.Issue, comment *models.Comment) {
+	issue *models.Issue, comment *models.Comment, mentions []*models.User) {
 	for _, notifier := range notifiers {
-		notifier.NotifyCreateIssueComment(doer, repo, issue, comment)
+		notifier.NotifyCreateIssueComment(doer, repo, issue, comment, mentions)
 	}
 }
 
 // NotifyNewIssue notifies new issue to notifiers
-func NotifyNewIssue(issue *models.Issue) {
+func NotifyNewIssue(issue *models.Issue, mentions []*models.User) {
 	for _, notifier := range notifiers {
-		notifier.NotifyNewIssue(issue)
+		notifier.NotifyNewIssue(issue, mentions)
 	}
 }
 
@@ -71,9 +71,9 @@ func NotifyMergePullRequest(pr *models.PullRequest, doer *models.User) {
 }
 
 // NotifyNewPullRequest notifies new pull request to notifiers
-func NotifyNewPullRequest(pr *models.PullRequest) {
+func NotifyNewPullRequest(pr *models.PullRequest, mentions []*models.User) {
 	for _, notifier := range notifiers {
-		notifier.NotifyNewPullRequest(pr)
+		notifier.NotifyNewPullRequest(pr, mentions)
 	}
 }
 
@@ -85,9 +85,16 @@ func NotifyPullRequestSynchronized(doer *models.User, pr *models.PullRequest) {
 }
 
 // NotifyPullRequestReview notifies new pull request review
-func NotifyPullRequestReview(pr *models.PullRequest, review *models.Review, comment *models.Comment) {
+func NotifyPullRequestReview(pr *models.PullRequest, review *models.Review, comment *models.Comment, mentions []*models.User) {
 	for _, notifier := range notifiers {
-		notifier.NotifyPullRequestReview(pr, review, comment)
+		notifier.NotifyPullRequestReview(pr, review, comment, mentions)
+	}
+}
+
+// NotifyPullRequestCodeComment notifies new pull request code comment
+func NotifyPullRequestCodeComment(pr *models.PullRequest, comment *models.Comment, mentions []*models.User) {
+	for _, notifier := range notifiers {
+		notifier.NotifyPullRequestCodeComment(pr, comment, mentions)
 	}
 }
 
