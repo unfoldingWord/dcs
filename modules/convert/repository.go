@@ -93,7 +93,6 @@ func innerToRepo(repo *models.Repository, mode models.AccessMode, isParent bool)
 
 	numReleases, _ := models.GetReleaseCountByRepoID(repo.ID, models.FindReleasesOptions{IncludeDrafts: false, IncludeTags: true})
 
-<<<<<<< HEAD
 	/* DCS Customizations */
 	var catalog *api.Catalog
 	if latestReleaseMetadata, err := models.GetLatestCatalogMetadataByRepoID(repo.ID, false); err != nil && !models.IsErrDoor43MetadataNotExist(err) {
@@ -150,8 +149,6 @@ func innerToRepo(repo *models.Repository, mode models.AccessMode, isParent bool)
 	}
 	/* END DCS Customizations */
 
-||||||| merged common ancestors
-=======
 	mirrorInterval := ""
 	if repo.IsMirror {
 		if err := repo.GetMirror(); err == nil {
@@ -159,7 +156,6 @@ func innerToRepo(repo *models.Repository, mode models.AccessMode, isParent bool)
 		}
 	}
 
->>>>>>> upstream/master
 	return &api.Repository{
 		ID:                        repo.ID,
 		Owner:                     ToUser(repo.Owner, mode != models.AccessModeNone, mode >= models.AccessModeAdmin),

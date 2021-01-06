@@ -47,7 +47,6 @@
 <p align="center">
   <a href="README_ZH.md">View the chinese version of this document</a>
 </p>
->>>>>>> upstream/master
 
 ## Purpose
 

@@ -91,17 +91,13 @@ type Repository struct {
 	AllowSquash               bool             `json:"allow_squash_merge"`
 	AvatarURL                 string           `json:"avatar_url"`
 	Internal                  bool             `json:"internal"`
-<<<<<<< HEAD
 	Language                  string           `json:"language"`
 	Subject                   string           `json:"subject"`
 	Books                     []string         `json:"books"`
 	Title                     string           `json:"title"`
 	CheckingLevel             string           `json:"checking_level"`
 	Catalog                   *Catalog         `json:"catalog"`
-||||||| merged common ancestors
-=======
 	MirrorInterval            string           `json:"mirror_interval"`
->>>>>>> upstream/master
 }
 
 // CreateRepoOption options when creating repository
