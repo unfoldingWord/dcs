@@ -376,7 +376,6 @@ var (
 	CustomConf    string
 	PIDFile       = "/run/gitea.pid"
 	WritePIDFile  bool
-	ProdMode      bool
 	RunMode       string
 	RunUser       string
 	IsWindows     bool
@@ -393,6 +392,11 @@ var (
 	}
 	/*** END DCS Customizations ***/
 )
+
+// IsProd if it's a production mode
+func IsProd() bool {
+	return strings.EqualFold(RunMode, "prod")
+}
 
 func getAppPath() (string, error) {
 	var appPath string
