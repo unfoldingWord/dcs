@@ -120,6 +120,22 @@ func registerUpdateMigrationPosterID() {
 	})
 }
 
+func registerCleanupHookTaskTable() {
+	RegisterTaskFatal("cleanup_hook_task_table", &CleanupHookTaskConfig{
+		BaseConfig: BaseConfig{
+			Enabled:    true,
+			RunAtStart: false,
+			Schedule:   "@every 24h",
+		},
+		CleanupType:  "OlderThan",
+		OlderThan:    168 * time.Hour,
+		NumberToKeep: 10,
+	}, func(ctx context.Context, _ *models.User, config Config) error {
+		realConfig := config.(*CleanupHookTaskConfig)
+		return models.CleanupHookTaskTable(ctx, models.ToHookTaskCleanupType(realConfig.CleanupType), realConfig.OlderThan, realConfig.NumberToKeep)
+	})
+}
+
 func initBasicTasks() {
 	registerUpdateMirrorTask()
 	registerRepoHealthCheck()
@@ -131,4 +147,5 @@ func initBasicTasks() {
 	if !setting.Repository.DisableMigrations {
 		registerUpdateMigrationPosterID()
 	}
+	registerCleanupHookTaskTable()
 }
