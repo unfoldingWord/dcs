@@ -90,10 +90,6 @@ func commonMiddlewares() []func(http.Handler) http.Handler {
 			next.ServeHTTP(resp, req)
 		})
 	})
-
-	if setting.EnableAccessLog {
-		handlers = append(handlers, accessLogger())
-	}
 	return handlers
 }
 
@@ -170,6 +166,10 @@ func WebRoutes() *web.Route {
 	// Removed: toolbox.Toolboxer middleware will provide debug informations which seems unnecessary
 	r.Use(context.Contexter())
 	// Removed: SetAutoHead allow a get request redirect to head if get method is not exist
+
+	if setting.EnableAccessLog {
+		r.Use(context.AccessLogger())
+	}
 
 	r.Use(user.GetNotificationCount)
 	r.Use(repo.GetActiveStopwatch)
