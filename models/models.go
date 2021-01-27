@@ -129,6 +129,7 @@ func init() {
 		new(LanguageStat),
 		new(EmailHash),
 		new(Door43Metadata),
+		new(UserRedirect),
 		new(Project),
 		new(ProjectBoard),
 		new(ProjectIssue),

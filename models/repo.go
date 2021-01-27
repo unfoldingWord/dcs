@@ -1314,8 +1314,8 @@ func TransferOwnership(doer *User, newOwnerName string, repo *Repository) error 
 		return fmt.Errorf("delete repo redirect: %v", err)
 	}
 
-	if err := NewRepoRedirect(DBContext{sess}, oldOwner.ID, repo.ID, repo.Name, repo.Name); err != nil {
-		return fmt.Errorf("NewRepoRedirect: %v", err)
+	if err := newRepoRedirect(sess, oldOwner.ID, repo.ID, repo.Name, repo.Name); err != nil {
+		return fmt.Errorf("newRepoRedirect: %v", err)
 	}
 
 	return sess.Commit()
@@ -1363,12 +1363,7 @@ func ChangeRepositoryName(doer *User, repo *Repository, newRepoName string) (err
 		return fmt.Errorf("sess.Begin: %v", err)
 	}
 
-	// If there was previously a redirect at this location, remove it.
-	if err = deleteRepoRedirect(sess, repo.OwnerID, newRepoName); err != nil {
-		return fmt.Errorf("delete repo redirect: %v", err)
-	}
-
-	if err := NewRepoRedirect(DBContext{sess}, repo.Owner.ID, repo.ID, oldRepoName, newRepoName); err != nil {
+	if err := newRepoRedirect(sess, repo.Owner.ID, repo.ID, oldRepoName, newRepoName); err != nil {
 		return err
 	}
 
