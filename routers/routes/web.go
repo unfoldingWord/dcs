@@ -107,6 +107,7 @@ func NormalRoutes() *web.Route {
 	r.Mount("/", WebRoutes())
 	r.Mount("/api/v1", apiv1.Routes())
 	r.Mount("/api/internal", private.Routes())
+	r.Mount("/api/catalog/v4", apicatalogv4.Routes())
 	return r
 }
 
@@ -1048,10 +1049,7 @@ func RegisterRoutes(m *web.Route) {
 	m.Get("/about", dcs.About)
 	m.Group("/catalog", func() {
 		m.Get("", dcs.Catalog)
-	}, reqSignIn)
-	m.Group("/api/catalog", func() {
-		apicatalogv4.RegisterRoutes(m)
-	}, handlers...)
+	}, ignSignIn)
 	/*** END DCS Customizations ***/
 
 	// Not found handler.
