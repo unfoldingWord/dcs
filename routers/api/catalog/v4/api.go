@@ -8,7 +8,7 @@
 //
 //     Schemes: http, https
 //     BasePath: /api/catalog/v4
-//     Version: 4
+//     Version: 4.0.1
 //     License: MIT http://opensource.org/licenses/MIT
 //
 //     Consumes:
@@ -26,6 +26,7 @@
 //     - AuthorizationHeaderToken :
 //     - SudoParam :
 //     - SudoHeader :
+//     - TOTPHeader :
 //
 //     SecurityDefinitions:
 //     BasicAuth:
@@ -53,6 +54,11 @@
 //          name: Sudo
 //          in: header
 //          description: Sudo API request as the user provided as the key. Admin privileges are required.
+//     TOTPHeader:
+//          type: apiKey
+//          name: X-GITEA-OTP
+//          in: header
+//          description: Must be used in combination with BasicAuth if two-factor authentication is enabled.
 //
 // swagger:meta
 package v4
@@ -65,13 +71,14 @@ import (
 	"code.gitea.io/gitea/modules/context"
 	"code.gitea.io/gitea/modules/log"
 	"code.gitea.io/gitea/modules/setting"
-	"code.gitea.io/gitea/routers/api/v1/misc"
+	"code.gitea.io/gitea/modules/web"
 	_ "code.gitea.io/gitea/routers/api/v1/swagger" // for swagger generation
 
-	"gitea.com/macaron/macaron"
+	"gitea.com/go-chi/session"
+	"github.com/go-chi/cors"
 )
 
-func sudo() macaron.Handler {
+func sudo() func(ctx *context.APIContext) {
 	return func(ctx *context.APIContext) {
 		sudo := ctx.Query("sudo")
 		if len(sudo) == 0 {
@@ -101,10 +108,10 @@ func sudo() macaron.Handler {
 	}
 }
 
-func repoAssignment() macaron.Handler {
+func repoAssignment() func(ctx *context.APIContext) {
 	return func(ctx *context.APIContext) {
-		userName := ctx.Params(":username")
-		repoName := ctx.Params(":reponame")
+		userName := ctx.Params("username")
+		repoName := ctx.Params("reponame")
 
 		var (
 			owner *models.User
@@ -118,7 +125,13 @@ func repoAssignment() macaron.Handler {
 			owner, err = models.GetUserByName(userName)
 			if err != nil {
 				if models.IsErrUserNotExist(err) {
-					ctx.NotFound()
+					if redirectUserID, err := models.LookupUserRedirect(userName); err == nil {
+						context.RedirectToUser(ctx.Context, userName, redirectUserID)
+					} else if models.IsErrUserRedirectNotExist(err) {
+						ctx.NotFound("GetUserByName", err)
+					} else {
+						ctx.Error(http.StatusInternalServerError, "LookupUserRedirect", err)
+					}
 				} else {
 					ctx.Error(http.StatusInternalServerError, "GetUserByName", err)
 				}
@@ -161,20 +174,43 @@ func repoAssignment() macaron.Handler {
 	}
 }
 
-// RegisterRoutes registers all Catalog v4 APIs routes to web application.
-// FIXME: custom form error response
-func RegisterRoutes(m *macaron.Macaron) {
-	if setting.API.EnableSwagger {
-		m.Get("/swagger", misc.Swagger) // Render V4 by default
-	}
+// Routes registers all catalog v4 APIs routes to web application.
+func Routes() *web.Route {
+	var m = web.NewRoute()
 
-	m.Group("/v4", func() {
+	m.Use(session.Sessioner(session.Options{
+		Provider:       setting.SessionConfig.Provider,
+		ProviderConfig: setting.SessionConfig.ProviderConfig,
+		CookieName:     setting.SessionConfig.CookieName,
+		CookiePath:     setting.SessionConfig.CookiePath,
+		Gclifetime:     setting.SessionConfig.Gclifetime,
+		Maxlifetime:    setting.SessionConfig.Maxlifetime,
+		Secure:         setting.SessionConfig.Secure,
+		Domain:         setting.SessionConfig.Domain,
+	}))
+	m.Use(securityHeaders())
+	if setting.CORSConfig.Enabled {
+		m.Use(cors.Handler(cors.Options{
+			//Scheme:           setting.CORSConfig.Scheme, // FIXME: the cors middleware needs scheme option
+			AllowedOrigins: setting.CORSConfig.AllowDomain,
+			//setting.CORSConfig.AllowSubdomain // FIXME: the cors middleware needs allowSubdomain option
+			AllowedMethods:   setting.CORSConfig.Methods,
+			AllowCredentials: setting.CORSConfig.AllowCredentials,
+			MaxAge:           int(setting.CORSConfig.MaxAge.Seconds()),
+		}))
+	}
+	m.Use(context.APIContexter())
+	m.Use(context.ToggleAPI(&context.ToggleOptions{
+		SignInRequired: setting.Service.RequireSignInView,
+	}))
+
+	m.Group("", func() {
 		// Miscellaneous
 		if setting.API.EnableSwagger {
-			m.Get("/swagger", misc.Swagger)
+			m.Get("/swagger", func(ctx *context.APIContext) {
+				ctx.Redirect("/api/swagger")
+			})
 		}
-		m.Get("/version", misc.Version)
-		m.Get("/signing-key.gpg", misc.SigningKey)
 
 		m.Get("", Search)
 
@@ -191,15 +227,18 @@ func RegisterRoutes(m *macaron.Macaron) {
 			m.Get("", GetCatalogEntry)
 			m.Get("/metadata", GetCatalogMetadata)
 		}, repoAssignment())
-	}, securityHeaders(), context.APIContexter(), sudo())
+	}, sudo())
+
+	return m
 }
 
-func securityHeaders() macaron.Handler {
-	return func(ctx *macaron.Context) {
-		ctx.Resp.Before(func(w macaron.ResponseWriter) {
+func securityHeaders() func(http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(resp http.ResponseWriter, req *http.Request) {
 			// CORB: https://www.chromium.org/Home/chromium-security/corb-for-developers
 			// http://stackoverflow.com/a/3146618/244009
-			w.Header().Set("x-content-type-options", "nosniff")
+			resp.Header().Set("x-content-type-options", "nosniff")
+			next.ServeHTTP(resp, req)
 		})
 	}
 }

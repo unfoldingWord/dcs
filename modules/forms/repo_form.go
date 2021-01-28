@@ -818,8 +818,9 @@ type NewDoor43MetadataForm struct {
 }
 
 // Validate validates the fields
-func (f *NewDoor43MetadataForm) Validate(ctx *macaron.Context, errs binding.Errors) binding.Errors {
-	return validate(errs, ctx.Data, f, ctx.Locale)
+func (f *NewDoor43MetadataForm) Validate(req *http.Request, errs binding.Errors) binding.Errors {
+	ctx := context.GetContext(req)
+	return middlewares.Validate(errs, ctx.Data, f, ctx.Locale)
 }
 
 // EditDoor43MetadataForm form for changing release
@@ -828,6 +829,7 @@ type EditDoor43MetadataForm struct {
 }
 
 // Validate validates the fields
-func (f *EditDoor43MetadataForm) Validate(ctx *macaron.Context, errs binding.Errors) binding.Errors {
-	return validate(errs, ctx.Data, f, ctx.Locale)
+func (f *EditDoor43MetadataForm) Validate(req *http.Request, errs binding.Errors) binding.Errors {
+	ctx := context.GetContext(req)
+	return middlewares.Validate(errs, ctx.Data, f, ctx.Locale)
 }
