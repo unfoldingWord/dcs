@@ -9,6 +9,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"net/http"
 	"strings"
 
 	"code.gitea.io/gitea/modules/git"
@@ -120,16 +121,25 @@ func ValidateBlobByRC020Schema(manifest *map[string]interface{}) (*gojsonschema.
 
 var rc02Schema []byte
 
-// GetRC020Schema Returns the schema for RC v0.2, retrieving it from file if not already done
+// GetRC020Schema Returns the schema for RC v0.2, first trying the online URL, then from file if not already done
 func GetRC020Schema() ([]byte, error) {
+	rc02SchmeFileName := "rc.schema.json"
+	schemaOnlineURL := "https://raw.githubusercontent.com/unfoldingWord/dcs/master/options/schema/" + rc02SchmeFileName
 	if rc02Schema == nil {
 		var err error
-		rc02Schema, err = options.Schemas("rc.schema.json")
-		if err != nil {
+		if res, err := http.Get(schemaOnlineURL); err == nil {
+			defer res.Body.Close()
+			// read all
+			if rc02Schema, err = ioutil.ReadAll(res.Body); err == nil {
+				return rc02Schema, nil
+			}
+		}
+		if rc02Schema, err = options.Schemas(rc02SchmeFileName); err != nil {
 			return nil, err
+		} else {
+			return rc02Schema, nil
 		}
 	}
-	return rc02Schema, nil
 }
 
 // ReadYAMLFromBlob reads a yaml file from a blob and unmarshals it
