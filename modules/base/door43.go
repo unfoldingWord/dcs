@@ -130,16 +130,15 @@ func GetRC020Schema() ([]byte, error) {
 		if res, err := http.Get(schemaOnlineURL); err == nil {
 			defer res.Body.Close()
 			// read all
-			if rc02Schema, err = ioutil.ReadAll(res.Body); err == nil {
-				return rc02Schema, nil
+			if body, err := ioutil.ReadAll(res.Body); err == nil {
+				rc02Schema = body
 			}
 		}
 		if rc02Schema, err = options.Schemas(rc02SchmeFileName); err != nil {
 			return nil, err
-		} else {
-			return rc02Schema, nil
 		}
 	}
+	return rc02Schema, nil
 }
 
 // ReadYAMLFromBlob reads a yaml file from a blob and unmarshals it
