@@ -1528,11 +1528,17 @@ func SearchUsers(opts *SearchUserOptions) (users []*User, _ int64, _ error) {
 	}
 
 	if len(opts.RepoLanguages) > 0 {
-		metadata := builder.Select("owner_id").
+		var langCond = builder.NewCond()
+		for _, lang := range opts.RepoLanguages {
+			for _, v := range strings.Split(lang, ",") {
+				langCond = langCond.Or(builder.Eq{"LOWER(JSON_UNQUOTE(JSON_EXTRACT(`door43_metadata`.metadata, '$.dublin_core.language.identifier')))": strings.ToLower(v)})
+			}
+		}
+		metadataSelect := builder.Select("owner_id").
 			From("repository").
 			Join("INNER", "`door43_metadata`", "repo_id = `repository`.id").
-			Where(builder.In("JSON_EXTRACT(metadata, '$.dublin_core.language.identifier')", opts.RepoLanguages))
-		sess.Join("INNER", metadata, "`repository`.owner_id = `user`.id")
+			Where(langCond)
+		sess.In("`user`.id", metadataSelect)
 	}
 
 	users = make([]*User, 0, opts.PageSize)

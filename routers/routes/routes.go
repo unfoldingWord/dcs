@@ -1161,7 +1161,7 @@ func RegisterRoutes(m *macaron.Macaron) {
 	m.Get("/about", dcs.About)
 	m.Group("/catalog", func() {
 		m.Get("", dcs.Catalog)
-	}, reqSignIn)
+	}, ignSignIn)
 	m.Group("/api/catalog", func() {
 		apicatalogv4.RegisterRoutes(m)
 	}, handlers...)

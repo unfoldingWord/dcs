@@ -19,6 +19,6 @@ const (
 
 // About render about page
 func About(ctx *context.Context) {
-	ctx.Data["PageIsHome"] = true
+	ctx.Data["PageIsAbout"] = true
 	ctx.HTML(200, tplAbout)
 }
