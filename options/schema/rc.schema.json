@@ -237,10 +237,10 @@
 					"enum": [
 						"Aligned Bible",
 						"Bible",
-            			"Bible stories",
+						"Bible stories",
 						"Greek New Testament",
 						"Hebrew Old Testament",
-            			"OBS Study Notes",
+						"OBS Study Notes",
 						"OBS Study Questions",
 						"OBS Translation Notes",
 						"OBS Translation Questions",
@@ -248,6 +248,7 @@
 						"Translation Academy",
 						"Translation Notes",
 						"Translation Questions",
+						"TSV Translation Questions",
 						"Translation Words",
 						"TSV Translation Notes"
 					]
