@@ -1,6 +1,6 @@
 # cloud.google.com/go v0.46.3
 cloud.google.com/go/compute/metadata
-# code.gitea.io/sdk/gitea v0.13.1
+# code.gitea.io/sdk/gitea v0.13.2
 ## explicit
 code.gitea.io/sdk/gitea
 # gitea.com/lunny/levelqueue v0.3.0

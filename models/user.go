@@ -40,7 +40,6 @@ import (
 	"golang.org/x/crypto/scrypt"
 	"golang.org/x/crypto/ssh"
 	"xorm.io/builder"
-	"xorm.io/xorm"
 )
 
 // UserType defines the user type
@@ -923,6 +922,7 @@ func VerifyActiveEmailCode(code, email string) *EmailAddress {
 
 // ChangeUserName changes all corresponding setting from old user name to new one.
 func ChangeUserName(u *User, newUserName string) (err error) {
+	oldUserName := u.Name
 	if err = IsUsableUsername(newUserName); err != nil {
 		return err
 	}
@@ -940,16 +940,24 @@ func ChangeUserName(u *User, newUserName string) (err error) {
 		return err
 	}
 
-	if _, err = sess.Exec("UPDATE `repository` SET owner_name=? WHERE owner_name=?", newUserName, u.Name); err != nil {
+	if _, err = sess.Exec("UPDATE `repository` SET owner_name=? WHERE owner_name=?", newUserName, oldUserName); err != nil {
 		return fmt.Errorf("Change repo owner name: %v", err)
 	}
 
 	// Do not fail if directory does not exist
-	if err = os.Rename(UserPath(u.Name), UserPath(newUserName)); err != nil && !os.IsNotExist(err) {
+	if err = os.Rename(UserPath(oldUserName), UserPath(newUserName)); err != nil && !os.IsNotExist(err) {
 		return fmt.Errorf("Rename user directory: %v", err)
 	}
 
-	return sess.Commit()
+	if err = sess.Commit(); err != nil {
+		if err2 := os.Rename(UserPath(newUserName), UserPath(oldUserName)); err2 != nil && !os.IsNotExist(err2) {
+			log.Critical("Unable to rollback directory change during failed username change from: %s to: %s. DB Error: %v. Filesystem Error: %v", oldUserName, newUserName, err, err2)
+			return fmt.Errorf("failed to rollback directory change during failed username change from: %s to: %s. DB Error: %w. Filesystem Error: %v", oldUserName, newUserName, err, err2)
+		}
+		return err
+	}
+
+	return nil
 }
 
 // checkDupEmail checks whether there are the same email with the user
@@ -1020,8 +1028,7 @@ func deleteBeans(e Engine, beans ...interface{}) (err error) {
 	return nil
 }
 
-// FIXME: need some kind of mechanism to record failure. HINT: system notice
-func deleteUser(e *xorm.Session, u *User) error {
+func deleteUser(e Engine, u *User) error {
 	// Note: A user owns any repository or belongs to any organization
 	//	cannot perform delete operation.
 
@@ -1115,6 +1122,16 @@ func deleteUser(e *xorm.Session, u *User) error {
 	// ***** END: PublicKey *****
 
 	// ***** START: GPGPublicKey *****
+	keys, err := listGPGKeys(e, u.ID, ListOptions{})
+	if err != nil {
+		return fmt.Errorf("ListGPGKeys: %v", err)
+	}
+	// Delete GPGKeyImport(s).
+	for _, key := range keys {
+		if _, err = e.Delete(&GPGKeyImport{KeyID: key.KeyID}); err != nil {
+			return fmt.Errorf("deleteGPGKeyImports: %v", err)
+		}
+	}
 	if _, err = e.Delete(&GPGKey{OwnerID: u.ID}); err != nil {
 		return fmt.Errorf("deleteGPGKeys: %v", err)
 	}
@@ -1135,18 +1152,21 @@ func deleteUser(e *xorm.Session, u *User) error {
 		return fmt.Errorf("Delete: %v", err)
 	}
 
-	// FIXME: system notice
 	// Note: There are something just cannot be roll back,
 	//	so just keep error logs of those operations.
 	path := UserPath(u.Name)
-	if err := util.RemoveAll(path); err != nil {
-		return fmt.Errorf("Failed to RemoveAll %s: %v", path, err)
+	if err = util.RemoveAll(path); err != nil {
+		err = fmt.Errorf("Failed to RemoveAll %s: %v", path, err)
+		_ = createNotice(e, NoticeTask, fmt.Sprintf("delete user '%s': %v", u.Name, err))
+		return err
 	}
 
 	if len(u.Avatar) > 0 {
 		avatarPath := u.CustomAvatarRelativePath()
-		if err := storage.Avatars.Delete(avatarPath); err != nil {
-			return fmt.Errorf("Failed to remove %s: %v", avatarPath, err)
+		if err = storage.Avatars.Delete(avatarPath); err != nil {
+			err = fmt.Errorf("Failed to remove %s: %v", avatarPath, err)
+			_ = createNotice(e, NoticeTask, fmt.Sprintf("delete user '%s': %v", u.Name, err))
+			return err
 		}
 	}
 
@@ -1619,20 +1639,34 @@ func deleteKeysMarkedForDeletion(keys []string) (bool, error) {
 func addLdapSSHPublicKeys(usr *User, s *LoginSource, sshPublicKeys []string) bool {
 	var sshKeysNeedUpdate bool
 	for _, sshKey := range sshPublicKeys {
-		_, _, _, _, err := ssh.ParseAuthorizedKey([]byte(sshKey))
-		if err == nil {
-			sshKeyName := fmt.Sprintf("%s-%s", s.Name, sshKey[0:40])
-			if _, err := AddPublicKey(usr.ID, sshKeyName, sshKey, s.ID); err != nil {
+		var err error
+		found := false
+		keys := []byte(sshKey)
+	loop:
+		for len(keys) > 0 && err == nil {
+			var out ssh.PublicKey
+			// We ignore options as they are not relevant to Gitea
+			out, _, _, keys, err = ssh.ParseAuthorizedKey(keys)
+			if err != nil {
+				break loop
+			}
+			found = true
+			marshalled := string(ssh.MarshalAuthorizedKey(out))
+			marshalled = marshalled[:len(marshalled)-1]
+			sshKeyName := fmt.Sprintf("%s-%s", s.Name, ssh.FingerprintSHA256(out))
+
+			if _, err := AddPublicKey(usr.ID, sshKeyName, marshalled, s.ID); err != nil {
 				if IsErrKeyAlreadyExist(err) {
-					log.Trace("addLdapSSHPublicKeys[%s]: LDAP Public SSH Key %s already exists for user", s.Name, usr.Name)
+					log.Trace("addLdapSSHPublicKeys[%s]: LDAP Public SSH Key %s already exists for user", sshKeyName, usr.Name)
 				} else {
-					log.Error("addLdapSSHPublicKeys[%s]: Error adding LDAP Public SSH Key for user %s: %v", s.Name, usr.Name, err)
+					log.Error("addLdapSSHPublicKeys[%s]: Error adding LDAP Public SSH Key for user %s: %v", sshKeyName, usr.Name, err)
 				}
 			} else {
-				log.Trace("addLdapSSHPublicKeys[%s]: Added LDAP Public SSH Key for user %s", s.Name, usr.Name)
+				log.Trace("addLdapSSHPublicKeys[%s]: Added LDAP Public SSH Key for user %s", sshKeyName, usr.Name)
 				sshKeysNeedUpdate = true
 			}
-		} else {
+		}
+		if !found && err != nil {
 			log.Warn("addLdapSSHPublicKeys[%s]: Skipping invalid LDAP Public SSH Key for user %s: %v", s.Name, usr.Name, sshKey)
 		}
 	}
