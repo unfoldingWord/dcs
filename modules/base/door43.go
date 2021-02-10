@@ -134,8 +134,11 @@ func GetRC020Schema() ([]byte, error) {
 				rc02Schema = body
 			}
 		}
-		if rc02Schema, err = options.Schemas(rc02SchmeFileName); err != nil {
-			return nil, err
+		if rc02Schema == nil {
+			// Failed to get schema online, falling back to the one in the options dir
+			if rc02Schema, err = options.Schemas(rc02SchmeFileName); err != nil {
+				return nil, err
+			}
 		}
 	}
 	return rc02Schema, nil
