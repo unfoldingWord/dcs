@@ -122,8 +122,10 @@ func Search(ctx *context.APIContext) {
 	//                the book, its repository will be included in the results. Multiple book's are ORed.
 	//   type: string
 	// - name: includeMetadata
+	//   in: query
 	//   description: if false, q value will only be searched for in the repo name, owner, description and title and
 	//                subject; otherwise search all values of the manifest file. (defaults to false)
+	//   type: boolean
 	// - name: sort
 	//   in: query
 	//   description: sort repos by attribute. Supported values are
