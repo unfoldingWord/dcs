@@ -240,6 +240,9 @@ func NewFuncMap() []template.FuncMap {
 		"DisableGitHooks": func() bool {
 			return setting.DisableGitHooks
 		},
+		"DisableWebhooks": func() bool {
+			return setting.DisableWebhooks
+		},
 		"DisableImportLocal": func() bool {
 			return !setting.ImportLocalPaths
 		},
@@ -809,6 +812,8 @@ func ActionIcon(opType models.ActionType) string {
 		return "diff"
 	case models.ActionPublishRelease:
 		return "tag"
+	case models.ActionPullReviewDismissed:
+		return "x"
 	default:
 		return "question"
 	}
