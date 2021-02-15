@@ -133,6 +133,7 @@ func init() {
 		new(Project),
 		new(ProjectBoard),
 		new(ProjectIssue),
+		new(Session),
 	)
 
 	gonicNames := []string{"SSL", "UID"}
