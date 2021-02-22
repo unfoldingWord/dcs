@@ -32,6 +32,8 @@ type User struct {
 	Created time.Time `json:"created,omitempty"`
 	// Repo languages
 	RepoLanguages []string `json:"repo_languages"`
+	// Is user restricted
+	Restricted bool `json:"restricted"`
 }
 
 // MarshalJSON implements the json.Marshaler interface for User, adding field(s) for backward compatibility

@@ -14421,6 +14421,10 @@
           "type": "boolean",
           "x-go-name": "ProhibitLogin"
         },
+        "restricted": {
+          "type": "boolean",
+          "x-go-name": "Restricted"
+        },
         "source_id": {
           "type": "integer",
           "format": "int64",
@@ -16875,6 +16879,11 @@
             "type": "string"
           },
           "x-go-name": "RepoLanguages"
+        },
+        "restricted": {
+          "description": "Is user restricted",
+          "type": "boolean",
+          "x-go-name": "Restricted"
         }
       },
       "x-go-package": "code.gitea.io/gitea/modules/structs"
