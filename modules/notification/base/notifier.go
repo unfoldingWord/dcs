@@ -63,4 +63,6 @@ type Notifier interface {
 	NotifyUpdateDoor43Metadata(doer *models.User, repo *models.Repository, refType, refFullName string)
 	NotifyDeleteDoor43Metadata(doer *models.User, repo *models.Repository, refType, refFullName string)
 	/*** END DCS Customizations ***/
+
+	NotifyRepoPendingTransfer(doer, newOwner *models.User, repo *models.Repository)
 }
