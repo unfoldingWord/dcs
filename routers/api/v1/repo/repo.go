@@ -760,6 +760,8 @@ func updateRepoUnits(ctx *context.APIContext, opts api.EditRepoOption) error {
 					AllowRebase:               true,
 					AllowRebaseMerge:          true,
 					AllowSquash:               true,
+					AllowManualMerge:          true,
+					AutodetectManualMerge:     false,
 				}
 			} else {
 				config = unit.PullRequestsConfig()
@@ -779,6 +781,12 @@ func updateRepoUnits(ctx *context.APIContext, opts api.EditRepoOption) error {
 			}
 			if opts.AllowSquash != nil {
 				config.AllowSquash = *opts.AllowSquash
+			}
+			if opts.AllowManualMerge != nil {
+				config.AllowManualMerge = *opts.AllowManualMerge
+			}
+			if opts.AutodetectManualMerge != nil {
+				config.AutodetectManualMerge = *opts.AutodetectManualMerge
 			}
 
 			units = append(units, models.RepoUnit{
