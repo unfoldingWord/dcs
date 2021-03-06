@@ -45,7 +45,7 @@ gitea.com/macaron/session/postgres
 # gitea.com/macaron/toolbox v0.0.0-20190822013122-05ff0fc766b7
 ## explicit
 gitea.com/macaron/toolbox
-# gitea.com/unfoldingword/gitea-vet v0.2.4
+# gitea.com/unfoldingword/gitea-vet v0.2.5
 ## explicit
 gitea.com/unfoldingword/gitea-vet
 gitea.com/unfoldingword/gitea-vet/checks

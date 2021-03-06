@@ -44,8 +44,8 @@ gitea.com/macaron/session v0.0.0-20200902202411-e3a87877db6e h1:BHoJ/xWNt6FrVsL5
 gitea.com/macaron/session v0.0.0-20200902202411-e3a87877db6e/go.mod h1:FanKy3WjWb5iw/iZBPk4ggoQT9FcM6bkBPvmDmsH6tY=
 gitea.com/macaron/toolbox v0.0.0-20190822013122-05ff0fc766b7 h1:N9QFoeNsUXLhl14mefLzGluqV7w2mGU3u+iZU+jCeWk=
 gitea.com/macaron/toolbox v0.0.0-20190822013122-05ff0fc766b7/go.mod h1:kgsbFPPS4P+acDYDOPDa3N4IWWOuDJt5/INKRUz7aks=
-gitea.com/unfoldingword/gitea-vet v0.2.4 h1:hfxcQffUw6x4pCYV4Fp84tI5fqwZOSZkfk3BxlHfX7A=
-gitea.com/unfoldingword/gitea-vet v0.2.4/go.mod h1:QE1hwmr7dCParRGjJobqmUZk/Ckmtzn5y4ksPnyv2bQ=
+gitea.com/unfoldingword/gitea-vet v0.2.5 h1:MiGfKwnfzOOVOTNXGAireQO5Pzj6X8G/CIAQN95rPU4=
+gitea.com/unfoldingword/gitea-vet v0.2.5/go.mod h1:QE1hwmr7dCParRGjJobqmUZk/Ckmtzn5y4ksPnyv2bQ=
 gitea.com/xorm/sqlfiddle v0.0.0-20180821085327-62ce714f951a h1:lSA0F4e9A2NcQSqGqTOXqu2aRi/XEQxDCBwM8yJtE6s=
 gitea.com/xorm/sqlfiddle v0.0.0-20180821085327-62ce714f951a/go.mod h1:EXuID2Zs0pAQhH8yz+DNjUbjppKQzKFAn28TMYPB6IU=
 github.com/6543/go-version v1.2.4 h1:MPsSnqNrM0HwA9tnmWNnsMdQMg4/u4fflARjwomoof4=
