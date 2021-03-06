@@ -10,7 +10,7 @@ require (
 	gitea.com/go-chi/captcha v0.0.0-20210110083842-e7696c336a1e
 	gitea.com/go-chi/session v0.0.0-20210108030337-0cb48c5ba8ee
 	gitea.com/lunny/levelqueue v0.3.0
-	gitea.com/unfoldingword/gitea-vet v0.2.4
+	gitea.com/unfoldingword/gitea-vet v0.2.5
 	github.com/Microsoft/go-winio v0.4.16 // indirect
 	github.com/NYTimes/gziphandler v1.1.1
 	github.com/PuerkitoBio/goquery v1.5.1

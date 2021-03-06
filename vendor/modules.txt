@@ -24,7 +24,7 @@ gitea.com/go-chi/session/postgres
 # gitea.com/lunny/levelqueue v0.3.0
 ## explicit
 gitea.com/lunny/levelqueue
-# gitea.com/unfoldingword/gitea-vet v0.2.4
+# gitea.com/unfoldingword/gitea-vet v0.2.5
 ## explicit
 gitea.com/unfoldingword/gitea-vet
 gitea.com/unfoldingword/gitea-vet/checks
