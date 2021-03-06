@@ -230,7 +230,7 @@ vet:
 	# Default vet
 	$(GO) vet $(GO_PACKAGES)
 	# Custom vet
-	$(GO) build -mod=vendor code.gitea.io/gitea-vet
+	$(GO) build -mod=vendor gitea.com/unfoldingword/gitea-vet 
 	$(GO) vet -vettool=gitea-vet $(GO_PACKAGES)
 
 .PHONY: $(TAGS_EVIDENCE)
