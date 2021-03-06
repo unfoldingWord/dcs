@@ -7,7 +7,6 @@
 package scrubber
 
 import (
-	repo_module "code.gitea.io/gitea/modules/repository"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -19,6 +18,7 @@ import (
 	"code.gitea.io/gitea/models"
 	"code.gitea.io/gitea/modules/git"
 	"code.gitea.io/gitea/modules/log"
+	repo_module "code.gitea.io/gitea/modules/repository"
 	repo_service "code.gitea.io/gitea/services/repository"
 )
 
