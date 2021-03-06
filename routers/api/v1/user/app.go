@@ -13,6 +13,7 @@ import (
 	"code.gitea.io/gitea/models"
 	"code.gitea.io/gitea/modules/context"
 	"code.gitea.io/gitea/modules/convert"
+	"code.gitea.io/gitea/modules/log"
 	api "code.gitea.io/gitea/modules/structs"
 	"code.gitea.io/gitea/routers/api/v1/utils"
 )
@@ -101,6 +102,7 @@ func CreateAccessToken(ctx *context.APIContext, form api.CreateAccessTokenOption
 		/*** DCS Customizations - Commented out so tokens can have the same name for translationCore ***/
 		//ctx.Error(http.StatusBadRequest, "AccessTokenByNameExists", errors.New("access token name has been used already"))
 		//return
+		log.Info("Ignoring existing Access Token for DCS/translationCore, UID: %v, Token Name: %v", ctx.User.ID, form.Name)
 		/*** END DCS Customizations ***/
 	}
 
