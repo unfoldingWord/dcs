@@ -124,7 +124,7 @@ var rc02Schema []byte
 // GetRC020Schema Returns the schema for RC v0.2, first trying the online URL, then from file if not already done
 func GetRC020Schema() ([]byte, error) {
 	rc02SchmeFileName := "rc.schema.json"
-	schemaOnlineURL := "https://raw.githubusercontent.com/unfoldingWord/dcs/master/options/schema/" + rc02SchmeFileName
+	schemaOnlineURL := "https://raw.githubusercontent.com/unfoldingWord/rc-schema/master/" + rc02SchmeFileName
 	if rc02Schema == nil {
 		var err error
 		if res, err := http.Get(schemaOnlineURL); err == nil {
