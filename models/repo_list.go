@@ -188,7 +188,7 @@ type SearchRepoOptions struct {
 	IncludeMetadata bool
 }
 
-//SearchOrderBy is used to sort the result
+// SearchOrderBy is used to sort the result
 type SearchOrderBy string
 
 func (s SearchOrderBy) String() string {
@@ -221,7 +221,7 @@ const (
 
 // SearchRepositoryCondition creates a query condition according search repository options
 func SearchRepositoryCondition(opts *SearchRepoOptions) builder.Cond {
-	var cond = builder.NewCond()
+	cond := builder.NewCond()
 
 	if opts.Private {
 		if opts.Actor != nil && !opts.Actor.IsAdmin && opts.Actor.ID != opts.OwnerID {
@@ -256,7 +256,7 @@ func SearchRepositoryCondition(opts *SearchRepoOptions) builder.Cond {
 
 	// Restrict repositories to those the OwnerID owns or contributes to as per opts.Collaborate
 	if opts.OwnerID > 0 {
-		var accessCond = builder.NewCond()
+		accessCond := builder.NewCond()
 		if opts.Collaborate != util.OptionalBoolTrue {
 			accessCond = builder.Eq{"owner_id": opts.OwnerID}
 		}
@@ -315,7 +315,7 @@ func SearchRepositoryCondition(opts *SearchRepoOptions) builder.Cond {
 
 	if opts.Keyword != "" {
 		// separate keyword
-		var subQueryCond = builder.NewCond()
+		subQueryCond := builder.NewCond()
 		for _, v := range strings.Split(opts.Keyword, ",") {
 			if opts.TopicOnly {
 				subQueryCond = subQueryCond.Or(builder.Eq{"topic.name": strings.ToLower(v)})
@@ -328,9 +328,9 @@ func SearchRepositoryCondition(opts *SearchRepoOptions) builder.Cond {
 			Where(subQueryCond).
 			GroupBy("repo_topic.repo_id")
 
-		var keywordCond = builder.In("`repository`.id", subQuery)
+		keywordCond := builder.In("`repository`.id", subQuery)
 		if !opts.TopicOnly {
-			var likes = builder.NewCond()
+			likes := builder.NewCond()
 			for _, v := range strings.Split(opts.Keyword, ",") {
 				likes = likes.Or(builder.Like{"`repository`.lower_name", strings.ToLower(v)})
 				if opts.IncludeDescription {
@@ -421,7 +421,6 @@ func SearchRepositoryByCondition(opts *SearchRepoOptions, cond builder.Cond, loa
 		Join("LEFT", "door43_metadata", "`door43_metadata`.repo_id = `repository`.id AND `door43_metadata`.release_id = 0").
 		Where(cond).
 		Count(new(Repository))
-
 	if err != nil {
 		return nil, 0, fmt.Errorf("Count: %v", err)
 	}
@@ -450,7 +449,7 @@ func SearchRepositoryByCondition(opts *SearchRepoOptions, cond builder.Cond, loa
 
 // accessibleRepositoryCondition takes a user a returns a condition for checking if a repository is accessible
 func accessibleRepositoryCondition(user *User) builder.Cond {
-	var cond = builder.NewCond()
+	cond := builder.NewCond()
 
 	if user == nil || !user.IsRestricted || user.ID <= 0 {
 		orgVisibilityLimit := []structs.VisibleType{structs.VisibleTypePrivate}
