@@ -2,12 +2,12 @@
 // Use of this source code is governed by a MIT-style
 // license that can be found in the LICENSE file.
 
-// Package v4 Catalog API.
+// Package Catalog API.
 //
 // This documentation describes the DCS Catalog API.
 //
 //     Schemes: http, https
-//     BasePath: /api/catalog/v4
+//     BasePath: /api/catalog/v5
 //     Version: 4.0.1
 //     License: MIT http://opensource.org/licenses/MIT
 //
@@ -61,22 +61,36 @@
 //          description: Must be used in combination with BasicAuth if two-factor authentication is enabled.
 //
 // swagger:meta
-package v4
+package catalog
 
 import (
+	"fmt"
 	"net/http"
-	"strings"
 
 	"code.gitea.io/gitea/models"
 	"code.gitea.io/gitea/modules/context"
 	"code.gitea.io/gitea/modules/log"
 	"code.gitea.io/gitea/modules/setting"
 	"code.gitea.io/gitea/modules/web"
+	"code.gitea.io/gitea/routers/api/catalog/v4"
+	"code.gitea.io/gitea/routers/api/catalog/v5"
 	_ "code.gitea.io/gitea/routers/api/v1/swagger" // for swagger generation
 
 	"gitea.com/go-chi/session"
 	"github.com/go-chi/cors"
 )
+
+var Versions = []string{
+	"v4",
+	"v5",
+}
+var LatestVersion = Versions[len(Versions)-1]
+
+func NormalRoutes(r *web.Route) {
+	r.Mount("/api/catalog", Routes())
+	r.Mount("/api/catalog/v4", v4.Routes())
+	r.Mount("/api/catalog/v5", v5.Routes())
+}
 
 func sudo() func(ctx *context.APIContext) {
 	return func(ctx *context.APIContext) {
@@ -108,73 +122,7 @@ func sudo() func(ctx *context.APIContext) {
 	}
 }
 
-func repoAssignment() func(ctx *context.APIContext) {
-	return func(ctx *context.APIContext) {
-		userName := ctx.Params("username")
-		repoName := ctx.Params("reponame")
-
-		var (
-			owner *models.User
-			err   error
-		)
-
-		// Check if the user is the same as the repository owner.
-		if ctx.IsSigned && ctx.User.LowerName == strings.ToLower(userName) {
-			owner = ctx.User
-		} else {
-			owner, err = models.GetUserByName(userName)
-			if err != nil {
-				if models.IsErrUserNotExist(err) {
-					if redirectUserID, err := models.LookupUserRedirect(userName); err == nil {
-						context.RedirectToUser(ctx.Context, userName, redirectUserID)
-					} else if models.IsErrUserRedirectNotExist(err) {
-						ctx.NotFound("GetUserByName", err)
-					} else {
-						ctx.Error(http.StatusInternalServerError, "LookupUserRedirect", err)
-					}
-				} else {
-					ctx.Error(http.StatusInternalServerError, "GetUserByName", err)
-				}
-				return
-			}
-		}
-		ctx.Repo.Owner = owner
-
-		// Get repository.
-		repo, err := models.GetRepositoryByName(owner.ID, repoName)
-		if err != nil {
-			if models.IsErrRepoNotExist(err) {
-				redirectRepoID, err := models.LookupRepoRedirect(owner.ID, repoName)
-				if err == nil {
-					context.RedirectToRepo(ctx.Context, redirectRepoID)
-				} else if models.IsErrRepoRedirectNotExist(err) {
-					ctx.NotFound()
-				} else {
-					ctx.Error(http.StatusInternalServerError, "LookupRepoRedirect", err)
-				}
-			} else {
-				ctx.Error(http.StatusInternalServerError, "GetRepositoryByName", err)
-			}
-			return
-		}
-
-		repo.Owner = owner
-		ctx.Repo.Repository = repo
-
-		ctx.Repo.Permission, err = models.GetUserRepoPermission(repo, ctx.User)
-		if err != nil {
-			ctx.Error(http.StatusInternalServerError, "GetUserRepoPermission", err)
-			return
-		}
-
-		if !ctx.Repo.HasAccess() {
-			ctx.NotFound()
-			return
-		}
-	}
-}
-
-// Routes registers all catalog v4 APIs routes to web application.
+// Routes registers general catalog APIs routes to web application.
 func Routes() *web.Route {
 	var m = web.NewRoute()
 
@@ -204,29 +152,15 @@ func Routes() *web.Route {
 		SignInRequired: setting.Service.RequireSignInView,
 	}))
 
-	m.Group("", func() {
-		// Miscellaneous
-		if setting.API.EnableSwagger {
-			m.Get("/swagger", func(ctx *context.APIContext) {
-				ctx.Redirect("/api/swagger")
-			})
-		}
+	m.Get("", ListCatalogVersionEndpoints)
 
-		m.Get("", Search)
-
-		m.Group("/search", func() {
-			m.Get("", Search)
-			m.Group("/{username}", func() {
-				m.Get("", SearchOwner)
-				m.Group("/{reponame}", func() {
-					m.Get("", SearchRepo)
-				}, repoAssignment())
-			})
+	m.Group("/latest", func() {
+		m.Get("", func(ctx *context.APIContext) {
+			ctx.Redirect(fmt.Sprintf("/api/catalog/%s", LatestVersion))
 		})
-		m.Group("/entry/{username}/{reponame}/{tag}", func() {
-			m.Get("", GetCatalogEntry)
-			m.Get("/metadata", GetCatalogMetadata)
-		}, repoAssignment())
+		m.Get("/*", func(ctx *context.APIContext) {
+			ctx.Redirect(fmt.Sprintf("/api/catalog/%s/%s", LatestVersion, ctx.Params("*")))
+		})
 	}, sudo())
 
 	return m

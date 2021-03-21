@@ -76,7 +76,7 @@ import (
 	"code.gitea.io/gitea/modules/setting"
 	api "code.gitea.io/gitea/modules/structs"
 	"code.gitea.io/gitea/modules/web"
-	catalog "code.gitea.io/gitea/routers/api/catalog/v4"
+	latestCatalog "code.gitea.io/gitea/routers/api/catalog/v5"
 	"code.gitea.io/gitea/routers/api/v1/admin"
 	"code.gitea.io/gitea/routers/api/v1/misc"
 	"code.gitea.io/gitea/routers/api/v1/notify"
@@ -1060,19 +1060,19 @@ func Routes() *web.Route {
 		m.Post("/yaml", bind(misc.YamlOption{}), misc.Yaml)
 		// Catalog
 		m.Group("/catalog", func() {
-			m.Get("", catalog.Search)
+			m.Get("", latestCatalog.Search)
 			m.Group("/search", func() {
-				m.Get("", catalog.Search)
-				m.Group("/:username", func() {
-					m.Get("", catalog.SearchOwner)
-					m.Group("/:reponame", func() {
-						m.Get("", catalog.SearchRepo)
+				m.Get("", latestCatalog.Search)
+				m.Group("/{username}", func() {
+					m.Get("", latestCatalog.SearchOwner)
+					m.Group("/{reponame}", func() {
+						m.Get("", latestCatalog.SearchRepo)
 					}, repoAssignment())
 				})
 			})
-			m.Group("/entry/:username/:reponame/:tag", func() {
-				m.Get("", catalog.GetCatalogEntry)
-				m.Get("/metadata", catalog.GetCatalogMetadata)
+			m.Group("/entry/{username}/{reponame}/{tag}", func() {
+				m.Get("", latestCatalog.GetCatalogEntry)
+				m.Get("/metadata", latestCatalog.GetCatalogMetadata)
 			}, repoAssignment())
 		})
 		/*** END DCS Customizations ***/
