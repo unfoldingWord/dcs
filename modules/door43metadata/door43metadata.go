@@ -155,6 +155,7 @@ func ProcessDoor43MetadataForRepo(repo *models.Repository) error {
 			}
 			releaseRef = release.TagName
 		}
+		log.Info("Processing Metadata for repo %s (%d), %s (%d)\n", repo.Name, repo.ID, releaseRef, releaseID)
 		if err = ProcessDoor43MetadataForRepoRelease(repo, release); err != nil {
 			log.Warn("Error processing metadata for repo %s (%d), %s (%d): %v\n", repo.Name, repo.ID, releaseRef, releaseID, err)
 		} else {

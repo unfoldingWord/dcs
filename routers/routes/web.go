@@ -5,6 +5,7 @@
 package routes
 
 import (
+	"code.gitea.io/gitea/routers/api/catalog"
 	"encoding/gob"
 	"fmt"
 	"net/http"
@@ -29,7 +30,6 @@ import (
 	"code.gitea.io/gitea/modules/web"
 	"code.gitea.io/gitea/routers"
 	"code.gitea.io/gitea/routers/admin"
-	apicatalogv4 "code.gitea.io/gitea/routers/api/catalog/v4" // DCS Customizations
 	apiv1 "code.gitea.io/gitea/routers/api/v1"
 	"code.gitea.io/gitea/routers/api/v1/misc"
 	"code.gitea.io/gitea/routers/dcs" // DCS Customizations
@@ -125,7 +125,7 @@ func NormalRoutes() *web.Route {
 	r.Mount("/", WebRoutes())
 	r.Mount("/api/v1", apiv1.Routes())
 	r.Mount("/api/internal", private.Routes())
-	r.Mount("/api/catalog/v4", apicatalogv4.Routes())
+	catalog.NormalRoutes(r)
 	return r
 }
 

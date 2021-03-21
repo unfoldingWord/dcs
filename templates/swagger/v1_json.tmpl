@@ -671,7 +671,7 @@
         ],
         "responses": {
           "200": {
-            "$ref": "#/responses/CatalogSearchResultsV4"
+            "$ref": "#/responses/CatalogSearchResultsV5"
           },
           "422": {
             "$ref": "#/responses/validationError"
@@ -687,34 +687,19 @@
         "tags": [
           "catalog"
         ],
-        "summary": "Catalog entry",
+        "summary": "Catalog version endpoint list, including \"latest\" pointing to the latest version",
         "operationId": "catalogGetCatalogEntry",
         "parameters": [
           {
             "type": "string",
-            "description": "name of the owner",
-            "name": "owner",
-            "in": "path",
-            "required": true
-          },
-          {
-            "type": "string",
-            "description": "name of the repo",
-            "name": "repo",
-            "in": "path",
-            "required": true
-          },
-          {
-            "type": "string",
-            "description": "release tag or default branch",
-            "name": "tag",
-            "in": "path",
-            "required": true
+            "description": "version to list, all if empty",
+            "name": "version",
+            "in": "path"
           }
         ],
         "responses": {
           "200": {
-            "$ref": "#/responses/CatalogEntryV4"
+            "$ref": "#/responses/CatalogVersionList"
           },
           "422": {
             "$ref": "#/responses/validationError"
@@ -876,7 +861,7 @@
         ],
         "responses": {
           "200": {
-            "$ref": "#/responses/CatalogSearchResultsV4"
+            "$ref": "#/responses/CatalogSearchResultsV5"
           },
           "422": {
             "$ref": "#/responses/validationError"
@@ -996,7 +981,7 @@
         ],
         "responses": {
           "200": {
-            "$ref": "#/responses/CatalogSearchResultsV4"
+            "$ref": "#/responses/CatalogSearchResultsV5"
           },
           "422": {
             "$ref": "#/responses/validationError"
@@ -12397,7 +12382,7 @@
       "x-go-package": "code.gitea.io/gitea/modules/structs"
     },
     "CatalogSearchResultsV4": {
-      "description": "CatalogSearchResultsV4 results of a successful search",
+      "description": "CatalogSearchResultsV4 results of a successful search for V4",
       "type": "object",
       "properties": {
         "data": {
@@ -17059,6 +17044,15 @@
       "description": "CatalogSearchResultsV4",
       "schema": {
         "$ref": "#/definitions/CatalogSearchResultsV4"
+      }
+    },
+    "CatalogVersionList": {
+      "description": "CatalogVersionList",
+      "schema": {
+        "type": "object",
+        "additionalProperties": {
+          "type": "object"
+        }
       }
     },
     "CombinedStatus": {
