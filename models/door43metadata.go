@@ -36,14 +36,15 @@ type Door43Metadata struct {
 func (dm *Door43Metadata) loadAttributes(e Engine) error {
 	var err error
 	if dm.Repo == nil {
-		dm.Repo, err = GetRepositoryByID(dm.RepoID)
-		if err != nil {
+		if dm.Repo, err = GetRepositoryByID(dm.RepoID); err != nil {
+			return err
+		}
+		if err := dm.Repo.GetOwner(); err != nil {
 			return err
 		}
 	}
 	if dm.Release == nil && dm.ReleaseID > 0 {
-		dm.Release, err = GetReleaseByID(dm.ReleaseID)
-		if err != nil {
+		if dm.Release, err = GetReleaseByID(dm.ReleaseID); err != nil {
 			return err
 		}
 		dm.Release.Door43Metadata = dm
