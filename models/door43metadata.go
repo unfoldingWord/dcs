@@ -10,12 +10,10 @@ import (
 
 	"code.gitea.io/gitea/modules/log"
 	"code.gitea.io/gitea/modules/setting"
-	"code.gitea.io/gitea/modules/structs"
 	"code.gitea.io/gitea/modules/timeutil"
 
 	"github.com/unknwon/com"
 	"xorm.io/builder"
-	"xorm.io/xorm"
 	"xorm.io/xorm/schemas"
 )
 
@@ -35,22 +33,53 @@ type Door43Metadata struct {
 	UpdatedUnix     timeutil.TimeStamp      `xorm:"INDEX updated"`
 }
 
-func (dm *Door43Metadata) loadAttributes(e Engine) error {
-	var err error
+func (dm *Door43Metadata) GetRepo() error {
+	return dm.getRepo(x)
+}
+
+func (dm *Door43Metadata) getRepo(e Engine) error {
 	if dm.Repo == nil {
-		dm.Repo, err = GetRepositoryByID(dm.RepoID)
-		if err != nil {
+		if repo, err := GetRepositoryByID(dm.RepoID); err != nil {
 			return err
+		} else {
+			dm.Repo = repo
+			if err := dm.Repo.getOwner(e); err != nil {
+				return nil
+			}
 		}
 	}
-	if dm.Release == nil && dm.ReleaseID > 0 {
-		dm.Release, err = GetReleaseByID(dm.ReleaseID)
-		if err != nil {
+	return nil
+}
+
+func (dm *Door43Metadata) GetRelease() error {
+	return dm.getRelease(x)
+}
+
+func (dm *Door43Metadata) getRelease(e Engine) error {
+	if dm.ReleaseID > 0 && dm.Release == nil {
+		if rel, err := GetReleaseByID(dm.ReleaseID); err != nil {
 			return err
+		} else {
+			dm.Release = rel
+			dm.Release.Door43Metadata = dm
+			if err := dm.getRepo(e); err != nil {
+				return err
+			}
+			dm.Release.Repo = dm.Repo
+			return dm.Release.loadAttributes(e)
 		}
-		dm.Release.Door43Metadata = dm
-		dm.Release.Repo = dm.Repo
-		return dm.Release.loadAttributes(e)
+	}
+	return nil
+}
+
+func (dm *Door43Metadata) loadAttributes(e Engine) error {
+	if err := dm.getRepo(e); err != nil {
+		return err
+	}
+	if dm.Release == nil && dm.ReleaseID > 0 {
+		if err := dm.getRelease(e); err !=nil {
+			return nil
+		}
 	}
 	return nil
 }
@@ -75,6 +104,26 @@ func (dm *Door43Metadata) APIURLV4() string {
 		ref = dm.Release.TagName
 	}
 	return fmt.Sprintf("%sapi/catalog/v4/entry/%s/%s",
+		setting.AppURL, dm.Repo.FullName(), ref)
+}
+
+// APIURLV5 the api url for a door43 metadata. door43 metadata must have attributes loaded
+func (dm *Door43Metadata) APIURLV5() string {
+	ref := dm.Repo.DefaultBranch
+	if dm.ReleaseID > 0 {
+		ref = dm.Release.TagName
+	}
+	return fmt.Sprintf("%sapi/catalog/v5/entry/%s/%s",
+		setting.AppURL, dm.Repo.FullName(), ref)
+}
+
+// APIURLLatest the api url for a door43 metadata. door43 metadata must have attributes loaded
+func (dm *Door43Metadata) APIURLLatest() string {
+	ref := dm.Repo.DefaultBranch
+	if dm.ReleaseID > 0 {
+		ref = dm.Release.TagName
+	}
+	return fmt.Sprintf("%sapi/catalog/latest/entry/%s/%s",
 		setting.AppURL, dm.Repo.FullName(), ref)
 }
 
@@ -108,47 +157,12 @@ func (dm *Door43Metadata) GetMetadataURL() string {
 
 // GetMetadataJSONURL gets the json representation of the contents of the manifest.yaml file
 func (dm *Door43Metadata) GetMetadataJSONURL() string {
-	return fmt.Sprintf("%s/metadata", dm.APIURLV4())
+	return fmt.Sprintf("%s/metadata", dm.APIURLLatest())
 }
 
 // GetMetadataAPIContentsURL gets the metadata API contents URL of the manifest.yaml file
 func (dm *Door43Metadata) GetMetadataAPIContentsURL() string {
 	return fmt.Sprintf("%s/contents/manifest.yaml?ref=%s", dm.Repo.APIURL(), dm.BranchOrTag)
-}
-
-// APIFormatV4 convert a Door43Metadata to structs.Door43MetadataV4
-func (dm *Door43Metadata) APIFormatV4() *structs.Door43MetadataV4 {
-	return dm.innerAPIFormatV4(x)
-}
-
-func (dm *Door43Metadata) innerAPIFormatV4(e *xorm.Engine) *structs.Door43MetadataV4 {
-	err := dm.loadAttributes(e)
-	if err != nil {
-		log.Error("loadAttributes: %v", err)
-		return nil
-	}
-	return &structs.Door43MetadataV4{
-		ID:                     dm.ID,
-		Self:                   dm.APIURLV4(),
-		Repo:                   dm.Repo.Name,
-		Owner:                  dm.Repo.OwnerName,
-		RepoURL:                dm.Repo.APIURL(),
-		ReleaseURL:             dm.GetReleaseURL(),
-		TarballURL:             dm.GetTarballURL(),
-		ZipballURL:             dm.GetZipballURL(),
-		Language:               (*dm.Metadata)["dublin_core"].(map[string]interface{})["language"].(map[string]interface{})["identifier"].(string),
-		Subject:                (*dm.Metadata)["dublin_core"].(map[string]interface{})["subject"].(string),
-		Title:                  (*dm.Metadata)["dublin_core"].(map[string]interface{})["title"].(string),
-		Books:                  dm.GetBooks(),
-		BranchOrTag:            dm.BranchOrTag,
-		Stage:                  dm.Stage.String(),
-		Released:               dm.ReleaseDateUnix.FormatDate(),
-		MetadataVersion:        dm.MetadataVersion,
-		MetadataURL:            dm.GetMetadataURL(),
-		MetadataJSONURL:        dm.GetMetadataJSONURL(),
-		MetadataAPIContentsURL: dm.GetMetadataAPIContentsURL(),
-		Ingredients:            (*dm.Metadata)["projects"].([]interface{}),
-	}
 }
 
 // GetBooks get the books of the resource

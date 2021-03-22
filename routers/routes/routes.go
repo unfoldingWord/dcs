@@ -31,7 +31,7 @@ import (
 	"code.gitea.io/gitea/modules/validation"
 	"code.gitea.io/gitea/routers"
 	"code.gitea.io/gitea/routers/admin"
-	apicatalogv4 "code.gitea.io/gitea/routers/api/catalog/v4" // DCS Customizations
+	"code.gitea.io/gitea/routers/api/catalog" // DCS Customizations
 	apiv1 "code.gitea.io/gitea/routers/api/v1"
 	"code.gitea.io/gitea/routers/dcs" // DCS Customizations
 	"code.gitea.io/gitea/routers/dev"
@@ -1165,7 +1165,7 @@ func RegisterRoutes(m *macaron.Macaron) {
 		m.Get("", dcs.Catalog)
 	}, ignSignIn)
 	m.Group("/api/catalog", func() {
-		apicatalogv4.RegisterRoutes(m)
+		catalog.RegisterRoutes(m)
 	}, handlers...)
 	/*** END DCS Customizations ***/
 

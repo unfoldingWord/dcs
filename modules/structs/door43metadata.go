@@ -28,8 +28,39 @@ type Door43MetadataV4 struct {
 	Ingredients            []interface{} `json:"ingredients,omitempty"`
 }
 
-// CatalogSearchResultsV4 results of a successful search
+// Door43MetadataV5 represents a repository's metadata of a tag or default branch for V5
+type Door43MetadataV5 struct {
+	ID                     int64         `json:"id"`
+	Self                   string        `json:"url"`
+	Name									 string        `json:"name"`
+	Owner			             string        `json:"owner"`
+	FullName 							 string			   `json:"full_name"`
+	Repo                   *Repository   `json:"repo"`
+	Release								 *Release			 `json:"release"`
+	TarballURL             string        `json:"tarbar_url"`
+	ZipballURL             string        `json:"zipball_url"`
+	Language               string        `json:"language"`
+	Subject                string        `json:"subject"`
+	Title                  string        `json:"title"`
+	BranchOrTag            string        `json:"branch_or_tag_name"`
+	Stage                  string        `json:"stage"`
+	MetadataURL            string        `json:"metadata_url"`
+	MetadataJSONURL        string        `json:"metadata_json_url"`
+	MetadataAPIContentsURL string        `json:"metadata_api_contents_url"`
+	MetadataVersion        string        `json:"metadata_version"`
+	Released               string        `json:"released"`
+	Books                  []string      `json:"books"`
+	Ingredients            []interface{} `json:"ingredients,omitempty"`
+}
+
+// CatalogSearchResultsV4 results of a successful search for V4
 type CatalogSearchResultsV4 struct {
 	OK   bool                `json:"ok"`
 	Data []*Door43MetadataV4 `json:"data"`
+}
+
+// CatalogSearchResultsV5 results of a successful search for V5
+type CatalogSearchResultsV5 struct {
+	OK   bool                `json:"ok"`
+	Data []*Door43MetadataV5 `json:"data"`
 }
