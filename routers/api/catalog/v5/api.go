@@ -2,12 +2,12 @@
 // Use of this source code is governed by a MIT-style
 // license that can be found in the LICENSE file.
 
-// Package v4 Catalog API.
+// Package v5 Catalog API.
 //
 // This documentation describes the DCS Catalog API.
 //
 //     Schemes: http, https
-//     BasePath: /api/catalog/v4
+//     BasePath: /api/catalog/v5
 //     Version: 4.0.1
 //     License: MIT http://opensource.org/licenses/MIT
 //
@@ -61,7 +61,7 @@
 //          description: Must be used in combination with BasicAuth if two-factor authentication is enabled.
 //
 // swagger:meta
-package v4
+package v5
 
 import (
 	"net/http"
@@ -174,7 +174,7 @@ func repoAssignment() func(ctx *context.APIContext) {
 	}
 }
 
-// Routes registers all catalog v4 APIs routes to web application.
+// Routes registers all catalog v5 APIs routes to web application.
 func Routes() *web.Route {
 	var m = web.NewRoute()
 

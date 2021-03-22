@@ -7,7 +7,6 @@ package convert
 import (
 	"code.gitea.io/gitea/models"
 	"code.gitea.io/gitea/modules/log"
-	"code.gitea.io/gitea/modules/markup"
 	api "code.gitea.io/gitea/modules/structs"
 )
 
@@ -93,40 +92,7 @@ func innerToRepo(repo *models.Repository, mode models.AccessMode, isParent bool)
 
 	numReleases, _ := models.GetReleaseCountByRepoID(repo.ID, models.FindReleasesOptions{IncludeDrafts: false, IncludeTags: true})
 
-	/* DCS Customizations */
-	var catalog *api.Catalog
-	if latestReleaseMetadata, err := models.GetLatestCatalogMetadataByRepoID(repo.ID, false); err != nil && !models.IsErrDoor43MetadataNotExist(err) {
-		log.Error("GetLatestCatalogMetadataByRepoID: %v", err)
-	} else if latestReleaseMetadata != nil {
-		r := latestReleaseMetadata.Release
-		catalog = &api.Catalog{
-			Release: &api.Release{
-				ID:           r.ID,
-				TagName:      r.TagName,
-				Target:       r.Target,
-				Title:        r.Title,
-				Note:         r.Note,
-				URL:          r.APIURL(),
-				HTMLURL:      r.HTMLURL(),
-				TarURL:       r.TarURL(),
-				ZipURL:       r.ZipURL(),
-				IsDraft:      r.IsDraft,
-				IsPrerelease: r.IsPrerelease,
-				CreatedAt:    r.CreatedUnix.AsTime(),
-				PublishedAt:  r.CreatedUnix.AsTime(),
-				Publisher: &api.User{
-					ID:            r.Publisher.ID,
-					UserName:      r.Publisher.Name,
-					FullName:      markup.Sanitize(r.Publisher.FullName),
-					Email:         r.Publisher.GetEmail(),
-					AvatarURL:     r.Publisher.AvatarLink(),
-					Created:       r.Publisher.CreatedUnix.AsTime(),
-					RepoLanguages: r.Publisher.GetRepoLanguages(),
-				},
-			},
-		}
-	}
-
+	/*** DCS Customizations ***/
 	metadata, err := models.GetDoor43MetadataByRepoIDAndReleaseID(repo.ID, 0)
 	if err != nil && !models.IsErrDoor43MetadataNotExist(err) {
 		log.Error("GetDoor43MetadataByRepoIDAndReleaseID: %v", err)
@@ -147,7 +113,7 @@ func innerToRepo(repo *models.Repository, mode models.AccessMode, isParent bool)
 		books = metadata.GetBooks()
 		checkingLevel = (*metadata.Metadata)["checking"].(map[string]interface{})["checking_level"].(string)
 	}
-	/* END DCS Customizations */
+	/*** END DCS Customizations ***/
 
 	mirrorInterval := ""
 	if repo.IsMirror {
@@ -203,7 +169,6 @@ func innerToRepo(repo *models.Repository, mode models.AccessMode, isParent bool)
 		Subject:                   subject,
 		Books:                     books,
 		CheckingLevel:             checkingLevel,
-		Catalog:                   catalog,
 		Internal:                  !repo.IsPrivate && repo.Owner.Visibility == api.VisibleTypePrivate,
 		MirrorInterval:            mirrorInterval,
 	}
