@@ -92,7 +92,7 @@ func innerToRepo(repo *models.Repository, mode models.AccessMode, isParent bool)
 
 	numReleases, _ := models.GetReleaseCountByRepoID(repo.ID, models.FindReleasesOptions{IncludeDrafts: false, IncludeTags: true})
 
-	/* DCS Customizations */
+	/*** DCS Customizations ***/
 	metadata, err := models.GetDoor43MetadataByRepoIDAndReleaseID(repo.ID, 0)
 	if err != nil && !models.IsErrDoor43MetadataNotExist(err) {
 		log.Error("GetDoor43MetadataByRepoIDAndReleaseID: %v", err)
@@ -113,7 +113,7 @@ func innerToRepo(repo *models.Repository, mode models.AccessMode, isParent bool)
 		books = metadata.GetBooks()
 		checkingLevel = (*metadata.Metadata)["checking"].(map[string]interface{})["checking_level"].(string)
 	}
-	/* END DCS Customizations */
+	/*** END DCS Customizations ***/
 
 	mirrorInterval := ""
 	if repo.IsMirror {
