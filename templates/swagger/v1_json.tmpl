@@ -12371,16 +12371,6 @@
       },
       "x-go-package": "code.gitea.io/gitea/modules/structs"
     },
-    "Catalog": {
-      "description": "Catalog represents a repository release",
-      "type": "object",
-      "properties": {
-        "release": {
-          "$ref": "#/definitions/Release"
-        }
-      },
-      "x-go-package": "code.gitea.io/gitea/modules/structs"
-    },
     "CatalogSearchResultsV4": {
       "description": "CatalogSearchResultsV4 results of a successful search for V4",
       "type": "object",
@@ -16286,9 +16276,6 @@
             "type": "string"
           },
           "x-go-name": "Books"
-        },
-        "catalog": {
-          "$ref": "#/definitions/Catalog"
         },
         "checking_level": {
           "type": "string",
