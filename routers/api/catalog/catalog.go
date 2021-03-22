@@ -10,7 +10,7 @@ import (
 
 // ListCatalogEndpoints Lists all the Catalog Endpoints for all versions
 func ListCatalogVersionEndpoints(ctx *context.APIContext) {
-	// swagger:operation GET /catalog/entry/{owner}/{repo}/{tag} catalog catalogGetCatalogEntry
+	// swagger:operation GET /catalog catalog catalogListCatalogVersionEndpoints
 	// ---
 	// summary: Catalog version endpoint list, including "latest" pointing to the latest version
 	// produces:

@@ -569,109 +569,19 @@
         "tags": [
           "catalog"
         ],
-        "summary": "Catalog search",
-        "operationId": "catalogSearch",
+        "summary": "Catalog version endpoint list, including \"latest\" pointing to the latest version",
+        "operationId": "catalogListCatalogVersionEndpoints",
         "parameters": [
           {
             "type": "string",
-            "description": "keyword(s). Can use multiple `q=\u003ckeyword\u003e`s or commas for more than one keyword",
-            "name": "q",
-            "in": "query"
-          },
-          {
-            "type": "string",
-            "description": "search only for entries with the given owner name(s).",
-            "name": "owner",
-            "in": "query"
-          },
-          {
-            "type": "string",
-            "description": "search only for entries with the given repo name(s).",
-            "name": "repo",
-            "in": "query"
-          },
-          {
-            "type": "string",
-            "description": "search only for entries with the given release tag(s)",
-            "name": "tag",
-            "in": "query"
-          },
-          {
-            "type": "string",
-            "description": "search only for entries with the given language(s)",
-            "name": "lang",
-            "in": "query"
-          },
-          {
-            "type": "string",
-            "description": "specifies which release stage to be return of these stages: \"prod\" - return only the production releases (default); \"preprod\" - return the pre-production release if it exists instead of the production release; \"draft\" - return the draft release if it exists instead of pre-production or production release; \"latest\" -return the default branch (e.g. master) if it is a valid RC instead of the above",
-            "name": "stage",
-            "in": "query"
-          },
-          {
-            "type": "string",
-            "description": "search only for entries with the given subject(s). Must match the entire string (case insensitive)",
-            "name": "subject",
-            "in": "query"
-          },
-          {
-            "type": "string",
-            "description": "search only for entries with the given checking level(s). Can be 1, 2 or 3",
-            "name": "checkingLevel",
-            "in": "query"
-          },
-          {
-            "type": "string",
-            "description": "search only for entries with the given book(s) (project ids)",
-            "name": "book",
-            "in": "query"
-          },
-          {
-            "type": "boolean",
-            "description": "if true, all releases, not just the latest, are included. Default is false",
-            "name": "includeHistory",
-            "in": "query"
-          },
-          {
-            "type": "boolean",
-            "description": "if false, only subject and title are searched with query terms, if true all metadata values are searched. Default is true",
-            "name": "includeMetadata",
-            "in": "query"
-          },
-          {
-            "type": "boolean",
-            "description": "if true, a list of the projects in the resource and their file paths will be listed for each entry. Default is false",
-            "name": "showIngredients",
-            "in": "query"
-          },
-          {
-            "type": "string",
-            "description": "sort repos alphanumerically by attribute. Supported values are \"subject\", \"title\", \"tag\", \"released\", \"lang\", \"releases\", \"stars\", \"forks\". Default is by \"language\", \"subject\" and then \"tag\"",
-            "name": "sort",
-            "in": "query"
-          },
-          {
-            "type": "string",
-            "description": "sort order, either \"asc\" (ascending) or \"desc\" (descending). Default is \"asc\", ignored if \"sort\" is not specified.",
-            "name": "order",
-            "in": "query"
-          },
-          {
-            "type": "integer",
-            "description": "page number of results to return (1-based)",
-            "name": "page",
-            "in": "query"
-          },
-          {
-            "type": "integer",
-            "description": "page size of results, maximum page size is 50",
-            "name": "limit",
-            "in": "query"
+            "description": "version to list, all if empty",
+            "name": "version",
+            "in": "path"
           }
         ],
         "responses": {
           "200": {
-            "$ref": "#/responses/CatalogSearchResultsV5"
+            "$ref": "#/responses/CatalogVersionList"
           },
           "422": {
             "$ref": "#/responses/validationError"
@@ -687,19 +597,34 @@
         "tags": [
           "catalog"
         ],
-        "summary": "Catalog version endpoint list, including \"latest\" pointing to the latest version",
+        "summary": "Catalog entry",
         "operationId": "catalogGetCatalogEntry",
         "parameters": [
           {
             "type": "string",
-            "description": "version to list, all if empty",
-            "name": "version",
-            "in": "path"
+            "description": "name of the owner",
+            "name": "owner",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "description": "name of the repo",
+            "name": "repo",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "description": "release tag or default branch",
+            "name": "tag",
+            "in": "path",
+            "required": true
           }
         ],
         "responses": {
           "200": {
-            "$ref": "#/responses/CatalogVersionList"
+            "$ref": "#/responses/CatalogEntryV5"
           },
           "422": {
             "$ref": "#/responses/validationError"
