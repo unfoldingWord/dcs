@@ -65,24 +65,22 @@ func Door43MetadataListOfMap(dmMap map[int64]*Door43Metadata) Door43MetadataList
 	return Door43MetadataList(valuesDoor43Metadata(dmMap))
 }
 
+// LoadAttributes loads the attributes for the given Door43MetadataList
+func (dms Door43MetadataList) LoadAttributes() error {
+	return dms.loadAttributes(x)
+}
+
 func (dms Door43MetadataList) loadAttributes(e Engine) error {
 	if len(dms) == 0 {
 		return nil
 	}
-
 	var lastErr error
 	for _, dm := range dms {
 		if err := dm.loadAttributes(e); err != nil && lastErr == nil {
 			lastErr = err
 		}
 	}
-
 	return lastErr
-}
-
-// LoadAttributes loads the attributes for the given Door43MetadataList
-func (dms Door43MetadataList) LoadAttributes() error {
-	return dms.loadAttributes(x)
 }
 
 func valuesDoor43Metadata(m map[int64]*Door43Metadata) []*Door43Metadata {
