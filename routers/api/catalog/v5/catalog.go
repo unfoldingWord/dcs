@@ -446,9 +446,6 @@ func searchCatalog(ctx *context.APIContext) {
 		keywords = models.SplitAtCommaNotInString(query, false)
 	}
 	listOptions := utils.GetListOptions(ctx)
-	if ctx.Query("limit") == "" {
-		listOptions.PageSize = 0
-	}
 
 	opts := &models.SearchCatalogOptions{
 		ListOptions:     listOptions,

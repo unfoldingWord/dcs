@@ -51,12 +51,14 @@ func (r *Release) loadAttributes(e Engine) error {
 			return err
 		}
 	}
+	/*** DCS Customizations ***/
 	if r.Door43Metadata == nil {
 		r.Door43Metadata, err = GetDoor43MetadataByRepoIDAndReleaseID(r.RepoID, r.ID)
 		if err != nil && !IsErrDoor43MetadataNotExist(err) {
 			return err
 		}
 	}
+	/*** END DCS Customizations ***/
 	if r.Publisher == nil && r.PublisherID > 0 {
 		r.Publisher, err = getUserByID(e, r.PublisherID)
 		if err != nil {

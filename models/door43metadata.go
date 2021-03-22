@@ -33,23 +33,52 @@ type Door43Metadata struct {
 	UpdatedUnix     timeutil.TimeStamp      `xorm:"INDEX updated"`
 }
 
-func (dm *Door43Metadata) loadAttributes(e Engine) error {
-	var err error
+func (dm *Door43Metadata) GetRepo() error {
+	return dm.getRepo(x)
+}
+
+func (dm *Door43Metadata) getRepo(e Engine) error {
 	if dm.Repo == nil {
-		if dm.Repo, err = GetRepositoryByID(dm.RepoID); err != nil {
+		if repo, err := GetRepositoryByID(dm.RepoID); err != nil {
 			return err
-		}
-		if err := dm.Repo.GetOwner(); err != nil {
-			return err
+		} else {
+			dm.Repo = repo
 		}
 	}
-	if dm.Release == nil && dm.ReleaseID > 0 {
-		if dm.Release, err = GetReleaseByID(dm.ReleaseID); err != nil {
+	return nil
+}
+
+func (dm *Door43Metadata) GetRelease() error {
+	return dm.getRelease(x)
+}
+
+func (dm *Door43Metadata) getRelease(e Engine) error {
+	if dm.Repo == nil {
+		if rel, err := GetReleaseByID(dm.ReleaseID); err != nil {
 			return err
+		} else {
+			dm.Release = rel
 		}
-		dm.Release.Door43Metadata = dm
-		dm.Release.Repo = dm.Repo
-		return dm.Release.loadAttributes(e)
+	}
+	dm.Release.Door43Metadata = dm
+	if err := dm.getRepo(e); err != nil {
+		return err
+	}
+	dm.Release.Repo = dm.Repo
+	return dm.Release.loadAttributes(e)
+}
+
+func (dm *Door43Metadata) loadAttributes(e Engine) error {
+	if err := dm.getRepo(e); err != nil {
+		return err
+	}
+	if err := dm.Repo.getOwner(e); err != nil {
+		return nil
+	}
+	if dm.Release == nil && dm.ReleaseID > 0 {
+		if err := dm.getRelease(e); err !=nil {
+			return nil
+		}
 	}
 	return nil
 }
