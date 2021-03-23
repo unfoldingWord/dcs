@@ -77,7 +77,7 @@ func (dm *Door43Metadata) loadAttributes(e Engine) error {
 		return err
 	}
 	if dm.Release == nil && dm.ReleaseID > 0 {
-		if err := dm.getRelease(e); err !=nil {
+		if err := dm.getRelease(e); err != nil {
 			return nil
 		}
 	}
@@ -145,7 +145,12 @@ func (dm *Door43Metadata) GetZipballURL() string {
 // GetReleaseURL get the URL the release API
 func (dm *Door43Metadata) GetReleaseURL() string {
 	if dm.ReleaseID > 0 {
-		return dm.Release.APIURL()
+		if dm.Release != nil {
+			return dm.Release.APIURL()
+		}
+		if err := dm.GetRepo(); err == nil {
+			return fmt.Sprintf("%sapi/v1/repos/%s/releases/%d", setting.AppURL, dm.Repo.FullName(), dm.ReleaseID)
+		}
 	}
 	return ""
 }
@@ -355,6 +360,26 @@ func getDoor43MetadataByRepoIDAndReleaseID(e Engine, repoID, releaseID int64) (*
 	}
 	if !has {
 		return nil, ErrDoor43MetadataNotExist{0, repoID, releaseID}
+	}
+	return dm, err
+}
+
+// GetDoor43MetadataByRepoIDAndStage returns the metadata of a given repo ID and stage.
+func GetDoor43MetadataByRepoIDAndStage(repoID int64, stage Stage) (*Door43Metadata, error) {
+	return getDoor43MetadataByRepoIDAndStage(x, repoID, stage)
+}
+
+func getDoor43MetadataByRepoIDAndStage(e Engine, repoID int64, stage Stage) (*Door43Metadata, error) {
+	var cond = builder.NewCond().
+		And(builder.Eq{"repo_id": repoID}).
+		And(builder.Eq{"stage": stage})
+	e = e.Where(cond)
+	e.Desc("created_unix")
+
+	dm := &Door43Metadata{}
+	found, err := e.Get(dm)
+	if err != nil || !found {
+		return nil, err
 	}
 	return dm, err
 }
