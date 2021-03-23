@@ -7,7 +7,7 @@
 // This documentation describes the DCS Catalog API.
 //
 //     Schemes: http, https
-//     BasePath: /api/catalog/v5
+//     BasePath: /api/catalog
 //     Version: 4.0.1
 //     License: MIT http://opensource.org/licenses/MIT
 //
@@ -72,9 +72,9 @@ import (
 	"code.gitea.io/gitea/modules/log"
 	"code.gitea.io/gitea/modules/setting"
 	"code.gitea.io/gitea/modules/web"
+	_ "code.gitea.io/gitea/routers/api/catalog/swagger" // for swagger generation
 	"code.gitea.io/gitea/routers/api/catalog/v4"
 	"code.gitea.io/gitea/routers/api/catalog/v5"
-	_ "code.gitea.io/gitea/routers/api/v1/swagger" // for swagger generation
 
 	"gitea.com/go-chi/session"
 	"github.com/go-chi/cors"
@@ -86,8 +86,9 @@ var Versions = []string{
 }
 var LatestVersion = Versions[len(Versions)-1]
 
-func NormalRoutes(r *web.Route) {
-	r.Mount("/api/catalog", Routes())
+func AllRoutes(r *web.Route) {
+	r.Mount("/api/catalog/latest", LatestRoutes())
+	r.Mount("/api/catalog/misc", MiscRoutes())
 	r.Mount("/api/catalog/v4", v4.Routes())
 	r.Mount("/api/catalog/v5", v5.Routes())
 }
@@ -122,8 +123,8 @@ func sudo() func(ctx *context.APIContext) {
 	}
 }
 
-// Routes registers general catalog APIs routes to web application.
-func Routes() *web.Route {
+// LatestRoutes registers latest redirects to latest version of the catalog API.
+func LatestRoutes() *web.Route {
 	var m = web.NewRoute()
 
 	m.Use(session.Sessioner(session.Options{
@@ -152,9 +153,7 @@ func Routes() *web.Route {
 		SignInRequired: setting.Service.RequireSignInView,
 	}))
 
-	m.Get("", ListCatalogVersionEndpoints)
-
-	m.Group("/latest", func() {
+	m.Group("", func() {
 		m.Get("", func(ctx *context.APIContext) {
 			ctx.Redirect(fmt.Sprintf("/api/catalog/%s", LatestVersion))
 		})
@@ -162,6 +161,41 @@ func Routes() *web.Route {
 			ctx.Redirect(fmt.Sprintf("/api/catalog/%s/%s", LatestVersion, ctx.Params("*")))
 		})
 	}, sudo())
+
+	return m
+}
+
+// MiscRoutes registers catalog API endpoints that are relevant for all versions
+func MiscRoutes() *web.Route {
+	var m = web.NewRoute()
+
+	m.Use(session.Sessioner(session.Options{
+		Provider:       setting.SessionConfig.Provider,
+		ProviderConfig: setting.SessionConfig.ProviderConfig,
+		CookieName:     setting.SessionConfig.CookieName,
+		CookiePath:     setting.SessionConfig.CookiePath,
+		Gclifetime:     setting.SessionConfig.Gclifetime,
+		Maxlifetime:    setting.SessionConfig.Maxlifetime,
+		Secure:         setting.SessionConfig.Secure,
+		Domain:         setting.SessionConfig.Domain,
+	}))
+	m.Use(securityHeaders())
+	if setting.CORSConfig.Enabled {
+		m.Use(cors.Handler(cors.Options{
+			//Scheme:           setting.CORSConfig.Scheme, // FIXME: the cors middleware needs scheme option
+			AllowedOrigins: setting.CORSConfig.AllowDomain,
+			//setting.CORSConfig.AllowSubdomain // FIXME: the cors middleware needs allowSubdomain option
+			AllowedMethods:   setting.CORSConfig.Methods,
+			AllowCredentials: setting.CORSConfig.AllowCredentials,
+			MaxAge:           int(setting.CORSConfig.MaxAge.Seconds()),
+		}))
+	}
+	m.Use(context.APIContexter())
+	m.Use(context.ToggleAPI(&context.ToggleOptions{
+		SignInRequired: setting.Service.RequireSignInView,
+	}))
+
+	m.Get("versions", ListCatalogVersionEndpoints)
 
 	return m
 }

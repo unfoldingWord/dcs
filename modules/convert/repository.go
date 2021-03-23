@@ -93,6 +93,58 @@ func innerToRepo(repo *models.Repository, mode models.AccessMode, isParent bool)
 	numReleases, _ := models.GetReleaseCountByRepoID(repo.ID, models.FindReleasesOptions{IncludeDrafts: false, IncludeTags: true})
 
 	/*** DCS Customizations ***/
+	catalog := &api.CatalogMetadata{}
+	prod, err := models.GetDoor43MetadataByRepoIDAndStage(repo.ID, models.StageProd)
+	if err != nil {
+		log.Error("GetDoor43MetadataByRepoIDAndStage: %v", err)
+	}
+	preprod, err := models.GetDoor43MetadataByRepoIDAndStage(repo.ID, models.StagePreProd)
+	if err != nil {
+		log.Error("GetDoor43MetadataByRepoIDAndStage: %v", err)
+	}
+	draft, err := models.GetDoor43MetadataByRepoIDAndStage(repo.ID, models.StageDraft)
+	if err != nil {
+		log.Error("GetDoor43MetadataByRepoIDAndStage: %v", err)
+	}
+	latest, err := models.GetDoor43MetadataByRepoIDAndStage(repo.ID, models.StageLatest)
+	if err != nil {
+		log.Error("GetDoor43MetadataByRepoIDAndStage: %v", err)
+	}
+	if draft != nil && ((prod != nil && prod.CreatedUnix >= draft.CreatedUnix) ||
+		(preprod != nil && preprod.CreatedUnix >= draft.CreatedUnix)) {
+		draft = nil
+	}
+	if prod != nil && preprod != nil && prod.CreatedUnix >= preprod.CreatedUnix {
+		preprod = nil
+	}
+	if prod != nil {
+		url := prod.GetReleaseURL()
+		catalog.Production = &api.CatalogStageMetadata{
+			Tag:        prod.BranchOrTag,
+			ReleaseURL: &url,
+		}
+	}
+	if preprod != nil {
+		url := preprod.GetReleaseURL()
+		catalog.PreProduction = &api.CatalogStageMetadata{
+			Tag:        preprod.BranchOrTag,
+			ReleaseURL: &url,
+		}
+	}
+	if draft != nil {
+		url := draft.GetReleaseURL()
+		catalog.Draft = &api.CatalogStageMetadata{
+			Tag:        draft.BranchOrTag,
+			ReleaseURL: &url,
+		}
+	}
+	if latest != nil {
+		catalog.Latest = &api.CatalogStageMetadata{
+			Tag:        latest.BranchOrTag,
+			ReleaseURL: nil,
+		}
+	}
+
 	metadata, err := models.GetDoor43MetadataByRepoIDAndReleaseID(repo.ID, 0)
 	if err != nil && !models.IsErrDoor43MetadataNotExist(err) {
 		log.Error("GetDoor43MetadataByRepoIDAndReleaseID: %v", err)
@@ -169,6 +221,7 @@ func innerToRepo(repo *models.Repository, mode models.AccessMode, isParent bool)
 		Subject:                   subject,
 		Books:                     books,
 		CheckingLevel:             checkingLevel,
+		Catalog:                   catalog,
 		Internal:                  !repo.IsPrivate && repo.Owner.Visibility == api.VisibleTypePrivate,
 		MirrorInterval:            mirrorInterval,
 	}
