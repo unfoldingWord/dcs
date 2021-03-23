@@ -96,7 +96,6 @@ type Repository struct {
 	Books                     []string         `json:"books"`
 	Title                     string           `json:"title"`
 	CheckingLevel             string           `json:"checking_level"`
-	Catalog                   *Catalog         `json:"catalog"`
 }
 
 // CreateRepoOption options when creating repository

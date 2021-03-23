@@ -410,15 +410,6 @@ func (repo *Repository) innerAPIFormat(e Engine, mode AccessMode, isParent bool)
 	numReleases, _ := GetReleaseCountByRepoID(repo.ID, FindReleasesOptions{IncludeDrafts: false, IncludeTags: true})
 
 	/* DCS Customizations */
-	var catalog *api.Catalog
-	if latestReleaseMetadata, err := getLatestCatalogMetadataByRepoID(e, repo.ID, false); err != nil && !IsErrDoor43MetadataNotExist(err) {
-		log.Error("getLatestCatalogMetadataByRepoID: %v", err)
-	} else if latestReleaseMetadata != nil {
-		catalog = &api.Catalog{
-			Release: latestReleaseMetadata.Release.APIFormat(),
-		}
-	}
-
 	metadata, err := getDoor43MetadataByRepoIDAndReleaseID(e, repo.ID, 0)
 	if err != nil && !IsErrDoor43MetadataNotExist(err) {
 		log.Error("getDoor43MetadataByRepoIDAndReleaseID: %v", err)
@@ -489,7 +480,6 @@ func (repo *Repository) innerAPIFormat(e Engine, mode AccessMode, isParent bool)
 		Subject:                   subject,
 		Books:                     books,
 		CheckingLevel:             checkingLevel,
-		Catalog:                   catalog,
 	}
 }
 

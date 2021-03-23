@@ -1,4 +1,4 @@
-// Copyright 2020 unfoldingWord. All rights reserved.
+// Copyright 2021 unfoldingWord. All rights reserved.
 // Use of this source code is governed by a MIT-style
 // license that can be found in the LICENSE file.
 
@@ -55,7 +55,7 @@
 //          description: Sudo API request as the user provided as the key. Admin privileges are required.
 //
 // swagger:meta
-package v4
+package v5
 
 import (
 	"net/http"
@@ -164,7 +164,7 @@ func repoAssignment() macaron.Handler {
 // RegisterRoutes registers all Catalog v4 APIs routes to web application.
 // FIXME: custom form error response
 func RegisterRoutes(m *macaron.Macaron) {
-	m.Group("/v4", func() {
+	m.Group("/v5", func() {
 		// Miscellaneous
 		if setting.API.EnableSwagger {
 			m.Get("/swagger", misc.Swagger)

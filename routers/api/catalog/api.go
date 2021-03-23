@@ -1,4 +1,4 @@
-// Copyright 2020 unfoldingWord. All rights reserved.
+// Copyright 2021 unfoldingWord. All rights reserved.
 // Use of this source code is governed by a MIT-style
 // license that can be found in the LICENSE file.
 
@@ -55,21 +55,28 @@
 //          description: Sudo API request as the user provided as the key. Admin privileges are required.
 //
 // swagger:meta
-package v4
+package catalog
 
 import (
-	"net/http"
-	"strings"
-
 	"code.gitea.io/gitea/models"
 	"code.gitea.io/gitea/modules/context"
 	"code.gitea.io/gitea/modules/log"
 	"code.gitea.io/gitea/modules/setting"
+	v4 "code.gitea.io/gitea/routers/api/catalog/v4"
+	v5 "code.gitea.io/gitea/routers/api/catalog/v5"
 	"code.gitea.io/gitea/routers/api/v1/misc"
 	_ "code.gitea.io/gitea/routers/api/v1/swagger" // for swagger generation
+	"fmt"
+	"net/http"
 
 	"gitea.com/macaron/macaron"
 )
+
+var Versions = []string{
+	"v4",
+	"v5",
+}
+var LatestVersion = Versions[len(Versions)-1]
 
 func sudo() macaron.Handler {
 	return func(ctx *context.APIContext) {
@@ -101,92 +108,27 @@ func sudo() macaron.Handler {
 	}
 }
 
-func repoAssignment() macaron.Handler {
-	return func(ctx *context.APIContext) {
-		userName := ctx.Params(":username")
-		repoName := ctx.Params(":reponame")
-
-		var (
-			owner *models.User
-			err   error
-		)
-
-		// Check if the user is the same as the repository owner.
-		if ctx.IsSigned && ctx.User.LowerName == strings.ToLower(userName) {
-			owner = ctx.User
-		} else {
-			owner, err = models.GetUserByName(userName)
-			if err != nil {
-				if models.IsErrUserNotExist(err) {
-					ctx.NotFound()
-				} else {
-					ctx.Error(http.StatusInternalServerError, "GetUserByName", err)
-				}
-				return
-			}
-		}
-		ctx.Repo.Owner = owner
-
-		// Get repository.
-		repo, err := models.GetRepositoryByName(owner.ID, repoName)
-		if err != nil {
-			if models.IsErrRepoNotExist(err) {
-				redirectRepoID, err := models.LookupRepoRedirect(owner.ID, repoName)
-				if err == nil {
-					context.RedirectToRepo(ctx.Context, redirectRepoID)
-				} else if models.IsErrRepoRedirectNotExist(err) {
-					ctx.NotFound()
-				} else {
-					ctx.Error(http.StatusInternalServerError, "LookupRepoRedirect", err)
-				}
-			} else {
-				ctx.Error(http.StatusInternalServerError, "GetRepositoryByName", err)
-			}
-			return
-		}
-
-		repo.Owner = owner
-		ctx.Repo.Repository = repo
-
-		ctx.Repo.Permission, err = models.GetUserRepoPermission(repo, ctx.User)
-		if err != nil {
-			ctx.Error(http.StatusInternalServerError, "GetUserRepoPermission", err)
-			return
-		}
-
-		if !ctx.Repo.HasAccess() {
-			ctx.NotFound()
-			return
-		}
-	}
-}
-
 // RegisterRoutes registers all Catalog v4 APIs routes to web application.
 // FIXME: custom form error response
 func RegisterRoutes(m *macaron.Macaron) {
-	m.Group("/v4", func() {
-		// Miscellaneous
-		if setting.API.EnableSwagger {
-			m.Get("/swagger", misc.Swagger)
-		}
-		m.Get("/version", misc.Version)
-		m.Get("/signing-key.gpg", misc.SigningKey)
+	if setting.API.EnableSwagger {
+		m.Get("/swagger", misc.Swagger) // Render catalog by default
+	}
 
-		m.Get("", Search)
+	m.Group("", func() {
+		m.Get("", ListCatalogVersionEndpoints)
 
-		m.Group("/search", func() {
-			m.Get("", Search)
-			m.Group("/:username", func() {
-				m.Get("", SearchOwner)
-				m.Group("/:reponame", func() {
-					m.Get("", SearchRepo)
-				}, repoAssignment())
+		m.Group("/latest", func() {
+			m.Get("", func(ctx *context.APIContext) {
+				ctx.Redirect(fmt.Sprintf("/api/catalog/%s", LatestVersion))
+			})
+			m.Get("/*", func(ctx *context.APIContext) {
+				ctx.Redirect(fmt.Sprintf("/api/catalog/%s/%s", LatestVersion, ctx.Params("*")))
 			})
 		})
-		m.Group("/entry/:username/:reponame/:tag", func() {
-			m.Get("", GetCatalogEntry)
-			m.Get("/metadata", GetCatalogMetadata)
-		}, repoAssignment())
+
+		v4.RegisterRoutes(m)
+		v5.RegisterRoutes(m)
 	}, securityHeaders(), context.APIContexter(), sudo())
 }
 
