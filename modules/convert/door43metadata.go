@@ -44,7 +44,7 @@ func ToDoor43MetadataV4(dm *models.Door43Metadata, mode models.AccessMode) *api.
 // ToDoor43MetadataV5 converts a Door43Metadata to api.Door43Metadata for Catalog V5
 func ToDoor43MetadataV5(dm *models.Door43Metadata, mode models.AccessMode) *api.Door43MetadataV5 {
 	if err := dm.LoadAttributes(); err != nil {
-			return nil
+		return nil
 	}
 
 	if err := dm.Repo.GetOwner(); err != nil {
@@ -59,11 +59,11 @@ func ToDoor43MetadataV5(dm *models.Door43Metadata, mode models.AccessMode) *api.
 	return &api.Door43MetadataV5{
 		ID:                     dm.ID,
 		Self:                   dm.APIURLV5(),
-		Name:										dm.Repo.Name,
-		Owner:              		dm.Repo.OwnerName,
-		FullName:								dm.Repo.FullName(),
+		Name:                   dm.Repo.Name,
+		Owner:                  dm.Repo.OwnerName,
+		FullName:               dm.Repo.FullName(),
 		Repo:                   innerToRepo(dm.Repo, mode, true),
-		Release:								release,
+		Release:                release,
 		TarballURL:             dm.GetTarballURL(),
 		ZipballURL:             dm.GetZipballURL(),
 		Language:               (*dm.Metadata)["dublin_core"].(map[string]interface{})["language"].(map[string]interface{})["identifier"].(string),
