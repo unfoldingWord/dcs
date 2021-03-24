@@ -90,6 +90,6 @@ type CatalogStage struct {
 	Tag        string  `json:"branch_or_tag_name"`
 	ReleaseURL *string `json:"release_url"`
 	Released   string  `json:"released"`
-	ZipballURl string  `json:"zipball_url"`
+	ZipballURL string  `json:"zipball_url"`
 	TarballURL string  `json:"tarball_url"`
 }

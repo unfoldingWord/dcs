@@ -125,7 +125,7 @@ func innerToRepo(repo *models.Repository, mode models.AccessMode, isParent bool)
 			Tag:        prod.BranchOrTag,
 			ReleaseURL: &url,
 			Released:   prod.GetReleaseDateTime(),
-			ZipballURl: prod.GetZipballURL(),
+			ZipballURL: prod.GetZipballURL(),
 			TarballURL: prod.GetTarballURL(),
 		}
 	}
@@ -136,7 +136,7 @@ func innerToRepo(repo *models.Repository, mode models.AccessMode, isParent bool)
 			Tag:        preprod.BranchOrTag,
 			ReleaseURL: &url,
 			Released:   preprod.GetReleaseDateTime(),
-			ZipballURl: preprod.GetZipballURL(),
+			ZipballURL: preprod.GetZipballURL(),
 			TarballURL: preprod.GetTarballURL(),
 		}
 	}
@@ -147,7 +147,7 @@ func innerToRepo(repo *models.Repository, mode models.AccessMode, isParent bool)
 			Tag:        draft.BranchOrTag,
 			ReleaseURL: &url,
 			Released:   draft.GetReleaseDateTime(),
-			ZipballURl: draft.GetZipballURL(),
+			ZipballURL: draft.GetZipballURL(),
 			TarballURL: draft.GetTarballURL(),
 		}
 	}
@@ -157,7 +157,7 @@ func innerToRepo(repo *models.Repository, mode models.AccessMode, isParent bool)
 			Tag:        latest.BranchOrTag,
 			ReleaseURL: nil,
 			Released:   latest.GetReleaseDateTime(),
-			ZipballURl: latest.GetZipballURL(),
+			ZipballURL: latest.GetZipballURL(),
 			TarballURL: latest.GetTarballURL(),
 		}
 	}
