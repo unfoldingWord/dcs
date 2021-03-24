@@ -386,7 +386,7 @@ func GetCatalogMetadata(ctx *context.APIContext) {
 	//   required: true
 	// responses:
 	//   "200":
-	//     "$ref": "#/responses/CatalogStages"
+	//     "$ref": "#/responses/CatalogMetadata"
 	//   "422":
 	//     "$ref": "#/responses/validationError"
 
