@@ -16,3 +16,13 @@ const tplSwaggerV1Json base.TplName = "swagger/v1_json"
 func SwaggerV1Json(ctx *context.Context) {
 	ctx.HTML(200, tplSwaggerV1Json)
 }
+
+/*** DCS Customizations ***/
+const tplSwaggerCatalogJSON base.TplName = "swagger/catalog/catalog_json"
+
+// SwaggerCatalogJSON render swagger catalog v5 json
+func SwaggerCatalogJSON(ctx *context.Context) {
+	ctx.HTML(200, tplSwaggerCatalogJSON)
+}
+
+/*** EMD DCS Customizations ***/
