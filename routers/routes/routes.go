@@ -1120,6 +1120,9 @@ func RegisterRoutes(m *macaron.Macaron) {
 
 	if setting.API.EnableSwagger {
 		m.Get("/swagger.v1.json", templates.JSONRenderer(), routers.SwaggerV1Json)
+		/*** DCS Customizations ***/
+		m.Get("/swagger.catalog.json", templates.JSONRenderer(), routers.SwaggerCatalogJSON)
+		/*** END DCS Customizations ***/
 	}
 
 	var handlers []macaron.Handler

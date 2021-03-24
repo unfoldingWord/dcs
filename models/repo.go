@@ -410,6 +410,75 @@ func (repo *Repository) innerAPIFormat(e Engine, mode AccessMode, isParent bool)
 	numReleases, _ := GetReleaseCountByRepoID(repo.ID, FindReleasesOptions{IncludeDrafts: false, IncludeTags: true})
 
 	/* DCS Customizations */
+	catalog := &api.CatalogStages{}
+	prod, err := GetDoor43MetadataByRepoIDAndStage(repo.ID, StageProd)
+	if err != nil {
+		log.Error("GetDoor43MetadataByRepoIDAndStage: %v", err)
+	}
+	preprod, err := GetDoor43MetadataByRepoIDAndStage(repo.ID, StagePreProd)
+	if err != nil {
+		log.Error("GetDoor43MetadataByRepoIDAndStage: %v", err)
+	}
+	draft, err := GetDoor43MetadataByRepoIDAndStage(repo.ID, StageDraft)
+	if err != nil {
+		log.Error("GetDoor43MetadataByRepoIDAndStage: %v", err)
+	}
+	latest, err := GetDoor43MetadataByRepoIDAndStage(repo.ID, StageLatest)
+	if err != nil {
+		log.Error("GetDoor43MetadataByRepoIDAndStage: %v", err)
+	}
+
+	if draft != nil && ((prod != nil && prod.ReleaseDateUnix >= draft.ReleaseDateUnix) ||
+		(preprod != nil && preprod.ReleaseDateUnix >= draft.ReleaseDateUnix)) {
+		draft = nil
+	}
+	if prod != nil && preprod != nil && prod.ReleaseDateUnix >= preprod.ReleaseDateUnix {
+		preprod = nil
+	}
+	if prod != nil {
+		prod.Repo = repo
+		url := prod.GetReleaseURL()
+		catalog.Production = &api.CatalogStage{
+			Tag:        prod.BranchOrTag,
+			ReleaseURL: &url,
+			Released:   prod.GetReleaseDateTime(),
+			ZipballURL: prod.GetZipballURL(),
+			TarballURL: prod.GetTarballURL(),
+		}
+	}
+	if preprod != nil {
+		preprod.Repo = repo
+		url := preprod.GetReleaseURL()
+		catalog.PreProduction = &api.CatalogStage{
+			Tag:        preprod.BranchOrTag,
+			ReleaseURL: &url,
+			Released:   preprod.GetReleaseDateTime(),
+			ZipballURL: preprod.GetZipballURL(),
+			TarballURL: preprod.GetTarballURL(),
+		}
+	}
+	if draft != nil {
+		draft.Repo = repo
+		url := draft.GetReleaseURL()
+		catalog.Draft = &api.CatalogStage{
+			Tag:        draft.BranchOrTag,
+			ReleaseURL: &url,
+			Released:   draft.GetReleaseDateTime(),
+			ZipballURL: draft.GetZipballURL(),
+			TarballURL: draft.GetTarballURL(),
+		}
+	}
+	if latest != nil {
+		latest.Repo = repo
+		catalog.Latest = &api.CatalogStage{
+			Tag:        latest.BranchOrTag,
+			ReleaseURL: nil,
+			Released:   latest.GetReleaseDateTime(),
+			ZipballURL: latest.GetZipballURL(),
+			TarballURL: latest.GetTarballURL(),
+		}
+	}
+
 	metadata, err := getDoor43MetadataByRepoIDAndReleaseID(e, repo.ID, 0)
 	if err != nil && !IsErrDoor43MetadataNotExist(err) {
 		log.Error("getDoor43MetadataByRepoIDAndReleaseID: %v", err)
@@ -480,6 +549,7 @@ func (repo *Repository) innerAPIFormat(e Engine, mode AccessMode, isParent bool)
 		Subject:                   subject,
 		Books:                     books,
 		CheckingLevel:             checkingLevel,
+		Catalog:                   catalog,
 	}
 }
 

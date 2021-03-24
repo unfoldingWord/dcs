@@ -32,11 +32,11 @@ type Door43MetadataV4 struct {
 type Door43MetadataV5 struct {
 	ID                     int64         `json:"id"`
 	Self                   string        `json:"url"`
-	Name									 string        `json:"name"`
-	Owner			             string        `json:"owner"`
-	FullName 							 string			   `json:"full_name"`
+	Name                   string        `json:"name"`
+	Owner                  string        `json:"owner"`
+	FullName               string        `json:"full_name"`
 	Repo                   *Repository   `json:"repo"`
-	Release								 *Release			 `json:"release"`
+	Release                *Release      `json:"release"`
 	TarballURL             string        `json:"tarbar_url"`
 	ZipballURL             string        `json:"zipball_url"`
 	Language               string        `json:"language"`
@@ -64,3 +64,33 @@ type CatalogSearchResultsV5 struct {
 	OK   bool                `json:"ok"`
 	Data []*Door43MetadataV5 `json:"data"`
 }
+
+// CatalogVersionEndpoints Info on the versions of the catalog
+type CatalogVersionEndpoints struct {
+	Latest   string            `json:"latest"`
+	Versions map[string]string `json:"versions"`
+}
+
+// CatalogVersionEndpointsResponse response with the endpoints for all versions of the catalog
+type CatalogVersionEndpointsResponse struct {
+	OK   bool                       `json:"ok"`
+	Data []*CatalogVersionEndpoints `json:"data"`
+}
+
+// CatalogStages a repo's catalog stages
+type CatalogStages struct {
+	Production    *CatalogStage `json:"prod"`
+	PreProduction *CatalogStage `json:"preprod"`
+	Draft         *CatalogStage `json:"draft"`
+	Latest        *CatalogStage `json:"latest"`
+}
+
+// CatalogStage a repo's catalog stage metadata
+type CatalogStage struct {
+	Tag        string  `json:"branch_or_tag_name"`
+	ReleaseURL *string `json:"release_url"`
+	Released   string  `json:"released"`
+	ZipballURL string  `json:"zipball_url"`
+	TarballURL string  `json:"tarball_url"`
+}
+

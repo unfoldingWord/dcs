@@ -1,3 +1,7 @@
+// Copyright 2021 unfoldingWord. All rights reserved.
+// Use of this source code is governed by a MIT-style
+// license that can be found in the LICENSE file.
+
 package catalog
 
 import (
@@ -6,39 +10,34 @@ import (
 
 	"code.gitea.io/gitea/modules/context"
 	"code.gitea.io/gitea/modules/setting"
+	"code.gitea.io/gitea/modules/structs"
 )
 
-// ListCatalogEndpoints Lists all the Catalog Endpoints for all versions
+// ListCatalogVersionEndpoints Lists all the Catalog Endpoints for all versions
 func ListCatalogVersionEndpoints(ctx *context.APIContext) {
-	// swagger:operation GET /catalog catalog catalogListCatalogVersionEndpoints
+	// swagger:operation GET /misc/versions misc miscListCatalogVersionEndpoints
 	// ---
-	// summary: Catalog version endpoint list, including "latest" pointing to the latest version
+	// summary: Catalog Next version endpoint list, including what version "latest" points to
 	// produces:
 	// - application/json
-	// parameters:
-	// - name: version
-	//   in: path
-	//   description: version to list, all if empty
-	//   type: string
-	//   required: false
 	// responses:
 	//   "200":
-	//     "$ref": "#/responses/CatalogVersionList"
+	//     "$ref": "#/responses/CatalogVersionEndpointsResponse"
 	//   "422":
 	//     "$ref": "#/responses/validationError"
 
-	versionInfo := map[string]interface{}{
-		"latest": LatestVersion,
-		"versions": map[string]string{},
+	versionEndpoints := structs.CatalogVersionEndpoints{
+		Latest:   latestVersion,
+		Versions: map[string]string{},
 	}
 
-	for _, version := range Versions {
-		versionInfo["versions"].(map[string]string)[version] = fmt.Sprintf("%sapi/catalog/%s", setting.AppURL, version)
+	for _, version := range versions {
+		versionEndpoints.Versions[version] = fmt.Sprintf("%sapi/catalog/%s", setting.AppURL, version)
 	}
 
 	resp := map[string]interface{}{
-		"ok": true,
-		"data": versionInfo,
+		"ok":   true,
+		"data": versionEndpoints,
 	}
 	ctx.JSON(http.StatusOK, resp)
 }

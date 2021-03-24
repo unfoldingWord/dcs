@@ -3,7 +3,7 @@
 // Use of this source code is governed by a MIT-style
 // license that can be found in the LICENSE file.
 
-// Package v1 Gitea API.
+// Package v1 DCS (Gitea) API.
 //
 // This documentation describes the DCS (Gitea) API.
 //
@@ -74,7 +74,6 @@ import (
 	"code.gitea.io/gitea/modules/log"
 	"code.gitea.io/gitea/modules/setting"
 	api "code.gitea.io/gitea/modules/structs"
-	catalog "code.gitea.io/gitea/routers/api/catalog/v4"
 	"code.gitea.io/gitea/routers/api/v1/admin"
 	"code.gitea.io/gitea/routers/api/v1/misc"
 	"code.gitea.io/gitea/routers/api/v1/notify"
@@ -973,23 +972,6 @@ func RegisterRoutes(m *macaron.Macaron) {
 
 		/*** DCS Customizations ***/
 		m.Post("/yaml", bind(misc.YamlOption{}), misc.Yaml)
-		// Catalog
-		m.Group("/catalog", func() {
-			m.Get("", catalog.Search)
-			m.Group("/search", func() {
-				m.Get("", catalog.Search)
-				m.Group("/:username", func() {
-					m.Get("", catalog.SearchOwner)
-					m.Group("/:reponame", func() {
-						m.Get("", catalog.SearchRepo)
-					}, repoAssignment())
-				})
-			})
-			m.Group("/entry/:username/:reponame/:tag", func() {
-				m.Get("", catalog.GetCatalogEntry)
-				m.Get("/metadata", catalog.GetCatalogMetadata)
-			}, repoAssignment())
-		})
 		/*** END DCS Customizations ***/
 	}, securityHeaders(), context.APIContexter(), sudo())
 }

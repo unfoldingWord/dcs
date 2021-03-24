@@ -2,9 +2,9 @@
 // Use of this source code is governed by a MIT-style
 // license that can be found in the LICENSE file.
 
-// Package v4 Catalog API.
+// Package v4 Catalog v4 API.
 //
-// This documentation describes the DCS Catalog API.
+// This documentation describes the DCS Catalog Next v4 API.
 //
 //     Schemes: http, https
 //     BasePath: /api/catalog/v4
@@ -64,9 +64,8 @@ import (
 	"code.gitea.io/gitea/models"
 	"code.gitea.io/gitea/modules/context"
 	"code.gitea.io/gitea/modules/log"
-	"code.gitea.io/gitea/modules/setting"
+	_ "code.gitea.io/gitea/routers/api/catalog/swagger" // for swagger generation
 	"code.gitea.io/gitea/routers/api/v1/misc"
-	_ "code.gitea.io/gitea/routers/api/v1/swagger" // for swagger generation
 
 	"gitea.com/macaron/macaron"
 )
@@ -166,9 +165,6 @@ func repoAssignment() macaron.Handler {
 func RegisterRoutes(m *macaron.Macaron) {
 	m.Group("/v4", func() {
 		// Miscellaneous
-		if setting.API.EnableSwagger {
-			m.Get("/swagger", misc.Swagger)
-		}
 		m.Get("/version", misc.Version)
 		m.Get("/signing-key.gpg", misc.SigningKey)
 

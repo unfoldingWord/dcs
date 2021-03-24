@@ -2,13 +2,13 @@
 // Use of this source code is governed by a MIT-style
 // license that can be found in the LICENSE file.
 
-// Package v4 Catalog API.
+// Package catalog Catalog Next API.
 //
-// This documentation describes the DCS Catalog API.
+// This documentation describes the Catalog Next API for all versions and other miscellaneous endpoints.
 //
 //     Schemes: http, https
-//     BasePath: /api/catalog/v4
-//     Version: 4
+//     BasePath: /api/catalog
+//     Version: 5.0.0
 //     License: MIT http://opensource.org/licenses/MIT
 //
 //     Consumes:
@@ -62,21 +62,20 @@ import (
 	"code.gitea.io/gitea/modules/context"
 	"code.gitea.io/gitea/modules/log"
 	"code.gitea.io/gitea/modules/setting"
+	_ "code.gitea.io/gitea/routers/api/catalog/swagger" // for swagger generation
 	v4 "code.gitea.io/gitea/routers/api/catalog/v4"
 	v5 "code.gitea.io/gitea/routers/api/catalog/v5"
-	"code.gitea.io/gitea/routers/api/v1/misc"
-	_ "code.gitea.io/gitea/routers/api/v1/swagger" // for swagger generation
 	"fmt"
 	"net/http"
 
 	"gitea.com/macaron/macaron"
 )
 
-var Versions = []string{
+var versions = []string{
 	"v4",
 	"v5",
 }
-var LatestVersion = Versions[len(Versions)-1]
+var latestVersion = versions[len(versions)-1]
 
 func sudo() macaron.Handler {
 	return func(ctx *context.APIContext) {
@@ -112,18 +111,20 @@ func sudo() macaron.Handler {
 // FIXME: custom form error response
 func RegisterRoutes(m *macaron.Macaron) {
 	if setting.API.EnableSwagger {
-		m.Get("/swagger", misc.Swagger) // Render catalog by default
+		m.Get("/swagger", Swagger) // Render catalog by default
 	}
 
 	m.Group("", func() {
-		m.Get("", ListCatalogVersionEndpoints)
+		m.Group("/misc", func() {
+			m.Get("/versions", ListCatalogVersionEndpoints)
+		})
 
 		m.Group("/latest", func() {
 			m.Get("", func(ctx *context.APIContext) {
-				ctx.Redirect(fmt.Sprintf("/api/catalog/%s", LatestVersion))
+				ctx.Redirect(fmt.Sprintf("/api/catalog/%s", latestVersion))
 			})
 			m.Get("/*", func(ctx *context.APIContext) {
-				ctx.Redirect(fmt.Sprintf("/api/catalog/%s/%s", LatestVersion, ctx.Params("*")))
+				ctx.Redirect(fmt.Sprintf("/api/catalog/%s/%s", latestVersion, ctx.Params("*")))
 			})
 		})
 
