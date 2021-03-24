@@ -2,9 +2,9 @@
 // Use of this source code is governed by a MIT-style
 // license that can be found in the LICENSE file.
 
-// Package v4 Catalog API.
+// Package v4 Catalog v4 API.
 //
-// This documentation describes the DCS Catalog API.
+// This documentation describes the DCS Catalog Next v4 API.
 //
 //     Schemes: http, https
 //     BasePath: /api/catalog/v4
@@ -208,7 +208,7 @@ func Routes() *web.Route {
 		// Miscellaneous
 		if setting.API.EnableSwagger {
 			m.Get("/swagger", func(ctx *context.APIContext) {
-				ctx.Redirect("/api/swagger")
+				ctx.Redirect("../swagger")
 			})
 		}
 
