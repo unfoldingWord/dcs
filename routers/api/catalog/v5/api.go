@@ -208,7 +208,7 @@ func Routes() *web.Route {
 		// Miscellaneous
 		if setting.API.EnableSwagger {
 			m.Get("/swagger", func(ctx *context.APIContext) {
-				ctx.Redirect("/api/catalog/swagger")
+				ctx.Redirect("../swagger")
 			})
 		}
 
