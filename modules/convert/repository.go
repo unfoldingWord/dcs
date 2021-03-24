@@ -110,6 +110,7 @@ func innerToRepo(repo *models.Repository, mode models.AccessMode, isParent bool)
 	if err != nil {
 		log.Error("GetDoor43MetadataByRepoIDAndStage: %v", err)
 	}
+
 	if draft != nil && ((prod != nil && prod.ReleaseDateUnix >= draft.ReleaseDateUnix) ||
 		(preprod != nil && preprod.ReleaseDateUnix >= draft.ReleaseDateUnix)) {
 		draft = nil
