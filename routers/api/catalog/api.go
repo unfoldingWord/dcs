@@ -58,6 +58,9 @@
 package catalog
 
 import (
+	"fmt"
+	"net/http"
+
 	"code.gitea.io/gitea/models"
 	"code.gitea.io/gitea/modules/context"
 	"code.gitea.io/gitea/modules/log"
@@ -65,8 +68,6 @@ import (
 	_ "code.gitea.io/gitea/routers/api/catalog/swagger" // for swagger generation
 	v4 "code.gitea.io/gitea/routers/api/catalog/v4"
 	v5 "code.gitea.io/gitea/routers/api/catalog/v5"
-	"fmt"
-	"net/http"
 
 	"gitea.com/macaron/macaron"
 )
