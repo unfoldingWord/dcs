@@ -12,6 +12,7 @@ import (
 	"code.gitea.io/gitea/modules/util"
 
 	"xorm.io/builder"
+	"xorm.io/xorm/schemas"
 )
 
 // RepositoryListDefaultPageSize is the default number of repositories
@@ -178,6 +179,13 @@ type SearchRepoOptions struct {
 	HasMilestones util.OptionalBool
 	// LowerNames represents valid lower names to restrict to
 	LowerNames []string
+	Owners     []string
+	Repos      []string
+	Subjects   []string
+	Books      []string
+	Languages  []string
+	// include all metadata in keyword search
+	IncludeMetadata bool
 }
 
 // SearchOrderBy is used to sort the result
@@ -189,20 +197,26 @@ func (s SearchOrderBy) String() string {
 
 // Strings for sorting result
 const (
-	SearchOrderByAlphabetically        SearchOrderBy = "name ASC"
-	SearchOrderByAlphabeticallyReverse SearchOrderBy = "name DESC"
-	SearchOrderByLeastUpdated          SearchOrderBy = "updated_unix ASC"
-	SearchOrderByRecentUpdated         SearchOrderBy = "updated_unix DESC"
-	SearchOrderByOldest                SearchOrderBy = "created_unix ASC"
-	SearchOrderByNewest                SearchOrderBy = "created_unix DESC"
-	SearchOrderBySize                  SearchOrderBy = "size ASC"
-	SearchOrderBySizeReverse           SearchOrderBy = "size DESC"
-	SearchOrderByID                    SearchOrderBy = "id ASC"
-	SearchOrderByIDReverse             SearchOrderBy = "id DESC"
-	SearchOrderByStars                 SearchOrderBy = "num_stars ASC"
-	SearchOrderByStarsReverse          SearchOrderBy = "num_stars DESC"
-	SearchOrderByForks                 SearchOrderBy = "num_forks ASC"
-	SearchOrderByForksReverse          SearchOrderBy = "num_forks DESC"
+	SearchOrderByAlphabetically            SearchOrderBy = "name ASC"
+	SearchOrderByAlphabeticallyReverse     SearchOrderBy = "name DESC"
+	SearchOrderByLeastUpdated              SearchOrderBy = "updated_unix ASC"
+	SearchOrderByRecentUpdated             SearchOrderBy = "updated_unix DESC"
+	SearchOrderByOldest                    SearchOrderBy = "created_unix ASC"
+	SearchOrderByNewest                    SearchOrderBy = "created_unix DESC"
+	SearchOrderBySize                      SearchOrderBy = "size ASC"
+	SearchOrderBySizeReverse               SearchOrderBy = "size DESC"
+	SearchOrderByID                        SearchOrderBy = "id ASC"
+	SearchOrderByIDReverse                 SearchOrderBy = "id DESC"
+	SearchOrderByStars                     SearchOrderBy = "num_stars ASC"
+	SearchOrderByStarsReverse              SearchOrderBy = "num_stars DESC"
+	SearchOrderByForks                     SearchOrderBy = "num_forks ASC"
+	SearchOrderByForksReverse              SearchOrderBy = "num_forks DESC"
+	SearchUserOrderByAlphabetically        SearchOrderBy = "name ASC"
+	SearchUserOrderByAlphabeticallyReverse SearchOrderBy = "name DESC"
+	SearchUserOrderByLeastUpdated          SearchOrderBy = "updated_unix ASC"
+	SearchUserOrderByRecentUpdated         SearchOrderBy = "updated_unix DESC"
+	SearchUserOrderByID                    SearchOrderBy = "id ASC"
+	SearchUserOrderByIDReverse             SearchOrderBy = "id DESC"
 )
 
 // SearchRepositoryCondition creates a query condition according search repository options
@@ -237,7 +251,7 @@ func SearchRepositoryCondition(opts *SearchRepoOptions) builder.Cond {
 
 	// Restrict to starred repositories
 	if opts.StarredByID > 0 {
-		cond = cond.And(builder.In("id", builder.Select("repo_id").From("star").Where(builder.Eq{"uid": opts.StarredByID})))
+		cond = cond.And(builder.In("`repository`.id", builder.Select("repo_id").From("star").Where(builder.Eq{"uid": opts.StarredByID})))
 	}
 
 	// Restrict repositories to those the OwnerID owns or contributes to as per opts.Collaborate
@@ -314,14 +328,30 @@ func SearchRepositoryCondition(opts *SearchRepoOptions) builder.Cond {
 			Where(subQueryCond).
 			GroupBy("repo_topic.repo_id")
 
-		keywordCond := builder.In("id", subQuery)
+		keywordCond := builder.In("`repository`.id", subQuery)
 		if !opts.TopicOnly {
 			likes := builder.NewCond()
 			for _, v := range strings.Split(opts.Keyword, ",") {
-				likes = likes.Or(builder.Like{"lower_name", strings.ToLower(v)})
+				likes = likes.Or(builder.Like{"`repository`.lower_name", strings.ToLower(v)})
 				if opts.IncludeDescription {
-					likes = likes.Or(builder.Like{"LOWER(description)", strings.ToLower(v)})
+					likes = likes.Or(builder.Like{"LOWER(`repository`.description)", strings.ToLower(v)})
 				}
+				/*** DCS Customizations ***/
+				switch x.Dialect().URI().DBType {
+				case schemas.MYSQL:
+					likes = likes.Or(builder.Like{"LOWER(JSON_UNQUOTE(JSON_EXTRACT(`door43_metadata`.metadata, '$.dublin_core.title')))", strings.ToLower(v)})
+					likes = likes.Or(builder.Like{"LOWER(JSON_UNQUOTE(JSON_EXTRACT(`door43_metadata`.metadata, '$.dublin_core.subject')))", strings.ToLower(v)})
+					if opts.IncludeMetadata {
+						likes = likes.Or(builder.Expr("JSON_SEARCH(LOWER(`door43_metadata`.metadata), 'one', ?) IS NOT NULL", "%"+strings.ToLower(v)+"%"))
+					}
+				default:
+					likes = likes.Or(builder.Like{"`door43_metadata`.metadata", `"title": "%` + strings.ToLower(v) + `%"`})
+					likes = likes.Or(builder.Like{"`door43_metadata`.metadata", `"subject": "%` + strings.ToLower(v) + `%"`})
+					if opts.IncludeMetadata {
+						likes = likes.Or(builder.Like{"`door43_metadata`.metadata", `": "%` + strings.ToLower(v) + `%"`})
+					}
+				}
+				/*** END DCS Customizations ***/
 			}
 			keywordCond = keywordCond.Or(likes)
 		}
@@ -351,6 +381,14 @@ func SearchRepositoryCondition(opts *SearchRepoOptions) builder.Cond {
 		cond = cond.And(builder.Eq{"num_milestones": 0}.Or(builder.IsNull{"num_milestones"}))
 	}
 
+	/*** DCS Customizations ***/
+	cond = cond.And(GetRepoCond(opts.Repos),
+		GetOwnerCond(opts.Owners),
+		GetSubjectCond(opts.Subjects),
+		GetBookCond(opts.Books),
+		GetLanguageCond(opts.Languages))
+	/*** EMD DCS Customizations ***/
+
 	return cond
 }
 
@@ -379,6 +417,8 @@ func SearchRepositoryByCondition(opts *SearchRepoOptions, cond builder.Cond, loa
 	defer sess.Close()
 
 	count, err := sess.
+		Join("INNER", "user", "`user`.id = `repository`.owner_id").
+		Join("LEFT", "door43_metadata", "`door43_metadata`.repo_id = `repository`.id AND `door43_metadata`.release_id = 0").
 		Where(cond).
 		Count(new(Repository))
 	if err != nil {
@@ -386,7 +426,11 @@ func SearchRepositoryByCondition(opts *SearchRepoOptions, cond builder.Cond, loa
 	}
 
 	repos := make(RepositoryList, 0, opts.PageSize)
-	sess.Where(cond).OrderBy(opts.OrderBy.String())
+	sess.
+		Join("INNER", "user", "`user`.id = `repository`.owner_id").
+		Join("LEFT", "door43_metadata", "`door43_metadata`.repo_id = `repository`.id AND `door43_metadata`.release_id = 0").
+		Where(cond).
+		OrderBy("`repository`." + opts.OrderBy.String())
 	if opts.PageSize > 0 {
 		sess.Limit(opts.PageSize, (opts.Page-1)*opts.PageSize)
 	}

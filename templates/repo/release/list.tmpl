@@ -80,6 +80,13 @@
 							<span class="commit">
 								<a class="mono" href="{{$.RepoLink}}/src/commit/{{.Sha1}}" rel="nofollow">{{svg "octicon-git-commit" 16 "mr-2"}}{{ShortSha .Sha1}}</a>
 							</span>
+							<!-- DCS Customizations -->
+							{{if .Door43Metadata}}
+								<span class="ui {{if .IsPrerelease}}orange{{else}}green{{end}} label" title="{{if .IsPrerelease}}pre-{{end}}prod" style="margin-top: 10px"><a href="{{$.RepoLink}}/src/tag/{{.TagName | EscapePound}}/manifest.yaml" rel="nofollow" style="opacity: inherit !important">{{$.i18n.Tr "repo.metadata.catalog"}} (rc0.2)</a></span>
+							{{else if (and (not .IsTag) (not .IsDraft)) }}
+								<span class="ui red label" title="{{$.i18n.Tr "repo.metadata.invalid_manifest_tooltip"}}" style="margin-top: 10px"><a href="{{$.RepoLink}}/src/tag/{{.TagName | EscapePound}}/manifest.yaml" rel="nofollow" style="opacity: inherit #important">{{$.i18n.Tr "repo.metadata.invalid"}} (rc0.2)</a></span>
+							{{end}}
+							<!-- END DCS Customizations -->
 						{{end}}
 					</div>
 					<div class="ui twelve wide column detail">

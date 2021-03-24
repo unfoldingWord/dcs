@@ -24,6 +24,9 @@ func ToUser(user *models.User, signed, authed bool) *api.User {
 		AvatarURL:  user.AvatarLink(),
 		Created:    user.CreatedUnix.AsTime(),
 		Restricted: user.IsRestricted,
+		/*** DCS Customizations ***/
+		RepoLanguages: user.GetRepoLanguages(),
+		/*** END DCS Customizations ***/
 	}
 	// hide primary email if API caller is anonymous or user keep email private
 	if signed && (!user.KeepEmailPrivate || authed) {

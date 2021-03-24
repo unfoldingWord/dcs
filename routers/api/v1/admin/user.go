@@ -375,6 +375,10 @@ func GetAllUsers(ctx *context.APIContext) {
 	// produces:
 	// - application/json
 	// parameters:
+	// - name: lang
+	//   in: query
+	//   description: If the user has one or more repos with the given language(s), the org will be in the results. Multiple lang's are ORed.
+	//   type: string
 	// - name: page
 	//   in: query
 	//   description: page number of results to return (1-based)
@@ -393,7 +397,7 @@ func GetAllUsers(ctx *context.APIContext) {
 
 	users, maxResults, err := models.SearchUsers(&models.SearchUserOptions{
 		Type:        models.UserTypeIndividual,
-		OrderBy:     models.SearchOrderByAlphabetically,
+		OrderBy:     models.SearchUserOrderByAlphabetically,
 		ListOptions: listOptions,
 	})
 	if err != nil {

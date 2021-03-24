@@ -31,6 +31,8 @@ type User struct {
 	LastLogin time.Time `json:"last_login,omitempty"`
 	// swagger:strfmt date-time
 	Created time.Time `json:"created,omitempty"`
+	// Repo languages
+	RepoLanguages []string `json:"repo_languages"`
 	// Is user restricted
 	Restricted bool `json:"restricted"`
 }

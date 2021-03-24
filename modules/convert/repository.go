@@ -6,6 +6,7 @@ package convert
 
 import (
 	"code.gitea.io/gitea/models"
+	"code.gitea.io/gitea/modules/log"
 	api "code.gitea.io/gitea/modules/structs"
 )
 
@@ -91,6 +92,98 @@ func innerToRepo(repo *models.Repository, mode models.AccessMode, isParent bool)
 
 	numReleases, _ := models.GetReleaseCountByRepoID(repo.ID, models.FindReleasesOptions{IncludeDrafts: false, IncludeTags: true})
 
+	/*** DCS Customizations ***/
+	catalog := &api.CatalogStages{}
+	prod, err := models.GetDoor43MetadataByRepoIDAndStage(repo.ID, models.StageProd)
+	if err != nil {
+		log.Error("GetDoor43MetadataByRepoIDAndStage: %v", err)
+	}
+	preprod, err := models.GetDoor43MetadataByRepoIDAndStage(repo.ID, models.StagePreProd)
+	if err != nil {
+		log.Error("GetDoor43MetadataByRepoIDAndStage: %v", err)
+	}
+	draft, err := models.GetDoor43MetadataByRepoIDAndStage(repo.ID, models.StageDraft)
+	if err != nil {
+		log.Error("GetDoor43MetadataByRepoIDAndStage: %v", err)
+	}
+	latest, err := models.GetDoor43MetadataByRepoIDAndStage(repo.ID, models.StageLatest)
+	if err != nil {
+		log.Error("GetDoor43MetadataByRepoIDAndStage: %v", err)
+	}
+
+	if draft != nil && ((prod != nil && prod.ReleaseDateUnix >= draft.ReleaseDateUnix) ||
+		(preprod != nil && preprod.ReleaseDateUnix >= draft.ReleaseDateUnix)) {
+		draft = nil
+	}
+	if prod != nil && preprod != nil && prod.ReleaseDateUnix >= preprod.ReleaseDateUnix {
+		preprod = nil
+	}
+	if prod != nil {
+		prod.Repo = repo
+		url := prod.GetReleaseURL()
+		catalog.Production = &api.CatalogStage{
+			Tag:        prod.BranchOrTag,
+			ReleaseURL: &url,
+			Released:   prod.GetReleaseDateTime(),
+			ZipballURL: prod.GetZipballURL(),
+			TarballURL: prod.GetTarballURL(),
+		}
+	}
+	if preprod != nil {
+		preprod.Repo = repo
+		url := preprod.GetReleaseURL()
+		catalog.PreProduction = &api.CatalogStage{
+			Tag:        preprod.BranchOrTag,
+			ReleaseURL: &url,
+			Released:   preprod.GetReleaseDateTime(),
+			ZipballURL: preprod.GetZipballURL(),
+			TarballURL: preprod.GetTarballURL(),
+		}
+	}
+	if draft != nil {
+		draft.Repo = repo
+		url := draft.GetReleaseURL()
+		catalog.Draft = &api.CatalogStage{
+			Tag:        draft.BranchOrTag,
+			ReleaseURL: &url,
+			Released:   draft.GetReleaseDateTime(),
+			ZipballURL: draft.GetZipballURL(),
+			TarballURL: draft.GetTarballURL(),
+		}
+	}
+	if latest != nil {
+		latest.Repo = repo
+		catalog.Latest = &api.CatalogStage{
+			Tag:        latest.BranchOrTag,
+			ReleaseURL: nil,
+			Released:   latest.GetReleaseDateTime(),
+			ZipballURL: latest.GetZipballURL(),
+			TarballURL: latest.GetTarballURL(),
+		}
+	}
+
+	metadata, err := models.GetDoor43MetadataByRepoIDAndReleaseID(repo.ID, 0)
+	if err != nil && !models.IsErrDoor43MetadataNotExist(err) {
+		log.Error("GetDoor43MetadataByRepoIDAndReleaseID: %v", err)
+	}
+	if metadata == nil {
+		metadata, err = repo.GetLatestPreProdCatalogMetadata()
+		if err != nil {
+			log.Error("GetLatestPreProdCatalogMetadata: %v", err)
+		}
+	}
+
+	var language, title, subject, checkingLevel string
+	var books []string
+	if metadata != nil {
+		language = (*metadata.Metadata)["dublin_core"].(map[string]interface{})["language"].(map[string]interface{})["identifier"].(string)
+		title = (*metadata.Metadata)["dublin_core"].(map[string]interface{})["title"].(string)
+		subject = (*metadata.Metadata)["dublin_core"].(map[string]interface{})["subject"].(string)
+		books = metadata.GetBooks()
+		checkingLevel = (*metadata.Metadata)["checking"].(map[string]interface{})["checking_level"].(string)
+	}
+	/*** END DCS Customizations ***/
+
 	mirrorInterval := ""
 	if repo.IsMirror {
 		if err := repo.GetMirror(); err == nil {
@@ -140,6 +233,12 @@ func innerToRepo(repo *models.Repository, mode models.AccessMode, isParent bool)
 		AllowRebaseMerge:          allowRebaseMerge,
 		AllowSquash:               allowSquash,
 		AvatarURL:                 repo.AvatarLink(),
+		Language:                  language,
+		Title:                     title,
+		Subject:                   subject,
+		Books:                     books,
+		CheckingLevel:             checkingLevel,
+		Catalog:                   catalog,
 		Internal:                  !repo.IsPrivate && repo.Owner.Visibility == api.VisibleTypePrivate,
 		MirrorInterval:            mirrorInterval,
 	}
