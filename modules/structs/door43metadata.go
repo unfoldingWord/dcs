@@ -93,4 +93,3 @@ type CatalogStage struct {
 	ZipballURL string  `json:"zipball_url"`
 	TarballURL string  `json:"tarball_url"`
 }
-

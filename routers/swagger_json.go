@@ -24,4 +24,5 @@ const tplSwaggerCatalogJSON base.TplName = "swagger/catalog/catalog_json"
 func SwaggerCatalogJSON(ctx *context.Context) {
 	ctx.HTML(200, tplSwaggerCatalogJSON)
 }
+
 /*** EMD DCS Customizations ***/
