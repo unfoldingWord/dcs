@@ -22,6 +22,20 @@ type swaggerResponseCatalogEntryV4 struct {
 	Body api.Door43MetadataV4 `json:"body"`
 }
 
+// CatalogSearchResultsV5
+// swagger:response CatalogSearchResultsV5
+type swaggerResponseCatalogSearchResultsV5 struct {
+	// in:body
+	Body api.CatalogSearchResultsV5 `json:"body"`
+}
+
+// CatalogEntryV5
+// swagger:response CatalogEntryV5
+type swaggerResponseCatalogEntryV5 struct {
+	// in:body
+	Body api.Door43MetadataV5 `json:"body"`
+}
+
 // CatalogMetadata
 // swagger:response CatalogMetadata
 type swaggerResponseCatalogMetadata struct {
@@ -29,9 +43,9 @@ type swaggerResponseCatalogMetadata struct {
 	Body map[string]interface{} `json:"body"`
 }
 
-// CatalogVersionList
-// swagger:response CatalogVersionList
-type swaggerResponseCatalogVersionList struct {
+// CatalogVersionEndpointsResponse
+// swagger:response CatalogVersionEndpointsResponse
+type swaggerResponseCatalogVersionEndpointsResponse struct {
 	// in:body
-	Body map[string]interface{} `json:"body"`
+	Body api.CatalogVersionEndpointsResponse `json:"body"`
 }

@@ -7,6 +7,7 @@ package models
 import (
 	"fmt"
 	"sort"
+	"time"
 
 	"code.gitea.io/gitea/modules/log"
 	"code.gitea.io/gitea/modules/setting"
@@ -33,41 +34,43 @@ type Door43Metadata struct {
 	UpdatedUnix     timeutil.TimeStamp      `xorm:"INDEX updated"`
 }
 
+// GetRepo gets the repo associated with the door43 metadata entry
 func (dm *Door43Metadata) GetRepo() error {
 	return dm.getRepo(x)
 }
 
 func (dm *Door43Metadata) getRepo(e Engine) error {
 	if dm.Repo == nil {
-		if repo, err := GetRepositoryByID(dm.RepoID); err != nil {
+		repo, err := GetRepositoryByID(dm.RepoID)
+		if err != nil {
 			return err
-		} else {
-			dm.Repo = repo
-			if err := dm.Repo.getOwner(e); err != nil {
-				return nil
-			}
+		}
+		dm.Repo = repo
+		if err := dm.Repo.getOwner(e); err != nil {
+			return err
 		}
 	}
 	return nil
 }
 
+// GetRelease gets the associated release of a door43 metadata entry
 func (dm *Door43Metadata) GetRelease() error {
 	return dm.getRelease(x)
 }
 
 func (dm *Door43Metadata) getRelease(e Engine) error {
 	if dm.ReleaseID > 0 && dm.Release == nil {
-		if rel, err := GetReleaseByID(dm.ReleaseID); err != nil {
+		rel, err := GetReleaseByID(dm.ReleaseID)
+		if err != nil {
 			return err
-		} else {
-			dm.Release = rel
-			dm.Release.Door43Metadata = dm
-			if err := dm.getRepo(e); err != nil {
-				return err
-			}
-			dm.Release.Repo = dm.Repo
-			return dm.Release.loadAttributes(e)
 		}
+		dm.Release = rel
+		dm.Release.Door43Metadata = dm
+		if err := dm.getRepo(e); err != nil {
+			return err
+		}
+		dm.Release.Repo = dm.Repo
+		return dm.Release.loadAttributes(e)
 	}
 	return nil
 }
@@ -77,7 +80,7 @@ func (dm *Door43Metadata) loadAttributes(e Engine) error {
 		return err
 	}
 	if dm.Release == nil && dm.ReleaseID > 0 {
-		if err := dm.getRelease(e); err !=nil {
+		if err := dm.getRelease(e); err != nil {
 			return nil
 		}
 	}
@@ -145,7 +148,12 @@ func (dm *Door43Metadata) GetZipballURL() string {
 // GetReleaseURL get the URL the release API
 func (dm *Door43Metadata) GetReleaseURL() string {
 	if dm.ReleaseID > 0 {
-		return dm.Release.APIURL()
+		if dm.Release != nil {
+			return dm.Release.APIURL()
+		}
+		if err := dm.GetRepo(); err == nil {
+			return fmt.Sprintf("%sapi/v1/repos/%s/releases/%d", setting.AppURL, dm.Repo.FullName(), dm.ReleaseID)
+		}
 	}
 	return ""
 }
@@ -342,6 +350,11 @@ func (dm *Door43Metadata) GetReleaseCount() (int64, error) {
 		Count(&Door43Metadata{})
 }
 
+// GetReleaseDateTime returns the ReleaseDateUnix time stamp as a RFC3339 date, e.g. 2006-01-02T15:04:05Z07:00
+func (dm *Door43Metadata) GetReleaseDateTime() string {
+	return dm.ReleaseDateUnix.Format(time.RFC3339)
+}
+
 // GetDoor43MetadataByRepoIDAndReleaseID returns the metadata of a given release ID (0 = default branch).
 func GetDoor43MetadataByRepoIDAndReleaseID(repoID, releaseID int64) (*Door43Metadata, error) {
 	return getDoor43MetadataByRepoIDAndReleaseID(x, repoID, releaseID)
@@ -355,6 +368,26 @@ func getDoor43MetadataByRepoIDAndReleaseID(e Engine, repoID, releaseID int64) (*
 	}
 	if !has {
 		return nil, ErrDoor43MetadataNotExist{0, repoID, releaseID}
+	}
+	return dm, err
+}
+
+// GetDoor43MetadataByRepoIDAndStage returns the metadata of a given repo ID and stage.
+func GetDoor43MetadataByRepoIDAndStage(repoID int64, stage Stage) (*Door43Metadata, error) {
+	return getDoor43MetadataByRepoIDAndStage(x, repoID, stage)
+}
+
+func getDoor43MetadataByRepoIDAndStage(e Engine, repoID int64, stage Stage) (*Door43Metadata, error) {
+	var cond = builder.NewCond().
+		And(builder.Eq{"repo_id": repoID}).
+		And(builder.Eq{"stage": stage})
+	e = e.Where(cond)
+	e.Desc("created_unix")
+
+	dm := &Door43Metadata{}
+	found, err := e.Get(dm)
+	if err != nil || !found {
+		return nil, err
 	}
 	return dm, err
 }
