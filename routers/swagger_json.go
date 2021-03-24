@@ -35,5 +35,4 @@ func SwaggerCatalogJSON(ctx *context.Context) {
 		ctx.Error(500)
 	}
 }
-
 /*** EMD DCS Customizations ***/
