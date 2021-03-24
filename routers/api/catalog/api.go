@@ -4,11 +4,11 @@
 
 // Package catalog Catalog Next API.
 //
-// This documentation describes the DCS Catalog API.
+// This documentation describes the Catalog Next API for all versions and other miscellaneous endpoints.
 //
 //     Schemes: http, https
 //     BasePath: /api/catalog
-//     Version: 4.0.1
+//     Version: 5.0.0
 //     License: MIT http://opensource.org/licenses/MIT
 //
 //     Consumes:
