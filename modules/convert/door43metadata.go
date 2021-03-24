@@ -72,7 +72,7 @@ func ToDoor43MetadataV5(dm *models.Door43Metadata, mode models.AccessMode) *api.
 		Books:                  dm.GetBooks(),
 		BranchOrTag:            dm.BranchOrTag,
 		Stage:                  dm.Stage.String(),
-		Released:               dm.ReleaseDateUnix.FormatDate(),
+		Released:               dm.GetReleaseDateTime(),
 		MetadataVersion:        dm.MetadataVersion,
 		MetadataURL:            dm.GetMetadataURL(),
 		MetadataJSONURL:        dm.GetMetadataJSONURL(),

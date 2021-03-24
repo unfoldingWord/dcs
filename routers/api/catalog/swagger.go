@@ -12,7 +12,7 @@ import (
 )
 
 // tplSwagger swagger page template
-const tplSwagger base.TplName = "swagger/ui"
+const tplSwagger base.TplName = "swagger/catalog/ui"
 
 // Swagger render swagger-ui page with v1 json
 func Swagger(ctx *context.Context) {

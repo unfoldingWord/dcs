@@ -45,7 +45,7 @@ type swaggerResponseCatalogMetadata struct {
 
 // CatalogVersionEndpointsResponse
 // swagger:response CatalogVersionEndpointsResponse
-type CatalogVersionEndpointsResponse struct {
+type swaggerResponseCatalogVersionEndpointsResponse struct {
 	// in:body
 	Body api.CatalogVersionEndpointsResponse `json:"body"`
 }

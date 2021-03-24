@@ -7,6 +7,7 @@ package models
 import (
 	"fmt"
 	"sort"
+	"time"
 
 	"code.gitea.io/gitea/modules/log"
 	"code.gitea.io/gitea/modules/setting"
@@ -33,41 +34,43 @@ type Door43Metadata struct {
 	UpdatedUnix     timeutil.TimeStamp      `xorm:"INDEX updated"`
 }
 
+// GetRepo gets the repo associated with the door43 metadata entry
 func (dm *Door43Metadata) GetRepo() error {
 	return dm.getRepo(x)
 }
 
 func (dm *Door43Metadata) getRepo(e Engine) error {
 	if dm.Repo == nil {
-		if repo, err := GetRepositoryByID(dm.RepoID); err != nil {
+		repo, err := GetRepositoryByID(dm.RepoID)
+		if err != nil {
 			return err
-		} else {
-			dm.Repo = repo
-			if err := dm.Repo.getOwner(e); err != nil {
-				return nil
-			}
+		}
+		dm.Repo = repo
+		if err := dm.Repo.getOwner(e); err != nil {
+			return err
 		}
 	}
 	return nil
 }
 
+// GetRelease gets the associated release of a door43 metadata entry
 func (dm *Door43Metadata) GetRelease() error {
 	return dm.getRelease(x)
 }
 
 func (dm *Door43Metadata) getRelease(e Engine) error {
 	if dm.ReleaseID > 0 && dm.Release == nil {
-		if rel, err := GetReleaseByID(dm.ReleaseID); err != nil {
+		rel, err := GetReleaseByID(dm.ReleaseID)
+		if err != nil {
 			return err
-		} else {
-			dm.Release = rel
-			dm.Release.Door43Metadata = dm
-			if err := dm.getRepo(e); err != nil {
-				return err
-			}
-			dm.Release.Repo = dm.Repo
-			return dm.Release.loadAttributes(e)
 		}
+		dm.Release = rel
+		dm.Release.Door43Metadata = dm
+		if err := dm.getRepo(e); err != nil {
+			return err
+		}
+		dm.Release.Repo = dm.Repo
+		return dm.Release.loadAttributes(e)
 	}
 	return nil
 }
@@ -345,6 +348,11 @@ func (dm *Door43Metadata) GetReleaseCount() (int64, error) {
 	return x.Join("LEFT", "release", "`release`.id = `door43_metadata`.release_id").
 		Where(builder.And(builder.Eq{"`door43_metadata`.repo_id": dm.RepoID}, stageCond)).
 		Count(&Door43Metadata{})
+}
+
+// GetReleaseDateTime returns the ReleaseDateUnix time stamp as a RFC3339 date, e.g. 2006-01-02T15:04:05Z07:00
+func (dm *Door43Metadata) GetReleaseDateTime() string {
+	return dm.ReleaseDateUnix.Format(time.RFC3339)
 }
 
 // GetDoor43MetadataByRepoIDAndReleaseID returns the metadata of a given release ID (0 = default branch).

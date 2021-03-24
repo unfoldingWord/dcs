@@ -2,7 +2,7 @@
 // Use of this source code is governed by a MIT-style
 // license that can be found in the LICENSE file.
 
-// Package Catalog API.
+// Package catalog Catalog Next API.
 //
 // This documentation describes the DCS Catalog API.
 //
@@ -80,12 +80,13 @@ import (
 	"github.com/go-chi/cors"
 )
 
-var Versions = []string{
+var versions = []string{
 	"v4",
 	"v5",
 }
-var LatestVersion = Versions[len(Versions)-1]
+var latestVersion = versions[len(versions)-1]
 
+// AllRoutes call all the other route functions for the catalog api
 func AllRoutes(r *web.Route) {
 	r.Mount("/api/catalog/latest", LatestRoutes())
 	r.Mount("/api/catalog/misc", MiscRoutes())
@@ -155,10 +156,10 @@ func LatestRoutes() *web.Route {
 
 	m.Group("", func() {
 		m.Get("", func(ctx *context.APIContext) {
-			ctx.Redirect(fmt.Sprintf("/api/catalog/%s", LatestVersion))
+			ctx.Redirect(fmt.Sprintf("/api/catalog/%s", latestVersion))
 		})
 		m.Get("/*", func(ctx *context.APIContext) {
-			ctx.Redirect(fmt.Sprintf("/api/catalog/%s/%s", LatestVersion, ctx.Params("*")))
+			ctx.Redirect(fmt.Sprintf("/api/catalog/%s/%s", latestVersion, ctx.Params("*")))
 		})
 	}, sudo())
 

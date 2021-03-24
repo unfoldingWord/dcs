@@ -2,9 +2,9 @@
 // Use of this source code is governed by a MIT-style
 // license that can be found in the LICENSE file.
 
-// Package v5 Catalog API.
+// Package v5 Catalog Next v5 API.
 //
-// This documentation describes the DCS Catalog API.
+// This documentation describes the DCS Catalog Next v5 API.
 //
 //     Schemes: http, https
 //     BasePath: /api/catalog/v5

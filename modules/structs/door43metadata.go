@@ -76,3 +76,20 @@ type CatalogVersionEndpointsResponse struct {
 	OK   bool                       `json:"ok"`
 	Data []*CatalogVersionEndpoints `json:"data"`
 }
+
+// CatalogStages a repo's catalog stages
+type CatalogStages struct {
+	Production    *CatalogStage `json:"prod"`
+	PreProduction *CatalogStage `json:"preprod"`
+	Draft         *CatalogStage `json:"draft"`
+	Latest        *CatalogStage `json:"latest"`
+}
+
+// CatalogStage a repo's catalog stage metadata
+type CatalogStage struct {
+	Tag        string  `json:"branch_or_tag_name"`
+	ReleaseURL *string `json:"release_url"`
+	Released   string  `json:"released"`
+	ZipballURl string  `json:"zipball_url"`
+	TarballURL string  `json:"tarball_url"`
+}

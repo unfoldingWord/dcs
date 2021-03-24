@@ -93,7 +93,7 @@ func innerToRepo(repo *models.Repository, mode models.AccessMode, isParent bool)
 	numReleases, _ := models.GetReleaseCountByRepoID(repo.ID, models.FindReleasesOptions{IncludeDrafts: false, IncludeTags: true})
 
 	/*** DCS Customizations ***/
-	catalog := &api.CatalogMetadata{}
+	catalog := &api.CatalogStages{}
 	prod, err := models.GetDoor43MetadataByRepoIDAndStage(repo.ID, models.StageProd)
 	if err != nil {
 		log.Error("GetDoor43MetadataByRepoIDAndStage: %v", err)
@@ -110,38 +110,54 @@ func innerToRepo(repo *models.Repository, mode models.AccessMode, isParent bool)
 	if err != nil {
 		log.Error("GetDoor43MetadataByRepoIDAndStage: %v", err)
 	}
-	if draft != nil && ((prod != nil && prod.CreatedUnix >= draft.CreatedUnix) ||
-		(preprod != nil && preprod.CreatedUnix >= draft.CreatedUnix)) {
+	if draft != nil && ((prod != nil && prod.ReleaseDateUnix >= draft.ReleaseDateUnix) ||
+		(preprod != nil && preprod.ReleaseDateUnix >= draft.ReleaseDateUnix)) {
 		draft = nil
 	}
-	if prod != nil && preprod != nil && prod.CreatedUnix >= preprod.CreatedUnix {
+	if prod != nil && preprod != nil && prod.ReleaseDateUnix >= preprod.ReleaseDateUnix {
 		preprod = nil
 	}
 	if prod != nil {
+		prod.Repo = repo
 		url := prod.GetReleaseURL()
-		catalog.Production = &api.CatalogStageMetadata{
+		catalog.Production = &api.CatalogStage{
 			Tag:        prod.BranchOrTag,
 			ReleaseURL: &url,
+			Released:   prod.GetReleaseDateTime(),
+			ZipballURl: prod.GetZipballURL(),
+			TarballURL: prod.GetTarballURL(),
 		}
 	}
 	if preprod != nil {
+		preprod.Repo = repo
 		url := preprod.GetReleaseURL()
-		catalog.PreProduction = &api.CatalogStageMetadata{
+		catalog.PreProduction = &api.CatalogStage{
 			Tag:        preprod.BranchOrTag,
 			ReleaseURL: &url,
+			Released:   preprod.GetReleaseDateTime(),
+			ZipballURl: preprod.GetZipballURL(),
+			TarballURL: preprod.GetTarballURL(),
 		}
 	}
 	if draft != nil {
+		draft.Repo = repo
 		url := draft.GetReleaseURL()
-		catalog.Draft = &api.CatalogStageMetadata{
+		catalog.Draft = &api.CatalogStage{
 			Tag:        draft.BranchOrTag,
 			ReleaseURL: &url,
+			Released:   draft.GetReleaseDateTime(),
+			ZipballURl: draft.GetZipballURL(),
+			TarballURL: draft.GetTarballURL(),
 		}
 	}
 	if latest != nil {
-		catalog.Latest = &api.CatalogStageMetadata{
+		latest.Repo = repo
+		catalog.Latest = &api.CatalogStage{
 			Tag:        latest.BranchOrTag,
 			ReleaseURL: nil,
+			Released:   latest.GetReleaseDateTime(),
+			ZipballURl: latest.GetZipballURL(),
+			TarballURL: latest.GetTarballURL(),
 		}
 	}
 

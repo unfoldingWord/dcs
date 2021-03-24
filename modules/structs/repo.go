@@ -96,7 +96,7 @@ type Repository struct {
 	Books                     []string         `json:"books"`
 	Title                     string           `json:"title"`
 	CheckingLevel             string           `json:"checking_level"`
-	Catalog                   *CatalogMetadata `json:"catalog"`
+	Catalog                   *CatalogStages   `json:"catalog"`
 	MirrorInterval            string           `json:"mirror_interval"`
 }
 

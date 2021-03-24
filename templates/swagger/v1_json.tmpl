@@ -14,7 +14,7 @@
   "swagger": "2.0",
   "info": {
     "description": "This documentation describes the DCS (Gitea) API.",
-    "title": "Gitea API.",
+    "title": "DCS (Gitea) API.",
     "license": {
       "name": "MIT",
       "url": "http://opensource.org/licenses/MIT"
@@ -11943,27 +11943,8 @@
       },
       "x-go-package": "code.gitea.io/gitea/modules/structs"
     },
-    "CatalogMetadata": {
-      "description": "CatalogMetadata metadata for a repo's catalog entry",
-      "type": "object",
-      "properties": {
-        "draft": {
-          "$ref": "#/definitions/CatalogStageMetadata"
-        },
-        "latest": {
-          "$ref": "#/definitions/CatalogStageMetadata"
-        },
-        "preprod": {
-          "$ref": "#/definitions/CatalogStageMetadata"
-        },
-        "prod": {
-          "$ref": "#/definitions/CatalogStageMetadata"
-        }
-      },
-      "x-go-package": "code.gitea.io/gitea/modules/structs"
-    },
-    "CatalogStageMetadata": {
-      "description": "CatalogStageMetadata metadata for a stage of a repo's catalog entry",
+    "CatalogStage": {
+      "description": "CatalogStage a repo's catalog stage metadata",
       "type": "object",
       "properties": {
         "branch_or_tag_name": {
@@ -11973,6 +11954,37 @@
         "release_url": {
           "type": "string",
           "x-go-name": "ReleaseURL"
+        },
+        "released": {
+          "type": "string",
+          "x-go-name": "Released"
+        },
+        "tarball_url": {
+          "type": "string",
+          "x-go-name": "TarballURL"
+        },
+        "zipball_url": {
+          "type": "string",
+          "x-go-name": "ZipballURl"
+        }
+      },
+      "x-go-package": "code.gitea.io/gitea/modules/structs"
+    },
+    "CatalogStages": {
+      "description": "CatalogStages a repo's catalog stages",
+      "type": "object",
+      "properties": {
+        "draft": {
+          "$ref": "#/definitions/CatalogStage"
+        },
+        "latest": {
+          "$ref": "#/definitions/CatalogStage"
+        },
+        "preprod": {
+          "$ref": "#/definitions/CatalogStage"
+        },
+        "prod": {
+          "$ref": "#/definitions/CatalogStage"
         }
       },
       "x-go-package": "code.gitea.io/gitea/modules/structs"
@@ -15772,7 +15784,7 @@
           "x-go-name": "Books"
         },
         "catalog": {
-          "$ref": "#/definitions/CatalogMetadata"
+          "$ref": "#/definitions/CatalogStages"
         },
         "checking_level": {
           "type": "string",

@@ -24,11 +24,11 @@ func SwaggerV1Json(ctx *context.Context) {
 }
 
 /*** DCS Customizations ***/
-const tplSwaggerCatalogJson base.TplName = "swagger/catalog/catalog_json"
+const tplSwaggerCatalogJSON base.TplName = "swagger/catalog/catalog_json"
 
-// SwaggerCatalogJson render swagger catalog v5 json
-func SwaggerCatalogJson(ctx *context.Context) {
-	t := ctx.Render.TemplateLookup(string(tplSwaggerCatalogJson))
+// SwaggerCatalogJSON render swagger catalog v5 json
+func SwaggerCatalogJSON(ctx *context.Context) {
+	t := ctx.Render.TemplateLookup(string(tplSwaggerCatalogJSON))
 	ctx.Resp.Header().Set("Content-Type", "application/json")
 	if err := t.Execute(ctx.Resp, ctx.Data); err != nil {
 		log.Error("%v", err)
