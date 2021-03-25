@@ -255,7 +255,12 @@
 						"TSV Study Questions",
 						"TSV Translation Notes",
 						"TSV Translation Questions",
-						"TSV Translation Words Links"
+            "TSV Translation Words Links",
+            "TSV OBS Study Notes",
+            "TSV OBS Study Questions",
+            "TSV OBS Translation Notes",
+            "TSV OBS Translation Questions",
+            "TSV OBS Translation Words Links"
 					]
 				},
 				"title": {
