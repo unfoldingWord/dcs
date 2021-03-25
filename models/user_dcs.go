@@ -62,7 +62,7 @@ func (u *User) GetRepoLanguages() []string {
 				parts := strings.Split(repo.LowerName, "_")
 				if len(parts) > 1 {
 					ln := GetLangNames()
-					if _, ok :=  ln[parts[0]]; ok {
+					if _, ok := ln[parts[0]]; ok {
 						languages = append(languages, parts[0])
 					}
 				}
