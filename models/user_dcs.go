@@ -25,6 +25,7 @@ func contains(strings []string, str string) bool {
 	return false
 }
 
+// GetLangNames returns the langnames.json file from tD in a keyed map, loads from tD if not already loaded
 func GetLangNames() map[string]interface{} {
 	myClient := &http.Client{Timeout: 10 * time.Second}
 	if len(langNames) == 0 {
