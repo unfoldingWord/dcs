@@ -72,6 +72,7 @@ func innerToRepo(repo *models.Repository, mode models.AccessMode, isParent bool)
 	allowRebase := false
 	allowRebaseMerge := false
 	allowSquash := false
+	defaultMergeStyle := models.MergeStyleMerge
 	if unit, err := repo.GetUnit(models.UnitTypePullRequests); err == nil {
 		config := unit.PullRequestsConfig()
 		hasPullRequests = true
@@ -80,6 +81,7 @@ func innerToRepo(repo *models.Repository, mode models.AccessMode, isParent bool)
 		allowRebase = config.AllowRebase
 		allowRebaseMerge = config.AllowRebaseMerge
 		allowSquash = config.AllowSquash
+		defaultMergeStyle = config.GetDefaultMergeStyle()
 	}
 	hasProjects := false
 	if _, err := repo.GetUnit(models.UnitTypeProjects); err == nil {
@@ -232,6 +234,7 @@ func innerToRepo(repo *models.Repository, mode models.AccessMode, isParent bool)
 		AllowRebase:               allowRebase,
 		AllowRebaseMerge:          allowRebaseMerge,
 		AllowSquash:               allowSquash,
+		DefaultMergeStyle:         string(defaultMergeStyle),
 		AvatarURL:                 repo.AvatarLink(),
 		Language:                  language,
 		Title:                     title,
