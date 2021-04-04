@@ -445,47 +445,25 @@ func searchRepositoryByCondition(opts *SearchRepoOptions, cond builder.Cond) (*x
 
 	sess := x.NewSession()
 
-<<<<<<< HEAD
-	count, err := sess.
-		Join("INNER", "user", "`user`.id = `repository`.owner_id").
-		Join("LEFT", "door43_metadata", "`door43_metadata`.repo_id = `repository`.id AND `door43_metadata`.release_id = 0").
-		Where(cond).
-		Count(new(Repository))
-	if err != nil {
-		return nil, 0, fmt.Errorf("Count: %v", err)
-||||||| merged common ancestors
-	count, err := sess.
-		Where(cond).
-		Count(new(Repository))
-	if err != nil {
-		return nil, 0, fmt.Errorf("Count: %v", err)
-=======
 	var count int64
 	if opts.PageSize > 0 {
 		var err error
 		count, err = sess.
+			Join("INNER", "user", "`user`.id = `repository`.owner_id").
+			Join("LEFT", "door43_metadata", "`door43_metadata`.repo_id = `repository`.id AND `door43_metadata`.release_id = 0").
 			Where(cond).
 			Count(new(Repository))
 		if err != nil {
 			_ = sess.Close()
 			return nil, 0, fmt.Errorf("Count: %v", err)
 		}
->>>>>>> upstream/master
 	}
 
-<<<<<<< HEAD
-	repos := make(RepositoryList, 0, opts.PageSize)
 	sess.
 		Join("INNER", "user", "`user`.id = `repository`.owner_id").
 		Join("LEFT", "door43_metadata", "`door43_metadata`.repo_id = `repository`.id AND `door43_metadata`.release_id = 0").
 		Where(cond).
-		OrderBy("`repository`." + opts.OrderBy.String())
-||||||| merged common ancestors
-	repos := make(RepositoryList, 0, opts.PageSize)
-	sess.Where(cond).OrderBy(opts.OrderBy.String())
-=======
-	sess.Where(cond).OrderBy(opts.OrderBy.String())
->>>>>>> upstream/master
+		OrderBy(opts.OrderBy.String())
 	if opts.PageSize > 0 {
 		sess.Limit(opts.PageSize, (opts.Page-1)*opts.PageSize)
 	}
