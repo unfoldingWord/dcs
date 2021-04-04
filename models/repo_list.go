@@ -12,8 +12,8 @@ import (
 	"code.gitea.io/gitea/modules/util"
 
 	"xorm.io/builder"
-	"xorm.io/xorm/schemas"
 	"xorm.io/xorm"
+	"xorm.io/xorm/schemas"
 )
 
 // RepositoryListDefaultPageSize is the default number of repositories
@@ -449,7 +449,7 @@ func searchRepositoryByCondition(opts *SearchRepoOptions, cond builder.Cond) (*x
 	if opts.PageSize > 0 {
 		var err error
 		count, err = sess.
-	 		Join("INNER", "user", "`user`.id = `repository`.owner_id").
+			Join("INNER", "user", "`user`.id = `repository`.owner_id").
 			Join("LEFT", "door43_metadata", "`door43_metadata`.repo_id = `repository`.id AND `door43_metadata`.release_id = 0").
 			Where(cond).
 			Count(new(Repository))
