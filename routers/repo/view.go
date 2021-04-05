@@ -12,6 +12,7 @@ import (
 	gotemplate "html/template"
 	"io"
 	"io/ioutil"
+	"net/http"
 	"net/url"
 	"path"
 	"strconv"
@@ -611,7 +612,7 @@ func Home(ctx *context.Context) {
 			ctx.Data["Repo"] = ctx.Repo
 			ctx.Data["MigrateTask"] = task
 			ctx.Data["CloneAddr"] = safeURL(cfg.CloneAddr)
-			ctx.HTML(200, tplMigrating)
+			ctx.HTML(http.StatusOK, tplMigrating)
 			return
 		}
 
@@ -670,7 +671,7 @@ func renderCode(ctx *context.Context) {
 	ctx.Data["PageIsViewCode"] = true
 
 	if ctx.Repo.Repository.IsEmpty {
-		ctx.HTML(200, tplRepoEMPTY)
+		ctx.HTML(http.StatusOK, tplRepoEMPTY)
 		return
 	}
 
@@ -738,7 +739,7 @@ func renderCode(ctx *context.Context) {
 	ctx.Data["Entry"] = entry
 	/*** END DCS Customizations ***/
 
-	ctx.HTML(200, tplRepoHome)
+	ctx.HTML(http.StatusOK, tplRepoHome)
 }
 
 // RenderUserCards render a page show users according the input templaet
@@ -760,7 +761,7 @@ func RenderUserCards(ctx *context.Context, total int, getter func(opts models.Li
 	}
 	ctx.Data["Cards"] = items
 
-	ctx.HTML(200, tpl)
+	ctx.HTML(http.StatusOK, tpl)
 }
 
 // Watchers render repository's watch users
@@ -799,5 +800,5 @@ func Forks(ctx *context.Context) {
 	}
 	ctx.Data["Forks"] = forks
 
-	ctx.HTML(200, tplForks)
+	ctx.HTML(http.StatusOK, tplForks)
 }

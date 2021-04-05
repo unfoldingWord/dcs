@@ -11,6 +11,7 @@ import (
 	"fmt"
 	"html"
 	"io/ioutil"
+	"net/http"
 	"path"
 	"path/filepath"
 	"strings"
@@ -647,7 +648,7 @@ func CompareDiff(ctx *context.Context) {
 		} else {
 			ctx.Data["HasPullRequest"] = true
 			ctx.Data["PullRequest"] = pr
-			ctx.HTML(200, tplCompareDiff)
+			ctx.HTML(http.StatusOK, tplCompareDiff)
 			return
 		}
 
@@ -675,7 +676,7 @@ func CompareDiff(ctx *context.Context) {
 
 	ctx.Data["HasIssuesOrPullsWritePermission"] = ctx.Repo.CanWrite(models.UnitTypePullRequests)
 
-	ctx.HTML(200, tplCompare)
+	ctx.HTML(http.StatusOK, tplCompare)
 }
 
 // ExcerptBlob render blob excerpt contents
@@ -694,7 +695,7 @@ func ExcerptBlob(ctx *context.Context) {
 	chunkSize := gitdiff.BlobExcerptChunkSize
 	commit, err := gitRepo.GetCommit(commitID)
 	if err != nil {
-		ctx.Error(500, "GetCommit")
+		ctx.Error(http.StatusInternalServerError, "GetCommit")
 		return
 	}
 	section := &gitdiff.DiffSection{
@@ -719,7 +720,7 @@ func ExcerptBlob(ctx *context.Context) {
 		idxRight = lastRight
 	}
 	if err != nil {
-		ctx.Error(500, "getExcerptLines")
+		ctx.Error(http.StatusInternalServerError, "getExcerptLines")
 		return
 	}
 	if idxRight > lastRight {
@@ -750,7 +751,7 @@ func ExcerptBlob(ctx *context.Context) {
 	ctx.Data["fileName"] = filePath
 	ctx.Data["AfterCommitID"] = commitID
 	ctx.Data["Anchor"] = anchor
-	ctx.HTML(200, tplBlobExcerpt)
+	ctx.HTML(http.StatusOK, tplBlobExcerpt)
 }
 
 func getExcerptLines(commit *git.Commit, filePath string, idxLeft int, idxRight int, chunkSize int) ([]*gitdiff.DiffLine, error) {

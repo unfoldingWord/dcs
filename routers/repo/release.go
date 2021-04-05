@@ -7,6 +7,7 @@ package repo
 
 import (
 	"fmt"
+	"net/http"
 	"strings"
 
 	"code.gitea.io/gitea/models"
@@ -150,7 +151,7 @@ func releasesOrTags(ctx *context.Context, isTagList bool) {
 	pager.SetDefaultParams(ctx)
 	ctx.Data["Page"] = pager
 
-	ctx.HTML(200, tplReleases)
+	ctx.HTML(http.StatusOK, tplReleases)
 }
 
 // SingleRelease renders a single release's page
@@ -198,7 +199,7 @@ func SingleRelease(ctx *context.Context) {
 	}
 
 	ctx.Data["Releases"] = []*models.Release{release}
-	ctx.HTML(200, tplReleases)
+	ctx.HTML(http.StatusOK, tplReleases)
 }
 
 // LatestRelease redirects to the latest release
@@ -251,7 +252,7 @@ func NewRelease(ctx *context.Context) {
 	}
 	ctx.Data["IsAttachmentEnabled"] = setting.Attachment.Enabled
 	upload.AddUploadContext(ctx, "release")
-	ctx.HTML(200, tplReleaseNew)
+	ctx.HTML(http.StatusOK, tplReleaseNew)
 }
 
 // NewReleasePost response for creating a release
@@ -263,7 +264,7 @@ func NewReleasePost(ctx *context.Context) {
 	ctx.Data["RequireTribute"] = true
 
 	if ctx.HasError() {
-		ctx.HTML(200, tplReleaseNew)
+		ctx.HTML(http.StatusOK, tplReleaseNew)
 		return
 	}
 
@@ -392,7 +393,7 @@ func EditRelease(ctx *context.Context) {
 	}
 	ctx.Data["attachments"] = rel.Attachments
 
-	ctx.HTML(200, tplReleaseNew)
+	ctx.HTML(http.StatusOK, tplReleaseNew)
 }
 
 // EditReleasePost response for edit release
@@ -425,7 +426,7 @@ func EditReleasePost(ctx *context.Context) {
 	ctx.Data["prerelease"] = rel.IsPrerelease
 
 	if ctx.HasError() {
-		ctx.HTML(200, tplReleaseNew)
+		ctx.HTML(http.StatusOK, tplReleaseNew)
 		return
 	}
 
@@ -478,13 +479,13 @@ func deleteReleaseOrTag(ctx *context.Context, isDelTag bool) {
 	}
 
 	if isDelTag {
-		ctx.JSON(200, map[string]interface{}{
+		ctx.JSON(http.StatusOK, map[string]interface{}{
 			"redirect": ctx.Repo.RepoLink + "/tags",
 		})
 		return
 	}
 
-	ctx.JSON(200, map[string]interface{}{
+	ctx.JSON(http.StatusOK, map[string]interface{}{
 		"redirect": ctx.Repo.RepoLink + "/releases",
 	})
 }
