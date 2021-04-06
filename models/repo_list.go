@@ -546,7 +546,9 @@ func SearchRepositoryIDs(opts *SearchRepoOptions) ([]int64, int64, error) {
 	}
 
 	ids := make([]int64, 0, defaultSize)
-	err = sess.Select("id").Table("repository").Find(&ids)
+	/*** DCS Customizations ***/
+	err = sess.Select("`repository`.id").Table("repository").Find(&ids)
+	/*** END DCS Customizations ***/
 	if opts.PageSize <= 0 {
 		count = int64(len(ids))
 	}
