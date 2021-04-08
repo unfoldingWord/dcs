@@ -8,6 +8,7 @@ import (
 	"strings"
 )
 
+// Subjects are the valid subjects keyed by their resource ID
 var Subjects = map[string]string{
 	"obs-sn":      "OBS Study Notes",
 	"obs-sq":      "OBS Study Questions",
@@ -32,6 +33,7 @@ var Subjects = map[string]string{
 	"obs-twl-tsv": "TSV OBS Translation Words Links",
 }
 
+// GetSubjectFromRepoName determines the subject of a repo by its repo name
 func GetSubjectFromRepoName(repoName string) string {
 	parts := strings.Split(repoName, "_")
 	if len(parts) > 1 {
