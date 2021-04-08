@@ -6,6 +6,7 @@ package convert
 
 import (
 	"code.gitea.io/gitea/models"
+	"code.gitea.io/gitea/modules/dcs"
 	"code.gitea.io/gitea/modules/log"
 	api "code.gitea.io/gitea/modules/structs"
 )
@@ -181,6 +182,9 @@ func innerToRepo(repo *models.Repository, mode models.AccessMode, isParent bool)
 		subject = (*metadata.Metadata)["dublin_core"].(map[string]interface{})["subject"].(string)
 		books = metadata.GetBooks()
 		checkingLevel = (*metadata.Metadata)["checking"].(map[string]interface{})["checking_level"].(string)
+	} else {
+		language = dcs.GetLanguageFromRepoName(repo.LowerName)
+		subject = dcs.GetSubjectFromRepoName(repo.LowerName)
 	}
 	/*** END DCS Customizations ***/
 
