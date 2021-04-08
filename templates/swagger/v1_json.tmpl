@@ -14771,11 +14771,19 @@
           "x-go-name": "RepoAdminChangeTeamAccess"
         },
         "repo_languages": {
+          "description": "DCS Customizations ***/",
           "type": "array",
           "items": {
             "type": "string"
           },
           "x-go-name": "RepoLanguages"
+        },
+        "repo_subjects": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "x-go-name": "RepoSubjects"
         },
         "username": {
           "type": "string",
@@ -16061,6 +16069,14 @@
             "type": "string"
           },
           "x-go-name": "RepoLanguages"
+        },
+        "repo_subjects": {
+          "description": "Repo subjects",
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "x-go-name": "RepoSubjects"
         }
       },
       "x-go-package": "code.gitea.io/gitea/modules/structs"
