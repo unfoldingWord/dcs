@@ -15102,11 +15102,19 @@
           "x-go-name": "RepoAdminChangeTeamAccess"
         },
         "repo_languages": {
+          "description": "DCS Customizations ***/",
           "type": "array",
           "items": {
             "type": "string"
           },
           "x-go-name": "RepoLanguages"
+        },
+        "repo_subjects": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "x-go-name": "RepoSubjects"
         },
         "username": {
           "type": "string",
@@ -16391,15 +16399,23 @@
           "x-go-name": "UserName"
         },
         "repo_languages": {
-          "description": "Repo languages",
+          "description": "DCS Customizations ***/\nRepo languages",
           "type": "array",
           "items": {
             "type": "string"
           },
           "x-go-name": "RepoLanguages"
         },
+        "repo_subjects": {
+          "description": "Repo subjects",
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "x-go-name": "RepoSubjects"
+        },
         "restricted": {
-          "description": "Is user restricted",
+          "description": "END DCS Customizations ***/\nIs user restricted",
           "type": "boolean",
           "x-go-name": "Restricted"
         }
