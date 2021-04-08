@@ -35,10 +35,8 @@ func (u *User) GetRepoLanguages() []string {
 				if lang != "" && !contains(languages, lang) {
 					languages = append(languages, lang)
 				}
-			} else {
-				if lang := dcs.GetLanguageFromRepoName(repo.LowerName); lang != "" {
-					languages = append(languages, lang)
-				}
+			} else if lang := dcs.GetLanguageFromRepoName(repo.LowerName); lang != "" {
+				languages = append(languages, lang)
 			}
 		}
 	}
