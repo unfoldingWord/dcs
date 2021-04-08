@@ -280,7 +280,10 @@ func ToOrganization(org *models.User) *api.Organization {
 		Location:                  org.Location,
 		Visibility:                org.Visibility.String(),
 		RepoAdminChangeTeamAccess: org.RepoAdminChangeTeamAccess,
-		RepoLanguages:             org.GetRepoLanguages(),
+		/*** DCS Customizations ***/
+		RepoLanguages: org.GetRepoLanguages(),
+		RepoSubjects:  org.GetRepoSubjects(),
+		/*** END DCS Customizations ***/
 	}
 }
 
