@@ -58,7 +58,6 @@
 package v4
 
 import (
-	"fmt"
 	"net/http"
 	"strings"
 
@@ -167,7 +166,7 @@ func RegisterRoutes(m *macaron.Macaron) {
 	m.Group("/v4", func() {
 		// Miscellaneous
 		m.Get("/swagger", func(ctx *context.APIContext) {
-			ctx.Redirect(fmt.Sprintf("../swagger"))
+			ctx.Redirect("../swagger")
 		})
 		m.Get("/version", misc.Version)
 		m.Get("/signing-key.gpg", misc.SigningKey)
