@@ -43,3 +43,26 @@ func (u *User) GetRepoLanguages() []string {
 	sort.SliceStable(languages, func(i, j int) bool { return strings.ToLower(languages[i]) < strings.ToLower(languages[j]) })
 	return languages
 }
+
+// GetRepoSubjects gets the subjects of the user's repos and returns alphabetized list
+func (u *User) GetRepoSubjects() []string {
+	var subjects []string
+	if repos, _, err := GetUserRepositories(&SearchRepoOptions{Actor: u, Private: false, ListOptions: ListOptions{PageSize: 0}}); err != nil {
+		log.Error("Error GetUserRepositories: %v", err)
+	} else {
+		for _, repo := range repos {
+			if dm, err := repo.GetDefaultBranchMetadata(); err != nil {
+				log.Error("Error GetDefaultBranchMetadata: %v", err)
+			} else if dm != nil {
+				subject := (*dm.Metadata)["dublin_core"].(map[string]interface{})["subject"].(string)
+				if subject != "" && !contains(subjects, subject) {
+					subjects = append(subjects, subject)
+				}
+			} else if subject := dcs.GetSubjectFromRepoName(repo.LowerName); subject != "" {
+				subjects = append(subjects, subject)
+			}
+		}
+	}
+	sort.SliceStable(subjects, func(i, j int) bool { return strings.ToLower(subjects[i]) < strings.ToLower(subjects[j]) })
+	return subjects
+}

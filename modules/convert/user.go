@@ -22,6 +22,7 @@ func ToUser(user *models.User, signed, authed bool) *api.User {
 		Created:   user.CreatedUnix.AsTime(),
 		/*** DCS Customizations ***/
 		RepoLanguages: user.GetRepoLanguages(),
+		RepoSubjects:  user.GetRepoSubjects(),
 		/*** END DCS Customizations ***/
 	}
 	// hide primary email if API caller is anonymous or user keep email private
