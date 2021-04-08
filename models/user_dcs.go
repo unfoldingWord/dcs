@@ -35,7 +35,7 @@ func (u *User) GetRepoLanguages() []string {
 				if lang != "" && !contains(languages, lang) {
 					languages = append(languages, lang)
 				}
-			} else if lang := dcs.GetLanguageFromRepoName(repo.LowerName); lang != "" {
+			} else if lang := dcs.GetLanguageFromRepoName(repo.LowerName); lang != "" && !contains(languages, lang) {
 				languages = append(languages, lang)
 			}
 		}
@@ -58,7 +58,7 @@ func (u *User) GetRepoSubjects() []string {
 				if subject != "" && !contains(subjects, subject) {
 					subjects = append(subjects, subject)
 				}
-			} else if subject := dcs.GetSubjectFromRepoName(repo.LowerName); subject != "" {
+			} else if subject := dcs.GetSubjectFromRepoName(repo.LowerName); subject != "" && !contains(subjects, subject) {
 				subjects = append(subjects, subject)
 			}
 		}
