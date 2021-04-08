@@ -12,6 +12,7 @@ import (
 	"code.gitea.io/gitea/modules/util"
 
 	"xorm.io/builder"
+	"xorm.io/xorm"
 	"xorm.io/xorm/schemas"
 )
 
@@ -401,6 +402,35 @@ func SearchRepository(opts *SearchRepoOptions) (RepositoryList, int64, error) {
 
 // SearchRepositoryByCondition search repositories by condition
 func SearchRepositoryByCondition(opts *SearchRepoOptions, cond builder.Cond, loadAttributes bool) (RepositoryList, int64, error) {
+	sess, count, err := searchRepositoryByCondition(opts, cond)
+	if err != nil {
+		return nil, 0, err
+	}
+	defer sess.Close()
+
+	defaultSize := 50
+	if opts.PageSize > 0 {
+		defaultSize = opts.PageSize
+	}
+	repos := make(RepositoryList, 0, defaultSize)
+	if err := sess.Find(&repos); err != nil {
+		return nil, 0, fmt.Errorf("Repo: %v", err)
+	}
+
+	if opts.PageSize <= 0 {
+		count = int64(len(repos))
+	}
+
+	if loadAttributes {
+		if err := repos.loadAttributes(sess); err != nil {
+			return nil, 0, fmt.Errorf("LoadAttributes: %v", err)
+		}
+	}
+
+	return repos, count, nil
+}
+
+func searchRepositoryByCondition(opts *SearchRepoOptions, cond builder.Cond) (*xorm.Session, int64, error) {
 	if opts.Page <= 0 {
 		opts.Page = 1
 	}
@@ -414,18 +444,21 @@ func SearchRepositoryByCondition(opts *SearchRepoOptions, cond builder.Cond, loa
 	}
 
 	sess := x.NewSession()
-	defer sess.Close()
 
-	count, err := sess.
-		Join("INNER", "user", "`user`.id = `repository`.owner_id").
-		Join("LEFT", "door43_metadata", "`door43_metadata`.repo_id = `repository`.id AND `door43_metadata`.release_id = 0").
-		Where(cond).
-		Count(new(Repository))
-	if err != nil {
-		return nil, 0, fmt.Errorf("Count: %v", err)
+	var count int64
+	if opts.PageSize > 0 {
+		var err error
+		count, err = sess.
+			Join("INNER", "user", "`user`.id = `repository`.owner_id").
+			Join("LEFT", "door43_metadata", "`door43_metadata`.repo_id = `repository`.id AND `door43_metadata`.release_id = 0").
+			Where(cond).
+			Count(new(Repository))
+		if err != nil {
+			_ = sess.Close()
+			return nil, 0, fmt.Errorf("Count: %v", err)
+		}
 	}
 
-	repos := make(RepositoryList, 0, opts.PageSize)
 	sess.
 		Join("INNER", "user", "`user`.id = `repository`.owner_id").
 		Join("LEFT", "door43_metadata", "`door43_metadata`.repo_id = `repository`.id AND `door43_metadata`.release_id = 0").
@@ -434,17 +467,7 @@ func SearchRepositoryByCondition(opts *SearchRepoOptions, cond builder.Cond, loa
 	if opts.PageSize > 0 {
 		sess.Limit(opts.PageSize, (opts.Page-1)*opts.PageSize)
 	}
-	if err = sess.Find(&repos); err != nil {
-		return nil, 0, fmt.Errorf("Repo: %v", err)
-	}
-
-	if loadAttributes {
-		if err = repos.loadAttributes(sess); err != nil {
-			return nil, 0, fmt.Errorf("LoadAttributes: %v", err)
-		}
-	}
-
-	return repos, count, nil
+	return sess, count, nil
 }
 
 // accessibleRepositoryCondition takes a user a returns a condition for checking if a repository is accessible
@@ -498,6 +521,35 @@ func accessibleRepositoryCondition(user *User) builder.Cond {
 func SearchRepositoryByName(opts *SearchRepoOptions) (RepositoryList, int64, error) {
 	opts.IncludeDescription = false
 	return SearchRepository(opts)
+}
+
+// SearchRepositoryIDs takes keyword and part of repository name to search,
+// it returns results in given range and number of total results.
+func SearchRepositoryIDs(opts *SearchRepoOptions) ([]int64, int64, error) {
+	opts.IncludeDescription = false
+
+	cond := SearchRepositoryCondition(opts)
+
+	sess, count, err := searchRepositoryByCondition(opts, cond)
+	if err != nil {
+		return nil, 0, err
+	}
+	defer sess.Close()
+
+	defaultSize := 50
+	if opts.PageSize > 0 {
+		defaultSize = opts.PageSize
+	}
+
+	ids := make([]int64, 0, defaultSize)
+	/*** DCS Customizations ***/
+	err = sess.Select("`repository`.id").Table("repository").Find(&ids)
+	/*** END DCS Customizations ***/
+	if opts.PageSize <= 0 {
+		count = int64(len(ids))
+	}
+
+	return ids, count, err
 }
 
 // AccessibleRepoIDsQuery queries accessible repository ids. Usable as a subquery wherever repo ids need to be filtered.
