@@ -25,6 +25,7 @@ import (
 	"strings"
 	"time"
 
+	"code.gitea.io/gitea/modules/dcs"
 	"code.gitea.io/gitea/modules/log"
 	"code.gitea.io/gitea/modules/markup"
 	"code.gitea.io/gitea/modules/options"
@@ -498,7 +499,11 @@ func (repo *Repository) innerAPIFormat(e Engine, mode AccessMode, isParent bool)
 		subject = (*metadata.Metadata)["dublin_core"].(map[string]interface{})["subject"].(string)
 		books = metadata.GetBooks()
 		checkingLevel = (*metadata.Metadata)["checking"].(map[string]interface{})["checking_level"].(string)
+	} else {
+		language = dcs.GetLanguageFromRepoName(repo.LowerName)
+		subject = dcs.GetSubjectFromRepoName(repo.LowerName)
 	}
+
 	/* END DCS Customizations */
 
 	return &api.Repository{
