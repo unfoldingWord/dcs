@@ -10122,6 +10122,9 @@
         "responses": {
           "201": {
             "$ref": "#/responses/OAuth2Application"
+          },
+          "400": {
+            "$ref": "#/responses/error"
           }
         }
       }
@@ -10149,6 +10152,9 @@
         "responses": {
           "200": {
             "$ref": "#/responses/OAuth2Application"
+          },
+          "404": {
+            "$ref": "#/responses/notFound"
           }
         }
       },
@@ -10174,6 +10180,9 @@
         "responses": {
           "204": {
             "$ref": "#/responses/empty"
+          },
+          "404": {
+            "$ref": "#/responses/notFound"
           }
         }
       },
@@ -10207,6 +10216,9 @@
         "responses": {
           "200": {
             "$ref": "#/responses/OAuth2Application"
+          },
+          "404": {
+            "$ref": "#/responses/notFound"
           }
         }
       }
@@ -10275,6 +10287,9 @@
         "responses": {
           "204": {
             "$ref": "#/responses/empty"
+          },
+          "404": {
+            "$ref": "#/responses/notFound"
           }
         }
       }
@@ -11549,6 +11564,9 @@
         "responses": {
           "201": {
             "$ref": "#/responses/AccessToken"
+          },
+          "400": {
+            "$ref": "#/responses/error"
           }
         }
       }
@@ -11582,6 +11600,9 @@
         "responses": {
           "204": {
             "$ref": "#/responses/empty"
+          },
+          "404": {
+            "$ref": "#/responses/notFound"
           },
           "422": {
             "$ref": "#/responses/error"

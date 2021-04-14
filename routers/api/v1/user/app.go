@@ -88,6 +88,8 @@ func CreateAccessToken(ctx *context.APIContext) {
 	// responses:
 	//   "201":
 	//     "$ref": "#/responses/AccessToken"
+	//   "400":
+	//     "$ref": "#/responses/error"
 
 	form := web.GetForm(ctx).(*api.CreateAccessTokenOption)
 
@@ -142,6 +144,8 @@ func DeleteAccessToken(ctx *context.APIContext) {
 	// responses:
 	//   "204":
 	//     "$ref": "#/responses/empty"
+	//   "404":
+	//     "$ref": "#/responses/notFound"
 	//   "422":
 	//     "$ref": "#/responses/error"
 
@@ -202,6 +206,8 @@ func CreateOauth2Application(ctx *context.APIContext) {
 	// responses:
 	//   "201":
 	//     "$ref": "#/responses/OAuth2Application"
+	//   "400":
+	//     "$ref": "#/responses/error"
 
 	data := web.GetForm(ctx).(*api.CreateOAuth2ApplicationOptions)
 
@@ -275,9 +281,15 @@ func DeleteOauth2Application(ctx *context.APIContext) {
 	// responses:
 	//   "204":
 	//     "$ref": "#/responses/empty"
+	//   "404":
+	//     "$ref": "#/responses/notFound"
 	appID := ctx.ParamsInt64(":id")
 	if err := models.DeleteOAuth2Application(appID, ctx.User.ID); err != nil {
-		ctx.Error(http.StatusInternalServerError, "DeleteOauth2ApplicationByID", err)
+		if models.IsErrOAuthApplicationNotFound(err) {
+			ctx.NotFound()
+		} else {
+			ctx.Error(http.StatusInternalServerError, "DeleteOauth2ApplicationByID", err)
+		}
 		return
 	}
 
@@ -301,6 +313,8 @@ func GetOauth2Application(ctx *context.APIContext) {
 	// responses:
 	//   "200":
 	//     "$ref": "#/responses/OAuth2Application"
+	//   "404":
+	//     "$ref": "#/responses/notFound"
 	appID := ctx.ParamsInt64(":id")
 	app, err := models.GetOAuth2ApplicationByID(appID)
 	if err != nil {
@@ -339,6 +353,8 @@ func UpdateOauth2Application(ctx *context.APIContext) {
 	// responses:
 	//   "200":
 	//     "$ref": "#/responses/OAuth2Application"
+	//   "404":
+	//     "$ref": "#/responses/notFound"
 	appID := ctx.ParamsInt64(":id")
 
 	data := web.GetForm(ctx).(*api.CreateOAuth2ApplicationOptions)

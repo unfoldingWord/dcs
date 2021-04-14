@@ -18,9 +18,11 @@
 <form class="ui form ignore-dirty" style="max-width: 90%">
 	<input type="hidden" name="tab" value="{{$.TabName}}">
 	<div class="ui fluid action input">
-	  <input name="q" value="{{.Keyword}}" placeholder="{{.i18n.Tr "explore.search"}}..." autofocus>
-	  <button class="ui blue button">{{.i18n.Tr "explore.search"}}</button>
-	  {{template "explore/info_icon" .}}
+		<input name="q" value="{{.Keyword}}" placeholder="{{.i18n.Tr "explore.search"}}..." autofocus>
+		<button class="ui blue button">{{.i18n.Tr "explore.search"}}</button>
+ 		<!-- DCS Customizations -->
+		{{template "explore/info_icon" .}}
+		<!-- END DCS Customizations -->
 	</div>
 </form>
 <div class="ui divider"></div>
