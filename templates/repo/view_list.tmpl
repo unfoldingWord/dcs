@@ -76,8 +76,8 @@
 										{{if StringHasSuffix $entry.Name ".yaml"}}
 											{{$errors = ValidateYAMLFile $entry}}
 											{{if and (eq $errors "") (eq $.TreePath "") (eq $entry.Name "manifest.yaml")}}
-											    {{$errors = ValidateManifestFile $entry}}
-											    {{$message = $.i18n.Tr "repo.metadata.valid_manifest_tooltip"}}
+												{{$errors = ValidateManifestFile $entry}}
+												{{$message = $.i18n.Tr "repo.metadata.valid_manifest_tooltip"}}
 											{{end}}
 										{{end}}
 										{{if StringHasSuffix $entry.Name ".json"}}
