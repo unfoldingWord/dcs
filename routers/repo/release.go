@@ -15,6 +15,7 @@ import (
 	"code.gitea.io/gitea/modules/context"
 	"code.gitea.io/gitea/modules/convert"
 	"code.gitea.io/gitea/modules/log"
+	"code.gitea.io/gitea/modules/markup"
 	"code.gitea.io/gitea/modules/markup/markdown"
 	"code.gitea.io/gitea/modules/setting"
 	"code.gitea.io/gitea/modules/upload"
@@ -132,7 +133,14 @@ func releasesOrTags(ctx *context.Context, isTagList bool) {
 			ctx.ServerError("calReleaseNumCommitsBehind", err)
 			return
 		}
-		r.Note = markdown.RenderString(r.Note, ctx.Repo.RepoLink, ctx.Repo.Repository.ComposeMetas())
+		r.Note, err = markdown.RenderString(&markup.RenderContext{
+			URLPrefix: ctx.Repo.RepoLink,
+			Metas:     ctx.Repo.Repository.ComposeMetas(),
+		}, r.Note)
+		if err != nil {
+			ctx.ServerError("RenderString", err)
+			return
+		}
 		/*** DCS Customizations ***/
 		if !r.IsTag {
 			r.Door43Metadata, err = models.GetDoor43MetadataByRepoIDAndReleaseID(r.RepoID, r.ID)
@@ -191,7 +199,14 @@ func SingleRelease(ctx *context.Context) {
 		ctx.ServerError("calReleaseNumCommitsBehind", err)
 		return
 	}
-	release.Note = markdown.RenderString(release.Note, ctx.Repo.RepoLink, ctx.Repo.Repository.ComposeMetas())
+	release.Note, err = markdown.RenderString(&markup.RenderContext{
+		URLPrefix: ctx.Repo.RepoLink,
+		Metas:     ctx.Repo.Repository.ComposeMetas(),
+	}, release.Note)
+	if err != nil {
+		ctx.ServerError("RenderString", err)
+		return
+	}
 
 	if err := release.LoadAttributes(); err != nil {
 		ctx.ServerError("LoadAttributes", err)

@@ -325,13 +325,26 @@ func renderDirectory(ctx *context.Context, treeLink string) {
 				ctx.Data["IsTextFile"] = true
 				ctx.Data["FileSize"] = fileSize
 			} else {
-				d, _ := ioutil.ReadAll(dataRc)
-				buf = charset.ToUTF8WithFallback(append(buf, d...))
+				rd := charset.ToUTF8WithFallbackReader(io.MultiReader(bytes.NewReader(buf), dataRc))
 
 				if markupType := markup.Type(readmeFile.name); markupType != "" {
 					ctx.Data["IsMarkup"] = true
 					ctx.Data["MarkupType"] = string(markupType)
-					ctx.Data["FileContent"] = string(markup.Render(readmeFile.name, buf, readmeTreelink, ctx.Repo.Repository.ComposeDocumentMetas()))
+					var result strings.Builder
+					err := markup.Render(&markup.RenderContext{
+						Filename:  readmeFile.name,
+						URLPrefix: readmeTreelink,
+						Metas:     ctx.Repo.Repository.ComposeDocumentMetas(),
+					}, rd, &result)
+					if err != nil {
+						log.Error("Render failed: %v then fallback", err)
+						bs, _ := ioutil.ReadAll(rd)
+						ctx.Data["FileContent"] = strings.ReplaceAll(
+							gotemplate.HTMLEscapeString(string(bs)), "\n", `<br>`,
+						)
+					} else {
+						ctx.Data["FileContent"] = result.String()
+					}
 				} else {
 					ctx.Data["IsRenderedHTML"] = true
 					ctx.Data["FileContent"] = strings.ReplaceAll(
@@ -494,8 +507,7 @@ func renderFile(ctx *context.Context, entry *git.TreeEntry, treeLink, rawLink st
 			break
 		}
 
-		d, _ := ioutil.ReadAll(dataRc)
-		buf = charset.ToUTF8WithFallback(append(buf, d...))
+		rd := charset.ToUTF8WithFallbackReader(io.MultiReader(bytes.NewReader(buf), dataRc))
 		readmeExist := markup.IsReadmeFile(blob.Name())
 		ctx.Data["ReadmeExist"] = readmeExist
 		/*** DCS Customizations ***/
@@ -505,8 +517,18 @@ func renderFile(ctx *context.Context, entry *git.TreeEntry, treeLink, rawLink st
 		if markupType := markup.Type(blob.Name()); markupType != "" {
 			ctx.Data["IsMarkup"] = true
 			ctx.Data["MarkupType"] = markupType
-			ctx.Data["FileContent"] = string(markup.Render(blob.Name(), buf, path.Dir(treeLink), ctx.Repo.Repository.ComposeDocumentMetas()))
-			/*** DCS Customizations ***/
+			var result strings.Builder
+			err := markup.Render(&markup.RenderContext{
+				Filename:  blob.Name(),
+				URLPrefix: path.Dir(treeLink),
+				Metas:     ctx.Repo.Repository.ComposeDocumentMetas(),
+			}, rd, &result)
+			if err != nil {
+				ctx.ServerError("Render", err)
+				return
+			}
+			ctx.Data["FileContent"] = result.String()
+		/*** DCS Customizations ***/
 		} else if isTocYaml {
 			ctx.Data["IsRenderedHTML"] = true
 			if rendered, err := yaml.Render(buf); err != nil {
@@ -517,14 +539,14 @@ func renderFile(ctx *context.Context, entry *git.TreeEntry, treeLink, rawLink st
 			} else {
 				ctx.Data["FileContent"] = string(rendered)
 			}
-			/*** END DCS Customizations ***/
+		/*** END DCS Customizations ***/
 		} else if readmeExist {
 			ctx.Data["IsRenderedHTML"] = true
 			ctx.Data["FileContent"] = strings.ReplaceAll(
 				gotemplate.HTMLEscapeString(string(buf)), "\n", `<br>`,
 			)
 		} else {
-			buf = charset.ToUTF8WithFallback(buf)
+			buf, _ := ioutil.ReadAll(rd)
 			lineNums := linesBytesCount(buf)
 			ctx.Data["NumLines"] = strconv.Itoa(lineNums)
 			ctx.Data["NumLinesSet"] = true
@@ -561,11 +583,20 @@ func renderFile(ctx *context.Context, entry *git.TreeEntry, treeLink, rawLink st
 		}
 
 		if markupType := markup.Type(blob.Name()); markupType != "" {
-			d, _ := ioutil.ReadAll(dataRc)
-			buf = append(buf, d...)
+			rd := io.MultiReader(bytes.NewReader(buf), dataRc)
 			ctx.Data["IsMarkup"] = true
 			ctx.Data["MarkupType"] = markupType
-			ctx.Data["FileContent"] = string(markup.Render(blob.Name(), buf, path.Dir(treeLink), ctx.Repo.Repository.ComposeDocumentMetas()))
+			var result strings.Builder
+			err := markup.Render(&markup.RenderContext{
+				Filename:  blob.Name(),
+				URLPrefix: path.Dir(treeLink),
+				Metas:     ctx.Repo.Repository.ComposeDocumentMetas(),
+			}, rd, &result)
+			if err != nil {
+				ctx.ServerError("Render", err)
+				return
+			}
+			ctx.Data["FileContent"] = result.String()
 		}
 	}
 
