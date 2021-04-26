@@ -528,7 +528,7 @@ func renderFile(ctx *context.Context, entry *git.TreeEntry, treeLink, rawLink st
 				return
 			}
 			ctx.Data["FileContent"] = result.String()
-		/*** DCS Customizations ***/
+			/*** DCS Customizations ***/
 		} else if isTocYaml {
 			ctx.Data["IsRenderedHTML"] = true
 			if rendered, err := yaml.Render(buf); err != nil {
@@ -539,7 +539,7 @@ func renderFile(ctx *context.Context, entry *git.TreeEntry, treeLink, rawLink st
 			} else {
 				ctx.Data["FileContent"] = string(rendered)
 			}
-		/*** END DCS Customizations ***/
+			/*** END DCS Customizations ***/
 		} else if readmeExist {
 			ctx.Data["IsRenderedHTML"] = true
 			ctx.Data["FileContent"] = strings.ReplaceAll(
