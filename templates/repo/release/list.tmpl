@@ -70,7 +70,7 @@
 							{{if .IsDraft}}
 								<span class="ui yellow label" title="draft">{{$.i18n.Tr "repo.release.draft"}}</span>
 							{{else if .IsPrerelease}}
-								<span class="ui orange label" title="preprod">{{$.i18n.Tr $"repo.release.prerelease"}}</span>
+								<span class="ui orange label" title="preprod">{{$.i18n.Tr "repo.release.prerelease"}}</span>
 							{{else}}
 								<span class="ui green label" title="prod">{{$.i18n.Tr "repo.release.stable"}}</span>
 							{{end}}
@@ -82,7 +82,7 @@
 							</span>
 							<!-- DCS Customizations -->
 							{{if .Door43Metadata}}
-								<span class="ui {{if .IsPrerelease}}orange{{else if .IsDraft}}yellow{{else}}green{{end}} label" title="{{if .IsPrerelease}}preprod{{else .IsDraft}}draft{{else}}prod{{end}}" style="margin-top: 10px"><a href="{{$.RepoLink}}/src/tag/{{.TagName | EscapePound}}/manifest.yaml" rel="nofollow" style="opacity: inherit !important">{{$.i18n.Tr "repo.metadata.catalog"}} (rc0.2)</a></span>
+								<span class="ui {{if .IsPrerelease}}orange{{else if .IsDraft}}yellow{{else}}green{{end}} label" title="{{if .IsPrerelease}}preprod{{else if .IsDraft}}draft{{else}}prod{{end}}" style="margin-top: 10px"><a href="{{$.RepoLink}}/src/tag/{{.TagName | EscapePound}}/manifest.yaml" rel="nofollow" style="opacity: inherit !important">{{$.i18n.Tr "repo.metadata.catalog"}} (rc0.2)</a></span>
 							{{else if (and (not .IsTag) (not .IsDraft)) }}
 								<span class="ui red label" title="{{$.i18n.Tr "repo.metadata.invalid_manifest_tooltip"}}" style="margin-top: 10px"><a href="{{$.RepoLink}}/src/tag/{{.TagName | EscapePound}}/manifest.yaml" rel="nofollow" style="opacity: inherit #important">{{$.i18n.Tr "repo.metadata.invalid"}} (rc0.2)</a></span>
 							{{end}}
