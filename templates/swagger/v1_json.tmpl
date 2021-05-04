@@ -16398,6 +16398,11 @@
           "type": "string",
           "x-go-name": "AvatarURL"
         },
+        "bio": {
+          "description": "the user's biography",
+          "type": "string",
+          "x-go-name": "Description"
+        },
         "created": {
           "type": "string",
           "format": "date-time",
@@ -16434,6 +16439,11 @@
           "format": "date-time",
           "x-go-name": "LastLogin"
         },
+        "location": {
+          "description": "the user's location",
+          "type": "string",
+          "x-go-name": "Location"
+        },
         "login": {
           "description": "the user's username",
           "type": "string",
@@ -16459,6 +16469,11 @@
           "description": "END DCS Customizations ***/\nIs user restricted",
           "type": "boolean",
           "x-go-name": "Restricted"
+        },
+        "website": {
+          "description": "the user's website",
+          "type": "string",
+          "x-go-name": "Website"
         }
       },
       "x-go-package": "code.gitea.io/gitea/modules/structs"
