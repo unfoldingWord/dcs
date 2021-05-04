@@ -252,7 +252,11 @@ func ProcessDoor43MetadataForRepoRelease(repo *models.Repository, release *model
 		branchOrTag = release.TagName
 	} else {
 		releaseDateUnix = timeutil.TimeStamp(commit.Author.When.Unix())
-		branchOrTag = repo.DefaultBranch
+		if release != nil {
+			branchOrTag = release.Target
+                } else {
+			branchOrTag = repo.DefaultBranch
+		}
 	}
 
 	if dm == nil ||
