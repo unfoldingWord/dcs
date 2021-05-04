@@ -81,10 +81,19 @@
 								<a class="mono" href="{{$.RepoLink}}/src/commit/{{.Sha1}}" rel="nofollow">{{svg "octicon-git-commit" 16 "mr-2"}}{{ShortSha .Sha1}}</a>
 							</span>
 							<!-- DCS Customizations -->
+							{{$stage := "prod"}}
+							{{$color := "green"}}
+							{{if .IsPrerelease}}
+								{{$stage = "preprod"}}
+								{{$color = "orange"}}
+							{{else if .IsDraft}}
+								{{$stage = "draft"}}
+								{{$color = "yellow"}}
+							{{end}}
 							{{if .Door43Metadata}}
-								<span class="ui {{if .IsPrerelease}}orange{{else if .IsDraft}}yellow{{else}}green{{end}} label" title="{{if .IsPrerelease}}preprod{{else if .IsDraft}}draft{{else}}prod{{end}}" style="margin-top: 10px"><a href="{{$.RepoLink}}/src/tag/{{.TagName | EscapePound}}/manifest.yaml" rel="nofollow" style="opacity: inherit !important">{{$.i18n.Tr "repo.metadata.catalog"}} (rc0.2)</a></span>
+								<span class="ui {{$color}} label" title="Stage: {{$stage}}" style="margin-top: 10px"><a href="{{$.RepoLink}}/src/tag/{{.TagName | EscapePound}}/manifest.yaml" rel="nofollow" style="opacity: inherit !important">{{$.i18n.Tr "repo.metadata.catalog"}} ({{$stage}})</a></span>
 							{{else if (and (not .IsTag) (not .IsDraft)) }}
-								<span class="ui red label" title="{{$.i18n.Tr "repo.metadata.invalid_manifest_tooltip"}}" style="margin-top: 10px"><a href="{{$.RepoLink}}/src/tag/{{.TagName | EscapePound}}/manifest.yaml" rel="nofollow" style="opacity: inherit #important">{{$.i18n.Tr "repo.metadata.invalid"}} (rc0.2)</a></span>
+								<span class="ui red label" title="{{$.i18n.Tr "repo.metadata.invalid_manifest_tooltip"}}" style="margin-top: 10px"><a href="{{$.RepoLink}}/src/tag/{{.TagName | EscapePound}}/manifest.yaml" rel="nofollow" style="opacity: inherit #important">{{$.i18n.Tr "repo.metadata.invalid"}} ({{$stage}})</a></span>
 							{{end}}
 							<!-- END DCS Customizations -->
 						{{end}}
