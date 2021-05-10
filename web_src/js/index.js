@@ -1157,11 +1157,9 @@ async function initRepository() {
     // Change status
     const $statusButton = $('#status-button');
     $('#comment-form textarea').on('keyup', function () {
-      if ($(this).val().length === 0) {
-        $statusButton.text($statusButton.data('status'));
-      } else {
-        $statusButton.text($statusButton.data('status-and-comment'));
-      }
+      const $simplemde = $(this).data('simplemde');
+      const value = ($simplemde && $simplemde.value()) ? $simplemde.value() : $(this).val();
+      $statusButton.text($statusButton.data(value.length === 0 ? 'status' : 'status-and-comment'));
     });
     $statusButton.on('click', () => {
       $('#status').val($statusButton.data('status-val'));
@@ -1670,6 +1668,8 @@ function setCommentSimpleMDE($editArea) {
     }
   });
   attachTribute(simplemde.codemirror.getInputField(), {mentions: true, emoji: true});
+  $editArea.data('simplemde', simplemde);
+  $(simplemde.codemirror.getInputField()).data('simplemde', simplemde);
   return simplemde;
 }
 
@@ -2180,6 +2180,10 @@ function searchRepositories() {
 }
 
 function showCodeViewMenu() {
+  if ($('.code-view-menu-list').length === 0) {
+    return;
+  }
+
   // Get clicked tr
   const $code_tr = $('.code-view td.lines-code.active').parent();
 
@@ -2834,6 +2838,11 @@ function selectRange($list, $select, $from) {
 
       // add hashchange to permalink
       const $issue = $('a.ref-in-new-issue');
+
+      if ($issue.length === 0) {
+        return;
+      }
+
       const matched = $issue.attr('href').match(/%23L\d+$|%23L\d+-L\d+$/);
       if (matched) {
         $issue.attr('href', $issue.attr('href').replace($issue.attr('href').substr(matched.index), `%23L${a}-L${b}`));
@@ -2849,6 +2858,11 @@ function selectRange($list, $select, $from) {
 
   // add hashchange to permalink
   const $issue = $('a.ref-in-new-issue');
+
+  if ($issue.length === 0) {
+    return;
+  }
+
   const matched = $issue.attr('href').match(/%23L\d+$|%23L\d+-L\d+$/);
   if (matched) {
     $issue.attr('href', $issue.attr('href').replace($issue.attr('href').substr(matched.index), `%23${$select.attr('rel')}`));
