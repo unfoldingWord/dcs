@@ -1187,4 +1187,5 @@ func NewServices() {
 	newTaskService()
 	NewQueueService()
 	newProject()
+	newMimeTypeMap()
 }
