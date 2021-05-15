@@ -920,6 +920,10 @@ func Delete(ctx *context.APIContext) {
 		return
 	}
 
+	if ctx.Repo.GitRepo != nil {
+		ctx.Repo.GitRepo.Close()
+	}
+
 	if err := repo_service.DeleteRepository(ctx.User, repo); err != nil {
 		ctx.Error(http.StatusInternalServerError, "DeleteRepository", err)
 		return
