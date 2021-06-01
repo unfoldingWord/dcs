@@ -212,7 +212,10 @@ func NewFuncMap() []template.FuncMap {
 		},
 		/*** DCS Customizations ***/
 		"GATrackingID": func() string {
-			return setting.Google.GATrackingID
+			return setting.DCS.GATrackingID
+		},
+		"Door43PreviewURL": func() string {
+			return setting.DCS.Door43PreviewURL
 		},
 		/*** END DCS Customizations ***/
 		"SubJumpablePath": func(str string) []string {
