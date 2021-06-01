@@ -405,8 +405,9 @@ var (
 	UILocation = time.Local
 
 	/*** DCS Customizations ***/
-	Google struct {
-		GATrackingID string
+	DCS struct {
+		GATrackingID     string
+		Door43PreviewURL string
 	}
 	/*** END DCS Customizations ***/
 )
@@ -978,7 +979,8 @@ func NewContext() {
 	UI.UseServiceWorker = Cfg.Section("ui").Key("USE_SERVICE_WORKER").MustBool(true)
 
 	/*** DCS Customizations ***/
-	Google.GATrackingID = Cfg.Section("other").Key("GA_TRACKING_ID").MustString("UA-60106521-5")
+	DCS.GATrackingID = Cfg.Section("dcs").Key("GA_TRACKING_ID").MustString("UA-60106521-5")
+	DCS.Door43PreviewURL = Cfg.Section("dcs").Key("DOOR43_PREVIEW_URL").MustString("https://door43.org")
 	/*** END DCS Customizations ***/
 
 	HasRobotsTxt, err = util.IsFile(path.Join(CustomPath, "robots.txt"))
