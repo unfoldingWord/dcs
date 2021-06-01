@@ -116,7 +116,7 @@ func NewUserPost(ctx *context.Context) {
 			ctx.RenderWithErr(password.BuildComplexityError(ctx), tplUserNew, &form)
 			return
 		}
-		pwned, err := password.IsPwned(ctx.Req.Context(), form.Password)
+		pwned, err := password.IsPwned(ctx, form.Password)
 		if pwned {
 			ctx.Data["Err_Password"] = true
 			errMsg := ctx.Tr("auth.password_pwned")
@@ -259,7 +259,7 @@ func EditUserPost(ctx *context.Context) {
 			ctx.RenderWithErr(password.BuildComplexityError(ctx), tplUserEdit, &form)
 			return
 		}
-		pwned, err := password.IsPwned(ctx.Req.Context(), form.Password)
+		pwned, err := password.IsPwned(ctx, form.Password)
 		if pwned {
 			ctx.Data["Err_Password"] = true
 			errMsg := ctx.Tr("auth.password_pwned")
