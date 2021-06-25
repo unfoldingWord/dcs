@@ -93,7 +93,7 @@ func innerToRepo(repo *models.Repository, mode models.AccessMode, isParent bool)
 		return nil
 	}
 
-	numReleases, _ := models.GetReleaseCountByRepoID(repo.ID, models.FindReleasesOptions{IncludeDrafts: false, IncludeTags: true})
+	numReleases, _ := models.GetReleaseCountByRepoID(repo.ID, models.FindReleasesOptions{IncludeDrafts: false, IncludeTags: false})
 
 	/*** DCS Customizations ***/
 	catalog := &api.CatalogStages{}
