@@ -3,7 +3,7 @@ name: Deploy DCS to Docker
 on:
   push:
     branches:
-      - master
+      - main
       - release/dcs/v*
     tags:
       - v*-dcs
@@ -36,8 +36,8 @@ jobs:
             MINOR_VERSION=`echo ${PATCH_VERSION} | cut -f1,2 -d'.'`
             MAJOR_VERSION=`echo ${MINOR_VERSION} | cut -f1 -d'.'`
             DOCKER_TAGS="${DOCKER_TAGS},latest,${MAJOR_VERSION},${MINOR_VERSION},${PATCH_VERSION}"
-          elif [[ "${REF}" == "master" ]]; then
-            # REF is the master development branch so is the lastest development code
+          elif [[ "${REF}" == "main" ]]; then
+            # REF is the main development branch so is the lastest development code
             DOCKER_TAGS="${DOCKER_TAGS}"
           elif [[ "${REF}" == "release/dcs/"* ]]; then
             # REF is a release branch so is a beta, qa or latest of this minor version
