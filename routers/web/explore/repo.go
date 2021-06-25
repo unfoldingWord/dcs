@@ -95,6 +95,7 @@ func RenderRepoSearch(ctx *context.Context, opts *RepoSearchOptions) {
 				keywords = append(keywords, token)
 			}
 		}
+		keyword = strings.Join(keywords, ", ")
 	}
 	/*** END DCS Customizations ***/
 
