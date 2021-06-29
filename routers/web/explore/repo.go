@@ -95,6 +95,7 @@ func RenderRepoSearch(ctx *context.Context, opts *RepoSearchOptions) {
 				keywords = append(keywords, token)
 			}
 		}
+		keyword = strings.Join(keywords, ", ")
 	}
 	/*** END DCS Customizations ***/
 
@@ -112,6 +113,14 @@ func RenderRepoSearch(ctx *context.Context, opts *RepoSearchOptions) {
 		AllLimited:         true,
 		TopicOnly:          topicOnly,
 		IncludeDescription: setting.UI.SearchRepoDescription,
+		/*** DCS Customizaitons ***/
+		Books:           books,
+		Languages:       langs,
+		Subjects:        subjects,
+		Repos:           repoNames,
+		Owners:          owners,
+		IncludeMetadata: true,
+		/*** END DCS Customations ***/
 	})
 	if err != nil {
 		ctx.ServerError("SearchRepository", err)
