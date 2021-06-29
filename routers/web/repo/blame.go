@@ -122,6 +122,10 @@ func RefBlame(ctx *context.Context) {
 		blameParts = append(blameParts, *blamePart)
 	}
 
+	/*** DCS Customizations ***/
+	ctx.Data["Entry"] = entry
+	/*** END DCS Customizations ***/
+
 	// Get Topics of this repo
 	renderRepoTopics(ctx)
 	if ctx.Written() {
@@ -201,10 +205,6 @@ func processBlameParts(ctx *context.Context, blameParts []git.BlamePart) (map[st
 		c := e.Value.(models.UserCommit)
 		commitNames[c.ID.String()] = c
 	}
-
-	/*** DCS Customizations ***/
-	ctx.Data["Entry"] = entry
-	/*** END DCS Customizations ***/
 
 	return commitNames, previousCommits
 }
