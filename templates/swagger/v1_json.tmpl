@@ -13440,6 +13440,10 @@
         "username": {
           "type": "string",
           "x-go-name": "Username"
+        },
+        "visibility": {
+          "type": "string",
+          "x-go-name": "Visibility"
         }
       },
       "x-go-package": "code.gitea.io/gitea/modules/structs"
@@ -14249,6 +14253,10 @@
           "format": "int64",
           "x-go-name": "SourceID"
         },
+        "visibility": {
+          "type": "string",
+          "x-go-name": "Visibility"
+        },
         "website": {
           "type": "string",
           "x-go-name": "Website"
@@ -14578,6 +14586,13 @@
             "type": "string"
           },
           "x-go-name": "AllowedReactions"
+        },
+        "custom_emojis": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "x-go-name": "CustomEmojis"
         },
         "default_theme": {
           "type": "string",
@@ -16799,6 +16814,11 @@
           "type": "integer",
           "format": "int64",
           "x-go-name": "StarredRepos"
+        },
+        "visibility": {
+          "description": "User visibility level option: public, limited, private",
+          "type": "string",
+          "x-go-name": "Visibility"
         },
         "website": {
           "description": "the user's website",

@@ -37,7 +37,8 @@ func Users(ctx *context.Context) {
 	ctx.Data["PageIsAdminUsers"] = true
 
 	explore.RenderUserSearch(ctx, &models.SearchUserOptions{
-		Type: models.UserTypeIndividual,
+		Actor: ctx.User,
+		Type:  models.UserTypeIndividual,
 		ListOptions: models.ListOptions{
 			PageSize: setting.UI.Admin.UserPagingNum,
 		},
@@ -53,6 +54,8 @@ func NewUser(ctx *context.Context) {
 	ctx.Data["Title"] = ctx.Tr("admin.users.new_account")
 	ctx.Data["PageIsAdmin"] = true
 	ctx.Data["PageIsAdminUsers"] = true
+	ctx.Data["DefaultUserVisibilityMode"] = setting.Service.DefaultUserVisibilityMode
+	ctx.Data["AllowedUserVisibilityModes"] = setting.Service.AllowedUserVisibilityModesSlice.ToVisibleTypeSlice()
 
 	ctx.Data["login_type"] = "0-0"
 
@@ -73,6 +76,7 @@ func NewUserPost(ctx *context.Context) {
 	ctx.Data["Title"] = ctx.Tr("admin.users.new_account")
 	ctx.Data["PageIsAdmin"] = true
 	ctx.Data["PageIsAdminUsers"] = true
+	ctx.Data["DefaultUserVisibilityMode"] = setting.Service.DefaultUserVisibilityMode
 
 	sources, err := models.LoginSources()
 	if err != nil {
@@ -129,7 +133,8 @@ func NewUserPost(ctx *context.Context) {
 		}
 		u.MustChangePassword = form.MustChangePassword
 	}
-	if err := models.CreateUser(u); err != nil {
+
+	if err := models.CreateUser(u, &models.CreateUserOverwriteOptions{Visibility: form.Visibility}); err != nil {
 		switch {
 		case models.IsErrUserAlreadyExist(err):
 			ctx.Data["Err_UserName"] = true
@@ -210,6 +215,7 @@ func EditUser(ctx *context.Context) {
 	ctx.Data["PageIsAdminUsers"] = true
 	ctx.Data["DisableRegularOrgCreation"] = setting.Admin.DisableRegularOrgCreation
 	ctx.Data["DisableMigrations"] = setting.Repository.DisableMigrations
+	ctx.Data["AllowedUserVisibilityModes"] = setting.Service.AllowedUserVisibilityModesSlice.ToVisibleTypeSlice()
 
 	prepareUserInfo(ctx)
 	if ctx.Written() {
@@ -314,6 +320,8 @@ func EditUserPost(ctx *context.Context) {
 	u.AllowGitHook = form.AllowGitHook
 	u.AllowImportLocal = form.AllowImportLocal
 	u.AllowCreateOrganization = form.AllowCreateOrganization
+
+	u.Visibility = form.Visibility
 
 	// skip self Prohibit Login
 	if ctx.User.ID == u.ID {
