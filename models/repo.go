@@ -1037,7 +1037,7 @@ func GetRepoInitFile(tp, name string) ([]byte, error) {
 
 var (
 	reservedRepoNames    = []string{".", ".."}
-	reservedRepoPatterns = []string{"*.git", "*.wiki"}
+	reservedRepoPatterns = []string{"*.git", "*.wiki", "*.rss", "*.atom"}
 )
 
 // IsUsableRepoName returns true when repository is usable
