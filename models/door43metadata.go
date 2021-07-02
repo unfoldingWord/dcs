@@ -329,19 +329,6 @@ func getLatestCatalogMetadataByRepoID(e Engine, repoID int64, canBePrerelease bo
 	return dm, dm.loadAttributes(e)
 }
 
-// GetDoor43MetadatasByRepoIDAndReleaseIDs returns a list of door43 metadatas of repository according repoID and releaseIDs.
-func GetDoor43MetadatasByRepoIDAndReleaseIDs(repoID int64, releaseIDs []int64) (dms []*Door43Metadata, err error) {
-	err = x.In("release_id", releaseIDs).
-		Desc("created_unix").
-		Find(&dms, Door43Metadata{RepoID: repoID})
-	return dms, err
-}
-
-// GetDoor43MetadataCountByRepoID returns the count of metadatas of repository
-func GetDoor43MetadataCountByRepoID(repoID int64, opts FindDoor43MetadatasOptions) (int64, error) {
-	return x.Where(opts.toConds(repoID)).Count(&Door43Metadata{})
-}
-
 // GetReleaseCount returns the count of releases of repository of the Door43Metadata's stage
 func (dm *Door43Metadata) GetReleaseCount() (int64, error) {
 	stageCond := GetStageCond(dm.Stage)
@@ -401,7 +388,7 @@ func (dms *door43MetadataSorter) Len() int {
 }
 
 func (dms *door43MetadataSorter) Less(i, j int) bool {
-	return dms.dms[i].UpdatedUnix > dms.dms[j].UpdatedUnix
+	return dms.dms[i].ReleaseDateUnix > dms.dms[j].ReleaseDateUnix
 }
 
 func (dms *door43MetadataSorter) Swap(i, j int) {
@@ -418,8 +405,6 @@ func SortDoorMetadatas(dms []*Door43Metadata) {
 func DeleteDoor43MetadataByID(id int64) error {
 	if dm, err := GetDoor43MetadataByID(id); err != nil {
 		return err
-	} else if err := dm.LoadAttributes(); err != nil {
-		return err
 	} else {
 		return DeleteDoor43Metadata(dm)
 	}
@@ -428,10 +413,10 @@ func DeleteDoor43MetadataByID(id int64) error {
 // DeleteDoor43Metadata deletes a metadata from database by given ID.
 func DeleteDoor43Metadata(dm *Door43Metadata) error {
 	id, err := x.Delete(dm)
-	if id > 0 && dm.ReleaseID > 0 {
+	if id > 0 {
 		if err := dm.LoadAttributes(); err != nil {
 			return err
-		} else if err := CreateRepositoryNotice("Door43 Metadata deleted for repo: %s, tag: %s", dm.Repo.Name, dm.Release.TagName); err != nil {
+		} else if err := CreateRepositoryNotice("Door43 Metadata #%d deleted for repo: %s, release_id: %s,", dm.ID, dm.Repo.Name, dm.ReleaseID); err != nil {
 			log.Error("CreateRepositoryNotice: %v", err)
 		}
 	}

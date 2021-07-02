@@ -129,6 +129,7 @@ func init() {
 		new(LanguageStat),
 		new(EmailHash),
 		new(Door43Metadata),
+		new(Door43Revision),
 		new(UserRedirect),
 		new(Project),
 		new(ProjectBoard),
@@ -276,7 +277,8 @@ type Statistic struct {
 		Issue, Comment, Oauth, Follow,
 		Mirror, Release, LoginSource, Webhook,
 		Milestone, Label, HookTask,
-		Team, UpdateTask, Attachment, Door43Metadata int64
+		Team, UpdateTask, Attachment, 
+		Door43Metadata, Door43Revision int64
 	}
 }
 
@@ -304,6 +306,7 @@ func GetStatistic() (stats Statistic) {
 	stats.Counter.Team, _ = x.Count(new(Team))
 	stats.Counter.Attachment, _ = x.Count(new(Attachment))
 	stats.Counter.Door43Metadata, _ = x.Count(new(Door43Metadata))
+	stats.Counter.Door43Revision, _ = x.Count(new(Door43Revision))
 	return
 }
 

@@ -30,7 +30,7 @@ func registerUpdateMirrorTask() {
 func registerUpdateDoor43MetadataTask() {
 	RegisterTaskFatal("update_metadata", &BaseConfig{
 		Enabled:    true,
-		RunAtStart: true,
+		RunAtStart: false,
 		Schedule:   "@every 2h",
 	}, func(ctx context.Context, _ *models.User, _ Config) error {
 		return metadata_service.UpdateDoor43Metadata(ctx)
