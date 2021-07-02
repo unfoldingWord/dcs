@@ -111,7 +111,7 @@ TAGS ?=
 TAGS_SPLIT := $(subst $(COMMA), ,$(TAGS))
 TAGS_EVIDENCE := $(MAKE_EVIDENCE_DIR)/tags
 
-TEST_TAGS ?= sqlite sqlite_unlock_notify
+TEST_TAGS ?= sqlite sqlite_unlock_notify sqlite_json
 
 GO_DIRS := cmd integrations models modules routers build services vendor tools
 
