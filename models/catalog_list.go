@@ -124,8 +124,8 @@ func SearchCatalogCondition(opts *SearchCatalogOptions) builder.Cond {
 	for _, keyword := range opts.Keywords {
 		keywordCond = keywordCond.Or(builder.Like{"`repository`.lower_name", strings.ToLower(keyword)})
 		keywordCond = keywordCond.Or(builder.Like{"`user`.lower_name", strings.ToLower(keyword)})
-		keywordCond = keywordCond.Or(builder.Like{"LOWER(JSON_UNQUOTE(JSON_EXTRACT(`door43_metadata`.metadata, '$.dublin_core.title')))", strings.ToLower(keyword)})
-		keywordCond = keywordCond.Or(builder.Like{"LOWER(JSON_UNQUOTE(JSON_EXTRACT(`door43_metadata`.metadata, '$.dublin_core.subject')))", strings.ToLower(keyword)})
+		keywordCond = keywordCond.Or(builder.Like{"LOWER(REPLACE(JSON_EXTRACT(`door43_metadata`.metadata, '$.dublin_core.title'), '\"', ''))", strings.ToLower(keyword)})
+		keywordCond = keywordCond.Or(builder.Like{"LOWER(REPLACE(JSON_EXTRACT(`door43_metadata`.metadata, '$.dublin_core.subject'), '\"', ''))", strings.ToLower(keyword)})
 		if opts.IncludeMetadata {
 			keywordCond = keywordCond.Or(builder.Expr("JSON_SEARCH(LOWER(`door43_metadata`.metadata), 'one', ?) IS NOT NULL", "%"+strings.ToLower(keyword)+"%"))
 		}
@@ -268,7 +268,7 @@ func GetHistoryCond(stage Stage, includeHistory bool) builder.Cond {
 func GetSubjectCond(subjects []string) builder.Cond {
 	var subjectCond = builder.NewCond()
 	for _, subject := range subjects {
-		subjectCond = subjectCond.Or(builder.Eq{"LOWER(JSON_UNQUOTE(JSON_EXTRACT(`door43_metadata`.metadata, '$.dublin_core.subject')))": strings.ToLower(subject)})
+		subjectCond = subjectCond.Or(builder.Eq{"LOWER(REPLACE(JSON_EXTRACT(`door43_metadata`.metadata, '$.dublin_core.subject'), '\"', ''))": strings.ToLower(subject)})
 	}
 	return subjectCond
 }
@@ -278,7 +278,7 @@ func GetLanguageCond(languages []string) builder.Cond {
 	var langCond = builder.NewCond()
 	for _, lang := range languages {
 		for _, v := range strings.Split(lang, ",") {
-			langCond = langCond.Or(builder.Eq{"LOWER(JSON_UNQUOTE(JSON_EXTRACT(`door43_metadata`.metadata, '$.dublin_core.language.identifier')))": strings.ToLower(v)})
+			langCond = langCond.Or(builder.Eq{"LOWER(REPLACE(JSON_EXTRACT(`door43_metadata`.metadata, '$.dublin_core.language.identifier'), '\"', ''))": strings.ToLower(v)})
 		}
 	}
 	return langCond
@@ -300,7 +300,7 @@ func GetCheckingLevelCond(checkingLevels []string) builder.Cond {
 	var checkingCond = builder.NewCond()
 	for _, checking := range checkingLevels {
 		for _, v := range strings.Split(checking, ",") {
-			checkingCond = checkingCond.Or(builder.Gte{"JSON_UNQUOTE(JSON_EXTRACT(`door43_metadata`.metadata, '$.checking.checking_level'))": v})
+			checkingCond = checkingCond.Or(builder.Gte{"REPLACE(JSON_EXTRACT(`door43_metadata`.metadata, '$.checking.checking_level'), '\"', '')": v})
 		}
 	}
 	return checkingCond
