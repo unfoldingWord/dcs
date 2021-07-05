@@ -239,10 +239,12 @@ func ProcessDoor43RevisionForRepoRelease(repo *models.Repository, release *model
 			for _, entry := range entries:
 				path := entry.Name()
 				mode := fmt.Sprintf("%06o", entry.Mode())
-				type := entry.Type()
+				entryType := entry.Type()
 				size = entry.Size()
 				sha = entry.ID.String()
-	
+
+				latest, err := GetLatestDoor43Revision(repo.ID, path)
+// NOTE TO SELF: WAS WORKING TO HERE, BELOW WAS DELETED FOR SOME REASON -RICH
 			if entries[e].IsDir() {
 				copy(treeURL[copyPos:], entries[e].ID.String())
 				tree.Entries[i].URL = string(treeURL)
