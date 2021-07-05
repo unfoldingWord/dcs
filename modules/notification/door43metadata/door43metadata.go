@@ -63,3 +63,27 @@ func (m *metadataNotifier) NotifyDeleteRepository(doer *models.User, repo *model
 		log.Error("DeleteAllDoor43MetadatasByRepoID: %v\n", err)
 	}
 }
+
+func (m *metadataNotifier) NotifyMigrateRepository(doer *models.User, u *models.User, repo *models.Repository) {
+	if err := door43metadata.ProcessDoor43MetadataForRepo(repo); err != nil {
+		log.Error("ProcessDoor43MetadataForRepo: %v\n", err)
+	}
+}
+
+func (m *metadataNotifier) NotifyTransferRepository(doer *models.User, repo *models.Repository, newOwnerName string) {
+	if err := door43metadata.ProcessDoor43MetadataForRepo(repo); err != nil {
+		log.Error("ProcessDoor43MetadataForRepo: %v\n", err)
+	}
+}
+
+func (m *metadataNotifier) NotifyForkRepository(doer *models.User, oldRepo, repo *models.Repository) {
+	if err := door43metadata.ProcessDoor43MetadataForRepo(repo); err != nil {
+		log.Error("ProcessDoor43MetadataForRepo: %v\n", err)
+	}
+}
+
+func (m *metadataNotifier) NotifyRenameRepository(doer *models.User, repo *models.Repository, oldName string) {
+	if err := door43metadata.ProcessDoor43MetadataForRepo(repo); err != nil {
+		log.Error("ProcessDoor43MetadataForRepo: %v\n", err)
+	}
+}
