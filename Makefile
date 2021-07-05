@@ -113,7 +113,7 @@ TAGS ?=
 TAGS_SPLIT := $(subst $(COMMA), ,$(TAGS))
 TAGS_EVIDENCE := $(MAKE_EVIDENCE_DIR)/tags
 
-TEST_TAGS ?= sqlite sqlite_unlock_notify
+TEST_TAGS ?= sqlite sqlite_unlock_notify sqlite_json
 
 TAR_EXCLUDES := .git data indexers queues log node_modules $(EXECUTABLE) $(FOMANTIC_WORK_DIR)/node_modules $(DIST) $(MAKE_EVIDENCE_DIR) $(AIR_TMP_DIR)
 
@@ -783,7 +783,7 @@ golangci-lint:
 .PHONY: docker
 docker:
 	docker build --disable-content-trust=false -t $(DOCKER_REF) .
-# support also build args docker build --build-arg GITEA_VERSION=v1.2.3 --build-arg TAGS="bindata sqlite sqlite_unlock_notify"  .
+# support also build args docker build --build-arg GITEA_VERSION=v1.2.3 --build-arg TAGS="bindata sqlite sqlite_unlock_notify sqlite_json"  .
 
 .PHONY: docker-build
 docker-build:
