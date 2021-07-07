@@ -407,7 +407,9 @@ func GetAllUsers(ctx *context.APIContext) {
 
 	results := make([]*api.User, len(users))
 	for i := range users {
-		results[i] = convert.ToUser(users[i], ctx.IsSigned, ctx.User.IsAdmin)
+		/*** DCS Customizations ***/
+		results[i] = convert.ToUserDCS(users[i], ctx.IsSigned, ctx.User.IsAdmin)
+		/*** END DCS Customizations ***/
 	}
 
 	ctx.SetLinkHeader(int(maxResults), listOptions.PageSize)
