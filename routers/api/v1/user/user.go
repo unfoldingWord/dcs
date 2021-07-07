@@ -82,7 +82,9 @@ func Search(ctx *context.APIContext) {
 
 	results := make([]*api.User, len(users))
 	for i := range users {
-		results[i] = convert.ToUser(users[i], ctx.IsSigned, ctx.User != nil && ctx.User.IsAdmin)
+		/*** DCS Customizations ***/
+		results[i] = convert.ToUserDCS(users[i], ctx.IsSigned, ctx.User != nil && ctx.User.IsAdmin)
+		/*** END DCS Customizations ***/
 	}
 
 	ctx.SetLinkHeader(int(maxResults), listOptions.PageSize)
@@ -119,7 +121,9 @@ func GetInfo(ctx *context.APIContext) {
 		return
 	}
 
-	ctx.JSON(http.StatusOK, convert.ToUser(u, ctx.IsSigned, ctx.User != nil && (ctx.User.ID == u.ID || ctx.User.IsAdmin)))
+	/*** DCS Customizations ***/
+	ctx.JSON(http.StatusOK, convert.ToUserDCS(u, ctx.IsSigned, ctx.User != nil && (ctx.User.ID == u.ID || ctx.User.IsAdmin)))
+	/*** END DCS Customizations ***/
 }
 
 // GetAuthenticatedUser get current user's information
@@ -133,7 +137,9 @@ func GetAuthenticatedUser(ctx *context.APIContext) {
 	//   "200":
 	//     "$ref": "#/responses/User"
 
-	ctx.JSON(http.StatusOK, convert.ToUser(ctx.User, ctx.IsSigned, ctx.User != nil))
+	/*** DCS Customizations ***/
+	ctx.JSON(http.StatusOK, convert.ToUserDCS(ctx.User, ctx.IsSigned, ctx.User != nil))
+	/*** END DCS Customizations ***/
 }
 
 // GetUserHeatmapData is the handler to get a users heatmap
