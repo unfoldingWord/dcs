@@ -66,9 +66,7 @@ func Search(ctx *context.APIContext) {
 		UID:         ctx.QueryInt64("uid"),
 		Type:        models.UserTypeIndividual,
 		ListOptions: listOptions,
-		/*** DCS Customizations ***/
-		RepoLanguages: ctx.QueryStrings("lang"),
-		/*** END DCS Customizations ***/
+		RepoLanguages: ctx.QueryStrings("lang"), // DCS Customizations
 	}
 
 	users, maxResults, err := models.SearchUsers(opts)
@@ -86,7 +84,7 @@ func Search(ctx *context.APIContext) {
 
 	ctx.JSON(http.StatusOK, map[string]interface{}{
 		"ok":   true,
-		"data": convert.ToUsers(ctx.User, users),
+		"data": convert.ToUsersDCS(ctx.User, users), // DCS Customizations
 	})
 }
 
@@ -120,7 +118,7 @@ func GetInfo(ctx *context.APIContext) {
 		ctx.NotFound("GetUserByName", models.ErrUserNotExist{Name: ctx.Params(":username")})
 		return
 	}
-	ctx.JSON(http.StatusOK, convert.ToUser(u, ctx.User))
+	ctx.JSON(http.StatusOK, convert.ToUserDCS(u, ctx.User)) // DCS Customizations
 }
 
 // GetAuthenticatedUser get current user's information
@@ -134,7 +132,7 @@ func GetAuthenticatedUser(ctx *context.APIContext) {
 	//   "200":
 	//     "$ref": "#/responses/User"
 
-	ctx.JSON(http.StatusOK, convert.ToUser(ctx.User, ctx.User))
+	ctx.JSON(http.StatusOK, convert.ToUserDCS(ctx.User, ctx.User)) // DCS Customizations
 }
 
 // GetUserHeatmapData is the handler to get a users heatmap

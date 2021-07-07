@@ -28,15 +28,17 @@ func (u *User) GetRepoLanguages() []string {
 		log.Error("Error GetUserRepositories: %v", err)
 	} else {
 		for _, repo := range repos {
+			lang := dcs.GetLanguageFromRepoName(repo.LowerName)
+			if lang != "" && !contains(languages, lang) {
+				languages = append(languages, lang)
+			}
 			if dm, err := repo.GetDefaultBranchMetadata(); err != nil {
 				log.Error("Error GetDefaultBranchMetadata: %v", err)
 			} else if dm != nil {
-				lang := (*dm.Metadata)["dublin_core"].(map[string]interface{})["language"].(map[string]interface{})["identifier"].(string)
+				lang = (*dm.Metadata)["dublin_core"].(map[string]interface{})["language"].(map[string]interface{})["identifier"].(string)
 				if lang != "" && !contains(languages, lang) {
 					languages = append(languages, lang)
 				}
-			} else if lang := dcs.GetLanguageFromRepoName(repo.LowerName); lang != "" && !contains(languages, lang) {
-				languages = append(languages, lang)
 			}
 		}
 	}
