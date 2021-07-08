@@ -36,10 +36,14 @@ var Subjects = map[string]string{
 // GetSubjectFromRepoName determines the subject of a repo by its repo name
 func GetSubjectFromRepoName(repoName string) string {
 	parts := strings.Split(repoName, "_")
-	if len(parts) > 1 {
-		if _, ok := Subjects[parts[1]]; ok {
-			return Subjects[parts[1]]
-		}
+	if len(parts) == 2 && IsValidSubject(parts[1]) && IsValidLanguage(parts[0]) {
+		return Subjects[parts[1]]
 	}
 	return ""
+}
+
+// IsValidSubject returns true if it is a valid subject
+func IsValidSubject(subject string) bool {
+	_, ok := Subjects[subject]
+	return ok
 }

@@ -57,10 +57,6 @@ func toUser(user *models.User, signed, authed bool) *api.User {
 		Location:    user.Location,
 		Website:     user.Website,
 		Description: user.Description,
-		/*** DCS Customizations ***/
-		RepoLanguages: user.GetRepoLanguages(),
-		RepoSubjects:  user.GetRepoSubjects(),
-		/*** END DCS Customizations ***/
 		// counter's
 		Followers:    user.NumFollowers,
 		Following:    user.NumFollowing,
