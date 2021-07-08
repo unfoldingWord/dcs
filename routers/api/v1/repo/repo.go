@@ -450,7 +450,7 @@ func Get(ctx *context.APIContext) {
 	//   "200":
 	//     "$ref": "#/responses/Repository"
 
-	ctx.JSON(http.StatusOK, convert.ToRepo(ctx.Repo.Repository, ctx.Repo.AccessMode))
+	ctx.JSON(http.StatusOK, convert.ToRepoDCS(ctx.Repo.Repository, ctx.Repo.AccessMode)) // DCS Customizations
 }
 
 // GetByID returns a single Repository
