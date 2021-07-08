@@ -11,11 +11,11 @@ import (
 
 // ToUserDCS convert models.User to api.User with DCS customized fields populated
 // signed shall only be set if requester is logged in. authed shall only be set if user is site admin or user himself
-func ToUserDCS(user *models.User, signed, authed bool) *api.User {
+func ToUserDCS(user, doer *models.User) *api.User {
 	if user == nil {
 		return nil
 	}
-	result := ToUser(user, signed, authed)
+	result := ToUser(user, doer)
 	result.RepoLanguages = user.GetRepoLanguages()
 	result.RepoSubjects = user.GetRepoSubjects()
 	return result
