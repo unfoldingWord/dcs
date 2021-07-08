@@ -96,74 +96,6 @@ func innerToRepo(repo *models.Repository, mode models.AccessMode, isParent bool)
 	numReleases, _ := models.GetReleaseCountByRepoID(repo.ID, models.FindReleasesOptions{IncludeDrafts: false, IncludeTags: false})
 
 	/*** DCS Customizations ***/
-	catalog := &api.CatalogStages{}
-	// prod, err := models.GetDoor43MetadataByRepoIDAndStage(repo.ID, models.StageProd)
-	// if err != nil {
-	// 	log.Error("GetDoor43MetadataByRepoIDAndStage: %v", err)
-	// }
-	// preprod, err := models.GetDoor43MetadataByRepoIDAndStage(repo.ID, models.StagePreProd)
-	// if err != nil {
-	// 	log.Error("GetDoor43MetadataByRepoIDAndStage: %v", err)
-	// }
-	// draft, err := models.GetDoor43MetadataByRepoIDAndStage(repo.ID, models.StageDraft)
-	// if err != nil {
-	// 	log.Error("GetDoor43MetadataByRepoIDAndStage: %v", err)
-	// }
-	// latest, err := models.GetDoor43MetadataByRepoIDAndStage(repo.ID, models.StageLatest)
-	// if err != nil {
-	// 	log.Error("GetDoor43MetadataByRepoIDAndStage: %v", err)
-	// }
-
-	// if draft != nil && ((prod != nil && prod.ReleaseDateUnix >= draft.ReleaseDateUnix) ||
-	// 	(preprod != nil && preprod.ReleaseDateUnix >= draft.ReleaseDateUnix)) {
-	// 	draft = nil
-	// }
-	// if prod != nil && preprod != nil && prod.ReleaseDateUnix >= preprod.ReleaseDateUnix {
-	// 	preprod = nil
-	// }
-	// if prod != nil {
-	// 	prod.Repo = repo
-	// 	url := prod.GetReleaseURL()
-	// 	catalog.Production = &api.CatalogStage{
-	// 		Tag:        prod.BranchOrTag,
-	// 		ReleaseURL: &url,
-	// 		Released:   prod.GetReleaseDateTime(),
-	// 		ZipballURL: prod.GetZipballURL(),
-	// 		TarballURL: prod.GetTarballURL(),
-	// 	}
-	// }
-	// if preprod != nil {
-	// 	preprod.Repo = repo
-	// 	url := preprod.GetReleaseURL()
-	// 	catalog.PreProduction = &api.CatalogStage{
-	// 		Tag:        preprod.BranchOrTag,
-	// 		ReleaseURL: &url,
-	// 		Released:   preprod.GetReleaseDateTime(),
-	// 		ZipballURL: preprod.GetZipballURL(),
-	// 		TarballURL: preprod.GetTarballURL(),
-	// 	}
-	// }
-	// if draft != nil {
-	// 	draft.Repo = repo
-	// 	url := draft.GetReleaseURL()
-	// 	catalog.Draft = &api.CatalogStage{
-	// 		Tag:        draft.BranchOrTag,
-	// 		ReleaseURL: &url,
-	// 		Released:   draft.GetReleaseDateTime(),
-	// 		ZipballURL: draft.GetZipballURL(),
-	// 		TarballURL: draft.GetTarballURL(),
-	// 	}
-	// }
-	// if latest != nil {
-	// 	latest.Repo = repo
-	// 	catalog.Latest = &api.CatalogStage{
-	// 		Tag:        latest.BranchOrTag,
-	// 		ReleaseURL: nil,
-	// 		Released:   latest.GetReleaseDateTime(),
-	// 		ZipballURL: latest.GetZipballURL(),
-	// 		TarballURL: latest.GetTarballURL(),
-	// 	}
-	// }
 
 	// TODO: Load in Repository's LoadAttributes() function and save to repo.Metadata
 	metadata, err := models.GetDoor43MetadataByRepoIDAndReleaseID(repo.ID, 0)
@@ -246,7 +178,6 @@ func innerToRepo(repo *models.Repository, mode models.AccessMode, isParent bool)
 		Subject:                   subject,
 		Books:                     books,
 		CheckingLevel:             checkingLevel,
-		Catalog:                   catalog,
 		Internal:                  !repo.IsPrivate && repo.Owner.Visibility == api.VisibleTypePrivate,
 		MirrorInterval:            mirrorInterval,
 	}
