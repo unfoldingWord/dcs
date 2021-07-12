@@ -337,6 +337,7 @@ func renderDirectory(ctx *context.Context, treeLink string) {
 					ctx.Data["MarkupType"] = string(markupType)
 					var result strings.Builder
 					err := markup.Render(&markup.RenderContext{
+						Ctx:       ctx,
 						Filename:  readmeFile.name,
 						URLPrefix: readmeTreelink,
 						Metas:     ctx.Repo.Repository.ComposeDocumentMetas(),
@@ -528,6 +529,7 @@ func renderFile(ctx *context.Context, entry *git.TreeEntry, treeLink, rawLink st
 			ctx.Data["MarkupType"] = markupType
 			var result strings.Builder
 			err := markup.Render(&markup.RenderContext{
+				Ctx:       ctx,
 				Filename:  blob.Name(),
 				URLPrefix: path.Dir(treeLink),
 				Metas:     ctx.Repo.Repository.ComposeDocumentMetas(),
@@ -599,6 +601,7 @@ func renderFile(ctx *context.Context, entry *git.TreeEntry, treeLink, rawLink st
 			ctx.Data["MarkupType"] = markupType
 			var result strings.Builder
 			err := markup.Render(&markup.RenderContext{
+				Ctx:       ctx,
 				Filename:  blob.Name(),
 				URLPrefix: path.Dir(treeLink),
 				Metas:     ctx.Repo.Repository.ComposeDocumentMetas(),
