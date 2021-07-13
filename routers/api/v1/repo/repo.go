@@ -868,14 +868,15 @@ func updateRepoUnits(ctx *context.APIContext, opts api.EditRepoOption) error {
 			if err != nil {
 				// Unit type doesn't exist so we make a new config file with default values
 				config = &models.PullRequestsConfig{
-					IgnoreWhitespaceConflicts: false,
-					AllowMerge:                true,
-					AllowRebase:               true,
-					AllowRebaseMerge:          true,
-					AllowSquash:               true,
-					AllowManualMerge:          true,
-					AutodetectManualMerge:     false,
-					DefaultMergeStyle:         models.MergeStyleMerge,
+					IgnoreWhitespaceConflicts:     false,
+					AllowMerge:                    true,
+					AllowRebase:                   true,
+					AllowRebaseMerge:              true,
+					AllowSquash:                   true,
+					AllowManualMerge:              true,
+					AutodetectManualMerge:         false,
+					DefaultDeleteBranchAfterMerge: false,
+					DefaultMergeStyle:             models.MergeStyleMerge,
 				}
 			} else {
 				config = unit.PullRequestsConfig()
@@ -901,6 +902,9 @@ func updateRepoUnits(ctx *context.APIContext, opts api.EditRepoOption) error {
 			}
 			if opts.AutodetectManualMerge != nil {
 				config.AutodetectManualMerge = *opts.AutodetectManualMerge
+			}
+			if opts.DefaultDeleteBranchAfterMerge != nil {
+				config.DefaultDeleteBranchAfterMerge = *opts.DefaultDeleteBranchAfterMerge
 			}
 			if opts.DefaultMergeStyle != nil {
 				config.DefaultMergeStyle = models.MergeStyle(*opts.DefaultMergeStyle)
