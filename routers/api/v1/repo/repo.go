@@ -655,7 +655,13 @@ func Edit(ctx *context.APIContext) {
 		}
 	}
 
-	ctx.JSON(http.StatusOK, convert.ToRepoDCS(ctx.Repo.Repository, ctx.Repo.AccessMode)) // DCS Customizations
+	repo, err := models.GetRepositoryByID(ctx.Repo.Repository.ID)
+	if err != nil {
+		ctx.InternalServerError(err)
+		return
+	}
+
+	ctx.JSON(http.StatusOK, convert.ToRepoDCS(repo, ctx.Repo.AccessMode)) // DCS Customizations
 }
 
 // updateBasicProperties updates the basic properties of a repo: Name, Description, Website and Visibility
