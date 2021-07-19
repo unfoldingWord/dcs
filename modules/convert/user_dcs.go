@@ -20,3 +20,12 @@ func ToUserDCS(user, doer *models.User) *api.User {
 	result.RepoSubjects = user.GetRepoSubjects()
 	return result
 }
+
+// ToUsersDCS convert list of models.User to list of api.User with DCS Customizations
+func ToUsersDCS(doer *models.User, users []*models.User) []*api.User {
+	result := make([]*api.User, len(users))
+	for i := range users {
+		result[i] = ToUserDCS(users[i], doer)
+	}
+	return result
+}
