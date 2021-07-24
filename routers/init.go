@@ -36,6 +36,7 @@ import (
 	web_routers "code.gitea.io/gitea/routers/web"
 	"code.gitea.io/gitea/services/archiver"
 	"code.gitea.io/gitea/services/auth"
+	"code.gitea.io/gitea/services/auth/source/oauth2"
 	"code.gitea.io/gitea/services/mailer"
 	mirror_service "code.gitea.io/gitea/services/mirror"
 	pull_service "code.gitea.io/gitea/services/pull"
@@ -101,7 +102,7 @@ func GlobalInit(ctx context.Context) {
 		log.Fatal("ORM engine initialization failed: %v", err)
 	}
 
-	if err := models.InitOAuth2(); err != nil {
+	if err := oauth2.Init(); err != nil {
 		log.Fatal("Failed to initialize OAuth2 support: %v", err)
 	}
 

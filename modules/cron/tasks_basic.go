@@ -13,6 +13,7 @@ import (
 	"code.gitea.io/gitea/modules/migrations"
 	repository_service "code.gitea.io/gitea/modules/repository"
 	"code.gitea.io/gitea/modules/setting"
+	"code.gitea.io/gitea/services/auth"
 	mirror_service "code.gitea.io/gitea/services/mirror"
 )
 
@@ -91,7 +92,7 @@ func registerSyncExternalUsers() {
 		UpdateExisting: true,
 	}, func(ctx context.Context, _ *models.User, config Config) error {
 		realConfig := config.(*UpdateExistingConfig)
-		return models.SyncExternalUsers(ctx, realConfig.UpdateExisting)
+		return auth.SyncExternalUsers(ctx, realConfig.UpdateExisting)
 	})
 }
 
