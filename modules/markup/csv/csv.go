@@ -34,7 +34,7 @@ func (Parser) Name() string {
 
 // Extensions implements markup.Parser
 func (Parser) Extensions() []string {
-	return []string{".csv", ".tsv"}
+	return []string{".csv"} // DCS Customization - removes .tsv and adds custom tsv parser
 }
 
 // Render implements markup.Parser
