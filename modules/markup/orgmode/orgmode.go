@@ -27,7 +27,7 @@ type Parser struct {
 
 // Name implements markup.Parser
 func (Parser) Name() string {
-	return "orgmode"
+	return "orgmode3"
 }
 
 // Extensions implements markup.Parser
