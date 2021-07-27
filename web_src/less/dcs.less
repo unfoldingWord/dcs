@@ -1,1 +1,42 @@
-.file-view.tsv > table > tbody > tr > td { vertical-align: top; }
+//  DCS Customizations
+
+.markdown.tsv {
+    padding: 10px;
+    overflow: scroll;
+
+    >table {
+        border: 1px solid var(--color-secondary);
+
+        th,
+        td {
+            vertical-align: top;
+
+            &:nth-child(9) {
+                line-height: normal !important;
+                min-width: 300px;
+
+                h1,
+                h2 {
+                    border-bottom: none;
+                }
+
+                p,
+                blockquote,
+                details,
+                ul,
+                ol,
+                dl,
+                table,
+                pre {
+                    margin: 0;
+                }
+
+                ol,
+                ul {
+                    display: flex;
+                    flex-direction: column;
+                }
+            }
+        }
+    }
+}
