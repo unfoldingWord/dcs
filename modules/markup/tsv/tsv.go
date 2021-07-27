@@ -10,6 +10,7 @@ import (
 	"html"
 	"io"
 	"regexp"
+	"strings"
 
 	"code.gitea.io/gitea/modules/markup"
 	"code.gitea.io/gitea/modules/markup/markdown"
@@ -54,7 +55,7 @@ func (p Parser) Render(rawBytes []byte, urlPrefix string, metas map[string]strin
 		}
 		tmpBlock.WriteString("<tr>")
 		for colID, field := range fields {
-			if rowId == 0 && strings.HasSuffix(strings.ToLower(field), "note") {
+			if rowID == 0 && strings.HasSuffix(strings.ToLower(field), "note") {
 				noteID = colID
 			}
 			if rowID > 0 && colID == noteID {
