@@ -43,7 +43,7 @@ func (p Parser) Render(rawBytes []byte, urlPrefix string, metas map[string]strin
 	var tmpBlock bytes.Buffer
 	tmpBlock.WriteString(`<table class="table tsv">`)
 	rowID := 0
-	notesID := -1
+	noteID := -1
 	for {
 		fields, err := rd.Read()
 		if err == io.EOF {
