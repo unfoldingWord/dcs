@@ -42,7 +42,8 @@ func (p Parser) Render(rawBytes []byte, urlPrefix string, metas map[string]strin
 	rd.Comma = '\t'
 	var tmpBlock bytes.Buffer
 	tmpBlock.WriteString(`<table class="table tsv">`)
-	rowId := 0
+	rowID := 0
+	notesID := -1
 	for {
 		fields, err := rd.Read()
 		if err == io.EOF {
@@ -52,8 +53,11 @@ func (p Parser) Render(rawBytes []byte, urlPrefix string, metas map[string]strin
 			continue
 		}
 		tmpBlock.WriteString("<tr>")
-		for i, field := range fields {
-			if rowId > 0 && i > 7 {
+		for colID, field := range fields {
+			if rowId == 0 && strings.HasSuffix(strings.ToLower(field), "note") {
+				noteID = colID
+			}
+			if rowID > 0 && colID == noteID {
 				tmpBlock.WriteString(`<td class="note">`)
 				tmpBlock.WriteString(string(markdown.Render([]byte(breakRegexp.ReplaceAllString(field, "\n")), urlPrefix, metas)))
 			} else {
@@ -63,7 +67,7 @@ func (p Parser) Render(rawBytes []byte, urlPrefix string, metas map[string]strin
 			tmpBlock.WriteString("</td>")
 		}
 		tmpBlock.WriteString("</tr>")
-		rowId += 1
+		rowID += 1
 	}
 	tmpBlock.WriteString("</table>")
 
