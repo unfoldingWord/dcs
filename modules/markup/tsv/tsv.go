@@ -160,10 +160,8 @@ func (Renderer) Render(ctx *markup.RenderContext, input io.Reader, output io.Wri
 				if note, err := markdown.RenderString(&markup.RenderContext{URLPrefix: ctx.URLPrefix, Metas: ctx.Metas},
 					newlineRegexp.ReplaceAllString(field, "\n")); err != nil {
 					return err
-				} else {
-					if err := writeField(tmpBlock, element, "note", note, false); err != nil {
-						return err
-					}
+				} else if err := writeField(tmpBlock, element, "note", note, false); err != nil {
+					return err
 				}
 			} else {
 				className := ""
