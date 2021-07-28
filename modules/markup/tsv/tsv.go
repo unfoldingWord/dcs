@@ -68,7 +68,7 @@ func (p Parser) Render(rawBytes []byte, urlPrefix string, metas map[string]strin
 			tmpBlock.WriteString("</td>")
 		}
 		tmpBlock.WriteString("</tr>")
-		rowID += 1
+		rowID++
 	}
 	tmpBlock.WriteString("</table>")
 
