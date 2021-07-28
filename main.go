@@ -21,6 +21,7 @@ import (
 	_ "code.gitea.io/gitea/modules/markup/csv"
 	_ "code.gitea.io/gitea/modules/markup/markdown"
 	_ "code.gitea.io/gitea/modules/markup/orgmode"
+	_ "code.gitea.io/gitea/modules/markup/tsv" // DCS Customizations
 
 	"github.com/urfave/cli"
 )

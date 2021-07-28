@@ -1,0 +1,63 @@
+//  DCS Customizations
+
+.markup.tsv {
+    padding: 10px;
+    overflow: scroll;
+
+    table.tsv {
+        border: 1px solid var(--color-secondary);
+
+        th,
+        td {
+            vertical-align: top;
+
+            &.line-num {
+                text-align: left;
+                color: var(--color-secondary-dark-2);
+            }
+
+            &.note {
+                line-height: normal !important;
+                min-width: 300px;
+
+                h1,
+                h2,
+                h3,
+                h4,
+                h5,
+                h6 {
+                    margin: 0;
+                    padding: 0;
+                    line-height: normal;
+                }
+
+                h1 {
+                    padding: 0;
+                    border-bottom: none;
+                }
+
+                h2 {
+                    padding: 0;
+                    border-bottom: none;
+                }
+
+                p,
+                blockquote,
+                details,
+                ul,
+                ol,
+                dl,
+                table,
+                pre {
+                    margin: 0;
+                }
+
+                ol,
+                ul {
+                    display: flex;
+                    flex-direction: column;
+                }
+            }
+        }
+    }
+}

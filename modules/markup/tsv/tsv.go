@@ -1,4 +1,4 @@
-// Copyright 2018 The Gitea Authors. All rights reserved.
+// Copyright 2021 The unfoldingWord Authors. All rights reserved.
 // Use of this source code is governed by a MIT-style
 // license that can be found in the LICENSE file.
 
@@ -7,14 +7,17 @@ package markup
 import (
 	"bufio"
 	"bytes"
+	"fmt"
 	"html"
 	"io"
 	"io/ioutil"
 	"regexp"
 	"strconv"
+	"strings"
 
 	"code.gitea.io/gitea/modules/csv"
 	"code.gitea.io/gitea/modules/markup"
+	"code.gitea.io/gitea/modules/markup/markdown"
 	"code.gitea.io/gitea/modules/setting"
 )
 
@@ -28,7 +31,7 @@ type Renderer struct {
 
 // Name implements markup.Renderer
 func (Renderer) Name() string {
-	return "csv"
+	return "tsv"
 }
 
 // NeedPostProcess implements markup.Renderer
@@ -36,7 +39,7 @@ func (Renderer) NeedPostProcess() bool { return false }
 
 // Extensions implements markup.Renderer
 func (Renderer) Extensions() []string {
-	return []string{".csv"} // DCS Customization - removes .tsv and adds custom tsv parser
+	return []string{".tsv"}
 }
 
 // SanitizerRules implements markup.Renderer
@@ -44,11 +47,11 @@ func (Renderer) SanitizerRules() []setting.MarkupSanitizerRule {
 	return []setting.MarkupSanitizerRule{
 		{Element: "table", AllowAttr: "class", Regexp: regexp.MustCompile(`data-table`)},
 		{Element: "th", AllowAttr: "class", Regexp: regexp.MustCompile(`line-num`)},
-		{Element: "td", AllowAttr: "class", Regexp: regexp.MustCompile(`line-num`)},
+		{Element: "td", AllowAttr: "class", Regexp: regexp.MustCompile(`note`)},
 	}
 }
 
-func writeField(w io.Writer, element, class, field string) error {
+func writeField(w io.Writer, element, class, field string, escapeString bool) error {
 	if _, err := io.WriteString(w, "<"); err != nil {
 		return err
 	}
@@ -69,7 +72,10 @@ func writeField(w io.Writer, element, class, field string) error {
 	if _, err := io.WriteString(w, ">"); err != nil {
 		return err
 	}
-	if _, err := io.WriteString(w, html.EscapeString(field)); err != nil {
+	if escapeString {
+		field = html.EscapeString(field)
+	}
+	if _, err := io.WriteString(w, field); err != nil {
 		return err
 	}
 	if _, err := io.WriteString(w, "</"); err != nil {
@@ -107,18 +113,34 @@ func (Renderer) Render(ctx *markup.RenderContext, input io.Reader, output io.Wri
 	if err != nil {
 		return err
 	}
+	rd.Comma = '\t' // This is a .tsv file so assume \t is delimiter
+	rd.LazyQuotes = true
+	rd.TrimLeadingSpace = false
 
-	if _, err := tmpBlock.WriteString(`<table class="data-table">`); err != nil {
+	if _, err := tmpBlock.WriteString(`<table class="data-table tsv">`); err != nil {
 		return err
 	}
 	row := 1
+	noteID := -1
+	numFields := -1
+	breakRegexp := regexp.MustCompile(`<br\/*>`)
 	for {
-		fields, err := rd.Read()
-		if err == io.EOF {
+		fields, fieldErr := rd.Read()
+		if fieldErr == io.EOF {
 			break
 		}
 		if err != nil {
+			colspan := 1
+			if numFields > 0 {
+				colspan = numFields
+			}
+			if _, err := tmpBlock.WriteString(fmt.Sprintf(`<tr><td colspan="%d">%v</td></tr>`, colspan, err)); err != nil {
+				return err
+			}
 			continue
+		}
+		if numFields < 0 {
+			numFields = len(fields)
 		}
 		if _, err := tmpBlock.WriteString("<tr>"); err != nil {
 			return err
@@ -127,12 +149,30 @@ func (Renderer) Render(ctx *markup.RenderContext, input io.Reader, output io.Wri
 		if row == 1 {
 			element = "th"
 		}
-		if err := writeField(tmpBlock, element, "line-num", strconv.Itoa(row)); err != nil {
+		if err := writeField(tmpBlock, element, "line-num", strconv.Itoa(row), true); err != nil {
 			return err
 		}
-		for _, field := range fields {
-			if err := writeField(tmpBlock, element, "", field); err != nil {
-				return err
+		for colID, field := range fields {
+			if row == 1 && (strings.HasSuffix(strings.ToLower(field), "note") || strings.HasSuffix(strings.ToLower(field), "notes")) {
+				noteID = colID
+			}
+			if row > 1 && colID == noteID {
+				if note, err := markdown.RenderString(&markup.RenderContext{URLPrefix: ctx.URLPrefix, Metas: ctx.Metas},
+					breakRegexp.ReplaceAllString(field, "\n")); err != nil {
+					return err
+				} else {
+					if err := writeField(tmpBlock, element, "note", note, false); err != nil {
+						return err
+					}
+				}
+			} else {
+				className := ""
+				if colID == noteID {
+					className = "note"
+				}
+				if err := writeField(tmpBlock, element, className, field, true); err != nil {
+					return err
+				}
 			}
 		}
 		if _, err := tmpBlock.WriteString("</tr>"); err != nil {
