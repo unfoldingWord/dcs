@@ -16,7 +16,7 @@ import (
 	"code.gitea.io/gitea/modules/markup/markdown"
 )
 
-var breakRegexp = regexp.MustCompile(`<br\/*>`)
+var newlineRegexp = regexp.MustCompile(`(<br\/*>|\\n)`)
 
 func init() {
 	markup.RegisterParser(Parser{})
@@ -60,7 +60,7 @@ func (p Parser) Render(rawBytes []byte, urlPrefix string, metas map[string]strin
 			}
 			if rowID > 0 && colID == noteID {
 				tmpBlock.WriteString(`<td class="note">`)
-				tmpBlock.WriteString(string(markdown.Render([]byte(breakRegexp.ReplaceAllString(field, "\n")), urlPrefix, metas)))
+				tmpBlock.WriteString(string(markdown.Render([]byte(newlineRegexp.ReplaceAllString(field, "\n")), urlPrefix, metas)))
 			} else {
 				tmpBlock.WriteString("<td>")
 				tmpBlock.WriteString(html.EscapeString(field))
