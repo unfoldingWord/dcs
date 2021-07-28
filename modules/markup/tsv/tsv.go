@@ -123,7 +123,7 @@ func (Renderer) Render(ctx *markup.RenderContext, input io.Reader, output io.Wri
 	row := 1
 	noteID := -1
 	numFields := -1
-	breakRegexp := regexp.MustCompile(`<br\/*>`)
+	newlineRegexp := regexp.MustCompile(`(<br\/*>|\\n)`)
 	for {
 		fields, fieldErr := rd.Read()
 		if fieldErr == io.EOF {
@@ -158,7 +158,7 @@ func (Renderer) Render(ctx *markup.RenderContext, input io.Reader, output io.Wri
 			}
 			if row > 1 && colID == noteID {
 				if note, err := markdown.RenderString(&markup.RenderContext{URLPrefix: ctx.URLPrefix, Metas: ctx.Metas},
-					breakRegexp.ReplaceAllString(field, "\n")); err != nil {
+					newlineRegexp.ReplaceAllString(field, "\n")); err != nil {
 					return err
 				} else {
 					if err := writeField(tmpBlock, element, "note", note, false); err != nil {
