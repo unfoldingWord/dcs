@@ -44,7 +44,7 @@ func Users(ctx *context.Context) {
 		},
 		SearchByEmail: true,
 		/*** DCS Customizations ***/
-		RepoLanguages: ctx.QueryStrings("lang"),
+		RepoLanguages: ctx.FormStrings("lang"),
 		/*** END DCS Customizations ***/
 	}, tplUsers)
 }

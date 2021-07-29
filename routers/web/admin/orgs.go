@@ -32,7 +32,7 @@ func Organizations(ctx *context.Context) {
 		},
 		Visible: []structs.VisibleType{structs.VisibleTypePublic, structs.VisibleTypeLimited, structs.VisibleTypePrivate},
 		/*** DCS Customizations ***/
-		RepoLanguages: ctx.QueryStrings("lang"),
+		RepoLanguages: ctx.FormStrings("lang"),
 		/*** END DCS Customizations ***/
 	}, tplOrgs)
 }

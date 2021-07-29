@@ -96,7 +96,7 @@ func AllRoutes(r *web.Route) {
 
 func sudo() func(ctx *context.APIContext) {
 	return func(ctx *context.APIContext) {
-		sudo := ctx.Query("sudo")
+		sudo := ctx.Form("sudo")
 		if len(sudo) == 0 {
 			sudo = ctx.Req.Header.Get("Sudo")
 		}

@@ -400,7 +400,7 @@ func GetCatalogMetadata(ctx *context.APIContext) {
 
 // QueryStrings After calling QueryStrings on the context, it also separates strings that have commas into substrings
 func QueryStrings(ctx *context.APIContext, name string) []string {
-	strs := ctx.QueryStrings(name)
+	strs := ctx.FormStrings(name)
 	if len(strs) == 0 {
 		return strs
 	}
@@ -425,11 +425,11 @@ func searchCatalog(ctx *context.APIContext) {
 		}
 		repos = QueryStrings(ctx, "repo")
 	}
-	if ctx.Query("includeMetadata") != "" {
-		includeMetadata = ctx.QueryBool("includeMetadata")
+	if ctx.Form("includeMetadata") != "" {
+		includeMetadata = ctx.FormBool("includeMetadata")
 	}
 
-	stageStr := ctx.Query("stage")
+	stageStr := ctx.Form("stage")
 	var stage models.Stage
 	if stageStr != "" {
 		var ok bool
@@ -441,7 +441,7 @@ func searchCatalog(ctx *context.APIContext) {
 	}
 
 	var keywords []string
-	query := strings.Trim(ctx.Query("q"), " ")
+	query := strings.Trim(ctx.Form("q"), " ")
 	if query != "" {
 		keywords = models.SplitAtCommaNotInString(query, false)
 	}
@@ -458,14 +458,14 @@ func searchCatalog(ctx *context.APIContext) {
 		Subjects:        QueryStrings(ctx, "subject"),
 		CheckingLevels:  QueryStrings(ctx, "checkingLevel"),
 		Books:           QueryStrings(ctx, "book"),
-		IncludeHistory:  ctx.QueryBool("includeHistory"),
-		ShowIngredients: ctx.QueryBool("showIngredients"),
+		IncludeHistory:  ctx.FormBool("includeHistory"),
+		ShowIngredients: ctx.FormBool("showIngredients"),
 		IncludeMetadata: includeMetadata,
 	}
 
 	var sortModes = QueryStrings(ctx, "sort")
 	if len(sortModes) > 0 {
-		var sortOrder = ctx.Query("order")
+		var sortOrder = ctx.Form("order")
 		if sortOrder == "" {
 			sortOrder = "asc"
 		}
