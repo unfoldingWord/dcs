@@ -138,7 +138,9 @@ func GetAll(ctx *context.APIContext) {
 		Type:          models.UserTypeOrganization,
 		OrderBy:       models.SearchOrderByAlphabetically,
 		Visible:       vMode,
-		RepoLanguages: ctx.QueryStrings("lang"),
+		/*** DCS Customizations ***/
+		RepoLanguages: ctx.FormStrings("lang"),
+		/*** END DCS Customizations ***/
 	})
 	if err != nil {
 		ctx.Error(http.StatusInternalServerError, "SearchOrganizations", err)

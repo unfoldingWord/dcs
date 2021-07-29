@@ -114,9 +114,9 @@ func GetAllOrgs(ctx *context.APIContext) {
 		OrderBy:     models.SearchUserOrderByAlphabetically,
 		ListOptions: listOptions,
 		Visible:     []api.VisibleType{api.VisibleTypePublic, api.VisibleTypeLimited, api.VisibleTypePrivate},
-		/*** DCS CUSTOMIZATIONS ***/
-		RepoLanguages: ctx.QueryStrings("lang"),
-		/*** END DCS CUSTOMIZATIONS ***/
+		/*** DCS Customizations ***/
+		RepoLanguages: ctx.FormStrings("lang"),
+		/*** END DCS Customizations ***/
 	})
 	if err != nil {
 		ctx.Error(http.StatusInternalServerError, "SearchOrganizations", err)

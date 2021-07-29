@@ -61,12 +61,14 @@ func Search(ctx *context.APIContext) {
 	listOptions := utils.GetListOptions(ctx)
 
 	opts := &models.SearchUserOptions{
-		Actor:         ctx.User,
-		Keyword:       strings.Trim(ctx.Query("q"), " "),
-		UID:           ctx.QueryInt64("uid"),
-		Type:          models.UserTypeIndividual,
-		ListOptions:   listOptions,
-		RepoLanguages: ctx.QueryStrings("lang"), // DCS Customizations
+		Actor:       ctx.User,
+		Keyword:     strings.Trim(ctx.Form("q"), " "),
+		UID:         ctx.FormInt64("uid"),
+		Type:        models.UserTypeIndividual,
+		ListOptions: listOptions,
+		/*** DCS Customizations ***/
+		RepoLanguages: ctx.FormStrings("lang"),
+		/*** END DCS Customizations ***/
 	}
 
 	users, maxResults, err := models.SearchUsers(opts)
