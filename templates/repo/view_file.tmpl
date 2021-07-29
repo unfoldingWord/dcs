@@ -142,13 +142,14 @@ expandViewButton.addEventListener("click", function(e) {
 		expandViewButton.classList.add("fa-expand");
 		expandViewButton.classList.remove("fa-compress");
 		expandViewButton.setAttribute("data-content", "{{.i18n.Tr "repo.expand_view"}}");
+		isExpandedView = false;
 	} else {
 		container.classList.add("fluid", "padded");
 		expandViewButton.classList.remove("fa-expand");
 		expandViewButton.classList.add("fa-compress");
 		expandViewButton.setAttribute("data-content", "{{.i18n.Tr "repo.compact_view"}}");
+		isExpandedView = true;
 	}
-	isExpandedView = true;
 }, false);
 </script>
 <!-- END DCS Customizations -->
