@@ -134,10 +134,10 @@ func GetAll(ctx *context.APIContext) {
 	listOptions := utils.GetListOptions(ctx)
 
 	publicOrgs, maxResults, err := models.SearchUsers(&models.SearchUserOptions{
-		ListOptions:   listOptions,
-		Type:          models.UserTypeOrganization,
-		OrderBy:       models.SearchOrderByAlphabetically,
-		Visible:       vMode,
+		ListOptions: listOptions,
+		Type:        models.UserTypeOrganization,
+		OrderBy:     models.SearchOrderByAlphabetically,
+		Visible:     vMode,
 		/*** DCS Customizations ***/
 		RepoLanguages: ctx.FormStrings("lang"),
 		/*** END DCS Customizations ***/
