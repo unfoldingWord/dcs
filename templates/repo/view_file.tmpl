@@ -135,7 +135,7 @@
 <script>
 var expandView = document.querySelector('#expand-view');
 expandView.addEventListener("click", function(e) {
-    var container = expandButton.closest(".container")
+    var container = expandView.closest(".container")
 	container.classList.toggle("fluid");
 	container.classList.toggle("padded");
 	expandView.classList.toggle("fa-expand");
