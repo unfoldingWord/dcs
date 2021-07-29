@@ -61,7 +61,7 @@
 				{{end}}
 			{{end}}
 			<!-- DCS Customizations -->
-			<button class="expand-button btn-octicon" data-content="Expand View" style="border:none"><i class="fa fa-expand" style="cursor:pointer"></i></button>
+			<i id="expand-view" class="fa fa-expand btn-octicon poping up" data-content="Expand View" data-position="bottom center" data-variation="tiny inverted" style="cursor:pointer"></i>
 			<!-- END DCS Customizations -->
 		</div>
 		{{end}}
@@ -133,14 +133,13 @@
 
 <!-- DCS Customizations -->
 <script>
-var expandButton = document.querySelector('.expand-button');
-expandButton.addEventListener("click", function(e) {
-    var container = expandButton.parentNode.parentNode.parentNode.parentNode;
+var expandView = document.querySelector('#expand-view');
+expandView.addEventListener("click", function(e) {
+    var container = expandButton.closest(".container")
 	container.classList.toggle("fluid");
 	container.classList.toggle("padded");
-	var icon = expandButton.querySelector('i');
-	icon.classList.toggle("fa-expand");
-	icon.classList.toggle("fa-compress");
+	expandView.classList.toggle("fa-expand");
+	expandView.classList.toggle("fa-compress");
 }, false);
 </script>
 <!-- END DCS Customizations -->
