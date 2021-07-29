@@ -134,7 +134,7 @@
 var expandViewButton = document.querySelector('#expand-view-button');
 var isExpandedView = false;
 expandViewButton.addEventListener("click", function(e) {
-    var container = expandViewButton.closest(".container")
+	var container = expandViewButton.closest(".container")
 	if (isExpandedView) {
 		container.classList.remove("fluid", "padded");
 		expandViewButton.classList.add("fa-expand");
