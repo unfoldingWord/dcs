@@ -60,6 +60,9 @@
 					<span class="btn-octicon poping up disabled" data-content="{{.DeleteFileTooltip}}" data-position="bottom center" data-variation="tiny inverted">{{svg "octicon-trash"}}</span>
 				{{end}}
 			{{end}}
+			<!-- DCS Customizations -->
+			<button class="expand-button btn-octicon"><i class="fa fa-expand" style="cursor:pointer"></i></button>
+			<!-- END DCS Customizations -->
 		</div>
 		{{end}}
 	</h4>
@@ -127,6 +130,20 @@
 		</div>
 	</div>
 </div>
+
+<!-- DCS Customizations -->
+<script>
+var expandButton = document.querySelector('.expand-button');
+expandButton.addEventListener("click", function(e) {
+    var container = expandButton.parentNode.parentNode.parentNode.parentNode;
+	container.classList.toggle("fluid");
+	container.classList.toggle("padded");
+	var icon = expandButton.querySelector('i');
+	icon.classList.toggle("fa-expand");
+	icon.classList.toggle("fa-compress");
+}, false);
+</script>
+<!-- END DCS Customizations -->
 
 <script>
 function submitDeleteForm() {
