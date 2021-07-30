@@ -5,72 +5,182 @@
 package markup
 
 import (
+	"bufio"
 	"bytes"
-	"encoding/csv"
+	"fmt"
 	"html"
 	"io"
+	"io/ioutil"
 	"regexp"
+	"strconv"
 	"strings"
 
+	"code.gitea.io/gitea/modules/csv"
 	"code.gitea.io/gitea/modules/markup"
 	"code.gitea.io/gitea/modules/markup/markdown"
+	"code.gitea.io/gitea/modules/setting"
 )
 
-var breakRegexp = regexp.MustCompile(`<br\/*>`)
-
 func init() {
-	markup.RegisterParser(Parser{})
-
+	markup.RegisterRenderer(Renderer{})
 }
 
-// Parser implements markup.Parser for tsv
-type Parser struct {
+// Renderer implements markup.Renderer for csv files
+type Renderer struct {
 }
 
-// Name implements markup.Parser
-func (Parser) Name() string {
+// Name implements markup.Renderer
+func (Renderer) Name() string {
 	return "tsv"
 }
 
-// Extensions implements markup.Parser
-func (Parser) Extensions() []string {
+// NeedPostProcess implements markup.Renderer
+func (Renderer) NeedPostProcess() bool { return false }
+
+// Extensions implements markup.Renderer
+func (Renderer) Extensions() []string {
 	return []string{".tsv"}
 }
 
-// Render implements markup.Parser
-func (p Parser) Render(rawBytes []byte, urlPrefix string, metas map[string]string, isWiki bool) []byte {
-	rd := csv.NewReader(bytes.NewReader(rawBytes))
-	rd.Comma = '\t'
-	var tmpBlock bytes.Buffer
-	tmpBlock.WriteString(`<table class="table tsv">`)
-	rowID := 0
+// SanitizerRules implements markup.Renderer
+func (Renderer) SanitizerRules() []setting.MarkupSanitizerRule {
+	return []setting.MarkupSanitizerRule{
+		{Element: "table", AllowAttr: "class", Regexp: regexp.MustCompile(`data-table`)},
+		{Element: "th", AllowAttr: "class", Regexp: regexp.MustCompile(`line-num`)},
+		{Element: "td", AllowAttr: "class", Regexp: regexp.MustCompile(`note`)},
+	}
+}
+
+func writeField(w io.Writer, element, class, field string, escapeString bool) error {
+	if _, err := io.WriteString(w, "<"); err != nil {
+		return err
+	}
+	if _, err := io.WriteString(w, element); err != nil {
+		return err
+	}
+	if len(class) > 0 {
+		if _, err := io.WriteString(w, " class=\""); err != nil {
+			return err
+		}
+		if _, err := io.WriteString(w, class); err != nil {
+			return err
+		}
+		if _, err := io.WriteString(w, "\""); err != nil {
+			return err
+		}
+	}
+	if _, err := io.WriteString(w, ">"); err != nil {
+		return err
+	}
+	if escapeString {
+		field = html.EscapeString(field)
+	}
+	if _, err := io.WriteString(w, field); err != nil {
+		return err
+	}
+	if _, err := io.WriteString(w, "</"); err != nil {
+		return err
+	}
+	if _, err := io.WriteString(w, element); err != nil {
+		return err
+	}
+	_, err := io.WriteString(w, ">")
+	return err
+}
+
+// Render implements markup.Renderer
+func (Renderer) Render(ctx *markup.RenderContext, input io.Reader, output io.Writer) error {
+	var tmpBlock = bufio.NewWriter(output)
+
+	// FIXME: don't read all to memory
+	rawBytes, err := ioutil.ReadAll(input)
+	if err != nil {
+		return err
+	}
+
+	if setting.UI.CSV.MaxFileSize != 0 && setting.UI.CSV.MaxFileSize < int64(len(rawBytes)) {
+		if _, err := tmpBlock.WriteString("<pre>"); err != nil {
+			return err
+		}
+		if _, err := tmpBlock.WriteString(html.EscapeString(string(rawBytes))); err != nil {
+			return err
+		}
+		_, err = tmpBlock.WriteString("</pre>")
+		return err
+	}
+
+	rd, err := csv.CreateReaderAndGuessDelimiter(bytes.NewReader(rawBytes))
+	if err != nil {
+		return err
+	}
+	rd.Comma = '\t' // This is a .tsv file so assume \t is delimiter
+	rd.LazyQuotes = true
+	rd.TrimLeadingSpace = false
+
+	if _, err := tmpBlock.WriteString(`<table class="data-table tsv">`); err != nil {
+		return err
+	}
+	row := 1
 	noteID := -1
+	numFields := -1
+	newlineRegexp := regexp.MustCompile(`(<br\/*>|\\n)`)
 	for {
-		fields, err := rd.Read()
-		if err == io.EOF {
+		fields, fieldErr := rd.Read()
+		if fieldErr == io.EOF {
 			break
 		}
 		if err != nil {
+			colspan := 1
+			if numFields > 0 {
+				colspan = numFields
+			}
+			if _, err := tmpBlock.WriteString(fmt.Sprintf(`<tr><td colspan="%d">%v</td></tr>`, colspan, err)); err != nil {
+				return err
+			}
 			continue
 		}
-		tmpBlock.WriteString("<tr>")
+		if numFields < 0 {
+			numFields = len(fields)
+		}
+		if _, err := tmpBlock.WriteString("<tr>"); err != nil {
+			return err
+		}
+		element := "td"
+		if row == 1 {
+			element = "th"
+		}
+		if err := writeField(tmpBlock, element, "line-num", strconv.Itoa(row), true); err != nil {
+			return err
+		}
 		for colID, field := range fields {
-			if rowID == 0 && strings.HasSuffix(strings.ToLower(field), "note") {
+			if row == 1 && (strings.HasSuffix(strings.ToLower(field), "note") || strings.HasSuffix(strings.ToLower(field), "notes")) {
 				noteID = colID
 			}
-			if rowID > 0 && colID == noteID {
-				tmpBlock.WriteString(`<td class="note">`)
-				tmpBlock.WriteString(string(markdown.Render([]byte(breakRegexp.ReplaceAllString(field, "\n")), urlPrefix, metas)))
+			if row > 1 && colID == noteID {
+				if note, err := markdown.RenderString(&markup.RenderContext{URLPrefix: ctx.URLPrefix, Metas: ctx.Metas},
+					newlineRegexp.ReplaceAllString(field, "\n")); err != nil {
+					return err
+				} else if err := writeField(tmpBlock, element, "note", note, false); err != nil {
+					return err
+				}
 			} else {
-				tmpBlock.WriteString("<td>")
-				tmpBlock.WriteString(html.EscapeString(field))
+				className := ""
+				if colID == noteID {
+					className = "note"
+				}
+				if err := writeField(tmpBlock, element, className, field, true); err != nil {
+					return err
+				}
 			}
-			tmpBlock.WriteString("</td>")
 		}
-		tmpBlock.WriteString("</tr>")
-		rowID += 1
-	}
-	tmpBlock.WriteString("</table>")
+		if _, err := tmpBlock.WriteString("</tr>"); err != nil {
+			return err
+		}
 
-	return tmpBlock.Bytes()
+		row++
+	}
+	if _, err = tmpBlock.WriteString("</table>"); err != nil {
+		return err
+	}
+	return tmpBlock.Flush()
 }
