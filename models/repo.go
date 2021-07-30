@@ -248,7 +248,7 @@ type Repository struct {
 	Avatar string `xorm:"VARCHAR(64)"`
 
 	/*** DCS Customizations ***/
-	Metadata *map[string]interface{} `xorm:-`
+	Metadata *map[string]interface{} `xorm:"-"`
 	/*** DCS Customizations ***/
 
 	CreatedUnix timeutil.TimeStamp `xorm:"INDEX created"`

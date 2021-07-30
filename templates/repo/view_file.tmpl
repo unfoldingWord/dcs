@@ -60,6 +60,9 @@
 					<span class="btn-octicon poping up disabled" data-content="{{.DeleteFileTooltip}}" data-position="bottom center" data-variation="tiny inverted">{{svg "octicon-trash"}}</span>
 				{{end}}
 			{{end}}
+			<!-- DCS Customizations -->
+			<i id="expand-view-button" class="fa fa-expand btn-octicon poping up" data-content="{{.i18n.Tr "repo.expand_view"}}" data-position="bottom center" data-variation="tiny inverted" style="cursor:pointer"></i>
+			<!-- END DCS Customizations -->
 		</div>
 		{{end}}
 	</h4>
@@ -127,6 +130,29 @@
 		</div>
 	</div>
 </div>
+
+<!-- DCS Customizations -->
+<script>
+var expandViewButton = document.querySelector('#expand-view-button');
+var isExpandedView = false;
+expandViewButton.addEventListener("click", function(e) {
+	var container = expandViewButton.closest(".container")
+	if (isExpandedView) {
+		container.classList.remove("fluid", "padded");
+		expandViewButton.classList.add("fa-expand");
+		expandViewButton.classList.remove("fa-compress");
+		expandViewButton.setAttribute("data-content", "{{.i18n.Tr "repo.expand_view"}}");
+		isExpandedView = false;
+	} else {
+		container.classList.add("fluid", "padded");
+		expandViewButton.classList.remove("fa-expand");
+		expandViewButton.classList.add("fa-compress");
+		expandViewButton.setAttribute("data-content", "{{.i18n.Tr "repo.compact_view"}}");
+		isExpandedView = true;
+	}
+}, false);
+</script>
+<!-- END DCS Customizations -->
 
 <script>
 function submitDeleteForm() {
