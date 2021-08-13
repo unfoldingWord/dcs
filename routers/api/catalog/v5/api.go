@@ -80,7 +80,7 @@ import (
 
 func sudo() func(ctx *context.APIContext) {
 	return func(ctx *context.APIContext) {
-		sudo := ctx.Form("sudo")
+		sudo := ctx.FormString("sudo")
 		if len(sudo) == 0 {
 			sudo = ctx.Req.Header.Get("Sudo")
 		}

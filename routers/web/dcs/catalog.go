@@ -40,8 +40,8 @@ func RenderCatalogSearch(ctx *context.Context, opts *CatalogSearchOptions) {
 		orderBy models.CatalogOrderBy
 	)
 
-	ctx.Data["SortType"] = ctx.Form("sort")
-	switch ctx.Form("sort") {
+	ctx.Data["SortType"] = ctx.FormString("sort")
+	switch ctx.FormString("sort") {
 	case "newest":
 		orderBy = models.CatalogOrderByNewest
 	case "oldest":
@@ -81,7 +81,7 @@ func RenderCatalogSearch(ctx *context.Context, opts *CatalogSearchOptions) {
 
 	var keywords, books, langs, subjects, repos, owners, tags, checkingLevels []string
 	stage := models.StageProd
-	query := strings.Trim(ctx.Form("q"), " ")
+	query := strings.Trim(ctx.FormString("q"), " ")
 	if query != "" {
 		for _, token := range models.SplitAtCommaNotInString(query, true) {
 			if strings.HasPrefix(token, "book:") {

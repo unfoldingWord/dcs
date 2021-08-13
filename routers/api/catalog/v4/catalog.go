@@ -425,11 +425,11 @@ func searchCatalog(ctx *context.APIContext) {
 		}
 		repos = QueryStrings(ctx, "repo")
 	}
-	if ctx.Form("includeMetadata") != "" {
+	if ctx.FormString("includeMetadata") != "" {
 		includeMetadata = ctx.FormBool("includeMetadata")
 	}
 
-	stageStr := ctx.Form("stage")
+	stageStr := ctx.FormString("stage")
 	var stage models.Stage
 	if stageStr != "" {
 		var ok bool
@@ -441,7 +441,7 @@ func searchCatalog(ctx *context.APIContext) {
 	}
 
 	var keywords []string
-	query := strings.Trim(ctx.Form("q"), " ")
+	query := strings.Trim(ctx.FormString("q"), " ")
 	if query != "" {
 		keywords = models.SplitAtCommaNotInString(query, false)
 	}
@@ -465,7 +465,7 @@ func searchCatalog(ctx *context.APIContext) {
 
 	var sortModes = QueryStrings(ctx, "sort")
 	if len(sortModes) > 0 {
-		var sortOrder = ctx.Form("order")
+		var sortOrder = ctx.FormString("order")
 		if sortOrder == "" {
 			sortOrder = "asc"
 		}
