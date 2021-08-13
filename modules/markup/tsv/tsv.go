@@ -10,7 +10,6 @@ import (
 	"html"
 	"io"
 	"regexp"
-	"strings"
 
 	"code.gitea.io/gitea/modules/markup"
 	"code.gitea.io/gitea/modules/markup/markdown"
@@ -44,7 +43,6 @@ func (p Parser) Render(rawBytes []byte, urlPrefix string, metas map[string]strin
 	var tmpBlock bytes.Buffer
 	tmpBlock.WriteString(`<table class="table tsv">`)
 	rowID := 0
-	noteID := -1
 	for {
 		fields, err := rd.Read()
 		if err == io.EOF {
@@ -54,15 +52,11 @@ func (p Parser) Render(rawBytes []byte, urlPrefix string, metas map[string]strin
 			continue
 		}
 		tmpBlock.WriteString("<tr>")
-		for colID, field := range fields {
-			if rowID == 0 && strings.HasSuffix(strings.ToLower(field), "note") {
-				noteID = colID
-			}
-			if rowID > 0 && colID == noteID {
-				tmpBlock.WriteString(`<td class="note">`)
+		for _, field := range fields {
+			tmpBlock.WriteString(`<td>`)
+			if rowID > 0 {
 				tmpBlock.WriteString(string(markdown.Render([]byte(newlineRegexp.ReplaceAllString(field, "\n")), urlPrefix, metas)))
 			} else {
-				tmpBlock.WriteString("<td>")
 				tmpBlock.WriteString(html.EscapeString(field))
 			}
 			tmpBlock.WriteString("</td>")
