@@ -178,7 +178,7 @@ func Search(ctx *context.APIContext) {
 		Owners:          catalog.QueryStrings(ctx, "owner"),
 		Subjects:        catalog.QueryStrings(ctx, "subject"),
 		Books:           catalog.QueryStrings(ctx, "book"),
-		IncludeMetadata: ctx.Form("includeMetadata") == "" || ctx.FormBool("includeMetadata"),
+		IncludeMetadata: ctx.FormString("includeMetadata") == "" || ctx.FormBool("includeMetadata"),
 		/*** END DCS Customizations ***/
 	}
 

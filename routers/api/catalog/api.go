@@ -73,8 +73,8 @@ import (
 	"code.gitea.io/gitea/modules/setting"
 	"code.gitea.io/gitea/modules/web"
 	_ "code.gitea.io/gitea/routers/api/catalog/swagger" // for swagger generation
-	"code.gitea.io/gitea/routers/api/catalog/v4"
-	"code.gitea.io/gitea/routers/api/catalog/v5"
+	v4 "code.gitea.io/gitea/routers/api/catalog/v4"
+	v5 "code.gitea.io/gitea/routers/api/catalog/v5"
 
 	"gitea.com/go-chi/session"
 	"github.com/go-chi/cors"
@@ -96,7 +96,7 @@ func AllRoutes(r *web.Route) {
 
 func sudo() func(ctx *context.APIContext) {
 	return func(ctx *context.APIContext) {
-		sudo := ctx.Form("sudo")
+		sudo := ctx.FormString("sudo")
 		if len(sudo) == 0 {
 			sudo = ctx.Req.Header.Get("Sudo")
 		}

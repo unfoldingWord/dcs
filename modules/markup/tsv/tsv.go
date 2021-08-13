@@ -13,7 +13,6 @@ import (
 	"io/ioutil"
 	"regexp"
 	"strconv"
-	"strings"
 
 	"code.gitea.io/gitea/modules/csv"
 	"code.gitea.io/gitea/modules/markup"
@@ -121,7 +120,6 @@ func (Renderer) Render(ctx *markup.RenderContext, input io.Reader, output io.Wri
 		return err
 	}
 	row := 1
-	noteID := -1
 	numFields := -1
 	newlineRegexp := regexp.MustCompile(`(<br\/*>|\\n)`)
 	for {
@@ -152,23 +150,16 @@ func (Renderer) Render(ctx *markup.RenderContext, input io.Reader, output io.Wri
 		if err := writeField(tmpBlock, element, "line-num", strconv.Itoa(row), true); err != nil {
 			return err
 		}
-		for colID, field := range fields {
-			if row == 1 && (strings.HasSuffix(strings.ToLower(field), "note") || strings.HasSuffix(strings.ToLower(field), "notes")) {
-				noteID = colID
-			}
-			if row > 1 && colID == noteID {
-				if note, err := markdown.RenderString(&markup.RenderContext{URLPrefix: ctx.URLPrefix, Metas: ctx.Metas},
+		for _, field := range fields {
+			if row > 1 {
+				if html, err := markdown.RenderString(&markup.RenderContext{URLPrefix: ctx.URLPrefix, Metas: ctx.Metas},
 					newlineRegexp.ReplaceAllString(field, "\n")); err != nil {
 					return err
-				} else if err := writeField(tmpBlock, element, "note", note, false); err != nil {
+				} else if err := writeField(tmpBlock, element, "tsv-value", html, false); err != nil {
 					return err
 				}
 			} else {
-				className := ""
-				if colID == noteID {
-					className = "note"
-				}
-				if err := writeField(tmpBlock, element, className, field, true); err != nil {
+				if err := writeField(tmpBlock, element, "", field, true); err != nil {
 					return err
 				}
 			}
