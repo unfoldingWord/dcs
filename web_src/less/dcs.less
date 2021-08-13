@@ -10,39 +10,35 @@
     th,
     td {
       vertical-align: top;
+      line-height: normal !important;
 
       &.line-num {
         text-align: left;
         color: var(--color-secondary-dark-2);
       }
 
-      &.markdown-to-html {
-        line-height: normal !important;
-        min-width: 300px;
+      h1,
+      h2,
+      h3,
+      h4,
+      h5,
+      h6 {
+        margin: 0;
+        border-bottom: none;
+        white-space: nowrap;
+        line-height: normal;
+      }
 
-        h1,
-        h2,
-        h3,
-        h4,
-        h5,
-        h6 {
-          margin: 0;
-          border-bottom: none;
-          white-space: nowrap;
-          line-height: normal;
-        }
+      ol,
+      ul {
+        display: flex;
+        flex-direction: column;
+      }
 
-        ol,
-        ul {
-          display: flex;
-          flex-direction: column;
-        }
-
-        p,
-        ul,
-        ol {
-          margin: 0;
-        }
+      p,
+      ul,
+      ol {
+        margin: 0;
       }
     }
   }
