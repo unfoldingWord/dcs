@@ -21,7 +21,7 @@ gitea.com/go-chi/session/couchbase
 gitea.com/go-chi/session/memcache
 gitea.com/go-chi/session/mysql
 gitea.com/go-chi/session/postgres
-# gitea.com/lunny/levelqueue v0.4.0
+# gitea.com/lunny/levelqueue v0.4.1
 ## explicit
 gitea.com/lunny/levelqueue
 # gitea.com/unfoldingword/gitea-vet v0.2.5
