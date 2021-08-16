@@ -46,7 +46,6 @@ func (Renderer) SanitizerRules() []setting.MarkupSanitizerRule {
 	return []setting.MarkupSanitizerRule{
 		{Element: "table", AllowAttr: "class", Regexp: regexp.MustCompile(`data-table`)},
 		{Element: "th", AllowAttr: "class", Regexp: regexp.MustCompile(`line-num`)},
-		{Element: "td", AllowAttr: "class", Regexp: regexp.MustCompile(`note`)},
 	}
 }
 
@@ -155,7 +154,7 @@ func (Renderer) Render(ctx *markup.RenderContext, input io.Reader, output io.Wri
 				if html, err := markdown.RenderString(&markup.RenderContext{URLPrefix: ctx.URLPrefix, Metas: ctx.Metas},
 					newlineRegexp.ReplaceAllString(field, "\n")); err != nil {
 					return err
-				} else if err := writeField(tmpBlock, element, "tsv-value", html, false); err != nil {
+				} else if err := writeField(tmpBlock, element, "", html, false); err != nil {
 					return err
 				}
 			} else {
