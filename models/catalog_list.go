@@ -268,7 +268,7 @@ func GetHistoryCond(stage Stage, includeHistory bool) builder.Cond {
 func GetSubjectCond(subjects []string) builder.Cond {
 	var subjectCond = builder.NewCond()
 	for _, subject := range subjects {
-		subjectCond = subjectCond.Or(builder.Eq{"LOWER(REPLACE(JSON_EXTRACT(`door43_metadata`.metadata, '$.dublin_core.subject'), '\"', ''))": strings.ToLower(subject)})
+		subjectCond = subjectCond.Or(builder.Like{"LOWER(REPLACE(JSON_EXTRACT(`door43_metadata`.metadata, '$.dublin_core.subject'), '\"', ''))", strings.ToLower(subject)})
 	}
 	return subjectCond
 }
@@ -278,7 +278,7 @@ func GetLanguageCond(languages []string) builder.Cond {
 	var langCond = builder.NewCond()
 	for _, lang := range languages {
 		for _, v := range strings.Split(lang, ",") {
-			langCond = langCond.Or(builder.Eq{"LOWER(REPLACE(JSON_EXTRACT(`door43_metadata`.metadata, '$.dublin_core.language.identifier'), '\"', ''))": strings.ToLower(v)})
+			langCond = langCond.Or(builder.Like{"LOWER(REPLACE(JSON_EXTRACT(`door43_metadata`.metadata, '$.dublin_core.language.identifier'), '\"', ''))", strings.ToLower(v)})
 		}
 	}
 	return langCond
