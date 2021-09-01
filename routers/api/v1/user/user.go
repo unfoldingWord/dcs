@@ -60,16 +60,14 @@ func Search(ctx *context.APIContext) {
 
 	listOptions := utils.GetListOptions(ctx)
 
-	opts := &models.SearchUserOptions{
+	users, maxResults, err := models.SearchUsers(&models.SearchUserOptions{
 		Actor:         ctx.User,
 		Keyword:       strings.Trim(ctx.Query("q"), " "),
 		UID:           ctx.QueryInt64("uid"),
 		Type:          models.UserTypeIndividual,
 		ListOptions:   listOptions,
 		RepoLanguages: ctx.QueryStrings("lang"), // DCS Customizations
-	}
-
-	users, maxResults, err := models.SearchUsers(opts)
+	})
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, map[string]interface{}{
 			"ok":    false,
