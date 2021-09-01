@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"xorm.io/builder"
+	"xorm.io/xorm/schemas"
 )
 
 //CatalogOrderBy is used to sort the result
@@ -124,10 +125,23 @@ func SearchCatalogCondition(opts *SearchCatalogOptions) builder.Cond {
 	for _, keyword := range opts.Keywords {
 		keywordCond = keywordCond.Or(builder.Like{"`repository`.lower_name", strings.ToLower(keyword)})
 		keywordCond = keywordCond.Or(builder.Like{"`user`.lower_name", strings.ToLower(keyword)})
-		keywordCond = keywordCond.Or(builder.Like{"LOWER(REPLACE(JSON_EXTRACT(`door43_metadata`.metadata, '$.dublin_core.title'), '\"', ''))", strings.ToLower(keyword)})
-		keywordCond = keywordCond.Or(builder.Like{"LOWER(REPLACE(JSON_EXTRACT(`door43_metadata`.metadata, '$.dublin_core.subject'), '\"', ''))", strings.ToLower(keyword)})
-		if opts.IncludeMetadata {
-			keywordCond = keywordCond.Or(builder.Expr("JSON_SEARCH(LOWER(`door43_metadata`.metadata), 'one', ?) IS NOT NULL", "%"+strings.ToLower(keyword)+"%"))
+		switch x.Dialect().URI().DBType {
+		case schemas.MYSQL, schemas.SQLITE:
+			keywordCond = keywordCond.Or(builder.Like{"LOWER(REPLACE(JSON_EXTRACT(`door43_metadata`.metadata, '$.dublin_core.title'), '\"', ''))", strings.ToLower(keyword)})
+			keywordCond = keywordCond.Or(builder.Like{"LOWER(REPLACE(JSON_EXTRACT(`door43_metadata`.metadata, '$.dublin_core.subject'), '\"', ''))", strings.ToLower(keyword)})
+			if opts.IncludeMetadata {
+				if x.Dialect().URI().DBType == schemas.MYSQL {
+					keywordCond = keywordCond.Or(builder.Expr("JSON_SEARCH(LOWER(`door43_metadata`.metadata), 'one', ?) IS NOT NULL", "%"+strings.ToLower(keyword)+"%"))
+				} else {
+					keywordCond = keywordCond.Or(builder.Like{"`door43_metadata`.metadata", `": "%` + strings.ToLower(keyword) + `%"`})
+				}
+			}
+		default:
+			keywordCond = keywordCond.Or(builder.Like{"`door43_metadata`.metadata", `"title": "%` + strings.ToLower(keyword) + `%"`})
+			keywordCond = keywordCond.Or(builder.Like{"`door43_metadata`.metadata", `"subject": "%` + strings.ToLower(keyword) + `%"`})
+			if opts.IncludeMetadata {
+				keywordCond = keywordCond.Or(builder.Like{"`door43_metadata`.metadata", `": "%` + strings.ToLower(keyword) + `%"`})
+			}
 		}
 	}
 
@@ -268,7 +282,7 @@ func GetHistoryCond(stage Stage, includeHistory bool) builder.Cond {
 func GetSubjectCond(subjects []string) builder.Cond {
 	var subjectCond = builder.NewCond()
 	for _, subject := range subjects {
-		subjectCond = subjectCond.Or(builder.Eq{"LOWER(REPLACE(JSON_EXTRACT(`door43_metadata`.metadata, '$.dublin_core.subject'), '\"', ''))": strings.ToLower(subject)})
+		subjectCond = subjectCond.Or(builder.Like{"LOWER(REPLACE(JSON_EXTRACT(`door43_metadata`.metadata, '$.dublin_core.subject'), '\"', ''))", strings.ToLower(subject)})
 	}
 	return subjectCond
 }
@@ -278,7 +292,7 @@ func GetLanguageCond(languages []string) builder.Cond {
 	var langCond = builder.NewCond()
 	for _, lang := range languages {
 		for _, v := range strings.Split(lang, ",") {
-			langCond = langCond.Or(builder.Eq{"LOWER(REPLACE(JSON_EXTRACT(`door43_metadata`.metadata, '$.dublin_core.language.identifier'), '\"', ''))": strings.ToLower(v)})
+			langCond = langCond.Or(builder.Like{"LOWER(REPLACE(JSON_EXTRACT(`door43_metadata`.metadata, '$.dublin_core.language.identifier'), '\"', ''))", strings.ToLower(v)})
 		}
 	}
 	return langCond
@@ -322,7 +336,7 @@ func GetRepoCond(repos []string) builder.Cond {
 	var repoCond = builder.NewCond()
 	for _, repo := range repos {
 		for _, v := range strings.Split(repo, ",") {
-			repoCond = repoCond.Or(builder.Eq{"`repository`.lower_name": strings.ToLower(v)})
+			repoCond = repoCond.Or(builder.Like{"`repository`.lower_name", strings.ToLower(v)})
 		}
 	}
 	return repoCond
@@ -333,7 +347,7 @@ func GetOwnerCond(owners []string) builder.Cond {
 	var ownerCond = builder.NewCond()
 	for _, owner := range owners {
 		for _, v := range strings.Split(owner, ",") {
-			ownerCond = ownerCond.Or(builder.Eq{"`user`.lower_name": strings.ToLower(v)})
+			ownerCond = ownerCond.Or(builder.Like{"`user`.lower_name", strings.ToLower(v)})
 		}
 	}
 	return ownerCond

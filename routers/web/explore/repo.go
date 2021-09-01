@@ -79,6 +79,7 @@ func RenderRepoSearch(ctx *context.Context, opts *RepoSearchOptions) {
 
 	/*** DCS Customizations ***/
 	var books, langs, keywords, subjects, repoNames, owners []string
+	var origKeyword = keyword
 	if keyword != "" {
 		for _, token := range models.SplitAtCommaNotInString(keyword, true) {
 			if strings.HasPrefix(token, "book:") {
@@ -126,7 +127,7 @@ func RenderRepoSearch(ctx *context.Context, opts *RepoSearchOptions) {
 		ctx.ServerError("SearchRepository", err)
 		return
 	}
-	ctx.Data["Keyword"] = keyword
+	ctx.Data["Keyword"] = origKeyword // DCS Customizations
 	ctx.Data["Total"] = count
 	ctx.Data["Repos"] = repos
 	ctx.Data["IsRepoIndexerEnabled"] = setting.Indexer.RepoIndexerEnabled

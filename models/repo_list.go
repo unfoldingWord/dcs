@@ -343,11 +343,15 @@ func SearchRepositoryCondition(opts *SearchRepoOptions) builder.Cond {
 				}
 				/*** DCS Customizations ***/
 				switch x.Dialect().URI().DBType {
-				case schemas.MYSQL:
-					likes = likes.Or(builder.Like{"LOWER(JSON_UNQUOTE(JSON_EXTRACT(`door43_metadata`.metadata, '$.dublin_core.title')))", strings.ToLower(v)})
-					likes = likes.Or(builder.Like{"LOWER(JSON_UNQUOTE(JSON_EXTRACT(`door43_metadata`.metadata, '$.dublin_core.subject')))", strings.ToLower(v)})
+				case schemas.MYSQL, schemas.SQLITE:
+					likes = likes.Or(builder.Like{"LOWER(REPLACE(JSON_EXTRACT(`door43_metadata`.metadata, '$.dublin_core.title'), '\"', ''))", strings.ToLower(v)})
+					likes = likes.Or(builder.Like{"LOWER(REPLACE(JSON_EXTRACT(`door43_metadata`.metadata, '$.dublin_core.subject'), '\"', ''))", strings.ToLower(v)})
 					if opts.IncludeMetadata {
-						likes = likes.Or(builder.Expr("JSON_SEARCH(LOWER(`door43_metadata`.metadata), 'one', ?) IS NOT NULL", "%"+strings.ToLower(v)+"%"))
+						if x.Dialect().URI().DBType == schemas.MYSQL {
+							likes = likes.Or(builder.Expr("JSON_SEARCH(LOWER(`door43_metadata`.metadata), 'one', ?) IS NOT NULL", "%"+strings.ToLower(v)+"%"))
+						} else {
+							likes = likes.Or(builder.Like{"`door43_metadata`.metadata", `": "%` + strings.ToLower(v) + `%"`})
+						}
 					}
 				default:
 					likes = likes.Or(builder.Like{"`door43_metadata`.metadata", `"title": "%` + strings.ToLower(v) + `%"`})
