@@ -111,6 +111,28 @@ type SearchCatalogOptions struct {
 	OrderBy         []CatalogOrderBy
 }
 
+func getMetadataCondByDBType(dbType schemas.DBType, keyword string, includeMetadata bool) builder.Cond {
+	cond := builder.NewCond()
+	if dbType == schemas.MYSQL || dbType == schemas.SQLITE {
+		cond = cond.Or(builder.Like{"LOWER(REPLACE(JSON_EXTRACT(`door43_metadata`.metadata, '$.dublin_core.title'), '\"', ''))", strings.ToLower(keyword)})
+		cond = cond.Or(builder.Like{"LOWER(REPLACE(JSON_EXTRACT(`door43_metadata`.metadata, '$.dublin_core.subject'), '\"', ''))", strings.ToLower(keyword)})
+		if includeMetadata {
+			if dbType == schemas.MYSQL {
+				cond = cond.Or(builder.Expr("JSON_SEARCH(LOWER(`door43_metadata`.metadata), 'one', ?) IS NOT NULL", "%"+strings.ToLower(keyword)+"%"))
+			} else {
+				cond = cond.Or(builder.Like{"`door43_metadata`.metadata", `": "%` + strings.ToLower(keyword) + `%"`})
+			}
+		}
+	} else {
+		cond = cond.Or(builder.Like{"`door43_metadata`.metadata", `"title": "%` + strings.ToLower(keyword) + `%"`})
+		cond = cond.Or(builder.Like{"`door43_metadata`.metadata", `"subject": "%` + strings.ToLower(keyword) + `%"`})
+		if includeMetadata {
+			cond = cond.Or(builder.Like{"`door43_metadata`.metadata", `": "%` + strings.ToLower(keyword) + `%"`})
+		}
+	}
+	return cond
+}
+
 // SearchCatalogCondition creates a query condition according search repository options
 func SearchCatalogCondition(opts *SearchCatalogOptions) builder.Cond {
 	var repoCond, ownerCond builder.Cond
@@ -125,24 +147,7 @@ func SearchCatalogCondition(opts *SearchCatalogOptions) builder.Cond {
 	for _, keyword := range opts.Keywords {
 		keywordCond = keywordCond.Or(builder.Like{"`repository`.lower_name", strings.ToLower(keyword)})
 		keywordCond = keywordCond.Or(builder.Like{"`user`.lower_name", strings.ToLower(keyword)})
-		switch x.Dialect().URI().DBType {
-		case schemas.MYSQL, schemas.SQLITE:
-			keywordCond = keywordCond.Or(builder.Like{"LOWER(REPLACE(JSON_EXTRACT(`door43_metadata`.metadata, '$.dublin_core.title'), '\"', ''))", strings.ToLower(keyword)})
-			keywordCond = keywordCond.Or(builder.Like{"LOWER(REPLACE(JSON_EXTRACT(`door43_metadata`.metadata, '$.dublin_core.subject'), '\"', ''))", strings.ToLower(keyword)})
-			if opts.IncludeMetadata {
-				if x.Dialect().URI().DBType == schemas.MYSQL {
-					keywordCond = keywordCond.Or(builder.Expr("JSON_SEARCH(LOWER(`door43_metadata`.metadata), 'one', ?) IS NOT NULL", "%"+strings.ToLower(keyword)+"%"))
-				} else {
-					keywordCond = keywordCond.Or(builder.Like{"`door43_metadata`.metadata", `": "%` + strings.ToLower(keyword) + `%"`})
-				}
-			}
-		default:
-			keywordCond = keywordCond.Or(builder.Like{"`door43_metadata`.metadata", `"title": "%` + strings.ToLower(keyword) + `%"`})
-			keywordCond = keywordCond.Or(builder.Like{"`door43_metadata`.metadata", `"subject": "%` + strings.ToLower(keyword) + `%"`})
-			if opts.IncludeMetadata {
-				keywordCond = keywordCond.Or(builder.Like{"`door43_metadata`.metadata", `": "%` + strings.ToLower(keyword) + `%"`})
-			}
-		}
+		keywordCond = keywordCond.Or(getMetadataCondByDBType(x.Dialect().URI().DBType, keyword, opts.IncludeMetadata))
 	}
 
 	stageCond := GetStageCond(opts.Stage)
