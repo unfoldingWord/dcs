@@ -7,8 +7,8 @@ on:
       - release/dcs/v*
     tags:
       - v*-dcs
-    release:
-      types: [published]
+  release:
+    types: [published]
 
 jobs:
   deploy-docker:
