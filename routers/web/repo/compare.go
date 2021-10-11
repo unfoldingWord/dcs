@@ -23,6 +23,7 @@ import (
 	"code.gitea.io/gitea/modules/git"
 	"code.gitea.io/gitea/modules/log"
 	"code.gitea.io/gitea/modules/setting"
+	tsv_module "code.gitea.io/gitea/modules/tsv"
 	"code.gitea.io/gitea/modules/upload"
 	"code.gitea.io/gitea/services/gitdiff"
 )
@@ -119,6 +120,18 @@ func setCsvCompareContext(ctx *context.Context) {
 			}
 			defer reader.Close()
 
+			/*** DCS Customizations ***/
+			if filepath.Ext(diffFile.Name) == ".tsv" {
+				rd, err := tsv_module.CreateReaderAndGuessDelimiter(charset.ToUTF8WithFallbackReader(reader))
+				if err != nil {
+					return err
+				}
+				rd.Comma = '\t' // This is a .tsv file so assume \t is delimiter
+				rd.LazyQuotes = true
+				rd.TrimLeadingSpace = false
+				return rd
+			}
+			/*** END DCS Customizations ***/
 			return csv_module.CreateReaderAndGuessDelimiter(charset.ToUTF8WithFallbackReader(reader))
 		}
 
