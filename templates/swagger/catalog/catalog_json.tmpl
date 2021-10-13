@@ -1727,6 +1727,17 @@
           "format": "email",
           "x-go-name": "Email"
         },
+        "followers_count": {
+          "description": "user counts",
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "Followers"
+        },
+        "following_count": {
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "Following"
+        },
         "full_name": {
           "description": "the user's full name",
           "type": "string",
@@ -1788,6 +1799,16 @@
           "description": "END DCS Customizations ***/\nIs user restricted",
           "type": "boolean",
           "x-go-name": "Restricted"
+        },
+        "starred_repos_count": {
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "StarredRepos"
+        },
+        "visibility": {
+          "description": "User visibility level option: public, limited, private",
+          "type": "string",
+          "x-go-name": "Visibility"
         },
         "website": {
           "description": "the user's website",
