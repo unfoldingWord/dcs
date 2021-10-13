@@ -381,7 +381,7 @@ func getDoor43MetadataByRepoIDAndStage(e Engine, repoID int64, stage Stage) (*Do
 	var cond = builder.NewCond().
 		And(builder.Eq{"repo_id": repoID}).
 		And(builder.Eq{"stage": stage})
-	e = e.Where(cond).Desc("released_date_unix").Desc("branch_or_tag")
+	e = e.Where(cond).Desc("release_date_unix").Desc("branch_or_tag")
 
 	dm := &Door43Metadata{}
 	found, err := e.Get(dm)
