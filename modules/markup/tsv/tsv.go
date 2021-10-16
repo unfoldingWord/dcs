@@ -8,11 +8,11 @@ import (
 	"bufio"
 	"bytes"
 	"encoding/csv"
+	"fmt"
 	"html"
 	"io"
 	"regexp"
 	"strconv"
-	"strings"
 
 	"code.gitea.io/gitea/modules/markup"
 	"code.gitea.io/gitea/modules/markup/markdown"
@@ -51,7 +51,7 @@ func (Renderer) SanitizerRules() []setting.MarkupSanitizerRule {
 	}
 }
 
-func writeField(w io.Writer, element, class, field string) error {
+func writeField(w io.Writer, element, class, field string, escapeString bool) error {
 	if _, err := io.WriteString(w, "<"); err != nil {
 		return err
 	}
@@ -72,7 +72,10 @@ func writeField(w io.Writer, element, class, field string) error {
 	if _, err := io.WriteString(w, ">"); err != nil {
 		return err
 	}
-	if _, err := io.WriteString(w, html.EscapeString(field)); err != nil {
+	if escapeString {
+		field = html.EscapeString(field)
+	}
+	if _, err := io.WriteString(w, field); err != nil {
 		return err
 	}
 	if _, err := io.WriteString(w, "</"); err != nil {
@@ -109,58 +112,59 @@ func (Renderer) Render(ctx *markup.RenderContext, input io.Reader, output io.Wri
 	rd := csv.NewReader(bytes.NewReader(rawBytes))
 	rd.Comma = '\t'
 
-	if _, err := tmpBlock.WriteString(`<table class="data-table">`); err != nil {
+	if _, err := tmpBlock.WriteString(`<table class="data-table tsv">`); err != nil {
 		return err
 	}
-	rowID := 0
-	noteID := -1
+	row := 1
+	numFields := -1
+	newlineRegexp := regexp.MustCompile(`(<br\/*>|\\n)`)
 	for {
-		fields, err := rd.Read()
-		if err == io.EOF {
+		fields, fieldErr := rd.Read()
+		if fieldErr == io.EOF {
 			break
 		}
 		if err != nil {
+			colspan := 1
+			if numFields > 0 {
+				colspan = numFields
+			}
+			if _, err := tmpBlock.WriteString(fmt.Sprintf(`<tr><td colspan="%d">%v</td></tr>`, colspan, err)); err != nil {
+				return err
+			}
 			continue
+		}
+		if numFields < 0 {
+			numFields = len(fields)
 		}
 		if _, err := tmpBlock.WriteString("<tr>"); err != nil {
 			return err
 		}
 		element := "td"
-		if rowID == 0 {
+		if row == 1 {
 			element = "th"
 		}
-		if err := writeField(tmpBlock, element, "line-num", strconv.Itoa(rowID+1)); err != nil {
+		if err := writeField(tmpBlock, element, "line-num", strconv.Itoa(row), true); err != nil {
 			return err
 		}
-		for colID, field := range fields {
-			if rowID == 0 && strings.HasSuffix(strings.ToLower(field), "note") {
-				noteID = colID
-			}
-			if rowID > 0 && colID == noteID {
-				tmpBlock.WriteString(`<td class="note">`)
-				renderedString, err := markdown.RenderString(&markup.RenderContext{
-					URLPrefix: ctx.URLPrefix,
-					Metas:     ctx.Metas,
-					IsWiki:    true,
-				}, breakRegexp.ReplaceAllString(field, "\n"))
-				if err != nil {
-					tmpBlock.WriteString(field)
+		for _, field := range fields {
+			if row > 1 {
+				if html, err := markdown.RenderString(&markup.RenderContext{URLPrefix: ctx.URLPrefix, Metas: ctx.Metas},
+					newlineRegexp.ReplaceAllString(field, "\n")); err != nil {
+					return err
+				} else if err := writeField(tmpBlock, element, "", html, false); err != nil {
+					return err
 				}
-				tmpBlock.WriteString(renderedString)
 			} else {
-				tmpBlock.WriteString("<td>")
-				tmpBlock.WriteString(html.EscapeString(field))
-			}
-
-			if err := writeField(tmpBlock, element, "", field); err != nil {
-				return err
+				if err := writeField(tmpBlock, element, "", field, true); err != nil {
+					return err
+				}
 			}
 		}
 		if _, err := tmpBlock.WriteString("</tr>"); err != nil {
 			return err
 		}
 
-		rowID++
+		row++
 	}
 	if _, err = tmpBlock.WriteString("</table>"); err != nil {
 		return err
