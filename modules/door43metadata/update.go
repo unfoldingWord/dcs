@@ -8,6 +8,7 @@ import (
 	"context"
 
 	"code.gitea.io/gitea/models"
+	"code.gitea.io/gitea/models/db"
 	"code.gitea.io/gitea/modules/log"
 
 	"xorm.io/builder"
@@ -22,8 +23,8 @@ func UpdateDoor43Metadata(ctx context.Context) error {
 		log.Error("GetReposForMetadata: %v", err)
 	}
 
-	if err = models.Iterate(
-		models.DefaultDBContext(),
+	if err = db.Iterate(
+		db.DefaultContext,
 		new(models.Repository),
 		builder.In("id", repoIDs),
 		func(idx int, bean interface{}) error {

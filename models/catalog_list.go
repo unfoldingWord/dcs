@@ -8,8 +8,10 @@ import (
 	"fmt"
 	"strings"
 
+	"code.gitea.io/gitea/models/db"
+	"code.gitea.io/gitea/modules/setting"
+
 	"xorm.io/builder"
-	"xorm.io/xorm/schemas"
 )
 
 //CatalogOrderBy is used to sort the result
@@ -68,10 +70,10 @@ func Door43MetadataListOfMap(dmMap map[int64]*Door43Metadata) Door43MetadataList
 
 // LoadAttributes loads the attributes for the given Door43MetadataList
 func (dms Door43MetadataList) LoadAttributes() error {
-	return dms.loadAttributes(x)
+	return dms.loadAttributes(db.GetEngine(db.DefaultContext))
 }
 
-func (dms Door43MetadataList) loadAttributes(e Engine) error {
+func (dms Door43MetadataList) loadAttributes(e db.Engine) error {
 	if len(dms) == 0 {
 		return nil
 	}
@@ -94,7 +96,7 @@ func valuesDoor43Metadata(m map[int64]*Door43Metadata) []*Door43Metadata {
 
 // SearchCatalogOptions holds the search options
 type SearchCatalogOptions struct {
-	ListOptions
+	db.ListOptions
 	RepoID          int64
 	Keywords        []string
 	Owners          []string
@@ -111,13 +113,13 @@ type SearchCatalogOptions struct {
 	OrderBy         []CatalogOrderBy
 }
 
-func getMetadataCondByDBType(dbType schemas.DBType, keyword string, includeMetadata bool) builder.Cond {
+func getMetadataCondByDBType(dbType string, keyword string, includeMetadata bool) builder.Cond {
 	cond := builder.NewCond()
-	if dbType == schemas.MYSQL || dbType == schemas.SQLITE {
+	if dbType == "mysql" || dbType == "sqlite3" {
 		cond = cond.Or(builder.Like{"LOWER(REPLACE(JSON_EXTRACT(`door43_metadata`.metadata, '$.dublin_core.title'), '\"', ''))", strings.ToLower(keyword)})
 		cond = cond.Or(builder.Like{"LOWER(REPLACE(JSON_EXTRACT(`door43_metadata`.metadata, '$.dublin_core.subject'), '\"', ''))", strings.ToLower(keyword)})
 		if includeMetadata {
-			if dbType == schemas.MYSQL {
+			if dbType == "mysql" {
 				cond = cond.Or(builder.Expr("JSON_SEARCH(LOWER(`door43_metadata`.metadata), 'one', ?) IS NOT NULL", "%"+strings.ToLower(keyword)+"%"))
 			} else {
 				cond = cond.Or(builder.Like{"`door43_metadata`.metadata", `": "%` + strings.ToLower(keyword) + `%"`})
@@ -147,7 +149,7 @@ func SearchCatalogCondition(opts *SearchCatalogOptions) builder.Cond {
 	for _, keyword := range opts.Keywords {
 		keywordCond = keywordCond.Or(builder.Like{"`repository`.lower_name", strings.ToLower(keyword)})
 		keywordCond = keywordCond.Or(builder.Like{"`user`.lower_name", strings.ToLower(keyword)})
-		keywordCond = keywordCond.Or(getMetadataCondByDBType(x.Dialect().URI().DBType, keyword, opts.IncludeMetadata))
+		keywordCond = keywordCond.Or(getMetadataCondByDBType(setting.Database.Type, keyword, opts.IncludeMetadata))
 	}
 
 	stageCond := GetStageCond(opts.Stage)
@@ -186,9 +188,6 @@ func SearchCatalogByCondition(opts *SearchCatalogOptions, cond builder.Cond, loa
 		opts.OrderBy = []CatalogOrderBy{CatalogOrderByNewest}
 	}
 
-	sess := x.NewSession()
-	defer sess.Close()
-
 	dms := make(Door43MetadataList, 0, opts.PageSize)
 
 	releaseInfoInner, err := builder.Select("`door43_metadata`.repo_id", "COUNT(*) AS release_count", "MAX(`door43_metadata`.release_date_unix) AS latest_unix").
@@ -206,8 +205,12 @@ func SearchCatalogByCondition(opts *SearchCatalogOptions, cond builder.Cond, loa
 		GroupBy("`door43_metadata`.repo_id").
 		ToBoundSQL()
 	if err != nil {
-		return nil, 0, err
+		return nil,
+			0, err
 	}
+
+	sess := db.NewSession(db.DefaultContext)
+	defer sess.Close()
 
 	sess.
 		Join("INNER", "repository", "`repository`.id = `door43_metadata`.repo_id").

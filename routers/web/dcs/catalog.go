@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"code.gitea.io/gitea/models"
+	"code.gitea.io/gitea/models/db"
 	"code.gitea.io/gitea/modules/base"
 	"code.gitea.io/gitea/modules/context"
 	"code.gitea.io/gitea/modules/setting"
@@ -111,7 +112,7 @@ func RenderCatalogSearch(ctx *context.Context, opts *CatalogSearchOptions) {
 	}
 
 	dms, count, err = models.SearchCatalog(&models.SearchCatalogOptions{
-		ListOptions: models.ListOptions{
+		ListOptions: db.ListOptions{
 			Page:     page,
 			PageSize: opts.PageSize,
 		},

@@ -8,6 +8,8 @@ import (
 	"fmt"
 	"strings"
 
+	"code.gitea.io/gitea/models/db"
+	"code.gitea.io/gitea/modules/setting"
 	"code.gitea.io/gitea/modules/structs"
 	"code.gitea.io/gitea/modules/util"
 
@@ -42,7 +44,7 @@ func RepositoryListOfMap(repoMap map[int64]*Repository) RepositoryList {
 	return RepositoryList(valuesRepository(repoMap))
 }
 
-func (repos RepositoryList) loadAttributes(e Engine) error {
+func (repos RepositoryList) loadAttributes(e db.Engine) error {
 	if len(repos) == 0 {
 		return nil
 	}
@@ -89,13 +91,13 @@ func (repos RepositoryList) loadAttributes(e Engine) error {
 
 // LoadAttributes loads the attributes for the given RepositoryList
 func (repos RepositoryList) LoadAttributes() error {
-	return repos.loadAttributes(x)
+	return repos.loadAttributes(db.GetEngine(db.DefaultContext))
 }
 
 // MirrorRepositoryList contains the mirror repositories
 type MirrorRepositoryList []*Repository
 
-func (repos MirrorRepositoryList) loadAttributes(e Engine) error {
+func (repos MirrorRepositoryList) loadAttributes(e db.Engine) error {
 	if len(repos) == 0 {
 		return nil
 	}
@@ -129,12 +131,12 @@ func (repos MirrorRepositoryList) loadAttributes(e Engine) error {
 
 // LoadAttributes loads the attributes for the given MirrorRepositoryList
 func (repos MirrorRepositoryList) LoadAttributes() error {
-	return repos.loadAttributes(x)
+	return repos.loadAttributes(db.GetEngine(db.DefaultContext))
 }
 
 // SearchRepoOptions holds the search options
 type SearchRepoOptions struct {
-	ListOptions
+	db.ListOptions
 	Actor           *User
 	Keyword         string
 	OwnerID         int64
@@ -341,7 +343,7 @@ func SearchRepositoryCondition(opts *SearchRepoOptions) builder.Cond {
 					likes = likes.Or(builder.Like{"LOWER(`repository`.description)", strings.ToLower(v)})
 				}
 				/*** DCS Customizations ***/
-				likes = likes.Or(getMetadataCondByDBType(x.Dialect().URI().DBType, v, opts.IncludeMetadata))
+				likes = likes.Or(getMetadataCondByDBType(setting.Database.Type, v, opts.IncludeMetadata))
 				/*** END DCS Customizations ***/
 			}
 			keywordCond = keywordCond.Or(likes)
@@ -433,7 +435,7 @@ func searchRepositoryByCondition(opts *SearchRepoOptions, cond builder.Cond) (*x
 		opts.OrderBy = SearchOrderBy(fmt.Sprintf("CASE WHEN owner_id = %d THEN 0 ELSE owner_id END, %s", opts.PriorityOwnerID, opts.OrderBy))
 	}
 
-	sess := x.NewSession()
+	sess := db.NewSession(db.DefaultContext)
 
 	var count int64
 	if opts.PageSize > 0 {
@@ -551,7 +553,7 @@ func AccessibleRepoIDsQuery(user *User) *builder.Builder {
 // FindUserAccessibleRepoIDs find all accessible repositories' ID by user's id
 func FindUserAccessibleRepoIDs(user *User) ([]int64, error) {
 	repoIDs := make([]int64, 0, 10)
-	if err := x.
+	if err := db.GetEngine(db.DefaultContext).
 		Table("repository").
 		Cols("id").
 		Where(accessibleRepositoryCondition(user)).

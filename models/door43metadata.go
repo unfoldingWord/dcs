@@ -9,13 +9,13 @@ import (
 	"sort"
 	"time"
 
+	"code.gitea.io/gitea/models/db"
 	"code.gitea.io/gitea/modules/log"
 	"code.gitea.io/gitea/modules/setting"
 	"code.gitea.io/gitea/modules/timeutil"
 
 	"github.com/unknwon/com"
 	"xorm.io/builder"
-	"xorm.io/xorm/schemas"
 )
 
 // Door43Metadata represents the metadata of repository's release or default branch (ReleaseID = 0).
@@ -34,12 +34,16 @@ type Door43Metadata struct {
 	UpdatedUnix     timeutil.TimeStamp      `xorm:"INDEX updated"`
 }
 
-// GetRepo gets the repo associated with the door43 metadata entry
-func (dm *Door43Metadata) GetRepo() error {
-	return dm.getRepo(x)
+func init() {
+	db.RegisterModel(new(Door43Metadata))
 }
 
-func (dm *Door43Metadata) getRepo(e Engine) error {
+// GetRepo gets the repo associated with the door43 metadata entry
+func (dm *Door43Metadata) GetRepo() error {
+	return dm.getRepo(db.GetEngine(db.DefaultContext))
+}
+
+func (dm *Door43Metadata) getRepo(e db.Engine) error {
 	if dm.Repo == nil {
 		repo, err := GetRepositoryByID(dm.RepoID)
 		if err != nil {
@@ -55,10 +59,10 @@ func (dm *Door43Metadata) getRepo(e Engine) error {
 
 // GetRelease gets the associated release of a door43 metadata entry
 func (dm *Door43Metadata) GetRelease() error {
-	return dm.getRelease(x)
+	return dm.getRelease(db.GetEngine(db.DefaultContext))
 }
 
-func (dm *Door43Metadata) getRelease(e Engine) error {
+func (dm *Door43Metadata) getRelease(e db.Engine) error {
 	if dm.ReleaseID > 0 && dm.Release == nil {
 		rel, err := GetReleaseByID(dm.ReleaseID)
 		if err != nil {
@@ -75,7 +79,7 @@ func (dm *Door43Metadata) getRelease(e Engine) error {
 	return nil
 }
 
-func (dm *Door43Metadata) loadAttributes(e Engine) error {
+func (dm *Door43Metadata) loadAttributes(e db.Engine) error {
 	if err := dm.getRepo(e); err != nil {
 		return err
 	}
@@ -89,7 +93,7 @@ func (dm *Door43Metadata) loadAttributes(e Engine) error {
 
 // LoadAttributes load repo and release attributes for a door43 metadata
 func (dm *Door43Metadata) LoadAttributes() error {
-	return dm.loadAttributes(x)
+	return dm.loadAttributes(db.GetEngine(db.DefaultContext))
 }
 
 // GetBranchOrTagType gets the type of the DM entry, "branch" or "tag"
@@ -186,12 +190,12 @@ func (dm *Door43Metadata) GetBooks() []string {
 
 // IsDoor43MetadataExist returns true if door43 metadata with given release ID already exists.
 func IsDoor43MetadataExist(repoID, releaseID int64) (bool, error) {
-	return x.Get(&Door43Metadata{RepoID: repoID, ReleaseID: releaseID})
+	return db.GetEngine(db.DefaultContext).Get(&Door43Metadata{RepoID: repoID, ReleaseID: releaseID})
 }
 
 // InsertDoor43Metadata inserts a door43 metadata
 func InsertDoor43Metadata(dm *Door43Metadata) error {
-	if id, err := x.Insert(dm); err != nil {
+	if id, err := db.GetEngine(db.DefaultContext).Insert(dm); err != nil {
 		return err
 	} else if id > 0 && dm.ReleaseID > 0 {
 		if err := dm.LoadAttributes(); err != nil {
@@ -205,17 +209,17 @@ func InsertDoor43Metadata(dm *Door43Metadata) error {
 }
 
 // InsertDoor43MetadatasContext inserts door43 metadatas
-func InsertDoor43MetadatasContext(ctx DBContext, dms []*Door43Metadata) error {
-	_, err := ctx.e.Insert(dms)
+func InsertDoor43MetadatasContext(ctx db.Context, dms []*Door43Metadata) error {
+	_, err := ctx.Engine().Insert(dms)
 	return err
 }
 
 // UpdateDoor43MetadataCols update door43 metadata according special columns
 func UpdateDoor43MetadataCols(dm *Door43Metadata, cols ...string) error {
-	return updateDoor43MetadataCols(x, dm, cols...)
+	return updateDoor43MetadataCols(db.GetEngine(db.DefaultContext), dm, cols...)
 }
 
-func updateDoor43MetadataCols(e Engine, dm *Door43Metadata, cols ...string) error {
+func updateDoor43MetadataCols(e db.Engine, dm *Door43Metadata, cols ...string) error {
 	id, err := e.ID(dm.ID).Cols(cols...).Update(dm)
 	if id > 0 && dm.ReleaseID > 0 {
 		err := dm.LoadAttributes()
@@ -249,14 +253,14 @@ func GetDoor43MetadataByRepoIDAndTagName(repoID int64, tagName string) (*Door43M
 	}
 
 	dm := &Door43Metadata{RepoID: repoID, ReleaseID: releaseID}
-	_, err = x.Get(dm)
+	_, err = db.GetEngine(db.DefaultContext).Get(dm)
 	return dm, err
 }
 
 // GetDoor43MetadataByID returns door43 metadata with given ID.
 func GetDoor43MetadataByID(id int64) (*Door43Metadata, error) {
 	rel := new(Door43Metadata)
-	has, err := x.
+	has, err := db.GetEngine(db.DefaultContext).
 		ID(id).
 		Get(rel)
 	if err != nil {
@@ -270,7 +274,7 @@ func GetDoor43MetadataByID(id int64) (*Door43Metadata, error) {
 
 // FindDoor43MetadatasOptions describes the conditions to find door43 metadatas
 type FindDoor43MetadatasOptions struct {
-	ListOptions
+	db.ListOptions
 	ReleaseIDs []int64
 }
 
@@ -286,12 +290,12 @@ func (opts *FindDoor43MetadatasOptions) toConds(repoID int64) builder.Cond {
 
 // GetDoor43MetadatasByRepoID returns a list of door43 metadatas of repository.
 func GetDoor43MetadatasByRepoID(repoID int64, opts FindDoor43MetadatasOptions) ([]*Door43Metadata, error) {
-	sess := x.
+	sess := db.GetEngine(db.DefaultContext).
 		Desc("created_unix", "id").
 		Where(opts.toConds(repoID))
 
 	if opts.PageSize > 0 {
-		sess = opts.setSessionPagination(sess)
+		sess = db.SetSessionPagination(sess, &opts)
 	}
 
 	dms := make([]*Door43Metadata, 0, opts.PageSize)
@@ -300,10 +304,10 @@ func GetDoor43MetadatasByRepoID(repoID int64, opts FindDoor43MetadatasOptions) (
 
 // GetLatestCatalogMetadataByRepoID returns the latest door43 metadata in the catalog by repoID, if canBePrerelease, a prerelease entry can match
 func GetLatestCatalogMetadataByRepoID(repoID int64, canBePrerelease bool) (*Door43Metadata, error) {
-	return getLatestCatalogMetadataByRepoID(x, repoID, canBePrerelease)
+	return getLatestCatalogMetadataByRepoID(db.GetEngine(db.DefaultContext), repoID, canBePrerelease)
 }
 
-func getLatestCatalogMetadataByRepoID(e Engine, repoID int64, canBePrerelease bool) (*Door43Metadata, error) {
+func getLatestCatalogMetadataByRepoID(e db.Engine, repoID int64, canBePrerelease bool) (*Door43Metadata, error) {
 	cond := builder.NewCond().
 		And(builder.Eq{"`door43_metadata`.repo_id": repoID}).
 		And(builder.Eq{"`release`.is_tag": 0}).
@@ -331,7 +335,7 @@ func getLatestCatalogMetadataByRepoID(e Engine, repoID int64, canBePrerelease bo
 
 // GetDoor43MetadatasByRepoIDAndReleaseIDs returns a list of door43 metadatas of repository according repoID and releaseIDs.
 func GetDoor43MetadatasByRepoIDAndReleaseIDs(repoID int64, releaseIDs []int64) (dms []*Door43Metadata, err error) {
-	err = x.In("release_id", releaseIDs).
+	err = db.GetEngine(db.DefaultContext).In("release_id", releaseIDs).
 		Desc("created_unix").
 		Find(&dms, Door43Metadata{RepoID: repoID})
 	return dms, err
@@ -339,13 +343,13 @@ func GetDoor43MetadatasByRepoIDAndReleaseIDs(repoID int64, releaseIDs []int64) (
 
 // GetDoor43MetadataCountByRepoID returns the count of metadatas of repository
 func GetDoor43MetadataCountByRepoID(repoID int64, opts FindDoor43MetadatasOptions) (int64, error) {
-	return x.Where(opts.toConds(repoID)).Count(&Door43Metadata{})
+	return db.GetEngine(db.DefaultContext).Where(opts.toConds(repoID)).Count(&Door43Metadata{})
 }
 
 // GetReleaseCount returns the count of releases of repository of the Door43Metadata's stage
 func (dm *Door43Metadata) GetReleaseCount() (int64, error) {
 	stageCond := GetStageCond(dm.Stage)
-	return x.Join("LEFT", "release", "`release`.id = `door43_metadata`.release_id").
+	return db.GetEngine(db.DefaultContext).Join("LEFT", "release", "`release`.id = `door43_metadata`.release_id").
 		Where(builder.And(builder.Eq{"`door43_metadata`.repo_id": dm.RepoID}, stageCond)).
 		Count(&Door43Metadata{})
 }
@@ -357,10 +361,10 @@ func (dm *Door43Metadata) GetReleaseDateTime() string {
 
 // GetDoor43MetadataByRepoIDAndReleaseID returns the metadata of a given release ID (0 = default branch).
 func GetDoor43MetadataByRepoIDAndReleaseID(repoID, releaseID int64) (*Door43Metadata, error) {
-	return getDoor43MetadataByRepoIDAndReleaseID(x, repoID, releaseID)
+	return getDoor43MetadataByRepoIDAndReleaseID(db.GetEngine(db.DefaultContext), repoID, releaseID)
 }
 
-func getDoor43MetadataByRepoIDAndReleaseID(e Engine, repoID, releaseID int64) (*Door43Metadata, error) {
+func getDoor43MetadataByRepoIDAndReleaseID(e db.Engine, repoID, releaseID int64) (*Door43Metadata, error) {
 	dm := &Door43Metadata{RepoID: repoID, ReleaseID: releaseID}
 	has, err := e.Get(dm)
 	if err != nil {
@@ -374,10 +378,10 @@ func getDoor43MetadataByRepoIDAndReleaseID(e Engine, repoID, releaseID int64) (*
 
 // GetDoor43MetadataByRepoIDAndStage returns the metadata of a given repo ID and stage.
 func GetDoor43MetadataByRepoIDAndStage(repoID int64, stage Stage) (*Door43Metadata, error) {
-	return getDoor43MetadataByRepoIDAndStage(x, repoID, stage)
+	return getDoor43MetadataByRepoIDAndStage(db.GetEngine(db.DefaultContext), repoID, stage)
 }
 
-func getDoor43MetadataByRepoIDAndStage(e Engine, repoID int64, stage Stage) (*Door43Metadata, error) {
+func getDoor43MetadataByRepoIDAndStage(e db.Engine, repoID int64, stage Stage) (*Door43Metadata, error) {
 	var cond = builder.NewCond().
 		And(builder.Eq{"repo_id": repoID}).
 		And(builder.Eq{"stage": stage})
@@ -426,7 +430,7 @@ func DeleteDoor43MetadataByID(id int64) error {
 
 // DeleteDoor43Metadata deletes a metadata from database by given ID.
 func DeleteDoor43Metadata(dm *Door43Metadata) error {
-	id, err := x.Delete(dm)
+	id, err := db.GetEngine(db.DefaultContext).Delete(dm)
 	if id > 0 && dm.ReleaseID > 0 {
 		if err := dm.LoadAttributes(); err != nil {
 			return err
@@ -446,18 +450,18 @@ func DeleteDoor43MetadataByRelease(release *Release) error {
 		}
 		return nil
 	}
-	_, err = x.ID(dm.ID).Delete(dm)
+	_, err = db.GetEngine(db.DefaultContext).ID(dm.ID).Delete(dm)
 	return err
 }
 
 // DeleteAllDoor43MetadatasByRepoID deletes all metadatas from database for a repo by given repo ID.
 func DeleteAllDoor43MetadatasByRepoID(repoID int64) (int64, error) {
-	return x.Delete(Door43Metadata{RepoID: repoID})
+	return db.GetEngine(db.DefaultContext).Delete(Door43Metadata{RepoID: repoID})
 }
 
 // GetReposForMetadata gets the IDs of all the repos to process for metadata
 func GetReposForMetadata() ([]int64, error) {
-	sess := x.NewSession()
+	sess := db.NewSession(db.DefaultContext)
 	defer sess.Close()
 
 	//records, err := sess.Query("SELECT r.id FROM `repository` r " +
@@ -490,7 +494,7 @@ func GetReposForMetadata() ([]int64, error) {
 
 // GetRepoReleaseIDsForMetadata gets the releases ids for a repo
 func GetRepoReleaseIDsForMetadata(repoID int64) ([]int64, error) {
-	sess := x.NewSession()
+	sess := db.NewSession(db.DefaultContext)
 	defer sess.Close()
 
 	//records, err := sess.Query("SELECT rel.id as id FROM `repository` r "+
@@ -527,10 +531,10 @@ func GetRepoReleaseIDsForMetadata(repoID int64) ([]int64, error) {
 
 // GetLatestProdCatalogMetadata gets the latest Door43 Metadata that is in the prod catalog.
 func (r *Repository) GetLatestProdCatalogMetadata() (*Door43Metadata, error) {
-	return r.getLatestProdCatalogMetadata(x)
+	return r.getLatestProdCatalogMetadata(db.GetEngine(db.DefaultContext))
 }
 
-func (r *Repository) getLatestProdCatalogMetadata(e Engine) (*Door43Metadata, error) {
+func (r *Repository) getLatestProdCatalogMetadata(e db.Engine) (*Door43Metadata, error) {
 	dm, err := GetLatestCatalogMetadataByRepoID(r.ID, false)
 	if err != nil && !IsErrDoor43MetadataNotExist(err) {
 		return nil, err
@@ -540,10 +544,10 @@ func (r *Repository) getLatestProdCatalogMetadata(e Engine) (*Door43Metadata, er
 
 // GetLatestPreProdCatalogMetadata gets the latest Door43 Metadata that is in the pre-prod catalog.
 func (r *Repository) GetLatestPreProdCatalogMetadata() (*Door43Metadata, error) {
-	return r.getLatestPreProdCatalogMetadata(x)
+	return r.getLatestPreProdCatalogMetadata(db.GetEngine(db.DefaultContext))
 }
 
-func (r *Repository) getLatestPreProdCatalogMetadata(e Engine) (*Door43Metadata, error) {
+func (r *Repository) getLatestPreProdCatalogMetadata(e db.Engine) (*Door43Metadata, error) {
 	dm, err := getLatestCatalogMetadataByRepoID(e, r.ID, true)
 	if err != nil && !IsErrDoor43MetadataNotExist(err) {
 		return nil, err
@@ -654,9 +658,9 @@ func (s *Stage) String() string {
 
 // InitDoor43Metadata does some db management
 func InitDoor43Metadata() error {
-	switch x.Dialect().URI().DBType {
-	case schemas.MYSQL:
-		_, err := x.Exec("ALTER TABLE `door43_metadata` MODIFY `metadata` JSON")
+	switch setting.Database.Type {
+	case "mysql":
+		_, err := db.GetEngine(db.DefaultContext).Exec("ALTER TABLE `door43_metadata` MODIFY `metadata` JSON")
 		if err != nil {
 			return fmt.Errorf("Error changing door43_metadata metadata column type: %v", err)
 		}

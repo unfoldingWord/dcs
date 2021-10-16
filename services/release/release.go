@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"code.gitea.io/gitea/models"
+	"code.gitea.io/gitea/models/db"
 	"code.gitea.io/gitea/modules/door43metadata"
 	"code.gitea.io/gitea/modules/git"
 	"code.gitea.io/gitea/modules/log"
@@ -123,7 +124,7 @@ func CreateRelease(gitRepo *git.Repository, rel *models.Release, attachmentUUIDs
 		return err
 	}
 
-	if err = models.AddReleaseAttachments(models.DefaultDBContext(), rel.ID, attachmentUUIDs); err != nil {
+	if err = models.AddReleaseAttachments(db.DefaultContext, rel.ID, attachmentUUIDs); err != nil {
 		return err
 	}
 
@@ -199,11 +200,11 @@ func UpdateRelease(doer *models.User, gitRepo *git.Repository, rel *models.Relea
 	}
 	rel.LowerTagName = strings.ToLower(rel.TagName)
 
-	ctx, commiter, err := models.TxDBContext()
+	ctx, committer, err := db.TxContext()
 	if err != nil {
 		return err
 	}
-	defer commiter.Close()
+	defer committer.Close()
 
 	if err = models.UpdateRelease(ctx, rel); err != nil {
 		return err
@@ -260,7 +261,7 @@ func UpdateRelease(doer *models.User, gitRepo *git.Repository, rel *models.Relea
 		}
 	}
 
-	if err = commiter.Commit(); err != nil {
+	if err = committer.Commit(); err != nil {
 		return
 	}
 
@@ -321,7 +322,7 @@ func DeleteReleaseByID(id int64, doer *models.User, delTag bool) error {
 	} else {
 		rel.IsTag = true
 
-		if err = models.UpdateRelease(models.DefaultDBContext(), rel); err != nil {
+		if err = models.UpdateRelease(db.DefaultContext, rel); err != nil {
 			return fmt.Errorf("Update: %v", err)
 		}
 	}

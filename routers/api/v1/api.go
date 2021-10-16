@@ -583,6 +583,9 @@ func Routes(sessioner func(http.Handler) http.Handler) *web.Route {
 			})
 		}
 		m.Get("/version", misc.Version)
+		if setting.Federation.Enabled {
+			m.Get("/nodeinfo", misc.NodeInfo)
+		}
 		m.Get("/signing-key.gpg", misc.SigningKey)
 		m.Post("/markdown", bind(api.MarkdownOption{}), misc.Markdown)
 		m.Post("/markdown/raw", misc.MarkdownRaw)
@@ -900,8 +903,7 @@ func Routes(sessioner func(http.Handler) http.Handler) *web.Route {
 					m.Group("/{index}", func() {
 						m.Combo("").Get(repo.GetPullRequest).
 							Patch(reqToken(), bind(api.EditPullRequestOption{}), repo.EditPullRequest)
-						m.Get(".diff", repo.DownloadPullDiff)
-						m.Get(".patch", repo.DownloadPullPatch)
+						m.Get(".{diffType:diff|patch}", repo.DownloadPullDiffOrPatch)
 						m.Post("/update", reqToken(), repo.UpdatePullRequest)
 						m.Get("/commits", repo.GetPullRequestCommits)
 						m.Combo("/merge").Get(repo.IsPullRequestMerged).
@@ -940,6 +942,7 @@ func Routes(sessioner func(http.Handler) http.Handler) *web.Route {
 				m.Group("/git", func() {
 					m.Group("/commits", func() {
 						m.Get("/{sha}", repo.GetSingleCommit)
+						m.Get("/{sha}.{diffType:diff|patch}", repo.DownloadCommitDiffOrPatch)
 					})
 					m.Get("/refs", repo.GetGitAllRefs)
 					m.Get("/refs/*", repo.GetGitRefs)
@@ -973,7 +976,10 @@ func Routes(sessioner func(http.Handler) http.Handler) *web.Route {
 
 		// Organizations
 		m.Get("/user/orgs", reqToken(), org.ListMyOrgs)
-		m.Get("/users/{username}/orgs", org.ListUserOrgs)
+		m.Group("/users/{username}/orgs", func() {
+			m.Get("", org.ListUserOrgs)
+			m.Get("/{org}/permissions", reqToken(), org.GetUserOrgsPermissions)
+		})
 		m.Post("/orgs", reqToken(), bind(api.CreateOrgOption{}), org.Create)
 		m.Get("/orgs", org.GetAll)
 		m.Group("/orgs/{org}", func() {

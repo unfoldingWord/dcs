@@ -9,6 +9,7 @@ import (
 	"strings" // DCS Customizations
 
 	"code.gitea.io/gitea/models"
+	"code.gitea.io/gitea/models/db"
 	"code.gitea.io/gitea/modules/base"
 	"code.gitea.io/gitea/modules/context"
 	"code.gitea.io/gitea/modules/setting"
@@ -101,7 +102,7 @@ func RenderRepoSearch(ctx *context.Context, opts *RepoSearchOptions) {
 	/*** END DCS Customizations ***/
 
 	repos, count, err = models.SearchRepository(&models.SearchRepoOptions{
-		ListOptions: models.ListOptions{
+		ListOptions: db.ListOptions{
 			Page:     page,
 			PageSize: opts.PageSize,
 		},
