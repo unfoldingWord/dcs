@@ -5,10 +5,10 @@ go 1.16
 require (
 	cloud.google.com/go v0.78.0 // indirect
 	code.gitea.io/sdk/gitea v0.14.0
-	gitea.com/go-chi/binding v0.0.0-20210301195521-1fe1c9a555e7
-	gitea.com/go-chi/cache v0.0.0-20210110083709-82c4c9ce2d5e
-	gitea.com/go-chi/captcha v0.0.0-20210110083842-e7696c336a1e
-	gitea.com/go-chi/session v0.0.0-20210913064732-2ac132b0fa07
+	gitea.com/go-chi/binding v0.0.0-20211013065440-d16dc407c2be
+	gitea.com/go-chi/cache v0.0.0-20211013020926-78790b11abf1
+	gitea.com/go-chi/captcha v0.0.0-20211013065431-70641c1a35d5
+	gitea.com/go-chi/session v0.0.0-20211013065435-7d334f340c09
 	gitea.com/lunny/levelqueue v0.4.1
 	gitea.com/unfoldingword/gitea-vet v0.2.5
 	github.com/Microsoft/go-winio v0.5.0 // indirect
@@ -38,6 +38,7 @@ require (
 	github.com/gliderlabs/ssh v0.3.3
 	github.com/go-asn1-ber/asn1-ber v1.5.3 // indirect
 	github.com/go-chi/chi v1.5.4
+	github.com/go-chi/chi/v5 v5.0.4
 	github.com/go-chi/cors v1.2.0
 	github.com/go-enry/go-enry/v2 v2.7.1
 	github.com/go-git/go-billy/v5 v5.3.1
@@ -57,6 +58,7 @@ require (
 	github.com/google/go-querystring v1.1.0 // indirect
 	github.com/google/uuid v1.2.0
 	github.com/gorilla/context v1.1.1
+	github.com/gorilla/feeds v1.1.1
 	github.com/gorilla/mux v1.8.0 // indirect
 	github.com/gorilla/sessions v1.2.1 // indirect
 	github.com/hashicorp/go-cleanhttp v0.5.2 // indirect
