@@ -43,43 +43,51 @@ func ToRepoDCS(repo *models.Repository, mode models.AccessMode) *api.Repository 
 		prod.Repo = repo
 		url := prod.GetReleaseURL()
 		catalog.Production = &api.CatalogStage{
-			Tag:        prod.BranchOrTag,
-			ReleaseURL: &url,
-			Released:   prod.GetReleaseDateTime(),
-			ZipballURL: prod.GetZipballURL(),
-			TarballURL: prod.GetTarballURL(),
+			Tag:         prod.BranchOrTag,
+			ReleaseURL:  &url,
+			Released:    prod.GetReleaseDateTime(),
+			ZipballURL:  prod.GetZipballURL(),
+			TarballURL:  prod.GetTarballURL(),
+			GitTreesURL: prod.GetGitTreesURL(),
+			ContentsURL: prod.GetContentsURL(),
 		}
 	}
 	if preprod != nil {
 		preprod.Repo = repo
 		url := preprod.GetReleaseURL()
 		catalog.PreProduction = &api.CatalogStage{
-			Tag:        preprod.BranchOrTag,
-			ReleaseURL: &url,
-			Released:   preprod.GetReleaseDateTime(),
-			ZipballURL: preprod.GetZipballURL(),
-			TarballURL: preprod.GetTarballURL(),
+			Tag:         preprod.BranchOrTag,
+			ReleaseURL:  &url,
+			Released:    preprod.GetReleaseDateTime(),
+			ZipballURL:  preprod.GetZipballURL(),
+			TarballURL:  preprod.GetTarballURL(),
+			GitTreesURL: preprod.GetGitTreesURL(),
+			ContentsURL: preprod.GetContentsURL(),
 		}
 	}
 	if draft != nil {
 		draft.Repo = repo
 		url := draft.GetReleaseURL()
 		catalog.Draft = &api.CatalogStage{
-			Tag:        draft.BranchOrTag,
-			ReleaseURL: &url,
-			Released:   draft.GetReleaseDateTime(),
-			ZipballURL: draft.GetZipballURL(),
-			TarballURL: draft.GetTarballURL(),
+			Tag:         draft.BranchOrTag,
+			ReleaseURL:  &url,
+			Released:    draft.GetReleaseDateTime(),
+			ZipballURL:  draft.GetZipballURL(),
+			TarballURL:  draft.GetTarballURL(),
+			GitTreesURL: draft.GetGitTreesURL(),
+			ContentsURL: draft.GetContentsURL(),
 		}
 	}
 	if latest != nil {
 		latest.Repo = repo
 		catalog.Latest = &api.CatalogStage{
-			Tag:        latest.BranchOrTag,
-			ReleaseURL: nil,
-			Released:   latest.GetReleaseDateTime(),
-			ZipballURL: latest.GetZipballURL(),
-			TarballURL: latest.GetTarballURL(),
+			Tag:         latest.BranchOrTag,
+			ReleaseURL:  nil,
+			Released:    latest.GetReleaseDateTime(),
+			ZipballURL:  latest.GetZipballURL(),
+			TarballURL:  latest.GetTarballURL(),
+			GitTreesURL: latest.GetGitTreesURL(),
+			ContentsURL: latest.GetContentsURL(),
 		}
 	}
 

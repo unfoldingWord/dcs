@@ -177,6 +177,16 @@ func (dm *Door43Metadata) GetMetadataAPIContentsURL() string {
 	return fmt.Sprintf("%s/contents/manifest.yaml?ref=%s", dm.Repo.APIURL(), dm.BranchOrTag)
 }
 
+// GetGitTreesURL gets the git trees URL for a repo and branch or tag for all files
+func (dm *Door43Metadata) GetGitTreesURL() string {
+	return fmt.Sprintf("%s/git/trees/%s?recursive=1&per_page=99999", dm.Repo.APIURL(), dm.BranchOrTag)
+}
+
+// GetContentsURL gets the contents URL for a repo and branch or tag for all files
+func (dm *Door43Metadata) GetContentsURL() string {
+	return fmt.Sprintf("%s/contents?ref=%s", dm.Repo.APIURL(), dm.BranchOrTag)
+}
+
 // GetBooks get the books of the resource
 func (dm *Door43Metadata) GetBooks() []string {
 	var books []string

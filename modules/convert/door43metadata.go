@@ -66,6 +66,8 @@ func ToDoor43MetadataV5(dm *models.Door43Metadata, mode models.AccessMode) *api.
 		Release:                release,
 		TarballURL:             dm.GetTarballURL(),
 		ZipballURL:             dm.GetZipballURL(),
+		GitTreesURL:            dm.GetGitTreesURL(),
+		ContentsURL:            dm.GetContentsURL(),
 		Language:               (*dm.Metadata)["dublin_core"].(map[string]interface{})["language"].(map[string]interface{})["identifier"].(string),
 		Subject:                (*dm.Metadata)["dublin_core"].(map[string]interface{})["subject"].(string),
 		Title:                  (*dm.Metadata)["dublin_core"].(map[string]interface{})["title"].(string),
