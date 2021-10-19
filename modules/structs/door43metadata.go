@@ -39,6 +39,8 @@ type Door43MetadataV5 struct {
 	Release                *Release      `json:"release"`
 	TarballURL             string        `json:"tarbar_url"`
 	ZipballURL             string        `json:"zipball_url"`
+	GitTreesURL            string        `json:"git_trees_url"`
+	ContentsURL            string        `json:"contents_url"`
 	Language               string        `json:"language"`
 	Subject                string        `json:"subject"`
 	Title                  string        `json:"title"`
@@ -87,9 +89,11 @@ type CatalogStages struct {
 
 // CatalogStage a repo's catalog stage metadata
 type CatalogStage struct {
-	Tag        string  `json:"branch_or_tag_name"`
-	ReleaseURL *string `json:"release_url"`
-	Released   string  `json:"released"`
-	ZipballURL string  `json:"zipball_url"`
-	TarballURL string  `json:"tarball_url"`
+	Tag         string  `json:"branch_or_tag_name"`
+	ReleaseURL  *string `json:"release_url"`
+	Released    string  `json:"released"`
+	ZipballURL  string  `json:"zipball_url"`
+	TarballURL  string  `json:"tarball_url"`
+	GitTreesURL string  `json:"git_trees_url"`
+	ContentsURL string  `json:"contents_url"`
 }
