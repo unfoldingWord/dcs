@@ -482,7 +482,7 @@ func RegisterRoutes(m *web.Route) {
 		m.Post("/action/{action}", user.Action)
 	}, reqSignIn)
 
-	if !setting.IsProd() {
+	if !setting.IsProd {
 		m.Get("/template/*", dev.TemplatePreview)
 	}
 
