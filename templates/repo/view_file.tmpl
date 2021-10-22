@@ -142,12 +142,12 @@
 
 <!-- DCS Customizations -->
 <script>
-let expandViewButton = document.querySelector('#expand-view-button');
+const expandViewButton = document.querySelector('#expand-view-button');
 let isExpandedView = false;
-expandViewButton.addEventListener('click', function() {
-	let container = expandViewButton.closest('.container');
-	let trExpand = expandViewButton.getAttribute('data-tr-expand');
-	let trCompact = expandViewButton.getAttribute('data-tr-compact');
+expandViewButton.addEventListener('click', () => {
+	const container = expandViewButton.closest('.container');
+	const trExpand = expandViewButton.getAttribute('data-tr-expand');
+	const trCompact = expandViewButton.getAttribute('data-tr-compact');
 	if (isExpandedView) {
 		container.classList.remove('fluid', 'padded');
 		expandViewButton.classList.add('fa-expand');
