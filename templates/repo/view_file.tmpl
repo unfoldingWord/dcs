@@ -61,14 +61,18 @@
 				{{end}}
 			{{end}}
 			<!-- DCS Customizations -->
-			<i id="expand-view-button" class="fa fa-expand btn-octicon poping up" data-content="{{.i18n.Tr "repo.expand_view"}}" data-position="bottom center" data-variation="tiny inverted" style="cursor:pointer"></i>
+			<i id="expand-view-button" class="fa fa-expand btn-octicon poping up" data-content="{{.i18n.Tr "repo.expand_view"}}" data-tr-expand="{{.i18n.Tr "repo.expand_view"}}" data-tr-compact="{{.i18n.Tr "repo.compact_view"}}" data-position="bottom center" data-variation="tiny inverted" style="cursor:pointer"></i>
 			<!-- END DCS Customizations -->
 		</div>
 		{{end}}
 	</h4>
 	<div class="ui attached table unstackable segment">
-		<!-- DCS Customizations - Adds right2left class and LangageName if relevant -->
-		<div class="file-view{{if .IsMarkup}} markup {{.MarkupType}}{{else if .IsRenderedHTML}} plain-text{{else if .IsTextSource}} code-view{{end}}{{if .IsRightToLeft}} rtl{{end}} {{if ne .LangageName ""}} ln-{{.LanguageName}}{{end}}">
+		<!-- DCS Customizations - Adds language identier and direction to this div -->
+		{{$dm := ""}}
+		{{if not .IgnoreLanguageDirection}} 
+			{{$dm = .Repository.GetDefaultBranchMetadata}}
+		{{end}}
+			<div class="file-view{{if .IsMarkup}} markup {{.MarkupType}}{{else if .IsRenderedHTML}} plain-text{{else if .IsTextSource}} code-view{{end}}{{if .IsTocYaml}} markdown yaml{{end}}{{if $dm}} dir-{{$dm.Metadata.dublin_core.language.direction}} ln-{{$dm.Metadata.dublin_core.language.identifier}}{{end}}"{{if $dm}} data-lang="{{$dm.Metadata.dublin_core.language.identifier}}" data-direction="{{$dm.Metadata.dublin_core.language.direction}}"{{end}}>
 			{{if .IsMarkup}}
 				{{if .FileContent}}{{.FileContent | Safe}}{{end}}
 			{{else if .IsRenderedHTML}}
@@ -141,18 +145,21 @@
 var expandViewButton = document.querySelector('#expand-view-button');
 var isExpandedView = false;
 expandViewButton.addEventListener("click", function(e) {
-	var container = expandViewButton.closest(".container")
+	var container = expandViewButton.closest(".container");
+	var dataContent == expandViewButton.getAttribute("data-content");
+	var trExpand = expandViewButton.getAttribute("data-tr-expand");
+	var trCompact = expandViewButton.getAttribute("data-tr-compact");
 	if (isExpandedView) {
 		container.classList.remove("fluid", "padded");
 		expandViewButton.classList.add("fa-expand");
 		expandViewButton.classList.remove("fa-compress");
-		expandViewButton.setAttribute("data-content", "{{.i18n.Tr "repo.expand_view"}}");
+		expandViewButton.setAttribute("data-content", trExpand);
 		isExpandedView = false;
 	} else {
 		container.classList.add("fluid", "padded");
 		expandViewButton.classList.remove("fa-expand");
 		expandViewButton.classList.add("fa-compress");
-		expandViewButton.setAttribute("data-content", "{{.i18n.Tr "repo.compact_view"}}");
+		expandViewButton.setAttribute("data-content", trCompact);
 		isExpandedView = true;
 	}
 }, false);

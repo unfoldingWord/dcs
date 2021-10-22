@@ -15,6 +15,7 @@ import (
 	"net/http"
 	"net/url"
 	"path"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"time"
@@ -374,6 +375,20 @@ func renderFile(ctx *context.Context, entry *git.TreeEntry, treeLink, rawLink st
 	fileSize := blob.Size()
 	ctx.Data["FileIsSymlink"] = entry.IsLink()
 	ctx.Data["FileName"] = blob.Name()
+	/*** DCS Customizations ***/
+	fileExt := filepath.Ext(blob.Name())
+	ctx.Data["FileExt"] = fileExt
+	ignoredExtensions := map[string]bool{
+		".gitignore": true,
+		".json":      true,
+		".usfm":      true,
+		".yaml":      true,
+		".yml":       true,
+	}
+	if _, ok := ignoredExtensions[fileExt]; ok {
+		ctx.Data["IgnoreLanguageDirection"] = true
+	}
+	/*** END DCS Customizations ***/
 	ctx.Data["RawFileLink"] = rawLink + "/" + ctx.Repo.TreePath
 
 	buf := make([]byte, 1024)
@@ -477,7 +492,7 @@ func renderFile(ctx *context.Context, entry *git.TreeEntry, treeLink, rawLink st
 		ctx.Data["ReadmeExist"] = readmeExist
 		/*** DCS Customizations ***/
 		isTocYaml := blob.Name() == "toc.yaml"
-		ctx.Data["IsTocreaYaml"] = isTocYaml
+		ctx.Data["IsTocYaml"] = isTocYaml
 		/*** END DCS Customizations ***/
 		if markupType := markup.Type(blob.Name()); markupType != "" {
 			ctx.Data["IsMarkup"] = true
