@@ -146,7 +146,7 @@ var expandViewButton = document.querySelector('#expand-view-button');
 var isExpandedView = false;
 expandViewButton.addEventListener("click", function(e) {
 	var container = expandViewButton.closest(".container");
-	var dataContent == expandViewButton.getAttribute("data-content");
+	var dataContent = expandViewButton.getAttribute("data-content");
 	var trExpand = expandViewButton.getAttribute("data-tr-expand");
 	var trCompact = expandViewButton.getAttribute("data-tr-compact");
 	if (isExpandedView) {
