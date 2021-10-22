@@ -161,7 +161,7 @@ func Routes() *web.Route {
 		// Note: The route moved from apiroutes because it's in fact want to render a web page
 		routes.Get("/api/swagger", append(common, misc.Swagger)...) // Render V1 by default
 		/*** DCS Customizations ***/
-		routes.Get("/api/catalog/swagger", catalog.Swagger)
+		routes.Get("/api/catalog/swagger", append(common, catalog.Swagger)...)
 		/*** END DCS Customizations ***/
 	}
 
