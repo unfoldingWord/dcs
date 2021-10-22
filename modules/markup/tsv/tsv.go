@@ -19,8 +19,6 @@ import (
 	"code.gitea.io/gitea/modules/setting"
 )
 
-var breakRegexp = regexp.MustCompile(`<br\/*>`)
-
 func init() {
 	markup.RegisterRenderer(Renderer{})
 }
