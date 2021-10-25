@@ -123,13 +123,13 @@ func setCsvCompareContext(ctx *context.Context) {
 
 			/*** DCS Customizations ***/
 			if filepath.Ext(diffFile.Name) == ".tsv" {
-			        csvReader, err := csv_module.CreateReaderAndGuessDelimiter(charset.ToUTF8WithFallbackReader(reader))
+				csvReader, err := csv_module.CreateReaderAndGuessDelimiter(charset.ToUTF8WithFallbackReader(reader))
 				if csvReader != nil {
 					csvReader.Comma = '\t' // This is a .tsv file so assume \t is delimiter
 					csvReader.LazyQuotes = true
 					csvReader.TrimLeadingSpace = false
 				}
-			        return csvReader, reader, err
+				return csvReader, reader, err
 			}
 			/*** END DCS Customizations ***/
 
