@@ -33,29 +33,34 @@ func ValidateYAMLFile(entry *git.TreeEntry) string {
 
 // ValidateJSONFile validates a json file
 func ValidateJSONFile(entry *git.TreeEntry) string {
-	err := ValidateJSONFromBlob(entry.Blob())
-	if err == nil {
+	validationErr := ValidateJSONFromBlob(entry.Blob())
+	if validationErr == nil {
 		return ""
 	}
-	dataRc, err2 := entry.Blob().DataAsync()
-	if err2 != nil {
-		log.Error("DataAsync Error: %v\n", err2)
-		return fmt.Sprintf("Error reading JSON file: %s\n", err.Error())
+	// JSON is not valid so we need to get all the errors
+	dataRc, err := entry.Blob().DataAsync()
+	if err != nil {
+		log.Error("DataAsync Error: %v\n", err)
+		return fmt.Sprintf("Error reading JSON file: %s\n", validationErr.Error())
 	}
 	defer dataRc.Close()
 
 	buf := make([]byte, 1024)
-	n, _ := util.ReadAtMost(dataRc, buf)
+	n, err := util.ReadAtMost(dataRc, buf)
+	if err != nil {
+		log.Error("util.ReadAtMost Error: %v\n", err)
+		return fmt.Sprintf("Error reading JSON file: %s\n", validationErr.Error())
+	}
 	buf = buf[:n]
 
 	rd := charset.ToUTF8WithFallbackReader(io.MultiReader(bytes.NewReader(buf), dataRc))
 	buf, err = io.ReadAll(rd)
 	if err != nil {
 		log.Error("io.ReadAll: %v", err)
-		return ""
+		return fmt.Sprintf("Error reading JSON file: %s", validationErr.Error())
 	}
 
-	switch err := err.(type) {
+	switch err := validationErr.(type) {
 	case *json.SyntaxError:
 		var errors string
 		scanner := bufio.NewScanner(strings.NewReader(string(buf)))
@@ -71,8 +76,8 @@ func ValidateJSONFile(entry *git.TreeEntry) string {
 		}
 		return errors
 	default:
-		log.Warn("Error decoding JSON: %v\n", err)
-		return fmt.Sprintf("Error decoding JSON: %s\n", err.Error())
+		log.Warn("Error decoding JSON: %v\n", validationErr)
+		return fmt.Sprintf("Error decoding JSON: %s\n", validationErr.Error())
 	}
 }
 
