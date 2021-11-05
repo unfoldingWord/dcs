@@ -389,18 +389,6 @@ func renderDirectory(ctx *context.Context, treeLink string) {
 		ctx.Data["CanUploadFile"] = setting.Repository.Upload.Enabled && !ctx.Repo.Repository.IsArchived
 	}
 
-	/*** DCS Customizations ***/
-	if ctx.Repo.TreePath == "" {
-		if entry, _ := tree.GetTreeEntryByPath("manifest.yaml"); entry != nil {
-			if result, err := base.ValidateManifestTreeEntry(entry); err != nil {
-				fmt.Printf("ValidateManifestTreeEntry: %v\n", err)
-			} else {
-				ctx.Data["ValidateManifestResult"] = result
-				ctx.Data["ValidateManifestResultErrors"] = base.StringifyValidationErrors(result)
-			}
-		}
-	}
-	/*** END DCS Customizations ***/
 	ctx.Data["SSHDomain"] = setting.SSH.Domain
 }
 
