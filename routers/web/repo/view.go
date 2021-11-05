@@ -16,6 +16,7 @@ import (
 	"net/url"
 	"path"
 	"path/filepath"
+	"reflect"
 	"strconv"
 	"strings"
 
@@ -264,7 +265,13 @@ func renderDirectory(ctx *context.Context, treeLink string) {
 			ctx.ServerError("Data", err)
 			return
 		}
-		defer dataRc.Close()
+		defer func() {
+			log.Debug("RICH: BEFORE CLOSE: %s", ctx.Repo.Repository.Name)
+			log.Debug("RICH: typeOf: %s", reflect.TypeOf(dataRc))
+			log.Debug("RICH: Kind: %s", reflect.ValueOf(dataRc).Kind())
+			err = dataRc.Close()
+			log.Debug("RICH: AFTER CLOSE: %s", ctx.Repo.Repository.Name)
+		}()
 
 		buf := make([]byte, 1024)
 		n, _ := util.ReadAtMost(dataRc, buf)
@@ -299,7 +306,6 @@ func renderDirectory(ctx *context.Context, treeLink string) {
 						ctx.ServerError("ReadMetaObject", err)
 						return
 					}
-					defer dataRc.Close()
 
 					buf = make([]byte, 1024)
 					n, err = util.ReadAtMost(dataRc, buf)
@@ -334,7 +340,9 @@ func renderDirectory(ctx *context.Context, treeLink string) {
 			} else {
 				rd := charset.ToUTF8WithFallbackReader(io.MultiReader(bytes.NewReader(buf), dataRc))
 
+				log.Debug("Got reader")
 				if markupType := markup.Type(readmeFile.name); markupType != "" {
+					log.Debug("If markupType")
 					ctx.Data["IsMarkup"] = true
 					ctx.Data["MarkupType"] = string(markupType)
 					var result strings.Builder
@@ -352,9 +360,12 @@ func renderDirectory(ctx *context.Context, treeLink string) {
 							gotemplate.HTMLEscapeString(string(bs)), "\n", `<br>`,
 						)
 					} else {
+						log.Debug("RICH: We have the content of the README.md file")
 						ctx.Data["FileContent"] = result.String()
 					}
+					log.Debug("End If markupType")
 				} else {
+					log.Debug("Not markupType")
 					ctx.Data["IsRenderedHTML"] = true
 					buf, err = ioutil.ReadAll(rd)
 					if err != nil {
@@ -363,6 +374,7 @@ func renderDirectory(ctx *context.Context, treeLink string) {
 					ctx.Data["FileContent"] = strings.ReplaceAll(
 						gotemplate.HTMLEscapeString(string(buf)), "\n", `<br>`,
 					)
+					log.Debug("End not markupType")
 				}
 			}
 		}
@@ -395,19 +407,23 @@ func renderDirectory(ctx *context.Context, treeLink string) {
 		ctx.Data["CanUploadFile"] = setting.Repository.Upload.Enabled && !ctx.Repo.Repository.IsArchived
 	}
 
+	log.Debug("RICH: Before manifest validation: %s", ctx.Repo.Repository.Name)
 	/*** DCS Customizations ***/
-	if ctx.Repo.TreePath == "" {
-		if entry, _ := tree.GetTreeEntryByPath("manifest.yaml"); entry != nil {
-			if result, err := base.ValidateManifestTreeEntry(entry); err != nil {
-				fmt.Printf("ValidateManifestTreeEntry: %v\n", err)
-			} else {
-				ctx.Data["ValidateManifestResult"] = result
-				ctx.Data["ValidateManifestResultErrors"] = base.StringifyValidationErrors(result)
-			}
-		}
-	}
+	// if ctx.Repo.TreePath == "" {
+	// 	if entry, _ := tree.GetTreeEntryByPath("manifest.yaml"); entry != nil {
+	// 		log.Debug("RICH: Got entry: %s", ctx.Repo.Repository.Name)
+	// 		if result, err := base.ValidateManifestTreeEntry(entry); err != nil {
+	// 			log.Error("ValidateManifestTreeEntry: %v\n", err)
+	// 		} else {
+	// 			log.Debug("RICH: Validation Succcess: %s", ctx.Repo.Repository.Name)
+	// 			ctx.Data["ValidateManifestResult"] = result
+	// 			ctx.Data["ValidateManifestResultErrors"] = base.StringifyValidationErrors(result)
+	// 		}
+	// 	}
+	// }
 	/*** END DCS Customizations ***/
 	ctx.Data["SSHDomain"] = setting.SSH.Domain
+	log.Debug("RICH: DONE WITH renderDirectory: %s", ctx.Repo.Repository.Name)
 }
 
 func renderFile(ctx *context.Context, entry *git.TreeEntry, treeLink, rawLink string) {
@@ -776,14 +792,17 @@ func renderCode(ctx *context.Context) {
 	} else {
 		renderFile(ctx, entry, treeLink, rawLink)
 	}
+	log.Debug("RICH: berforr ctx.Written: %s", ctx.Repo.Repository.Name)
 	if ctx.Written() {
 		return
 	}
 
 	var treeNames []string
 	paths := make([]string, 0, 5)
+	log.Debug("RICH: berforr repo.TreePath: %s", ctx.Repo.Repository.Name)
 	if len(ctx.Repo.TreePath) > 0 {
 		treeNames = strings.Split(ctx.Repo.TreePath, "/")
+		log.Debug("RICH: treeName: %#v", treeNames)
 		for i := range treeNames {
 			paths = append(paths, strings.Join(treeNames[:i+1], "/"))
 		}
@@ -803,6 +822,7 @@ func renderCode(ctx *context.Context) {
 	ctx.Data["Entry"] = entry
 	/*** END DCS Customizations ***/
 
+	log.Debug("RICH: berforr renter template %s: %s", tplRepoHome, ctx.Repo.Repository.Name)
 	ctx.HTML(http.StatusOK, tplRepoHome)
 }
 

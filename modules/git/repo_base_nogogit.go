@@ -3,6 +3,7 @@
 // Use of this source code is governed by a MIT-style
 // license that can be found in the LICENSE file.
 
+//go:build !gogit
 // +build !gogit
 
 package git
@@ -59,6 +60,7 @@ func (repo *Repository) CatFileBatch() (WriteCloserError, *bufio.Reader, func())
 		log.Debug("Opening temporary cat file batch for: %s", repo.Path)
 		return CatFileBatch(repo.Path)
 	}
+	log.Debug("RICH: Already have a batchWriter/Reader for: %s", repo.Path)
 	return repo.batchWriter, repo.batchReader, func() {}
 }
 
@@ -77,7 +79,9 @@ func (repo *Repository) Close() {
 		return
 	}
 	if repo.batchCancel != nil {
+		log.Debug("RICH: Calling repo.batchCancel(): %s", repo.Path)
 		repo.batchCancel()
+		log.Debug("RICH: Setting batchReader to nil: %s", repo.Path)
 		repo.batchReader = nil
 		repo.batchWriter = nil
 		repo.batchCancel = nil

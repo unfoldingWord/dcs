@@ -88,8 +88,11 @@ func StringHasSuffix(str string, suffix string) bool {
 
 // ValidateManifestTreeEntry validates a tree entry that is a manifest file and returns the results
 func ValidateManifestTreeEntry(entry *git.TreeEntry) (*gojsonschema.Result, error) {
+	log.Debug("RICH: Before ReadYAMLFromBlog for manifest.yaml")
 	manifest, err := ReadYAMLFromBlob(entry.Blob())
+	log.Debug("RICH: After ReadYAMLFromBlog for manifest.yaml")
 	if err != nil {
+		log.Debug("RICH: ReadYAMLFromBlog error: %v", err)
 		return nil, err
 	}
 	return ValidateBlobByRC020Schema(manifest)
@@ -109,14 +112,22 @@ func StringifyValidationErrors(result *gojsonschema.Result) string {
 
 // ValidateBlobByRC020Schema Validates a blob by the RC v0.2.0 schema and returns the result
 func ValidateBlobByRC020Schema(manifest *map[string]interface{}) (*gojsonschema.Result, error) {
+	log.Debug("RICH: Before get Schema")
 	schema, err := GetRC020Schema()
+	log.Debug("RICH: After get Schema")
 	if err != nil {
+		log.Debug("RICH: get Schema error: %v", err)
 		return nil, err
 	}
+	log.Debug("RICH: Before Schema Loader")
 	schemaLoader := gojsonschema.NewBytesLoader(schema)
+	log.Debug("RICH: Before Document Loader")
 	documentLoader := gojsonschema.NewGoLoader(manifest)
 
-	return gojsonschema.Validate(schemaLoader, documentLoader)
+	log.Debug("RICH: Before Validate")
+	res, err := gojsonschema.Validate(schemaLoader, documentLoader)
+	log.Debug("RICH: After Validate: %v", err)
+	return res, err
 }
 
 var rc02Schema []byte

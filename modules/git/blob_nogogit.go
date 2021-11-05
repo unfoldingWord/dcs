@@ -2,6 +2,7 @@
 // Use of this source code is governed by a MIT-style
 // license that can be found in the LICENSE file.
 
+//go:build !gogit
 // +build !gogit
 
 package git
@@ -12,6 +13,7 @@ import (
 	"io"
 	"io/ioutil"
 	"math"
+	"reflect"
 
 	"code.gitea.io/gitea/modules/log"
 )
@@ -105,26 +107,50 @@ func (b *blobReader) Read(p []byte) (n int, err error) {
 
 // Close implements io.Closer
 func (b *blobReader) Close() error {
-	defer b.cancel()
+	defer func() {
+		log.Debug("RICH: Before b.cancel()")
+		b.cancel()
+		log.Debug("RICH: After b.cancel()")
+	}()
+	log.Debug("RICH: b: %v", b)
+	log.Debug("RICH: b.rd == nil: %b", b.rd == nil)
+	log.Debug("RICH: typeOf: %s", reflect.TypeOf(b.rd))
+	log.Debug("RICH: Kind: %s", reflect.ValueOf(b.rd).Kind())
 	if b.n > 0 {
+		log.Debug("RICH: b.n > 0")
 		for b.n > math.MaxInt32 {
+			log.Debug("RICH: b.n > math.MaxInt32: %d", b.n)
+			log.Debug("RICH: Before Discard(math.MaxInt32): %d", math.MaxInt32)
 			n, err := b.rd.Discard(math.MaxInt32)
+			log.Debug("RICH: before b.n -= int64(%d)", n)
 			b.n -= int64(n)
+			log.Debug("RICH: after b.n -= int64(%d): %d", n, b.n)
 			if err != nil {
+				log.Debug("RICH: Discard(math.MaxInt32) Error: %v", err)
 				return err
 			}
 			b.n -= math.MaxInt32
+			log.Debug("RICH: b.n -= math.MaxInt32: %d", b.n)
 		}
+		log.Debug("RICH: Before Discard(b.n): %d", b.n)
 		n, err := b.rd.Discard(int(b.n))
+		log.Debug("RICH: Before b.n -= int64(%d)", n)
 		b.n -= int64(n)
+		log.Debug("RICH: after b.n -= int64(%d): %d", n, b.n)
 		if err != nil {
+			log.Debug("RICH: Discard(b.n) Error: %v", err)
 			return err
 		}
 	}
+	log.Debug("RICH: before if b.n == 0: %d", b.n)
 	if b.n == 0 {
+		log.Debug("RICH: in if b.n == 0, before b.rd.Discard(1): %d", b.n)
 		_, err := b.rd.Discard(1)
+		log.Debug("RICH: after b.rd.Discard(1): %v", err)
 		b.n--
+		log.Debug("RICH: after b.n--: %d", b.n)
 		return err
 	}
+	log.Debug("RICH: returning nil (end of Close())")
 	return nil
 }
