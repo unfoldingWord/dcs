@@ -6,15 +6,18 @@ package base
 
 import (
 	"bufio"
+	"bytes"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"strings"
 
+	"code.gitea.io/gitea/modules/charset"
 	"code.gitea.io/gitea/modules/git"
 	"code.gitea.io/gitea/modules/log"
 	"code.gitea.io/gitea/modules/options"
+	"code.gitea.io/gitea/modules/util"
 
 	"github.com/ghodss/yaml"
 	"github.com/xeipuuv/gojsonschema"
@@ -30,22 +33,37 @@ func ValidateYAMLFile(entry *git.TreeEntry) string {
 
 // ValidateJSONFile validates a json file
 func ValidateJSONFile(entry *git.TreeEntry) string {
-	err := ValidateJSONFromBlob(entry.Blob())
-	if err == nil {
+	validationErr := ValidateJSONFromBlob(entry.Blob())
+	if validationErr == nil {
 		return ""
 	}
-	dataRc, err2 := entry.Blob().DataAsync()
-	if err2 != nil {
-		log.Error("DataAsync Error: %v\n", err2)
-		return fmt.Sprintf("Error reading JSON file: %s\n", err.Error())
+	// JSON is not valid so we need to get all the errors
+	dataRc, err := entry.Blob().DataAsync()
+	if err != nil {
+		log.Error("DataAsync Error: %v\n", err)
+		return fmt.Sprintf("Error reading JSON file: %s\n", validationErr.Error())
 	}
 	defer dataRc.Close()
-	content, _ := ioutil.ReadAll(dataRc)
 
-	switch err := err.(type) {
+	buf := make([]byte, 1024)
+	n, err := util.ReadAtMost(dataRc, buf)
+	if err != nil {
+		log.Error("util.ReadAtMost Error: %v\n", err)
+		return fmt.Sprintf("Error reading JSON file: %s\n", validationErr.Error())
+	}
+	buf = buf[:n]
+
+	rd := charset.ToUTF8WithFallbackReader(io.MultiReader(bytes.NewReader(buf), dataRc))
+	buf, err = io.ReadAll(rd)
+	if err != nil {
+		log.Error("io.ReadAll: %v", err)
+		return fmt.Sprintf("Error reading JSON file: %s", validationErr.Error())
+	}
+
+	switch err := validationErr.(type) {
 	case *json.SyntaxError:
 		var errors string
-		scanner := bufio.NewScanner(strings.NewReader(string(content)))
+		scanner := bufio.NewScanner(strings.NewReader(string(buf)))
 		var line int
 		var readBytes int64
 		for scanner.Scan() {
@@ -58,8 +76,8 @@ func ValidateJSONFile(entry *git.TreeEntry) string {
 		}
 		return errors
 	default:
-		log.Warn("Error decoding JSON: %v\n", err)
-		return fmt.Sprintf("Error decoding JSON: %s\n", err.Error())
+		log.Warn("Error decoding JSON: %v\n", validationErr)
+		return fmt.Sprintf("Error decoding JSON: %s\n", validationErr.Error())
 	}
 }
 
@@ -130,7 +148,7 @@ func GetRC020Schema() ([]byte, error) {
 		if res, err := http.Get(schemaOnlineURL); err == nil {
 			defer res.Body.Close()
 			// read all
-			if body, err := ioutil.ReadAll(res.Body); err == nil {
+			if body, err := io.ReadAll(res.Body); err == nil {
 				rc02Schema = body
 			}
 		}
@@ -152,10 +170,20 @@ func ReadYAMLFromBlob(blob *git.Blob) (*map[string]interface{}, error) {
 		return nil, err
 	}
 	defer dataRc.Close()
-	content, _ := ioutil.ReadAll(dataRc)
+
+	buf := make([]byte, 1024)
+	n, _ := util.ReadAtMost(dataRc, buf)
+	buf = buf[:n]
+
+	rd := charset.ToUTF8WithFallbackReader(io.MultiReader(bytes.NewReader(buf), dataRc))
+	buf, err = io.ReadAll(rd)
+	if err != nil {
+		log.Error("io.ReadAll: %v", err)
+		return nil, err
+	}
 
 	var result *map[string]interface{}
-	if err := yaml.Unmarshal(content, &result); err != nil {
+	if err := yaml.Unmarshal(buf, &result); err != nil {
 		log.Error("yaml.Unmarshal: %v", err)
 		return nil, err
 	}
@@ -170,10 +198,20 @@ func ValidateJSONFromBlob(blob *git.Blob) error {
 		return err
 	}
 	defer dataRc.Close()
-	content, _ := ioutil.ReadAll(dataRc)
+
+	buf := make([]byte, 1024)
+	n, _ := util.ReadAtMost(dataRc, buf)
+	buf = buf[:n]
+
+	rd := charset.ToUTF8WithFallbackReader(io.MultiReader(bytes.NewReader(buf), dataRc))
+	buf, err = io.ReadAll(rd)
+	if err != nil {
+		log.Error("io.ReadAll: %v", err)
+		return err
+	}
 
 	var result interface{}
-	err = json.Unmarshal(content, &result)
+	err = json.Unmarshal(buf, &result)
 	if err != nil {
 		log.Error("json.Unmarshal: %v", err)
 	}
