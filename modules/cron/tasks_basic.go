@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"code.gitea.io/gitea/models"
+	"code.gitea.io/gitea/models/webhook"
 	metadata_service "code.gitea.io/gitea/modules/door43metadata"
 	"code.gitea.io/gitea/modules/migrations"
 	repository_service "code.gitea.io/gitea/modules/repository"
@@ -133,7 +134,7 @@ func registerCleanupHookTaskTable() {
 		NumberToKeep: 10,
 	}, func(ctx context.Context, _ *models.User, config Config) error {
 		realConfig := config.(*CleanupHookTaskConfig)
-		return models.CleanupHookTaskTable(ctx, models.ToHookTaskCleanupType(realConfig.CleanupType), realConfig.OlderThan, realConfig.NumberToKeep)
+		return webhook.CleanupHookTaskTable(ctx, webhook.ToHookTaskCleanupType(realConfig.CleanupType), realConfig.OlderThan, realConfig.NumberToKeep)
 	})
 }
 

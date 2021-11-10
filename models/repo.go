@@ -23,6 +23,8 @@ import (
 	"unicode/utf8"
 
 	"code.gitea.io/gitea/models/db"
+	"code.gitea.io/gitea/models/unit"
+	"code.gitea.io/gitea/models/webhook"
 	"code.gitea.io/gitea/modules/lfs"
 	"code.gitea.io/gitea/modules/log"
 	"code.gitea.io/gitea/modules/markup"
@@ -128,7 +130,7 @@ func loadRepoConfig() {
 // NewRepoContext creates a new repository context
 func NewRepoContext() {
 	loadRepoConfig()
-	loadUnitConfig()
+	unit.LoadUnitConfig()
 
 	RemoveAllWithNotice("Clean up repository temporary data", filepath.Join(setting.AppDataPath, "tmp"))
 }
@@ -357,11 +359,11 @@ func (repo *Repository) getUnits(e db.Engine) (err error) {
 }
 
 // CheckUnitUser check whether user could visit the unit of this repository
-func (repo *Repository) CheckUnitUser(user *User, unitType UnitType) bool {
+func (repo *Repository) CheckUnitUser(user *User, unitType unit.Type) bool {
 	return repo.checkUnitUser(db.GetEngine(db.DefaultContext), user, unitType)
 }
 
-func (repo *Repository) checkUnitUser(e db.Engine, user *User, unitType UnitType) bool {
+func (repo *Repository) checkUnitUser(e db.Engine, user *User, unitType unit.Type) bool {
 	if user.IsAdmin {
 		return true
 	}
@@ -375,7 +377,7 @@ func (repo *Repository) checkUnitUser(e db.Engine, user *User, unitType UnitType
 }
 
 // UnitEnabled if this repository has the given unit enabled
-func (repo *Repository) UnitEnabled(tp UnitType) bool {
+func (repo *Repository) UnitEnabled(tp unit.Type) bool {
 	if err := repo.getUnits(db.GetEngine(db.DefaultContext)); err != nil {
 		log.Warn("Error loading repository (ID: %d) units: %s", repo.ID, err.Error())
 	}
@@ -389,7 +391,7 @@ func (repo *Repository) UnitEnabled(tp UnitType) bool {
 
 // ErrUnitTypeNotExist represents a "UnitTypeNotExist" kind of error.
 type ErrUnitTypeNotExist struct {
-	UT UnitType
+	UT unit.Type
 }
 
 // IsErrUnitTypeNotExist checks if an error is a ErrUnitNotExist.
@@ -403,28 +405,28 @@ func (err ErrUnitTypeNotExist) Error() string {
 }
 
 // MustGetUnit always returns a RepoUnit object
-func (repo *Repository) MustGetUnit(tp UnitType) *RepoUnit {
+func (repo *Repository) MustGetUnit(tp unit.Type) *RepoUnit {
 	ru, err := repo.GetUnit(tp)
 	if err == nil {
 		return ru
 	}
 
-	if tp == UnitTypeExternalWiki {
+	if tp == unit.TypeExternalWiki {
 		return &RepoUnit{
 			Type:   tp,
 			Config: new(ExternalWikiConfig),
 		}
-	} else if tp == UnitTypeExternalTracker {
+	} else if tp == unit.TypeExternalTracker {
 		return &RepoUnit{
 			Type:   tp,
 			Config: new(ExternalTrackerConfig),
 		}
-	} else if tp == UnitTypePullRequests {
+	} else if tp == unit.TypePullRequests {
 		return &RepoUnit{
 			Type:   tp,
 			Config: new(PullRequestsConfig),
 		}
-	} else if tp == UnitTypeIssues {
+	} else if tp == unit.TypeIssues {
 		return &RepoUnit{
 			Type:   tp,
 			Config: new(IssuesConfig),
@@ -437,11 +439,11 @@ func (repo *Repository) MustGetUnit(tp UnitType) *RepoUnit {
 }
 
 // GetUnit returns a RepoUnit object
-func (repo *Repository) GetUnit(tp UnitType) (*RepoUnit, error) {
+func (repo *Repository) GetUnit(tp unit.Type) (*RepoUnit, error) {
 	return repo.getUnit(db.GetEngine(db.DefaultContext), tp)
 }
 
-func (repo *Repository) getUnit(e db.Engine, tp UnitType) (*RepoUnit, error) {
+func (repo *Repository) getUnit(e db.Engine, tp unit.Type) (*RepoUnit, error) {
 	if err := repo.getUnits(e); err != nil {
 		return nil, err
 	}
@@ -488,7 +490,7 @@ func (repo *Repository) ComposeMetas() map[string]string {
 			"mode":     "comment",
 		}
 
-		unit, err := repo.GetUnit(UnitTypeExternalTracker)
+		unit, err := repo.GetUnit(unit.TypeExternalTracker)
 		if err == nil {
 			metas["format"] = unit.ExternalTrackerConfig().ExternalTrackerFormat
 			switch unit.ExternalTrackerConfig().ExternalTrackerStyle {
@@ -806,7 +808,7 @@ func (repo *Repository) CanEnablePulls() bool {
 
 // AllowsPulls returns true if repository meets the requirements of accepting pulls and has them enabled.
 func (repo *Repository) AllowsPulls() bool {
-	return repo.CanEnablePulls() && repo.UnitEnabled(UnitTypePullRequests)
+	return repo.CanEnablePulls() && repo.UnitEnabled(unit.TypePullRequests)
 }
 
 // CanEnableEditor returns true if repository meets the requirements of web editor.
@@ -1082,9 +1084,9 @@ func CreateRepository(ctx context.Context, doer, u *User, repo *Repository, over
 	}
 
 	// insert units for repo
-	units := make([]RepoUnit, 0, len(DefaultRepoUnits))
-	for _, tp := range DefaultRepoUnits {
-		if tp == UnitTypeIssues {
+	units := make([]RepoUnit, 0, len(unit.DefaultRepoUnits))
+	for _, tp := range unit.DefaultRepoUnits {
+		if tp == unit.TypeIssues {
 			units = append(units, RepoUnit{
 				RepoID: repo.ID,
 				Type:   tp,
@@ -1094,7 +1096,7 @@ func CreateRepository(ctx context.Context, doer, u *User, repo *Repository, over
 					EnableDependencies:               setting.Service.DefaultEnableDependencies,
 				},
 			})
-		} else if tp == UnitTypePullRequests {
+		} else if tp == unit.TypePullRequests {
 			units = append(units, RepoUnit{
 				RepoID: repo.ID,
 				Type:   tp,
@@ -1158,7 +1160,7 @@ func CreateRepository(ctx context.Context, doer, u *User, repo *Repository, over
 		}
 	}
 
-	if err = copyDefaultWebhooksToRepo(db.GetEngine(ctx), repo.ID); err != nil {
+	if err = webhook.CopyDefaultWebhooksToRepo(ctx, repo.ID); err != nil {
 		return fmt.Errorf("copyDefaultWebhooksToRepo: %v", err)
 	}
 
@@ -1412,7 +1414,7 @@ func UpdateRepositoryUpdatedTime(repoID int64, updateTime time.Time) error {
 }
 
 // UpdateRepositoryUnits updates a repository's units
-func UpdateRepositoryUnits(repo *Repository, units []RepoUnit, deleteUnitTypes []UnitType) (err error) {
+func UpdateRepositoryUnits(repo *Repository, units []RepoUnit, deleteUnitTypes []unit.Type) (err error) {
 	sess := db.NewSession(db.DefaultContext)
 	defer sess.Close()
 	if err = sess.Begin(); err != nil {
@@ -1514,7 +1516,7 @@ func DeleteRepository(doer *User, uid, repoID int64) error {
 		&Comment{RefRepoID: repoID},
 		&CommitStatus{RepoID: repoID},
 		&DeletedBranch{RepoID: repoID},
-		&HookTask{RepoID: repoID},
+		&webhook.HookTask{RepoID: repoID},
 		&LFSLock{RepoID: repoID},
 		&LanguageStat{RepoID: repoID},
 		&Milestone{RepoID: repoID},
@@ -1531,7 +1533,7 @@ func DeleteRepository(doer *User, uid, repoID int64) error {
 		&Star{RepoID: repoID},
 		&Task{RepoID: repoID},
 		&Watch{RepoID: repoID},
-		&Webhook{RepoID: repoID},
+		&webhook.Webhook{RepoID: repoID},
 	); err != nil {
 		return fmt.Errorf("deleteBeans: %v", err)
 	}
@@ -1937,7 +1939,7 @@ func CheckRepoStats(ctx context.Context) error {
 		select {
 		case <-ctx.Done():
 			log.Warn("CheckRepoStats: Cancelled before %s", checker.desc)
-			return ErrCancelledf("before checking %s", checker.desc)
+			return db.ErrCancelledf("before checking %s", checker.desc)
 		default:
 			repoStatsCheck(ctx, checker)
 		}
@@ -1954,7 +1956,7 @@ func CheckRepoStats(ctx context.Context) error {
 			select {
 			case <-ctx.Done():
 				log.Warn("CheckRepoStats: Cancelled during %s for repo ID %d", desc, id)
-				return ErrCancelledf("during %s for repo ID %d", desc, id)
+				return db.ErrCancelledf("during %s for repo ID %d", desc, id)
 			default:
 			}
 			log.Trace("Updating %s: %d", desc, id)
@@ -1977,7 +1979,7 @@ func CheckRepoStats(ctx context.Context) error {
 			select {
 			case <-ctx.Done():
 				log.Warn("CheckRepoStats: Cancelled")
-				return ErrCancelledf("during %s for repo ID %d", desc, id)
+				return db.ErrCancelledf("during %s for repo ID %d", desc, id)
 			default:
 			}
 			log.Trace("Updating %s: %d", desc, id)
@@ -2000,7 +2002,7 @@ func CheckRepoStats(ctx context.Context) error {
 			select {
 			case <-ctx.Done():
 				log.Warn("CheckRepoStats: Cancelled")
-				return ErrCancelledf("during %s for repo ID %d", desc, id)
+				return db.ErrCancelledf("during %s for repo ID %d", desc, id)
 			default:
 			}
 			log.Trace("Updating repository count 'num_forks': %d", id)
