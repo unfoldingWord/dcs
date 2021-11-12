@@ -68,6 +68,7 @@ import (
 	"strings"
 
 	"code.gitea.io/gitea/models"
+	user_model "code.gitea.io/gitea/models/user"
 	"code.gitea.io/gitea/modules/context"
 	"code.gitea.io/gitea/modules/log"
 	"code.gitea.io/gitea/modules/setting"
@@ -125,9 +126,9 @@ func repoAssignment() func(ctx *context.APIContext) {
 			owner, err = models.GetUserByName(userName)
 			if err != nil {
 				if models.IsErrUserNotExist(err) {
-					if redirectUserID, err := models.LookupUserRedirect(userName); err == nil {
+					if redirectUserID, err := user_model.LookupUserRedirect(userName); err == nil {
 						context.RedirectToUser(ctx.Context, userName, redirectUserID)
-					} else if models.IsErrUserRedirectNotExist(err) {
+					} else if user_model.IsErrUserRedirectNotExist(err) {
 						ctx.NotFound("GetUserByName", err)
 					} else {
 						ctx.Error(http.StatusInternalServerError, "LookupUserRedirect", err)

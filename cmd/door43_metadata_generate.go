@@ -24,7 +24,9 @@ var CmdDoor43MetadataGenerate = cli.Command{
 }
 
 func runDoor43MetadataGenerate(ctx *cli.Context) error {
-	if err := initDB(); err != nil {
+	stdCtx, cancel := installSignals()
+	defer cancel()
+	if err := initDB(stdCtx); err != nil {
 		return err
 	}
 
@@ -34,7 +36,7 @@ func runDoor43MetadataGenerate(ctx *cli.Context) error {
 	log.Trace("Log path: %s", setting.LogRootPath)
 	setting.InitDBConfig()
 
-	if err := db.NewEngine(context.Background(), door43metadata.GenerateDoor43Metadata); err != nil {
+	if err := db.InitEngineWithMigration(context.Background(), door43metadata.GenerateDoor43Metadata); err != nil {
 		log.Fatal("Failed to initialize ORM engine: %v", err)
 		return err
 	}

@@ -125,7 +125,7 @@ func setCsvCompareContext(ctx *context.Context) {
 
 			/*** DCS Customizations ***/
 			if filepath.Ext(diffFile.Name) == ".tsv" {
-				csvReader, err := csv_module.CreateReaderAndGuessDelimiter(charset.ToUTF8WithFallbackReader(reader))
+				csvReader, err := csv_module.CreateReaderAndDetermineDelimiter(ctx, charset.ToUTF8WithFallbackReader(reader))
 				if csvReader != nil {
 					csvReader.Comma = '\t' // This is a .tsv file so assume \t is delimiter
 					csvReader.LazyQuotes = true
