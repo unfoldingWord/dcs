@@ -46,7 +46,7 @@ type Release struct {
 	IsTag            bool                     `xorm:"NOT NULL DEFAULT false"`
 	Attachments      []*repo_model.Attachment `xorm:"-"`
 	CreatedUnix      timeutil.TimeStamp       `xorm:"INDEX"`
-	Door43Metadata   *Door43Metadata    `xorm:"-"`
+	Door43Metadata   *Door43Metadata          `xorm:"-"`
 }
 
 func init() {
