@@ -13,6 +13,7 @@ import (
 	"code.gitea.io/gitea/models"
 	unit_model "code.gitea.io/gitea/models/unit"
 	"code.gitea.io/gitea/models/unittest"
+	user_model "code.gitea.io/gitea/models/user"
 	api "code.gitea.io/gitea/modules/structs"
 
 	"github.com/stretchr/testify/assert"
@@ -134,9 +135,9 @@ func TestAPIRepoEdit(t *testing.T) {
 	onGiteaRun(t, func(t *testing.T, u *url.URL) {
 		bFalse, bTrue := false, true
 
-		user2 := unittest.AssertExistsAndLoadBean(t, &models.User{ID: 2}).(*models.User)               // owner of the repo1 & repo16
-		user3 := unittest.AssertExistsAndLoadBean(t, &models.User{ID: 3}).(*models.User)               // owner of the repo3, is an org
-		user4 := unittest.AssertExistsAndLoadBean(t, &models.User{ID: 4}).(*models.User)               // owner of neither repos
+		user2 := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: 2}).(*user_model.User)       // owner of the repo1 & repo16
+		user3 := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: 3}).(*user_model.User)       // owner of the repo3, is an org
+		user4 := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: 4}).(*user_model.User)       // owner of neither repos
 		repo1 := unittest.AssertExistsAndLoadBean(t, &models.Repository{ID: 1}).(*models.Repository)   // public repo
 		repo3 := unittest.AssertExistsAndLoadBean(t, &models.Repository{ID: 3}).(*models.Repository)   // public repo
 		repo15 := unittest.AssertExistsAndLoadBean(t, &models.Repository{ID: 15}).(*models.Repository) // empty repo
@@ -145,7 +146,6 @@ func TestAPIRepoEdit(t *testing.T) {
 		// Get user2's token
 		session := loginUser(t, user2.Name)
 		token2 := getTokenForLoggedInUser(t, session)
-		session = emptyTestSession(t)
 		// Get user4's token
 		session = loginUser(t, user4.Name)
 		token4 := getTokenForLoggedInUser(t, session)
@@ -223,15 +223,15 @@ func TestAPIRepoEdit(t *testing.T) {
 		// Do some tests with invalid URL for external tracker and wiki
 		repoEditOption.ExternalTracker.ExternalTrackerURL = "htp://www.somewebsite.com"
 		req = NewRequestWithJSON(t, "PATCH", url, &repoEditOption)
-		resp = session.MakeRequest(t, req, http.StatusUnprocessableEntity)
+		session.MakeRequest(t, req, http.StatusUnprocessableEntity)
 		repoEditOption.ExternalTracker.ExternalTrackerURL = "http://www.somewebsite.com"
 		repoEditOption.ExternalTracker.ExternalTrackerFormat = "http://www.somewebsite.com/{user/{repo}?issue={index}"
 		req = NewRequestWithJSON(t, "PATCH", url, &repoEditOption)
-		resp = session.MakeRequest(t, req, http.StatusUnprocessableEntity)
+		session.MakeRequest(t, req, http.StatusUnprocessableEntity)
 		repoEditOption.ExternalTracker.ExternalTrackerFormat = "http://www.somewebsite.com/{user}/{repo}?issue={index}"
 		repoEditOption.ExternalWiki.ExternalWikiURL = "htp://www.somewebsite.com"
 		req = NewRequestWithJSON(t, "PATCH", url, &repoEditOption)
-		resp = session.MakeRequest(t, req, http.StatusUnprocessableEntity)
+		session.MakeRequest(t, req, http.StatusUnprocessableEntity)
 
 		//Test small repo change through API with issue and wiki option not set; They shall not be touched.
 		*repoEditOption.Description = "small change"

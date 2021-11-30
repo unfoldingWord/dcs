@@ -12,12 +12,13 @@ import (
 	"html"
 	"io"
 	"net/http"
-	"path"
+	"net/url"
 	"path/filepath"
 	"strings"
 
 	"code.gitea.io/gitea/models"
 	"code.gitea.io/gitea/models/unit"
+	user_model "code.gitea.io/gitea/models/user"
 	"code.gitea.io/gitea/modules/base"
 	"code.gitea.io/gitea/modules/charset"
 	"code.gitea.io/gitea/modules/context"
@@ -38,7 +39,7 @@ const (
 )
 
 // setCompareContext sets context data.
-func setCompareContext(ctx *context.Context, base *git.Commit, head *git.Commit, headTarget string) {
+func setCompareContext(ctx *context.Context, base *git.Commit, head *git.Commit, headOwner, headName string) {
 	ctx.Data["BaseCommit"] = base
 	ctx.Data["HeadCommit"] = head
 
@@ -54,22 +55,28 @@ func setCompareContext(ctx *context.Context, base *git.Commit, head *git.Commit,
 		return blob
 	}
 
-	setPathsCompareContext(ctx, base, head, headTarget)
+	setPathsCompareContext(ctx, base, head, headOwner, headName)
 	setImageCompareContext(ctx)
 	setCsvCompareContext(ctx)
 }
 
-// setPathsCompareContext sets context data for source and raw paths
-func setPathsCompareContext(ctx *context.Context, base *git.Commit, head *git.Commit, headTarget string) {
-	sourcePath := setting.AppSubURL + "/%s/src/commit/%s"
-	rawPath := setting.AppSubURL + "/%s/raw/commit/%s"
+// SourceCommitURL creates a relative URL for a commit in the given repository
+func SourceCommitURL(owner, name string, commit *git.Commit) string {
+	return setting.AppSubURL + "/" + url.PathEscape(owner) + "/" + url.PathEscape(name) + "/src/commit/" + url.PathEscape(commit.ID.String())
+}
 
-	ctx.Data["SourcePath"] = fmt.Sprintf(sourcePath, headTarget, head.ID)
-	ctx.Data["RawPath"] = fmt.Sprintf(rawPath, headTarget, head.ID)
+// RawCommitURL creates a relative URL for the raw commit in the given repository
+func RawCommitURL(owner, name string, commit *git.Commit) string {
+	return setting.AppSubURL + "/" + url.PathEscape(owner) + "/" + url.PathEscape(name) + "/raw/commit/" + url.PathEscape(commit.ID.String())
+}
+
+// setPathsCompareContext sets context data for source and raw paths
+func setPathsCompareContext(ctx *context.Context, base *git.Commit, head *git.Commit, headOwner, headName string) {
+	ctx.Data["SourcePath"] = SourceCommitURL(headOwner, headName, head)
+	ctx.Data["RawPath"] = RawCommitURL(headOwner, headName, head)
 	if base != nil {
-		baseTarget := path.Join(ctx.Repo.Owner.Name, ctx.Repo.Repository.Name)
-		ctx.Data["BeforeSourcePath"] = fmt.Sprintf(sourcePath, baseTarget, base.ID)
-		ctx.Data["BeforeRawPath"] = fmt.Sprintf(rawPath, baseTarget, base.ID)
+		ctx.Data["BeforeSourcePath"] = SourceCommitURL(headOwner, headName, head)
+		ctx.Data["BeforeRawPath"] = RawCommitURL(headOwner, headName, head)
 	}
 }
 
@@ -169,7 +176,7 @@ func setCsvCompareContext(ctx *context.Context) {
 
 // CompareInfo represents the collected results from ParseCompareInfo
 type CompareInfo struct {
-	HeadUser         *models.User
+	HeadUser         *user_model.User
 	HeadRepo         *models.Repository
 	HeadGitRepo      *git.Repository
 	CompareInfo      *git.CompareInfo
@@ -243,9 +250,9 @@ func ParseCompareInfo(ctx *context.Context) *CompareInfo {
 	} else if len(headInfos) == 2 {
 		headInfosSplit := strings.Split(headInfos[0], "/")
 		if len(headInfosSplit) == 1 {
-			ci.HeadUser, err = models.GetUserByName(headInfos[0])
+			ci.HeadUser, err = user_model.GetUserByName(headInfos[0])
 			if err != nil {
-				if models.IsErrUserNotExist(err) {
+				if user_model.IsErrUserNotExist(err) {
 					ctx.NotFound("GetUserByName", nil)
 				} else {
 					ctx.ServerError("GetUserByName", err)
@@ -268,7 +275,7 @@ func ParseCompareInfo(ctx *context.Context) *CompareInfo {
 				return nil
 			}
 			if err := ci.HeadRepo.GetOwner(); err != nil {
-				if models.IsErrUserNotExist(err) {
+				if user_model.IsErrUserNotExist(err) {
 					ctx.NotFound("GetUserByName", nil)
 				} else {
 					ctx.ServerError("GetUserByName", err)
@@ -337,8 +344,8 @@ func ParseCompareInfo(ctx *context.Context) *CompareInfo {
 	// "OwnForkRepo"
 	var ownForkRepo *models.Repository
 	if ctx.User != nil && baseRepo.OwnerID != ctx.User.ID {
-		repo, has := models.HasForkedRepo(ctx.User.ID, baseRepo.ID)
-		if has {
+		repo := models.GetForkedRepo(ctx.User.ID, baseRepo.ID)
+		if repo != nil {
 			ownForkRepo = repo
 			ctx.Data["OwnForkRepo"] = ownForkRepo
 		}
@@ -361,12 +368,14 @@ func ParseCompareInfo(ctx *context.Context) *CompareInfo {
 
 	// 5. If the headOwner has a fork of the baseRepo - use that
 	if !has {
-		ci.HeadRepo, has = models.HasForkedRepo(ci.HeadUser.ID, baseRepo.ID)
+		ci.HeadRepo = models.GetForkedRepo(ci.HeadUser.ID, baseRepo.ID)
+		has = ci.HeadRepo != nil
 	}
 
 	// 6. If the baseRepo is a fork and the headUser has a fork of that use that
 	if !has && baseRepo.IsFork {
-		ci.HeadRepo, has = models.HasForkedRepo(ci.HeadUser.ID, baseRepo.ForkID)
+		ci.HeadRepo = models.GetForkedRepo(ci.HeadUser.ID, baseRepo.ForkID)
+		has = ci.HeadRepo != nil
 	}
 
 	// 7. Otherwise if we're not the same repo and haven't found a repo give up
@@ -439,7 +448,7 @@ func ParseCompareInfo(ctx *context.Context) *CompareInfo {
 		if canRead {
 			ctx.Data["RootRepo"] = rootRepo
 			if !fileOnly {
-				branches, tags, err := getBranchesAndTagsForRepo(ctx.User, rootRepo)
+				branches, tags, err := getBranchesAndTagsForRepo(rootRepo)
 				if err != nil {
 					ctx.ServerError("GetBranchesForRepo", err)
 					return nil
@@ -464,7 +473,7 @@ func ParseCompareInfo(ctx *context.Context) *CompareInfo {
 		if canRead {
 			ctx.Data["OwnForkRepo"] = ownForkRepo
 			if !fileOnly {
-				branches, tags, err := getBranchesAndTagsForRepo(ctx.User, ownForkRepo)
+				branches, tags, err := getBranchesAndTagsForRepo(ownForkRepo)
 				if err != nil {
 					ctx.ServerError("GetBranchesForRepo", err)
 					return nil
@@ -575,9 +584,23 @@ func PrepareCompareDiff(
 		beforeCommitID = ci.CompareInfo.BaseCommitID
 	}
 
-	diff, err := gitdiff.GetDiffRangeWithWhitespaceBehavior(ci.HeadGitRepo,
-		beforeCommitID, headCommitID, ctx.FormString("skip-to"), setting.Git.MaxGitDiffLines,
-		setting.Git.MaxGitDiffLineCharacters, setting.Git.MaxGitDiffFiles, whitespaceBehavior, ci.DirectComparison)
+	maxLines, maxFiles := setting.Git.MaxGitDiffLines, setting.Git.MaxGitDiffFiles
+	files := ctx.FormStrings("files")
+	if len(files) == 2 || len(files) == 1 {
+		maxLines, maxFiles = -1, -1
+	}
+
+	diff, err := gitdiff.GetDiff(ci.HeadGitRepo,
+		&gitdiff.DiffOptions{
+			BeforeCommitID:     beforeCommitID,
+			AfterCommitID:      headCommitID,
+			SkipTo:             ctx.FormString("skip-to"),
+			MaxLines:           maxLines,
+			MaxLineCharacters:  setting.Git.MaxGitDiffLineCharacters,
+			MaxFiles:           maxFiles,
+			WhitespaceBehavior: whitespaceBehavior,
+			DirectComparison:   ci.DirectComparison,
+		}, ctx.FormStrings("files")...)
 	if err != nil {
 		ctx.ServerError("GetDiffRangeWithWhitespaceBehavior", err)
 		return false
@@ -631,8 +654,7 @@ func PrepareCompareDiff(
 	ctx.Data["Username"] = ci.HeadUser.Name
 	ctx.Data["Reponame"] = ci.HeadRepo.Name
 
-	headTarget := path.Join(ci.HeadUser.Name, repo.Name)
-	setCompareContext(ctx, baseCommit, headCommit, headTarget)
+	setCompareContext(ctx, baseCommit, headCommit, ci.HeadUser.Name, repo.Name)
 
 	/*** DCS Customizations ***/
 	for _, file := range diff.Files {
@@ -652,7 +674,7 @@ func PrepareCompareDiff(
 	return false
 }
 
-func getBranchesAndTagsForRepo(user *models.User, repo *models.Repository) (branches, tags []string, err error) {
+func getBranchesAndTagsForRepo(repo *models.Repository) (branches, tags []string, err error) {
 	gitRepo, err := git.OpenRepository(repo.RepoPath())
 	if err != nil {
 		return nil, nil, err

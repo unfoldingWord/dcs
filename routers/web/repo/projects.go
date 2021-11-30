@@ -7,9 +7,11 @@ package repo
 import (
 	"fmt"
 	"net/http"
+	"net/url"
 	"strings"
 
 	"code.gitea.io/gitea/models"
+	"code.gitea.io/gitea/models/perm"
 	"code.gitea.io/gitea/models/unit"
 	"code.gitea.io/gitea/modules/base"
 	"code.gitea.io/gitea/modules/context"
@@ -173,7 +175,7 @@ func ChangeProjectStatus(ctx *context.Context) {
 		}
 		return
 	}
-	ctx.Redirect(ctx.Repo.RepoLink + "/projects?state=" + ctx.Params(":action"))
+	ctx.Redirect(ctx.Repo.RepoLink + "/projects?state=" + url.QueryEscape(ctx.Params(":action")))
 }
 
 // DeleteProject delete a project
@@ -268,7 +270,6 @@ func EditProjectPost(ctx *context.Context) {
 
 // ViewProject renders the project board for a project
 func ViewProject(ctx *context.Context) {
-
 	project, err := models.GetProjectByID(ctx.ParamsInt64(":id"))
 	if err != nil {
 		if models.IsErrProjectNotExist(err) {
@@ -331,6 +332,7 @@ func ViewProject(ctx *context.Context) {
 		return
 	}
 
+	ctx.Data["IsProjectsPage"] = true
 	ctx.Data["CanWriteProjects"] = ctx.Repo.Permission.CanWrite(unit.TypeProjects)
 	ctx.Data["Project"] = project
 	ctx.Data["Boards"] = boards
@@ -372,7 +374,7 @@ func DeleteProjectBoard(ctx *context.Context) {
 		return
 	}
 
-	if !ctx.Repo.IsOwner() && !ctx.Repo.IsAdmin() && !ctx.Repo.CanAccess(models.AccessModeWrite, unit.TypeProjects) {
+	if !ctx.Repo.IsOwner() && !ctx.Repo.IsAdmin() && !ctx.Repo.CanAccess(perm.AccessModeWrite, unit.TypeProjects) {
 		ctx.JSON(http.StatusForbidden, map[string]string{
 			"message": "Only authorized users are allowed to perform this action.",
 		})
@@ -421,7 +423,7 @@ func DeleteProjectBoard(ctx *context.Context) {
 // AddBoardToProjectPost allows a new board to be added to a project.
 func AddBoardToProjectPost(ctx *context.Context) {
 	form := web.GetForm(ctx).(*forms.EditProjectBoardForm)
-	if !ctx.Repo.IsOwner() && !ctx.Repo.IsAdmin() && !ctx.Repo.CanAccess(models.AccessModeWrite, unit.TypeProjects) {
+	if !ctx.Repo.IsOwner() && !ctx.Repo.IsAdmin() && !ctx.Repo.CanAccess(perm.AccessModeWrite, unit.TypeProjects) {
 		ctx.JSON(http.StatusForbidden, map[string]string{
 			"message": "Only authorized users are allowed to perform this action.",
 		})
@@ -461,7 +463,7 @@ func checkProjectBoardChangePermissions(ctx *context.Context) (*models.Project, 
 		return nil, nil
 	}
 
-	if !ctx.Repo.IsOwner() && !ctx.Repo.IsAdmin() && !ctx.Repo.CanAccess(models.AccessModeWrite, unit.TypeProjects) {
+	if !ctx.Repo.IsOwner() && !ctx.Repo.IsAdmin() && !ctx.Repo.CanAccess(perm.AccessModeWrite, unit.TypeProjects) {
 		ctx.JSON(http.StatusForbidden, map[string]string{
 			"message": "Only authorized users are allowed to perform this action.",
 		})
@@ -555,7 +557,7 @@ func MoveIssueAcrossBoards(ctx *context.Context) {
 		return
 	}
 
-	if !ctx.Repo.IsOwner() && !ctx.Repo.IsAdmin() && !ctx.Repo.CanAccess(models.AccessModeWrite, unit.TypeProjects) {
+	if !ctx.Repo.IsOwner() && !ctx.Repo.IsAdmin() && !ctx.Repo.CanAccess(perm.AccessModeWrite, unit.TypeProjects) {
 		ctx.JSON(http.StatusForbidden, map[string]string{
 			"message": "Only authorized users are allowed to perform this action.",
 		})

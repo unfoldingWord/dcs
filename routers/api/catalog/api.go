@@ -72,9 +72,10 @@ import (
 	"code.gitea.io/gitea/modules/log"
 	"code.gitea.io/gitea/modules/setting"
 	"code.gitea.io/gitea/modules/web"
-	_ "code.gitea.io/gitea/routers/api/catalog/swagger" // for swagger generation
 	v4 "code.gitea.io/gitea/routers/api/catalog/v4"
 	v5 "code.gitea.io/gitea/routers/api/catalog/v5"
+
+	_ "code.gitea.io/gitea/routers/api/catalog/swagger" // for swagger generation
 
 	"gitea.com/go-chi/session"
 	"github.com/go-chi/cors"

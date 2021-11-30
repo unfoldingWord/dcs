@@ -13,8 +13,10 @@ import (
 	"testing"
 
 	"code.gitea.io/gitea/models/db"
+	repo_model "code.gitea.io/gitea/models/repo"
 	"code.gitea.io/gitea/models/unit"
 	"code.gitea.io/gitea/models/unittest"
+	user_model "code.gitea.io/gitea/models/user"
 	"code.gitea.io/gitea/modules/markup"
 
 	"github.com/stretchr/testify/assert"
@@ -24,7 +26,7 @@ func TestMetas(t *testing.T) {
 	assert.NoError(t, unittest.PrepareTestDatabase())
 
 	repo := &Repository{Name: "testRepo"}
-	repo.Owner = &User{Name: "testOwner"}
+	repo.Owner = &user_model.User{Name: "testOwner"}
 	repo.OwnerName = repo.Owner.Name
 
 	repo.Units = nil
@@ -71,9 +73,9 @@ func TestMetas(t *testing.T) {
 func TestGetRepositoryCount(t *testing.T) {
 	assert.NoError(t, unittest.PrepareTestDatabase())
 
-	count, err1 := GetRepositoryCount(&User{ID: int64(10)})
-	privateCount, err2 := GetPrivateRepositoryCount(&User{ID: int64(10)})
-	publicCount, err3 := GetPublicRepositoryCount(&User{ID: int64(10)})
+	count, err1 := GetRepositoryCount(db.DefaultContext, 10)
+	privateCount, err2 := GetPrivateRepositoryCount(&user_model.User{ID: int64(10)})
+	publicCount, err3 := GetPublicRepositoryCount(&user_model.User{ID: int64(10)})
 	assert.NoError(t, err1)
 	assert.NoError(t, err2)
 	assert.NoError(t, err3)
@@ -84,7 +86,7 @@ func TestGetRepositoryCount(t *testing.T) {
 func TestGetPublicRepositoryCount(t *testing.T) {
 	assert.NoError(t, unittest.PrepareTestDatabase())
 
-	count, err := GetPublicRepositoryCount(&User{ID: int64(10)})
+	count, err := GetPublicRepositoryCount(&user_model.User{ID: int64(10)})
 	assert.NoError(t, err)
 	assert.Equal(t, int64(1), count)
 }
@@ -92,7 +94,7 @@ func TestGetPublicRepositoryCount(t *testing.T) {
 func TestGetPrivateRepositoryCount(t *testing.T) {
 	assert.NoError(t, unittest.PrepareTestDatabase())
 
-	count, err := GetPrivateRepositoryCount(&User{ID: int64(10)})
+	count, err := GetPrivateRepositoryCount(&user_model.User{ID: int64(10)})
 	assert.NoError(t, err)
 	assert.Equal(t, int64(2), count)
 }
@@ -223,4 +225,31 @@ func TestRepoGetReviewerTeams(t *testing.T) {
 	teams, err = repo3.GetReviewerTeams()
 	assert.NoError(t, err)
 	assert.Len(t, teams, 2)
+}
+
+func TestLinkedRepository(t *testing.T) {
+	assert.NoError(t, unittest.PrepareTestDatabase())
+	testCases := []struct {
+		name             string
+		attachID         int64
+		expectedRepo     *Repository
+		expectedUnitType unit.Type
+	}{
+		{"LinkedIssue", 1, &Repository{ID: 1}, unit.TypeIssues},
+		{"LinkedComment", 3, &Repository{ID: 1}, unit.TypePullRequests},
+		{"LinkedRelease", 9, &Repository{ID: 1}, unit.TypeReleases},
+		{"Notlinked", 10, nil, -1},
+	}
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			attach, err := repo_model.GetAttachmentByID(tc.attachID)
+			assert.NoError(t, err)
+			repo, unitType, err := LinkedRepository(attach)
+			assert.NoError(t, err)
+			if tc.expectedRepo != nil {
+				assert.Equal(t, tc.expectedRepo.ID, repo.ID)
+			}
+			assert.Equal(t, tc.expectedUnitType, unitType)
+		})
+	}
 }

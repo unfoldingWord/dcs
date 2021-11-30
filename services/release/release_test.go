@@ -11,7 +11,9 @@ import (
 	"time"
 
 	"code.gitea.io/gitea/models"
+	repo_model "code.gitea.io/gitea/models/repo"
 	"code.gitea.io/gitea/models/unittest"
+	user_model "code.gitea.io/gitea/models/user"
 	"code.gitea.io/gitea/modules/git"
 	"code.gitea.io/gitea/services/attachment"
 
@@ -25,7 +27,7 @@ func TestMain(m *testing.M) {
 func TestRelease_Create(t *testing.T) {
 	assert.NoError(t, unittest.PrepareTestDatabase())
 
-	user := unittest.AssertExistsAndLoadBean(t, &models.User{ID: 2}).(*models.User)
+	user := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: 2}).(*user_model.User)
 	repo := unittest.AssertExistsAndLoadBean(t, &models.Repository{ID: 1}).(*models.Repository)
 	repoPath := models.RepoPath(user.Name, repo.Name)
 
@@ -103,7 +105,7 @@ func TestRelease_Create(t *testing.T) {
 		IsTag:        false,
 	}, nil, ""))
 
-	attach, err := attachment.NewAttachment(&models.Attachment{
+	attach, err := attachment.NewAttachment(&repo_model.Attachment{
 		RepoID:     repo.ID,
 		UploaderID: user.ID,
 		Name:       "test.txt",
@@ -129,7 +131,7 @@ func TestRelease_Create(t *testing.T) {
 func TestRelease_Update(t *testing.T) {
 	assert.NoError(t, unittest.PrepareTestDatabase())
 
-	user := unittest.AssertExistsAndLoadBean(t, &models.User{ID: 2}).(*models.User)
+	user := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: 2}).(*user_model.User)
 	repo := unittest.AssertExistsAndLoadBean(t, &models.Repository{ID: 1}).(*models.Repository)
 	repoPath := models.RepoPath(user.Name, repo.Name)
 
@@ -236,7 +238,7 @@ func TestRelease_Update(t *testing.T) {
 	assert.Equal(t, tagName, release.TagName)
 
 	// Add new attachments
-	attach, err := attachment.NewAttachment(&models.Attachment{
+	attach, err := attachment.NewAttachment(&repo_model.Attachment{
 		RepoID:     repo.ID,
 		UploaderID: user.ID,
 		Name:       "test.txt",
@@ -271,7 +273,7 @@ func TestRelease_Update(t *testing.T) {
 func TestRelease_createTag(t *testing.T) {
 	assert.NoError(t, unittest.PrepareTestDatabase())
 
-	user := unittest.AssertExistsAndLoadBean(t, &models.User{ID: 2}).(*models.User)
+	user := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: 2}).(*user_model.User)
 	repo := unittest.AssertExistsAndLoadBean(t, &models.Repository{ID: 1}).(*models.Repository)
 	repoPath := models.RepoPath(user.Name, repo.Name)
 
@@ -353,7 +355,7 @@ func TestRelease_createTag(t *testing.T) {
 
 func TestCreateNewTag(t *testing.T) {
 	assert.NoError(t, unittest.PrepareTestDatabase())
-	user := unittest.AssertExistsAndLoadBean(t, &models.User{ID: 2}).(*models.User)
+	user := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: 2}).(*user_model.User)
 	repo := unittest.AssertExistsAndLoadBean(t, &models.Repository{ID: 1}).(*models.Repository)
 
 	assert.NoError(t, CreateNewTag(user, repo, "master", "v2.0",

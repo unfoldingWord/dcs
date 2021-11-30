@@ -11,6 +11,7 @@ import (
 
 	"code.gitea.io/gitea/models"
 	"code.gitea.io/gitea/models/unittest"
+	user_model "code.gitea.io/gitea/models/user"
 	api "code.gitea.io/gitea/modules/structs"
 
 	"github.com/stretchr/testify/assert"
@@ -22,7 +23,7 @@ func TestAPIRepoTeams(t *testing.T) {
 	// publicOrgRepo = user3/repo21
 	publicOrgRepo := unittest.AssertExistsAndLoadBean(t, &models.Repository{ID: 32}).(*models.Repository)
 	// user4
-	user := unittest.AssertExistsAndLoadBean(t, &models.User{ID: 4}).(*models.User)
+	user := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: 4}).(*user_model.User)
 	session := loginUser(t, user.Name)
 	token := getTokenForLoggedInUser(t, session)
 
@@ -54,25 +55,25 @@ func TestAPIRepoTeams(t *testing.T) {
 
 	url = fmt.Sprintf("/api/v1/repos/%s/teams/%s?token=%s", publicOrgRepo.FullName(), "NonExistingTeam", token)
 	req = NewRequest(t, "GET", url)
-	res = session.MakeRequest(t, req, http.StatusNotFound)
+	session.MakeRequest(t, req, http.StatusNotFound)
 
 	// AddTeam with user4
 	url = fmt.Sprintf("/api/v1/repos/%s/teams/%s?token=%s", publicOrgRepo.FullName(), "team1", token)
 	req = NewRequest(t, "PUT", url)
-	res = session.MakeRequest(t, req, http.StatusForbidden)
+	session.MakeRequest(t, req, http.StatusForbidden)
 
 	// AddTeam with user2
-	user = unittest.AssertExistsAndLoadBean(t, &models.User{ID: 2}).(*models.User)
+	user = unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: 2}).(*user_model.User)
 	session = loginUser(t, user.Name)
 	token = getTokenForLoggedInUser(t, session)
 	url = fmt.Sprintf("/api/v1/repos/%s/teams/%s?token=%s", publicOrgRepo.FullName(), "team1", token)
 	req = NewRequest(t, "PUT", url)
-	res = session.MakeRequest(t, req, http.StatusNoContent)
-	res = session.MakeRequest(t, req, http.StatusUnprocessableEntity) // test duplicate request
+	session.MakeRequest(t, req, http.StatusNoContent)
+	session.MakeRequest(t, req, http.StatusUnprocessableEntity) // test duplicate request
 
 	// DeleteTeam
 	url = fmt.Sprintf("/api/v1/repos/%s/teams/%s?token=%s", publicOrgRepo.FullName(), "team1", token)
 	req = NewRequest(t, "DELETE", url)
-	res = session.MakeRequest(t, req, http.StatusNoContent)
-	res = session.MakeRequest(t, req, http.StatusUnprocessableEntity) // test duplicate request
+	session.MakeRequest(t, req, http.StatusNoContent)
+	session.MakeRequest(t, req, http.StatusUnprocessableEntity) // test duplicate request
 }

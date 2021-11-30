@@ -9,6 +9,7 @@ import (
 	"net/http"
 
 	"code.gitea.io/gitea/models"
+	user_model "code.gitea.io/gitea/models/user"
 	"code.gitea.io/gitea/modules/context"
 	"code.gitea.io/gitea/modules/convert"
 	"code.gitea.io/gitea/routers/api/v1/utils"
@@ -58,11 +59,11 @@ func Search(ctx *context.APIContext) {
 
 	listOptions := utils.GetListOptions(ctx)
 
-	users, maxResults, err := models.SearchUsers(&models.SearchUserOptions{
+	users, maxResults, err := user_model.SearchUsers(&user_model.SearchUserOptions{
 		Actor:         ctx.User,
 		Keyword:       ctx.FormTrim("q"),
 		UID:           ctx.FormInt64("uid"),
-		Type:          models.UserTypeIndividual,
+		Type:          user_model.UserTypeIndividual,
 		ListOptions:   listOptions,
 		RepoLanguages: ctx.FormStrings("lang"), // DCS Customizations
 	})
@@ -108,9 +109,9 @@ func GetInfo(ctx *context.APIContext) {
 		return
 	}
 
-	if !u.IsVisibleToUser(ctx.User) {
+	if !models.IsUserVisibleToViewer(u, ctx.User) {
 		// fake ErrUserNotExist error message to not leak information about existence
-		ctx.NotFound("GetUserByName", models.ErrUserNotExist{Name: ctx.Params(":username")})
+		ctx.NotFound("GetUserByName", user_model.ErrUserNotExist{Name: ctx.Params(":username")})
 		return
 	}
 	ctx.JSON(http.StatusOK, convert.ToUserDCS(u, ctx.User)) // DCS Customizations

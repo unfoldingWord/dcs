@@ -16,17 +16,13 @@ import (
 
 	"code.gitea.io/gitea/modules/setting"
 
-	// Needed for the MySQL driver
-	_ "github.com/go-sql-driver/mysql"
 	"xorm.io/xorm"
 	"xorm.io/xorm/names"
 	"xorm.io/xorm/schemas"
 
-	// Needed for the Postgresql driver
-	_ "github.com/lib/pq"
-
-	// Needed for the MSSQL driver
-	_ "github.com/denisenkom/go-mssqldb"
+	_ "github.com/denisenkom/go-mssqldb" // Needed for the MSSQL driver
+	_ "github.com/go-sql-driver/mysql"   // Needed for the MySQL driver
+	_ "github.com/lib/pq"                // Needed for the Postgresql driver
 )
 
 var (
@@ -59,6 +55,7 @@ type Engine interface {
 	Asc(colNames ...string) *xorm.Session
 	Desc(colNames ...string) *xorm.Session
 	Limit(limit int, start ...int) *xorm.Session
+	NoAutoTime() *xorm.Session
 	SumInt(bean interface{}, columnName string) (res int64, err error)
 	Sync2(...interface{}) error
 	Select(string) *xorm.Session

@@ -114,6 +114,10 @@ var (
 	LetsEncryptTOS       bool
 	LetsEncryptDirectory string
 	LetsEncryptEmail     string
+	SSLMinimumVersion    string
+	SSLMaximumVersion    string
+	SSLCurvePreferences  []string
+	SSLCipherSuites      []string
 	GracefulRestartable  bool
 	GracefulHammerTime   time.Duration
 	StartupTimeout       time.Duration
@@ -586,6 +590,10 @@ func NewContext() {
 	sec := Cfg.Section("server")
 	AppName = Cfg.Section("").Key("APP_NAME").MustString("Gitea: Git with a cup of tea")
 
+	Domain = sec.Key("DOMAIN").MustString("localhost")
+	HTTPAddr = sec.Key("HTTP_ADDR").MustString("0.0.0.0")
+	HTTPPort = sec.Key("HTTP_PORT").MustString("3000")
+
 	Protocol = HTTP
 	switch sec.Key("PROTOCOL").String() {
 	case "https":
@@ -608,6 +616,9 @@ func NewContext() {
 			log.Fatal("Failed to parse unixSocketPermission: %s", UnixSocketPermissionRaw)
 		}
 		UnixSocketPermission = uint32(UnixSocketPermissionParsed)
+		if !filepath.IsAbs(HTTPAddr) {
+			HTTPAddr = filepath.Join(AppWorkPath, HTTPAddr)
+		}
 	case "unix":
 		Protocol = UnixSocket
 		UnixSocketPermissionRaw := sec.Key("UNIX_SOCKET_PERMISSION").MustString("666")
@@ -616,6 +627,9 @@ func NewContext() {
 			log.Fatal("Failed to parse unixSocketPermission: %s", UnixSocketPermissionRaw)
 		}
 		UnixSocketPermission = uint32(UnixSocketPermissionParsed)
+		if !filepath.IsAbs(HTTPAddr) {
+			HTTPAddr = filepath.Join(AppWorkPath, HTTPAddr)
+		}
 	}
 	EnableLetsEncrypt = sec.Key("ENABLE_LETSENCRYPT").MustBool(false)
 	LetsEncryptTOS = sec.Key("LETSENCRYPT_ACCEPTTOS").MustBool(false)
@@ -625,9 +639,10 @@ func NewContext() {
 	}
 	LetsEncryptDirectory = sec.Key("LETSENCRYPT_DIRECTORY").MustString("https")
 	LetsEncryptEmail = sec.Key("LETSENCRYPT_EMAIL").MustString("")
-	Domain = sec.Key("DOMAIN").MustString("localhost")
-	HTTPAddr = sec.Key("HTTP_ADDR").MustString("0.0.0.0")
-	HTTPPort = sec.Key("HTTP_PORT").MustString("3000")
+	SSLMinimumVersion = sec.Key("SSL_MIN_VERSION").MustString("")
+	SSLMaximumVersion = sec.Key("SSL_MAX_VERSION").MustString("")
+	SSLCurvePreferences = sec.Key("SSL_CURVE_PREFERENCES").Strings(",")
+	SSLCipherSuites = sec.Key("SSL_CIPHER_SUITES").Strings(",")
 	GracefulRestartable = sec.Key("ALLOW_GRACEFUL_RESTARTS").MustBool(true)
 	GracefulHammerTime = sec.Key("GRACEFUL_HAMMER_TIME").MustDuration(60 * time.Second)
 	StartupTimeout = sec.Key("STARTUP_TIMEOUT").MustDuration(0 * time.Second)

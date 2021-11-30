@@ -10,6 +10,7 @@ import (
 	gotemplate "html/template"
 	"io"
 	"net/http"
+	"net/url"
 	"path"
 	"strconv"
 	"strings"
@@ -215,9 +216,9 @@ func LFSLockFile(ctx *context.Context) {
 	}
 
 	_, err := models.CreateLFSLock(&models.LFSLock{
-		Repo:  ctx.Repo.Repository,
-		Path:  lockPath,
-		Owner: ctx.User,
+		Repo:    ctx.Repo.Repository,
+		Path:    lockPath,
+		OwnerID: ctx.User.ID,
 	})
 	if err != nil {
 		if models.IsErrLFSLockAlreadyExist(err) {
@@ -285,7 +286,7 @@ func LFSFileGet(ctx *context.Context) {
 
 	fileSize := meta.Size
 	ctx.Data["FileSize"] = meta.Size
-	ctx.Data["RawFileLink"] = fmt.Sprintf("%s%s.git/info/lfs/objects/%s/%s", setting.AppURL, ctx.Repo.Repository.FullName(), meta.Oid, "direct")
+	ctx.Data["RawFileLink"] = fmt.Sprintf("%s%s/%s.git/info/lfs/objects/%s/%s", setting.AppURL, url.PathEscape(ctx.Repo.Repository.OwnerName), url.PathEscape(ctx.Repo.Repository.Name), url.PathEscape(meta.Oid), "direct")
 	switch {
 	case isRepresentableAsText:
 		if st.IsSvgImage() {

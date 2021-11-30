@@ -15,6 +15,7 @@ import (
 
 	"code.gitea.io/gitea/models"
 	"code.gitea.io/gitea/models/unittest"
+	user_model "code.gitea.io/gitea/models/user"
 	"code.gitea.io/gitea/modules/indexer/issues"
 	"code.gitea.io/gitea/modules/references"
 	"code.gitea.io/gitea/modules/setting"
@@ -61,11 +62,11 @@ func TestNoLoginViewIssues(t *testing.T) {
 func TestViewIssuesSortByType(t *testing.T) {
 	defer prepareTestEnv(t)()
 
-	user := unittest.AssertExistsAndLoadBean(t, &models.User{ID: 1}).(*models.User)
+	user := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: 1}).(*user_model.User)
 	repo := unittest.AssertExistsAndLoadBean(t, &models.Repository{ID: 1}).(*models.Repository)
 
 	session := loginUser(t, user.Name)
-	req := NewRequest(t, "GET", repo.RelLink()+"/issues?type=created_by")
+	req := NewRequest(t, "GET", repo.Link()+"/issues?type=created_by")
 	resp := session.MakeRequest(t, req, http.StatusOK)
 
 	htmlDoc := NewHTMLParser(t, resp.Body)
@@ -97,7 +98,7 @@ func TestViewIssuesKeyword(t *testing.T) {
 	issues.UpdateIssueIndexer(issue)
 	time.Sleep(time.Second * 1)
 	const keyword = "first"
-	req := NewRequestf(t, "GET", "%s/issues?q=%s", repo.RelLink(), keyword)
+	req := NewRequestf(t, "GET", "%s/issues?q=%s", repo.Link(), keyword)
 	resp := MakeRequest(t, req, http.StatusOK)
 
 	htmlDoc := NewHTMLParser(t, resp.Body)
@@ -287,7 +288,7 @@ func TestIssueCrossReference(t *testing.T) {
 	unittest.AssertExistsAndLoadBean(t, comment)
 
 	// Ref from a different repository
-	issueRefURL, issueRef = testIssueWithBean(t, "user12", 10, "TitleXRef", fmt.Sprintf("Description ref user2/repo1#%d", issueBase.Index))
+	_, issueRef = testIssueWithBean(t, "user12", 10, "TitleXRef", fmt.Sprintf("Description ref user2/repo1#%d", issueBase.Index))
 	unittest.AssertExistsAndLoadBean(t, &models.Comment{
 		IssueID:      issueBase.ID,
 		RefRepoID:    10,

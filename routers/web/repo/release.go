@@ -13,6 +13,7 @@ import (
 	"code.gitea.io/gitea/models"
 	"code.gitea.io/gitea/models/db"
 	"code.gitea.io/gitea/models/unit"
+	user_model "code.gitea.io/gitea/models/user"
 	"code.gitea.io/gitea/modules/base"
 	"code.gitea.io/gitea/modules/context"
 	"code.gitea.io/gitea/modules/log"
@@ -20,6 +21,7 @@ import (
 	"code.gitea.io/gitea/modules/markup/markdown"
 	"code.gitea.io/gitea/modules/setting"
 	"code.gitea.io/gitea/modules/upload"
+	"code.gitea.io/gitea/modules/util"
 	"code.gitea.io/gitea/modules/web"
 	"code.gitea.io/gitea/services/forms"
 	releaseservice "code.gitea.io/gitea/services/release"
@@ -131,7 +133,7 @@ func releasesOrTags(ctx *context.Context, isTagList bool) {
 
 	// Temporary cache commits count of used branches to speed up.
 	countCache := make(map[string]int64)
-	cacheUsers := make(map[int64]*models.User)
+	cacheUsers := make(map[int64]*user_model.User)
 	if ctx.User != nil {
 		cacheUsers[ctx.User.ID] = ctx.User
 	}
@@ -139,10 +141,10 @@ func releasesOrTags(ctx *context.Context, isTagList bool) {
 
 	for _, r := range releases {
 		if r.Publisher, ok = cacheUsers[r.PublisherID]; !ok {
-			r.Publisher, err = models.GetUserByID(r.PublisherID)
+			r.Publisher, err = user_model.GetUserByID(r.PublisherID)
 			if err != nil {
-				if models.IsErrUserNotExist(err) {
-					r.Publisher = models.NewGhostUser()
+				if user_model.IsErrUserNotExist(err) {
+					r.Publisher = user_model.NewGhostUser()
 				} else {
 					ctx.ServerError("GetUserByID", err)
 					return
@@ -215,10 +217,10 @@ func SingleRelease(ctx *context.Context) {
 		return
 	}
 
-	release.Publisher, err = models.GetUserByID(release.PublisherID)
+	release.Publisher, err = user_model.GetUserByID(release.PublisherID)
 	if err != nil {
-		if models.IsErrUserNotExist(err) {
-			release.Publisher = models.NewGhostUser()
+		if user_model.IsErrUserNotExist(err) {
+			release.Publisher = user_model.NewGhostUser()
 		} else {
 			ctx.ServerError("GetUserByID", err)
 			return
@@ -364,7 +366,7 @@ func NewReleasePost(ctx *context.Context) {
 			}
 
 			ctx.Flash.Success(ctx.Tr("repo.tag.create_success", form.TagName))
-			ctx.Redirect(ctx.Repo.RepoLink + "/src/tag/" + form.TagName)
+			ctx.Redirect(ctx.Repo.RepoLink + "/src/tag/" + util.PathEscapeSegments(form.TagName))
 			return
 		}
 

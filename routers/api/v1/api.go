@@ -65,6 +65,7 @@
 package v1
 
 import (
+	"fmt"
 	"net/http"
 	"reflect"
 	"strings"
@@ -83,10 +84,11 @@ import (
 	"code.gitea.io/gitea/routers/api/v1/org"
 	"code.gitea.io/gitea/routers/api/v1/repo"
 	"code.gitea.io/gitea/routers/api/v1/settings"
-	_ "code.gitea.io/gitea/routers/api/v1/swagger" // for swagger generation
 	"code.gitea.io/gitea/routers/api/v1/user"
 	"code.gitea.io/gitea/services/auth"
 	"code.gitea.io/gitea/services/forms"
+
+	_ "code.gitea.io/gitea/routers/api/v1/swagger" // for swagger generation
 
 	"gitea.com/go-chi/binding"
 	"github.com/go-chi/cors"
@@ -101,9 +103,9 @@ func sudo() func(ctx *context.APIContext) {
 
 		if len(sudo) > 0 {
 			if ctx.IsSigned && ctx.User.IsAdmin {
-				user, err := models.GetUserByName(sudo)
+				user, err := user_model.GetUserByName(sudo)
 				if err != nil {
-					if models.IsErrUserNotExist(err) {
+					if user_model.IsErrUserNotExist(err) {
 						ctx.NotFound()
 					} else {
 						ctx.Error(http.StatusInternalServerError, "GetUserByName", err)
@@ -128,7 +130,7 @@ func repoAssignment() func(ctx *context.APIContext) {
 		repoName := ctx.Params("reponame")
 
 		var (
-			owner *models.User
+			owner *user_model.User
 			err   error
 		)
 
@@ -136,9 +138,9 @@ func repoAssignment() func(ctx *context.APIContext) {
 		if ctx.IsSigned && ctx.User.LowerName == strings.ToLower(userName) {
 			owner = ctx.User
 		} else {
-			owner, err = models.GetUserByName(userName)
+			owner, err = user_model.GetUserByName(userName)
 			if err != nil {
-				if models.IsErrUserNotExist(err) {
+				if user_model.IsErrUserNotExist(err) {
 					if redirectUserID, err := user_model.LookupUserRedirect(userName); err == nil {
 						context.RedirectToUser(ctx.Context, userName, redirectUserID)
 					} else if user_model.IsErrUserRedirectNotExist(err) {
@@ -217,10 +219,13 @@ func reqExploreSignIn() func(ctx *context.APIContext) {
 	}
 }
 
-func reqBasicAuth() func(ctx *context.APIContext) {
+func reqBasicOrRevProxyAuth() func(ctx *context.APIContext) {
 	return func(ctx *context.APIContext) {
+		if ctx.IsSigned && setting.Service.EnableReverseProxyAuth && ctx.Data["AuthedMethod"].(string) == auth.ReverseProxyMethodName {
+			return
+		}
 		if !ctx.Context.IsBasicAuth {
-			ctx.Error(http.StatusUnauthorized, "reqBasicAuth", "basic auth required")
+			ctx.Error(http.StatusUnauthorized, "reqBasicOrRevProxyAuth", "auth required")
 			return
 		}
 		ctx.CheckForOTP()
@@ -550,7 +555,7 @@ func bind(obj interface{}) http.HandlerFunc {
 		var theObj = reflect.New(tp).Interface() // create a new form obj for every request but not use obj directly
 		errs := binding.Bind(ctx.Req, theObj)
 		if len(errs) > 0 {
-			ctx.Error(http.StatusUnprocessableEntity, "validationError", errs[0].Error())
+			ctx.Error(http.StatusUnprocessableEntity, "validationError", fmt.Sprintf("%s: %s", errs[0].FieldNames, errs[0].Error()))
 			return
 		}
 		web.SetForm(ctx, theObj)
@@ -632,7 +637,7 @@ func Routes(sessioner func(http.Handler) http.Handler) *web.Route {
 					m.Combo("").Get(user.ListAccessTokens).
 						Post(bind(api.CreateAccessTokenOption{}), user.CreateAccessToken)
 					m.Combo("/{id}").Delete(user.DeleteAccessToken)
-				}, reqBasicAuth())
+				}, reqBasicOrRevProxyAuth())
 			})
 		})
 
