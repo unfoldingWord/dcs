@@ -7,7 +7,6 @@ package models
 import (
 	"fmt"
 	"sort"
-	"time"
 
 	"code.gitea.io/gitea/modules/log"
 	"code.gitea.io/gitea/modules/setting"
@@ -358,11 +357,6 @@ func (dm *Door43Metadata) GetReleaseCount() (int64, error) {
 	return x.Join("LEFT", "release", "`release`.id = `door43_metadata`.release_id").
 		Where(builder.And(builder.Eq{"`door43_metadata`.repo_id": dm.RepoID}, stageCond)).
 		Count(&Door43Metadata{})
-}
-
-// GetReleaseDateTime returns the ReleaseDateUnix time stamp as a RFC3339 date, e.g. 2006-01-02T15:04:05Z07:00
-func (dm *Door43Metadata) GetReleaseDateTime() string {
-	return dm.ReleaseDateUnix.Format(time.RFC3339)
 }
 
 // GetDoor43MetadataByRepoIDAndReleaseID returns the metadata of a given release ID (0 = default branch).

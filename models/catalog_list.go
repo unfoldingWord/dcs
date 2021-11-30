@@ -109,6 +109,7 @@ type SearchCatalogOptions struct {
 	ShowIngredients bool
 	Languages       []string
 	OrderBy         []CatalogOrderBy
+	ExactMatch      bool
 }
 
 func getMetadataCondByDBType(dbType schemas.DBType, keyword string, includeMetadata bool) builder.Cond {
@@ -139,8 +140,8 @@ func SearchCatalogCondition(opts *SearchCatalogOptions) builder.Cond {
 	if opts.RepoID > 0 {
 		repoCond = builder.Eq{"`repository`.ID": opts.RepoID}
 	} else {
-		repoCond = GetRepoCond(opts.Repos)
-		ownerCond = GetOwnerCond(opts.Owners)
+		repoCond = GetRepoCond(opts.Repos, opts.ExactMatch)
+		ownerCond = GetOwnerCond(opts.Owners, opts.ExactMatch)
 	}
 
 	keywordCond := builder.NewCond()
@@ -151,11 +152,11 @@ func SearchCatalogCondition(opts *SearchCatalogOptions) builder.Cond {
 	}
 
 	stageCond := GetStageCond(opts.Stage)
-	historyCond := GetHistoryCond(opts.Stage, opts.IncludeHistory)
+	historyCond := GetHistoryCond(opts.IncludeHistory)
 
-	cond := builder.NewCond().And(GetSubjectCond(opts.Subjects),
+	cond := builder.NewCond().And(GetSubjectCond(opts.Subjects, opts.ExactMatch),
 		GetBookCond(opts.Books),
-		GetLanguageCond(opts.Languages),
+		GetLanguageCond(opts.Languages, opts.ExactMatch),
 		GetCheckingLevelCond(opts.CheckingLevels),
 		GetTagCond(opts.Tags),
 		repoCond,
@@ -178,22 +179,30 @@ func SearchCatalog(opts *SearchCatalogOptions) (Door43MetadataList, int64, error
 
 // SearchCatalogByCondition search repositories by condition
 func SearchCatalogByCondition(opts *SearchCatalogOptions, cond builder.Cond, loadAttributes bool) (Door43MetadataList, int64, error) {
+	return searchCatalogByCondition(x, opts, cond, loadAttributes)
+}
+
+func searchCatalogByCondition(e Engine, opts *SearchCatalogOptions, cond builder.Cond, loadAttributes bool) (Door43MetadataList, int64, error) {
 	if opts.Page <= 0 {
 		opts.Page = 1
+	}
+	if opts.PageSize < 0 {
+		opts.PageSize = 0
 	}
 
 	if len(opts.OrderBy) == 0 {
 		opts.OrderBy = []CatalogOrderBy{CatalogOrderByNewest}
 	}
 
-	sess := x.NewSession()
-	defer sess.Close()
-
-	dms := make(Door43MetadataList, 0, opts.PageSize)
+	var dms Door43MetadataList
+	if opts.PageSize > 0 {
+		dms = make(Door43MetadataList, 0, opts.PageSize)
+	}
 
 	releaseInfoInner, err := builder.Select("`door43_metadata`.repo_id", "COUNT(*) AS release_count", "MAX(`door43_metadata`.release_date_unix) AS latest_unix").
 		From("door43_metadata").
 		GroupBy("`door43_metadata`.repo_id").
+		Where(builder.Gt{"`door43_metadata`.release_date_unix": 0}).
 		Where(GetStageCond(opts.Stage)).
 		ToBoundSQL()
 	if err != nil {
@@ -209,7 +218,7 @@ func SearchCatalogByCondition(opts *SearchCatalogOptions, cond builder.Cond, loa
 		return nil, 0, err
 	}
 
-	sess.
+	sess := e.Table(&Door43Metadata{}).
 		Join("INNER", "repository", "`repository`.id = `door43_metadata`.repo_id").
 		Join("INNER", "user", "`repository`.owner_id = `user`.id").
 		Join("LEFT", "release", "`release`.id = `door43_metadata`.release_id").
@@ -220,7 +229,7 @@ func SearchCatalogByCondition(opts *SearchCatalogOptions, cond builder.Cond, loa
 		sess.OrderBy(orderBy.String())
 	}
 
-	if opts.PageSize > 0 {
+	if opts.PageSize > 0 || opts.Page > 1 {
 		sess.Limit(opts.PageSize, (opts.Page-1)*opts.PageSize)
 	}
 	count, err := sess.FindAndCount(&dms)
@@ -275,8 +284,8 @@ func GetStageCond(stage Stage) builder.Cond {
 	return builder.Lte{"`door43_metadata`.stage": stage}
 }
 
-// GetHistoryCond gets the conditions if IncludeHistory is true based on stage
-func GetHistoryCond(stage Stage, includeHistory bool) builder.Cond {
+// GetHistoryCond gets the conditions if IncludeHistory is false
+func GetHistoryCond(includeHistory bool) builder.Cond {
 	if includeHistory {
 		return nil
 	}
@@ -284,20 +293,28 @@ func GetHistoryCond(stage Stage, includeHistory bool) builder.Cond {
 }
 
 // GetSubjectCond gets the subject condition
-func GetSubjectCond(subjects []string) builder.Cond {
+func GetSubjectCond(subjects []string, exactMatch bool) builder.Cond {
 	var subjectCond = builder.NewCond()
 	for _, subject := range subjects {
-		subjectCond = subjectCond.Or(builder.Like{"LOWER(REPLACE(JSON_EXTRACT(`door43_metadata`.metadata, '$.dublin_core.subject'), '\"', ''))", strings.ToLower(subject)})
+		if exactMatch {
+			subjectCond = subjectCond.Or(builder.Eq{"LOWER(REPLACE(JSON_EXTRACT(`door43_metadata`.metadata, '$.dublin_core.subject'), '\"', ''))": strings.ToLower(subject)})
+		} else {
+			subjectCond = subjectCond.Or(builder.Like{"LOWER(REPLACE(JSON_EXTRACT(`door43_metadata`.metadata, '$.dublin_core.subject'), '\"', ''))", strings.ToLower(subject)})
+		}
 	}
 	return subjectCond
 }
 
 // GetLanguageCond gets the language condition
-func GetLanguageCond(languages []string) builder.Cond {
+func GetLanguageCond(languages []string, exactMatch bool) builder.Cond {
 	var langCond = builder.NewCond()
 	for _, lang := range languages {
 		for _, v := range strings.Split(lang, ",") {
-			langCond = langCond.Or(builder.Like{"LOWER(REPLACE(JSON_EXTRACT(`door43_metadata`.metadata, '$.dublin_core.language.identifier'), '\"', ''))", strings.ToLower(v)})
+			if exactMatch {
+				langCond = langCond.Or(builder.Eq{"LOWER(REPLACE(JSON_EXTRACT(`door43_metadata`.metadata, '$.dublin_core.language.identifier'), '\"', ''))": strings.ToLower(v)})
+			} else {
+				langCond = langCond.Or(builder.Like{"LOWER(REPLACE(JSON_EXTRACT(`door43_metadata`.metadata, '$.dublin_core.language.identifier'), '\"', ''))", strings.ToLower(v)})
+			}
 		}
 	}
 	return langCond
@@ -337,23 +354,77 @@ func GetTagCond(tags []string) builder.Cond {
 }
 
 // GetRepoCond gets the repo condition
-func GetRepoCond(repos []string) builder.Cond {
+func GetRepoCond(repos []string, exactMatch bool) builder.Cond {
 	var repoCond = builder.NewCond()
 	for _, repo := range repos {
 		for _, v := range strings.Split(repo, ",") {
-			repoCond = repoCond.Or(builder.Like{"`repository`.lower_name", strings.ToLower(v)})
+			if exactMatch {
+				repoCond = repoCond.Or(builder.Eq{"`repository`.lower_name": strings.ToLower(v)})
+			} else {
+				repoCond = repoCond.Or(builder.Like{"`repository`.lower_name", strings.ToLower(v)})
+			}
 		}
 	}
 	return repoCond
 }
 
 // GetOwnerCond gets the owner condition
-func GetOwnerCond(owners []string) builder.Cond {
+func GetOwnerCond(owners []string, exactMatch bool) builder.Cond {
 	var ownerCond = builder.NewCond()
 	for _, owner := range owners {
 		for _, v := range strings.Split(owner, ",") {
-			ownerCond = ownerCond.Or(builder.Like{"`user`.lower_name", strings.ToLower(v)})
+			if exactMatch {
+				ownerCond = ownerCond.Or(builder.Eq{"`user`.lower_name": strings.ToLower(v)})
+			} else {
+				ownerCond = ownerCond.Or(builder.Like{"`user`.lower_name", strings.ToLower(v)})
+			}
 		}
 	}
 	return ownerCond
+}
+
+// QueryForCatalogV3 Does a special query for all of V3
+func QueryForCatalogV3(subject string) (Door43MetadataList, error) {
+	return queryForCatalogV3(x, subject)
+}
+
+func queryForCatalogV3(e Engine, subject string) (Door43MetadataList, error) {
+	sess := e.Table(&Door43Metadata{}).
+		Join("INNER", "repository", "`repository`.id = `door43_metadata`.repo_id").
+		Join("INNER", "user", "`repository`.owner_id = `user`.id").
+		Where("(`door43_metadata`.stage = 0 AND `door43_metadata`.repo_id NOT IN (SELECT dm1.repo_id FROM door43_metadata dm1 INNER JOIN repository r1 ON dm1.repo_id = r1.id INNER JOIN user u1 ON u1.id = r1.owner_id WHERE u1.lower_name = \"door43-catalog\" AND dm1.stage = 3)) OR (`door43_metadata`.stage = 3 AND `user`.lower_name = \"door43-catalog\")").
+		And("`door43_metadata`.stage = 3 OR `door43_metadata`.release_date_unix = (SELECT release_date_unix FROM (SELECT dm2.repo_id, dm2.stage, MAX(dm2.release_date_unix) AS release_date_unix FROM door43_metadata dm2 GROUP BY repo_id, dm2.stage ORDER BY dm2.stage) t WHERE `door43_metadata`.repo_id = t.repo_id LIMIT 1)").
+		Where(GetSubjectCond([]string{subject}, true)).
+		OrderBy("`repository`.lower_name").
+		OrderBy("IF(`user`.lower_name = \"door43-catalog\", 0, 1)").
+		OrderBy("IF(`user`.lower_name = \"unfoldingword\", 0, 1)")
+
+	var dms Door43MetadataList
+
+	err := sess.Find(&dms)
+	fmt.Println(sess.LastSQL())
+	if err != nil {
+		return nil, fmt.Errorf("FindAndCount: %v", err)
+	}
+
+	var filteredDMs Door43MetadataList
+
+	for i, dm := range dms {
+		dm.LoadAttributes()
+		unique := false
+		for j := 0; j < i; j++ {
+			if dms[j].Repo.LowerName == dm.Repo.LowerName {
+				unique = true
+			}
+		}
+		if unique {
+			filteredDMs = append(filteredDMs, dm)
+		}
+	}
+
+	// if err = dms.loadAttributes(sess); err != nil {
+	// 	return nil, 0, fmt.Errorf("loadAttributes: %v", err)
+	// }
+
+	return dms, nil
 }

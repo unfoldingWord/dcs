@@ -73,14 +73,16 @@ import (
 	"code.gitea.io/gitea/modules/setting"
 	"code.gitea.io/gitea/modules/web"
 	_ "code.gitea.io/gitea/routers/api/catalog/swagger" // for swagger generation
-	"code.gitea.io/gitea/routers/api/catalog/v4"
-	"code.gitea.io/gitea/routers/api/catalog/v5"
+	v3 "code.gitea.io/gitea/routers/api/catalog/v3"
+	v4 "code.gitea.io/gitea/routers/api/catalog/v4"
+	v5 "code.gitea.io/gitea/routers/api/catalog/v5"
 
 	"gitea.com/go-chi/session"
 	"github.com/go-chi/cors"
 )
 
 var versions = []string{
+	"v3",
 	"v4",
 	"v5",
 }
@@ -90,6 +92,7 @@ var latestVersion = versions[len(versions)-1]
 func AllRoutes(r *web.Route) {
 	r.Mount("/api/catalog/latest", LatestRoutes())
 	r.Mount("/api/catalog/misc", MiscRoutes())
+	r.Mount("/api/catalog/v3", v3.Routes())
 	r.Mount("/api/catalog/v4", v4.Routes())
 	r.Mount("/api/catalog/v5", v5.Routes())
 }
