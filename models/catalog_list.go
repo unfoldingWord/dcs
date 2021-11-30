@@ -410,7 +410,9 @@ func queryForCatalogV3(e Engine, subject string) (Door43MetadataList, error) {
 	var filteredDMs Door43MetadataList
 
 	for i, dm := range dms {
-		dm.LoadAttributes()
+		if err := dm.LoadAttributes(); err != nil {
+			return nil, err
+		}
 		unique := false
 		for j := 0; j < i; j++ {
 			if dms[j].Repo.LowerName == dm.Repo.LowerName {
@@ -426,5 +428,5 @@ func queryForCatalogV3(e Engine, subject string) (Door43MetadataList, error) {
 	// 	return nil, 0, fmt.Errorf("loadAttributes: %v", err)
 	// }
 
-	return dms, nil
+	return filteredDMs, nil
 }
