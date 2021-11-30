@@ -14,7 +14,7 @@ import (
 	api "code.gitea.io/gitea/modules/structs"
 )
 
-// ToCatalogV3 converts a Door43Metadata to a api.CatalogV3 entry
+// ToCatalogV3Resource converts a Door43Metadata to a api.CatalogV3 resource entry
 func ToCatalogV3Resource(dm *models.Door43Metadata) *api.CatalogV3Resource {
 	if err := dm.LoadAttributes(); err != nil {
 		return nil
