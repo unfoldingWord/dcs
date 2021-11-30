@@ -8,12 +8,12 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
+	"time"
 
 	"code.gitea.io/gitea/models"
 	"code.gitea.io/gitea/modules/context"
 	"code.gitea.io/gitea/modules/convert"
 	api "code.gitea.io/gitea/modules/structs"
-	"code.gitea.io/gitea/routers/api/v1/utils"
 )
 
 var searchOrderByMap = map[string]map[string]models.CatalogOrderBy{
@@ -116,7 +116,7 @@ func Search(ctx *context.APIContext) {
 	//   type: integer
 	// - name: limit
 	//   in: query
-	//   description: page size of results, maximum page size is 50
+	//   description: page size of results, defaults to no limit
 	//   type: integer
 	// responses:
 	//   "200":
@@ -205,7 +205,7 @@ func SearchOwner(ctx *context.APIContext) {
 	//   type: integer
 	// - name: limit
 	//   in: query
-	//   description: page size of results, maximum page size is 50
+	//   description: page size of results, defaults to no limit
 	//   type: integer
 	// responses:
 	//   "200":
@@ -295,7 +295,7 @@ func SearchRepo(ctx *context.APIContext) {
 	//   type: integer
 	// - name: limit
 	//   in: query
-	//   description: page size of results, maximum page size is 50
+	//   description: page size of results, defaults to no limit
 	//   type: integer
 	// responses:
 	//   "200":
@@ -358,7 +358,7 @@ func GetCatalogEntry(ctx *context.APIContext) {
 			Error: err.Error(),
 		})
 	}
-	ctx.JSON(http.StatusOK, convert.ToDoor43MetadataV5(dm, accessMode))
+	ctx.JSON(http.StatusOK, convert.ToCatalogV5(dm, accessMode))
 }
 
 // GetCatalogMetadata Get the metadata (RC 0.2.0 manifest) in JSON format for the given ownername, reponame and ref
@@ -445,7 +445,10 @@ func searchCatalog(ctx *context.APIContext) {
 	if query != "" {
 		keywords = models.SplitAtCommaNotInString(query, false)
 	}
-	listOptions := utils.GetListOptions(ctx)
+	listOptions := models.ListOptions{
+		Page:     ctx.QueryInt("page", 1),
+		PageSize: ctx.QueryInt("limit", 0),
+	}
 
 	opts := &models.SearchCatalogOptions{
 		ListOptions:     listOptions,
@@ -462,6 +465,7 @@ func searchCatalog(ctx *context.APIContext) {
 		IncludeHistory:  ctx.QueryBool("includeHistory"),
 		ShowIngredients: ctx.QueryBool("showIngredients"),
 		IncludeMetadata: includeMetadata,
+		ExactMatch:      ctx.QueryBool("exactMatch"),
 	}
 
 	var sortModes = QueryStrings(ctx, "sort")
@@ -496,7 +500,8 @@ func searchCatalog(ctx *context.APIContext) {
 		return
 	}
 
-	results := make([]*api.Door43MetadataV5, len(dms))
+	results := make([]*api.CatalogV5, len(dms))
+	var lastUpdated time.Time
 	for i, dm := range dms {
 		accessMode, err := models.AccessLevel(ctx.User, dm.Repo)
 		if err != nil {
@@ -505,16 +510,29 @@ func searchCatalog(ctx *context.APIContext) {
 				Error: err.Error(),
 			})
 		}
-		results[i] = convert.ToDoor43MetadataV5(dm, accessMode)
+		dmAPI := convert.ToCatalogV5(dm, accessMode)
 		if !opts.ShowIngredients {
-			results[i].Ingredients = nil
+			dmAPI.Ingredients = nil
 		}
+		if dmAPI.Released.After(lastUpdated) {
+			lastUpdated = dmAPI.Released
+		}
+		results[i] = dmAPI
 	}
 
-	ctx.SetLinkHeader(int(count), opts.PageSize)
+	if lastUpdated.IsZero() {
+		lastUpdated = time.Now()
+	}
+
+	if opts.PageSize > 0 {
+		ctx.SetLinkHeader(int(count), opts.PageSize)
+	} else {
+		ctx.SetLinkHeader(int(count), int(count))
+	}
 	ctx.Header().Set("X-Total-Count", fmt.Sprintf("%d", count))
 	ctx.JSON(http.StatusOK, api.CatalogSearchResultsV5{
-		OK:   true,
-		Data: results,
+		OK:          true,
+		Data:        results,
+		LastUpdated: lastUpdated,
 	})
 }

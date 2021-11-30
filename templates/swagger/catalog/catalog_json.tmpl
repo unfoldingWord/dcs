@@ -43,6 +43,34 @@
         }
       }
     },
+    "/v3": {
+      "get": {
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "v3"
+        ],
+        "summary": "Catalog v3 listing",
+        "operationId": "CatalogV3",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "If present, should list only items by the given subject (Bible, Aligned Bible, Open Bible Stories, etc.)",
+            "name": "subject",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/CatalogSearchResultsV5"
+          },
+          "422": {
+            "$ref": "#/responses/validationError"
+          }
+        }
+      }
+    },
     "/v4/entry/{owner}/{repo}/{tag}": {
       "get": {
         "produces": [
@@ -675,7 +703,7 @@
           },
           {
             "type": "integer",
-            "description": "page size of results, maximum page size is 50",
+            "description": "page size of results, defaults to no limit",
             "name": "limit",
             "in": "query"
           }
@@ -794,7 +822,7 @@
           },
           {
             "type": "integer",
-            "description": "page size of results, maximum page size is 50",
+            "description": "page size of results, defaults to no limit",
             "name": "limit",
             "in": "query"
           }
@@ -914,7 +942,7 @@
           },
           {
             "type": "integer",
-            "description": "page size of results, maximum page size is 50",
+            "description": "page size of results, defaults to no limit",
             "name": "limit",
             "in": "query"
           }
@@ -1001,7 +1029,7 @@
         "data": {
           "type": "array",
           "items": {
-            "$ref": "#/definitions/Door43MetadataV4"
+            "$ref": "#/definitions/CatalogV4"
           },
           "x-go-name": "Data"
         },
@@ -1019,9 +1047,14 @@
         "data": {
           "type": "array",
           "items": {
-            "$ref": "#/definitions/Door43MetadataV5"
+            "$ref": "#/definitions/CatalogV5"
           },
           "x-go-name": "Data"
+        },
+        "last_updated": {
+          "type": "string",
+          "format": "date-time",
+          "x-go-name": "LastUpdated"
         },
         "ok": {
           "type": "boolean",
@@ -1052,6 +1085,7 @@
         },
         "released": {
           "type": "string",
+          "format": "date-time",
           "x-go-name": "Released"
         },
         "tarball_url": {
@@ -1084,44 +1118,8 @@
       },
       "x-go-package": "code.gitea.io/gitea/modules/structs"
     },
-    "CatalogVersionEndpoints": {
-      "description": "CatalogVersionEndpoints Info on the versions of the catalog",
-      "type": "object",
-      "properties": {
-        "latest": {
-          "type": "string",
-          "x-go-name": "Latest"
-        },
-        "versions": {
-          "type": "object",
-          "additionalProperties": {
-            "type": "string"
-          },
-          "x-go-name": "Versions"
-        }
-      },
-      "x-go-package": "code.gitea.io/gitea/modules/structs"
-    },
-    "CatalogVersionEndpointsResponse": {
-      "description": "CatalogVersionEndpointsResponse response with the endpoints for all versions of the catalog",
-      "type": "object",
-      "properties": {
-        "data": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/CatalogVersionEndpoints"
-          },
-          "x-go-name": "Data"
-        },
-        "ok": {
-          "type": "boolean",
-          "x-go-name": "OK"
-        }
-      },
-      "x-go-package": "code.gitea.io/gitea/modules/structs"
-    },
-    "Door43MetadataV4": {
-      "description": "Door43MetadataV4 represents a repository's metadata of a tag or default branch",
+    "CatalogV4": {
+      "description": "CatalogV4 represents a repository's metadata of a tag or default branch",
       "type": "object",
       "properties": {
         "books": {
@@ -1177,6 +1175,7 @@
         },
         "released": {
           "type": "string",
+          "format": "date-time",
           "x-go-name": "Released"
         },
         "repo": {
@@ -1214,8 +1213,8 @@
       },
       "x-go-package": "code.gitea.io/gitea/modules/structs"
     },
-    "Door43MetadataV5": {
-      "description": "Door43MetadataV5 represents a repository's metadata of a tag or default branch for V5",
+    "CatalogV5": {
+      "description": "CatalogV5 represents a repository's metadata of a tag or default branch for V5",
       "type": "object",
       "properties": {
         "books": {
@@ -1286,6 +1285,7 @@
         },
         "released": {
           "type": "string",
+          "format": "date-time",
           "x-go-name": "Released"
         },
         "repo": {
@@ -1314,6 +1314,42 @@
         "zipball_url": {
           "type": "string",
           "x-go-name": "ZipballURL"
+        }
+      },
+      "x-go-package": "code.gitea.io/gitea/modules/structs"
+    },
+    "CatalogVersionEndpoints": {
+      "description": "CatalogVersionEndpoints Info on the versions of the catalog",
+      "type": "object",
+      "properties": {
+        "latest": {
+          "type": "string",
+          "x-go-name": "Latest"
+        },
+        "versions": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          },
+          "x-go-name": "Versions"
+        }
+      },
+      "x-go-package": "code.gitea.io/gitea/modules/structs"
+    },
+    "CatalogVersionEndpointsResponse": {
+      "description": "CatalogVersionEndpointsResponse response with the endpoints for all versions of the catalog",
+      "type": "object",
+      "properties": {
+        "data": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/CatalogVersionEndpoints"
+          },
+          "x-go-name": "Data"
+        },
+        "ok": {
+          "type": "boolean",
+          "x-go-name": "OK"
         }
       },
       "x-go-package": "code.gitea.io/gitea/modules/structs"
@@ -1866,13 +1902,13 @@
     "CatalogEntryV4": {
       "description": "CatalogEntryV4",
       "schema": {
-        "$ref": "#/definitions/Door43MetadataV4"
+        "$ref": "#/definitions/CatalogV4"
       }
     },
     "CatalogEntryV5": {
       "description": "CatalogEntryV5",
       "schema": {
-        "$ref": "#/definitions/Door43MetadataV5"
+        "$ref": "#/definitions/CatalogV5"
       }
     },
     "CatalogMetadata": {

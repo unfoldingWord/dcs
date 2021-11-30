@@ -13,7 +13,6 @@ import (
 	"code.gitea.io/gitea/modules/context"
 	"code.gitea.io/gitea/modules/convert"
 	api "code.gitea.io/gitea/modules/structs"
-	"code.gitea.io/gitea/routers/api/v1/utils"
 )
 
 var searchOrderByMap = map[string]map[string]models.CatalogOrderBy{
@@ -358,7 +357,7 @@ func GetCatalogEntry(ctx *context.APIContext) {
 			Error: err.Error(),
 		})
 	}
-	ctx.JSON(http.StatusOK, convert.ToDoor43MetadataV4(dm, accessMode))
+	ctx.JSON(http.StatusOK, convert.ToCatalogV4(dm, accessMode))
 }
 
 // GetCatalogMetadata Get the metadata (RC 0.2.0 manifest) in JSON format for the given ownername, reponame and ref
@@ -445,9 +444,13 @@ func searchCatalog(ctx *context.APIContext) {
 	if query != "" {
 		keywords = models.SplitAtCommaNotInString(query, false)
 	}
+	listOptions := models.ListOptions{
+		Page:     ctx.QueryInt("page", 1),
+		PageSize: ctx.QueryInt("limit", 0),
+	}
 
 	opts := &models.SearchCatalogOptions{
-		ListOptions:     utils.GetListOptions(ctx),
+		ListOptions:     listOptions,
 		Keywords:        keywords,
 		Owners:          owners,
 		Repos:           repos,
@@ -495,7 +498,7 @@ func searchCatalog(ctx *context.APIContext) {
 		return
 	}
 
-	results := make([]*api.Door43MetadataV4, len(dms))
+	results := make([]*api.CatalogV4, len(dms))
 	for i, dm := range dms {
 		accessMode, err := models.AccessLevel(ctx.User, dm.Repo)
 		if err != nil {
@@ -504,13 +507,17 @@ func searchCatalog(ctx *context.APIContext) {
 				Error: err.Error(),
 			})
 		}
-		results[i] = convert.ToDoor43MetadataV4(dm, accessMode)
+		results[i] = convert.ToCatalogV4(dm, accessMode)
 		if !opts.ShowIngredients {
 			results[i].Ingredients = nil
 		}
 	}
 
-	ctx.SetLinkHeader(int(count), opts.PageSize)
+	if opts.PageSize > 0 {
+		ctx.SetLinkHeader(int(count), opts.PageSize)
+	} else {
+		ctx.SetLinkHeader(int(count), int(count))
+	}
 	ctx.Header().Set("X-Total-Count", fmt.Sprintf("%d", count))
 	ctx.JSON(http.StatusOK, api.CatalogSearchResultsV4{
 		OK:   true,

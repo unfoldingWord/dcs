@@ -375,11 +375,11 @@ func SearchRepositoryCondition(opts *SearchRepoOptions) builder.Cond {
 	}
 
 	/*** DCS Customizations ***/
-	cond = cond.And(GetRepoCond(opts.Repos),
-		GetOwnerCond(opts.Owners),
-		GetSubjectCond(opts.Subjects),
+	cond = cond.And(GetRepoCond(opts.Repos, false),
+		GetOwnerCond(opts.Owners, false),
+		GetSubjectCond(opts.Subjects, false),
 		GetBookCond(opts.Books),
-		GetLanguageCond(opts.Languages))
+		GetLanguageCond(opts.Languages, false))
 	/*** EMD DCS Customizations ***/
 
 	return cond

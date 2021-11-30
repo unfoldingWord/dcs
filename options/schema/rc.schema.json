@@ -400,9 +400,20 @@
 							"title": "Items",
 							"type": "string",
 							"enum": [
-								"bible-ot",
+								"bible-frt",
+								"bible-bak",
+								"bible-cnc",
+								"bible-glo",
+								"bible-int",
 								"bible-nt",
-								"ta"
+								"bible-ot",
+								"bible-oth",
+								"bible-ndx",
+								"bible-tdx",
+								"bible-xx",
+								"obs",
+								"ta",
+								"tw"
 							]
 						}
 					}
