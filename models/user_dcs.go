@@ -35,7 +35,7 @@ func (u *User) GetRepoLanguages() []string {
 			if dm, err := repo.GetDefaultBranchMetadata(); err != nil {
 				log.Error("Error GetDefaultBranchMetadata: %v", err)
 			} else if dm != nil {
-				lang = (*dm.Metadata)["dublin_core"].(map[string]interface{})["language"].(map[string]interface{})["identifier"].(string)
+				lang = (*dm.Metadata)["dubli n_core"].(map[string]interface{})["language"].(map[string]interface{})["identifier"].(string)
 				if lang != "" && !contains(languages, lang) {
 					languages = append(languages, lang)
 				}

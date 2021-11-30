@@ -72,8 +72,8 @@ func GenerateDoor43Metadata(x *xorm.Engine) error {
 }
 
 // ConvertGenericMapToRC020Manifest converts a generic map to a RC020Manifest object
-func ConvertGenericMapToRC020Manifest(manifest *map[string]interface{}) (*structs.RC020Manifest, error) {
-	var rc020manifest structs.RC020Manifest
+func ConvertGenericMapToRC020Manifest(manifest *map[string]interface{}) (*structs.RcSchemaJson, error) {
+	var rc020manifest structs.RcSchemaJson
 	err := mapstructure.Decode(*manifest, &rc020manifest)
 	if err != nil {
 		return nil, err

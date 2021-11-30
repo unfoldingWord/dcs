@@ -43,6 +43,34 @@
         }
       }
     },
+    "/v3": {
+      "get": {
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "v3"
+        ],
+        "summary": "Catalog v3 listing",
+        "operationId": "CatalogV3",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "If present, should list only items by the given subject (Bible, Aligned Bible, Open Bible Stories, etc.)",
+            "name": "subject",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/CatalogSearchResultsV5"
+          },
+          "422": {
+            "$ref": "#/responses/validationError"
+          }
+        }
+      }
+    },
     "/v4/entry/{owner}/{repo}/{tag}": {
       "get": {
         "produces": [
@@ -675,7 +703,7 @@
           },
           {
             "type": "integer",
-            "description": "page size of results, maximum page size is 50",
+            "description": "page size of results, defaults to no limit",
             "name": "limit",
             "in": "query"
           }
@@ -794,7 +822,7 @@
           },
           {
             "type": "integer",
-            "description": "page size of results, maximum page size is 50",
+            "description": "page size of results, defaults to no limit",
             "name": "limit",
             "in": "query"
           }
@@ -914,7 +942,7 @@
           },
           {
             "type": "integer",
-            "description": "page size of results, maximum page size is 50",
+            "description": "page size of results, defaults to no limit",
             "name": "limit",
             "in": "query"
           }
@@ -1023,6 +1051,11 @@
           },
           "x-go-name": "Data"
         },
+        "last_updated": {
+          "type": "string",
+          "format": "date-time",
+          "x-go-name": "LastUpdated"
+        },
         "ok": {
           "type": "boolean",
           "x-go-name": "OK"
@@ -1052,6 +1085,7 @@
         },
         "released": {
           "type": "string",
+          "format": "date-time",
           "x-go-name": "Released"
         },
         "tarball_url": {
@@ -1177,6 +1211,7 @@
         },
         "released": {
           "type": "string",
+          "format": "date-time",
           "x-go-name": "Released"
         },
         "repo": {
@@ -1286,6 +1321,7 @@
         },
         "released": {
           "type": "string",
+          "format": "date-time",
           "x-go-name": "Released"
         },
         "repo": {
