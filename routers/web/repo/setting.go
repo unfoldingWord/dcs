@@ -770,10 +770,10 @@ func SettingsPost(ctx *context.Context) {
 			log.Trace("Repository scrubbed: %s/%s", ctx.Repo.Owner.Name, repo.Name)
 
 			units := make([]models.RepoUnit, 0, len(repo.Units))
-			var deleteUnitTypes []models.UnitType
+			var deleteUnitTypes []unit_model.Type
 
 			for _, unit := range repo.Units {
-				if unit.Type != models.UnitTypeWiki {
+				if unit.Type != unit_model.TypeWiki {
 					units = append(units, *unit)
 				}
 			}

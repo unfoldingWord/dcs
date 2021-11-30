@@ -31,7 +31,7 @@ func UpdateDoor43Metadata(ctx context.Context) error {
 			repo := bean.(*models.Repository)
 			select {
 			case <-ctx.Done():
-				return models.ErrCancelledf("before update door43 metadata of %s", repo.FullName())
+				return db.ErrCancelledf("before update door43 metadata of %s", repo.FullName())
 			default:
 			}
 			log.Trace("Running generate metadata on %v", repo)
