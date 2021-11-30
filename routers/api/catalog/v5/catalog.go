@@ -477,7 +477,7 @@ func searchCatalog(ctx *context.APIContext) {
 		IncludeHistory:  ctx.QueryBool("includeHistory"),
 		ShowIngredients: ctx.QueryBool("showIngredients"),
 		IncludeMetadata: includeMetadata,
-		PartialMatch:    ctx.QueryBool("partialMatch", true),
+		PartialMatch:    ctx.QueryBool("partialMatch", false),
 	}
 
 	var sortModes = QueryStrings(ctx, "sort")
