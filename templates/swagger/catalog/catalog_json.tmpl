@@ -667,6 +667,12 @@
           },
           {
             "type": "boolean",
+            "description": "if true, subject, owner and repo search fields will use partial match (LIKE) when querying the catalog. Default is false",
+            "name": "partialMatch",
+            "in": "query"
+          },
+          {
+            "type": "boolean",
             "description": "if true, all releases, not just the latest, are included. Default is false",
             "name": "includeHistory",
             "in": "query"
@@ -782,6 +788,12 @@
             "type": "string",
             "description": "search only for entries with the given book(s) (project ids)",
             "name": "book",
+            "in": "query"
+          },
+          {
+            "type": "boolean",
+            "description": "if true, subject, owner and repo search fields will use partial match (LIKE) when querying the catalog. Default is false",
+            "name": "partialMatch",
             "in": "query"
           },
           {
@@ -902,6 +914,12 @@
             "type": "string",
             "description": "search only for entries with the given book(s) (project ids)",
             "name": "book",
+            "in": "query"
+          },
+          {
+            "type": "boolean",
+            "description": "if true, subject, owner and repo search fields will use partial match (LIKE) when querying the catalog. Default is false",
+            "name": "partialMatch",
             "in": "query"
           },
           {
