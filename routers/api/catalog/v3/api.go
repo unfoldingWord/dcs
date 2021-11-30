@@ -65,7 +65,6 @@ package v3
 
 import (
 	"net/http"
-	"strings"
 
 	"code.gitea.io/gitea/models"
 	"code.gitea.io/gitea/modules/context"
@@ -104,72 +103,6 @@ func sudo() func(ctx *context.APIContext) {
 				})
 				return
 			}
-		}
-	}
-}
-
-func repoAssignment() func(ctx *context.APIContext) {
-	return func(ctx *context.APIContext) {
-		userName := ctx.Params("username")
-		repoName := ctx.Params("reponame")
-
-		var (
-			owner *models.User
-			err   error
-		)
-
-		// Check if the user is the same as the repository owner.
-		if ctx.IsSigned && ctx.User.LowerName == strings.ToLower(userName) {
-			owner = ctx.User
-		} else {
-			owner, err = models.GetUserByName(userName)
-			if err != nil {
-				if models.IsErrUserNotExist(err) {
-					if redirectUserID, err := models.LookupUserRedirect(userName); err == nil {
-						context.RedirectToUser(ctx.Context, userName, redirectUserID)
-					} else if models.IsErrUserRedirectNotExist(err) {
-						ctx.NotFound("GetUserByName", err)
-					} else {
-						ctx.Error(http.StatusInternalServerError, "LookupUserRedirect", err)
-					}
-				} else {
-					ctx.Error(http.StatusInternalServerError, "GetUserByName", err)
-				}
-				return
-			}
-		}
-		ctx.Repo.Owner = owner
-
-		// Get repository.
-		repo, err := models.GetRepositoryByName(owner.ID, repoName)
-		if err != nil {
-			if models.IsErrRepoNotExist(err) {
-				redirectRepoID, err := models.LookupRepoRedirect(owner.ID, repoName)
-				if err == nil {
-					context.RedirectToRepo(ctx.Context, redirectRepoID)
-				} else if models.IsErrRepoRedirectNotExist(err) {
-					ctx.NotFound()
-				} else {
-					ctx.Error(http.StatusInternalServerError, "LookupRepoRedirect", err)
-				}
-			} else {
-				ctx.Error(http.StatusInternalServerError, "GetRepositoryByName", err)
-			}
-			return
-		}
-
-		repo.Owner = owner
-		ctx.Repo.Repository = repo
-
-		ctx.Repo.Permission, err = models.GetUserRepoPermission(repo, ctx.User)
-		if err != nil {
-			ctx.Error(http.StatusInternalServerError, "GetUserRepoPermission", err)
-			return
-		}
-
-		if !ctx.Repo.HasAccess() {
-			ctx.NotFound()
-			return
 		}
 	}
 }
