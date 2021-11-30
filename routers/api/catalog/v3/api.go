@@ -2,12 +2,12 @@
 // Use of this source code is governed by a MIT-style
 // license that can be found in the LICENSE file.
 
-// Package v5 Catalog Next v5 API.
+// Package v3 Catalog v3 Backport API.
 //
-// This documentation describes the DCS Catalog Next v5 API.
+// This documentation describes the DCS Catalog Backport to v3 API.
 //
 //     Schemes: http, https
-//     BasePath: /api/catalog/v5
+//     BasePath: /api/catalog/v3
 //     Version: 4.0.1
 //     License: MIT http://opensource.org/licenses/MIT
 //
@@ -107,7 +107,7 @@ func sudo() func(ctx *context.APIContext) {
 	}
 }
 
-// Routes registers all catalog v5 APIs routes to web application.
+// Routes registers all catalog v3 APIs routes to web application.
 func Routes() *web.Route {
 	var m = web.NewRoute()
 
