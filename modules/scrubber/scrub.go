@@ -16,6 +16,7 @@ import (
 	"reflect"
 
 	"code.gitea.io/gitea/models"
+	user_model "code.gitea.io/gitea/models/user"
 	"code.gitea.io/gitea/modules/git"
 	"code.gitea.io/gitea/modules/log"
 	repo_module "code.gitea.io/gitea/modules/repository"
@@ -42,7 +43,7 @@ type ScrubSensitiveDataOptions struct {
 }
 
 // ScrubSensitiveData removes names and email addresses from the manifest|project|package|status.json files and scrubs previous history.
-func ScrubSensitiveData(repo *models.Repository, doer *models.User, opts ScrubSensitiveDataOptions) error {
+func ScrubSensitiveData(repo *models.Repository, doer *user_model.User, opts ScrubSensitiveDataOptions) error {
 	localPath, err := models.CreateTemporaryPath("repo-scrubber")
 	if err != nil {
 		return err
@@ -66,7 +67,7 @@ func ScrubSensitiveData(repo *models.Repository, doer *models.User, opts ScrubSe
 			Message:   opts.CommitMessage,
 		}); err != nil {
 			return fmt.Errorf("CommitChanges: %v", err)
-		} else if err := git.Push(localPath, git.PushOptions{
+		} else if err := git.Push(git.DefaultContext, localPath, git.PushOptions{
 			Remote: "origin",
 			Branch: "master",
 			Force:  true,

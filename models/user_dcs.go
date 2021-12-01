@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"code.gitea.io/gitea/models/db"
+	user_model "code.gitea.io/gitea/models/user"
 	"code.gitea.io/gitea/modules/dcs"
 	"code.gitea.io/gitea/modules/log"
 )
@@ -23,7 +24,7 @@ func contains(strings []string, str string) bool {
 }
 
 // GetRepoLanguages gets the languages of the user's repos and returns alphabetized list
-func (u *User) GetRepoLanguages() []string {
+func GetRepoLanguages(u *user_model.User) []string {
 	var languages []string
 	if repos, _, err := GetUserRepositories(&SearchRepoOptions{Actor: u, Private: false, ListOptions: db.ListOptions{PageSize: 0}}); err != nil {
 		log.Error("Error GetUserRepositories: %v", err)
@@ -48,7 +49,7 @@ func (u *User) GetRepoLanguages() []string {
 }
 
 // GetRepoSubjects gets the subjects of the user's repos and returns alphabetized list
-func (u *User) GetRepoSubjects() []string {
+func GetRepoSubjects(u *user_model.User) []string {
 	var subjects []string
 	if repos, _, err := GetUserRepositories(&SearchRepoOptions{Actor: u, Private: false, ListOptions: db.ListOptions{PageSize: 0}}); err != nil {
 		log.Error("Error GetUserRepositories: %v", err)

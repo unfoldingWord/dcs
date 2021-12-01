@@ -11,10 +11,9 @@ import (
 	"code.gitea.io/gitea/models"
 	user_model "code.gitea.io/gitea/models/user"
 	"code.gitea.io/gitea/models/webhook"
-	metadata_service "code.gitea.io/gitea/modules/door43metadata"
-	repository_service "code.gitea.io/gitea/modules/repository"
 	"code.gitea.io/gitea/modules/setting"
 	"code.gitea.io/gitea/services/auth"
+	metadata_service "code.gitea.io/gitea/services/door43metadata"
 	"code.gitea.io/gitea/services/migrations"
 	mirror_service "code.gitea.io/gitea/services/mirror"
 	repository_service "code.gitea.io/gitea/services/repository"
@@ -47,7 +46,7 @@ func registerUpdateDoor43MetadataTask() {
 		Enabled:    false,
 		RunAtStart: false,
 		Schedule:   "@every 2h",
-	}, func(ctx context.Context, _ *models.User, _ Config) error {
+	}, func(ctx context.Context, _ *user_model.User, _ Config) error {
 		return metadata_service.UpdateDoor43Metadata(ctx)
 	})
 }

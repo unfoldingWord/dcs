@@ -209,10 +209,7 @@ func SearchCatalogByCondition(opts *SearchCatalogOptions, cond builder.Cond, loa
 			0, err
 	}
 
-	sess := db.NewSession(db.DefaultContext)
-	defer sess.Close()
-
-	sess.
+	sess := db.GetEngine(db.DefaultContext).
 		Join("INNER", "repository", "`repository`.id = `door43_metadata`.repo_id").
 		Join("INNER", "user", "`repository`.owner_id = `user`.id").
 		Join("LEFT", "release", "`release`.id = `door43_metadata`.release_id").

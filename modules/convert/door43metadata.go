@@ -6,12 +6,13 @@ package convert
 
 import (
 	"code.gitea.io/gitea/models"
+	"code.gitea.io/gitea/models/perm"
 	"code.gitea.io/gitea/modules/log"
 	api "code.gitea.io/gitea/modules/structs"
 )
 
 // ToDoor43MetadataV4 converts a Door43Metadata to api.Door43Metadata for Catalog V4
-func ToDoor43MetadataV4(dm *models.Door43Metadata, mode models.AccessMode) *api.Door43MetadataV4 {
+func ToDoor43MetadataV4(dm *models.Door43Metadata, mode perm.AccessMode) *api.Door43MetadataV4 {
 	err := dm.LoadAttributes()
 	if err != nil {
 		log.Error("loadAttributes: %v", err)
@@ -42,7 +43,7 @@ func ToDoor43MetadataV4(dm *models.Door43Metadata, mode models.AccessMode) *api.
 }
 
 // ToDoor43MetadataV5 converts a Door43Metadata to api.Door43Metadata for Catalog V5
-func ToDoor43MetadataV5(dm *models.Door43Metadata, mode models.AccessMode) *api.Door43MetadataV5 {
+func ToDoor43MetadataV5(dm *models.Door43Metadata, mode perm.AccessMode) *api.Door43MetadataV5 {
 	if err := dm.LoadAttributes(); err != nil {
 		return nil
 	}

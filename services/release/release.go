@@ -13,13 +13,13 @@ import (
 	"code.gitea.io/gitea/models/db"
 	repo_model "code.gitea.io/gitea/models/repo"
 	user_model "code.gitea.io/gitea/models/user"
-	"code.gitea.io/gitea/modules/door43metadata"
 	"code.gitea.io/gitea/modules/git"
 	"code.gitea.io/gitea/modules/log"
 	"code.gitea.io/gitea/modules/notification"
 	"code.gitea.io/gitea/modules/repository"
 	"code.gitea.io/gitea/modules/storage"
 	"code.gitea.io/gitea/modules/timeutil"
+	door43metadata_service "code.gitea.io/gitea/services/door43metadata"
 )
 
 func createTag(gitRepo *git.Repository, rel *models.Release, msg string) (bool, error) {
@@ -139,7 +139,7 @@ func CreateRelease(gitRepo *git.Repository, rel *models.Release, attachmentUUIDs
 			if err := rel.LoadAttributes(); err != nil {
 				return err
 			}
-			return door43metadata.ProcessDoor43MetadataForRepoRelease(rel.Repo, rel)
+			return door43metadata_service.ProcessDoor43MetadataForRepoRelease(rel.Repo, rel)
 		}
 	}
 	/*** END DCS Customizations ***/

@@ -8,6 +8,7 @@ import (
 	"context"
 
 	"code.gitea.io/gitea/models"
+	admin_model "code.gitea.io/gitea/models/admin"
 	"code.gitea.io/gitea/models/db"
 	"code.gitea.io/gitea/modules/log"
 
@@ -37,7 +38,7 @@ func UpdateDoor43Metadata(ctx context.Context) error {
 			log.Trace("Running generate metadata on %v", repo)
 			if err := ProcessDoor43MetadataForRepo(repo); err != nil {
 				log.Warn("Failed to process metadata for repo (%v): %v", repo, err)
-				if err = models.CreateRepositoryNotice("Failed to process metadata for repository (%s): %v", repo.FullName(), err); err != nil {
+				if err = admin_model.CreateRepositoryNotice("Failed to process metadata for repository (%s): %v", repo.FullName(), err); err != nil {
 					log.Error("ProcessDoor43MetadataForRepo: %v", err)
 				}
 			}

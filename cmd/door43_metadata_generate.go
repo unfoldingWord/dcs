@@ -8,9 +8,9 @@ import (
 	"context"
 
 	"code.gitea.io/gitea/models/db"
-	"code.gitea.io/gitea/modules/door43metadata"
 	"code.gitea.io/gitea/modules/log"
 	"code.gitea.io/gitea/modules/setting"
+	door43metadata_service "code.gitea.io/gitea/services/door43metadata"
 
 	"github.com/urfave/cli"
 )
@@ -36,7 +36,7 @@ func runDoor43MetadataGenerate(ctx *cli.Context) error {
 	log.Trace("Log path: %s", setting.LogRootPath)
 	setting.InitDBConfig()
 
-	if err := db.InitEngineWithMigration(context.Background(), door43metadata.GenerateDoor43Metadata); err != nil {
+	if err := db.InitEngineWithMigration(context.Background(), door43metadata_service.GenerateDoor43Metadata); err != nil {
 		log.Fatal("Failed to initialize ORM engine: %v", err)
 		return err
 	}
