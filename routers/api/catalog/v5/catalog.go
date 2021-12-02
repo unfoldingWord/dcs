@@ -87,6 +87,10 @@ func Search(ctx *context.APIContext) {
 	//   in: query
 	//   description: search only for entries with the given book(s) (project ids)
 	//   type: string
+	// - name: partialMatch
+	//   in: query
+	//   description: if true, subject, owner and repo search fields will use partial match (LIKE) when querying the catalog. Default is false
+	//   type: boolean
 	// - name: includeHistory
 	//   in: query
 	//   description: if true, all releases, not just the latest, are included. Default is false
@@ -176,6 +180,10 @@ func SearchOwner(ctx *context.APIContext) {
 	//   in: query
 	//   description: search only for entries with the given book(s) (project ids)
 	//   type: string
+	// - name: partialMatch
+	//   in: query
+	//   description: if true, subject, owner and repo search fields will use partial match (LIKE) when querying the catalog. Default is false
+	//   type: boolean
 	// - name: includeHistory
 	//   in: query
 	//   description: if true, all releases, not just the latest, are included. Default is false
@@ -266,6 +274,10 @@ func SearchRepo(ctx *context.APIContext) {
 	//   in: query
 	//   description: search only for entries with the given book(s) (project ids)
 	//   type: string
+	// - name: partialMatch
+	//   in: query
+	//   description: if true, subject, owner and repo search fields will use partial match (LIKE) when querying the catalog. Default is false
+	//   type: boolean
 	// - name: includeHistory
 	//   in: query
 	//   description: if true, all releases, not just the latest, are included. Default is false
@@ -465,7 +477,7 @@ func searchCatalog(ctx *context.APIContext) {
 		IncludeHistory:  ctx.QueryBool("includeHistory"),
 		ShowIngredients: ctx.QueryBool("showIngredients"),
 		IncludeMetadata: includeMetadata,
-		ExactMatch:      ctx.QueryBool("exactMatch"),
+		PartialMatch:    ctx.QueryBool("partialMatch", false),
 	}
 
 	var sortModes = QueryStrings(ctx, "sort")

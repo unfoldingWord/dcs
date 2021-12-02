@@ -109,7 +109,7 @@ type SearchCatalogOptions struct {
 	ShowIngredients bool
 	Languages       []string
 	OrderBy         []CatalogOrderBy
-	ExactMatch      bool
+	PartialMatch    bool
 }
 
 func getMetadataCondByDBType(dbType schemas.DBType, keyword string, includeMetadata bool) builder.Cond {
@@ -140,8 +140,8 @@ func SearchCatalogCondition(opts *SearchCatalogOptions) builder.Cond {
 	if opts.RepoID > 0 {
 		repoCond = builder.Eq{"`repository`.ID": opts.RepoID}
 	} else {
-		repoCond = GetRepoCond(opts.Repos, opts.ExactMatch)
-		ownerCond = GetOwnerCond(opts.Owners, opts.ExactMatch)
+		repoCond = GetRepoCond(opts.Repos, opts.PartialMatch)
+		ownerCond = GetOwnerCond(opts.Owners, opts.PartialMatch)
 	}
 
 	keywordCond := builder.NewCond()
@@ -154,9 +154,9 @@ func SearchCatalogCondition(opts *SearchCatalogOptions) builder.Cond {
 	stageCond := GetStageCond(opts.Stage)
 	historyCond := GetHistoryCond(opts.IncludeHistory)
 
-	cond := builder.NewCond().And(GetSubjectCond(opts.Subjects, opts.ExactMatch),
+	cond := builder.NewCond().And(GetSubjectCond(opts.Subjects, opts.PartialMatch),
 		GetBookCond(opts.Books),
-		GetLanguageCond(opts.Languages, opts.ExactMatch),
+		GetLanguageCond(opts.Languages, opts.PartialMatch),
 		GetCheckingLevelCond(opts.CheckingLevels),
 		GetTagCond(opts.Tags),
 		repoCond,
@@ -293,24 +293,24 @@ func GetHistoryCond(includeHistory bool) builder.Cond {
 }
 
 // GetSubjectCond gets the subject condition
-func GetSubjectCond(subjects []string, exactMatch bool) builder.Cond {
+func GetSubjectCond(subjects []string, partialMatch bool) builder.Cond {
 	var subjectCond = builder.NewCond()
 	for _, subject := range subjects {
-		if exactMatch {
-			subjectCond = subjectCond.Or(builder.Eq{"LOWER(REPLACE(JSON_EXTRACT(`door43_metadata`.metadata, '$.dublin_core.subject'), '\"', ''))": strings.ToLower(subject)})
-		} else {
+		if partialMatch {
 			subjectCond = subjectCond.Or(builder.Like{"LOWER(REPLACE(JSON_EXTRACT(`door43_metadata`.metadata, '$.dublin_core.subject'), '\"', ''))", strings.ToLower(subject)})
+		} else {
+			subjectCond = subjectCond.Or(builder.Eq{"LOWER(REPLACE(JSON_EXTRACT(`door43_metadata`.metadata, '$.dublin_core.subject'), '\"', ''))": strings.ToLower(subject)})
 		}
 	}
 	return subjectCond
 }
 
 // GetLanguageCond gets the language condition
-func GetLanguageCond(languages []string, exactMatch bool) builder.Cond {
+func GetLanguageCond(languages []string, partialMatch bool) builder.Cond {
 	var langCond = builder.NewCond()
 	for _, lang := range languages {
 		for _, v := range strings.Split(lang, ",") {
-			if exactMatch {
+			if partialMatch {
 				langCond = langCond.Or(builder.Eq{"LOWER(REPLACE(JSON_EXTRACT(`door43_metadata`.metadata, '$.dublin_core.language.identifier'), '\"', ''))": strings.ToLower(v)})
 			} else {
 				langCond = langCond.Or(builder.Like{"LOWER(REPLACE(JSON_EXTRACT(`door43_metadata`.metadata, '$.dublin_core.language.identifier'), '\"', ''))", strings.ToLower(v)})
@@ -354,14 +354,14 @@ func GetTagCond(tags []string) builder.Cond {
 }
 
 // GetRepoCond gets the repo condition
-func GetRepoCond(repos []string, exactMatch bool) builder.Cond {
+func GetRepoCond(repos []string, partialMatch bool) builder.Cond {
 	var repoCond = builder.NewCond()
 	for _, repo := range repos {
 		for _, v := range strings.Split(repo, ",") {
-			if exactMatch {
-				repoCond = repoCond.Or(builder.Eq{"`repository`.lower_name": strings.ToLower(v)})
-			} else {
+			if partialMatch {
 				repoCond = repoCond.Or(builder.Like{"`repository`.lower_name", strings.ToLower(v)})
+			} else {
+				repoCond = repoCond.Or(builder.Eq{"`repository`.lower_name": strings.ToLower(v)})
 			}
 		}
 	}
@@ -369,14 +369,14 @@ func GetRepoCond(repos []string, exactMatch bool) builder.Cond {
 }
 
 // GetOwnerCond gets the owner condition
-func GetOwnerCond(owners []string, exactMatch bool) builder.Cond {
+func GetOwnerCond(owners []string, partialMatch bool) builder.Cond {
 	var ownerCond = builder.NewCond()
 	for _, owner := range owners {
 		for _, v := range strings.Split(owner, ",") {
-			if exactMatch {
-				ownerCond = ownerCond.Or(builder.Eq{"`user`.lower_name": strings.ToLower(v)})
-			} else {
+			if partialMatch {
 				ownerCond = ownerCond.Or(builder.Like{"`user`.lower_name", strings.ToLower(v)})
+			} else {
+				ownerCond = ownerCond.Or(builder.Eq{"`user`.lower_name": strings.ToLower(v)})
 			}
 		}
 	}
@@ -410,7 +410,9 @@ func queryForCatalogV3(e Engine, subject string) (Door43MetadataList, error) {
 	var filteredDMs Door43MetadataList
 
 	for i, dm := range dms {
-		dm.LoadAttributes()
+		if err := dm.LoadAttributes(); err != nil {
+			return nil, err
+		}
 		unique := false
 		for j := 0; j < i; j++ {
 			if dms[j].Repo.LowerName == dm.Repo.LowerName {
@@ -426,5 +428,5 @@ func queryForCatalogV3(e Engine, subject string) (Door43MetadataList, error) {
 	// 	return nil, 0, fmt.Errorf("loadAttributes: %v", err)
 	// }
 
-	return dms, nil
+	return filteredDMs, nil
 }
