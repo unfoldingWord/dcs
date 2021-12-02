@@ -751,7 +751,8 @@ func SettingsPost(ctx *context.Context) {
 		}
 
 		if ctx.Repo.Owner.IsOrganization() {
-			owned, err := ctx.Repo.Owner.IsOwnedBy(ctx.User.ID)
+			org := models.OrgFromUser(ctx.Repo.Owner)
+			owned, err := org.IsOwnedBy(ctx.User.ID)
 			if err != nil {
 				ctx.ServerError("IsOwnedBy", err)
 				return

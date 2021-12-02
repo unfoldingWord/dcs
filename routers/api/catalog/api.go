@@ -67,11 +67,12 @@ import (
 	"fmt"
 	"net/http"
 
-	"code.gitea.io/gitea/models"
+	user_model "code.gitea.io/gitea/models/user"
 	"code.gitea.io/gitea/modules/context"
 	"code.gitea.io/gitea/modules/log"
 	"code.gitea.io/gitea/modules/setting"
 	"code.gitea.io/gitea/modules/web"
+	v3 "code.gitea.io/gitea/routers/api/catalog/v3"
 	v4 "code.gitea.io/gitea/routers/api/catalog/v4"
 	v5 "code.gitea.io/gitea/routers/api/catalog/v5"
 
@@ -82,6 +83,7 @@ import (
 )
 
 var versions = []string{
+	"v3",
 	"v4",
 	"v5",
 }
@@ -91,6 +93,7 @@ var latestVersion = versions[len(versions)-1]
 func AllRoutes(r *web.Route) {
 	r.Mount("/api/catalog/latest", LatestRoutes())
 	r.Mount("/api/catalog/misc", MiscRoutes())
+	r.Mount("/api/catalog/v3", v3.Routes())
 	r.Mount("/api/catalog/v4", v4.Routes())
 	r.Mount("/api/catalog/v5", v5.Routes())
 }
@@ -104,9 +107,9 @@ func sudo() func(ctx *context.APIContext) {
 
 		if len(sudo) > 0 {
 			if ctx.IsSigned && ctx.User.IsAdmin {
-				user, err := models.GetUserByName(sudo)
+				user, err := user_model.GetUserByName(sudo)
 				if err != nil {
-					if models.IsErrUserNotExist(err) {
+					if user_model.IsErrUserNotExist(err) {
 						ctx.NotFound()
 					} else {
 						ctx.Error(http.StatusInternalServerError, "GetUserByName", err)

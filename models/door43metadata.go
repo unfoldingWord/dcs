@@ -7,8 +7,8 @@ package models
 import (
 	"fmt"
 	"sort"
-	"time"
 
+	admin_model "code.gitea.io/gitea/models/admin"
 	"code.gitea.io/gitea/models/db"
 	"code.gitea.io/gitea/modules/log"
 	"code.gitea.io/gitea/modules/setting"
@@ -211,7 +211,7 @@ func InsertDoor43Metadata(dm *Door43Metadata) error {
 		if err := dm.LoadAttributes(); err != nil {
 			return err
 		}
-		if err := CreateRepositoryNotice("Door43 Metadata created for repo: %s, tag: %s", dm.Repo.Name, dm.Release.TagName); err != nil {
+		if err := admin_model.CreateRepositoryNotice("Door43 Metadata created for repo: %s, tag: %s", dm.Repo.Name, dm.Release.TagName); err != nil {
 			return err
 		}
 	}
@@ -236,7 +236,7 @@ func updateDoor43MetadataCols(e db.Engine, dm *Door43Metadata, cols ...string) e
 		if err != nil {
 			return err
 		}
-		if err := CreateRepositoryNotice("Door43 Metadata updated for repo: %s, tag: %s", dm.Repo.Name, dm.Release.TagName); err != nil {
+		if err := admin_model.CreateRepositoryNotice("Door43 Metadata updated for repo: %s, tag: %s", dm.Repo.Name, dm.Release.TagName); err != nil {
 			log.Error("CreateRepositoryNotice: %v", err)
 		}
 	}
@@ -364,11 +364,6 @@ func (dm *Door43Metadata) GetReleaseCount() (int64, error) {
 		Count(&Door43Metadata{})
 }
 
-// GetReleaseDateTime returns the ReleaseDateUnix time stamp as a RFC3339 date, e.g. 2006-01-02T15:04:05Z07:00
-func (dm *Door43Metadata) GetReleaseDateTime() string {
-	return dm.ReleaseDateUnix.Format(time.RFC3339)
-}
-
 // GetDoor43MetadataByRepoIDAndReleaseID returns the metadata of a given release ID (0 = default branch).
 func GetDoor43MetadataByRepoIDAndReleaseID(repoID, releaseID int64) (*Door43Metadata, error) {
 	return getDoor43MetadataByRepoIDAndReleaseID(db.GetEngine(db.DefaultContext), repoID, releaseID)
@@ -444,7 +439,7 @@ func DeleteDoor43Metadata(dm *Door43Metadata) error {
 	if id > 0 && dm.ReleaseID > 0 {
 		if err := dm.LoadAttributes(); err != nil {
 			return err
-		} else if err := CreateRepositoryNotice("Door43 Metadata deleted for repo: %s, tag: %s", dm.Repo.Name, dm.Release.TagName); err != nil {
+		} else if err := admin_model.CreateRepositoryNotice("Door43 Metadata deleted for repo: %s, tag: %s", dm.Repo.Name, dm.Release.TagName); err != nil {
 			log.Error("CreateRepositoryNotice: %v", err)
 		}
 	}
@@ -471,10 +466,7 @@ func DeleteAllDoor43MetadatasByRepoID(repoID int64) (int64, error) {
 
 // GetReposForMetadata gets the IDs of all the repos to process for metadata
 func GetReposForMetadata() ([]int64, error) {
-	sess := db.NewSession(db.DefaultContext)
-	defer sess.Close()
-
-	//records, err := sess.Query("SELECT r.id FROM `repository` r " +
+	//records, err := db.GetEngine(db.DefaultContext).Query("SELECT r.id FROM `repository` r " +
 	//	"JOIN `release` rel ON rel.repo_id = r.id " +
 	//	"LEFT JOIN `door43_metadata` dm ON r.id = dm.repo_id " +
 	//	"AND rel.id = dm.release_id " +
@@ -488,7 +480,7 @@ func GetReposForMetadata() ([]int64, error) {
 	//records, err := sess.Query("SELECT r.id FROM `repository` r " +
 	//	"ORDER BY id ASC")
 	//records, err := sess.Query("SELECT r.id FROM `repository` r WHERE r.is_private = 0 AND r.is_archived = 0 ORDER BY id ASC")
-	records, err := sess.Query("SELECT id FROM `repository` ORDER BY id ASC")
+	records, err := db.GetEngine(db.DefaultContext).Query("SELECT id FROM `repository` ORDER BY id ASC")
 	if err != nil {
 		return nil, err
 	}
@@ -504,10 +496,7 @@ func GetReposForMetadata() ([]int64, error) {
 
 // GetRepoReleaseIDsForMetadata gets the releases ids for a repo
 func GetRepoReleaseIDsForMetadata(repoID int64) ([]int64, error) {
-	sess := db.NewSession(db.DefaultContext)
-	defer sess.Close()
-
-	//records, err := sess.Query("SELECT rel.id as id FROM `repository` r "+
+	//records, err := db.GetEngine(db.DefaultContext).Query("SELECT rel.id as id FROM `repository` r "+
 	//	"INNER JOIN `release` rel ON rel.repo_id = r.id "+
 	//	"LEFT JOIN `door43_metadata` dm ON r.id = dm.repo_id "+
 	//	"AND rel.id = dm.release_id "+
@@ -518,14 +507,13 @@ func GetRepoReleaseIDsForMetadata(repoID int64) ([]int64, error) {
 	//	"AND dm2.release_id = 0 "+
 	//	"WHERE dm2.id IS NULL AND r2.id=? "+
 	//	"ORDER BY id ASC", r.ID, r.ID)
-	records, err := sess.Query("SELECT rel.id as id FROM `repository` r "+
+	records, err := db.GetEngine(db.DefaultContext).Query("SELECT rel.id as id FROM `repository` r "+
 		"INNER JOIN `release` rel ON rel.repo_id = r.id "+
 		"WHERE rel.is_tag = 0 AND r.id=? "+
 		"UNION "+
 		"SELECT 0 as id FROM `repository` r2 "+
 		"WHERE r2.id=? "+
 		"ORDER BY id ASC", repoID, repoID)
-	log.Trace(sess.LastSQL())
 	if err != nil {
 		return nil, err
 	}

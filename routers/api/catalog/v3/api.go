@@ -2,12 +2,12 @@
 // Use of this source code is governed by a MIT-style
 // license that can be found in the LICENSE file.
 
-// Package v5 Catalog Next v5 API.
+// Package v3 Catalog v3 Backport API.
 //
-// This documentation describes the DCS Catalog Next v5 API.
+// This documentation describes the DCS Catalog Backport to v3 API.
 //
 //     Schemes: http, https
-//     BasePath: /api/catalog/v5
+//     BasePath: /api/catalog/v3
 //     Version: 4.0.1
 //     License: MIT http://opensource.org/licenses/MIT
 //
@@ -61,19 +61,16 @@
 //          description: Must be used in combination with BasicAuth if two-factor authentication is enabled.
 //
 // swagger:meta
-package v5
+package v3
 
 import (
 	"net/http"
-	"strings"
 
-	"code.gitea.io/gitea/models"
 	user_model "code.gitea.io/gitea/models/user"
 	"code.gitea.io/gitea/modules/context"
 	"code.gitea.io/gitea/modules/log"
 	"code.gitea.io/gitea/modules/setting"
 	"code.gitea.io/gitea/modules/web"
-
 	_ "code.gitea.io/gitea/routers/api/v1/swagger" // for swagger generation
 
 	"gitea.com/go-chi/session"
@@ -110,73 +107,7 @@ func sudo() func(ctx *context.APIContext) {
 	}
 }
 
-func repoAssignment() func(ctx *context.APIContext) {
-	return func(ctx *context.APIContext) {
-		userName := ctx.Params("username")
-		repoName := ctx.Params("reponame")
-
-		var (
-			owner *user_model.User
-			err   error
-		)
-
-		// Check if the user is the same as the repository owner.
-		if ctx.IsSigned && ctx.User.LowerName == strings.ToLower(userName) {
-			owner = ctx.User
-		} else {
-			owner, err = user_model.GetUserByName(userName)
-			if err != nil {
-				if user_model.IsErrUserNotExist(err) {
-					if redirectUserID, err := user_model.LookupUserRedirect(userName); err == nil {
-						context.RedirectToUser(ctx.Context, userName, redirectUserID)
-					} else if user_model.IsErrUserRedirectNotExist(err) {
-						ctx.NotFound("GetUserByName", err)
-					} else {
-						ctx.Error(http.StatusInternalServerError, "LookupUserRedirect", err)
-					}
-				} else {
-					ctx.Error(http.StatusInternalServerError, "GetUserByName", err)
-				}
-				return
-			}
-		}
-		ctx.Repo.Owner = owner
-
-		// Get repository.
-		repo, err := models.GetRepositoryByName(owner.ID, repoName)
-		if err != nil {
-			if models.IsErrRepoNotExist(err) {
-				redirectRepoID, err := models.LookupRepoRedirect(owner.ID, repoName)
-				if err == nil {
-					context.RedirectToRepo(ctx.Context, redirectRepoID)
-				} else if models.IsErrRepoRedirectNotExist(err) {
-					ctx.NotFound()
-				} else {
-					ctx.Error(http.StatusInternalServerError, "LookupRepoRedirect", err)
-				}
-			} else {
-				ctx.Error(http.StatusInternalServerError, "GetRepositoryByName", err)
-			}
-			return
-		}
-
-		repo.Owner = owner
-		ctx.Repo.Repository = repo
-
-		ctx.Repo.Permission, err = models.GetUserRepoPermission(repo, ctx.User)
-		if err != nil {
-			ctx.Error(http.StatusInternalServerError, "GetUserRepoPermission", err)
-			return
-		}
-
-		if !ctx.Repo.HasAccess() {
-			ctx.NotFound()
-			return
-		}
-	}
-}
-
-// Routes registers all catalog v5 APIs routes to web application.
+// Routes registers all catalog v3 APIs routes to web application.
 func Routes() *web.Route {
 	var m = web.NewRoute()
 
@@ -214,21 +145,7 @@ func Routes() *web.Route {
 			})
 		}
 
-		m.Get("", Search)
-
-		m.Group("/search", func() {
-			m.Get("", Search)
-			m.Group("/{username}", func() {
-				m.Get("", SearchOwner)
-				m.Group("/{reponame}", func() {
-					m.Get("", SearchRepo)
-				}, repoAssignment())
-			})
-		})
-		m.Group("/entry/{username}/{reponame}/{tag}", func() {
-			m.Get("", GetCatalogEntry)
-			m.Get("/metadata", GetCatalogMetadata)
-		}, repoAssignment())
+		m.Get("", CatalogV3)
 	}, sudo())
 
 	return m

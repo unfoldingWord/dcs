@@ -19,7 +19,7 @@ type swaggerResponseCatalogSearchResultsV4 struct {
 // swagger:response CatalogEntryV4
 type swaggerResponseCatalogEntryV4 struct {
 	// in:body
-	Body api.Door43MetadataV4 `json:"body"`
+	Body api.CatalogV4 `json:"body"`
 }
 
 // CatalogSearchResultsV5
@@ -33,7 +33,7 @@ type swaggerResponseCatalogSearchResultsV5 struct {
 // swagger:response CatalogEntryV5
 type swaggerResponseCatalogEntryV5 struct {
 	// in:body
-	Body api.Door43MetadataV5 `json:"body"`
+	Body api.CatalogV5 `json:"body"`
 }
 
 // CatalogMetadata
