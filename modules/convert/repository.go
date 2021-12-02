@@ -5,6 +5,8 @@
 package convert
 
 import (
+	"fmt"
+
 	"code.gitea.io/gitea/models"
 	"code.gitea.io/gitea/models/perm"
 	unit_model "code.gitea.io/gitea/models/unit"
@@ -118,7 +120,7 @@ func innerToRepo(repo *models.Repository, mode perm.AccessMode, isParent bool) *
 		title = (*metadata.Metadata)["dublin_core"].(map[string]interface{})["title"].(string)
 		subject = (*metadata.Metadata)["dublin_core"].(map[string]interface{})["subject"].(string)
 		books = metadata.GetBooks()
-		checkingLevel = (*metadata.Metadata)["checking"].(map[string]interface{})["checking_level"].(string)
+		checkingLevel = fmt.Sprintf("%v", (*metadata.Metadata)["checking"].(map[string]interface{})["checking_level"])
 	} else {
 		language = dcs.GetLanguageFromRepoName(repo.LowerName)
 		subject = dcs.GetSubjectFromRepoName(repo.LowerName)

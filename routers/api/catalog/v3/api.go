@@ -1,14 +1,14 @@
-// Copyright 2020 unfoldingWord. All rights reserved.
+// Copyright 2021 unfoldingWord. All rights reserved.
 // Use of this source code is governed by a MIT-style
 // license that can be found in the LICENSE file.
 
-// Package catalog Catalog Next API.
+// Package v3 Catalog v3 Backport API.
 //
-// This documentation describes the Catalog Next API for all versions and other miscellaneous endpoints.
+// This documentation describes the DCS Catalog Backport to v3 API.
 //
 //     Schemes: http, https
-//     BasePath: /api/catalog
-//     Version: 5.0.0
+//     BasePath: /api/catalog/v3
+//     Version: 4.0.1
 //     License: MIT http://opensource.org/licenses/MIT
 //
 //     Consumes:
@@ -61,10 +61,9 @@
 //          description: Must be used in combination with BasicAuth if two-factor authentication is enabled.
 //
 // swagger:meta
-package catalog
+package v3
 
 import (
-	"fmt"
 	"net/http"
 
 	user_model "code.gitea.io/gitea/models/user"
@@ -72,31 +71,11 @@ import (
 	"code.gitea.io/gitea/modules/log"
 	"code.gitea.io/gitea/modules/setting"
 	"code.gitea.io/gitea/modules/web"
-	v3 "code.gitea.io/gitea/routers/api/catalog/v3"
-	v4 "code.gitea.io/gitea/routers/api/catalog/v4"
-	v5 "code.gitea.io/gitea/routers/api/catalog/v5"
-
-	_ "code.gitea.io/gitea/routers/api/catalog/swagger" // for swagger generation
+	_ "code.gitea.io/gitea/routers/api/v1/swagger" // for swagger generation
 
 	"gitea.com/go-chi/session"
 	"github.com/go-chi/cors"
 )
-
-var versions = []string{
-	"v3",
-	"v4",
-	"v5",
-}
-var latestVersion = versions[len(versions)-1]
-
-// AllRoutes call all the other route functions for the catalog api
-func AllRoutes(r *web.Route) {
-	r.Mount("/api/catalog/latest", LatestRoutes())
-	r.Mount("/api/catalog/misc", MiscRoutes())
-	r.Mount("/api/catalog/v3", v3.Routes())
-	r.Mount("/api/catalog/v4", v4.Routes())
-	r.Mount("/api/catalog/v5", v5.Routes())
-}
 
 func sudo() func(ctx *context.APIContext) {
 	return func(ctx *context.APIContext) {
@@ -128,8 +107,8 @@ func sudo() func(ctx *context.APIContext) {
 	}
 }
 
-// LatestRoutes registers latest redirects to latest version of the catalog API.
-func LatestRoutes() *web.Route {
+// Routes registers all catalog v3 APIs routes to web application.
+func Routes() *web.Route {
 	var m = web.NewRoute()
 
 	m.Use(session.Sessioner(session.Options{
@@ -159,48 +138,15 @@ func LatestRoutes() *web.Route {
 	}))
 
 	m.Group("", func() {
-		m.Get("", func(ctx *context.APIContext) {
-			ctx.Redirect(fmt.Sprintf("/api/catalog/%s", latestVersion))
-		})
-		m.Get("/*", func(ctx *context.APIContext) {
-			ctx.Redirect(fmt.Sprintf("/api/catalog/%s/%s", latestVersion, ctx.Params("*")))
-		})
+		// Miscellaneous
+		if setting.API.EnableSwagger {
+			m.Get("/swagger", func(ctx *context.APIContext) {
+				ctx.Redirect("../swagger")
+			})
+		}
+
+		m.Get("", CatalogV3)
 	}, sudo())
-
-	return m
-}
-
-// MiscRoutes registers catalog API endpoints that are relevant for all versions
-func MiscRoutes() *web.Route {
-	var m = web.NewRoute()
-
-	m.Use(session.Sessioner(session.Options{
-		Provider:       setting.SessionConfig.Provider,
-		ProviderConfig: setting.SessionConfig.ProviderConfig,
-		CookieName:     setting.SessionConfig.CookieName,
-		CookiePath:     setting.SessionConfig.CookiePath,
-		Gclifetime:     setting.SessionConfig.Gclifetime,
-		Maxlifetime:    setting.SessionConfig.Maxlifetime,
-		Secure:         setting.SessionConfig.Secure,
-		Domain:         setting.SessionConfig.Domain,
-	}))
-	m.Use(securityHeaders())
-	if setting.CORSConfig.Enabled {
-		m.Use(cors.Handler(cors.Options{
-			//Scheme:           setting.CORSConfig.Scheme, // FIXME: the cors middleware needs scheme option
-			AllowedOrigins: setting.CORSConfig.AllowDomain,
-			//setting.CORSConfig.AllowSubdomain // FIXME: the cors middleware needs allowSubdomain option
-			AllowedMethods:   setting.CORSConfig.Methods,
-			AllowCredentials: setting.CORSConfig.AllowCredentials,
-			MaxAge:           int(setting.CORSConfig.MaxAge.Seconds()),
-		}))
-	}
-	m.Use(context.APIContexter())
-	m.Use(context.ToggleAPI(&context.ToggleOptions{
-		SignInRequired: setting.Service.RequireSignInView,
-	}))
-
-	m.Get("versions", ListCatalogVersionEndpoints)
 
 	return m
 }

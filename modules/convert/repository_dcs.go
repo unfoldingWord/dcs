@@ -46,7 +46,7 @@ func ToRepoDCS(repo *models.Repository, mode perm.AccessMode) *api.Repository {
 		catalog.Production = &api.CatalogStage{
 			Tag:         prod.BranchOrTag,
 			ReleaseURL:  &url,
-			Released:    prod.GetReleaseDateTime(),
+			Released:    prod.ReleaseDateUnix.AsTime(),
 			ZipballURL:  prod.GetZipballURL(),
 			TarballURL:  prod.GetTarballURL(),
 			GitTreesURL: prod.GetGitTreesURL(),
@@ -59,7 +59,7 @@ func ToRepoDCS(repo *models.Repository, mode perm.AccessMode) *api.Repository {
 		catalog.PreProduction = &api.CatalogStage{
 			Tag:         preprod.BranchOrTag,
 			ReleaseURL:  &url,
-			Released:    preprod.GetReleaseDateTime(),
+			Released:    preprod.ReleaseDateUnix.AsTime(),
 			ZipballURL:  preprod.GetZipballURL(),
 			TarballURL:  preprod.GetTarballURL(),
 			GitTreesURL: preprod.GetGitTreesURL(),
@@ -72,7 +72,7 @@ func ToRepoDCS(repo *models.Repository, mode perm.AccessMode) *api.Repository {
 		catalog.Draft = &api.CatalogStage{
 			Tag:         draft.BranchOrTag,
 			ReleaseURL:  &url,
-			Released:    draft.GetReleaseDateTime(),
+			Released:    draft.ReleaseDateUnix.AsTime(),
 			ZipballURL:  draft.GetZipballURL(),
 			TarballURL:  draft.GetTarballURL(),
 			GitTreesURL: draft.GetGitTreesURL(),
@@ -84,7 +84,7 @@ func ToRepoDCS(repo *models.Repository, mode perm.AccessMode) *api.Repository {
 		catalog.Latest = &api.CatalogStage{
 			Tag:         latest.BranchOrTag,
 			ReleaseURL:  nil,
-			Released:    latest.GetReleaseDateTime(),
+			Released:    latest.ReleaseDateUnix.AsTime(),
 			ZipballURL:  latest.GetZipballURL(),
 			TarballURL:  latest.GetTarballURL(),
 			GitTreesURL: latest.GetGitTreesURL(),
