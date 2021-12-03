@@ -311,9 +311,9 @@ func GetLanguageCond(languages []string, partialMatch bool) builder.Cond {
 	for _, lang := range languages {
 		for _, v := range strings.Split(lang, ",") {
 			if partialMatch {
-				langCond = langCond.Or(builder.Eq{"LOWER(REPLACE(JSON_EXTRACT(`door43_metadata`.metadata, '$.dublin_core.language.identifier'), '\"', ''))": strings.ToLower(v)})
-			} else {
 				langCond = langCond.Or(builder.Like{"LOWER(REPLACE(JSON_EXTRACT(`door43_metadata`.metadata, '$.dublin_core.language.identifier'), '\"', ''))", strings.ToLower(v)})
+			} else {
+				langCond = langCond.Or(builder.Eq{"LOWER(REPLACE(JSON_EXTRACT(`door43_metadata`.metadata, '$.dublin_core.language.identifier'), '\"', ''))": strings.ToLower(v)})
 			}
 		}
 	}
