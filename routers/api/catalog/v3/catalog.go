@@ -52,8 +52,9 @@ func CatalogV3(ctx *context.APIContext) {
 				Title:      langInfo["title"].(string),
 				Direction:  langInfo["direction"].(string),
 			}
-			currentLang.Resources = append(currentLang.Resources, convert.ToCatalogV3Resource(dm))
+			languages = append(languages, currentLang)
 		}
+		currentLang.Resources = append(currentLang.Resources, convert.ToCatalogV3Resource(dm))
 	}
 
 	ctx.JSON(http.StatusOK, api.CatalogV3{
