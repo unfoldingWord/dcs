@@ -24,23 +24,23 @@ type CatalogV3Language struct {
 
 // CatalogV3Resource represents a resource in the catalog v3 resources array
 type CatalogV3Resource struct {
-	Identifier  string        `json:"identifier"`
-	Title       string        `json:"title"`
-	Subject     string        `json:"subject"`
-	Version     string        `json:"version"`
-	Checking    *interface{}  `json:"checking"`
-	Comment     *string       `json:"comment"`
-	Contributor *interface{}  `json:"contributor"`
-	Creator     string        `json:"creator"`
-	Description string        `json:"description"`
-	Formats     *interface{}  `json:"formats"`
-	Issued      time.Time     `json:"issued"`
-	Modified    time.Time     `json:"modified"`
-	Projects    *interface{}  `json:"projects"`
-	Publisher   string        `json:"publisher"`
-	Relation    *interface{}  `json:"relation"`
-	Rights      string        `json:"rights"`
-	Source      []interface{} `json:"source"`
+	Identifier  string                   `json:"identifier"`
+	Title       string                   `json:"title"`
+	Subject     string                   `json:"subject"`
+	Version     string                   `json:"version"`
+	Checking    map[string]string        `json:"checking"`
+	Comment     string                   `json:"comment"`
+	Contributor []interface{}            `json:"contributor"`
+	Creator     string                   `json:"creator"`
+	Description string                   `json:"description"`
+	Formats     []map[string]interface{} `json:"formats"`
+	Issued      time.Time                `json:"issued"`
+	Modified    time.Time                `json:"modified"`
+	Projects    []map[string]interface{} `json:"projects"`
+	Publisher   string                   `json:"publisher"`
+	Relation    []interface{}            `json:"relation"`
+	Rights      string                   `json:"rights"`
+	Source      []interface{}            `json:"source"`
 }
 
 // CatalogV4 represents a repository's metadata of a tag or default branch

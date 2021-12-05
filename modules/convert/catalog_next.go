@@ -42,19 +42,65 @@ func ToCatalogV3Resource(dm *models.Door43Metadata) *api.CatalogV3Resource {
 		}
 	}
 
+	var checking map[string]string
+	if val, ok := (*dm.Metadata)["dublin_core"].(map[string]interface{})["checking"]; ok && val != nil {
+		checking = val.(map[string]string)
+	}
+
+	var comment string
+	if val, ok := (*dm.Metadata)["dublin_core"].(map[string]interface{})["comment"]; ok && val != nil {
+		comment = val.(string)
+	}
+
+	var contributor []interface{}
+	if val, ok := (*dm.Metadata)["dublin_core"].(map[string]interface{})["contributor"]; ok && val != nil {
+		fmt.Printf("HERE: %v\n", val)
+		contributor = val.([]interface{})
+	}
+
+	// TODO: GET THE WHOLE FORMAT AS WELL AS PDF FROM media.yaml
+	var formats []map[string]interface{}
+	var format string
+	if val, ok := (*dm.Metadata)["dublin_core"].(map[string]interface{})["format"]; ok && val != nil {
+		format = val.(string)
+	} else {
+		format = "text/markdown"
+	}
+	format = fmt.Sprintf("application/zip; type=%s content=%s conformsto=%s",
+		(*dm.Metadata)["dublin_core"].(map[string]interface{})["type"].(string),
+		format,
+		(*dm.Metadata)["dublin_core"].(map[string]interface{})["conformsto"].(string))
+	formats = append(formats, map[string]interface{}{
+		"format":    format,
+		"modified":  time.Now(),
+		"signature": "",
+		"size":      0,
+		"ur":        "",
+	})
+
+	var projects []map[string]interface{}
+	if val, ok := (*dm.Metadata)["dublin_core"].(map[string]interface{})["projects"]; ok && val != nil {
+		projects = val.([]map[string]interface{})
+	}
+
+	var relation []interface{}
+	if val, ok := (*dm.Metadata)["dublin_core"].(map[string]interface{})["relation"]; ok && val != nil {
+		relation = val.([]interface{})
+	}
+
 	return &api.CatalogV3Resource{
-		Checking:    (*dm.Metadata)["dublin_core"].(map[string]interface{})["checking"].(*interface{}),
-		Comment:     (*dm.Metadata)["dublin_core"].(map[string]interface{})["comment"].(*string),
-		Contributor: (*dm.Metadata)["dublin_core"].(map[string]interface{})["contributor"].(*interface{}),
+		Checking:    checking,
+		Comment:     comment,
+		Contributor: contributor,
 		Creator:     (*dm.Metadata)["dublin_core"].(map[string]interface{})["creator"].(string),
 		Description: (*dm.Metadata)["dublin_core"].(map[string]interface{})["description"].(string),
-		Formats:     (*dm.Metadata)["dublin_core"].(map[string]interface{})["formats"].(*interface{}),
+		Formats:     formats,
 		Identifier:  (*dm.Metadata)["dublin_core"].(map[string]interface{})["identifier"].(string),
 		Issued:      issued.Local().In(setting.DefaultUILocation),
 		Modified:    modified.Local().In(setting.DefaultUILocation),
-		Projects:    (*dm.Metadata)["projects"].(*interface{}),
+		Projects:    projects,
 		Publisher:   (*dm.Metadata)["dublin_core"].(map[string]interface{})["publisher"].(string),
-		Relation:    (*dm.Metadata)["dublin_core"].(map[string]interface{})["relation"].(*interface{}),
+		Relation:    relation,
 		Rights:      (*dm.Metadata)["dublin_core"].(map[string]interface{})["rights"].(string),
 		Source:      (*dm.Metadata)["dublin_core"].(map[string]interface{})["source"].([]interface{}),
 		Subject:     (*dm.Metadata)["dublin_core"].(map[string]interface{})["subject"].(string),
