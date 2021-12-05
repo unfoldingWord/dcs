@@ -54,7 +54,6 @@ func ToCatalogV3Resource(dm *models.Door43Metadata) *api.CatalogV3Resource {
 
 	var contributor []interface{}
 	if val, ok := (*dm.Metadata)["dublin_core"].(map[string]interface{})["contributor"]; ok && val != nil {
-		fmt.Printf("HERE: %v\n", val)
 		contributor = val.([]interface{})
 	}
 
