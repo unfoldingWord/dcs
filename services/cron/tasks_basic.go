@@ -16,7 +16,8 @@ import (
 	metadata_service "code.gitea.io/gitea/services/door43metadata"
 	"code.gitea.io/gitea/services/migrations"
 	mirror_service "code.gitea.io/gitea/services/mirror"
-	repository_service "code.gitea.io/gitea/services/repository"
+	repo_service "code.gitea.io/gitea/services/repository"
+	archiver_service "code.gitea.io/gitea/services/repository/archiver"
 )
 
 func registerUpdateMirrorTask() {
@@ -67,7 +68,7 @@ func registerRepoHealthCheck() {
 		Args:    []string{},
 	}, func(ctx context.Context, _ *user_model.User, config Config) error {
 		rhcConfig := config.(*RepoHealthCheckConfig)
-		return repository_service.GitFsck(ctx, rhcConfig.Timeout, rhcConfig.Args)
+		return repo_service.GitFsck(ctx, rhcConfig.Timeout, rhcConfig.Args)
 	})
 }
 
@@ -91,7 +92,7 @@ func registerArchiveCleanup() {
 		OlderThan: 24 * time.Hour,
 	}, func(ctx context.Context, _ *user_model.User, config Config) error {
 		acConfig := config.(*OlderThanConfig)
-		return models.DeleteOldRepositoryArchives(ctx, acConfig.OlderThan)
+		return archiver_service.DeleteOldRepositoryArchives(ctx, acConfig.OlderThan)
 	})
 }
 
