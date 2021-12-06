@@ -9,9 +9,11 @@ import (
 	"time"
 
 	"code.gitea.io/gitea/models"
+	"code.gitea.io/gitea/modules/git"
 	"code.gitea.io/gitea/modules/log"
 	"code.gitea.io/gitea/modules/setting"
 	api "code.gitea.io/gitea/modules/structs"
+	"code.gitea.io/gitea/modules/util"
 )
 
 // ToCatalogV3Resource converts a Door43Metadata to a api.CatalogV3 resource entry
@@ -42,9 +44,9 @@ func ToCatalogV3Resource(dm *models.Door43Metadata) *api.CatalogV3Resource {
 		}
 	}
 
-	var checking map[string]string
-	if val, ok := (*dm.Metadata)["dublin_core"].(map[string]interface{})["checking"]; ok && val != nil {
-		checking = val.(map[string]string)
+	var checking map[string]interface{}
+	if val, ok := (*dm.Metadata)["checking"]; ok && val != nil {
+		checking = val.(map[string]interface{})
 	}
 
 	var comment string
@@ -69,17 +71,30 @@ func ToCatalogV3Resource(dm *models.Door43Metadata) *api.CatalogV3Resource {
 		(*dm.Metadata)["dublin_core"].(map[string]interface{})["type"].(string),
 		format,
 		(*dm.Metadata)["dublin_core"].(map[string]interface{})["conformsto"].(string))
+	gitRepo, _ := git.OpenRepository(dm.Repo.RepoPath())
+	var formatModified time.Time
+	if gitRepo != nil {
+		var commit *git.Commit
+		if dm.ReleaseID == 0 {
+			commit, _ = gitRepo.GetBranchCommit(dm.Repo.DefaultBranch)
+		} else {
+			commit, _ = gitRepo.GetTagCommit(dm.BranchOrTag)
+		}
+		if commit != nil {
+			formatModified = commit.Author.When
+		}
+	}
 	formats = append(formats, map[string]interface{}{
 		"format":    format,
-		"modified":  time.Now(),
+		"modified":  formatModified,
 		"signature": "",
 		"size":      0,
-		"ur":        "",
+		"ur":        util.URLJoin(dm.Repo.HTMLURL(), "archive", dm.BranchOrTag+".zip"),
 	})
 
-	var projects []map[string]interface{}
-	if val, ok := (*dm.Metadata)["dublin_core"].(map[string]interface{})["projects"]; ok && val != nil {
-		projects = val.([]map[string]interface{})
+	var projects []interface{}
+	if val, ok := (*dm.Metadata)["projects"]; ok && val != nil {
+		projects = val.([]interface{})
 	}
 
 	var relation []interface{}

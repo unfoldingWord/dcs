@@ -413,10 +413,10 @@ func queryForCatalogV3(e Engine, subject string) (Door43MetadataList, error) {
 		if err := dm.LoadAttributes(); err != nil {
 			return nil, err
 		}
-		unique := false
+		unique := true
 		for j := 0; j < i; j++ {
 			if dms[j].Repo.LowerName == dm.Repo.LowerName {
-				unique = true
+				unique = false
 			}
 		}
 		if unique {

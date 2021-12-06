@@ -28,7 +28,7 @@ type CatalogV3Resource struct {
 	Title       string                   `json:"title"`
 	Subject     string                   `json:"subject"`
 	Version     string                   `json:"version"`
-	Checking    map[string]string        `json:"checking"`
+	Checking    map[string]interface{}   `json:"checking"`
 	Comment     string                   `json:"comment"`
 	Contributor []interface{}            `json:"contributor"`
 	Creator     string                   `json:"creator"`
@@ -36,7 +36,7 @@ type CatalogV3Resource struct {
 	Formats     []map[string]interface{} `json:"formats"`
 	Issued      time.Time                `json:"issued"`
 	Modified    time.Time                `json:"modified"`
-	Projects    []map[string]interface{} `json:"projects"`
+	Projects    []interface{}            `json:"projects"`
 	Publisher   string                   `json:"publisher"`
 	Relation    []interface{}            `json:"relation"`
 	Rights      string                   `json:"rights"`
