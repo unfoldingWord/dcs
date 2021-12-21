@@ -23,22 +23,26 @@ func (s CatalogOrderBy) String() string {
 
 // Strings for sorting result
 const (
-	CatalogOrderByTitle           CatalogOrderBy = "JSON_EXTRACT(`door43_metadata`.metadata, '$.dublin_core.title') ASC"
-	CatalogOrderByTitleReverse    CatalogOrderBy = "JSON_EXTRACT(`door43_metadata`.metadata, '$.dublin_core.title') DESC"
-	CatalogOrderBySubject         CatalogOrderBy = "JSON_EXTRACT(`door43_metadata`.metadata, '$.dublin_core.subject') ASC"
-	CatalogOrderBySubjectReverse  CatalogOrderBy = "JSON_EXTRACT(`door43_metadata`.metadata, '$.dublin_core.subject') DESC"
-	CatalogOrderByTag             CatalogOrderBy = "CAST(TRIM(LEADING 'v' FROM `release`.tag_name) AS unsigned) ASC, `door43_metadata`.branch_or_tag ASC, `door43_metadata`.release_date_unix ASC"
-	CatalogOrderByTagReverse      CatalogOrderBy = "CAST(TRIM(LEADING 'v' FROM `release`.tag_name) AS unsigned) DESC, `door43_metadata`.branch_or_tag DESC, `door43_metadata`.release_date_unix DESC"
-	CatalogOrderByLangCode        CatalogOrderBy = "JSON_EXTRACT(`door43_metadata`.metadata, '$.dublin_core.language.identifier') ASC"
-	CatalogOrderByLangCodeReverse CatalogOrderBy = "JSON_EXTRACT(`door43_metadata`.metadata, '$.dublin_core.language.identifier') DESC"
-	CatalogOrderByOldest          CatalogOrderBy = "`door43_metadata`.release_date_unix ASC"
-	CatalogOrderByNewest          CatalogOrderBy = "`door43_metadata`.release_date_unix DESC"
-	CatalogOrderByReleases        CatalogOrderBy = "release_count ASC"
-	CatalogOrderByReleasesReverse CatalogOrderBy = "release_count DESC"
-	CatalogOrderByStars           CatalogOrderBy = "`repository`.num_stars ASC"
-	CatalogOrderByStarsReverse    CatalogOrderBy = "`repository`.num_stars DESC"
-	CatalogOrderByForks           CatalogOrderBy = "`repository`.num_forks ASC"
-	CatalogOrderByForksReverse    CatalogOrderBy = "`repository`.num_forks DESC"
+	CatalogOrderByTitle             CatalogOrderBy = "JSON_EXTRACT(`door43_metadata`.metadata, '$.dublin_core.title') ASC"
+	CatalogOrderByTitleReverse      CatalogOrderBy = "JSON_EXTRACT(`door43_metadata`.metadata, '$.dublin_core.title') DESC"
+	CatalogOrderBySubject           CatalogOrderBy = "JSON_EXTRACT(`door43_metadata`.metadata, '$.dublin_core.subject') ASC"
+	CatalogOrderBySubjectReverse    CatalogOrderBy = "JSON_EXTRACT(`door43_metadata`.metadata, '$.dublin_core.subject') DESC"
+	CatalogOrderByIdentifier        CatalogOrderBy = "JSON_EXTRACT(`door43_metadata`.metadata, '$.dublin_core.identifier') ASC"
+	CatalogOrderByIdentifierReverse CatalogOrderBy = "JSON_EXTRACT(`door43_metadata`.metadata, '$.dublin_core.identifier') DESC"
+	CatalogOrderByRepoName          CatalogOrderBy = "`repository`.lower_name ASC"
+	CatalogOrderByRepoNameReverse   CatalogOrderBy = "`repository`.lower_name DESC"
+	CatalogOrderByTag               CatalogOrderBy = "CAST(TRIM(LEADING 'v' FROM `release`.tag_name) AS unsigned) ASC, `door43_metadata`.branch_or_tag ASC, `door43_metadata`.release_date_unix ASC"
+	CatalogOrderByTagReverse        CatalogOrderBy = "CAST(TRIM(LEADING 'v' FROM `release`.tag_name) AS unsigned) DESC, `door43_metadata`.branch_or_tag DESC, `door43_metadata`.release_date_unix DESC"
+	CatalogOrderByLangCode          CatalogOrderBy = "JSON_EXTRACT(`door43_metadata`.metadata, '$.dublin_core.language.identifier') ASC"
+	CatalogOrderByLangCodeReverse   CatalogOrderBy = "JSON_EXTRACT(`door43_metadata`.metadata, '$.dublin_core.language.identifier') DESC"
+	CatalogOrderByOldest            CatalogOrderBy = "`door43_metadata`.release_date_unix ASC"
+	CatalogOrderByNewest            CatalogOrderBy = "`door43_metadata`.release_date_unix DESC"
+	CatalogOrderByReleases          CatalogOrderBy = "release_count ASC"
+	CatalogOrderByReleasesReverse   CatalogOrderBy = "release_count DESC"
+	CatalogOrderByStars             CatalogOrderBy = "`repository`.num_stars ASC"
+	CatalogOrderByStarsReverse      CatalogOrderBy = "`repository`.num_stars DESC"
+	CatalogOrderByForks             CatalogOrderBy = "`repository`.num_forks ASC"
+	CatalogOrderByForksReverse      CatalogOrderBy = "`repository`.num_forks DESC"
 )
 
 // Door43MetadataListDefaultPageSize is the default number of repositories
@@ -387,20 +391,29 @@ func GetOwnerCond(owners []string, partialMatch bool) builder.Cond {
 }
 
 // QueryForCatalogV3 Does a special query for all of V3
-func QueryForCatalogV3(subject string) (Door43MetadataList, error) {
-	return queryForCatalogV3(db.GetEngine(db.DefaultContext), subject)
+func QueryForCatalogV3(opts *SearchCatalogOptions) (Door43MetadataList, error) {
+	return queryForCatalogV3(db.GetEngine(db.DefaultContext), opts)
 }
 
-func queryForCatalogV3(e db.Engine, subject string) (Door43MetadataList, error) {
+func queryForCatalogV3(e db.Engine, opts *SearchCatalogOptions) (Door43MetadataList, error) {
 	sess := e.Table(&Door43Metadata{}).
 		Join("INNER", "repository", "`repository`.id = `door43_metadata`.repo_id").
 		Join("INNER", "user", "`repository`.owner_id = `user`.id").
 		Where("(`door43_metadata`.stage = 0 AND `door43_metadata`.repo_id NOT IN (SELECT dm1.repo_id FROM door43_metadata dm1 INNER JOIN repository r1 ON dm1.repo_id = r1.id INNER JOIN user u1 ON u1.id = r1.owner_id WHERE u1.lower_name = \"door43-catalog\" AND dm1.stage = 3)) OR (`door43_metadata`.stage = 3 AND `user`.lower_name = \"door43-catalog\")").
 		And("`door43_metadata`.stage = 3 OR `door43_metadata`.release_date_unix = (SELECT release_date_unix FROM (SELECT dm2.repo_id, dm2.stage, MAX(dm2.release_date_unix) AS release_date_unix FROM door43_metadata dm2 GROUP BY repo_id, dm2.stage ORDER BY dm2.stage) t WHERE `door43_metadata`.repo_id = t.repo_id LIMIT 1)").
-		Where(GetSubjectCond([]string{subject}, true)).
-		OrderBy("`repository`.lower_name").
-		OrderBy("IF(`user`.lower_name = \"door43-catalog\", 0, 1)").
-		OrderBy("IF(`user`.lower_name = \"unfoldingword\", 0, 1)")
+		Where(GetSubjectCond(opts.Subjects, opts.PartialMatch)).
+		Where(GetOwnerCond(opts.Owners, opts.PartialMatch)).
+		Where(GetRepoCond(opts.Repos, opts.PartialMatch)).
+		Where(GetLanguageCond(opts.Languages, opts.PartialMatch))
+
+	for _, orderBy := range opts.OrderBy {
+		sess.OrderBy(orderBy.String())
+	}
+
+	sess.OrderBy(string(CatalogOrderByLangCode)).
+		OrderBy(string(CatalogOrderByIdentifier)).
+		OrderBy("IF(`user`.lower_name = \"door43-catalog\", 0, 1) ASC").
+		OrderBy("IF(`user`.lower_name = \"unfoldingword\", 0, 1) ASC")
 
 	var dms Door43MetadataList
 
@@ -410,8 +423,8 @@ func queryForCatalogV3(e db.Engine, subject string) (Door43MetadataList, error) 
 		return nil, fmt.Errorf("FindAndCount: %v", err)
 	}
 
+	// Filter for unique language/resource combinations
 	var filteredDMs Door43MetadataList
-
 	for i, dm := range dms {
 		if err := dm.LoadAttributes(); err != nil {
 			return nil, err
