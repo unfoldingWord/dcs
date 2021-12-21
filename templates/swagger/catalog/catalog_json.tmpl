@@ -21,7 +21,7 @@
     },
     "version": "5.0.0"
   },
-  "basePath": "/api/catalog",
+  "basePath": "{{AppSubUrl | JSEscape | Safe}}/api/catalog",
   "paths": {
     "/misc/versions": {
       "get": {
@@ -1439,9 +1439,6 @@
       "properties": {
         "checking": {
           "type": "object",
-          "additionalProperties": {
-            "type": "object"
-          },
           "x-go-name": "Checking"
         },
         "comment": {
@@ -1449,10 +1446,7 @@
           "x-go-name": "Comment"
         },
         "contributor": {
-          "type": "array",
-          "items": {
-            "type": "object"
-          },
+          "type": "object",
           "x-go-name": "Contributor"
         },
         "creator": {
@@ -1464,13 +1458,7 @@
           "x-go-name": "Description"
         },
         "formats": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "additionalProperties": {
-              "type": "object"
-            }
-          },
+          "type": "object",
           "x-go-name": "Formats"
         },
         "identifier": {
@@ -1492,10 +1480,7 @@
           "x-go-name": "Owner"
         },
         "projects": {
-          "type": "array",
-          "items": {
-            "type": "object"
-          },
+          "type": "object",
           "x-go-name": "Projects"
         },
         "publisher": {
@@ -1503,10 +1488,7 @@
           "x-go-name": "Publisher"
         },
         "relation": {
-          "type": "array",
-          "items": {
-            "type": "object"
-          },
+          "type": "object",
           "x-go-name": "Relation"
         },
         "repo": {
