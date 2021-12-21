@@ -29,7 +29,7 @@ type CatalogV3Pivoted struct {
 	LastUpdated time.Time           `json:"last_updated"`
 }
 
-// CatalogV3Subjects represents a subject & language combination in the catalog v3 languages array
+// CatalogV3Subject represents a subject & language combination in the catalog v3 languages array
 type CatalogV3Subject struct {
 	Subject     string               `json:"subject"`
 	Identifier  string               `json:"identifier"`
