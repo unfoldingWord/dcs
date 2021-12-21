@@ -246,7 +246,6 @@ fmt:
 .PHONY: vet
 vet:
 	@echo "Running go vet..."
-	@$(GO) vet $(GO_PACKAGES)
 	@GOOS= GOARCH= $(GO) build -mod=vendor gitea.com/unfoldingword/gitea-vet
 	@$(GO) vet -vettool=gitea-vet $(GO_PACKAGES)
 

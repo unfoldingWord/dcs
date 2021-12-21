@@ -34,6 +34,7 @@ import (
 	"code.gitea.io/gitea/modules/upload"
 	"code.gitea.io/gitea/modules/util"
 	"code.gitea.io/gitea/modules/web"
+	asymkey_service "code.gitea.io/gitea/services/asymkey"
 	comment_service "code.gitea.io/gitea/services/comments"
 	"code.gitea.io/gitea/services/forms"
 	issue_service "code.gitea.io/gitea/services/issue"
@@ -107,7 +108,7 @@ func MustAllowPulls(ctx *context.Context) {
 	}
 
 	// User can send pull request if owns a forked repository.
-	if ctx.IsSigned && models.HasForkedRepo(ctx.User.ID, ctx.Repo.Repository.ID) {
+	if ctx.IsSigned && repo_model.HasForkedRepo(ctx.User.ID, ctx.Repo.Repository.ID) {
 		ctx.Repo.PullRequest.Allowed = true
 		ctx.Repo.PullRequest.HeadInfoSubURL = url.PathEscape(ctx.User.Name) + ":" + util.PathEscapeSegments(ctx.Repo.BranchName)
 	}
@@ -733,7 +734,7 @@ func getFileContentFromDefaultBranch(ctx *context.Context, filename string) (str
 	return string(bytes), true
 }
 
-func setTemplateIfExists(ctx *context.Context, ctxDataKey string, possibleDirs []string, possibleFiles []string) {
+func setTemplateIfExists(ctx *context.Context, ctxDataKey string, possibleDirs, possibleFiles []string) {
 	templateCandidates := make([]string, 0, len(possibleFiles))
 	if ctx.FormString("template") != "" {
 		for _, dirName := range possibleDirs {
@@ -775,6 +776,8 @@ func setTemplateIfExists(ctx *context.Context, ctxDataKey string, possibleDirs [
 			}
 			ctx.Data["HasSelectedLabel"] = len(labelIDs) > 0
 			ctx.Data["label_ids"] = strings.Join(labelIDs, ",")
+			ctx.Data["Reference"] = meta.Ref
+			ctx.Data["RefEndName"] = git.RefEndName(meta.Ref)
 			return
 		}
 	}
@@ -786,7 +789,7 @@ func NewIssue(ctx *context.Context) {
 	ctx.Data["PageIsIssueList"] = true
 	ctx.Data["NewIssueChooseTemplate"] = len(ctx.IssueTemplatesFromDefaultBranch()) > 0
 	ctx.Data["RequireHighlightJS"] = true
-	ctx.Data["RequireSimpleMDE"] = true
+	ctx.Data["RequireEasyMDE"] = true
 	ctx.Data["RequireTribute"] = true
 	ctx.Data["PullRequestWorkInProgressPrefixes"] = setting.Repository.PullRequest.WorkInProgressPrefixes
 	title := ctx.FormString("title")
@@ -959,7 +962,7 @@ func NewIssuePost(ctx *context.Context) {
 	ctx.Data["PageIsIssueList"] = true
 	ctx.Data["NewIssueChooseTemplate"] = len(ctx.IssueTemplatesFromDefaultBranch()) > 0
 	ctx.Data["RequireHighlightJS"] = true
-	ctx.Data["RequireSimpleMDE"] = true
+	ctx.Data["RequireEasyMDE"] = true
 	ctx.Data["PullRequestWorkInProgressPrefixes"] = setting.Repository.PullRequest.WorkInProgressPrefixes
 	ctx.Data["IsAttachmentEnabled"] = setting.Attachment.Enabled
 	upload.AddUploadContext(ctx, "comment")
@@ -1144,7 +1147,7 @@ func ViewIssue(ctx *context.Context) {
 
 	ctx.Data["RequireHighlightJS"] = true
 	ctx.Data["RequireTribute"] = true
-	ctx.Data["RequireSimpleMDE"] = true
+	ctx.Data["RequireEasyMDE"] = true
 	ctx.Data["IsProjectsEnabled"] = ctx.Repo.CanRead(unit.TypeProjects)
 	ctx.Data["IsAttachmentEnabled"] = setting.Attachment.Enabled
 	upload.AddUploadContext(ctx, "comment")
@@ -1583,12 +1586,12 @@ func ViewIssue(ctx *context.Context) {
 		}
 		ctx.Data["WillSign"] = false
 		if ctx.User != nil {
-			sign, key, _, err := pull.SignMerge(ctx.User, pull.BaseRepo.RepoPath(), pull.BaseBranch, pull.GetGitRefName())
+			sign, key, _, err := asymkey_service.SignMerge(pull, ctx.User, pull.BaseRepo.RepoPath(), pull.BaseBranch, pull.GetGitRefName())
 			ctx.Data["WillSign"] = sign
 			ctx.Data["SigningKey"] = key
 			if err != nil {
-				if models.IsErrWontSign(err) {
-					ctx.Data["WontSignReason"] = err.(*models.ErrWontSign).Reason
+				if asymkey_service.IsErrWontSign(err) {
+					ctx.Data["WontSignReason"] = err.(*asymkey_service.ErrWontSign).Reason
 				} else {
 					ctx.Data["WontSignReason"] = "error"
 					log.Error("Error whilst checking if could sign pr %d in repo %s. Error: %v", pull.ID, pull.BaseRepo.FullName(), err)
@@ -1634,6 +1637,7 @@ func ViewIssue(ctx *context.Context) {
 	ctx.Data["Participants"] = participants
 	ctx.Data["NumParticipants"] = len(participants)
 	ctx.Data["Issue"] = issue
+	ctx.Data["Reference"] = issue.Ref
 	ctx.Data["SignInLink"] = setting.AppSubURL + "/user/login?redirect_to=" + url.QueryEscape(ctx.Data["Link"].(string))
 	ctx.Data["IsIssuePoster"] = ctx.IsSigned && issue.IsPoster(ctx.User.ID)
 	ctx.Data["HasIssuesOrPullsWritePermission"] = ctx.Repo.CanWriteIssuesOrPulls(issue.IsPull)
@@ -2342,7 +2346,7 @@ func ChangeIssueReaction(ctx *context.Context) {
 		return
 	}
 
-	html, err := ctx.HTMLString(string(tplReactions), map[string]interface{}{
+	html, err := ctx.RenderToString(tplReactions, map[string]interface{}{
 		"ctx":       ctx.Data,
 		"ActionURL": fmt.Sprintf("%s/issues/%d/reactions", ctx.Repo.RepoLink, issue.Index),
 		"Reactions": issue.Reactions.GroupByType(),
@@ -2442,7 +2446,7 @@ func ChangeCommentReaction(ctx *context.Context) {
 		return
 	}
 
-	html, err := ctx.HTMLString(string(tplReactions), map[string]interface{}{
+	html, err := ctx.RenderToString(tplReactions, map[string]interface{}{
 		"ctx":       ctx.Data,
 		"ActionURL": fmt.Sprintf("%s/comments/%d/reactions", ctx.Repo.RepoLink, comment.ID),
 		"Reactions": comment.Reactions.GroupByType(),
@@ -2564,7 +2568,7 @@ func updateAttachments(item interface{}, files []string) error {
 }
 
 func attachmentsHTML(ctx *context.Context, attachments []*repo_model.Attachment, content string) string {
-	attachHTML, err := ctx.HTMLString(string(tplAttachment), map[string]interface{}{
+	attachHTML, err := ctx.RenderToString(tplAttachment, map[string]interface{}{
 		"ctx":         ctx.Data,
 		"Attachments": attachments,
 		"Content":     content,
