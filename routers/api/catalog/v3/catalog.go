@@ -205,9 +205,9 @@ func CatalogSubjectsPivotedSearchV3(ctx *context.APIContext) {
 
 // CatalogSubjectsPivotedBySubjectV3 catalog v3 listing that pivotes the catalog by subject/language for a single subject
 func CatalogSubjectsPivotedBySubjectV3(ctx *context.APIContext) {
-	// swagger:operation GET /v3/subjects/{subject}.json v3 CatalogSubjectsPivotedSearchV3
+	// swagger:operation GET /v3/subjects/{subject}.json v3 CatalogSubjectsPivotedBySubjectV3
 	// ---
-	// summary: Catalog v3 listing pivoted on subject by a given subject (example: /v3/subjects/Open_Bible_Stories.json)
+	// summary: Catalog v3 listing pivoted on subject by a given subject (e.g. /v3/subjects/Open_Bible_Stories.json)
 	// produces:
 	// - application/json
 	// parameters:
