@@ -18,24 +18,28 @@ import (
 
 var searchOrderByMap = map[string]map[string]models.CatalogOrderBy{
 	"asc": {
-		"subject":  models.CatalogOrderBySubject,
-		"title":    models.CatalogOrderByTitle,
-		"released": models.CatalogOrderByOldest,
-		"lang":     models.CatalogOrderByLangCode,
-		"releases": models.CatalogOrderByReleases,
-		"stars":    models.CatalogOrderByStars,
-		"forks":    models.CatalogOrderByForks,
-		"tag":      models.CatalogOrderByTag,
+		"title":      models.CatalogOrderByTitle,
+		"subject":    models.CatalogOrderBySubject,
+		"identifier": models.CatalogOrderByIdentifier,
+		"reponame":   models.CatalogOrderByRepoName,
+		"released":   models.CatalogOrderByOldest,
+		"lang":       models.CatalogOrderByLangCode,
+		"releases":   models.CatalogOrderByReleases,
+		"stars":      models.CatalogOrderByStars,
+		"forks":      models.CatalogOrderByForks,
+		"tag":        models.CatalogOrderByTag,
 	},
 	"desc": {
-		"title":    models.CatalogOrderByTitleReverse,
-		"subject":  models.CatalogOrderBySubjectReverse,
-		"released": models.CatalogOrderByNewest,
-		"lang":     models.CatalogOrderByLangCodeReverse,
-		"releases": models.CatalogOrderByReleasesReverse,
-		"stars":    models.CatalogOrderByStarsReverse,
-		"forks":    models.CatalogOrderByForksReverse,
-		"tag":      models.CatalogOrderByTagReverse,
+		"title":      models.CatalogOrderByTitleReverse,
+		"subject":    models.CatalogOrderBySubjectReverse,
+		"identifier": models.CatalogOrderByIdentifierReverse,
+		"reponame":   models.CatalogOrderByRepoNameReverse,
+		"released":   models.CatalogOrderByNewest,
+		"lang":       models.CatalogOrderByLangCodeReverse,
+		"releases":   models.CatalogOrderByReleasesReverse,
+		"stars":      models.CatalogOrderByStarsReverse,
+		"forks":      models.CatalogOrderByForksReverse,
+		"tag":        models.CatalogOrderByTagReverse,
 	},
 }
 
@@ -49,23 +53,23 @@ func Search(ctx *context.APIContext) {
 	// parameters:
 	// - name: q
 	//   in: query
-	//   description: keyword(s). Can use multiple `q=<keyword>`s or commas for more than one keyword
+	//   description: keyword(s). Can use multiple `q=<keyword>`s or a comma-delimited string for more than one keyword. Is case insensitive
 	//   type: string
 	// - name: owner
 	//   in: query
-	//   description: search only for entries with the given owner name(s).
+	//   description: search only for entries with the given owner name(s). Will perform an exact match (case insensitive) unlesss partialMatch=true
 	//   type: string
 	// - name: repo
 	//   in: query
-	//   description: search only for entries with the given repo name(s).
+	//   description: search only for entries with the given repo name(s). To match multiple, give the parameter multiple times or give a list comma delimited. Will perform an exact match (case insensitive) unlesss partialMatch=true
 	//   type: string
 	// - name: tag
 	//   in: query
-	//   description: search only for entries with the given release tag(s)
+	//   description: search only for entries with the given release tag(s). To match multiple, give the parameter multiple times or give a list comma delimited. Will perform an exact match (case insensitive)
 	//   type: string
 	// - name: lang
 	//   in: query
-	//   description: search only for entries with the given language(s)
+	//   description: search only for entries with the given language(s). To match multiple, give the parameter multiple times or give a list comma delimited. Will perform an exact match (case insensitive) unlesss partialMatch=true
 	//   type: string
 	// - name: stage
 	//   in: query
@@ -77,7 +81,7 @@ func Search(ctx *context.APIContext) {
 	//   type: string
 	// - name: subject
 	//   in: query
-	//   description: search only for entries with the given subject(s). Must match the entire string (case insensitive)
+	//   description: search only for entries with the given subject(s). To match multiple, give the parameter multiple times or give a list comma delimited. Will perform an exact match (case insensitive) unlesss partialMatch=true
 	//   type: string
 	// - name: checkingLevel
 	//   in: query
@@ -85,7 +89,7 @@ func Search(ctx *context.APIContext) {
 	//   type: string
 	// - name: book
 	//   in: query
-	//   description: search only for entries with the given book(s) (project ids)
+	//   description: search only for entries with the given book(s) (project ids). To match multiple, give the parameter multiple times or give a list comma delimited. Will perform an exact match (case insensitive)
 	//   type: string
 	// - name: partialMatch
 	//   in: query
@@ -106,7 +110,7 @@ func Search(ctx *context.APIContext) {
 	// - name: sort
 	//   in: query
 	//   description: sort repos alphanumerically by attribute. Supported values are
-	//                "subject", "title", "tag", "released", "lang", "releases", "stars", "forks".
+	//                "subject", "title", "reponame", "tag", "released", "lang", "releases", "stars", "forks".
 	//                Default is by "language", "subject" and then "tag"
 	//   type: string
 	// - name: order
@@ -141,24 +145,24 @@ func SearchOwner(ctx *context.APIContext) {
 	// parameters:
 	// - name: owner
 	//   in: path
-	//   description: owner of entries
+	//   description: owner of the returned entries
 	//   type: string
 	//   required: true
 	// - name: q
 	//   in: query
-	//   description: keyword(s). Can use multiple `q=<keyword>`s or commas for more than one keyword
+	//   description: keyword(s). Can use multiple `q=<keyword>`s or a comma-delimited string for more than one keyword. Is case insensitive
 	//   type: string
 	// - name: repo
 	//   in: query
-	//   description: search only for entries with the given repo name(s).
+	//   description: search only for entries with the given repo name(s). To match multiple, give the parameter multiple times or give a list comma delimited. Will perform an exact match (case insensitive) unlesss partialMatch=true
 	//   type: string
 	// - name: tag
 	//   in: query
-	//   description: search only for entries with the given release tag(s)
+	//   description: search only for entries with the given release tag(s). To match multiple, give the parameter multiple times or give a list comma delimited. Will perform an exact match (case insensitive)
 	//   type: string
 	// - name: lang
 	//   in: query
-	//   description: search only for entries with the given language(s)
+	//   description: search only for entries with the given language(s). To match multiple, give the parameter multiple times or give a list comma delimited. Will perform an exact match (case insensitive) unlesss partialMatch=true
 	//   type: string
 	// - name: stage
 	//   in: query
@@ -170,7 +174,7 @@ func SearchOwner(ctx *context.APIContext) {
 	//   type: string
 	// - name: subject
 	//   in: query
-	//   description: search only for entries with the given subject(s). Must match the entire string (case insensitive)
+	//   description: search only for entries with the given subject(s). To match multiple, give the parameter multiple times or give a list comma delimited. Will perform an exact match (case insensitive) unlesss partialMatch=true
 	//   type: string
 	// - name: checkingLevel
 	//   in: query
@@ -178,7 +182,7 @@ func SearchOwner(ctx *context.APIContext) {
 	//   type: string
 	// - name: book
 	//   in: query
-	//   description: search only for entries with the given book(s) (project ids)
+	//   description: search only for entries with the given book(s) (project ids). To match multiple, give the parameter multiple times or give a list comma delimited. Will perform an exact match (case insensitive)
 	//   type: string
 	// - name: partialMatch
 	//   in: query
@@ -199,7 +203,7 @@ func SearchOwner(ctx *context.APIContext) {
 	// - name: sort
 	//   in: query
 	//   description: sort repos alphanumerically by attribute. Supported values are
-	//                "subject", "title", "tag", "released", "lang", "releases", "stars", "forks".
+	//                "subject", "title", "reponame", "tag", "released", "lang", "releases", "stars", "forks".
 	//                Default is by "language", "subject" and then "tag"
 	//   type: string
 	// - name: order
@@ -234,25 +238,33 @@ func SearchRepo(ctx *context.APIContext) {
 	// parameters:
 	// - name: owner
 	//   in: path
-	//   description: name of the owner
+	//   description: owner of the returned entries
 	//   type: string
 	//   required: true
 	// - name: repo
 	//   in: path
-	//   description: name of the repo
+	//   description: name of the repo of the returned entries
 	//   type: string
 	//   required: true
 	// - name: q
 	//   in: query
-	//   description: keyword(s). Can use multiple `q=<keyword>`s or commas for more than one keyword
+	//   description: keyword(s). Can use multiple `q=<keyword>`s or a comma-delimited string for more than one keyword. Is case insensitive
+	//   type: string
+	// - name: owner
+	//   in: query
+	//   description: search only for entries with the given owner name(s). Will perform an exact match (case insensitive) unlesss partialMatch=true
+	//   type: string
+	// - name: repo
+	//   in: query
+	//   description: search only for entries with the given repo name(s). To match multiple, give the parameter multiple times or give a list comma delimited. Will perform an exact match (case insensitive) unlesss partialMatch=true
 	//   type: string
 	// - name: tag
 	//   in: query
-	//   description: search only for entries with the given release tag(s)
+	//   description: search only for entries with the given release tag(s). To match multiple, give the parameter multiple times or give a list comma delimited. Will perform an exact match (case insensitive)
 	//   type: string
 	// - name: lang
 	//   in: query
-	//   description: search only for entries with the given language(s)
+	//   description: search only for entries with the given language(s). To match multiple, give the parameter multiple times or give a list comma delimited. Will perform an exact match (case insensitive) unlesss partialMatch=true
 	//   type: string
 	// - name: stage
 	//   in: query
@@ -264,7 +276,7 @@ func SearchRepo(ctx *context.APIContext) {
 	//   type: string
 	// - name: subject
 	//   in: query
-	//   description: search only for entries with the given subject(s). Must match the entire string (case insensitive)
+	//   description: search only for entries with the given subject(s). To match multiple, give the parameter multiple times or give a list comma delimited. Will perform an exact match (case insensitive) unlesss partialMatch=true
 	//   type: string
 	// - name: checkingLevel
 	//   in: query
@@ -272,7 +284,7 @@ func SearchRepo(ctx *context.APIContext) {
 	//   type: string
 	// - name: book
 	//   in: query
-	//   description: search only for entries with the given book(s) (project ids)
+	//   description: search only for entries with the given book(s) (project ids). To match multiple, give the parameter multiple times or give a list comma delimited. Will perform an exact match (case insensitive)
 	//   type: string
 	// - name: partialMatch
 	//   in: query
@@ -293,8 +305,8 @@ func SearchRepo(ctx *context.APIContext) {
 	// - name: sort
 	//   in: query
 	//   description: sort repos alphanumerically by attribute. Supported values are
-	//                "subject", "title", "tag", "released", "lang", "releases", "stars", "forks".
-	//                Default is language,subject,tag
+	//                "subject", "title", "reponame", "tag", "released", "lang", "releases", "stars", "forks".
+	//                Default is by "language", "subject" and then "tag"
 	//   type: string
 	// - name: order
 	//   in: query
