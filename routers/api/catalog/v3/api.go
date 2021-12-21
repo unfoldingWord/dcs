@@ -146,6 +146,13 @@ func Routes() *web.Route {
 		}
 
 		m.Get("", CatalogV3)
+		m.Get("/catalog.json", CatalogV3)
+		m.Get("/search", CatalogSearchV3)
+		m.Group("/subjects", func() {
+			m.Get("/pivoted.json", CatalogSubjectsPivotedV3)
+			m.Get("/{subject}.json", CatalogSubjectsPivotedBySubjectV3)
+			m.Get("/search", CatalogSubjectsPivotedSearchV3)
+		})
 	}, sudo())
 
 	return m

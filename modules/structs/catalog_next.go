@@ -22,6 +22,24 @@ type CatalogV3Language struct {
 	LastUpdated time.Time            `json:"last_updated"`
 }
 
+// CatalogV3Pivoted represents the root of the v3 Pivoted Catalog
+type CatalogV3Pivoted struct {
+	Catalogs    []map[string]string `json:"catalogs"`
+	Subjects    []*CatalogV3Subject `json:"subjects"`
+	LastUpdated time.Time           `json:"last_updated"`
+}
+
+// CatalogV3Subjects represents a subject & language combination in the catalog v3 languages array
+type CatalogV3Subject struct {
+	Subject     string               `json:"subject"`
+	Identifier  string               `json:"identifier"`
+	Language    string               `json:"language"`
+	Resources   []*CatalogV3Resource `json:"resources"`
+	Direction   string               `json:"direction"`
+	Title       string               `json:"title"`
+	LastUpdated time.Time            `json:"last_updated"`
+}
+
 // CatalogV3Resource represents a resource in the catalog v3 resources array
 type CatalogV3Resource struct {
 	Identifier  string        `json:"identifier"`
@@ -41,6 +59,8 @@ type CatalogV3Resource struct {
 	Relation    *interface{}  `json:"relation"`
 	Rights      string        `json:"rights"`
 	Source      []interface{} `json:"source"`
+	Owner       string        `json:"owner"`
+	RepoName    string        `json:"repo"`
 }
 
 // CatalogV4 represents a repository's metadata of a tag or default branch
@@ -94,10 +114,25 @@ type CatalogV5 struct {
 	Ingredients            []interface{} `json:"ingredients,omitempty"`
 }
 
+// CatalogSearchResultsV3 results of a successful search for V3
+type CatalogSearchResultsV3 struct {
+	OK          bool         `json:"ok"`
+	Data        []*CatalogV3 `json:"data"`
+	LastUpdated time.Time    `json:"last_updated"`
+}
+
+// CatalogSearchResultsPivotedV3 results of a successful search for V3 pivoted
+type CatalogSearchResultsPivotedV3 struct {
+	OK          bool                `json:"ok"`
+	Data        []*CatalogV3Pivoted `json:"data"`
+	LastUpdated time.Time           `json:"last_updated"`
+}
+
 // CatalogSearchResultsV4 results of a successful search for V4
 type CatalogSearchResultsV4 struct {
-	OK   bool         `json:"ok"`
-	Data []*CatalogV4 `json:"data"`
+	OK          bool         `json:"ok"`
+	Data        []*CatalogV4 `json:"data"`
+	LastUpdated time.Time    `json:"last_updated"`
 }
 
 // CatalogSearchResultsV5 results of a successful search for V5

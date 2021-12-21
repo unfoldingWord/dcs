@@ -8,6 +8,20 @@ import (
 	api "code.gitea.io/gitea/modules/structs"
 )
 
+// CatalogSearchResultsV3
+// swagger:response CatalogSearchResultsV3
+type swaggerResponseCatalogSearchResultsV3 struct {
+	// in:body
+	Body api.CatalogSearchResultsV3 `json:"body"`
+}
+
+// CatalogSearchResultsPivotedV3
+// swagger:response CatalogSearchResultsPivotedV3
+type swaggerResponseCatalogSearchResultsPivotedV3 struct {
+	// in:body
+	Body api.CatalogSearchResultsPivotedV3 `json:"body"`
+}
+
 // CatalogSearchResultsV4
 // swagger:response CatalogSearchResultsV4
 type swaggerResponseCatalogSearchResultsV4 struct {

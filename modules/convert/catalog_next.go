@@ -6,6 +6,7 @@ package convert
 
 import (
 	"fmt"
+	"strings"
 	"time"
 
 	"code.gitea.io/gitea/models"
@@ -58,9 +59,11 @@ func ToCatalogV3Resource(dm *models.Door43Metadata) *api.CatalogV3Resource {
 		Relation:    (*dm.Metadata)["dublin_core"].(map[string]interface{})["relation"].(*interface{}),
 		Rights:      (*dm.Metadata)["dublin_core"].(map[string]interface{})["rights"].(string),
 		Source:      (*dm.Metadata)["dublin_core"].(map[string]interface{})["source"].([]interface{}),
-		Subject:     (*dm.Metadata)["dublin_core"].(map[string]interface{})["subject"].(string),
+		Subject:     strings.ReplaceAll((*dm.Metadata)["dublin_core"].(map[string]interface{})["subject"].(string), " ", "_"),
 		Title:       (*dm.Metadata)["dublin_core"].(map[string]interface{})["title"].(string),
 		Version:     fmt.Sprintf("%v", (*dm.Metadata)["dublin_core"].(map[string]interface{})["version"]),
+		Owner:       dm.Repo.OwnerName,
+		RepoName:    dm.Repo.Name,
 	}
 }
 

@@ -55,6 +55,14 @@ func RenderCatalogSearch(ctx *context.Context, opts *CatalogSearchOptions) {
 		orderBy = models.CatalogOrderBySubjectReverse
 	case "subject":
 		orderBy = models.CatalogOrderBySubject
+	case "reverseridentifier":
+		orderBy = models.CatalogOrderByIdentifierReverse
+	case "identifier":
+		orderBy = models.CatalogOrderByIdentifier
+	case "reverserepo":
+		orderBy = models.CatalogOrderByRepoNameReverse
+	case "repo":
+		orderBy = models.CatalogOrderByRepoName
 	case "reversetag":
 		orderBy = models.CatalogOrderByTagReverse
 	case "tag":
