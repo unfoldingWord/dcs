@@ -195,8 +195,8 @@
         "tags": [
           "v3"
         ],
-        "summary": "Catalog v3 listing pivoted on subject by a given subject",
-        "operationId": "CatalogSubjectsPivotedSearchV3",
+        "summary": "Catalog v3 listing pivoted on subject by a given subject (e.g. /v3/subjects/Open_Bible_Stories.json)",
+        "operationId": "CatalogSubjectsPivotedBySubjectV3",
         "parameters": [
           {
             "type": "string",
@@ -1439,9 +1439,6 @@
       "properties": {
         "checking": {
           "type": "object",
-          "additionalProperties": {
-            "type": "object"
-          },
           "x-go-name": "Checking"
         },
         "comment": {
@@ -1449,10 +1446,7 @@
           "x-go-name": "Comment"
         },
         "contributor": {
-          "type": "array",
-          "items": {
-            "type": "object"
-          },
+          "type": "object",
           "x-go-name": "Contributor"
         },
         "creator": {
@@ -1464,13 +1458,7 @@
           "x-go-name": "Description"
         },
         "formats": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "additionalProperties": {
-              "type": "object"
-            }
-          },
+          "type": "object",
           "x-go-name": "Formats"
         },
         "identifier": {
@@ -1492,10 +1480,7 @@
           "x-go-name": "Owner"
         },
         "projects": {
-          "type": "array",
-          "items": {
-            "type": "object"
-          },
+          "type": "object",
           "x-go-name": "Projects"
         },
         "publisher": {
@@ -1503,10 +1488,7 @@
           "x-go-name": "Publisher"
         },
         "relation": {
-          "type": "array",
-          "items": {
-            "type": "object"
-          },
+          "type": "object",
           "x-go-name": "Relation"
         },
         "repo": {
@@ -1540,7 +1522,7 @@
       "x-go-package": "code.gitea.io/gitea/modules/structs"
     },
     "CatalogV3Subject": {
-      "description": "CatalogV3Subjects represents a subject \u0026 language combination in the catalog v3 languages array",
+      "description": "CatalogV3Subject represents a subject \u0026 language combination in the catalog v3 languages array",
       "type": "object",
       "properties": {
         "direction": {
