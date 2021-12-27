@@ -138,6 +138,20 @@ func innerToRepo(repo *repo_model.Repository, mode perm.AccessMode, isParent boo
 		}
 	}
 
+	var transfer *api.RepoTransfer
+	if repo.Status == repo_model.RepositoryPendingTransfer {
+		t, err := models.GetPendingRepositoryTransfer(repo)
+		if err != nil && !models.IsErrNoPendingTransfer(err) {
+			log.Warn("GetPendingRepositoryTransfer: %v", err)
+		} else {
+			if err := t.LoadAttributes(); err != nil {
+				log.Warn("LoadAttributes of RepoTransfer: %v", err)
+			} else {
+				transfer = ToRepoTransfer(t)
+			}
+		}
+	}
+
 	return &api.Repository{
 		ID:                        repo.ID,
 		Owner:                     ToUserWithAccessMode(repo.Owner, mode),
@@ -188,5 +202,20 @@ func innerToRepo(repo *repo_model.Repository, mode perm.AccessMode, isParent boo
 		CheckingLevel:             checkingLevel,
 		Internal:                  !repo.IsPrivate && repo.Owner.Visibility == api.VisibleTypePrivate,
 		MirrorInterval:            mirrorInterval,
+		RepoTransfer:              transfer,
+	}
+}
+
+// ToRepoTransfer convert a models.RepoTransfer to a structs.RepeTransfer
+func ToRepoTransfer(t *models.RepoTransfer) *api.RepoTransfer {
+	var teams []*api.Team
+	for _, v := range t.Teams {
+		teams = append(teams, ToTeam(v))
+	}
+
+	return &api.RepoTransfer{
+		Doer:      ToUser(t.Doer, nil),
+		Recipient: ToUser(t.Recipient, nil),
+		Teams:     teams,
 	}
 }

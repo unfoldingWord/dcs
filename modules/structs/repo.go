@@ -99,6 +99,7 @@ type Repository struct {
 	CheckingLevel             string           `json:"checking_level"`
 	Catalog                   *CatalogStages   `json:"catalog"`
 	MirrorInterval            string           `json:"mirror_interval"`
+	RepoTransfer              *RepoTransfer    `json:"repo_transfer"`
 }
 
 // CreateRepoOption options when creating repository
@@ -342,3 +343,10 @@ var (
 		CodebaseService,
 	}
 )
+
+// RepoTransfer represents a pending repo transfer
+type RepoTransfer struct {
+	Doer      *User   `json:"doer"`
+	Recipient *User   `json:"recipient"`
+	Teams     []*Team `json:"teams"`
+}
