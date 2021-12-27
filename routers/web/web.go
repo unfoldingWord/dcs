@@ -1091,4 +1091,15 @@ func RegisterRoutes(m *web.Route) {
 		m.Get("", dcs.Catalog)
 	}, ignSignIn)
 	/*** END DCS Customizations ***/
+
+	m.NotFound(func(w http.ResponseWriter, req *http.Request) {
+		escapedPath := req.URL.EscapedPath()
+		if len(escapedPath) > 1 && escapedPath[len(escapedPath)-1] == '/' {
+			http.Redirect(w, req, setting.AppSubURL+escapedPath[:len(escapedPath)-1], http.StatusTemporaryRedirect)
+			return
+		}
+		ctx := context.GetContext(req)
+		ctx.NotFound("", nil)
+	})
+
 }
