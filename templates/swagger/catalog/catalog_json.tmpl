@@ -21,7 +21,7 @@
     },
     "version": "5.0.0"
   },
-  "basePath": "{{AppSubUrl | JSEscape | Safe}}/api/catalog",
+  "basePath": "/api/catalog",
   "paths": {
     "/misc/versions": {
       "get": {
@@ -43,7 +43,7 @@
         }
       }
     },
-    "/v3": {
+    "/v3/catalog.json": {
       "get": {
         "produces": [
           "application/json"
@@ -51,19 +51,164 @@
         "tags": [
           "v3"
         ],
-        "summary": "Catalog v3 listing",
+        "summary": "Catalog v3 listing by language, back-port of https://api.door43.org/v3/catalog.json",
         "operationId": "CatalogV3",
+        "responses": {
+          "200": {
+            "$ref": "#/responses/CatalogSearchResultsV3"
+          },
+          "422": {
+            "$ref": "#/responses/validationError"
+          }
+        }
+      }
+    },
+    "/v3/search": {
+      "get": {
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "v3"
+        ],
+        "summary": "Catalog v3 search",
+        "operationId": "CatalogSearchV3",
         "parameters": [
           {
             "type": "string",
-            "description": "If present, should list only items by the given subject (Bible, Aligned Bible, Open Bible Stories, etc.)",
+            "description": "search only for entries with the given owner name(s). Will perform an exact match (case insensitive) unlesss partialMatch=true",
+            "name": "owner",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "description": "search only for entries with the given repo name(s). To match multiple, give the parameter multiple times or give a list comma delimited. Will perform an exact match (case insensitive) unlesss partialMatch=true",
+            "name": "repo",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "description": "search only for entries with the given language(s). To match multiple, give the parameter multiple times or give a list comma delimited. Will perform an exact match (case insensitive)",
+            "name": "lang",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "description": "search only for entries with the given subject(s). To match multiple, give the parameter multiple times or give a list comma delimited. Will perform an exact match (case insensitive) unlesss partialMatch=true",
             "name": "subject",
+            "in": "query"
+          },
+          {
+            "type": "boolean",
+            "description": "if true, subject, owner and repo search fields will use partial match (LIKE) when querying the catalog. Default is false",
+            "name": "partialMatch",
             "in": "query"
           }
         ],
         "responses": {
           "200": {
-            "$ref": "#/responses/CatalogSearchResultsV5"
+            "$ref": "#/responses/CatalogSearchResultsV3"
+          },
+          "422": {
+            "$ref": "#/responses/validationError"
+          }
+        }
+      }
+    },
+    "/v3/subjects/pivoted.json": {
+      "get": {
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "v3"
+        ],
+        "summary": "Catalog v3 listing pivoted by subject/language, back-port of https://api.door43.org/v3/subjects/pivoted.json",
+        "operationId": "CatalogSubjectsPivotedV3",
+        "responses": {
+          "200": {
+            "$ref": "#/responses/CatalogSearchResultsPivotedV3"
+          },
+          "422": {
+            "$ref": "#/responses/validationError"
+          }
+        }
+      }
+    },
+    "/v3/subjects/search": {
+      "get": {
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "v3"
+        ],
+        "summary": "Catalog v3 search pivoted by subject/language",
+        "operationId": "CatalogSubjectsPivotedSearchV3",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "search only for entries with the given owner name(s). Will perform an exact match (case insensitive) unlesss partialMatch=true",
+            "name": "owner",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "description": "search only for entries with the given repo name(s). To match multiple, give the parameter multiple times or give a list comma delimited. Will perform an exact match (case insensitive) unlesss partialMatch=true",
+            "name": "repo",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "description": "search only for entries with the given language(s). To match multiple, give the parameter multiple times or give a list comma delimited. Will perform an exact match (case insensitive)",
+            "name": "lang",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "description": "search only for entries with the given subject(s). To match multiple, give the parameter multiple times or give a list comma delimited. Will perform an exact match (case insensitive) unlesss partialMatch=true",
+            "name": "subject",
+            "in": "query"
+          },
+          {
+            "type": "boolean",
+            "description": "if true, subject, owner and repo search fields will use partial match (LIKE) when querying the catalog. Default is false",
+            "name": "partialMatch",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/CatalogSearchResultsPivotedV3"
+          },
+          "422": {
+            "$ref": "#/responses/validationError"
+          }
+        }
+      }
+    },
+    "/v3/subjects/{subject}.json": {
+      "get": {
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "v3"
+        ],
+        "summary": "Catalog v3 listing pivoted on subject by a given subject (e.g. /v3/subjects/Open_Bible_Stories.json)",
+        "operationId": "CatalogSubjectsPivotedBySubjectV3",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "subject to query",
+            "name": "subject",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/CatalogSearchResultsPivotedV3"
           },
           "422": {
             "$ref": "#/responses/validationError"
@@ -242,7 +387,7 @@
           },
           {
             "type": "string",
-            "description": "sort repos alphanumerically by attribute. Supported values are \"subject\", \"title\", \"tag\", \"released\", \"lang\", \"releases\", \"stars\", \"forks\". Default is by \"language\", \"subject\" and then \"tag\"",
+            "description": "sort repos alphanumerically by attribute. Supported values are \"subject\", \"title\", \"reponame\", \"tag\", \"released\", \"lang\", \"releases\", \"stars\", \"forks\". Default is by \"language\", \"subject\" and then \"tag\"",
             "name": "sort",
             "in": "query"
           },
@@ -361,7 +506,7 @@
           },
           {
             "type": "string",
-            "description": "sort repos alphanumerically by attribute. Supported values are \"subject\", \"title\", \"tag\", \"released\", \"lang\", \"releases\", \"stars\", \"forks\". Default is by \"language\", \"subject\" and then \"tag\"",
+            "description": "sort repos alphanumerically by attribute. Supported values are \"subject\", \"title\", \"reponame\", \"tag\", \"released\", \"lang\", \"releases\", \"stars\", \"forks\". Default is by \"language\", \"subject\" and then \"tag\"",
             "name": "sort",
             "in": "query"
           },
@@ -481,7 +626,7 @@
           },
           {
             "type": "string",
-            "description": "sort repos alphanumerically by attribute. Supported values are \"subject\", \"title\", \"tag\", \"released\", \"lang\", \"releases\", \"stars\", \"forks\". Default is language,subject,tag",
+            "description": "sort repos alphanumerically by attribute. Supported values are \"subject\", \"title\", \"reponame\", \"tag\", \"released\", \"lang\", \"releases\", \"stars\", \"forks\". Default is by \"language\", \"subject\" and then \"tag\"",
             "name": "sort",
             "in": "query"
           },
@@ -613,31 +758,31 @@
         "parameters": [
           {
             "type": "string",
-            "description": "keyword(s). Can use multiple `q=\u003ckeyword\u003e`s or commas for more than one keyword",
+            "description": "keyword(s). Can use multiple `q=\u003ckeyword\u003e`s or a comma-delimited string for more than one keyword. Is case insensitive",
             "name": "q",
             "in": "query"
           },
           {
             "type": "string",
-            "description": "search only for entries with the given owner name(s).",
+            "description": "search only for entries with the given owner name(s). Will perform an exact match (case insensitive) unlesss partialMatch=true",
             "name": "owner",
             "in": "query"
           },
           {
             "type": "string",
-            "description": "search only for entries with the given repo name(s).",
+            "description": "search only for entries with the given repo name(s). To match multiple, give the parameter multiple times or give a list comma delimited. Will perform an exact match (case insensitive) unlesss partialMatch=true",
             "name": "repo",
             "in": "query"
           },
           {
             "type": "string",
-            "description": "search only for entries with the given release tag(s)",
+            "description": "search only for entries with the given release tag(s). To match multiple, give the parameter multiple times or give a list comma delimited. Will perform an exact match (case insensitive)",
             "name": "tag",
             "in": "query"
           },
           {
             "type": "string",
-            "description": "search only for entries with the given language(s)",
+            "description": "search only for entries with the given language(s). To match multiple, give the parameter multiple times or give a list comma delimited. Will perform an exact match (case insensitive) unlesss partialMatch=true",
             "name": "lang",
             "in": "query"
           },
@@ -649,7 +794,7 @@
           },
           {
             "type": "string",
-            "description": "search only for entries with the given subject(s). Must match the entire string (case insensitive)",
+            "description": "search only for entries with the given subject(s). To match multiple, give the parameter multiple times or give a list comma delimited. Will perform an exact match (case insensitive) unlesss partialMatch=true",
             "name": "subject",
             "in": "query"
           },
@@ -661,7 +806,7 @@
           },
           {
             "type": "string",
-            "description": "search only for entries with the given book(s) (project ids)",
+            "description": "search only for entries with the given book(s) (project ids). To match multiple, give the parameter multiple times or give a list comma delimited. Will perform an exact match (case insensitive)",
             "name": "book",
             "in": "query"
           },
@@ -691,7 +836,7 @@
           },
           {
             "type": "string",
-            "description": "sort repos alphanumerically by attribute. Supported values are \"subject\", \"title\", \"tag\", \"released\", \"lang\", \"releases\", \"stars\", \"forks\". Default is by \"language\", \"subject\" and then \"tag\"",
+            "description": "sort repos alphanumerically by attribute. Supported values are \"subject\", \"title\", \"reponame\", \"tag\", \"released\", \"lang\", \"releases\", \"stars\", \"forks\". Default is by \"language\", \"subject\" and then \"tag\"",
             "name": "sort",
             "in": "query"
           },
@@ -737,32 +882,32 @@
         "parameters": [
           {
             "type": "string",
-            "description": "owner of entries",
+            "description": "owner of the returned entries",
             "name": "owner",
             "in": "path",
             "required": true
           },
           {
             "type": "string",
-            "description": "keyword(s). Can use multiple `q=\u003ckeyword\u003e`s or commas for more than one keyword",
+            "description": "keyword(s). Can use multiple `q=\u003ckeyword\u003e`s or a comma-delimited string for more than one keyword. Is case insensitive",
             "name": "q",
             "in": "query"
           },
           {
             "type": "string",
-            "description": "search only for entries with the given repo name(s).",
+            "description": "search only for entries with the given repo name(s). To match multiple, give the parameter multiple times or give a list comma delimited. Will perform an exact match (case insensitive) unlesss partialMatch=true",
             "name": "repo",
             "in": "query"
           },
           {
             "type": "string",
-            "description": "search only for entries with the given release tag(s)",
+            "description": "search only for entries with the given release tag(s). To match multiple, give the parameter multiple times or give a list comma delimited. Will perform an exact match (case insensitive)",
             "name": "tag",
             "in": "query"
           },
           {
             "type": "string",
-            "description": "search only for entries with the given language(s)",
+            "description": "search only for entries with the given language(s). To match multiple, give the parameter multiple times or give a list comma delimited. Will perform an exact match (case insensitive) unlesss partialMatch=true",
             "name": "lang",
             "in": "query"
           },
@@ -774,7 +919,7 @@
           },
           {
             "type": "string",
-            "description": "search only for entries with the given subject(s). Must match the entire string (case insensitive)",
+            "description": "search only for entries with the given subject(s). To match multiple, give the parameter multiple times or give a list comma delimited. Will perform an exact match (case insensitive) unlesss partialMatch=true",
             "name": "subject",
             "in": "query"
           },
@@ -786,7 +931,7 @@
           },
           {
             "type": "string",
-            "description": "search only for entries with the given book(s) (project ids)",
+            "description": "search only for entries with the given book(s) (project ids). To match multiple, give the parameter multiple times or give a list comma delimited. Will perform an exact match (case insensitive)",
             "name": "book",
             "in": "query"
           },
@@ -816,7 +961,7 @@
           },
           {
             "type": "string",
-            "description": "sort repos alphanumerically by attribute. Supported values are \"subject\", \"title\", \"tag\", \"released\", \"lang\", \"releases\", \"stars\", \"forks\". Default is by \"language\", \"subject\" and then \"tag\"",
+            "description": "sort repos alphanumerically by attribute. Supported values are \"subject\", \"title\", \"reponame\", \"tag\", \"released\", \"lang\", \"releases\", \"stars\", \"forks\". Default is by \"language\", \"subject\" and then \"tag\"",
             "name": "sort",
             "in": "query"
           },
@@ -862,33 +1007,45 @@
         "parameters": [
           {
             "type": "string",
-            "description": "name of the owner",
+            "description": "owner of the returned entries",
             "name": "owner",
             "in": "path",
             "required": true
           },
           {
             "type": "string",
-            "description": "name of the repo",
+            "description": "name of the repo of the returned entries",
             "name": "repo",
             "in": "path",
             "required": true
           },
           {
             "type": "string",
-            "description": "keyword(s). Can use multiple `q=\u003ckeyword\u003e`s or commas for more than one keyword",
+            "description": "keyword(s). Can use multiple `q=\u003ckeyword\u003e`s or a comma-delimited string for more than one keyword. Is case insensitive",
             "name": "q",
             "in": "query"
           },
           {
             "type": "string",
-            "description": "search only for entries with the given release tag(s)",
+            "description": "search only for entries with the given owner name(s). Will perform an exact match (case insensitive) unlesss partialMatch=true",
+            "name": "owner",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "description": "search only for entries with the given repo name(s). To match multiple, give the parameter multiple times or give a list comma delimited. Will perform an exact match (case insensitive) unlesss partialMatch=true",
+            "name": "repo",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "description": "search only for entries with the given release tag(s). To match multiple, give the parameter multiple times or give a list comma delimited. Will perform an exact match (case insensitive)",
             "name": "tag",
             "in": "query"
           },
           {
             "type": "string",
-            "description": "search only for entries with the given language(s)",
+            "description": "search only for entries with the given language(s). To match multiple, give the parameter multiple times or give a list comma delimited. Will perform an exact match (case insensitive) unlesss partialMatch=true",
             "name": "lang",
             "in": "query"
           },
@@ -900,7 +1057,7 @@
           },
           {
             "type": "string",
-            "description": "search only for entries with the given subject(s). Must match the entire string (case insensitive)",
+            "description": "search only for entries with the given subject(s). To match multiple, give the parameter multiple times or give a list comma delimited. Will perform an exact match (case insensitive) unlesss partialMatch=true",
             "name": "subject",
             "in": "query"
           },
@@ -912,7 +1069,7 @@
           },
           {
             "type": "string",
-            "description": "search only for entries with the given book(s) (project ids)",
+            "description": "search only for entries with the given book(s) (project ids). To match multiple, give the parameter multiple times or give a list comma delimited. Will perform an exact match (case insensitive)",
             "name": "book",
             "in": "query"
           },
@@ -942,7 +1099,7 @@
           },
           {
             "type": "string",
-            "description": "sort repos alphanumerically by attribute. Supported values are \"subject\", \"title\", \"tag\", \"released\", \"lang\", \"releases\", \"stars\", \"forks\". Default is language,subject,tag",
+            "description": "sort repos alphanumerically by attribute. Supported values are \"subject\", \"title\", \"reponame\", \"tag\", \"released\", \"lang\", \"releases\", \"stars\", \"forks\". Default is by \"language\", \"subject\" and then \"tag\"",
             "name": "sort",
             "in": "query"
           },
@@ -1040,6 +1197,52 @@
       },
       "x-go-package": "code.gitea.io/gitea/modules/structs"
     },
+    "CatalogSearchResultsPivotedV3": {
+      "description": "CatalogSearchResultsPivotedV3 results of a successful search for V3 pivoted",
+      "type": "object",
+      "properties": {
+        "data": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/CatalogV3Pivoted"
+          },
+          "x-go-name": "Data"
+        },
+        "last_updated": {
+          "type": "string",
+          "format": "date-time",
+          "x-go-name": "LastUpdated"
+        },
+        "ok": {
+          "type": "boolean",
+          "x-go-name": "OK"
+        }
+      },
+      "x-go-package": "code.gitea.io/gitea/modules/structs"
+    },
+    "CatalogSearchResultsV3": {
+      "description": "CatalogSearchResultsV3 results of a successful search for V3",
+      "type": "object",
+      "properties": {
+        "data": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/CatalogV3"
+          },
+          "x-go-name": "Data"
+        },
+        "last_updated": {
+          "type": "string",
+          "format": "date-time",
+          "x-go-name": "LastUpdated"
+        },
+        "ok": {
+          "type": "boolean",
+          "x-go-name": "OK"
+        }
+      },
+      "x-go-package": "code.gitea.io/gitea/modules/structs"
+    },
     "CatalogSearchResultsV4": {
       "description": "CatalogSearchResultsV4 results of a successful search for V4",
       "type": "object",
@@ -1050,6 +1253,11 @@
             "$ref": "#/definitions/CatalogV4"
           },
           "x-go-name": "Data"
+        },
+        "last_updated": {
+          "type": "string",
+          "format": "date-time",
+          "x-go-name": "LastUpdated"
         },
         "ok": {
           "type": "boolean",
@@ -1132,6 +1340,240 @@
         },
         "prod": {
           "$ref": "#/definitions/CatalogStage"
+        }
+      },
+      "x-go-package": "code.gitea.io/gitea/modules/structs"
+    },
+    "CatalogV3": {
+      "description": "CatalogV3 represents the root of the v3 Catalog",
+      "type": "object",
+      "properties": {
+        "catalogs": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "x-go-name": "Catalogs"
+        },
+        "languages": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/CatalogV3Language"
+          },
+          "x-go-name": "Languages"
+        },
+        "last_updated": {
+          "type": "string",
+          "format": "date-time",
+          "x-go-name": "LastUpdated"
+        }
+      },
+      "x-go-package": "code.gitea.io/gitea/modules/structs"
+    },
+    "CatalogV3Language": {
+      "description": "CatalogV3Language represents a language in the catalog v3 languages array",
+      "type": "object",
+      "properties": {
+        "direction": {
+          "type": "string",
+          "x-go-name": "Direction"
+        },
+        "identifier": {
+          "type": "string",
+          "x-go-name": "Identifier"
+        },
+        "last_updated": {
+          "type": "string",
+          "format": "date-time",
+          "x-go-name": "LastUpdated"
+        },
+        "resources": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/CatalogV3Resource"
+          },
+          "x-go-name": "Resources"
+        },
+        "title": {
+          "type": "string",
+          "x-go-name": "Title"
+        }
+      },
+      "x-go-package": "code.gitea.io/gitea/modules/structs"
+    },
+    "CatalogV3Pivoted": {
+      "description": "CatalogV3Pivoted represents the root of the v3 Pivoted Catalog",
+      "type": "object",
+      "properties": {
+        "catalogs": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "x-go-name": "Catalogs"
+        },
+        "last_updated": {
+          "type": "string",
+          "format": "date-time",
+          "x-go-name": "LastUpdated"
+        },
+        "subjects": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/CatalogV3Subject"
+          },
+          "x-go-name": "Subjects"
+        }
+      },
+      "x-go-package": "code.gitea.io/gitea/modules/structs"
+    },
+    "CatalogV3Resource": {
+      "description": "CatalogV3Resource represents a resource in the catalog v3 resources array",
+      "type": "object",
+      "properties": {
+        "checking": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "object"
+          },
+          "x-go-name": "Checking"
+        },
+        "comment": {
+          "type": "string",
+          "x-go-name": "Comment"
+        },
+        "contributor": {
+          "type": "array",
+          "items": {
+            "type": "object"
+          },
+          "x-go-name": "Contributor"
+        },
+        "creator": {
+          "type": "string",
+          "x-go-name": "Creator"
+        },
+        "description": {
+          "type": "string",
+          "x-go-name": "Description"
+        },
+        "formats": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "object"
+            }
+          },
+          "x-go-name": "Formats"
+        },
+        "identifier": {
+          "type": "string",
+          "x-go-name": "Identifier"
+        },
+        "issued": {
+          "type": "string",
+          "format": "date-time",
+          "x-go-name": "Issued"
+        },
+        "modified": {
+          "type": "string",
+          "format": "date-time",
+          "x-go-name": "Modified"
+        },
+        "owner": {
+          "type": "string",
+          "x-go-name": "Owner"
+        },
+        "projects": {
+          "type": "array",
+          "items": {
+            "type": "object"
+          },
+          "x-go-name": "Projects"
+        },
+        "publisher": {
+          "type": "string",
+          "x-go-name": "Publisher"
+        },
+        "relation": {
+          "type": "array",
+          "items": {
+            "type": "object"
+          },
+          "x-go-name": "Relation"
+        },
+        "repo": {
+          "type": "string",
+          "x-go-name": "RepoName"
+        },
+        "rights": {
+          "type": "string",
+          "x-go-name": "Rights"
+        },
+        "source": {
+          "type": "array",
+          "items": {
+            "type": "object"
+          },
+          "x-go-name": "Source"
+        },
+        "subject": {
+          "type": "string",
+          "x-go-name": "Subject"
+        },
+        "title": {
+          "type": "string",
+          "x-go-name": "Title"
+        },
+        "version": {
+          "type": "string",
+          "x-go-name": "Version"
+        }
+      },
+      "x-go-package": "code.gitea.io/gitea/modules/structs"
+    },
+    "CatalogV3Subject": {
+      "description": "CatalogV3Subject represents a subject \u0026 language combination in the catalog v3 languages array",
+      "type": "object",
+      "properties": {
+        "direction": {
+          "type": "string",
+          "x-go-name": "Direction"
+        },
+        "identifier": {
+          "type": "string",
+          "x-go-name": "Identifier"
+        },
+        "language": {
+          "type": "string",
+          "x-go-name": "Language"
+        },
+        "last_updated": {
+          "type": "string",
+          "format": "date-time",
+          "x-go-name": "LastUpdated"
+        },
+        "resources": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/CatalogV3Resource"
+          },
+          "x-go-name": "Resources"
+        },
+        "subject": {
+          "type": "string",
+          "x-go-name": "Subject"
+        },
+        "title": {
+          "type": "string",
+          "x-go-name": "Title"
         }
       },
       "x-go-package": "code.gitea.io/gitea/modules/structs"
@@ -1936,6 +2378,18 @@
         "additionalProperties": {
           "type": "object"
         }
+      }
+    },
+    "CatalogSearchResultsPivotedV3": {
+      "description": "CatalogSearchResultsPivotedV3",
+      "schema": {
+        "$ref": "#/definitions/CatalogSearchResultsPivotedV3"
+      }
+    },
+    "CatalogSearchResultsV3": {
+      "description": "CatalogSearchResultsV3",
+      "schema": {
+        "$ref": "#/definitions/CatalogSearchResultsV3"
       }
     },
     "CatalogSearchResultsV4": {

@@ -6,6 +6,7 @@ package convert
 
 import (
 	"fmt"
+	"strings"
 	"time"
 
 	"code.gitea.io/gitea/models"
@@ -71,9 +72,11 @@ func ToCatalogV3Resource(dm *models.Door43Metadata) *api.CatalogV3Resource {
 		(*dm.Metadata)["dublin_core"].(map[string]interface{})["type"].(string),
 		format,
 		(*dm.Metadata)["dublin_core"].(map[string]interface{})["conformsto"].(string))
-	gitRepo, _ := git.OpenRepository(dm.Repo.RepoPath())
 	var formatModified time.Time
+	var formatSize int64
+	gitRepo, _ := git.OpenRepository(dm.Repo.RepoPath())
 	if gitRepo != nil {
+		defer gitRepo.Close()
 		var commit *git.Commit
 		if dm.ReleaseID == 0 {
 			commit, _ = gitRepo.GetBranchCommit(dm.Repo.DefaultBranch)
@@ -83,13 +86,33 @@ func ToCatalogV3Resource(dm *models.Door43Metadata) *api.CatalogV3Resource {
 		if commit != nil {
 			formatModified = commit.Author.When
 		}
+		// if ctx, commiter, err := models.TxDBContext(); err == nil {
+		// 	defer commiter.Close()
+		// 	if archiver, err := models.GetRepoArchiver(ctx, dm.Repo.ID, git.ZIP, commit.ID.String()); err == nil {
+		// 		if rPath, err := archiver.RelativePath(); err == nil {
+		// 			if info, err := storage.RepoArchives.Stat(rPath); err == nil {
+		// 				formatSize = info.Size()
+		// 			}
+		// 		}
+		// 	}
+		// }
 	}
+	formatURL := util.URLJoin(dm.Repo.HTMLURL(), "archive", dm.BranchOrTag+".zip")
+	// resp, err := http.Head(formatURL)
+	// fmt.Printf("%s\n\n%v\n\n%v\n\n", formatURL, resp, err)
+	// if err == nil && resp != nil && resp.StatusCode == http.StatusOK {
+	// 	fmt.Printf("HEADER:%v\n\nCL: %s\n\n", resp.Header, resp.Header.Get("Content-Length"))
+	// 	size, err := strconv.Atoi(resp.Header.Get("Content-Length"))
+	// 	fmt.Printf("%d\n\n\n%v\n\n", size, err)
+	// 	formatSize = int64(size)
+	// }
+
 	formats = append(formats, map[string]interface{}{
 		"format":    format,
 		"modified":  formatModified,
 		"signature": "",
-		"size":      0,
-		"ur":        util.URLJoin(dm.Repo.HTMLURL(), "archive", dm.BranchOrTag+".zip"),
+		"size":      formatSize,
+		"url":       formatURL,
 	})
 
 	var projects []interface{}
@@ -117,9 +140,11 @@ func ToCatalogV3Resource(dm *models.Door43Metadata) *api.CatalogV3Resource {
 		Relation:    relation,
 		Rights:      (*dm.Metadata)["dublin_core"].(map[string]interface{})["rights"].(string),
 		Source:      (*dm.Metadata)["dublin_core"].(map[string]interface{})["source"].([]interface{}),
-		Subject:     (*dm.Metadata)["dublin_core"].(map[string]interface{})["subject"].(string),
+		Subject:     strings.ReplaceAll((*dm.Metadata)["dublin_core"].(map[string]interface{})["subject"].(string), " ", "_"),
 		Title:       (*dm.Metadata)["dublin_core"].(map[string]interface{})["title"].(string),
 		Version:     fmt.Sprintf("%v", (*dm.Metadata)["dublin_core"].(map[string]interface{})["version"]),
+		Owner:       dm.Repo.OwnerName,
+		RepoName:    dm.Repo.Name,
 	}
 }
 

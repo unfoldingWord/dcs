@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
+	"time"
 
 	"code.gitea.io/gitea/models"
 	"code.gitea.io/gitea/modules/context"
@@ -17,24 +18,28 @@ import (
 
 var searchOrderByMap = map[string]map[string]models.CatalogOrderBy{
 	"asc": {
-		"subject":  models.CatalogOrderBySubject,
-		"title":    models.CatalogOrderByTitle,
-		"released": models.CatalogOrderByOldest,
-		"lang":     models.CatalogOrderByLangCode,
-		"releases": models.CatalogOrderByReleases,
-		"stars":    models.CatalogOrderByStars,
-		"forks":    models.CatalogOrderByForks,
-		"tag":      models.CatalogOrderByTag,
+		"title":      models.CatalogOrderByTitle,
+		"subject":    models.CatalogOrderBySubject,
+		"identifier": models.CatalogOrderByIdentifier,
+		"reponame":   models.CatalogOrderByRepoName,
+		"released":   models.CatalogOrderByOldest,
+		"lang":       models.CatalogOrderByLangCode,
+		"releases":   models.CatalogOrderByReleases,
+		"stars":      models.CatalogOrderByStars,
+		"forks":      models.CatalogOrderByForks,
+		"tag":        models.CatalogOrderByTag,
 	},
 	"desc": {
-		"title":    models.CatalogOrderByTitleReverse,
-		"subject":  models.CatalogOrderBySubjectReverse,
-		"released": models.CatalogOrderByNewest,
-		"lang":     models.CatalogOrderByLangCodeReverse,
-		"releases": models.CatalogOrderByReleasesReverse,
-		"stars":    models.CatalogOrderByStarsReverse,
-		"forks":    models.CatalogOrderByForksReverse,
-		"tag":      models.CatalogOrderByTagReverse,
+		"title":      models.CatalogOrderByTitleReverse,
+		"subject":    models.CatalogOrderBySubjectReverse,
+		"identifier": models.CatalogOrderByIdentifierReverse,
+		"reponame":   models.CatalogOrderByRepoNameReverse,
+		"released":   models.CatalogOrderByNewest,
+		"lang":       models.CatalogOrderByLangCodeReverse,
+		"releases":   models.CatalogOrderByReleasesReverse,
+		"stars":      models.CatalogOrderByStarsReverse,
+		"forks":      models.CatalogOrderByForksReverse,
+		"tag":        models.CatalogOrderByTagReverse,
 	},
 }
 
@@ -101,7 +106,7 @@ func Search(ctx *context.APIContext) {
 	// - name: sort
 	//   in: query
 	//   description: sort repos alphanumerically by attribute. Supported values are
-	//                "subject", "title", "tag", "released", "lang", "releases", "stars", "forks".
+	//                "subject", "title", "reponame", "tag", "released", "lang", "releases", "stars", "forks".
 	//                Default is by "language", "subject" and then "tag"
 	//   type: string
 	// - name: order
@@ -190,7 +195,7 @@ func SearchOwner(ctx *context.APIContext) {
 	// - name: sort
 	//   in: query
 	//   description: sort repos alphanumerically by attribute. Supported values are
-	//                "subject", "title", "tag", "released", "lang", "releases", "stars", "forks".
+	//                "subject", "title", "reponame", "tag", "released", "lang", "releases", "stars", "forks".
 	//                Default is by "language", "subject" and then "tag"
 	//   type: string
 	// - name: order
@@ -280,8 +285,8 @@ func SearchRepo(ctx *context.APIContext) {
 	// - name: sort
 	//   in: query
 	//   description: sort repos alphanumerically by attribute. Supported values are
-	//                "subject", "title", "tag", "released", "lang", "releases", "stars", "forks".
-	//                Default is language,subject,tag
+	//                "subject", "title", "reponame", "tag", "released", "lang", "releases", "stars", "forks".
+	//                Default is by "language", "subject" and then "tag"
 	//   type: string
 	// - name: order
 	//   in: query
@@ -499,6 +504,7 @@ func searchCatalog(ctx *context.APIContext) {
 	}
 
 	results := make([]*api.CatalogV4, len(dms))
+	var lastUpdated time.Time
 	for i, dm := range dms {
 		accessMode, err := models.AccessLevel(ctx.User, dm.Repo)
 		if err != nil {
@@ -507,10 +513,18 @@ func searchCatalog(ctx *context.APIContext) {
 				Error: err.Error(),
 			})
 		}
-		results[i] = convert.ToCatalogV4(dm, accessMode)
+		dmAPI := convert.ToCatalogV4(dm, accessMode)
 		if !opts.ShowIngredients {
-			results[i].Ingredients = nil
+			dmAPI.Ingredients = nil
 		}
+		if dmAPI.Released.After(lastUpdated) {
+			lastUpdated = dmAPI.Released
+		}
+		results[i] = dmAPI
+	}
+
+	if lastUpdated.IsZero() {
+		lastUpdated = time.Now()
 	}
 
 	if opts.PageSize > 0 {
@@ -520,7 +534,8 @@ func searchCatalog(ctx *context.APIContext) {
 	}
 	ctx.Header().Set("X-Total-Count", fmt.Sprintf("%d", count))
 	ctx.JSON(http.StatusOK, api.CatalogSearchResultsV4{
-		OK:   true,
-		Data: results,
+		OK:          true,
+		Data:        results,
+		LastUpdated: lastUpdated,
 	})
 }
