@@ -30,7 +30,6 @@
 				</div>
 			{{end}}
 		</div>
-		{{if not .ReadmeInList}}
 		<div class="file-header-right file-actions df ac">
 			{{if .HasSourceRenderedToggle}}
 				<div class="ui compact icon buttons two-toggle-buttons">
@@ -38,34 +37,42 @@
 					<a href="{{$.Link}}" class="ui mini basic button tooltip {{if .IsDisplayingRendered}}active{{end}}" data-content="{{.i18n.Tr "repo.file_view_rendered"}}" data-position="bottom center">{{svg "octicon-file" 15}}</a>
 				</div>
 			{{end}}
-			<div class="ui buttons mr-2">
-				<a class="ui mini basic button" href="{{$.RawFileLink}}">{{.i18n.Tr "repo.file_raw"}}</a>
-				{{if not .IsViewCommit}}
-					<a class="ui mini basic button" href="{{.RepoLink}}/src/commit/{{PathEscape .CommitID}}/{{PathEscapeSegments .TreePath}}">{{.i18n.Tr "repo.file_permalink"}}</a>
+			{{if not .ReadmeInList}}
+				<div class="ui buttons mr-2">
+					<a class="ui mini basic button" href="{{$.RawFileLink}}">{{.i18n.Tr "repo.file_raw"}}</a>
+					{{if not .IsViewCommit}}
+						<a class="ui mini basic button" href="{{.RepoLink}}/src/commit/{{PathEscape .CommitID}}/{{PathEscapeSegments .TreePath}}">{{.i18n.Tr "repo.file_permalink"}}</a>
+					{{end}}
+					{{if .IsRepresentableAsText}}
+						<a class="ui mini basic button" href="{{.RepoLink}}/blame/{{.BranchNameSubURL}}/{{PathEscapeSegments .TreePath}}">{{.i18n.Tr "repo.blame"}}</a>
+					{{end}}
+					<a class="ui mini basic button" href="{{.RepoLink}}/commits/{{.BranchNameSubURL}}/{{PathEscapeSegments .TreePath}}">{{.i18n.Tr "repo.file_history"}}</a>
+					{{if .EscapeStatus.Escaped}}
+						<a class="ui mini basic button unescape-button" style="display: none;">{{.i18n.Tr "repo.unescape_control_characters"}}</a>
+						<a class="ui mini basic button escape-button">{{.i18n.Tr "repo.escape_control_characters"}}</a>
+					{{end}}
+				</div>
+				<a download href="{{$.RawFileLink}}"><span class="btn-octicon tooltip" data-content="{{.i18n.Tr "repo.download_file"}}" data-position="bottom center">{{svg "octicon-download"}}</span></a>
+				{{if .Repository.CanEnableEditor}}
+					{{if .CanEditFile}}
+						<a href="{{.RepoLink}}/_edit/{{PathEscapeSegments .BranchName}}/{{PathEscapeSegments .TreePath}}"><span class="btn-octicon tooltip" data-content="{{.EditFileTooltip}}" data-position="bottom center">{{svg "octicon-pencil"}}</span></a>
+					{{else}}
+						<span class="btn-octicon tooltip disabled" data-content="{{.EditFileTooltip}}" data-position="bottom center">{{svg "octicon-pencil"}}</span>
+					{{end}}
+					{{if .CanDeleteFile}}
+						<a href="{{.RepoLink}}/_delete/{{PathEscapeSegments .BranchName}}/{{PathEscapeSegments .TreePath}}"><span class="btn-octicon btn-octicon-danger tooltip"  data-content="{{.DeleteFileTooltip}}" data-position="bottom center">{{svg "octicon-trash"}}</span></a>
+					{{else}}
+						<span class="btn-octicon tooltip disabled" data-content="{{.DeleteFileTooltip}}" data-position="bottom center">{{svg "octicon-trash"}}</span>
+					{{end}}
 				{{end}}
-				{{if .IsRepresentableAsText}}
-					<a class="ui mini basic button" href="{{.RepoLink}}/blame/{{.BranchNameSubURL}}/{{PathEscapeSegments .TreePath}}">{{.i18n.Tr "repo.blame"}}</a>
-				{{end}}
-				<a class="ui mini basic button" href="{{.RepoLink}}/commits/{{.BranchNameSubURL}}/{{PathEscapeSegments .TreePath}}">{{.i18n.Tr "repo.file_history"}}</a>
-			</div>
-			<a download href="{{$.RawFileLink}}"><span class="btn-octicon tooltip" data-content="{{.i18n.Tr "repo.download_file"}}" data-position="bottom center">{{svg "octicon-download"}}</span></a>
-			{{if .Repository.CanEnableEditor}}
-				{{if .CanEditFile}}
-					<a href="{{.RepoLink}}/_edit/{{PathEscapeSegments .BranchName}}/{{PathEscapeSegments .TreePath}}"><span class="btn-octicon tooltip" data-content="{{.EditFileTooltip}}" data-position="bottom center">{{svg "octicon-pencil"}}</span></a>
-				{{else}}
-					<span class="btn-octicon tooltip disabled" data-content="{{.EditFileTooltip}}" data-position="bottom center">{{svg "octicon-pencil"}}</span>
-				{{end}}
-				{{if .CanDeleteFile}}
-					<a href="{{.RepoLink}}/_delete/{{PathEscapeSegments .BranchName}}/{{PathEscapeSegments .TreePath}}"><span class="btn-octicon btn-octicon-danger tooltip"  data-content="{{.DeleteFileTooltip}}" data-position="bottom center">{{svg "octicon-trash"}}</span></a>
-				{{else}}
-					<span class="btn-octicon tooltip disabled" data-content="{{.DeleteFileTooltip}}" data-position="bottom center">{{svg "octicon-trash"}}</span>
-				{{end}}
+			{{else if .EscapeStatus.Escaped}}
+				<a class="ui mini basic button unescape-button mr-2" style="display: none;">{{.i18n.Tr "repo.unescape_control_characters"}}</a>
+				<a class="ui mini basic button escape-button mr-2">{{.i18n.Tr "repo.escape_control_characters"}}</a>
 			{{end}}
 			<!-- DCS Customizations -->
 			<i id="expand-view-button" class="fa fa-expand btn-octicon poping up" data-content="{{.i18n.Tr "repo.expand_view"}}" data-tr-expand="{{.i18n.Tr "repo.expand_view"}}" data-tr-compact="{{.i18n.Tr "repo.compact_view"}}" data-position="bottom center" data-variation="tiny inverted" style="cursor:pointer"></i>
 			<!-- END DCS Customizations -->
 		</div>
-		{{end}}
 	</h4>
 	<div class="ui attached table unstackable segment">
 		<!-- DCS Customizations - Adds language identier and direction to this div -->
@@ -73,7 +80,8 @@
 		{{if not .IgnoreLanguageDirection}}
 			{{$dm = .Repository.GetDefaultBranchMetadata}}
 		{{end}}
-			<div class="file-view{{if .IsMarkup}} markup {{.MarkupType}}{{else if .IsRenderedHTML}} plain-text{{else if .IsTextSource}} code-view{{end}}{{if .IsTocYaml}} markdown yaml{{end}}{{if $dm}} dir-{{$dm.Metadata.dublin_core.language.direction}} ln-{{$dm.Metadata.dublin_core.language.identifier}}{{end}}"{{if $dm}} data-lang="{{$dm.Metadata.dublin_core.language.identifier}}" data-direction="{{$dm.Metadata.dublin_core.language.direction}}"{{end}}>
+		{{template "repo/unicode_escape_prompt" dict "EscapeStatus" .EscapeStatus "root" $}}
+		<div class="file-view{{if .IsMarkup}} markup {{.MarkupType}}{{else if .IsRenderedHTML}} plain-text{{else if .IsTextSource}} code-view{{end}}{{if .IsTocYaml}} markdown yaml{{end}}{{if $dm}} dir-{{$dm.Metadata.dublin_core.language.direction}} ln-{{$dm.Metadata.dublin_core.language.identifier}}{{end}}"{{if $dm}} data-lang="{{$dm.Metadata.dublin_core.language.identifier}}" data-direction="{{$dm.Metadata.dublin_core.language.direction}}"{{end}}>
 			{{if .IsMarkup}}
 				{{if .FileContent}}{{.FileContent | Safe}}{{end}}
 			{{else if .IsRenderedHTML}}
@@ -112,6 +120,9 @@
 						{{$line := Add $idx 1}}
 						<tr>
 							<td id="L{{$line}}" class="lines-num"><span id="L{{$line}}" data-line-number="{{$line}}"></span></td>
+							{{if $.EscapeStatus.Escaped}}
+								<td class="lines-escape">{{if (index $.LineEscapeStatus $idx).Escaped}}<a href="" class="toggle-escape-button" title="{{$.i18n.Tr "repo.line_unicode"}}"></a>{{end}}</td>
+							{{end}}
 							<td rel="L{{$line}}" class="lines-code chroma"><code class="code-inner">{{$code | Safe}}</code></td>
 						</tr>
 						{{end}}

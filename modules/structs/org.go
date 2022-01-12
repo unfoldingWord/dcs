@@ -21,7 +21,7 @@ type Organization struct {
 	/*** END DCS Customizations ***/
 }
 
-// OrganizationPermissions list differents users permissions on an organization
+// OrganizationPermissions list different users permissions on an organization
 type OrganizationPermissions struct {
 	IsOwner             bool `json:"is_owner"`
 	IsAdmin             bool `json:"is_admin"`
