@@ -19,7 +19,7 @@
       "name": "MIT",
       "url": "http://opensource.org/licenses/MIT"
     },
-    "version": "5.0.0"
+    "version": "{{AppVer | JSEscape | Safe}}"
   },
   "basePath": "{{AppSubUrl | JSEscape | Safe}}/api/catalog",
   "paths": {
@@ -1888,6 +1888,65 @@
       },
       "x-go-package": "code.gitea.io/gitea/modules/structs"
     },
+    "Organization": {
+      "description": "Organization represents an organization",
+      "type": "object",
+      "properties": {
+        "avatar_url": {
+          "type": "string",
+          "x-go-name": "AvatarURL"
+        },
+        "description": {
+          "type": "string",
+          "x-go-name": "Description"
+        },
+        "full_name": {
+          "type": "string",
+          "x-go-name": "FullName"
+        },
+        "id": {
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "ID"
+        },
+        "location": {
+          "type": "string",
+          "x-go-name": "Location"
+        },
+        "repo_admin_change_team_access": {
+          "type": "boolean",
+          "x-go-name": "RepoAdminChangeTeamAccess"
+        },
+        "repo_languages": {
+          "description": "DCS Customizations ***/",
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "x-go-name": "RepoLanguages"
+        },
+        "repo_subjects": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "x-go-name": "RepoSubjects"
+        },
+        "username": {
+          "type": "string",
+          "x-go-name": "UserName"
+        },
+        "visibility": {
+          "type": "string",
+          "x-go-name": "Visibility"
+        },
+        "website": {
+          "type": "string",
+          "x-go-name": "Website"
+        }
+      },
+      "x-go-package": "code.gitea.io/gitea/modules/structs"
+    },
     "Permission": {
       "description": "Permission represents a set of permissions",
       "type": "object",
@@ -1975,6 +2034,26 @@
         "zipball_url": {
           "type": "string",
           "x-go-name": "ZipURL"
+        }
+      },
+      "x-go-package": "code.gitea.io/gitea/modules/structs"
+    },
+    "RepoTransfer": {
+      "description": "RepoTransfer represents a pending repo transfer",
+      "type": "object",
+      "properties": {
+        "doer": {
+          "$ref": "#/definitions/User"
+        },
+        "recipient": {
+          "$ref": "#/definitions/User"
+        },
+        "teams": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Team"
+          },
+          "x-go-name": "Teams"
         }
       },
       "x-go-package": "code.gitea.io/gitea/modules/structs"
@@ -2149,6 +2228,9 @@
           "format": "int64",
           "x-go-name": "Releases"
         },
+        "repo_transfer": {
+          "$ref": "#/definitions/RepoTransfer"
+        },
         "size": {
           "type": "integer",
           "format": "int64",
@@ -2188,6 +2270,73 @@
         "website": {
           "type": "string",
           "x-go-name": "Website"
+        }
+      },
+      "x-go-package": "code.gitea.io/gitea/modules/structs"
+    },
+    "Team": {
+      "description": "Team represents a team in an organization",
+      "type": "object",
+      "properties": {
+        "can_create_org_repo": {
+          "type": "boolean",
+          "x-go-name": "CanCreateOrgRepo"
+        },
+        "description": {
+          "type": "string",
+          "x-go-name": "Description"
+        },
+        "id": {
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "ID"
+        },
+        "includes_all_repositories": {
+          "type": "boolean",
+          "x-go-name": "IncludesAllRepositories"
+        },
+        "name": {
+          "type": "string",
+          "x-go-name": "Name"
+        },
+        "organization": {
+          "$ref": "#/definitions/Organization"
+        },
+        "permission": {
+          "type": "string",
+          "enum": [
+            "none",
+            "read",
+            "write",
+            "admin",
+            "owner"
+          ],
+          "x-go-name": "Permission"
+        },
+        "units": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "x-go-name": "Units",
+          "example": [
+            "repo.code",
+            "repo.issues",
+            "repo.ext_issues",
+            "repo.wiki",
+            "repo.pulls",
+            "repo.releases",
+            "repo.projects",
+            "repo.ext_wiki"
+          ]
+        },
+        "units_map": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          },
+          "x-go-name": "UnitsMap",
+          "example": "{\"repo.code\":\"read\",\"repo.issues\":\"write\",\"repo.ext_issues\":\"none\",\"repo.wiki\":\"admin\",\"repo.pulls\":\"owner\",\"repo.releases\":\"none\",\"repo.projects\":\"none\",\"repo.ext_wiki\":\"none\"]"
         }
       },
       "x-go-package": "code.gitea.io/gitea/modules/structs"
