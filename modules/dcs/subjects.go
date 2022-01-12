@@ -15,7 +15,7 @@ var Subjects = map[string]string{
 	"obs-tn":      "OBS Translation Notes",
 	"obs-tq":      "OBS Translation Questions",
 	"obs":         "Open Bible Stories",
-	"obs-twl":     "TSV OBS Translation Word Links",
+	"obs-twl":     "TSV OBS Translation Words Links",
 	"sn":          "Study Notes",
 	"sq":          "Study Questions",
 	"ta":          "Translation Academy",

@@ -124,6 +124,7 @@ func searchCatalog(ctx *context.APIContext) {
 			langLastUpdated = dm.ReleaseDateUnix
 			currentLang.LastUpdated = langLastUpdated.AsTime()
 		}
+		currentLang.Resources = append(currentLang.Resources, convert.ToCatalogV3Resource(dm))
 	}
 
 	ctx.JSON(http.StatusOK, api.CatalogV3{
