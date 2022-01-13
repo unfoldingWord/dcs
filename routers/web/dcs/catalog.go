@@ -17,7 +17,7 @@ import (
 
 const (
 	// tplCatalog catalog page template.
-	tplCatalog base.TplName = "catalog/catalog"
+	tplCatalog base.TplName = "dcs/catalog"
 )
 
 // CatalogSearchOptions when calling search catalog

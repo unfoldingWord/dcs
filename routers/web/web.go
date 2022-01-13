@@ -150,7 +150,8 @@ func Routes(sessioner func(next http.Handler) http.Handler) *web.Route {
 		// Note: The route moved from apiroutes because it's in fact want to render a web page
 		routes.Get("/api/swagger", append(common, misc.Swagger)...) // Render V1 by default
 		/*** DCS Customizations ***/
-		routes.Get("/api/catalog/swagger", append(common, catalog.Swagger)...)
+		routes.Get("/api/catalog/swagger", append(common, catalog.CatalogSwagger)...)
+		routes.Get("/api/dcs/swagger", append(common, catalog.DcsSwagger)...)
 		/*** END DCS Customizations ***/
 	}
 
@@ -1029,7 +1030,10 @@ func RegisterRoutes(m *web.Route) {
 
 	if setting.API.EnableSwagger {
 		m.Get("/swagger.v1.json", SwaggerV1Json)
+		/*** DCS Customizations ***/
 		m.Get("/swagger.catalog.json", SwaggerCatalogJSON)
+		m.Get("/swagger.dcs.json", SwaggerDcsJSON)
+		/*** END DCS Customizations ***/
 	}
 
 	/*** DCS Customizations ***/
