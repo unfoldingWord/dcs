@@ -19,9 +19,9 @@
       "name": "MIT",
       "url": "http://opensource.org/licenses/MIT"
     },
-    "version": "5.0.0"
+    "version": "{{AppVer | JSEscape | Safe}}"
   },
-  "basePath": "/api/catalog",
+  "basePath": "{{AppSubUrl | JSEscape | Safe}}/api/catalog",
   "paths": {
     "/misc/versions": {
       "get": {
