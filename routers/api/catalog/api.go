@@ -8,7 +8,7 @@
 //
 //     Schemes: http, https
 //     BasePath: /api/catalog
-//     Version: 5.0.0
+//     Version: {{AppVer | JSEscape | Safe}}
 //     License: MIT http://opensource.org/licenses/MIT
 //
 //     Consumes:
