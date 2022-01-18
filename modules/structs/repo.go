@@ -99,7 +99,9 @@ type Repository struct {
 	CheckingLevel             string           `json:"checking_level"`
 	Catalog                   *CatalogStages   `json:"catalog"`
 	MirrorInterval            string           `json:"mirror_interval"`
-	RepoTransfer              *RepoTransfer    `json:"repo_transfer"`
+	// swagger:strfmt date-time
+	MirrorUpdated time.Time     `json:"mirror_updated,omitempty"`
+	RepoTransfer  *RepoTransfer `json:"repo_transfer"`
 }
 
 // CreateRepoOption options when creating repository
