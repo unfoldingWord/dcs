@@ -542,7 +542,7 @@ steps:
     settings:
       acl: public-read
       bucket: gitea-artifacts
-      endpoint: https://storage.gitea.io
+      endpoint: https://ams3.digitaloceanspaces.com
       path_style: true
       source: "dist/release/*"
       strip_prefix: dist/release/
@@ -563,7 +563,7 @@ steps:
     settings:
       acl: public-read
       bucket: gitea-artifacts
-      endpoint: https://storage.gitea.io
+      endpoint: https://ams3.digitaloceanspaces.com
       path_style: true
       source: "dist/release/*"
       strip_prefix: dist/release/
@@ -638,7 +638,7 @@ steps:
     settings:
       acl: public-read
       bucket: gitea-artifacts
-      endpoint: https://storage.gitea.io
+      endpoint: https://ams3.digitaloceanspaces.com
       path_style: true
       source: "dist/release/*"
       strip_prefix: dist/release/
