@@ -1052,6 +1052,7 @@ steps:
       auto_tag: false
       ignore_missing: true
       spec: docker/manifest.rootless.tmpl
+      dump: true
       password:
         from_secret: docker_password
       username:
@@ -1063,6 +1064,7 @@ steps:
       auto_tag: false
       ignore_missing: true
       spec: docker/manifest.tmpl
+      dump: true
       password:
         from_secret: docker_password
       username:
@@ -1071,6 +1073,7 @@ steps:
 trigger:
   ref:
   - refs/heads/main
+  - "refs/heads/release/v*"
   event:
     exclude:
     - cron
