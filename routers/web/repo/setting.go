@@ -67,7 +67,7 @@ func Settings(ctx *context.Context) {
 	ctx.Data["DisableNewPushMirrors"] = setting.Mirror.DisableNewPush
 	ctx.Data["DefaultMirrorInterval"] = setting.Mirror.DefaultInterval
 
-	signing, _ := asymkey_service.SigningKey(ctx.Repo.Repository.RepoPath())
+	signing, _ := asymkey_service.SigningKey(ctx, ctx.Repo.Repository.RepoPath())
 	ctx.Data["SigningKeyAvailable"] = len(signing) > 0
 	ctx.Data["SigningSettings"] = setting.Repository.Signing
 	ctx.Data["CodeIndexerEnabled"] = setting.Indexer.RepoIndexerEnabled
@@ -224,7 +224,7 @@ func SettingsPost(ctx *context.Context) {
 			return
 		}
 
-		if err := mirror_service.UpdateAddress(ctx.Repo.Mirror, address); err != nil {
+		if err := mirror_service.UpdateAddress(ctx, ctx.Repo.Mirror, address); err != nil {
 			ctx.ServerError("UpdateAddress", err)
 			return
 		}
@@ -300,7 +300,7 @@ func SettingsPost(ctx *context.Context) {
 			return
 		}
 
-		if err = mirror_service.RemovePushMirrorRemote(m); err != nil {
+		if err = mirror_service.RemovePushMirrorRemote(ctx, m); err != nil {
 			ctx.ServerError("RemovePushMirrorRemote", err)
 			return
 		}
@@ -340,7 +340,7 @@ func SettingsPost(ctx *context.Context) {
 			return
 		}
 
-		remoteSuffix, err := util.RandomString(10)
+		remoteSuffix, err := util.CryptoRandomString(10)
 		if err != nil {
 			ctx.ServerError("RandomString", err)
 			return
@@ -357,7 +357,7 @@ func SettingsPost(ctx *context.Context) {
 			return
 		}
 
-		if err := mirror_service.AddPushMirrorRemote(m, address); err != nil {
+		if err := mirror_service.AddPushMirrorRemote(ctx, m, address); err != nil {
 			if err := repo_model.DeletePushMirrorByID(m.ID); err != nil {
 				log.Error("DeletePushMirrorByID %v", err)
 			}
@@ -581,7 +581,7 @@ func SettingsPost(ctx *context.Context) {
 		}
 		repo.IsMirror = false
 
-		if _, err := repository.CleanUpMigrateInfo(repo); err != nil {
+		if _, err := repository.CleanUpMigrateInfo(ctx, repo); err != nil {
 			ctx.ServerError("CleanUpMigrateInfo", err)
 			return
 		} else if err = repo_model.DeleteMirrorByRepoID(ctx.Repo.Repository.ID); err != nil {
@@ -726,7 +726,7 @@ func SettingsPost(ctx *context.Context) {
 			ctx.Repo.GitRepo.Close()
 		}
 
-		if err := repo_service.DeleteRepository(ctx.User, ctx.Repo.Repository, true); err != nil {
+		if err := repo_service.DeleteRepository(ctx, ctx.User, ctx.Repo.Repository, true); err != nil {
 			ctx.ServerError("DeleteRepository", err)
 			return
 		}
@@ -745,7 +745,7 @@ func SettingsPost(ctx *context.Context) {
 			return
 		}
 
-		err := wiki_service.DeleteWiki(repo)
+		err := wiki_service.DeleteWiki(ctx, repo)
 		if err != nil {
 			log.Error("Delete Wiki: %v", err.Error())
 		}
