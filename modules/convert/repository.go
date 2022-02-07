@@ -6,6 +6,7 @@ package convert
 
 import (
 	"fmt"
+	"time"
 
 	"code.gitea.io/gitea/models"
 	"code.gitea.io/gitea/models/db"
@@ -130,11 +131,13 @@ func innerToRepo(repo *repo_model.Repository, mode perm.AccessMode, isParent boo
 	/*** END DCS Customizations ***/
 
 	mirrorInterval := ""
+	var mirrorUpdated time.Time
 	if repo.IsMirror {
 		var err error
 		repo.Mirror, err = repo_model.GetMirrorByRepoID(repo.ID)
 		if err == nil {
 			mirrorInterval = repo.Mirror.Interval.String()
+			mirrorUpdated = repo.Mirror.UpdatedUnix.AsTime()
 		}
 	}
 
@@ -202,6 +205,7 @@ func innerToRepo(repo *repo_model.Repository, mode perm.AccessMode, isParent boo
 		CheckingLevel:             checkingLevel,
 		Internal:                  !repo.IsPrivate && repo.Owner.Visibility == api.VisibleTypePrivate,
 		MirrorInterval:            mirrorInterval,
+		MirrorUpdated:             mirrorUpdated,
 		RepoTransfer:              transfer,
 	}
 }
