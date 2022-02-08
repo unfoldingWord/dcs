@@ -423,7 +423,21 @@ func renderFile(ctx *context.Context, entry *git.TreeEntry, treeLink, rawLink st
 		".yaml":      true,
 		".yml":       true,
 	}
+	ignoredFiles := map[string]bool {
+		".gitignore": true,
+		"README": true,
+		"README.md": true,
+		"LICENSE": true
+		"LICENSE.md": true,
+		"manifest.json": true,
+		"manifest.yaml": true,
+		"manifest.yml": true,
+		"media.yaml": true,
+		"media.yml": true,
+	}
 	if _, ok := ignoredExtensions[fileExt]; ok {
+		ctx.Data["IgnoreLanguageDirection"] = true
+	} else if _, ok := ignoredFiles[blog.Name]; ok {
 		ctx.Data["IgnoreLanguageDirection"] = true
 	}
 	/*** END DCS Customizations ***/
