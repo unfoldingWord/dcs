@@ -427,7 +427,7 @@ func renderFile(ctx *context.Context, entry *git.TreeEntry, treeLink, rawLink st
 		".gitignore": true,
 		"README": true,
 		"README.md": true,
-		"LICENSE": true
+		"LICENSE": true,
 		"LICENSE.md": true,
 		"manifest.json": true,
 		"manifest.yaml": true,
