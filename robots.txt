@@ -17,7 +17,7 @@ Disallow: /swagger.*.json
 Disallow: /*?lang=
 Disallow: /*q=
 
-# taken from Github since Gitea mimics their strugure
+# taken from Github since Gitea mimics their structure
 Allow: /*/*/tree/master
 Allow: /*/*/blob/master
 Disallow: /*/*/pulse
