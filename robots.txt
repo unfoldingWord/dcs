@@ -69,7 +69,7 @@ Disallow: /search
 Disallow: /*.atom
 
 # DCS specific
-Disallow: /unfoldingword-dev ## Our github mirror of software, no need to index
-Disallow: /unfoldingword-box3 ## Our github mirror of software, no need to index
+Disallow: /unfoldingword-dev/
+Disallow: /unfoldingword-box3/
 
 Crawl-delay: 2
