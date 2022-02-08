@@ -416,28 +416,7 @@ func renderFile(ctx *context.Context, entry *git.TreeEntry, treeLink, rawLink st
 	/*** DCS Customizations ***/
 	fileExt := filepath.Ext(blob.Name())
 	ctx.Data["FileExt"] = fileExt
-	ignoredExtensions := map[string]bool{
-		".gitignore": true,
-		".json":      true,
-		".usfm":      true,
-		".yaml":      true,
-		".yml":       true,
-	}
-	ignoredFiles := map[string]bool {
-		".gitignore": true,
-		"README": true,
-		"README.md": true,
-		"LICENSE": true,
-		"LICENSE.md": true,
-		"manifest.json": true,
-		"manifest.yaml": true,
-		"manifest.yml": true,
-		"media.yaml": true,
-		"media.yml": true,
-	}
-	if _, ok := ignoredExtensions[fileExt]; ok {
-		ctx.Data["IgnoreLanguageDirection"] = true
-	} else if _, ok := ignoredFiles[blog.Name]; ok {
+	if fileExt != ".md" || blob.Name() == "README.md" || blob.Name() == "LICENSE.md" {
 		ctx.Data["IgnoreLanguageDirection"] = true
 	}
 	/*** END DCS Customizations ***/
