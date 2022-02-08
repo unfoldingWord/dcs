@@ -390,6 +390,13 @@ func renderFile(ctx *context.Context, entry *git.TreeEntry, treeLink, rawLink st
 	/*** DCS Customizations ***/
 	fileExt := filepath.Ext(blob.Name())
 	ctx.Data["FileExt"] = fileExt
+	ignoredExtensions := map[string]bool{
+		".gitignore": true,
+		".json":      true,
+		".usfm":      true,
+		".yaml":      true,
+		".yml":       true,
+	}
 	ignoredFiles := map[string]bool {
 		".gitignore": true,
 		"README": true,
