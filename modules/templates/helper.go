@@ -229,6 +229,13 @@ func NewFuncMap() []template.FuncMap {
 			}
 			return dm
 		},
+		"GetDefaultBranchMetadata": func(repoID int64) *models.Door43Metadata {
+			dm, err := models.GetDefaultBranchMetadata(repoID)
+			if err != nil {
+				return nil
+			}
+			return dm
+		},
 		/*** END DCS Customizations ***/
 		"SubJumpablePath": func(str string) []string {
 			var path []string

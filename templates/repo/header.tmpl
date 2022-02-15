@@ -14,11 +14,11 @@
 					<div class="mx-2">/</div>
 					<a href="{{$.RepoLink}}">{{.Name}}</a>
 					<!--- DCS Customizations -->
-					{{$prodDM := GetLatestProdCatalogMetadata .ID}}
+					{{$prodDM := (GetLatestProdCatalogMetadata .ID)}}
 					{{if $prodDM}}
 						<span class="ui green label" title="Catalog: Production"><a href="{{.Link}}/releases/tag/{{$prodDM.Release.TagName | PathEscapeSegments}}" rel="nofollow">{{$prodDM.Release.TagName}}</a></span>
 					{{end}}
-					{{$preProdDM := GetLatestPreProdCatalogMetadata .ID}}
+					{{$preProdDM := (GetLatestPreProdCatalogMetadata .ID)}}
 					{{if $preProdDM}}
 						<span class="ui orange label" title="Catalog: Pre-Production"><a href="{{.Link}}/releases/tag/{{$preProdDM.Release.TagName | PathEscapeSegments}}" rel="nofollow">{{$preProdDM.Release.TagName}}</a></span>
 					{{end}}
@@ -53,7 +53,7 @@
 			{{if not (or .IsBeingCreated .IsBroken)}}
 				<div class="repo-buttons">
 					<!-- DCS Customizations -->
-					{{$prodDM := .GetLatestProdCatalogMetadata}}
+					{{$prodDM := (GetLatestProdCatalogMetadata .ID)}}
 					{{if $prodDM}}
 					<div class="ui labeled button" tabindex="0">
 						<a type="submit" class="ui compact basic button" href="{{.Link}}/releases/tag/{{$prodDM.Release.TagName | PathEscapeSegments}}">

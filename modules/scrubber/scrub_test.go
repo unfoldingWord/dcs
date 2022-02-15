@@ -39,7 +39,7 @@ func TestScrubJsonFiles(t *testing.T) {
 		repoDir := path.Join(tempDir, repoName)
 		fmt.Println("Copying ", path.Join(testFilesDir, repoName), "==>", repoDir)
 		CopyDir(path.Join(testFilesDir, repoName), repoDir)
-		git.InitRepository(git.DefaultContext, repoDir, false)
+		git.InitRepository(repoDir, false)
 		git.AddChanges(repoDir, true)
 		git.CommitChanges(repoDir, git.CommitChangesOptions{
 			Committer: &git.Signature{
@@ -55,9 +55,9 @@ func TestScrubJsonFiles(t *testing.T) {
 			Message: "Initial Commit",
 		})
 		if throwsError {
-			assert.NotNil(t, scrubber.ScrubJSONFiles(&git.DefaultContext, repoDir))
+			assert.NotNil(t, scrubber.ScrubJSONFiles(repoDir))
 		} else {
-			assert.Nil(t, scrubber.ScrubJSONFiles(&git.DefaultContext, repoDir))
+			assert.Nil(t, scrubber.ScrubJSONFiles(repoDir))
 		}
 	}
 }
