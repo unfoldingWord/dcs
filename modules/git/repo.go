@@ -79,16 +79,20 @@ func InitRepository(repoPath string, bare bool) error {
 
 // IsEmpty Check if repository is empty.
 func (repo *Repository) IsEmpty() (bool, error) {
-	var errbuf strings.Builder
-	if err := NewCommand("log", "-1").RunInDirPipeline(repo.Path, nil, &errbuf); err != nil {
-		if strings.Contains(errbuf.String(), "fatal: bad default revision 'HEAD'") ||
-			strings.Contains(errbuf.String(), "fatal: your current branch 'master' does not have any commits yet") {
+	var errbuf, output strings.Builder
+	if err := NewCommandContext(repo.Ctx, "show-ref", "--head", "^HEAD$").RunWithContext(&RunContext{
+		Timeout: -1,
+		Dir:     repo.Path,
+		Stdout:  &output,
+		Stderr:  &errbuf,
+	}); err != nil {
+		if err.Error() == "exit status 1" && errbuf.String() == "" {
 			return true, nil
 		}
 		return true, fmt.Errorf("check empty: %v - %s", err, errbuf.String())
 	}
 
-	return false, nil
+	return strings.TrimSpace(output.String()) == "", nil
 }
 
 // CloneRepoOptions options when clone a repository
@@ -101,6 +105,7 @@ type CloneRepoOptions struct {
 	Shared     bool
 	NoCheckout bool
 	Depth      int
+	Filter     string
 }
 
 // Clone clones original repository to target path.
@@ -141,7 +146,9 @@ func CloneWithArgs(ctx context.Context, from, to string, args []string, opts Clo
 	if opts.Depth > 0 {
 		cmd.AddArguments("--depth", strconv.Itoa(opts.Depth))
 	}
-
+	if opts.Filter != "" {
+		cmd.AddArguments("--filter", opts.Filter)
+	}
 	if len(opts.Branch) > 0 {
 		cmd.AddArguments("-b", opts.Branch)
 	}

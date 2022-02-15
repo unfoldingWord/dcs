@@ -65,6 +65,11 @@ func NewWorkerPool(handle HandlerFunc, config WorkerPoolConfiguration) *WorkerPo
 	return pool
 }
 
+// Done returns when this worker pool's base context has been cancelled
+func (p *WorkerPool) Done() <-chan struct{} {
+	return p.baseCtx.Done()
+}
+
 // Push pushes the data to the internal channel
 func (p *WorkerPool) Push(data Data) {
 	atomic.AddInt64(&p.numInQueue, 1)
@@ -82,6 +87,20 @@ func (p *WorkerPool) Push(data Data) {
 	}
 }
 
+// HasNoWorkerScaling will return true if the queue has no workers, and has no worker boosting
+func (p *WorkerPool) HasNoWorkerScaling() bool {
+	p.lock.Lock()
+	defer p.lock.Unlock()
+	return p.hasNoWorkerScaling()
+}
+
+func (p *WorkerPool) hasNoWorkerScaling() bool {
+	return p.numberOfWorkers == 0 && (p.boostTimeout == 0 || p.boostWorkers == 0 || p.maxNumberOfWorkers == 0)
+}
+
+// zeroBoost will add a temporary boost worker for a no worker queue
+// p.lock must be locked at the start of this function BUT it will be unlocked by the end of this function
+// (This is because addWorkers has to be called whilst unlocked)
 func (p *WorkerPool) zeroBoost() {
 	ctx, cancel := context.WithTimeout(p.baseCtx, p.boostTimeout)
 	mq := GetManager().GetManagedQueue(p.qid)
@@ -90,7 +109,7 @@ func (p *WorkerPool) zeroBoost() {
 		boost = p.maxNumberOfWorkers - p.numberOfWorkers
 	}
 	if mq != nil {
-		log.Warn("WorkerPool: %d (for %s) has zero workers - adding %d temporary workers for %s", p.qid, mq.Name, boost, p.boostTimeout)
+		log.Debug("WorkerPool: %d (for %s) has zero workers - adding %d temporary workers for %s", p.qid, mq.Name, boost, p.boostTimeout)
 
 		start := time.Now()
 		pid := mq.RegisterWorkers(boost, start, true, start.Add(p.boostTimeout), cancel, false)
@@ -98,7 +117,7 @@ func (p *WorkerPool) zeroBoost() {
 			mq.RemoveWorkers(pid)
 		}
 	} else {
-		log.Warn("WorkerPool: %d has zero workers - adding %d temporary workers for %s", p.qid, p.boostWorkers, p.boostTimeout)
+		log.Debug("WorkerPool: %d has zero workers - adding %d temporary workers for %s", p.qid, p.boostWorkers, p.boostTimeout)
 	}
 	p.lock.Unlock()
 	p.addWorkers(ctx, cancel, boost)
@@ -272,6 +291,21 @@ func (p *WorkerPool) addWorkers(ctx context.Context, cancel context.CancelFunc, 
 				p.cond.Broadcast()
 				cancel()
 			}
+
+			select {
+			case <-p.baseCtx.Done():
+				// Don't warn if the baseCtx is shutdown
+			default:
+				if p.hasNoWorkerScaling() {
+					log.Warn(
+						"Queue: %d is configured to be non-scaling and has no workers - this configuration is likely incorrect.", p.qid)
+				} else if p.numberOfWorkers == 0 && atomic.LoadInt64(&p.numInQueue) > 0 {
+					// OK there are no workers but... there's still work to be done -> Reboost
+					p.zeroBoost()
+					// p.lock will be unlocked by zeroBoost
+					return
+				}
+			}
 			p.lock.Unlock()
 		}()
 	}
@@ -326,7 +360,10 @@ func (p *WorkerPool) FlushWithContext(ctx context.Context) error {
 	log.Trace("WorkerPool: %d Flush", p.qid)
 	for {
 		select {
-		case data := <-p.dataChan:
+		case data, ok := <-p.dataChan:
+			if !ok {
+				return nil
+			}
 			p.handle(data)
 			atomic.AddInt64(&p.numInQueue, -1)
 		case <-p.baseCtx.Done():
@@ -341,7 +378,7 @@ func (p *WorkerPool) FlushWithContext(ctx context.Context) error {
 
 func (p *WorkerPool) doWork(ctx context.Context) {
 	delay := time.Millisecond * 300
-	var data = make([]Data, 0, p.batchLength)
+	data := make([]Data, 0, p.batchLength)
 	for {
 		select {
 		case <-ctx.Done():
