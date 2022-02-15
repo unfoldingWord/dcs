@@ -7,6 +7,7 @@
 package scrubber
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -16,6 +17,8 @@ import (
 	"reflect"
 
 	"code.gitea.io/gitea/models"
+	"code.gitea.io/gitea/models/db"
+	"code.gitea.io/gitea/models/repo"
 	user_model "code.gitea.io/gitea/models/user"
 	"code.gitea.io/gitea/modules/git"
 	"code.gitea.io/gitea/modules/log"
@@ -43,7 +46,7 @@ type ScrubSensitiveDataOptions struct {
 }
 
 // ScrubSensitiveData removes names and email addresses from the manifest|project|package|status.json files and scrubs previous history.
-func ScrubSensitiveData(repo *models.Repository, doer *user_model.User, opts ScrubSensitiveDataOptions) error {
+func ScrubSensitiveData(ctx *context.Context, repo *repo.Repository, doer *user_model.User, opts ScrubSensitiveDataOptions) error {
 	localPath, err := models.CreateTemporaryPath("repo-scrubber")
 	if err != nil {
 		return err
@@ -54,12 +57,12 @@ func ScrubSensitiveData(repo *models.Repository, doer *user_model.User, opts Scr
 		}
 	}()
 
-	if err := git.Clone(repo.RepoPath(), localPath, git.CloneRepoOptions{}); err != nil {
+	if err := git.Clone(db.DefaultContext, repo.RepoPath(), localPath, git.CloneRepoOptions{}); err != nil {
 		log.Error("Failed to clone repository: %s (%v)", repo.FullName(), err)
 		return fmt.Errorf("failed to clone repository: %s (%v)", repo.FullName(), err)
 	}
 
-	if err := ScrubJSONFiles(localPath); err == nil {
+	if err := ScrubJSONFiles(ctx, localPath); err == nil {
 		if err := git.AddChanges(localPath, true); err != nil {
 			return fmt.Errorf("AddChanges: %v", err)
 		} else if err := git.CommitChanges(localPath, git.CommitChangesOptions{
@@ -99,20 +102,20 @@ func ScrubSensitiveData(repo *models.Repository, doer *user_model.User, opts Scr
 		return err
 	}
 
-	return ScrubCommitNameAndEmail(localPath, "Door43", "commit@door43.org")
+	return ScrubCommitNameAndEmail(ctx, localPath, "Door43", "commit@door43.org")
 }
 
 // ScrubJSONFiles will scrub all JSON files
-func ScrubJSONFiles(localPath string) error {
+func ScrubJSONFiles(ctx *context.Context, localPath string) error {
 	for _, fileName := range jsonFilesToScrub {
-		if err := scrubJSONFile(localPath, fileName); err != nil {
+		if err := scrubJSONFile(ctx, localPath, fileName); err != nil {
 			return err
 		}
 	}
 	return nil
 }
 
-func scrubJSONFile(localPath, fileName string) error {
+func scrubJSONFile(ctx *context.Context, localPath, fileName string) error {
 	jsonPath := path.Join(localPath, fileName)
 
 	var jsonData interface{}
@@ -131,9 +134,9 @@ func scrubJSONFile(localPath, fileName string) error {
 
 	if fileContent, err := json.MarshalIndent(m, "", "  "); err != nil {
 		return err
-	} else if err := ScrubFile(localPath, fileName); err != nil {
+	} else if err := ScrubFile(ctx, localPath, fileName); err != nil {
 		return err
-	} else if err := ioutil.WriteFile(jsonPath, []byte(fileContent), 0666); err != nil {
+	} else if err := ioutil.WriteFile(jsonPath, []byte(fileContent), 0o666); err != nil {
 		return err
 	}
 
@@ -156,12 +159,12 @@ func ScrubMap(m map[string]interface{}) {
 }
 
 // ScrubFile completely removes a file from a repository's history
-func ScrubFile(repoPath string, fileName string) error {
+func ScrubFile(ctx *context.Context, repoPath string, fileName string) error {
 	gitPath, err := exec.LookPath("git")
 	if err != nil {
 		return err
 	}
-	cmd := git.NewCommand("filter-branch", "--force", "--prune-empty", "--tag-name-filter", "cat",
+	cmd := git.NewCommand(*ctx, "filter-branch", "--force", "--prune-empty", "--tag-name-filter", "cat",
 		"--index-filter", "\""+gitPath+"\" rm --cached --ignore-unmatch "+fileName,
 		"--", "--all")
 	_, err = cmd.RunInDir(repoPath)
@@ -170,10 +173,10 @@ func ScrubFile(repoPath string, fileName string) error {
 		if err != nil {
 			return err
 		}
-		cmd = git.NewCommand("reflog", "expire", "--all")
+		cmd = git.NewCommand(*ctx, "reflog", "expire", "--all")
 		_, err = cmd.RunInDir(repoPath)
 		if err != nil && err.Error() == "exit status 1" {
-			cmd = git.NewCommand("gc", "--aggressive", "--prune")
+			cmd = git.NewCommand(*ctx, "gc", "--aggressive", "--prune")
 			_, err = cmd.RunInDir(repoPath)
 			return err
 		}
@@ -182,11 +185,11 @@ func ScrubFile(repoPath string, fileName string) error {
 }
 
 // ScrubCommitNameAndEmail scrubs all commit names and emails
-func ScrubCommitNameAndEmail(localPath, newName, newEmail string) error {
+func ScrubCommitNameAndEmail(ctx *context.Context, localPath, newName, newEmail string) error {
 	if err := os.RemoveAll(path.Join(localPath, ".git/refs/original/")); err != nil {
 		return err
 	}
-	if _, err := git.NewCommand("filter-branch", "-f", "--env-filter", `
+	if _, err := git.NewCommand(db.DefaultContext, "filter-branch", "-f", "--env-filter", `
 export GIT_COMMITTER_NAME="`+newName+`"
 export GIT_COMMITTER_EMAIL="`+newEmail+`"
 export GIT_AUTHOR_NAME="`+newName+`"
@@ -194,7 +197,7 @@ export GIT_AUTHOR_EMAIL="`+newEmail+`"
 `, "--tag-name-filter", "cat", "--", "--branches", "--tags").RunInDir(localPath); err != nil {
 		return err
 	}
-	if _, err := git.NewCommand("push", "--force", "--tags", "origin", "refs/heads/*").RunInDir(localPath); err != nil {
+	if _, err := git.NewCommand(*ctx, "push", "--force", "--tags", "origin", "refs/heads/*").RunInDir(localPath); err != nil {
 		return err
 	}
 	return nil

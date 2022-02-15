@@ -53,7 +53,7 @@ func SetDefaultBranch(ctx *gitea_context.PrivateContext) {
 	}
 
 	/*** DCS Customizations ***/
-	if err := door43metadata_service.ProcessDoor43MetadataForRepoRelease(repo, nil); err != nil {
+	if err := door43metadata_service.ProcessDoor43MetadataForRepoRelease(ctx.Repo.Repository, nil); err != nil {
 		ctx.JSON(http.StatusInternalServerError, map[string]interface{}{
 			"Err": fmt.Sprintf("Unable to process default branch on repository: %s/%s Error: %v", ownerName, repoName, err),
 		})

@@ -183,7 +183,6 @@ func innerToRepo(repo *repo_model.Repository, mode perm.AccessMode, isParent boo
 		CloneURL:                  cloneLink.HTTPS,
 		OriginalURL:               repo.SanitizedOriginalURL(),
 		Website:                   repo.Website,
-		Language:                  language,
 		LanguagesURL:              repoAPIURL + "/languages",
 		Stars:                     repo.NumStars,
 		Forks:                     repo.NumForks,

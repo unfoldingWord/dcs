@@ -4,9 +4,11 @@
 
 package structs
 
-import "fmt"
-import "reflect"
-import "encoding/json"
+import (
+	"fmt"
+	"reflect"
+	"encoding/json"
+)
 
 // UnmarshalJSON implements json.Unmarshaler.
 func (j *RC020CheckingCheckingLevel) UnmarshalJSON(b []byte) error {
@@ -84,14 +86,12 @@ func (j *RC020DublinCore) UnmarshalJSON(b []byte) error {
 	}
 	if v, ok := raw["relation"]; !ok || v == nil {
 		plain.Relation = []RelationItem{}
-
 	}
 	if v, ok := raw["rights"]; !ok || v == nil {
 		plain.Rights = "CC BY-SA 4.0"
 	}
 	if v, ok := raw["source"]; !ok || v == nil {
 		plain.Source = []RC020DublinCoreSourceElem{}
-
 	}
 	if v, ok := raw["title"]; !ok || v == nil {
 		plain.Title = ""
@@ -165,7 +165,6 @@ func (j *RC020ProjectsElem) UnmarshalJSON(b []byte) error {
 	}
 	if v, ok := raw["categories"]; !ok || v == nil {
 		plain.Categories = []string{}
-
 	}
 	if v, ok := raw["identifier"]; !ok || v == nil {
 		plain.Identifier = ""
@@ -245,7 +244,6 @@ func (j *RC020Checking) UnmarshalJSON(b []byte) error {
 	}
 	if v, ok := raw["checking_entity"]; !ok || v == nil {
 		plain.CheckingEntity = []string{}
-
 	}
 	if v, ok := raw["checking_level"]; !ok || v == nil {
 		plain.CheckingLevel = "1"
@@ -736,19 +734,23 @@ var enumValuesProjectIdentifier = []interface{}{
 	"checking",
 	"bible",
 }
+
 var enumValuesRC020CheckingCheckingLevel = []interface{}{
 	"",
 	"1",
 	"2",
 	"3",
 }
+
 var enumValuesRC020DublinCoreConformsto = []interface{}{
 	"rc0.2",
 }
+
 var enumValuesRC020DublinCoreLanguageDirection = []interface{}{
 	"ltr",
 	"rtl",
 }
+
 var enumValuesRC020DublinCoreRights = []interface{}{
 	"CC BY 3.0",
 	"CC BY-SA 3.0",
@@ -756,6 +758,7 @@ var enumValuesRC020DublinCoreRights = []interface{}{
 	"Free Translate 2.0 International Public License",
 	"Public Domain",
 }
+
 var enumValuesRC020DublinCoreSubject = []interface{}{
 	"Aligned Bible",
 	"Bible",
@@ -773,6 +776,7 @@ var enumValuesRC020DublinCoreSubject = []interface{}{
 	"Translation Words",
 	"TSV Translation Notes",
 }
+
 var enumValuesRC020DublinCoreType = []interface{}{
 	"book",
 	"bundle",
@@ -780,6 +784,7 @@ var enumValuesRC020DublinCoreType = []interface{}{
 	"help",
 	"man",
 }
+
 var enumValuesRC020ProjectsElemVersification = []interface{}{
 	"avd",
 	"odx",
@@ -815,7 +820,6 @@ func (j *RC020Manifest) UnmarshalJSON(b []byte) error {
 	}
 	if v, ok := raw["projects"]; !ok || v == nil {
 		plain.Projects = []RC020ProjectsElem{}
-
 	}
 	*j = RC020Manifest(plain)
 	return nil

@@ -81,7 +81,7 @@ func RenderRepoSearch(ctx *context.Context, opts *RepoSearchOptions) {
 
 	/*** DCS Customizations ***/
 	var books, langs, keywords, subjects, repoNames, owners []string
-	var origKeyword = keyword
+	origKeyword := keyword
 	if keyword != "" {
 		for _, token := range models.SplitAtCommaNotInString(keyword, true) {
 			if strings.HasPrefix(token, "book:") {

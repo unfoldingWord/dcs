@@ -71,6 +71,7 @@ import (
 	"code.gitea.io/gitea/modules/log"
 	"code.gitea.io/gitea/modules/setting"
 	"code.gitea.io/gitea/modules/web"
+
 	_ "code.gitea.io/gitea/routers/api/v1/swagger" // for swagger generation
 
 	"gitea.com/go-chi/session"
@@ -109,7 +110,7 @@ func sudo() func(ctx *context.APIContext) {
 
 // Routes registers all catalog v3 APIs routes to web application.
 func Routes() *web.Route {
-	var m = web.NewRoute()
+	m := web.NewRoute()
 
 	m.Use(session.Sessioner(session.Options{
 		Provider:       setting.SessionConfig.Provider,
@@ -124,9 +125,9 @@ func Routes() *web.Route {
 	m.Use(securityHeaders())
 	if setting.CORSConfig.Enabled {
 		m.Use(cors.Handler(cors.Options{
-			//Scheme:           setting.CORSConfig.Scheme, // FIXME: the cors middleware needs scheme option
+			// Scheme:           setting.CORSConfig.Scheme, // FIXME: the cors middleware needs scheme option
 			AllowedOrigins: setting.CORSConfig.AllowDomain,
-			//setting.CORSConfig.AllowSubdomain // FIXME: the cors middleware needs allowSubdomain option
+			// setting.CORSConfig.AllowSubdomain // FIXME: the cors middleware needs allowSubdomain option
 			AllowedMethods:   setting.CORSConfig.Methods,
 			AllowCredentials: setting.CORSConfig.AllowCredentials,
 			MaxAge:           int(setting.CORSConfig.MaxAge.Seconds()),

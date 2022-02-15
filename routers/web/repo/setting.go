@@ -819,15 +819,16 @@ func SettingsPost(ctx *context.Context) {
 			}
 		}
 
-		if err := scrubber.ScrubSensitiveData(repo, ctx.User, scrubber.ScrubSensitiveDataOptions{
+		if err := scrubber.ScrubSensitiveData(&ctx.Repo.GitRepo.Ctx, repo, ctx.User, scrubber.ScrubSensitiveDataOptions{
 			LastCommitID:  ctx.Repo.CommitID,
-			CommitMessage: ctx.Tr("repo.settings.scrub_commit_message")}); err != nil {
+			CommitMessage: ctx.Tr("repo.settings.scrub_commit_message"),
+		}); err != nil {
 			log.Error("%v", err)
 			ctx.Flash.Error(ctx.Tr("repo.settings.scrub_error"))
 		} else {
 			log.Trace("Repository scrubbed: %s/%s", ctx.Repo.Owner.Name, repo.Name)
 
-			units := make([]models.RepoUnit, 0, len(repo.Units))
+			units := make([]repo_model.RepoUnit, 0, len(repo.Units))
 			var deleteUnitTypes []unit_model.Type
 
 			for _, unit := range repo.Units {
@@ -835,7 +836,7 @@ func SettingsPost(ctx *context.Context) {
 					units = append(units, *unit)
 				}
 			}
-			if err := models.UpdateRepositoryUnits(repo, units, deleteUnitTypes); err != nil {
+			if err := repo_model.UpdateRepositoryUnits(repo, units, deleteUnitTypes); err != nil {
 				ctx.ServerError("UpdateRepositoryUnits", err)
 				return
 			}

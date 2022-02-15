@@ -68,6 +68,7 @@ import (
 	"strings"
 
 	"code.gitea.io/gitea/models"
+	repo_model "code.gitea.io/gitea/models/repo"
 	user_model "code.gitea.io/gitea/models/user"
 	"code.gitea.io/gitea/modules/context"
 	"code.gitea.io/gitea/modules/log"
@@ -143,13 +144,13 @@ func repoAssignment() func(ctx *context.APIContext) {
 		ctx.Repo.Owner = owner
 
 		// Get repository.
-		repo, err := models.GetRepositoryByName(owner.ID, repoName)
+		repo, err := repo_model.GetRepositoryByName(owner.ID, repoName)
 		if err != nil {
-			if models.IsErrRepoNotExist(err) {
-				redirectRepoID, err := models.LookupRepoRedirect(owner.ID, repoName)
+			if repo_model.IsErrRepoNotExist(err) {
+				redirectRepoID, err := repo_model.LookupRedirect(owner.ID, repoName)
 				if err == nil {
 					context.RedirectToRepo(ctx.Context, redirectRepoID)
-				} else if models.IsErrRepoRedirectNotExist(err) {
+				} else if repo_model.IsErrRedirectNotExist(err) {
 					ctx.NotFound()
 				} else {
 					ctx.Error(http.StatusInternalServerError, "LookupRepoRedirect", err)
@@ -178,7 +179,7 @@ func repoAssignment() func(ctx *context.APIContext) {
 
 // Routes registers all catalog v5 APIs routes to web application.
 func Routes() *web.Route {
-	var m = web.NewRoute()
+	m := web.NewRoute()
 
 	m.Use(session.Sessioner(session.Options{
 		Provider:       setting.SessionConfig.Provider,
@@ -193,9 +194,9 @@ func Routes() *web.Route {
 	m.Use(securityHeaders())
 	if setting.CORSConfig.Enabled {
 		m.Use(cors.Handler(cors.Options{
-			//Scheme:           setting.CORSConfig.Scheme, // FIXME: the cors middleware needs scheme option
+			// Scheme:           setting.CORSConfig.Scheme, // FIXME: the cors middleware needs scheme option
 			AllowedOrigins: setting.CORSConfig.AllowDomain,
-			//setting.CORSConfig.AllowSubdomain // FIXME: the cors middleware needs allowSubdomain option
+			// setting.CORSConfig.AllowSubdomain // FIXME: the cors middleware needs allowSubdomain option
 			AllowedMethods:   setting.CORSConfig.Methods,
 			AllowCredentials: setting.CORSConfig.AllowCredentials,
 			MaxAge:           int(setting.CORSConfig.MaxAge.Seconds()),
