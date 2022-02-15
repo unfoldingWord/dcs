@@ -10,6 +10,7 @@ import (
 	"code.gitea.io/gitea/models"
 	admin_model "code.gitea.io/gitea/models/admin"
 	"code.gitea.io/gitea/models/db"
+	"code.gitea.io/gitea/models/repo"
 	"code.gitea.io/gitea/modules/log"
 
 	"xorm.io/builder"
@@ -26,10 +27,10 @@ func UpdateDoor43Metadata(ctx context.Context) error {
 
 	if err = db.Iterate(
 		db.DefaultContext,
-		new(models.Repository),
+		new(repo.Repository),
 		builder.In("id", repoIDs),
 		func(idx int, bean interface{}) error {
-			repo := bean.(*models.Repository)
+			repo := bean.(*repo.Repository)
 			select {
 			case <-ctx.Done():
 				return db.ErrCancelledf("before update door43 metadata of %s", repo.FullName())

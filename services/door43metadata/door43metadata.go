@@ -9,6 +9,7 @@ import (
 	"reflect"
 
 	"code.gitea.io/gitea/models"
+	"code.gitea.io/gitea/models/repo"
 	"code.gitea.io/gitea/modules/base"
 	"code.gitea.io/gitea/modules/git"
 	"code.gitea.io/gitea/modules/log"
@@ -42,13 +43,13 @@ func GenerateDoor43Metadata(x *xorm.Engine) error {
 		return err
 	}
 
-	cacheRepos := make(map[int64]*models.Repository)
+	cacheRepos := make(map[int64]*repo.Repository)
 
 	for _, record := range records {
 		releaseID := com.StrTo(record["release_id"]).MustInt64()
 		repoID := com.StrTo(record["repo_id"]).MustInt64()
 		if cacheRepos[repoID] == nil {
-			cacheRepos[repoID], err = models.GetRepositoryByID(repoID)
+			cacheRepos[repoID], err = repo.GetRepositoryByID(repoID)
 			if err != nil {
 				log.Warn("GetRepositoryByID Error: %v\n", err)
 				continue
@@ -125,7 +126,7 @@ func ConvertGenericMapToRC020Manifest(manifest *map[string]interface{}) (*struct
 }
 
 // ProcessDoor43MetadataForRepo handles the metadata for a given repo for all its releases
-func ProcessDoor43MetadataForRepo(repo *models.Repository) error {
+func ProcessDoor43MetadataForRepo(repo *repo.Repository) error {
 	if repo == nil {
 		return fmt.Errorf("no repository provided")
 	}
@@ -166,7 +167,7 @@ func ProcessDoor43MetadataForRepo(repo *models.Repository) error {
 }
 
 // ProcessDoor43MetadataForRepoRelease handles the metadata for a given repo by release based on if the container is a valid RC or not
-func ProcessDoor43MetadataForRepoRelease(repo *models.Repository, release *models.Release) error {
+func ProcessDoor43MetadataForRepoRelease(repo *repo.Repository, release *models.Release) error {
 	if repo == nil {
 		return fmt.Errorf("no repository provided")
 	}

@@ -34,7 +34,7 @@ func GetRepoLanguages(u *user_model.User) []string {
 			if lang != "" && !contains(languages, lang) {
 				languages = append(languages, lang)
 			}
-			if dm, err := repo.GetDefaultBranchMetadata(); err != nil {
+			if dm, err := GetDefaultBranchMetadata(repo.ID); err != nil {
 				log.Error("Error GetDefaultBranchMetadata: %v", err)
 			} else if dm != nil {
 				lang = (*dm.Metadata)["dublin_core"].(map[string]interface{})["language"].(map[string]interface{})["identifier"].(string)
@@ -55,7 +55,7 @@ func GetRepoSubjects(u *user_model.User) []string {
 		log.Error("Error GetUserRepositories: %v", err)
 	} else {
 		for _, repo := range repos {
-			if dm, err := repo.GetDefaultBranchMetadata(); err != nil {
+			if dm, err := GetDefaultBranchMetadata(repo.ID); err != nil {
 				log.Error("Error GetDefaultBranchMetadata: %v", err)
 			} else if dm != nil {
 				subject := (*dm.Metadata)["dublin_core"].(map[string]interface{})["subject"].(string)
