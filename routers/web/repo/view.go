@@ -952,6 +952,9 @@ func renderCode(ctx *context.Context) {
 
 	if entry.IsDir() {
 		renderDirectory(ctx, treeLink)
+		/*** DCS Customizations ***/
+		ctx.Data["IgnoreLanguageDirection"] = true
+		/*** END DCS Customizations ***/
 	} else {
 		renderFile(ctx, entry, treeLink, rawLink)
 	}

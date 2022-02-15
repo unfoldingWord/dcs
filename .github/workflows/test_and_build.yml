@@ -83,7 +83,7 @@ jobs:
         working-directory: ${{ env.GITEA_ROOT }}
 
       - name: build-backend-no-gcc
-        run: go build -mod=vendor -o gitea_no_gcc # test if build succeeds without the sqlite tag
+        run: go build -o gitea_no_gcc # test if build succeeds without the sqlite tag
         working-directory: ${{ env.GITEA_ROOT }}
         env:
           GO111MODULE: on
