@@ -70,7 +70,7 @@ jobs:
 
       - name: lint-backend
         shell: bash
-        run: make -f Makefile.dcs lint-backend-without-vet # remove "without-vet" when using Gitea v1.13 or highter
+        run: make -f Makefile lint-backend-without-vet # remove "without-vet" when using Gitea v1.13 or highter
         working-directory: ${{ env.GITEA_ROOT }}
         env:
           GOPROXY: https://goproxy.cn # proxy.golang.org is blocked in China, this proxy is not
