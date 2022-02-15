@@ -54,9 +54,9 @@ jobs:
 
       - name: Setup node
         if: always()
-        uses: actions/setup-node@v1
+        uses: actions/setup-node@v2
         with:
-          node-version: 12.x
+          node-version: '17'
 
       - name: deps-frontend
         shell: bash
