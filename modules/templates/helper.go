@@ -217,18 +217,18 @@ func NewFuncMap() []template.FuncMap {
 			return setting.DCS.Door43PreviewURL
 		},
 		"GetLatestProdCatalogMetadata": func(repoID int64) *models.Door43Metadata {
-			if dm, err := models.GetLatestProdCatalogMetadata(repoID); err != nil {
+			dm, err := models.GetLatestProdCatalogMetadata(repoID)
+			if err != nil {
 				return nil
-			} else {
-				return dm
 			}
+			return dm
 		},
 		"GetLatestPreProdCatalogMetadata": func(repoID int64) *models.Door43Metadata {
-			if dm, err := models.GetLatestPreProdCatalogMetadata(repoID); err != nil {
+			dm, err := models.GetLatestPreProdCatalogMetadata(repoID)
+			if err != nil {
 				return nil
-			} else {
-				return dm
 			}
+			return dm
 		},
 		/*** END DCS Customizations ***/
 		"SubJumpablePath": func(str string) []string {

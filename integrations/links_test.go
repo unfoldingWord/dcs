@@ -20,7 +20,7 @@ import (
 func TestLinksNoLogin(t *testing.T) {
 	defer prepareTestEnv(t)()
 
-	links = []string{
+	links := []string{
 		//"/explore/repos",
 		//"/explore/repos?q=test&tab=",
 		//"/explore/users",

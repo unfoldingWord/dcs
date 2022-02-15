@@ -1,6 +1,8 @@
 // Copyright 2019 The Gitea Authors. All rights reserved.
 // Use of this source code is governed by a MIT-style
 // license that can be found in the LICENSE file.
+//
+// Allow "io/ioutil" import
 
 /*** DCS Customizations - Tests for scrubbing repos ***/
 
@@ -111,7 +113,7 @@ func CopyFile(src, dst string) (err error) {
 // CopyDir recursively copies a directory tree, attempting to preserve permissions.
 // Source directory must exist, destination directory must *not* exist.
 // Symlinks are ignored and skipped.
-func CopyDir(src string, dst string) (err error) {
+func CopyDir(src, dst string) (err error) {
 	src = filepath.Clean(src)
 	dst = filepath.Clean(dst)
 

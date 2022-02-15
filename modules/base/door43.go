@@ -1,6 +1,8 @@
 // Copyright 2020 The Gitea Authors. All rights reserved.
 // Use of this source code is governed by a MIT-style
 // license that can be found in the LICENSE file.
+//
+// Allow "encoding/json" import
 
 package base
 
@@ -100,7 +102,7 @@ func StringifyManifestValidationResults(result *gojsonschema.Result) string {
 }
 
 // StringHasSuffix returns bool if str ends in the suffix
-func StringHasSuffix(str string, suffix string) bool {
+func StringHasSuffix(str, suffix string) bool {
 	return strings.HasSuffix(str, suffix)
 }
 

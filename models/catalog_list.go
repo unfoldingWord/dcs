@@ -118,7 +118,7 @@ type SearchCatalogOptions struct {
 	PartialMatch    bool
 }
 
-func getMetadataCondByDBType(dbType string, keyword string, includeMetadata bool) builder.Cond {
+func getMetadataCondByDBType(dbType, keyword string, includeMetadata bool) builder.Cond {
 	cond := builder.NewCond()
 	if dbType == "mysql" || dbType == "sqlite3" {
 		cond = cond.Or(builder.Like{"LOWER(REPLACE(JSON_EXTRACT(`door43_metadata`.metadata, '$.dublin_core.title'), '\"', ''))", strings.ToLower(keyword)})

@@ -64,7 +64,7 @@ func (m *metadataNotifier) NotifyDeleteRepository(doer *user_model.User, repo *r
 	}
 }
 
-func (m *metadataNotifier) NotifyMigrateRepository(doer *user_model.User, u *user_model.User, repo *repo.Repository) {
+func (m *metadataNotifier) NotifyMigrateRepository(doer, u *user_model.User, repo *repo.Repository) {
 	if err := door43metadata_service.ProcessDoor43MetadataForRepo(repo); err != nil {
 		log.Error("ProcessDoor43MetadataForRepo: %v\n", err)
 	}

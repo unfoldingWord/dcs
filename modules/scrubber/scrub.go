@@ -1,6 +1,9 @@
 // Copyright 2019 The Gitea Authors. All rights reserved.
 // Use of this source code is governed by a MIT-style
 // license that can be found in the LICENSE file.
+//
+// Allow "encoding/json" import
+// Allow "io/ioutil" import
 
 /*** DCS Customizations - Module for scrubbing repos ***/
 
@@ -159,7 +162,7 @@ func ScrubMap(m map[string]interface{}) {
 }
 
 // ScrubFile completely removes a file from a repository's history
-func ScrubFile(ctx *context.Context, repoPath string, fileName string) error {
+func ScrubFile(ctx *context.Context, repoPath, fileName string) error {
 	gitPath, err := exec.LookPath("git")
 	if err != nil {
 		return err
