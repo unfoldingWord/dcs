@@ -75,6 +75,9 @@ import {initRepoBranchButton} from './features/repo-branch.js';
 import {initCommonOrganization} from './features/common-organization.js';
 import {initRepoWikiForm} from './features/repo-wiki.js';
 import {initRepoCommentForm, initRepository} from './features/repo-legacy.js';
+/** DCS Customizations **/
+import {initDcsInfoIcon} from './features/dcs-info-icon.js';
+/** END DCS Customizations **/
 
 // Silence fomantic's error logging when tabs are used without a target content element
 $.fn.tab.settings.silent = true;
@@ -121,6 +124,10 @@ $(document).ready(() => {
   initAdminUserListSearchForm();
 
   initDashboardRepoList();
+
+  /** DCS Customizations **/
+  initDcsInfoIcon();
+  /** END DCS Customizations **/
 
   initNotificationCount();
   initNotificationsTable();
