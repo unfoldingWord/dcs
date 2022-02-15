@@ -84,7 +84,7 @@ jobs:
       - name: checks-backend
         run: make checks-backend
         working-directory: ${{ env.GITEA_ROOT }}
-      
+
       - name: build-frontend
         shell: bash
         run: make frontend
