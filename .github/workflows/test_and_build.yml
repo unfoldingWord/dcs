@@ -80,12 +80,10 @@ jobs:
       - name: checks-frontend
         run: make checks-frontend
         working-directory: ${{ env.GITEA_ROOT }}
-        depends_on: [deps-frontend]
 
       - name: checks-backend
         run: make checks-backend
         working-directory: ${{ env.GITEA_ROOT }}
-        depends_on: [lint-backend]
       
       - name: build-frontend
         shell: bash
