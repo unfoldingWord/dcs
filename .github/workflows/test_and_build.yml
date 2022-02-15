@@ -31,10 +31,10 @@ jobs:
       GITEA_ROOT: /home/runner/work/dcs/dcs/go/src/code.gitea.io/gitea
 
     steps:
-      - name: Set up Go 1.14
+      - name: Set up Go 1.17
         uses: actions/setup-go@v2
         with:
-          go-version: '^1.14.5'
+          go-version: '^1.17.7'
         id: go
 
       - name: Checkout
@@ -54,9 +54,9 @@ jobs:
 
       - name: Setup node
         if: always()
-        uses: actions/setup-node@v1
+        uses: actions/setup-node@v2
         with:
-          node-version: 12.x
+          node-version: '16'
 
       - name: deps-frontend
         shell: bash
@@ -75,7 +75,15 @@ jobs:
         env:
           GOPROXY: https://goproxy.cn # proxy.golang.org is blocked in China, this proxy is not
           GOSUMDB: sum.golang.org
-          TAGS: bindata sqlite sqlite_unlock_notify
+          TAGS: bindata sqlite sqlite_unlock_notify sqlite_json
+
+      - name: checks-frontend
+        run: make checks-frontend
+        working-directory: ${{ env.GITEA_ROOT }}
+
+      - name: checks-backend
+        run: make checks-backend
+        working-directory: ${{ env.GITEA_ROOT }}
 
       - name: build-frontend
         shell: bash
@@ -87,7 +95,7 @@ jobs:
         working-directory: ${{ env.GITEA_ROOT }}
         env:
           GO111MODULE: on
-          GOPROXY: off
+          GOPROXY: https://goproxy.cn
 
       - name: build-backend-arm64
         run: |
@@ -96,17 +104,17 @@ jobs:
         working-directory: ${{ env.GITEA_ROOT }}
         env:
           GO111MODULE: on
-          GOPROXY: off
+          GOPROXY: https://goproxy.cn
           GOOS: linux
           GOARCH: arm64
-          TAGS: bindata
+          TAGS: bindata gogit
 
       - name: build-backend-386
-        run: go build -mod=vendor -o gitea_linux_386 # test if compatible with 32 bit
+        run: go build -o gitea_linux_386 # test if compatible with 32 bit
         working-directory: ${{ env.GITEA_ROOT }}
         env:
           GO111MODULE: on
-          GOPROXY: off
+          GOPROXY: https://goproxy.cn
           GOOS: linux
           GOARCH: 386
 
@@ -210,8 +218,10 @@ jobs:
           timeout -s ABRT 40m make test-sqlite-migration test-sqlite
         working-directory: ${{ env.GITEA_ROOT }}
         env:
-          GOPROXY: off
-          TAGS: bindata
+          GOPROXY: https://goproxy.cn
+          TAGS: bindata gogit sqlite sqlite_unlock_notify sqlite_json
+          RACE_ENABLED: true
+          TEST_TAGS: gogit sqlite sqlite_unlock_notify sqlite_json
           USE_REPO_TEST_DIR: 1
 
 #      - name: Start MySQL
@@ -232,7 +242,7 @@ jobs:
 #          make test-mysql-migration integration-test-coverage
 #        working-directory: ${{ env.GITEA_ROOT }}
 #        env:
-#          GOPROXY: off
+#          GOPROXY: https://goproxy.cn
 #          TAGS: bindata
 #          TEST_LDAP: 1
 #          USE_REPO_TEST_DIR: 1
