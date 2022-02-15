@@ -88,9 +88,9 @@
 								{{$color = "yellow"}}
 							{{end}}
 							{{if .Door43Metadata}}
-								<span class="ui {{$color}} label" title="Stage: {{$stage}}" style="margin-top: 10px"><a href="{{$.RepoLink}}/src/tag/{{.TagName | EscapePound}}/manifest.yaml" rel="nofollow" style="opacity: inherit !important">{{$.i18n.Tr "repo.metadata.catalog"}} ({{$stage}})</a></span>
+								<span class="ui {{$color}} label" title="Stage: {{$stage}}" style="margin-top: 10px"><a href="{{$.RepoLink}}/src/tag/{{.TagName | PathEscapeSegments}}/manifest.yaml" rel="nofollow" style="opacity: inherit !important">{{$.i18n.Tr "repo.metadata.catalog"}} ({{$stage}})</a></span>
 							{{else if (and (not .IsTag) (not .IsDraft)) }}
-								<span class="ui red label" title="{{$.i18n.Tr "repo.metadata.invalid_manifest_tooltip"}}" style="margin-top: 10px"><a href="{{$.RepoLink}}/src/tag/{{.TagName | EscapePound}}/manifest.yaml" rel="nofollow" style="opacity: inherit #important">{{$.i18n.Tr "repo.metadata.invalid"}} ({{$stage}})</a></span>
+								<span class="ui red label" title="{{$.i18n.Tr "repo.metadata.invalid_manifest_tooltip"}}" style="margin-top: 10px"><a href="{{$.RepoLink}}/src/tag/{{.TagName | PathEscapeSegments}}/manifest.yaml" rel="nofollow" style="opacity: inherit #important">{{$.i18n.Tr "repo.metadata.invalid"}} ({{$stage}})</a></span>
 							{{end}}
 							<!-- END DCS Customizations -->
 							{{if not .IsDraft}}

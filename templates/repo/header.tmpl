@@ -14,13 +14,13 @@
 					<div class="mx-2">/</div>
 					<a href="{{$.RepoLink}}">{{.Name}}</a>
 					<!--- DCS Customizations -->
-					{{$prodDM := .GetLatestProdCatalogMetadata}}
+					{{$prodDM := GetLatestProdCatalogMetadata .ID}}
 					{{if $prodDM}}
-						<span class="ui green label" title="Catalog: Production"><a href="{{.Link}}/releases/tag/{{$prodDM.Release.TagName | EscapePound}}" rel="nofollow">{{$prodDM.Release.TagName}}</a></span>
+						<span class="ui green label" title="Catalog: Production"><a href="{{.Link}}/releases/tag/{{$prodDM.Release.TagName | PathEscapeSegments}}" rel="nofollow">{{$prodDM.Release.TagName}}</a></span>
 					{{end}}
-					{{$preProdDM := .GetLatestPreProdCatalogMetadata}}
+					{{$preProdDM := GetLatestPreProdCatalogMetadata .ID}}
 					{{if $preProdDM}}
-						<span class="ui orange label" title="Catalog: Pre-Production"><a href="{{.Link}}/releases/tag/{{$preProdDM.Release.TagName | EscapePound}}" rel="nofollow">{{$preProdDM.Release.TagName}}</a></span>
+						<span class="ui orange label" title="Catalog: Pre-Production"><a href="{{.Link}}/releases/tag/{{$preProdDM.Release.TagName | PathEscapeSegments}}" rel="nofollow">{{$preProdDM.Release.TagName}}</a></span>
 					{{end}}
 					<!-- END DCS Customizations -->
 					<div class="labels df ac fw">
@@ -56,10 +56,10 @@
 					{{$prodDM := .GetLatestProdCatalogMetadata}}
 					{{if $prodDM}}
 					<div class="ui labeled button" tabindex="0">
-						<a type="submit" class="ui compact basic button" href="{{.Link}}/releases/tag/{{$prodDM.Release.TagName | EscapePound}}">
+						<a type="submit" class="ui compact basic button" href="{{.Link}}/releases/tag/{{$prodDM.Release.TagName | PathEscapeSegments}}">
 							<i class="icon fa-file-text"></i>{{$.i18n.Tr "repo.metadata.catalog"}}
 						</a>
-						<a class="ui basic label" href="{{.Link}}/releases/tag/{{$prodDM.Release.TagName | EscapePound}}">
+						<a class="ui basic label" href="{{.Link}}/releases/tag/{{$prodDM.Release.TagName | PathEscapeSegments}}">
 							{{$prodDM.Release.TagName}}
 						</a>
 					</div>

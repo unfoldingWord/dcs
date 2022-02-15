@@ -7,6 +7,7 @@
 package scrubber
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -16,6 +17,7 @@ import (
 	"reflect"
 
 	"code.gitea.io/gitea/models"
+	"code.gitea.io/gitea/models/repo"
 	user_model "code.gitea.io/gitea/models/user"
 	"code.gitea.io/gitea/modules/git"
 	"code.gitea.io/gitea/modules/log"
@@ -43,7 +45,7 @@ type ScrubSensitiveDataOptions struct {
 }
 
 // ScrubSensitiveData removes names and email addresses from the manifest|project|package|status.json files and scrubs previous history.
-func ScrubSensitiveData(repo *models.Repository, doer *user_model.User, opts ScrubSensitiveDataOptions) error {
+func ScrubSensitiveData(ctx *context.Context, repo *repo.Repository, doer *user_model.User, opts ScrubSensitiveDataOptions) error {
 	localPath, err := models.CreateTemporaryPath("repo-scrubber")
 	if err != nil {
 		return err
@@ -99,7 +101,7 @@ func ScrubSensitiveData(repo *models.Repository, doer *user_model.User, opts Scr
 		return err
 	}
 
-	return ScrubCommitNameAndEmail(localPath, "Door43", "commit@door43.org")
+	return ScrubCommitNameAndEmail(ctx, localPath, "Door43", "commit@door43.org")
 }
 
 // ScrubJSONFiles will scrub all JSON files
@@ -133,7 +135,7 @@ func scrubJSONFile(localPath, fileName string) error {
 		return err
 	} else if err := ScrubFile(localPath, fileName); err != nil {
 		return err
-	} else if err := ioutil.WriteFile(jsonPath, []byte(fileContent), 0666); err != nil {
+	} else if err := ioutil.WriteFile(jsonPath, []byte(fileContent), 0o666); err != nil {
 		return err
 	}
 
@@ -182,7 +184,7 @@ func ScrubFile(repoPath string, fileName string) error {
 }
 
 // ScrubCommitNameAndEmail scrubs all commit names and emails
-func ScrubCommitNameAndEmail(localPath, newName, newEmail string) error {
+func ScrubCommitNameAndEmail(ctx *context.Context, localPath, newName, newEmail string) error {
 	if err := os.RemoveAll(path.Join(localPath, ".git/refs/original/")); err != nil {
 		return err
 	}

@@ -130,7 +130,7 @@ func sudo() func(ctx *context.APIContext) {
 
 // LatestRoutes registers latest redirects to latest version of the catalog API.
 func LatestRoutes() *web.Route {
-	var m = web.NewRoute()
+	m := web.NewRoute()
 
 	m.Use(session.Sessioner(session.Options{
 		Provider:       setting.SessionConfig.Provider,
@@ -145,9 +145,9 @@ func LatestRoutes() *web.Route {
 	m.Use(securityHeaders())
 	if setting.CORSConfig.Enabled {
 		m.Use(cors.Handler(cors.Options{
-			//Scheme:           setting.CORSConfig.Scheme, // FIXME: the cors middleware needs scheme option
+			// Scheme:           setting.CORSConfig.Scheme, // FIXME: the cors middleware needs scheme option
 			AllowedOrigins: setting.CORSConfig.AllowDomain,
-			//setting.CORSConfig.AllowSubdomain // FIXME: the cors middleware needs allowSubdomain option
+			// setting.CORSConfig.AllowSubdomain // FIXME: the cors middleware needs allowSubdomain option
 			AllowedMethods:   setting.CORSConfig.Methods,
 			AllowCredentials: setting.CORSConfig.AllowCredentials,
 			MaxAge:           int(setting.CORSConfig.MaxAge.Seconds()),
@@ -172,7 +172,7 @@ func LatestRoutes() *web.Route {
 
 // MiscRoutes registers catalog API endpoints that are relevant for all versions
 func MiscRoutes() *web.Route {
-	var m = web.NewRoute()
+	m := web.NewRoute()
 
 	m.Use(session.Sessioner(session.Options{
 		Provider:       setting.SessionConfig.Provider,
@@ -187,9 +187,9 @@ func MiscRoutes() *web.Route {
 	m.Use(securityHeaders())
 	if setting.CORSConfig.Enabled {
 		m.Use(cors.Handler(cors.Options{
-			//Scheme:           setting.CORSConfig.Scheme, // FIXME: the cors middleware needs scheme option
+			// Scheme:           setting.CORSConfig.Scheme, // FIXME: the cors middleware needs scheme option
 			AllowedOrigins: setting.CORSConfig.AllowDomain,
-			//setting.CORSConfig.AllowSubdomain // FIXME: the cors middleware needs allowSubdomain option
+			// setting.CORSConfig.AllowSubdomain // FIXME: the cors middleware needs allowSubdomain option
 			AllowedMethods:   setting.CORSConfig.Methods,
 			AllowCredentials: setting.CORSConfig.AllowCredentials,
 			MaxAge:           int(setting.CORSConfig.MaxAge.Seconds()),

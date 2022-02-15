@@ -290,7 +290,7 @@ type FindDoor43MetadatasOptions struct {
 }
 
 func (opts *FindDoor43MetadatasOptions) toConds(repoID int64) builder.Cond {
-	var cond = builder.NewCond()
+	cond := builder.NewCond()
 	cond = cond.And(builder.Eq{"repo_id": repoID})
 
 	if len(opts.ReleaseIDs) > 0 {
@@ -388,7 +388,7 @@ func GetDoor43MetadataByRepoIDAndStage(repoID int64, stage Stage) (*Door43Metada
 }
 
 func getDoor43MetadataByRepoIDAndStage(e db.Engine, repoID int64, stage Stage) (*Door43Metadata, error) {
-	var cond = builder.NewCond().
+	cond := builder.NewCond().
 		And(builder.Eq{"repo_id": repoID}).
 		And(builder.Eq{"stage": stage})
 	e = e.Where(cond).Desc("release_date_unix").Desc("branch_or_tag")
@@ -505,7 +505,7 @@ func DeleteAllDoor43MetadatasByRepoID(repoID int64) (int64, error) {
 
 // GetReposForMetadata gets the IDs of all the repos to process for metadata
 func GetReposForMetadata() ([]int64, error) {
-	//records, err := db.GetEngine(db.DefaultContext).Query("SELECT r.id FROM `repository` r " +
+	// records, err := db.GetEngine(db.DefaultContext).Query("SELECT r.id FROM `repository` r " +
 	//	"JOIN `release` rel ON rel.repo_id = r.id " +
 	//	"LEFT JOIN `door43_metadata` dm ON r.id = dm.repo_id " +
 	//	"AND rel.id = dm.release_id " +
@@ -516,9 +516,9 @@ func GetReposForMetadata() ([]int64, error) {
 	//	"AND dm2.release_id = 0 " +
 	//	"WHERE dm2.id IS NULL " +
 	//	"ORDER BY id ASC")
-	//records, err := sess.Query("SELECT r.id FROM `repository` r " +
+	// records, err := sess.Query("SELECT r.id FROM `repository` r " +
 	//	"ORDER BY id ASC")
-	//records, err := sess.Query("SELECT r.id FROM `repository` r WHERE r.is_private = 0 AND r.is_archived = 0 ORDER BY id ASC")
+	// records, err := sess.Query("SELECT r.id FROM `repository` r WHERE r.is_private = 0 AND r.is_archived = 0 ORDER BY id ASC")
 	records, err := db.GetEngine(db.DefaultContext).Query("SELECT id FROM `repository` ORDER BY id ASC")
 	if err != nil {
 		return nil, err
@@ -535,7 +535,7 @@ func GetReposForMetadata() ([]int64, error) {
 
 // GetRepoReleaseIDsForMetadata gets the releases ids for a repo
 func GetRepoReleaseIDsForMetadata(repoID int64) ([]int64, error) {
-	//records, err := db.GetEngine(db.DefaultContext).Query("SELECT rel.id as id FROM `repository` r "+
+	// records, err := db.GetEngine(db.DefaultContext).Query("SELECT rel.id as id FROM `repository` r "+
 	//	"INNER JOIN `release` rel ON rel.repo_id = r.id "+
 	//	"LEFT JOIN `door43_metadata` dm ON r.id = dm.repo_id "+
 	//	"AND rel.id = dm.release_id "+

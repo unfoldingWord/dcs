@@ -7,12 +7,13 @@ package convert
 import (
 	"code.gitea.io/gitea/models"
 	"code.gitea.io/gitea/models/perm"
+	"code.gitea.io/gitea/models/repo"
 	"code.gitea.io/gitea/modules/log"
 	api "code.gitea.io/gitea/modules/structs"
 )
 
 // ToRepoDCS adds some fields for DCS Customizations
-func ToRepoDCS(repo *models.Repository, mode perm.AccessMode) *api.Repository {
+func ToRepoDCS(repo *repo.Repository, mode perm.AccessMode) *api.Repository {
 	apiRepo := ToRepo(repo, mode)
 
 	catalog := &api.CatalogStages{}

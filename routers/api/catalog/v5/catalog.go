@@ -496,9 +496,9 @@ func searchCatalog(ctx *context.APIContext) {
 		PartialMatch:    ctx.FormBool("partialMatch"),
 	}
 
-	var sortModes = QueryStrings(ctx, "sort")
+	sortModes := QueryStrings(ctx, "sort")
 	if len(sortModes) > 0 {
-		var sortOrder = ctx.FormString("order")
+		sortOrder := ctx.FormString("order")
 		if sortOrder == "" {
 			sortOrder = "asc"
 		}
@@ -557,7 +557,7 @@ func searchCatalog(ctx *context.APIContext) {
 	} else {
 		ctx.SetLinkHeader(int(count), int(count))
 	}
-	ctx.Header().Set("X-Total-Count", fmt.Sprintf("%d", count))
+	ctx.RespHeader().Set("X-Total-Count", fmt.Sprintf("%d", count))
 	ctx.JSON(http.StatusOK, api.CatalogSearchResultsV5{
 		OK:          true,
 		Data:        results,

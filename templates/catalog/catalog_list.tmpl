@@ -6,9 +6,9 @@
 					<img class="ui avatar image" src="{{.Repo.RelAvatarLink}}">
 				{{end}}
 				{{if .Release}}
-				<a class="name" href="{{.Repo.Link}}/releases/tag/{{.Release.TagName | EscapePound}}">
+				<a class="name" href="{{.Repo.Link}}/releases/tag/{{.Release.TagName | PathEscapeSegments}}">
 				{{else}}
-				<a class="name" href="{{.Repo.Link}}/src/branch/{{.Repo.DefaultBranch | EscapePound}}">
+				<a class="name" href="{{.Repo.Link}}/src/branch/{{.Repo.DefaultBranch | PathEscapeSegments}}">
 				{{end}}
 					{{.Metadata.dublin_core.title}}
 				</a>

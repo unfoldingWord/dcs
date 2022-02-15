@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"code.gitea.io/gitea/models"
+	"code.gitea.io/gitea/models/db"
 	"code.gitea.io/gitea/models/perm"
 	"code.gitea.io/gitea/modules/log"
 	"code.gitea.io/gitea/modules/setting"
@@ -22,7 +23,7 @@ func ToCatalogV3Resource(dm *models.Door43Metadata) *api.CatalogV3Resource {
 		return nil
 	}
 
-	if err := dm.Repo.GetOwner(); err != nil {
+	if err := dm.Repo.GetOwner(db.DefaultContext); err != nil {
 		return nil
 	}
 
@@ -104,7 +105,7 @@ func ToCatalogV5(dm *models.Door43Metadata, mode perm.AccessMode) *api.CatalogV5
 		return nil
 	}
 
-	if err := dm.Repo.GetOwner(); err != nil {
+	if err := dm.Repo.GetOwner(db.DefaultContext); err != nil {
 		return nil
 	}
 

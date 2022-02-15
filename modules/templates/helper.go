@@ -215,6 +215,20 @@ func NewFuncMap() []template.FuncMap {
 		"Door43PreviewURL": func() string {
 			return setting.DCS.Door43PreviewURL
 		},
+		"GetLatestProdCatalogMetadata": func(repoID int64) *models.Door43Metadata {
+			dm, err := models.GetLatestProdCatalogMetadata(repoID)
+			if err != nil {
+				return nil
+			}
+			return dm
+		},
+		"GetLatestPreProdCatalogMetadata": func(repoID int64) *models.Door43Metadata {
+			dm, err := models.GetLatestPreProdCatalogMetadata(repoID)
+			if err != nil {
+				return nil
+			}
+			return dm
+		},
 		/*** END DCS Customizations ***/
 		"SubJumpablePath": func(str string) []string {
 			var path []string

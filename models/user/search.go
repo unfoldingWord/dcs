@@ -145,7 +145,7 @@ func SearchUsers(opts *SearchUserOptions) (users []*User, _ int64, _ error) {
 
 	/*** DCS Customizations ***/
 	if len(opts.RepoLanguages) > 0 {
-		var langCond = builder.NewCond()
+		langCond := builder.NewCond()
 		for _, lang := range opts.RepoLanguages {
 			for _, v := range strings.Split(lang, ",") {
 				langCond = langCond.Or(builder.Eq{"LOWER(REPLACE(JSON_EXTRACT(`door43_metadata`.metadata, '$.dublin_core.language.identifier'), '\"', ''))": strings.ToLower(v)})

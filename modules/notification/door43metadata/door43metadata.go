@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"code.gitea.io/gitea/models"
+	"code.gitea.io/gitea/models/repo"
 	user_model "code.gitea.io/gitea/models/user"
 	"code.gitea.io/gitea/modules/git"
 	"code.gitea.io/gitea/modules/log"
@@ -20,9 +21,7 @@ type metadataNotifier struct {
 	base.NullNotifier
 }
 
-var (
-	_ base.Notifier = &metadataNotifier{}
-)
+var _ base.Notifier = &metadataNotifier{}
 
 // NewNotifier create a new metadataNotifier notifier
 func NewNotifier() base.Notifier {
@@ -51,7 +50,7 @@ func (m *metadataNotifier) NotifyDeleteRelease(doer *user_model.User, rel *model
 	}
 }
 
-func (m *metadataNotifier) NotifyPushCommits(pusher *user_model.User, repo *models.Repository, opts *repository.PushUpdateOptions, commits *repository.PushCommits) {
+func (m *metadataNotifier) NotifyPushCommits(pusher *user_model.User, repo *repo.Repository, opts *repository.PushUpdateOptions, commits *repository.PushCommits) {
 	if strings.HasPrefix(opts.RefFullName, git.BranchPrefix) && strings.TrimPrefix(opts.RefFullName, git.BranchPrefix) == repo.DefaultBranch {
 		if err := door43metadata_service.ProcessDoor43MetadataForRepoRelease(repo, nil); err != nil {
 			log.Info("ProcessDoor43MetadataForRepoRelease: %v\n", err)
@@ -59,31 +58,31 @@ func (m *metadataNotifier) NotifyPushCommits(pusher *user_model.User, repo *mode
 	}
 }
 
-func (m *metadataNotifier) NotifyDeleteRepository(doer *user_model.User, repo *models.Repository) {
+func (m *metadataNotifier) NotifyDeleteRepository(doer *user_model.User, repo *repo.Repository) {
 	if _, err := models.DeleteAllDoor43MetadatasByRepoID(repo.ID); err != nil {
 		log.Error("DeleteAllDoor43MetadatasByRepoID: %v\n", err)
 	}
 }
 
-func (m *metadataNotifier) NotifyMigrateRepository(doer *user_model.User, u *user_model.User, repo *models.Repository) {
+func (m *metadataNotifier) NotifyMigrateRepository(doer *user_model.User, u *user_model.User, repo *repo.Repository) {
 	if err := door43metadata_service.ProcessDoor43MetadataForRepo(repo); err != nil {
 		log.Error("ProcessDoor43MetadataForRepo: %v\n", err)
 	}
 }
 
-func (m *metadataNotifier) NotifyTransferRepository(doer *user_model.User, repo *models.Repository, newOwnerName string) {
+func (m *metadataNotifier) NotifyTransferRepository(doer *user_model.User, repo *repo.Repository, newOwnerName string) {
 	if err := door43metadata_service.ProcessDoor43MetadataForRepo(repo); err != nil {
 		log.Error("ProcessDoor43MetadataForRepo: %v\n", err)
 	}
 }
 
-func (m *metadataNotifier) NotifyForkRepository(doer *user_model.User, oldRepo, repo *models.Repository) {
+func (m *metadataNotifier) NotifyForkRepository(doer *user_model.User, oldRepo, repo *repo.Repository) {
 	if err := door43metadata_service.ProcessDoor43MetadataForRepo(repo); err != nil {
 		log.Error("ProcessDoor43MetadataForRepo: %v\n", err)
 	}
 }
 
-func (m *metadataNotifier) NotifyRenameRepository(doer *user_model.User, repo *models.Repository, oldName string) {
+func (m *metadataNotifier) NotifyRenameRepository(doer *user_model.User, repo *repo.Repository, oldName string) {
 	if err := door43metadata_service.ProcessDoor43MetadataForRepo(repo); err != nil {
 		log.Error("ProcessDoor43MetadataForRepo: %v\n", err)
 	}

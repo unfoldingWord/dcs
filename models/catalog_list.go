@@ -14,7 +14,7 @@ import (
 	"xorm.io/builder"
 )
 
-//CatalogOrderBy is used to sort the result
+// CatalogOrderBy is used to sort the result
 type CatalogOrderBy string
 
 func (s CatalogOrderBy) String() string {
@@ -91,7 +91,7 @@ func (dms Door43MetadataList) loadAttributes(e db.Engine) error {
 }
 
 func valuesDoor43Metadata(m map[int64]*Door43Metadata) []*Door43Metadata {
-	var values = make([]*Door43Metadata, 0, len(m))
+	values := make([]*Door43Metadata, 0, len(m))
 	for _, v := range m {
 		values = append(values, v)
 	}
@@ -301,7 +301,7 @@ func GetHistoryCond(includeHistory bool) builder.Cond {
 
 // GetSubjectCond gets the subject condition
 func GetSubjectCond(subjects []string, partialMatch bool) builder.Cond {
-	var subjectCond = builder.NewCond()
+	subjectCond := builder.NewCond()
 	for _, subject := range subjects {
 		if partialMatch {
 			subjectCond = subjectCond.Or(builder.Like{"LOWER(REPLACE(JSON_EXTRACT(`door43_metadata`.metadata, '$.dublin_core.subject'), '\"', ''))", strings.ToLower(subject)})
@@ -314,7 +314,7 @@ func GetSubjectCond(subjects []string, partialMatch bool) builder.Cond {
 
 // GetLanguageCond gets the language condition
 func GetLanguageCond(languages []string, partialMatch bool) builder.Cond {
-	var langCond = builder.NewCond()
+	langCond := builder.NewCond()
 	for _, lang := range languages {
 		for _, v := range strings.Split(lang, ",") {
 			if partialMatch {
@@ -329,7 +329,7 @@ func GetLanguageCond(languages []string, partialMatch bool) builder.Cond {
 
 // GetBookCond gets the book condition
 func GetBookCond(books []string) builder.Cond {
-	var bookCond = builder.NewCond()
+	bookCond := builder.NewCond()
 	for _, book := range books {
 		for _, v := range strings.Split(book, ",") {
 			bookCond = bookCond.Or(builder.Expr("JSON_CONTAINS(LOWER(JSON_EXTRACT(`door43_metadata`.metadata, '$.projects')), JSON_OBJECT('identifier', ?))", strings.ToLower(v)))
@@ -340,7 +340,7 @@ func GetBookCond(books []string) builder.Cond {
 
 // GetCheckingLevelCond gets the checking level condition
 func GetCheckingLevelCond(checkingLevels []string) builder.Cond {
-	var checkingCond = builder.NewCond()
+	checkingCond := builder.NewCond()
 	for _, checking := range checkingLevels {
 		for _, v := range strings.Split(checking, ",") {
 			checkingCond = checkingCond.Or(builder.Gte{"REPLACE(JSON_EXTRACT(`door43_metadata`.metadata, '$.checking.checking_level'), '\"', '')": v})
@@ -351,7 +351,7 @@ func GetCheckingLevelCond(checkingLevels []string) builder.Cond {
 
 // GetTagCond gets the tag condition
 func GetTagCond(tags []string) builder.Cond {
-	var tagCond = builder.NewCond()
+	tagCond := builder.NewCond()
 	for _, tag := range tags {
 		for _, v := range strings.Split(tag, ",") {
 			tagCond = tagCond.Or(builder.Eq{"`release`.tag_name": v})
@@ -362,7 +362,7 @@ func GetTagCond(tags []string) builder.Cond {
 
 // GetRepoCond gets the repo condition
 func GetRepoCond(repos []string, partialMatch bool) builder.Cond {
-	var repoCond = builder.NewCond()
+	repoCond := builder.NewCond()
 	for _, repo := range repos {
 		for _, v := range strings.Split(repo, ",") {
 			if partialMatch {
@@ -377,7 +377,7 @@ func GetRepoCond(repos []string, partialMatch bool) builder.Cond {
 
 // GetOwnerCond gets the owner condition
 func GetOwnerCond(owners []string, partialMatch bool) builder.Cond {
-	var ownerCond = builder.NewCond()
+	ownerCond := builder.NewCond()
 	for _, owner := range owners {
 		for _, v := range strings.Split(owner, ",") {
 			if partialMatch {

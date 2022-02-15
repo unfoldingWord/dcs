@@ -100,7 +100,7 @@ func StringifyManifestValidationResults(result *gojsonschema.Result) string {
 }
 
 // StringHasSuffix returns bool if str ends in the suffix
-func StringHasSuffix(str string, suffix string) bool {
+func StringHasSuffix(str, suffix string) bool {
 	return strings.HasSuffix(str, suffix)
 }
 

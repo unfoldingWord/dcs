@@ -150,9 +150,9 @@ type Repository struct {
 	// Avatar: ID(10-20)-md5(32) - must fit into 64 symbols
 	Avatar string `xorm:"VARCHAR(64)"`
 
-        /*** DCS Customizations ***/
-        Metadata *map[string]interface{} `xorm:"-"`
-        /*** DCS Customizations ***/
+	/*** DCS Customizations ***/
+	Metadata *map[string]interface{} `xorm:"-"`
+	/*** DCS Customizations ***/
 
 	CreatedUnix timeutil.TimeStamp `xorm:"INDEX created"`
 	UpdatedUnix timeutil.TimeStamp `xorm:"INDEX updated"`
