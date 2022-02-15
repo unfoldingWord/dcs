@@ -73,7 +73,6 @@
 							{{else}}
 								{{svg (printf "octicon-%s" (EntryIcon $entry))}}
 								<a href="{{$.TreeLink}}/{{PathEscapeSegments $entry.Name}}" title="{{$entry.Name}}">{{$entry.Name}}
-								<a href="{{EscapePound $.TreeLink}}/{{EscapePound $entry.Name}}" title="{{$entry.Name}}">{{$entry.Name}}
 									<!-- DCS Customizations -->
 									{{if or (StringHasSuffix $entry.Name ".yaml") (StringHasSuffix $entry.Name ".json")}}
 										{{$errors := ""}}
