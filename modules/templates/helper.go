@@ -216,6 +216,13 @@ func NewFuncMap() []template.FuncMap {
 		"Door43PreviewURL": func() string {
 			return setting.DCS.Door43PreviewURL
 		},
+		"GetDefaultBranchMetadata": func(repoID int64) *models.Door43Metadata {
+			dm, err := models.GetDefaultBranchMetadata(repoID)
+			if err != nil {
+				return nil
+			}
+			return dm
+		},
 		"GetLatestProdCatalogMetadata": func(repoID int64) *models.Door43Metadata {
 			dm, err := models.GetLatestProdCatalogMetadata(repoID)
 			if err != nil {

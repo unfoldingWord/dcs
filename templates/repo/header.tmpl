@@ -53,7 +53,7 @@
 			{{if not (or .IsBeingCreated .IsBroken)}}
 				<div class="repo-buttons">
 					<!-- DCS Customizations -->
-					{{$prodDM := .GetLatestProdCatalogMetadata}}
+					{{$prodDM := (GetLatestProdCatalogMetadata .ID)}}
 					{{if $prodDM}}
 					<div class="ui labeled button" tabindex="0">
 						<a type="submit" class="ui compact basic button" href="{{.Link}}/releases/tag/{{$prodDM.Release.TagName | PathEscapeSegments}}">
