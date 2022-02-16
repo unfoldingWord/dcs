@@ -78,7 +78,7 @@
 		<!-- DCS Customizations - Adds language identier and direction to this div -->
 		{{$dm := ""}}
 		{{if not .IgnoreLanguageDirection}}
-			{{$dm = .Repository.GetDefaultBranchMetadata}}
+			{{$dm = (GetDefaultBranchMetadata .Repository.ID)}}
 		{{end}}
 		{{template "repo/unicode_escape_prompt" dict "EscapeStatus" .EscapeStatus "root" $}}
 		<div class="file-view{{if .IsMarkup}} markup {{.MarkupType}}{{else if .IsRenderedHTML}} plain-text{{else if .IsTextSource}} code-view{{end}}{{if .IsTocYaml}} markdown yaml{{end}}{{if $dm}} dir-{{$dm.Metadata.dublin_core.language.direction}} ln-{{$dm.Metadata.dublin_core.language.identifier}}{{end}}"{{if $dm}} data-lang="{{$dm.Metadata.dublin_core.language.identifier}}" data-direction="{{$dm.Metadata.dublin_core.language.direction}}"{{end}}>
