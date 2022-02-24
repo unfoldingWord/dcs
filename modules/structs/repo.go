@@ -225,7 +225,6 @@ type GenerateRepoOption struct {
 // CreateBranchRepoOption options when creating a branch in a repository
 // swagger:model
 type CreateBranchRepoOption struct {
-
 	// Name of the branch to create
 	//
 	// required: true
