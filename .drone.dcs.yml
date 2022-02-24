@@ -1,0 +1,568 @@
+---
+kind: pipeline
+type: docker
+name: release-latest
+
+platform:
+  os: linux
+  arch: amd64
+
+workspace:
+  base: /source
+  path: /
+
+trigger:
+  branch:
+    - main
+    - "release/dcs/*"
+  event:
+    - push
+
+volumes:
+  - name: deps
+    temp: {}
+
+steps:
+  - name: fetch-tags
+    image: docker:git
+    pull: always
+    commands:
+      - git fetch --tags --force
+
+  - name: deps-frontend
+    image: node:16
+    pull: always
+    commands:
+      - make deps-frontend
+
+  - name: deps-backend
+    image: golang:1.17
+    pull: always
+    commands:
+      - make deps-backend
+    volumes:
+      - name: deps
+        path: /go
+
+  - name: static
+    image: techknowlogick/xgo:go-1.17.x
+    pull: always
+    commands:
+      - curl -sL https://deb.nodesource.com/setup_16.x | bash - && apt-get install -y nodejs
+      - export PATH=$PATH:$GOPATH/bin
+      - make release
+    environment:
+      GOPROXY: https://goproxy.cn # proxy.golang.org is blocked in China, this proxy is not
+      TAGS: bindata sqlite sqlite_unlock_notify
+    volumes:
+      - name: deps
+        path: /go
+
+  - name: release-branch
+    image: woodpeckerci/plugin-s3:latest
+    pull: always
+    settings:
+      acl: public-read
+      bucket: gitea-artifacts
+      endpoint: https://ams3.digitaloceanspaces.com
+      path_style: true
+      source: "dist/release/dcs/*"
+      strip_prefix: dist/release/
+      target: "/gitea/${DRONE_BRANCH##release/dcs/v}"
+    environment:
+      AWS_ACCESS_KEY_ID:
+        from_secret: aws_access_key_id
+      AWS_SECRET_ACCESS_KEY:
+        from_secret: aws_secret_access_key
+    when:
+      branch:
+        - "release/dcs/*"
+      event:
+        - push
+
+  - name: release-main
+    image: woodpeckerci/plugin-s3:latest
+    settings:
+      acl: public-read
+      bucket: gitea-artifacts
+      endpoint: https://ams3.digitaloceanspaces.com
+      path_style: true
+      source: "dist/release/dcs/*"
+      strip_prefix: dist/release/dcs/
+      target: /dcs/main
+    environment:
+      AWS_ACCESS_KEY_ID:
+        from_secret: aws_access_key_id
+      AWS_SECRET_ACCESS_KEY:
+        from_secret: aws_secret_access_key
+    when:
+      branch:
+        - main
+      event:
+        - push
+
+---
+kind: pipeline
+name: release-version
+
+platform:
+  os: linux
+  arch: amd64
+
+workspace:
+  base: /source
+  path: /
+
+trigger:
+  event:
+    - tag
+
+volumes:
+  - name: deps
+    temp: {}
+
+steps:
+  - name: fetch-tags
+    image: docker:git
+    pull: always
+    commands:
+      - git fetch --tags --force
+
+  - name: deps-frontend
+    image: node:16
+    pull: always
+    commands:
+      - make deps-frontend
+
+  - name: deps-backend
+    image: golang:1.17
+    pull: always
+    commands:
+      - make deps-backend
+    volumes:
+      - name: deps
+        path: /go
+
+  - name: static
+    image: techknowlogick/xgo:go-1.17.x
+    pull: always
+    commands:
+      - curl -sL https://deb.nodesource.com/setup_16.x | bash - && apt-get install -y nodejs
+      - export PATH=$PATH:$GOPATH/bin
+      - make release
+    environment:
+      GOPROXY: https://goproxy.cn # proxy.golang.org is blocked in China, this proxy is not
+      TAGS: bindata sqlite sqlite_unlock_notify
+    depends_on: [fetch-tags]
+    volumes:
+      - name: deps
+        path: /go
+
+  - name: release-tag
+    image: woodpeckerci/plugin-s3:latest
+    pull: always
+    settings:
+      acl: public-read
+      bucket: gitea-artifacts
+      endpoint: https://ams3.digitaloceanspaces.com
+      path_style: true
+      source: "dist/release/dcs/*"
+      strip_prefix: dist/release/
+      target: "/gitea/${DRONE_TAG##v}"
+    environment:
+      AWS_ACCESS_KEY_ID:
+        from_secret: aws_access_key_id
+      AWS_SECRET_ACCESS_KEY:
+        from_secret: aws_secret_access_key
+
+  - name: github
+    image: plugins/github-release:1
+    pull: always
+    settings:
+      files:
+        - "dist/release/dcs/*"
+    environment:
+      GITHUB_TOKEN:
+        from_secret: github_token
+
+---
+kind: pipeline
+type: docker
+name: docker-linux-amd64-release-version
+
+platform:
+  os: linux
+  arch: amd64
+
+trigger:
+  ref:
+  - "refs/tags/**"
+  event:
+    exclude:
+    - cron
+
+steps:
+  - name: fetch-tags
+    image: docker:git
+    pull: always
+    commands:
+      - git fetch --tags --force
+
+  - name: publish
+    image: techknowlogick/drone-docker:latest
+    pull: always
+    settings:
+      auto_tag: true
+      auto_tag_suffix: linux-amd64
+      repo: unfoldingword/dcs
+      build_args:
+        - GOPROXY=https://goproxy.cn
+      password:
+        from_secret: docker_password
+      username:
+        from_secret: docker_username
+    when:
+      event:
+        exclude:
+        - pull_request
+
+  - name: publish-rootless
+    image: techknowlogick/drone-docker:latest
+    settings:
+      dockerfile: Dockerfile.rootless
+      auto_tag: true
+      auto_tag_suffix: linux-amd64-rootless
+      repo: unfoldingword/dcs
+      build_args:
+        - GOPROXY=https://goproxy.cn
+      password:
+        from_secret: docker_password
+      username:
+        from_secret: docker_username
+    when:
+      event:
+        exclude:
+        - pull_request
+
+---
+kind: pipeline
+type: docker
+name: docker-linux-amd64-release
+
+platform:
+  os: linux
+  arch: amd64
+
+trigger:
+  ref:
+  - refs/heads/main
+  event:
+    exclude:
+    - cron
+
+steps:
+  - name: fetch-tags
+    image: docker:git
+    pull: always
+    commands:
+      - git fetch --tags --force
+
+  - name: publish
+    image: techknowlogick/drone-docker:latest
+    pull: always
+    settings:
+      auto_tag: false
+      tags: dev-linux-amd64
+      repo: unfoldingword/dcs
+      build_args:
+        - GOPROXY=https://goproxy.cn
+      password:
+        from_secret: docker_password
+      username:
+        from_secret: docker_username
+    when:
+      event:
+        exclude:
+        - pull_request
+
+  - name: publish-rootless
+    image: techknowlogick/drone-docker:latest
+    settings:
+      dockerfile: Dockerfile.rootless
+      auto_tag: false
+      tags: dev-linux-amd64-rootless
+      repo: unfoldingword/dcs
+      build_args:
+        - GOPROXY=https://goproxy.cn
+      password:
+        from_secret: docker_password
+      username:
+        from_secret: docker_username
+    when:
+      event:
+        exclude:
+        - pull_request
+
+---
+kind: pipeline
+name: docker-linux-amd64-release-branch
+
+platform:
+  os: linux
+  arch: amd64
+
+trigger:
+  ref:
+  - "refs/heads/release/dcs/v*"
+  event:
+    exclude:
+    - cron
+
+steps:
+  - name: fetch-tags
+    image: docker:git
+    pull: always
+    commands:
+      - git fetch --tags --force
+
+  - name: publish
+    image: techknowlogick/drone-docker:latest
+    pull: always
+    settings:
+      auto_tag: false
+      tags: ${DRONE_BRANCH##release/dcs/v}-dev-linux-amd64
+      repo: unfoldingword/dcs
+      build_args:
+        - GOPROXY=https://goproxy.cn
+      password:
+        from_secret: docker_password
+      username:
+        from_secret: docker_username
+    when:
+      event:
+        exclude:
+        - pull_request
+
+  - name: publish-rootless
+    image: techknowlogick/drone-docker:latest
+    settings:
+      dockerfile: Dockerfile.rootless
+      auto_tag: false
+      tags: ${DRONE_BRANCH##release/dcs/v}-dev-linux-amd64-rootless
+      repo: unfoldingword/dcs
+      build_args:
+        - GOPROXY=https://goproxy.cn
+      password:
+        from_secret: docker_password
+      username:
+        from_secret: docker_username
+    when:
+      event:
+        exclude:
+        - pull_request
+
+---
+kind: pipeline
+type: docker
+name: docker-linux-arm64-dry-run
+
+platform:
+  os: linux
+  arch: arm64
+
+trigger:
+  ref:
+  - "refs/pull/**"
+
+steps:
+  - name: dryrun
+    image: techknowlogick/drone-docker:latest
+    pull: always
+    settings:
+      dry_run: true
+      repo: unfoldingword/dcs
+      tags: linux-arm64
+      build_args:
+        - GOPROXY=https://goproxy.cn
+    environment:
+      PLUGIN_MIRROR:
+        from_secret: plugin_mirror
+    when:
+      event:
+        - pull_request
+
+---
+kind: pipeline
+type: docker
+name: docker-linux-arm64-release-version
+
+platform:
+  os: linux
+  arch: arm64
+
+trigger:
+  ref:
+  - "refs/tags/**"
+  event:
+    exclude:
+    - cron
+
+steps:
+  - name: fetch-tags
+    image: docker:git
+    pull: always
+    commands:
+      - git fetch --tags --force
+
+  - name: publish
+    image: techknowlogick/drone-docker:latest
+    pull: always
+    settings:
+      auto_tag: true
+      auto_tag_suffix: linux-arm64
+      repo: unfoldingword/dcs
+      build_args:
+        - GOPROXY=https://goproxy.cn
+      password:
+        from_secret: docker_password
+      username:
+        from_secret: docker_username
+    when:
+      event:
+        exclude:
+        - pull_request
+
+  - name: publish-rootless
+    image: techknowlogick/drone-docker:latest
+    settings:
+      dockerfile: Dockerfile.rootless
+      auto_tag: true
+      auto_tag_suffix: linux-arm64-rootless
+      repo: unfoldingword/dcs
+      build_args:
+        - GOPROXY=https://goproxy.cn
+      password:
+        from_secret: docker_password
+      username:
+        from_secret: docker_username
+    when:
+      event:
+        exclude:
+        - pull_request
+
+---
+kind: pipeline
+type: docker
+name: docker-linux-arm64-release
+
+platform:
+  os: linux
+  arch: arm64
+
+trigger:
+  ref:
+  - refs/heads/main
+  event:
+    exclude:
+    - cron
+
+steps:
+  - name: fetch-tags
+    image: docker:git
+    pull: always
+    commands:
+      - git fetch --tags --force
+
+  - name: publish
+    image: techknowlogick/drone-docker:latest
+    pull: always
+    settings:
+      auto_tag: false
+      tags: dev-linux-arm64
+      repo: unfoldingword/dcs
+      build_args:
+        - GOPROXY=https://goproxy.cn
+      password:
+        from_secret: docker_password
+      username:
+        from_secret: docker_username
+    when:
+      event:
+        exclude:
+        - pull_request
+
+  - name: publish-rootless
+    image: techknowlogick/drone-docker:latest
+    settings:
+      dockerfile: Dockerfile.rootless
+      auto_tag: false
+      tags: dev-linux-arm64-rootless
+      repo: unfoldingword/dcs
+      build_args:
+        - GOPROXY=https://goproxy.cn
+      password:
+        from_secret: docker_password
+      username:
+        from_secret: docker_username
+    when:
+      event:
+        exclude:
+        - pull_request
+
+---
+kind: pipeline
+name: docker-linux-arm64-release-branch
+
+platform:
+  os: linux
+  arch: arm64
+
+trigger:
+  ref:
+  - "refs/heads/release/dcs/v*"
+  event:
+    exclude:
+    - cron
+
+steps:
+  - name: fetch-tags
+    image: docker:git
+    pull: always
+    commands:
+      - git fetch --tags --force
+
+  - name: publish
+    image: techknowlogick/drone-docker:latest
+    pull: always
+    settings:
+      auto_tag: false
+      tags: ${DRONE_BRANCH##release/dcs/v}-dev-linux-arm64
+      repo: unfoldingword/dcs
+      build_args:
+        - GOPROXY=https://goproxy.cn
+      password:
+        from_secret: docker_password
+      username:
+        from_secret: docker_username
+    when:
+      event:
+        exclude:
+        - pull_request
+
+  - name: publish-rootless
+    image: techknowlogick/drone-docker:latest
+    settings:
+      dockerfile: Dockerfile.rootless
+      auto_tag: false
+      tags: ${DRONE_BRANCH##release/dcs/v}-dev-linux-arm64-rootless
+      repo: unfoldingword/dcs
+      build_args:
+        - GOPROXY=https://goproxy.cn
+      password:
+        from_secret: docker_password
+      username:
+        from_secret: docker_username
+    when:
+      event:
+        exclude:
+        - pull_request
