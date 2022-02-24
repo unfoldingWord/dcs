@@ -531,7 +531,7 @@ steps:
       branch: main
       commit: true
       commit_message: "[skip ci] Updated translations via Crowdin"
-      remote: "git@github.com:go-gitea/gitea.git"
+      remote: "git@github.com:unfoldingword/dcs.git"
     environment:
       GIT_PUSH_SSH_KEY:
         from_secret: git_push_ssh_key
@@ -581,7 +581,7 @@ steps:
       branch: main
       commit: true
       commit_message: "[skip ci] Updated licenses and gitignores "
-      remote: "git@github.com:go-gitea/gitea.git"
+      remote: "git@github.com:unfoldingword/dcs.git"
     environment:
       GIT_PUSH_SSH_KEY:
         from_secret: git_push_ssh_key
