@@ -7,7 +7,7 @@ ARG GOPROXY
 ENV GOPROXY ${GOPROXY:-direct}
 
 ARG GITEA_VERSION
-ARG TAGS="bindata sqlite sqlite_unlock_notify sqlite_json"
+ARG TAGS="sqlite sqlite_unlock_notify sqlite_json"
 ENV TAGS "bindata timetzdata $TAGS"
 ARG CGO_EXTRA_CFLAGS
 
@@ -20,7 +20,7 @@ WORKDIR ${GOPATH}/src/code.gitea.io/gitea
 
 #Checkout version if set
 RUN if [ -n "${GITEA_VERSION}" ]; then git checkout "${GITEA_VERSION}"; fi \
- && make build
+ && make clean-all build
 
 # Begin env-to-ini build
 RUN go build contrib/environment-to-ini/environment-to-ini.go
