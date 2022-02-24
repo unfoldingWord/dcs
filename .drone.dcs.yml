@@ -1,11 +1,173 @@
 ---
 kind: pipeline
 type: docker
+name: compliance
+
+platform:
+  os: linux
+  arch: amd64
+
+trigger:
+  event:
+    - push
+    - tag
+    - pull_request
+
+volumes:
+  - name: deps
+    temp: {}
+
+steps:
+  - name: deps-frontend
+    image: node:16
+    pull: always
+    commands:
+      - make deps-frontend
+
+  - name: deps-backend
+    image: golang:1.17
+    pull: always
+    commands:
+      - make deps-backend
+    volumes:
+      - name: deps
+        path: /go
+
+  - name: lint-frontend
+    image: node:16
+    commands:
+      - make lint-frontend
+    depends_on: [deps-frontend]
+
+  - name: lint-backend
+    image: gitea/test_env:linux-amd64  # https://gitea.com/gitea/test-env
+    pull: always
+    commands:
+      - make lint-backend
+    environment:
+      GOPROXY: https://goproxy.cn # proxy.golang.org is blocked in China, this proxy is not
+      GOSUMDB: sum.golang.org
+      TAGS: bindata sqlite sqlite_unlock_notify
+    depends_on: [deps-backend]
+
+  - name: lint-backend-windows
+    image: gitea/test_env:linux-amd64  # https://gitea.com/gitea/test-env
+    commands:
+      - make golangci-lint vet
+    environment:
+      GOPROXY: https://goproxy.cn # proxy.golang.org is blocked in China, this proxy is not
+      GOSUMDB: sum.golang.org
+      TAGS: bindata sqlite sqlite_unlock_notify
+      GOOS: windows
+      GOARCH: amd64
+    depends_on: [deps-backend]
+
+  - name: lint-backend-gogit
+    image: gitea/test_env:linux-amd64  # https://gitea.com/gitea/test-env
+    commands:
+      - make lint-backend
+    environment:
+      GOPROXY: https://goproxy.cn # proxy.golang.org is blocked in China, this proxy is not
+      GOSUMDB: sum.golang.org
+      TAGS: bindata gogit sqlite sqlite_unlock_notify
+    depends_on: [deps-backend]
+
+  - name: checks-frontend
+    image: node:16
+    commands:
+      - make checks-frontend
+    depends_on: [deps-frontend]
+
+  - name: checks-backend
+    image: golang:1.17
+    commands:
+      - make checks-backend
+    depends_on: [deps-backend]
+    volumes:
+      - name: deps
+        path: /go
+
+  - name: test-frontend
+    image: node:16
+    commands:
+      - make test-frontend
+    depends_on: [lint-frontend]
+
+  - name: build-frontend
+    image: node:16
+    commands:
+      - make frontend
+    depends_on: [test-frontend]
+
+  - name: build-backend-no-gcc
+    image: golang:1.16 # this step is kept as the lowest version of golang that we support
+    pull: always
+    environment:
+      GO111MODULE: on
+      GOPROXY: https://goproxy.cn
+    commands:
+      - go build -o gitea_no_gcc # test if build succeeds without the sqlite tag
+    depends_on: [deps-backend, checks-backend]
+    volumes:
+      - name: deps
+        path: /go
+
+  - name: build-backend-arm64
+    image: golang:1.17
+    environment:
+      GO111MODULE: on
+      GOPROXY: https://goproxy.cn
+      GOOS: linux
+      GOARCH: arm64
+      TAGS: bindata gogit
+    commands:
+      - make backend # test cross compile
+      - rm ./gitea # clean
+    depends_on: [deps-backend, checks-backend]
+    volumes:
+      - name: deps
+        path: /go
+
+  - name: build-backend-windows
+    image: golang:1.17
+    environment:
+      GO111MODULE: on
+      GOPROXY: https://goproxy.cn
+      GOOS: windows
+      GOARCH: amd64
+      TAGS: bindata gogit
+    commands:
+      - go build -o gitea_windows
+    depends_on: [deps-backend, checks-backend]
+    volumes:
+      - name: deps
+        path: /go
+
+  - name: build-backend-386
+    image: golang:1.17
+    environment:
+      GO111MODULE: on
+      GOPROXY: https://goproxy.cn
+      GOOS: linux
+      GOARCH: 386
+    commands:
+      - go build -o gitea_linux_386 # test if compatible with 32 bit
+    depends_on: [deps-backend, checks-backend]
+    volumes:
+      - name: deps
+        path: /go
+
+---
+kind: pipeline
+type: docker
 name: release-latest
 
 platform:
   os: linux
   arch: amd64
+
+depends_on:
+  - compliance
 
 workspace:
   base: /source
@@ -53,7 +215,7 @@ steps:
       - make release
     environment:
       GOPROXY: https://goproxy.cn # proxy.golang.org is blocked in China, this proxy is not
-      TAGS: bindata sqlite sqlite_unlock_notify
+      TAGS: bindata sqlite sqlite_unlock_notify sqlite_json
     volumes:
       - name: deps
         path: /go
@@ -109,6 +271,9 @@ platform:
   os: linux
   arch: amd64
 
+depends_on:
+  - compliance
+
 workspace:
   base: /source
   path: /
@@ -152,7 +317,7 @@ steps:
       - make release
     environment:
       GOPROXY: https://goproxy.cn # proxy.golang.org is blocked in China, this proxy is not
-      TAGS: bindata sqlite sqlite_unlock_notify
+      TAGS: bindata sqlite sqlite_unlock_notify sqlite_json
     depends_on: [fetch-tags]
     volumes:
       - name: deps
@@ -193,6 +358,9 @@ name: docker-linux-amd64-release-version
 platform:
   os: linux
   arch: amd64
+
+depends_on:
+  - compliance
 
 trigger:
   ref:
@@ -253,6 +421,9 @@ platform:
   os: linux
   arch: amd64
 
+depends_on:
+  - compliance
+
 trigger:
   ref:
   - refs/heads/main
@@ -310,6 +481,9 @@ name: docker-linux-amd64-release-branch
 platform:
   os: linux
   arch: amd64
+
+depends_on:
+  - compliance
 
 trigger:
   ref:
@@ -370,6 +544,9 @@ platform:
   os: linux
   arch: arm64
 
+depends_on:
+  - compliance
+
 trigger:
   ref:
   - "refs/pull/**"
@@ -399,6 +576,12 @@ name: docker-linux-arm64-release-version
 platform:
   os: linux
   arch: arm64
+
+depends_on:
+  - compliance
+
+depends_on:
+  - compliance
 
 trigger:
   ref:
@@ -459,6 +642,9 @@ platform:
   os: linux
   arch: arm64
 
+depends_on:
+  - compliance
+
 trigger:
   ref:
   - refs/heads/main
@@ -516,6 +702,9 @@ name: docker-linux-arm64-release-branch
 platform:
   os: linux
   arch: arm64
+
+depends_on:
+  - compliance
 
 trigger:
   ref:
