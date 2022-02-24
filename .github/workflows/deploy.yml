@@ -22,6 +22,12 @@ jobs:
           fetch-depth: 0
           lfs: true
 
+      - uses: actions/setup-go@v2
+        with:
+          go-version: '^1.17.7' # The Go version to download (if necessary) and use.
+      
+      - run: go version
+
       - name: Prepare Variables
         id: vars
         shell: bash
