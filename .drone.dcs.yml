@@ -228,7 +228,7 @@ steps:
       bucket: gitea-artifacts
       endpoint: https://ams3.digitaloceanspaces.com
       path_style: true
-      source: "dist/release/dcs/*"
+      source: "dist/release/*"
       strip_prefix: dist/release/
       target: "/gitea/${DRONE_BRANCH##release/dcs/v}"
     environment:
@@ -249,8 +249,8 @@ steps:
       bucket: gitea-artifacts
       endpoint: https://ams3.digitaloceanspaces.com
       path_style: true
-      source: "dist/release/dcs/*"
-      strip_prefix: dist/release/dcs/
+      source: "dist/release/*"
+      strip_prefix: dist/release/
       target: /dcs/main
     environment:
       AWS_ACCESS_KEY_ID:
@@ -331,7 +331,7 @@ steps:
       bucket: gitea-artifacts
       endpoint: https://ams3.digitaloceanspaces.com
       path_style: true
-      source: "dist/release/dcs/*"
+      source: "dist/release/*"
       strip_prefix: dist/release/
       target: "/gitea/${DRONE_TAG##v}"
     environment:
@@ -345,7 +345,7 @@ steps:
     pull: always
     settings:
       files:
-        - "dist/release/dcs/*"
+        - "dist/release/*"
     environment:
       GITHUB_TOKEN:
         from_secret: github_token
