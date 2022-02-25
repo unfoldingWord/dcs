@@ -606,9 +606,9 @@ trigger:
   event:
     - push
 
-depends_on:
-  - testing-amd64
-  - testing-arm64
+# depends_on:
+#   - testing-amd64
+#   - testing-arm64
 
 volumes:
   - name: deps
@@ -724,9 +724,9 @@ trigger:
   event:
     - tag
 
-depends_on:
-  - testing-arm64
-  - testing-amd64
+# depends_on:
+#   - testing-arm64
+#   - testing-amd64
 
 volumes:
   - name: deps
@@ -823,8 +823,8 @@ platform:
   os: linux
   arch: arm64
 
-depends_on:
-  - compliance
+# depends_on:
+#   - compliance
 
 trigger:
   event:
@@ -865,9 +865,9 @@ platform:
   os: linux
   arch: amd64
 
-depends_on:
-  - testing-amd64
-  - testing-arm64
+# depends_on:
+#   - testing-amd64
+#   - testing-arm64
 
 trigger:
   ref:
@@ -928,9 +928,9 @@ platform:
   os: linux
   arch: amd64
 
-depends_on:
-  - testing-amd64
-  - testing-arm64
+# depends_on:
+#   - testing-amd64
+#   - testing-arm64
 
 trigger:
   ref:
@@ -990,9 +990,9 @@ platform:
   os: linux
   arch: amd64
 
-depends_on:
-  - testing-amd64
-  - testing-arm64
+# depends_on:
+#   - testing-amd64
+#   - testing-arm64
 
 trigger:
   ref:
@@ -1053,8 +1053,8 @@ platform:
   os: linux
   arch: arm64
 
-depends_on:
-  - compliance
+# depends_on:
+#   - compliance
 
 trigger:
   ref:
@@ -1086,9 +1086,9 @@ platform:
   os: linux
   arch: arm64
 
-depends_on:
-  - testing-amd64
-  - testing-arm64
+# depends_on:
+#   - testing-amd64
+#   - testing-arm64
 
 trigger:
   ref:
@@ -1149,9 +1149,9 @@ platform:
   os: linux
   arch: arm64
 
-depends_on:
-  - testing-amd64
-  - testing-arm64
+# depends_on:
+#   - testing-amd64
+#   - testing-arm64
 
 trigger:
   ref:
@@ -1211,9 +1211,9 @@ platform:
   os: linux
   arch: arm64
 
-depends_on:
-  - testing-amd64
-  - testing-arm64
+# depends_on:
+#   - testing-amd64
+#   - testing-arm64
 
 trigger:
   ref:
@@ -1356,51 +1356,51 @@ depends_on:
   - docker-linux-amd64-release-branch
   - docker-linux-arm64-release-branch
 
----
-kind: pipeline
-type: docker
-name: notifications
+# ---
+# kind: pipeline
+# type: docker
+# name: notifications
 
-platform:
-  os: linux
-  arch: arm64
+# platform:
+#   os: linux
+#   arch: arm64
 
-clone:
-  disable: true
+# clone:
+#   disable: true
 
-trigger:
-  branch:
-    - main
-    - "release/dcs/*"
-  event:
-    - push
-    - tag
-  status:
-    - success
-    - failure
+# trigger:
+#   branch:
+#     - main
+#     - "release/dcs/*"
+#   event:
+#     - push
+#     - tag
+#   status:
+#     - success
+#     - failure
 
-depends_on:
-  - testing-amd64
-  - testing-arm64
-  - release-version
-  - release-latest
-  - docker-linux-amd64-release
-  - docker-linux-arm64-release
-  - docker-linux-amd64-release-version
-  - docker-linux-arm64-release-version
-  - docker-linux-amd64-release-branch
-  - docker-linux-arm64-release-branch
-  - docker-manifest
-  - docker-manifest-version
-  - docs
+# depends_on:
+#   - testing-amd64
+#   - testing-arm64
+#   - release-version
+#   - release-latest
+#   - docker-linux-amd64-release
+#   - docker-linux-arm64-release
+#   - docker-linux-amd64-release-version
+#   - docker-linux-arm64-release-version
+#   - docker-linux-amd64-release-branch
+#   - docker-linux-arm64-release-branch
+#   - docker-manifest
+#   - docker-manifest-version
+#   - docs
 
-steps:
-  - name: discord
-    image: appleboy/drone-discord:1.2.4
-    pull: always
-    settings:
-      message: "{{#success build.status}} ✅  Build #{{build.number}} of `{{repo.name}}` succeeded.\n\n📝 Commit by {{commit.author}} on `{{commit.branch}}`:\n``` {{commit.message}} ```\n\n🌐 {{ build.link }} {{else}} ❌  Build #{{build.number}} of `{{repo.name}}` failed.\n\n📝 Commit by {{commit.author}} on `{{commit.branch}}`:\n``` {{commit.message}} ```\n\n🌐 {{ build.link }} {{/success}}\n"
-      webhook_id:
-        from_secret: discord_webhook_id
-      webhook_token:
-        from_secret: discord_webhook_token
+# steps:
+#   - name: discord
+#     image: appleboy/drone-discord:1.2.4
+#     pull: always
+#     settings:
+#       message: "{{#success build.status}} ✅  Build #{{build.number}} of `{{repo.name}}` succeeded.\n\n📝 Commit by {{commit.author}} on `{{commit.branch}}`:\n``` {{commit.message}} ```\n\n🌐 {{ build.link }} {{else}} ❌  Build #{{build.number}} of `{{repo.name}}` failed.\n\n📝 Commit by {{commit.author}} on `{{commit.branch}}`:\n``` {{commit.message}} ```\n\n🌐 {{ build.link }} {{/success}}\n"
+#       webhook_id:
+#         from_secret: discord_webhook_id
+#       webhook_token:
+#         from_secret: discord_webhook_token
