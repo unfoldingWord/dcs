@@ -381,8 +381,8 @@ steps:
     pull: always
     settings:
       auto_tag: false
-      tags: ${DRONE_TAG##v},latest
-      auto_tag_suffix: linux-amd64
+      tags: ${DRONE_TAG##v},${DRONE_TAG##v}-linux-amd64,latest
+      auto_tag_suffix: 
       repo: unfoldingword/dcs
       build_args:
         - GOPROXY=https://goproxy.cn
@@ -400,7 +400,7 @@ steps:
     settings:
       dockerfile: Dockerfile.rootless
       auto_tag: false
-      auto_tag_suffix: ${DRONE_BRANCH##release/dcs/v}-linux-amd64-rootless
+      auto_tag_suffix: ${DRONE_TAG##v}-linux-amd64-rootless
       repo: unfoldingword/dcs
       build_args:
         - GOPROXY=https://goproxy.cn
@@ -583,7 +583,7 @@ depends_on:
 
 trigger:
   ref:
-    - "refs/tags/**"
+    - "refs/tags/v*-dcs"
   event:
     exclude:
       - cron
