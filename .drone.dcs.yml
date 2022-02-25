@@ -381,7 +381,7 @@ steps:
     pull: always
     settings:
       auto_tag: false
-      tags: ${DRONE_TAG##v},${DRONE_TAG##v}-linux-amd64,latest
+      tags: "${DRONE_TAG##v}, ${DRONE_TAG##v}-linux-amd64, latest"
       auto_tag_suffix: 
       repo: unfoldingword/dcs
       build_args:
@@ -505,7 +505,7 @@ steps:
     pull: always
     settings:
       auto_tag: false
-      tags: ${DRONE_BRANCH##release/dcs/v}-qa,latest-qa
+      tags: "${DRONE_BRANCH##release/dcs/v}-qa, latest-qa"
       repo: unfoldingword/dcs
       build_args:
         - GOPROXY=https://goproxy.cn
@@ -523,7 +523,7 @@ steps:
     settings:
       dockerfile: Dockerfile.rootless
       auto_tag: false
-      tags: ${DRONE_BRANCH##release/dcs/v}-qa-linux-amd64-rootless,latest-qa-rootless
+      tags: "${DRONE_BRANCH##release/dcs/v}-qa-linux-amd64-rootless, latest-qa-rootless"
       repo: unfoldingword/dcs
       build_args:
         - GOPROXY=https://goproxy.cn
@@ -724,7 +724,7 @@ steps:
     pull: always
     settings:
       auto_tag: false
-      tags: ${DRONE_BRANCH##release/dcs/v}-dev-linux-arm64,latest-qa-linux-arm64
+      tags: "${DRONE_BRANCH##release/dcs/v}-dev-linux-arm64, latest-qa-linux-arm64"
       repo: unfoldingword/dcs
       build_args:
         - GOPROXY=https://goproxy.cn
@@ -742,7 +742,7 @@ steps:
     settings:
       dockerfile: Dockerfile.rootless
       auto_tag: false
-      tags: ${DRONE_BRANCH##release/dcs/v}-dev-linux-arm64-rootless
+      tags: "${DRONE_BRANCH##release/dcs/v}-dev-linux-arm64-rootless"
       repo: unfoldingword/dcs
       build_args:
         - GOPROXY=https://goproxy.cn
