@@ -846,7 +846,7 @@ steps:
     pull: always
     settings:
       path: docs/public/
-      site_id: d2260bae-7861-4c02-8646-8f6440b12672
+      site_id: 80d6116f-7730-4ab8-8c02-b9528293aa07
     environment:
       NETLIFY_TOKEN:
         from_secret: netlify_token
