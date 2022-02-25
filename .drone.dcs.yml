@@ -45,7 +45,7 @@ steps:
     commands:
       - make lint-backend
     environment:
-      GOPROXY: https://goproxy.cn # proxy.golang.org is blocked in China, this proxy is not
+      GOPROXY: https://goproxy.cn  # proxy.golang.org is blocked in China, this proxy is not
       GOSUMDB: sum.golang.org
       TAGS: bindata sqlite sqlite_unlock_notify
     depends_on: [deps-backend]
@@ -55,7 +55,7 @@ steps:
     commands:
       - make golangci-lint vet
     environment:
-      GOPROXY: https://goproxy.cn # proxy.golang.org is blocked in China, this proxy is not
+      GOPROXY: https://goproxy.cn  # proxy.golang.org is blocked in China, this proxy is not
       GOSUMDB: sum.golang.org
       TAGS: bindata sqlite sqlite_unlock_notify
       GOOS: windows
@@ -67,7 +67,7 @@ steps:
     commands:
       - make lint-backend
     environment:
-      GOPROXY: https://goproxy.cn # proxy.golang.org is blocked in China, this proxy is not
+      GOPROXY: https://goproxy.cn  # proxy.golang.org is blocked in China, this proxy is not
       GOSUMDB: sum.golang.org
       TAGS: bindata gogit sqlite sqlite_unlock_notify
     depends_on: [deps-backend]
@@ -100,13 +100,13 @@ steps:
     depends_on: [test-frontend]
 
   - name: build-backend-no-gcc
-    image: golang:1.16 # this step is kept as the lowest version of golang that we support
+    image: golang:1.16  # this step is kept as the lowest version of golang that we support
     pull: always
     environment:
       GO111MODULE: on
       GOPROXY: https://goproxy.cn
     commands:
-      - go build -o gitea_no_gcc # test if build succeeds without the sqlite tag
+      - go build -o gitea_no_gcc  # test if build succeeds without the sqlite tag
     depends_on: [deps-backend, checks-backend]
     volumes:
       - name: deps
@@ -121,8 +121,8 @@ steps:
       GOARCH: arm64
       TAGS: bindata gogit
     commands:
-      - make backend # test cross compile
-      - rm ./gitea # clean
+      - make backend  # test cross compile
+      - rm ./gitea  # clean
     depends_on: [deps-backend, checks-backend]
     volumes:
       - name: deps
@@ -151,7 +151,7 @@ steps:
       GOOS: linux
       GOARCH: 386
     commands:
-      - go build -o gitea_linux_386 # test if compatible with 32 bit
+      - go build -o gitea_linux_386  # test if compatible with 32 bit
     depends_on: [deps-backend, checks-backend]
     volumes:
       - name: deps
@@ -214,7 +214,7 @@ steps:
 #       - export PATH=$PATH:$GOPATH/bin
 #       - make release
 #     environment:
-#       GOPROXY: https://goproxy.cn # proxy.golang.org is blocked in China, this proxy is not
+#       GOPROXY: https://goproxy.cn  # proxy.golang.org is blocked in China, this proxy is not
 #       TAGS: bindata sqlite sqlite_unlock_notify sqlite_json
 #     volumes:
 #       - name: deps
@@ -316,7 +316,7 @@ steps:
 #       - export PATH=$PATH:$GOPATH/bin
 #       - make release
 #     environment:
-#       GOPROXY: https://goproxy.cn # proxy.golang.org is blocked in China, this proxy is not
+#       GOPROXY: https://goproxy.cn  # proxy.golang.org is blocked in China, this proxy is not
 #       TAGS: bindata sqlite sqlite_unlock_notify sqlite_json
 #     depends_on: [fetch-tags]
 #     volumes:
@@ -364,10 +364,10 @@ depends_on:
 
 trigger:
   ref:
-  - "refs/tags/v*-dcs"
+    - "refs/tags/v*-dcs"
   event:
     exclude:
-    - cron
+      - cron
 
 steps:
   - name: fetch-tags
@@ -393,7 +393,7 @@ steps:
     when:
       event:
         exclude:
-        - pull_request
+          - pull_request
 
   - name: publish-rootless
     image: techknowlogick/drone-docker:latest
@@ -411,7 +411,7 @@ steps:
     when:
       event:
         exclude:
-        - pull_request
+          - pull_request
 
 ---
 kind: pipeline
@@ -427,10 +427,10 @@ depends_on:
 
 trigger:
   ref:
-  - refs/heads/main
+    - refs/heads/main
   event:
     exclude:
-    - cron
+      - cron
 
 steps:
   - name: fetch-tags
@@ -455,7 +455,7 @@ steps:
     when:
       event:
         exclude:
-        - pull_request
+          - pull_request
 
   - name: publish-rootless
     image: techknowlogick/drone-docker:latest
@@ -473,7 +473,7 @@ steps:
     when:
       event:
         exclude:
-        - pull_request
+          - pull_request
 
 ---
 kind: pipeline
@@ -488,10 +488,10 @@ depends_on:
 
 trigger:
   ref:
-  - "refs/heads/release/dcs/v*"
+    - "refs/heads/release/dcs/v*"
   event:
     exclude:
-    - cron
+      - cron
 
 steps:
   - name: fetch-tags
@@ -516,7 +516,7 @@ steps:
     when:
       event:
         exclude:
-        - pull_request
+          - pull_request
 
   - name: publish-rootless
     image: techknowlogick/drone-docker:latest
@@ -534,7 +534,7 @@ steps:
     when:
       event:
         exclude:
-        - pull_request
+          - pull_request
 
 ---
 kind: pipeline
@@ -550,7 +550,7 @@ depends_on:
 
 trigger:
   ref:
-  - "refs/pull/**"
+    - "refs/pull/**"
 
 steps:
   - name: dryrun
@@ -581,15 +581,12 @@ platform:
 depends_on:
   - compliance
 
-depends_on:
-  - compliance
-
 trigger:
   ref:
-  - "refs/tags/**"
+    - "refs/tags/**"
   event:
     exclude:
-    - cron
+      - cron
 
 steps:
   - name: fetch-tags
@@ -614,7 +611,7 @@ steps:
     when:
       event:
         exclude:
-        - pull_request
+          - pull_request
 
   - name: publish-rootless
     image: techknowlogick/drone-docker:latest
@@ -633,7 +630,7 @@ steps:
     when:
       event:
         exclude:
-        - pull_request
+          - pull_request
 
 ---
 kind: pipeline
@@ -649,10 +646,10 @@ depends_on:
 
 trigger:
   ref:
-  - refs/heads/main
+    - refs/heads/main
   event:
     exclude:
-    - cron
+      - cron
 
 steps:
   - name: fetch-tags
@@ -677,7 +674,7 @@ steps:
     when:
       event:
         exclude:
-        - pull_request
+          - pull_request
 
   - name: publish-rootless
     image: techknowlogick/drone-docker:latest
@@ -695,7 +692,7 @@ steps:
     when:
       event:
         exclude:
-        - pull_request
+          - pull_request
 
 ---
 kind: pipeline
@@ -710,10 +707,10 @@ depends_on:
 
 trigger:
   ref:
-  - "refs/heads/release/dcs/v*"
+    - "refs/heads/release/dcs/v*"
   event:
     exclude:
-    - cron
+      - cron
 
 steps:
   - name: fetch-tags
@@ -738,7 +735,7 @@ steps:
     when:
       event:
         exclude:
-        - pull_request
+          - pull_request
 
   - name: publish-rootless
     image: techknowlogick/drone-docker:latest
@@ -756,4 +753,4 @@ steps:
     when:
       event:
         exclude:
-        - pull_request
+          - pull_request
