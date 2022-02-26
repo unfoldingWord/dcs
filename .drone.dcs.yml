@@ -889,11 +889,11 @@ steps:
       event:
         - tag
     commands:
-      - export PATCH_VERSION=${DRONE_TAG##v}
-      - export PATCH_VERSION=${PATCH_VERSION%%-dcs}
-      - export MINOR_VERSION=`echo ${PATCH_VERSION} | cut -f1,2 -d'.'`
-      - export MAJOR_VERSION=`echo ${MINOR_VERSION} | cut -f1 -d'.'`
-      - echo -n "${DRONE_TAG}-linux-amd64, ${PATCH_VERSION}-linux-amd64, ${MINOR_VERSION}-linux-amd64, ${MAJOR_VERSION}-linux-amd64" > .tags
+      - PATCH_VERSION=`echo $${DRONE_TAG##v}`
+      - PATCH_VERSION=`echo $${PATCH_VERSION%%-dcs}`
+      - MINOR_VERSION=`echo $${PATCH_VERSION} | cut -f1,2 -d'.'`
+      - MAJOR_VERSION=`echo $${MINOR_VERSION} | cut -f1 -d'.'`
+      - echo -n $DRONE_TAG"-linux-amd64, "$PATCH_VERSION"-linux-amd64, "$MINOR_VERSION"-linux-amd64, "$MAJOR_VERSION"-linux-amd64" > .tags
 
   - name: publish
     image: techknowlogick/drone-docker:latest
@@ -1134,11 +1134,11 @@ steps:
       event:
         - tag
     commands:
-      - export PATCH_VERSION=${DRONE_TAG##v}
-      - export PATCH_VERSION=${PATCH_VERSION%%-dcs}
-      - export MINOR_VERSION=`echo ${PATCH_VERSION} | cut -f1,2 -d'.'`
-      - export MAJOR_VERSION=`echo ${MINOR_VERSION} | cut -f1 -d'.'`
-      - echo -n "${DRONE_TAG}-linux-amd64, ${PATCH_VERSION}-linux-arm64, ${MINOR_VERSION}-linux-arm64, ${MAJOR_VERSION}-linux-arm64" > .tags
+      - PATCH_VERSION=`echo $${DRONE_TAG##v}`
+      - PATCH_VERSION=`echo $${PATCH_VERSION%%-dcs}`
+      - MINOR_VERSION=`echo $${PATCH_VERSION} | cut -f1,2 -d'.'`
+      - MAJOR_VERSION=`echo $${MINOR_VERSION} | cut -f1 -d'.'`
+      - echo -n $DRONE_TAG"-linux-arm64, "$PATCH_VERSION"-linux-arm64, "$MINOR_VERSION"-linux-arm64, "$MAJOR_VERSION"-linux-arm64" > .tags
 
   - name: publish
     image: techknowlogick/drone-docker:latest
