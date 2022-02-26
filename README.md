@@ -6,7 +6,7 @@
 <h1 align="center">Gitea - Git with a cup of tea - DCS Version</h1>
 
 <p align="center">
-  <a href="https://drone.gitea.io/go-gitea/gitea" title="Build Status">
+  <a href="https://drone.gitea.io/unfoldingword/dcs" title="Build Status">
     <img src="https://drone.gitea.io/api/badges/unfoldingword/dcs/status.svg?ref=refs/heads/main">
   </a>
   <a href="https://discord.gg/Gitea" title="Join the Discord chat at https://discord.gg/Gitea">
@@ -15,8 +15,8 @@
   <a href="https://codecov.io/gh/unfoldingword/dcs" title="Codecov">
     <img src="https://codecov.io/gh/unfoldingword/dcs/branch/main/graph/badge.svg">
   </a>
-  <a href="https://goreportcard.com/report/code.gitea.io/gitea" title="Go Report Card">
-    <img src="https://goreportcard.com/badge/code.gitea.io/gitea">
+  <a href="https://goreportcard.com/report/unfoldingword/dcs" title="Go Report Card">
+    <img src="https://goreportcard.com/badge/unfoldingword/dcs">
   </a>
   <a href="https://godoc.org/code.gitea.io/gitea" title="GoDoc">
     <img src="https://godoc.org/code.gitea.io/gitea?status.svg">
@@ -33,8 +33,8 @@
   <a href="https://opensource.org/licenses/MIT" title="License: MIT">
     <img src="https://img.shields.io/badge/License-MIT-blue.svg">
   </a>
-  <a href="https://crowdin.com/project/gitea" title="Crowdin">
-    <img src="https://badges.crowdin.net/gitea/localized.svg">
+  <a href="https://crowdin.com/project/dcs-gitea" title="Crowdin">
+    <img src="https://badges.crowdin.net/dcs-gitea/localized.svg">
   </a>
   <a href="https://www.tickgit.com/browse?repo=github.com/go-gitea/gitea&branch=main" title="TODOs">
     <img src="https://badgen.net/https/api.tickgit.com/badgen/github.com/go-gitea/gitea/main">
