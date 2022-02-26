@@ -6,8 +6,8 @@
 <h1 align="center">Gitea - Git with a cup of tea - DCS Version</h1>
 
 <p align="center">
-  <a href="https://drone.gitea.io/unfoldingword/dcs" title="Build Status">
-    <img src="https://drone.gitea.io/api/badges/unfoldingword/dcs/status.svg?ref=refs/heads/main">
+  <a href="https://drone.gitea.io/unfoldingWord/dcs" title="Build Status">
+    <img src="https://drone.gitea.io/api/badges/unfoldingWord/dcs/status.svg?ref=refs/heads/main">
   </a>
   <a href="https://discord.gg/Gitea" title="Join the Discord chat at https://discord.gg/Gitea">
     <img src="https://img.shields.io/discord/322538954119184384.svg">
