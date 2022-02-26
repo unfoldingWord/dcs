@@ -1,4 +1,4 @@
-image: unfoldingword/dcs:{{#if build.tag}}{{trimPrefix "v" build.tag}}{{trimSuffix "-dcs" build.tag}}{{else}}{{#if (hasPrefix "refs/heads/release/dcs/v" build.ref)}}{{trimPrefix "refs/heads/release/dcs/v" build.ref}}-{{/if}}dev{{/if}}
+image: unfoldingword/dcs:{{#if build.tag}}{{trimSuffix "-dcs" (trimPrefix "v" build.tag)}}{{else}}{{#if (hasPrefix "refs/heads/release/dcs/v" build.ref)}}{{trimPrefix "refs/heads/release/dcs/v" build.ref}}-{{/if}}dev{{/if}}
 {{#if build.tags}}
 tags:
 {{#each build.tags}}
@@ -8,12 +8,12 @@ tags:
 {{/if}}
 manifests:
   -
-    image: unfoldingword/dcs:{{#if build.tag}}{{trimPrefix "v" build.tag}}{{trimSuffix "-dcs" build.tag}}{{else}}{{#if (hasPrefix "refs/heads/release/dcs/v" build.ref)}}{{trimPrefix "refs/heads/release/dcs/v" build.ref}}-{{/if}}dev{{/if}}-linux-amd64
+    image: unfoldingword/dcs:{{#if build.tag}}{{trimSuffix "-dcs" (trimPrefix "v" build.tag)}}{{else}}{{#if (hasPrefix "refs/heads/release/dcs/v" build.ref)}}{{trimPrefix "refs/heads/release/dcs/v" build.ref}}-{{/if}}dev{{/if}}-linux-amd64
     platform:
       architecture: amd64
       os: linux
   -
-    image: unfoldingword/dcs:{{#if build.tag}}{{trimPrefix "v" build.tag}}{{trimSuffix "-dcs" build.tag}}{{else}}{{#if (hasPrefix "refs/heads/release/dcs/v" build.ref)}}{{trimPrefix "refs/heads/release/dcs/v" build.ref}}-{{/if}}dev{{/if}}-linux-arm64
+    image: unfoldingword/dcs:{{#if build.tag}}{{trimSuffix "-dcs" (trimPrefix "v" build.tag)}}{{else}}{{#if (hasPrefix "refs/heads/release/dcs/v" build.ref)}}{{trimPrefix "refs/heads/release/dcs/v" build.ref}}-{{/if}}dev{{/if}}-linux-arm64
     platform:
       architecture: arm64
       os: linux
