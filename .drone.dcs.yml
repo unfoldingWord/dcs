@@ -1312,11 +1312,23 @@ platform:
   arch: amd64
 
 steps:
+  - name: send-tags-to-tags-file
+    image: node
+    when:
+      event:
+        - tag
+    commands:
+      - PATCH_VERSION=`echo $${DRONE_TAG##v}`
+      - PATCH_VERSION=`echo $${PATCH_VERSION%%-dcs}`
+      - MINOR_VERSION=`echo $${PATCH_VERSION} | cut -f1,2 -d'.'`
+      - MAJOR_VERSION=`echo $${MINOR_VERSION} | cut -f1 -d'.'`
+      - echo -n $DRONE_TAG", "$PATCH_VERSION", "$MINOR_VERSION", "$MAJOR_VERSION"" > .tags
+
   # - name: manifest-rootless
   #   image: plugins/manifest
   #   pull: always
   #   settings:
-  #     auto_tag: true
+  #     auto_tag: false
   #     ignore_missing: true
   #     spec: docker/manifest.rootless.dcs.tmpl
   #     password:
@@ -1327,7 +1339,7 @@ steps:
   - name: manifest
     image: plugins/manifest
     settings:
-      auto_tag: true
+      auto_tag: false
       ignore_missing: true
       spec: docker/manifest.dcs.tmpl
       password:
