@@ -1205,6 +1205,7 @@ steps:
 
 ---
 kind: pipeline
+type: docker
 name: docker-linux-arm64-release-branch
 
 platform:

@@ -7,13 +7,13 @@
 
 <p align="center">
   <a href="https://drone.gitea.io/go-gitea/gitea" title="Build Status">
-    <img src="https://drone.gitea.io/api/badges/go-gitea/gitea/status.svg?ref=refs/heads/main">
+    <img src="https://drone.gitea.io/api/badges/unfoldingword/dcs/status.svg?ref=refs/heads/main">
   </a>
   <a href="https://discord.gg/Gitea" title="Join the Discord chat at https://discord.gg/Gitea">
     <img src="https://img.shields.io/discord/322538954119184384.svg">
   </a>
-  <a href="https://codecov.io/gh/go-gitea/gitea" title="Codecov">
-    <img src="https://codecov.io/gh/go-gitea/gitea/branch/main/graph/badge.svg">
+  <a href="https://codecov.io/gh/unfoldingword/dcs" title="Codecov">
+    <img src="https://codecov.io/gh/unfoldingword/dcs/branch/main/graph/badge.svg">
   </a>
   <a href="https://goreportcard.com/report/code.gitea.io/gitea" title="Go Report Card">
     <img src="https://goreportcard.com/badge/code.gitea.io/gitea">
@@ -21,8 +21,8 @@
   <a href="https://godoc.org/code.gitea.io/gitea" title="GoDoc">
     <img src="https://godoc.org/code.gitea.io/gitea?status.svg">
   </a>
-  <a href="https://github.com/go-gitea/gitea/releases/latest" title="GitHub release">
-    <img src="https://img.shields.io/github/release/go-gitea/gitea.svg">
+  <a href="https://github.com/unfoldingword/dcs/releases/latest" title="DCS release">
+    <img src="https://img.shields.io/github/release/unfoldingword/dcs.svg">
   </a>
   <a href="https://www.codetriage.com/go-gitea/gitea" title="Help Contribute to Open Source">
     <img src="https://www.codetriage.com/go-gitea/gitea/badges/users.svg">
