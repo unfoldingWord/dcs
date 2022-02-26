@@ -883,15 +883,27 @@ steps:
     commands:
       - git fetch --tags --force
 
+  - name: send-tags-to-tags-file
+    image: node
+    when:
+      event:
+        - tag
+    commands:
+      - PATCH_VERSION=${DRONE_TAG##v}
+      - PATCH_VERSION=${PATCH_VERSION%%-dcs}
+      - MINOR_VERSION=`echo ${PATCH_VERSION} | cut -f1,2 -d'.'`
+      - MAJOR_VERSION=`echo ${MINOR_VERSION} | cut -f1 -d'.'`
+      - echo -n "$(DRONE_TAG}-linux-amd64, ${PATCH_VERSION}-linux-amd64, ${MINOR_VERSION}-linux-amd64, ${MAJOR_VERSION}-linux-amd64" > .tags
+
   - name: publish
     image: techknowlogick/drone-docker:latest
     pull: always
     settings:
-      auto_tag: true
-      auto_tag_suffix: linux-amd64
+      auto_tag: false
       repo: unfoldingword/dcs
       build_args:
         - GOPROXY=https://goproxy.cn
+        - LOG_LEVEL=debug
       password:
         from_secret: docker_password
       username:
@@ -901,23 +913,35 @@ steps:
         exclude:
         - pull_request
 
-  - name: publish-rootless
-    image: techknowlogick/drone-docker:latest
-    settings:
-      dockerfile: Dockerfile.rootless
-      auto_tag: true
-      auto_tag_suffix: linux-amd64-rootless
-      repo: unfoldingword/dcs
-      build_args:
-        - GOPROXY=https://goproxy.cn
-      password:
-        from_secret: docker_password
-      username:
-        from_secret: docker_username
-    when:
-      event:
-        exclude:
-        - pull_request
+  # - name: send-tags-to-tags-file-rootless
+  #   image: node
+  #   when:
+  #     event:
+  #       - tag
+  #   commands:
+  #     - PATCH_VERSION=${DRONE_TAG##v}
+  #     - PATCH_VERSION=${PATCH_VERSION%%-dcs}
+  #     - MINOR_VERSION=`echo ${PATCH_VERSION} | cut -f1,2 -d'.'`
+  #     - MAJOR_VERSION=`echo ${MINOR_VERSION} | cut -f1 -d'.'`
+  #     - echo -n "$(DRONE_TAG}-linux-amd64, ${PATCH_VERSION}-linux-amd64-rootless, ${MINOR_VERSION}-linux-amd64-rootless, ${MAJOR_VERSION}-linux-amd64-rootless" > .tags
+
+  # - name: publish-rootless
+  #   image: techknowlogick/drone-docker:latest
+  #   settings:
+  #     dockerfile: Dockerfile.rootless
+  #     auto_tag: true
+  #     auto_tag_suffix: linux-amd64-rootless
+  #     repo: unfoldingword/dcs
+  #     build_args:
+  #       - GOPROXY=https://goproxy.cn
+  #     password:
+  #       from_secret: docker_password
+  #     username:
+  #       from_secret: docker_username
+  #   when:
+  #     event:
+  #       exclude:
+  #       - pull_request
 
 ---
 kind: pipeline
@@ -964,23 +988,23 @@ steps:
         exclude:
         - pull_request
 
-  - name: publish-rootless
-    image: techknowlogick/drone-docker:latest
-    settings:
-      dockerfile: Dockerfile.rootless
-      auto_tag: false
-      tags: dev-linux-amd64-rootless
-      repo: unfoldingword/dcs
-      build_args:
-        - GOPROXY=https://goproxy.cn
-      password:
-        from_secret: docker_password
-      username:
-        from_secret: docker_username
-    when:
-      event:
-        exclude:
-        - pull_request
+  # - name: publish-rootless
+  #   image: techknowlogick/drone-docker:latest
+  #   settings:
+  #     dockerfile: Dockerfile.rootless
+  #     auto_tag: false
+  #     tags: dev-linux-amd64-rootless
+  #     repo: unfoldingword/dcs
+  #     build_args:
+  #       - GOPROXY=https://goproxy.cn
+  #     password:
+  #       from_secret: docker_password
+  #     username:
+  #       from_secret: docker_username
+  #   when:
+  #     event:
+  #       exclude:
+  #       - pull_request
 
 ---
 kind: pipeline
@@ -1026,23 +1050,23 @@ steps:
         exclude:
         - pull_request
 
-  - name: publish-rootless
-    image: techknowlogick/drone-docker:latest
-    settings:
-      dockerfile: Dockerfile.rootless
-      auto_tag: false
-      tags: ${DRONE_BRANCH##release/dcs/v}-dev-linux-amd64-rootless
-      repo: unfoldingword/dcs
-      build_args:
-        - GOPROXY=https://goproxy.cn
-      password:
-        from_secret: docker_password
-      username:
-        from_secret: docker_username
-    when:
-      event:
-        exclude:
-        - pull_request
+  # - name: publish-rootless
+  #   image: techknowlogick/drone-docker:latest
+  #   settings:
+  #     dockerfile: Dockerfile.rootless
+  #     auto_tag: false
+  #     tags: ${DRONE_BRANCH##release/dcs/v}-dev-linux-amd64-rootless
+  #     repo: unfoldingword/dcs
+  #     build_args:
+  #       - GOPROXY=https://goproxy.cn
+  #     password:
+  #       from_secret: docker_password
+  #     username:
+  #       from_secret: docker_username
+  #   when:
+  #     event:
+  #       exclude:
+  #       - pull_request
 
 ---
 kind: pipeline
@@ -1104,15 +1128,27 @@ steps:
     commands:
       - git fetch --tags --force
 
+  - name: send-tags-to-tags-file
+    image: node
+    when:
+      event:
+        - tag
+    commands:
+      - PATCH_VERSION=${DRONE_TAG##v}
+      - PATCH_VERSION=${PATCH_VERSION%%-dcs}
+      - MINOR_VERSION=`echo ${PATCH_VERSION} | cut -f1,2 -d'.'`
+      - MAJOR_VERSION=`echo ${MINOR_VERSION} | cut -f1 -d'.'`
+      - echo -n "$(DRONE_TAG}-linux-amd64, ${PATCH_VERSION}-linux-arm64, ${MINOR_VERSION}-linux-arm64, ${MAJOR_VERSION}-linux-arm64" > .tags
+
   - name: publish
     image: techknowlogick/drone-docker:latest
     pull: always
     settings:
-      auto_tag: true
-      auto_tag_suffix: linux-arm64
+      auto_tag: false
       repo: unfoldingword/dcs
       build_args:
         - GOPROXY=https://goproxy.cn
+        - LOG_LEVEL=debug
       password:
         from_secret: docker_password
       username:
@@ -1122,23 +1158,23 @@ steps:
         exclude:
         - pull_request
 
-  - name: publish-rootless
-    image: techknowlogick/drone-docker:latest
-    settings:
-      dockerfile: Dockerfile.rootless
-      auto_tag: true
-      auto_tag_suffix: linux-arm64-rootless
-      repo: unfoldingword/dcs
-      build_args:
-        - GOPROXY=https://goproxy.cn
-      password:
-        from_secret: docker_password
-      username:
-        from_secret: docker_username
-    when:
-      event:
-        exclude:
-        - pull_request
+  # - name: publish-rootless
+  #   image: techknowlogick/drone-docker:latest
+  #   settings:
+  #     dockerfile: Dockerfile.rootless
+  #     auto_tag: true
+  #     auto_tag_suffix: linux-arm64-rootless
+  #     repo: unfoldingword/dcs
+  #     build_args:
+  #       - GOPROXY=https://goproxy.cn
+  #     password:
+  #       from_secret: docker_password
+  #     username:
+  #       from_secret: docker_username
+  #   when:
+  #     event:
+  #       exclude:
+  #       - pull_request
 
 ---
 kind: pipeline
@@ -1185,23 +1221,23 @@ steps:
         exclude:
         - pull_request
 
-  - name: publish-rootless
-    image: techknowlogick/drone-docker:latest
-    settings:
-      dockerfile: Dockerfile.rootless
-      auto_tag: false
-      tags: dev-linux-arm64-rootless
-      repo: unfoldingword/dcs
-      build_args:
-        - GOPROXY=https://goproxy.cn
-      password:
-        from_secret: docker_password
-      username:
-        from_secret: docker_username
-    when:
-      event:
-        exclude:
-        - pull_request
+  # - name: publish-rootless
+  #   image: techknowlogick/drone-docker:latest
+  #   settings:
+  #     dockerfile: Dockerfile.rootless
+  #     auto_tag: false
+  #     tags: dev-linux-arm64-rootless
+  #     repo: unfoldingword/dcs
+  #     build_args:
+  #       - GOPROXY=https://goproxy.cn
+  #     password:
+  #       from_secret: docker_password
+  #     username:
+  #       from_secret: docker_username
+  #   when:
+  #     event:
+  #       exclude:
+  #       - pull_request
 
 ---
 kind: pipeline
@@ -1248,23 +1284,23 @@ steps:
         exclude:
         - pull_request
 
-  - name: publish-rootless
-    image: techknowlogick/drone-docker:latest
-    settings:
-      dockerfile: Dockerfile.rootless
-      auto_tag: false
-      tags: ${DRONE_BRANCH##release/dcs/v}-dev-linux-arm64-rootless
-      repo: unfoldingword/dcs
-      build_args:
-        - GOPROXY=https://goproxy.cn
-      password:
-        from_secret: docker_password
-      username:
-        from_secret: docker_username
-    when:
-      event:
-        exclude:
-        - pull_request
+  # - name: publish-rootless
+  #   image: techknowlogick/drone-docker:latest
+  #   settings:
+  #     dockerfile: Dockerfile.rootless
+  #     auto_tag: false
+  #     tags: ${DRONE_BRANCH##release/dcs/v}-dev-linux-arm64-rootless
+  #     repo: unfoldingword/dcs
+  #     build_args:
+  #       - GOPROXY=https://goproxy.cn
+  #     password:
+  #       from_secret: docker_password
+  #     username:
+  #       from_secret: docker_username
+  #   when:
+  #     event:
+  #       exclude:
+  #       - pull_request
 
 ---
 kind: pipeline
@@ -1276,17 +1312,17 @@ platform:
   arch: amd64
 
 steps:
-  - name: manifest-rootless
-    image: plugins/manifest
-    pull: always
-    settings:
-      auto_tag: true
-      ignore_missing: true
-      spec: docker/manifest.rootless.dcs.tmpl
-      password:
-        from_secret: docker_password
-      username:
-        from_secret: docker_username
+  # - name: manifest-rootless
+  #   image: plugins/manifest
+  #   pull: always
+  #   settings:
+  #     auto_tag: true
+  #     ignore_missing: true
+  #     spec: docker/manifest.rootless.dcs.tmpl
+  #     password:
+  #       from_secret: docker_password
+  #     username:
+  #       from_secret: docker_username
 
   - name: manifest
     image: plugins/manifest
@@ -1320,17 +1356,17 @@ platform:
   arch: amd64
 
 steps:
-  - name: manifest-rootless
-    pull: always
-    image: plugins/manifest
-    settings:
-      auto_tag: false
-      ignore_missing: true
-      spec: docker/manifest.rootless.dcs.tmpl
-      password:
-        from_secret: docker_password
-      username:
-        from_secret: docker_username
+  # - name: manifest-rootless
+  #   pull: always
+  #   image: plugins/manifest
+  #   settings:
+  #     auto_tag: false
+  #     ignore_missing: true
+  #     spec: docker/manifest.rootless.dcs.tmpl
+  #     password:
+  #       from_secret: docker_password
+  #     username:
+  #       from_secret: docker_username
 
   - name: manifest
     image: plugins/manifest
