@@ -454,38 +454,38 @@ steps:
       - name: deps
         path: /go
 
-  - name: test-sqlite
-    image: gitea/test_env:linux-arm64  # https://gitea.com/gitea/test-env
-    user: gitea
-    commands:
-      - timeout -s ABRT 40m make test-sqlite-migration test-sqlite
-    environment:
-      GOPROXY: https://goproxy.cn
-      TAGS: bindata gogit sqlite sqlite_unlock_notify
-      RACE_ENABLED: true
-      TEST_TAGS: gogit sqlite sqlite_unlock_notify
-      USE_REPO_TEST_DIR: 1
-    depends_on: [build]
-    volumes:
-      - name: deps
-        path: /go
+  # - name: test-sqlite
+  #   image: gitea/test_env:linux-arm64  # https://gitea.com/gitea/test-env
+  #   user: gitea
+  #   commands:
+  #     - timeout -s ABRT 40m make test-sqlite-migration test-sqlite
+  #   environment:
+  #     GOPROXY: https://goproxy.cn
+  #     TAGS: bindata gogit sqlite sqlite_unlock_notify
+  #     RACE_ENABLED: true
+  #     TEST_TAGS: gogit sqlite sqlite_unlock_notify
+  #     USE_REPO_TEST_DIR: 1
+  #   depends_on: [build]
+  #   volumes:
+  #     - name: deps
+  #       path: /go
 
-  - name: test-pgsql
-    image: gitea/test_env:linux-arm64  # https://gitea.com/gitea/test-env
-    user: gitea
-    commands:
-      - timeout -s ABRT 40m make test-pgsql-migration test-pgsql
-    environment:
-      GOPROXY: https://goproxy.cn
-      TAGS: bindata gogit
-      RACE_ENABLED: true
-      TEST_TAGS: gogit
-      TEST_LDAP: 1
-      USE_REPO_TEST_DIR: 1
-    depends_on: [build]
-    volumes:
-      - name: deps
-        path: /go
+  # - name: test-pgsql
+  #   image: gitea/test_env:linux-arm64  # https://gitea.com/gitea/test-env
+  #   user: gitea
+  #   commands:
+  #     - timeout -s ABRT 40m make test-pgsql-migration test-pgsql
+  #   environment:
+  #     GOPROXY: https://goproxy.cn
+  #     TAGS: bindata gogit
+  #     RACE_ENABLED: true
+  #     TEST_TAGS: gogit
+  #     TEST_LDAP: 1
+  #     USE_REPO_TEST_DIR: 1
+  #   depends_on: [build]
+  #   volumes:
+  #     - name: deps
+  #       path: /go
 
 ---
 kind: pipeline
