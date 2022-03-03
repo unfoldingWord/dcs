@@ -20,6 +20,7 @@ import (
 // SearchUserOptions contains the options for searching
 type SearchUserOptions struct {
 	db.ListOptions
+
 	Keyword       string
 	Type          UserType
 	UID           int64
@@ -33,9 +34,12 @@ type SearchUserOptions struct {
 	IsRestricted       util.OptionalBool
 	IsTwoFactorEnabled util.OptionalBool
 	IsProhibitLogin    util.OptionalBool
+
 	/*** DCS CUSTOMIZATIONS ***/
 	RepoLanguages []string // Find users that have the given language id in a repo's manifest
 	/*** END DCS CUSTOMIZATIONS ***/
+
+	ExtraParamStrings map[string]string
 }
 
 func (opts *SearchUserOptions) toSearchQueryBase() *xorm.Session {
