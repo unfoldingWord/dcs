@@ -1,10 +1,14 @@
 image: unfoldingword/dcs:{{#if build.tag}}{{trimSuffix "-dcs" (trimPrefix "v" build.tag)}}{{else}}{{#if (hasPrefix "refs/heads/release/dcs/v" build.ref)}}{{trimPrefix "refs/heads/release/dcs/v" build.ref}}-{{/if}}dev{{/if}}-rootless
-{{#if build.tags}}
 tags:
+{{#if build.tags}}
 {{#each build.tags}}
   - {{this}}-rootless
 {{/each}}
-  - latest{{#if (hasPrefix "refs/heads/release/dcs/v" build.ref)}}-qa{{/fi}}-rootless
+  - latest-rootless
+{{else if (hasPrefix "refs/heads/release/dcs/v" build.ref)}}
+  - latest-qa-rootless
+{{else}}
+  - main-rootless
 {{/if}}
 manifests:
   -
