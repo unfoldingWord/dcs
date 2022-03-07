@@ -1,19 +1,19 @@
-image: unfoldingword/dcs:{{#if build.tag}}{{trimPrefix "v" build.tag}}{{trimSuffix "-dcs" build.tag}}{{else}}{{#if (hasPrefix "refs/heads/release/dcs/v" build.ref)}}{{trimPrefix "refs/heads/release/dcs/v" build.ref}}-{{/if}}dev{{/if}}-rootless
+image: unfoldingword/dcs:{{#if build.tag}}{{trimSuffix "-dcs" (trimPrefix "v" build.tag)}}{{else}}{{#if (hasPrefix "refs/heads/release/dcs/v" build.ref)}}{{trimPrefix "refs/heads/release/dcs/v" build.ref}}-{{/if}}dev{{/if}}-rootless
 {{#if build.tags}}
 tags:
 {{#each build.tags}}
   - {{this}}-rootless
 {{/each}}
-  - "latest-rootless"
+  - latest{{#if (hasPrefix "refs/heads/release/dcs/v" build.ref)}}-qa{{/fi}}-rootless
 {{/if}}
 manifests:
   -
-    image: unfoldingword/dcs:{{#if build.tag}}{{trimPrefix "v" build.tag}}{{trimSuffix "-dcs" build.tag}}{{else}}{{#if (hasPrefix "refs/heads/release/dcs/v" build.ref)}}{{trimPrefix "refs/heads/release/dcs/v" build.ref}}-{{/if}}dev{{/if}}-linux-amd64-rootless
+    image: unfoldingword/dcs:{{#if build.tag}}{{trimSuffix "-dcs" (trimPrefix "v" build.tag)}}{{else}}{{#if (hasPrefix "refs/heads/release/dcs/v" build.ref)}}{{trimPrefix "refs/heads/release/dcs/v" build.ref}}-{{/if}}dev{{/if}}-linux-amd64-rootless
     platform:
       architecture: amd64
       os: linux
   -
-    image: unfoldingword/dcs:{{#if build.tag}}{{trimPrefix "v" build.tag}}{{else}}{{#if (hasPrefix "refs/heads/release/dcs/v" build.ref)}}{{trimPrefix "refs/heads/release/dcs/v" build.ref}}-{{/if}}dev{{/if}}-linux-arm64-rootless
+    image: unfoldingword/dcs:{{#if build.tag}}{{trimSuffix "-dcs" (trimPrefix "v" build.tag)}}{{else}}{{#if (hasPrefix "refs/heads/release/dcs/v" build.ref)}}{{trimPrefix "refs/heads/release/dcs/v" build.ref}}-{{/if}}dev{{/if}}-linux-arm64-rootless
     platform:
       architecture: arm64
       os: linux
