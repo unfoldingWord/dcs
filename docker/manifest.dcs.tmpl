@@ -4,7 +4,7 @@ tags:
 {{#each build.tags}}
   - {{this}}
 {{/each}}
-  - "latest"
+  - latest{{#if (hasPrefix "refs/heads/release/dcs/v" build.ref)}}-qa{{/fi}}
 {{/if}}
 manifests:
   -
