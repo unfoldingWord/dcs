@@ -4,11 +4,11 @@ tags:
 {{#each build.tags}}
   - {{this}}-rootless
 {{/each}}
-  - latest-rootless
+  - "latest-rootless"
 {{else if (hasPrefix "refs/heads/release/dcs/v" build.ref)}}
-  - latest-qa-rootless
+  - "latest-qa-rootless"
 {{else}}
-  - main-rootless
+  - "main-rootless"
 {{/if}}
 manifests:
   -
