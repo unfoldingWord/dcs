@@ -4,11 +4,11 @@ tags:
 {{#each build.tags}}
   - {{this}}
 {{/each}}
-  - latest
+  - "latest"
 {{else if (hasPrefix "refs/heads/release/dcs/v" build.ref)}}
-  - latest-qa
+  - "latest-qa"
 {{else}}
-  - main
+  - "main"
 {{/if}}
 manifests:
   -
