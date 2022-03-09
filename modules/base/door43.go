@@ -21,8 +21,8 @@ import (
 	"code.gitea.io/gitea/modules/options"
 	"code.gitea.io/gitea/modules/util"
 
-	"github.com/ghodss/yaml"
 	"github.com/xeipuuv/gojsonschema"
+	"gopkg.in/yaml.v2"
 )
 
 // ValidateYAMLFile validates a yaml file
