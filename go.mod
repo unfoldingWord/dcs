@@ -35,7 +35,6 @@ require (
 	github.com/editorconfig/editorconfig-core-go/v2 v2.4.2
 	github.com/emirpasic/gods v1.12.0
 	github.com/ethantkoenig/rupture v1.0.0
-	github.com/ghodss/yaml v1.0.0
 	github.com/gliderlabs/ssh v0.3.3
 	github.com/go-asn1-ber/asn1-ber v1.5.3 // indirect
 	github.com/go-chi/chi/v5 v5.0.4
