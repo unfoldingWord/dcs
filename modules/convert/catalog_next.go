@@ -46,7 +46,7 @@ func ToCatalogV3Resource(dm *models.Door43Metadata) *api.CatalogV3Resource {
 	}
 
 	return &api.CatalogV3Resource{
-		Checking:    (*dm.Metadata)["dublin_core"].(map[string]interface{})["checking"].(*interface{}),
+		Checking:    (*dm.Metadata)["checking"].(*interface{}),
 		Comment:     (*dm.Metadata)["dublin_core"].(map[string]interface{})["comment"].(*string),
 		Contributor: (*dm.Metadata)["dublin_core"].(map[string]interface{})["contributor"].(*interface{}),
 		Creator:     (*dm.Metadata)["dublin_core"].(map[string]interface{})["creator"].(string),
