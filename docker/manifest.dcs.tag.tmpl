@@ -1,0 +1,18 @@
+image: unfoldingword/dcs:{{trimSuffix "-dcs" (trimPrefix "v" build.tag)}}
+tags:
+{{#each build.tags}}
+  - {{this}}
+{{/each}}
+  - latest
+manifests:
+  -
+    image: unfoldingword/dcs:{{trimSuffix "-dcs" (trimPrefix "v" build.tag)}}-linux-amd64
+    platform:
+      architecture: amd64
+      os: linux
+  -
+    image: unfoldingword/dcs:{{trimSuffix "-dcs" (trimPrefix "v" build.tag)}}-linux-arm64
+    platform:
+      architecture: arm64
+      os: linux
+      variant: v8

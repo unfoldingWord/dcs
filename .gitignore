@@ -119,3 +119,8 @@ prime/
 
 # Manpage
 /man
+
+# Docker compose
+/mysql
+/data-main
+/data-release

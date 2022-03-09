@@ -710,7 +710,7 @@ steps:
 
 # ---
 # kind: pipeline
-# name: release-version
+# name: release-tag
 
 # platform:
 #   os: linux
@@ -859,7 +859,7 @@ steps:
 ---
 kind: pipeline
 type: docker
-name: docker-linux-amd64-release-version
+name: docker-linux-amd64-release-tag
 
 platform:
   os: linux
@@ -946,7 +946,7 @@ steps:
 ---
 kind: pipeline
 type: docker
-name: docker-linux-amd64-release
+name: docker-linux-amd64-main-branch
 
 platform:
   os: linux
@@ -1104,7 +1104,7 @@ steps:
 ---
 kind: pipeline
 type: docker
-name: docker-linux-arm64-release-version
+name: docker-linux-arm64-release-tag
 
 platform:
   os: linux
@@ -1179,7 +1179,7 @@ steps:
 ---
 kind: pipeline
 type: docker
-name: docker-linux-arm64-release
+name: docker-linux-arm64-main-branch
 
 platform:
   os: linux
@@ -1305,11 +1305,22 @@ steps:
 ---
 kind: pipeline
 type: docker
-name: docker-manifest-version
+name: docker-manifest-release-tag
+
+trigger:
+  ref:
+  - "refs/tags/**-dcs"
+  event:
+    exclude:
+    - cron
 
 platform:
   os: linux
   arch: amd64
+
+depends_on:
+  - docker-linux-amd64-release-tag
+  - docker-linux-arm64-release-tag
 
 steps:
   - name: send-tags-to-tags-file
@@ -1341,31 +1352,31 @@ steps:
     settings:
       auto_tag: false
       ignore_missing: true
-      spec: docker/manifest.dcs.tmpl
+      spec: docker/manifest.dcs.tag.tmpl
       password:
         from_secret: docker_password
       username:
         from_secret: docker_username
 
+---
+kind: pipeline
+type: docker
+name: docker-manifest-release-branch
+
 trigger:
   ref:
-  - "refs/tags/**-dcs"
+  - "refs/heads/release/dcs/v*"
   event:
     exclude:
     - cron
 
-depends_on:
-  - docker-linux-amd64-release-version
-  - docker-linux-arm64-release-version
-
----
-kind: pipeline
-type: docker
-name: docker-manifest
-
 platform:
   os: linux
   arch: amd64
+
+depends_on:
+  - docker-linux-amd64-release-branch
+  - docker-linux-arm64-release-branch
 
 steps:
   # - name: manifest-rootless
@@ -1383,27 +1394,57 @@ steps:
   - name: manifest
     image: plugins/manifest
     settings:
-      auto_tag: false
+      auto_tag: true
       ignore_missing: true
-      spec: docker/manifest.dcs.tmpl
+      spec: docker/manifest.dcs.release.tmpl
       password:
         from_secret: docker_password
       username:
         from_secret: docker_username
 
+---
+kind: pipeline
+type: docker
+name: docker-manifest-main-branch
+
 trigger:
   ref:
   - refs/heads/main
-  - "refs/heads/release/dcs/v*"
   event:
     exclude:
     - cron
 
+platform:
+  os: linux
+  arch: amd64
+
 depends_on:
-  - docker-linux-amd64-release
-  - docker-linux-arm64-release
-  - docker-linux-amd64-release-branch
-  - docker-linux-arm64-release-branch
+  - docker-linux-amd64-main-branch
+  - docker-linux-arm64-main-branch
+
+steps:
+  # - name: manifest-rootless
+  #   pull: always
+  #   image: plugins/manifest
+  #   settings:
+  #     auto_tag: false
+  #     ignore_missing: true
+  #     spec: docker/manifest.rootless.dcs.tmpl
+  #     password:
+  #       from_secret: docker_password
+  #     username:
+  #       from_secret: docker_username
+
+  - name: manifest
+    image: plugins/manifest
+    settings:
+      auto_tag: true
+      ignore_missing: true
+      spec: docker/manifest.dcs.main.tmpl
+      password:
+        from_secret: docker_password
+      username:
+        from_secret: docker_username
 
 # ---
 # kind: pipeline
@@ -1431,12 +1472,12 @@ depends_on:
 # depends_on:
 #   - testing-amd64
 #   - testing-arm64
-#   - release-version
+#   - release-tag
 #   - release-latest
-#   - docker-linux-amd64-release
-#   - docker-linux-arm64-release
-#   - docker-linux-amd64-release-version
-#   - docker-linux-arm64-release-version
+#   - docker-linux-amd64-main-branch
+#   - docker-linux-arm64-main-branch
+#   - docker-linux-amd64-release-tag
+#   - docker-linux-arm64-release-tag
 #   - docker-linux-amd64-release-branch
 #   - docker-linux-arm64-release-branch
 #   - docker-manifest

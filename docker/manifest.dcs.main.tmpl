@@ -1,0 +1,15 @@
+image: unfoldingword/dcs:dev
+tags:
+  - main
+manifests:
+  -
+    image: unfoldingword/dcs:dev-linux-amd64
+    platform:
+      architecture: amd64
+      os: linux
+  -
+    image: unfoldingword/dcs:dev-linux-arm64
+    platform:
+      architecture: arm64
+      os: linux
+      variant: v8
