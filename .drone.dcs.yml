@@ -1394,7 +1394,7 @@ steps:
   - name: manifest
     image: plugins/manifest
     settings:
-      auto_tag: true
+      auto_tag: false
       ignore_missing: true
       spec: docker/manifest.dcs.release.tmpl
       password:
@@ -1438,7 +1438,7 @@ steps:
   - name: manifest
     image: plugins/manifest
     settings:
-      auto_tag: true
+      auto_tag: false
       ignore_missing: true
       spec: docker/manifest.dcs.main.tmpl
       password:
