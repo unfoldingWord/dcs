@@ -8,6 +8,7 @@ import (
 	"bufio"
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -19,7 +20,7 @@ import (
 	"code.gitea.io/gitea/modules/options"
 	"code.gitea.io/gitea/modules/util"
 
-	"github.com/xeipuuv/gojsonschema"
+	"github.com/santhosh-tekuri/jsonschema/v5"
 	"gopkg.in/yaml.v2"
 )
 
@@ -83,7 +84,7 @@ func ValidateJSONFile(entry *git.TreeEntry) string {
 
 // ValidateManifestFile validates a manifest file and returns the results as a string
 func ValidateManifestFile(entry *git.TreeEntry) string {
-	var result *gojsonschema.Result
+	var result *jsonschema.ValidationError
 	if entry != nil {
 		if r, err := ValidateManifestTreeEntry(entry); err != nil {
 			fmt.Printf("ValidateManifestTreeEntry: %v\n", err)
@@ -91,12 +92,7 @@ func ValidateManifestFile(entry *git.TreeEntry) string {
 			result = r
 		}
 	}
-	return StringifyManifestValidationResults(result)
-}
-
-// StringifyManifestValidationResults returns the errors and a string
-func StringifyManifestValidationResults(result *gojsonschema.Result) string {
-	return StringifyValidationErrors(result)
+	return StringifyValidationError(result)
 }
 
 // StringHasSuffix returns bool if str ends in the suffix
@@ -105,36 +101,107 @@ func StringHasSuffix(str, suffix string) bool {
 }
 
 // ValidateManifestTreeEntry validates a tree entry that is a manifest file and returns the results
-func ValidateManifestTreeEntry(entry *git.TreeEntry) (*gojsonschema.Result, error) {
+func ValidateManifestTreeEntry(entry *git.TreeEntry) (*jsonschema.ValidationError, error) {
 	manifest, err := ReadYAMLFromBlob(entry.Blob())
+	if err != nil {
+		return nil, err
+	}
 	if err != nil {
 		return nil, err
 	}
 	return ValidateBlobByRC020Schema(manifest)
 }
 
-// StringifyValidationErrors returns a semi-colon & new line separated string of the errors
-func StringifyValidationErrors(result *gojsonschema.Result) string {
-	if result.Valid() {
+// StringifyValidationError returns a semi-colon & new line separated string of the validation errors
+func StringifyValidationError(valErr *jsonschema.ValidationError) string {
+	return stringifyValidationError(valErr, "")
+}
+
+func stringifyValidationError(valErr *jsonschema.ValidationError, padding string) string {
+	if valErr == nil {
 		return ""
 	}
-	errStrings := make([]string, len(result.Errors()))
-	for i, v := range result.Errors() {
-		errStrings[i] = v.String()
+	str := ""
+	loc := "/"
+	message := ""
+	if valErr.InstanceLocation != "" {
+		loc = valErr.InstanceLocation
 	}
-	return " * " + strings.Join(errStrings, ";\n * ")
+	if padding != "" {
+		str = "\n"
+		message = valErr.Message
+	}
+	str += fmt.Sprintf("%s * %s: %s", padding, loc, message)
+	for _, cause := range valErr.Causes {
+		str += stringifyValidationError(cause, padding+"  ")
+	}
+	return str
 }
 
 // ValidateBlobByRC020Schema Validates a blob by the RC v0.2.0 schema and returns the result
-func ValidateBlobByRC020Schema(manifest *map[string]interface{}) (*gojsonschema.Result, error) {
-	schema, err := GetRC020Schema()
+func ValidateBlobByRC020Schema(manifest *map[string]interface{}) (*jsonschema.ValidationError, error) {
+	schemaText, err := GetRC020Schema()
 	if err != nil {
 		return nil, err
 	}
-	schemaLoader := gojsonschema.NewBytesLoader(schema)
-	documentLoader := gojsonschema.NewGoLoader(manifest)
 
-	return gojsonschema.Validate(schemaLoader, documentLoader)
+	compiler := jsonschema.NewCompiler()
+	if err := compiler.AddResource("schema.json", strings.NewReader(string(schemaText))); err != nil {
+		return nil, err
+	}
+	schema, err := compiler.Compile("schema.json")
+	if err != nil {
+		return nil, err
+	}
+	if err = schema.Validate(*manifest); err != nil {
+		switch e := err.(type) {
+		case *jsonschema.ValidationError:
+			return e, nil
+		default:
+			return nil, e
+		}
+	}
+	return nil, nil
+}
+
+// ToStringKeys takes an interface and change it to map[string]interface{} on all levels
+func ToStringKeys(val interface{}) (interface{}, error) {
+	var err error
+	switch val := val.(type) {
+	case map[interface{}]interface{}:
+		m := make(map[string]interface{})
+		for k, v := range val {
+			k, ok := k.(string)
+			if !ok {
+				return nil, errors.New("found non-string key")
+			}
+			m[k], err = ToStringKeys(v)
+			if err != nil {
+				return nil, err
+			}
+		}
+		return m, nil
+	case map[string]interface{}:
+		m := make(map[string]interface{})
+		for k, v := range val {
+			m[k], err = ToStringKeys(v)
+			if err != nil {
+				return nil, err
+			}
+		}
+		return m, nil
+	case []interface{}:
+		var l = make([]interface{}, len(val))
+		for i, v := range val {
+			l[i], err = ToStringKeys(v)
+			if err != nil {
+				return nil, err
+			}
+		}
+		return l, nil
+	default:
+		return val, nil
+	}
 }
 
 var rc02Schema []byte
@@ -186,6 +253,13 @@ func ReadYAMLFromBlob(blob *git.Blob) (*map[string]interface{}, error) {
 	if err := yaml.Unmarshal(buf, &result); err != nil {
 		log.Error("yaml.Unmarshal: %v", err)
 		return nil, err
+	}
+	for k, v := range *result {
+		if val, err := ToStringKeys(v); err != nil {
+			log.Error("ToStringKeys: %v", err)
+		} else {
+			(*result)[k] = val
+		}
 	}
 	return result, nil
 }
