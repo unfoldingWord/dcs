@@ -855,11 +855,11 @@ func renderDirectoryFiles(ctx *context.Context, timeout time.Duration) git.Entri
 	/*** DCS Customizations ***/
 	if ctx.Repo.TreePath == "" {
 		if entry, _ := tree.GetTreeEntryByPath("manifest.yaml"); entry != nil {
+			ctx.Data["ValidateManifestResultErrors"] = ""
 			if result, err := base.ValidateManifestTreeEntry(entry); err != nil {
 				fmt.Printf("ValidateManifestTreeEntry: %v\n", err)
 			} else {
-				ctx.Data["ValidateManifestResult"] = result
-				ctx.Data["ValidateManifestResultErrors"] = base.StringifyValidationErrors(result)
+				ctx.Data["ValidateManifestResultErrors"] = base.StringifyValidationError(result)
 			}
 		}
 	}

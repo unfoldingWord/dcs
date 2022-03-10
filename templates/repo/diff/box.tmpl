@@ -106,12 +106,12 @@
 								{{end}}
 							{{end}}
 							<!-- DCS Customizations -->
-							{{if and (eq $file.Name "manifest.yaml") ($.ValidateManifestResult)}}
+							{{if and (eq $file.Name "manifest.yaml")}}
 								<div class="fitted item">
-								{{if $.ValidateManifestResult.Valid}}
-									<span class="ui label green green" title="{{$.i18n.Tr "repo.metadata.valid_manifest_tooltip"}}">{{$.i18n.Tr "repo.metadata.valid"}}</span>
-								{{else}}
+								{{if $.ValidateManifestResultErrors}}
 									<span class="ui label red" title="{{$.ValidateManifestResultErrors}}">{{$.i18n.Tr "repo.metadata.invalid"}}</span>
+								{{else}}
+									<span class="ui label green green" title="{{$.i18n.Tr "repo.metadata.valid_manifest_tooltip"}}">{{$.i18n.Tr "repo.metadata.valid"}}</span>
 								{{end}}
 								</div>
 							{{end}}

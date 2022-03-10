@@ -216,7 +216,7 @@ func ProcessDoor43MetadataForRepoRelease(repo *repo.Repository, release *models.
 		return err
 	}
 
-	result, err := base.ValidateBlobByRC020Schema(manifest)
+	validationResult, err := base.ValidateBlobByRC020Schema(manifest)
 	if err != nil {
 		return err
 	}
@@ -265,7 +265,7 @@ func ProcessDoor43MetadataForRepoRelease(repo *repo.Repository, release *models.
 		dm.Stage != stage ||
 		dm.BranchOrTag != branchOrTag ||
 		!reflect.DeepEqual(dm.Metadata, manifest) {
-		if !result.Valid() {
+		if validationResult != nil {
 			log.Warn("%s/%s: manifest.yaml is not valid. see errors:", repo.FullName(), branchOrTag)
 			log.Warn("REPO ID: %d, RELEASE ID: %d", repo.ID, releaseID)
 			if release != nil {
@@ -273,10 +273,7 @@ func ProcessDoor43MetadataForRepoRelease(repo *repo.Repository, release *models.
 			} else {
 				log.Warn("BRANCH: %s", repo.DefaultBranch)
 			}
-			for _, desc := range result.Errors() {
-				log.Warn("- %s", desc.Description())
-				log.Warn("- %s = %s", desc.Field(), desc.Value())
-			}
+			log.Warn(base.StringifyValidationError(validationResult))
 			if dm != nil {
 				return models.DeleteDoor43Metadata(dm)
 			}
