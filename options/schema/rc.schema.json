@@ -1,6 +1,6 @@
 {
 	"$schema": "http://json-schema.org/draft-07/schema",
-	"$id": "https://resource-container.readthedocs.io/schema/rc.schema.json",
+	"$id": "https://github.com/unfoldingWord/rc-schema/edit/master/rc.schema.json",
 	"$$target": [
 			"rc.schema.json#/definitions/languageTag",
 			"rc.schema.json#/definitions/localizedText"
