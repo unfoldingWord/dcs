@@ -123,13 +123,12 @@ func stringifyValidationError(valErr *jsonschema.ValidationError, padding string
 	}
 	str := ""
 	loc := "/"
-	message := ""
+	message := valErr.Message
 	if valErr.InstanceLocation != "" {
 		loc = valErr.InstanceLocation
 	}
 	if padding != "" {
 		str = "\n"
-		message = valErr.Message
 	}
 	str += fmt.Sprintf("%s * %s: %s", padding, loc, message)
 	for _, cause := range valErr.Causes {
