@@ -193,7 +193,7 @@ func ToStringKeys(val interface{}) (interface{}, error) {
 		}
 		return m, nil
 	case []interface{}:
-		var l = make([]interface{}, len(val))
+		l := make([]interface{}, len(val))
 		for i, v := range val {
 			l[i], err = ToStringKeys(v)
 			if err != nil {
