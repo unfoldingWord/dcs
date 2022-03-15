@@ -77,6 +77,7 @@ import {initRepoWikiForm} from './features/repo-wiki.js';
 import {initRepoCommentForm, initRepository} from './features/repo-legacy.js';
 /** DCS Customizations **/
 import {initDcsInfoIcon} from './features/dcs-info-icon.js';
+import {initDcsValidationErrors} from './features/dcs-validation-errors.js';
 /** END DCS Customizations **/
 
 // Silence fomantic's error logging when tabs are used without a target content element
@@ -129,6 +130,7 @@ $(document).ready(() => {
 
   /** DCS Customizations **/
   initDcsInfoIcon();
+  initDcsValidationErrors();
   /** END DCS Customizations **/
 
   initNotificationCount();

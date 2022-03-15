@@ -95,7 +95,10 @@
 							<span class="ui label green" title="{{$message}}" style="margin-left: 5px">{{$.i18n.Tr "repo.metadata.valid"}}</span>
 						{{end}}
 					{{else}}
-						<span class="ui label red" title="{{$errors}}" style="margin-left: 5px">{{$.i18n.Tr "repo.metadata.invalid"}}</span>
+						<a class="ui label red validation-errors-trigger" style="margin-left: 5px">{{$.i18n.Tr "repo.metadata.invalid"}} {{svg "octicon-info"}}</a>
+						<div class="ui popup very wide validation-errors">
+							<pre>{{$errors}}</pre>
+						</div>
 					{{end}}
 					</div>
 				{{end}}
