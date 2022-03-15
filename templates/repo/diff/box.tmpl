@@ -83,6 +83,18 @@
 							{{if $file.IsVendored}}
 								<span class="ui label ml-3">{{$.i18n.Tr "repo.diff.vendored"}}</span>
 							{{end}}
+							<!-- DCS Customizations -->
+							{{if and (eq $file.Name "manifest.yaml")}}
+								{{if $.ValidateManifestResultErrors}}
+									<a class="ui label red validation-errors-trigger" style="margin-left: 5px" data-position="bottom center">{{$.i18n.Tr "repo.metadata.invalid"}} {{svg "octicon-info"}}</a>
+									<div class="ui popup very wide validation-errors" data-position="bottom center">
+										<pre>{{$.ValidateManifestResultErrors}}</pre>
+									</div>
+								{{else}}
+									<span class="ui label green green" title="{{$.i18n.Tr "repo.metadata.valid_manifest_tooltip"}}">{{$.i18n.Tr "repo.metadata.valid"}}</span>
+								{{end}}
+							{{end}}
+							<!-- END DCS Customizations -->
 						</div>
 						<div class="diff-file-header-actions df ac">
 							{{if $showFileViewToggle}}
@@ -105,17 +117,6 @@
 									<a class="ui basic tiny button" rel="nofollow" href="{{$.SourcePath}}/{{PathEscapeSegments .Name}}">{{$.i18n.Tr "repo.diff.view_file"}}</a>
 								{{end}}
 							{{end}}
-							<!-- DCS Customizations -->
-							{{if and (eq $file.Name "manifest.yaml")}}
-								<div class="fitted item">
-								{{if $.ValidateManifestResultErrors}}
-									<span class="ui label red" title="{{$.ValidateManifestResultErrors}}">{{$.i18n.Tr "repo.metadata.invalid"}}</span>
-								{{else}}
-									<span class="ui label green green" title="{{$.i18n.Tr "repo.metadata.valid_manifest_tooltip"}}">{{$.i18n.Tr "repo.metadata.valid"}}</span>
-								{{end}}
-								</div>
-							{{end}}
-							<!-- END DCS Customizations -->
 						</div>
 					</h4>
 					<div class="diff-file-body ui attached unstackable table segment">
