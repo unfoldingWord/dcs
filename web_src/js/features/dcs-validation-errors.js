@@ -1,3 +1,5 @@
+import $ from 'jquery';
+
 export function initDcsValidationErrors() {
   const invalidButtonEl = $('.validation-errors-trigger');
 
