@@ -854,19 +854,6 @@ func renderDirectoryFiles(ctx *context.Context, timeout time.Duration) git.Entri
 	ctx.Data["TreeLink"] = treeLink
 	ctx.Data["SSHDomain"] = setting.SSH.Domain
 
-	/*** DCS Customizations ***/
-	if ctx.Repo.TreePath == "" {
-		if entry, _ := tree.GetTreeEntryByPath("manifest.yaml"); entry != nil {
-			ctx.Data["ValidateManifestResultErrors"] = ""
-			if result, err := base.ValidateManifestTreeEntry(entry); err != nil {
-				fmt.Printf("ValidateManifestTreeEntry: %v\n", err)
-			} else {
-				ctx.Data["ValidateManifestResultErrors"] = base.StringifyValidationError(result)
-			}
-		}
-	}
-	/*** END DCS Customizations ***/
-
 	return allEntries
 }
 

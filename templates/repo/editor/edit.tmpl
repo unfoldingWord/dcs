@@ -24,6 +24,13 @@
 						{{end}}
 						<span>{{.i18n.Tr "repo.editor.or"}} <a href="{{$.BranchLink}}{{if not .IsNewFile}}/{{PathEscapeSegments .TreePath}}{{end}}">{{.i18n.Tr "repo.editor.cancel_lower"}}</a></span>
 						<input type="hidden" id="tree_path" name="tree_path" value="{{.TreePath}}" required>
+						<!-- DCS Customizations -->
+						{{if $.Entry}}
+							{{if or (StringHasSuffix $.Entry.Name ".yaml") (StringHasSuffix $.Entry.Name ".json")}}
+								{{template "repo/validation-errors" dict "file" $.Entry "root" $}}
+							{{end}}
+						{{end}}
+						<!-- END DCS Customizations -->
 					</div>
 				</div>
 			</div>

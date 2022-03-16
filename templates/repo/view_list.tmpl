@@ -75,28 +75,7 @@
 								<a href="{{$.TreeLink}}/{{PathEscapeSegments $entry.Name}}" title="{{$entry.Name}}">{{$entry.Name}}</a>
 								<!-- DCS Customizations -->
 								{{if or (StringHasSuffix $entry.Name ".yaml") (StringHasSuffix $entry.Name ".json")}}
-									{{$errors := ""}}
-									{{$message := $.i18n.Tr "repo.metadata.valid"}}
-									{{if StringHasSuffix $entry.Name ".yaml"}}
-										{{$errors = ValidateYAMLFile $entry}}
-										{{if and (eq $errors "") (eq $.TreePath "") (eq $entry.Name "manifest.yaml")}}
-											{{$errors = ValidateManifestFile $entry}}
-											{{$message = $.i18n.Tr "repo.metadata.valid_manifest_tooltip"}}
-										{{end}}
-									{{end}}
-									{{if StringHasSuffix $entry.Name ".json"}}
-										{{$errors = ValidateJSONFile $entry}}
-									{{end}}
-									{{if eq $errors ""}}
-										{{if and (eq $errors "") (eq $.TreePath "") (eq $entry.Name "manifest.yaml")}}
-										<span class="ui label green" title="{{$message}}" style="margin-left: 5px">{{$.i18n.Tr "repo.metadata.valid"}}</span>
-										{{end}}
-									{{else}}
-										<a class="ui label red validation-errors-trigger" style="margin-left: 5px; padding: 2px 0 2px 5px;">{{$.i18n.Tr "repo.metadata.invalid"}} {{svg "octicon-info"}}</a>
-										<div class="ui popup very wide validation-errors">
-											<pre>{{$errors}}</pre>
-										</div>
-									{{end}}
+									{{template "repo/validation-errors" dict "file" $entry "root" $}}
 								{{end}}
 								<!-- END DCS Customizations -->
 							{{end}}

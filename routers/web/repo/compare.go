@@ -662,21 +662,6 @@ func PrepareCompareDiff(
 
 	setCompareContext(ctx, baseCommit, headCommit, ci.HeadUser.Name, repo.Name)
 
-	/*** DCS Customizations ***/
-	for _, file := range diff.Files {
-		if file.Name == "manifest.yaml" {
-			if entry, _ := headCommit.GetTreeEntryByPath(file.Name); entry != nil {
-				ctx.Data["ValidateManifestResultErrors"] = ""
-				if result, err := base.ValidateManifestTreeEntry(entry); err != nil {
-					fmt.Printf("ValidateManifestTreeEntry: %v\n", err)
-				} else {
-					ctx.Data["ValidateManifestResultErrors"] = base.StringifyValidationError(result)
-				}
-			}
-		}
-	}
-	/*** END DCS Customizations ***/
-
 	return false
 }
 

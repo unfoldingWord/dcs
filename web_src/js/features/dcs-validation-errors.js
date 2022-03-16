@@ -1,13 +1,16 @@
 export function initDcsValidationErrors() {
-  const invalidButtonEl = $('.validation-errors-trigger');
+  const invalidButtonEl = $('.validation-message-trigger');
 
   if (!invalidButtonEl.length) {
     return;
   }
 
-  invalidButtonEl.removeAttr('href'); // intended for noscript mode only
   invalidButtonEl.popup({
+    on: 'click',
+    hoverable: false,
+    closable: false,
     position: 'bottom center',
-    hoverable: true,
+    lastResort: 'bottom right',
+    name: 'validation-message',
   });
 }

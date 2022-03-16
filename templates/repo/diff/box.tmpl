@@ -84,15 +84,8 @@
 								<span class="ui label ml-3">{{$.i18n.Tr "repo.diff.vendored"}}</span>
 							{{end}}
 							<!-- DCS Customizations -->
-							{{if and (eq $file.Name "manifest.yaml")}}
-								{{if $.ValidateManifestResultErrors}}
-									<a class="ui label red validation-errors-trigger" style="margin-left: 5px" data-position="bottom center">{{$.i18n.Tr "repo.metadata.invalid"}} {{svg "octicon-info"}}</a>
-									<div class="ui popup very wide validation-errors" data-position="bottom center">
-										<pre>{{$.ValidateManifestResultErrors}}</pre>
-									</div>
-								{{else}}
-									<span class="ui label green green" title="{{$.i18n.Tr "repo.metadata.valid_manifest_tooltip"}}">{{$.i18n.Tr "repo.metadata.valid"}}</span>
-								{{end}}
+							{{if or (StringHasSuffix $file.Name ".yaml") (StringHasSuffix $file.Name ".json")}}
+								{{template "repo/validation-errors" dict "file" . "root" $}}
 							{{end}}
 							<!-- END DCS Customizations -->
 						</div>
