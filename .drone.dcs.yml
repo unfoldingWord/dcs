@@ -814,47 +814,47 @@ steps:
 #         from_secret: github_token
 #     depends_on: [gpg-sign]
 
----
-kind: pipeline
-type: docker
-name: docs
+# ---
+# kind: pipeline
+# type: docker
+# name: docs
 
-platform:
-  os: linux
-  arch: arm64
+# platform:
+#   os: linux
+#   arch: arm64
 
-depends_on:
-  - compliance
+# depends_on:
+#   - compliance
 
-trigger:
-  event:
-    - push
-    - tag
-    - pull_request
+# trigger:
+#   event:
+#     - push
+#     - tag
+#     - pull_request
 
-steps:
-  - name: build-docs
-    image: plugins/hugo:latest
-    pull: always
-    commands:
-      - apk add --no-cache make bash curl
-      - cd docs
-      - make trans-copy clean build
+# steps:
+#   - name: build-docs
+#     image: plugins/hugo:latest
+#     pull: always
+#     commands:
+#       - apk add --no-cache make bash curl
+#       - cd docs
+#       - make trans-copy clean build
 
-  - name: publish-docs
-    image: techknowlogick/drone-netlify:latest
-    pull: always
-    settings:
-      path: docs/public/
-      site_id: 80d6116f-7730-4ab8-8c02-b9528293aa07
-    environment:
-      NETLIFY_TOKEN:
-        from_secret: netlify_token
-    when:
-      branch:
-        - main
-      event:
-        - push
+#   - name: publish-docs
+#     image: techknowlogick/drone-netlify:latest
+#     pull: always
+#     settings:
+#       path: docs/public/
+#       site_id: 80d6116f-7730-4ab8-8c02-b9528293aa07
+#     environment:
+#       NETLIFY_TOKEN:
+#         from_secret: netlify_token
+#     when:
+#       branch:
+#         - main
+#       event:
+#         - push
 
 ---
 kind: pipeline
@@ -865,9 +865,9 @@ platform:
   os: linux
   arch: amd64
 
-depends_on:
-  - testing-amd64
-  - testing-arm64
+# depends_on:
+#   - testing-amd64
+#   - testing-arm64
 
 trigger:
   ref:
@@ -952,9 +952,9 @@ platform:
   os: linux
   arch: amd64
 
-depends_on:
-  - testing-amd64
-  - testing-arm64
+# depends_on:
+#   - testing-amd64
+#   - testing-arm64
 
 trigger:
   ref:
@@ -1014,9 +1014,9 @@ platform:
   os: linux
   arch: amd64
 
-depends_on:
-  - testing-amd64
-  - testing-arm64
+# depends_on:
+#   - testing-amd64
+#   - testing-arm64
 
 trigger:
   ref:
@@ -1077,8 +1077,8 @@ platform:
   os: linux
   arch: arm64
 
-depends_on:
-  - compliance
+# depends_on:
+#   - compliance
 
 trigger:
   ref:
@@ -1110,9 +1110,9 @@ platform:
   os: linux
   arch: arm64
 
-depends_on:
-  - testing-amd64
-  - testing-arm64
+# depends_on:
+#   - testing-amd64
+#   - testing-arm64
 
 trigger:
   ref:
@@ -1185,9 +1185,9 @@ platform:
   os: linux
   arch: arm64
 
-depends_on:
-  - testing-amd64
-  - testing-arm64
+# depends_on:
+#   - testing-amd64
+#   - testing-arm64
 
 trigger:
   ref:
@@ -1248,9 +1248,9 @@ platform:
   os: linux
   arch: arm64
 
-depends_on:
-  - testing-amd64
-  - testing-arm64
+# depends_on:
+#   - testing-amd64
+#   - testing-arm64
 
 trigger:
   ref:
