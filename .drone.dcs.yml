@@ -1,5 +1,4 @@
 ---
-
 # kind: pipeline
 # type: docker
 # name: compliance
@@ -1079,8 +1078,8 @@ platform:
   os: linux
   arch: arm64
 
-depends_on:
-  - compliance
+# depends_on:
+#   - compliance
 
 trigger:
   ref:
