@@ -10,6 +10,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"html/template"
 	"io"
 	"net/http"
 	"strings"
@@ -82,26 +83,27 @@ func ValidateJSONFile(entry *git.TreeEntry) string {
 	}
 }
 
-// ValidateManifestFile validates a manifest file and returns the results as a string
-func ValidateManifestFile(entry *git.TreeEntry) string {
-	var result *jsonschema.ValidationError
-	if entry != nil {
-		if r, err := ValidateManifestTreeEntry(entry); err != nil {
-			fmt.Printf("ValidateManifestTreeEntry: %v\n", err)
-		} else {
-			result = r
-		}
-	}
-	return StringifyValidationError(result)
-}
-
 // StringHasSuffix returns bool if str ends in the suffix
 func StringHasSuffix(str, suffix string) bool {
 	return strings.HasSuffix(str, suffix)
 }
 
+// ValidateManifestFileAsHTML validates a manifest file and returns the results as template.HTML
+func ValidateManifestFileAsHTML(entry *git.TreeEntry) template.HTML {
+	var result *jsonschema.ValidationError
+	if r, err := ValidateManifestTreeEntry(entry); err != nil {
+		log.Warn("ValidateManifestTreeEntry: %v\n", err)
+	} else {
+		result = r
+	}
+	return template.HTML(ConvertValidationErrorToHTML(result))
+}
+
 // ValidateManifestTreeEntry validates a tree entry that is a manifest file and returns the results
 func ValidateManifestTreeEntry(entry *git.TreeEntry) (*jsonschema.ValidationError, error) {
+	if entry == nil {
+		return nil, nil
+	}
 	manifest, err := ReadYAMLFromBlob(entry.Blob())
 	if err != nil {
 		return nil, err
@@ -112,29 +114,63 @@ func ValidateManifestTreeEntry(entry *git.TreeEntry) (*jsonschema.ValidationErro
 	return ValidateBlobByRC020Schema(manifest)
 }
 
-// StringifyValidationError returns a semi-colon & new line separated string of the validation errors
-func StringifyValidationError(valErr *jsonschema.ValidationError) string {
-	return stringifyValidationError(valErr, "")
+// ConvertValidationErrorToString returns a semi-colon & new line separated string of the validation errors
+func ConvertValidationErrorToString(valErr *jsonschema.ValidationError) string {
+	return convertValidationErrorToString(valErr, nil, "")
 }
 
-func stringifyValidationError(valErr *jsonschema.ValidationError, padding string) string {
+func convertValidationErrorToString(valErr, parentErr *jsonschema.ValidationError, padding string) string {
 	if valErr == nil {
 		return ""
 	}
-	str := ""
-	loc := "/"
-	message := valErr.Message
-	if valErr.InstanceLocation != "" {
-		loc = valErr.InstanceLocation
+	str := padding
+	if parentErr == nil {
+		str += fmt.Sprintf("Invalid: %s\n", valErr.Message)
+		str += "<root>:\n"
+	} else {
+		loc := ""
+		if valErr.InstanceLocation != "" {
+			loc = strings.TrimPrefix(valErr.InstanceLocation, parentErr.InstanceLocation)
+			if loc != "" {
+				loc = fmt.Sprintf("%s: ", strings.TrimPrefix(loc, "/"))
+			}
+		}
+		str += fmt.Sprintf("* %s%s\n", loc, valErr.Message)
 	}
-	if padding != "" {
-		str = "\n"
-	}
-	str += fmt.Sprintf("%s * %s: %s", padding, loc, message)
 	for _, cause := range valErr.Causes {
-		str += stringifyValidationError(cause, padding+"  ")
+		str += convertValidationErrorToString(cause, valErr, padding+"  ")
 	}
 	return str
+}
+
+// ConvertValidationErrorToHTML converts a validation error object to an HTML string
+func ConvertValidationErrorToHTML(valErr *jsonschema.ValidationError) string {
+	return convertValidationErrorToHTML(valErr, nil)
+}
+
+func convertValidationErrorToHTML(valErr, parentErr *jsonschema.ValidationError) string {
+	if valErr == nil {
+		return ""
+	}
+	html := "<ul>\n"
+	if parentErr == nil {
+		html += fmt.Sprintf("<strong>Invalid:</strong> %s\n", valErr.Message)
+		html += "<li>&lt;root&gt;:</li>\n"
+	} else {
+		loc := ""
+		if valErr.InstanceLocation != "" {
+			loc = strings.TrimPrefix(valErr.InstanceLocation, parentErr.InstanceLocation)
+			if loc != "" {
+				loc = fmt.Sprintf("<strong>%s:</strong> ", strings.TrimPrefix(loc, "/"))
+			}
+		}
+		html += fmt.Sprintf("<li>%s%s</li>\n", loc, valErr.Message)
+	}
+	for _, cause := range valErr.Causes {
+		html += convertValidationErrorToHTML(cause, valErr)
+	}
+	html += "</ul>\n"
+	return html
 }
 
 // ValidateBlobByRC020Schema Validates a blob by the RC v0.2.0 schema and returns the result

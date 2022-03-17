@@ -273,7 +273,7 @@ func ProcessDoor43MetadataForRepoRelease(repo *repo.Repository, release *models.
 			} else {
 				log.Warn("BRANCH: %s", repo.DefaultBranch)
 			}
-			log.Warn(base.StringifyValidationError(validationResult))
+			log.Warn(base.ConvertValidationErrorToString(validationResult))
 			if dm != nil {
 				return models.DeleteDoor43Metadata(dm)
 			}

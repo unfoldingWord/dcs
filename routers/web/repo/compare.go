@@ -662,6 +662,17 @@ func PrepareCompareDiff(
 
 	setCompareContext(ctx, baseCommit, headCommit, ci.HeadUser.Name, repo.Name)
 
+	/*** DCS Customizations ***/
+	// For Validation
+	for _, file := range diff.Files {
+		if strings.HasSuffix(file.Name, ".json") || strings.HasSuffix(file.Name, ".yaml") || strings.HasSuffix(file.Name, ".yml") {
+			if entry, _ := headCommit.GetTreeEntryByPath(file.Name); entry != nil {
+				file.Entry = entry
+			}
+		}
+	}
+	/*** END DCS Customizations ***/
+
 	return false
 }
 

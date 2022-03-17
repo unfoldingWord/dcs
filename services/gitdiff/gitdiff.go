@@ -623,6 +623,7 @@ type DiffFile struct {
 	IsGenerated             bool
 	IsVendored              bool
 	Language                string
+	Entry                   *git.TreeEntry // DCS Customizations
 }
 
 // GetType returns type of diff file.

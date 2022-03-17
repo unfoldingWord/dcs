@@ -10,7 +10,9 @@ export function initDcsValidationErrors() {
     hoverable: false,
     closable: false,
     position: 'bottom center',
-    lastResort: 'bottom right',
+    lastResort: 'bottom center',
     name: 'validation-message',
+    movePopup: false,
+    debug: true,
   });
 }

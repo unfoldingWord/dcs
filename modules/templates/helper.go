@@ -106,10 +106,10 @@ func NewFuncMap() []template.FuncMap {
 		"EntryIcon":     base.EntryIcon,
 		"MigrationIcon": MigrationIcon,
 		/*** DCS Customizations ***/
-		"StringHasSuffix":      base.StringHasSuffix,
-		"ValidateJSONFile":     base.ValidateJSONFile,
-		"ValidateYAMLFile":     base.ValidateYAMLFile,
-		"ValidateManifestFile": base.ValidateManifestFile,
+		"StringHasSuffix":            base.StringHasSuffix,
+		"ValidateJSONFile":           base.ValidateJSONFile,
+		"ValidateYAMLFile":           base.ValidateYAMLFile,
+		"ValidateManifestFileAsHTML": base.ValidateManifestFileAsHTML,
 		/*** END DCS Customizations ***/
 		"Add": func(a ...int) int {
 			sum := 0

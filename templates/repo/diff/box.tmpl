@@ -84,8 +84,8 @@
 								<span class="ui label ml-3">{{$.i18n.Tr "repo.diff.vendored"}}</span>
 							{{end}}
 							<!-- DCS Customizations -->
-							{{if or (StringHasSuffix $file.Name ".yaml") (StringHasSuffix $file.Name ".json")}}
-								{{template "repo/validation-errors" dict "file" . "root" $}}
+							{{if $file.Entry}}
+								{{template "repo/validation-errors" dict "file" $file.Entry "root" $}}
 							{{end}}
 							<!-- END DCS Customizations -->
 						</div>

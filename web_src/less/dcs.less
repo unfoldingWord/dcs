@@ -52,11 +52,19 @@
 // This is for CSV/TSV diffs so that the modified text starts on new lines
 .data-table .modified span { display: inline-block; }
 
-.validation-message pre {
-  white-space: break-spaces;
+.validation-message-trigger {
+  cursor: pointer;
+  
+  .svg {
+    margin-right: 0 !important;
+    width: 14px !important;
+  }
 }
 
-.validation-message-trigger .svg {
-  margin-right: 0 !important;
-  width: 14px !important;
+.validation-message {
+  z-index: 100;
+  
+  * {
+    z-index: 100;
+  }
 }
