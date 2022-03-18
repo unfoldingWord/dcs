@@ -13,6 +13,7 @@ import (
 	"html/template"
 	"io"
 	"net/http"
+	"sort"
 	"strings"
 
 	"code.gitea.io/gitea/modules/charset"
@@ -125,18 +126,19 @@ func convertValidationErrorToString(valErr, parentErr *jsonschema.ValidationErro
 	}
 	str := padding
 	if parentErr == nil {
-		str += fmt.Sprintf("Invalid: %s\n", valErr.Message)
-		str += "<root>:\n"
+		str += fmt.Sprintf("Invalid: %s\n", strings.TrimSuffix(valErr.Message, "#"))
+		str += "* <root>:\n"
 	} else {
 		loc := ""
 		if valErr.InstanceLocation != "" {
-			loc = strings.TrimPrefix(valErr.InstanceLocation, parentErr.InstanceLocation)
+			loc = strings.Replace(strings.TrimPrefix(strings.TrimPrefix(valErr.InstanceLocation, parentErr.InstanceLocation), "/"), "/", ".", -1)
 			if loc != "" {
 				loc = fmt.Sprintf("%s: ", strings.TrimPrefix(loc, "/"))
 			}
 		}
 		str += fmt.Sprintf("* %s%s\n", loc, valErr.Message)
 	}
+	sort.Slice(valErr.Causes, func(i, j int) bool { return valErr.Causes[i].InstanceLocation < valErr.Causes[j].InstanceLocation })
 	for _, cause := range valErr.Causes {
 		str += convertValidationErrorToString(cause, valErr, padding+"  ")
 	}
@@ -152,20 +154,23 @@ func convertValidationErrorToHTML(valErr, parentErr *jsonschema.ValidationError)
 	if valErr == nil {
 		return ""
 	}
-	html := "<ul>\n"
+	var html string
 	if parentErr == nil {
-		html += fmt.Sprintf("<strong>Invalid:</strong> %s\n", valErr.Message)
-		html += "<li>&lt;root&gt;:</li>\n"
+		html += fmt.Sprintf("<strong>Invalid:</strong> %s\n", strings.TrimSuffix(valErr.Message, "#"))
+		html += "<ul>\n"
+		html += "<li><strong>&lt;root&gt;:</strong></li>\n"
 	} else {
+		html += "<ul>\n"
 		loc := ""
 		if valErr.InstanceLocation != "" {
-			loc = strings.TrimPrefix(valErr.InstanceLocation, parentErr.InstanceLocation)
+			loc = strings.Replace(strings.TrimPrefix(strings.TrimPrefix(valErr.InstanceLocation, parentErr.InstanceLocation), "/"), "/", ".", -1)
 			if loc != "" {
 				loc = fmt.Sprintf("<strong>%s:</strong> ", strings.TrimPrefix(loc, "/"))
 			}
 		}
 		html += fmt.Sprintf("<li>%s%s</li>\n", loc, valErr.Message)
 	}
+	sort.Slice(valErr.Causes, func(i, j int) bool { return valErr.Causes[i].InstanceLocation < valErr.Causes[j].InstanceLocation })
 	for _, cause := range valErr.Causes {
 		html += convertValidationErrorToHTML(cause, valErr)
 	}
