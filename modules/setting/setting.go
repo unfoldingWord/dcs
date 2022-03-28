@@ -30,6 +30,8 @@ import (
 
 	"github.com/unknwon/com"
 	gossh "golang.org/x/crypto/ssh"
+	"golang.org/x/text/cases"
+	"golang.org/x/text/language"
 	ini "gopkg.in/ini.v1"
 )
 
@@ -90,13 +92,15 @@ var (
 	// AppDataPath is the default path for storing data.
 	// It maps to ini:"APP_DATA_PATH" and defaults to AppWorkPath + "/data"
 	AppDataPath string
+	// LocalURL is the url for locally running applications to contact Gitea. It always has a '/' suffix
+	// It maps to ini:"LOCAL_ROOT_URL"
+	LocalURL string
 
 	// Server settings
 	Protocol             Scheme
 	Domain               string
 	HTTPAddr             string
 	HTTPPort             string
-	LocalURL             string
 	RedirectOtherPort    bool
 	PortToRedirect       string
 	OfflineMode          bool
@@ -644,7 +648,7 @@ func loadFromConf(allowEmpty bool, extraConfig string) {
 		}
 		UnixSocketPermissionRaw := sec.Key("UNIX_SOCKET_PERMISSION").MustString("666")
 		UnixSocketPermissionParsed, err := strconv.ParseUint(UnixSocketPermissionRaw, 8, 32)
-		if err != nil || UnixSocketPermissionParsed > 0777 {
+		if err != nil || UnixSocketPermissionParsed > 0o777 {
 			log.Fatal("Failed to parse unixSocketPermission: %s", UnixSocketPermissionRaw)
 		}
 
@@ -717,6 +721,7 @@ func loadFromConf(allowEmpty bool, extraConfig string) {
 		}
 	}
 	LocalURL = sec.Key("LOCAL_ROOT_URL").MustString(defaultLocalURL)
+	LocalURL = strings.TrimRight(LocalURL, "/") + "/"
 	RedirectOtherPort = sec.Key("REDIRECT_OTHER_PORT").MustBool(false)
 	PortToRedirect = sec.Key("PORT_TO_REDIRECT").MustString("80")
 	OfflineMode = sec.Key("OFFLINE_MODE").MustBool()
@@ -800,16 +805,16 @@ func loadFromConf(allowEmpty bool, extraConfig string) {
 	SSH.AuthorizedPrincipalsAllow, SSH.AuthorizedPrincipalsEnabled = parseAuthorizedPrincipalsAllow(sec.Key("SSH_AUTHORIZED_PRINCIPALS_ALLOW").Strings(","))
 
 	if !SSH.Disabled && !SSH.StartBuiltinServer {
-		if err := os.MkdirAll(SSH.RootPath, 0700); err != nil {
+		if err := os.MkdirAll(SSH.RootPath, 0o700); err != nil {
 			log.Fatal("Failed to create '%s': %v", SSH.RootPath, err)
-		} else if err = os.MkdirAll(SSH.KeyTestPath, 0644); err != nil {
+		} else if err = os.MkdirAll(SSH.KeyTestPath, 0o644); err != nil {
 			log.Fatal("Failed to create '%s': %v", SSH.KeyTestPath, err)
 		}
 
 		if len(trustedUserCaKeys) > 0 && SSH.AuthorizedPrincipalsEnabled {
 			fname := sec.Key("SSH_TRUSTED_USER_CA_KEYS_FILENAME").MustString(filepath.Join(SSH.RootPath, "gitea-trusted-user-ca-keys.pem"))
 			if err := os.WriteFile(fname,
-				[]byte(strings.Join(trustedUserCaKeys, "\n")), 0600); err != nil {
+				[]byte(strings.Join(trustedUserCaKeys, "\n")), 0o600); err != nil {
 				log.Fatal("Failed to create '%s': %v", fname, err)
 			}
 		}
@@ -950,8 +955,9 @@ func loadFromConf(allowEmpty bool, extraConfig string) {
 	// The following is a purposefully undocumented option. Please do not run Gitea as root. It will only cause future headaches.
 	// Please don't use root as a bandaid to "fix" something that is broken, instead the broken thing should instead be fixed properly.
 	unsafeAllowRunAsRoot := Cfg.Section("").Key("I_AM_BEING_UNSAFE_RUNNING_AS_ROOT").MustBool(false)
-	RunMode = Cfg.Section("").Key("RUN_MODE").MustString("prod")
-	IsProd = strings.EqualFold(RunMode, "prod")
+	RunMode = Cfg.Section("").Key("RUN_MODE").MustString("Prod")
+	RunMode = cases.Title(language.English).String(strings.ToLower(RunMode))
+	IsProd = RunMode == "Prod"
 	// Does not check run user when the install lock is off.
 	if InstallLock {
 		currentUser, match := IsRunUserMatchCurrentUser(RunUser)
@@ -1086,7 +1092,7 @@ func loadInternalToken(sec *ini.Section) string {
 	}
 	switch tempURI.Scheme {
 	case "file":
-		fp, err := os.OpenFile(tempURI.RequestURI(), os.O_RDWR, 0600)
+		fp, err := os.OpenFile(tempURI.RequestURI(), os.O_RDWR, 0o600)
 		if err != nil {
 			log.Fatal("Failed to open InternalTokenURI (%s): %v", uri, err)
 		}

@@ -77,8 +77,9 @@ func sendUserMail(language string, u *user_model.User, tpl base.TplName, code, s
 		"Code":              code,
 		"Language":          locale.Language(),
 		// helper
-		"i18n":     locale,
-		"Str2html": templates.Str2html,
+		"i18n":      locale,
+		"Str2html":  templates.Str2html,
+		"DotEscape": templates.DotEscape,
 	}
 
 	var content bytes.Buffer
@@ -127,8 +128,9 @@ func SendActivateEmailMail(u *user_model.User, email *user_model.EmailAddress) {
 		"Email":           email.Email,
 		"Language":        locale.Language(),
 		// helper
-		"i18n":     locale,
-		"Str2html": templates.Str2html,
+		"i18n":      locale,
+		"Str2html":  templates.Str2html,
+		"DotEscape": templates.DotEscape,
 	}
 
 	var content bytes.Buffer
@@ -146,8 +148,8 @@ func SendActivateEmailMail(u *user_model.User, email *user_model.EmailAddress) {
 
 // SendRegisterNotifyMail triggers a notify e-mail by admin created a account.
 func SendRegisterNotifyMail(u *user_model.User) {
-	if setting.MailService == nil {
-		// No mail service configured
+	if setting.MailService == nil || !u.IsActive {
+		// No mail service configured OR user is inactive
 		return
 	}
 	locale := translation.NewLocale(u.Language)
@@ -157,8 +159,9 @@ func SendRegisterNotifyMail(u *user_model.User) {
 		"Username":    u.Name,
 		"Language":    locale.Language(),
 		// helper
-		"i18n":     locale,
-		"Str2html": templates.Str2html,
+		"i18n":      locale,
+		"Str2html":  templates.Str2html,
+		"DotEscape": templates.DotEscape,
 	}
 
 	var content bytes.Buffer
@@ -176,8 +179,8 @@ func SendRegisterNotifyMail(u *user_model.User) {
 
 // SendCollaboratorMail sends mail notification to new collaborator.
 func SendCollaboratorMail(u, doer *user_model.User, repo *repo_model.Repository) {
-	if setting.MailService == nil {
-		// No mail service configured
+	if setting.MailService == nil || !u.IsActive {
+		// No mail service configured OR the user is inactive
 		return
 	}
 	locale := translation.NewLocale(u.Language)
@@ -190,8 +193,9 @@ func SendCollaboratorMail(u, doer *user_model.User, repo *repo_model.Repository)
 		"Link":     repo.HTMLURL(),
 		"Language": locale.Language(),
 		// helper
-		"i18n":     locale,
-		"Str2html": templates.Str2html,
+		"i18n":      locale,
+		"Str2html":  templates.Str2html,
+		"DotEscape": templates.DotEscape,
 	}
 
 	var content bytes.Buffer
@@ -273,8 +277,9 @@ func composeIssueCommentMessages(ctx *mailCommentContext, lang string, recipient
 		"ReviewComments":  reviewComments,
 		"Language":        locale.Language(),
 		// helper
-		"i18n":     locale,
-		"Str2html": templates.Str2html,
+		"i18n":      locale,
+		"Str2html":  templates.Str2html,
+		"DotEscape": templates.DotEscape,
 	}
 
 	var mailSubject bytes.Buffer
@@ -404,6 +409,10 @@ func SendIssueAssignedMail(issue *models.Issue, doer *user_model.User, content s
 
 	langMap := make(map[string][]*user_model.User)
 	for _, user := range recipients {
+		if !user.IsActive {
+			// don't send emails to inactive users
+			continue
+		}
 		langMap[user.Language] = append(langMap[user.Language], user)
 	}
 
