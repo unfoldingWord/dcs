@@ -80,6 +80,9 @@ steps:
     commands:
       - make checks-frontend
     depends_on: [deps-frontend]
+    volumes:
+      - name: deps
+        path: /go
 
   - name: checks-backend
     image: golang:1.17
