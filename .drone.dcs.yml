@@ -80,9 +80,6 @@ steps:
     commands:
       - make checks-frontend
     depends_on: [deps-frontend]
-    volumes:
-      - name: deps
-        path: /go
 
   - name: checks-backend
     image: golang:1.17
@@ -469,7 +466,7 @@ steps:
   #     GOPROXY: https://goproxy.cn
   #     TAGS: bindata gogit sqlite sqlite_unlock_notify
   #     RACE_ENABLED: true
-  #     TEST_TAGS: gogit sqlite sqlite_unlock_notify
+  #     TEST_TAGS: gogit sqlite sqlite_unlock_notify sqlite_json
   #     USE_REPO_TEST_DIR: 1
   #   depends_on: [build]
   #   volumes:
@@ -612,9 +609,9 @@ steps:
 #   event:
 #     - push
 
-# # depends_on:
-# #   - testing-amd64
-# #   - testing-arm64
+# depends_on:
+#   - testing-amd64
+#   - testing-arm64
 
 # volumes:
 #   - name: deps
@@ -677,7 +674,7 @@ steps:
 #     settings:
 #       acl: public-read
 #       bucket: dcs-artifacts
-#       endpoint: https://cdn.door43.org.s3.us-west-2.amazonaws.com
+#       endpoint:  https://cdn.door43.org.s3.us-west-2.amazonaws.com
 #       path_style: true
 #       source: "dist/release/*"
 #       strip_prefix: dist/release/
@@ -698,7 +695,7 @@ steps:
 #     settings:
 #       acl: public-read
 #       bucket: dcs-artifacts
-#       endpoint: https://ams3.digitaloceanspaces.com
+#       endpoint:  https://cdn.door43.org.s3.us-west-2.amazonaws.com
 #       path_style: true
 #       source: "dist/release/*"
 #       strip_prefix: dist/release/
@@ -716,7 +713,7 @@ steps:
 
 # ---
 # kind: pipeline
-# name: release-tag
+# name: release-version
 
 # platform:
 #   os: linux
@@ -730,9 +727,9 @@ steps:
 #   event:
 #     - tag
 
-# # depends_on:
-# #   - testing-arm64
-# #   - testing-amd64
+# depends_on:
+#   - testing-arm64
+#   - testing-amd64
 
 # volumes:
 #   - name: deps
@@ -797,7 +794,7 @@ steps:
 #     settings:
 #       acl: public-read
 #       bucket: dcs-artifacts
-#       endpoint: https://ams3.digitaloceanspaces.com
+#       endpoint:  https://cdn.door43.org.s3.us-west-2.amazonaws.com
 #       path_style: true
 #       source: "dist/release/*"
 #       strip_prefix: dist/release/
@@ -866,7 +863,7 @@ steps:
 ---
 kind: pipeline
 type: docker
-name: docker-linux-amd64-release-tag
+name: docker-linux-amd64-release-version
 
 platform:
   os: linux
@@ -907,10 +904,10 @@ steps:
     pull: always
     settings:
       auto_tag: false
+      # auto_tag_suffix: linux-amd64
       repo: unfoldingword/dcs
       build_args:
         - GOPROXY=https://goproxy.cn
-        - LOG_LEVEL=debug
       password:
         from_secret: docker_password
       username:
@@ -919,18 +916,6 @@ steps:
       event:
         exclude:
         - pull_request
-
-  # - name: send-tags-to-tags-file-rootless
-  #   image: node
-  #   when:
-  #     event:
-  #       - tag
-  #   commands:
-  #     - PATCH_VERSION=${DRONE_TAG##v}
-  #     - PATCH_VERSION=${PATCH_VERSION%%-dcs}
-  #     - MINOR_VERSION=`echo ${PATCH_VERSION} | cut -f1,2 -d'.'`
-  #     - MAJOR_VERSION=`echo ${MINOR_VERSION} | cut -f1 -d'.'`
-  #     - echo -n "$(DRONE_TAG}-linux-amd64, ${PATCH_VERSION}-linux-amd64-rootless, ${MINOR_VERSION}-linux-amd64-rootless, ${MAJOR_VERSION}-linux-amd64-rootless" > .tags
 
   # - name: publish-rootless
   #   image: techknowlogick/drone-docker:latest
@@ -953,7 +938,7 @@ steps:
 ---
 kind: pipeline
 type: docker
-name: docker-linux-amd64-main-branch
+name: docker-linux-amd64-release
 
 platform:
   os: linux
@@ -1111,7 +1096,7 @@ steps:
 ---
 kind: pipeline
 type: docker
-name: docker-linux-arm64-release-tag
+name: docker-linux-arm64-release-version
 
 platform:
   os: linux
@@ -1152,10 +1137,10 @@ steps:
     pull: always
     settings:
       auto_tag: false
+      # auto_tag_suffix: linux-arm64
       repo: unfoldingword/dcs
       build_args:
         - GOPROXY=https://goproxy.cn
-        - LOG_LEVEL=debug
       password:
         from_secret: docker_password
       username:
@@ -1186,7 +1171,7 @@ steps:
 ---
 kind: pipeline
 type: docker
-name: docker-linux-arm64-main-branch
+name: docker-linux-arm64-release
 
 platform:
   os: linux
@@ -1248,7 +1233,6 @@ steps:
 
 ---
 kind: pipeline
-type: docker
 name: docker-linux-arm64-release-branch
 
 platform:
@@ -1312,22 +1296,11 @@ steps:
 ---
 kind: pipeline
 type: docker
-name: docker-manifest-release-tag
-
-trigger:
-  ref:
-  - "refs/tags/**-dcs"
-  event:
-    exclude:
-    - cron
+name: docker-manifest-version
 
 platform:
   os: linux
   arch: amd64
-
-depends_on:
-  - docker-linux-amd64-release-tag
-  - docker-linux-arm64-release-tag
 
 steps:
   - name: send-tags-to-tags-file
@@ -1365,25 +1338,25 @@ steps:
       username:
         from_secret: docker_username
 
+trigger:
+  ref:
+  - "refs/tags/**-dcs"
+  event:
+    exclude:
+    - cron
+
+depends_on:
+  - docker-linux-amd64-release-version
+  - docker-linux-arm64-release-version
+
 ---
 kind: pipeline
 type: docker
 name: docker-manifest-release-branch
 
-trigger:
-  ref:
-  - "refs/heads/release/dcs/v*"
-  event:
-    exclude:
-    - cron
-
 platform:
   os: linux
   arch: amd64
-
-depends_on:
-  - docker-linux-amd64-release-branch
-  - docker-linux-arm64-release-branch
 
 steps:
   # - name: manifest-rootless
@@ -1409,39 +1382,27 @@ steps:
       username:
         from_secret: docker_username
 
----
-kind: pipeline
-type: docker
-name: docker-manifest-main-branch
-
 trigger:
   ref:
-  - refs/heads/main
+  - "refs/heads/release/dcs/v*"
   event:
     exclude:
     - cron
+
+depends_on:
+  - docker-linux-amd64-release-branch
+  - docker-linux-arm64-release-branch
+
+---
+kind: pipeline
+type: docker
+name: docker-manifest-release
 
 platform:
   os: linux
   arch: amd64
 
-depends_on:
-  - docker-linux-amd64-main-branch
-  - docker-linux-arm64-main-branch
-
 steps:
-  # - name: manifest-rootless
-  #   pull: always
-  #   image: plugins/manifest
-  #   settings:
-  #     auto_tag: false
-  #     ignore_missing: true
-  #     spec: docker/manifest.rootless.dcs.tmpl
-  #     password:
-  #       from_secret: docker_password
-  #     username:
-  #       from_secret: docker_username
-
   - name: manifest
     image: plugins/manifest
     settings:
@@ -1452,6 +1413,17 @@ steps:
         from_secret: docker_password
       username:
         from_secret: docker_username
+
+trigger:
+  ref:
+  - refs/heads/main
+  event:
+    exclude:
+    - cron
+
+depends_on:
+  - docker-linux-amd64-release
+  - docker-linux-arm64-release
 
 # ---
 # kind: pipeline
@@ -1479,12 +1451,12 @@ steps:
 # depends_on:
 #   - testing-amd64
 #   - testing-arm64
-#   - release-tag
+#   - release-version
 #   - release-latest
-#   - docker-linux-amd64-main-branch
-#   - docker-linux-arm64-main-branch
-#   - docker-linux-amd64-release-tag
-#   - docker-linux-arm64-release-tag
+#   - docker-linux-amd64-release
+#   - docker-linux-arm64-release
+#   - docker-linux-amd64-release-version
+#   - docker-linux-arm64-release-version
 #   - docker-linux-amd64-release-branch
 #   - docker-linux-arm64-release-branch
 #   - docker-manifest
