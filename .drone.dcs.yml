@@ -1261,9 +1261,9 @@ platform:
   os: linux
   arch: arm64
 
-# depends_on:
-#   - testing-amd64
-#   - testing-arm64
+depends_on:
+  - testing-amd64
+  - testing-arm64
 
 trigger:
   ref:
