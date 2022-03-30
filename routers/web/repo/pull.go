@@ -761,15 +761,11 @@ func ViewPullFiles(ctx *context.Context) {
 	ctx.Data["HasIssuesOrPullsWritePermission"] = ctx.Repo.CanWriteIssuesOrPulls(issue.IsPull)
 
 	/*** DCS Customizations ***/
+	// For Validation
 	for _, file := range diff.Files {
-		if file.Name == "manifest.yaml" {
+		if strings.HasSuffix(file.Name, ".json") || strings.HasSuffix(file.Name, ".yaml") || strings.HasSuffix(file.Name, ".yml") {
 			if entry, _ := commit.GetTreeEntryByPath(file.Name); entry != nil {
-				ctx.Data["ValidateManifestResultErrors"] = ""
-				if result, err := base.ValidateManifestTreeEntry(entry); err != nil {
-					fmt.Printf("ValidateManifestTreeEntry: %v\n", err)
-				} else {
-					ctx.Data["ValidateManifestResultErrors"] = base.StringifyValidationError(result)
-				}
+				file.Entry = entry
 			}
 		}
 	}

@@ -78,28 +78,7 @@
 				<!-- DCS Customizations -->
 				{{if or (StringHasSuffix $.Entry.Name ".yaml") (StringHasSuffix $.Entry.Name ".json")}}
 					<div class="fitted item">
-					{{$errors := ""}}
-					{{$message := $.i18n.Tr "repo.metadata.valid"}}
-					{{if StringHasSuffix $.Entry.Name ".yaml"}}
-						{{$errors = ValidateYAMLFile $.Entry}}
-						{{if and (eq $errors "") (eq $.TreePath "manifest.yaml")}}
-							{{$errors = ValidateManifestFile $.Entry}}
-							{{$message = $.i18n.Tr "repo.metadata.valid_manifest_tooltip"}}
-						{{end}}
-					{{end}}
-					{{if StringHasSuffix $.Entry.Name ".json"}}
-						{{$errors = ValidateJSONFile $.Entry}}
-					{{end}}
-					{{if eq $errors ""}}
-						{{if and (eq $errors "") (eq $.TreePath "manifest.yaml")}}
-							<span class="ui label green" title="{{$message}}" style="margin-left: 5px">{{$.i18n.Tr "repo.metadata.valid"}}</span>
-						{{end}}
-					{{else}}
-						<a class="ui label red validation-errors-trigger" style="margin-left: 5px">{{$.i18n.Tr "repo.metadata.invalid"}} {{svg "octicon-info"}}</a>
-						<div class="ui popup very wide validation-errors">
-							<pre>{{$errors}}</pre>
-						</div>
-					{{end}}
+						{{template "repo/validation-errors" dict "file" $.Entry "root" $}}
 					</div>
 				{{end}}
 				<!-- END DCS Customizations -->

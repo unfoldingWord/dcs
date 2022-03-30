@@ -138,9 +138,15 @@ func editFile(ctx *context.Context, isNewFile bool) {
 		} else {
 			ctx.Data["FileContent"] = content
 		}
+		/*** DCS Customizations ***/
+		ctx.Data["Entry"] = entry
+		/*** END DCS Customizations ***/
 	} else {
 		// Append filename from query, or empty string to allow user name the new file.
 		treeNames = append(treeNames, fileName)
+		/*** DCS Customizations ***/
+		ctx.Data["Entry"] = nil
+		/*** END DCS Customizations ***/
 	}
 
 	ctx.Data["TreeNames"] = treeNames
