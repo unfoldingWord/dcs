@@ -93,6 +93,8 @@ type Repository struct {
 	AvatarURL                 string           `json:"avatar_url"`
 	Internal                  bool             `json:"internal"`
 	Language                  string           `json:"language"`
+	LanguageTitle             string           `json:"language_title"`
+	LanguageDir               string           `json:"language_direction"`
 	Subject                   string           `json:"subject"`
 	Books                     []string         `json:"books"`
 	Title                     string           `json:"title"`

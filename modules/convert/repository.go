@@ -116,10 +116,12 @@ func innerToRepo(repo *repo_model.Repository, mode perm.AccessMode, isParent boo
 	// 	}
 	// }
 
-	var language, title, subject, checkingLevel string
+	var language, languageTitle, languageDir, title, subject, checkingLevel string
 	var books []string
 	if metadata != nil {
 		language = (*metadata.Metadata)["dublin_core"].(map[string]interface{})["language"].(map[string]interface{})["identifier"].(string)
+		languageTitle = (*metadata.Metadata)["dublin_core"].(map[string]interface{})["language"].(map[string]interface{})["title"].(string)
+		languageDir = (*metadata.Metadata)["dublin_core"].(map[string]interface{})["language"].(map[string]interface{})["direction"].(string)
 		title = (*metadata.Metadata)["dublin_core"].(map[string]interface{})["title"].(string)
 		subject = (*metadata.Metadata)["dublin_core"].(map[string]interface{})["subject"].(string)
 		books = metadata.GetBooks()
@@ -199,6 +201,8 @@ func innerToRepo(repo *repo_model.Repository, mode perm.AccessMode, isParent boo
 		DefaultMergeStyle:         string(defaultMergeStyle),
 		AvatarURL:                 repo.AvatarLink(),
 		Language:                  language,
+		LanguageTitle:             languageTitle,
+		LanguageDir:               languageDir,
 		Title:                     title,
 		Subject:                   subject,
 		Books:                     books,

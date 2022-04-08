@@ -101,6 +101,8 @@ type CatalogV5 struct {
 	GitTreesURL            string        `json:"git_trees_url"`
 	ContentsURL            string        `json:"contents_url"`
 	Language               string        `json:"language"`
+	LanguageTitle          string        `json:"language_title"`
+	LanguageDir            string        `json:"language_direction"`
 	Subject                string        `json:"subject"`
 	Title                  string        `json:"title"`
 	BranchOrTag            string        `json:"branch_or_tag_name"`
