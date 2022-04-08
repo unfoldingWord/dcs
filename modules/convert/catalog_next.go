@@ -127,6 +127,8 @@ func ToCatalogV5(dm *models.Door43Metadata, mode perm.AccessMode) *api.CatalogV5
 		GitTreesURL:            dm.GetGitTreesURL(),
 		ContentsURL:            dm.GetContentsURL(),
 		Language:               (*dm.Metadata)["dublin_core"].(map[string]interface{})["language"].(map[string]interface{})["identifier"].(string),
+		LanguageTitle:          (*dm.Metadata)["dublin_core"].(map[string]interface{})["language"].(map[string]interface{})["title"].(string),
+		LanguageDir:            (*dm.Metadata)["dublin_core"].(map[string]interface{})["language"].(map[string]interface{})["direction"].(string),
 		Subject:                (*dm.Metadata)["dublin_core"].(map[string]interface{})["subject"].(string),
 		Title:                  (*dm.Metadata)["dublin_core"].(map[string]interface{})["title"].(string),
 		Books:                  dm.GetBooks(),

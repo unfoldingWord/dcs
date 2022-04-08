@@ -94,6 +94,8 @@ type Repository struct {
 	DefaultMergeStyle         string           `json:"default_merge_style"`
 	AvatarURL                 string           `json:"avatar_url"`
 	Internal                  bool             `json:"internal"`
+	LanguageTitle             string           `json:"language_title"`
+	LanguageDir               string           `json:"language_direction"`
 	Subject                   string           `json:"subject"`
 	Books                     []string         `json:"books"`
 	Title                     string           `json:"title"`
