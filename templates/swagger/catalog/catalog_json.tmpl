@@ -23,6 +23,38 @@
   },
   "basePath": "{{AppSubUrl | JSEscape | Safe}}/api/catalog",
   "paths": {
+    "/markdown": {
+      "post": {
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "text/html"
+        ],
+        "tags": [
+          "miscellaneous"
+        ],
+        "summary": "Render a markdown document as HTML",
+        "operationId": "renderMarkdown",
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "schema": {
+              "$ref": "#/definitions/MarkdownOption"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/MarkdownRender"
+          },
+          "422": {
+            "$ref": "#/responses/validationError"
+          }
+        }
+      }
+    },
     "/misc/versions": {
       "get": {
         "produces": [
@@ -1698,6 +1730,14 @@
           "type": "string",
           "x-go-name": "Language"
         },
+        "language_direction": {
+          "type": "string",
+          "x-go-name": "LanguageDir"
+        },
+        "language_title": {
+          "type": "string",
+          "x-go-name": "LanguageTitle"
+        },
         "metadata_api_contents_url": {
           "type": "string",
           "x-go-name": "MetadataAPIContentsURL"
@@ -2183,6 +2223,14 @@
         "language": {
           "type": "string",
           "x-go-name": "Language"
+        },
+        "language_direction": {
+          "type": "string",
+          "x-go-name": "LanguageDir"
+        },
+        "language_title": {
+          "type": "string",
+          "x-go-name": "LanguageTitle"
         },
         "languages_url": {
           "type": "string",
