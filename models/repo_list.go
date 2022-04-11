@@ -13,6 +13,7 @@ import (
 	repo_model "code.gitea.io/gitea/models/repo"
 	"code.gitea.io/gitea/models/unit"
 	user_model "code.gitea.io/gitea/models/user"
+	"code.gitea.io/gitea/modules/container"
 	"code.gitea.io/gitea/modules/setting"
 	"code.gitea.io/gitea/modules/structs"
 	"code.gitea.io/gitea/modules/util"
@@ -63,7 +64,7 @@ func (repos RepositoryList) loadAttributes(e db.Engine) error {
 	users := make(map[int64]*user_model.User, len(set))
 	if err := e.
 		Where("id > 0").
-		In("id", keysInt64(set)).
+		In("id", container.KeysInt64(set)).
 		Find(&users); err != nil {
 		return fmt.Errorf("find users: %v", err)
 	}
@@ -561,7 +562,7 @@ func searchRepositoryByCondition(opts *SearchRepoOptions, cond builder.Cond) (db
 		Join("INNER", "user", "`user`.id = `repository`.owner_id").
 		Join("LEFT", "door43_metadata", "`door43_metadata`.repo_id = `repository`.id AND `door43_metadata`.release_id = 0").
 		Where(cond).
-		OrderBy("`repository`." + opts.OrderBy.String())
+		OrderBy("`repository`." + opts.OrderBy.String()) // DCS Customizations
 	if opts.PageSize > 0 {
 		sess = sess.Limit(opts.PageSize, (opts.Page-1)*opts.PageSize)
 	}
