@@ -89,7 +89,7 @@ func sudo() func(ctx *context.APIContext) {
 		}
 
 		if len(sudo) > 0 {
-			if ctx.IsSigned && ctx.User.IsAdmin {
+			if ctx.IsSigned && ctx.ContextUser.IsAdmin {
 				user, err := user_model.GetUserByName(sudo)
 				if err != nil {
 					if user_model.IsErrUserNotExist(err) {
@@ -99,8 +99,8 @@ func sudo() func(ctx *context.APIContext) {
 					}
 					return
 				}
-				log.Trace("Sudo from (%s) to: %s", ctx.User.Name, user.Name)
-				ctx.User = user
+				log.Trace("Sudo from (%s) to: %s", ctx.ContextUser.Name, user.Name)
+				ctx.ContextUser = user
 			} else {
 				ctx.JSON(http.StatusForbidden, map[string]string{
 					"message": "Only administrators allowed to sudo.",
@@ -122,8 +122,8 @@ func repoAssignment() func(ctx *context.APIContext) {
 		)
 
 		// Check if the user is the same as the repository owner.
-		if ctx.IsSigned && ctx.User.LowerName == strings.ToLower(userName) {
-			owner = ctx.User
+		if ctx.IsSigned && ctx.ContextUser.LowerName == strings.ToLower(userName) {
+			owner = ctx.ContextUser
 		} else {
 			owner, err = user_model.GetUserByName(userName)
 			if err != nil {
@@ -164,7 +164,7 @@ func repoAssignment() func(ctx *context.APIContext) {
 		repo.Owner = owner
 		ctx.Repo.Repository = repo
 
-		ctx.Repo.Permission, err = models.GetUserRepoPermission(repo, ctx.User)
+		ctx.Repo.Permission, err = models.GetUserRepoPermission(repo, ctx.ContextUser)
 		if err != nil {
 			ctx.Error(http.StatusInternalServerError, "GetUserRepoPermission", err)
 			return

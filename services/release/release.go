@@ -144,7 +144,7 @@ func CreateRelease(gitRepo *git.Repository, rel *models.Release, attachmentUUIDs
 			if err := rel.LoadAttributes(); err != nil {
 				return err
 			}
-			return door43metadata_service.ProcessDoor43MetadataForRepoRelease(rel.Repo, rel)
+			return door43metadata_service.ProcessDoor43MetadataForRepoRelease(gitRepo.Ctx, rel.Repo, rel)
 		}
 	}
 	/*** END DCS Customizations ***/

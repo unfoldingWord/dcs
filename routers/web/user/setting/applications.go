@@ -60,7 +60,7 @@ func ApplicationsPost(ctx *context.Context) {
 		//ctx.Flash.Error(ctx.Tr("settings.generate_token_name_duplicate", t.Name))
 		//ctx.Redirect(setting.AppSubURL + "/user/settings/applications")
 		//return
-		log.Info("Ignoring existing Access Token for DCS/translationCore, UID: %v, Token Name: %v", ctx.User.ID, form.Name)
+		log.Info("Ignoring existing Access Token for DCS/translationCore, UID: %v, Token Name: %v", ctx.ContextUser.ID, form.Name)
 		/*** END DCS Customizations ***/
 	}
 

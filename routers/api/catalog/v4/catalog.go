@@ -356,7 +356,7 @@ func GetCatalogEntry(ctx *context.APIContext) {
 		ctx.Error(http.StatusInternalServerError, "GetDoor43MetadataByRepoIDAndTagName", err)
 		return
 	}
-	accessMode, err := models.AccessLevel(ctx.User, dm.Repo)
+	accessMode, err := models.AccessLevel(ctx.ContextUser, dm.Repo)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, api.SearchError{
 			OK:    false,
@@ -510,7 +510,7 @@ func searchCatalog(ctx *context.APIContext) {
 	results := make([]*api.CatalogV4, len(dms))
 	var lastUpdated time.Time
 	for i, dm := range dms {
-		accessMode, err := models.AccessLevel(ctx.User, dm.Repo)
+		accessMode, err := models.AccessLevel(ctx.ContextUser, dm.Repo)
 		if err != nil {
 			ctx.JSON(http.StatusInternalServerError, api.SearchError{
 				OK:    false,

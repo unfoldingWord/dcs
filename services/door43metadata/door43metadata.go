@@ -5,10 +5,12 @@
 package door43metadata
 
 import (
+	"context"
 	"fmt"
 	"reflect"
 
 	"code.gitea.io/gitea/models"
+	"code.gitea.io/gitea/models/db"
 	"code.gitea.io/gitea/models/repo"
 	"code.gitea.io/gitea/modules/base"
 	"code.gitea.io/gitea/modules/git"
@@ -25,6 +27,12 @@ import (
 func GenerateDoor43Metadata(x *xorm.Engine) error {
 	sess := x.NewSession()
 	defer sess.Close()
+
+	ctx, commiter, err := db.TxContext()
+	if err != nil {
+		return err
+	}
+	defer commiter.Close()
 
 	// Query to find repos that need processing, either having releases that
 	// haven't been processed, or their default branch hasn't been processed.
@@ -64,7 +72,7 @@ func GenerateDoor43Metadata(x *xorm.Engine) error {
 				continue
 			}
 		}
-		if err = ProcessDoor43MetadataForRepoRelease(repo, release); err != nil {
+		if err = ProcessDoor43MetadataForRepoRelease(ctx, repo, release); err != nil {
 			continue
 		}
 	}
@@ -145,6 +153,12 @@ func ProcessDoor43MetadataForRepo(repo *repo.Repository) error {
 		return err
 	}
 
+	ctx, commiter, err := db.TxContext()
+	if err != nil {
+		return err
+	}
+	defer commiter.Close()
+
 	for _, releaseID := range relIDs {
 		var release *models.Release
 		releaseRef := repo.DefaultBranch
@@ -157,7 +171,7 @@ func ProcessDoor43MetadataForRepo(repo *repo.Repository) error {
 			releaseRef = release.TagName
 		}
 		log.Info("Processing Metadata for repo %s (%d), %s (%d)\n", repo.Name, repo.ID, releaseRef, releaseID)
-		if err = ProcessDoor43MetadataForRepoRelease(repo, release); err != nil {
+		if err = ProcessDoor43MetadataForRepoRelease(ctx, repo, release); err != nil {
 			log.Warn("Error processing metadata for repo %s (%d), %s (%d): %v\n", repo.Name, repo.ID, releaseRef, releaseID, err)
 		} else {
 			log.Info("Processed Metadata for repo %s (%d), %s (%d)\n", repo.Name, repo.ID, releaseRef, releaseID)
@@ -167,7 +181,7 @@ func ProcessDoor43MetadataForRepo(repo *repo.Repository) error {
 }
 
 // ProcessDoor43MetadataForRepoRelease handles the metadata for a given repo by release based on if the container is a valid RC or not
-func ProcessDoor43MetadataForRepoRelease(repo *repo.Repository, release *models.Release) error {
+func ProcessDoor43MetadataForRepoRelease(ctx context.Context, repo *repo.Repository, release *models.Release) error {
 	if repo == nil {
 		return fmt.Errorf("no repository provided")
 	}
@@ -175,7 +189,7 @@ func ProcessDoor43MetadataForRepoRelease(repo *repo.Repository, release *models.
 		return fmt.Errorf("release can only be a release, not a tag")
 	}
 
-	gitRepo, err := git.OpenRepository(repo.RepoPath())
+	gitRepo, err := git.OpenRepository(ctx, repo.RepoPath())
 	if err != nil {
 		fmt.Printf("OpenRepository Error: %v\n", err)
 		return err

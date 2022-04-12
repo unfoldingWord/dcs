@@ -106,7 +106,7 @@ func sudo() func(ctx *context.APIContext) {
 		}
 
 		if len(sudo) > 0 {
-			if ctx.IsSigned && ctx.User.IsAdmin {
+			if ctx.IsSigned && ctx.ContextUser.IsAdmin {
 				user, err := user_model.GetUserByName(sudo)
 				if err != nil {
 					if user_model.IsErrUserNotExist(err) {
@@ -116,8 +116,8 @@ func sudo() func(ctx *context.APIContext) {
 					}
 					return
 				}
-				log.Trace("Sudo from (%s) to: %s", ctx.User.Name, user.Name)
-				ctx.User = user
+				log.Trace("Sudo from (%s) to: %s", ctx.ContextUser.Name, user.Name)
+				ctx.ContextUser = user
 			} else {
 				ctx.JSON(http.StatusForbidden, map[string]string{
 					"message": "Only administrators allowed to sudo.",

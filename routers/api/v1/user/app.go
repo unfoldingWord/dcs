@@ -112,7 +112,7 @@ func CreateAccessToken(ctx *context.APIContext) {
 		/*** DCS Customizations - Commented out so tokens can have the same name for translationCore ***/
 		//ctx.Error(http.StatusBadRequest, "AccessTokenByNameExists", errors.New("access token name has been used already"))
 		//return
-		log.Info("Ignoring existing Access Token for DCS/translationCore, UID: %v, Token Name: %v", ctx.User.ID, form.Name)
+		log.Info("Ignoring existing Access Token for DCS/translationCore, UID: %v, Token Name: %v", ctx.ContextUser.ID, form.Name)
 		/*** END DCS Customizations ***/
 	}
 

@@ -170,7 +170,7 @@ func SettingsPost(ctx *context.Context) {
 		}
 
 		/*** DCS Customizations - Must be admin ***/
-		repo.IsPrivate = form.Private && ctx.User.IsAdmin
+		repo.IsPrivate = form.Private && ctx.ContextUser.IsAdmin
 		/*** END DCS Customizations ***/
 		if err := models.UpdateRepository(repo, visibilityChanged); err != nil {
 			ctx.ServerError("UpdateRepository", err)
@@ -810,8 +810,8 @@ func SettingsPost(ctx *context.Context) {
 		}
 
 		if ctx.Repo.Owner.IsOrganization() {
-			org := models.OrgFromUser(ctx.Repo.Owner)
-			owned, err := org.IsOwnedBy(ctx.User.ID)
+			org := organization.OrgFromUser(ctx.Repo.Owner)
+			owned, err := org.IsOwnedBy(ctx.ContextUser.ID)
 			if err != nil {
 				ctx.ServerError("IsOwnedBy", err)
 				return
@@ -821,7 +821,7 @@ func SettingsPost(ctx *context.Context) {
 			}
 		}
 
-		if err := scrubber.ScrubSensitiveData(&ctx.Repo.GitRepo.Ctx, repo, ctx.User, scrubber.ScrubSensitiveDataOptions{
+		if err := scrubber.ScrubSensitiveData(&ctx.Repo.GitRepo.Ctx, repo, ctx.ContextUser, scrubber.ScrubSensitiveDataOptions{
 			LastCommitID:  ctx.Repo.CommitID,
 			CommitMessage: ctx.Tr("repo.settings.scrub_commit_message"),
 		}); err != nil {

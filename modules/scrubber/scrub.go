@@ -80,7 +80,7 @@ func ScrubSensitiveData(ctx *context.Context, repo *repo.Repository, doer *user_
 		}); err != nil {
 			return fmt.Errorf("PushForce: %v", err)
 		}
-		gitRepo, err := git.OpenRepository(repo.RepoPath())
+		gitRepo, err := git.OpenRepository(*ctx, repo.RepoPath())
 		if err != nil {
 			return fmt.Errorf("OpenRepository: %v", err)
 		}
@@ -167,21 +167,17 @@ func ScrubFile(ctx *context.Context, repoPath, fileName string) error {
 	if err != nil {
 		return err
 	}
-	cmd := git.NewCommand(*ctx, "filter-branch", "--force", "--prune-empty", "--tag-name-filter", "cat",
+	err = git.NewCommand(*ctx, "filter-branch", "--force", "--prune-empty", "--tag-name-filter", "cat",
 		"--index-filter", "\""+gitPath+"\" rm --cached --ignore-unmatch "+fileName,
-		"--", "--all")
-	_, err = cmd.RunInDir(repoPath)
+		"--", "--all").Run(&git.RunOpts{Dir: repoPath})
 	if err != nil && err.Error() == "exit status 1" {
 		err := os.RemoveAll(path.Join(repoPath, ".git/refs/original/"))
 		if err != nil {
 			return err
 		}
-		cmd = git.NewCommand(*ctx, "reflog", "expire", "--all")
-		_, err = cmd.RunInDir(repoPath)
+		err = git.NewCommand(*ctx, "reflog", "expire", "--all").Run(&git.RunOpts{Dir: repoPath})
 		if err != nil && err.Error() == "exit status 1" {
-			cmd = git.NewCommand(*ctx, "gc", "--aggressive", "--prune")
-			_, err = cmd.RunInDir(repoPath)
-			return err
+			return git.NewCommand(*ctx, "gc", "--aggressive", "--prune").Run(&git.RunOpts{Dir: repoPath})
 		}
 	}
 	return err
@@ -192,15 +188,15 @@ func ScrubCommitNameAndEmail(ctx *context.Context, localPath, newName, newEmail 
 	if err := os.RemoveAll(path.Join(localPath, ".git/refs/original/")); err != nil {
 		return err
 	}
-	if _, err := git.NewCommand(db.DefaultContext, "filter-branch", "-f", "--env-filter", `
+	if err := git.NewCommand(db.DefaultContext, "filter-branch", "-f", "--env-filter", `
 export GIT_COMMITTER_NAME="`+newName+`"
 export GIT_COMMITTER_EMAIL="`+newEmail+`"
 export GIT_AUTHOR_NAME="`+newName+`"
 export GIT_AUTHOR_EMAIL="`+newEmail+`"
-`, "--tag-name-filter", "cat", "--", "--branches", "--tags").RunInDir(localPath); err != nil {
+`, "--tag-name-filter", "cat", "--", "--branches", "--tags").Run(&git.RunOpts{Dir: localPath}); err != nil {
 		return err
 	}
-	if _, err := git.NewCommand(*ctx, "push", "--force", "--tags", "origin", "refs/heads/*").RunInDir(localPath); err != nil {
+	if err := git.NewCommand(*ctx, "push", "--force", "--tags", "origin", "refs/heads/*").Run(&git.RunOpts{Dir: localPath}); err != nil {
 		return err
 	}
 	return nil

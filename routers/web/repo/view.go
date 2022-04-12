@@ -529,7 +529,6 @@ func renderFile(ctx *context.Context, entry *git.TreeEntry, treeLink, rawLink st
 				return
 			}
 			ctx.Data["EscapeStatus"], ctx.Data["FileContent"] = charset.EscapeControlString(result.String())
-<<<<<<< HEAD
 			/*** DCS Customizations ***/
 		} else if isTocYaml {
 			ctx.Data["IsRenderedHTML"] = true
@@ -542,12 +541,7 @@ func renderFile(ctx *context.Context, entry *git.TreeEntry, treeLink, rawLink st
 				ctx.Data["FileContent"] = string(rendered)
 			}
 			/*** END DCS Customizations ***/
-		} else if readmeExist {
-||||||| cc6ff7425
-		} else if readmeExist {
-=======
 		} else if readmeExist && !shouldRenderSource {
->>>>>>> upstream/main
 			buf := &bytes.Buffer{}
 			ctx.Data["IsRenderedHTML"] = true
 
