@@ -11,7 +11,6 @@ package scrubber
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -24,6 +23,7 @@ import (
 	"code.gitea.io/gitea/models/repo"
 	user_model "code.gitea.io/gitea/models/user"
 	"code.gitea.io/gitea/modules/git"
+	"code.gitea.io/gitea/modules/json"
 	"code.gitea.io/gitea/modules/log"
 	repo_module "code.gitea.io/gitea/modules/repository"
 	repo_service "code.gitea.io/gitea/services/repository"
@@ -196,10 +196,7 @@ export GIT_AUTHOR_EMAIL="`+newEmail+`"
 `, "--tag-name-filter", "cat", "--", "--branches", "--tags").Run(&git.RunOpts{Dir: localPath}); err != nil {
 		return err
 	}
-	if err := git.NewCommand(*ctx, "push", "--force", "--tags", "origin", "refs/heads/*").Run(&git.RunOpts{Dir: localPath}); err != nil {
-		return err
-	}
-	return nil
+	return git.NewCommand(*ctx, "push", "--force", "--tags", "origin", "refs/heads/*").Run(&git.RunOpts{Dir: localPath})
 }
 
 /*** END DCS Customizations ***/

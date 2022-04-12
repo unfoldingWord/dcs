@@ -7,6 +7,7 @@ package models
 import (
 	"fmt"
 	"sort"
+	"strconv"
 
 	admin_model "code.gitea.io/gitea/models/admin"
 	"code.gitea.io/gitea/models/db"
@@ -15,7 +16,6 @@ import (
 	"code.gitea.io/gitea/modules/setting"
 	"code.gitea.io/gitea/modules/timeutil"
 
-	"github.com/unknwon/com"
 	"xorm.io/builder"
 )
 
@@ -527,7 +527,8 @@ func GetReposForMetadata() ([]int64, error) {
 	repoIDs := make([]int64, len(records))
 
 	for idx, record := range records {
-		repoIDs[idx] = com.StrTo(record["id"]).MustInt64()
+		v, _ := strconv.ParseInt(string(record["id"]), 10, 64)
+		repoIDs[idx] = int64(v)
 	}
 
 	return repoIDs, nil
@@ -560,7 +561,8 @@ func GetRepoReleaseIDsForMetadata(repoID int64) ([]int64, error) {
 	relIDs := make([]int64, len(records))
 
 	for idx, record := range records {
-		relIDs[idx] = com.StrTo(record["id"]).MustInt64()
+		v, _ := strconv.ParseInt(string(record["id"]), 10, 64)
+		relIDs[idx] = int64(v)
 	}
 
 	return relIDs, nil

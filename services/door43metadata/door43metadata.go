@@ -8,6 +8,7 @@ import (
 	"context"
 	"fmt"
 	"reflect"
+	"strconv"
 
 	"code.gitea.io/gitea/models"
 	"code.gitea.io/gitea/models/db"
@@ -19,7 +20,6 @@ import (
 	"code.gitea.io/gitea/modules/timeutil"
 
 	"github.com/mitchellh/mapstructure"
-	"github.com/unknwon/com"
 	"xorm.io/xorm"
 )
 
@@ -54,8 +54,10 @@ func GenerateDoor43Metadata(x *xorm.Engine) error {
 	cacheRepos := make(map[int64]*repo.Repository)
 
 	for _, record := range records {
-		releaseID := com.StrTo(record["release_id"]).MustInt64()
-		repoID := com.StrTo(record["repo_id"]).MustInt64()
+		v, _ := strconv.ParseInt(string(record["release_id"]), 10, 64)
+		releaseID := int64(v)
+		v, _ = strconv.ParseInt(string(record["repo_id"]), 10, 64)
+		repoID := int64(v)
 		if cacheRepos[repoID] == nil {
 			cacheRepos[repoID], err = repo.GetRepositoryByID(repoID)
 			if err != nil {

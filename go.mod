@@ -79,7 +79,6 @@ require (
 	github.com/stretchr/testify v1.7.0
 	github.com/syndtr/goleveldb v1.0.0
 	github.com/tstranex/u2f v1.0.0
-	github.com/unknwon/com v1.0.1
 	github.com/unrolled/render v1.4.1
 	github.com/urfave/cli v1.22.5
 	github.com/xanzy/go-gitlab v0.58.0
@@ -249,6 +248,7 @@ require (
 	github.com/tmc/grpc-websocket-proxy v0.0.0-20201229170055-e5319fda7802 // indirect
 	github.com/toqueteos/webbrowser v1.2.0 // indirect
 	github.com/ulikunitz/xz v0.5.10 // indirect
+	github.com/unknwon/com v1.0.1 // indirect
 	github.com/x448/float16 v0.8.4 // indirect
 	github.com/xanzy/ssh-agent v0.3.1 // indirect
 	github.com/xi2/xz v0.0.0-20171230120015-48954b6210f8 // indirect

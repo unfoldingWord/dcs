@@ -1,15 +1,13 @@
 // Copyright 2022 The Gitea Authors. All rights reserved.
 // Use of this source code is governed by a MIT-style
 // license that can be found in the LICENSE file.
-//
-// Allow "encoding/json" import
 
 package base
 
 import (
 	"bufio"
 	"bytes"
-	"encoding/json"
+	json_package "encoding/json" //nolint:depguard
 	"errors"
 	"fmt"
 	"html/template"
@@ -20,6 +18,7 @@ import (
 
 	"code.gitea.io/gitea/modules/charset"
 	"code.gitea.io/gitea/modules/git"
+	"code.gitea.io/gitea/modules/json"
 	"code.gitea.io/gitea/modules/log"
 	"code.gitea.io/gitea/modules/options"
 	"code.gitea.io/gitea/modules/util"
@@ -66,7 +65,7 @@ func ValidateJSONFile(entry *git.TreeEntry) string {
 	}
 
 	switch err := validationErr.(type) {
-	case *json.SyntaxError:
+	case *json_package.SyntaxError:
 		var errors string
 		scanner := bufio.NewScanner(strings.NewReader(string(buf)))
 		var line int
@@ -133,7 +132,7 @@ func convertValidationErrorToString(valErr, parentErr *jsonschema.ValidationErro
 	} else {
 		loc := ""
 		if valErr.InstanceLocation != "" {
-			loc = strings.Replace(strings.TrimPrefix(strings.TrimPrefix(valErr.InstanceLocation, parentErr.InstanceLocation), "/"), "/", ".", -1)
+			loc = strings.ReplaceAll(strings.TrimPrefix(strings.TrimPrefix(valErr.InstanceLocation, parentErr.InstanceLocation), "/"), "/", ".")
 			if loc != "" {
 				loc = fmt.Sprintf("%s: ", strings.TrimPrefix(loc, "/"))
 			}
@@ -165,7 +164,7 @@ func convertValidationErrorToHTML(valErr, parentErr *jsonschema.ValidationError)
 		html += "<ul>\n"
 		loc := ""
 		if valErr.InstanceLocation != "" {
-			loc = strings.Replace(strings.TrimPrefix(strings.TrimPrefix(valErr.InstanceLocation, parentErr.InstanceLocation), "/"), "/", ".", -1)
+			loc = strings.ReplaceAll(strings.TrimPrefix(strings.TrimPrefix(valErr.InstanceLocation, parentErr.InstanceLocation), "/"), "/", ".")
 			if loc != "" {
 				loc = fmt.Sprintf("<strong>%s:</strong> ", strings.TrimPrefix(loc, "/"))
 			}

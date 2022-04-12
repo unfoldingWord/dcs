@@ -7,11 +7,11 @@
 package dcs
 
 import (
-	"encoding/json"
 	"net/http"
 	"strings"
 	"time"
 
+	"code.gitea.io/gitea/modules/json"
 	"code.gitea.io/gitea/modules/log"
 )
 
