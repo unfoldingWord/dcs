@@ -5,9 +5,7 @@
 package base
 
 import (
-	"bufio"
 	"bytes"
-	json_package "encoding/json" //nolint:depguard
 	"errors"
 	"fmt"
 	"html/template"
@@ -37,52 +35,11 @@ func ValidateYAMLFile(entry *git.TreeEntry) string {
 
 // ValidateJSONFile validates a json file
 func ValidateJSONFile(entry *git.TreeEntry) string {
-	validationErr := ValidateJSONFromBlob(entry.Blob())
-	if validationErr == nil {
-		return ""
+	if err := ValidateJSONFromBlob(entry.Blob()); err != nil {
+		log.Warn("Error decoding JSON file %s: %v\n", entry.Name(), err)
+		return fmt.Sprintf("Error reading JSON file %s: %s\n", entry.Name(), err.Error())
 	}
-	// JSON is not valid so we need to get all the errors
-	dataRc, err := entry.Blob().DataAsync()
-	if err != nil {
-		log.Error("DataAsync Error: %v\n", err)
-		return fmt.Sprintf("Error reading JSON file: %s\n", validationErr.Error())
-	}
-	defer dataRc.Close()
-
-	buf := make([]byte, 1024)
-	n, err := util.ReadAtMost(dataRc, buf)
-	if err != nil {
-		log.Error("util.ReadAtMost Error: %v\n", err)
-		return fmt.Sprintf("Error reading JSON file: %s\n", validationErr.Error())
-	}
-	buf = buf[:n]
-
-	rd := charset.ToUTF8WithFallbackReader(io.MultiReader(bytes.NewReader(buf), dataRc))
-	buf, err = io.ReadAll(rd)
-	if err != nil {
-		log.Error("io.ReadAll: %v", err)
-		return fmt.Sprintf("Error reading JSON file: %s", validationErr.Error())
-	}
-
-	switch err := validationErr.(type) {
-	case *json_package.SyntaxError:
-		var errors string
-		scanner := bufio.NewScanner(strings.NewReader(string(buf)))
-		var line int
-		var readBytes int64
-		for scanner.Scan() {
-			// +1 for the \n character
-			readBytes += int64(len(scanner.Bytes()) + 1)
-			line++
-			if readBytes >= err.Offset {
-				errors += fmt.Sprintf("error: json: line %d: %s\n", line, err.Error())
-			}
-		}
-		return errors
-	default:
-		log.Warn("Error decoding JSON: %v\n", validationErr)
-		return fmt.Sprintf("Error decoding JSON: %s\n", validationErr.Error())
-	}
+	return ""
 }
 
 // StringHasSuffix returns bool if str ends in the suffix
