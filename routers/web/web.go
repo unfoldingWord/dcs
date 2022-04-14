@@ -379,8 +379,8 @@ func RegisterRoutes(m *web.Route) {
 
 	m.Group("/user", func() {
 		// r.Get("/feeds", binding.Bind(auth.FeedsForm{}), user.Feeds)
-		m.Get("/activate", auth.Activate, reqSignIn)
-		m.Post("/activate", auth.ActivatePost, reqSignIn)
+		m.Get("/activate", auth.Activate)
+		m.Post("/activate", auth.ActivatePost)
 		m.Any("/activate_email", auth.ActivateEmail)
 		m.Get("/avatar/{username}/{size}", user.AvatarByUserName)
 		m.Get("/recover_account", auth.ResetPasswd)
@@ -388,7 +388,7 @@ func RegisterRoutes(m *web.Route) {
 		m.Get("/forgot_password", auth.ForgotPasswd)
 		m.Post("/forgot_password", auth.ForgotPasswdPost)
 		m.Post("/logout", auth.SignOut)
-		m.Get("/task/{task}", user.TaskStatus)
+		m.Get("/task/{task}", reqSignIn, user.TaskStatus)
 	})
 	// ***** END: User *****
 
