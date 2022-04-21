@@ -371,15 +371,19 @@ func GetDoor43MetadataByRepoIDAndReleaseID(repoID, releaseID int64) (*Door43Meta
 }
 
 func getDoor43MetadataByRepoIDAndReleaseID(e db.Engine, repoID, releaseID int64) (*Door43Metadata, error) {
-	dm := &Door43Metadata{RepoID: repoID, ReleaseID: releaseID}
-	has, err := e.Get(dm)
+	var dms []*Door43Metadata
+	err := e.Find(&dms, &Door43Metadata{RepoID: repoID, ReleaseID: releaseID})
 	if err != nil {
 		return nil, err
 	}
-	if !has {
-		return nil, ErrDoor43MetadataNotExist{0, repoID, releaseID}
+	if len(dms) > 0 {
+		for _, dm := range dms {
+			if dm.ReleaseID == releaseID {
+				return dm, nil
+			}
+		}
 	}
-	return dm, err
+	return nil, ErrDoor43MetadataNotExist{0, repoID, releaseID}
 }
 
 // GetDoor43MetadataByRepoIDAndStage returns the metadata of a given repo ID and stage.
