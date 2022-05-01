@@ -150,13 +150,13 @@ func (Renderer) Render(ctx *markup.RenderContext, input io.Reader, output io.Wri
 				md := field
 				md = newlineRegexp.ReplaceAllString(md, "\n")
 				md = rcFromBrackets.ReplaceAllString(md, "START${1}END") // preserver rc links with double square brackets [[rc://...]] since that means something in markdown (short link)
-				if html, err := markdown.RenderString(&markup.RenderContext{URLPrefix: ctx.URLPrefix, Metas: ctx.Metas}, md); err != nil {
+				html, err := markdown.RenderString(&markup.RenderContext{URLPrefix: ctx.URLPrefix, Metas: ctx.Metas}, md)
+				if err != nil {
 					return err
-				} else {
-					html = rcToBrackets.ReplaceAllString(html, "[[${1}]]") // restore double bracket rc links
-					if err := writeField(tmpBlock, element, "", html, false); err != nil {
-						return err
-					}
+				}
+				html = rcToBrackets.ReplaceAllString(html, "[[${1}]]") // restore double bracket rc links
+				if err = writeField(tmpBlock, element, "", html, false); err != nil {
+					return err
 				}
 			} else {
 				if err := writeField(tmpBlock, element, "", field, true); err != nil {
