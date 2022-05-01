@@ -134,7 +134,7 @@ func Search(ctx *context.APIContext) {
 
 // SearchOwner search the catalog via owner and via options
 func SearchOwner(ctx *context.APIContext) {
-	// swagger:operation GET /v4/search/{owner} v4 v4SearchOwner
+	// swagger:operation GET /v4/search/{owner} v4 catalo4SearchOwner
 	// ---
 	// summary: Catalog search by owner
 	// produces:
@@ -223,7 +223,7 @@ func SearchOwner(ctx *context.APIContext) {
 
 // SearchRepo search the catalog via repo and options
 func SearchRepo(ctx *context.APIContext) {
-	// swagger:operation GET /v4/search/{owner}/{repo} v4 v4SearchRepo
+	// swagger:operation GET /v4/search/{owner}/{repo} v4 catalogSearchRepo
 	// ---
 	// summary: Catalog search by repo
 	// produces:
@@ -313,7 +313,7 @@ func SearchRepo(ctx *context.APIContext) {
 
 // GetCatalogEntry Get the catalog entry from the given ownername, reponame and ref
 func GetCatalogEntry(ctx *context.APIContext) {
-	// swagger:operation GET /v4/entry/{owner}/{repo}/{tag} v4 v4GetCatalogEntry
+	// swagger:operation GET /v4/entry/{owner}/{repo}/{tag} v4 catalogGetEntry
 	// ---
 	// summary: Catalog entry
 	// produces:
@@ -368,7 +368,7 @@ func GetCatalogEntry(ctx *context.APIContext) {
 
 // GetCatalogMetadata Get the metadata (RC 0.2.0 manifest) in JSON format for the given ownername, reponame and ref
 func GetCatalogMetadata(ctx *context.APIContext) {
-	// swagger:operation GET /v4/entry/{owner}/{repo}/{tag}/metadata v4 v4GetMetadata
+	// swagger:operation GET /v4/entry/{owner}/{repo}/{tag}/metadata v4 catalogGetMetadata
 	// ---
 	// summary: Catalog entry metadata (manifest.yaml in JSON format)
 	// produces:

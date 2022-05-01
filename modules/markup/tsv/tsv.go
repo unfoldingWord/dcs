@@ -115,6 +115,8 @@ func (Renderer) Render(ctx *markup.RenderContext, input io.Reader, output io.Wri
 	row := 1
 	numFields := -1
 	newlineRegexp := regexp.MustCompile(`(<br\/*>|\\n)`)
+	rcFromBrackets := regexp.MustCompile(`\[\[(rc://[^\]]+)\]\]`)
+	rcToBrackets := regexp.MustCompile(`START(rc://.+?)END`)
 	for {
 		fields, fieldErr := rd.Read()
 		if fieldErr == io.EOF {
@@ -145,11 +147,16 @@ func (Renderer) Render(ctx *markup.RenderContext, input io.Reader, output io.Wri
 		}
 		for _, field := range fields {
 			if row > 1 {
-				if html, err := markdown.RenderString(&markup.RenderContext{URLPrefix: ctx.URLPrefix, Metas: ctx.Metas},
-					newlineRegexp.ReplaceAllString(field, "\n")); err != nil {
+				md := field
+				md = newlineRegexp.ReplaceAllString(md, "\n")
+				md = rcFromBrackets.ReplaceAllString(md, "START${1}END") // preserver rc links with double square brackets [[rc://...]] since that means something in markdown (short link)
+				if html, err := markdown.RenderString(&markup.RenderContext{URLPrefix: ctx.URLPrefix, Metas: ctx.Metas}, md); err != nil {
 					return err
-				} else if err := writeField(tmpBlock, element, "", html, false); err != nil {
-					return err
+				} else {
+					html = rcToBrackets.ReplaceAllString(html, "[[${1}]]") // restore double bracket rc links
+					if err := writeField(tmpBlock, element, "", html, false); err != nil {
+						return err
+					}
 				}
 			} else {
 				if err := writeField(tmpBlock, element, "", field, true); err != nil {
