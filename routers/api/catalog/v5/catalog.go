@@ -46,7 +46,7 @@ var searchOrderByMap = map[string]map[string]models.CatalogOrderBy{
 
 // Search search the catalog via options
 func Search(ctx *context.APIContext) {
-	// swagger:operation GET /v5/search v5 v5Search
+	// swagger:operation GET /v5/search v5 catalogSearch
 	// ---
 	// summary: Catalog search
 	// produces:
@@ -138,7 +138,7 @@ func Search(ctx *context.APIContext) {
 
 // SearchOwner search the catalog via owner and via options
 func SearchOwner(ctx *context.APIContext) {
-	// swagger:operation GET /v5/search/{owner} v5 v5SearchOwner
+	// swagger:operation GET /v5/search/{owner} v5 catalogSearchOwner
 	// ---
 	// summary: Catalog search by owner
 	// produces:
@@ -231,7 +231,7 @@ func SearchOwner(ctx *context.APIContext) {
 
 // SearchRepo search the catalog via repo and options
 func SearchRepo(ctx *context.APIContext) {
-	// swagger:operation GET /v5/search/{owner}/{repo} v5 v5SearchRepo
+	// swagger:operation GET /v5/search/{owner}/{repo} v5 catalogSearchRepo
 	// ---
 	// summary: Catalog search by repo
 	// produces:
@@ -333,7 +333,7 @@ func SearchRepo(ctx *context.APIContext) {
 
 // GetCatalogEntry Get the catalog entry from the given ownername, reponame and ref
 func GetCatalogEntry(ctx *context.APIContext) {
-	// swagger:operation GET /v5/entry/{owner}/{repo}/{tag} v5 v5GetCatalogEntry
+	// swagger:operation GET /v5/entry/{owner}/{repo}/{tag} v5 catlogGetEntry
 	// ---
 	// summary: Catalog entry
 	// produces:
@@ -388,7 +388,7 @@ func GetCatalogEntry(ctx *context.APIContext) {
 
 // GetCatalogMetadata Get the metadata (RC 0.2.0 manifest) in JSON format for the given ownername, reponame and ref
 func GetCatalogMetadata(ctx *context.APIContext) {
-	// swagger:operation GET /v5/entry/{owner}/{repo}/{tag}/metadata v5 v5GetMetadata
+	// swagger:operation GET /v5/entry/{owner}/{repo}/{tag}/metadata v5 catalogGetMetadata
 	// ---
 	// summary: Catalog entry metadata (manifest.yaml in JSON format)
 	// produces:
