@@ -98,7 +98,7 @@ var (
 // InitIssueIndexer initialize issue indexer, syncReindex is true then reindex until
 // all issue index done.
 func InitIssueIndexer(syncReindex bool) {
-	waitChannel := make(chan time.Duration)
+	waitChannel := make(chan time.Duration, 1)
 
 	// Create the Queue
 	switch setting.Indexer.IssueType {
@@ -272,7 +272,7 @@ func populateIssueIndexer(ctx context.Context) {
 // UpdateRepoIndexer add/update all issues of the repositories
 func UpdateRepoIndexer(repo *repo_model.Repository) {
 	is, err := models.Issues(&models.IssuesOptions{
-		RepoIDs:  []int64{repo.ID},
+		RepoID:   repo.ID,
 		IsClosed: util.OptionalBoolNone,
 		IsPull:   util.OptionalBoolNone,
 	})

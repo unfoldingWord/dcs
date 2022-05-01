@@ -7,6 +7,7 @@ package migrations
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -33,9 +34,7 @@ import (
 	gouuid "github.com/google/uuid"
 )
 
-var (
-	_ base.Uploader = &GiteaLocalUploader{}
-)
+var _ base.Uploader = &GiteaLocalUploader{}
 
 // GiteaLocalUploader implements an Uploader to gitea sites
 type GiteaLocalUploader struct {
@@ -159,7 +158,7 @@ func (g *GiteaLocalUploader) CreateTopics(topics ...string) error {
 
 // CreateMilestones creates milestones
 func (g *GiteaLocalUploader) CreateMilestones(milestones ...*base.Milestone) error {
-	var mss = make([]*models.Milestone, 0, len(milestones))
+	mss := make([]*models.Milestone, 0, len(milestones))
 	for _, milestone := range milestones {
 		var deadline timeutil.TimeStamp
 		if milestone.Deadline != nil {
@@ -182,7 +181,7 @@ func (g *GiteaLocalUploader) CreateMilestones(milestones ...*base.Milestone) err
 			milestone.Updated = &milestone.Created
 		}
 
-		var ms = models.Milestone{
+		ms := models.Milestone{
 			RepoID:       g.repo.ID,
 			Name:         milestone.Title,
 			Content:      milestone.Description,
@@ -210,7 +209,7 @@ func (g *GiteaLocalUploader) CreateMilestones(milestones ...*base.Milestone) err
 
 // CreateLabels creates labels
 func (g *GiteaLocalUploader) CreateLabels(labels ...*base.Label) error {
-	var lbs = make([]*models.Label, 0, len(labels))
+	lbs := make([]*models.Label, 0, len(labels))
 	for _, label := range labels {
 		lbs = append(lbs, &models.Label{
 			RepoID:      g.repo.ID,
@@ -232,7 +231,7 @@ func (g *GiteaLocalUploader) CreateLabels(labels ...*base.Label) error {
 
 // CreateReleases creates releases
 func (g *GiteaLocalUploader) CreateReleases(releases ...*base.Release) error {
-	var rels = make([]*models.Release, 0, len(releases))
+	rels := make([]*models.Release, 0, len(releases))
 	for _, release := range releases {
 		if release.Created.IsZero() {
 			if !release.Published.IsZero() {
@@ -242,13 +241,12 @@ func (g *GiteaLocalUploader) CreateReleases(releases ...*base.Release) error {
 			}
 		}
 
-		var rel = models.Release{
+		rel := models.Release{
 			RepoID:       g.repo.ID,
 			TagName:      release.TagName,
 			LowerTagName: strings.ToLower(release.TagName),
 			Target:       release.TargetCommitish,
 			Title:        release.Name,
-			Sha1:         release.TargetCommitish,
 			Note:         release.Body,
 			IsDraft:      release.Draft,
 			IsPrerelease: release.Prerelease,
@@ -277,15 +275,18 @@ func (g *GiteaLocalUploader) CreateReleases(releases ...*base.Release) error {
 			rel.OriginalAuthorID = release.PublisherID
 		}
 
-		// calc NumCommits if no draft
-		if !release.Draft {
+		// calc NumCommits if possible
+		if rel.TagName != "" {
 			commit, err := g.gitRepo.GetTagCommit(rel.TagName)
-			if err != nil {
-				return fmt.Errorf("GetTagCommit[%v]: %v", rel.TagName, err)
-			}
-			rel.NumCommits, err = commit.CommitsCount()
-			if err != nil {
-				return fmt.Errorf("CommitsCount: %v", err)
+			if !errors.Is(err, git.ErrNotExist{}) {
+				if err != nil {
+					return fmt.Errorf("GetTagCommit[%v]: %v", rel.TagName, err)
+				}
+				rel.Sha1 = commit.ID.String()
+				rel.NumCommits, err = commit.CommitsCount()
+				if err != nil {
+					return fmt.Errorf("CommitsCount: %v", err)
+				}
 			}
 		}
 
@@ -297,7 +298,7 @@ func (g *GiteaLocalUploader) CreateReleases(releases ...*base.Release) error {
 					asset.Created = release.Created
 				}
 			}
-			var attach = repo_model.Attachment{
+			attach := repo_model.Attachment{
 				UUID:          gouuid.New().String(),
 				Name:          asset.Name,
 				DownloadCount: int64(*asset.DownloadCount),
@@ -348,7 +349,7 @@ func (g *GiteaLocalUploader) SyncTags() error {
 
 // CreateIssues creates issues
 func (g *GiteaLocalUploader) CreateIssues(issues ...*base.Issue) error {
-	var iss = make([]*models.Issue, 0, len(issues))
+	iss := make([]*models.Issue, 0, len(issues))
 	for _, issue := range issues {
 		var labels []*models.Label
 		for _, label := range issue.Labels {
@@ -381,7 +382,7 @@ func (g *GiteaLocalUploader) CreateIssues(issues ...*base.Issue) error {
 			}
 		}
 
-		var is = models.Issue{
+		is := models.Issue{
 			RepoID:      g.repo.ID,
 			Repo:        g.repo,
 			Index:       issue.Number,
@@ -433,7 +434,7 @@ func (g *GiteaLocalUploader) CreateIssues(issues ...*base.Issue) error {
 					g.userMap[reaction.UserID] = userid
 				}
 			}
-			var res = models.Reaction{
+			res := models.Reaction{
 				Type:        reaction.Content,
 				CreatedUnix: timeutil.TimeStampNow(),
 			}
@@ -464,7 +465,7 @@ func (g *GiteaLocalUploader) CreateIssues(issues ...*base.Issue) error {
 
 // CreateComments creates comments of issues
 func (g *GiteaLocalUploader) CreateComments(comments ...*base.Comment) error {
-	var cms = make([]*models.Comment, 0, len(comments))
+	cms := make([]*models.Comment, 0, len(comments))
 	for _, comment := range comments {
 		var issue *models.Issue
 		issueInter, ok := g.issues.Load(comment.IssueIndex)
@@ -528,7 +529,7 @@ func (g *GiteaLocalUploader) CreateComments(comments ...*base.Comment) error {
 					g.userMap[reaction.UserID] = userid
 				}
 			}
-			var res = models.Reaction{
+			res := models.Reaction{
 				Type:        reaction.Content,
 				CreatedUnix: timeutil.TimeStampNow(),
 			}
@@ -553,7 +554,7 @@ func (g *GiteaLocalUploader) CreateComments(comments ...*base.Comment) error {
 
 // CreatePullRequests creates pull requests
 func (g *GiteaLocalUploader) CreatePullRequests(prs ...*base.PullRequest) error {
-	var gprs = make([]*models.PullRequest, 0, len(prs))
+	gprs := make([]*models.PullRequest, 0, len(prs))
 	for _, pr := range prs {
 		gpr, err := g.newPullRequest(pr)
 		if err != nil {
@@ -652,7 +653,7 @@ func (g *GiteaLocalUploader) newPullRequest(pr *base.PullRequest) (*models.PullR
 		return nil, err
 	}
 
-	var head = "unknown repository"
+	head := "unknown repository"
 	if pr.IsForkPullRequest() && pr.State != "closed" {
 		if pr.Head.OwnerName != "" {
 			remote := pr.Head.OwnerName
@@ -669,7 +670,7 @@ func (g *GiteaLocalUploader) newPullRequest(pr *base.PullRequest) (*models.PullR
 			}
 
 			if ok {
-				_, err = git.NewCommand("fetch", remote, pr.Head.Ref).RunInDir(g.repo.RepoPath())
+				_, err = git.NewCommandContext(g.ctx, "fetch", "--no-tags", "--", remote, pr.Head.Ref).RunInDir(g.repo.RepoPath())
 				if err != nil {
 					log.Error("Fetch branch from %s failed: %v", pr.Head.CloneURL, err)
 				} else {
@@ -723,7 +724,7 @@ func (g *GiteaLocalUploader) newPullRequest(pr *base.PullRequest) (*models.PullR
 		pr.Updated = pr.Created
 	}
 
-	var issue = models.Issue{
+	issue := models.Issue{
 		RepoID:      g.repo.ID,
 		Repo:        g.repo,
 		Title:       pr.Title,
@@ -773,7 +774,7 @@ func (g *GiteaLocalUploader) newPullRequest(pr *base.PullRequest) (*models.PullR
 				g.userMap[reaction.UserID] = userid
 			}
 		}
-		var res = models.Reaction{
+		res := models.Reaction{
 			Type:        reaction.Content,
 			CreatedUnix: timeutil.TimeStampNow(),
 		}
@@ -787,7 +788,7 @@ func (g *GiteaLocalUploader) newPullRequest(pr *base.PullRequest) (*models.PullR
 		issue.Reactions = append(issue.Reactions, &res)
 	}
 
-	var pullRequest = models.PullRequest{
+	pullRequest := models.PullRequest{
 		HeadRepoID: g.repo.ID,
 		HeadBranch: head,
 		BaseRepoID: g.repo.ID,
@@ -830,7 +831,7 @@ func convertReviewState(state string) models.ReviewType {
 
 // CreateReviews create pull request reviews
 func (g *GiteaLocalUploader) CreateReviews(reviews ...*base.Review) error {
-	var cms = make([]*models.Review, 0, len(reviews))
+	cms := make([]*models.Review, 0, len(reviews))
 	for _, review := range reviews {
 		var issue *models.Issue
 		issueInter, ok := g.issues.Load(review.IssueIndex)
@@ -862,7 +863,7 @@ func (g *GiteaLocalUploader) CreateReviews(reviews ...*base.Review) error {
 			review.CreatedAt = time.Unix(int64(issue.CreatedUnix), 0)
 		}
 
-		var cm = models.Review{
+		cm := models.Review{
 			Type:        convertReviewState(review.State),
 			IssueID:     issue.ID,
 			Content:     review.Content,
@@ -926,7 +927,7 @@ func (g *GiteaLocalUploader) CreateReviews(reviews ...*base.Review) error {
 				comment.UpdatedAt = comment.CreatedAt
 			}
 
-			var c = models.Comment{
+			c := models.Comment{
 				Type:        models.CommentTypeCode,
 				PosterID:    comment.PosterID,
 				IssueID:     issue.ID,
