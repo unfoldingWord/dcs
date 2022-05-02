@@ -333,7 +333,7 @@ func SearchRepo(ctx *context.APIContext) {
 
 // GetCatalogEntry Get the catalog entry from the given ownername, reponame and ref
 func GetCatalogEntry(ctx *context.APIContext) {
-	// swagger:operation GET /v5/entry/{owner}/{repo}/{tag} v5 catlogGetEntry
+	// swagger:operation GET /v5/entry/{owner}/{repo}/{tag} v5 catalogGetEntry
 	// ---
 	// summary: Catalog entry
 	// produces:
