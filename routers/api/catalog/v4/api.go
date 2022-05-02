@@ -164,7 +164,7 @@ func repoAssignment() func(ctx *context.APIContext) {
 		repo.Owner = owner
 		ctx.Repo.Repository = repo
 
-		ctx.Repo.Permission, err = models.GetUserRepoPermission(repo, ctx.ContextUser)
+		ctx.Repo.Permission, err = models.GetUserRepoPermission(ctx, repo, ctx.ContextUser)
 		if err != nil {
 			ctx.Error(http.StatusInternalServerError, "GetUserRepoPermission", err)
 			return
