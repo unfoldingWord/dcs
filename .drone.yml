@@ -109,7 +109,7 @@ steps:
     depends_on: [test-frontend]
 
   - name: build-backend-no-gcc
-    image: golang:1.16 # this step is kept as the lowest version of golang that we support
+    image: golang:1.17 # this step is kept as the lowest version of golang that we support
     pull: always
     environment:
       GO111MODULE: on
@@ -931,7 +931,7 @@ steps:
   #     auto_tag_suffix: linux-amd64-rootless
   #     repo: unfoldingword/dcs
   #     build_args:
-  #       - GOPROXY=https://goproxy.io
+  #       - GOPROXY=https://goproxy.cn
   #     password:
   #       from_secret: docker_password
   #     username:
@@ -1286,10 +1286,10 @@ steps:
   #   settings:
   #     dockerfile: Dockerfile.rootless
   #     auto_tag: false
-  #     tags: ${DRONE_BRANCH##release/v}-dev-linux-arm64-rootless
-  #     repo: gitea/gitea
+  #     tags: ${DRONE_BRANCH##release/dcs/v}-dev-linux-arm64-rootless
+  #     repo: unfoldingword/dcs
   #     build_args:
-  #       - GOPROXY=https://goproxy.io
+  #       - GOPROXY=https://goproxy.cn
   #     password:
   #       from_secret: docker_password
   #     username:
