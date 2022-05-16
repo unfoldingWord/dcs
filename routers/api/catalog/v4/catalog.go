@@ -12,6 +12,7 @@ import (
 
 	"code.gitea.io/gitea/models"
 	"code.gitea.io/gitea/models/db"
+	access_model "code.gitea.io/gitea/models/perm/access"
 	"code.gitea.io/gitea/modules/context"
 	"code.gitea.io/gitea/modules/convert"
 	api "code.gitea.io/gitea/modules/structs"
@@ -356,7 +357,7 @@ func GetCatalogEntry(ctx *context.APIContext) {
 		ctx.Error(http.StatusInternalServerError, "GetDoor43MetadataByRepoIDAndTagName", err)
 		return
 	}
-	accessMode, err := models.AccessLevel(ctx.ContextUser, dm.Repo)
+	accessMode, err := access_model.AccessLevel(ctx.ContextUser, dm.Repo)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, api.SearchError{
 			OK:    false,
@@ -510,7 +511,7 @@ func searchCatalog(ctx *context.APIContext) {
 	results := make([]*api.CatalogV4, len(dms))
 	var lastUpdated time.Time
 	for i, dm := range dms {
-		accessMode, err := models.AccessLevel(ctx.ContextUser, dm.Repo)
+		accessMode, err := access_model.AccessLevel(ctx.ContextUser, dm.Repo)
 		if err != nil {
 			ctx.JSON(http.StatusInternalServerError, api.SearchError{
 				OK:    false,
