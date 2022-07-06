@@ -1168,7 +1168,7 @@ steps:
   #   image: techknowlogick/drone-docker:latest
   #   settings:
   #     dockerfile: Dockerfile.rootless
-  #     auto_tag: true
+  #     auto_tag: false
   #     auto_tag_suffix: linux-arm64-rootless
   #     repo: unfoldingword/dcs
   #     build_args:
