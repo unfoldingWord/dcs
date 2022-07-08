@@ -2,6 +2,7 @@ version: "3"
 
 services:
   dcs:
+    container_name: dcs
     build: .
     image: dcs-local:main
     environment:
@@ -20,7 +21,7 @@ services:
       - /etc/localtime:/etc/localtime:ro
       - ./data-main:/data
     ports:
-      - "${DCS_PORT-3000}:3000"
+      - "${DCS_PORT-3000}:80"
       - "222:22"
     depends_on:
       - db

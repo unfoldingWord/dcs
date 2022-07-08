@@ -108,18 +108,18 @@ steps:
       - make frontend
     depends_on: [test-frontend]
 
-  - name: build-backend-no-gcc
-    image: golang:1.17 # this step is kept as the lowest version of golang that we support
-    pull: always
-    environment:
-      GO111MODULE: on
-      GOPROXY: https://goproxy.io
-    commands:
-      - go build -o gitea_no_gcc # test if build succeeds without the sqlite tag
-    depends_on: [deps-backend, checks-backend]
-    volumes:
-      - name: deps
-        path: /go
+  # - name: build-backend-no-gcc
+  #   image: golang:1.17 # this step is kept as the lowest version of golang that we support
+  #   pull: always
+  #   environment:
+  #     GO111MODULE: on
+  #     GOPROXY: https://goproxy.io
+  #   commands:
+  #     - go build -o gitea_no_gcc # test if build succeeds without the sqlite tag
+  #   depends_on: [deps-backend, checks-backend]
+  #   volumes:
+  #     - name: deps
+  #       path: /go
 
   - name: build-backend-arm64
     image: golang:1.18

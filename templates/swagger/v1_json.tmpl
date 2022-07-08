@@ -17864,6 +17864,13 @@
       "description": "Repository represents a repository",
       "type": "object",
       "properties": {
+        "alignment_counts": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "object"
+          },
+          "x-go-name": "AlignmentCounts"
+        },
         "allow_merge_commits": {
           "type": "boolean",
           "x-go-name": "AllowMerge"
@@ -17983,12 +17990,17 @@
           "$ref": "#/definitions/InternalTracker"
         },
         "language": {
+          "description": "DCS Customizations ***/",
           "type": "string",
           "x-go-name": "Language"
         },
         "language_direction": {
           "type": "string",
           "x-go-name": "LanguageDir"
+        },
+        "language_is_gl": {
+          "type": "boolean",
+          "x-go-name": "LanguageIsGL"
         },
         "language_title": {
           "type": "string",

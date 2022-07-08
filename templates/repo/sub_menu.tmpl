@@ -21,7 +21,7 @@
 			{{$dm := (GetDefaultBranchMetadata .Repository.ID)}}
 			{{ if $dm }}
 				<div class="item">
-					<a class="ui" href="{{AppSubUrl}}/explore/repos?q=lang:{{$dm.Metadata.dublin_core.language.identifier}}"><i class="fa fa-language"></i> <b>{{$dm.Metadata.dublin_core.language.title}} ({{$dm.Metadata.dublin_core.language.identifier}})</b></a>
+					<a class="ui" href="{{AppSubUrl}}/explore/repos?q=lang:{{$dm.Metadata.dublin_core.language.identifier}}"><i class="fa fa-language"></i> <b>{{$dm.Metadata.dublin_core.language.title}} ({{$dm.Metadata.dublin_core.language.identifier}}){{if $dm.Metadata.dublin_core.language.is_gl}}*{{end}}</b></a>
 				</div>
 			{{ end }}
 			<!-- END DCS Customizations -->

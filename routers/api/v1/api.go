@@ -225,10 +225,10 @@ func reqToken() func(ctx *context.APIContext) {
 func reqExploreSignIn() func(ctx *context.APIContext) {
 	return func(ctx *context.APIContext) {
 		if setting.Service.Explore.RequireSigninView && !ctx.IsSigned {
-			/*** DCS Customization ***/
+			/*** DCS Customizations ***/
 			return
 			//ctx.Error(http.StatusUnauthorized, "reqExploreSignIn", "you must be signed in to search for users")
-			/*** END DCS Customization ***/
+			/*** END DCS Customizations ***/
 		}
 	}
 }

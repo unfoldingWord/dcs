@@ -16,6 +16,7 @@ func ToRelease(r *models.Release) *api.Release {
 	for _, att := range r.Attachments {
 		assets = append(assets, ToReleaseAttachment(att))
 	}
+
 	return &api.Release{
 		ID:           r.ID,
 		TagName:      r.TagName,

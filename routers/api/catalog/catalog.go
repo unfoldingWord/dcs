@@ -27,7 +27,7 @@ func ListCatalogVersionEndpoints(ctx *context.APIContext) {
 	//     "$ref": "#/responses/validationError"
 
 	versionEndpoints := structs.CatalogVersionEndpoints{
-		Latest:   latestVersion,
+		Latest:   LatestVersion,
 		Versions: map[string]string{},
 	}
 

@@ -12,6 +12,7 @@ import (
 	"code.gitea.io/gitea/models"
 	"code.gitea.io/gitea/models/db"
 	"code.gitea.io/gitea/models/perm"
+	"code.gitea.io/gitea/modules/dcs"
 	"code.gitea.io/gitea/modules/log"
 	"code.gitea.io/gitea/modules/setting"
 	api "code.gitea.io/gitea/modules/structs"
@@ -114,6 +115,47 @@ func ToCatalogV5(dm *models.Door43Metadata, mode perm.AccessMode) *api.CatalogV5
 		release = ToRelease(dm.Release)
 	}
 
+	var language string
+	if val, ok := (*dm.Metadata)["dublin_core"].(map[string]interface{})["language"].(map[string]interface{})["identifier"].(string); ok {
+		language = val
+	}
+
+	var languageDir = "ltr"
+	if val, ok := (*dm.Metadata)["dublin_core"].(map[string]interface{})["language"].(map[string]interface{})["direction"].(string); ok {
+		languageDir = val
+	} else if language != "" {
+		dcs.GetLanguageDirection(language)
+	}
+
+	var languageTitle string
+	if val, ok := (*dm.Metadata)["dublin_core"].(map[string]interface{})["language"].(map[string]interface{})["title"].(string); ok {
+		languageTitle = val
+	} else if language != "" {
+		dcs.GetLanguageTitle(language)
+	}
+
+	var languageIsGL bool
+	if val, ok := (*dm.Metadata)["dublin_core"].(map[string]interface{})["language"].(map[string]interface{})["is_gl"].(bool); ok {
+		languageIsGL = val
+	} else {
+		languageIsGL = dcs.LanguageIsGL(language)
+	}
+
+	var books []interface{}
+	if val, ok := (*dm.Metadata)["books"].([]interface{}); ok {
+		books = val
+	}
+
+	var alignmentCounts map[string]interface{}
+	if val, ok := (*dm.Metadata)["alignment_counts"].(map[string]interface{}); ok {
+		alignmentCounts = val
+	}
+
+	var ingredients []interface{}
+	if val, ok := (*dm.Metadata)["projects"].([]interface{}); ok {
+		ingredients = val
+	}
+
 	return &api.CatalogV5{
 		ID:                     dm.ID,
 		Self:                   dm.APIURLV5(),
@@ -126,12 +168,14 @@ func ToCatalogV5(dm *models.Door43Metadata, mode perm.AccessMode) *api.CatalogV5
 		ZipballURL:             dm.GetZipballURL(),
 		GitTreesURL:            dm.GetGitTreesURL(),
 		ContentsURL:            dm.GetContentsURL(),
-		Language:               (*dm.Metadata)["dublin_core"].(map[string]interface{})["language"].(map[string]interface{})["identifier"].(string),
-		LanguageTitle:          (*dm.Metadata)["dublin_core"].(map[string]interface{})["language"].(map[string]interface{})["title"].(string),
-		LanguageDir:            (*dm.Metadata)["dublin_core"].(map[string]interface{})["language"].(map[string]interface{})["direction"].(string),
+		Language:               language,
+		LanguageTitle:          languageTitle,
+		LanguageDir:            languageDir,
+		LanguageIsGL:           languageIsGL,
 		Subject:                (*dm.Metadata)["dublin_core"].(map[string]interface{})["subject"].(string),
 		Title:                  (*dm.Metadata)["dublin_core"].(map[string]interface{})["title"].(string),
-		Books:                  dm.GetBooks(),
+		Books:                  books,
+		AlignmentCounts:        alignmentCounts,
 		BranchOrTag:            dm.BranchOrTag,
 		Stage:                  dm.Stage.String(),
 		Released:               dm.ReleaseDateUnix.AsTime(),
@@ -139,6 +183,6 @@ func ToCatalogV5(dm *models.Door43Metadata, mode perm.AccessMode) *api.CatalogV5
 		MetadataURL:            dm.GetMetadataURL(),
 		MetadataJSONURL:        dm.GetMetadataJSONURL(),
 		MetadataAPIContentsURL: dm.GetMetadataAPIContentsURL(),
-		Ingredients:            (*dm.Metadata)["projects"].([]interface{}),
+		Ingredients:            ingredients,
 	}
 }

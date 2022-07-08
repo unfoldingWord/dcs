@@ -5,13 +5,14 @@
 package models
 
 import (
+	"context"
 	"fmt"
 	"sort"
 	"strconv"
 
 	admin_model "code.gitea.io/gitea/models/admin"
-	"code.gitea.io/gitea/models/door43metadata"
 	"code.gitea.io/gitea/models/db"
+	"code.gitea.io/gitea/models/door43metadata"
 	"code.gitea.io/gitea/models/repo"
 	"code.gitea.io/gitea/modules/log"
 	"code.gitea.io/gitea/modules/setting"
@@ -60,17 +61,17 @@ func init() {
 
 // GetRepo gets the repo associated with the door43 metadata entry
 func (dm *Door43Metadata) GetRepo() error {
-	return dm.getRepo(db.GetEngine(db.DefaultContext))
+	return dm.getRepo(db.DefaultContext)
 }
 
-func (dm *Door43Metadata) getRepo(e db.Engine) error {
+func (dm *Door43Metadata) getRepo(ctx context.Context) error {
 	if dm.Repo == nil {
 		repo, err := repo.GetRepositoryByID(dm.RepoID)
 		if err != nil {
 			return err
 		}
 		dm.Repo = repo
-		if err := dm.Repo.GetOwner(db.DefaultContext); err != nil {
+		if err := dm.Repo.GetOwner(ctx); err != nil {
 			return err
 		}
 	}
@@ -79,32 +80,36 @@ func (dm *Door43Metadata) getRepo(e db.Engine) error {
 
 // GetRelease gets the associated release of a door43 metadata entry
 func (dm *Door43Metadata) GetRelease() error {
-	return dm.getRelease(db.GetEngine(db.DefaultContext))
+	return dm.getRelease(db.DefaultContext)
 }
 
-func (dm *Door43Metadata) getRelease(e db.Engine) error {
+func (dm *Door43Metadata) getRelease(ctx context.Context) error {
 	if dm.ReleaseID > 0 && dm.Release == nil {
-		rel, err := GetReleaseByID(dm.ReleaseID)
+		rel, err := GetReleaseByID(ctx, dm.ReleaseID)
 		if err != nil {
 			return err
 		}
 		dm.Release = rel
 		dm.Release.Door43Metadata = dm
-		if err := dm.getRepo(e); err != nil {
+		if err := dm.getRepo(ctx); err != nil {
 			return err
 		}
 		dm.Release.Repo = dm.Repo
-		return dm.Release.LoadAttributes()
+		if err := dm.Release.LoadAttributes(); err != nil {
+			log.Warn("loadAttributes Error: %v\n", err)
+			return err
+		}
 	}
 	return nil
 }
 
-func (dm *Door43Metadata) loadAttributes(e db.Engine) error {
-	if err := dm.getRepo(e); err != nil {
+func (dm *Door43Metadata) loadAttributes(ctx context.Context) error {
+	if err := dm.getRepo(ctx); err != nil {
 		return err
 	}
 	if dm.Release == nil && dm.ReleaseID > 0 {
-		if err := dm.getRelease(e); err != nil {
+		if err := dm.getRelease(ctx); err != nil {
+			log.Error("getRelease: %v", err)
 			return nil
 		}
 	}
@@ -113,7 +118,7 @@ func (dm *Door43Metadata) loadAttributes(e db.Engine) error {
 
 // LoadAttributes load repo and release attributes for a door43 metadata
 func (dm *Door43Metadata) LoadAttributes() error {
-	return dm.loadAttributes(db.GetEngine(db.DefaultContext))
+	return dm.loadAttributes(db.DefaultContext)
 }
 
 // GetBranchOrTagType gets the type of the DM entry, "branch" or "tag"
@@ -207,7 +212,7 @@ func (dm *Door43Metadata) GetContentsURL() string {
 	return fmt.Sprintf("%s/contents?ref=%s", dm.Repo.APIURL(), dm.BranchOrTag)
 }
 
-// GetBooks get the books of the resource
+// GetBooks get the books of the manifest
 func (dm *Door43Metadata) GetBooks() []string {
 	var books []string
 	if len((*dm.Metadata)["projects"].([]interface{})) > 0 {
@@ -334,10 +339,10 @@ func GetDoor43MetadatasByRepoID(repoID int64, opts FindDoor43MetadatasOptions) (
 
 // GetLatestCatalogMetadataByRepoID returns the latest door43 metadata in the catalog by repoID, if canBePrerelease, a prerelease entry can match
 func GetLatestCatalogMetadataByRepoID(repoID int64, canBePrerelease bool) (*Door43Metadata, error) {
-	return getLatestCatalogMetadataByRepoID(db.GetEngine(db.DefaultContext), repoID, canBePrerelease)
+	return getLatestCatalogMetadataByRepoID(db.DefaultContext, repoID, canBePrerelease)
 }
 
-func getLatestCatalogMetadataByRepoID(e db.Engine, repoID int64, canBePrerelease bool) (*Door43Metadata, error) {
+func getLatestCatalogMetadataByRepoID(ctx context.Context, repoID int64, canBePrerelease bool) (*Door43Metadata, error) {
 	cond := builder.NewCond().
 		And(builder.Eq{"`door43_metadata`.repo_id": repoID}).
 		And(builder.Eq{"`release`.is_tag": 0}).
@@ -348,7 +353,7 @@ func getLatestCatalogMetadataByRepoID(e db.Engine, repoID int64, canBePrerelease
 	}
 
 	dm := new(Door43Metadata)
-	has, err := e.
+	has, err := db.GetEngine(ctx).
 		Join("INNER", "release", "`release`.id = `door43_metadata`.release_id").
 		Where(cond).
 		Desc("`release`.created_unix", "`release`.id").
@@ -360,7 +365,7 @@ func getLatestCatalogMetadataByRepoID(e db.Engine, repoID int64, canBePrerelease
 		return nil, ErrDoor43MetadataNotExist{0, repoID, 0}
 	}
 
-	return dm, dm.loadAttributes(e)
+	return dm, dm.loadAttributes(ctx)
 }
 
 // GetDoor43MetadatasByRepoIDAndReleaseIDs returns a list of door43 metadatas of repository according repoID and releaseIDs.
@@ -378,7 +383,7 @@ func GetDoor43MetadataCountByRepoID(repoID int64, opts FindDoor43MetadatasOption
 
 // GetReleaseCount returns the count of releases of repository of the Door43Metadata's stage
 func (dm *Door43Metadata) GetReleaseCount() (int64, error) {
-	stageCond := Getdoor43metadata.StageCond(dm.Stage)
+	stageCond := door43metadata.GetStageCond(dm.Stage)
 	return db.GetEngine(db.DefaultContext).Join("LEFT", "release", "`release`.id = `door43_metadata`.release_id").
 		Where(builder.And(builder.Eq{"`door43_metadata`.repo_id": dm.RepoID}, stageCond)).
 		Count(&Door43Metadata{})
@@ -406,11 +411,11 @@ func getDoor43MetadataByRepoIDAndReleaseID(e db.Engine, repoID, releaseID int64)
 }
 
 // GetDoor43MetadataByRepoIDAnddoor43metadata.Stage returns the metadata of a given repo ID and stage.
-func GetDoor43MetadataByRepoIDAnddoor43metadata.Stage(repoID int64, stage door43metadata.Stage) (*Door43Metadata, error) {
-	return getDoor43MetadataByRepoIDAnddoor43metadata.Stage(db.GetEngine(db.DefaultContext), repoID, stage)
+func GetDoor43MetadataByRepoIDAndStage(repoID int64, stage door43metadata.Stage) (*Door43Metadata, error) {
+	return getDoor43MetadataByRepoIDAndStage(db.GetEngine(db.DefaultContext), repoID, stage)
 }
 
-func getDoor43MetadataByRepoIDAnddoor43metadata.Stage(e db.Engine, repoID int64, stage door43metadata.Stage) (*Door43Metadata, error) {
+func getDoor43MetadataByRepoIDAndStage(e db.Engine, repoID int64, stage door43metadata.Stage) (*Door43Metadata, error) {
 	cond := builder.NewCond().
 		And(builder.Eq{"repo_id": repoID}).
 		And(builder.Eq{"stage": stage})
@@ -439,11 +444,11 @@ func getLatestProdCatalogMetadata(repoID int64, e db.Engine) (*Door43Metadata, e
 
 // GetLatestPreProdCatalogMetadata gets the latest Door43 Metadata that is in the pre-prod catalog.
 func GetLatestPreProdCatalogMetadata(repoID int64) (*Door43Metadata, error) {
-	return getLatestPreProdCatalogMetadata(repoID, db.GetEngine(db.DefaultContext))
+	return getLatestPreProdCatalogMetadata(db.DefaultContext, repoID, db.GetEngine(db.DefaultContext))
 }
 
-func getLatestPreProdCatalogMetadata(repoID int64, e db.Engine) (*Door43Metadata, error) {
-	dm, err := getLatestCatalogMetadataByRepoID(e, repoID, true)
+func getLatestPreProdCatalogMetadata(ctx context.Context, repoID int64, e db.Engine) (*Door43Metadata, error) {
+	dm, err := getLatestCatalogMetadataByRepoID(ctx, repoID, true)
 	if err != nil && !IsErrDoor43MetadataNotExist(err) {
 		return nil, err
 	}
@@ -497,16 +502,16 @@ func Door43MetadataListOfMap(dmMap map[int64]*Door43Metadata) Door43MetadataList
 
 // LoadAttributes loads the attributes for the given Door43MetadataList
 func (dms Door43MetadataList) LoadAttributes() error {
-	return dms.loadAttributes(db.GetEngine(db.DefaultContext))
+	return dms.loadAttributes(db.DefaultContext)
 }
 
-func (dms Door43MetadataList) loadAttributes(e db.Engine) error {
+func (dms Door43MetadataList) loadAttributes(ctx context.Context) error {
 	if len(dms) == 0 {
 		return nil
 	}
 	var lastErr error
 	for _, dm := range dms {
-		if err := dm.loadAttributes(e); err != nil && lastErr == nil {
+		if err := dm.loadAttributes(ctx); err != nil && lastErr == nil {
 			lastErr = err
 		}
 	}

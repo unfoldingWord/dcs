@@ -5,6 +5,7 @@
 package models
 
 import (
+	"context"
 	"fmt"
 
 	"code.gitea.io/gitea/models/db"
@@ -22,10 +23,10 @@ func SearchCatalog(opts *door43metadata.SearchCatalogOptions) (Door43MetadataLis
 
 // SearchCatalogByCondition search repositories by condition
 func SearchCatalogByCondition(opts *door43metadata.SearchCatalogOptions, cond builder.Cond, loadAttributes bool) (Door43MetadataList, int64, error) {
-	return searchCatalogByCondition(db.GetEngine(db.DefaultContext), opts, cond, loadAttributes)
+	return searchCatalogByCondition(db.DefaultContext, opts, cond, loadAttributes)
 }
 
-func searchCatalogByCondition(e db.Engine, opts *door43metadata.SearchCatalogOptions, cond builder.Cond, loadAttributes bool) (Door43MetadataList, int64, error) {
+func searchCatalogByCondition(ctx context.Context, opts *door43metadata.SearchCatalogOptions, cond builder.Cond, loadAttributes bool) (Door43MetadataList, int64, error) {
 	if opts.Page <= 0 {
 		opts.Page = 1
 	}
@@ -82,7 +83,7 @@ func searchCatalogByCondition(e db.Engine, opts *door43metadata.SearchCatalogOpt
 	}
 
 	if loadAttributes {
-		if err = dms.loadAttributes(sess); err != nil {
+		if err = dms.loadAttributes(ctx); err != nil {
 			return nil, 0, fmt.Errorf("loadAttributes: %v", err)
 		}
 	}
