@@ -35,7 +35,7 @@ func (Renderer) NeedPostProcess() bool { return false }
 
 // Extensions implements markup.Renderer
 func (Renderer) Extensions() []string {
-	return []string{".csv"} // DCS Customization - removes .tsv and adds custom tsv parser
+	return []string{".csv"} // DCS Customizations - removes .tsv and adds custom tsv parser
 }
 
 // SanitizerRules implements markup.Renderer

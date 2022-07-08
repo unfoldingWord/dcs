@@ -89,31 +89,33 @@ type CatalogV4 struct {
 
 // CatalogV5 represents a repository's metadata of a tag or default branch for V5
 type CatalogV5 struct {
-	ID                     int64         `json:"id"`
-	Self                   string        `json:"url"`
-	Name                   string        `json:"name"`
-	Owner                  string        `json:"owner"`
-	FullName               string        `json:"full_name"`
-	Repo                   *Repository   `json:"repo"`
-	Release                *Release      `json:"release"`
-	TarballURL             string        `json:"tarbar_url"`
-	ZipballURL             string        `json:"zipball_url"`
-	GitTreesURL            string        `json:"git_trees_url"`
-	ContentsURL            string        `json:"contents_url"`
-	Language               string        `json:"language"`
-	LanguageTitle          string        `json:"language_title"`
-	LanguageDir            string        `json:"language_direction"`
-	Subject                string        `json:"subject"`
-	Title                  string        `json:"title"`
-	BranchOrTag            string        `json:"branch_or_tag_name"`
-	Stage                  string        `json:"stage"`
-	MetadataURL            string        `json:"metadata_url"`
-	MetadataJSONURL        string        `json:"metadata_json_url"`
-	MetadataAPIContentsURL string        `json:"metadata_api_contents_url"`
-	MetadataVersion        string        `json:"metadata_version"`
-	Released               time.Time     `json:"released"`
-	Books                  []string      `json:"books"`
-	Ingredients            []interface{} `json:"ingredients,omitempty"`
+	ID                     int64                  `json:"id"`
+	Self                   string                 `json:"url"`
+	Name                   string                 `json:"name"`
+	Owner                  string                 `json:"owner"`
+	FullName               string                 `json:"full_name"`
+	Repo                   *Repository            `json:"repo"`
+	Release                *Release               `json:"release"`
+	TarballURL             string                 `json:"tarbar_url"`
+	ZipballURL             string                 `json:"zipball_url"`
+	GitTreesURL            string                 `json:"git_trees_url"`
+	ContentsURL            string                 `json:"contents_url"`
+	Language               string                 `json:"language"`
+	LanguageTitle          string                 `json:"language_title"`
+	LanguageDir            string                 `json:"language_direction"`
+	LanguageIsGL           bool                   `json:"language_is_gl"`
+	Subject                string                 `json:"subject"`
+	Title                  string                 `json:"title"`
+	BranchOrTag            string                 `json:"branch_or_tag_name"`
+	Stage                  string                 `json:"stage"`
+	MetadataURL            string                 `json:"metadata_url"`
+	MetadataJSONURL        string                 `json:"metadata_json_url"`
+	MetadataAPIContentsURL string                 `json:"metadata_api_contents_url"`
+	MetadataVersion        string                 `json:"metadata_version"`
+	Released               time.Time              `json:"released"`
+	Books                  []interface{}          `json:"books,omitempty"`
+	AlignmentCounts        map[string]interface{} `json:"alignment_counts,omitempty"`
+	Ingredients            []interface{}          `json:"ingredients,omitempty"`
 }
 
 // CatalogSearchResultsV3 results of a successful search for V3

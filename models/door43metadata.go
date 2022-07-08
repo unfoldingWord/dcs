@@ -75,7 +75,10 @@ func (dm *Door43Metadata) getRelease(e db.Engine) error {
 			return err
 		}
 		dm.Release.Repo = dm.Repo
-		return dm.Release.LoadAttributes()
+		if err := dm.Release.LoadAttributes(); err != nil {
+			log.Warn("loadAttributes Error: %v\n", err)
+			return err
+		}
 	}
 	return nil
 }
@@ -86,6 +89,7 @@ func (dm *Door43Metadata) loadAttributes(e db.Engine) error {
 	}
 	if dm.Release == nil && dm.ReleaseID > 0 {
 		if err := dm.getRelease(e); err != nil {
+			log.Error("getRelease: %v", err)
 			return nil
 		}
 	}
@@ -188,7 +192,7 @@ func (dm *Door43Metadata) GetContentsURL() string {
 	return fmt.Sprintf("%s/contents?ref=%s", dm.Repo.APIURL(), dm.BranchOrTag)
 }
 
-// GetBooks get the books of the resource
+// GetBooks get the books of the manifest
 func (dm *Door43Metadata) GetBooks() []string {
 	var books []string
 	if len((*dm.Metadata)["projects"].([]interface{})) > 0 {

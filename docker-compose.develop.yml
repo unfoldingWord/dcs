@@ -3,16 +3,20 @@ version: "3"
 services:
   dcs:
     container_name: dcs
-    build: .
-    image: dcs-local:release
+    image: dcs-dev:latest
+    build:
+      context: .
+      dockerfile: Dockerfile-dev
+    user: "${UID}:${GID}"
     environment:
-      - USER_UID=1000
-      - USER_GID=1000
+      - USER_UID="${UID}"
+      - USER_GID="${GID}"
       - GITEA__database__DB_TYPE=mysql
       - GITEA__database__HOST=db:3306
       - GITEA__database__NAME=gitea-release
       - GITEA__database__USER=gitea
       - GITEA__database__PASSWD=gitea
+      - TAGS=bindata sqlite sqlite_unlock_notify sqlite_json
     restart: always
     networks:
       - gitea
@@ -20,11 +24,14 @@ services:
       - /etc/timezone:/etc/timezone:ro
       - /etc/localtime:/etc/localtime:ro
       - ./data-release:/data
+      - .:/go/src/code.gitea.io/gitea
     ports:
       - "${DCS_PORT-3000}:80"
       - "222:22"
     depends_on:
       - db
+    stdin_open: true # docker run -i
+    tty: true        # docker run -t
 
   db:
     platform: linux/x86_64

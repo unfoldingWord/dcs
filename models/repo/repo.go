@@ -252,6 +252,20 @@ func (repo *Repository) APIURL() string {
 	return setting.AppURL + "api/v1/repos/" + url.PathEscape(repo.OwnerName) + "/" + url.PathEscape(repo.Name)
 }
 
+/*** DCS Customizations ***/
+
+// CatalogSearchURL returns the repository catalog search API URL
+func (repo *Repository) CatalogSearchURL() string {
+	return setting.AppURL + "api/catalog/latest/search/" + url.PathEscape(repo.OwnerName) + "/" + url.PathEscape(repo.Name)
+}
+
+// CatalogEntryURL returns the repository catalog entry API URL
+func (repo *Repository) CatalogEntryURL() string {
+	return setting.AppURL + "api/catalog/latest/entry/" + url.PathEscape(repo.OwnerName) + "/" + url.PathEscape(repo.Name)
+}
+
+/*** END DCS Customizations ***/
+
 // GetCommitsCountCacheKey returns cache key used for commits count caching.
 func (repo *Repository) GetCommitsCountCacheKey(contextName string, isRef bool) string {
 	var prefix string

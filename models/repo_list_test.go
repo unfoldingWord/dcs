@@ -234,13 +234,13 @@ func TestSearchRepository(t *testing.T) {
 		{
 			name: "AllPublic/PublicRepositoriesOfUserIncludingCollaborative",
 			opts: &SearchRepoOptions{ListOptions: db.ListOptions{Page: 1, PageSize: 10}, OwnerID: 15, AllPublic: true, Template: util.OptionalBoolFalse},
-			/*** DCS Customization - Adds 1 more test, total 29 ***/
+			/*** DCS Customizations - Adds 1 more test, total 29 ***/
 			count: 29,
 		},
 		{
 			name: "AllPublic/PublicAndPrivateRepositoriesOfUserIncludingCollaborative",
 			opts: &SearchRepoOptions{ListOptions: db.ListOptions{Page: 1, PageSize: 10}, OwnerID: 15, Private: true, AllPublic: true, AllLimited: true, Template: util.OptionalBoolFalse},
-			/*** DCS Customization - Adds 1 more test, total 34 ***/
+			/*** DCS Customizations - Adds 1 more test, total 34 ***/
 			count: 34,
 		},
 		{
@@ -256,7 +256,7 @@ func TestSearchRepository(t *testing.T) {
 		{
 			name: "AllPublic/PublicRepositoriesOfOrganization",
 			opts: &SearchRepoOptions{ListOptions: db.ListOptions{Page: 1, PageSize: 10}, OwnerID: 17, AllPublic: true, Collaborate: util.OptionalBoolFalse, Template: util.OptionalBoolFalse},
-			/*** DCS Customization - Adds 1 more test, total 29 ***/
+			/*** DCS Customizations - Adds 1 more test, total 29 ***/
 			count: 29,
 		},
 		{

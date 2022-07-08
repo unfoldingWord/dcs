@@ -92,18 +92,22 @@ type Repository struct {
 	DefaultMergeStyle         string           `json:"default_merge_style"`
 	AvatarURL                 string           `json:"avatar_url"`
 	Internal                  bool             `json:"internal"`
-	Language                  string           `json:"language"`
-	LanguageTitle             string           `json:"language_title"`
-	LanguageDir               string           `json:"language_direction"`
-	Subject                   string           `json:"subject"`
-	Books                     []string         `json:"books"`
-	Title                     string           `json:"title"`
-	CheckingLevel             string           `json:"checking_level"`
-	Catalog                   *CatalogStages   `json:"catalog"`
 	MirrorInterval            string           `json:"mirror_interval"`
 	// swagger:strfmt date-time
 	MirrorUpdated time.Time     `json:"mirror_updated,omitempty"`
 	RepoTransfer  *RepoTransfer `json:"repo_transfer"`
+	/*** DCS Customizations ***/
+	Language        string                 `json:"language"`
+	LanguageTitle   string                 `json:"language_title"`
+	LanguageDir     string                 `json:"language_direction"`
+	LanguageIsGL    bool                   `json:"language_is_gl"`
+	Subject         string                 `json:"subject"`
+	Books           []string               `json:"books,omitempty"`
+	AlignmentCounts map[string]interface{} `json:"alignment_counts,omitempty"`
+	Title           string                 `json:"title"`
+	CheckingLevel   string                 `json:"checking_level"`
+	Catalog         *CatalogStages         `json:"catalog"`
+	/*** END DCS Customizations ***/
 }
 
 // CreateRepoOption options when creating repository

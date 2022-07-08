@@ -87,7 +87,7 @@ var versions = []string{
 	"v4",
 	"v5",
 }
-var latestVersion = versions[len(versions)-1]
+var LatestVersion = versions[len(versions)-1]
 
 // AllRoutes call all the other route functions for the catalog api
 func AllRoutes(r *web.Route) {
@@ -160,10 +160,18 @@ func LatestRoutes() *web.Route {
 
 	m.Group("", func() {
 		m.Get("", func(ctx *context.APIContext) {
-			ctx.Redirect(fmt.Sprintf("/api/catalog/%s", latestVersion))
+			var query string
+			if ctx.Req.URL.RawQuery != "" {
+				query = "?" + ctx.Req.URL.RawQuery
+			}
+			ctx.Redirect(fmt.Sprintf("/api/catalog/%s%s", LatestVersion, query))
 		})
 		m.Get("/*", func(ctx *context.APIContext) {
-			ctx.Redirect(fmt.Sprintf("/api/catalog/%s/%s", latestVersion, ctx.Params("*")))
+			var query string
+			if ctx.Req.URL.RawQuery != "" {
+				query = "?" + ctx.Req.URL.RawQuery
+			}
+			ctx.Redirect(fmt.Sprintf("/api/catalog/%s/%s%s", LatestVersion, ctx.Params("*"), query))
 		})
 	}, sudo())
 

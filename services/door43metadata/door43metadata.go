@@ -5,17 +5,32 @@
 package door43metadata
 
 import (
+	"bytes"
+	"encoding/json"
 	"fmt"
+	"io"
+	"io/ioutil"
+	"net/http"
 	"reflect"
+	"regexp"
+	"strings"
+	"time"
 
 	"code.gitea.io/gitea/models"
-	"code.gitea.io/gitea/models/repo"
+	"code.gitea.io/gitea/models/db"
+	repo_model "code.gitea.io/gitea/models/repo"
 	"code.gitea.io/gitea/modules/base"
+	"code.gitea.io/gitea/modules/charset"
+	"code.gitea.io/gitea/modules/dcs"
 	"code.gitea.io/gitea/modules/git"
 	"code.gitea.io/gitea/modules/log"
+	"code.gitea.io/gitea/modules/setting"
+	"code.gitea.io/gitea/modules/storage"
 	"code.gitea.io/gitea/modules/structs"
 	"code.gitea.io/gitea/modules/timeutil"
+	"code.gitea.io/gitea/modules/util"
 
+	"github.com/google/uuid"
 	"github.com/mitchellh/mapstructure"
 	"github.com/unknwon/com"
 	"xorm.io/xorm"
@@ -43,13 +58,13 @@ func GenerateDoor43Metadata(x *xorm.Engine) error {
 		return err
 	}
 
-	cacheRepos := make(map[int64]*repo.Repository)
+	cacheRepos := make(map[int64]*repo_model.Repository)
 
 	for _, record := range records {
 		releaseID := com.StrTo(record["release_id"]).MustInt64()
 		repoID := com.StrTo(record["repo_id"]).MustInt64()
 		if cacheRepos[repoID] == nil {
-			cacheRepos[repoID], err = repo.GetRepositoryByID(repoID)
+			cacheRepos[repoID], err = repo_model.GetRepositoryByID(repoID)
 			if err != nil {
 				log.Warn("GetRepositoryByID Error: %v\n", err)
 				continue
@@ -126,7 +141,7 @@ func ConvertGenericMapToRC020Manifest(manifest *map[string]interface{}) (*struct
 }
 
 // ProcessDoor43MetadataForRepo handles the metadata for a given repo for all its releases
-func ProcessDoor43MetadataForRepo(repo *repo.Repository) error {
+func ProcessDoor43MetadataForRepo(repo *repo_model.Repository) error {
 	if repo == nil {
 		return fmt.Errorf("no repository provided")
 	}
@@ -151,14 +166,14 @@ func ProcessDoor43MetadataForRepo(repo *repo.Repository) error {
 		if releaseID > 0 {
 			release, err = models.GetReleaseByID(releaseID)
 			if err != nil {
-				fmt.Printf("GetReleaseByID Error: %v\n", err)
+				log.Error("GetReleaseByID Error: %v\n", err)
 				continue
 			}
 			releaseRef = release.TagName
 		}
 		log.Info("Processing Metadata for repo %s (%d), %s (%d)\n", repo.Name, repo.ID, releaseRef, releaseID)
 		if err = ProcessDoor43MetadataForRepoRelease(repo, release); err != nil {
-			log.Warn("Error processing metadata for repo %s (%d), %s (%d): %v\n", repo.Name, repo.ID, releaseRef, releaseID, err)
+			log.Error("Error processing metadata for repo %s (%d), %s (%d): %v\n", repo.Name, repo.ID, releaseRef, releaseID, err)
 		} else {
 			log.Info("Processed Metadata for repo %s (%d), %s (%d)\n", repo.Name, repo.ID, releaseRef, releaseID)
 		}
@@ -166,8 +181,62 @@ func ProcessDoor43MetadataForRepo(repo *repo.Repository) error {
 	return nil
 }
 
+func GetBookAlignmentCount(bookPath string, commit *git.Commit) (int, error) {
+	blob, err := commit.GetBlobByPath(bookPath)
+	if err != nil {
+		log.Warn("GetBlobByPath(%s) Error: %v\n", bookPath, err)
+		return 0, err
+	}
+	dataRc, err := blob.DataAsync()
+	if err != nil {
+		log.Error("blob.DataAsync() Error: %v\n", err)
+		return 0, err
+	}
+	defer dataRc.Close()
+
+	buf := make([]byte, 1024)
+	n, _ := util.ReadAtMost(dataRc, buf)
+	buf = buf[:n]
+
+	rd := charset.ToUTF8WithFallbackReader(io.MultiReader(bytes.NewReader(buf), dataRc))
+	buf, err = io.ReadAll(rd)
+	if err != nil {
+		log.Error("io.ReadAll Error: %v", err)
+		return 0, err
+	}
+	matches := regexp.MustCompile(`\\zaln-s`).FindAllStringIndex(string(buf), -1)
+	return len(matches), nil
+}
+
+// GetAlignmentsCounts get all the alignment counts for all books
+func GetAlignmentsCounts(manifest *map[string]interface{}, commit *git.Commit) map[string]int {
+	var counts = map[string]int{}
+	if (*manifest)["dublin_core"].(map[string]interface{})["subject"].(string) != "Aligned Bible" || len((*manifest)["projects"].([]interface{})) <= 0 {
+		return counts
+	}
+	for _, prod := range (*manifest)["projects"].([]interface{}) {
+		bookPath := prod.(map[string]interface{})["path"].(string)
+		if strings.HasSuffix(bookPath, ".usfm") {
+			count, _ := GetBookAlignmentCount(bookPath, commit)
+			counts[prod.(map[string]interface{})["identifier"].(string)] = count
+		}
+	}
+	return counts
+}
+
+// GetBooks get the books of the manifest
+func GetBooks(manifest *map[string]interface{}) []string {
+	var books []string
+	if len((*manifest)["projects"].([]interface{})) > 0 {
+		for _, prod := range (*manifest)["projects"].([]interface{}) {
+			books = append(books, prod.(map[string]interface{})["identifier"].(string))
+		}
+	}
+	return books
+}
+
 // ProcessDoor43MetadataForRepoRelease handles the metadata for a given repo by release based on if the container is a valid RC or not
-func ProcessDoor43MetadataForRepoRelease(repo *repo.Repository, release *models.Release) error {
+func ProcessDoor43MetadataForRepoRelease(repo *repo_model.Repository, release *models.Release) error {
 	if repo == nil {
 		return fmt.Errorf("no repository provided")
 	}
@@ -177,7 +246,7 @@ func ProcessDoor43MetadataForRepoRelease(repo *repo.Repository, release *models.
 
 	gitRepo, err := git.OpenRepository(repo.RepoPath())
 	if err != nil {
-		fmt.Printf("OpenRepository Error: %v\n", err)
+		log.Error("OpenRepository Error: %v\n", err)
 		return err
 	}
 	defer gitRepo.Close()
@@ -201,6 +270,10 @@ func ProcessDoor43MetadataForRepoRelease(repo *repo.Repository, release *models.
 			log.Error("GetBranchCommit: %v\n", err)
 			return err
 		}
+	}
+
+	if release != nil {
+		UnpackJSONAttachments(release)
 	}
 
 	blob, err := commit.GetBlobByPath("manifest.yaml")
@@ -278,6 +351,12 @@ func ProcessDoor43MetadataForRepoRelease(repo *repo.Repository, release *models.
 				return models.DeleteDoor43Metadata(dm)
 			}
 		} else {
+			if (*manifest)["dublin_core"].(map[string]interface{})["subject"].(string) == "Aligned Bible" {
+				(*manifest)["alignment_counts"] = GetAlignmentsCounts(manifest, commit)
+			}
+			(*manifest)["books"] = GetBooks(manifest)
+			lc := (*manifest)["dublin_core"].(map[string]interface{})["language"].(map[string]interface{})["identifier"].(string)
+			(*manifest)["dublin_core"].(map[string]interface{})["language"].(map[string]interface{})["is_gl"] = dcs.LanguageIsGL(lc)
 			log.Warn("%s/%s: manifest.yaml is valid.", repo.FullName(), branchOrTag)
 			if dm == nil {
 				dm = &models.Door43Metadata{
@@ -297,9 +376,110 @@ func ProcessDoor43MetadataForRepoRelease(repo *repo.Repository, release *models.
 			dm.ReleaseDateUnix = releaseDateUnix
 			dm.Stage = stage
 			dm.BranchOrTag = branchOrTag
-			return models.UpdateDoor43MetadataCols(dm, "metadata", "release_date_unix", "stage", "branch_or_tag")
+			return models.UpdateDoor43MetadataCols(dm, "lang", "metadata", "release_date_unix", "stage", "branch_or_tag")
 		}
 	}
 
 	return nil
+}
+
+func UnpackJSONAttachments(release *models.Release) {
+	if release == nil || len(release.Attachments) == 0 {
+		return
+	}
+	var jsonFileNameSuffix = regexp.MustCompile(`(file|link)s*\.json$`)
+	for _, attachment := range release.Attachments {
+		if jsonFileNameSuffix.MatchString(attachment.Name) {
+			remoteAttachments, err := GetAttachmentsFromJSON(attachment)
+			if err != nil {
+				log.Warn("GetAttachmentsFromJSON Error: %v", err)
+				continue
+			}
+			for _, remoteAttachment := range remoteAttachments {
+				remoteAttachment.ReleaseID = attachment.ReleaseID
+				remoteAttachment.RepoID = attachment.RepoID
+				remoteAttachment.UploaderID = attachment.UploaderID
+				var foundExisting = false
+				for _, a := range release.Attachments {
+					if a.Name == remoteAttachment.Name {
+						if remoteAttachment.Size > 0 {
+							a.Size = remoteAttachment.Size
+						}
+						if remoteAttachment.BrowserDownloadURL != "" {
+							a.BrowserDownloadURL = remoteAttachment.BrowserDownloadURL
+						}
+						a.BrowserDownloadURL = remoteAttachment.BrowserDownloadURL
+						if err := repo_model.UpdateAttachment(a); err != nil {
+							log.Warn("UpdateAttachment [%d]: %v", a.ID, err)
+							continue
+						}
+						foundExisting = true
+						break
+					}
+				}
+				if foundExisting {
+					continue
+				}
+				// No existing attachment was found with the same name, so we insert a new one
+				remoteAttachment.UUID = uuid.New().String()
+				if _, err = db.GetEngine(db.DefaultContext).Insert(remoteAttachment); err != nil {
+					log.Warn("insert attachment [%d]: %v", remoteAttachment.ID, err)
+					continue
+				}
+			}
+			if err := repo_model.DeleteAttachment(attachment, true); err != nil {
+				log.Error("delete attachment [%d]: %v", attachment.ID, err)
+				continue
+			}
+			continue
+		}
+	}
+}
+
+// GetAttachmentsFromJSON gets the attachments from uploaded
+func GetAttachmentsFromJSON(attachment *repo_model.Attachment) ([]*repo_model.Attachment, error) {
+	var url string
+	if setting.Attachment.ServeDirect {
+		//If we have a signed url (S3, object storage), redirect to this directly.
+		urlObj, err := storage.Attachments.URL(attachment.RelativePath(), attachment.Name)
+
+		if urlObj != nil && err == nil {
+			url = urlObj.String()
+		}
+	} else {
+		url = attachment.DownloadURL()
+	}
+	client := http.Client{
+		Timeout: time.Second * 2, // Timeout after 2 seconds
+	}
+	req, err := http.NewRequest(http.MethodGet, url, nil)
+	if err != nil {
+		return nil, fmt.Errorf("http.NewRequest Error: %v", err)
+	}
+	req.Header.Set("User-Agent", "dcs")
+	res, err := client.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("client.Do Error: %v", err)
+	}
+	if res.StatusCode != 200 {
+		return nil, fmt.Errorf("client.Do Error: `%s` returned StatusCode [%d]", attachment.DownloadURL(), res.StatusCode)
+	}
+	if res.Body != nil {
+		defer res.Body.Close()
+	}
+
+	body, err := ioutil.ReadAll(res.Body)
+	if err != nil {
+		return nil, fmt.Errorf("ioutil.ReadAll Error: %v", err)
+	}
+	attachments := []*repo_model.Attachment{}
+	if err1 := json.Unmarshal(body, &attachments); err1 != nil {
+		// We couldn't unmarshal an array of attachments, so lets see if it is just a single attachment
+		attachment := &repo_model.Attachment{}
+		if err2 := json.Unmarshal(body, attachment); err2 != nil {
+			return nil, fmt.Errorf("json.Unmarshal Error: %v", err1)
+		}
+		attachments = append(attachments, attachment)
+	}
+	return attachments, nil
 }

@@ -50,3 +50,36 @@ func IsValidLanguage(lang string) bool {
 	_, ok := ln[lang]
 	return ok
 }
+
+// GetLanguageDirection returns the language direction
+func GetLanguageDirection(lang string) string {
+	ln := GetLangNames()
+	if data, ok := ln[lang]; ok {
+		if val, ok := data.(map[string]interface{})["ld"].(string); ok {
+			return val
+		}
+	}
+	return "ltr"
+}
+
+// GetLanguageTitle returns the language title
+func GetLanguageTitle(lang string) string {
+	ln := GetLangNames()
+	if data, ok := ln[lang]; ok {
+		if val, ok := data.(map[string]interface{})["ln"].(string); ok {
+			return val
+		}
+	}
+	return ""
+}
+
+// LanguageIsGL returns true if string is a valid language and is a GL
+func LanguageIsGL(lang string) bool {
+	ln := GetLangNames()
+	if data, ok := ln[lang]; ok {
+		if val, ok := data.(map[string]interface{})["gw"].(bool); ok {
+			return val
+		}
+	}
+	return false
+}

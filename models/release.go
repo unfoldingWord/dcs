@@ -152,7 +152,6 @@ func AddReleaseAttachments(ctx context.Context, releaseID int64, attachmentUUIDs
 			return fmt.Errorf("update attachment [%d]: %v", attachments[i].ID, err)
 		}
 	}
-
 	return
 }
 

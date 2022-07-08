@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"net/url"
 	"path"
+	"strings" // DCS Customizations
 
 	"code.gitea.io/gitea/models/db"
 	"code.gitea.io/gitea/modules/setting"
@@ -29,11 +30,49 @@ type Attachment struct {
 	DownloadCount int64              `xorm:"DEFAULT 0"`
 	Size          int64              `xorm:"DEFAULT 0"`
 	CreatedUnix   timeutil.TimeStamp `xorm:"created"`
+	/*** DCS Customizations ***/
+	BrowserDownloadURL string `xorm:"-" json:"browser_download_url"`
+	/*** END DCS Customizations ***/
 }
 
 func init() {
 	db.RegisterModel(new(Attachment))
 }
+
+/*** DCS Customizations ***/
+
+func (a *Attachment) AfterLoad() {
+	if strings.Contains(a.Name, "|http") || strings.Contains(a.Name, "|ftp") {
+		if name, url, ok := strings.Cut(a.Name, "|"); ok {
+			a.Name = name
+			a.BrowserDownloadURL = url
+		}
+	}
+}
+
+func (a *Attachment) BeforeInsert() {
+	if a.Name == "" && a.BrowserDownloadURL != "" {
+		u, _ := url.Parse(a.BrowserDownloadURL)
+		a.Name = path.Base(u.Path)
+	}
+	if a.BrowserDownloadURL != "" {
+		a.Name = fmt.Sprintf("%s|%s", a.Name, a.BrowserDownloadURL)
+	}
+}
+
+func (a *Attachment) BeforeUpdate() {
+	a.BeforeInsert()
+}
+
+func (a *Attachment) AfterInsert() {
+	a.AfterLoad()
+}
+
+func (a *Attachment) AfterUpdate() {
+	a.AfterLoad()
+}
+
+/*** END DCS Customiations ***/
 
 // IncreaseDownloadCount is update download count + 1
 func (a *Attachment) IncreaseDownloadCount() error {
@@ -57,6 +96,11 @@ func (a *Attachment) RelativePath() string {
 
 // DownloadURL returns the download url of the attached file
 func (a *Attachment) DownloadURL() string {
+	/*** DCS Customizations ***/
+	if a.BrowserDownloadURL != "" {
+		return a.BrowserDownloadURL
+	}
+	/*** END DCS Customizations ***/
 	return setting.AppURL + "attachments/" + url.PathEscape(a.UUID)
 }
 
