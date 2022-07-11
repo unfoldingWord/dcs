@@ -31,6 +31,7 @@ import (
 	repo_model "code.gitea.io/gitea/models/repo"
 	user_model "code.gitea.io/gitea/models/user"
 	"code.gitea.io/gitea/modules/base"
+	"code.gitea.io/gitea/modules/dcs"
 	"code.gitea.io/gitea/modules/emoji"
 	"code.gitea.io/gitea/modules/git"
 	giturl "code.gitea.io/gitea/modules/git/url"
@@ -248,6 +249,27 @@ func NewFuncMap() []template.FuncMap {
 				return nil
 			}
 			return dm
+		},
+		"GetLanguageFromRepoName": func(name string) string {
+			return dcs.GetLanguageFromRepoName(name)
+		},
+		"GetLanguageTitle": func(language string) string {
+			if language != "" {
+				return dcs.GetLanguageTitle(language)
+			}
+			return ""
+		},
+		"GetLanguageDirection": func(language string) string {
+			if language != "" {
+				return dcs.GetLanguageDirection(language)
+			}
+			return ""
+		},
+		"GetLanguageIsGL": func(language string) bool {
+			if language != "" {
+				return dcs.LanguageIsGL(language)
+			}
+			return false
 		},
 		/*** END DCS Customizations ***/
 		"SubJumpablePath": func(str string) []string {

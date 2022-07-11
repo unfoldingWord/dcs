@@ -226,7 +226,7 @@ func GetBookAlignmentCount(bookPath string, commit *git.Commit) (int, error) {
 
 // GetAlignmentsCounts get all the alignment counts for all books
 func GetAlignmentsCounts(manifest *map[string]interface{}, commit *git.Commit) map[string]int {
-	var counts = map[string]int{}
+	counts := map[string]int{}
 	if (*manifest)["dublin_core"].(map[string]interface{})["subject"].(string) != "Aligned Bible" || len((*manifest)["projects"].([]interface{})) <= 0 {
 		return counts
 	}
@@ -403,7 +403,7 @@ func UnpackJSONAttachments(ctx context.Context, release *models.Release) {
 	if release == nil || len(release.Attachments) == 0 {
 		return
 	}
-	var jsonFileNameSuffix = regexp.MustCompile(`(file|link)s*\.json$`)
+	jsonFileNameSuffix := regexp.MustCompile(`(file|link)s*\.json$`)
 	for _, attachment := range release.Attachments {
 		if jsonFileNameSuffix.MatchString(attachment.Name) {
 			remoteAttachments, err := GetAttachmentsFromJSON(attachment)
@@ -415,7 +415,7 @@ func UnpackJSONAttachments(ctx context.Context, release *models.Release) {
 				remoteAttachment.ReleaseID = attachment.ReleaseID
 				remoteAttachment.RepoID = attachment.RepoID
 				remoteAttachment.UploaderID = attachment.UploaderID
-				var foundExisting = false
+				foundExisting := false
 				for _, a := range release.Attachments {
 					if a.Name == remoteAttachment.Name {
 						if remoteAttachment.Size > 0 {
@@ -456,7 +456,7 @@ func UnpackJSONAttachments(ctx context.Context, release *models.Release) {
 func GetAttachmentsFromJSON(attachment *repo_model.Attachment) ([]*repo_model.Attachment, error) {
 	var url string
 	if setting.Attachment.ServeDirect {
-		//If we have a signed url (S3, object storage), redirect to this directly.
+		// If we have a signed url (S3, object storage), redirect to this directly.
 		urlObj, err := storage.Attachments.URL(attachment.RelativePath(), attachment.Name)
 
 		if urlObj != nil && err == nil {

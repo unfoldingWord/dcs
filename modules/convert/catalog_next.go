@@ -120,7 +120,7 @@ func ToCatalogV5(dm *models.Door43Metadata, mode perm.AccessMode) *api.CatalogV5
 		language = val
 	}
 
-	var languageDir = "ltr"
+	languageDir := "ltr"
 	if val, ok := (*dm.Metadata)["dublin_core"].(map[string]interface{})["language"].(map[string]interface{})["direction"].(string); ok {
 		languageDir = val
 	} else if language != "" {

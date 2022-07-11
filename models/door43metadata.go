@@ -13,7 +13,7 @@ import (
 	admin_model "code.gitea.io/gitea/models/admin"
 	"code.gitea.io/gitea/models/db"
 	"code.gitea.io/gitea/models/door43metadata"
-	"code.gitea.io/gitea/models/repo"
+	repo_model "code.gitea.io/gitea/models/repo"
 	"code.gitea.io/gitea/modules/log"
 	"code.gitea.io/gitea/modules/setting"
 	"code.gitea.io/gitea/modules/timeutil"
@@ -43,7 +43,7 @@ func InitDoor43Metadata() error {
 type Door43Metadata struct {
 	ID              int64                   `xorm:"pk autoincr"`
 	RepoID          int64                   `xorm:"INDEX UNIQUE(n) NOT NULL"`
-	Repo            *repo.Repository        `xorm:"-"`
+	Repo            *repo_model.Repository  `xorm:"-"`
 	ReleaseID       int64                   `xorm:"INDEX UNIQUE(n)"`
 	Release         *Release                `xorm:"-"`
 	MetadataVersion string                  `xorm:"NOT NULL"`
@@ -66,7 +66,7 @@ func (dm *Door43Metadata) GetRepo() error {
 
 func (dm *Door43Metadata) getRepo(ctx context.Context) error {
 	if dm.Repo == nil {
-		repo, err := repo.GetRepositoryByID(dm.RepoID)
+		repo, err := repo_model.GetRepositoryByID(dm.RepoID)
 		if err != nil {
 			return err
 		}

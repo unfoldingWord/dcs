@@ -39,8 +39,8 @@ func GetLangNames() map[string]interface{} {
 
 // GetLanguageFromRepoName determines the language of a repo by its repo name
 func GetLanguageFromRepoName(repoName string) string {
-	parts := strings.Split(repoName, "_")
-	if len(parts) == 2 && IsValidLanguage(parts[0]) && IsValidSubject(parts[1]) {
+	parts := strings.Split(strings.ToLower(repoName), "_")
+	if len(parts) >= 2 && IsValidLanguage(parts[0]) && IsValidSubject(parts[1]) {
 		return parts[0]
 	}
 	return ""
