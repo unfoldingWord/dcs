@@ -41,6 +41,7 @@ var (
 
 func init() {
 	setting.AppVer = Version
+	fmt.Printf("setting.AppVer!!!!!!!!!!!!! %s\n\n", setting.AppVer)
 	setting.AppBuiltWith = formatBuiltWith()
 	setting.AppStartTime = time.Now().UTC()
 
@@ -57,6 +58,7 @@ func main() {
 	app.Description = `By default, gitea will start serving using the webserver with no
 arguments - which can alternatively be run by running the subcommand web.`
 	app.Version = Version + formatBuiltWith()
+	fmt.Printf("app.Version!!!!!!!!!!!!! %s\n\n", app.Version)
 	app.Commands = []cli.Command{
 		cmd.CmdWeb,
 		cmd.CmdServ,
