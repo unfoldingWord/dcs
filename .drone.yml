@@ -542,7 +542,7 @@ steps:
 #       branch: main
 #       commit: true
 #       commit_message: "[skip ci] Updated translations via Crowdin"
-#       remote: "git@github.com:unfoldingWord/dcs.git"
+#       remote: "git@github.com:unfoldingword/dcs.git"
 #     environment:
 #       GIT_PUSH_SSH_KEY:
 #         from_secret: git_push_ssh_key
@@ -592,7 +592,7 @@ steps:
 #       branch: main
 #       commit: true
 #       commit_message: "[skip ci] Updated licenses and gitignores "
-#       remote: "git@github.com:unfoldingWord/dcs.git"
+#       remote: "git@github.com:unfoldingword/dcs.git"
 #     environment:
 #       GIT_PUSH_SSH_KEY:
 #         from_secret: git_push_ssh_key
@@ -907,7 +907,7 @@ steps:
       tags:
         - ${DRONE_TAG##v}-linux-amd64
         - ${DRONE_TAG:1:4}-linux-amd64
-      repo: unfoldingWord/dcs
+      repo: unfoldingword/dcs
       build_args:
         - GOPROXY=https://goproxy.io
       password:
@@ -928,7 +928,7 @@ steps:
       tags:
         - ${DRONE_TAG##v}-linux-amd64-rootless
         - ${DRONE_TAG:1:4}-linux-amd64-rootless
-      repo: unfoldingWord/dcs
+      repo: unfoldingword/dcs
       build_args:
         - GOPROXY=https://goproxy.io
       password:
@@ -974,7 +974,7 @@ steps:
     settings:
       auto_tag: false
       tags: dev-linux-amd64
-      repo: unfoldingWord/dcs
+      repo: unfoldingword/dcs
       build_args:
         - GOPROXY=https://goproxy.io
       password:
@@ -992,7 +992,7 @@ steps:
       dockerfile: Dockerfile.rootless
       auto_tag: false
       tags: dev-linux-amd64-rootless
-      repo: unfoldingWord/dcs
+      repo: unfoldingword/dcs
       build_args:
         - GOPROXY=https://goproxy.io
       password:
@@ -1037,7 +1037,7 @@ steps:
     settings:
       auto_tag: false
       tags: ${DRONE_BRANCH##release/dcs/v}-dev-linux-amd64
-      repo: unfoldingWord/dcs
+      repo: unfoldingword/dcs
       build_args:
         - GOPROXY=https://goproxy.io
       password:
@@ -1055,7 +1055,7 @@ steps:
       dockerfile: Dockerfile.rootless
       auto_tag: false
       tags: ${DRONE_BRANCH##release/dcs/v}-dev-linux-amd64-rootless
-      repo: unfoldingWord/dcs
+      repo: unfoldingword/dcs
       build_args:
         - GOPROXY=https://goproxy.io
       password:
@@ -1089,7 +1089,7 @@ steps:
     pull: always
     settings:
       dry_run: true
-      repo: unfoldingWord/dcs
+      repo: unfoldingword/dcs
       tags: linux-arm64
       build_args:
         - GOPROXY=https://goproxy.io
@@ -1137,7 +1137,7 @@ steps:
       tags:
         - ${DRONE_TAG##v}-linux-arm64
         - ${DRONE_TAG:1:4}-linux-arm64
-      repo: unfoldingWord/dcs
+      repo: unfoldingword/dcs
       build_args:
         - GOPROXY=https://goproxy.io
       password:
@@ -1158,7 +1158,7 @@ steps:
       tags:
         - ${DRONE_TAG##v}-linux-arm64-rootless
         - ${DRONE_TAG:1:4}-linux-arm64-rootless
-      repo: unfoldingWord/dcs
+      repo: unfoldingword/dcs
       build_args:
         - GOPROXY=https://goproxy.io
       password:
@@ -1204,7 +1204,7 @@ steps:
     settings:
       auto_tag: false
       tags: dev-linux-arm64
-      repo: unfoldingWord/dcs
+      repo: unfoldingword/dcs
       build_args:
         - GOPROXY=https://goproxy.io
       password:
@@ -1222,7 +1222,7 @@ steps:
       dockerfile: Dockerfile.rootless
       auto_tag: false
       tags: dev-linux-arm64-rootless
-      repo: unfoldingWord/dcs
+      repo: unfoldingword/dcs
       build_args:
         - GOPROXY=https://goproxy.io
       password:
@@ -1267,7 +1267,7 @@ steps:
     settings:
       auto_tag: false
       tags: ${DRONE_BRANCH##release/dcs/v}-dev-linux-arm64
-      repo: unfoldingWord/dcs
+      repo: unfoldingword/dcs
       build_args:
         - GOPROXY=https://goproxy.io
       password:
@@ -1285,7 +1285,7 @@ steps:
       dockerfile: Dockerfile.rootless
       auto_tag: false
       tags: ${DRONE_BRANCH##release/dcs/v}-dev-linux-arm64-rootless
-      repo: unfoldingWord/dcs
+      repo: unfoldingword/dcs
       build_args:
         - GOPROXY=https://goproxy.io
       password:
