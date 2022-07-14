@@ -80,12 +80,12 @@
 							<!-- DCS Customizations -->
 							{{$stage := "prod"}}
 							{{$color := "green"}}
-							{{if .IsPrerelease}}
-								{{$stage = "preprod"}}
-								{{$color = "orange"}}
-							{{else if .IsDraft}}
+							{{if .IsDraft}}
 								{{$stage = "draft"}}
 								{{$color = "yellow"}}
+							{{else if .IsPrerelease}}
+								{{$stage = "preprod"}}
+								{{$color = "orange"}}
 							{{end}}
 							{{if .Door43Metadata}}
 								<span class="ui {{$color}} label" title="Stage: {{$stage}}" style="margin-top: 10px"><a href="{{$.RepoLink}}/src/tag/{{.TagName | PathEscapeSegments}}/manifest.yaml" rel="nofollow" style="opacity: inherit !important">{{$.i18n.Tr "repo.metadata.catalog"}} ({{$stage}})</a></span>
