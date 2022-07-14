@@ -47,7 +47,7 @@ steps:
     environment:
       GOPROXY: https://goproxy.io # proxy.golang.org is blocked in China, this proxy is not
       GOSUMDB: sum.golang.org
-      TAGS: bindata sqlite sqlite_unlock_notify
+      TAGS: bindata sqlite sqlite_unlock_notify sqlite_json
     depends_on: [deps-backend]
     volumes:
       - name: deps
@@ -60,7 +60,7 @@ steps:
     environment:
       GOPROXY: https://goproxy.io # proxy.golang.org is blocked in China, this proxy is not
       GOSUMDB: sum.golang.org
-      TAGS: bindata sqlite sqlite_unlock_notify
+      TAGS: bindata sqlite sqlite_unlock_notify sqlite_json
       GOOS: windows
       GOARCH: amd64
     depends_on: [deps-backend]
@@ -75,7 +75,7 @@ steps:
     environment:
       GOPROXY: https://goproxy.io # proxy.golang.org is blocked in China, this proxy is not
       GOSUMDB: sum.golang.org
-      TAGS: bindata gogit sqlite sqlite_unlock_notify
+      TAGS: bindata gogit sqlite sqlite_unlock_notify sqlite_json
     depends_on: [deps-backend]
     volumes:
       - name: deps
@@ -108,18 +108,18 @@ steps:
       - make frontend
     depends_on: [test-frontend]
 
-  - name: build-backend-no-gcc
-    image: golang:1.16 # this step is kept as the lowest version of golang that we support
-    pull: always
-    environment:
-      GO111MODULE: on
-      GOPROXY: https://goproxy.io
-    commands:
-      - go build -o gitea_no_gcc # test if build succeeds without the sqlite tag
-    depends_on: [deps-backend, checks-backend]
-    volumes:
-      - name: deps
-        path: /go
+  # - name: build-backend-no-gcc
+  #   image: golang:1.16 # this step is kept as the lowest version of golang that we support
+  #   pull: always
+  #   environment:
+  #     GO111MODULE: on
+  #     GOPROXY: https://goproxy.io
+  #   commands:
+  #     - go build -o gitea_no_gcc # test if build succeeds without the sqlite tag
+  #   depends_on: [deps-backend, checks-backend]
+  #   volumes:
+  #     - name: deps
+  #       path: /go
 
   - name: build-backend-arm64
     image: golang:1.18
@@ -203,13 +203,13 @@ services:
       MYSQL_ALLOW_EMPTY_PASSWORD: yes
       MYSQL_DATABASE: testgitea
 
-  - name: mssql
-    image: mcr.microsoft.com/mssql/server:latest
-    pull: always
-    environment:
-      ACCEPT_EULA: Y
-      MSSQL_PID: Standard
-      SA_PASSWORD: MwantsaSecurePassword1
+  # - name: mssql
+  #   image: mcr.microsoft.com/mssql/server:latest
+  #   pull: always
+  #   environment:
+  #     ACCEPT_EULA: Y
+  #     MSSQL_PID: Standard
+  #     SA_PASSWORD: MwantsaSecurePassword1
 
   - name: ldap
     image: gitea/test-openldap:latest
@@ -272,7 +272,7 @@ steps:
     environment:
       GOPROXY: https://goproxy.io # proxy.golang.org is blocked in China, this proxy is not
       GOSUMDB: sum.golang.org
-      TAGS: bindata sqlite sqlite_unlock_notify
+      TAGS: bindata sqlite sqlite_unlock_notify sqlite_json
     depends_on: [deps-backend, prepare-test-env]
     volumes:
       - name: deps
@@ -285,7 +285,7 @@ steps:
       - make unit-test-coverage test-check
     environment:
       GOPROXY: https://goproxy.io
-      TAGS: bindata sqlite sqlite_unlock_notify
+      TAGS: bindata sqlite sqlite_unlock_notify sqlite_json
       RACE_ENABLED: true
       GITHUB_READ_TOKEN:
         from_secret: github_read_token
@@ -301,7 +301,7 @@ steps:
       - make unit-test-coverage test-check
     environment:
       GOPROXY: https://goproxy.io
-      TAGS: bindata gogit sqlite sqlite_unlock_notify
+      TAGS: bindata gogit sqlite sqlite_unlock_notify sqlite_json
       RACE_ENABLED: true
       GITHUB_READ_TOKEN:
         from_secret: github_read_token
@@ -343,52 +343,52 @@ steps:
       - name: deps
         path: /go
 
-  - name: test-mssql
-    image: gitea/test_env:linux-amd64  # https://gitea.com/gitea/test-env
-    user: gitea
-    commands:
-      - make test-mssql-migration test-mssql
-    environment:
-      GOPROXY: https://goproxy.io
-      TAGS: bindata
-      RACE_ENABLED: true
-      TEST_LDAP: 1
-      USE_REPO_TEST_DIR: 1
-    depends_on: [build]
-    volumes:
-      - name: deps
-        path: /go
+  # - name: test-mssql
+  #   image: gitea/test_env:linux-amd64  # https://gitea.com/gitea/test-env
+  #   user: gitea
+  #   commands:
+  #     - make test-mssql-migration test-mssql
+  #   environment:
+  #     GOPROXY: https://goproxy.io
+  #     TAGS: bindata
+  #     RACE_ENABLED: true
+  #     TEST_LDAP: 1
+  #     USE_REPO_TEST_DIR: 1
+  #   depends_on: [build]
+  #   volumes:
+  #     - name: deps
+  #       path: /go
 
-  - name: generate-coverage
-    image: golang:1.18
-    commands:
-      - make coverage
-    environment:
-      GOPROXY: https://goproxy.io
-      TAGS: bindata
-    depends_on: [unit-test, test-mysql]
-    when:
-      branch:
-        - main
-      event:
-        - push
-        - pull_request
+  # - name: generate-coverage
+  #   image: golang:1.18
+  #   commands:
+  #     - make coverage
+  #   environment:
+  #     GOPROXY: https://goproxy.io
+  #     TAGS: bindata
+  #   depends_on: [unit-test, test-mysql]
+  #   when:
+  #     branch:
+  #       - main
+  #     event:
+  #       - push
+  #       - pull_request
 
-  - name: coverage-codecov
-    image: woodpeckerci/plugin-codecov:next-alpine
-    pull: always
-    settings:
-      files:
-        - coverage.all
-      token:
-        from_secret: codecov_token
-    depends_on: [generate-coverage]
-    when:
-      branch:
-        - main
-      event:
-        - push
-        - pull_request
+  # - name: coverage-codecov
+  #   image: woodpeckerci/plugin-codecov:next-alpine
+  #   pull: always
+  #   settings:
+  #     files:
+  #       - coverage.all
+  #     token:
+  #       from_secret: codecov_token
+  #   depends_on: [generate-coverage]
+  #   when:
+  #     branch:
+  #       - main
+  #     event:
+  #       - push
+  #       - pull_request
 
 ---
 kind: pipeline
@@ -412,12 +412,12 @@ volumes:
     temp: {}
 
 services:
-  - name: pgsql
-    pull: default
-    image: postgres:10
-    environment:
-      POSTGRES_DB: test
-      POSTGRES_PASSWORD: postgres
+  # - name: pgsql
+  #   pull: default
+  #   image: postgres:10
+  #   environment:
+  #     POSTGRES_DB: test
+  #     POSTGRES_PASSWORD: postgres
 
   - name: ldap
     pull: default
@@ -459,416 +459,416 @@ steps:
     environment:
       GOPROXY: https://goproxy.io # proxy.golang.org is blocked in China, this proxy is not
       GOSUMDB: sum.golang.org
-      TAGS: bindata gogit sqlite sqlite_unlock_notify
+      TAGS: bindata gogit sqlite sqlite_unlock_notify sqlite_json
     depends_on: [deps-backend, prepare-test-env]
     volumes:
       - name: deps
         path: /go
 
-  - name: test-sqlite
-    image: gitea/test_env:linux-arm64  # https://gitea.com/gitea/test-env
-    user: gitea
-    commands:
-      - timeout -s ABRT 40m make test-sqlite-migration test-sqlite
-    environment:
-      GOPROXY: https://goproxy.io
-      TAGS: bindata gogit sqlite sqlite_unlock_notify
-      RACE_ENABLED: true
-      TEST_TAGS: gogit sqlite sqlite_unlock_notify
-      USE_REPO_TEST_DIR: 1
-    depends_on: [build]
-    volumes:
-      - name: deps
-        path: /go
+  # - name: test-sqlite
+  #   image: gitea/test_env:linux-arm64  # https://gitea.com/gitea/test-env
+  #   user: gitea
+  #   commands:
+  #     - timeout -s ABRT 40m make test-sqlite-migration test-sqlite
+  #   environment:
+  #     GOPROXY: https://goproxy.io
+  #     TAGS: bindata gogit sqlite sqlite_unlock_notify sqlite_json
+  #     RACE_ENABLED: true
+  #     TEST_TAGS: gogit sqlite sqlite_unlock_notify sqlite_json
+  #     USE_REPO_TEST_DIR: 1
+  #   depends_on: [build]
+  #   volumes:
+  #     - name: deps
+  #       path: /go
 
-  - name: test-pgsql
-    image: gitea/test_env:linux-arm64  # https://gitea.com/gitea/test-env
-    user: gitea
-    commands:
-      - timeout -s ABRT 40m make test-pgsql-migration test-pgsql
-    environment:
-      GOPROXY: https://goproxy.io
-      TAGS: bindata gogit
-      RACE_ENABLED: true
-      TEST_TAGS: gogit
-      TEST_LDAP: 1
-      USE_REPO_TEST_DIR: 1
-    depends_on: [build]
-    volumes:
-      - name: deps
-        path: /go
+  # - name: test-pgsql
+  #   image: gitea/test_env:linux-arm64  # https://gitea.com/gitea/test-env
+  #   user: gitea
+  #   commands:
+  #     - timeout -s ABRT 40m make test-pgsql-migration test-pgsql
+  #   environment:
+  #     GOPROXY: https://goproxy.io
+  #     TAGS: bindata gogit
+  #     RACE_ENABLED: true
+  #     TEST_TAGS: gogit
+  #     TEST_LDAP: 1
+  #     USE_REPO_TEST_DIR: 1
+  #   depends_on: [build]
+  #   volumes:
+  #     - name: deps
+  #       path: /go
 
----
-kind: pipeline
-name: update_translations
+# ---
+# kind: pipeline
+# name: update_translations
 
-platform:
-  os: linux
-  arch: arm64
+# platform:
+#   os: linux
+#   arch: arm64
 
-trigger:
-  branch:
-    - main
-  event:
-    - cron
-  cron:
-    - update_translations
+# trigger:
+#   branch:
+#     - main
+#   event:
+#     - cron
+#   cron:
+#     - update_translations
 
-steps:
-  - name: download
-    image: jonasfranz/crowdin
-    pull: always
-    settings:
-      download: true
-      export_dir: options/locale/
-      ignore_branch: true
-      project_identifier: gitea
-    environment:
-      CROWDIN_KEY:
-        from_secret: crowdin_key
+# steps:
+#   - name: download
+#     image: jonasfranz/crowdin
+#     pull: always
+#     settings:
+#       download: true
+#       export_dir: options/locale/
+#       ignore_branch: true
+#       project_identifier: gitea
+#     environment:
+#       CROWDIN_KEY:
+#         from_secret: crowdin_key
 
-  - name: update
-    image: alpine:3.13
-    pull: always
-    commands:
-      - ./build/update-locales.sh
+#   - name: update
+#     image: alpine:3.13
+#     pull: always
+#     commands:
+#       - ./build/update-locales.sh
 
-  - name: push
-    image: appleboy/drone-git-push
-    pull: always
-    settings:
-      author_email: "teabot@gitea.io"
-      author_name: GiteaBot
-      branch: main
-      commit: true
-      commit_message: "[skip ci] Updated translations via Crowdin"
-      remote: "git@github.com:go-gitea/gitea.git"
-    environment:
-      GIT_PUSH_SSH_KEY:
-        from_secret: git_push_ssh_key
+#   - name: push
+#     image: appleboy/drone-git-push
+#     pull: always
+#     settings:
+#       author_email: "teabot@gitea.io"
+#       author_name: GiteaBot
+#       branch: main
+#       commit: true
+#       commit_message: "[skip ci] Updated translations via Crowdin"
+#       remote: "git@github.com:unfoldingword/gitea.git"
+#     environment:
+#       GIT_PUSH_SSH_KEY:
+#         from_secret: git_push_ssh_key
 
-  - name: upload_translations
-    image: jonasfranz/crowdin
-    pull: always
-    settings:
-      files:
-        locale_en-US.ini: options/locale/locale_en-US.ini
-      ignore_branch: true
-      project_identifier: gitea
-    environment:
-      CROWDIN_KEY:
-        from_secret: crowdin_key
+#   - name: upload_translations
+#     image: jonasfranz/crowdin
+#     pull: always
+#     settings:
+#       files:
+#         locale_en-US.ini: options/locale/locale_en-US.ini
+#       ignore_branch: true
+#       project_identifier: gitea
+#     environment:
+#       CROWDIN_KEY:
+#         from_secret: crowdin_key
 
----
-kind: pipeline
-type: docker
-name: update_gitignore_and_licenses
+# ---
+# kind: pipeline
+# type: docker
+# name: update_gitignore_and_licenses
 
-platform:
-  os: linux
-  arch: arm64
+# platform:
+#   os: linux
+#   arch: arm64
 
-trigger:
-  branch:
-    - main
-  event:
-    - cron
-  cron:
-    - update_gitignore_and_licenses
+# trigger:
+#   branch:
+#     - main
+#   event:
+#     - cron
+#   cron:
+#     - update_gitignore_and_licenses
 
-steps:
-  - name: download
-    image: golang:1.18
-    pull: always
-    commands:
-      - timeout -s ABRT 40m make generate-license generate-gitignore
+# steps:
+#   - name: download
+#     image: golang:1.18
+#     pull: always
+#     commands:
+#       - timeout -s ABRT 40m make generate-license generate-gitignore
 
-  - name: push
-    image: appleboy/drone-git-push
-    pull: always
-    settings:
-      author_email: "teabot@gitea.io"
-      author_name: GiteaBot
-      branch: main
-      commit: true
-      commit_message: "[skip ci] Updated licenses and gitignores "
-      remote: "git@github.com:go-gitea/gitea.git"
-    environment:
-      GIT_PUSH_SSH_KEY:
-        from_secret: git_push_ssh_key
+#   - name: push
+#     image: appleboy/drone-git-push
+#     pull: always
+#     settings:
+#       author_email: "teabot@gitea.io"
+#       author_name: GiteaBot
+#       branch: main
+#       commit: true
+#       commit_message: "[skip ci] Updated licenses and gitignores "
+#       remote: "git@github.com:unfoldingword/gitea.git"
+#     environment:
+#       GIT_PUSH_SSH_KEY:
+#         from_secret: git_push_ssh_key
 
----
-kind: pipeline
-type: docker
-name: release-latest
+# ---
+# kind: pipeline
+# type: docker
+# name: release-latest
 
-platform:
-  os: linux
-  arch: amd64
+# platform:
+#   os: linux
+#   arch: amd64
 
-workspace:
-  base: /source
-  path: /
+# workspace:
+#   base: /source
+#   path: /
 
-trigger:
-  branch:
-    - main
-    - "release/*"
-  event:
-    - push
+# trigger:
+#   branch:
+#     - main
+#     - "release/dcs/*"
+#   event:
+#     - push
 
-depends_on:
-  - testing-amd64
-  - testing-arm64
+# depends_on:
+#   - testing-amd64
+#   - testing-arm64
 
-volumes:
-  - name: deps
-    temp: {}
+# volumes:
+#   - name: deps
+#     temp: {}
 
-steps:
-  - name: fetch-tags
-    image: docker:git
-    pull: always
-    commands:
-      - git config --global --add safe.directory /drone/src
-      - git fetch --tags --force
+# steps:
+#   - name: fetch-tags
+#     image: docker:git
+#     pull: always
+#     commands:
+#       - git config --global --add safe.directory /drone/src
+#       - git fetch --tags --force
 
-  - name: deps-frontend
-    image: node:16
-    pull: always
-    commands:
-      - make deps-frontend
+#   - name: deps-frontend
+#     image: node:16
+#     pull: always
+#     commands:
+#       - make deps-frontend
 
-  - name: deps-backend
-    image: golang:1.18
-    pull: always
-    commands:
-      - make deps-backend
-    volumes:
-      - name: deps
-        path: /go
+#   - name: deps-backend
+#     image: golang:1.18
+#     pull: always
+#     commands:
+#       - make deps-backend
+#     volumes:
+#       - name: deps
+#         path: /go
 
-  - name: static
-    image: techknowlogick/xgo:go-1.18.x
-    pull: always
-    commands:
-      - curl -sL https://deb.nodesource.com/setup_16.x | bash - && apt-get install -y nodejs
-      - export PATH=$PATH:$GOPATH/bin
-      - make release
-    environment:
-      GOPROXY: https://goproxy.io # proxy.golang.org is blocked in China, this proxy is not
-      TAGS: bindata sqlite sqlite_unlock_notify
-    volumes:
-      - name: deps
-        path: /go
+#   - name: static
+#     image: techknowlogick/xgo:go-1.18.x
+#     pull: always
+#     commands:
+#       - curl -sL https://deb.nodesource.com/setup_16.x | bash - && apt-get install -y nodejs
+#       - export PATH=$PATH:$GOPATH/bin
+#       - make release
+#     environment:
+#       GOPROXY: https://goproxy.io # proxy.golang.org is blocked in China, this proxy is not
+#       TAGS: bindata sqlite sqlite_unlock_notify sqlite_json
+#     volumes:
+#       - name: deps
+#         path: /go
 
-  - name: gpg-sign
-    image: plugins/gpgsign:1
-    pull: always
-    settings:
-      detach_sign: true
-      excludes:
-        - "dist/release/*.sha256"
-      files:
-        - "dist/release/*"
-    environment:
-      GPGSIGN_KEY:
-        from_secret: gpgsign_key
-      GPGSIGN_PASSPHRASE:
-        from_secret: gpgsign_passphrase
+  # - name: gpg-sign
+  #   image: plugins/gpgsign:1
+  #   pull: always
+  #   settings:
+  #     detach_sign: true
+  #     excludes:
+  #       - "dist/release/*.sha256"
+  #     files:
+  #       - "dist/release/*"
+  #   environment:
+  #     GPGSIGN_KEY:
+  #       from_secret: gpgsign_key
+  #     GPGSIGN_PASSPHRASE:
+  #       from_secret: gpgsign_passphrase
 
-  - name: release-branch
-    image: woodpeckerci/plugin-s3:latest
-    pull: always
-    settings:
-      acl: public-read
-      bucket: gitea-artifacts
-      endpoint: https://ams3.digitaloceanspaces.com
-      path_style: true
-      source: "dist/release/*"
-      strip_prefix: dist/release/
-      target: "/gitea/${DRONE_BRANCH##release/v}"
-    environment:
-      AWS_ACCESS_KEY_ID:
-        from_secret: aws_access_key_id
-      AWS_SECRET_ACCESS_KEY:
-        from_secret: aws_secret_access_key
-    when:
-      branch:
-        - "release/*"
-      event:
-        - push
+  # - name: release-branch
+  #   image: woodpeckerci/plugin-s3:latest
+  #   pull: always
+  #   settings:
+  #     acl: public-read
+  #     bucket: gitea-artifacts
+  #     endpoint: https://ams3.digitaloceanspaces.com
+  #     path_style: true
+  #     source: "dist/release/*"
+  #     strip_prefix: dist/release/
+  #     target: "/gitea/${DRONE_BRANCH##release/dcs/v}"
+  #   environment:
+  #     AWS_ACCESS_KEY_ID:
+  #       from_secret: aws_access_key_id
+  #     AWS_SECRET_ACCESS_KEY:
+  #       from_secret: aws_secret_access_key
+  #   when:
+  #     branch:
+  #       - "release/dcs/*"
+  #     event:
+  #       - push
 
-  - name: release-main
-    image: woodpeckerci/plugin-s3:latest
-    settings:
-      acl: public-read
-      bucket: gitea-artifacts
-      endpoint: https://ams3.digitaloceanspaces.com
-      path_style: true
-      source: "dist/release/*"
-      strip_prefix: dist/release/
-      target: /gitea/main
-    environment:
-      AWS_ACCESS_KEY_ID:
-        from_secret: aws_access_key_id
-      AWS_SECRET_ACCESS_KEY:
-        from_secret: aws_secret_access_key
-    when:
-      branch:
-        - main
-      event:
-        - push
+  # - name: release-main
+  #   image: woodpeckerci/plugin-s3:latest
+  #   settings:
+  #     acl: public-read
+  #     bucket: gitea-artifacts
+  #     endpoint: https://ams3.digitaloceanspaces.com
+  #     path_style: true
+  #     source: "dist/release/*"
+  #     strip_prefix: dist/release/
+  #     target: /gitea/main
+  #   environment:
+  #     AWS_ACCESS_KEY_ID:
+  #       from_secret: aws_access_key_id
+  #     AWS_SECRET_ACCESS_KEY:
+  #       from_secret: aws_secret_access_key
+  #   when:
+  #     branch:
+  #       - main
+  #     event:
+  #       - push
 
----
-kind: pipeline
-name: release-version
+# ---
+# kind: pipeline
+# name: release-version
 
-platform:
-  os: linux
-  arch: amd64
+# platform:
+#   os: linux
+#   arch: amd64
 
-workspace:
-  base: /source
-  path: /
+# workspace:
+#   base: /source
+#   path: /
 
-trigger:
-  event:
-    - tag
+# trigger:
+#   event:
+#     - tag
 
-depends_on:
-  - testing-arm64
-  - testing-amd64
+# depends_on:
+#   - testing-arm64
+#   - testing-amd64
 
-volumes:
-  - name: deps
-    temp: {}
+# volumes:
+#   - name: deps
+#     temp: {}
 
-steps:
-  - name: fetch-tags
-    image: docker:git
-    pull: always
-    commands:
-      - git config --global --add safe.directory /drone/src
-      - git fetch --tags --force
+# steps:
+#   - name: fetch-tags
+#     image: docker:git
+#     pull: always
+#     commands:
+#       - git config --global --add safe.directory /drone/src
+#       - git fetch --tags --force
 
-  - name: deps-frontend
-    image: node:16
-    pull: always
-    commands:
-      - make deps-frontend
+#   - name: deps-frontend
+#     image: node:16
+#     pull: always
+#     commands:
+#       - make deps-frontend
 
-  - name: deps-backend
-    image: golang:1.18
-    pull: always
-    commands:
-      - make deps-backend
-    volumes:
-      - name: deps
-        path: /go
+#   - name: deps-backend
+#     image: golang:1.18
+#     pull: always
+#     commands:
+#       - make deps-backend
+#     volumes:
+#       - name: deps
+#         path: /go
 
-  - name: static
-    image: techknowlogick/xgo:go-1.18.x
-    pull: always
-    commands:
-      - curl -sL https://deb.nodesource.com/setup_16.x | bash - && apt-get install -y nodejs
-      - export PATH=$PATH:$GOPATH/bin
-      - make release
-    environment:
-      GOPROXY: https://goproxy.io # proxy.golang.org is blocked in China, this proxy is not
-      TAGS: bindata sqlite sqlite_unlock_notify
-    depends_on: [fetch-tags]
-    volumes:
-      - name: deps
-        path: /go
+#   - name: static
+#     image: techknowlogick/xgo:go-1.18.x
+#     pull: always
+#     commands:
+#       - curl -sL https://deb.nodesource.com/setup_16.x | bash - && apt-get install -y nodejs
+#       - export PATH=$PATH:$GOPATH/bin
+#       - make release
+#     environment:
+#       GOPROXY: https://goproxy.io # proxy.golang.org is blocked in China, this proxy is not
+#       TAGS: bindata sqlite sqlite_unlock_notify sqlite_json
+#     depends_on: [fetch-tags]
+#     volumes:
+#       - name: deps
+#         path: /go
 
-  - name: gpg-sign
-    image: plugins/gpgsign:1
-    pull: always
-    settings:
-      detach_sign: true
-      excludes:
-        - "dist/release/*.sha256"
-      files:
-        - "dist/release/*"
-    environment:
-      GPGSIGN_KEY:
-        from_secret: gpgsign_key
-      GPGSIGN_PASSPHRASE:
-        from_secret: gpgsign_passphrase
-    depends_on: [static]
+  # - name: gpg-sign
+  #   image: plugins/gpgsign:1
+  #   pull: always
+  #   settings:
+  #     detach_sign: true
+  #     excludes:
+  #       - "dist/release/*.sha256"
+  #     files:
+  #       - "dist/release/*"
+  #   environment:
+  #     GPGSIGN_KEY:
+  #       from_secret: gpgsign_key
+  #     GPGSIGN_PASSPHRASE:
+  #       from_secret: gpgsign_passphrase
+  #   depends_on: [static]
 
-  - name: release-tag
-    image: woodpeckerci/plugin-s3:latest
-    pull: always
-    settings:
-      acl: public-read
-      bucket: gitea-artifacts
-      endpoint: https://ams3.digitaloceanspaces.com
-      path_style: true
-      source: "dist/release/*"
-      strip_prefix: dist/release/
-      target: "/gitea/${DRONE_TAG##v}"
-    environment:
-      AWS_ACCESS_KEY_ID:
-        from_secret: aws_access_key_id
-      AWS_SECRET_ACCESS_KEY:
-        from_secret: aws_secret_access_key
-    depends_on: [gpg-sign]
+  # - name: release-tag
+  #   image: woodpeckerci/plugin-s3:latest
+  #   pull: always
+  #   settings:
+  #     acl: public-read
+  #     bucket: gitea-artifacts
+  #     endpoint: https://ams3.digitaloceanspaces.com
+  #     path_style: true
+  #     source: "dist/release/*"
+  #     strip_prefix: dist/release/
+  #     target: "/gitea/${DRONE_TAG##v}"
+  #   environment:
+  #     AWS_ACCESS_KEY_ID:
+  #       from_secret: aws_access_key_id
+  #     AWS_SECRET_ACCESS_KEY:
+  #       from_secret: aws_secret_access_key
+  #   depends_on: [gpg-sign]
 
-  - name: github
-    image: plugins/github-release:latest
-    pull: always
-    settings:
-      files:
-        - "dist/release/*"
-      file_exists: overwrite
-    environment:
-      GITHUB_TOKEN:
-        from_secret: github_token
-    depends_on: [gpg-sign]
+  # - name: github
+  #   image: plugins/github-release:latest
+  #   pull: always
+  #   settings:
+  #     files:
+  #       - "dist/release/*"
+  #     file_exists: overwrite
+  #   environment:
+  #     GITHUB_TOKEN:
+  #       from_secret: github_token
+  #   depends_on: [gpg-sign]
 
----
-kind: pipeline
-type: docker
-name: docs
+# ---
+# kind: pipeline
+# type: docker
+# name: docs
 
-platform:
-  os: linux
-  arch: arm64
+# platform:
+#   os: linux
+#   arch: arm64
 
-depends_on:
-  - compliance
+# depends_on:
+#   - compliance
 
-trigger:
-  event:
-    - push
-    - tag
-    - pull_request
+# trigger:
+#   event:
+#     - push
+#     - tag
+#     - pull_request
 
-steps:
-  - name: build-docs
-    image: plugins/hugo:latest
-    pull: always
-    commands:
-      - apk add --no-cache make bash curl
-      - cd docs
-      - make trans-copy clean build
+# steps:
+#   - name: build-docs
+#     image: plugins/hugo:latest
+#     pull: always
+#     commands:
+#       - apk add --no-cache make bash curl
+#       - cd docs
+#       - make trans-copy clean build
 
-  - name: publish-docs
-    image: techknowlogick/drone-netlify:latest
-    pull: always
-    settings:
-      path: docs/public/
-      site_id: d2260bae-7861-4c02-8646-8f6440b12672
-    environment:
-      NETLIFY_TOKEN:
-        from_secret: netlify_token
-    when:
-      branch:
-        - main
-      event:
-        - push
+#   - name: publish-docs
+#     image: techknowlogick/drone-netlify:latest
+#     pull: always
+#     settings:
+#       path: docs/public/
+#       site_id: d2260bae-7861-4c02-8646-8f6440b12672
+#     environment:
+#       NETLIFY_TOKEN:
+#         from_secret: netlify_token
+#     when:
+#       branch:
+#         - main
+#       event:
+#         - push
 
 ---
 kind: pipeline
@@ -907,7 +907,7 @@ steps:
       tags:
         - ${DRONE_TAG##v}-linux-amd64
         - ${DRONE_TAG:1:4}-linux-amd64
-      repo: gitea/gitea
+      repo: unfoldingword/gitea
       build_args:
         - GOPROXY=https://goproxy.io
       password:
@@ -928,7 +928,7 @@ steps:
       tags:
         - ${DRONE_TAG##v}-linux-amd64-rootless
         - ${DRONE_TAG:1:4}-linux-amd64-rootless
-      repo: gitea/gitea
+      repo: unfoldingword/gitea
       build_args:
         - GOPROXY=https://goproxy.io
       password:
@@ -974,7 +974,7 @@ steps:
     settings:
       auto_tag: false
       tags: dev-linux-amd64
-      repo: gitea/gitea
+      repo: unfoldingword/gitea
       build_args:
         - GOPROXY=https://goproxy.io
       password:
@@ -992,7 +992,7 @@ steps:
       dockerfile: Dockerfile.rootless
       auto_tag: false
       tags: dev-linux-amd64-rootless
-      repo: gitea/gitea
+      repo: unfoldingword/gitea
       build_args:
         - GOPROXY=https://goproxy.io
       password:
@@ -1018,7 +1018,7 @@ depends_on:
 
 trigger:
   ref:
-  - "refs/heads/release/v*"
+  - "refs/heads/release/dcs/v*"
   event:
     exclude:
     - cron
@@ -1036,8 +1036,8 @@ steps:
     pull: always
     settings:
       auto_tag: false
-      tags: ${DRONE_BRANCH##release/v}-dev-linux-amd64
-      repo: gitea/gitea
+      tags: ${DRONE_BRANCH##release/dcs/v}-dev-linux-amd64
+      repo: unfoldingword/gitea
       build_args:
         - GOPROXY=https://goproxy.io
       password:
@@ -1054,8 +1054,8 @@ steps:
     settings:
       dockerfile: Dockerfile.rootless
       auto_tag: false
-      tags: ${DRONE_BRANCH##release/v}-dev-linux-amd64-rootless
-      repo: gitea/gitea
+      tags: ${DRONE_BRANCH##release/dcs/v}-dev-linux-amd64-rootless
+      repo: unfoldingword/gitea
       build_args:
         - GOPROXY=https://goproxy.io
       password:
@@ -1089,7 +1089,7 @@ steps:
     pull: always
     settings:
       dry_run: true
-      repo: gitea/gitea
+      repo: unfoldingword/gitea
       tags: linux-arm64
       build_args:
         - GOPROXY=https://goproxy.io
@@ -1137,7 +1137,7 @@ steps:
       tags:
         - ${DRONE_TAG##v}-linux-arm64
         - ${DRONE_TAG:1:4}-linux-arm64
-      repo: gitea/gitea
+      repo: unfoldingword/gitea
       build_args:
         - GOPROXY=https://goproxy.io
       password:
@@ -1158,7 +1158,7 @@ steps:
       tags:
         - ${DRONE_TAG##v}-linux-arm64-rootless
         - ${DRONE_TAG:1:4}-linux-arm64-rootless
-      repo: gitea/gitea
+      repo: unfoldingword/gitea
       build_args:
         - GOPROXY=https://goproxy.io
       password:
@@ -1204,7 +1204,7 @@ steps:
     settings:
       auto_tag: false
       tags: dev-linux-arm64
-      repo: gitea/gitea
+      repo: unfoldingword/gitea
       build_args:
         - GOPROXY=https://goproxy.io
       password:
@@ -1222,7 +1222,7 @@ steps:
       dockerfile: Dockerfile.rootless
       auto_tag: false
       tags: dev-linux-arm64-rootless
-      repo: gitea/gitea
+      repo: unfoldingword/gitea
       build_args:
         - GOPROXY=https://goproxy.io
       password:
@@ -1248,7 +1248,7 @@ depends_on:
 
 trigger:
   ref:
-  - "refs/heads/release/v*"
+  - "refs/heads/release/dcs/v*"
   event:
     exclude:
     - cron
@@ -1266,8 +1266,8 @@ steps:
     pull: always
     settings:
       auto_tag: false
-      tags: ${DRONE_BRANCH##release/v}-dev-linux-arm64
-      repo: gitea/gitea
+      tags: ${DRONE_BRANCH##release/dcs/v}-dev-linux-arm64
+      repo: unfoldingword/gitea
       build_args:
         - GOPROXY=https://goproxy.io
       password:
@@ -1284,8 +1284,8 @@ steps:
     settings:
       dockerfile: Dockerfile.rootless
       auto_tag: false
-      tags: ${DRONE_BRANCH##release/v}-dev-linux-arm64-rootless
-      repo: gitea/gitea
+      tags: ${DRONE_BRANCH##release/dcs/v}-dev-linux-arm64-rootless
+      repo: unfoldingword/gitea
       build_args:
         - GOPROXY=https://goproxy.io
       password:
@@ -1378,7 +1378,7 @@ steps:
 trigger:
   ref:
   - refs/heads/main
-  - "refs/heads/release/v*"
+  - "refs/heads/release/dcs/v*"
   event:
     exclude:
     - cron
@@ -1389,51 +1389,51 @@ depends_on:
   - docker-linux-amd64-release-branch
   - docker-linux-arm64-release-branch
 
----
-kind: pipeline
-type: docker
-name: notifications
+# ---
+# kind: pipeline
+# type: docker
+# name: notifications
 
-platform:
-  os: linux
-  arch: arm64
+# platform:
+#   os: linux
+#   arch: arm64
 
-clone:
-  disable: true
+# clone:
+#   disable: true
 
-trigger:
-  branch:
-    - main
-    - "release/*"
-  event:
-    - push
-    - tag
-  status:
-    - success
-    - failure
+# trigger:
+#   branch:
+#     - main
+#     - "release/dcs/*"
+#   event:
+#     - push
+#     - tag
+#   status:
+#     - success
+#     - failure
 
-depends_on:
-  - testing-amd64
-  - testing-arm64
-  - release-version
-  - release-latest
-  - docker-linux-amd64-release
-  - docker-linux-arm64-release
-  - docker-linux-amd64-release-version
-  - docker-linux-arm64-release-version
-  - docker-linux-amd64-release-branch
-  - docker-linux-arm64-release-branch
-  - docker-manifest
-  - docker-manifest-version
-  - docs
+# depends_on:
+#   - testing-amd64
+#   - testing-arm64
+#   - release-version
+#   - release-latest
+#   - docker-linux-amd64-release
+#   - docker-linux-arm64-release
+#   - docker-linux-amd64-release-version
+#   - docker-linux-arm64-release-version
+#   - docker-linux-amd64-release-branch
+#   - docker-linux-arm64-release-branch
+#   - docker-manifest
+#   - docker-manifest-version
+#   - docs
 
-steps:
-  - name: discord
-    image: appleboy/drone-discord:1.2.4
-    pull: always
-    settings:
-      message: "{{#success build.status}} ✅  Build #{{build.number}} of `{{repo.name}}` succeeded.\n\n📝 Commit by {{commit.author}} on `{{commit.branch}}`:\n``` {{commit.message}} ```\n\n🌐 {{ build.link }} {{else}} ❌  Build #{{build.number}} of `{{repo.name}}` failed.\n\n📝 Commit by {{commit.author}} on `{{commit.branch}}`:\n``` {{commit.message}} ```\n\n🌐 {{ build.link }} {{/success}}\n"
-      webhook_id:
-        from_secret: discord_webhook_id
-      webhook_token:
-        from_secret: discord_webhook_token
+# steps:
+#   - name: discord
+#     image: appleboy/drone-discord:1.2.4
+#     pull: always
+#     settings:
+#       message: "{{#success build.status}} ✅  Build #{{build.number}} of `{{repo.name}}` succeeded.\n\n📝 Commit by {{commit.author}} on `{{commit.branch}}`:\n``` {{commit.message}} ```\n\n🌐 {{ build.link }} {{else}} ❌  Build #{{build.number}} of `{{repo.name}}` failed.\n\n📝 Commit by {{commit.author}} on `{{commit.branch}}`:\n``` {{commit.message}} ```\n\n🌐 {{ build.link }} {{/success}}\n"
+#       webhook_id:
+#         from_secret: discord_webhook_id
+#       webhook_token:
+#         from_secret: discord_webhook_token
