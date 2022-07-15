@@ -207,7 +207,7 @@ func GetAll(ctx *context.APIContext) {
 		Actor:       ctx.Doer,
 		ListOptions: listOptions,
 		Type:        user_model.UserTypeOrganization,
-		OrderBy:     db.SearchOrderByAlphabetically,
+		OrderBy:     db.SearchUserOrderByAlphabetically,
 		Visible:     vMode,
 		/*** DCS Customizations ***/
 		RepoLanguages: ctx.FormStrings("lang"),

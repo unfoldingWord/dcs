@@ -87,7 +87,7 @@ func sudo() func(ctx *context.APIContext) {
 
 		if len(sudo) > 0 {
 			if ctx.IsSigned && ctx.ContextUser.IsAdmin {
-				user, err := user_model.GetUserByName(sudo)
+				user, err := user_model.GetUserByName(ctx, sudo)
 				if err != nil {
 					if user_model.IsErrUserNotExist(err) {
 						ctx.NotFound()

@@ -177,20 +177,20 @@ func (s SearchOrderBy) String() string {
 
 // Strings for sorting result
 const (
-	SearchOrderByAlphabetically        SearchOrderBy = "name ASC"
-	SearchOrderByAlphabeticallyReverse SearchOrderBy = "name DESC"
-	SearchOrderByLeastUpdated          SearchOrderBy = "updated_unix ASC"
-	SearchOrderByRecentUpdated         SearchOrderBy = "updated_unix DESC"
-	SearchOrderByOldest                SearchOrderBy = "created_unix ASC"
-	SearchOrderByNewest                SearchOrderBy = "created_unix DESC"
-	SearchOrderBySize                  SearchOrderBy = "size ASC"
-	SearchOrderBySizeReverse           SearchOrderBy = "size DESC"
-	SearchOrderByID                    SearchOrderBy = "id ASC"
-	SearchOrderByIDReverse             SearchOrderBy = "id DESC"
-	SearchOrderByStars                 SearchOrderBy = "num_stars ASC"
-	SearchOrderByStarsReverse          SearchOrderBy = "num_stars DESC"
-	SearchOrderByForks                 SearchOrderBy = "num_forks ASC"
-	SearchOrderByForksReverse          SearchOrderBy = "num_forks DESC"
+	SearchOrderByAlphabetically        SearchOrderBy = "`repository`.name ASC"
+	SearchOrderByAlphabeticallyReverse SearchOrderBy = "`repository`.name DESC"
+	SearchOrderByLeastUpdated          SearchOrderBy = "`repository`.updated_unix ASC"
+	SearchOrderByRecentUpdated         SearchOrderBy = "`repository`.updated_unix DESC"
+	SearchOrderByOldest                SearchOrderBy = "`repository`.created_unix ASC"
+	SearchOrderByNewest                SearchOrderBy = "`repository`.created_unix DESC"
+	SearchOrderBySize                  SearchOrderBy = "`repository`.size ASC"
+	SearchOrderBySizeReverse           SearchOrderBy = "`repository`.size DESC"
+	SearchOrderByID                    SearchOrderBy = "`repository`.id ASC"
+	SearchOrderByIDReverse             SearchOrderBy = "`repository`.id DESC"
+	SearchOrderByStars                 SearchOrderBy = "`repository`.num_stars ASC"
+	SearchOrderByStarsReverse          SearchOrderBy = "`repository`.num_stars DESC"
+	SearchOrderByForks                 SearchOrderBy = "`repository`.num_forks ASC"
+	SearchOrderByForksReverse          SearchOrderBy = "`repository`.num_forks DESC"
 )
 
 // userOwnedRepoCond returns user ownered repositories
@@ -599,9 +599,9 @@ func searchRepositoryByCondition(ctx context.Context, opts *SearchRepoOptions, c
 
 	sess = sess.
 		Join("INNER", "user", "`user`.id = `repository`.owner_id").
-		Join("LEFT", "door43_metadata", "`door43_metadata`.repo_id = `repository`.id AND `door43_metadata`.release_id = 0").
+		Join("LEFT", "door43_metadata", "`door43_metadata`.repo_id = `repository`.id AND `door43_metadata`.release_id = 0"). // DCS Customizations
 		Where(cond).
-		OrderBy("`repository`." + opts.OrderBy.String()) // DCS Customizations
+		OrderBy(opts.OrderBy.String())
 	if opts.PageSize > 0 {
 		sess = sess.Limit(opts.PageSize, (opts.Page-1)*opts.PageSize)
 	}
