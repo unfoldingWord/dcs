@@ -37,14 +37,14 @@
 			<div class="description">
 				<p>{{.Metadata.dublin_core.subject}}</p>
 				{{if .Release}}
-				<p class="time">{{$.i18n.Tr "explore.released"}}: {{.ReleaseDateUnix.FormatDate}}</p>
+				<p class="time">{{$.locale.Tr "explore.released"}}: {{.ReleaseDateUnix.FormatDate}}</p>
 				{{end}}
-				<p class="time">{{$.i18n.Tr "explore.language"}}: {{.Metadata.dublin_core.language.title}} ({{.Metadata.dublin_core.language.identifier}})</p>
+				<p class="time">{{$.locale.Tr "explore.language"}}: {{.Metadata.dublin_core.language.title}} ({{.Metadata.dublin_core.language.identifier}})</p>
 			</div>
 		</div>
 	{{else}}
 	<div>
-		{{$.i18n.Tr "explore.repo_no_results"}}
+		{{$.locale.Tr "explore.repo_no_results"}}
 	</div>
 	{{end}}
 </div>

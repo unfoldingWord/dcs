@@ -11,6 +11,7 @@ import (
 
 	admin_model "code.gitea.io/gitea/models/admin"
 	"code.gitea.io/gitea/models/db"
+	"code.gitea.io/gitea/models/door43metadata"
 	"code.gitea.io/gitea/models/repo"
 	"code.gitea.io/gitea/modules/log"
 	"code.gitea.io/gitea/modules/setting"
@@ -28,7 +29,7 @@ type Door43Metadata struct {
 	Release         *Release                `xorm:"-"`
 	MetadataVersion string                  `xorm:"NOT NULL"`
 	Metadata        *map[string]interface{} `xorm:"JSON NOT NULL"`
-	Stage           Stage                   `xorm:"NOT NULL"`
+	Stage           door43metadata.Stage    `xorm:"NOT NULL"`
 	BranchOrTag     string                  `xorm:"NOT NULL"`
 	ReleaseDateUnix timeutil.TimeStamp      `xorm:"NOT NULL"`
 	CreatedUnix     timeutil.TimeStamp      `xorm:"INDEX created NOT NULL"`
@@ -65,7 +66,7 @@ func (dm *Door43Metadata) GetRelease() error {
 
 func (dm *Door43Metadata) getRelease(e db.Engine) error {
 	if dm.ReleaseID > 0 && dm.Release == nil {
-		rel, err := GetReleaseByID(dm.ReleaseID)
+		rel, err := GetReleaseByID(db.DefaultContext, dm.ReleaseID)
 		if err != nil {
 			return err
 		}
@@ -99,7 +100,7 @@ func (dm *Door43Metadata) LoadAttributes() error {
 
 // GetBranchOrTagType gets the type of the DM entry, "branch" or "tag"
 func (dm *Door43Metadata) GetBranchOrTagType() string {
-	if dm.Stage < StageDraft {
+	if dm.Stage < door43metadata.StageDraft {
 		return "tag"
 	}
 	return "branch"
@@ -359,7 +360,7 @@ func GetDoor43MetadataCountByRepoID(repoID int64, opts FindDoor43MetadatasOption
 
 // GetReleaseCount returns the count of releases of repository of the Door43Metadata's stage
 func (dm *Door43Metadata) GetReleaseCount() (int64, error) {
-	stageCond := GetStageCond(dm.Stage)
+	stageCond := door43metadata.GetStageCond(dm.Stage)
 	return db.GetEngine(db.DefaultContext).Join("LEFT", "release", "`release`.id = `door43_metadata`.release_id").
 		Where(builder.And(builder.Eq{"`door43_metadata`.repo_id": dm.RepoID}, stageCond)).
 		Count(&Door43Metadata{})
@@ -387,11 +388,11 @@ func getDoor43MetadataByRepoIDAndReleaseID(e db.Engine, repoID, releaseID int64)
 }
 
 // GetDoor43MetadataByRepoIDAndStage returns the metadata of a given repo ID and stage.
-func GetDoor43MetadataByRepoIDAndStage(repoID int64, stage Stage) (*Door43Metadata, error) {
+func GetDoor43MetadataByRepoIDAndStage(repoID int64, stage door43metadata.Stage) (*Door43Metadata, error) {
 	return getDoor43MetadataByRepoIDAndStage(db.GetEngine(db.DefaultContext), repoID, stage)
 }
 
-func getDoor43MetadataByRepoIDAndStage(e db.Engine, repoID int64, stage Stage) (*Door43Metadata, error) {
+func getDoor43MetadataByRepoIDAndStage(e db.Engine, repoID int64, stage door43metadata.Stage) (*Door43Metadata, error) {
 	cond := builder.NewCond().
 		And(builder.Eq{"repo_id": repoID}).
 		And(builder.Eq{"stage": stage})
@@ -622,42 +623,6 @@ func (err ErrInvalidRelease) Error() string {
 }
 
 /*** END Error Structs & Functions ***/
-
-/*** Stage ***/
-
-// Stage type for choosing which level of stage to return in the Catalog results
-type Stage int
-
-// Stage values
-const (
-	StageProd    Stage = iota // 0
-	StagePreProd Stage = 1
-	StageDraft   Stage = 2
-	StageLatest  Stage = 3
-)
-
-// StageMap map from string to Stage (int)
-var StageMap = map[string]Stage{
-	"prod":    StageProd,
-	"preprod": StagePreProd,
-	"draft":   StageDraft,
-	"latest":  StageLatest,
-}
-
-// StageToStringMap map from stage (int) to string
-var StageToStringMap = map[Stage]string{
-	StageProd:    "prod",
-	StagePreProd: "preprod",
-	StageDraft:   "draft",
-	StageLatest:  "latest",
-}
-
-// String returns string repensation of a Stage (int)
-func (s *Stage) String() string {
-	return StageToStringMap[*s]
-}
-
-/*** END Stage ***/
 
 /*** INIT DB ***/
 

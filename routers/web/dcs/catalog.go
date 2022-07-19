@@ -11,6 +11,7 @@ import (
 
 	"code.gitea.io/gitea/models"
 	"code.gitea.io/gitea/models/db"
+	"code.gitea.io/gitea/models/door43metadata"
 	"code.gitea.io/gitea/modules/base"
 	"code.gitea.io/gitea/modules/context"
 	"code.gitea.io/gitea/modules/setting"
@@ -38,61 +39,61 @@ func RenderCatalogSearch(ctx *context.Context, opts *CatalogSearchOptions) {
 		dms     []*models.Door43Metadata
 		count   int64
 		err     error
-		orderBy models.CatalogOrderBy
+		orderBy door43metadata.CatalogOrderBy
 	)
 
 	ctx.Data["SortType"] = ctx.FormString("sort")
 	switch ctx.FormString("sort") {
 	case "newest":
-		orderBy = models.CatalogOrderByNewest
+		orderBy = door43metadata.CatalogOrderByNewest
 	case "oldest":
-		orderBy = models.CatalogOrderByOldest
+		orderBy = door43metadata.CatalogOrderByOldest
 	case "reversetitle":
-		orderBy = models.CatalogOrderByTitleReverse
+		orderBy = door43metadata.CatalogOrderByTitleReverse
 	case "title":
-		orderBy = models.CatalogOrderByTitle
+		orderBy = door43metadata.CatalogOrderByTitle
 	case "reversesubject":
-		orderBy = models.CatalogOrderBySubjectReverse
+		orderBy = door43metadata.CatalogOrderBySubjectReverse
 	case "subject":
-		orderBy = models.CatalogOrderBySubject
+		orderBy = door43metadata.CatalogOrderBySubject
 	case "reverseridentifier":
-		orderBy = models.CatalogOrderByIdentifierReverse
+		orderBy = door43metadata.CatalogOrderByIdentifierReverse
 	case "identifier":
-		orderBy = models.CatalogOrderByIdentifier
+		orderBy = door43metadata.CatalogOrderByIdentifier
 	case "reverserepo":
-		orderBy = models.CatalogOrderByRepoNameReverse
+		orderBy = door43metadata.CatalogOrderByRepoNameReverse
 	case "repo":
-		orderBy = models.CatalogOrderByRepoName
+		orderBy = door43metadata.CatalogOrderByRepoName
 	case "reversetag":
-		orderBy = models.CatalogOrderByTagReverse
+		orderBy = door43metadata.CatalogOrderByTagReverse
 	case "tag":
-		orderBy = models.CatalogOrderByTag
+		orderBy = door43metadata.CatalogOrderByTag
 	case "reverselangcode":
-		orderBy = models.CatalogOrderByLangCodeReverse
+		orderBy = door43metadata.CatalogOrderByLangCodeReverse
 	case "langcode":
-		orderBy = models.CatalogOrderByLangCode
+		orderBy = door43metadata.CatalogOrderByLangCode
 	case "mostreleases":
-		orderBy = models.CatalogOrderByReleasesReverse
+		orderBy = door43metadata.CatalogOrderByReleasesReverse
 	case "fewestreleases":
-		orderBy = models.CatalogOrderByReleases
+		orderBy = door43metadata.CatalogOrderByReleases
 	case "moststars":
-		orderBy = models.CatalogOrderByStarsReverse
+		orderBy = door43metadata.CatalogOrderByStarsReverse
 	case "feweststars":
-		orderBy = models.CatalogOrderByStars
+		orderBy = door43metadata.CatalogOrderByStars
 	case "mostforks":
-		orderBy = models.CatalogOrderByForksReverse
+		orderBy = door43metadata.CatalogOrderByForksReverse
 	case "fewestforks":
-		orderBy = models.CatalogOrderByForks
+		orderBy = door43metadata.CatalogOrderByForks
 	default:
 		ctx.Data["SortType"] = "newest"
-		orderBy = models.CatalogOrderByNewest
+		orderBy = door43metadata.CatalogOrderByNewest
 	}
 
 	var keywords, books, langs, subjects, repos, owners, tags, checkingLevels []string
-	stage := models.StageProd
+	stage := door43metadata.StageProd
 	query := strings.Trim(ctx.FormString("q"), " ")
 	if query != "" {
-		for _, token := range models.SplitAtCommaNotInString(query, true) {
+		for _, token := range door43metadata.SplitAtCommaNotInString(query, true) {
 			if strings.HasPrefix(token, "book:") {
 				books = append(books, strings.TrimPrefix(token, "book:"))
 			} else if strings.HasPrefix(token, "lang:") {
@@ -108,7 +109,7 @@ func RenderCatalogSearch(ctx *context.Context, opts *CatalogSearchOptions) {
 			} else if strings.HasPrefix(token, "checkinglevel:") {
 				checkingLevels = append(checkingLevels, strings.TrimPrefix(token, "checkinglevel:"))
 			} else if strings.HasPrefix(token, "stage:") {
-				if s, ok := models.StageMap[strings.Trim(strings.TrimPrefix(token, "stage:"), `"`)]; ok {
+				if s, ok := door43metadata.StageMap[strings.Trim(strings.TrimPrefix(token, "stage:"), `"`)]; ok {
 					stage = s
 				} else {
 					stage = 0 // Makes it invalid, return no results
@@ -119,12 +120,12 @@ func RenderCatalogSearch(ctx *context.Context, opts *CatalogSearchOptions) {
 		}
 	}
 
-	dms, count, err = models.SearchCatalog(&models.SearchCatalogOptions{
+	dms, count, err = models.SearchCatalog(&door43metadata.SearchCatalogOptions{
 		ListOptions: db.ListOptions{
 			Page:     page,
 			PageSize: opts.PageSize,
 		},
-		OrderBy:         []models.CatalogOrderBy{orderBy},
+		OrderBy:         []door43metadata.CatalogOrderBy{orderBy},
 		Keywords:        keywords,
 		IncludeMetadata: true,
 		Stage:           stage,

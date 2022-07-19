@@ -12,36 +12,37 @@ import (
 
 	"code.gitea.io/gitea/models"
 	"code.gitea.io/gitea/models/db"
+	"code.gitea.io/gitea/models/door43metadata"
 	access_model "code.gitea.io/gitea/models/perm/access"
 	"code.gitea.io/gitea/modules/context"
 	"code.gitea.io/gitea/modules/convert"
 	api "code.gitea.io/gitea/modules/structs"
 )
 
-var searchOrderByMap = map[string]map[string]models.CatalogOrderBy{
+var searchOrderByMap = map[string]map[string]door43metadata.CatalogOrderBy{
 	"asc": {
-		"title":      models.CatalogOrderByTitle,
-		"subject":    models.CatalogOrderBySubject,
-		"identifier": models.CatalogOrderByIdentifier,
-		"reponame":   models.CatalogOrderByRepoName,
-		"released":   models.CatalogOrderByOldest,
-		"lang":       models.CatalogOrderByLangCode,
-		"releases":   models.CatalogOrderByReleases,
-		"stars":      models.CatalogOrderByStars,
-		"forks":      models.CatalogOrderByForks,
-		"tag":        models.CatalogOrderByTag,
+		"title":      door43metadata.CatalogOrderByTitle,
+		"subject":    door43metadata.CatalogOrderBySubject,
+		"identifier": door43metadata.CatalogOrderByIdentifier,
+		"reponame":   door43metadata.CatalogOrderByRepoName,
+		"released":   door43metadata.CatalogOrderByOldest,
+		"lang":       door43metadata.CatalogOrderByLangCode,
+		"releases":   door43metadata.CatalogOrderByReleases,
+		"stars":      door43metadata.CatalogOrderByStars,
+		"forks":      door43metadata.CatalogOrderByForks,
+		"tag":        door43metadata.CatalogOrderByTag,
 	},
 	"desc": {
-		"title":      models.CatalogOrderByTitleReverse,
-		"subject":    models.CatalogOrderBySubjectReverse,
-		"identifier": models.CatalogOrderByIdentifierReverse,
-		"reponame":   models.CatalogOrderByRepoNameReverse,
-		"released":   models.CatalogOrderByNewest,
-		"lang":       models.CatalogOrderByLangCodeReverse,
-		"releases":   models.CatalogOrderByReleasesReverse,
-		"stars":      models.CatalogOrderByStarsReverse,
-		"forks":      models.CatalogOrderByForksReverse,
-		"tag":        models.CatalogOrderByTagReverse,
+		"title":      door43metadata.CatalogOrderByTitleReverse,
+		"subject":    door43metadata.CatalogOrderBySubjectReverse,
+		"identifier": door43metadata.CatalogOrderByIdentifierReverse,
+		"reponame":   door43metadata.CatalogOrderByRepoNameReverse,
+		"released":   door43metadata.CatalogOrderByNewest,
+		"lang":       door43metadata.CatalogOrderByLangCodeReverse,
+		"releases":   door43metadata.CatalogOrderByReleasesReverse,
+		"stars":      door43metadata.CatalogOrderByStarsReverse,
+		"forks":      door43metadata.CatalogOrderByForksReverse,
+		"tag":        door43metadata.CatalogOrderByTagReverse,
 	},
 }
 
@@ -432,7 +433,7 @@ func QueryStrings(ctx *context.APIContext, name string) []string {
 	}
 	var newStrs []string
 	for _, str := range strs {
-		newStrs = append(newStrs, models.SplitAtCommaNotInString(str, false)...)
+		newStrs = append(newStrs, door43metadata.SplitAtCommaNotInString(str, false)...)
 	}
 	return newStrs
 }
@@ -456,10 +457,10 @@ func searchCatalog(ctx *context.APIContext) {
 	}
 
 	stageStr := ctx.FormString("stage")
-	var stage models.Stage
+	var stage door43metadata.Stage
 	if stageStr != "" {
 		var ok bool
-		stage, ok = models.StageMap[stageStr]
+		stage, ok = door43metadata.StageMap[stageStr]
 		if !ok {
 			ctx.Error(http.StatusUnprocessableEntity, "", fmt.Errorf("invalid stage: \"%s\"", stageStr))
 			return
@@ -469,7 +470,7 @@ func searchCatalog(ctx *context.APIContext) {
 	keywords := []string{}
 	query := strings.Trim(ctx.FormString("q"), " ")
 	if query != "" {
-		keywords = models.SplitAtCommaNotInString(query, false)
+		keywords = door43metadata.SplitAtCommaNotInString(query, false)
 	}
 	listOptions := db.ListOptions{
 		Page:     ctx.FormInt("page"),
@@ -479,7 +480,7 @@ func searchCatalog(ctx *context.APIContext) {
 		listOptions.Page = 1
 	}
 
-	opts := &models.SearchCatalogOptions{
+	opts := &door43metadata.SearchCatalogOptions{
 		ListOptions:     listOptions,
 		Keywords:        keywords,
 		Owners:          owners,
@@ -517,7 +518,7 @@ func searchCatalog(ctx *context.APIContext) {
 			return
 		}
 	} else {
-		opts.OrderBy = []models.CatalogOrderBy{models.CatalogOrderByLangCode, models.CatalogOrderBySubject, models.CatalogOrderByTagReverse}
+		opts.OrderBy = []door43metadata.CatalogOrderBy{door43metadata.CatalogOrderByLangCode, door43metadata.CatalogOrderBySubject, door43metadata.CatalogOrderByTagReverse}
 	}
 
 	dms, count, err := models.SearchCatalog(opts)

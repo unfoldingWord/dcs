@@ -12,6 +12,7 @@ import (
 
 	"code.gitea.io/gitea/models"
 	"code.gitea.io/gitea/models/db"
+	"code.gitea.io/gitea/models/door43metadata"
 	"code.gitea.io/gitea/models/repo"
 	"code.gitea.io/gitea/modules/base"
 	"code.gitea.io/gitea/modules/git"
@@ -68,7 +69,7 @@ func GenerateDoor43Metadata(x *xorm.Engine) error {
 		repo := cacheRepos[repoID]
 		var release *models.Release
 		if releaseID > 0 {
-			release, err = models.GetReleaseByID(releaseID)
+			release, err = models.GetReleaseByID(db.DefaultContext, releaseID)
 			if err != nil {
 				log.Warn("GetReleaseByID Error: %v\n", err)
 				continue
@@ -165,7 +166,7 @@ func ProcessDoor43MetadataForRepo(repo *repo.Repository) error {
 		var release *models.Release
 		releaseRef := repo.DefaultBranch
 		if releaseID > 0 {
-			release, err = models.GetReleaseByID(releaseID)
+			release, err = models.GetReleaseByID(db.DefaultContext, releaseID)
 			if err != nil {
 				fmt.Printf("GetReleaseByID Error: %v\n", err)
 				continue
@@ -238,18 +239,18 @@ func ProcessDoor43MetadataForRepoRelease(ctx context.Context, repo *repo.Reposit
 	}
 
 	var releaseID int64
-	var stage models.Stage
+	var stage door43metadata.Stage
 	if release != nil {
 		releaseID = release.ID
 		if release.IsDraft {
-			stage = models.StageDraft
+			stage = door43metadata.StageDraft
 		} else if release.IsPrerelease {
-			stage = models.StagePreProd
+			stage = door43metadata.StagePreProd
 		} else {
-			stage = models.StageProd
+			stage = door43metadata.StageProd
 		}
 	} else {
-		stage = models.StageLatest
+		stage = door43metadata.StageLatest
 	}
 
 	dm, err := models.GetDoor43MetadataByRepoIDAndReleaseID(repo.ID, releaseID)

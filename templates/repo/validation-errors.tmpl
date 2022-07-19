@@ -11,9 +11,9 @@
 
 {{if or (ne $errors "") (eq $.file.Name "manifest.yaml")}}
 	<div class="ui label {{if eq $errors ""}}green{{else}}red{{end}} validation-message-trigger" style="margin-left: 5px">
-		{{if eq $errors ""}}{{$.root.i18n.Tr "repo.metadata.valid"}}{{else}}{{$.root.i18n.Tr "repo.metadata.invalid"}} {{svg "octicon-info"}}{{end}}
+		{{if eq $errors ""}}{{$.root.locale.Tr "repo.metadata.valid"}}{{else}}{{$.root.locale.Tr "repo.metadata.invalid"}} {{svg "octicon-info"}}{{end}}
 	</div>
 	<div class="ui popup very wide validation-message">
-		{{if $errors}}{{$errors}}{{else}}{{$.root.i18n.Tr "repo.metadata.valid_manifest_tooltip"}}{{end}}
+		{{if $errors}}{{$errors}}{{else}}{{$.root.locale.Tr "repo.metadata.valid_manifest_tooltip"}}{{end}}
 	</div>
 {{end}}
