@@ -477,11 +477,11 @@ func SearchRepositoryCondition(opts *SearchRepoOptions) builder.Cond {
 					pieces := strings.Split(opts.Keyword, "/")
 					ownerName := pieces[0]
 					repoName := pieces[1]
-					likes = likes.Or(builder.And(builder.Like{"owner_name", strings.ToLower(ownerName)}, builder.Like{"lower_name", strings.ToLower(repoName)}))
+					likes = likes.Or(builder.And(builder.Like{"owner_name", strings.ToLower(ownerName)}, builder.Like{"`repository`.lower_name", strings.ToLower(repoName)})) // DCS Customizations
 				}
 
 				if opts.IncludeDescription {
-					likes = likes.Or(builder.Like{"LOWER(description)", strings.ToLower(v)})
+					likes = likes.Or(builder.Like{"LOWER(`repository`.description)", strings.ToLower(v)}) // DCS Customizations
 				}
 				/*** DCS Customizations ***/
 				likes = likes.Or(door43metadata.GetMetadataCondByDBType(setting.Database.Type, v, opts.IncludeMetadata))
@@ -592,24 +592,24 @@ func searchRepositoryByCondition(ctx context.Context, opts *SearchRepoOptions, c
 
 	sess := db.GetEngine(ctx)
 
-	/*** DCS Customizaitons ***/
-	sess = sess.
-		Join("INNER", "user", "`user`.id = `repository`.owner_id").
-		Join("LEFT", "door43_metadata", "`door43_metadata`.repo_id = `repository`.id AND `door43_metadata`.release_id = 0")
-	/*** END DCS Customizaitons ***/
-
 	var count int64
 	if opts.PageSize > 0 {
 		var err error
 		count, err = sess.
-			Where(cond).
+			Join("INNER", "user", "`user`.id = `repository`.owner_id").                                                                      // DCS Customizations
+			Join("LEFT", "door43_metadata", "`door43_metadata`.repo_id = `repository`.id AND `door43_metadata`.release_id = 0").Where(cond). // DCS Customizations
 			Count(new(Repository))
 		if err != nil {
 			return nil, 0, fmt.Errorf("Count: %v", err)
 		}
 	}
 
-	sess = sess.Where(cond).OrderBy(opts.OrderBy.String(), args...)
+	/*** DCS Customizations ***/
+	sess = sess.
+		Join("INNER", "user", "`user`.id = `repository`.owner_id").
+		Join("LEFT", "door43_metadata", "`door43_metadata`.repo_id = `repository`.id AND `door43_metadata`.release_id = 0").
+		Where(cond).OrderBy(opts.OrderBy.String(), args...)
+	/*** END DCS Customizations ***/
 	if opts.PageSize > 0 {
 		sess = sess.Limit(opts.PageSize, (opts.Page-1)*opts.PageSize)
 	}
@@ -688,7 +688,7 @@ func SearchRepositoryIDs(opts *SearchRepoOptions) ([]int64, int64, error) {
 	}
 
 	ids := make([]int64, 0, defaultSize)
-	err = sess.Select("id").Table("repository").Find(&ids)
+	err = sess.Select("`repository`.id").Table("repository").Find(&ids) // DCS Customizations
 	if opts.PageSize <= 0 {
 		count = int64(len(ids))
 	}
@@ -728,7 +728,7 @@ func GetUserRepositories(opts *SearchRepoOptions) (RepositoryList, int64, error)
 	}
 
 	if opts.LowerNames != nil && len(opts.LowerNames) > 0 {
-		cond = cond.And(builder.In("lower_name", opts.LowerNames))
+		cond = cond.And(builder.In("`repository`.lower_name", opts.LowerNames))
 	}
 
 	sess := db.GetEngine(db.DefaultContext)
