@@ -138,7 +138,7 @@ func scrubJSONFile(ctx *context.Context, localPath, fileName string) error {
 		return err
 	} else if err := ScrubFile(ctx, localPath, fileName); err != nil {
 		return err
-	} else if err := ioutil.WriteFile(jsonPath, []byte(fileContent), 0o666); err != nil {
+	} else if err := ioutil.WriteFile(jsonPath, fileContent, 0o666); err != nil {
 		return err
 	}
 

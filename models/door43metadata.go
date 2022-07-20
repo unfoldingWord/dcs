@@ -533,7 +533,7 @@ func GetReposForMetadata() ([]int64, error) {
 
 	for idx, record := range records {
 		v, _ := strconv.ParseInt(string(record["id"]), 10, 64)
-		repoIDs[idx] = int64(v)
+		repoIDs[idx] = v
 	}
 
 	return repoIDs, nil
@@ -567,7 +567,7 @@ func GetRepoReleaseIDsForMetadata(repoID int64) ([]int64, error) {
 
 	for idx, record := range records {
 		v, _ := strconv.ParseInt(string(record["id"]), 10, 64)
-		relIDs[idx] = int64(v)
+		relIDs[idx] = v
 	}
 
 	return relIDs, nil

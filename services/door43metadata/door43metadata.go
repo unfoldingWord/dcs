@@ -56,9 +56,9 @@ func GenerateDoor43Metadata(x *xorm.Engine) error {
 
 	for _, record := range records {
 		v, _ := strconv.ParseInt(string(record["release_id"]), 10, 64)
-		releaseID := int64(v)
+		releaseID := v
 		v, _ = strconv.ParseInt(string(record["repo_id"]), 10, 64)
-		repoID := int64(v)
+		repoID := v
 		if cacheRepos[repoID] == nil {
 			cacheRepos[repoID], err = repo.GetRepositoryByID(repoID)
 			if err != nil {
