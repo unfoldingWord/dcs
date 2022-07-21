@@ -15,6 +15,7 @@ import (
 	"net/http"
 	"net/url"
 	"path"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"time"
@@ -40,6 +41,7 @@ import (
 	"code.gitea.io/gitea/modules/structs"
 	"code.gitea.io/gitea/modules/typesniffer"
 	"code.gitea.io/gitea/modules/util"
+	"code.gitea.io/gitea/modules/yaml" // DCS Customizations
 	"code.gitea.io/gitea/routers/web/feed"
 )
 
@@ -401,6 +403,13 @@ func renderFile(ctx *context.Context, entry *git.TreeEntry, treeLink, rawLink st
 	fileSize := blob.Size()
 	ctx.Data["FileIsSymlink"] = entry.IsLink()
 	ctx.Data["FileName"] = blob.Name()
+	/*** DCS Customizations ***/
+	fileExt := filepath.Ext(blob.Name())
+	ctx.Data["FileExt"] = fileExt
+	if fileExt != ".md" || blob.Name() == "README.md" || blob.Name() == "LICENSE.md" {
+		ctx.Data["IgnoreLanguageDirection"] = true
+	}
+	/*** END DCS Customizations ***/
 	ctx.Data["RawFileLink"] = rawLink + "/" + util.PathEscapeSegments(ctx.Repo.TreePath)
 
 	buf := make([]byte, 1024)
@@ -509,6 +518,11 @@ func renderFile(ctx *context.Context, entry *git.TreeEntry, treeLink, rawLink st
 		readmeExist := markup.IsReadmeFile(blob.Name())
 		ctx.Data["ReadmeExist"] = readmeExist
 
+		/*** DCS Customizations ***/
+		isTocYaml := blob.Name() == "toc.yaml"
+		ctx.Data["IsTocYaml"] = isTocYaml
+		/*** END DCS Customizations ***/
+
 		markupType := markup.Type(blob.Name())
 		// If the markup is detected by custom markup renderer it should not be reset later on
 		// to not pass it down to the render context.
@@ -545,6 +559,18 @@ func renderFile(ctx *context.Context, entry *git.TreeEntry, treeLink, rawLink st
 			// to prevent iframe load third-party url
 			ctx.Resp.Header().Add("Content-Security-Policy", "frame-src 'self'")
 			ctx.Data["EscapeStatus"], ctx.Data["FileContent"] = charset.EscapeControlString(result.String())
+			/*** DCS Customizations ***/
+		} else if isTocYaml {
+			ctx.Data["IsRenderedHTML"] = true
+			if rendered, err := yaml.Render(buf); err != nil {
+				log.Error("RenderYaml: %v", err)
+				ctx.Flash.ErrorMsg = fmt.Sprintf("Unable to parse %v", err)
+				ctx.Data["Flash"] = ctx.Flash
+				ctx.Data["FileContent"] = string(buf)
+			} else {
+				ctx.Data["FileContent"] = string(rendered)
+			}
+			/*** END DCS Customizations ***/
 		} else if readmeExist && !shouldRenderSource {
 			buf := &bytes.Buffer{}
 			ctx.Data["IsRenderedHTML"] = true
@@ -962,6 +988,9 @@ func renderCode(ctx *context.Context) {
 
 	if entry.IsDir() {
 		renderDirectory(ctx, treeLink)
+		/*** DCS Customizations ***/
+		ctx.Data["IgnoreLanguageDirection"] = true
+		/*** END DCS Customizations ***/
 	} else {
 		renderFile(ctx, entry, treeLink, rawLink)
 	}
@@ -987,6 +1016,11 @@ func renderCode(ctx *context.Context) {
 	ctx.Data["TreeLink"] = treeLink
 	ctx.Data["TreeNames"] = treeNames
 	ctx.Data["BranchLink"] = branchLink
+
+	/*** DCS Customizations ***/
+	ctx.Data["Entry"] = entry
+	/*** END DCS Customizations ***/
+
 	ctx.HTML(http.StatusOK, tplRepoHome)
 }
 

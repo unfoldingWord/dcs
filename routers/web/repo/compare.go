@@ -135,6 +135,18 @@ func setCsvCompareContext(ctx *context.Context) {
 				return nil, nil, err
 			}
 
+			/*** DCS Customizations ***/
+			if filepath.Ext(diffFile.Name) == ".tsv" {
+				csvReader, err := csv_module.CreateReaderAndDetermineDelimiter(ctx, charset.ToUTF8WithFallbackReader(reader))
+				if csvReader != nil {
+					csvReader.Comma = '\t' // This is a .tsv file so assume \t is delimiter
+					csvReader.LazyQuotes = true
+					csvReader.TrimLeadingSpace = false
+				}
+				return csvReader, reader, err
+			}
+			/*** END DCS Customizations ***/
+
 			csvReader, err := csv_module.CreateReaderAndDetermineDelimiter(ctx, charset.ToUTF8WithFallbackReader(reader))
 			return csvReader, reader, err
 		}
@@ -670,6 +682,17 @@ func PrepareCompareDiff(
 	ctx.Data["Reponame"] = ci.HeadRepo.Name
 
 	setCompareContext(ctx, baseCommit, headCommit, ci.HeadUser.Name, repo.Name)
+
+	/*** DCS Customizations ***/
+	// For Validation
+	for _, file := range diff.Files {
+		if strings.HasSuffix(file.Name, ".json") || strings.HasSuffix(file.Name, ".yaml") || strings.HasSuffix(file.Name, ".yml") {
+			if entry, _ := headCommit.GetTreeEntryByPath(file.Name); entry != nil {
+				file.Entry = entry
+			}
+		}
+	}
+	/*** END DCS Customizations ***/
 
 	return false
 }

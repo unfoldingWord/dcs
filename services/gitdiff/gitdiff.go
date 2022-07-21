@@ -627,6 +627,7 @@ type DiffFile struct {
 	IsViewed                  bool // User specific
 	HasChangedSinceLastReview bool // User specific
 	Language                  string
+	Entry                     *git.TreeEntry // DCS Customizations
 }
 
 // GetType returns type of diff file.

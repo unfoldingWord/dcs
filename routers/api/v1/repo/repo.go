@@ -29,6 +29,7 @@ import (
 	"code.gitea.io/gitea/modules/util"
 	"code.gitea.io/gitea/modules/validation"
 	"code.gitea.io/gitea/modules/web"
+	catalog "code.gitea.io/gitea/routers/api/catalog/v4"
 	"code.gitea.io/gitea/routers/api/v1/utils"
 	repo_service "code.gitea.io/gitea/services/repository"
 )
@@ -51,7 +52,7 @@ func Search(ctx *context.APIContext) {
 	//   type: boolean
 	// - name: includeDesc
 	//   in: query
-	//   description: include search of keyword within repository description
+	//   description: include search of keyword within repository description (defaults to false)
 	//   type: boolean
 	// - name: uid
 	//   in: query
@@ -98,6 +99,32 @@ func Search(ctx *context.APIContext) {
 	//   in: query
 	//   description: if `uid` is given, search only for repos that the user owns
 	//   type: boolean
+	// - name: repo
+	//   in: query
+	//   description: name of the repo. Multiple repo's are ORed.
+	//   type: string
+	// - name: owner
+	//   in: query
+	//   description: owner of the repo. Multiple owner's are ORed.
+	//   type: string
+	// - name: lang
+	//   in: query
+	//   description: If the repo is a resource of the given language(s), the repo will be in the results. Multiple lang's are ORed.
+	//   type: string
+	// - name: subject
+	//   in: query
+	//   description: resource subject. Multiple subject's are ORed.
+	//   type: string
+	// - name: book
+	//   in: query
+	//   description: book (project id) that exist in a resource. If the resource contains the
+	//                the book, its repository will be included in the results. Multiple book's are ORed.
+	//   type: string
+	// - name: includeMetadata
+	//   in: query
+	//   description: if false, q value will only be searched for in the repo name, owner, description and title and
+	//                subject; otherwise search all values of the manifest file. (defaults to false)
+	//   type: boolean
 	// - name: sort
 	//   in: query
 	//   description: sort repos by attribute. Supported values are
@@ -136,6 +163,14 @@ func Search(ctx *context.APIContext) {
 		Template:           util.OptionalBoolNone,
 		StarredByID:        ctx.FormInt64("starredBy"),
 		IncludeDescription: ctx.FormBool("includeDesc"),
+		/*** DCS Customizations ***/
+		Languages:       catalog.QueryStrings(ctx, "lang"),
+		Repos:           catalog.QueryStrings(ctx, "repo"),
+		Owners:          catalog.QueryStrings(ctx, "owner"),
+		Subjects:        catalog.QueryStrings(ctx, "subject"),
+		Books:           catalog.QueryStrings(ctx, "book"),
+		IncludeMetadata: ctx.FormString("includeMetadata") == "" || ctx.FormBool("includeMetadata"),
+		/*** END DCS Customizations ***/
 	}
 
 	if ctx.FormString("template") != "" {
@@ -525,7 +560,7 @@ func Get(ctx *context.APIContext) {
 		return
 	}
 
-	ctx.JSON(http.StatusOK, convert.ToRepo(ctx.Repo.Repository, ctx.Repo.AccessMode))
+	ctx.JSON(http.StatusOK, convert.ToRepoDCS(ctx.Repo.Repository, ctx.Repo.AccessMode)) // DCS Customizations
 }
 
 // GetByID returns a single Repository
@@ -564,7 +599,7 @@ func GetByID(ctx *context.APIContext) {
 		ctx.NotFound()
 		return
 	}
-	ctx.JSON(http.StatusOK, convert.ToRepo(repo, perm.AccessMode))
+	ctx.JSON(http.StatusOK, convert.ToRepoDCS(repo, perm.AccessMode)) // DCS Customizations
 }
 
 // Edit edit repository properties
@@ -627,7 +662,7 @@ func Edit(ctx *context.APIContext) {
 		return
 	}
 
-	ctx.JSON(http.StatusOK, convert.ToRepo(repo, ctx.Repo.AccessMode))
+	ctx.JSON(http.StatusOK, convert.ToRepoDCS(repo, ctx.Repo.AccessMode)) // DCS Customizations
 }
 
 // updateBasicProperties updates the basic properties of a repo: Name, Description, Website and Visibility

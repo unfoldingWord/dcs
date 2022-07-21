@@ -89,6 +89,11 @@
 							{{if $file.IsVendored}}
 								<span class="ui label ml-3">{{$.i18n.Tr "repo.diff.vendored"}}</span>
 							{{end}}
+							<!-- DCS Customizations -->
+							{{if $file.Entry}}
+								{{template "repo/validation-errors" dict "file" $file.Entry "root" $}}
+							{{end}}
+							<!-- END DCS Customizations -->
 						</div>
 						<div class="diff-file-header-actions df ac">
 							{{if $showFileViewToggle}}

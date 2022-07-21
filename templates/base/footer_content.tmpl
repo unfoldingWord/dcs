@@ -1,9 +1,11 @@
 <footer>
 	<div class="ui container">
 		<div class="ui left">
+			<span class="license">
+				Except where otherwise noted, content on DCS is licensed under a <bdi><a href="https://door43.org/en/copyright-and-licensing/" target="_blank">CC BY-SA 4.0 License</a></bdi>
+			</span>
 			{{.i18n.Tr "powered_by" "Gitea"}}
 			{{if (or .ShowFooterVersion .PageIsAdmin)}}
-				{{.i18n.Tr "version"}}:
 				{{if .IsAdmin}}
 					<a href="{{AppSubUrl}}/admin/config">{{AppVer}}</a>
 				{{else}}
@@ -17,9 +19,6 @@
 			{{end}}
 		</div>
 		<div class="ui right links">
-			{{if .ShowFooterBranding}}
-				<a target="_blank" rel="noopener noreferrer" href="https://github.com/go-gitea/gitea">{{svg "octicon-mark-github"}}<span class="sr-only">GitHub</span></a>
-			{{end}}
 			<div class="ui language bottom floating slide up dropdown link item">
 				{{svg "octicon-globe"}}
 				<div class="text">{{.i18n.LangName}}</div>
@@ -31,7 +30,7 @@
 			</div>
 			<a href="{{AssetUrlPrefix}}/js/licenses.txt">{{.i18n.Tr "licenses"}}</a>
 			{{if .EnableSwagger}}<a href="{{AppSubUrl}}/api/swagger">API</a>{{end}}
-			<a target="_blank" rel="noopener noreferrer" href="https://gitea.io">{{.i18n.Tr "website"}}</a>
+			<a target="_blank" rel="noopener noreferrer" href="https://unfoldingword.org">unfoldingWord</a>
 			{{template "custom/extra_links_footer" .}}
 		</div>
 	</div>

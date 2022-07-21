@@ -413,6 +413,10 @@ func GetAllUsers(ctx *context.APIContext) {
 	// produces:
 	// - application/json
 	// parameters:
+	// - name: lang
+	//   in: query
+	//   description: If the user has one or more repos with the given language(s), the org will be in the results. Multiple lang's are ORed.
+	//   type: string
 	// - name: page
 	//   in: query
 	//   description: page number of results to return (1-based)
@@ -432,7 +436,7 @@ func GetAllUsers(ctx *context.APIContext) {
 	users, maxResults, err := user_model.SearchUsers(&user_model.SearchUserOptions{
 		Actor:       ctx.Doer,
 		Type:        user_model.UserTypeIndividual,
-		OrderBy:     db.SearchOrderByAlphabetically,
+		OrderBy:     db.SearchUserOrderByAlphabetically,
 		ListOptions: listOptions,
 	})
 	if err != nil {
@@ -442,7 +446,7 @@ func GetAllUsers(ctx *context.APIContext) {
 
 	results := make([]*api.User, len(users))
 	for i := range users {
-		results[i] = convert.ToUser(users[i], ctx.Doer)
+		results[i] = convert.ToUserDCS(users[i], ctx.Doer) // DCS Customizations
 	}
 
 	ctx.SetLinkHeader(int(maxResults), listOptions.PageSize)

@@ -126,6 +126,10 @@ func RefBlame(ctx *context.Context) {
 		blameParts = append(blameParts, *blamePart)
 	}
 
+	/*** DCS Customizations ***/
+	ctx.Data["Entry"] = entry
+	/*** END DCS Customizations ***/
+
 	// Get Topics of this repo
 	renderRepoTopics(ctx)
 	if ctx.Written() {

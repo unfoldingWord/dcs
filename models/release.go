@@ -46,6 +46,7 @@ type Release struct {
 	IsTag            bool                     `xorm:"NOT NULL DEFAULT false"`
 	Attachments      []*repo_model.Attachment `xorm:"-"`
 	CreatedUnix      timeutil.TimeStamp       `xorm:"INDEX"`
+	Door43Metadata   *Door43Metadata          `xorm:"-"`
 }
 
 func init() {
@@ -60,6 +61,14 @@ func (r *Release) loadAttributes(ctx context.Context) error {
 			return err
 		}
 	}
+	/*** DCS Customizations ***/
+	if r.Door43Metadata == nil {
+		r.Door43Metadata, err = GetDoor43MetadataByRepoIDAndReleaseID(r.RepoID, r.ID)
+		if err != nil && !IsErrDoor43MetadataNotExist(err) {
+			return err
+		}
+	}
+	/*** END DCS Customizations ***/
 	if r.Publisher == nil {
 		r.Publisher, err = user_model.GetUserByIDCtx(ctx, r.PublisherID)
 		if err != nil {

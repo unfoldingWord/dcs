@@ -217,6 +217,39 @@ func NewFuncMap() []template.FuncMap {
 			}
 			return "tab-size-8"
 		},
+		/*** DCS Customizations ***/
+		"StringHasSuffix":            base.StringHasSuffix,
+		"ValidateJSONFile":           base.ValidateJSONFile,
+		"ValidateYAMLFile":           base.ValidateYAMLFile,
+		"ValidateManifestFileAsHTML": base.ValidateManifestFileAsHTML,
+		"GATrackingID": func() string {
+			return setting.DCS.GATrackingID
+		},
+		"Door43PreviewURL": func() string {
+			return setting.DCS.Door43PreviewURL
+		},
+		"GetDefaultBranchMetadata": func(repoID int64) *models.Door43Metadata {
+			dm, err := models.GetDefaultBranchMetadata(repoID)
+			if err != nil {
+				return nil
+			}
+			return dm
+		},
+		"GetLatestProdCatalogMetadata": func(repoID int64) *models.Door43Metadata {
+			dm, err := models.GetLatestProdCatalogMetadata(repoID)
+			if err != nil {
+				return nil
+			}
+			return dm
+		},
+		"GetLatestPreProdCatalogMetadata": func(repoID int64) *models.Door43Metadata {
+			dm, err := models.GetLatestPreProdCatalogMetadata(repoID)
+			if err != nil {
+				return nil
+			}
+			return dm
+		},
+		/*** END DCS Customizations ***/
 		"SubJumpablePath": func(str string) []string {
 			var path []string
 			index := strings.LastIndex(str, "/")

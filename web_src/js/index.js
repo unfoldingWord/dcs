@@ -85,6 +85,10 @@ import {initCommonOrganization} from './features/common-organization.js';
 import {initRepoWikiForm} from './features/repo-wiki.js';
 import {initRepoCommentForm, initRepository} from './features/repo-legacy.js';
 import {initFormattingReplacements} from './features/formatting.js';
+/** DCS Customizations **/
+import {initDcsInfoIcon} from './features/dcs-info-icon.js';
+import {initDcsValidationErrors} from './features/dcs-validation-errors.js';
+/** END DCS Customizations **/
 
 // Run time-critical code as soon as possible. This is safe to do because this
 // script appears at the end of <body> and rendered HTML is accessible at that point.
@@ -137,6 +141,11 @@ $(document).ready(() => {
   initAdminUserListSearchForm();
 
   initDashboardRepoList();
+
+  /** DCS Customizations **/
+  initDcsInfoIcon();
+  initDcsValidationErrors();
+  /** END DCS Customizations **/
 
   initNotificationCount();
   initNotificationsTable();

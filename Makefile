@@ -36,7 +36,7 @@ MISSPELL_PACKAGE ?= github.com/client9/misspell/cmd/misspell@v0.3.4
 SWAGGER_PACKAGE ?= github.com/go-swagger/go-swagger/cmd/swagger@v0.29.0
 XGO_PACKAGE ?= src.techknowlogick.com/xgo@latest
 
-DOCKER_IMAGE ?= gitea/gitea
+DOCKER_IMAGE ?= unfoldingword/dcs
 DOCKER_TAG ?= latest
 DOCKER_REF := $(DOCKER_IMAGE):$(DOCKER_TAG)
 
@@ -119,7 +119,7 @@ TAGS ?=
 TAGS_SPLIT := $(subst $(COMMA), ,$(TAGS))
 TAGS_EVIDENCE := $(MAKE_EVIDENCE_DIR)/tags
 
-TEST_TAGS ?= sqlite sqlite_unlock_notify
+TEST_TAGS ?= sqlite sqlite_unlock_notify sqlite_json
 
 TAR_EXCLUDES := .git data indexers queues log node_modules $(EXECUTABLE) $(FOMANTIC_WORK_DIR)/node_modules $(DIST) $(MAKE_EVIDENCE_DIR) $(AIR_TMP_DIR)
 
@@ -137,6 +137,13 @@ SWAGGER_SPEC_S_TMPL := s|"basePath": *"/api/v1"|"basePath": "{{AppSubUrl \| JSEs
 SWAGGER_SPEC_S_JSON := s|"basePath": *"{{AppSubUrl \| JSEscape \| Safe}}/api/v1"|"basePath": "/api/v1"|g
 SWAGGER_EXCLUDE := code.gitea.io/sdk
 SWAGGER_NEWLINE_COMMAND := -e '$$a\'
+# DCS Customizations
+SWAGGER_CATALOG_SPEC := templates/swagger/catalog/catalog_json.tmpl
+SWAGGER_CATALOG_SPEC_S_TMPL := s|"basePath": *"/api/catalog"|"basePath": "{{AppSubUrl \| JSEscape \| Safe}}/api/catalog"|g
+SWAGGER_CATALOG_SPEC_S_JSON := s|"basePath": *"{{AppSubUrl \| JSEscape \| Safe}}/api/catalog"|"basePath": "/api/catalog"|g
+SWAGGER_CATALOG_EXCLUDE := code.gitea.io/sdk" -x "code.gitea.io/gitea/routers/api/v1
+SWAGGER_EXCLUDE := code.gitea.io/sdk" -x "code.gitea.io/gitea/routers/api/catalog
+# END DCS Customizations
 
 TEST_MYSQL_HOST ?= mysql:3306
 TEST_MYSQL_DBNAME ?= testgitea
@@ -266,6 +273,11 @@ generate-swagger:
 	$(GO) run $(SWAGGER_PACKAGE) generate spec -x "$(SWAGGER_EXCLUDE)" -o './$(SWAGGER_SPEC)'
 	$(SED_INPLACE) '$(SWAGGER_SPEC_S_TMPL)' './$(SWAGGER_SPEC)'
 	$(SED_INPLACE) $(SWAGGER_NEWLINE_COMMAND) './$(SWAGGER_SPEC)'
+# DCS Customizations
+	$(GO) run $(SWAGGER_PACKAGE) generate spec -x "$(SWAGGER_CATALOG_EXCLUDE)" -o './$(SWAGGER_CATALOG_SPEC)'
+	$(SED_INPLACE) '$(SWAGGER_CATALOG_SPEC_S_TMPL)' './$(SWAGGER_CATALOG_SPEC)'
+	$(SED_INPLACE) $(SWAGGER_NEWLINE_COMMAND) './$(SWAGGER_CATALOG_SPEC)'
+# END DCS Customizaitons
 
 .PHONY: swagger-check
 swagger-check: generate-swagger
@@ -795,7 +807,7 @@ editorconfig-checker:
 .PHONY: docker
 docker:
 	docker build --disable-content-trust=false -t $(DOCKER_REF) .
-# support also build args docker build --build-arg GITEA_VERSION=v1.2.3 --build-arg TAGS="bindata sqlite sqlite_unlock_notify"  .
+# support also build args docker build --build-arg GITEA_VERSION=v1.2.3 --build-arg TAGS="bindata sqlite sqlite_unlock_notify sqlite_json"  .
 
 .PHONY: docker-build
 docker-build:

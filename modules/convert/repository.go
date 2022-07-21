@@ -5,6 +5,7 @@
 package convert
 
 import (
+	"fmt"
 	"time"
 
 	"code.gitea.io/gitea/models"
@@ -12,6 +13,7 @@ import (
 	"code.gitea.io/gitea/models/perm"
 	repo_model "code.gitea.io/gitea/models/repo"
 	unit_model "code.gitea.io/gitea/models/unit"
+	"code.gitea.io/gitea/modules/dcs"
 	"code.gitea.io/gitea/modules/log"
 	api "code.gitea.io/gitea/modules/structs"
 )
@@ -100,6 +102,36 @@ func innerToRepo(repo *repo_model.Repository, mode perm.AccessMode, isParent boo
 
 	numReleases, _ := models.GetReleaseCountByRepoID(repo.ID, models.FindReleasesOptions{IncludeDrafts: false, IncludeTags: false})
 
+	/*** DCS Customizations ***/
+
+	// TODO: Load in Repository's LoadAttributes() function and save to repo.Metadata
+	metadata, err := models.GetDoor43MetadataByRepoIDAndReleaseID(repo.ID, 0)
+	if err != nil && !models.IsErrDoor43MetadataNotExist(err) {
+		log.Error("GetDoor43MetadataByRepoIDAndReleaseID: %v", err)
+	}
+	// if metadata == nil {
+	// 	metadata, err = repo.GetLatestPreProdCatalogMetadata()
+	// 	if err != nil {
+	// 		log.Error("GetLatestPreProdCatalogMetadata: %v", err)
+	// 	}
+	// }
+
+	var language, languageTitle, languageDir, title, subject, checkingLevel string
+	var books []string
+	if metadata != nil {
+		language = (*metadata.Metadata)["dublin_core"].(map[string]interface{})["language"].(map[string]interface{})["identifier"].(string)
+		languageTitle = (*metadata.Metadata)["dublin_core"].(map[string]interface{})["language"].(map[string]interface{})["title"].(string)
+		languageDir = (*metadata.Metadata)["dublin_core"].(map[string]interface{})["language"].(map[string]interface{})["direction"].(string)
+		title = (*metadata.Metadata)["dublin_core"].(map[string]interface{})["title"].(string)
+		subject = (*metadata.Metadata)["dublin_core"].(map[string]interface{})["subject"].(string)
+		books = metadata.GetBooks()
+		checkingLevel = fmt.Sprintf("%v", (*metadata.Metadata)["checking"].(map[string]interface{})["checking_level"])
+	} else {
+		language = dcs.GetLanguageFromRepoName(repo.LowerName)
+		subject = dcs.GetSubjectFromRepoName(repo.LowerName)
+	}
+	/*** END DCS Customizations ***/
+
 	mirrorInterval := ""
 	var mirrorUpdated time.Time
 	if repo.IsMirror {
@@ -125,10 +157,12 @@ func innerToRepo(repo *repo_model.Repository, mode perm.AccessMode, isParent boo
 		}
 	}
 
-	var language string
-	if repo.PrimaryLanguage != nil {
-		language = repo.PrimaryLanguage.Language
-	}
+	/*** DCS Customizations - Commented out for Resource Language instead of programming language ***/
+	// var language string
+	// if repo.PrimaryLanguage != nil {
+	// 	language = repo.PrimaryLanguage.Language
+	// }
+	/*** END DCS Customizaitons ***/
 
 	repoAPIURL := repo.APIURL()
 
@@ -151,7 +185,6 @@ func innerToRepo(repo *repo_model.Repository, mode perm.AccessMode, isParent boo
 		CloneURL:                  cloneLink.HTTPS,
 		OriginalURL:               repo.SanitizedOriginalURL(),
 		Website:                   repo.Website,
-		Language:                  language,
 		LanguagesURL:              repoAPIURL + "/languages",
 		Stars:                     repo.NumStars,
 		Forks:                     repo.NumForks,
@@ -177,6 +210,13 @@ func innerToRepo(repo *repo_model.Repository, mode perm.AccessMode, isParent boo
 		AllowSquash:               allowSquash,
 		DefaultMergeStyle:         string(defaultMergeStyle),
 		AvatarURL:                 repo.AvatarLink(),
+		Language:                  language,
+		LanguageTitle:             languageTitle,
+		LanguageDir:               languageDir,
+		Title:                     title,
+		Subject:                   subject,
+		Books:                     books,
+		CheckingLevel:             checkingLevel,
 		Internal:                  !repo.IsPrivate && repo.Owner.Visibility == api.VisibleTypePrivate,
 		MirrorInterval:            mirrorInterval,
 		MirrorUpdated:             mirrorUpdated,

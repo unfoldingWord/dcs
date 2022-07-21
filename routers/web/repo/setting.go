@@ -30,6 +30,7 @@ import (
 	"code.gitea.io/gitea/modules/lfs"
 	"code.gitea.io/gitea/modules/log"
 	"code.gitea.io/gitea/modules/repository"
+	"code.gitea.io/gitea/modules/scrubber"
 	"code.gitea.io/gitea/modules/setting"
 	"code.gitea.io/gitea/modules/structs"
 	"code.gitea.io/gitea/modules/typesniffer"
@@ -182,7 +183,7 @@ func SettingsPost(ctx *context.Context) {
 			return
 		}
 
-		repo.IsPrivate = form.Private
+		repo.IsPrivate = form.Private && ctx.ContextUser.IsAdmin // DCS Customizations
 		if err := repo_service.UpdateRepository(repo, visibilityChanged); err != nil {
 			ctx.ServerError("UpdateRepository", err)
 			return
@@ -816,6 +817,55 @@ func SettingsPost(ctx *context.Context) {
 
 		log.Trace("Repository was un-archived: %s/%s", ctx.Repo.Owner.Name, repo.Name)
 		ctx.Redirect(ctx.Repo.RepoLink + "/settings")
+
+	/*** DCS Customizations ***/
+	case "scrub":
+		if !ctx.Repo.IsOwner() {
+			ctx.Error(404)
+			return
+		}
+		if repo.Name != form.RepoName {
+			ctx.RenderWithErr(ctx.Tr("form.enterred_invalid_repo_name"), tplSettingsOptions, nil)
+			return
+		}
+
+		if ctx.Repo.Owner.IsOrganization() {
+			org := organization.OrgFromUser(ctx.Repo.Owner)
+			owned, err := org.IsOwnedBy(ctx.ContextUser.ID)
+			if err != nil {
+				ctx.ServerError("IsOwnedBy", err)
+				return
+			} else if !owned {
+				ctx.Error(404)
+				return
+			}
+		}
+
+		if err := scrubber.ScrubSensitiveData(&ctx.Repo.GitRepo.Ctx, repo, ctx.ContextUser, scrubber.ScrubSensitiveDataOptions{
+			LastCommitID:  ctx.Repo.CommitID,
+			CommitMessage: ctx.Tr("repo.settings.scrub_commit_message"),
+		}); err != nil {
+			log.Error("%v", err)
+			ctx.Flash.Error(ctx.Tr("repo.settings.scrub_error"))
+		} else {
+			log.Trace("Repository scrubbed: %s/%s", ctx.Repo.Owner.Name, repo.Name)
+
+			units := make([]repo_model.RepoUnit, 0, len(repo.Units))
+			var deleteUnitTypes []unit_model.Type
+
+			for _, unit := range repo.Units {
+				if unit.Type != unit_model.TypeWiki {
+					units = append(units, *unit)
+				}
+			}
+			if err := repo_model.UpdateRepositoryUnits(repo, units, deleteUnitTypes); err != nil {
+				ctx.ServerError("UpdateRepositoryUnits", err)
+				return
+			}
+			ctx.Flash.Success(ctx.Tr("repo.settings.scrub_success"))
+		}
+		ctx.Redirect(ctx.Repo.RepoLink + "/settings")
+	/*** END DCS Customizations ***/
 
 	default:
 		ctx.NotFound("", nil)

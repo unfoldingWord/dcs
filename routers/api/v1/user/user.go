@@ -32,6 +32,10 @@ func Search(ctx *context.APIContext) {
 	//   description: ID of the user to search for
 	//   type: integer
 	//   format: int64
+	// - name: lang
+	//   in: query
+	//   description: If the user has one or more repos with the given language(s), the org will be in the results. Multiple lang's are ORed.
+	//   type: string
 	// - name: page
 	//   in: query
 	//   description: page number of results to return (1-based)
@@ -61,6 +65,9 @@ func Search(ctx *context.APIContext) {
 		UID:         ctx.FormInt64("uid"),
 		Type:        user_model.UserTypeIndividual,
 		ListOptions: listOptions,
+		// DCS Customizations
+		RepoLanguages: ctx.FormStrings("lang"),
+		// END DCS Customizations
 	})
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, map[string]interface{}{
@@ -75,7 +82,7 @@ func Search(ctx *context.APIContext) {
 
 	ctx.JSON(http.StatusOK, map[string]interface{}{
 		"ok":   true,
-		"data": convert.ToUsers(ctx.Doer, users),
+		"data": convert.ToUsersDCS(ctx.Doer, users), // DCS Customizations
 	})
 }
 
@@ -103,7 +110,7 @@ func GetInfo(ctx *context.APIContext) {
 		ctx.NotFound("GetUserByName", user_model.ErrUserNotExist{Name: ctx.Params(":username")})
 		return
 	}
-	ctx.JSON(http.StatusOK, convert.ToUser(ctx.ContextUser, ctx.Doer))
+	ctx.JSON(http.StatusOK, convert.ToUserDCS(ctx.ContextUser, ctx.Doer)) // DCS Customizations
 }
 
 // GetAuthenticatedUser get current user's information
@@ -117,7 +124,7 @@ func GetAuthenticatedUser(ctx *context.APIContext) {
 	//   "200":
 	//     "$ref": "#/responses/User"
 
-	ctx.JSON(http.StatusOK, convert.ToUser(ctx.Doer, ctx.Doer))
+	ctx.JSON(http.StatusOK, convert.ToUserDCS(ctx.Doer, ctx.Doer)) // DCS Customizations
 }
 
 // GetUserHeatmapData is the handler to get a users heatmap

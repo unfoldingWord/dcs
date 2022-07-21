@@ -12,6 +12,7 @@ import (
 	user_model "code.gitea.io/gitea/models/user"
 	"code.gitea.io/gitea/modules/notification/action"
 	"code.gitea.io/gitea/modules/notification/base"
+	"code.gitea.io/gitea/modules/notification/door43metadata" // DCS Customizations
 	"code.gitea.io/gitea/modules/notification/indexer"
 	"code.gitea.io/gitea/modules/notification/mail"
 	"code.gitea.io/gitea/modules/notification/ui"
@@ -37,6 +38,9 @@ func NewContext() {
 	RegisterNotifier(indexer.NewNotifier())
 	RegisterNotifier(webhook.NewNotifier())
 	RegisterNotifier(action.NewNotifier())
+	/*** DCS Customizations ***/
+	RegisterNotifier(door43metadata.NewNotifier())
+	/*** END DCS Customizations ***/
 }
 
 // NotifyCreateIssueComment notifies issue comment related message to notifiers

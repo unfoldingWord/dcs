@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"code.gitea.io/gitea/models/db"
+	"code.gitea.io/gitea/models/door43metadata"
 	"code.gitea.io/gitea/models/perm"
 	"code.gitea.io/gitea/models/unit"
 	user_model "code.gitea.io/gitea/models/user"
@@ -186,6 +187,15 @@ type SearchRepoOptions struct {
 	HasMilestones util.OptionalBool
 	// LowerNames represents valid lower names to restrict to
 	LowerNames []string
+	/*** DCS Customizations ***/
+	Owners    []string
+	Repos     []string
+	Subjects  []string
+	Books     []string
+	Languages []string
+	// include all metadata in keyword search
+	IncludeMetadata bool
+	/*** END DCS Customizations ***/
 }
 
 // SearchOrderBy is used to sort the result
@@ -389,7 +399,7 @@ func SearchRepositoryCondition(opts *SearchRepoOptions) builder.Cond {
 
 	// Restrict to starred repositories
 	if opts.StarredByID > 0 {
-		cond = cond.And(builder.In("id", builder.Select("repo_id").From("star").Where(builder.Eq{"uid": opts.StarredByID})))
+		cond = cond.And(builder.In("`repository`.id", builder.Select("repo_id").From("star").Where(builder.Eq{"uid": opts.StarredByID})))
 	}
 
 	// Restrict to watched repositories
@@ -456,11 +466,11 @@ func SearchRepositoryCondition(opts *SearchRepoOptions) builder.Cond {
 			Where(subQueryCond).
 			GroupBy("repo_topic.repo_id")
 
-		keywordCond := builder.In("id", subQuery)
+		keywordCond := builder.In("`repository`.id", subQuery)
 		if !opts.TopicOnly {
 			likes := builder.NewCond()
 			for _, v := range strings.Split(opts.Keyword, ",") {
-				likes = likes.Or(builder.Like{"lower_name", strings.ToLower(v)})
+				likes = likes.Or(builder.Like{"`repository`.lower_name", strings.ToLower(v)})
 
 				// If the string looks like "org/repo", match against that pattern too
 				if opts.TeamID == 0 && strings.Count(opts.Keyword, "/") == 1 {
@@ -471,8 +481,11 @@ func SearchRepositoryCondition(opts *SearchRepoOptions) builder.Cond {
 				}
 
 				if opts.IncludeDescription {
-					likes = likes.Or(builder.Like{"LOWER(description)", strings.ToLower(v)})
+					likes = likes.Or(builder.Like{"LOWER(`repository`.description)", strings.ToLower(v)})
 				}
+				/*** DCS Customizations ***/
+				likes = likes.Or(door43metadata.GetMetadataCondByDBType(setting.Database.Type, v, opts.IncludeMetadata))
+				/*** END DCS Customizations ***/
 			}
 			keywordCond = keywordCond.Or(likes)
 		}
@@ -508,6 +521,14 @@ func SearchRepositoryCondition(opts *SearchRepoOptions) builder.Cond {
 	case util.OptionalBoolFalse:
 		cond = cond.And(builder.Eq{"num_milestones": 0}.Or(builder.IsNull{"num_milestones"}))
 	}
+
+	/*** DCS Customizations ***/
+	cond = cond.And(door43metadata.GetRepoCond(opts.Repos, false),
+		door43metadata.GetOwnerCond(opts.Owners, false),
+		door43metadata.GetSubjectCond(opts.Subjects, false),
+		door43metadata.GetBookCond(opts.Books),
+		door43metadata.GetLanguageCond(opts.Languages, true))
+	/*** EMD DCS Customizations ***/
 
 	return cond
 }
@@ -575,6 +596,8 @@ func searchRepositoryByCondition(ctx context.Context, opts *SearchRepoOptions, c
 	if opts.PageSize > 0 {
 		var err error
 		count, err = sess.
+			Join("INNER", "user", "`user`.id = `repository`.owner_id").                                                          // DCS Customizations
+			Join("LEFT", "door43_metadata", "`door43_metadata`.repo_id = `repository`.id AND `door43_metadata`.release_id = 0"). // DCS Customizations
 			Where(cond).
 			Count(new(Repository))
 		if err != nil {
@@ -582,7 +605,13 @@ func searchRepositoryByCondition(ctx context.Context, opts *SearchRepoOptions, c
 		}
 	}
 
-	sess = sess.Where(cond).OrderBy(opts.OrderBy.String(), args...)
+	/*** DCS Customizations - changed line to multiple lines ***/
+	sess = sess.
+		Join("INNER", "user", "`user`.id = `repository`.owner_id").
+		Join("LEFT", "door43_metadata", "`door43_metadata`.repo_id = `repository`.id AND `door43_metadata`.release_id = 0").
+		Where(cond).
+		OrderBy(opts.OrderBy.String(), args...)
+	/*** END DCS Customizations - changed line to multiple lines ***/
 	if opts.PageSize > 0 {
 		sess = sess.Limit(opts.PageSize, (opts.Page-1)*opts.PageSize)
 	}
@@ -661,7 +690,7 @@ func SearchRepositoryIDs(opts *SearchRepoOptions) ([]int64, int64, error) {
 	}
 
 	ids := make([]int64, 0, defaultSize)
-	err = sess.Select("id").Table("repository").Find(&ids)
+	err = sess.Select("`repository`.id").Table("repository").Find(&ids) // DCS Customizations
 	if opts.PageSize <= 0 {
 		count = int64(len(ids))
 	}

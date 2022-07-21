@@ -55,6 +55,11 @@ type Notifier interface {
 	NotifySyncPushCommits(pusher *user_model.User, repo *repo_model.Repository, opts *repository.PushUpdateOptions, commits *repository.PushCommits)
 	NotifySyncCreateRef(doer *user_model.User, repo *repo_model.Repository, refType, refFullName, refID string)
 	NotifySyncDeleteRef(doer *user_model.User, repo *repo_model.Repository, refType, refFullName string)
+	/*** DCS Customizations ***/
+	NotifyNewDoor43Metadata(doer *user_model.User, repo *repo_model.Repository, refType, refFullName string)
+	NotifyUpdateDoor43Metadata(doer *user_model.User, repo *repo_model.Repository, refType, refFullName string)
+	NotifyDeleteDoor43Metadata(doer *user_model.User, repo *repo_model.Repository, refType, refFullName string)
+	/*** END DCS Customizations ***/
 	NotifyRepoPendingTransfer(doer, newOwner *user_model.User, repo *repo_model.Repository)
 	NotifyPackageCreate(doer *user_model.User, pd *packages_model.PackageDescriptor)
 	NotifyPackageDelete(doer *user_model.User, pd *packages_model.PackageDescriptor)

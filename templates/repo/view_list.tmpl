@@ -73,6 +73,11 @@
 							{{else}}
 								{{svg (printf "octicon-%s" (EntryIcon $entry))}}
 								<a href="{{$.TreeLink}}/{{PathEscapeSegments $entry.Name}}" title="{{$entry.Name}}">{{$entry.Name}}</a>
+								<!-- DCS Customizations -->
+								{{if or (StringHasSuffix $entry.Name ".yaml") (StringHasSuffix $entry.Name ".json")}}
+									{{template "repo/validation-errors" dict "file" $entry "root" $}}
+								{{end}}
+								<!-- END DCS Customizations -->
 							{{end}}
 						{{end}}
 					</span>

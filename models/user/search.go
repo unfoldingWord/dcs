@@ -35,6 +35,10 @@ type SearchUserOptions struct {
 	IsTwoFactorEnabled util.OptionalBool
 	IsProhibitLogin    util.OptionalBool
 
+	/*** DCS CUSTOMIZATIONS ***/
+	RepoLanguages []string // Find users that have the given language id in a repo's manifest
+	/*** END DCS CUSTOMIZATIONS ***/
+
 	ExtraParamStrings map[string]string
 }
 
@@ -142,6 +146,22 @@ func SearchUsers(opts *SearchUserOptions) (users []*User, _ int64, _ error) {
 	if opts.Page != 0 {
 		sessQuery = db.SetSessionPagination(sessQuery, opts)
 	}
+
+	/*** DCS Customizations ***/
+	if len(opts.RepoLanguages) > 0 {
+		langCond := builder.NewCond()
+		for _, lang := range opts.RepoLanguages {
+			for _, v := range strings.Split(lang, ",") {
+				langCond = langCond.Or(builder.Eq{"LOWER(REPLACE(JSON_EXTRACT(`door43_metadata`.metadata, '$.dublin_core.language.identifier'), '\"', ''))": strings.ToLower(v)})
+			}
+		}
+		metadataSelect := builder.Select("owner_id").
+			From("repository").
+			Join("INNER", "`door43_metadata`", "repo_id = `repository`.id").
+			Where(langCond)
+		sessQuery.In("`user`.id", metadataSelect)
+	}
+	/*** END DCS Customizations ***/
 
 	// the sql may contain JOIN, so we must only select User related columns
 	sessQuery = sessQuery.Select("`user`.*")

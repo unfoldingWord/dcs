@@ -288,9 +288,11 @@ func prepareRepoCommit(ctx context.Context, repo *repo_model.Repository, tmpDir,
 			return fmt.Errorf("GetRepoInitFile[%s]: %v", opts.License, err)
 		}
 
-		if err = os.WriteFile(filepath.Join(tmpDir, "LICENSE"), data, 0o644); err != nil {
+		/*** DCS Customizations - LICENSE => LICENSE.md ***/
+		if err = os.WriteFile(filepath.Join(tmpDir, "LICENSE.md"), data, 0o644); err != nil {
 			return fmt.Errorf("write LICENSE: %v", err)
 		}
+		/*** END DCS Customizations ***/
 	}
 
 	return nil

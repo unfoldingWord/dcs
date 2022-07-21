@@ -1,0 +1,70 @@
+//  DCS Customizations
+
+.markup.tsv {
+  padding: 10px;
+  overflow: scroll;
+
+  table.tsv {
+    border: 1px solid var(--color-secondary);
+
+    th,
+    td {
+      vertical-align: top;
+      line-height: normal !important;
+
+      &.line-num {
+        text-align: left;
+        color: var(--color-secondary-dark-2);
+      }
+
+      h1,
+      h2,
+      h3,
+      h4,
+      h5,
+      h6 {
+        margin: 0;
+        border-bottom: none;
+        white-space: nowrap;
+        line-height: normal;
+      }
+
+      ol,
+      ul {
+        display: flex;
+        flex-direction: column;
+      }
+
+      p,
+      ul,
+      ol {
+        margin: 0;
+      }
+    }
+  }
+}
+
+[data-direction="rtl"] {
+  direction: rtl;
+  text-align: right;
+}
+
+// This is for CSV/TSV diffs so that the modified text starts on new lines
+.data-table .modified span { display: inline-block; }
+
+.validation-message-trigger {
+  cursor: pointer;
+
+  .svg {
+    margin-right: 0 !important;
+    width: 14px !important;
+  }
+}
+
+.validation-message {
+  z-index: 100;
+
+  * {
+    z-index: 100;
+  }
+}
