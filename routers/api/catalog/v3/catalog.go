@@ -10,6 +10,7 @@ import (
 
 	"code.gitea.io/gitea/models"
 	"code.gitea.io/gitea/models/db"
+	"code.gitea.io/gitea/models/door43metadata"
 	"code.gitea.io/gitea/modules/context"
 	"code.gitea.io/gitea/modules/convert"
 	api "code.gitea.io/gitea/modules/structs"
@@ -84,7 +85,7 @@ func searchCatalog(ctx *context.APIContext) {
 		subjectQueryStrings[i] = strings.ReplaceAll(subject, "_", " ")
 	}
 
-	opts := &models.SearchCatalogOptions{
+	opts := &door43metadata.SearchCatalogOptions{
 		ListOptions:  listOptions,
 		Owners:       v5.QueryStrings(ctx, "owner"),
 		Repos:        v5.QueryStrings(ctx, "repo"),
@@ -224,14 +225,14 @@ func searchCatalogPivoted(ctx *context.APIContext) {
 		subjectQueryStrings[i] = strings.ReplaceAll(subject, "_", " ")
 	}
 
-	opts := &models.SearchCatalogOptions{
+	opts := &door43metadata.SearchCatalogOptions{
 		ListOptions:  listOptions,
 		Owners:       v5.QueryStrings(ctx, "owner"),
 		Repos:        v5.QueryStrings(ctx, "repo"),
 		Languages:    v5.QueryStrings(ctx, "lang"),
 		Subjects:     subjectQueryStrings,
 		PartialMatch: ctx.FormBool("partialMatch"),
-		OrderBy:      []models.CatalogOrderBy{models.CatalogOrderBySubject},
+		OrderBy:      []door43metadata.CatalogOrderBy{door43metadata.CatalogOrderBySubject},
 	}
 
 	prodDMs, err := models.QueryForCatalogV3(opts)

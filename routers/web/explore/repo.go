@@ -9,6 +9,7 @@ import (
 	"strings" // DCS Customizations
 
 	"code.gitea.io/gitea/models/db"
+	"code.gitea.io/gitea/models/door43metadata"
 	repo_model "code.gitea.io/gitea/models/repo"
 	"code.gitea.io/gitea/modules/base"
 	"code.gitea.io/gitea/modules/context"
@@ -82,7 +83,7 @@ func RenderRepoSearch(ctx *context.Context, opts *RepoSearchOptions) {
 	var books, langs, keywords, subjects, repoNames, owners []string
 	origKeyword := keyword
 	if keyword != "" {
-		for _, token := range models.SplitAtCommaNotInString(keyword, true) {
+		for _, token := range door43metadata.SplitAtCommaNotInString(keyword, true) {
 			if strings.HasPrefix(token, "book:") {
 				books = append(books, strings.TrimPrefix(token, "book:"))
 			} else if strings.HasPrefix(token, "lang:") {

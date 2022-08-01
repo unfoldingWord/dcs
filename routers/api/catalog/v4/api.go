@@ -89,8 +89,8 @@ func sudo() func(ctx *context.APIContext) {
 		}
 
 		if len(sudo) > 0 {
-			if ctx.IsSigned && ctx.ContextUser.IsAdmin {
-				user, err := user_model.GetUserByName(sudo)
+			if ctx.IsSigned && ctx.Doer.IsAdmin {
+				user, err := user_model.GetUserByName(ctx, sudo)
 				if err != nil {
 					if user_model.IsErrUserNotExist(err) {
 						ctx.NotFound()
@@ -99,8 +99,8 @@ func sudo() func(ctx *context.APIContext) {
 					}
 					return
 				}
-				log.Trace("Sudo from (%s) to: %s", ctx.ContextUser.Name, user.Name)
-				ctx.ContextUser = user
+				log.Trace("Sudo from (%s) to: %s", ctx.Doer.Name, user.Name)
+				ctx.Doer = user
 			} else {
 				ctx.JSON(http.StatusForbidden, map[string]string{
 					"message": "Only administrators allowed to sudo.",
@@ -122,10 +122,10 @@ func repoAssignment() func(ctx *context.APIContext) {
 		)
 
 		// Check if the user is the same as the repository owner.
-		if ctx.IsSigned && ctx.ContextUser.LowerName == strings.ToLower(userName) {
-			owner = ctx.ContextUser
+		if ctx.IsSigned && ctx.Doer.LowerName == strings.ToLower(userName) {
+			owner = ctx.Doer
 		} else {
-			owner, err = user_model.GetUserByName(userName)
+			owner, err = user_model.GetUserByName(ctx, userName)
 			if err != nil {
 				if user_model.IsErrUserNotExist(err) {
 					if redirectUserID, err := user_model.LookupUserRedirect(userName); err == nil {
@@ -142,6 +142,7 @@ func repoAssignment() func(ctx *context.APIContext) {
 			}
 		}
 		ctx.Repo.Owner = owner
+		ctx.ContextUser = owner
 
 		// Get repository.
 		repo, err := repo_model.GetRepositoryByName(owner.ID, repoName)
@@ -164,7 +165,7 @@ func repoAssignment() func(ctx *context.APIContext) {
 		repo.Owner = owner
 		ctx.Repo.Repository = repo
 
-		ctx.Repo.Permission, err = access_model.GetUserRepoPermission(ctx, repo, ctx.ContextUser)
+		ctx.Repo.Permission, err = access_model.GetUserRepoPermission(ctx, repo, ctx.Doer)
 		if err != nil {
 			ctx.Error(http.StatusInternalServerError, "GetUserRepoPermission", err)
 			return
