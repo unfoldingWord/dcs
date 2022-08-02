@@ -15,6 +15,7 @@ import (
 	"code.gitea.io/gitea/modules/setting"
 	api "code.gitea.io/gitea/modules/structs"
 	"code.gitea.io/gitea/modules/timeutil"
+	"code.gitea.io/gitea/modules/util"
 
 	"xorm.io/builder"
 )
@@ -122,6 +123,11 @@ func NewMilestone(m *Milestone) (err error) {
 		return err
 	}
 	return committer.Commit()
+}
+
+// HasMilestoneByRepoID returns if the milestone exists in the repository.
+func HasMilestoneByRepoID(ctx context.Context, repoID, id int64) (bool, error) {
+	return db.GetEngine(ctx).ID(id).Where("repo_id=?", repoID).Exist(new(Milestone))
 }
 
 // GetMilestoneByRepoID returns the milestone in a repository.
@@ -356,7 +362,11 @@ func (opts GetMilestonesOption) toCond() builder.Cond {
 	}
 
 	if len(opts.Name) != 0 {
-		cond = cond.And(builder.Like{"name", opts.Name})
+		if setting.Database.UseSQLite3 {
+			cond = cond.And(builder.Like{"UPPER(name)", util.ToUpperASCII(opts.Name)})
+		} else {
+			cond = cond.And(builder.Like{"UPPER(name)", strings.ToUpper(opts.Name)})
+		}
 	}
 
 	return cond

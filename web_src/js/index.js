@@ -55,6 +55,7 @@ import {
   initGlobalEnterQuickSubmit,
   initGlobalFormDirtyLeaveConfirm,
   initGlobalLinkActions,
+  initGlobalPopups,
   initHeadNavbarContentToggle,
 } from './features/common-global.js';
 import {initRepoTopicBar} from './features/repo-home.js';
@@ -103,6 +104,7 @@ initVueEnv();
 $(document).ready(() => {
   initGlobalCommon();
 
+  initGlobalPopups();
   initGlobalButtonClickOnEnter();
   initGlobalButtons();
   initGlobalCopyToClipboardListener();

@@ -141,6 +141,7 @@ func Dashboard(ctx *context.Context) {
 		OnlyPerformedBy: false,
 		IncludeDeleted:  false,
 		Date:            ctx.FormString("date"),
+		ListOptions:     db.ListOptions{PageSize: setting.UI.FeedPagingNum},
 	})
 	if err != nil {
 		ctx.ServerError("GetFeeds", err)
@@ -590,6 +591,7 @@ func buildIssueOverview(ctx *context.Context, unitType unit.Type) {
 			LabelIDs:   opts.LabelIDs,
 			Org:        org,
 			Team:       team,
+			RepoCond:   opts.RepoCond,
 		}
 
 		issueStats, err = issues_model.GetUserIssueStats(statsOpts)
