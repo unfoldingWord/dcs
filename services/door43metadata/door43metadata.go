@@ -7,10 +7,8 @@ package door43metadata
 import (
 	"bytes"
 	"context"
-	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"reflect"
 	"regexp"
@@ -26,6 +24,7 @@ import (
 	"code.gitea.io/gitea/modules/charset"
 	"code.gitea.io/gitea/modules/dcs"
 	"code.gitea.io/gitea/modules/git"
+	"code.gitea.io/gitea/modules/json"
 	"code.gitea.io/gitea/modules/log"
 	"code.gitea.io/gitea/modules/setting"
 	"code.gitea.io/gitea/modules/storage"
@@ -227,7 +226,7 @@ func GetBookAlignmentCount(bookPath string, commit *git.Commit) (int, error) {
 // GetAlignmentsCounts get all the alignment counts for all books
 func GetAlignmentsCounts(manifest *map[string]interface{}, commit *git.Commit) map[string]int {
 	counts := map[string]int{}
-	if (*manifest)["dublin_core"].(map[string]interface{})["subject"].(string) != "Aligned Bible" || len((*manifest)["projects"].([]interface{})) <= 0 {
+	if (*manifest)["dublin_core"].(map[string]interface{})["subject"].(string) != "Aligned Bible" || len((*manifest)["projects"].([]interface{})) == 0 {
 		return counts
 	}
 	for _, prod := range (*manifest)["projects"].([]interface{}) {
@@ -484,9 +483,9 @@ func GetAttachmentsFromJSON(attachment *repo_model.Attachment) ([]*repo_model.At
 		defer res.Body.Close()
 	}
 
-	body, err := ioutil.ReadAll(res.Body)
+	body, err := io.ReadAll(res.Body)
 	if err != nil {
-		return nil, fmt.Errorf("ioutil.ReadAll Error: %v", err)
+		return nil, fmt.Errorf("io.ReadAll Error: %v", err)
 	}
 	attachments := []*repo_model.Attachment{}
 	if err1 := json.Unmarshal(body, &attachments); err1 != nil {
