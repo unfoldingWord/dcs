@@ -477,7 +477,7 @@ func SearchRepositoryCondition(opts *SearchRepoOptions) builder.Cond {
 					pieces := strings.Split(opts.Keyword, "/")
 					ownerName := pieces[0]
 					repoName := pieces[1]
-					likes = likes.Or(builder.And(builder.Like{"owner_name", strings.ToLower(ownerName)}, builder.Like{"lower_name", strings.ToLower(repoName)}))
+					likes = likes.Or(builder.And(builder.Like{"owner_name", strings.ToLower(ownerName)}, builder.Like{"`repository`.lower_name", strings.ToLower(repoName)}))
 				}
 
 				if opts.IncludeDescription {
@@ -730,7 +730,7 @@ func GetUserRepositories(opts *SearchRepoOptions) (RepositoryList, int64, error)
 	}
 
 	if opts.LowerNames != nil && len(opts.LowerNames) > 0 {
-		cond = cond.And(builder.In("lower_name", opts.LowerNames))
+		cond = cond.And(builder.In("`repository`.lower_name", opts.LowerNames))
 	}
 
 	sess := db.GetEngine(db.DefaultContext)
