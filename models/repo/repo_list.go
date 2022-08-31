@@ -610,7 +610,7 @@ func searchRepositoryByCondition(ctx context.Context, opts *SearchRepoOptions, c
 		Join("INNER", "user", "`user`.id = `repository`.owner_id").
 		Join("LEFT", "door43_metadata", "`door43_metadata`.repo_id = `repository`.id AND `door43_metadata`.release_id = 0").
 		Where(cond).
-		OrderBy(opts.OrderBy.String(), args...)
+		OrderBy("`repository`."+opts.OrderBy.String(), args...)
 	/*** END DCS Customizations - changed line to multiple lines ***/
 	if opts.PageSize > 0 {
 		sess = sess.Limit(opts.PageSize, (opts.Page-1)*opts.PageSize)
