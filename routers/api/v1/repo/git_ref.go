@@ -289,7 +289,7 @@ func updateReference(ctx *context.APIContext, ref, target string) error {
 	}
 
 	if strings.HasPrefix(ref, "refs/pull/") {
-		err := fmt.Errorf("refs/pull/* is read-only.")
+		err := fmt.Errorf("refs/pull/* is read-only")
 		ctx.Error(http.StatusUnprocessableEntity, "reference is read-only'", err)
 		return err
 	}
