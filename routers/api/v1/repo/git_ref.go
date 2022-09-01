@@ -288,6 +288,12 @@ func updateReference(ctx *context.APIContext, ref, target string) error {
 		return err
 	}
 
+	if strings.HasPrefix(ref, "refs/pull/") {
+		err := fmt.Errorf("refs/pull/* is read-only.")
+		ctx.Error(http.StatusUnprocessableEntity, "reference is read-only'", err)
+		return err
+	}
+
 	if !userCanModifyRef(ctx, ref) {
 		err := fmt.Errorf("user not allowed to modify a this reference: %s", ref)
 		ctx.Error(http.StatusMethodNotAllowed, "user not allowed", err)
