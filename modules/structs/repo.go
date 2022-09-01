@@ -92,16 +92,30 @@ type Repository struct {
 	DefaultMergeStyle         string           `json:"default_merge_style"`
 	AvatarURL                 string           `json:"avatar_url"`
 	Internal                  bool             `json:"internal"`
-	Language                  string           `json:"language"`
-	Subject                   string           `json:"subject"`
-	Books                     []string         `json:"books"`
-	Title                     string           `json:"title"`
-	CheckingLevel             string           `json:"checking_level"`
-	Catalog                   *CatalogStages   `json:"catalog"`
 	MirrorInterval            string           `json:"mirror_interval"`
 	// swagger:strfmt date-time
 	MirrorUpdated time.Time     `json:"mirror_updated,omitempty"`
 	RepoTransfer  *RepoTransfer `json:"repo_transfer"`
+	// language from the manifest
+	Language string `json:"language"` // DCS Customiations
+	// language title from the manifest
+	LanguageTitle string `json:"language_title"` // DCS Customiations
+	// language direction from the manifest
+	LanguageDir string `json:"language_direction"` // DCS Customiations
+	// is the language a GL
+	LanguageIsGL bool `json:"language_is_gl"` // DCS Customiations
+	// subject from the manifest
+	Subject string `json:"subject"` // DCS Customiations
+	// project IDs from the manifest
+	Books []string `json:"books,omitempty"` // DCS Customiations
+	// the count of alignments of each book
+	AlignmentCounts map[string]interface{} `json:"alignment_counts,omitempty"` // DCS Customiations
+	// title from the manifest
+	Title string `json:"title"` // DCS Customiations
+	// checking level from the manifest
+	CheckingLevel string `json:"checking_level"` // DCS Customiations
+	// latest catalog entry of each stage
+	Catalog *CatalogStages `json:"catalog"` // DCS Customiations
 }
 
 // CreateRepoOption options when creating repository

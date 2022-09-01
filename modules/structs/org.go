@@ -15,10 +15,10 @@ type Organization struct {
 	Location                  string `json:"location"`
 	Visibility                string `json:"visibility"`
 	RepoAdminChangeTeamAccess bool   `json:"repo_admin_change_team_access"`
-	/*** DCS Customizations ***/
-	RepoLanguages []string `json:"repo_languages"`
-	RepoSubjects  []string `json:"repo_subjects"`
-	/*** END DCS Customizations ***/
+	// All languages of the repos the org owns
+	RepoLanguages []string `json:"repo_languages"` // DCS Customizations
+	// All subjects of the repos the org owns
+	RepoSubjects []string `json:"repo_subjects"` // DCS Customizations
 }
 
 // OrganizationPermissions list different users permissions on an organization
