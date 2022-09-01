@@ -172,4 +172,10 @@ type swaggerParameterBodies struct {
 
 	// in:body
 	CreateWikiPageOptions api.CreateWikiPageOptions
+
+	// in:body
+	CreateGitRefOption api.CreateGitRefOption
+
+	// in:body
+	UpdateGitRefOption api.UpdateGitRefOption
 }

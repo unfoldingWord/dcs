@@ -3795,6 +3795,57 @@
             "$ref": "#/responses/notFound"
           }
         }
+      },
+      "post": {
+        "description": "Creates a reference for your repository. You are unable to create new references for empty repositories, even if the commit SHA-1 hash used exists. Empty repositories are repositories without branches.",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "repository"
+        ],
+        "summary": "Create a reference",
+        "operationId": "repoCreateGitRef",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "owner of the repo",
+            "name": "owner",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "description": "name of the repo",
+            "name": "repo",
+            "in": "path",
+            "required": true
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "schema": {
+              "$ref": "#/definitions/CreateGitRefOption"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "$ref": "#/responses/Reference"
+          },
+          "404": {
+            "$ref": "#/responses/notFound"
+          },
+          "409": {
+            "description": "The git ref with the same name already exists."
+          },
+          "422": {
+            "description": "Unable to form reference"
+          }
+        }
       }
     },
     "/repos/{owner}/{repo}/git/refs/{ref}": {
@@ -3833,6 +3884,107 @@
         "responses": {
           "200": {
             "$ref": "#/responses/ReferenceList"
+          },
+          "404": {
+            "$ref": "#/responses/notFound"
+          }
+        }
+      },
+      "delete": {
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "repository"
+        ],
+        "summary": "Delete a reference",
+        "operationId": "repoDeleteGitRef",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "owner of the repo",
+            "name": "owner",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "description": "name of the repo",
+            "name": "repo",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "description": "name of the ref to be deleted",
+            "name": "ref",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "204": {
+            "$ref": "#/responses/empty"
+          },
+          "404": {
+            "$ref": "#/responses/notFound"
+          },
+          "405": {
+            "$ref": "#/responses/error"
+          },
+          "409": {
+            "$ref": "#/responses/conflict"
+          }
+        }
+      },
+      "patch": {
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "repository"
+        ],
+        "summary": "Update a reference",
+        "operationId": "repoUpdateGitRef",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "owner of the repo",
+            "name": "owner",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "description": "name of the repo",
+            "name": "repo",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "description": "name of the ref to update",
+            "name": "ref",
+            "in": "path",
+            "required": true
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "schema": {
+              "$ref": "#/definitions/UpdateGitRefOption"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/Reference"
           },
           "404": {
             "$ref": "#/responses/notFound"
@@ -9420,7 +9572,7 @@
           }
         ],
         "responses": {
-          "200": {
+          "201": {
             "$ref": "#/responses/Tag"
           },
           "404": {
@@ -13602,6 +13754,27 @@
         "armored_signature": {
           "type": "string",
           "x-go-name": "Signature"
+        }
+      },
+      "x-go-package": "code.gitea.io/gitea/modules/structs"
+    },
+    "CreateGitRefOption": {
+      "description": "CreateGitRefOption options when creating a git ref in a repository",
+      "type": "object",
+      "required": [
+        "ref",
+        "target"
+      ],
+      "properties": {
+        "ref": {
+          "description": "The name of the reference.",
+          "type": "string",
+          "x-go-name": "Ref"
+        },
+        "target": {
+          "description": "The target commitish for this reference.",
+          "type": "string",
+          "x-go-name": "Target"
         }
       },
       "x-go-package": "code.gitea.io/gitea/modules/structs"
@@ -17974,6 +18147,21 @@
       },
       "x-go-package": "code.gitea.io/gitea/modules/structs"
     },
+    "UpdateGitRefOption": {
+      "description": "UpdateGitRefOption options when updating a git ref in a repository",
+      "type": "object",
+      "required": [
+        "target"
+      ],
+      "properties": {
+        "target": {
+          "description": "The target commitish for the reference to be updated to.",
+          "type": "string",
+          "x-go-name": "Target"
+        }
+      },
+      "x-go-package": "code.gitea.io/gitea/modules/structs"
+    },
     "User": {
       "description": "User represents a user",
       "type": "object",
@@ -19101,7 +19289,7 @@
     "parameterBodies": {
       "description": "parameterBodies",
       "schema": {
-        "$ref": "#/definitions/CreateWikiPageOptions"
+        "$ref": "#/definitions/UpdateGitRefOption"
       }
     },
     "redirect": {
