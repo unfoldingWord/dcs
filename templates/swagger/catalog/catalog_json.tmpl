@@ -1937,7 +1937,7 @@
           "x-go-name": "RepoAdminChangeTeamAccess"
         },
         "repo_languages": {
-          "description": "DCS Customizations ***/",
+          "description": "All languages of the repos the org owns",
           "type": "array",
           "items": {
             "type": "string"
@@ -1945,6 +1945,7 @@
           "x-go-name": "RepoLanguages"
         },
         "repo_subjects": {
+          "description": "All subjects of the repos the org owns",
           "type": "array",
           "items": {
             "type": "string"
@@ -2082,6 +2083,7 @@
       "type": "object",
       "properties": {
         "alignment_counts": {
+          "description": "the count of alignments of each book",
           "type": "object",
           "additionalProperties": {
             "type": "object"
@@ -2113,6 +2115,7 @@
           "x-go-name": "AvatarURL"
         },
         "books": {
+          "description": "project IDs from the manifest",
           "type": "array",
           "items": {
             "type": "string"
@@ -2123,6 +2126,7 @@
           "$ref": "#/definitions/CatalogStages"
         },
         "checking_level": {
+          "description": "checking level from the manifest",
           "type": "string",
           "x-go-name": "CheckingLevel"
         },
@@ -2207,19 +2211,22 @@
           "$ref": "#/definitions/InternalTracker"
         },
         "language": {
-          "description": "DCS Customizations ***/",
+          "description": "language from the manifest",
           "type": "string",
           "x-go-name": "Language"
         },
         "language_direction": {
+          "description": "language direction from the manifest",
           "type": "string",
           "x-go-name": "LanguageDir"
         },
         "language_is_gl": {
+          "description": "is the language a GL",
           "type": "boolean",
           "x-go-name": "LanguageIsGL"
         },
         "language_title": {
+          "description": "language title from the manifest",
           "type": "string",
           "x-go-name": "LanguageTitle"
         },
@@ -2290,6 +2297,7 @@
           "x-go-name": "Stars"
         },
         "subject": {
+          "description": "subject from the manifest",
           "type": "string",
           "x-go-name": "Subject"
         },
@@ -2298,6 +2306,7 @@
           "x-go-name": "Template"
         },
         "title": {
+          "description": "title from the manifest",
           "type": "string",
           "x-go-name": "Title"
         },
@@ -2467,7 +2476,7 @@
           "x-go-name": "ProhibitLogin"
         },
         "repo_languages": {
-          "description": "DCS Customizations ***/\nRepo languages",
+          "description": "Repo languages",
           "type": "array",
           "items": {
             "type": "string"
@@ -2483,7 +2492,7 @@
           "x-go-name": "RepoSubjects"
         },
         "restricted": {
-          "description": "END DCS Customizations ***/\nIs user restricted",
+          "description": "Is user restricted",
           "type": "boolean",
           "x-go-name": "Restricted"
         },
