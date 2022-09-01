@@ -281,6 +281,7 @@ func DeleteGitRef(ctx *context.APIContext) {
 	ctx.Status(http.StatusNoContent)
 }
 
+// updateReference is used for Create,Update and Deletion of a reference, checking for format, permissions and special cases
 func updateReference(ctx *context.APIContext, ref, target string) error {
 	if !strings.HasPrefix(ref, "refs/") {
 		err := fmt.Errorf("reference must start with 'refs/'")
@@ -300,6 +301,8 @@ func updateReference(ctx *context.APIContext, ref, target string) error {
 		return err
 	}
 
+	// If target is not empty, we update a ref (will create new one if doesn't exist),
+	//   else if target is empty, we delete the ref.
 	if target != "" {
 		commitID, err := ctx.Repo.GitRepo.GetRefCommitID(target)
 		if err != nil {
@@ -329,6 +332,7 @@ func updateReference(ctx *context.APIContext, ref, target string) error {
 	return nil
 }
 
+// userCanModifyRef checks based on the reference prefix if the user can modify the reference
 func userCanModifyRef(ctx *context.APIContext, ref string) bool {
 	refPrefix, refName := git.SplitRefName(ref)
 	if refPrefix == "refs/tags/" {
