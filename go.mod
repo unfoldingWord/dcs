@@ -3,6 +3,7 @@ module code.gitea.io/gitea
 go 1.18
 
 require (
+	cloud.google.com/go v0.99.0 // indirect
 	code.gitea.io/gitea-vet v0.2.2-0.20220122151748-48ebc902541b
 	code.gitea.io/sdk/gitea v0.15.1
 	gitea.com/go-chi/binding v0.0.0-20220309004920-114340dabecb
@@ -107,7 +108,6 @@ require (
 )
 
 require (
-	cloud.google.com/go v0.99.0 // indirect
 	github.com/Azure/go-ntlmssp v0.0.0-20211209120228-48547f28849e // indirect
 	github.com/Microsoft/go-winio v0.5.2 // indirect
 	github.com/ProtonMail/go-crypto v0.0.0-20220407094043-a94812496cf5 // indirect
