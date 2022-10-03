@@ -25,8 +25,8 @@ func TestMain(m *testing.M) {
 func TestGitRef_Get(t *testing.T) {
 	assert.NoError(t, unittest.PrepareTestDatabase())
 
-	user := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: 2})
-	repo := unittest.AssertExistsAndLoadBean(t, &repo_model.Repository{ID: 1})
+	user := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: 2}).(*user_model.User)
+	repo := unittest.AssertExistsAndLoadBean(t, &repo_model.Repository{ID: 1}).(*repo_model.Repository)
 	repoPath := repo_model.RepoPath(user.Name, repo.Name)
 
 	gitRepo, err := git.OpenRepository(git.DefaultContext, repoPath)
