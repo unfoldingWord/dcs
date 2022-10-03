@@ -24,11 +24,11 @@
 			{{$langDir := ""}}
 			{{$langIsGL := false}}
 			{{ if $dm }}
-				{{$lang := $dm.Metadata.dublin_core.language.identifier}}
-				{{$langTitle := $dm.Metadata.dublin_core.language.title}}
-				{{$langDir := $dm.Metadata.dublin_core.language.direction}}
-				{{$langTitle := $dm.Metadata.dublin_core.language.title}}
-				{{$langIsGL := $dm.Metadata.dublin_core.language.is_gl}}
+				{{$lang = $dm.Metadata.dublin_core.language.identifier}}
+				{{$langTitle = $dm.Metadata.dublin_core.language.title}}
+				{{$langDir = $dm.Metadata.dublin_core.language.direction}}
+				{{$langTitle = $dm.Metadata.dublin_core.language.title}}
+				{{$langIsGL = $dm.Metadata.dublin_core.language.is_gl}}
 			{{ else }}
 				{{$lang = (GetLanguageFromRepoName .Repository.Name)}}
 				{{ if $lang }}
