@@ -556,6 +556,10 @@ func searchRepositoryByCondition(ctx context.Context, opts *SearchRepoOptions, c
 		opts.OrderBy = db.SearchOrderByAlphabetically
 	}
 
+	/*** DCS Customizations - Since we join with more tables we need to prefix the OrderBy with `repository` ***/
+	opts.OrderBy = "`repository`." + opts.OrderBy
+	/*** END DCS Customizaitons ***/
+
 	args := make([]interface{}, 0)
 	if opts.PriorityOwnerID > 0 {
 		opts.OrderBy = db.SearchOrderBy(fmt.Sprintf("CASE WHEN owner_id = ? THEN 0 ELSE owner_id END, %s", opts.OrderBy))
@@ -582,13 +586,13 @@ func searchRepositoryByCondition(ctx context.Context, opts *SearchRepoOptions, c
 		}
 	}
 
-	/*** DCS Customizations - changed line to multiple lines ***/
+	/*** DCS Customizations - adds tables needed for Door43 Metadata ***/
 	sess = sess.
 		Join("INNER", "user", "`user`.id = `repository`.owner_id").
-		Join("LEFT", "door43_metadata", "`door43_metadata`.repo_id = `repository`.id AND `door43_metadata`.release_id = 0").
-		Where(cond).
-		OrderBy("`repository`."+opts.OrderBy.String(), args...)
-	/*** END DCS Customizations - changed line to multiple lines ***/
+		Join("LEFT", "door43_metadata", "`door43_metadata`.repo_id = `repository`.id AND `door43_metadata`.release_id = 0")
+	/*** END DCS Customizations ***/
+
+	sess = sess.Where(cond).OrderBy(opts.OrderBy.String(), args...)
 	if opts.PageSize > 0 {
 		sess = sess.Limit(opts.PageSize, (opts.Page-1)*opts.PageSize)
 	}
