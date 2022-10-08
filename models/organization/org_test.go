@@ -341,8 +341,8 @@ func TestAccessibleReposEnv_Repos(t *testing.T) {
 		}
 		assert.Equal(t, expectedRepos, repos)
 	}
-	testSuccess(2, []int64{3, 5, 32})
-	testSuccess(4, []int64{3, 32})
+	testSuccess(2, []int64{3})
+	testSuccess(4, []int64{32})
 }
 
 func TestAccessibleReposEnv_MirrorRepos(t *testing.T) {
