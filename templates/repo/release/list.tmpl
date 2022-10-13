@@ -95,7 +95,6 @@
 								<span class="ui red label" title="{{$.i18n.Tr "repo.metadata.invalid_manifest_tooltip"}}" style="margin-top: 10px"><a href="{{$.RepoLink}}/src/tag/{{.TagName | PathEscapeSegments}}/manifest.yaml" rel="nofollow" style="opacity: inherit #important">{{$.i18n.Tr "repo.metadata.invalid"}} ({{$stage}})</a></span>
 							{{end}}
 							<!-- END DCS Customizations -->
-							{{if not .IsDraft}}
 							{{if .Sha1}}
 								<span class="commit">
 									<a class="mono" href="{{$.RepoLink}}/src/commit/{{.Sha1}}" rel="nofollow">{{svg "octicon-git-commit" 16 "mr-2"}}{{ShortSha .Sha1}}</a>
