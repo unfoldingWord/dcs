@@ -139,9 +139,9 @@ SWAGGER_EXCLUDE := code.gitea.io/sdk
 SWAGGER_NEWLINE_COMMAND := -e '$$a\'
 # DCS Customizations
 SWAGGER_CATALOG_SPEC := templates/swagger/catalog/catalog_json.tmpl
-SWAGGER_CATALOG_SPEC_S_TMPL := s|"basePath": *"/api/catalog"|"basePath": "{{AppSubUrl \| JSEscape \| Safe}}/api/catalog"|g
-SWAGGER_CATALOG_SPEC_S_JSON := s|"basePath": *"{{AppSubUrl \| JSEscape \| Safe}}/api/catalog"|"basePath": "/api/catalog"|g
-SWAGGER_CATALOG_EXCLUDE := code.gitea.io/sdk" -x "code.gitea.io/gitea/routers/api/v1
+SWAGGER_CATALOG_SPEC_S_TMPL := s|"basePath": *"/api/catalog"|"basePath": "{{AppSubUrl \| JSEscape \| Safe}}/api/catalog/v5"|g
+SWAGGER_CATALOG_SPEC_S_JSON := s|"basePath": *"{{AppSubUrl \| JSEscape \| Safe}}/api/catalog"|"basePath": "/api/catalog/v5"|g
+SWAGGER_CATALOG_EXCLUDE := code.gitea.io/sdk" -x "code.gitea.io/gitea/routers/api/v1" -x "code.gitea.io/gitea/routers/api/catalog/v3" -x "code.gitea.io/gitea/routers/api/catalog/v4
 SWAGGER_EXCLUDE := code.gitea.io/sdk" -x "code.gitea.io/gitea/routers/api/catalog
 # END DCS Customizations
 

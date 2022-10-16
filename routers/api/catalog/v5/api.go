@@ -4,11 +4,11 @@
 
 // Package v5 Catalog Next v5 API.
 //
-// This documentation describes the DCS Catalog Next v5 API.
+// This documentation describes the DCS Catalog API.
 //
 //     Schemes: http, https
-//     BasePath: /api/catalog/v5
-//     Version: 4.0.1
+//     BasePath: /api/v1
+//     Version: {{AppVer | JSEscape | Safe}}
 //     License: MIT http://opensource.org/licenses/MIT
 //
 //     Consumes:
