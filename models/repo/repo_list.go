@@ -466,22 +466,22 @@ func SearchRepositoryCondition(opts *SearchRepoOptions) builder.Cond {
 			Where(subQueryCond).
 			GroupBy("repo_topic.repo_id")
 
-		keywordCond := builder.In("`repository`.id", subQuery)
+		keywordCond := builder.In("`repository`.id", subQuery) // DCS Customizations - adds `repository`.
 		if !opts.TopicOnly {
 			likes := builder.NewCond()
 			for _, v := range strings.Split(opts.Keyword, ",") {
-				likes = likes.Or(builder.Like{"`repository`.lower_name", strings.ToLower(v)})
+				likes = likes.Or(builder.Like{"`repository`.lower_name", strings.ToLower(v)}) // DCS Customizations - adds `repository`.
 
 				// If the string looks like "org/repo", match against that pattern too
 				if opts.TeamID == 0 && strings.Count(opts.Keyword, "/") == 1 {
 					pieces := strings.Split(opts.Keyword, "/")
 					ownerName := pieces[0]
 					repoName := pieces[1]
-					likes = likes.Or(builder.And(builder.Like{"owner_name", strings.ToLower(ownerName)}, builder.Like{"`repository`.lower_name", strings.ToLower(repoName)}))
+					likes = likes.Or(builder.And(builder.Like{"owner_name", strings.ToLower(ownerName)}, builder.Like{"`repository`.lower_name", strings.ToLower(repoName)})) // DCS Customizations - adds `repository`.
 				}
 
 				if opts.IncludeDescription {
-					likes = likes.Or(builder.Like{"LOWER(`repository`.description)", strings.ToLower(v)})
+					likes = likes.Or(builder.Like{"LOWER(`repository`.description)", strings.ToLower(v)}) // DCS Customizations - adds `repository`.
 				}
 				/*** DCS Customizations ***/
 				likes = likes.Or(door43metadata.GetMetadataCondByDBType(setting.Database.Type, v, opts.IncludeMetadata))
@@ -493,7 +493,8 @@ func SearchRepositoryCondition(opts *SearchRepoOptions) builder.Cond {
 	}
 
 	if opts.Language != "" {
-		cond = cond.And(builder.In("id", builder.
+		// DCS Customizations - Adds `repository`.
+		cond = cond.And(builder.In("`repository`.id", builder.
 			Select("repo_id").
 			From("language_stat").
 			Where(builder.Eq{"language": opts.Language}).And(builder.Eq{"is_primary": true})))
@@ -600,7 +601,6 @@ func searchRepositoryByCondition(ctx context.Context, opts *SearchRepoOptions, c
 	if opts.PageSize > 0 {
 		var err error
 		count, err = sess.
-			Join("INNER", "user", "`user`.id = `repository`.owner_id").                                                          // DCS Customizations
 			Join("LEFT", "door43_metadata", "`door43_metadata`.repo_id = `repository`.id AND `door43_metadata`.release_id = 0"). // DCS Customizations
 			Where(cond).
 			Count(new(Repository))
@@ -611,7 +611,6 @@ func searchRepositoryByCondition(ctx context.Context, opts *SearchRepoOptions, c
 
 	/*** DCS Customizations - adds tables needed for Door43 Metadata ***/
 	sess = sess.
-		Join("INNER", "user", "`user`.id = `repository`.owner_id").
 		Join("LEFT", "door43_metadata", "`door43_metadata`.repo_id = `repository`.id AND `door43_metadata`.release_id = 0")
 	/*** END DCS Customizations ***/
 
@@ -734,7 +733,7 @@ func GetUserRepositories(opts *SearchRepoOptions) (RepositoryList, int64, error)
 	}
 
 	if opts.LowerNames != nil && len(opts.LowerNames) > 0 {
-		cond = cond.And(builder.In("`repository`.lower_name", opts.LowerNames))
+		cond = cond.And(builder.In("lower_name", opts.LowerNames))
 	}
 
 	sess := db.GetEngine(db.DefaultContext)
