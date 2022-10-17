@@ -1275,7 +1275,6 @@ func RegisterRoutes(m *web.Route) {
 
 	if setting.API.EnableSwagger {
 		m.Get("/swagger.v1.json", SwaggerV1Json)
-		m.Get("/swagger.catalog.json", SwaggerCatalogJSON)
 	}
 
 	/*** DCS Customizations ***/
