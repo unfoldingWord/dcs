@@ -12,14 +12,14 @@ import (
 // swagger:response CatalogSearchResults
 type swaggerResponseCatalogSearchResults struct {
 	// in:body
-	Body api.CatalogSearchResultsV5 `json:"body"`
+	Body api.CatalogSearchResults `json:"body"`
 }
 
 // CatalogEntry
 // swagger:response CatalogEntry
 type swaggerResponseCatalogEntry struct {
 	// in:body
-	Body api.CatalogV5 `json:"body"`
+	Body api.CatalogEntry `json:"body"`
 }
 
 // CatalogMetadata

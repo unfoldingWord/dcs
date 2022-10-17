@@ -2,7 +2,7 @@
 // Use of this source code is governed by a MIT-style
 // license that can be found in the LICENSE file.
 
-package v5
+package catalog
 
 import (
 	"fmt"
@@ -48,7 +48,7 @@ var searchOrderByMap = map[string]map[string]door43metadata.CatalogOrderBy{
 
 // Search search the catalog via options
 func Search(ctx *context.APIContext) {
-	// swagger:operation GET /search catalog catalogSearch
+	// swagger:operation GET /catalog/search catalog catalogSearch
 	// ---
 	// summary: Catalog search
 	// produces:
@@ -140,7 +140,7 @@ func Search(ctx *context.APIContext) {
 
 // SearchOwner search the catalog via owner and via options
 func SearchOwner(ctx *context.APIContext) {
-	// swagger:operation GET /search/{owner} catalog catalogSearchOwner
+	// swagger:operation GET /catalog/search/{owner} catalog catalogSearchOwner
 	// ---
 	// summary: Catalog search by owner
 	// produces:
@@ -233,7 +233,7 @@ func SearchOwner(ctx *context.APIContext) {
 
 // SearchRepo search the catalog via repo and options
 func SearchRepo(ctx *context.APIContext) {
-	// swagger:operation GET /search/{owner}/{repo} catalog catalogSearchRepo
+	// swagger:operation GET /catalog/search/{owner}/{repo} catalog catalogSearchRepo
 	// ---
 	// summary: Catalog search by repo
 	// produces:
@@ -335,7 +335,7 @@ func SearchRepo(ctx *context.APIContext) {
 
 // GetCatalogEntry Get the catalog entry from the given ownername, reponame and ref
 func GetCatalogEntry(ctx *context.APIContext) {
-	// swagger:operation GET /entry/{owner}/{repo}/{tag} catalog catalogGetEntry
+	// swagger:operation GET /catalog/entry/{owner}/{repo}/{tag} catalog catalogGetEntry
 	// ---
 	// summary: Catalog entry
 	// produces:
@@ -385,12 +385,12 @@ func GetCatalogEntry(ctx *context.APIContext) {
 			Error: err.Error(),
 		})
 	}
-	ctx.JSON(http.StatusOK, convert.ToCatalogV5(dm, accessMode))
+	ctx.JSON(http.StatusOK, convert.ToCatalogEntry(dm, accessMode))
 }
 
 // GetCatalogMetadata Get the metadata (RC 0.2.0 manifest) in JSON format for the given ownername, reponame and ref
 func GetCatalogMetadata(ctx *context.APIContext) {
-	// swagger:operation GET /entry/{owner}/{repo}/{tag}/metadata catalog catalogGetMetadata
+	// swagger:operation GET /catalog/entry/{owner}/{repo}/{tag}/metadata catalog catalogGetMetadata
 	// ---
 	// summary: Catalog entry metadata (manifest.yaml in JSON format)
 	// produces:
@@ -530,7 +530,7 @@ func searchCatalog(ctx *context.APIContext) {
 		return
 	}
 
-	results := make([]*api.CatalogV5, len(dms))
+	results := make([]*api.CatalogEntry, len(dms))
 	var lastUpdated time.Time
 	for i, dm := range dms {
 		accessMode, err := access_model.AccessLevel(ctx.ContextUser, dm.Repo)
@@ -540,7 +540,7 @@ func searchCatalog(ctx *context.APIContext) {
 				Error: err.Error(),
 			})
 		}
-		dmAPI := convert.ToCatalogV5(dm, accessMode)
+		dmAPI := convert.ToCatalogEntry(dm, accessMode)
 		if !opts.ShowIngredients {
 			dmAPI.Ingredients = nil
 		}
@@ -560,7 +560,7 @@ func searchCatalog(ctx *context.APIContext) {
 		ctx.SetLinkHeader(int(count), int(count))
 	}
 	ctx.RespHeader().Set("X-Total-Count", fmt.Sprintf("%d", count))
-	ctx.JSON(http.StatusOK, api.CatalogSearchResultsV5{
+	ctx.JSON(http.StatusOK, api.CatalogSearchResults{
 		OK:          true,
 		Data:        results,
 		LastUpdated: lastUpdated,

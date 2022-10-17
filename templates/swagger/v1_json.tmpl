@@ -561,6 +561,479 @@
         }
       }
     },
+    "/catalog/entry/{owner}/{repo}/{tag}": {
+      "get": {
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "catalog"
+        ],
+        "summary": "Catalog entry",
+        "operationId": "catalogGetEntry",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "name of the owner",
+            "name": "owner",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "description": "name of the repo",
+            "name": "repo",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "description": "release tag or default branch",
+            "name": "tag",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/CatalogEntry"
+          },
+          "422": {
+            "$ref": "#/responses/validationError"
+          }
+        }
+      }
+    },
+    "/catalog/entry/{owner}/{repo}/{tag}/metadata": {
+      "get": {
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "catalog"
+        ],
+        "summary": "Catalog entry metadata (manifest.yaml in JSON format)",
+        "operationId": "catalogGetMetadata",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "name of the owner",
+            "name": "owner",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "description": "name of the repo",
+            "name": "repo",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "description": "release tag or default branch",
+            "name": "tag",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/CatalogMetadata"
+          },
+          "422": {
+            "$ref": "#/responses/validationError"
+          }
+        }
+      }
+    },
+    "/catalog/search": {
+      "get": {
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "catalog"
+        ],
+        "summary": "Catalog search",
+        "operationId": "catalogSearch",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "keyword(s). Can use multiple `q=\u003ckeyword\u003e`s or a comma-delimited string for more than one keyword. Is case insensitive",
+            "name": "q",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "description": "search only for entries with the given owner name(s). Will perform an exact match (case insensitive) unlesss partialMatch=true",
+            "name": "owner",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "description": "search only for entries with the given repo name(s). To match multiple, give the parameter multiple times or give a list comma delimited. Will perform an exact match (case insensitive) unlesss partialMatch=true",
+            "name": "repo",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "description": "search only for entries with the given release tag(s). To match multiple, give the parameter multiple times or give a list comma delimited. Will perform an exact match (case insensitive)",
+            "name": "tag",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "description": "search only for entries with the given language(s). To match multiple, give the parameter multiple times or give a list comma delimited. Will perform an exact match (case insensitive) unlesss partialMatch=true",
+            "name": "lang",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "description": "specifies which release stage to be return of these stages: \"prod\" - return only the production releases (default); \"preprod\" - return the pre-production release if it exists instead of the production release; \"draft\" - return the draft release if it exists instead of pre-production or production release; \"latest\" -return the default branch (e.g. master) if it is a valid RC instead of the above",
+            "name": "stage",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "description": "search only for entries with the given subject(s). To match multiple, give the parameter multiple times or give a list comma delimited. Will perform an exact match (case insensitive) unlesss partialMatch=true",
+            "name": "subject",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "description": "search only for entries with the given checking level(s). Can be 1, 2 or 3",
+            "name": "checkingLevel",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "description": "search only for entries with the given book(s) (project ids). To match multiple, give the parameter multiple times or give a list comma delimited. Will perform an exact match (case insensitive)",
+            "name": "book",
+            "in": "query"
+          },
+          {
+            "type": "boolean",
+            "description": "if true, subject, owner and repo search fields will use partial match (LIKE) when querying the catalog. Default is false",
+            "name": "partialMatch",
+            "in": "query"
+          },
+          {
+            "type": "boolean",
+            "description": "if true, all releases, not just the latest, are included. Default is false",
+            "name": "includeHistory",
+            "in": "query"
+          },
+          {
+            "type": "boolean",
+            "description": "if false, only subject and title are searched with query terms, if true all metadata values are searched. Default is true",
+            "name": "includeMetadata",
+            "in": "query"
+          },
+          {
+            "type": "boolean",
+            "description": "if true, a list of the projects in the resource and their file paths will be listed for each entry. Default is false",
+            "name": "showIngredients",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "description": "sort repos alphanumerically by attribute. Supported values are \"subject\", \"title\", \"reponame\", \"tag\", \"released\", \"lang\", \"releases\", \"stars\", \"forks\". Default is by \"language\", \"subject\" and then \"tag\"",
+            "name": "sort",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "description": "sort order, either \"asc\" (ascending) or \"desc\" (descending). Default is \"asc\", ignored if \"sort\" is not specified.",
+            "name": "order",
+            "in": "query"
+          },
+          {
+            "type": "integer",
+            "description": "page number of results to return (1-based)",
+            "name": "page",
+            "in": "query"
+          },
+          {
+            "type": "integer",
+            "description": "page size of results, defaults to no limit",
+            "name": "limit",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/CatalogSearchResults"
+          },
+          "422": {
+            "$ref": "#/responses/validationError"
+          }
+        }
+      }
+    },
+    "/catalog/search/{owner}": {
+      "get": {
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "catalog"
+        ],
+        "summary": "Catalog search by owner",
+        "operationId": "catalogSearchOwner",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "owner of the returned entries",
+            "name": "owner",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "description": "keyword(s). Can use multiple `q=\u003ckeyword\u003e`s or a comma-delimited string for more than one keyword. Is case insensitive",
+            "name": "q",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "description": "search only for entries with the given repo name(s). To match multiple, give the parameter multiple times or give a list comma delimited. Will perform an exact match (case insensitive) unlesss partialMatch=true",
+            "name": "repo",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "description": "search only for entries with the given release tag(s). To match multiple, give the parameter multiple times or give a list comma delimited. Will perform an exact match (case insensitive)",
+            "name": "tag",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "description": "search only for entries with the given language(s). To match multiple, give the parameter multiple times or give a list comma delimited. Will perform an exact match (case insensitive) unlesss partialMatch=true",
+            "name": "lang",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "description": "specifies which release stage to be return of these stages: \"prod\" - return only the production releases (default); \"preprod\" - return the pre-production release if it exists instead of the production release; \"draft\" - return the draft release if it exists instead of pre-production or production release; \"latest\" -return the default branch (e.g. master) if it is a valid RC instead of the above",
+            "name": "stage",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "description": "search only for entries with the given subject(s). To match multiple, give the parameter multiple times or give a list comma delimited. Will perform an exact match (case insensitive) unlesss partialMatch=true",
+            "name": "subject",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "description": "search only for entries with the given checking level(s). Can be 1, 2 or 3",
+            "name": "checkingLevel",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "description": "search only for entries with the given book(s) (project ids). To match multiple, give the parameter multiple times or give a list comma delimited. Will perform an exact match (case insensitive)",
+            "name": "book",
+            "in": "query"
+          },
+          {
+            "type": "boolean",
+            "description": "if true, subject, owner and repo search fields will use partial match (LIKE) when querying the catalog. Default is false",
+            "name": "partialMatch",
+            "in": "query"
+          },
+          {
+            "type": "boolean",
+            "description": "if true, all releases, not just the latest, are included. Default is false",
+            "name": "includeHistory",
+            "in": "query"
+          },
+          {
+            "type": "boolean",
+            "description": "if false, only subject and title are searched with query terms, if true all metadata values are searched. Default is true",
+            "name": "includeMetadata",
+            "in": "query"
+          },
+          {
+            "type": "boolean",
+            "description": "if true, a list of the projects in the resource and their file paths will be listed for each entry. Default is false",
+            "name": "showIngredients",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "description": "sort repos alphanumerically by attribute. Supported values are \"subject\", \"title\", \"reponame\", \"tag\", \"released\", \"lang\", \"releases\", \"stars\", \"forks\". Default is by \"language\", \"subject\" and then \"tag\"",
+            "name": "sort",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "description": "sort order, either \"asc\" (ascending) or \"desc\" (descending). Default is \"asc\", ignored if \"sort\" is not specified.",
+            "name": "order",
+            "in": "query"
+          },
+          {
+            "type": "integer",
+            "description": "page number of results to return (1-based)",
+            "name": "page",
+            "in": "query"
+          },
+          {
+            "type": "integer",
+            "description": "page size of results, defaults to no limit",
+            "name": "limit",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/CatalogSearchResults"
+          },
+          "422": {
+            "$ref": "#/responses/validationError"
+          }
+        }
+      }
+    },
+    "/catalog/search/{owner}/{repo}": {
+      "get": {
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "catalog"
+        ],
+        "summary": "Catalog search by repo",
+        "operationId": "catalogSearchRepo",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "owner of the returned entries",
+            "name": "owner",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "description": "name of the repo of the returned entries",
+            "name": "repo",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "description": "keyword(s). Can use multiple `q=\u003ckeyword\u003e`s or a comma-delimited string for more than one keyword. Is case insensitive",
+            "name": "q",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "description": "search only for entries with the given owner name(s). Will perform an exact match (case insensitive) unlesss partialMatch=true",
+            "name": "owner",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "description": "search only for entries with the given repo name(s). To match multiple, give the parameter multiple times or give a list comma delimited. Will perform an exact match (case insensitive) unlesss partialMatch=true",
+            "name": "repo",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "description": "search only for entries with the given release tag(s). To match multiple, give the parameter multiple times or give a list comma delimited. Will perform an exact match (case insensitive)",
+            "name": "tag",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "description": "search only for entries with the given language(s). To match multiple, give the parameter multiple times or give a list comma delimited. Will perform an exact match (case insensitive) unlesss partialMatch=true",
+            "name": "lang",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "description": "specifies which release stage to be return of these stages: \"prod\" - return only the production releases (default); \"preprod\" - return the pre-production release if it exists instead of the production release; \"draft\" - return the draft release if it exists instead of pre-production or production release; \"latest\" -return the default branch (e.g. master) if it is a valid RC instead of the above",
+            "name": "stage",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "description": "search only for entries with the given subject(s). To match multiple, give the parameter multiple times or give a list comma delimited. Will perform an exact match (case insensitive) unlesss partialMatch=true",
+            "name": "subject",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "description": "search only for entries with the given checking level(s). Can be 1, 2 or 3",
+            "name": "checkingLevel",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "description": "search only for entries with the given book(s) (project ids). To match multiple, give the parameter multiple times or give a list comma delimited. Will perform an exact match (case insensitive)",
+            "name": "book",
+            "in": "query"
+          },
+          {
+            "type": "boolean",
+            "description": "if true, subject, owner and repo search fields will use partial match (LIKE) when querying the catalog. Default is false",
+            "name": "partialMatch",
+            "in": "query"
+          },
+          {
+            "type": "boolean",
+            "description": "if true, all releases, not just the latest, are included. Default is false",
+            "name": "includeHistory",
+            "in": "query"
+          },
+          {
+            "type": "boolean",
+            "description": "if false, only subject and title are searched with query terms, if true all metadata values are searched. Default is true",
+            "name": "includeMetadata",
+            "in": "query"
+          },
+          {
+            "type": "boolean",
+            "description": "if true, a list of the projects in the resource and their file paths will be listed for each entry. Default is false",
+            "name": "showIngredients",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "description": "sort repos alphanumerically by attribute. Supported values are \"subject\", \"title\", \"reponame\", \"tag\", \"released\", \"lang\", \"releases\", \"stars\", \"forks\". Default is by \"language\", \"subject\" and then \"tag\"",
+            "name": "sort",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "description": "sort order, either \"asc\" (ascending) or \"desc\" (descending). Default is \"asc\", ignored if \"sort\" is not specified.",
+            "name": "order",
+            "in": "query"
+          },
+          {
+            "type": "integer",
+            "description": "page number of results to return (1-based)",
+            "name": "page",
+            "in": "query"
+          },
+          {
+            "type": "integer",
+            "description": "page size of results, defaults to no limit",
+            "name": "limit",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/CatalogSearchResults"
+          },
+          "422": {
+            "$ref": "#/responses/validationError"
+          }
+        }
+      }
+    },
     "/markdown": {
       "post": {
         "consumes": [
@@ -13625,6 +14098,153 @@
       },
       "x-go-package": "code.gitea.io/gitea/modules/structs"
     },
+    "CatalogEntry": {
+      "description": "CatalogEntry represents a repository's metadata of a tag or default branch as an entry of the catalog",
+      "type": "object",
+      "properties": {
+        "alignment_counts": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "object"
+          },
+          "x-go-name": "AlignmentCounts"
+        },
+        "books": {
+          "type": "array",
+          "items": {
+            "type": "object"
+          },
+          "x-go-name": "Books"
+        },
+        "branch_or_tag_name": {
+          "type": "string",
+          "x-go-name": "BranchOrTag"
+        },
+        "contents_url": {
+          "type": "string",
+          "x-go-name": "ContentsURL"
+        },
+        "full_name": {
+          "type": "string",
+          "x-go-name": "FullName"
+        },
+        "git_trees_url": {
+          "type": "string",
+          "x-go-name": "GitTreesURL"
+        },
+        "id": {
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "ID"
+        },
+        "ingredients": {
+          "type": "array",
+          "items": {
+            "type": "object"
+          },
+          "x-go-name": "Ingredients"
+        },
+        "language": {
+          "type": "string",
+          "x-go-name": "Language"
+        },
+        "language_direction": {
+          "type": "string",
+          "x-go-name": "LanguageDir"
+        },
+        "language_is_gl": {
+          "type": "boolean",
+          "x-go-name": "LanguageIsGL"
+        },
+        "language_title": {
+          "type": "string",
+          "x-go-name": "LanguageTitle"
+        },
+        "metadata_api_contents_url": {
+          "type": "string",
+          "x-go-name": "MetadataAPIContentsURL"
+        },
+        "metadata_json_url": {
+          "type": "string",
+          "x-go-name": "MetadataJSONURL"
+        },
+        "metadata_url": {
+          "type": "string",
+          "x-go-name": "MetadataURL"
+        },
+        "metadata_version": {
+          "type": "string",
+          "x-go-name": "MetadataVersion"
+        },
+        "name": {
+          "type": "string",
+          "x-go-name": "Name"
+        },
+        "owner": {
+          "type": "string",
+          "x-go-name": "Owner"
+        },
+        "release": {
+          "$ref": "#/definitions/Release"
+        },
+        "released": {
+          "type": "string",
+          "format": "date-time",
+          "x-go-name": "Released"
+        },
+        "repo": {
+          "$ref": "#/definitions/Repository"
+        },
+        "stage": {
+          "type": "string",
+          "x-go-name": "Stage"
+        },
+        "subject": {
+          "type": "string",
+          "x-go-name": "Subject"
+        },
+        "tarbar_url": {
+          "type": "string",
+          "x-go-name": "TarballURL"
+        },
+        "title": {
+          "type": "string",
+          "x-go-name": "Title"
+        },
+        "url": {
+          "type": "string",
+          "x-go-name": "Self"
+        },
+        "zipball_url": {
+          "type": "string",
+          "x-go-name": "ZipballURL"
+        }
+      },
+      "x-go-package": "code.gitea.io/gitea/modules/structs"
+    },
+    "CatalogSearchResults": {
+      "description": "CatalogSearchResults results of a successful catalog search",
+      "type": "object",
+      "properties": {
+        "data": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/CatalogEntry"
+          },
+          "x-go-name": "Data"
+        },
+        "last_updated": {
+          "type": "string",
+          "format": "date-time",
+          "x-go-name": "LastUpdated"
+        },
+        "ok": {
+          "type": "boolean",
+          "x-go-name": "OK"
+        }
+      },
+      "x-go-package": "code.gitea.io/gitea/modules/structs"
+    },
     "CatalogStage": {
       "description": "CatalogStage a repo's catalog stage metadata",
       "type": "object",
@@ -13676,6 +14296,42 @@
         },
         "prod": {
           "$ref": "#/definitions/CatalogStage"
+        }
+      },
+      "x-go-package": "code.gitea.io/gitea/modules/structs"
+    },
+    "CatalogVersionEndpoints": {
+      "description": "CatalogVersionEndpoints Info on the versions of the catalog",
+      "type": "object",
+      "properties": {
+        "latest": {
+          "type": "string",
+          "x-go-name": "Latest"
+        },
+        "versions": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          },
+          "x-go-name": "Versions"
+        }
+      },
+      "x-go-package": "code.gitea.io/gitea/modules/structs"
+    },
+    "CatalogVersionEndpointsResponse": {
+      "description": "CatalogVersionEndpointsResponse response with the endpoints for all versions of the catalog",
+      "type": "object",
+      "properties": {
+        "data": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/CatalogVersionEndpoints"
+          },
+          "x-go-name": "Data"
+        },
+        "ok": {
+          "type": "boolean",
+          "x-go-name": "OK"
         }
       },
       "x-go-package": "code.gitea.io/gitea/modules/structs"
@@ -19228,6 +19884,33 @@
         "items": {
           "$ref": "#/definitions/BranchProtection"
         }
+      }
+    },
+    "CatalogEntry": {
+      "description": "CatalogEntry",
+      "schema": {
+        "$ref": "#/definitions/CatalogEntry"
+      }
+    },
+    "CatalogMetadata": {
+      "description": "CatalogMetadata",
+      "schema": {
+        "type": "object",
+        "additionalProperties": {
+          "type": "object"
+        }
+      }
+    },
+    "CatalogSearchResults": {
+      "description": "CatalogSearchResults",
+      "schema": {
+        "$ref": "#/definitions/CatalogSearchResults"
+      }
+    },
+    "CatalogVersionEndpointsResponse": {
+      "description": "CatalogVersionEndpointsResponse",
+      "schema": {
+        "$ref": "#/definitions/CatalogVersionEndpointsResponse"
       }
     },
     "CombinedStatus": {
