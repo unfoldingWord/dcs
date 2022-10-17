@@ -82,6 +82,7 @@ import (
 	api "code.gitea.io/gitea/modules/structs"
 	"code.gitea.io/gitea/modules/web"
 	"code.gitea.io/gitea/routers/api/v1/admin"
+	"code.gitea.io/gitea/routers/api/v1/catalog"
 	"code.gitea.io/gitea/routers/api/v1/misc"
 	"code.gitea.io/gitea/routers/api/v1/notify"
 	"code.gitea.io/gitea/routers/api/v1/org"
@@ -642,6 +643,11 @@ func Routes() *web.Route {
 			m.Get("/swagger", func(ctx *context.APIContext) {
 				ctx.Redirect(setting.AppSubURL + "/api/swagger")
 			})
+			/*** DCS Customizations ***/
+			m.Get("/catalog/swagger", func(ctx *context.Context) {
+				ctx.Redirect(setting.AppSubURL + "/api/swagger#catalog")
+			})
+			/*** END DCS Customizations ***/
 		}
 		m.Get("/version", misc.Version)
 		if setting.Federation.Enabled {
@@ -1173,6 +1179,23 @@ func Routes() *web.Route {
 
 		/*** DCS Customizations ***/
 		m.Post("/yaml", bind(misc.YamlOption{}), misc.Yaml)
+		m.Group("/catalog", func() {
+			m.Get("", catalog.Search)
+
+			m.Group("/search", func() {
+				m.Get("", catalog.Search)
+				m.Group("/{username}", func() {
+					m.Get("", catalog.SearchOwner)
+					m.Group("/{reponame}", func() {
+						m.Get("", catalog.SearchRepo)
+					}, repoAssignment())
+				})
+			})
+			m.Group("/entry/{username}/{reponame}/{tag}", func() {
+				m.Get("", catalog.GetCatalogEntry)
+				m.Get("/metadata", catalog.GetCatalogMetadata)
+			}, repoAssignment())
+		})
 		/*** END DCS Customizations ***/
 	}, sudo())
 

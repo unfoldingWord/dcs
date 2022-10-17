@@ -137,13 +137,6 @@ SWAGGER_SPEC_S_TMPL := s|"basePath": *"/api/v1"|"basePath": "{{AppSubUrl \| JSEs
 SWAGGER_SPEC_S_JSON := s|"basePath": *"{{AppSubUrl \| JSEscape \| Safe}}/api/v1"|"basePath": "/api/v1"|g
 SWAGGER_EXCLUDE := code.gitea.io/sdk
 SWAGGER_NEWLINE_COMMAND := -e '$$a\'
-# DCS Customizations
-SWAGGER_CATALOG_SPEC := templates/swagger/catalog/catalog_json.tmpl
-SWAGGER_CATALOG_SPEC_S_TMPL := s|"basePath": *"/api/catalog"|"basePath": "{{AppSubUrl \| JSEscape \| Safe}}/api/catalog"|g
-SWAGGER_CATALOG_SPEC_S_JSON := s|"basePath": *"{{AppSubUrl \| JSEscape \| Safe}}/api/catalog"|"basePath": "/api/catalog"|g
-SWAGGER_CATALOG_EXCLUDE := code.gitea.io/sdk" -x "code.gitea.io/gitea/routers/api/v1
-SWAGGER_EXCLUDE := code.gitea.io/sdk" -x "code.gitea.io/gitea/routers/api/catalog
-# END DCS Customizations
 
 TEST_MYSQL_HOST ?= mysql:3306
 TEST_MYSQL_DBNAME ?= testgitea
@@ -273,11 +266,6 @@ generate-swagger:
 	$(GO) run $(SWAGGER_PACKAGE) generate spec -x "$(SWAGGER_EXCLUDE)" -o './$(SWAGGER_SPEC)'
 	$(SED_INPLACE) '$(SWAGGER_SPEC_S_TMPL)' './$(SWAGGER_SPEC)'
 	$(SED_INPLACE) $(SWAGGER_NEWLINE_COMMAND) './$(SWAGGER_SPEC)'
-# DCS Customizations
-	$(GO) run $(SWAGGER_PACKAGE) generate spec -x "$(SWAGGER_CATALOG_EXCLUDE)" -o './$(SWAGGER_CATALOG_SPEC)'
-	$(SED_INPLACE) '$(SWAGGER_CATALOG_SPEC_S_TMPL)' './$(SWAGGER_CATALOG_SPEC)'
-	$(SED_INPLACE) $(SWAGGER_NEWLINE_COMMAND) './$(SWAGGER_CATALOG_SPEC)'
-# END DCS Customizaitons
 
 .PHONY: swagger-check
 swagger-check: generate-swagger

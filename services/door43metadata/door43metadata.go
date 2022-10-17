@@ -329,11 +329,6 @@ func ProcessDoor43MetadataForRepoRelease(ctx context.Context, repo *repo_model.R
 		return err
 	}
 
-	//metadata, err := ConvertGenericMapToRC020Manifest(manifest)
-	//if err != nil {
-	//	return err
-	//}
-
 	var releaseDateUnix timeutil.TimeStamp
 	var branchOrTag string
 	if release != nil && !release.IsDraft {
