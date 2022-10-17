@@ -70,7 +70,7 @@ func ToCatalogEntry(dm *models.Door43Metadata, mode perm.AccessMode) *api.Catalo
 
 	return &api.CatalogEntry{
 		ID:                     dm.ID,
-		Self:                   dm.APIURLV5(),
+		Self:                   dm.APIURL(),
 		Name:                   dm.Repo.Name,
 		Owner:                  dm.Repo.OwnerName,
 		FullName:               dm.Repo.FullName(),

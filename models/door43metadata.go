@@ -129,6 +129,15 @@ func (dm *Door43Metadata) GetBranchOrTagType() string {
 	return "branch"
 }
 
+// APIURL the api url for a door43 metadata. door43 metadata must have attributes loaded
+func (dm *Door43Metadata) APIURL() string {
+	ref := dm.Repo.DefaultBranch
+	if dm.ReleaseID > 0 {
+		ref = dm.Release.TagName
+	}
+	return fmt.Sprintf("%sapi/v1/catalog/entry/%s/%s/", setting.AppURL, dm.Repo.FullName(), ref)
+}
+
 // HTMLURL the url for a door43 metadata on the web UI. door43 metadata must have attributes loaded
 func (dm *Door43Metadata) HTMLURL() string {
 	return fmt.Sprintf("%s/metadata/tag/%s", dm.Repo.HTMLURL(), dm.Release.TagName)
@@ -164,7 +173,7 @@ func (dm *Door43Metadata) GetMetadataURL() string {
 
 // GetMetadataJSONURL gets the json representation of the contents of the manifest.yaml file
 func (dm *Door43Metadata) GetMetadataJSONURL() string {
-	return fmt.Sprintf("%s/metadata", dm.APIURLLatest())
+	return fmt.Sprintf("%smetadata/", dm.APIURL())
 }
 
 // GetMetadataAPIContentsURL gets the metadata API contents URL of the manifest.yaml file
@@ -557,6 +566,20 @@ func DeleteAllDoor43MetadatasByRepoID(repoID int64) (int64, error) {
 
 // GetReposForMetadata gets the IDs of all the repos to process for metadata
 func GetReposForMetadata() ([]int64, error) {
+	// records, err := db.GetEngine(db.DefaultContext).Query("SELECT r.id FROM `repository` r " +
+	//	"JOIN `release` rel ON rel.repo_id = r.id " +
+	//	"LEFT JOIN `door43_metadata` dm ON r.id = dm.repo_id " +
+	//	"AND rel.id = dm.release_id " +
+	//	"WHERE dm.id IS NULL AND rel.is_tag = 0 " +
+	//	"UNION " +
+	//	"SELECT r2.id FROM `repository` r2 " +
+	//	"LEFT JOIN `door43_metadata` dm2 ON r2.id = dm2.repo_id " +
+	//	"AND dm2.release_id = 0 " +
+	//	"WHERE dm2.id IS NULL " +
+	//	"ORDER BY id ASC")
+	// records, err := sess.Query("SELECT r.id FROM `repository` r " +
+	//	"ORDER BY id ASC")
+	// records, err := sess.Query("SELECT r.id FROM `repository` r WHERE r.is_private = 0 AND r.is_archived = 0 ORDER BY id ASC")
 	records, err := db.GetEngine(db.DefaultContext).Query("SELECT id FROM `repository` ORDER BY id ASC")
 	if err != nil {
 		return nil, err
@@ -574,6 +597,17 @@ func GetReposForMetadata() ([]int64, error) {
 
 // GetRepoReleaseIDsForMetadata gets the releases ids for a repo
 func GetRepoReleaseIDsForMetadata(repoID int64) ([]int64, error) {
+	// records, err := db.GetEngine(db.DefaultContext).Query("SELECT rel.id as id FROM `repository` r "+
+	//	"INNER JOIN `release` rel ON rel.repo_id = r.id "+
+	//	"LEFT JOIN `door43_metadata` dm ON r.id = dm.repo_id "+
+	//	"AND rel.id = dm.release_id "+
+	//	"WHERE dm.id IS NULL AND rel.is_tag = 0 AND r.id=? "+
+	//	"UNION "+
+	//	"SELECT 0 as id FROM `repository` r2 "+
+	//	"LEFT JOIN `door43_metadata` dm2 ON r2.id = dm2.repo_id "+
+	//	"AND dm2.release_id = 0 "+
+	//	"WHERE dm2.id IS NULL AND r2.id=? "+
+	//	"ORDER BY id ASC", r.ID, r.ID)
 	records, err := db.GetEngine(db.DefaultContext).Query("SELECT rel.id as id FROM `repository` r "+
 		"INNER JOIN `release` rel ON rel.repo_id = r.id "+
 		"WHERE rel.is_tag = 0 AND r.id=? "+

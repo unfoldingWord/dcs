@@ -3,9 +3,9 @@
 // Use of this source code is governed by a MIT-style
 // license that can be found in the LICENSE file.
 
-// Package v1 DCS (Gitea) API.
+// Package v1 Gitea API.
 //
-// This documentation describes the DCS (Gitea) API.
+// This documentation describes the Gitea API.
 //
 //	Schemes: http, https
 //	BasePath: /api/v1
@@ -1181,7 +1181,6 @@ func Routes() *web.Route {
 		m.Post("/yaml", bind(misc.YamlOption{}), misc.Yaml)
 		m.Group("/catalog", func() {
 			m.Get("", catalog.Search)
-
 			m.Group("/search", func() {
 				m.Get("", catalog.Search)
 				m.Group("/{username}", func() {
