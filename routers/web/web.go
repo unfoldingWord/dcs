@@ -6,7 +6,6 @@ package web
 
 import (
 	gocontext "context"
-	"fmt"
 	"net/http"
 	"os"
 	"path"
@@ -25,7 +24,7 @@ import (
 	"code.gitea.io/gitea/modules/templates"
 	"code.gitea.io/gitea/modules/validation"
 	"code.gitea.io/gitea/modules/web"
-	"code.gitea.io/gitea/modules/web/routing" // DCS Customizations
+	"code.gitea.io/gitea/modules/web/routing"
 	"code.gitea.io/gitea/routers/web/admin"
 	"code.gitea.io/gitea/routers/web/auth"
 	"code.gitea.io/gitea/routers/web/dcs" // DCS Customizations
@@ -224,19 +223,6 @@ func Routes() *web.Route {
 	for _, middle := range common {
 		others.Use(middle)
 	}
-
-	/*** DCS Customizations ***/
-	routes.Get("/api/catalog/swagger", func(ctx *context.Context) {
-		ctx.Redirect(setting.AppSubURL + "/api/swagger#catalog")
-	})
-	routes.Get("/api/catalog/v5/*", func(ctx *context.APIContext) {
-		var query string
-		if ctx.Req.URL.RawQuery != "" {
-			query = "?" + ctx.Req.URL.RawQuery
-		}
-		ctx.Redirect(fmt.Sprintf("/api/v1/catalog/%s%s", ctx.Params("*"), query))
-	})
-	/*** END DCS Customizations ***/
 
 	RegisterRoutes(others)
 	routes.Mount("", others)

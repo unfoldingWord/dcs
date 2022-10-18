@@ -643,11 +643,6 @@ func Routes() *web.Route {
 			m.Get("/swagger", func(ctx *context.APIContext) {
 				ctx.Redirect(setting.AppSubURL + "/api/swagger")
 			})
-			/*** DCS Customizations ***/
-			m.Get("/catalog/swagger", func(ctx *context.Context) {
-				ctx.Redirect(setting.AppSubURL + "/api/swagger#catalog")
-			})
-			/*** END DCS Customizations ***/
 		}
 		m.Get("/version", misc.Version)
 		if setting.Federation.Enabled {
