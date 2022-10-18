@@ -5293,7 +5293,7 @@
           },
           {
             "type": "string",
-            "description": "The name of the commit/branch/tag. Default the repository’s default branch (usually master)",
+            "description": "The name of the commit/branch/tag, indicates which commit will be loaded to the webhook payload.",
             "name": "ref",
             "in": "query"
           }
@@ -13100,6 +13100,18 @@
         "operationId": "userCurrentTrackedTimes",
         "parameters": [
           {
+            "type": "integer",
+            "description": "page number of results to return (1-based)",
+            "name": "page",
+            "in": "query"
+          },
+          {
+            "type": "integer",
+            "description": "page size of results",
+            "name": "limit",
+            "in": "query"
+          },
+          {
             "type": "string",
             "format": "date-time",
             "description": "Only show times updated after the given time. This is a timestamp in RFC 3339 format",
@@ -14104,16 +14116,12 @@
       "properties": {
         "alignment_counts": {
           "type": "object",
-          "additionalProperties": {
-            "type": "object"
-          },
+          "additionalProperties": {},
           "x-go-name": "AlignmentCounts"
         },
         "books": {
           "type": "array",
-          "items": {
-            "type": "object"
-          },
+          "items": {},
           "x-go-name": "Books"
         },
         "branch_or_tag_name": {
@@ -14139,9 +14147,7 @@
         },
         "ingredients": {
           "type": "array",
-          "items": {
-            "type": "object"
-          },
+          "items": {},
           "x-go-name": "Ingredients"
         },
         "language": {
@@ -15747,6 +15753,10 @@
         "message": {
           "type": "string",
           "x-go-name": "Message"
+        },
+        "priors": {
+          "type": "boolean",
+          "x-go-name": "Priors"
         }
       },
       "x-go-package": "code.gitea.io/gitea/modules/structs"
@@ -16559,7 +16569,6 @@
           "$ref": "#/definitions/FileCommitResponse"
         },
         "content": {
-          "type": "object",
           "x-go-name": "Content"
         },
         "verification": {
@@ -18697,9 +18706,7 @@
         "alignment_counts": {
           "description": "the count of alignments of each book",
           "type": "object",
-          "additionalProperties": {
-            "type": "object"
-          },
+          "additionalProperties": {},
           "x-go-name": "AlignmentCounts"
         },
         "allow_merge_commits": {
@@ -19698,7 +19705,6 @@
           "x-go-name": "Ignored"
         },
         "reason": {
-          "type": "object",
           "x-go-name": "Reason"
         },
         "repository_url": {
@@ -19896,9 +19902,7 @@
       "description": "CatalogMetadata",
       "schema": {
         "type": "object",
-        "additionalProperties": {
-          "type": "object"
-        }
+        "additionalProperties": {}
       }
     },
     "CatalogSearchResults": {
