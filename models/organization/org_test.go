@@ -322,8 +322,8 @@ func TestAccessibleReposEnv_RepoIDs(t *testing.T) {
 		assert.NoError(t, err)
 		assert.Equal(t, expectedRepoIDs, repoIDs)
 	}
-	testSuccess(2, 1, 100, []int64{3})
-	testSuccess(4, 0, 100, []int64{32})
+	testSuccess(2, 1, 100, []int64{3, 5, 32})
+	testSuccess(4, 0, 100, []int64{3, 32})
 }
 
 func TestAccessibleReposEnv_Repos(t *testing.T) {
@@ -341,9 +341,8 @@ func TestAccessibleReposEnv_Repos(t *testing.T) {
 		}
 		assert.Equal(t, expectedRepos, repos)
 	}
-	testSuccess(2, []int64{3})
-	testSuccess(4, []int64{32})
-}
+	testSuccess(2, []int64{3, 5, 32})
+	testSuccess(4, []int64{3, 32})}
 
 func TestAccessibleReposEnv_MirrorRepos(t *testing.T) {
 	assert.NoError(t, unittest.PrepareTestDatabase())
