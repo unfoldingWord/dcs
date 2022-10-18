@@ -3,9 +3,9 @@
 // Use of this source code is governed by a MIT-style
 // license that can be found in the LICENSE file.
 
-// Package v1 Gitea API.
+// Package v1 DCS (Gitea) API.
 //
-// This documentation describes the Gitea API.
+// This documentation describes the DCS (Gitea) API.
 //
 //	Schemes: http, https
 //	BasePath: /api/v1
