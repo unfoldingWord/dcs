@@ -181,6 +181,6 @@ func NormalRoutes() *web.Route {
 	}
 	/** DCS Customizations ***/
 	r.Mount("/api/catalog", catalog.Routes())
-	/*** END DCS Customizations ***/	
+	/*** END DCS Customizations ***/
 	return r
 }
