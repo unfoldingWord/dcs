@@ -4,6 +4,7 @@
 package catalog
 
 import (
+	"fmt"
 	"net/http"
 	"strings"
 
@@ -13,7 +14,6 @@ import (
 	"code.gitea.io/gitea/modules/context"
 	"code.gitea.io/gitea/modules/setting"
 	"code.gitea.io/gitea/modules/web"
-	"code.gitea.io/gitea/routers/api/v1/catalog"
 
 	"github.com/go-chi/cors"
 )
@@ -111,20 +111,20 @@ func Routes() *web.Route {
 			ctx.Redirect(setting.AppSubURL + "/api/swagger#/catalog", http.StatusMovedPermanently)
 		})
 		m.Group("/v5", func() {
-			m.Get("", catalog.Search)
-			m.Group("/search", func() {
-				m.Get("", catalog.Search)
-				m.Group("/{username}", func() {
-					m.Get("", catalog.SearchOwner)
-					m.Group("/{reponame}", func() {
-						m.Get("", catalog.SearchRepo)
-					})
-				})
+			m.Get("", func(ctx *context.APIContext) {
+				var query string
+				if ctx.Req.URL.RawQuery != "" {
+					query = "?" + ctx.Req.URL.RawQuery
+				}
+				ctx.Redirect(fmt.Sprintf("/api/v1/catalog/%s", query), http.StatusPermanentRedirect)
 			})
-			m.Group("/entry/{username}/{reponame}/{tag}", func() {
-				m.Get("", catalog.GetCatalogEntry)
-				m.Get("/metadata", catalog.GetCatalogMetadata)
-			}, repoAssignment())
+			m.Get("/*", func(ctx *context.APIContext) {
+				var query string
+				if ctx.Req.URL.RawQuery != "" {
+					query = "?" + ctx.Req.URL.RawQuery
+				}
+				ctx.Redirect(fmt.Sprintf("/api/v1/catalog/%s%s", ctx.Params("*"), query), http.StatusPermanentRedirect)
+			})
 		})
 	})
 
