@@ -108,7 +108,7 @@ func Routes() *web.Route {
 
 	m.Group("", func() {
 		m.Get("/swagger", func(ctx *context.Context) {
-			ctx.Redirect(setting.AppSubURL + "/api/swagger#/catalog")
+			ctx.Redirect(setting.AppSubURL + "/api/swagger#/catalog", http.StatusMovedPermanently)
 		})
 		m.Group("/v5", func() {
 			m.Get("", catalog.Search)
