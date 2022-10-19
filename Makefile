@@ -82,7 +82,7 @@ ifneq ($(DRONE_TAG),)
 	GITEA_VERSION ?= $(VERSION)
 else
 	ifneq ($(DRONE_BRANCH),)
-		VERSION ?= $(subst release/v,,$(DRONE_BRANCH))
+		VERSION ?= $(subst release/dcs/v,,$(DRONE_BRANCH))
 	else
 		VERSION ?= main
 	endif

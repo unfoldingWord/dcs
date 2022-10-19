@@ -687,7 +687,7 @@ steps:
 #       path_style: true
 #       source: "dist/release/*"
 #       strip_prefix: dist/release/
-#       target: "/gitea/${DRONE_BRANCH##release/v}"
+#       target: "/gitea/${DRONE_BRANCH##release/dcs/v}"
 #     environment:
 #       AWS_ACCESS_KEY_ID:
 #         from_secret: aws_access_key_id
@@ -1060,7 +1060,7 @@ steps:
   #   settings:
   #     dockerfile: Dockerfile.rootless
   #     auto_tag: false
-  #     tags: ${DRONE_BRANCH##release/v}-dev-linux-amd64-rootless
+  #     tags: ${DRONE_BRANCH##release/dcs/v}-dev-linux-amd64-rootless
   #     repo: gitea/gitea
   #     build_args:
   #       - GOPROXY=https://goproxy.io
