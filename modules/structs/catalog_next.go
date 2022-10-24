@@ -8,33 +8,43 @@ import "time"
 
 // CatalogEntry represents a repository's metadata of a tag or default branch as an entry of the catalog
 type CatalogEntry struct {
-	ID                     int64                  `json:"id"`
-	Self                   string                 `json:"url"`
-	Name                   string                 `json:"name"`
-	Owner                  string                 `json:"owner"`
-	FullName               string                 `json:"full_name"`
-	Repo                   *Repository            `json:"repo"`
-	Release                *Release               `json:"release"`
-	TarballURL             string                 `json:"tarbar_url"`
-	ZipballURL             string                 `json:"zipball_url"`
-	GitTreesURL            string                 `json:"git_trees_url"`
-	ContentsURL            string                 `json:"contents_url"`
-	Language               string                 `json:"language"`
-	LanguageTitle          string                 `json:"language_title"`
-	LanguageDir            string                 `json:"language_direction"`
-	LanguageIsGL           bool                   `json:"language_is_gl"`
-	Subject                string                 `json:"subject"`
-	Title                  string                 `json:"title"`
-	BranchOrTag            string                 `json:"branch_or_tag_name"`
-	Stage                  string                 `json:"stage"`
-	MetadataURL            string                 `json:"metadata_url"`
-	MetadataJSONURL        string                 `json:"metadata_json_url"`
-	MetadataAPIContentsURL string                 `json:"metadata_api_contents_url"`
-	MetadataVersion        string                 `json:"metadata_version"`
-	Released               time.Time              `json:"released"`
-	Books                  []interface{}          `json:"books,omitempty"`
-	AlignmentCounts        map[string]interface{} `json:"alignment_counts,omitempty"`
-	Ingredients            []interface{}          `json:"ingredients,omitempty"`
+	ID                     int64            `json:"id"`
+	Self                   string           `json:"url"`
+	Name                   string           `json:"name"`
+	Owner                  string           `json:"owner"`
+	FullName               string           `json:"full_name"`
+	Repo                   *Repository      `json:"repo"`
+	Release                *Release         `json:"release"`
+	TarballURL             string           `json:"tarbar_url"`
+	ZipballURL             string           `json:"zipball_url"`
+	GitTreesURL            string           `json:"git_trees_url"`
+	ContentsURL            string           `json:"contents_url"`
+	Language               string           `json:"language"`
+	LanguageTitle          string           `json:"language_title"`
+	LanguageDir            string           `json:"language_direction"`
+	LanguageIsGL           bool             `json:"language_is_gl"`
+	Subject                string           `json:"subject"`
+	Title                  string           `json:"title"`
+	BranchOrTag            string           `json:"branch_or_tag_name"`
+	Stage                  string           `json:"stage"`
+	MetadataURL            string           `json:"metadata_url"`
+	MetadataJSONURL        string           `json:"metadata_json_url"`
+	MetadataAPIContentsURL string           `json:"metadata_api_contents_url"`
+	MetadataVersion        string           `json:"metadata_version"`
+	Released               time.Time        `json:"released"`
+	Books                  []string         `json:"books,omitempty"`
+	AlignmentCounts        map[string]int64 `json:"alignment_counts,omitempty"`
+	Ingredients            []*Ingredients   `json:"ingredients,omitempty"`
+}
+
+// Ingredients holds a project of a resource
+type Ingredients struct {
+	Categories    []string `json:"categories"`
+	Identifier    string   `json:"identifier"`
+	Path          string   `json:"path"`
+	Sort          int64    `json:"sort"`
+	Title         string   `json:"title"`
+	Versification string   `json:"versification"`
 }
 
 // CatalogSearchResults results of a successful catalog search
