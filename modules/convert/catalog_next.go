@@ -53,18 +53,18 @@ func ToCatalogEntry(dm *models.Door43Metadata, mode perm.AccessMode) *api.Catalo
 		languageIsGL = dcs.LanguageIsGL(language)
 	}
 
-	var books []interface{}
-	if val, ok := (*dm.Metadata)["books"].([]interface{}); ok {
+	var books []string
+	if val, ok := (*dm.Metadata)["books"].([]string); ok {
 		books = val
 	}
 
-	var alignmentCounts map[string]interface{}
-	if val, ok := (*dm.Metadata)["alignment_counts"].(map[string]interface{}); ok {
+	var alignmentCounts map[string]int64
+	if val, ok := (*dm.Metadata)["alignment_counts"].(map[string]int64); ok {
 		alignmentCounts = val
 	}
 
-	var ingredients []interface{}
-	if val, ok := (*dm.Metadata)["projects"].([]interface{}); ok {
+	var ingredients []*api.Ingredients
+	if val, ok := (*dm.Metadata)["projects"].([]*api.Ingredients); ok {
 		ingredients = val
 	}
 
