@@ -30,7 +30,6 @@ import (
 	"code.gitea.io/gitea/modules/translation"
 	"code.gitea.io/gitea/modules/util"
 	"code.gitea.io/gitea/modules/web"
-	"code.gitea.io/gitea/routers/api/catalog"
 	packages_router "code.gitea.io/gitea/routers/api/packages"
 	apiv1 "code.gitea.io/gitea/routers/api/v1"
 	"code.gitea.io/gitea/routers/common"
@@ -180,7 +179,7 @@ func NormalRoutes() *web.Route {
 		r.Mount("/v2", packages_router.ContainerRoutes())
 	}
 	/** DCS Customizations ***/
-	r.Mount("/api/catalog", catalog.Routes())
+	// r.Mount("/api/catalog", catalog.Routes())
 	/*** END DCS Customizations ***/
 	return r
 }
