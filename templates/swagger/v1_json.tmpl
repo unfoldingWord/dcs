@@ -14116,12 +14116,17 @@
       "properties": {
         "alignment_counts": {
           "type": "object",
-          "additionalProperties": {},
+          "additionalProperties": {
+            "type": "integer",
+            "format": "int64"
+          },
           "x-go-name": "AlignmentCounts"
         },
         "books": {
           "type": "array",
-          "items": {},
+          "items": {
+            "type": "string"
+          },
           "x-go-name": "Books"
         },
         "branch_or_tag_name": {
@@ -14147,7 +14152,9 @@
         },
         "ingredients": {
           "type": "array",
-          "items": {},
+          "items": {
+            "$ref": "#/definitions/Ingredient"
+          },
           "x-go-name": "Ingredients"
         },
         "language": {
@@ -17066,6 +17073,41 @@
         "name": {
           "type": "string",
           "x-go-name": "Name"
+        }
+      },
+      "x-go-package": "code.gitea.io/gitea/modules/structs"
+    },
+    "Ingredient": {
+      "description": "Ingredient is a single project of a resource",
+      "type": "object",
+      "properties": {
+        "categories": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "x-go-name": "Categories"
+        },
+        "identifier": {
+          "type": "string",
+          "x-go-name": "Identifier"
+        },
+        "path": {
+          "type": "string",
+          "x-go-name": "Path"
+        },
+        "sort": {
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "Sort"
+        },
+        "title": {
+          "type": "string",
+          "x-go-name": "Title"
+        },
+        "versification": {
+          "type": "string",
+          "x-go-name": "Versification"
         }
       },
       "x-go-package": "code.gitea.io/gitea/modules/structs"

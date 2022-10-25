@@ -5,12 +5,40 @@
 package convert
 
 import (
+	"encoding/json"
+	"fmt"
+
 	"code.gitea.io/gitea/models"
 	"code.gitea.io/gitea/models/db"
 	"code.gitea.io/gitea/models/perm"
 	"code.gitea.io/gitea/modules/dcs"
 	api "code.gitea.io/gitea/modules/structs"
 )
+
+// ToIngredient converts a Door43Metadata project to an api.Ingredient
+func ToIngredient(project map[string]interface{}) *api.Ingredient {
+	ingredient := &api.Ingredient{}
+	fmt.Printf("PROJECT: %v\n\n\n\n", project)
+	if val, ok := project["categories"].([]string); ok {
+		ingredient.Categories = val
+	}
+	if val, ok := project["identifier"].(string); ok {
+		ingredient.Identifier = val
+	}
+	if val, ok := project["path"].(string); ok {
+		ingredient.Path = val
+	}
+	if val, ok := project["sort"].(int64); ok {
+		ingredient.Sort = val
+	}
+	if val, ok := project["sort"].(string); ok {
+		ingredient.Title = val
+	}
+	if val, ok := project["sort"].(string); ok {
+		ingredient.Versification = val
+	}
+	return ingredient
+}
 
 // ToCatalogEntry converts a Door43Metadata to an api.CatalogEntry
 func ToCatalogEntry(dm *models.Door43Metadata, mode perm.AccessMode) *api.CatalogEntry {
@@ -63,9 +91,19 @@ func ToCatalogEntry(dm *models.Door43Metadata, mode perm.AccessMode) *api.Catalo
 		alignmentCounts = val
 	}
 
-	var ingredients []*api.Ingredients
-	if val, ok := (*dm.Metadata)["projects"].([]*api.Ingredients); ok {
-		ingredients = val
+	var ingredients []*api.Ingredient
+	if val, ok := (*dm.Metadata)["projects"].([]interface{}); ok {
+		ingredients = make([]*api.Ingredient, len(val))
+		for i, project := range val {
+			// Marshal/Unmarshal to let Unmarshaliing convert interface{} to Ingredient
+			if byteData, err := json.Marshal(project); err == nil {
+				err = json.Unmarshal(byteData, &ingredients[i])
+				if err != nil {
+					// Attempt our own conversation since Marshal/Unmarshal failed
+					ingredients[i] = ToIngredient(project.(map[string]interface{}))
+				}
+			}
+		}
 	}
 
 	return &api.CatalogEntry{
