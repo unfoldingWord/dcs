@@ -5,13 +5,13 @@
 package convert
 
 import (
-	"encoding/json"
 	"fmt"
 
 	"code.gitea.io/gitea/models"
 	"code.gitea.io/gitea/models/db"
 	"code.gitea.io/gitea/models/perm"
 	"code.gitea.io/gitea/modules/dcs"
+	"code.gitea.io/gitea/modules/json"
 	api "code.gitea.io/gitea/modules/structs"
 )
 
