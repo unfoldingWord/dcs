@@ -34,7 +34,7 @@ type CatalogEntry struct {
 	Released               time.Time        `json:"released"`
 	Books                  []string         `json:"books,omitempty"`
 	AlignmentCounts        map[string]int64 `json:"alignment_counts,omitempty"`
-	Ingredients            []*Ingredient   `json:"ingredients,omitempty"`
+	Ingredients            []*Ingredient    `json:"ingredients,omitempty"`
 }
 
 // Ingredient is a single project of a resource
