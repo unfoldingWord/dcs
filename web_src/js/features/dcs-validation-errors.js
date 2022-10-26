@@ -1,6 +1,6 @@
 import $ from 'jquery';
 
-export function initDcsValidationErrors() {
+export function initDCSValidationErrors() {
   const invalidButtonEl = $('.validation-message-trigger');
 
   if (!invalidButtonEl.length) {

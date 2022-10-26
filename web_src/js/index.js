@@ -55,6 +55,7 @@ import {
   initGlobalEnterQuickSubmit,
   initGlobalFormDirtyLeaveConfirm,
   initGlobalLinkActions,
+  initGlobalPopups,
   initHeadNavbarContentToggle,
 } from './features/common-global.js';
 import {initRepoTopicBar} from './features/repo-home.js';
@@ -86,8 +87,9 @@ import {initRepoWikiForm} from './features/repo-wiki.js';
 import {initRepoCommentForm, initRepository} from './features/repo-legacy.js';
 import {initFormattingReplacements} from './features/formatting.js';
 /** DCS Customizations **/
-import {initDcsInfoIcon} from './features/dcs-info-icon.js';
-import {initDcsValidationErrors} from './features/dcs-validation-errors.js';
+import {initDCSInfoIcon} from './features/dcs-info-icon.js';
+import {initDCSValidationErrors} from './features/dcs-validation-errors.js';
+import {initDCSLanguageFonts} from './features/dcs-language-fonts.js';
 /** END DCS Customizations **/
 
 // Run time-critical code as soon as possible. This is safe to do because this
@@ -143,8 +145,9 @@ $(document).ready(() => {
   initDashboardRepoList();
 
   /** DCS Customizations **/
-  initDcsInfoIcon();
-  initDcsValidationErrors();
+  initDCSInfoIcon();
+  initDCSValidationErrors();
+  initDCSLanguageFonts();
   /** END DCS Customizations **/
 
   initNotificationCount();
