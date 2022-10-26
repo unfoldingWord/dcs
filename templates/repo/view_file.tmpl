@@ -81,7 +81,7 @@
 			{{$dm = (GetDefaultBranchMetadata .Repository.ID)}}
 		{{end}}
 		{{template "repo/unicode_escape_prompt" dict "EscapeStatus" .EscapeStatus "root" $}}
-		<div class="file-view{{if .IsMarkup}} markup {{.MarkupType}}{{else if .IsRenderedHTML}} plain-text{{else if .IsTextSource}} code-view{{end}}{{if .IsTocYaml}} markdown yaml{{end}}"{{if $dm}} data-language="{{$dm.Metadata.dublin_core.language.identifier}}" data-direction="{{$dm.Metadata.dublin_core.language.direction}}"{{end}}>
+		<div class="file-view{{if .IsMarkup}} markup {{.MarkupType}}{{else if .IsRenderedHTML}} plain-text{{else if .IsTextSource}} code-view{{end}}{{if .IsTocYaml}} markdown yaml{{end}}"{{if $dm}} data-language="{{$dm.Metadata.dublin_core.language.identifier}}" data-language-direction="{{$dm.Metadata.dublin_core.language.direction}}"{{end}}>
 			{{if .IsMarkup}}
 				{{if .FileContent}}{{.FileContent | Safe}}{{end}}
 			{{else if .IsRenderedHTML}}

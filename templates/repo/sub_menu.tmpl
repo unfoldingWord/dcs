@@ -39,7 +39,7 @@
 			{{ end }}
 			{{ if $lang }}
 				<div class="item">
-					<a class="ui" href="{{AppSubUrl}}/explore/repos?q=lang:{{$lang}}" title="Is a{{if $langIsGL}} Gateway{{else}}n Other{{end}} Language"><i class="fa fa-language"></i> <span style="font-weight: bold"><span data-language="{{$lang}}">{{$langTitle}}</span> ({{$lang}}){{if $langIsGL}}*{{end}}</span></a>
+					<a class="ui" href="{{AppSubUrl}}/explore/repos?q=lang:{{$lang}}" title="Is a{{if $langIsGL}} Gateway{{else}}n Other{{end}} Language"><i class="fa fa-language"></i> <span style="font-weight: bold"><span data-language="{{$lang}}" data-language-direction="{{$langDir}}">{{$langTitle}}</span> ({{$lang}}){{if $langIsGL}}*{{end}}</span></a>
 				</div>
 			{{ end }}
 			<!-- END DCS Customizations -->
