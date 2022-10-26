@@ -55,6 +55,7 @@ import {
   initGlobalEnterQuickSubmit,
   initGlobalFormDirtyLeaveConfirm,
   initGlobalLinkActions,
+  initGlobalPopups,
   initHeadNavbarContentToggle,
 } from './features/common-global.js';
 import {initRepoTopicBar} from './features/repo-home.js';
