@@ -1,5 +1,5 @@
 import $ from 'jquery';
 
-export function initDcsInfoIcon() {
+export function initDCSInfoIcon() {
   $('#dcs-info-icon').popup();
 }
