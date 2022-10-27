@@ -173,9 +173,9 @@ func setAppHelpTemplates() {
 }
 
 func adjustHelpTemplate(originalTemplate string) string {
-	overrided := ""
+	overridden := ""
 	if _, ok := os.LookupEnv("GITEA_CUSTOM"); ok {
-		overrided = "(GITEA_CUSTOM)"
+		overridden = "(GITEA_CUSTOM)"
 	}
 
 	return fmt.Sprintf(`%s
@@ -185,7 +185,7 @@ DEFAULT CONFIGURATION:
      AppPath:     %s
      AppWorkPath: %s
 
-`, originalTemplate, setting.CustomPath, overrided, setting.CustomConf, setting.AppPath, setting.AppWorkPath)
+`, originalTemplate, setting.CustomPath, overridden, setting.CustomConf, setting.AppPath, setting.AppWorkPath)
 }
 
 func formatBuiltWith() string {

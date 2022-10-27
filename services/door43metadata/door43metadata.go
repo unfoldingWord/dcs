@@ -16,7 +16,6 @@ import (
 	"strings"
 	"time"
 
-	"code.gitea.io/gitea/models"
 	"code.gitea.io/gitea/models/db"
 	"code.gitea.io/gitea/models/door43metadata"
 	repo_model "code.gitea.io/gitea/models/repo"
@@ -80,9 +79,9 @@ func GenerateDoor43Metadata(x *xorm.Engine) error {
 			}
 		}
 		repo := cacheRepos[repoID]
-		var release *models.Release
+		var release *repo_model.Release
 		if releaseID > 0 {
-			release, err = models.GetReleaseByID(ctx, releaseID)
+			release, err = repo_model.GetReleaseByID(ctx, releaseID)
 			if err != nil {
 				log.Warn("GetReleaseByID Error: %v\n", err)
 				continue
@@ -156,14 +155,14 @@ func ProcessDoor43MetadataForRepo(repo *repo_model.Repository) error {
 	}
 
 	if repo.IsArchived || repo.IsPrivate {
-		_, err := models.DeleteAllDoor43MetadatasByRepoID(repo.ID)
+		_, err := repo_model.DeleteAllDoor43MetadatasByRepoID(repo.ID)
 		if err != nil {
 			log.Error("DeleteAllDoor43MetadatasByRepoID: %v", err)
 		}
 		return err
 	}
 
-	relIDs, err := models.GetRepoReleaseIDsForMetadata(repo.ID)
+	relIDs, err := repo_model.GetRepoReleaseIDsForMetadata(repo.ID)
 	if err != nil {
 		log.Error("GetReleaseIDsNeedingDoor43Metadata: %v", err)
 		return err
@@ -176,10 +175,10 @@ func ProcessDoor43MetadataForRepo(repo *repo_model.Repository) error {
 	defer commiter.Close()
 
 	for _, releaseID := range relIDs {
-		var release *models.Release
+		var release *repo_model.Release
 		releaseRef := repo.DefaultBranch
 		if releaseID > 0 {
-			release, err = models.GetReleaseByID(ctx, releaseID)
+			release, err = repo_model.GetReleaseByID(ctx, releaseID)
 			if err != nil {
 				log.Error("GetReleaseByID Error: %v\n", err)
 				continue
@@ -251,7 +250,7 @@ func GetBooks(manifest *map[string]interface{}) []string {
 }
 
 // ProcessDoor43MetadataForRepoRelease handles the metadata for a given repo by release based on if the container is a valid RC or not
-func ProcessDoor43MetadataForRepoRelease(ctx context.Context, repo *repo_model.Repository, release *models.Release) error {
+func ProcessDoor43MetadataForRepoRelease(ctx context.Context, repo *repo_model.Repository, release *repo_model.Release) error {
 	if repo == nil {
 		return fmt.Errorf("no repository provided")
 	}
@@ -324,8 +323,8 @@ func ProcessDoor43MetadataForRepoRelease(ctx context.Context, repo *repo_model.R
 		stage = door43metadata.StageLatest
 	}
 
-	dm, err := models.GetDoor43MetadataByRepoIDAndReleaseID(repo.ID, releaseID)
-	if err != nil && !models.IsErrDoor43MetadataNotExist(err) {
+	dm, err := repo_model.GetDoor43MetadataByRepoIDAndReleaseID(repo.ID, releaseID)
+	if err != nil && !repo_model.IsErrDoor43MetadataNotExist(err) {
 		return err
 	}
 
@@ -358,7 +357,7 @@ func ProcessDoor43MetadataForRepoRelease(ctx context.Context, repo *repo_model.R
 			}
 			log.Warn(base.ConvertValidationErrorToString(validationResult))
 			if dm != nil {
-				return models.DeleteDoor43Metadata(dm)
+				return repo_model.DeleteDoor43Metadata(dm)
 			}
 		} else {
 			if (*manifest)["dublin_core"].(map[string]interface{})["subject"].(string) == "Aligned Bible" {
@@ -369,7 +368,7 @@ func ProcessDoor43MetadataForRepoRelease(ctx context.Context, repo *repo_model.R
 			(*manifest)["dublin_core"].(map[string]interface{})["language"].(map[string]interface{})["is_gl"] = dcs.LanguageIsGL(lc)
 			log.Warn("%s/%s: manifest.yaml is valid.", repo.FullName(), branchOrTag)
 			if dm == nil {
-				dm = &models.Door43Metadata{
+				dm = &repo_model.Door43Metadata{
 					RepoID:          repo.ID,
 					Repo:            repo,
 					ReleaseID:       releaseID,
@@ -380,20 +379,20 @@ func ProcessDoor43MetadataForRepoRelease(ctx context.Context, repo *repo_model.R
 					Stage:           stage,
 					BranchOrTag:     branchOrTag,
 				}
-				return models.InsertDoor43Metadata(dm)
+				return repo_model.InsertDoor43Metadata(dm)
 			}
 			dm.Metadata = manifest
 			dm.ReleaseDateUnix = releaseDateUnix
 			dm.Stage = stage
 			dm.BranchOrTag = branchOrTag
-			return models.UpdateDoor43MetadataCols(dm, "lang", "metadata", "release_date_unix", "stage", "branch_or_tag")
+			return repo_model.UpdateDoor43MetadataCols(dm, "lang", "metadata", "release_date_unix", "stage", "branch_or_tag")
 		}
 	}
 
 	return nil
 }
 
-func UnpackJSONAttachments(ctx context.Context, release *models.Release) {
+func UnpackJSONAttachments(ctx context.Context, release *repo_model.Release) {
 	if release == nil || len(release.Attachments) == 0 {
 		return
 	}

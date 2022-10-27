@@ -8,8 +8,7 @@ import (
 	"fmt"
 	"strings"
 
-	"code.gitea.io/gitea/models"
-	"code.gitea.io/gitea/models/repo"
+	repo_model "code.gitea.io/gitea/models/repo"
 	user_model "code.gitea.io/gitea/models/user"
 	"code.gitea.io/gitea/modules/git"
 	"code.gitea.io/gitea/modules/graceful"
@@ -31,7 +30,7 @@ func NewNotifier() base.Notifier {
 	return &metadataNotifier{}
 }
 
-func (m *metadataNotifier) NotifyNewRelease(rel *models.Release) {
+func (m *metadataNotifier) NotifyNewRelease(rel *repo_model.Release) {
 	if !rel.IsTag {
 		ctx, _, finished := process.GetManager().AddContext(graceful.GetManager().HammerContext(), fmt.Sprintf("metadataNotifier.NotifyNewRelease rel[%d]%s in [%d]", rel.ID, rel.Title, rel.RepoID))
 		defer finished()
@@ -42,7 +41,7 @@ func (m *metadataNotifier) NotifyNewRelease(rel *models.Release) {
 	}
 }
 
-func (m *metadataNotifier) NotifyUpdateRelease(doer *user_model.User, rel *models.Release) {
+func (m *metadataNotifier) NotifyUpdateRelease(doer *user_model.User, rel *repo_model.Release) {
 	if !rel.IsTag {
 		ctx, _, finished := process.GetManager().AddContext(graceful.GetManager().HammerContext(), fmt.Sprintf("metadataNotifier.NotifyUpdateRelease rel[%d]%s in [%d]", rel.ID, rel.Title, rel.RepoID))
 		defer finished()
@@ -53,13 +52,13 @@ func (m *metadataNotifier) NotifyUpdateRelease(doer *user_model.User, rel *model
 	}
 }
 
-func (m *metadataNotifier) NotifyDeleteRelease(doer *user_model.User, rel *models.Release) {
-	if err := models.DeleteDoor43MetadataByRelease(rel); err != nil {
+func (m *metadataNotifier) NotifyDeleteRelease(doer *user_model.User, rel *repo_model.Release) {
+	if err := repo_model.DeleteDoor43MetadataByRelease(rel); err != nil {
 		log.Error("ProcessDoor43MetadataForRepoRelease: %v\n", err)
 	}
 }
 
-func (m *metadataNotifier) NotifyPushCommits(pusher *user_model.User, repo *repo.Repository, opts *repository.PushUpdateOptions, commits *repository.PushCommits) {
+func (m *metadataNotifier) NotifyPushCommits(pusher *user_model.User, repo *repo_model.Repository, opts *repository.PushUpdateOptions, commits *repository.PushCommits) {
 	if strings.HasPrefix(opts.RefFullName, git.BranchPrefix) && strings.TrimPrefix(opts.RefFullName, git.BranchPrefix) == repo.DefaultBranch {
 		ctx, _, finished := process.GetManager().AddContext(graceful.GetManager().HammerContext(), fmt.Sprintf("metadataNotifier.NotifyPushCommits User: %s[%d] in %s[%d]", pusher.Name, pusher.ID, repo.FullName(), repo.ID))
 		defer finished()
@@ -70,31 +69,31 @@ func (m *metadataNotifier) NotifyPushCommits(pusher *user_model.User, repo *repo
 	}
 }
 
-func (m *metadataNotifier) NotifyDeleteRepository(doer *user_model.User, repo *repo.Repository) {
-	if _, err := models.DeleteAllDoor43MetadatasByRepoID(repo.ID); err != nil {
+func (m *metadataNotifier) NotifyDeleteRepository(doer *user_model.User, repo *repo_model.Repository) {
+	if _, err := repo_model.DeleteAllDoor43MetadatasByRepoID(repo.ID); err != nil {
 		log.Error("DeleteAllDoor43MetadatasByRepoID: %v\n", err)
 	}
 }
 
-func (m *metadataNotifier) NotifyMigrateRepository(doer, u *user_model.User, repo *repo.Repository) {
+func (m *metadataNotifier) NotifyMigrateRepository(doer, u *user_model.User, repo *repo_model.Repository) {
 	if err := door43metadata_service.ProcessDoor43MetadataForRepo(repo); err != nil {
 		log.Error("ProcessDoor43MetadataForRepo: %v\n", err)
 	}
 }
 
-func (m *metadataNotifier) NotifyTransferRepository(doer *user_model.User, repo *repo.Repository, newOwnerName string) {
+func (m *metadataNotifier) NotifyTransferRepository(doer *user_model.User, repo *repo_model.Repository, newOwnerName string) {
 	if err := door43metadata_service.ProcessDoor43MetadataForRepo(repo); err != nil {
 		log.Error("ProcessDoor43MetadataForRepo: %v\n", err)
 	}
 }
 
-func (m *metadataNotifier) NotifyForkRepository(doer *user_model.User, oldRepo, repo *repo.Repository) {
+func (m *metadataNotifier) NotifyForkRepository(doer *user_model.User, oldRepo, repo *repo_model.Repository) {
 	if err := door43metadata_service.ProcessDoor43MetadataForRepo(repo); err != nil {
 		log.Error("ProcessDoor43MetadataForRepo: %v\n", err)
 	}
 }
 
-func (m *metadataNotifier) NotifyRenameRepository(doer *user_model.User, repo *repo.Repository, oldName string) {
+func (m *metadataNotifier) NotifyRenameRepository(doer *user_model.User, repo *repo_model.Repository, oldName string) {
 	if err := door43metadata_service.ProcessDoor43MetadataForRepo(repo); err != nil {
 		log.Error("ProcessDoor43MetadataForRepo: %v\n", err)
 	}

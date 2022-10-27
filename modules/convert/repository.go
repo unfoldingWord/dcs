@@ -58,9 +58,10 @@ func innerToRepo(repo *repo_model.Repository, mode perm.AccessMode, isParent boo
 		config := unit.ExternalTrackerConfig()
 		hasIssues = true
 		externalTracker = &api.ExternalTracker{
-			ExternalTrackerURL:    config.ExternalTrackerURL,
-			ExternalTrackerFormat: config.ExternalTrackerFormat,
-			ExternalTrackerStyle:  config.ExternalTrackerStyle,
+			ExternalTrackerURL:           config.ExternalTrackerURL,
+			ExternalTrackerFormat:        config.ExternalTrackerFormat,
+			ExternalTrackerStyle:         config.ExternalTrackerStyle,
+			ExternalTrackerRegexpPattern: config.ExternalTrackerRegexpPattern,
 		}
 	}
 	hasWiki := false
@@ -104,13 +105,13 @@ func innerToRepo(repo *repo_model.Repository, mode perm.AccessMode, isParent boo
 		return nil
 	}
 
-	numReleases, _ := models.GetReleaseCountByRepoID(repo.ID, models.FindReleasesOptions{IncludeDrafts: false, IncludeTags: false})
+	numReleases, _ := repo_model.GetReleaseCountByRepoID(repo.ID, repo_model.FindReleasesOptions{IncludeDrafts: false, IncludeTags: false})
 
 	/*** DCS Customizations ***/
 
 	// TODO: Load in Repository's LoadAttributes() function and save to repo.Metadata
-	metadata, err := models.GetDoor43MetadataByRepoIDAndReleaseID(repo.ID, 0)
-	if err != nil && !models.IsErrDoor43MetadataNotExist(err) {
+	metadata, err := repo_model.GetDoor43MetadataByRepoIDAndReleaseID(repo.ID, 0)
+	if err != nil && !repo_model.IsErrDoor43MetadataNotExist(err) {
 		log.Error("GetDoor43MetadataByRepoIDAndReleaseID: %v", err)
 	}
 	// if metadata == nil {

@@ -14,6 +14,7 @@ import (
 	"code.gitea.io/gitea/models/db"
 	"code.gitea.io/gitea/models/door43metadata"
 	access_model "code.gitea.io/gitea/models/perm/access"
+	"code.gitea.io/gitea/models/repo"
 	"code.gitea.io/gitea/modules/context"
 	"code.gitea.io/gitea/modules/convert"
 	api "code.gitea.io/gitea/modules/structs"
@@ -363,12 +364,12 @@ func GetCatalogEntry(ctx *context.APIContext) {
 	//     "$ref": "#/responses/validationError"
 
 	tag := ctx.Params("tag")
-	var dm *models.Door43Metadata
+	var dm *repo.Door43Metadata
 	var err error
 	if tag == ctx.Repo.Repository.DefaultBranch {
-		dm, err = models.GetDoor43MetadataByRepoIDAndReleaseID(ctx.Repo.Repository.ID, 0)
+		dm, err = repo.GetDoor43MetadataByRepoIDAndReleaseID(ctx.Repo.Repository.ID, 0)
 	} else {
-		dm, err = models.GetDoor43MetadataByRepoIDAndTagName(ctx.Repo.Repository.ID, tag)
+		dm, err = repo.GetDoor43MetadataByRepoIDAndTagName(ctx.Repo.Repository.ID, tag)
 	}
 	if err != nil {
 		ctx.Error(http.StatusInternalServerError, "GetDoor43MetadataByRepoIDAndTagName", err)
@@ -417,7 +418,7 @@ func GetCatalogMetadata(ctx *context.APIContext) {
 	//   "422":
 	//     "$ref": "#/responses/validationError"
 
-	dm, err := models.GetDoor43MetadataByRepoIDAndTagName(ctx.Repo.Repository.ID, ctx.Repo.TagName)
+	dm, err := repo.GetDoor43MetadataByRepoIDAndTagName(ctx.Repo.Repository.ID, ctx.Repo.TagName)
 	if err != nil {
 		ctx.Error(http.StatusInternalServerError, "GetDoor43MetadataByRepoIDAndTagName", err)
 		return

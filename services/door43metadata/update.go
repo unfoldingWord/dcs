@@ -7,10 +7,9 @@ package door43metadata
 import (
 	"context"
 
-	"code.gitea.io/gitea/models"
-	admin_model "code.gitea.io/gitea/models/admin"
 	"code.gitea.io/gitea/models/db"
 	"code.gitea.io/gitea/models/repo"
+	"code.gitea.io/gitea/models/system"
 	"code.gitea.io/gitea/modules/log"
 
 	"xorm.io/builder"
@@ -20,7 +19,7 @@ import (
 func UpdateDoor43Metadata(ctx context.Context) error {
 	log.Trace("Doing: UpdateDoor43Metadata")
 
-	repoIDs, err := models.GetReposForMetadata()
+	repoIDs, err := repo.GetReposForMetadata()
 	if err != nil {
 		log.Error("GetReposForMetadata: %v", err)
 	}
@@ -39,7 +38,7 @@ func UpdateDoor43Metadata(ctx context.Context) error {
 			log.Trace("Running generate metadata on %v", repo)
 			if err := ProcessDoor43MetadataForRepo(repo); err != nil {
 				log.Warn("Failed to process metadata for repo (%v): %v", repo, err)
-				if err = admin_model.CreateRepositoryNotice("Failed to process metadata for repository (%s): %v", repo.FullName(), err); err != nil {
+				if err = system.CreateRepositoryNotice("Failed to process metadata for repository (%s): %v", repo.FullName(), err); err != nil {
 					log.Error("ProcessDoor43MetadataForRepo: %v", err)
 				}
 			}

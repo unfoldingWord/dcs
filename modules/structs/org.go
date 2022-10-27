@@ -7,7 +7,7 @@ package structs
 // Organization represents an organization
 type Organization struct {
 	ID                        int64  `json:"id"`
-	UserName                  string `json:"username"`
+	Name                      string `json:"name"`
 	FullName                  string `json:"full_name"`
 	AvatarURL                 string `json:"avatar_url"`
 	Description               string `json:"description"`
@@ -19,6 +19,8 @@ type Organization struct {
 	RepoLanguages []string `json:"repo_languages"` // DCS Customizations
 	// All subjects of the repos the org owns
 	RepoSubjects []string `json:"repo_subjects"` // DCS Customizations
+	// deprecated
+	UserName string `json:"username"`
 }
 
 // OrganizationPermissions list different users permissions on an organization

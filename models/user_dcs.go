@@ -10,6 +10,7 @@ import (
 
 	"code.gitea.io/gitea/models/db"
 	"code.gitea.io/gitea/models/repo"
+	repo_model "code.gitea.io/gitea/models/repo"
 	user_model "code.gitea.io/gitea/models/user"
 	"code.gitea.io/gitea/modules/dcs"
 	"code.gitea.io/gitea/modules/log"
@@ -35,7 +36,7 @@ func GetRepoLanguages(u *user_model.User) []string {
 			if lang != "" && !contains(languages, lang) {
 				languages = append(languages, lang)
 			}
-			if dm, err := GetDefaultBranchMetadata(repo.ID); err != nil {
+			if dm, err := repo_model.GetDefaultBranchMetadata(repo.ID); err != nil {
 				log.Error("Error GetDefaultBranchMetadata: %v", err)
 			} else if dm != nil {
 				lang = (*dm.Metadata)["dublin_core"].(map[string]interface{})["language"].(map[string]interface{})["identifier"].(string)
@@ -56,7 +57,7 @@ func GetRepoSubjects(u *user_model.User) []string {
 		log.Error("Error GetUserRepositories: %v", err)
 	} else {
 		for _, repo := range repos {
-			if dm, err := GetDefaultBranchMetadata(repo.ID); err != nil {
+			if dm, err := repo_model.GetDefaultBranchMetadata(repo.ID); err != nil {
 				log.Error("Error GetDefaultBranchMetadata: %v", err)
 			} else if dm != nil {
 				subject := (*dm.Metadata)["dublin_core"].(map[string]interface{})["subject"].(string)

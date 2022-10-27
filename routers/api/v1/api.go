@@ -65,6 +65,7 @@
 package v1
 
 import (
+	gocontext "context"
 	"fmt"
 	"net/http"
 	"reflect"
@@ -609,7 +610,7 @@ func buildAuthGroup() *auth.Group {
 }
 
 // Routes registers all v1 APIs routes to web application.
-func Routes() *web.Route {
+func Routes(ctx gocontext.Context) *web.Route {
 	m := web.NewRoute()
 
 	m.Use(securityHeaders())
@@ -627,7 +628,7 @@ func Routes() *web.Route {
 	m.Use(context.APIContexter())
 
 	group := buildAuthGroup()
-	if err := group.Init(); err != nil {
+	if err := group.Init(ctx); err != nil {
 		log.Error("Could not initialize '%s' auth method, error: %s", group.Name(), err)
 	}
 
@@ -986,6 +987,15 @@ func Routes() *web.Route {
 					})
 				}, reqRepoReader(unit.TypeReleases))
 				m.Post("/mirror-sync", reqToken(), reqRepoWriter(unit.TypeCode), repo.MirrorSync)
+				m.Post("/push_mirrors-sync", reqAdmin(), repo.PushMirrorSync)
+				m.Group("/push_mirrors", func() {
+					m.Combo("").Get(repo.ListPushMirrors).
+						Post(bind(api.CreatePushMirrorOption{}), repo.AddPushMirror)
+					m.Combo("/{name}").
+						Delete(repo.DeletePushMirrorByRemoteName).
+						Get(repo.GetPushMirrorByName)
+				}, reqAdmin())
+
 				m.Get("/editorconfig/{filename}", context.ReferencesGitRepo(), context.RepoRefForAPI, reqRepoReader(unit.TypeCode), repo.GetEditorconfig)
 				m.Group("/pulls", func() {
 					m.Combo("").Get(repo.ListPullRequests).
@@ -996,6 +1006,7 @@ func Routes() *web.Route {
 						m.Get(".{diffType:diff|patch}", repo.DownloadPullDiffOrPatch)
 						m.Post("/update", reqToken(), repo.UpdatePullRequest)
 						m.Get("/commits", repo.GetPullRequestCommits)
+						m.Get("/files", repo.GetPullRequestFiles)
 						m.Combo("/merge").Get(repo.IsPullRequestMerged).
 							Post(reqToken(), mustNotBeArchived, bind(forms.MergePullRequestForm{}), repo.MergePullRequest).
 							Delete(reqToken(), mustNotBeArchived, repo.CancelScheduledAutoMerge)

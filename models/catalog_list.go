@@ -10,23 +10,24 @@ import (
 
 	"code.gitea.io/gitea/models/db"
 	"code.gitea.io/gitea/models/door43metadata"
+	"code.gitea.io/gitea/models/repo"
 
 	"xorm.io/builder"
 )
 
 // SearchCatalog returns catalog repositories based on search options,
 // it returns results in given range and number of total results.
-func SearchCatalog(opts *door43metadata.SearchCatalogOptions) (Door43MetadataList, int64, error) {
+func SearchCatalog(opts *door43metadata.SearchCatalogOptions) (repo.Door43MetadataList, int64, error) {
 	cond := door43metadata.SearchCatalogCondition(opts)
 	return SearchCatalogByCondition(opts, cond, true)
 }
 
 // SearchCatalogByCondition search repositories by condition
-func SearchCatalogByCondition(opts *door43metadata.SearchCatalogOptions, cond builder.Cond, loadAttributes bool) (Door43MetadataList, int64, error) {
+func SearchCatalogByCondition(opts *door43metadata.SearchCatalogOptions, cond builder.Cond, loadAttributes bool) (repo.Door43MetadataList, int64, error) {
 	return searchCatalogByCondition(db.DefaultContext, opts, cond, loadAttributes)
 }
 
-func searchCatalogByCondition(ctx context.Context, opts *door43metadata.SearchCatalogOptions, cond builder.Cond, loadAttributes bool) (Door43MetadataList, int64, error) {
+func searchCatalogByCondition(ctx context.Context, opts *door43metadata.SearchCatalogOptions, cond builder.Cond, loadAttributes bool) (repo.Door43MetadataList, int64, error) {
 	if opts.Page <= 0 {
 		opts.Page = 1
 	}
@@ -38,9 +39,9 @@ func searchCatalogByCondition(ctx context.Context, opts *door43metadata.SearchCa
 		opts.OrderBy = []door43metadata.CatalogOrderBy{door43metadata.CatalogOrderByNewest}
 	}
 
-	var dms Door43MetadataList
+	var dms repo.Door43MetadataList
 	if opts.PageSize > 0 {
-		dms = make(Door43MetadataList, 0, opts.PageSize)
+		dms = make(repo.Door43MetadataList, 0, opts.PageSize)
 	}
 
 	releaseInfoInner, err := builder.Select("`door43_metadata`.repo_id", "COUNT(*) AS release_count", "MAX(`door43_metadata`.release_date_unix) AS latest_unix").
@@ -83,8 +84,8 @@ func searchCatalogByCondition(ctx context.Context, opts *door43metadata.SearchCa
 	}
 
 	if loadAttributes {
-		if err = dms.loadAttributes(ctx); err != nil {
-			return nil, 0, fmt.Errorf("loadAttributes: %v", err)
+		if err = dms.LoadAttributes(); err != nil {
+			return nil, 0, fmt.Errorf("LoadAttributes: %v", err)
 		}
 	}
 

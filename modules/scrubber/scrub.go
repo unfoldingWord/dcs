@@ -164,9 +164,9 @@ func ScrubFile(ctx *context.Context, repoPath, fileName string) error {
 	if err != nil {
 		return err
 	}
+	indexFilter := "\"" + gitPath + "\" rm --cached --ignore-unmatch \"" + fileName + "\""
 	err = git.NewCommand(*ctx, "filter-branch", "--force", "--prune-empty", "--tag-name-filter", "cat",
-		"--index-filter", "\""+gitPath+"\" rm --cached --ignore-unmatch "+fileName,
-		"--", "--all").Run(&git.RunOpts{Dir: repoPath})
+		"--index-filter").AddDynamicArguments(indexFilter, "--", "--all").Run(&git.RunOpts{Dir: repoPath})
 	if err != nil && err.Error() == "exit status 1" {
 		err := os.RemoveAll(path.Join(repoPath, ".git/refs/original/"))
 		if err != nil {
@@ -185,12 +185,13 @@ func ScrubCommitNameAndEmail(ctx *context.Context, localPath, newName, newEmail 
 	if err := os.RemoveAll(path.Join(localPath, ".git/refs/original/")); err != nil {
 		return err
 	}
-	if err := git.NewCommand(db.DefaultContext, "filter-branch", "-f", "--env-filter", `
-export GIT_COMMITTER_NAME="`+newName+`"
-export GIT_COMMITTER_EMAIL="`+newEmail+`"
-export GIT_AUTHOR_NAME="`+newName+`"
-export GIT_AUTHOR_EMAIL="`+newEmail+`"
-`, "--tag-name-filter", "cat", "--", "--branches", "--tags").Run(&git.RunOpts{Dir: localPath}); err != nil {
+	envFilter := `
+export GIT_COMMITTER_NAME="` + newName + `"
+export GIT_COMMITTER_EMAIL="` + newEmail + `"
+export GIT_AUTHOR_NAME="` + newName + `"
+export GIT_AUTHOR_EMAIL="` + newEmail + `"
+`
+	if err := git.NewCommand(db.DefaultContext, "filter-branch", "-f", "--env-filter").AddDynamicArguments(envFilter, "--tag-name-filter", "cat", "--", "--branches", "--tags").Run(&git.RunOpts{Dir: localPath}); err != nil {
 		return err
 	}
 	return git.NewCommand(*ctx, "push", "--force", "--tags", "origin", "refs/heads/*").Run(&git.RunOpts{Dir: localPath})

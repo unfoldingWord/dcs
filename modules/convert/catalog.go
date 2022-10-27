@@ -7,9 +7,9 @@ package convert
 import (
 	"fmt"
 
-	"code.gitea.io/gitea/models"
 	"code.gitea.io/gitea/models/db"
 	"code.gitea.io/gitea/models/perm"
+	"code.gitea.io/gitea/models/repo"
 	"code.gitea.io/gitea/modules/dcs"
 	"code.gitea.io/gitea/modules/json"
 	api "code.gitea.io/gitea/modules/structs"
@@ -41,7 +41,7 @@ func ToIngredient(project map[string]interface{}) *api.Ingredient {
 }
 
 // ToCatalogEntry converts a Door43Metadata to an api.CatalogEntry
-func ToCatalogEntry(dm *models.Door43Metadata, mode perm.AccessMode) *api.CatalogEntry {
+func ToCatalogEntry(dm *repo.Door43Metadata, mode perm.AccessMode) *api.CatalogEntry {
 	if err := dm.LoadAttributes(); err != nil {
 		return nil
 	}

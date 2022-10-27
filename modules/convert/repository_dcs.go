@@ -5,32 +5,31 @@
 package convert
 
 import (
-	"code.gitea.io/gitea/models"
 	"code.gitea.io/gitea/models/door43metadata"
 	"code.gitea.io/gitea/models/perm"
-	"code.gitea.io/gitea/models/repo"
+	repo_model "code.gitea.io/gitea/models/repo"
 	"code.gitea.io/gitea/modules/log"
 	api "code.gitea.io/gitea/modules/structs"
 )
 
 // ToRepoDCS adds some fields for DCS Customizations
-func ToRepoDCS(repo *repo.Repository, mode perm.AccessMode) *api.Repository {
+func ToRepoDCS(repo *repo_model.Repository, mode perm.AccessMode) *api.Repository {
 	apiRepo := ToRepo(repo, mode)
 
 	catalog := &api.CatalogStages{}
-	prod, err := models.GetDoor43MetadataByRepoIDAndStage(repo.ID, door43metadata.StageProd)
+	prod, err := repo_model.GetDoor43MetadataByRepoIDAndStage(repo.ID, door43metadata.StageProd)
 	if err != nil {
 		log.Error("GetDoor43MetadataByRepoIDAndStage: %v", err)
 	}
-	preprod, err := models.GetDoor43MetadataByRepoIDAndStage(repo.ID, door43metadata.StagePreProd)
+	preprod, err := repo_model.GetDoor43MetadataByRepoIDAndStage(repo.ID, door43metadata.StagePreProd)
 	if err != nil {
 		log.Error("GetDoor43MetadataByRepoIDAndStage: %v", err)
 	}
-	draft, err := models.GetDoor43MetadataByRepoIDAndStage(repo.ID, door43metadata.StageDraft)
+	draft, err := repo_model.GetDoor43MetadataByRepoIDAndStage(repo.ID, door43metadata.StageDraft)
 	if err != nil {
 		log.Error("GetDoor43MetadataByRepoIDAndStage: %v", err)
 	}
-	latest, err := models.GetDoor43MetadataByRepoIDAndStage(repo.ID, door43metadata.StageLatest)
+	latest, err := repo_model.GetDoor43MetadataByRepoIDAndStage(repo.ID, door43metadata.StageLatest)
 	if err != nil {
 		log.Error("GetDoor43MetadataByRepoIDAndStage: %v", err)
 	}
