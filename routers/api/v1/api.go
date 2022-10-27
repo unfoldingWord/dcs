@@ -7,59 +7,59 @@
 //
 // This documentation describes the DCS (Gitea) API.
 //
-//     Schemes: http, https
-//     BasePath: /api/v1
-//     Version: {{AppVer | JSEscape | Safe}}
-//     License: MIT http://opensource.org/licenses/MIT
+//	Schemes: http, https
+//	BasePath: /api/v1
+//	Version: {{AppVer | JSEscape | Safe}}
+//	License: MIT http://opensource.org/licenses/MIT
 //
-//     Consumes:
-//     - application/json
-//     - text/plain
+//	Consumes:
+//	- application/json
+//	- text/plain
 //
-//     Produces:
-//     - application/json
-//     - text/html
+//	Produces:
+//	- application/json
+//	- text/html
 //
-//     Security:
-//     - BasicAuth :
-//     - Token :
-//     - AccessToken :
-//     - AuthorizationHeaderToken :
-//     - SudoParam :
-//     - SudoHeader :
-//     - TOTPHeader :
+//	Security:
+//	- BasicAuth :
+//	- Token :
+//	- AccessToken :
+//	- AuthorizationHeaderToken :
+//	- SudoParam :
+//	- SudoHeader :
+//	- TOTPHeader :
 //
-//     SecurityDefinitions:
-//     BasicAuth:
-//          type: basic
-//     Token:
-//          type: apiKey
-//          name: token
-//          in: query
-//     AccessToken:
-//          type: apiKey
-//          name: access_token
-//          in: query
-//     AuthorizationHeaderToken:
-//          type: apiKey
-//          name: Authorization
-//          in: header
-//          description: API tokens must be prepended with "token" followed by a space.
-//     SudoParam:
-//          type: apiKey
-//          name: sudo
-//          in: query
-//          description: Sudo API request as the user provided as the key. Admin privileges are required.
-//     SudoHeader:
-//          type: apiKey
-//          name: Sudo
-//          in: header
-//          description: Sudo API request as the user provided as the key. Admin privileges are required.
-//     TOTPHeader:
-//          type: apiKey
-//          name: X-GITEA-OTP
-//          in: header
-//          description: Must be used in combination with BasicAuth if two-factor authentication is enabled.
+//	SecurityDefinitions:
+//	BasicAuth:
+//	     type: basic
+//	Token:
+//	     type: apiKey
+//	     name: token
+//	     in: query
+//	AccessToken:
+//	     type: apiKey
+//	     name: access_token
+//	     in: query
+//	AuthorizationHeaderToken:
+//	     type: apiKey
+//	     name: Authorization
+//	     in: header
+//	     description: API tokens must be prepended with "token" followed by a space.
+//	SudoParam:
+//	     type: apiKey
+//	     name: sudo
+//	     in: query
+//	     description: Sudo API request as the user provided as the key. Admin privileges are required.
+//	SudoHeader:
+//	     type: apiKey
+//	     name: Sudo
+//	     in: header
+//	     description: Sudo API request as the user provided as the key. Admin privileges are required.
+//	TOTPHeader:
+//	     type: apiKey
+//	     name: X-GITEA-OTP
+//	     in: header
+//	     description: Must be used in combination with BasicAuth if two-factor authentication is enabled.
 //
 // swagger:meta
 package v1
@@ -83,6 +83,7 @@ import (
 	"code.gitea.io/gitea/modules/web"
 	"code.gitea.io/gitea/routers/api/v1/activitypub"
 	"code.gitea.io/gitea/routers/api/v1/admin"
+	"code.gitea.io/gitea/routers/api/v1/catalog"
 	"code.gitea.io/gitea/routers/api/v1/misc"
 	"code.gitea.io/gitea/routers/api/v1/notify"
 	"code.gitea.io/gitea/routers/api/v1/org"
@@ -226,10 +227,10 @@ func reqToken() func(ctx *context.APIContext) {
 func reqExploreSignIn() func(ctx *context.APIContext) {
 	return func(ctx *context.APIContext) {
 		if setting.Service.Explore.RequireSigninView && !ctx.IsSigned {
-			/*** DCS Customization ***/
+			/*** DCS Customizations ***/
 			return
 			//ctx.Error(http.StatusUnauthorized, "reqExploreSignIn", "you must be signed in to search for users")
-			/*** END DCS Customization ***/
+			/*** END DCS Customizations ***/
 		}
 	}
 }
@@ -1034,8 +1035,15 @@ func Routes() *web.Route {
 						m.Get("/{sha}", repo.GetSingleCommit)
 						m.Get("/{sha}.{diffType:diff|patch}", repo.DownloadCommitDiffOrPatch)
 					})
-					m.Get("/refs", repo.GetGitAllRefs)
-					m.Get("/refs/*", repo.GetGitRefs)
+					m.Group("/refs", func() {
+						m.Get("", repo.GetGitAllRefs)
+						m.Post("", reqToken(), reqRepoWriter(unit.TypeCode), bind(api.CreateGitRefOption{}), repo.CreateGitRef)
+						m.Get("/*", repo.GetGitRefs)
+						m.Group("/*", func() {
+							m.Patch("", bind(api.UpdateGitRefOption{}), repo.UpdateGitRef)
+							m.Delete("", repo.DeleteGitRef)
+						}, reqToken(), reqRepoWriter(unit.TypeCode))
+					})
 					m.Get("/trees/{sha}", repo.GetTree)
 					m.Get("/blobs/{sha}", repo.GetBlob)
 					m.Get("/tags/{sha}", repo.GetAnnotatedTag)
@@ -1173,6 +1181,22 @@ func Routes() *web.Route {
 
 		/*** DCS Customizations ***/
 		m.Post("/yaml", bind(misc.YamlOption{}), misc.Yaml)
+		m.Group("/catalog", func() {
+			m.Get("", catalog.Search)
+			m.Group("/search", func() {
+				m.Get("", catalog.Search)
+				m.Group("/{username}", func() {
+					m.Get("", catalog.SearchOwner)
+					m.Group("/{reponame}", func() {
+						m.Get("", catalog.SearchRepo)
+					}, repoAssignment())
+				})
+			})
+			m.Group("/entry/{username}/{reponame}/{tag}", func() {
+				m.Get("", catalog.GetCatalogEntry)
+				m.Get("/metadata", catalog.GetCatalogMetadata)
+			}, repoAssignment())
+		})
 		/*** END DCS Customizations ***/
 	}, sudo())
 

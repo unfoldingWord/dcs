@@ -1,8 +1,6 @@
 // Copyright 2021 The Gitea Authors. All rights reserved.
 // Use of this source code is governed by a MIT-style
 // license that can be found in the LICENSE file.
-//
-// Allow "encoding/json" import
 
 package dcs
 
@@ -39,8 +37,8 @@ func GetLangNames() map[string]interface{} {
 
 // GetLanguageFromRepoName determines the language of a repo by its repo name
 func GetLanguageFromRepoName(repoName string) string {
-	parts := strings.Split(repoName, "_")
-	if len(parts) == 2 && IsValidLanguage(parts[0]) && IsValidSubject(parts[1]) {
+	parts := strings.Split(strings.ToLower(repoName), "_")
+	if len(parts) >= 2 && IsValidLanguage(parts[0]) && IsValidSubject(parts[1]) {
 		return parts[0]
 	}
 	return ""
@@ -51,4 +49,37 @@ func IsValidLanguage(lang string) bool {
 	ln := GetLangNames()
 	_, ok := ln[lang]
 	return ok
+}
+
+// GetLanguageDirection returns the language direction
+func GetLanguageDirection(lang string) string {
+	ln := GetLangNames()
+	if data, ok := ln[lang]; ok {
+		if val, ok := data.(map[string]interface{})["ld"].(string); ok {
+			return val
+		}
+	}
+	return "ltr"
+}
+
+// GetLanguageTitle returns the language title
+func GetLanguageTitle(lang string) string {
+	ln := GetLangNames()
+	if data, ok := ln[lang]; ok {
+		if val, ok := data.(map[string]interface{})["ln"].(string); ok {
+			return val
+		}
+	}
+	return ""
+}
+
+// LanguageIsGL returns true if string is a valid language and is a GL
+func LanguageIsGL(lang string) bool {
+	ln := GetLangNames()
+	if data, ok := ln[lang]; ok {
+		if val, ok := data.(map[string]interface{})["gw"].(bool); ok {
+			return val
+		}
+	}
+	return false
 }

@@ -10,6 +10,8 @@ import (
 
 // Subjects are the valid subjects keyed by their resource ID
 var Subjects = map[string]string{
+	"glt":         "Aligned Bible",
+	"gst":         "Aligned Bible",
 	"obs-sn":      "OBS Study Notes",
 	"obs-sq":      "OBS Study Questions",
 	"obs-tn":      "OBS Translation Notes",
@@ -19,8 +21,8 @@ var Subjects = map[string]string{
 	"sn":          "Study Notes",
 	"sq":          "Study Questions",
 	"ta":          "Translation Academy",
-	"tn":          "Translation Notes",
-	"tq":          "Translation Questions",
+	"tn":          "TSV Translation Notes",
+	"tq":          "TSV Translation Questions",
 	"tw":          "Translation Words",
 	"twl":         "TSV Translation Word Links",
 	"sn-tsv":      "TSV Study Notes",
@@ -33,6 +35,8 @@ var Subjects = map[string]string{
 	"obs-tn-tsv":  "TSV OBS Translation Notes",
 	"obs-tq-tsv":  "TSV OBS Translation Questions",
 	"obs-twl-tsv": "TSV OBS Translation Words Links",
+	"ult":         "Aligned Bible",
+	"ust":         "Aligned Bible",
 }
 
 // GetSubjectFromRepoName determines the subject of a repo by its repo name

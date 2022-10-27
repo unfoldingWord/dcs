@@ -86,8 +86,9 @@ import {initCommonOrganization} from './features/common-organization.js';
 import {initRepoWikiForm} from './features/repo-wiki.js';
 import {initRepoCommentForm, initRepository} from './features/repo-legacy.js';
 /** DCS Customizations **/
-import {initDcsInfoIcon} from './features/dcs-info-icon.js';
-import {initDcsValidationErrors} from './features/dcs-validation-errors.js';
+import {initDCSInfoIcon} from './features/dcs-info-icon.js';
+import {initDCSValidationErrors} from './features/dcs-validation-errors.js';
+import {initDCSLanguageFonts} from './features/dcs-language-fonts.js';
 /** END DCS Customizations **/
 import {initFormattingReplacements} from './features/formatting.js';
 
@@ -145,8 +146,9 @@ $(document).ready(() => {
   initDashboardRepoList();
 
   /** DCS Customizations **/
-  initDcsInfoIcon();
-  initDcsValidationErrors();
+  initDCSInfoIcon();
+  initDCSValidationErrors();
+  initDCSLanguageFonts();
   /** END DCS Customizations **/
 
   initNotificationCount();

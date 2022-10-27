@@ -184,9 +184,7 @@ func SettingsPost(ctx *context.Context) {
 			return
 		}
 
-		/*** DCS Customizations - Must be admin ***/
-		repo.IsPrivate = form.Private && ctx.ContextUser.IsAdmin
-		/*** END DCS Customizations ***/
+		repo.IsPrivate = form.Private && ctx.ContextUser.IsAdmin // DCS Customizations - must be admin
 		if err := repo_service.UpdateRepository(repo, visibilityChanged); err != nil {
 			ctx.ServerError("UpdateRepository", err)
 			return

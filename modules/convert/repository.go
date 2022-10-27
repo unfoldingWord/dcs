@@ -121,18 +121,52 @@ func innerToRepo(repo *repo_model.Repository, mode perm.AccessMode, isParent boo
 	// }
 
 	var language, languageTitle, languageDir, title, subject, checkingLevel string
+	var languageIsGL bool
 	var books []string
+	var alignmentCounts map[string]interface{}
 	if metadata != nil {
-		language = (*metadata.Metadata)["dublin_core"].(map[string]interface{})["language"].(map[string]interface{})["identifier"].(string)
-		languageTitle = (*metadata.Metadata)["dublin_core"].(map[string]interface{})["language"].(map[string]interface{})["title"].(string)
-		languageDir = (*metadata.Metadata)["dublin_core"].(map[string]interface{})["language"].(map[string]interface{})["direction"].(string)
 		title = (*metadata.Metadata)["dublin_core"].(map[string]interface{})["title"].(string)
 		subject = (*metadata.Metadata)["dublin_core"].(map[string]interface{})["subject"].(string)
-		books = metadata.GetBooks()
+
+		if val, ok := (*metadata.Metadata)["dublin_core"].(map[string]interface{})["language"].(map[string]interface{})["identifier"].(string); ok {
+			language = val
+		}
+
+		if val, ok := (*metadata.Metadata)["dublin_core"].(map[string]interface{})["language"].(map[string]interface{})["direction"].(string); ok {
+			languageDir = val
+		} else if language != "" {
+			languageDir = dcs.GetLanguageDirection(language)
+		}
+
+		if val, ok := (*metadata.Metadata)["dublin_core"].(map[string]interface{})["language"].(map[string]interface{})["title"].(string); ok {
+			languageTitle = val
+		} else if language != "" {
+			languageTitle = dcs.GetLanguageTitle(language)
+		}
+
+		if val, ok := (*metadata.Metadata)["dublin_core"].(map[string]interface{})["language"].(map[string]interface{})["is_gl"].(bool); ok {
+			languageIsGL = val
+		} else {
+			languageIsGL = dcs.LanguageIsGL(language)
+		}
+
+		if val, ok := (*metadata.Metadata)["books"].([]string); ok {
+			books = val
+		} else {
+			books = metadata.GetBooks()
+		}
+
+		if val, ok := (*metadata.Metadata)["alignment_counts"]; ok {
+			alignmentCounts = val.(map[string]interface{})
+		}
+
 		checkingLevel = fmt.Sprintf("%v", (*metadata.Metadata)["checking"].(map[string]interface{})["checking_level"])
 	} else {
-		language = dcs.GetLanguageFromRepoName(repo.LowerName)
 		subject = dcs.GetSubjectFromRepoName(repo.LowerName)
+		language = dcs.GetLanguageFromRepoName(repo.LowerName)
+		languageTitle = dcs.GetLanguageTitle(language)
+		languageDir = dcs.GetLanguageDirection(language)
+		languageIsGL = dcs.LanguageIsGL(language)
 	}
 	/*** END DCS Customizations ***/
 
@@ -189,7 +223,6 @@ func innerToRepo(repo *repo_model.Repository, mode perm.AccessMode, isParent boo
 		CloneURL:                      cloneLink.HTTPS,
 		OriginalURL:                   repo.SanitizedOriginalURL(),
 		Website:                       repo.Website,
-		Language:                      language,
 		LanguagesURL:                  repoAPIURL + "/languages",
 		Stars:                         repo.NumStars,
 		Forks:                         repo.NumForks,
@@ -221,14 +254,15 @@ func innerToRepo(repo *repo_model.Repository, mode perm.AccessMode, isParent boo
 		MirrorInterval:                mirrorInterval,
 		MirrorUpdated:                 mirrorUpdated,
 		RepoTransfer:                  transfer,
-		/*** DCS Customizations ***/
-		LanguageTitle: languageTitle,
-		LanguageDir:   languageDir,
-		Title:         title,
-		Subject:       subject,
-		Books:         books,
-		CheckingLevel: checkingLevel,
-		/*** END DCS Customizations ***/
+		Language:                      language,        // DCS Customization
+		LanguageTitle:                 languageTitle,   // DCS Customization
+		LanguageDir:                   languageDir,     // DCS Customization
+		LanguageIsGL:                  languageIsGL,    // DCS Customization
+		Title:                         title,           // DCS Customization
+		Subject:                       subject,         // DCS Customization
+		Books:                         books,           // DCS Customization
+		AlignmentCounts:               alignmentCounts, // DCS Customization
+		CheckingLevel:                 checkingLevel,   // DCS Customization
 	}
 }
 

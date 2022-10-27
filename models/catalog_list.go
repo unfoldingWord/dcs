@@ -5,6 +5,7 @@
 package models
 
 import (
+	"context"
 	"fmt"
 
 	"code.gitea.io/gitea/models/db"
@@ -12,59 +13,6 @@ import (
 
 	"xorm.io/builder"
 )
-
-// Door43MetadataListDefaultPageSize is the default number of repositories
-// to load in memory when running administrative tasks on all (or almost
-// all) of them.
-// The number should be low enough to avoid filling up all RAM with
-// repository data...
-const Door43MetadataListDefaultPageSize = 64
-
-// Door43MetadataList contains a list of repositories
-type Door43MetadataList []*Door43Metadata
-
-func (dms Door43MetadataList) Len() int {
-	return len(dms)
-}
-
-func (dms Door43MetadataList) Less(i, j int) bool {
-	return dms[i].Repo.FullName() < dms[j].Repo.FullName()
-}
-
-func (dms Door43MetadataList) Swap(i, j int) {
-	dms[i], dms[j] = dms[j], dms[i]
-}
-
-// Door43MetadataListOfMap make list from values of map
-func Door43MetadataListOfMap(dmMap map[int64]*Door43Metadata) Door43MetadataList {
-	return Door43MetadataList(valuesDoor43Metadata(dmMap))
-}
-
-// LoadAttributes loads the attributes for the given Door43MetadataList
-func (dms Door43MetadataList) LoadAttributes() error {
-	return dms.loadAttributes(db.GetEngine(db.DefaultContext))
-}
-
-func (dms Door43MetadataList) loadAttributes(e db.Engine) error {
-	if len(dms) == 0 {
-		return nil
-	}
-	var lastErr error
-	for _, dm := range dms {
-		if err := dm.loadAttributes(e); err != nil && lastErr == nil {
-			lastErr = err
-		}
-	}
-	return lastErr
-}
-
-func valuesDoor43Metadata(m map[int64]*Door43Metadata) []*Door43Metadata {
-	values := make([]*Door43Metadata, 0, len(m))
-	for _, v := range m {
-		values = append(values, v)
-	}
-	return values
-}
 
 // SearchCatalog returns catalog repositories based on search options,
 // it returns results in given range and number of total results.
@@ -75,10 +23,10 @@ func SearchCatalog(opts *door43metadata.SearchCatalogOptions) (Door43MetadataLis
 
 // SearchCatalogByCondition search repositories by condition
 func SearchCatalogByCondition(opts *door43metadata.SearchCatalogOptions, cond builder.Cond, loadAttributes bool) (Door43MetadataList, int64, error) {
-	return searchCatalogByCondition(db.GetEngine(db.DefaultContext), opts, cond, loadAttributes)
+	return searchCatalogByCondition(db.DefaultContext, opts, cond, loadAttributes)
 }
 
-func searchCatalogByCondition(e db.Engine, opts *door43metadata.SearchCatalogOptions, cond builder.Cond, loadAttributes bool) (Door43MetadataList, int64, error) {
+func searchCatalogByCondition(ctx context.Context, opts *door43metadata.SearchCatalogOptions, cond builder.Cond, loadAttributes bool) (Door43MetadataList, int64, error) {
 	if opts.Page <= 0 {
 		opts.Page = 1
 	}
@@ -135,67 +83,10 @@ func searchCatalogByCondition(e db.Engine, opts *door43metadata.SearchCatalogOpt
 	}
 
 	if loadAttributes {
-		if err = dms.loadAttributes(sess); err != nil {
+		if err = dms.loadAttributes(ctx); err != nil {
 			return nil, 0, fmt.Errorf("loadAttributes: %v", err)
 		}
 	}
 
 	return dms, count, nil
-}
-
-// QueryForCatalogV3 Does a special query for all of V3
-func QueryForCatalogV3(opts *door43metadata.SearchCatalogOptions) (Door43MetadataList, error) {
-	return queryForCatalogV3(db.GetEngine(db.DefaultContext), opts)
-}
-
-func queryForCatalogV3(e db.Engine, opts *door43metadata.SearchCatalogOptions) (Door43MetadataList, error) {
-	sess := e.Table(&Door43Metadata{}).
-		Join("INNER", "repository", "`repository`.id = `door43_metadata`.repo_id").
-		Join("INNER", "user", "`repository`.owner_id = `user`.id").
-		Where("(`door43_metadata`.stage = 0 AND `door43_metadata`.repo_id NOT IN (SELECT dm1.repo_id FROM door43_metadata dm1 INNER JOIN repository r1 ON dm1.repo_id = r1.id INNER JOIN user u1 ON u1.id = r1.owner_id WHERE u1.lower_name = \"door43-catalog\" AND dm1.stage = 3)) OR (`door43_metadata`.stage = 3 AND `user`.lower_name = \"door43-catalog\")").
-		And("`door43_metadata`.stage = 3 OR `door43_metadata`.release_date_unix = (SELECT release_date_unix FROM (SELECT dm2.repo_id, dm2.stage, MAX(dm2.release_date_unix) AS release_date_unix FROM door43_metadata dm2 GROUP BY repo_id, dm2.stage ORDER BY dm2.stage) t WHERE `door43_metadata`.repo_id = t.repo_id LIMIT 1)").
-		Where(door43metadata.GetSubjectCond(opts.Subjects, opts.PartialMatch)).
-		Where(door43metadata.GetOwnerCond(opts.Owners, opts.PartialMatch)).
-		Where(door43metadata.GetRepoCond(opts.Repos, opts.PartialMatch)).
-		Where(door43metadata.GetLanguageCond(opts.Languages, opts.PartialMatch))
-
-	for _, orderBy := range opts.OrderBy {
-		sess.OrderBy(orderBy.String())
-	}
-
-	sess.OrderBy(string(door43metadata.CatalogOrderByLangCode)).
-		OrderBy(string(door43metadata.CatalogOrderByIdentifier)).
-		OrderBy("IF(`user`.lower_name = \"door43-catalog\", 0, 1) ASC").
-		OrderBy("IF(`user`.lower_name = \"unfoldingword\", 0, 1) ASC")
-
-	var dms Door43MetadataList
-
-	err := sess.Find(&dms)
-	fmt.Println(sess.LastSQL())
-	if err != nil {
-		return nil, fmt.Errorf("FindAndCount: %v", err)
-	}
-
-	// Filter for unique language/resource combinations
-	var filteredDMs Door43MetadataList
-	for i, dm := range dms {
-		if err := dm.LoadAttributes(); err != nil {
-			return nil, err
-		}
-		unique := false
-		for j := 0; j < i; j++ {
-			if dms[j].Repo.LowerName == dm.Repo.LowerName {
-				unique = true
-			}
-		}
-		if unique {
-			filteredDMs = append(filteredDMs, dm)
-		}
-	}
-
-	// if err = dms.loadAttributes(sess); err != nil {
-	// 	return nil, 0, fmt.Errorf("loadAttributes: %v", err)
-	// }
-
-	return filteredDMs, nil
 }

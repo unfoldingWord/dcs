@@ -188,9 +188,13 @@ func GetLanguageCond(languages []string, partialMatch bool) builder.Cond {
 	for _, lang := range languages {
 		for _, v := range strings.Split(lang, ",") {
 			if partialMatch {
-				langCond = langCond.Or(builder.Like{"LOWER(REPLACE(JSON_EXTRACT(`door43_metadata`.metadata, '$.dublin_core.language.identifier'), '\"', ''))", strings.ToLower(v)})
+				langCond = langCond.
+					Or(builder.Like{"LOWER(REPLACE(JSON_EXTRACT(`door43_metadata`.metadata, '$.dublin_core.language.identifier'), '\"', ''))", strings.ToLower(v)}).
+					Or(builder.Like{"CONCAT(SUBSTRING_INDEX(`repository`.lower_name, '_', 1), '_')", strings.ToLower(v) + "\\_"})
 			} else {
-				langCond = langCond.Or(builder.Eq{"LOWER(REPLACE(JSON_EXTRACT(`door43_metadata`.metadata, '$.dublin_core.language.identifier'), '\"', ''))": strings.ToLower(v)})
+				langCond = langCond.
+					Or(builder.Eq{"LOWER(REPLACE(JSON_EXTRACT(`door43_metadata`.metadata, '$.dublin_core.language.identifier'), '\"', ''))": strings.ToLower(v)}).
+					Or(builder.Eq{"CONCAT(SUBSTRING_INDEX(`repository`.lower_name, '_', 1), '_')": strings.ToLower(v) + "_"})
 			}
 		}
 	}

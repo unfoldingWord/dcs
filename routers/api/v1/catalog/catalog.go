@@ -2,7 +2,7 @@
 // Use of this source code is governed by a MIT-style
 // license that can be found in the LICENSE file.
 
-package v4
+package catalog
 
 import (
 	"fmt"
@@ -48,7 +48,7 @@ var searchOrderByMap = map[string]map[string]door43metadata.CatalogOrderBy{
 
 // Search search the catalog via options
 func Search(ctx *context.APIContext) {
-	// swagger:operation GET /v4/search v4 catalogSearch
+	// swagger:operation GET /catalog/search catalog catalogSearch
 	// ---
 	// summary: Catalog search
 	// produces:
@@ -56,23 +56,23 @@ func Search(ctx *context.APIContext) {
 	// parameters:
 	// - name: q
 	//   in: query
-	//   description: keyword(s). Can use multiple `q=<keyword>`s or commas for more than one keyword
+	//   description: keyword(s). Can use multiple `q=<keyword>`s or a comma-delimited string for more than one keyword. Is case insensitive
 	//   type: string
 	// - name: owner
 	//   in: query
-	//   description: search only for entries with the given owner name(s).
+	//   description: search only for entries with the given owner name(s). Will perform an exact match (case insensitive) unlesss partialMatch=true
 	//   type: string
 	// - name: repo
 	//   in: query
-	//   description: search only for entries with the given repo name(s).
+	//   description: search only for entries with the given repo name(s). To match multiple, give the parameter multiple times or give a list comma delimited. Will perform an exact match (case insensitive) unlesss partialMatch=true
 	//   type: string
 	// - name: tag
 	//   in: query
-	//   description: search only for entries with the given release tag(s)
+	//   description: search only for entries with the given release tag(s). To match multiple, give the parameter multiple times or give a list comma delimited. Will perform an exact match (case insensitive)
 	//   type: string
 	// - name: lang
 	//   in: query
-	//   description: search only for entries with the given language(s)
+	//   description: search only for entries with the given language(s). To match multiple, give the parameter multiple times or give a list comma delimited. Will perform an exact match (case insensitive) unlesss partialMatch=true
 	//   type: string
 	// - name: stage
 	//   in: query
@@ -84,7 +84,7 @@ func Search(ctx *context.APIContext) {
 	//   type: string
 	// - name: subject
 	//   in: query
-	//   description: search only for entries with the given subject(s). Must match the entire string (case insensitive)
+	//   description: search only for entries with the given subject(s). To match multiple, give the parameter multiple times or give a list comma delimited. Will perform an exact match (case insensitive) unlesss partialMatch=true
 	//   type: string
 	// - name: checkingLevel
 	//   in: query
@@ -92,8 +92,12 @@ func Search(ctx *context.APIContext) {
 	//   type: string
 	// - name: book
 	//   in: query
-	//   description: search only for entries with the given book(s) (project ids)
+	//   description: search only for entries with the given book(s) (project ids). To match multiple, give the parameter multiple times or give a list comma delimited. Will perform an exact match (case insensitive)
 	//   type: string
+	// - name: partialMatch
+	//   in: query
+	//   description: if true, subject, owner and repo search fields will use partial match (LIKE) when querying the catalog. Default is false
+	//   type: boolean
 	// - name: includeHistory
 	//   in: query
 	//   description: if true, all releases, not just the latest, are included. Default is false
@@ -123,11 +127,11 @@ func Search(ctx *context.APIContext) {
 	//   type: integer
 	// - name: limit
 	//   in: query
-	//   description: page size of results, maximum page size is 50
+	//   description: page size of results, defaults to no limit
 	//   type: integer
 	// responses:
 	//   "200":
-	//     "$ref": "#/responses/CatalogSearchResultsV4"
+	//     "$ref": "#/responses/CatalogSearchResults"
 	//   "422":
 	//     "$ref": "#/responses/validationError"
 
@@ -136,7 +140,7 @@ func Search(ctx *context.APIContext) {
 
 // SearchOwner search the catalog via owner and via options
 func SearchOwner(ctx *context.APIContext) {
-	// swagger:operation GET /v4/search/{owner} v4 catalo4SearchOwner
+	// swagger:operation GET /catalog/search/{owner} catalog catalogSearchOwner
 	// ---
 	// summary: Catalog search by owner
 	// produces:
@@ -144,24 +148,24 @@ func SearchOwner(ctx *context.APIContext) {
 	// parameters:
 	// - name: owner
 	//   in: path
-	//   description: owner of entries
+	//   description: owner of the returned entries
 	//   type: string
 	//   required: true
 	// - name: q
 	//   in: query
-	//   description: keyword(s). Can use multiple `q=<keyword>`s or commas for more than one keyword
+	//   description: keyword(s). Can use multiple `q=<keyword>`s or a comma-delimited string for more than one keyword. Is case insensitive
 	//   type: string
 	// - name: repo
 	//   in: query
-	//   description: search only for entries with the given repo name(s).
+	//   description: search only for entries with the given repo name(s). To match multiple, give the parameter multiple times or give a list comma delimited. Will perform an exact match (case insensitive) unlesss partialMatch=true
 	//   type: string
 	// - name: tag
 	//   in: query
-	//   description: search only for entries with the given release tag(s)
+	//   description: search only for entries with the given release tag(s). To match multiple, give the parameter multiple times or give a list comma delimited. Will perform an exact match (case insensitive)
 	//   type: string
 	// - name: lang
 	//   in: query
-	//   description: search only for entries with the given language(s)
+	//   description: search only for entries with the given language(s). To match multiple, give the parameter multiple times or give a list comma delimited. Will perform an exact match (case insensitive) unlesss partialMatch=true
 	//   type: string
 	// - name: stage
 	//   in: query
@@ -173,7 +177,7 @@ func SearchOwner(ctx *context.APIContext) {
 	//   type: string
 	// - name: subject
 	//   in: query
-	//   description: search only for entries with the given subject(s). Must match the entire string (case insensitive)
+	//   description: search only for entries with the given subject(s). To match multiple, give the parameter multiple times or give a list comma delimited. Will perform an exact match (case insensitive) unlesss partialMatch=true
 	//   type: string
 	// - name: checkingLevel
 	//   in: query
@@ -181,8 +185,12 @@ func SearchOwner(ctx *context.APIContext) {
 	//   type: string
 	// - name: book
 	//   in: query
-	//   description: search only for entries with the given book(s) (project ids)
+	//   description: search only for entries with the given book(s) (project ids). To match multiple, give the parameter multiple times or give a list comma delimited. Will perform an exact match (case insensitive)
 	//   type: string
+	// - name: partialMatch
+	//   in: query
+	//   description: if true, subject, owner and repo search fields will use partial match (LIKE) when querying the catalog. Default is false
+	//   type: boolean
 	// - name: includeHistory
 	//   in: query
 	//   description: if true, all releases, not just the latest, are included. Default is false
@@ -212,11 +220,11 @@ func SearchOwner(ctx *context.APIContext) {
 	//   type: integer
 	// - name: limit
 	//   in: query
-	//   description: page size of results, maximum page size is 50
+	//   description: page size of results, defaults to no limit
 	//   type: integer
 	// responses:
 	//   "200":
-	//     "$ref": "#/responses/CatalogSearchResultsV4"
+	//     "$ref": "#/responses/CatalogSearchResults"
 	//   "422":
 	//     "$ref": "#/responses/validationError"
 
@@ -225,7 +233,7 @@ func SearchOwner(ctx *context.APIContext) {
 
 // SearchRepo search the catalog via repo and options
 func SearchRepo(ctx *context.APIContext) {
-	// swagger:operation GET /v4/search/{owner}/{repo} v4 catalogSearchRepo
+	// swagger:operation GET /catalog/search/{owner}/{repo} catalog catalogSearchRepo
 	// ---
 	// summary: Catalog search by repo
 	// produces:
@@ -233,25 +241,33 @@ func SearchRepo(ctx *context.APIContext) {
 	// parameters:
 	// - name: owner
 	//   in: path
-	//   description: name of the owner
+	//   description: owner of the returned entries
 	//   type: string
 	//   required: true
 	// - name: repo
 	//   in: path
-	//   description: name of the repo
+	//   description: name of the repo of the returned entries
 	//   type: string
 	//   required: true
 	// - name: q
 	//   in: query
-	//   description: keyword(s). Can use multiple `q=<keyword>`s or commas for more than one keyword
+	//   description: keyword(s). Can use multiple `q=<keyword>`s or a comma-delimited string for more than one keyword. Is case insensitive
+	//   type: string
+	// - name: owner
+	//   in: query
+	//   description: search only for entries with the given owner name(s). Will perform an exact match (case insensitive) unlesss partialMatch=true
+	//   type: string
+	// - name: repo
+	//   in: query
+	//   description: search only for entries with the given repo name(s). To match multiple, give the parameter multiple times or give a list comma delimited. Will perform an exact match (case insensitive) unlesss partialMatch=true
 	//   type: string
 	// - name: tag
 	//   in: query
-	//   description: search only for entries with the given release tag(s)
+	//   description: search only for entries with the given release tag(s). To match multiple, give the parameter multiple times or give a list comma delimited. Will perform an exact match (case insensitive)
 	//   type: string
 	// - name: lang
 	//   in: query
-	//   description: search only for entries with the given language(s)
+	//   description: search only for entries with the given language(s). To match multiple, give the parameter multiple times or give a list comma delimited. Will perform an exact match (case insensitive) unlesss partialMatch=true
 	//   type: string
 	// - name: stage
 	//   in: query
@@ -263,7 +279,7 @@ func SearchRepo(ctx *context.APIContext) {
 	//   type: string
 	// - name: subject
 	//   in: query
-	//   description: search only for entries with the given subject(s). Must match the entire string (case insensitive)
+	//   description: search only for entries with the given subject(s). To match multiple, give the parameter multiple times or give a list comma delimited. Will perform an exact match (case insensitive) unlesss partialMatch=true
 	//   type: string
 	// - name: checkingLevel
 	//   in: query
@@ -271,8 +287,12 @@ func SearchRepo(ctx *context.APIContext) {
 	//   type: string
 	// - name: book
 	//   in: query
-	//   description: search only for entries with the given book(s) (project ids)
+	//   description: search only for entries with the given book(s) (project ids). To match multiple, give the parameter multiple times or give a list comma delimited. Will perform an exact match (case insensitive)
 	//   type: string
+	// - name: partialMatch
+	//   in: query
+	//   description: if true, subject, owner and repo search fields will use partial match (LIKE) when querying the catalog. Default is false
+	//   type: boolean
 	// - name: includeHistory
 	//   in: query
 	//   description: if true, all releases, not just the latest, are included. Default is false
@@ -302,11 +322,11 @@ func SearchRepo(ctx *context.APIContext) {
 	//   type: integer
 	// - name: limit
 	//   in: query
-	//   description: page size of results, maximum page size is 50
+	//   description: page size of results, defaults to no limit
 	//   type: integer
 	// responses:
 	//   "200":
-	//     "$ref": "#/responses/CatalogSearchResultsV4"
+	//     "$ref": "#/responses/CatalogSearchResults"
 	//   "422":
 	//     "$ref": "#/responses/validationError"
 
@@ -315,7 +335,7 @@ func SearchRepo(ctx *context.APIContext) {
 
 // GetCatalogEntry Get the catalog entry from the given ownername, reponame and ref
 func GetCatalogEntry(ctx *context.APIContext) {
-	// swagger:operation GET /v4/entry/{owner}/{repo}/{tag} v4 catalogGetEntry
+	// swagger:operation GET /catalog/entry/{owner}/{repo}/{tag} catalog catalogGetEntry
 	// ---
 	// summary: Catalog entry
 	// produces:
@@ -338,7 +358,7 @@ func GetCatalogEntry(ctx *context.APIContext) {
 	//   required: true
 	// responses:
 	//   "200":
-	//     "$ref": "#/responses/CatalogEntryV4"
+	//     "$ref": "#/responses/CatalogEntry"
 	//   "422":
 	//     "$ref": "#/responses/validationError"
 
@@ -365,12 +385,12 @@ func GetCatalogEntry(ctx *context.APIContext) {
 			Error: err.Error(),
 		})
 	}
-	ctx.JSON(http.StatusOK, convert.ToCatalogV4(dm, accessMode))
+	ctx.JSON(http.StatusOK, convert.ToCatalogEntry(dm, accessMode))
 }
 
 // GetCatalogMetadata Get the metadata (RC 0.2.0 manifest) in JSON format for the given ownername, reponame and ref
 func GetCatalogMetadata(ctx *context.APIContext) {
-	// swagger:operation GET /v4/entry/{owner}/{repo}/{tag}/metadata v4 catalogGetMetadata
+	// swagger:operation GET /catalog/entry/{owner}/{repo}/{tag}/metadata catalog catalogGetMetadata
 	// ---
 	// summary: Catalog entry metadata (manifest.yaml in JSON format)
 	// produces:
@@ -447,7 +467,7 @@ func searchCatalog(ctx *context.APIContext) {
 		}
 	}
 
-	var keywords []string
+	keywords := []string{}
 	query := strings.Trim(ctx.FormString("q"), " ")
 	if query != "" {
 		keywords = door43metadata.SplitAtCommaNotInString(query, false)
@@ -456,7 +476,7 @@ func searchCatalog(ctx *context.APIContext) {
 		Page:     ctx.FormInt("page"),
 		PageSize: ctx.FormInt("limit"),
 	}
-	if listOptions.Page < 0 {
+	if listOptions.Page < 1 {
 		listOptions.Page = 1
 	}
 
@@ -475,6 +495,7 @@ func searchCatalog(ctx *context.APIContext) {
 		IncludeHistory:  ctx.FormBool("includeHistory"),
 		ShowIngredients: ctx.FormBool("showIngredients"),
 		IncludeMetadata: includeMetadata,
+		PartialMatch:    ctx.FormBool("partialMatch"),
 	}
 
 	sortModes := QueryStrings(ctx, "sort")
@@ -509,7 +530,7 @@ func searchCatalog(ctx *context.APIContext) {
 		return
 	}
 
-	results := make([]*api.CatalogV4, len(dms))
+	results := make([]*api.CatalogEntry, len(dms))
 	var lastUpdated time.Time
 	for i, dm := range dms {
 		accessMode, err := access_model.AccessLevel(ctx.ContextUser, dm.Repo)
@@ -519,7 +540,7 @@ func searchCatalog(ctx *context.APIContext) {
 				Error: err.Error(),
 			})
 		}
-		dmAPI := convert.ToCatalogV4(dm, accessMode)
+		dmAPI := convert.ToCatalogEntry(dm, accessMode)
 		if !opts.ShowIngredients {
 			dmAPI.Ingredients = nil
 		}
@@ -539,7 +560,7 @@ func searchCatalog(ctx *context.APIContext) {
 		ctx.SetLinkHeader(int(count), int(count))
 	}
 	ctx.RespHeader().Set("X-Total-Count", fmt.Sprintf("%d", count))
-	ctx.JSON(http.StatusOK, api.CatalogSearchResultsV4{
+	ctx.JSON(http.StatusOK, api.CatalogSearchResults{
 		OK:          true,
 		Data:        results,
 		LastUpdated: lastUpdated,

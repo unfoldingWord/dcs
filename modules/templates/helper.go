@@ -31,6 +31,7 @@ import (
 	repo_model "code.gitea.io/gitea/models/repo"
 	user_model "code.gitea.io/gitea/models/user"
 	"code.gitea.io/gitea/modules/base"
+	"code.gitea.io/gitea/modules/dcs"
 	"code.gitea.io/gitea/modules/emoji"
 	"code.gitea.io/gitea/modules/git"
 	giturl "code.gitea.io/gitea/modules/git/url"
@@ -485,6 +486,10 @@ func NewFuncMap() []template.FuncMap {
 			}
 			return dm
 		},
+		"GetLanguageFromRepoName": dcs.GetLanguageFromRepoName,
+		"GetLanguageTitle":        dcs.GetLanguageTitle,
+		"GetLanguageDirection":    dcs.GetLanguageDirection,
+		"GetLanguageIsGL":         dcs.LanguageIsGL,
 		/*** END DCS Customizations ***/
 	}}
 }

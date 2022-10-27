@@ -25,8 +25,8 @@
 	<input type="hidden" name="sort" value="{{$.SortType}}">
 	<input type="hidden" name="language" value="{{$.Language}}">
 	<div class="ui fluid action input">
-		<input name="q" value="{{.Keyword}}" placeholder="{{.locale.Tr "explore.search"}}..." autofocus>
-		<button class="ui primary button">{{.locale.Tr "explore.search"}}</button>
+		<input name="q" value="{{.Keyword}}" placeholder="{{.i18n.Tr "explore.search"}}..." autofocus>
+		<button class="ui primary button">{{.i18n.Tr "explore.search"}}</button>
 		<!-- DCS Customizations -->
 			{{template "explore/info_icon" .}}
 		<!-- END DCS Customizations -->

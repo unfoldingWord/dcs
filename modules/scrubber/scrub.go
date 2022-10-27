@@ -3,7 +3,6 @@
 // license that can be found in the LICENSE file.
 //
 // Allow "encoding/json" import
-// Allow "io/ioutil" import
 
 /*** DCS Customizations - Module for scrubbing repos ***/
 
@@ -12,7 +11,6 @@ package scrubber
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"os/exec"
 	"path"
@@ -123,7 +121,7 @@ func scrubJSONFile(ctx *context.Context, localPath, fileName string) error {
 	var jsonData interface{}
 	if _, err := os.Stat(jsonPath); os.IsNotExist(err) {
 		return nil // path does not exist, nothing to scrub!
-	} else if fileContent, err := ioutil.ReadFile(jsonPath); err != nil {
+	} else if fileContent, err := os.ReadFile(jsonPath); err != nil {
 		log.Error("%v", err)
 		return err // error reading file
 	} else if err = json.Unmarshal(fileContent, &jsonData); err != nil {
@@ -138,7 +136,7 @@ func scrubJSONFile(ctx *context.Context, localPath, fileName string) error {
 		return err
 	} else if err := ScrubFile(ctx, localPath, fileName); err != nil {
 		return err
-	} else if err := ioutil.WriteFile(jsonPath, fileContent, 0o666); err != nil {
+	} else if err := os.WriteFile(jsonPath, fileContent, 0o666); err != nil {
 		return err
 	}
 

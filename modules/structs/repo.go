@@ -59,7 +59,6 @@ type Repository struct {
 	Parent        *Repository `json:"parent"`
 	Mirror        bool        `json:"mirror"`
 	Size          int         `json:"size"`
-	Language      string      `json:"language"`
 	LanguagesURL  string      `json:"languages_url"`
 	HTMLURL       string      `json:"html_url"`
 	SSHURL        string      `json:"ssh_url"`
@@ -100,15 +99,26 @@ type Repository struct {
 	// swagger:strfmt date-time
 	MirrorUpdated time.Time     `json:"mirror_updated,omitempty"`
 	RepoTransfer  *RepoTransfer `json:"repo_transfer"`
-	/*** DCS Customizations ***/
-	LanguageTitle string         `json:"language_title"`
-	LanguageDir   string         `json:"language_direction"`
-	Subject       string         `json:"subject"`
-	Books         []string       `json:"books"`
-	Title         string         `json:"title"`
-	CheckingLevel string         `json:"checking_level"`
-	Catalog       *CatalogStages `json:"catalog"`
-	/*** END DCS Customizations ***/
+	// language from the manifest
+	Language string `json:"language"` // DCS Customiations
+	// language title from the manifest
+	LanguageTitle string `json:"language_title"` // DCS Customiations
+	// language direction from the manifest
+	LanguageDir string `json:"language_direction"` // DCS Customiations
+	// is the language a GL
+	LanguageIsGL bool `json:"language_is_gl"` // DCS Customiations
+	// subject from the manifest
+	Subject string `json:"subject"` // DCS Customiations
+	// project IDs from the manifest
+	Books []string `json:"books,omitempty"` // DCS Customiations
+	// the count of alignments of each book
+	AlignmentCounts map[string]interface{} `json:"alignment_counts,omitempty"` // DCS Customiations
+	// title from the manifest
+	Title string `json:"title"` // DCS Customiations
+	// checking level from the manifest
+	CheckingLevel string `json:"checking_level"` // DCS Customiations
+	// latest catalog entry of each stage
+	Catalog *CatalogStages `json:"catalog"` // DCS Customiations
 }
 
 // CreateRepoOption options when creating repository
@@ -247,6 +257,29 @@ type CreateBranchRepoOption struct {
 	//
 	// unique: true
 	OldBranchName string `json:"old_branch_name" binding:"GitRefName;MaxSize(100)"`
+}
+
+// CreateGitRefOption options when creating a git ref in a repository
+// swagger:model
+type CreateGitRefOption struct {
+	// The name of the reference.
+	//
+	// required: true
+	RefName string `json:"ref" binding:"Required;GitRefName;MaxSize(100)"`
+
+	// The target commitish for this reference.
+	//
+	// required: true
+	Target string `json:"target" binding:"Required"`
+}
+
+// UpdateGitRefOption options when updating a git ref in a repository
+// swagger:model
+type UpdateGitRefOption struct {
+	// The target commitish for the reference to be updated to.
+	//
+	// required: true
+	Target string `json:"target" binding:"Required"`
 }
 
 // TransferRepoOption options when transfer a repository's ownership
