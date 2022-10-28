@@ -18,15 +18,18 @@
 					<span class="middle">{{svg "octicon-repo-clone" 16}}</span>
 				{{end}}
 				{{if .Release}}
+					{{$color := "green"}}
+					{{$type := "Production"}}
 					{{if .Release.IsDraft}}
-					<span class="ui yellow label" title="Catalog: Draft">
+						{{$color = "yellow"}}
+						{{$type = "Draft"}}
 					{{else if .Release.IsPrerelease}}
-					<span class="ui orange label" title="Catalog: Pre-Production">
-					{{else}}
-					<span class="ui green label" title="Catalog: Production">
+						{{$color = "orange"}}
+						{{$type = "Pre-Release"}}
 					{{end}}
+					<button class="ui {{$color}} label compact icon button tooltip" data-content="Catalog: {{$type}}" aria-label="Catalog: {{$type}}">
 						{{.Release.TagName}}
-					</span>
+					</button>
 				{{end}}
 				<div class="ui right metas">
 					<span class="text grey" title="# stars">{{svg "octicon-star" 16}} {{.Repo.NumStars}}</span>
