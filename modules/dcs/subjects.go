@@ -21,6 +21,7 @@ var Subjects = map[string]string{
 	"sn":          "Study Notes",
 	"sq":          "Study Questions",
 	"ta":          "Translation Academy",
+	"tl":          "Training Library",
 	"tn":          "TSV Translation Notes",
 	"tq":          "TSV Translation Questions",
 	"tw":          "Translation Words",
