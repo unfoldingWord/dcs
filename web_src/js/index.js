@@ -89,7 +89,7 @@ import {initRepoWikiForm} from './features/repo-wiki.js';
 import {initRepoCommentForm, initRepository} from './features/repo-legacy.js';
 /** DCS Customizations **/
 import {initDCSInfoIcon} from './features/dcs-info-icon.js';
-import {initDCSValidationErrors} from './features/dcs-validation-errors.js';
+import {initDCSValidationBadge} from './features/dcs-validation-badge.js';
 import {initDCSLanguageFonts} from './features/dcs-language-fonts.js';
 /** END DCS Customizations **/
 import {initFormattingReplacements} from './features/formatting.js';
@@ -151,7 +151,7 @@ $(document).ready(() => {
 
   /** DCS Customizations **/
   initDCSInfoIcon();
-  initDCSValidationErrors();
+  initDCSValidationBadge();
   initDCSLanguageFonts();
   /** END DCS Customizations **/
 

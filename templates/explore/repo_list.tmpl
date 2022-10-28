@@ -39,11 +39,19 @@
 						<!-- DCS Customizations -->
 						{{$prodDM := GetLatestProdCatalogMetadata .ID}}
 						{{if $prodDM}}
-							<span class="ui green label" title="Catalog: Production"><a href="{{.Link}}/releases/tag/{{$prodDM.Release.TagName | PathEscapeSegments}}" rel="nofollow">{{$prodDM.Release.TagName}}</a></span>
+							<a href="{{.Link}}/releases/tag/{{$prodDM.Release.TagName | PathEscapeSegments}}" rel="nofollow">
+								<button class="ui green label compact icon button tooltip" data-content="Catalog: Production" aria-label="Catalog: Production">
+									{{$prodDM.Release.TagName}}
+								</button>
+							</a>
 						{{end}}
 						{{$preProdDM := GetLatestPreProdCatalogMetadata .ID}}
 						{{if $preProdDM}}
-							<span class="ui orange label" title="Catalog: Pre-Production"><a href="{{.Link}}/releases/tag/{{$preProdDM.Release.TagName | PathEscapeSegments}}" rel="nofollow">{{$preProdDM.Release.TagName}}</a></span>
+							<a href="{{.Link}}/releases/tag/{{$prodDM.Release.TagName | PathEscapeSegments}}" rel="nofollow">
+								<button class="ui orange label compact icon button tooltip" data-content="Catalog: Pre-Production" aria-label="Catalog: Production">
+									{{$prodDM.Release.TagName}}
+								</button>
+							</a>
 						{{end}}
 						<!-- END DCS Customizations -->
 					</div>

@@ -90,9 +90,17 @@
 								{{$color = "orange"}}
 							{{end}}
 							{{if .Door43Metadata}}
-								<span class="ui {{$color}} label" title="Stage: {{$stage}}" style="margin-top: 10px"><a href="{{$.RepoLink}}/src/tag/{{.TagName | PathEscapeSegments}}/manifest.yaml" rel="nofollow" style="opacity: inherit !important">{{$.locale.Tr "repo.metadata.catalog"}} ({{$stage}})</a></span>
+								<a class="catalog-badge" href="{{$.RepoLink}}/src/tag/{{.TagName | PathEscapeSegments}}" rel="nofollow" style="opacity: inherit !important">
+									<button class="ui {{$color}} label compact icon button tooltip" data-content="Stage: {{$stage}}" aria-label="Stage: {{$stage}}">
+										{{$.locale.Tr "repo.metadata.catalog"}} ({{$stage}})
+									</button>
+								</a>
 							{{else if (and (not .IsTag) (not .IsDraft))}}
-								<span class="ui red label" title="{{$.locale.Tr "repo.metadata.invalid_manifest_tooltip"}}" style="margin-top: 10px"><a href="{{$.RepoLink}}/src/tag/{{.TagName | PathEscapeSegments}}/manifest.yaml" rel="nofollow" style="opacity: inherit #important">{{$.locale.Tr "repo.metadata.invalid"}} ({{$stage}})</a></span>
+								<a class="catalog-badge" href="{{$.RepoLink}}/src/tag/{{.TagName | PathEscapeSegments}}/manifest.yaml" rel="nofollow" style="opacity: inherit !important">
+									<button class="ui red label compact icon button tooltip" data-content="{{$.locale.Tr "repo.metadata.invalid_manifest_tooltip"}}" aria-label="{{$.locale.Tr "repo.metadata.invalid_manifest_tooltip"}}">
+										{{$.locale.Tr "repo.metadata.invalid"}} ({{$stage}})
+									</button>
+								</a>
 							{{end}}
 							<!-- END DCS Customizations -->
 							{{if .Sha1}}
