@@ -238,11 +238,12 @@
 						"Aligned Bible",
 						"Aramaic Grammar",
 						"Bible",
-						"Bible stories",
 						"Greek Grammar",
+						"Greek Lexicon",
 						"Greek New Testament",
 						"Hebrew Grammar",
 						"Hebrew Old Testament",
+						"Hebrew-Aramaic Lexicon",
 						"OBS Study Notes",
 						"OBS Study Questions",
 						"OBS Translation Notes",
@@ -250,6 +251,7 @@
 						"Open Bible Stories",
 						"Study Notes",
  						"Study Questions",
+						"Training Library",
 						"Translation Academy",
 						"Translation Notes",
 						"Translation Questions",
@@ -538,7 +540,13 @@
 				"translate",
 				"checking",
 				"bible",
-				"content"
+				"content",
+				"ugl",
+				"uhal",
+				"ggl",
+				"ghal",
+				"ugg",
+				"uhg"
 			]
 		},
 		"relationItem": {
