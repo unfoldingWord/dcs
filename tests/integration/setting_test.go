@@ -36,7 +36,7 @@ func TestSettingShowUserEmailExplore(t *testing.T) {
 	htmlDoc = NewHTMLParser(t, resp.Body)
 	assert.NotContains(t,
 		htmlDoc.doc.Find(".ui.user.list").Text(),
-		"info@unfoldingword.org",  // DCS Customization - change to include last email we added
+		"info@unfoldingword.org", // DCS Customization - change to include last email we added
 	)
 
 	setting.UI.ShowUserEmail = showUserEmail
