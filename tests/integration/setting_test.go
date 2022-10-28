@@ -26,7 +26,7 @@ func TestSettingShowUserEmailExplore(t *testing.T) {
 	htmlDoc := NewHTMLParser(t, resp.Body)
 	assert.Contains(t,
 		htmlDoc.doc.Find(".ui.user.list").Text(),
-		"info@unfoldingword.org", // DCS Customization - change to include last email we added
+		"user4@example.com",
 	)
 
 	setting.UI.ShowUserEmail = false
@@ -36,7 +36,7 @@ func TestSettingShowUserEmailExplore(t *testing.T) {
 	htmlDoc = NewHTMLParser(t, resp.Body)
 	assert.NotContains(t,
 		htmlDoc.doc.Find(".ui.user.list").Text(),
-		"info@unfoldingword.org", // DCS Customization - change to include last email we added
+		"user4@example.com",
 	)
 
 	setting.UI.ShowUserEmail = showUserEmail
