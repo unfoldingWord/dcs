@@ -601,6 +601,7 @@ func searchRepositoryByCondition(ctx context.Context, opts *SearchRepoOptions, c
 	if opts.PageSize > 0 {
 		var err error
 		count, err = sess.
+			Join("INNER", "user", "`user`.id = `repository`.owner_id").                                                          // DCS Customizaitons - for owner search
 			Join("LEFT", "door43_metadata", "`door43_metadata`.repo_id = `repository`.id AND `door43_metadata`.release_id = 0"). // DCS Customizations
 			Where(cond).
 			Count(new(Repository))
@@ -611,6 +612,7 @@ func searchRepositoryByCondition(ctx context.Context, opts *SearchRepoOptions, c
 
 	/*** DCS Customizations - adds tables needed for Door43 Metadata ***/
 	sess = sess.
+		Join("INNER", "user", "`user`.id = `repository`.owner_id"). // DCS Customizaitons - for owner search
 		Join("LEFT", "door43_metadata", "`door43_metadata`.repo_id = `repository`.id AND `door43_metadata`.release_id = 0")
 	/*** END DCS Customizations ***/
 

@@ -32,7 +32,7 @@ function setDCSFontsHTML(fonts, selector) {
 <style type="text/css">
     ${selector} {
     font-family: "${fonts.join(', ')}, sans-serif" !important;
-  }; 
+  };
 </style>`);
   set_dcs_selectors.push(selector);
 }
