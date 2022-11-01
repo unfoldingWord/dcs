@@ -26,10 +26,8 @@ func UpdateDoor43Metadata(ctx context.Context) error {
 
 	if err = db.Iterate(
 		db.DefaultContext,
-		new(repo.Repository),
 		builder.In("id", repoIDs),
-		func(idx int, bean interface{}) error {
-			repo := bean.(*repo.Repository)
+		func(ctx context.Context, repo *repo.Repository) error {
 			select {
 			case <-ctx.Done():
 				return db.ErrCancelledf("before update door43 metadata of %s", repo.FullName())
