@@ -12,6 +12,7 @@ import (
 	"code.gitea.io/gitea/models/repo"
 	"code.gitea.io/gitea/modules/dcs"
 	"code.gitea.io/gitea/modules/json"
+	"code.gitea.io/gitea/modules/log"
 	api "code.gitea.io/gitea/modules/structs"
 )
 
@@ -31,10 +32,10 @@ func ToIngredient(project map[string]interface{}) *api.Ingredient {
 	if val, ok := project["sort"].(int64); ok {
 		ingredient.Sort = val
 	}
-	if val, ok := project["sort"].(string); ok {
+	if val, ok := project["title"].(string); ok {
 		ingredient.Title = val
 	}
-	if val, ok := project["sort"].(string); ok {
+	if val, ok := project["versification"].(string); ok {
 		ingredient.Versification = val
 	}
 	return ingredient
@@ -43,10 +44,12 @@ func ToIngredient(project map[string]interface{}) *api.Ingredient {
 // ToCatalogEntry converts a Door43Metadata to an api.CatalogEntry
 func ToCatalogEntry(dm *repo.Door43Metadata, mode perm.AccessMode) *api.CatalogEntry {
 	if err := dm.LoadAttributes(); err != nil {
+		log.Error("ToCatalogEntry: dm.LoadAttributes() ERROR: %v", err)
 		return nil
 	}
 
 	if err := dm.Repo.GetOwner(db.DefaultContext); err != nil {
+		log.Error("ToCatalogEntry: dm.Repo.GetOwner() ERROR: %v", err)
 		return nil
 	}
 
@@ -77,18 +80,20 @@ func ToCatalogEntry(dm *repo.Door43Metadata, mode perm.AccessMode) *api.CatalogE
 	var languageIsGL bool
 	if val, ok := (*dm.Metadata)["dublin_core"].(map[string]interface{})["language"].(map[string]interface{})["is_gl"].(bool); ok {
 		languageIsGL = val
-	} else {
-		languageIsGL = dcs.LanguageIsGL(language)
 	}
 
 	var books []string
-	if val, ok := (*dm.Metadata)["books"].([]string); ok {
-		books = val
+	if val, ok := (*dm.Metadata)["books"]; ok {
+		if byteData, err := json.Marshal(val); err == nil {
+			json.Unmarshal(byteData, &books)
+		}
 	}
 
 	var alignmentCounts map[string]int64
-	if val, ok := (*dm.Metadata)["alignment_counts"].(map[string]int64); ok {
-		alignmentCounts = val
+	if val, ok := (*dm.Metadata)["alignment_counts"]; ok {
+		if byteData, err := json.Marshal(val); err == nil {
+			json.Unmarshal(byteData, &alignmentCounts)
+		}
 	}
 
 	var ingredients []*api.Ingredient
