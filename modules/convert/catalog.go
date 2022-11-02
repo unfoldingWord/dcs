@@ -84,15 +84,21 @@ func ToCatalogEntry(dm *models.Door43Metadata, mode perm.AccessMode) *api.Catalo
 
 	var books []string
 	if val, ok := (*dm.Metadata)["books"]; ok {
+		// Marshal/Unmarshal to let Unmarshaliing convert interface{} to []string
 		if byteData, err := json.Marshal(val); err == nil {
-			json.Unmarshal(byteData, &books)
+			if err := json.Unmarshal(byteData, &books); err != nil {
+				log.Error("Unable to Unmarshal books: %v\n", val)
+			}
 		}
 	}
 
 	var alignmentCounts map[string]int64
 	if val, ok := (*dm.Metadata)["alignment_counts"]; ok {
+		// Marshal/Unmarshal to let Unmarshaliing convert interface{} to map[string]int64
 		if byteData, err := json.Marshal(val); err == nil {
-			json.Unmarshal(byteData, &alignmentCounts)
+			if err := json.Unmarshal(byteData, &alignmentCounts); err != nil {
+				log.Error("Unable to Unmarshal alignment_counts: %v\n", val)
+			}
 		}
 	}
 
