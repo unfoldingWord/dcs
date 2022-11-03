@@ -114,7 +114,7 @@ type Repository struct {
 	// project IDs from the manifest
 	Books []string `json:"books,omitempty"` // DCS Customiations
 	// the count of alignments of each book
-	AlignmentCounts map[string]interface{} `json:"alignment_counts,omitempty"` // DCS Customiations
+	AlignmentCounts map[string]int64 `json:"alignment_counts,omitempty"` // DCS Customiations
 	// title from the manifest
 	Title string `json:"title"` // DCS Customiations
 	// checking level from the manifest
