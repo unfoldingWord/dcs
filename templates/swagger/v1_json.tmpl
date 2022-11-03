@@ -18748,7 +18748,10 @@
         "alignment_counts": {
           "description": "the count of alignments of each book",
           "type": "object",
-          "additionalProperties": {},
+          "additionalProperties": {
+            "type": "integer",
+            "format": "int64"
+          },
           "x-go-name": "AlignmentCounts"
         },
         "allow_merge_commits": {
