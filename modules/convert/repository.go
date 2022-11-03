@@ -14,6 +14,7 @@ import (
 	repo_model "code.gitea.io/gitea/models/repo"
 	unit_model "code.gitea.io/gitea/models/unit"
 	"code.gitea.io/gitea/modules/dcs"
+	"code.gitea.io/gitea/modules/json"
 	"code.gitea.io/gitea/modules/log"
 	api "code.gitea.io/gitea/modules/structs"
 )
@@ -124,7 +125,7 @@ func innerToRepo(repo *repo_model.Repository, mode perm.AccessMode, isParent boo
 	var language, languageTitle, languageDir, title, subject, checkingLevel string
 	var languageIsGL bool
 	var books []string
-	var alignmentCounts map[string]interface{}
+	var alignmentCounts map[string]int64
 	if metadata != nil {
 		title = (*metadata.Metadata)["dublin_core"].(map[string]interface{})["title"].(string)
 		subject = (*metadata.Metadata)["dublin_core"].(map[string]interface{})["subject"].(string)
@@ -158,7 +159,12 @@ func innerToRepo(repo *repo_model.Repository, mode perm.AccessMode, isParent boo
 		}
 
 		if val, ok := (*metadata.Metadata)["alignment_counts"]; ok {
-			alignmentCounts = val.(map[string]interface{})
+			// Marshal/Unmarshal to let Unmarshaliing convert interface{} to map[string]int64
+			if byteData, err := json.Marshal(val); err == nil {
+				if err := json.Unmarshal(byteData, &alignmentCounts); err != nil {
+					log.Error("Unable to Unmarshal alignment_counts: %v\n", val)
+				}
+			}
 		}
 
 		checkingLevel = fmt.Sprintf("%v", (*metadata.Metadata)["checking"].(map[string]interface{})["checking_level"])
