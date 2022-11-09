@@ -47,7 +47,7 @@
 						{{end}}
 						{{$preProdDM := GetLatestPreProdCatalogMetadata .ID}}
 						{{if $preProdDM}}
-							<a href="{{.Link}}/releases/tag/{{$prodDM.Release.TagName | PathEscapeSegments}}" rel="nofollow">
+							<a href="{{.Link}}/releases/tag/{{$preProdDM.Release.TagName | PathEscapeSegments}}" rel="nofollow">
 								<button class="ui orange label compact icon button tooltip" data-content="Catalog: Pre-Production" aria-label="Catalog: Production">
 									{{$prodDM.Release.TagName}}
 								</button>
