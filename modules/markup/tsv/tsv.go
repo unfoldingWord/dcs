@@ -15,8 +15,9 @@ import (
 	"strconv"
 
 	"code.gitea.io/gitea/modules/markup"
-	"code.gitea.io/gitea/modules/markup/markdown"
 	"code.gitea.io/gitea/modules/setting"
+
+	"github.com/yuin/goldmark"
 )
 
 func init() {
@@ -119,9 +120,11 @@ func (Renderer) Render(ctx *markup.RenderContext, input io.Reader, output io.Wri
 	}
 	row := 1
 	numFields := -1
+	markdownField := regexp.MustCompile("(?i)(note|question|answer|response)")
 	newlineRegexp := regexp.MustCompile(`(<br\/*>|\\n)`)
 	rcFromBrackets := regexp.MustCompile(`\[\[(rc://[^\]]+)\]\]`)
 	rcToBrackets := regexp.MustCompile(`START(rc://.+?)END`)
+	var headers []string	
 	for {
 		fields, fieldErr := rd.Read()
 		if fieldErr == io.EOF {
@@ -146,27 +149,28 @@ func (Renderer) Render(ctx *markup.RenderContext, input io.Reader, output io.Wri
 		element := "td"
 		if row == 1 {
 			element = "th"
+			headers = fields
 		}
 		if err := writeField(tmpBlock, element, "line-num", strconv.Itoa(row), true); err != nil {
 			return err
 		}
-		for _, field := range fields {
+		for i, field := range fields {
 			if row > 1 {
-				md := field
-				md = newlineRegexp.ReplaceAllString(md, "\n")
-				md = rcFromBrackets.ReplaceAllString(md, "START${1}END") // preserver rc links with double square brackets [[rc://...]] since that means something in markdown (short link)
-				html, err := markdown.RenderString(&markup.RenderContext{URLPrefix: ctx.URLPrefix, Metas: ctx.Metas}, md)
-				if err != nil {
-					return err
+				if len(headers) <= (i + 1) && markdownField.MatchString(headers[i]) {
+					md := newlineRegexp.ReplaceAllString(field, "\n")
+					md = rcFromBrackets.ReplaceAllString(md, "START${1}END") // preserver rc links with double square brackets [[rc://...]] since that means something in markdown (short link)
+					var buf bytes.Buffer
+					if err := goldmark.Convert([]byte(md), &buf); err == nil {
+						md = rcToBrackets.ReplaceAllString(buf.String(), "[[${1}]]") // restore double bracket rc links
+						if err = writeField(tmpBlock, element, "", md, false); err == nil {
+							continue
+						}
+					}
 				}
-				html = rcToBrackets.ReplaceAllString(html, "[[${1}]]") // restore double bracket rc links
-				if err = writeField(tmpBlock, element, "", html, false); err != nil {
-					return err
-				}
-			} else {
-				if err := writeField(tmpBlock, element, "", field, true); err != nil {
-					return err
-				}
+			}
+			// Did NOT render Markdown above, so going to make it a regular field
+			if err := writeField(tmpBlock, element, "", field, true); err != nil {
+				return err
 			}
 		}
 		if _, err := tmpBlock.WriteString("</tr>"); err != nil {
