@@ -124,7 +124,7 @@ func (Renderer) Render(ctx *markup.RenderContext, input io.Reader, output io.Wri
 	newlineRegexp := regexp.MustCompile(`(<br\/*>|\\n)`)
 	rcFromBrackets := regexp.MustCompile(`\[\[(rc://[^\]]+)\]\]`)
 	rcToBrackets := regexp.MustCompile(`START(rc://.+?)END`)
-	var headers []string	
+	var headers []string
 	for {
 		fields, fieldErr := rd.Read()
 		if fieldErr == io.EOF {
@@ -156,7 +156,7 @@ func (Renderer) Render(ctx *markup.RenderContext, input io.Reader, output io.Wri
 		}
 		for i, field := range fields {
 			if row > 1 {
-				if len(headers) <= (i + 1) && markdownField.MatchString(headers[i]) {
+				if len(headers) <= (i+1) && markdownField.MatchString(headers[i]) {
 					md := newlineRegexp.ReplaceAllString(field, "\n")
 					md = rcFromBrackets.ReplaceAllString(md, "START${1}END") // preserver rc links with double square brackets [[rc://...]] since that means something in markdown (short link)
 					var buf bytes.Buffer
