@@ -67,9 +67,6 @@ func ValidateManifestTreeEntry(entry *git.TreeEntry) (*jsonschema.ValidationErro
 	if err != nil {
 		return nil, err
 	}
-	if err != nil {
-		return nil, err
-	}
 	return ValidateBlobByRC020Schema(manifest)
 }
 
@@ -85,7 +82,9 @@ func convertValidationErrorToString(valErr, parentErr *jsonschema.ValidationErro
 	str := padding
 	if parentErr == nil {
 		str += fmt.Sprintf("Invalid: %s\n", strings.TrimSuffix(valErr.Message, "#"))
-		str += "* <root>:\n"
+		if len(valErr.Causes) > 0 {
+			str += "* <root>:\n"
+		}
 	} else {
 		loc := ""
 		if valErr.InstanceLocation != "" {
@@ -116,7 +115,9 @@ func convertValidationErrorToHTML(valErr, parentErr *jsonschema.ValidationError)
 	if parentErr == nil {
 		html += fmt.Sprintf("<strong>Invalid:</strong> %s\n", strings.TrimSuffix(valErr.Message, "#"))
 		html += "<ul>\n"
-		html += "<li><strong>&lt;root&gt;:</strong></li>\n"
+		if len(valErr.Causes) > 0 {
+			html += "<li><strong>&lt;root&gt;:</strong></li>\n"
+		}
 	} else {
 		html += "<ul>\n"
 		loc := ""
@@ -138,6 +139,9 @@ func convertValidationErrorToHTML(valErr, parentErr *jsonschema.ValidationError)
 
 // ValidateBlobByRC020Schema Validates a blob by the RC v0.2.0 schema and returns the result
 func ValidateBlobByRC020Schema(manifest *map[string]interface{}) (*jsonschema.ValidationError, error) {
+	if manifest == nil {
+		return &jsonschema.ValidationError{Message: "file cannot be empty"}, nil
+	}
 	schemaText, err := GetRC020Schema()
 	if err != nil {
 		return nil, err
@@ -252,11 +256,13 @@ func ReadYAMLFromBlob(blob *git.Blob) (*map[string]interface{}, error) {
 		log.Error("yaml.Unmarshal: %v", err)
 		return nil, err
 	}
-	for k, v := range *result {
-		if val, err := ToStringKeys(v); err != nil {
-			log.Error("ToStringKeys: %v", err)
-		} else {
-			(*result)[k] = val
+	if result != nil {
+		for k, v := range *result {
+			if val, err := ToStringKeys(v); err != nil {
+				log.Error("ToStringKeys: %v", err)
+			} else {
+				(*result)[k] = val
+			}
 		}
 	}
 	return result, nil
