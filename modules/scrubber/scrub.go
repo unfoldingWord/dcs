@@ -90,7 +90,7 @@ func ScrubSensitiveData(ctx *context.Context, repo *repo.Repository, doer *user_
 			&repo_module.PushUpdateOptions{
 				PusherID:     doer.ID,
 				PusherName:   doer.Name,
-				RepoUserName: repo.MustOwner().Name,
+				RepoUserName: repo.MustOwner(*ctx).Name,
 				RepoName:     repo.Name,
 				RefFullName:  git.BranchPrefix + "master",
 				OldCommitID:  oldCommitID,

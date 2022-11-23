@@ -285,7 +285,7 @@ func DeleteGitRef(ctx *context.APIContext) {
 		return
 	}
 
-	err := gitref.RemoveReferenceWithChecks(ctx, refName)
+	err := gitref.RemoveReferenceWithChecks(*ctx.Context, refName)
 	if err != nil {
 		if git.IsErrInvalidRefName(err) {
 			ctx.Error(http.StatusUnprocessableEntity, "invalid reference'", err)

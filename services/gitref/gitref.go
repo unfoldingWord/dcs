@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"strings"
 
+	"code.gitea.io/gitea/models/db"
 	git_model "code.gitea.io/gitea/models/git"
 	"code.gitea.io/gitea/modules/context"
 	"code.gitea.io/gitea/modules/git"
@@ -30,7 +31,7 @@ func GetReference(gitRepo *git.Repository, refName string) (*git.Reference, erro
 
 // UpdateReferenceWithChecks creates or updates a reference, checking for format, permissions and special cases
 func UpdateReferenceWithChecks(ctx *context.APIContext, refName, commitID string) (*git.Reference, error) {
-	err := CheckReferenceEditability(refName, commitID, ctx.Repo.Repository.ID, ctx.Doer.ID)
+	err := CheckReferenceEditability(*ctx.Context, refName, commitID, ctx.Repo.Repository.ID, ctx.Doer.ID)
 	if err != nil {
 		return nil, err
 	}
@@ -48,8 +49,8 @@ func UpdateReferenceWithChecks(ctx *context.APIContext, refName, commitID string
 }
 
 // RemoveReferenceWithChecks deletes a reference, checking for format, permission and special cases
-func RemoveReferenceWithChecks(ctx *context.APIContext, refName string) error {
-	err := CheckReferenceEditability(refName, "", ctx.Repo.Repository.ID, ctx.Doer.ID)
+func RemoveReferenceWithChecks(ctx context.Context, refName string) error {
+	err := CheckReferenceEditability(ctx, refName, "", ctx.Repo.Repository.ID, ctx.Doer.ID)
 	if err != nil {
 		return err
 	}
@@ -57,7 +58,7 @@ func RemoveReferenceWithChecks(ctx *context.APIContext, refName string) error {
 	return ctx.Repo.GitRepo.RemoveReference(refName)
 }
 
-func CheckReferenceEditability(refName, commitID string, repoID, userID int64) error {
+func CheckReferenceEditability(ctx context.Context, refName, commitID string, repoID, userID int64) error {
 	refParts := strings.Split(refName, "/")
 
 	// Must have at least 3 parts, e.g. refs/heads/new-branch
@@ -91,8 +92,8 @@ func CheckReferenceEditability(refName, commitID string, repoID, userID int64) e
 	if refType == "tags" {
 		// If the 2nd part is "tags" then we need ot make sure the user is allowed to
 		//   modify this tag (not protected or is admin)
-		if protectedTags, err := git_model.GetProtectedTags(repoID); err == nil {
-			isAllowed, err := git_model.IsUserAllowedToControlTag(protectedTags, refRest, userID)
+		if protectedTags, err := git_model.GetProtectedTags(db.DefaultContext, repoID); err == nil {
+			isAllowed, err := git_model.IsUserAllowedToControlTag(db.DefaultContext, protectedTags, refRest, userID)
 			if err != nil {
 				return err
 			}

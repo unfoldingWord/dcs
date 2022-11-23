@@ -94,7 +94,7 @@ func (dm *Door43Metadata) getRelease(ctx context.Context) error {
 			return err
 		}
 		dm.Release.Repo = dm.Repo
-		if err := dm.Release.LoadAttributes(); err != nil {
+		if err := dm.Release.LoadAttributes(ctx); err != nil {
 			log.Warn("loadAttributes Error: %v\n", err)
 			return err
 		}

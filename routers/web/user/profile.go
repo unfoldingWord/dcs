@@ -204,7 +204,7 @@ func Profile(ctx *context.Context) {
 		}
 	case "stars":
 		ctx.Data["PageIsProfileStarList"] = true
-		repos, count, err = repo_model.SearchRepository(&repo_model.SearchRepoOptions{
+		repos, count, err = repo_model.SearchRepository(ctx, &repo_model.SearchRepoOptions{
 			ListOptions: db.ListOptions{
 				PageSize: setting.UI.User.RepoPagingNum,
 				Page:     page,
@@ -236,7 +236,7 @@ func Profile(ctx *context.Context) {
 			return
 		}
 	case "watching":
-		repos, count, err = repo_model.SearchRepository(&repo_model.SearchRepoOptions{
+		repos, count, err = repo_model.SearchRepository(ctx, &repo_model.SearchRepoOptions{
 			ListOptions: db.ListOptions{
 				PageSize: setting.UI.User.RepoPagingNum,
 				Page:     page,
@@ -278,7 +278,7 @@ func Profile(ctx *context.Context) {
 			}
 		}
 		/*** END DCS Customizations ***/
-		repos, count, err = repo_model.SearchRepository(&repo_model.SearchRepoOptions{
+		repos, count, err = repo_model.SearchRepository(ctx, &repo_model.SearchRepoOptions{
 			ListOptions: db.ListOptions{
 				PageSize: setting.UI.User.RepoPagingNum,
 				Page:     page,

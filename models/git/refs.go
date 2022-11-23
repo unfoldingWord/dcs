@@ -7,6 +7,7 @@ package git
 import (
 	"strings"
 
+	"code.gitea.io/gitea/models/db"
 	"code.gitea.io/gitea/modules/git"
 )
 
@@ -41,8 +42,8 @@ func CheckReferenceEditability(refName, commitID string, repoID, userID int64) e
 	if refParts[1] == "tags" {
 		// If the 2nd part is "tags" then we need ot make sure the user is allowed to
 		//   modify this tag (not protected or is admin)
-		if protectedTags, err := GetProtectedTags(repoID); err == nil {
-			isAllowed, err := IsUserAllowedToControlTag(protectedTags, refName, userID)
+		if protectedTags, err := GetProtectedTags(db.DefaultContext, repoID); err == nil {
+			isAllowed, err := IsUserAllowedToControlTag(db.DefaultContext, protectedTags, refName, userID)
 			if err != nil {
 				return err
 			}

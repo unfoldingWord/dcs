@@ -41,7 +41,7 @@ func GenerateDoor43Metadata(x *xorm.Engine) error {
 	sess := x.NewSession()
 	defer sess.Close()
 
-	ctx, commiter, err := db.TxContext()
+	ctx, commiter, err := db.TxContext(db.DefaultContext)
 	if err != nil {
 		return err
 	}
@@ -168,7 +168,7 @@ func ProcessDoor43MetadataForRepo(repo *repo_model.Repository) error {
 		return err
 	}
 
-	ctx, commiter, err := db.TxContext()
+	ctx, commiter, err := db.TxContext(db.DefaultContext)
 	if err != nil {
 		return err
 	}
