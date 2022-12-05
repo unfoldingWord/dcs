@@ -142,14 +142,14 @@
 						<button id="api-btn" class="ui basic jump dropdown icon button tooltip" data-content="API" data-position="top right">
 							{{svg "octicon-code"}}
 							<div class="menu">
-								<a class="item" href="{{.Repository.APIURL}}" target="_blank">{{svg "octicon-repo" 16 "mr-3"}} API: {{.i18n.Tr "repository"}}</a>
-								<a class="item" href="{{.Repository.CatalogEntryURL}}/master/metadata" target="_blank">{{svg "octicon-briefcase" 16 "mr-3"}} API: {{.i18n.Tr "repo.metadata.metadata"}}</a>
-								<a class="item" href="{{.Repository.APIURL}}/branches" target="_blank">{{svg "octicon-git-branch" 16 "mr-3"}} API: {{.i18n.Tr "repo.branches"}}</a>
-								<a class="item" href="{{.Repository.APIURL}}/commits?sha={{PathEscapeSegments $.BranchName}}" target="_blank">{{svg "octicon-git-commit" 16 "mr-3"}} API: {{.i18n.Tr "repo.commits"}}</a>
-								<a class="item" href="{{.Repository.APIURL}}/contents?ref={{PathEscapeSegments $.BranchName}}" target="_blank">{{svg "octicon-file-directory" 16 "mr-3"}} API: {{.i18n.Tr "repo.code"}}</a>
-								<a class="item" href="{{.Repository.CatalogSearchURL}}?stage=latest&includeHistory=1&sort=released&order=desc" target="_blank">{{svg "octicon-book" 16 "mr-3"}} API: {{.i18n.Tr "catalog"}}</a>
-								<a class="item" href="{{.Repository.APIURL}}/releases" target="_blank">{{svg "octicon-tag" 16 "mr-3"}} API: {{.i18n.Tr "repo.releases"}}</a>
-								<a class="item" href="{{.Repository.APIURL}}/tags" target="_blank">{{svg "octicon-tag" 16 "mr-3"}} API: {{.i18n.Tr "repo.tags"}}</a>
+								<a class="item" href="{{.Repository.APIURL}}" target="_blank">{{svg "octicon-repo" 16 "mr-3"}} API: {{.locale.Tr "repository"}}</a>
+								<a class="item" href="{{.Repository.CatalogEntryURL}}/master/metadata" target="_blank">{{svg "octicon-briefcase" 16 "mr-3"}} API: {{.locale.Tr "repo.metadata.metadata"}}</a>
+								<a class="item" href="{{.Repository.APIURL}}/branches" target="_blank">{{svg "octicon-git-branch" 16 "mr-3"}} API: {{.locale.Tr "repo.branches"}}</a>
+								<a class="item" href="{{.Repository.APIURL}}/commits?sha={{PathEscapeSegments $.BranchName}}" target="_blank">{{svg "octicon-git-commit" 16 "mr-3"}} API: {{.locale.Tr "repo.commits"}}</a>
+								<a class="item" href="{{.Repository.APIURL}}/contents?ref={{PathEscapeSegments $.BranchName}}" target="_blank">{{svg "octicon-file-directory" 16 "mr-3"}} API: {{.locale.Tr "repo.code"}}</a>
+								<a class="item" href="{{.Repository.CatalogSearchURL}}?stage=latest&includeHistory=1&sort=released&order=desc" target="_blank">{{svg "octicon-book" 16 "mr-3"}} API: {{.locale.Tr "catalog"}}</a>
+								<a class="item" href="{{.Repository.APIURL}}/releases" target="_blank">{{svg "octicon-tag" 16 "mr-3"}} API: {{.locale.Tr "repo.releases"}}</a>
+								<a class="item" href="{{.Repository.APIURL}}/tags" target="_blank">{{svg "octicon-tag" 16 "mr-3"}} API: {{.locale.Tr "repo.tags"}}</a>
 								<a class="item" href="{{AppSubUrl}}/api/swagger" target="_blank">{{svg "octicon-list-unordered" 16 "mr-3"}} More...</a>
 							</div>
 						</button>
