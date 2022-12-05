@@ -519,7 +519,7 @@ func searchCatalog(ctx *context.APIContext) {
 			return
 		}
 	} else {
-		opts.OrderBy = []door43metadata.CatalogOrderBy{door43metadata.CatalogOrderByLangCode, door43metadata.CatalogOrderBySubject, door43metadata.CatalogOrderByTagReverse}
+		opts.OrderBy = []door43metadata.CatalogOrderBy{door43metadata.CatalogOrderByLangCode, door43metadata.CatalogOrderBySubject, door43metadata.CatalogOrderByReleaseDateReverse}
 	}
 
 	dms, count, err := models.SearchCatalog(opts)
