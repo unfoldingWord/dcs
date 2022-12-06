@@ -65,7 +65,7 @@ func (dm *Door43Metadata) GetRepo() error {
 
 func (dm *Door43Metadata) getRepo(ctx context.Context) error {
 	if dm.Repo == nil {
-		repo, err := GetRepositoryByID(dm.RepoID)
+		repo, err := GetRepositoryByID(ctx, dm.RepoID)
 		if err != nil {
 			return err
 		}

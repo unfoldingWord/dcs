@@ -386,7 +386,7 @@ func GetCatalogEntry(ctx *context.APIContext) {
 			Error: err.Error(),
 		})
 	}
-	ctx.JSON(http.StatusOK, convert.ToCatalogEntry(dm, accessMode))
+	ctx.JSON(http.StatusOK, convert.ToCatalogEntry(ctx, dm, accessMode))
 }
 
 // GetCatalogMetadata Get the metadata (RC 0.2.0 manifest) in JSON format for the given ownername, reponame and ref
@@ -541,7 +541,7 @@ func searchCatalog(ctx *context.APIContext) {
 				Error: err.Error(),
 			})
 		}
-		dmAPI := convert.ToCatalogEntry(dm, accessMode)
+		dmAPI := convert.ToCatalogEntry(ctx, dm, accessMode)
 		if !opts.ShowIngredients {
 			dmAPI.Ingredients = nil
 		}

@@ -5,6 +5,8 @@
 package convert
 
 import (
+	"context"
+
 	"code.gitea.io/gitea/models/door43metadata"
 	"code.gitea.io/gitea/models/perm"
 	repo_model "code.gitea.io/gitea/models/repo"
@@ -13,8 +15,8 @@ import (
 )
 
 // ToRepoDCS adds some fields for DCS Customizations
-func ToRepoDCS(repo *repo_model.Repository, mode perm.AccessMode) *api.Repository {
-	apiRepo := ToRepo(repo, mode)
+func ToRepoDCS(ctx context.Context, repo *repo_model.Repository, mode perm.AccessMode) *api.Repository {
+	apiRepo := ToRepo(ctx, repo, mode)
 
 	catalog := &api.CatalogStages{}
 	prod, err := repo_model.GetDoor43MetadataByRepoIDAndStage(repo.ID, door43metadata.StageProd)

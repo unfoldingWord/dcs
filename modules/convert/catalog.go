@@ -5,6 +5,7 @@
 package convert
 
 import (
+	"context"
 	"fmt"
 
 	"code.gitea.io/gitea/models/db"
@@ -42,7 +43,7 @@ func ToIngredient(project map[string]interface{}) *api.Ingredient {
 }
 
 // ToCatalogEntry converts a Door43Metadata to an api.CatalogEntry
-func ToCatalogEntry(dm *repo.Door43Metadata, mode perm.AccessMode) *api.CatalogEntry {
+func ToCatalogEntry(ctx context.Context, dm *repo.Door43Metadata, mode perm.AccessMode) *api.CatalogEntry {
 	if err := dm.LoadAttributes(); err != nil {
 		log.Error("ToCatalogEntry: dm.LoadAttributes() ERROR: %v", err)
 		return nil
@@ -120,7 +121,7 @@ func ToCatalogEntry(dm *repo.Door43Metadata, mode perm.AccessMode) *api.CatalogE
 		Name:                   dm.Repo.Name,
 		Owner:                  dm.Repo.OwnerName,
 		FullName:               dm.Repo.FullName(),
-		Repo:                   innerToRepo(dm.Repo, mode, true),
+		Repo:                   innerToRepo(ctx, dm.Repo, mode, true),
 		Release:                release,
 		TarballURL:             dm.GetTarballURL(),
 		ZipballURL:             dm.GetZipballURL(),

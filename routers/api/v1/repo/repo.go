@@ -1,7 +1,6 @@
 // Copyright 2014 The Gogs Authors. All rights reserved.
 // Copyright 2018 The Gitea Authors. All rights reserved.
-// Use of this source code is governed by a MIT-style
-// license that can be found in the LICENSE file.
+// SPDX-License-Identifier: MIT
 
 package repo
 
@@ -251,7 +250,7 @@ func Search(ctx *context.APIContext) {
 				Error: err.Error(),
 			})
 		}
-		results[i] = convert.ToRepo(repo, accessMode)
+		results[i] = convert.ToRepo(ctx, repo, accessMode)
 	}
 	ctx.SetLinkHeader(int(count), opts.PageSize)
 	ctx.SetTotalCountHeader(count)
@@ -293,12 +292,12 @@ func CreateUserRepo(ctx *context.APIContext, owner *user_model.User, opt api.Cre
 	}
 
 	// reload repo from db to get a real state after creation
-	repo, err = repo_model.GetRepositoryByID(repo.ID)
+	repo, err = repo_model.GetRepositoryByID(ctx, repo.ID)
 	if err != nil {
 		ctx.Error(http.StatusInternalServerError, "GetRepositoryByID", err)
 	}
 
-	ctx.JSON(http.StatusCreated, convert.ToRepo(repo, perm.AccessModeOwner))
+	ctx.JSON(http.StatusCreated, convert.ToRepo(ctx, repo, perm.AccessModeOwner))
 }
 
 // Create one repository of mine
@@ -443,7 +442,7 @@ func Generate(ctx *context.APIContext) {
 	}
 	log.Trace("Repository generated [%d]: %s/%s", repo.ID, ctxUser.Name, repo.Name)
 
-	ctx.JSON(http.StatusCreated, convert.ToRepo(repo, perm.AccessModeOwner))
+	ctx.JSON(http.StatusCreated, convert.ToRepo(ctx, repo, perm.AccessModeOwner))
 }
 
 // CreateOrgRepoDeprecated create one repository of the organization
@@ -559,7 +558,7 @@ func Get(ctx *context.APIContext) {
 		return
 	}
 
-	ctx.JSON(http.StatusOK, convert.ToRepoDCS(ctx.Repo.Repository, ctx.Repo.AccessMode)) // DCS Customizations
+	ctx.JSON(http.StatusOK, convert.ToRepo(ctx, ctx.Repo.Repository, ctx.Repo.AccessMode))
 }
 
 // GetByID returns a single Repository
@@ -580,7 +579,7 @@ func GetByID(ctx *context.APIContext) {
 	//   "200":
 	//     "$ref": "#/responses/Repository"
 
-	repo, err := repo_model.GetRepositoryByID(ctx.ParamsInt64(":id"))
+	repo, err := repo_model.GetRepositoryByID(ctx, ctx.ParamsInt64(":id"))
 	if err != nil {
 		if repo_model.IsErrRepoNotExist(err) {
 			ctx.NotFound()
@@ -598,7 +597,7 @@ func GetByID(ctx *context.APIContext) {
 		ctx.NotFound()
 		return
 	}
-	ctx.JSON(http.StatusOK, convert.ToRepoDCS(repo, perm.AccessMode)) // DCS Customizations
+	ctx.JSON(http.StatusOK, convert.ToRepoDCS(ctx, repo, perm.AccessMode)) // DCS Customizations - ToRepo => ToRepoDCS
 }
 
 // Edit edit repository properties
@@ -654,13 +653,13 @@ func Edit(ctx *context.APIContext) {
 		}
 	}
 
-	repo, err := repo_model.GetRepositoryByID(ctx.Repo.Repository.ID)
+	repo, err := repo_model.GetRepositoryByID(ctx, ctx.Repo.Repository.ID)
 	if err != nil {
 		ctx.InternalServerError(err)
 		return
 	}
 
-	ctx.JSON(http.StatusOK, convert.ToRepoDCS(repo, ctx.Repo.AccessMode)) // DCS Customizations
+	ctx.JSON(http.StatusOK, convert.ToRepoDCS(ctx, repo, ctx.Repo.AccessMode)) // DCS Customizations - ToRepo => ToRepoDCS
 }
 
 // updateBasicProperties updates the basic properties of a repo: Name, Description, Website and Visibility
@@ -705,7 +704,7 @@ func updateBasicProperties(ctx *context.APIContext, opts api.EditRepoOption) err
 	if opts.Private != nil {
 		// Visibility of forked repository is forced sync with base repository.
 		if repo.IsFork {
-			if err := repo.GetBaseRepo(); err != nil {
+			if err := repo.GetBaseRepo(ctx); err != nil {
 				ctx.Error(http.StatusInternalServerError, "Unable to load base repository", err)
 				return err
 			}
