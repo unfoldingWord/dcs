@@ -21,7 +21,8 @@ import (
 	"code.gitea.io/gitea/modules/repository"
 	"code.gitea.io/gitea/modules/storage"
 	"code.gitea.io/gitea/modules/timeutil"
-	door43metadata_service "code.gitea.io/gitea/services/door43metadata"
+	"code.gitea.io/gitea/modules/util"
+	door43metadata_service "code.gitea.io/gitea/services/door43metadata" // DCS Customizations
 )
 
 func createTag(ctx context.Context, gitRepo *git.Repository, rel *repo_model.Release, msg string) (bool, error) {
@@ -229,7 +230,10 @@ func UpdateRelease(doer *user_model.User, gitRepo *git.Repository, rel *repo_mod
 		}
 		for _, attach := range attachments {
 			if attach.ReleaseID != rel.ID {
-				return errors.New("delete attachement of release permission denied")
+				return util.SilentWrap{
+					Message: "delete attachment of release permission denied",
+					Err:     util.ErrPermissionDenied,
+				}
 			}
 			deletedUUIDs.Add(attach.UUID)
 		}
@@ -251,7 +255,10 @@ func UpdateRelease(doer *user_model.User, gitRepo *git.Repository, rel *repo_mod
 		}
 		for _, attach := range attachments {
 			if attach.ReleaseID != rel.ID {
-				return errors.New("update attachement of release permission denied")
+				return util.SilentWrap{
+					Message: "update attachment of release permission denied",
+					Err:     util.ErrPermissionDenied,
+				}
 			}
 		}
 

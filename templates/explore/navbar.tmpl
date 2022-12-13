@@ -1,18 +1,26 @@
 <div class="ui secondary pointing tabular top attached borderless stackable menu new-menu navbar">
-	<a class="{{if .PageIsExploreRepositories}}active{{end}} item" href="{{AppSubUrl}}/explore/repos">
+	<a class="{{if .PageIsExploreRepositories}}active {{end}}item" href="{{AppSubUrl}}/explore/repos">
 		{{svg "octicon-repo"}} {{.locale.Tr "explore.repos"}}
 	</a>
 	{{if not .UsersIsDisabled}}
-		<a class="{{if .PageIsExploreUsers}}active{{end}} item" href="{{AppSubUrl}}/explore/users">
+		<a class="{{if .PageIsExploreUsers}}active {{end}}item" href="{{AppSubUrl}}/explore/users">
 			{{svg "octicon-person"}} {{.locale.Tr "explore.users"}}
 		</a>
 	{{end}}
-	<a class="{{if .PageIsExploreOrganizations}}active{{end}} item" href="{{AppSubUrl}}/explore/organizations">
+	<a class="{{if .PageIsExploreOrganizations}}active {{end}}item" href="{{AppSubUrl}}/explore/organizations">
 		{{svg "octicon-organization"}} {{.locale.Tr "explore.organizations"}}
 	</a>
 	{{if .IsRepoIndexerEnabled}}
+<<<<<<< HEAD
 	<a class="{{if .PageIsExploreCode}}active{{end}} item" href="{{AppSubUrl}}/explore/code">
 		{{svg "octicon-file"}} {{.locale.Tr "explore.code"}}
+||||||| 8fb1e53ca
+	<a class="{{if .PageIsExploreCode}}active{{end}} item" href="{{AppSubUrl}}/explore/code">
+		{{svg "octicon-code"}} {{.locale.Tr "explore.code"}}
+=======
+	<a class="{{if .PageIsExploreCode}}active {{end}}item" href="{{AppSubUrl}}/explore/code">
+		{{svg "octicon-code"}} {{.locale.Tr "explore.code"}}
+>>>>>>> upstream/main
 	</a>
 	{{end}}
 </div>
