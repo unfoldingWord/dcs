@@ -515,15 +515,6 @@ func renderFile(ctx *context.Context, entry *git.TreeEntry, treeLink, rawLink st
 				ctx.Data["FileContent"] = string(rendered)
 			}
 			/*** END DCS Customizations ***/
-		} else if readmeExist && !shouldRenderSource {
-			buf := &bytes.Buffer{}
-			ctx.Data["IsRenderedHTML"] = true
-
-			ctx.Data["EscapeStatus"], _ = charset.EscapeControlReader(rd, buf, ctx.Locale)
-
-			ctx.Data["FileContent"] = strings.ReplaceAll(
-				gotemplate.HTMLEscapeString(buf.String()), "\n", `<br>`,
-			)
 		} else {
 			buf, _ := io.ReadAll(rd)
 
