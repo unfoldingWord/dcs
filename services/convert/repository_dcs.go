@@ -98,3 +98,8 @@ func ToRepoDCS(ctx context.Context, repo *repo_model.Repository, mode perm.Acces
 
 	return apiRepo
 }
+
+// ToRepo converts a Repository to api.Repository
+func ToRepoIsParent(ctx context.Context, repo *repo_model.Repository, mode perm.AccessMode) *api.Repository {
+	return innerToRepo(ctx, repo, mode, true)
+}

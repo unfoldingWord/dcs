@@ -120,7 +120,7 @@ func ToCatalogEntry(ctx context.Context, dm *repo.Door43Metadata, mode perm.Acce
 		Name:                   dm.Repo.Name,
 		Owner:                  dm.Repo.OwnerName,
 		FullName:               dm.Repo.FullName(),
-		Repo:                   innerToRepo(ctx, dm.Repo, mode, true),
+		Repo:                   ToRepoIsParent(ctx, dm.Repo, mode),
 		Release:                release,
 		TarballURL:             dm.GetTarballURL(),
 		ZipballURL:             dm.GetZipballURL(),
