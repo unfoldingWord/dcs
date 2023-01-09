@@ -405,13 +405,20 @@ func ProcessDoor43MetadataForRepoRelease(ctx context.Context, repo *repo_model.R
 		if err != nil || tcTsManifest == nil {
 			return fmt.Errorf("tried to process a tS or tC repo but manifest.json file invalid")
 		}
-		if !dcs.BookIsValid(*tcTsManifest.Project.ID) {
+		if !dcs.BookIsValid(tcTsManifest.Project.ID) {
 			return fmt.Errorf("%s does not have a valid book in its manifest.json", repo.FullName())
 		}
 		manifest, err = base.ReadJSONFromBlob(blob)
 		if err != nil {
 			return err
 		}
+		resource = tcTsManifest.Resource.ID
+		title = tcTsManifest.Resource.Name
+		language = tcTsManifest.TargetLanguage.ID
+		languageTitle = tcTsManifest.TargetLanguage.Name
+		languageDirection = tcTsManifest.TargetLanguage.Direction
+		languageIsGL = dcs.LanguageIsGL(language)
+		checkingLevel = 1
 		if tcTsManifest.TcVersion != nil {
 			metadataType = "tc"
 			metadataVersion = strconv.Itoa(*tcTsManifest.TcVersion)
@@ -420,8 +427,8 @@ func ProcessDoor43MetadataForRepoRelease(ctx context.Context, repo *repo_model.R
 			bookPath := "./" + repo.Name + ".usfm"
 			count, _ := GetBookAlignmentCount(bookPath, commit)
 			projects = []*structs.Door43MetadataProject{{
-				Identifier:     *tcTsManifest.Project.ID,
-				Title:          *tcTsManifest.Project.Name,
+				Identifier:     tcTsManifest.Project.ID,
+				Title:          tcTsManifest.Project.Name,
 				Path:           bookPath,
 				AlignmentCount: &count,
 			}}
@@ -429,25 +436,18 @@ func ProcessDoor43MetadataForRepoRelease(ctx context.Context, repo *repo_model.R
 			metadataType = "ts"
 			metadataVersion = strconv.Itoa(*tcTsManifest.TsVersion)
 			contentFormat = "text"
-			if (*manifest)["project"].(map[string]string)["id"] == "obs" {
+			if resource == "obs" {
 				subject = "TS Open Bible Stories"
 			} else {
 				subject = "TS Bible"
 			}
 			projects = []*structs.Door43MetadataProject{{
-				Identifier: *tcTsManifest.Project.ID,
-				Title:      *tcTsManifest.Project.Name,
+				Identifier: tcTsManifest.Project.ID,
+				Title:      tcTsManifest.Project.Name,
 				Path:       ".",
 			}}
 		}
-		resource = *tcTsManifest.Resource.ID
-		title = *tcTsManifest.Resource.Name
-		language = *tcTsManifest.TargetLanguage.ID
-		languageTitle = *tcTsManifest.TargetLanguage.Name
-		languageDirection = *tcTsManifest.TargetLanguage.Direction
-		languageIsGL = dcs.LanguageIsGL(language)
 		tCtSJsonBytes, err := json.Marshal(tcTsManifest)
-		checkingLevel = 1
 		if err != nil {
 			return fmt.Errorf("%s: error marshaling TcTsManifest to bytes", repo.FullName())
 		}
