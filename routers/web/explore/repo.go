@@ -149,8 +149,8 @@ func RenderRepoSearch(ctx *context.Context, opts *RepoSearchOptions) {
 		Books:              books,            // DCS Customizaitons
 		Languages:          langs,            // DCS Customizaitons
 		Subjects:           subjects,         // DCS Customizaitons
-		Resources: resources, // DCS Customizations
-		ContentFormats: contentFormats, // DCS Customizations
+		Resources:          resources,        // DCS Customizations
+		ContentFormats:     contentFormats,   // DCS Customizations
 		Repos:              repoNames,        // DCS Customizaitons
 		Owners:             owners,           // DCS Customizaitons
 		IncludeMetadata:    true,             // DCS Customizaitons

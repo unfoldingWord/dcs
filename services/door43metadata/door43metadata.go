@@ -253,13 +253,14 @@ func ProcessDoor43MetadataForRepoRelease(ctx context.Context, repo *repo_model.R
 	var commit *git.Commit
 	var releaseDateUnix timeutil.TimeStamp
 	var branchOrTag string
+	var commitID string
 
 	if release == nil {
+		branchOrTag = repo.DefaultBranch
 		stage = door43metadata.StageLatest
-		commit, err = gitRepo.GetBranchCommit(repo.DefaultBranch)
+		commitID, err = gitRepo.GetBranchCommitID(branchOrTag)
 		if err != nil {
-			log.Error("GetBranchCommit: %v\n", err)
-			return err
+			log.Error("GetBranchCommitID: %v\n", err)
 		}
 	} else {
 		releaseID = release.ID
@@ -273,29 +274,28 @@ func ProcessDoor43MetadataForRepoRelease(ctx context.Context, repo *repo_model.R
 		}
 
 		if !release.IsDraft {
-			commit, err = gitRepo.GetTagCommit(release.TagName)
-			if err != nil {
-				log.Error("GetTagCommit: %v\n", err)
-				return err
-			}
-			releaseDateUnix = release.CreatedUnix
 			branchOrTag = release.TagName
-		} else {
-			commit, err = gitRepo.GetBranchCommit(release.Target)
+			releaseDateUnix = release.CreatedUnix
+			commitID, err = gitRepo.GetTagCommitID(branchOrTag)
 			if err != nil {
-				log.Error("GetBranchCommit: %v\n", err)
-				return err
+				log.Error("GetBranchCommitID: %v\n", err)
 			}
+		} else {
+			branchOrTag = release.Target
 			releaseDateUnix = timeutil.TimeStamp(commit.Author.When.Unix())
-			if release != nil {
-				branchOrTag = release.Target
-			} else {
-				branchOrTag = repo.DefaultBranch
+			commitID, err = gitRepo.GetBranchCommitID(branchOrTag)
+			if err != nil {
+				log.Error("GetBranchCommitID: %v\n", err)
 			}
 		}
 	}
 
-	commitSHA := commit.ID.String()
+	commit, err = gitRepo.GetBranchCommit(branchOrTag)
+	if err != nil {
+		log.Error("GetBranchCommit: %v\n", err)
+		return err
+	}
+
 	var metadataType string
 	var metadataVersion string
 	var subject string
@@ -354,17 +354,18 @@ func ProcessDoor43MetadataForRepoRelease(ctx context.Context, repo *repo_model.R
 		var bookPath string
 		for _, prod := range (*manifest)["projects"].([]interface{}) {
 			bookPath = prod.(map[string]interface{})["path"].(string)
+			project := structs.Door43MetadataProject{
+				Identifier: prod.(map[string]interface{})["identifier"].(string),
+				Title:      prod.(map[string]interface{})["title"].(string),
+				Path:       bookPath,
+			}
 			if subject == "Aligned Bible" && strings.HasSuffix(bookPath, ".usfm") {
 				count, _ := GetBookAlignmentCount(bookPath, commit)
-				projects = append(projects, &structs.Door43MetadataProject{
-					Identifier:     prod.(map[string]interface{})["identifier"].(string),
-					Title:          prod.(map[string]interface{})["title"].(string),
-					Path:           bookPath,
-					AlignmentCount: count,
-				})
+				project.AlignmentCount = &count
 			}
+			projects = append(projects, &project)
 		}
-		if subject == "Bible" || subject == "Aligned Bible" {
+		if subject == "Bible" || subject == "Aligned Bible" || subject == "Greek New Testament" || subject == "Hebrew Old Testament" {
 			contentFormat = "usfm"
 		} else if strings.HasPrefix(subject, "TSV ") {
 			if strings.HasPrefix(fmt.Sprintf("./%s_", resource), bookPath) {
@@ -421,7 +422,7 @@ func ProcessDoor43MetadataForRepoRelease(ctx context.Context, repo *repo_model.R
 				Identifier:     *tcTsManifest.Project.ID,
 				Title:          *tcTsManifest.Project.Name,
 				Path:           bookPath,
-				AlignmentCount: count,
+				AlignmentCount: &count,
 			}}
 		} else {
 			metadataType = "ts"
@@ -477,7 +478,7 @@ func ProcessDoor43MetadataForRepoRelease(ctx context.Context, repo *repo_model.R
 		ReleaseID:         releaseID,
 		Release:           release,
 		Stage:             stage,
-		CommitSHA:         commitSHA,
+		CommitID:          commitID,
 		BranchOrTag:       branchOrTag,
 		ReleaseDateUnix:   releaseDateUnix,
 		MetadataType:      metadataType,
@@ -485,6 +486,7 @@ func ProcessDoor43MetadataForRepoRelease(ctx context.Context, repo *repo_model.R
 		Subject:           subject,
 		Title:             title,
 		Resource:          resource,
+		Language:          language,
 		LanguageTitle:     languageTitle,
 		LanguageDirection: languageDirection,
 		LanguageIsGL:      languageIsGL,
