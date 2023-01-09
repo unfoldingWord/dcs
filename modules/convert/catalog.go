@@ -106,6 +106,8 @@ func ToCatalogEntry(dm *repo.Door43Metadata, mode perm.AccessMode) *api.CatalogE
 		ZipballURL:             dm.GetZipballURL(),
 		GitTreesURL:            dm.GetGitTreesURL(),
 		ContentsURL:            dm.GetContentsURL(),
+		BranchOrTag:            dm.BranchOrTag,
+		CommitSHA:              dm.CommitSHA,
 		Language:               language,
 		LanguageTitle:          languageTitle,
 		LanguageDir:            languageDir,
@@ -114,8 +116,6 @@ func ToCatalogEntry(dm *repo.Door43Metadata, mode perm.AccessMode) *api.CatalogE
 		Title:                  dm.Title,
 		Books:                  books,
 		AlignmentCounts:        alignmentCounts,
-		BranchOrTag:            dm.BranchOrTag,
-		CommitSHA:              dm.CommitSHA,
 		Stage:                  dm.Stage.String(),
 		Released:               dm.ReleaseDateUnix.AsTime(),
 		MetadataType:           dm.MetadataType,
@@ -124,5 +124,6 @@ func ToCatalogEntry(dm *repo.Door43Metadata, mode perm.AccessMode) *api.CatalogE
 		MetadataJSONURL:        dm.GetMetadataJSONURL(),
 		MetadataAPIContentsURL: dm.GetMetadataAPIContentsURL(),
 		Ingredients:            ingredients,
+		ContentFormat:          dm.ContentFormat,
 	}
 }

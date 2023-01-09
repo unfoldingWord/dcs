@@ -42,6 +42,7 @@ type CatalogEntry struct {
 	MetadataAPIContentsURL string                   `json:"metadata_api_contents_url"`
 	MetadataVersion        string                   `json:"metadata_version"`
 	MetadataType           string                   `json:"metadata_type"`
+	ContentFormat          string                   `json:"content_format"`
 	Released               time.Time                `json:"released"`
 	Books                  []string                 `json:"books,omitempty"`
 	AlignmentCounts        map[string]int64         `json:"alignment_counts,omitempty"`
