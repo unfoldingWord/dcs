@@ -375,7 +375,7 @@ func ProcessDoor43MetadataForRepoRelease(ctx context.Context, repo *repo_model.R
 		} else if repo.PrimaryLanguage != nil {
 			contentFormat = repo.PrimaryLanguage.Language
 		} else {
-			contentntFormat = "text"
+			contentFormat = "text"
 		}
 		var ok bool
 		checkingLevel, ok = (*manifest)["checking"].(map[string]interface{})["checking_level"].(int)
@@ -412,7 +412,7 @@ func ProcessDoor43MetadataForRepoRelease(ctx context.Context, repo *repo_model.R
 		}
 		if tcTsManifest.TcVersion != nil {
 			metadataType = "tc"
-			metadataVersion = str(tcTsManifest.TcVersion)
+			metadataVersion = strconv.Itoa(*tcTsManifest.TcVersion)
 			subject = "Aligned Bible"
 			contentFormat = "usfm"
 			bookPath := "./" + repo.Name + ".usfm"
@@ -425,7 +425,7 @@ func ProcessDoor43MetadataForRepoRelease(ctx context.Context, repo *repo_model.R
 			}}
 		} else {
 			metadataType = "ts"
-			metadataVersion = str(tcTsManifest.TsVersion)
+			metadataVersion = strconv.Itoa(*tcTsManifest.TsVersion)
 			contentFormat = "text"
 			if (*manifest)["project"].(map[string]string)["id"] == "obs" {
 				subject = "TS Open Bible Stories"
