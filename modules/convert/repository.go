@@ -125,6 +125,7 @@ func innerToRepo(repo *repo_model.Repository, mode perm.AccessMode, isParent boo
 	var languageIsGL bool
 	var books []string
 	var alignmentCounts map[string]int
+	var projects []*api.Door43MetadataProject
 	if dm != nil {
 		title = dm.Title
 		subject = dm.Subject
@@ -142,6 +143,7 @@ func innerToRepo(repo *repo_model.Repository, mode perm.AccessMode, isParent boo
 		alignmentCounts = dm.GetAlignmentCounts()
 		checkingLevel = dm.CheckingLevel
 		contentFormat = dm.ContentFormat
+		projects = dm.Projects
 	} else {
 		subject = dcs.GetSubjectFromRepoName(repo.LowerName)
 		language = dcs.GetLanguageFromRepoName(repo.LowerName)
@@ -239,6 +241,7 @@ func innerToRepo(repo *repo_model.Repository, mode perm.AccessMode, isParent boo
 		Subject:                       subject,         // DCS Customization
 		Books:                         books,           // DCS Customization
 		AlignmentCounts:               alignmentCounts, // DCS Customization
+		Projects:                      projects,        // DCS Customization
 		ContentFormat:                 contentFormat,   // DCS Customization
 		CheckingLevel:                 checkingLevel,   // DCS Customization
 	}

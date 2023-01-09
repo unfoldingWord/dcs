@@ -230,7 +230,9 @@ func (dm *Door43Metadata) GetAlignmentCounts() map[string]int {
 	counts := map[string]int{}
 	if len(dm.Projects) > 0 {
 		for _, prod := range dm.Projects {
-			counts[prod.Identifier] = *prod.AlignmentCount
+			if prod.AlignmentCount != nil {
+				counts[prod.Identifier] = *prod.AlignmentCount
+			}
 		}
 	}
 	return counts
