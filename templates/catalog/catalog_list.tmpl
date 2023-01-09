@@ -10,7 +10,7 @@
 				{{else}}
 				<a class="name" href="{{.Repo.Link}}/src/branch/{{.Repo.DefaultBranch | PathEscapeSegments}}">
 				{{end}}
-					{{.Metadata.dublin_core.title}}
+					{{.Title}}
 				</a>
 				{{if .Repo.IsFork}}
 					<span class="middle">{{svg "octicon-repo-forked" 16}}</span>
@@ -38,11 +38,11 @@
 				</div>
 			</div>
 			<div class="description">
-				<p>{{.Metadata.dublin_core.subject}}</p>
+				<p>{{.Subject}}</p>
 				{{if .Release}}
 				<p class="time">{{$.locale.Tr "explore.released"}}: {{.ReleaseDateUnix.FormatDate}}</p>
 				{{end}}
-				<p class="time">{{$.locale.Tr "explore.language"}}: {{.Metadata.dublin_core.language.title}} ({{.Metadata.dublin_core.language.identifier}})</p>
+				<p class="time">{{$.locale.Tr "explore.language"}}: {{.LanguageTitle}} ({{.Language}})</p>
 			</div>
 		</div>
 	{{else}}

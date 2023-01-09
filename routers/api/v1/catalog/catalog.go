@@ -22,28 +22,28 @@ import (
 
 var searchOrderByMap = map[string]map[string]door43metadata.CatalogOrderBy{
 	"asc": {
-		"title":      door43metadata.CatalogOrderByTitle,
-		"subject":    door43metadata.CatalogOrderBySubject,
-		"identifier": door43metadata.CatalogOrderByIdentifier,
-		"reponame":   door43metadata.CatalogOrderByRepoName,
-		"released":   door43metadata.CatalogOrderByOldest,
-		"lang":       door43metadata.CatalogOrderByLangCode,
-		"releases":   door43metadata.CatalogOrderByReleases,
-		"stars":      door43metadata.CatalogOrderByStars,
-		"forks":      door43metadata.CatalogOrderByForks,
-		"tag":        door43metadata.CatalogOrderByTag,
+		"title":    door43metadata.CatalogOrderByTitle,
+		"subject":  door43metadata.CatalogOrderBySubject,
+		"resource": door43metadata.CatalogOrderByResource,
+		"reponame": door43metadata.CatalogOrderByRepoName,
+		"released": door43metadata.CatalogOrderByOldest,
+		"lang":     door43metadata.CatalogOrderByLangCode,
+		"releases": door43metadata.CatalogOrderByReleases,
+		"stars":    door43metadata.CatalogOrderByStars,
+		"forks":    door43metadata.CatalogOrderByForks,
+		"tag":      door43metadata.CatalogOrderByTag,
 	},
 	"desc": {
-		"title":      door43metadata.CatalogOrderByTitleReverse,
-		"subject":    door43metadata.CatalogOrderBySubjectReverse,
-		"identifier": door43metadata.CatalogOrderByIdentifierReverse,
-		"reponame":   door43metadata.CatalogOrderByRepoNameReverse,
-		"released":   door43metadata.CatalogOrderByNewest,
-		"lang":       door43metadata.CatalogOrderByLangCodeReverse,
-		"releases":   door43metadata.CatalogOrderByReleasesReverse,
-		"stars":      door43metadata.CatalogOrderByStarsReverse,
-		"forks":      door43metadata.CatalogOrderByForksReverse,
-		"tag":        door43metadata.CatalogOrderByTagReverse,
+		"title":    door43metadata.CatalogOrderByTitleReverse,
+		"subject":  door43metadata.CatalogOrderBySubjectReverse,
+		"resouce":  door43metadata.CatalogOrderByResourceReverse,
+		"reponame": door43metadata.CatalogOrderByRepoNameReverse,
+		"released": door43metadata.CatalogOrderByNewest,
+		"lang":     door43metadata.CatalogOrderByLangCodeReverse,
+		"releases": door43metadata.CatalogOrderByReleasesReverse,
+		"stars":    door43metadata.CatalogOrderByStarsReverse,
+		"forks":    door43metadata.CatalogOrderByForksReverse,
+		"tag":      door43metadata.CatalogOrderByTagReverse,
 	},
 }
 
@@ -94,6 +94,14 @@ func Search(ctx *context.APIContext) {
 	// - name: book
 	//   in: query
 	//   description: search only for entries with the given book(s) (project ids). To match multiple, give the parameter multiple times or give a list comma delimited. Will perform an exact match (case insensitive)
+	//   type: string
+	// - name: metadataType
+	//   in: query
+	//   description: return repos only with metadata of this type (e.g. rc, tc, ts, sb). <empty> or "all" for all. Default is rc
+	//   type: string
+	// - name: metadataVersion
+	//   in: query
+	//   description: return repos only with the version of metadata given. Does not apply if metadataType is "all"
 	//   type: string
 	// - name: partialMatch
 	//   in: query
@@ -187,6 +195,14 @@ func SearchOwner(ctx *context.APIContext) {
 	// - name: book
 	//   in: query
 	//   description: search only for entries with the given book(s) (project ids). To match multiple, give the parameter multiple times or give a list comma delimited. Will perform an exact match (case insensitive)
+	//   type: string
+	// - name: metadataType
+	//   in: query
+	//   description: return repos only with metadata of this type (e.g. rc, tc, ts, sb). . <empty> or "all" for all. Default is rc
+	//   type: string
+	// - name: metadataVersion
+	//   in: query
+	//   description: return repos only with the version of metadata given. Does not apply if metadataType is "all"
 	//   type: string
 	// - name: partialMatch
 	//   in: query
@@ -289,6 +305,14 @@ func SearchRepo(ctx *context.APIContext) {
 	// - name: book
 	//   in: query
 	//   description: search only for entries with the given book(s) (project ids). To match multiple, give the parameter multiple times or give a list comma delimited. Will perform an exact match (case insensitive)
+	//   type: string
+	// - name: metadataType
+	//   in: query
+	//   description: return repos only with metadata of this type (e.g. rc, tc, ts, sb). <empty> or "all" for all. Default is rc
+	//   type: string
+	// - name: metadataVersion
+	//   in: query
+	//   description: return repos only with the version of metadata given. Does not apply if metadataType is "all"
 	//   type: string
 	// - name: partialMatch
 	//   in: query
@@ -468,6 +492,15 @@ func searchCatalog(ctx *context.APIContext) {
 		}
 	}
 
+	metadataTypes := QueryStrings(ctx, "metadataType")
+	metadataVersions := QueryStrings(ctx, "metadataVersion")
+	if len(metadataTypes) == 1 && (metadataTypes[0] == "all" || metadataTypes[0] == "") {
+		metadataTypes = nil
+		metadataVersions = nil
+	} else if len(metadataTypes) == 0 {
+		metadataTypes = []string{"rc"}
+	}
+
 	keywords := []string{}
 	query := strings.Trim(ctx.FormString("q"), " ")
 	if query != "" {
@@ -482,21 +515,23 @@ func searchCatalog(ctx *context.APIContext) {
 	}
 
 	opts := &door43metadata.SearchCatalogOptions{
-		ListOptions:     listOptions,
-		Keywords:        keywords,
-		Owners:          owners,
-		Repos:           repos,
-		RepoID:          repoID,
-		Tags:            QueryStrings(ctx, "tag"),
-		Stage:           stage,
-		Languages:       QueryStrings(ctx, "lang"),
-		Subjects:        QueryStrings(ctx, "subject"),
-		CheckingLevels:  QueryStrings(ctx, "checkingLevel"),
-		Books:           QueryStrings(ctx, "book"),
-		IncludeHistory:  ctx.FormBool("includeHistory"),
-		ShowIngredients: ctx.FormBool("showIngredients"),
-		IncludeMetadata: includeMetadata,
-		PartialMatch:    ctx.FormBool("partialMatch"),
+		ListOptions:      listOptions,
+		Keywords:         keywords,
+		Owners:           owners,
+		Repos:            repos,
+		RepoID:           repoID,
+		Tags:             QueryStrings(ctx, "tag"),
+		Stage:            stage,
+		Languages:        QueryStrings(ctx, "lang"),
+		Subjects:         QueryStrings(ctx, "subject"),
+		CheckingLevels:   QueryStrings(ctx, "checkingLevel"),
+		Books:            QueryStrings(ctx, "book"),
+		IncludeHistory:   ctx.FormBool("includeHistory"),
+		ShowIngredients:  ctx.FormBool("showIngredients"),
+		IncludeMetadata:  includeMetadata,
+		MetadataTypes:    metadataTypes,
+		MetadataVersions: metadataVersions,
+		PartialMatch:     ctx.FormBool("partialMatch"),
 	}
 
 	sortModes := QueryStrings(ctx, "sort")

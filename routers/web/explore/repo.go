@@ -98,7 +98,7 @@ func RenderRepoSearch(ctx *context.Context, opts *RepoSearchOptions) {
 	ctx.Data["TopicOnly"] = topicOnly
 
 	/*** DCS Customizations ***/
-	var books, langs, keywords, subjects, repoNames, owners []string
+	var books, langs, keywords, subjects, repoNames, owners, metadataTypes, metadataVersions []string
 	origKeyword := keyword
 	if keyword != "" {
 		for _, token := range door43metadata.SplitAtCommaNotInString(keyword, true) {
@@ -112,6 +112,10 @@ func RenderRepoSearch(ctx *context.Context, opts *RepoSearchOptions) {
 				repoNames = append(repoNames, strings.TrimPrefix(token, "repo:"))
 			} else if strings.HasPrefix(token, "owner:") {
 				owners = append(owners, strings.TrimPrefix(token, "owner:"))
+			} else if strings.HasPrefix(token, "metadata_type:") {
+				metadataTypes = append(metadataTypes, strings.TrimPrefix(token, "metadata_type:"))
+			} else if strings.HasPrefix(token, "metadata_version:") {
+				metadataVersions = append(metadataVersions, strings.TrimPrefix(token, "metadata_version:"))
 			} else {
 				keywords = append(keywords, token)
 			}
@@ -138,12 +142,14 @@ func RenderRepoSearch(ctx *context.Context, opts *RepoSearchOptions) {
 		TopicOnly:          topicOnly,
 		Language:           language,
 		IncludeDescription: setting.UI.SearchRepoDescription,
-		Books:              books,     /// DCS Customizaitons
-		Languages:          langs,     /// DCS Customizaitons
-		Subjects:           subjects,  /// DCS Customizaitons
-		Repos:              repoNames, /// DCS Customizaitons
-		Owners:             owners,    /// DCS Customizaitons
-		IncludeMetadata:    true,      /// DCS Customizaitons
+		Books:              books,            // DCS Customizaitons
+		Languages:          langs,            // DCS Customizaitons
+		Subjects:           subjects,         // DCS Customizaitons
+		Repos:              repoNames,        // DCS Customizaitons
+		Owners:             owners,           // DCS Customizaitons
+		IncludeMetadata:    true,             // DCS Customizaitons
+		MetadataTypes:      metadataTypes,    // DCS Customizaitons
+		MetadataVersions:   metadataVersions, // DCS Customizaitons
 		OnlyShowRelevant:   onlyShowRelevant,
 	})
 	if err != nil {

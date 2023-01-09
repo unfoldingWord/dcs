@@ -10,7 +10,6 @@ import (
 	"code.gitea.io/gitea/models/db"
 	"code.gitea.io/gitea/models/perm"
 	"code.gitea.io/gitea/models/repo"
-	"code.gitea.io/gitea/modules/dcs"
 	"code.gitea.io/gitea/modules/json"
 	"code.gitea.io/gitea/modules/log"
 	api "code.gitea.io/gitea/modules/structs"
@@ -58,29 +57,10 @@ func ToCatalogEntry(dm *repo.Door43Metadata, mode perm.AccessMode) *api.CatalogE
 		release = ToRelease(dm.Release)
 	}
 
-	var language string
-	if val, ok := (*dm.Metadata)["dublin_core"].(map[string]interface{})["language"].(map[string]interface{})["identifier"].(string); ok {
-		language = val
-	}
-
-	languageDir := "ltr"
-	if val, ok := (*dm.Metadata)["dublin_core"].(map[string]interface{})["language"].(map[string]interface{})["direction"].(string); ok {
-		languageDir = val
-	} else if language != "" {
-		dcs.GetLanguageDirection(language)
-	}
-
-	var languageTitle string
-	if val, ok := (*dm.Metadata)["dublin_core"].(map[string]interface{})["language"].(map[string]interface{})["title"].(string); ok {
-		languageTitle = val
-	} else if language != "" {
-		dcs.GetLanguageTitle(language)
-	}
-
-	var languageIsGL bool
-	if val, ok := (*dm.Metadata)["dublin_core"].(map[string]interface{})["language"].(map[string]interface{})["is_gl"].(bool); ok {
-		languageIsGL = val
-	}
+	language := dm.Language
+	languageTitle := dm.LanguageTitle
+	languageDir := dm.LanguageDirection
+	languageIsGL := dm.LanguageIsGL
 
 	var books []string
 	if val, ok := (*dm.Metadata)["books"].([]string); ok {
@@ -130,13 +110,15 @@ func ToCatalogEntry(dm *repo.Door43Metadata, mode perm.AccessMode) *api.CatalogE
 		LanguageTitle:          languageTitle,
 		LanguageDir:            languageDir,
 		LanguageIsGL:           languageIsGL,
-		Subject:                (*dm.Metadata)["dublin_core"].(map[string]interface{})["subject"].(string),
-		Title:                  (*dm.Metadata)["dublin_core"].(map[string]interface{})["title"].(string),
+		Subject:                dm.Subject,
+		Title:                  dm.Title,
 		Books:                  books,
 		AlignmentCounts:        alignmentCounts,
 		BranchOrTag:            dm.BranchOrTag,
+		CommitSHA:              dm.CommitSHA,
 		Stage:                  dm.Stage.String(),
 		Released:               dm.ReleaseDateUnix.AsTime(),
+		MetadataType:           dm.MetadataType,
 		MetadataVersion:        dm.MetadataVersion,
 		MetadataURL:            dm.GetMetadataURL(),
 		MetadataJSONURL:        dm.GetMetadataJSONURL(),

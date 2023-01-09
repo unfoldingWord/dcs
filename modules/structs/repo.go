@@ -102,6 +102,10 @@ type Repository struct {
 	MirrorUpdated time.Time     `json:"mirror_updated,omitempty"`
 	RepoTransfer  *RepoTransfer `json:"repo_transfer"`
 	// language from the manifest
+	MetadataType string `json:"metadata_type"` // DCS Customiations
+	// language from the manifest
+	MetadataVersion string `json:"metadata_version"` // DCS Customiations
+	// language from the manifest
 	Language string `json:"language"` // DCS Customiations
 	// language title from the manifest
 	LanguageTitle string `json:"language_title"` // DCS Customiations
@@ -111,16 +115,20 @@ type Repository struct {
 	LanguageIsGL bool `json:"language_is_gl"` // DCS Customiations
 	// subject from the manifest
 	Subject string `json:"subject"` // DCS Customiations
+	// title from the manifest
+	Title string `json:"title"` // DCS Customiations
+	// projects
+	Projects []*Door43MetadataProject `json:"projects"` // DCS Customizaitons
 	// project IDs from the manifest
 	Books []string `json:"books,omitempty"` // DCS Customiations
 	// the count of alignments of each book
-	AlignmentCounts map[string]int64 `json:"alignment_counts,omitempty"` // DCS Customiations
-	// title from the manifest
-	Title string `json:"title"` // DCS Customiations
+	AlignmentCounts map[string]int `json:"alignment_counts,omitempty"` // DCS Customiations
 	// checking level from the manifest
-	CheckingLevel string `json:"checking_level"` // DCS Customiations
+	CheckingLevel int `json:"checking_level"` // DCS Customiations
 	// latest catalog entry of each stage
 	Catalog *CatalogStages `json:"catalog"` // DCS Customiations
+	// content format
+	ContentFormat string `json:"content_format"` // DCS Customizaitons
 }
 
 // CreateRepoOption options when creating repository

@@ -15,6 +15,7 @@ import (
 	"code.gitea.io/gitea/models/system"
 	"code.gitea.io/gitea/modules/log"
 	"code.gitea.io/gitea/modules/setting"
+	"code.gitea.io/gitea/modules/structs"
 	"code.gitea.io/gitea/modules/timeutil"
 
 	"xorm.io/builder"
@@ -40,18 +41,30 @@ func InitDoor43Metadata() error {
 
 // Door43Metadata represents the metadata of repository's release or default branch (ReleaseID = 0).
 type Door43Metadata struct {
-	ID              int64                   `xorm:"pk autoincr"`
-	RepoID          int64                   `xorm:"INDEX UNIQUE(n) NOT NULL"`
-	Repo            *Repository             `xorm:"-"`
-	ReleaseID       int64                   `xorm:"INDEX UNIQUE(n)"`
-	Release         *Release                `xorm:"-"`
-	MetadataVersion string                  `xorm:"NOT NULL"`
-	Metadata        *map[string]interface{} `xorm:"JSON NOT NULL"`
-	Stage           door43metadata.Stage    `xorm:"NOT NULL"`
-	BranchOrTag     string                  `xorm:"NOT NULL"`
-	ReleaseDateUnix timeutil.TimeStamp      `xorm:"NOT NULL"`
-	CreatedUnix     timeutil.TimeStamp      `xorm:"INDEX created NOT NULL"`
-	UpdatedUnix     timeutil.TimeStamp      `xorm:"INDEX updated"`
+	ID                int64                            `xorm:"pk autoincr"`
+	RepoID            int64                            `xorm:"INDEX UNIQUE(n) NOT NULL"`
+	Repo              *Repository                      `xorm:"-"`
+	ReleaseID         int64                            `xorm:"INDEX UNIQUE(n)"`
+	Release           *Release                         `xorm:"-"`
+	BranchOrTag       string                           `xorm:"NOT NULL"`
+	CommitSHA         string                           `xorm:"VARCHAR(40)"`
+	Stage             door43metadata.Stage             `xorm:"NOT NULL"`
+	MetadataType      string                           `xorm:"NOT NULL"`
+	MetadataVersion   string                           `xorm:"NOT NULL"`
+	Resource          string                           `xorm:"NOT NULL"`
+	Subject           string                           `xorm:"NOT NULL"`
+	Title             string                           `xorm:"NOT NULL"`
+	Language          string                           `xorm:"NOT NULL"`
+	LanguageTitle     string                           `xorm:"NOT NULL"`
+	LanguageDirection string                           `xorm:"NOT NULL"`
+	LanguageIsGL      bool                             `xorm:"NOT NULL"`
+	ContentFormat     string                           `xorm:"NOT NULL"`
+	CheckingLevel     int                              `xorm:"NOT NULL"`
+	Projects          []*structs.Door43MetadataProject `xorm:"JSON NOT NULL"`
+	Metadata          *map[string]interface{}          `xorm:"JSON NOT NULL"`
+	ReleaseDateUnix   timeutil.TimeStamp               `xorm:"NOT NULL"`
+	CreatedUnix       timeutil.TimeStamp               `xorm:"INDEX created NOT NULL"`
+	UpdatedUnix       timeutil.TimeStamp               `xorm:"INDEX updated"`
 }
 
 func init() {
@@ -125,7 +138,7 @@ func (dm *Door43Metadata) GetBranchOrTagType() string {
 	if dm.Stage < door43metadata.StageDraft {
 		return "tag"
 	}
-	return "branch"
+	return "commit"
 }
 
 // APIURL the api url for a door43 metadata. door43 metadata must have attributes loaded
@@ -142,14 +155,22 @@ func (dm *Door43Metadata) HTMLURL() string {
 	return fmt.Sprintf("%s/metadata/tag/%s", dm.Repo.HTMLURL(), dm.Release.TagName)
 }
 
+// GetRef gets the ref of the DM that should be used to retrieve files and other URLs
+func (dm *Door43Metadata) GetRef() string {
+	if dm.ReleaseID == 0 && len(dm.CommitSHA) >= 10 {
+		return dm.CommitSHA[:10]
+	}
+	return dm.BranchOrTag // will be the tag
+}
+
 // GetTarballURL get the tarball URL of the tag or branch
 func (dm *Door43Metadata) GetTarballURL() string {
-	return fmt.Sprintf("%s/archive/%s.tar.gz", dm.Repo.HTMLURL(), dm.BranchOrTag)
+	return fmt.Sprintf("%s/archive/%s.tar.gz", dm.Repo.HTMLURL(), dm.GetRef())
 }
 
 // GetZipballURL get the zipball URL of the tag or branch
 func (dm *Door43Metadata) GetZipballURL() string {
-	return fmt.Sprintf("%s/archive/%s.zip", dm.Repo.HTMLURL(), dm.BranchOrTag)
+	return fmt.Sprintf("%s/archive/%s.zip", dm.Repo.HTMLURL(), dm.GetRef())
 }
 
 // GetReleaseURL get the URL the release API
@@ -167,7 +188,11 @@ func (dm *Door43Metadata) GetReleaseURL() string {
 
 // GetMetadataURL gets the url to the raw manifest.yaml file
 func (dm *Door43Metadata) GetMetadataURL() string {
-	return fmt.Sprintf("%s/raw/%s/%s/manifest.yaml", dm.Repo.HTMLURL(), dm.GetBranchOrTagType(), dm.BranchOrTag)
+	if dm.MetadataType == "rc" {
+		return fmt.Sprintf("%s/raw/%s/%s/manifest.yaml", dm.Repo.HTMLURL(), dm.GetBranchOrTagType(), dm.GetRef())
+	}
+	// so far this means we have a ts or tc metadata entry, but need to change for scripture burrito!
+	return fmt.Sprintf("%s/raw/%s/%s/manifest.json", dm.Repo.HTMLURL(), dm.GetBranchOrTagType(), dm.GetRef())
 }
 
 // GetMetadataJSONURL gets the json representation of the contents of the manifest.yaml file
@@ -177,12 +202,12 @@ func (dm *Door43Metadata) GetMetadataJSONURL() string {
 
 // GetMetadataAPIContentsURL gets the metadata API contents URL of the manifest.yaml file
 func (dm *Door43Metadata) GetMetadataAPIContentsURL() string {
-	return fmt.Sprintf("%s/contents/manifest.yaml?ref=%s", dm.Repo.APIURL(), dm.BranchOrTag)
+	return fmt.Sprintf("%s/contents/manifest.yaml?ref=%s", dm.Repo.APIURL(), dm.GetRef())
 }
 
 // GetGitTreesURL gets the git trees URL for a repo and branch or tag for all files
 func (dm *Door43Metadata) GetGitTreesURL() string {
-	return fmt.Sprintf("%s/git/trees/%s?recursive=1&per_page=99999", dm.Repo.APIURL(), dm.BranchOrTag)
+	return fmt.Sprintf("%s/git/trees/%s?recursive=1&per_page=99999", dm.Repo.APIURL(), dm.GetRef())
 }
 
 // GetContentsURL gets the contents URL for a repo and branch or tag for all files
@@ -193,12 +218,22 @@ func (dm *Door43Metadata) GetContentsURL() string {
 // GetBooks get the books of the manifest
 func (dm *Door43Metadata) GetBooks() []string {
 	var books []string
-	if len((*dm.Metadata)["projects"].([]interface{})) > 0 {
-		for _, prod := range (*dm.Metadata)["projects"].([]interface{}) {
-			books = append(books, prod.(map[string]interface{})["identifier"].(string))
+	if len(dm.Projects) > 0 {
+		for _, prod := range dm.Projects {
+			books = append(books, prod.Identifier)
 		}
 	}
 	return books
+}
+
+func (dm *Door43Metadata) GetAlignmentCounts() map[string]int {
+	counts := map[string]int{}
+	if len(dm.Projects) > 0 {
+		for _, prod := range dm.Projects {
+			counts[prod.Identifier] = prod.AlignmentCount
+		}
+	}
+	return counts
 }
 
 // IsDoor43MetadataExist returns true if door43 metadata with given release ID already exists.

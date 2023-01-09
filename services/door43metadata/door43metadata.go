@@ -10,7 +10,6 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"reflect"
 	"regexp"
 	"strconv"
 	"strings"
@@ -222,22 +221,6 @@ func GetBookAlignmentCount(bookPath string, commit *git.Commit) (int, error) {
 	return len(matches), nil
 }
 
-// GetAlignmentsCounts get all the alignment counts for all books
-func GetAlignmentsCounts(manifest *map[string]interface{}, commit *git.Commit) map[string]int {
-	counts := map[string]int{}
-	if (*manifest)["dublin_core"].(map[string]interface{})["subject"].(string) != "Aligned Bible" || len((*manifest)["projects"].([]interface{})) == 0 {
-		return counts
-	}
-	for _, prod := range (*manifest)["projects"].([]interface{}) {
-		bookPath := prod.(map[string]interface{})["path"].(string)
-		if strings.HasSuffix(bookPath, ".usfm") {
-			count, _ := GetBookAlignmentCount(bookPath, commit)
-			counts[prod.(map[string]interface{})["identifier"].(string)] = count
-		}
-	}
-	return counts
-}
-
 // GetBooks get the books of the manifest
 func GetBooks(manifest *map[string]interface{}) []string {
 	var books []string
@@ -265,53 +248,22 @@ func ProcessDoor43MetadataForRepoRelease(ctx context.Context, repo *repo_model.R
 	}
 	defer gitRepo.Close()
 
+	var releaseID int64
+	var stage door43metadata.Stage
 	var commit *git.Commit
+	var releaseDateUnix timeutil.TimeStamp
+	var branchOrTag string
+
 	if release == nil {
+		stage = door43metadata.StageLatest
 		commit, err = gitRepo.GetBranchCommit(repo.DefaultBranch)
 		if err != nil {
 			log.Error("GetBranchCommit: %v\n", err)
 			return err
 		}
-	} else if !release.IsDraft {
-		commit, err = gitRepo.GetTagCommit(release.TagName)
-		if err != nil {
-			log.Error("GetTagCommit: %v\n", err)
-			return err
-		}
 	} else {
-		commit, err = gitRepo.GetBranchCommit(release.Target)
-		if err != nil {
-			log.Error("GetBranchCommit: %v\n", err)
-			return err
-		}
-	}
-
-	if release != nil {
-		UnpackJSONAttachments(ctx, release)
-	}
-
-	blob, err := commit.GetBlobByPath("manifest.yaml")
-	if err != nil && !git.IsErrNotExist(err) {
-		return err
-	}
-	if blob == nil {
-		return nil
-	}
-
-	manifest, err := base.ReadYAMLFromBlob(blob)
-	if err != nil {
-		return err
-	}
-
-	validationResult, err := base.ValidateBlobByRC020Schema(manifest)
-	if err != nil {
-		return err
-	}
-
-	var releaseID int64
-	var stage door43metadata.Stage
-	if release != nil {
 		releaseID = release.ID
+
 		if release.IsDraft {
 			stage = door43metadata.StageDraft
 		} else if release.IsPrerelease {
@@ -319,34 +271,58 @@ func ProcessDoor43MetadataForRepoRelease(ctx context.Context, repo *repo_model.R
 		} else {
 			stage = door43metadata.StageProd
 		}
-	} else {
-		stage = door43metadata.StageLatest
-	}
 
-	dm, err := repo_model.GetDoor43MetadataByRepoIDAndReleaseID(repo.ID, releaseID)
-	if err != nil && !repo_model.IsErrDoor43MetadataNotExist(err) {
-		return err
-	}
-
-	var releaseDateUnix timeutil.TimeStamp
-	var branchOrTag string
-	if release != nil && !release.IsDraft {
-		releaseDateUnix = release.CreatedUnix
-		branchOrTag = release.TagName
-	} else {
-		releaseDateUnix = timeutil.TimeStamp(commit.Author.When.Unix())
-		if release != nil {
-			branchOrTag = release.Target
+		if !release.IsDraft {
+			commit, err = gitRepo.GetTagCommit(release.TagName)
+			if err != nil {
+				log.Error("GetTagCommit: %v\n", err)
+				return err
+			}
+			releaseDateUnix = release.CreatedUnix
+			branchOrTag = release.TagName
 		} else {
-			branchOrTag = repo.DefaultBranch
+			commit, err = gitRepo.GetBranchCommit(release.Target)
+			if err != nil {
+				log.Error("GetBranchCommit: %v\n", err)
+				return err
+			}
+			releaseDateUnix = timeutil.TimeStamp(commit.Author.When.Unix())
+			if release != nil {
+				branchOrTag = release.Target
+			} else {
+				branchOrTag = repo.DefaultBranch
+			}
 		}
 	}
 
-	if dm == nil ||
-		releaseDateUnix != dm.ReleaseDateUnix ||
-		dm.Stage != stage ||
-		dm.BranchOrTag != branchOrTag ||
-		!reflect.DeepEqual(dm.Metadata, manifest) {
+	commitSHA := commit.ID.String()
+	var metadataType string
+	var metadataVersion string
+	var subject string
+	var resource string
+	var title string
+	var language string
+	var languageTitle string
+	var languageDirection string
+	var languageIsGL bool
+	var contentFormat string
+	var checkingLevel int
+	var projects []*structs.Door43MetadataProject
+	var manifest *map[string]interface{}
+
+	blob, err := commit.GetBlobByPath("manifest.yaml")
+	if err != nil && !git.IsErrNotExist(err) {
+		return err
+	}
+	if blob != nil { // We have a RC manifest.yaml file, or so we assume
+		manifest, err = base.ReadYAMLFromBlob(blob)
+		if err != nil {
+			return err
+		}
+		validationResult, err := base.ValidateBlobByRC020Schema(manifest)
+		if err != nil {
+			return err
+		}
 		if validationResult != nil {
 			log.Warn("%s/%s: manifest.yaml is not valid. see errors:", repo.FullName(), branchOrTag)
 			log.Warn("REPO ID: %d, RELEASE ID: %d", repo.ID, releaseID)
@@ -356,40 +332,169 @@ func ProcessDoor43MetadataForRepoRelease(ctx context.Context, repo *repo_model.R
 				log.Warn("BRANCH: %s", repo.DefaultBranch)
 			}
 			log.Warn(base.ConvertValidationErrorToString(validationResult))
-			if dm != nil {
-				return repo_model.DeleteDoor43Metadata(dm)
-			}
+			return fmt.Errorf("manifest.yaml is not valid")
+		}
+		log.Info("%s/%s: manifest.yaml is valid.", repo.FullName(), branchOrTag)
+		re := regexp.MustCompile("^([^0-9]+)(.*)$")
+		matches := re.FindStringSubmatch((*manifest)["dublin_core"].(map[string]interface{})["conformsto"].(string))
+		if len(matches) == 3 {
+			metadataType = matches[1]
+			metadataVersion = matches[2]
 		} else {
-			if (*manifest)["dublin_core"].(map[string]interface{})["subject"].(string) == "Aligned Bible" {
-				(*manifest)["alignment_counts"] = GetAlignmentsCounts(manifest, commit)
+			// should never get here since schema validated
+			metadataType = "rc"
+			metadataVersion = "0.2"
+		}
+		subject = (*manifest)["dublin_core"].(map[string]interface{})["subject"].(string)
+		resource = (*manifest)["dublin_core"].(map[string]interface{})["identifier"].(string)
+		language = (*manifest)["dublin_core"].(map[string]interface{})["language"].(map[string]interface{})["identifier"].(string)
+		languageTitle = (*manifest)["dublin_core"].(map[string]interface{})["language"].(map[string]interface{})["title"].(string)
+		languageDirection = dcs.GetLanguageDirection(language)
+		languageIsGL = dcs.LanguageIsGL(language)
+		var bookPath string
+		for _, prod := range (*manifest)["projects"].([]interface{}) {
+			bookPath = prod.(map[string]interface{})["path"].(string)
+			if subject == "Aligned Bible" && strings.HasSuffix(bookPath, ".usfm") {
+				count, _ := GetBookAlignmentCount(bookPath, commit)
+				projects = append(projects, &structs.Door43MetadataProject{
+					Identifier:     prod.(map[string]interface{})["identifier"].(string),
+					Title:          prod.(map[string]interface{})["title"].(string),
+					Path:           bookPath,
+					AlignmentCount: count,
+				})
 			}
-			(*manifest)["books"] = GetBooks(manifest)
-			lc := (*manifest)["dublin_core"].(map[string]interface{})["language"].(map[string]interface{})["identifier"].(string)
-			(*manifest)["dublin_core"].(map[string]interface{})["language"].(map[string]interface{})["is_gl"] = dcs.LanguageIsGL(lc)
-			log.Warn("%s/%s: manifest.yaml is valid.", repo.FullName(), branchOrTag)
-			if dm == nil {
-				dm = &repo_model.Door43Metadata{
-					RepoID:          repo.ID,
-					Repo:            repo,
-					ReleaseID:       releaseID,
-					Release:         release,
-					ReleaseDateUnix: releaseDateUnix,
-					MetadataVersion: "rc0.2",
-					Metadata:        manifest,
-					Stage:           stage,
-					BranchOrTag:     branchOrTag,
+		}
+		if subject == "Bible" || subject == "Aligned Bible" {
+			contentFormat = "usfm"
+		} else if strings.HasPrefix(subject, "TSV ") {
+			if strings.HasPrefix(fmt.Sprintf("./%s_", resource), bookPath) {
+				contentFormat = "tsv7"
+			} else {
+				contentFormat = "tsv9"
+			}
+		} else if repo.PrimaryLanguage != nil {
+			contentFormat = repo.PrimaryLanguage.Language
+		} else {
+			contentntFormat = "text"
+		}
+		var ok bool
+		checkingLevel, ok = (*manifest)["checking"].(map[string]interface{})["checking_level"].(int)
+		if !ok {
+			cL, ok := (*manifest)["checking"].(map[string]interface{})["checking_level"].(string)
+			if !ok {
+				checkingLevel = 1
+			} else {
+				checkingLevel, err = strconv.Atoi(cL)
+				if err != nil {
+					checkingLevel = 1
 				}
-				return repo_model.InsertDoor43Metadata(dm)
 			}
-			dm.Metadata = manifest
-			dm.ReleaseDateUnix = releaseDateUnix
-			dm.Stage = stage
-			dm.BranchOrTag = branchOrTag
-			return repo_model.UpdateDoor43MetadataCols(dm, "lang", "metadata", "release_date_unix", "stage", "branch_or_tag")
+		}
+	} else {
+		blob, err := commit.GetBlobByPath("manifest.json")
+		if err != nil && !git.IsErrNotExist(err) {
+			return err
+		}
+		if blob == nil {
+			return fmt.Errorf("invalid repo: %s: not a rc, tc, or ts repo", repo.FullName())
+		}
+		log.Info("%s: manifest.json exists so might be a tS or tC repo", repo.FullName())
+		tcTsManifest, err := base.ReadTcTsManifestFromBlob(blob)
+		if err != nil || tcTsManifest == nil {
+			return fmt.Errorf("tried to process a tS or tC repo but manifest.json file invalid")
+		}
+		if !dcs.BookIsValid(*tcTsManifest.Project.ID) {
+			return fmt.Errorf("%s does not have a valid book in its manifest.json", repo.FullName())
+		}
+		manifest, err = base.ReadJSONFromBlob(blob)
+		if err != nil {
+			return err
+		}
+		if tcTsManifest.TcVersion != nil {
+			metadataType = "tc"
+			metadataVersion = str(tcTsManifest.TcVersion)
+			subject = "Aligned Bible"
+			contentFormat = "usfm"
+			bookPath := "./" + repo.Name + ".usfm"
+			count, _ := GetBookAlignmentCount(bookPath, commit)
+			projects = []*structs.Door43MetadataProject{{
+				Identifier:     *tcTsManifest.Project.ID,
+				Title:          *tcTsManifest.Project.Name,
+				Path:           bookPath,
+				AlignmentCount: count,
+			}}
+		} else {
+			metadataType = "ts"
+			metadataVersion = str(tcTsManifest.TsVersion)
+			contentFormat = "text"
+			if (*manifest)["project"].(map[string]string)["id"] == "obs" {
+				subject = "TS Open Bible Stories"
+			} else {
+				subject = "TS Bible"
+			}
+			contentFormat = *tcTsManifest.Format
+			projects = []*structs.Door43MetadataProject{{
+				Identifier: *tcTsManifest.Project.ID,
+				Title:      *tcTsManifest.Project.Name,
+				Path:       ".",
+			}}
+		}
+		resource = *tcTsManifest.Resource.ID
+		title = *tcTsManifest.Resource.Name
+		language = *tcTsManifest.TargetLanguage.ID
+		languageTitle = *tcTsManifest.TargetLanguage.Name
+		languageDirection = *tcTsManifest.TargetLanguage.Direction
+		languageIsGL = dcs.LanguageIsGL(language)
+		tCtSJsonBytes, err := json.Marshal(tcTsManifest)
+		checkingLevel = 1
+		if err != nil {
+			return fmt.Errorf("%s: error marshaling TcTsManifest to bytes", repo.FullName())
+		}
+		err = json.Unmarshal(tCtSJsonBytes, &manifest)
+		if err != nil {
+			return fmt.Errorf("%s: error Unmarshaling TcTsManifest to generic map", repo.FullName())
 		}
 	}
 
-	return nil
+	if checkingLevel < 1 || checkingLevel > 3 {
+		checkingLevel = 1
+	}
+
+	dm, err := repo_model.GetDoor43MetadataByRepoIDAndReleaseID(repo.ID, releaseID)
+	if err != nil && !repo_model.IsErrDoor43MetadataNotExist(err) {
+		return err
+	}
+	if dm != nil {
+		err = repo_model.DeleteDoor43Metadata(dm)
+		if err != nil {
+			return err
+		}
+	}
+
+	dm = &repo_model.Door43Metadata{
+		RepoID:            repo.ID,
+		Repo:              repo,
+		ReleaseID:         releaseID,
+		Release:           release,
+		Stage:             stage,
+		CommitSHA:         commitSHA,
+		BranchOrTag:       branchOrTag,
+		ReleaseDateUnix:   releaseDateUnix,
+		MetadataType:      metadataType,
+		MetadataVersion:   metadataVersion,
+		Subject:           subject,
+		Title:             title,
+		Resource:          resource,
+		LanguageTitle:     languageTitle,
+		LanguageDirection: languageDirection,
+		LanguageIsGL:      languageIsGL,
+		ContentFormat:     contentFormat,
+		CheckingLevel:     checkingLevel,
+		Projects:          projects,
+		Metadata:          manifest,
+	}
+
+	return repo_model.InsertDoor43Metadata(dm)
 }
 
 func UnpackJSONAttachments(ctx context.Context, release *repo_model.Release) {

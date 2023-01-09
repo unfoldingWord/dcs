@@ -119,6 +119,14 @@ func Search(ctx *context.APIContext) {
 	//   description: book (project id) that exist in a resource. If the resource contains the
 	//                the book, its repository will be included in the results. Multiple book's are ORed.
 	//   type: string
+	// - name: metadataType
+	//   in: query
+	//   description: return repos only with metadata of this type (e.g. rc, tc, ts, sb). <empty> or "all" for all. Default is rc
+	//   type: string
+	// - name: metadataVersion
+	//   in: query
+	//   description: return repos only with the version of metadata given. Does not apply if metadataType is "all"
+	//   type: string
 	// - name: includeMetadata
 	//   in: query
 	//   description: if false, q value will only be searched for in the repo name, owner, description and title and
@@ -149,6 +157,15 @@ func Search(ctx *context.APIContext) {
 	//   "422":
 	//     "$ref": "#/responses/validationError"
 
+	metadataTypes := catalog.QueryStrings(ctx, "metadataType")
+	metadataVersions := catalog.QueryStrings(ctx, "metadataVersion")
+	if len(metadataTypes) == 1 && (metadataTypes[0] == "all" || metadataTypes[0] == "") {
+		metadataTypes = nil
+		metadataVersions = nil
+	} else if len(metadataTypes) == 0 {
+		metadataTypes = []string{"rc"}
+	}
+
 	opts := &repo_model.SearchRepoOptions{
 		ListOptions:        utils.GetListOptions(ctx),
 		Actor:              ctx.Doer,
@@ -168,6 +185,8 @@ func Search(ctx *context.APIContext) {
 		Owners:          catalog.QueryStrings(ctx, "owner"),
 		Subjects:        catalog.QueryStrings(ctx, "subject"),
 		Books:           catalog.QueryStrings(ctx, "book"),
+		MetadataTypes:   metadataTypes,
+		MetadataVersions: metadataVersions,
 		IncludeMetadata: ctx.FormString("includeMetadata") == "" || ctx.FormBool("includeMetadata"),
 		/*** END DCS Customizations ***/
 	}

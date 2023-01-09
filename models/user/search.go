@@ -127,7 +127,7 @@ func SearchUsers(opts *SearchUserOptions) (users []*User, _ int64, _ error) {
 		langCond := builder.NewCond()
 		for _, lang := range opts.RepoLanguages {
 			for _, v := range strings.Split(lang, ",") {
-				langCond = langCond.Or(builder.Eq{"LOWER(REPLACE(JSON_EXTRACT(`door43_metadata`.metadata, '$.dublin_core.language.identifier'), '\"', ''))": strings.ToLower(v)})
+				langCond = langCond.Or(builder.Eq{"LOWER(`door43_metadata`.language)": strings.ToLower(v)})
 			}
 		}
 		metadataSelect := builder.Select("owner_id").

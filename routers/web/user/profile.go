@@ -259,7 +259,7 @@ func Profile(ctx *context.Context) {
 		total = int(count)
 	default:
 		/*** DCS Customizations ***/
-		var books, langs, keywords, subjects, repoNames, owners []string
+		var books, langs, keywords, subjects, repoNames, owners, metadataTypes, metadataVersions []string
 		if keyword != "" {
 			for _, token := range door43metadata.SplitAtCommaNotInString(keyword, true) {
 				if strings.HasPrefix(token, "book:") {
@@ -272,6 +272,10 @@ func Profile(ctx *context.Context) {
 					repoNames = append(repoNames, strings.TrimPrefix(token, "repo:"))
 				} else if strings.HasPrefix(token, "owner:") {
 					owners = append(owners, strings.TrimPrefix(token, "owner:"))
+				} else if strings.HasPrefix(token, "metadata_type:") {
+					metadataTypes = append(metadataTypes, strings.TrimPrefix(token, "metadata_type:"))
+				} else if strings.HasPrefix(token, "metadata_version:") {
+					metadataVersions = append(metadataVersions, strings.TrimPrefix(token, "metadata_version:"))
 				} else {
 					keywords = append(keywords, token)
 				}
@@ -292,12 +296,14 @@ func Profile(ctx *context.Context) {
 			TopicOnly:          topicOnly,
 			Language:           language,
 			IncludeDescription: setting.UI.SearchRepoDescription,
-			Books:              books,
-			Languages:          langs,
-			Subjects:           subjects,
-			Repos:              repoNames,
-			Owners:             owners,
-			IncludeMetadata:    true,
+			Books:              books,            // DCS Customizations
+			Languages:          langs,            // DCS Customizations
+			Subjects:           subjects,         // DCS Customizations
+			Repos:              repoNames,        // DCS Customizations
+			Owners:             owners,           // DCS Customizations
+			MetadataTypes:      metadataTypes,    // DCS Customizations
+			MetadataVersions:   metadataVersions, // DCS Customizations
+			IncludeMetadata:    true,             // DCS Customizations
 		})
 		if err != nil {
 			ctx.ServerError("SearchRepository", err)

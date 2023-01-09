@@ -765,6 +765,18 @@
             "in": "query"
           },
           {
+            "type": "string",
+            "description": "return repos only with metadata of this type (e.g. rc, tc, ts, sb). \u003cempty\u003e or \"all\" for all. Default is rc",
+            "name": "metadataType",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "description": "return repos only with the version of metadata given. Does not apply if metadataType is \"all\"",
+            "name": "metadataVersion",
+            "in": "query"
+          },
+          {
             "type": "boolean",
             "description": "if true, subject, owner and repo search fields will use partial match (LIKE) when querying the catalog. Default is false",
             "name": "partialMatch",
@@ -887,6 +899,18 @@
             "type": "string",
             "description": "search only for entries with the given book(s) (project ids). To match multiple, give the parameter multiple times or give a list comma delimited. Will perform an exact match (case insensitive)",
             "name": "book",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "description": "return repos only with metadata of this type (e.g. rc, tc, ts, sb). . \u003cempty\u003e or \"all\" for all. Default is rc",
+            "name": "metadataType",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "description": "return repos only with the version of metadata given. Does not apply if metadataType is \"all\"",
+            "name": "metadataVersion",
             "in": "query"
           },
           {
@@ -1025,6 +1049,18 @@
             "type": "string",
             "description": "search only for entries with the given book(s) (project ids). To match multiple, give the parameter multiple times or give a list comma delimited. Will perform an exact match (case insensitive)",
             "name": "book",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "description": "return repos only with metadata of this type (e.g. rc, tc, ts, sb). \u003cempty\u003e or \"all\" for all. Default is rc",
+            "name": "metadataType",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "description": "return repos only with the version of metadata given. Does not apply if metadataType is \"all\"",
+            "name": "metadataVersion",
             "in": "query"
           },
           {
@@ -2897,6 +2933,18 @@
             "type": "string",
             "description": "book (project id) that exist in a resource. If the resource contains the the book, its repository will be included in the results. Multiple book's are ORed.",
             "name": "book",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "description": "return repos only with metadata of this type (e.g. rc, tc, ts, sb). \u003cempty\u003e or \"all\" for all. Default is rc",
+            "name": "metadataType",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "description": "return repos only with the version of metadata given. Does not apply if metadataType is \"all\"",
+            "name": "metadataVersion",
             "in": "query"
           },
           {
@@ -14503,6 +14551,10 @@
           "type": "string",
           "x-go-name": "BranchOrTag"
         },
+        "commit_sha": {
+          "type": "string",
+          "x-go-name": "CommitSHA"
+        },
         "contents_url": {
           "type": "string",
           "x-go-name": "ContentsURL"
@@ -14551,6 +14603,10 @@
           "type": "string",
           "x-go-name": "MetadataJSONURL"
         },
+        "metadata_type": {
+          "type": "string",
+          "x-go-name": "MetadataType"
+        },
         "metadata_url": {
           "type": "string",
           "x-go-name": "MetadataURL"
@@ -14566,6 +14622,13 @@
         "owner": {
           "type": "string",
           "x-go-name": "Owner"
+        },
+        "projects": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Door43MetadataProject"
+          },
+          "x-go-name": "Projects"
         },
         "release": {
           "$ref": "#/definitions/Release"
@@ -16220,6 +16283,29 @@
         "priors": {
           "type": "boolean",
           "x-go-name": "Priors"
+        }
+      },
+      "x-go-package": "code.gitea.io/gitea/modules/structs"
+    },
+    "Door43MetadataProject": {
+      "type": "object",
+      "properties": {
+        "alignment_count": {
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "AlignmentCount"
+        },
+        "identifier": {
+          "type": "string",
+          "x-go-name": "Identifier"
+        },
+        "path": {
+          "type": "string",
+          "x-go-name": "Path"
+        },
+        "title": {
+          "type": "string",
+          "x-go-name": "Title"
         }
       },
       "x-go-package": "code.gitea.io/gitea/modules/structs"
@@ -19251,12 +19337,18 @@
         },
         "checking_level": {
           "description": "checking level from the manifest",
-          "type": "string",
+          "type": "integer",
+          "format": "int64",
           "x-go-name": "CheckingLevel"
         },
         "clone_url": {
           "type": "string",
           "x-go-name": "CloneURL"
+        },
+        "content_format": {
+          "description": "content format",
+          "type": "string",
+          "x-go-name": "ContentFormat"
         },
         "created_at": {
           "type": "string",
@@ -19362,6 +19454,16 @@
           "type": "string",
           "x-go-name": "LanguagesURL"
         },
+        "metadata_type": {
+          "description": "language from the manifest",
+          "type": "string",
+          "x-go-name": "MetadataType"
+        },
+        "metadata_version": {
+          "description": "language from the manifest",
+          "type": "string",
+          "x-go-name": "MetadataVersion"
+        },
         "mirror": {
           "type": "boolean",
           "x-go-name": "Mirror"
@@ -19405,6 +19507,14 @@
         "private": {
           "type": "boolean",
           "x-go-name": "Private"
+        },
+        "projects": {
+          "description": "projects",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Door43MetadataProject"
+          },
+          "x-go-name": "Projects"
         },
         "release_counter": {
           "type": "integer",
