@@ -282,7 +282,6 @@ func ProcessDoor43MetadataForRepoRelease(ctx context.Context, repo *repo_model.R
 			}
 		} else {
 			branchOrTag = release.Target
-			releaseDateUnix = timeutil.TimeStamp(commit.Author.When.Unix())
 			commitID, err = gitRepo.GetBranchCommitID(branchOrTag)
 			if err != nil {
 				log.Error("GetBranchCommitID: %v\n", err)
@@ -294,6 +293,10 @@ func ProcessDoor43MetadataForRepoRelease(ctx context.Context, repo *repo_model.R
 	if err != nil {
 		log.Error("GetBranchCommit: %v\n", err)
 		return err
+	}
+
+	if release == nil || release.IsDraft {
+		releaseDateUnix = timeutil.TimeStamp(commit.Author.When.Unix())
 	}
 
 	var metadataType string
