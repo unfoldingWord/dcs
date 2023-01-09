@@ -129,7 +129,7 @@ func Search(ctx *context.APIContext) {
 	//   type: string
 	// - name: metadataType
 	//   in: query
-	//   description: return repos only with metadata of this type (e.g. rc, tc, ts, sb). <empty> or "all" for all. Default is rc
+	//   description: return repos only with metadata of this type (e.g. rc, tc, ts, sb)
 	//   type: string
 	// - name: metadataVersion
 	//   in: query
@@ -165,15 +165,6 @@ func Search(ctx *context.APIContext) {
 	//   "422":
 	//     "$ref": "#/responses/validationError"
 
-	metadataTypes := catalog.QueryStrings(ctx, "metadataType")
-	metadataVersions := catalog.QueryStrings(ctx, "metadataVersion")
-	if len(metadataTypes) == 1 && (metadataTypes[0] == "all" || metadataTypes[0] == "") {
-		metadataTypes = nil
-		metadataVersions = nil
-	} else if len(metadataTypes) == 0 {
-		metadataTypes = []string{"rc"}
-	}
-
 	opts := &repo_model.SearchRepoOptions{
 		ListOptions:        utils.GetListOptions(ctx),
 		Actor:              ctx.Doer,
@@ -195,8 +186,8 @@ func Search(ctx *context.APIContext) {
 		Resources:        catalog.QueryStrings(ctx, "resource"),
 		ContentFormats:   catalog.QueryStrings(ctx, "format"),
 		Books:            catalog.QueryStrings(ctx, "book"),
-		MetadataTypes:    metadataTypes,
-		MetadataVersions: metadataVersions,
+		MetadataTypes:    catalog.QueryStrings(ctx, "metadataType"),
+		MetadataVersions: catalog.QueryStrings(ctx, "metadataVersion"),
 		IncludeMetadata:  ctx.FormString("includeMetadata") == "" || ctx.FormBool("includeMetadata"),
 		/*** END DCS Customizations ***/
 	}
