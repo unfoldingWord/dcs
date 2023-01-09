@@ -100,24 +100,32 @@ func Search(ctx *context.APIContext) {
 	//   type: boolean
 	// - name: repo
 	//   in: query
-	//   description: name of the repo. Multiple repo's are ORed.
+	//   description: name of the repo. Multiple repos are ORed.
 	//   type: string
 	// - name: owner
 	//   in: query
-	//   description: owner of the repo. Multiple owner's are ORed.
+	//   description: owner of the repo. Multiple owners are ORed.
 	//   type: string
 	// - name: lang
 	//   in: query
-	//   description: If the repo is a resource of the given language(s), the repo will be in the results. Multiple lang's are ORed.
+	//   description: If the repo is a resource of the given language(s), the repo will be in the results. Multiple langs are ORed.
 	//   type: string
 	// - name: subject
 	//   in: query
-	//   description: resource subject. Multiple subject's are ORed.
+	//   description: resource subject. Multiple subjects are ORed.
+	//   type: string
+	// - name: resource
+	//   in: query
+	//   description: resource identifier. Multiple resources are ORed.
+	//   type: string
+	// - name: format
+	//   in: query
+	//   description: content format (usfm, text, markdown, etc.). Multiple formats are ORed.
 	//   type: string
 	// - name: book
 	//   in: query
 	//   description: book (project id) that exist in a resource. If the resource contains the
-	//                the book, its repository will be included in the results. Multiple book's are ORed.
+	//                the book, its repository will be included in the results. Multiple books are ORed.
 	//   type: string
 	// - name: metadataType
 	//   in: query
@@ -184,6 +192,8 @@ func Search(ctx *context.APIContext) {
 		Repos:            catalog.QueryStrings(ctx, "repo"),
 		Owners:           catalog.QueryStrings(ctx, "owner"),
 		Subjects:         catalog.QueryStrings(ctx, "subject"),
+		Resources:        catalog.QueryStrings(ctx, "resource"),
+		ContentFormats:   catalog.QueryStrings(ctx, "format"),
 		Books:            catalog.QueryStrings(ctx, "book"),
 		MetadataTypes:    metadataTypes,
 		MetadataVersions: metadataVersions,

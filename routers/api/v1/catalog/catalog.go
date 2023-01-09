@@ -87,6 +87,14 @@ func Search(ctx *context.APIContext) {
 	//   in: query
 	//   description: search only for entries with the given subject(s). To match multiple, give the parameter multiple times or give a list comma delimited. Will perform an exact match (case insensitive) unlesss partialMatch=true
 	//   type: string
+	// - name: resource
+	//   in: query
+	//   description: resource identifier. Multiple resources are ORed.
+	//   type: string
+	// - name: format
+	//   in: query
+	//   description: content format (usfm, text, markdown, etc.). Multiple formats are ORed.
+	//   type: string
 	// - name: checkingLevel
 	//   in: query
 	//   description: search only for entries with the given checking level(s). Can be 1, 2 or 3
@@ -187,6 +195,14 @@ func SearchOwner(ctx *context.APIContext) {
 	// - name: subject
 	//   in: query
 	//   description: search only for entries with the given subject(s). To match multiple, give the parameter multiple times or give a list comma delimited. Will perform an exact match (case insensitive) unlesss partialMatch=true
+	//   type: string
+	// - name: resource
+	//   in: query
+	//   description: resource identifier. Multiple resources are ORed.
+	//   type: string
+	// - name: format
+	//   in: query
+	//   description: content format (usfm, text, markdown, etc.). Multiple formats are ORed.
 	//   type: string
 	// - name: checkingLevel
 	//   in: query
@@ -297,6 +313,14 @@ func SearchRepo(ctx *context.APIContext) {
 	// - name: subject
 	//   in: query
 	//   description: search only for entries with the given subject(s). To match multiple, give the parameter multiple times or give a list comma delimited. Will perform an exact match (case insensitive) unlesss partialMatch=true
+	//   type: string
+	// - name: resource
+	//   in: query
+	//   description: resource identifier. Multiple resources are ORed.
+	//   type: string
+	// - name: format
+	//   in: query
+	//   description: content format (usfm, text, markdown, etc.). Multiple formats are ORed.
 	//   type: string
 	// - name: checkingLevel
 	//   in: query
@@ -524,6 +548,8 @@ func searchCatalog(ctx *context.APIContext) {
 		Stage:            stage,
 		Languages:        QueryStrings(ctx, "lang"),
 		Subjects:         QueryStrings(ctx, "subject"),
+		Resources:        QueryStrings(ctx, "resource"),
+		ContentFormats:   QueryStrings(ctx, "format"),
 		CheckingLevels:   QueryStrings(ctx, "checkingLevel"),
 		Books:            QueryStrings(ctx, "book"),
 		IncludeHistory:   ctx.FormBool("includeHistory"),

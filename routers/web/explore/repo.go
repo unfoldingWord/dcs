@@ -98,7 +98,7 @@ func RenderRepoSearch(ctx *context.Context, opts *RepoSearchOptions) {
 	ctx.Data["TopicOnly"] = topicOnly
 
 	/*** DCS Customizations ***/
-	var books, langs, keywords, subjects, repoNames, owners, metadataTypes, metadataVersions []string
+	var books, langs, keywords, subjects, resources, contentFormats, repoNames, owners, metadataTypes, metadataVersions []string
 	origKeyword := keyword
 	if keyword != "" {
 		for _, token := range door43metadata.SplitAtCommaNotInString(keyword, true) {
@@ -108,6 +108,10 @@ func RenderRepoSearch(ctx *context.Context, opts *RepoSearchOptions) {
 				langs = append(langs, strings.TrimPrefix(token, "lang:"))
 			} else if strings.HasPrefix(token, "subject:") {
 				subjects = append(subjects, strings.Trim(strings.TrimPrefix(token, "subject:"), `"`))
+			} else if strings.HasPrefix(token, "resource:") {
+				resources = append(resources, strings.Trim(strings.TrimPrefix(token, "resouce:"), `"`))
+			} else if strings.HasPrefix(token, "format:") {
+				contentFormats = append(contentFormats, strings.Trim(strings.TrimPrefix(token, "format:"), `"`))
 			} else if strings.HasPrefix(token, "repo:") {
 				repoNames = append(repoNames, strings.TrimPrefix(token, "repo:"))
 			} else if strings.HasPrefix(token, "owner:") {
@@ -145,6 +149,8 @@ func RenderRepoSearch(ctx *context.Context, opts *RepoSearchOptions) {
 		Books:              books,            // DCS Customizaitons
 		Languages:          langs,            // DCS Customizaitons
 		Subjects:           subjects,         // DCS Customizaitons
+		Resources: resources, // DCS Customizations
+		ContentFormats: contentFormats, // DCS Customizations
 		Repos:              repoNames,        // DCS Customizaitons
 		Owners:             owners,           // DCS Customizaitons
 		IncludeMetadata:    true,             // DCS Customizaitons
