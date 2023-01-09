@@ -519,8 +519,8 @@ func searchCatalog(ctx *context.APIContext) {
 	metadataTypes := QueryStrings(ctx, "metadataType")
 	metadataVersions := QueryStrings(ctx, "metadataVersion")
 	if len(metadataTypes) == 1 && (metadataTypes[0] == "all" || metadataTypes[0] == "") {
-		metadataTypes = nil
-		metadataVersions = nil
+		metadataTypes = []string{}
+		metadataVersions = []string{}
 	} else if len(metadataTypes) == 0 {
 		metadataTypes = []string{"rc"}
 	}
