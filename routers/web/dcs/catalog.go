@@ -57,10 +57,10 @@ func RenderCatalogSearch(ctx *context.Context, opts *CatalogSearchOptions) {
 		orderBy = door43metadata.CatalogOrderBySubjectReverse
 	case "subject":
 		orderBy = door43metadata.CatalogOrderBySubject
-	case "reverseridentifier":
-		orderBy = door43metadata.CatalogOrderByIdentifierReverse
-	case "identifier":
-		orderBy = door43metadata.CatalogOrderByIdentifier
+	case "reverserresource":
+		orderBy = door43metadata.CatalogOrderByResourceReverse
+	case "resource":
+		orderBy = door43metadata.CatalogOrderByResource
 	case "reverserepo":
 		orderBy = door43metadata.CatalogOrderByRepoNameReverse
 	case "repo":
@@ -90,7 +90,7 @@ func RenderCatalogSearch(ctx *context.Context, opts *CatalogSearchOptions) {
 		orderBy = door43metadata.CatalogOrderByNewest
 	}
 
-	var keywords, books, langs, subjects, repos, owners, tags, checkingLevels []string
+	var keywords, books, langs, subjects, repos, owners, tags, checkingLevels, metadataTypes, metadataVersions []string
 	stage := door43metadata.StageProd
 	query := strings.Trim(ctx.FormString("q"), " ")
 	if query != "" {
@@ -109,6 +109,10 @@ func RenderCatalogSearch(ctx *context.Context, opts *CatalogSearchOptions) {
 				tags = append(tags, strings.TrimPrefix(token, "tag:"))
 			} else if strings.HasPrefix(token, "checkinglevel:") {
 				checkingLevels = append(checkingLevels, strings.TrimPrefix(token, "checkinglevel:"))
+			} else if strings.HasPrefix(token, "metadata_type:") {
+				metadataTypes = append(metadataTypes, strings.TrimPrefix(token, "metadata_type:"))
+			} else if strings.HasPrefix(token, "metadata_version:") {
+				metadataVersions = append(metadataVersions, strings.TrimPrefix(token, "metadata_version:"))
 			} else if strings.HasPrefix(token, "stage:") {
 				if s, ok := door43metadata.StageMap[strings.Trim(strings.TrimPrefix(token, "stage:"), `"`)]; ok {
 					stage = s
@@ -126,18 +130,20 @@ func RenderCatalogSearch(ctx *context.Context, opts *CatalogSearchOptions) {
 			Page:     page,
 			PageSize: opts.PageSize,
 		},
-		OrderBy:         []door43metadata.CatalogOrderBy{orderBy},
-		Keywords:        keywords,
-		IncludeMetadata: true,
-		Stage:           stage,
-		IncludeHistory:  false,
-		Books:           books,
-		Subjects:        subjects,
-		Languages:       langs,
-		Repos:           repos,
-		Owners:          owners,
-		Tags:            tags,
-		CheckingLevels:  checkingLevels,
+		OrderBy:          []door43metadata.CatalogOrderBy{orderBy},
+		Keywords:         keywords,
+		IncludeMetadata:  true,
+		Stage:            stage,
+		IncludeHistory:   false,
+		Books:            books,
+		Subjects:         subjects,
+		Languages:        langs,
+		Repos:            repos,
+		Owners:           owners,
+		MetadataTypes:    metadataTypes,
+		MetadataVersions: metadataVersions,
+		Tags:             tags,
+		CheckingLevels:   checkingLevels,
 	})
 	if err != nil {
 		ctx.ServerError("SearchCatalog", err)

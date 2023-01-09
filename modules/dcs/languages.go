@@ -83,3 +83,10 @@ func LanguageIsGL(lang string) bool {
 	}
 	return false
 }
+
+// LanguageIsValid returns true if string is a valid language
+func LanguageIsValid(lang string) bool {
+	ln := GetLangNames()
+	_, ok := ln[lang]
+	return ok
+}

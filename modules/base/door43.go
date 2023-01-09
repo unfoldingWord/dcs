@@ -231,8 +231,8 @@ func GetRC020Schema() ([]byte, error) {
 	return rc02Schema, nil
 }
 
-// ReadYAMLFromBlob reads a yaml file from a blob and unmarshals it
-func ReadYAMLFromBlob(blob *git.Blob) (*map[string]interface{}, error) {
+// ReadFileFromBlob reads a file from a blob and returns the content
+func ReadFileFromBlob(blob *git.Blob) ([]byte, error) {
 	dataRc, err := blob.DataAsync()
 	if err != nil {
 		log.Warn("DataAsync Error: %v\n", err)
@@ -250,10 +250,82 @@ func ReadYAMLFromBlob(blob *git.Blob) (*map[string]interface{}, error) {
 		log.Error("io.ReadAll: %v", err)
 		return nil, err
 	}
+	return buf, nil
+}
+
+// ReadYAMLFromBlob reads a yaml file from a blob and unmarshals it
+func ReadYAMLFromBlob(blob *git.Blob) (*map[string]interface{}, error) {
+	buf, err := ReadFileFromBlob(blob)
+	if err != nil {
+		return nil, err
+	}
 
 	var result *map[string]interface{}
 	if err := yaml.Unmarshal(buf, &result); err != nil {
 		log.Error("yaml.Unmarshal: %v", err)
+		return nil, err
+	}
+	if result != nil {
+		for k, v := range *result {
+			if val, err := ToStringKeys(v); err != nil {
+				log.Error("ToStringKeys: %v", err)
+			} else {
+				(*result)[k] = val
+			}
+		}
+	}
+	return result, nil
+}
+
+type TcTsManifest struct {
+	TcVersion      *int    `json:"tc_version"`
+	TsVersion      *int    `json:"package_version"`
+	Format         *string `json:"format"`
+	TargetLanguage *struct {
+		ID        *string `json:"id"`
+		Name      *string `json:"name"`
+		Direction *string `json:"direction"`
+	} `json:"target_language"`
+	Type *struct {
+		ID   *string `json:"id"`
+		Name *string `json:"name"`
+	} `json:"type"`
+	Resource *struct {
+		ID   *string `json:"id"`
+		Name *string `json:"name"`
+	} `json:"resource"`
+	Project *struct {
+		ID   *string `json:"id"`
+		Name *string `json:"name"`
+	}
+}
+
+func ReadTcTsManifestFromBlob(blob *git.Blob) (*TcTsManifest, error) {
+	buf, err := ReadFileFromBlob(blob)
+	if err != nil {
+		return nil, err
+	}
+	t := &TcTsManifest{}
+	err = json.Unmarshal(buf, t)
+	if err != nil {
+		return nil, err
+	}
+	if t.TargetLanguage == nil || t.Resource == nil || t.Type == nil || t.Project == nil || (t.TcVersion == nil && t.TsVersion == nil) || (*t.TcVersion < 7 && *t.TsVersion < 6) {
+		return nil, fmt.Errorf("invalid manifest.json file")
+	}
+	return t, nil
+}
+
+// ReadJSONFromBlob reads a json file from a blob and unmarshals it
+func ReadJSONFromBlob(blob *git.Blob) (*map[string]interface{}, error) {
+	buf, err := ReadFileFromBlob(blob)
+	if err != nil {
+		return nil, err
+	}
+
+	var result *map[string]interface{}
+	if err := json.Unmarshal(buf, &result); err != nil {
+		log.Error("json.Unmarshal: %v", err)
 		return nil, err
 	}
 	if result != nil {

@@ -4,37 +4,49 @@
 
 package structs
 
-import "time"
+import (
+	"time"
+)
+
+type Door43MetadataProject struct {
+	Identifier     string `json:"identifier"`
+	Title          string `json:"title"`
+	Path           string `json:"path"`
+	AlignmentCount int    `json:"alignment_count"`
+}
 
 // CatalogEntry represents a repository's metadata of a tag or default branch as an entry of the catalog
 type CatalogEntry struct {
-	ID                     int64            `json:"id"`
-	Self                   string           `json:"url"`
-	Name                   string           `json:"name"`
-	Owner                  string           `json:"owner"`
-	FullName               string           `json:"full_name"`
-	Repo                   *Repository      `json:"repo"`
-	Release                *Release         `json:"release"`
-	TarballURL             string           `json:"tarbar_url"`
-	ZipballURL             string           `json:"zipball_url"`
-	GitTreesURL            string           `json:"git_trees_url"`
-	ContentsURL            string           `json:"contents_url"`
-	Language               string           `json:"language"`
-	LanguageTitle          string           `json:"language_title"`
-	LanguageDir            string           `json:"language_direction"`
-	LanguageIsGL           bool             `json:"language_is_gl"`
-	Subject                string           `json:"subject"`
-	Title                  string           `json:"title"`
-	BranchOrTag            string           `json:"branch_or_tag_name"`
-	Stage                  string           `json:"stage"`
-	MetadataURL            string           `json:"metadata_url"`
-	MetadataJSONURL        string           `json:"metadata_json_url"`
-	MetadataAPIContentsURL string           `json:"metadata_api_contents_url"`
-	MetadataVersion        string           `json:"metadata_version"`
-	Released               time.Time        `json:"released"`
-	Books                  []string         `json:"books,omitempty"`
-	AlignmentCounts        map[string]int64 `json:"alignment_counts,omitempty"`
-	Ingredients            []*Ingredient    `json:"ingredients,omitempty"`
+	ID                     int64                    `json:"id"`
+	Self                   string                   `json:"url"`
+	Name                   string                   `json:"name"`
+	Owner                  string                   `json:"owner"`
+	FullName               string                   `json:"full_name"`
+	Repo                   *Repository              `json:"repo"`
+	Release                *Release                 `json:"release"`
+	TarballURL             string                   `json:"tarbar_url"`
+	ZipballURL             string                   `json:"zipball_url"`
+	GitTreesURL            string                   `json:"git_trees_url"`
+	ContentsURL            string                   `json:"contents_url"`
+	Language               string                   `json:"language"`
+	LanguageTitle          string                   `json:"language_title"`
+	LanguageDir            string                   `json:"language_direction"`
+	LanguageIsGL           bool                     `json:"language_is_gl"`
+	Subject                string                   `json:"subject"`
+	Title                  string                   `json:"title"`
+	BranchOrTag            string                   `json:"branch_or_tag_name"`
+	CommitSHA              string                   `json:"commit_sha"`
+	Stage                  string                   `json:"stage"`
+	MetadataURL            string                   `json:"metadata_url"`
+	MetadataJSONURL        string                   `json:"metadata_json_url"`
+	MetadataAPIContentsURL string                   `json:"metadata_api_contents_url"`
+	MetadataVersion        string                   `json:"metadata_version"`
+	MetadataType           string                   `json:"metadata_type"`
+	Released               time.Time                `json:"released"`
+	Books                  []string                 `json:"books,omitempty"`
+	AlignmentCounts        map[string]int64         `json:"alignment_counts,omitempty"`
+	Projects               []*Door43MetadataProject `json:"projects"`
+	Ingredients            []*Ingredient            `json:"ingredients,omitempty"`
 }
 
 // Ingredient is a single project of a resource

@@ -170,6 +170,9 @@ type SearchRepoOptions struct {
 	Subjects   []string // DCS Customizations
 	Books      []string // DCS Customizations
 	Languages  []string // DCS Customizations
+	// query metadata type and version
+	MetadataTypes    []string // DCS Customizations
+	MetadataVersions []string // DCS Customizations
 	// include all metadata in keyword search
 	IncludeMetadata bool // DCS Customizations
 	// When specified true, apply some filters over the conditions:
@@ -511,7 +514,9 @@ func SearchRepositoryCondition(opts *SearchRepoOptions) builder.Cond {
 		door43metadata.GetOwnerCond(opts.Owners, false),
 		door43metadata.GetSubjectCond(opts.Subjects, false),
 		door43metadata.GetBookCond(opts.Books),
-		door43metadata.GetLanguageCond(opts.Languages, true))
+		door43metadata.GetLanguageCond(opts.Languages, true),
+		door43metadata.GetMetadataTypeCond(opts.MetadataTypes, false),
+		door43metadata.GetMetadataVersionCond(opts.MetadataVersions, false))
 	/*** EMD DCS Customizations ***/
 
 	if opts.OnlyShowRelevant {

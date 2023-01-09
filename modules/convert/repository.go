@@ -5,7 +5,6 @@
 package convert
 
 import (
-	"fmt"
 	"time"
 
 	"code.gitea.io/gitea/models"
@@ -14,7 +13,6 @@ import (
 	repo_model "code.gitea.io/gitea/models/repo"
 	unit_model "code.gitea.io/gitea/models/unit"
 	"code.gitea.io/gitea/modules/dcs"
-	"code.gitea.io/gitea/modules/json"
 	"code.gitea.io/gitea/modules/log"
 	api "code.gitea.io/gitea/modules/structs"
 )
@@ -111,7 +109,7 @@ func innerToRepo(repo *repo_model.Repository, mode perm.AccessMode, isParent boo
 	/*** DCS Customizations ***/
 
 	// TODO: Load in Repository's LoadAttributes() function and save to repo.Metadata
-	metadata, err := repo_model.GetDoor43MetadataByRepoIDAndReleaseID(repo.ID, 0)
+	dm, err := repo_model.GetDoor43MetadataByRepoIDAndReleaseID(repo.ID, 0)
 	if err != nil && !repo_model.IsErrDoor43MetadataNotExist(err) {
 		log.Error("GetDoor43MetadataByRepoIDAndReleaseID: %v", err)
 	}
@@ -122,52 +120,27 @@ func innerToRepo(repo *repo_model.Repository, mode perm.AccessMode, isParent boo
 	// 	}
 	// }
 
-	var language, languageTitle, languageDir, title, subject, checkingLevel string
+	var language, languageTitle, languageDir, title, subject string
+	var checkingLevel int
 	var languageIsGL bool
 	var books []string
-	var alignmentCounts map[string]int64
-	if metadata != nil {
-		title = (*metadata.Metadata)["dublin_core"].(map[string]interface{})["title"].(string)
-		subject = (*metadata.Metadata)["dublin_core"].(map[string]interface{})["subject"].(string)
-
-		if val, ok := (*metadata.Metadata)["dublin_core"].(map[string]interface{})["language"].(map[string]interface{})["identifier"].(string); ok {
-			language = val
-		}
-
-		if val, ok := (*metadata.Metadata)["dublin_core"].(map[string]interface{})["language"].(map[string]interface{})["direction"].(string); ok {
-			languageDir = val
-		} else if language != "" {
+	var alignmentCounts map[string]int
+	if dm != nil {
+		title = dm.Title
+		subject = dm.Subject
+		language = dm.Language
+		languageDir = dm.LanguageDirection
+		if languageDir == "" && language != "" {
 			languageDir = dcs.GetLanguageDirection(language)
 		}
-
-		if val, ok := (*metadata.Metadata)["dublin_core"].(map[string]interface{})["language"].(map[string]interface{})["title"].(string); ok {
-			languageTitle = val
-		} else if language != "" {
+		languageTitle = dm.LanguageTitle
+		if languageTitle == "" && language != "" {
 			languageTitle = dcs.GetLanguageTitle(language)
 		}
-
-		if val, ok := (*metadata.Metadata)["dublin_core"].(map[string]interface{})["language"].(map[string]interface{})["is_gl"].(bool); ok {
-			languageIsGL = val
-		} else {
-			languageIsGL = dcs.LanguageIsGL(language)
-		}
-
-		if val, ok := (*metadata.Metadata)["books"].([]string); ok {
-			books = val
-		} else {
-			books = metadata.GetBooks()
-		}
-
-		if val, ok := (*metadata.Metadata)["alignment_counts"]; ok {
-			// Marshal/Unmarshal to let Unmarshaliing convert interface{} to map[string]int64
-			if byteData, err := json.Marshal(val); err == nil {
-				if err := json.Unmarshal(byteData, &alignmentCounts); err != nil {
-					log.Error("Unable to Unmarshal alignment_counts: %v\n", val)
-				}
-			}
-		}
-
-		checkingLevel = fmt.Sprintf("%v", (*metadata.Metadata)["checking"].(map[string]interface{})["checking_level"])
+		languageIsGL = dm.LanguageIsGL
+		books = dm.GetBooks()
+		alignmentCounts = dm.GetAlignmentCounts()
+		checkingLevel = dm.CheckingLevel
 	} else {
 		subject = dcs.GetSubjectFromRepoName(repo.LowerName)
 		language = dcs.GetLanguageFromRepoName(repo.LowerName)
@@ -203,10 +176,10 @@ func innerToRepo(repo *repo_model.Repository, mode perm.AccessMode, isParent boo
 	}
 
 	/*** DCS Customizations - Commented out for Resource Language instead of programming language ***/
-	// var language string
-	// if repo.PrimaryLanguage != nil {
-	// 	language = repo.PrimaryLanguage.Language
-	// }
+	var contentFormat string
+	if repo.PrimaryLanguage != nil {
+		contentFormat = repo.PrimaryLanguage.Language
+	}
 	/*** END DCS Customizaitons ***/
 
 	repoAPIURL := repo.APIURL()
@@ -269,6 +242,7 @@ func innerToRepo(repo *repo_model.Repository, mode perm.AccessMode, isParent boo
 		Subject:                       subject,         // DCS Customization
 		Books:                         books,           // DCS Customization
 		AlignmentCounts:               alignmentCounts, // DCS Customization
+		ContentFormat:                 contentFormat,   // DCS Customization
 		CheckingLevel:                 checkingLevel,   // DCS Customization
 	}
 }
