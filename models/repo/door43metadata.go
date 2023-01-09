@@ -47,7 +47,7 @@ type Door43Metadata struct {
 	ReleaseID         int64                            `xorm:"INDEX UNIQUE(n)"`
 	Release           *Release                         `xorm:"-"`
 	BranchOrTag       string                           `xorm:"NOT NULL"`
-	CommitSHA         string                           `xorm:"VARCHAR(40)"`
+	CommitID          string                           `xorm:"VARCHAR(40)"`
 	Stage             door43metadata.Stage             `xorm:"NOT NULL"`
 	MetadataType      string                           `xorm:"NOT NULL"`
 	MetadataVersion   string                           `xorm:"NOT NULL"`
@@ -157,8 +157,8 @@ func (dm *Door43Metadata) HTMLURL() string {
 
 // GetRef gets the ref of the DM that should be used to retrieve files and other URLs
 func (dm *Door43Metadata) GetRef() string {
-	if dm.ReleaseID == 0 && len(dm.CommitSHA) >= 10 {
-		return dm.CommitSHA[:10]
+	if dm.ReleaseID == 0 && len(dm.CommitID) >= 10 {
+		return dm.CommitID[:10]
 	}
 	return dm.BranchOrTag // will be the tag
 }
@@ -230,7 +230,7 @@ func (dm *Door43Metadata) GetAlignmentCounts() map[string]int {
 	counts := map[string]int{}
 	if len(dm.Projects) > 0 {
 		for _, prod := range dm.Projects {
-			counts[prod.Identifier] = prod.AlignmentCount
+			counts[prod.Identifier] = *prod.AlignmentCount
 		}
 	}
 	return counts

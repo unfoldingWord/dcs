@@ -303,8 +303,8 @@ func Profile(ctx *context.Context) {
 			Books:              books,            // DCS Customizations
 			Languages:          langs,            // DCS Customizations
 			Subjects:           subjects,         // DCS Customizations
-			Resources:           resources,         // DCS Customizations
-			ContentFormats:           contentFormats,         // DCS Customizations
+			Resources:          resources,        // DCS Customizations
+			ContentFormats:     contentFormats,   // DCS Customizations
 			Repos:              repoNames,        // DCS Customizations
 			Owners:             owners,           // DCS Customizations
 			MetadataTypes:      metadataTypes,    // DCS Customizations

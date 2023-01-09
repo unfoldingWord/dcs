@@ -164,14 +164,14 @@ type SearchRepoOptions struct {
 	// False -> include just has no milestone
 	HasMilestones util.OptionalBool
 	// LowerNames represents valid lower names to restrict to
-	LowerNames []string
-	Owners     []string // DCS Customizations
-	Repos      []string // DCS Customizations
-	Subjects   []string // DCS Customizations
-	Resources  []string // DCS Customizations
+	LowerNames     []string
+	Owners         []string // DCS Customizations
+	Repos          []string // DCS Customizations
+	Subjects       []string // DCS Customizations
+	Resources      []string // DCS Customizations
 	ContentFormats []string // DCS Customization
-	Books      []string // DCS Customizations
-	Languages  []string // DCS Customizations
+	Books          []string // DCS Customizations
+	Languages      []string // DCS Customizations
 	// query metadata type and version
 	MetadataTypes    []string // DCS Customizations
 	MetadataVersions []string // DCS Customizations

@@ -107,7 +107,7 @@ func ToCatalogEntry(dm *repo.Door43Metadata, mode perm.AccessMode) *api.CatalogE
 		GitTreesURL:            dm.GetGitTreesURL(),
 		ContentsURL:            dm.GetContentsURL(),
 		BranchOrTag:            dm.BranchOrTag,
-		CommitSHA:              dm.CommitSHA,
+		CommitID:               dm.CommitID,
 		Language:               language,
 		LanguageTitle:          languageTitle,
 		LanguageDir:            languageDir,

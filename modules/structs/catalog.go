@@ -12,7 +12,7 @@ type Door43MetadataProject struct {
 	Identifier     string `json:"identifier"`
 	Title          string `json:"title"`
 	Path           string `json:"path"`
-	AlignmentCount int    `json:"alignment_count"`
+	AlignmentCount *int   `json:"alignment_count"`
 }
 
 // CatalogEntry represents a repository's metadata of a tag or default branch as an entry of the catalog
@@ -35,7 +35,7 @@ type CatalogEntry struct {
 	Subject                string                   `json:"subject"`
 	Title                  string                   `json:"title"`
 	BranchOrTag            string                   `json:"branch_or_tag_name"`
-	CommitSHA              string                   `json:"commit_sha"`
+	CommitID               string                   `json:"commit_id"`
 	Stage                  string                   `json:"stage"`
 	MetadataURL            string                   `json:"metadata_url"`
 	MetadataJSONURL        string                   `json:"metadata_json_url"`
