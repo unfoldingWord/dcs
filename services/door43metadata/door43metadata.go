@@ -347,6 +347,7 @@ func ProcessDoor43MetadataForRepoRelease(ctx context.Context, repo *repo_model.R
 		}
 		subject = (*manifest)["dublin_core"].(map[string]interface{})["subject"].(string)
 		resource = (*manifest)["dublin_core"].(map[string]interface{})["identifier"].(string)
+		title = (*manifest)["dublin_core"].(map[string]interface{})["title"].(string)
 		language = (*manifest)["dublin_core"].(map[string]interface{})["language"].(map[string]interface{})["identifier"].(string)
 		languageTitle = (*manifest)["dublin_core"].(map[string]interface{})["language"].(map[string]interface{})["title"].(string)
 		languageDirection = dcs.GetLanguageDirection(language)
@@ -374,9 +375,9 @@ func ProcessDoor43MetadataForRepoRelease(ctx context.Context, repo *repo_model.R
 				contentFormat = "tsv9"
 			}
 		} else if repo.PrimaryLanguage != nil {
-			contentFormat = repo.PrimaryLanguage.Language
+			contentFormat = strings.ToLower(repo.PrimaryLanguage.Language)
 		} else {
-			contentFormat = "text"
+			contentFormat = "markdown"
 		}
 		var ok bool
 		checkingLevel, ok = (*manifest)["checking"].(map[string]interface{})["checking_level"].(int)
