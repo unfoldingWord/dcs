@@ -433,7 +433,6 @@ func ProcessDoor43MetadataForRepoRelease(ctx context.Context, repo *repo_model.R
 			} else {
 				subject = "TS Bible"
 			}
-			contentFormat = *tcTsManifest.Format
 			projects = []*structs.Door43MetadataProject{{
 				Identifier: *tcTsManifest.Project.ID,
 				Title:      *tcTsManifest.Project.Name,
