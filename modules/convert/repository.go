@@ -120,7 +120,7 @@ func innerToRepo(repo *repo_model.Repository, mode perm.AccessMode, isParent boo
 	// 	}
 	// }
 
-	var language, languageTitle, languageDir, title, subject string
+	var language, languageTitle, languageDir, title, subject, contentFormat string
 	var checkingLevel int
 	var languageIsGL bool
 	var books []string
@@ -141,12 +141,16 @@ func innerToRepo(repo *repo_model.Repository, mode perm.AccessMode, isParent boo
 		books = dm.GetBooks()
 		alignmentCounts = dm.GetAlignmentCounts()
 		checkingLevel = dm.CheckingLevel
+		contentFormat = dm.ContentFormat
 	} else {
 		subject = dcs.GetSubjectFromRepoName(repo.LowerName)
 		language = dcs.GetLanguageFromRepoName(repo.LowerName)
 		languageTitle = dcs.GetLanguageTitle(language)
 		languageDir = dcs.GetLanguageDirection(language)
 		languageIsGL = dcs.LanguageIsGL(language)
+		if repo.PrimaryLanguage != nil {
+			contentFormat = repo.PrimaryLanguage.Language
+		}
 	}
 	/*** END DCS Customizations ***/
 
@@ -174,13 +178,6 @@ func innerToRepo(repo *repo_model.Repository, mode perm.AccessMode, isParent boo
 			}
 		}
 	}
-
-	/*** DCS Customizations - Commented out for Resource Language instead of programming language ***/
-	var contentFormat string
-	if repo.PrimaryLanguage != nil {
-		contentFormat = repo.PrimaryLanguage.Language
-	}
-	/*** END DCS Customizaitons ***/
 
 	repoAPIURL := repo.APIURL()
 

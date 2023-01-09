@@ -180,14 +180,14 @@ func Search(ctx *context.APIContext) {
 		StarredByID:        ctx.FormInt64("starredBy"),
 		IncludeDescription: ctx.FormBool("includeDesc"),
 		/*** DCS Customizations ***/
-		Languages:       catalog.QueryStrings(ctx, "lang"),
-		Repos:           catalog.QueryStrings(ctx, "repo"),
-		Owners:          catalog.QueryStrings(ctx, "owner"),
-		Subjects:        catalog.QueryStrings(ctx, "subject"),
-		Books:           catalog.QueryStrings(ctx, "book"),
-		MetadataTypes:   metadataTypes,
+		Languages:        catalog.QueryStrings(ctx, "lang"),
+		Repos:            catalog.QueryStrings(ctx, "repo"),
+		Owners:           catalog.QueryStrings(ctx, "owner"),
+		Subjects:         catalog.QueryStrings(ctx, "subject"),
+		Books:            catalog.QueryStrings(ctx, "book"),
+		MetadataTypes:    metadataTypes,
 		MetadataVersions: metadataVersions,
-		IncludeMetadata: ctx.FormString("includeMetadata") == "" || ctx.FormBool("includeMetadata"),
+		IncludeMetadata:  ctx.FormString("includeMetadata") == "" || ctx.FormBool("includeMetadata"),
 		/*** END DCS Customizations ***/
 	}
 
