@@ -90,7 +90,7 @@ func RenderCatalogSearch(ctx *context.Context, opts *CatalogSearchOptions) {
 		orderBy = door43metadata.CatalogOrderByNewest
 	}
 
-	var keywords, books, langs, subjects, repos, owners, tags, checkingLevels, metadataTypes, metadataVersions []string
+	var keywords, books, langs, subjects, resources, contentFormats, repos, owners, tags, checkingLevels, metadataTypes, metadataVersions []string
 	stage := door43metadata.StageProd
 	query := strings.Trim(ctx.FormString("q"), " ")
 	if query != "" {
@@ -101,6 +101,10 @@ func RenderCatalogSearch(ctx *context.Context, opts *CatalogSearchOptions) {
 				langs = append(langs, strings.TrimPrefix(token, "lang:"))
 			} else if strings.HasPrefix(token, "subject:") {
 				subjects = append(subjects, strings.Trim(strings.TrimPrefix(token, "subject:"), `"`))
+			} else if strings.HasPrefix(token, "resource:") {
+				resources = append(resources, strings.Trim(strings.TrimPrefix(token, "resource:"), `"`))
+			} else if strings.HasPrefix(token, "format:") {
+				contentFormats = append(contentFormats, strings.Trim(strings.TrimPrefix(token, "format:"), `"`))
 			} else if strings.HasPrefix(token, "repo:") {
 				repos = append(repos, strings.TrimPrefix(token, "repo:"))
 			} else if strings.HasPrefix(token, "owner:") {
@@ -137,6 +141,8 @@ func RenderCatalogSearch(ctx *context.Context, opts *CatalogSearchOptions) {
 		IncludeHistory:   false,
 		Books:            books,
 		Subjects:         subjects,
+		Resources: resources,
+		ContentFormats: contentFormats,
 		Languages:        langs,
 		Repos:            repos,
 		Owners:           owners,

@@ -754,6 +754,18 @@
           },
           {
             "type": "string",
+            "description": "resource identifier. Multiple resources are ORed.",
+            "name": "resource",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "description": "content format (usfm, text, markdown, etc.). Multiple formats are ORed.",
+            "name": "format",
+            "in": "query"
+          },
+          {
+            "type": "string",
             "description": "search only for entries with the given checking level(s). Can be 1, 2 or 3",
             "name": "checkingLevel",
             "in": "query"
@@ -887,6 +899,18 @@
             "type": "string",
             "description": "search only for entries with the given subject(s). To match multiple, give the parameter multiple times or give a list comma delimited. Will perform an exact match (case insensitive) unlesss partialMatch=true",
             "name": "subject",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "description": "resource identifier. Multiple resources are ORed.",
+            "name": "resource",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "description": "content format (usfm, text, markdown, etc.). Multiple formats are ORed.",
+            "name": "format",
             "in": "query"
           },
           {
@@ -1037,6 +1061,18 @@
             "type": "string",
             "description": "search only for entries with the given subject(s). To match multiple, give the parameter multiple times or give a list comma delimited. Will perform an exact match (case insensitive) unlesss partialMatch=true",
             "name": "subject",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "description": "resource identifier. Multiple resources are ORed.",
+            "name": "resource",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "description": "content format (usfm, text, markdown, etc.). Multiple formats are ORed.",
+            "name": "format",
             "in": "query"
           },
           {
@@ -2907,31 +2943,43 @@
           },
           {
             "type": "string",
-            "description": "name of the repo. Multiple repo's are ORed.",
+            "description": "name of the repo. Multiple repos are ORed.",
             "name": "repo",
             "in": "query"
           },
           {
             "type": "string",
-            "description": "owner of the repo. Multiple owner's are ORed.",
+            "description": "owner of the repo. Multiple owners are ORed.",
             "name": "owner",
             "in": "query"
           },
           {
             "type": "string",
-            "description": "If the repo is a resource of the given language(s), the repo will be in the results. Multiple lang's are ORed.",
+            "description": "If the repo is a resource of the given language(s), the repo will be in the results. Multiple langs are ORed.",
             "name": "lang",
             "in": "query"
           },
           {
             "type": "string",
-            "description": "resource subject. Multiple subject's are ORed.",
+            "description": "resource subject. Multiple subjects are ORed.",
             "name": "subject",
             "in": "query"
           },
           {
             "type": "string",
-            "description": "book (project id) that exist in a resource. If the resource contains the the book, its repository will be included in the results. Multiple book's are ORed.",
+            "description": "resource identifier. Multiple resources are ORed.",
+            "name": "resource",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "description": "content format (usfm, text, markdown, etc.). Multiple formats are ORed.",
+            "name": "format",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "description": "book (project id) that exist in a resource. If the resource contains the the book, its repository will be included in the results. Multiple books are ORed.",
             "name": "book",
             "in": "query"
           },

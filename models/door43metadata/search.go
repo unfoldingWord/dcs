@@ -56,6 +56,8 @@ type SearchCatalogOptions struct {
 	Tags             []string
 	Stage            Stage
 	Subjects         []string
+	Resources        []string
+	ContentFormats   []string
 	CheckingLevels   []string
 	Books            []string
 	IncludeHistory   bool
@@ -113,6 +115,8 @@ func SearchCatalogCondition(opts *SearchCatalogOptions) builder.Cond {
 
 	cond := builder.NewCond().And(
 		GetSubjectCond(opts.Subjects, opts.PartialMatch),
+		GetResourceCond(opts.Resources),
+		GetContentFormatCond(opts.ContentFormats, opts.PartialMatch),
 		GetBookCond(opts.Books),
 		GetLanguageCond(opts.Languages, opts.PartialMatch),
 		GetCheckingLevelCond(opts.CheckingLevels),
@@ -187,6 +191,28 @@ func GetSubjectCond(subjects []string, partialMatch bool) builder.Cond {
 		}
 	}
 	return subjectCond
+}
+
+// GetResourceCond gets the metdata type condition
+func GetResourceCond(resources []string) builder.Cond {
+	resourceCond := builder.NewCond()
+	for _, t := range resources {
+		resourceCond = resourceCond.Or(builder.Eq{"LOWER(`door43_metadata`.resource)": strings.ToLower(t)})
+	}
+	return resourceCond
+}
+
+// GetContentFormatCond gets the metdata type condition
+func GetContentFormatCond(formats []string, partialMatch bool) builder.Cond {
+	formatCond := builder.NewCond()
+	for _, t := range formats {
+		if partialMatch {
+			formatCond = formatCond.Or(builder.Like{"LOWER(`door43_metadata`.content_format)", strings.ToLower(t)})
+		} else {
+			formatCond = formatCond.Or(builder.Eq{"LOWER(`door43_metadata`.content_format)": strings.ToLower(t)})
+		}
+	}
+	return formatCond
 }
 
 // GetMetadataTypeCond gets the metdata type condition

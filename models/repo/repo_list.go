@@ -168,6 +168,8 @@ type SearchRepoOptions struct {
 	Owners     []string // DCS Customizations
 	Repos      []string // DCS Customizations
 	Subjects   []string // DCS Customizations
+	Resources  []string // DCS Customizations
+	ContentFormats []string // DCS Customization
 	Books      []string // DCS Customizations
 	Languages  []string // DCS Customizations
 	// query metadata type and version
@@ -513,6 +515,8 @@ func SearchRepositoryCondition(opts *SearchRepoOptions) builder.Cond {
 	cond = cond.And(door43metadata.GetRepoCond(opts.Repos, false),
 		door43metadata.GetOwnerCond(opts.Owners, false),
 		door43metadata.GetSubjectCond(opts.Subjects, false),
+		door43metadata.GetResourceCond(opts.Resources),
+		door43metadata.GetContentFormatCond(opts.ContentFormats, true),
 		door43metadata.GetBookCond(opts.Books),
 		door43metadata.GetLanguageCond(opts.Languages, true),
 		door43metadata.GetMetadataTypeCond(opts.MetadataTypes, false),
