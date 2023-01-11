@@ -110,42 +110,40 @@
 	}
 
 	function readCookie(name) {
-		const nameEQ = name + "=";
+		const nameEQ = `${name}=`;
 		const ca = document.cookie.split(';');
 		for (let i = 0; i < ca.length; i++) {
-			const c = ca[i];
-			while (c.charAt(0) == ' ') c = c.substring(1, c.length);
-			if (c.indexOf(nameEQ) == 0) return c.substring(nameEQ.length, c.length);
+			let c= ca[i];
+			while (c.charAt(0) === ' ')
+				c = c.substring(1, c.length);
+			if (c.indexOf(nameEQ) === 0)
+				return c.substring(nameEQ.length, c.length);
 		}
 		return null;
 	}
-
-	function eraseCookie(name) {
-		createCookie(name, "", -1);
-	}
-
-	const bar = document.getElementById("static-bar");
-	const warning = document.querySelector(".warning-alert");
-	const closeBtn = warning.querySelector(".alert-flag");
-        let cookieSet = false;
+	
+	const bar = document.getElementById('static-bar');
+	const warning = document.querySelector('.warning-alert');
+	const closeBtn = warning.querySelector('.alert-flag');
+	let cookieSet = false;
 	if (readCookie('hide-warning')) {
 		cookieSet = true;
-		warning.style.display = "none";
-		bar.style.display = "block";
+		warning.style.display = 'none';
+		bar.style.display = 'block';
 	} else {
-		bar.style.display = "none";
+		bar.style.display = 'none';
 	}
-	closeBtn.addEventListener("change", () => {
-		warning.style.display = "none";
-		bar.style.display = "block";
-		if (! cookieSet) {
+	closeBtn.addEventListener('change', () => {
+		warning.style.display = 'none';
+		bar.style.display = 'block';
+		if (!cookieSet) {
 			createCookie('hide-warning', true, 7 - (new Date().getDay())); // Days until Sunday
 		}
 	});
-	bar.onclick = function() {
-		warning.style.display = "block";
-		bar.style.display = "none";
-	}
+	bar.addEventListener('click',  () => {
+		warning.style.display = 'block';
+		bar.style.display = 'none';
+	});
 </script>
 {{end}}
 {{if and (ne AppUrl "https://git.door43.org/") (ne AppUrl "https://qa.door43.org/") (ne AppUrl "https://develop.door43.org/")}}
