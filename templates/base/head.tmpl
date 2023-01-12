@@ -82,6 +82,10 @@
 
 		{{template "custom/body_inner_pre" .}}
 
+		<!-- DCS Customizations -->
+		{{template "dcs_testing_banner" .}}
+		<!-- END DCS Customizations -->
+
 		{{if not .PageIsInstall}}
 			<div class="ui top secondary stackable main menu following bar light no-vertical-tabs">
 				{{template "base/head_navbar" .}}
