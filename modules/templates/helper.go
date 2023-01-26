@@ -464,9 +464,6 @@ func NewFuncMap() []template.FuncMap {
 		"ValidateJSONFile":           base.ValidateJSONFile,
 		"ValidateYAMLFile":           base.ValidateYAMLFile,
 		"ValidateManifestFileAsHTML": base.ValidateManifestFileAsHTML,
-		"GATrackingID": func() string {
-			return setting.DCS.GATrackingID
-		},
 		"Door43PreviewURL": func() string {
 			return setting.DCS.Door43PreviewURL
 		},

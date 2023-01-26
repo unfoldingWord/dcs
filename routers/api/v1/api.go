@@ -1194,6 +1194,9 @@ func Routes(ctx gocontext.Context) *web.Route {
 		m.Post("/yaml", bind(misc.YamlOption{}), misc.Yaml)
 		m.Group("/catalog", func() {
 			m.Get("", catalog.Search)
+			m.Get("/subjects", catalog.ListCatalogSubjects)
+			m.Get("/owners", catalog.ListCatalogOwners)
+			m.Get("/languages", catalog.ListCatalogLanguages)
 			m.Group("/search", func() {
 				m.Get("", catalog.Search)
 				m.Group("/{username}", func() {

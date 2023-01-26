@@ -15,6 +15,7 @@ const (
 	StagePreProd Stage = 1
 	StageDraft   Stage = 2
 	StageLatest  Stage = 3
+	StageRepo    Stage = 4 // For general repo info
 )
 
 // StageMap map from string to Stage (int)
