@@ -440,7 +440,7 @@ func ListCatalogSubjects(ctx *context.APIContext) {
 	//   type: boolean
 	// responses:
 	//   "200":
-	//     "$ref": "#/responses/swaggerResponseStringSlice"
+	//     "$ref": "#/responses/StringSlice"
 	//   "422":
 	//     "$ref": "#/responses/validationError"
 
@@ -501,7 +501,7 @@ func ListCatalogOwners(ctx *context.APIContext) {
 	//   type: string
 	// responses:
 	//   "200":
-	//     "$ref": "#/responses/swaggerResponseStringSlice"
+	//     "$ref": "#/responses/StringSlice"
 	//   "422":
 	//     "$ref": "#/responses/validationError"
 
@@ -574,7 +574,7 @@ func ListCatalogLanguages(ctx *context.APIContext) {
 	//   type: boolean
 	// responses:
 	//   "200":
-	//     "$ref": "#/responses/swaggerResponseStringSlice"
+	//     "$ref": "#/responses/StringSlice"
 	//   "422":
 	//     "$ref": "#/responses/validationError"
 
