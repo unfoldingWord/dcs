@@ -456,7 +456,6 @@ var (
 
 	/*** DCS Customizations ***/
 	DCS struct {
-		GATrackingID     string
 		Door43PreviewURL string
 	}
 	/*** END DCS Customizations ***/
@@ -1125,7 +1124,6 @@ func loadFromConf(allowEmpty bool, extraConfig string) {
 	UI.OnlyShowRelevantRepos = Cfg.Section("ui").Key("ONLY_SHOW_RELEVANT_REPOS").MustBool(false)
 
 	/*** DCS Customizations ***/
-	DCS.GATrackingID = Cfg.Section("dcs").Key("GA_TRACKING_ID").MustString("UA-60106521-5")
 	DCS.Door43PreviewURL = Cfg.Section("dcs").Key("DOOR43_PREVIEW_URL").MustString("https://door43.org")
 	/*** END DCS Customizations ***/
 

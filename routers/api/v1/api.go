@@ -236,10 +236,13 @@ func reqExploreSignIn() func(ctx *context.APIContext) {
 	}
 }
 
-func reqBasicAuth() func(ctx *context.APIContext) {
+func reqBasicOrRevProxyAuth() func(ctx *context.APIContext) {
 	return func(ctx *context.APIContext) {
+		if ctx.IsSigned && setting.Service.EnableReverseProxyAuth && ctx.Data["AuthedMethod"].(string) == auth.ReverseProxyMethodName {
+			return
+		}
 		if !ctx.Context.IsBasicAuth {
-			ctx.Error(http.StatusUnauthorized, "reqBasicAuth", "auth required")
+			ctx.Error(http.StatusUnauthorized, "reqBasicOrRevProxyAuth", "auth required")
 			return
 		}
 		ctx.CheckForOTP()
@@ -598,6 +601,9 @@ func buildAuthGroup() *auth.Group {
 		&auth.HTTPSign{},
 		&auth.Basic{}, // FIXME: this should be removed once we don't allow basic auth in API
 	)
+	if setting.Service.EnableReverseProxyAuth {
+		group.Add(&auth.ReverseProxy{})
+	}
 	specialAdd(group)
 
 	return group
@@ -687,7 +693,7 @@ func Routes(ctx gocontext.Context) *web.Route {
 					m.Combo("").Get(user.ListAccessTokens).
 						Post(bind(api.CreateAccessTokenOption{}), user.CreateAccessToken)
 					m.Combo("/{id}").Delete(user.DeleteAccessToken)
-				}, reqBasicAuth())
+				}, reqBasicOrRevProxyAuth())
 			}, context_service.UserAssignmentAPI())
 		})
 
@@ -896,7 +902,7 @@ func Routes(ctx gocontext.Context) *web.Route {
 					m.Group("/{index}", func() {
 						m.Combo("").Get(repo.GetIssue).
 							Patch(reqToken(), bind(api.EditIssueOption{}), repo.EditIssue).
-							Delete(reqToken(), reqAdmin(), context.ReferencesGitRepo(), repo.DeleteIssue)
+							Delete(reqToken(), reqAdmin(), repo.DeleteIssue)
 						m.Group("/comments", func() {
 							m.Combo("").Get(repo.ListIssueComments).
 								Post(reqToken(), mustNotBeArchived, bind(api.CreateIssueCommentOption{}), repo.CreateIssueComment)
@@ -1188,6 +1194,9 @@ func Routes(ctx gocontext.Context) *web.Route {
 		m.Post("/yaml", bind(misc.YamlOption{}), misc.Yaml)
 		m.Group("/catalog", func() {
 			m.Get("", catalog.Search)
+			m.Get("/subjects", catalog.ListCatalogSubjects)
+			m.Get("/owners", catalog.ListCatalogOwners)
+			m.Get("/languages", catalog.ListCatalogLanguages)
 			m.Group("/search", func() {
 				m.Get("", catalog.Search)
 				m.Group("/{username}", func() {

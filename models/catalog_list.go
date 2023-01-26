@@ -91,3 +91,60 @@ func searchCatalogByCondition(ctx context.Context, opts *door43metadata.SearchCa
 
 	return dms, count, nil
 }
+
+// SearchDoor43MetadataField returns door43metadat field based on search options
+func SearchDoor43MetadataField(opts *door43metadata.SearchCatalogOptions, field string) ([]string, error) {
+	cond := door43metadata.SearchCatalogCondition(opts)
+	return SearchDoor43MetadataFieldByCondition(opts, cond, field)
+}
+
+// SearchDoor43MetadataFieldByCondition search door43metadata entries by condition for a single field
+func SearchDoor43MetadataFieldByCondition(opts *door43metadata.SearchCatalogOptions, cond builder.Cond, field string) ([]string, error) {
+	return searchDoor43MetadataFieldByCondition(db.DefaultContext, opts, cond, field)
+}
+
+func searchDoor43MetadataFieldByCondition(ctx context.Context, opts *door43metadata.SearchCatalogOptions, cond builder.Cond, field string) ([]string, error) {
+	var results []string
+
+	releaseInfoInner, err := builder.Select("`door43_metadata`.repo_id", "COUNT(*) AS release_count", "MAX(`door43_metadata`.release_date_unix) AS latest_unix").
+		From("door43_metadata").
+		GroupBy("`door43_metadata`.repo_id").
+		Where(builder.Gt{"`door43_metadata`.release_date_unix": 0}).
+		Where(door43metadata.GetStageCond(opts.Stage)).
+		ToBoundSQL()
+	if err != nil {
+		return nil, err
+	}
+
+	releaseInfoOuter, err := builder.Select("`door43_metadata`.repo_id", "MAX(release_count) AS release_count", "MAX(latest_unix) AS latest_unix", "MIN(stage) AS latest_stage").
+		From("door43_metadata").
+		Join("INNER", "("+releaseInfoInner+") release_info_inner", "`release_info_inner`.repo_id = `door43_metadata`.repo_id AND `door43_metadata`.release_date_unix = `release_info_inner`.latest_unix").
+		GroupBy("`door43_metadata`.repo_id").
+		ToBoundSQL()
+	if err != nil {
+		return nil, err
+	}
+
+	sess := db.GetEngine(db.DefaultContext).Table("door43_metadata").
+		Select("DISTINCT "+field).
+		Join("INNER", "repository", "`repository`.id = `door43_metadata`.repo_id").
+		Join("INNER", "user", "`repository`.owner_id = `user`.id").
+		Join("LEFT", "release", "`release`.id = `door43_metadata`.release_id").
+		Join("INNER", "("+releaseInfoOuter+") release_info", "release_info.repo_id = `door43_metadata`.repo_id").
+		Where(cond).
+		OrderBy(field)
+
+	for _, orderBy := range opts.OrderBy {
+		sess.OrderBy(orderBy.String())
+	}
+
+	if opts.PageSize > 0 || opts.Page > 1 {
+		sess.Limit(opts.PageSize, (opts.Page-1)*opts.PageSize)
+	}
+	err = sess.Find(&results)
+	if err != nil {
+		return nil, fmt.Errorf("Find: %v", err)
+	}
+
+	return results, nil
+}

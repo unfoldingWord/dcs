@@ -699,6 +699,106 @@
         }
       }
     },
+    "/catalog/owners": {
+      "get": {
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "catalog"
+        ],
+        "summary": "Catalog list owners",
+        "operationId": "catalogListLanguages",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "list only lannguages with entries in the given owners(s). To match multiple, give the parameter multiple times or give a list comma delimited. Will perform an exact match (case insensitive) unlesss partialMatch=true",
+            "name": "owner",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "description": "list only the given languages(s) if they have entries in the catalog meeting the criteria given (e.g. way to test an language has a given owner and/or subject)",
+            "name": "lang",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "description": "list only languages of the given stage or lower, with low to high being: \"prod\" - return only the production subjects (default); \"preprod\" - return pre-production and production subjects; \"draft\" - return only draft, pre-product and production subjects; \"latest\" - return all subjects in the catalog for all stages",
+            "name": "stage",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "description": "list only languages with the the given subject(s). Multiple resources are ORed.",
+            "name": "subject",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "description": "list only languages with the given resource identifier(s). Multiple resources are ORed.",
+            "name": "resource",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "description": "list only languages with the given content format (usfm, text, markdown, etc.). Multiple formats are ORed.",
+            "name": "format",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "description": "list only for languages with the given checking level(s). Can be 1, 2 or 3",
+            "name": "checkingLevel",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "description": "list only languages with the given book(s) (project ids). To match multiple, give the parameter multiple times or give a list comma delimited. Will perform an exact match (case insensitive)",
+            "name": "book",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "description": "list only languages with the given metadata type (e.g. rc, tc, ts, sb). . \u003cempty\u003e or \"all\" for all. Default is rc",
+            "name": "metadataType",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "description": "list only languages with the  given metadatay version. Does not apply if metadataType is \"all\" or empty",
+            "name": "metadataVersion",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "description": "list only languages of the given language direction, \"ltr\" or \"rtl\".",
+            "name": "direction",
+            "in": "query"
+          },
+          {
+            "type": "boolean",
+            "description": "list only languages of they are (true) or are not (false) a gatetway language.",
+            "name": "isGL",
+            "in": "query"
+          },
+          {
+            "type": "boolean",
+            "description": "if true, owner, language and subject search fields will use partial match (LIKE) when querying the catalog. Default is false",
+            "name": "partialMatch",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/swaggerResponseStringSlice"
+          },
+          "422": {
+            "$ref": "#/responses/validationError"
+          }
+        }
+      }
+    },
     "/catalog/search": {
       "get": {
         "produces": [
@@ -742,7 +842,7 @@
           },
           {
             "type": "string",
-            "description": "specifies which release stage to be return of these stages: \"prod\" - return only the production releases (default); \"preprod\" - return the pre-production release if it exists instead of the production release; \"draft\" - return the draft release if it exists instead of pre-production or production release; \"latest\" -return the default branch (e.g. master) if it is a valid RC instead of the above",
+            "description": "specifies which release stage to be return of these stages: \"prod\" - return only the production releases (default); \"preprod\" - return the pre-production release if it exists instead of the production release; \"draft\" - return the draft release if it exists instead of pre-production or production release; \"latest\" - return the default branch (e.g. master) if it is a valid RC instead of the above",
             "name": "stage",
             "in": "query"
           },
@@ -1151,6 +1251,94 @@
         "responses": {
           "200": {
             "$ref": "#/responses/CatalogSearchResults"
+          },
+          "422": {
+            "$ref": "#/responses/validationError"
+          }
+        }
+      }
+    },
+    "/catalog/subjects": {
+      "get": {
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "catalog"
+        ],
+        "summary": "Catalog list subjects",
+        "operationId": "catalogListSubjects",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "list only subjects in the given owner(s). To match multiple, give the parameter multiple times or give a list comma delimited.",
+            "name": "owner",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "description": "list only subjects in the given language(s). To match multiple, give the parameter multiple times or give a list comma delimited. Will perform an exact match (case insensitive) unlesss partialMatch=true",
+            "name": "lang",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "description": "list only subjects of the given stage or lower, with low to high being: \"prod\" - return only the production subjects (default); \"preprod\" - return pre-production and production subjects; \"draft\" - return only draft, pre-product and production subjects; \"latest\" - return all subjects in the catalog for all stages",
+            "name": "stage",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "description": "list only the given subjects if they are in the catalog meeting the criteria given (e.g. way to test a given language has the given subject)",
+            "name": "subject",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "description": "list only subjects with the given resource identifier. Multiple resources are ORed.",
+            "name": "resource",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "description": "list only subjects with the given content format (usfm, text, markdown, etc.). Multiple formats are ORed.",
+            "name": "format",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "description": "list only for subjects with the given checking level(s). Can be 1, 2 or 3",
+            "name": "checkingLevel",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "description": "list only subjects with the given book(s) (project ids). To match multiple, give the parameter multiple times or give a list comma delimited. Will perform an exact match (case insensitive)",
+            "name": "book",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "description": "list only subjects with the given metadata type (e.g. rc, tc, ts, sb). . \u003cempty\u003e or \"all\" for all. Default is rc",
+            "name": "metadataType",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "description": "list only subjects with the  given metadatay version. Does not apply if metadataType is \"all\" or empty",
+            "name": "metadataVersion",
+            "in": "query"
+          },
+          {
+            "type": "boolean",
+            "description": "if true, owner, subject and language search fields will use partial match (LIKE) when querying the catalog. Default is false",
+            "name": "partialMatch",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/swaggerResponseStringSlice"
           },
           "422": {
             "$ref": "#/responses/validationError"

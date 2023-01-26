@@ -81,7 +81,7 @@ func Search(ctx *context.APIContext) {
 	//                "prod" - return only the production releases (default);
 	//                "preprod" - return the pre-production release if it exists instead of the production release;
 	//                "draft" - return the draft release if it exists instead of pre-production or production release;
-	//                "latest" -return the default branch (e.g. master) if it is a valid RC instead of the above'
+	//                "latest" - return the default branch (e.g. master) if it is a valid RC instead of the above'
 	//   type: string
 	// - name: subject
 	//   in: query
@@ -382,6 +382,205 @@ func SearchRepo(ctx *context.APIContext) {
 	searchCatalog(ctx)
 }
 
+// ListCatalogSubjects list the subjects available in the catalog
+func ListCatalogSubjects(ctx *context.APIContext) {
+	// swagger:operation GET /catalog/subjects catalog catalogListSubjects
+	// ---
+	// summary: Catalog list subjects
+	// produces:
+	// - application/json
+	// parameters:
+	// - name: owner
+	//   in: query
+	//   description: list only subjects in the given owner(s). To match multiple, give the parameter multiple times or give a list comma delimited.
+	//   type: string
+	// - name: lang
+	//   in: query
+	//   description: list only subjects in the given language(s). To match multiple, give the parameter multiple times or give a list comma delimited. Will perform an exact match (case insensitive) unlesss partialMatch=true
+	//   type: string
+	// - name: stage
+	//   in: query
+	//   description: 'list only subjects of the given stage or lower, with low to high being:
+	//                "prod" - return only the production subjects (default);
+	//                "preprod" - return pre-production and production subjects;
+	//                "draft" - return only draft, pre-product and production subjects;
+	//                "latest" - return all subjects in the catalog for all stages'
+	//   type: string
+	// - name: subject
+	//   in: query
+	//   description: list only the given subjects if they are in the catalog meeting the criteria given (e.g. way to test a given language has the given subject)
+	//   type: string
+	// - name: resource
+	//   in: query
+	//   description: list only subjects with the given resource identifier. Multiple resources are ORed.
+	//   type: string
+	// - name: format
+	//   in: query
+	//   description: list only subjects with the given content format (usfm, text, markdown, etc.). Multiple formats are ORed.
+	//   type: string
+	// - name: checkingLevel
+	//   in: query
+	//   description: list only for subjects with the given checking level(s). Can be 1, 2 or 3
+	//   type: string
+	// - name: book
+	//   in: query
+	//   description: list only subjects with the given book(s) (project ids). To match multiple, give the parameter multiple times or give a list comma delimited. Will perform an exact match (case insensitive)
+	//   type: string
+	// - name: metadataType
+	//   in: query
+	//   description: list only subjects with the given metadata type (e.g. rc, tc, ts, sb). . <empty> or "all" for all. Default is rc
+	//   type: string
+	// - name: metadataVersion
+	//   in: query
+	//   description: list only subjects with the  given metadatay version. Does not apply if metadataType is "all" or empty
+	//   type: string
+	// - name: partialMatch
+	//   in: query
+	//   description: if true, owner, subject and language search fields will use partial match (LIKE) when querying the catalog. Default is false
+	//   type: boolean
+	// responses:
+	//   "200":
+	//     "$ref": "#/responses/swaggerResponseStringSlice"
+	//   "422":
+	//     "$ref": "#/responses/validationError"
+
+	listSingleDMField(ctx, "`door43_metadata`.subject")
+}
+
+// ListCatalogOwners list the subjects available in the catalog
+func ListCatalogOwners(ctx *context.APIContext) {
+	// swagger:operation GET /catalog/owners catalog catalogListOwners
+	// ---
+	// summary: Catalog list owners
+	// produces:
+	// - application/json
+	// parameters:
+	// - name: owner
+	//   in: query
+	//   description: list only the given owners(s) if they have entries in the catalog meeting the criteria given (e.g. way to test an owner has a given language or subject)
+	//   type: string
+	// - name: lang
+	//   in: query
+	//   description: list only owners with entries in the given language(s). To match multiple, give the parameter multiple times or give a list comma delimited. Will perform an exact match (case insensitive) unlesss partialMatch=true
+	//   type: string
+	// - name: stage
+	//   in: query
+	//   description: 'list only owners of the given stage or lower, with low to high being:
+	//                "prod" - return only the production subjects (default);
+	//                "preprod" - return pre-production and production subjects;
+	//                "draft" - return only draft, pre-product and production subjects;
+	//                "latest" - return all subjects in the catalog for all stages'
+	//   type: string
+	// - name: subject
+	//   in: query
+	//   description: list only owners with the the given subject(s). Multiple resources are ORed.
+	//   type: string
+	// - name: resource
+	//   in: query
+	//   description: list only owners with the given resource identifier(s). Multiple resources are ORed.
+	//   type: string
+	// - name: format
+	//   in: query
+	//   description: list only owners with the given content format (usfm, text, markdown, etc.). Multiple formats are ORed.
+	//   type: string
+	// - name: checkingLevel
+	//   in: query
+	//   description: list only for owners with the given checking level(s). Can be 1, 2 or 3
+	//   type: string
+	// - name: book
+	//   in: query
+	//   description: list only owners with the given book(s) (project ids). To match multiple, give the parameter multiple times or give a list comma delimited. Will perform an exact match (case insensitive)
+	//   type: string
+	// - name: metadataType
+	//   in: query
+	//   description: list only owners with the given metadata type (e.g. rc, tc, ts, sb). . <empty> or "all" for all. Default is rc
+	//   type: string
+	// - name: metadataVersion
+	//   in: query
+	//   description: list only owners with the  given metadatay version. Does not apply if metadataType is "all" or empty
+	//   type: string
+	// responses:
+	//   "200":
+	//     "$ref": "#/responses/swaggerResponseStringSlice"
+	//   "422":
+	//     "$ref": "#/responses/validationError"
+
+	listSingleDMField(ctx, "`user`.login")
+}
+
+// ListCatalogLanguages list the languages available in the catalog
+func ListCatalogLanguages(ctx *context.APIContext) {
+	// swagger:operation GET /catalog/owners catalog catalogListLanguages
+	// ---
+	// summary: Catalog list owners
+	// produces:
+	// - application/json
+	// parameters:
+	// - name: owner
+	//   in: query
+	//   description: list only lannguages with entries in the given owners(s). To match multiple, give the parameter multiple times or give a list comma delimited. Will perform an exact match (case insensitive) unlesss partialMatch=true
+	//   type: string
+	// - name: lang
+	//   in: query
+	//   description: list only the given languages(s) if they have entries in the catalog meeting the criteria given (e.g. way to test an language has a given owner and/or subject)
+	//   type: string
+	// - name: stage
+	//   in: query
+	//   description: 'list only languages of the given stage or lower, with low to high being:
+	//                "prod" - return only the production subjects (default);
+	//                "preprod" - return pre-production and production subjects;
+	//                "draft" - return only draft, pre-product and production subjects;
+	//                "latest" - return all subjects in the catalog for all stages'
+	//   type: string
+	// - name: subject
+	//   in: query
+	//   description: list only languages with the the given subject(s). Multiple resources are ORed.
+	//   type: string
+	// - name: resource
+	//   in: query
+	//   description: list only languages with the given resource identifier(s). Multiple resources are ORed.
+	//   type: string
+	// - name: format
+	//   in: query
+	//   description: list only languages with the given content format (usfm, text, markdown, etc.). Multiple formats are ORed.
+	//   type: string
+	// - name: checkingLevel
+	//   in: query
+	//   description: list only for languages with the given checking level(s). Can be 1, 2 or 3
+	//   type: string
+	// - name: book
+	//   in: query
+	//   description: list only languages with the given book(s) (project ids). To match multiple, give the parameter multiple times or give a list comma delimited. Will perform an exact match (case insensitive)
+	//   type: string
+	// - name: metadataType
+	//   in: query
+	//   description: list only languages with the given metadata type (e.g. rc, tc, ts, sb). . <empty> or "all" for all. Default is rc
+	//   type: string
+	// - name: metadataVersion
+	//   in: query
+	//   description: list only languages with the  given metadatay version. Does not apply if metadataType is "all" or empty
+	//   type: string
+	// - name: direction
+	//   in: query
+	//   description: list only languages of the given language direction, "ltr" or "rtl".
+	//   type: string
+	// - name: isGL
+	//   in: query
+	//   description: list only languages of they are (true) or are not (false) a gatetway language.
+	//   type: boolean
+	// - name: partialMatch
+	//   in: query
+	//   description: if true, owner, language and subject search fields will use partial match (LIKE) when querying the catalog. Default is false
+	//   type: boolean
+	// responses:
+	//   "200":
+	//     "$ref": "#/responses/swaggerResponseStringSlice"
+	//   "422":
+	//     "$ref": "#/responses/validationError"
+
+	listSingleDMField(ctx, "`door43_metadata`.language")
+}
+
 // GetCatalogEntry Get the catalog entry from the given ownername, reponame and ref
 func GetCatalogEntry(ctx *context.APIContext) {
 	// swagger:operation GET /catalog/entry/{owner}/{repo}/{tag} catalog catalogGetEntry
@@ -627,4 +826,89 @@ func searchCatalog(ctx *context.APIContext) {
 		Data:        results,
 		LastUpdated: lastUpdated,
 	})
+}
+
+func listSingleDMField(ctx *context.APIContext, field string) {
+	var owners, repos []string
+	stageStr := ctx.FormString("stage")
+	var stage door43metadata.Stage
+	if stageStr != "" {
+		var ok bool
+		stage, ok = door43metadata.StageMap[stageStr]
+		if !ok {
+			ctx.Error(http.StatusUnprocessableEntity, "", fmt.Errorf("invalid stage: \"%s\"", stageStr))
+			return
+		}
+	}
+
+	metadataTypes := QueryStrings(ctx, "metadataType")
+	metadataVersions := QueryStrings(ctx, "metadataVersion")
+	if len(metadataTypes) == 1 && (metadataTypes[0] == "all" || metadataTypes[0] == "") {
+		metadataTypes = []string{}
+		metadataVersions = []string{}
+	} else if len(metadataTypes) == 0 {
+		metadataTypes = []string{"rc"}
+	}
+
+	listOptions := db.ListOptions{
+		Page:     ctx.FormInt("page"),
+		PageSize: ctx.FormInt("limit"),
+	}
+	if listOptions.Page < 1 {
+		listOptions.Page = 1
+	}
+
+	opts := &door43metadata.SearchCatalogOptions{
+		ListOptions:      listOptions,
+		Owners:           owners,
+		Repos:            repos,
+		Tags:             QueryStrings(ctx, "tag"),
+		Stage:            stage,
+		Languages:        QueryStrings(ctx, "lang"),
+		Subjects:         QueryStrings(ctx, "subject"),
+		Resources:        QueryStrings(ctx, "resource"),
+		ContentFormats:   QueryStrings(ctx, "format"),
+		CheckingLevels:   QueryStrings(ctx, "checkingLevel"),
+		Books:            QueryStrings(ctx, "book"),
+		IncludeHistory:   ctx.FormBool("includeHistory"),
+		ShowIngredients:  ctx.FormBool("showIngredients"),
+		MetadataTypes:    metadataTypes,
+		MetadataVersions: metadataVersions,
+		PartialMatch:     ctx.FormBool("partialMatch"),
+	}
+
+	sortModes := QueryStrings(ctx, "sort")
+	if len(sortModes) > 0 {
+		sortOrder := ctx.FormString("order")
+		if sortOrder == "" {
+			sortOrder = "asc"
+		}
+		if searchModeMap, ok := searchOrderByMap[sortOrder]; ok {
+			for _, sortMode := range sortModes {
+				if orderBy, ok := searchModeMap[strings.ToLower(sortMode)]; ok {
+					opts.OrderBy = append(opts.OrderBy, orderBy)
+				} else {
+					ctx.Error(http.StatusUnprocessableEntity, "", fmt.Errorf("invalid sort mode: \"%s\"", sortMode))
+					return
+				}
+			}
+		} else {
+			ctx.Error(http.StatusUnprocessableEntity, "", fmt.Errorf("invalid sort order: \"%s\"", sortOrder))
+			return
+		}
+	} else {
+		opts.OrderBy = []door43metadata.CatalogOrderBy{door43metadata.CatalogOrderByLangCode, door43metadata.CatalogOrderBySubject, door43metadata.CatalogOrderByReleaseDateReverse}
+	}
+
+	results, err := models.SearchDoor43MetadataField(opts, field)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, api.SearchError{
+			OK:    false,
+			Error: err.Error(),
+		})
+		return
+	}
+
+	ctx.RespHeader().Set("X-Total-Count", fmt.Sprintf("%d", len(results)))
+	ctx.JSON(http.StatusOK, results)
 }

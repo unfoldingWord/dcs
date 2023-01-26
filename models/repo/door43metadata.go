@@ -47,7 +47,7 @@ type Door43Metadata struct {
 	ReleaseID         int64                            `xorm:"INDEX UNIQUE(n)"`
 	Release           *Release                         `xorm:"-"`
 	BranchOrTag       string                           `xorm:"NOT NULL"`
-	CommitID          string                           `xorm:"VARCHAR(40)"`
+	CommitID          string                           `xorm:"VARCHAR(40) NOT NULL"`
 	Stage             door43metadata.Stage             `xorm:"NOT NULL"`
 	MetadataType      string                           `xorm:"NOT NULL"`
 	MetadataVersion   string                           `xorm:"NOT NULL"`
@@ -65,6 +65,7 @@ type Door43Metadata struct {
 	ReleaseDateUnix   timeutil.TimeStamp               `xorm:"NOT NULL"`
 	CreatedUnix       timeutil.TimeStamp               `xorm:"INDEX created NOT NULL"`
 	UpdatedUnix       timeutil.TimeStamp               `xorm:"INDEX updated"`
+	Reprocess         bool                             `xorm:"DEFAULT 0"`
 }
 
 func init() {
@@ -150,27 +151,14 @@ func (dm *Door43Metadata) APIURL() string {
 	return fmt.Sprintf("%sapi/v1/catalog/entry/%s/%s/", setting.AppURL, dm.Repo.FullName(), ref)
 }
 
-// HTMLURL the url for a door43 metadata on the web UI. door43 metadata must have attributes loaded
-func (dm *Door43Metadata) HTMLURL() string {
-	return fmt.Sprintf("%s/metadata/tag/%s", dm.Repo.HTMLURL(), dm.Release.TagName)
-}
-
-// GetRef gets the ref of the DM that should be used to retrieve files and other URLs
-func (dm *Door43Metadata) GetRef() string {
-	if dm.ReleaseID == 0 && len(dm.CommitID) >= 10 {
-		return dm.CommitID[:10]
-	}
-	return dm.BranchOrTag // will be the tag
-}
-
 // GetTarballURL get the tarball URL of the tag or branch
 func (dm *Door43Metadata) GetTarballURL() string {
-	return fmt.Sprintf("%s/archive/%s.tar.gz", dm.Repo.HTMLURL(), dm.GetRef())
+	return fmt.Sprintf("%s/archive/%s.tar.gz", dm.Repo.HTMLURL(), dm.BranchOrTag)
 }
 
 // GetZipballURL get the zipball URL of the tag or branch
 func (dm *Door43Metadata) GetZipballURL() string {
-	return fmt.Sprintf("%s/archive/%s.zip", dm.Repo.HTMLURL(), dm.GetRef())
+	return fmt.Sprintf("%s/archive/%s.zip", dm.Repo.HTMLURL(), dm.BranchOrTag)
 }
 
 // GetReleaseURL get the URL the release API
@@ -189,10 +177,10 @@ func (dm *Door43Metadata) GetReleaseURL() string {
 // GetMetadataURL gets the url to the raw manifest.yaml file
 func (dm *Door43Metadata) GetMetadataURL() string {
 	if dm.MetadataType == "rc" {
-		return fmt.Sprintf("%s/raw/%s/%s/manifest.yaml", dm.Repo.HTMLURL(), dm.GetBranchOrTagType(), dm.GetRef())
+		return fmt.Sprintf("%s/raw/%s/%s/manifest.yaml", dm.Repo.HTMLURL(), dm.GetBranchOrTagType(), dm.BranchOrTag)
 	}
 	// so far this means we have a ts or tc metadata entry, but need to change for scripture burrito!
-	return fmt.Sprintf("%s/raw/%s/%s/manifest.json", dm.Repo.HTMLURL(), dm.GetBranchOrTagType(), dm.GetRef())
+	return fmt.Sprintf("%s/raw/%s/%s/manifest.json", dm.Repo.HTMLURL(), dm.GetBranchOrTagType(), dm.BranchOrTag)
 }
 
 // GetMetadataJSONURL gets the json representation of the contents of the manifest.yaml file
@@ -202,12 +190,12 @@ func (dm *Door43Metadata) GetMetadataJSONURL() string {
 
 // GetMetadataAPIContentsURL gets the metadata API contents URL of the manifest.yaml file
 func (dm *Door43Metadata) GetMetadataAPIContentsURL() string {
-	return fmt.Sprintf("%s/contents/manifest.yaml?ref=%s", dm.Repo.APIURL(), dm.GetRef())
+	return fmt.Sprintf("%s/contents/manifest.yaml?ref=%s", dm.Repo.APIURL(), dm.BranchOrTag)
 }
 
 // GetGitTreesURL gets the git trees URL for a repo and branch or tag for all files
 func (dm *Door43Metadata) GetGitTreesURL() string {
-	return fmt.Sprintf("%s/git/trees/%s?recursive=1&per_page=99999", dm.Repo.APIURL(), dm.GetRef())
+	return fmt.Sprintf("%s/git/trees/%s?recursive=1&per_page=99999", dm.Repo.APIURL(), dm.BranchOrTag)
 }
 
 // GetContentsURL gets the contents URL for a repo and branch or tag for all files
@@ -271,6 +259,25 @@ func UpdateDoor43MetadataCols(dm *Door43Metadata, cols ...string) error {
 
 func updateDoor43MetadataCols(e db.Engine, dm *Door43Metadata, cols ...string) error {
 	id, err := e.ID(dm.ID).Cols(cols...).Update(dm)
+	if id > 0 && dm.ReleaseID > 0 {
+		err := dm.LoadAttributes()
+		if err != nil {
+			return err
+		}
+		if err := system.CreateRepositoryNotice("Door43 Metadata updated for repo: %s, tag: %s", dm.Repo.Name, dm.Release.TagName); err != nil {
+			log.Error("CreateRepositoryNotice: %v", err)
+		}
+	}
+	return err
+}
+
+// UpdateDoor43Metadata update a;ll door43 metadata
+func UpdateDoor43Metadata(dm *Door43Metadata) error {
+	return updateDoor43Metadata(db.GetEngine(db.DefaultContext), dm)
+}
+
+func updateDoor43Metadata(e db.Engine, dm *Door43Metadata) error {
+	id, err := e.ID(dm.ID).AllCols().Update(dm)
 	if id > 0 && dm.ReleaseID > 0 {
 		err := dm.LoadAttributes()
 		if err != nil {

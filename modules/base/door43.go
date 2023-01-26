@@ -277,9 +277,17 @@ func ReadYAMLFromBlob(blob *git.Blob) (*map[string]interface{}, error) {
 	return result, nil
 }
 
+type TcManifest struct {
+	TcVersion int `json:"tc_version"`
+	*TcTsManifest
+}
+
+type TsManifest struct {
+	PackageVersion int `json:"package_version"`
+	*TcTsManifest
+}
+
 type TcTsManifest struct {
-	TcVersion      *int   `json:"tc_version"`
-	TsVersion      *int   `json:"package_version"`
 	Format         string `json:"format"`
 	TargetLanguage struct {
 		ID        string `json:"id"`
@@ -300,19 +308,28 @@ type TcTsManifest struct {
 	}
 }
 
-func ReadTcTsManifestFromBlob(blob *git.Blob) (*TcTsManifest, error) {
+func GetTcManifestFromBlob(blob *git.Blob) (*TcManifest, error) {
 	buf, err := ReadFileFromBlob(blob)
 	if err != nil {
 		return nil, err
 	}
-	t := &TcTsManifest{}
+	t := &TcManifest{}
 	err = json.Unmarshal(buf, t)
 	if err != nil {
-		fmt.Printf("\n\n\nERROR: %#v\n\n\n\n", err)
 		return nil, err
 	}
-	if t.TargetLanguage.ID == "" || t.Resource.ID == "" || t.Type.ID == "" || t.Project.ID == "" || ((t.TcVersion == nil || *t.TcVersion < 7) && (t.TsVersion == nil || *t.TsVersion < 6)) {
-		return nil, fmt.Errorf("invalid manifest.json file")
+	return t, nil
+}
+
+func GetTsManifestFromBlob(blob *git.Blob) (*TsManifest, error) {
+	buf, err := ReadFileFromBlob(blob)
+	if err != nil {
+		return nil, err
+	}
+	t := &TsManifest{}
+	err = json.Unmarshal(buf, t)
+	if err != nil {
+		return nil, err
 	}
 	return t, nil
 }

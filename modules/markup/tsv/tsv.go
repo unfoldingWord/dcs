@@ -156,7 +156,7 @@ func (Renderer) Render(ctx *markup.RenderContext, input io.Reader, output io.Wri
 		}
 		for i, field := range fields {
 			if row > 1 {
-				if len(headers) <= (i+1) && markdownField.MatchString(headers[i]) {
+				if len(headers) > i && markdownField.MatchString(headers[i]) {
 					md := newlineRegexp.ReplaceAllString(field, "\n")
 					md = rcFromBrackets.ReplaceAllString(md, "START${1}END") // preserver rc links with double square brackets [[rc://...]] since that means something in markdown (short link)
 					var buf bytes.Buffer

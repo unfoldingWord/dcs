@@ -1237,5 +1237,4 @@ PROXY_HOSTS = *.github.com
 
 ## DCS (`dcs`)
 
-- `GA_TRACKING_ID`: Google Analytics Tracking ID. Optional. If given, JS code on every page is injected with GA code.
 - `DOOR43_PREVIEW_URL`: **https://door43.org**: Door43 Preview URL, URL for the website that has the previews. Do not included trailing /'s and any path.
