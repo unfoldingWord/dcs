@@ -492,6 +492,8 @@ func NewFuncMap() []template.FuncMap {
 		"GetLanguageTitle":        dcs.GetLanguageTitle,
 		"GetLanguageDirection":    dcs.GetLanguageDirection,
 		"GetLanguageIsGL":         dcs.LanguageIsGL,
+		"GetMetadataTypeTitle":    dcs.GetMetadataTypeTitle,
+		"GetMetadataTypeIconURL":  dcs.GetMetadataTypeIconURL,
 		/*** END DCS Customizations ***/
 		"HasPrefix": strings.HasPrefix,
 		"CompareLink": func(baseRepo, repo *repo_model.Repository, branchName string) string {
