@@ -505,7 +505,7 @@ func ListCatalogOwners(ctx *context.APIContext) {
 	//   "422":
 	//     "$ref": "#/responses/validationError"
 
-	listSingleDMField(ctx, "`user`.login")
+	listSingleDMField(ctx, "`user`.lower_name")
 }
 
 // ListCatalogLanguages list the languages available in the catalog
@@ -617,6 +617,7 @@ func GetCatalogEntry(ctx *context.APIContext) {
 		dm, err = repo.GetDoor43MetadataByRepoIDAndReleaseID(ctx.Repo.Repository.ID, 0)
 	} else {
 		dm, err = repo.GetDoor43MetadataByRepoIDAndTagName(ctx.Repo.Repository.ID, tag)
+		dm.Repo = ctx.Repo.Repository
 	}
 	if err != nil {
 		ctx.Error(http.StatusInternalServerError, "GetDoor43MetadataByRepoIDAndTagName", err)
@@ -794,6 +795,7 @@ func searchCatalog(ctx *context.APIContext) {
 	results := make([]*api.CatalogEntry, len(dms))
 	var lastUpdated time.Time
 	for i, dm := range dms {
+		dm.Repo = ctx.Repo.Repository
 		accessMode, err := access_model.AccessLevel(ctx.ContextUser, dm.Repo)
 		if err != nil {
 			ctx.JSON(http.StatusInternalServerError, api.SearchError{
