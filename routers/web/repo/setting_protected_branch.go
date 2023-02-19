@@ -91,7 +91,7 @@ func ProtectedBranchPost(ctx *context.Context) {
 				return
 			}
 			/*** DCS Customizations ***/
-			if err := door43metadata_service.ProcessDoor43MetadataForRepoRelease(ctx, repo, nil); err != nil {
+			if err := door43metadata_service.ProcessDoor43MetadataForRepoRelease(ctx, repo, nil, branch); err != nil {
 				ctx.ServerError("ProcessDoor43MetadataForRepoRelease", err)
 				return
 			}

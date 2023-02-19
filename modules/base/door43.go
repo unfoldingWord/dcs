@@ -23,6 +23,8 @@ import (
 
 	"github.com/santhosh-tekuri/jsonschema/v5"
 	"gopkg.in/yaml.v2"
+
+	_ "github.com/santhosh-tekuri/jsonschema/v5/httploader" // Loader for Scheuma via HTTP
 )
 
 // ValidateYAMLFile validates a yaml file
@@ -67,7 +69,7 @@ func ValidateManifestTreeEntry(entry *git.TreeEntry) (*jsonschema.ValidationErro
 	if err != nil {
 		return nil, err
 	}
-	return ValidateBlobByRC020Schema(manifest)
+	return ValidateMapByRC020Schema(manifest)
 }
 
 // ConvertValidationErrorToString returns a semi-colon & new line separated string of the validation errors
@@ -137,9 +139,9 @@ func convertValidationErrorToHTML(valErr, parentErr *jsonschema.ValidationError)
 	return html
 }
 
-// ValidateBlobByRC020Schema Validates a blob by the RC v0.2.0 schema and returns the result
-func ValidateBlobByRC020Schema(manifest *map[string]interface{}) (*jsonschema.ValidationError, error) {
-	if manifest == nil {
+// ValidateMapByRC020Schema Validates a blob by the RC v0.2.0 schema and returns the result
+func ValidateMapByRC020Schema(data *map[string]interface{}) (*jsonschema.ValidationError, error) {
+	if data == nil {
 		return &jsonschema.ValidationError{Message: "file cannot be empty"}, nil
 	}
 	schemaText, err := GetRC020Schema()
@@ -155,7 +157,28 @@ func ValidateBlobByRC020Schema(manifest *map[string]interface{}) (*jsonschema.Va
 	if err != nil {
 		return nil, err
 	}
-	if err = schema.Validate(*manifest); err != nil {
+	if err = schema.Validate(*data); err != nil {
+		switch e := err.(type) {
+		case *jsonschema.ValidationError:
+			return e, nil
+		default:
+			return nil, e
+		}
+	}
+	return nil, nil
+}
+
+// ValidateDataBySB100Schema Validates a blob by the RC v0.2.0 schema and returns the result
+func ValidateDataBySB100Schema(data *map[string]interface{}) (*jsonschema.ValidationError, error) {
+	if data == nil {
+		return &jsonschema.ValidationError{Message: "file cannot be empty"}, nil
+	}
+	compiler := jsonschema.NewCompiler()
+	schema, err := compiler.Compile("https://raw.githubusercontent.com/bible-technology/scripture-burrito/v1.0.0-rc2/schema/index.js")
+	if err != nil {
+		return nil, err
+	}
+	if err = schema.Validate(*data); err != nil {
 		switch e := err.(type) {
 		case *jsonschema.ValidationError:
 			return e, nil
@@ -277,6 +300,61 @@ func ReadYAMLFromBlob(blob *git.Blob) (*map[string]interface{}, error) {
 	return result, nil
 }
 
+type SBMetadata struct {
+	Type string `json:"type"`
+	Data []byte `json:"data"`
+}
+
+type SB100 struct {
+	Format         string                         `json:"format"`
+	Meta           SB100Meta                      `json:"meta"`
+	Identification SB100Identification            `json:"identification"`
+	Languages      []SB100Language                `json:"languages"`
+	Type           SB100Type                      `json:"type"`
+	LocalizedNames *map[string]SB100LocalizedName `json:"localizedName"`
+	Metadata       *map[string]interface{}
+}
+
+type SB100Meta struct {
+	Version       string `json:"version"`
+	DefaultLocal  string `json:"defaultLocale"`
+	DateCreate    string `json:"dateCreated"`
+	Normalization string `json:"normalization:"`
+}
+
+type SB100Identification struct {
+	Name         SB100En `json:"name"`
+	Abbreviation SB100En `json:"abbreviation"`
+}
+
+type SB100En struct {
+	En string `json:"en"`
+}
+
+type SB100Language struct {
+	Tag  string  `json:"tag"`
+	Name SB100En `json:"name"`
+}
+
+type SB100Type struct {
+	FlavorType SB100FlavorType `json:"flavorType"`
+}
+
+type SB100FlavorType struct {
+	Name   string      `json:"name"`
+	Flavor SB100Flavor `json:"flavor"`
+}
+
+type SB100Flavor struct {
+	Name string `json:"name"`
+}
+
+type SB100LocalizedName struct {
+	Short SB100En `json:"short"`
+	Abbr  SB100En `json:"abbr"`
+	Long  SB100En `json:"long"`
+}
+
 type TcManifest struct {
 	TcVersion int `json:"tc_version"`
 	*TcTsManifest
@@ -332,6 +410,28 @@ func GetTsManifestFromBlob(blob *git.Blob) (*TsManifest, error) {
 		return nil, err
 	}
 	return t, nil
+}
+
+func GetSBDataFromBlob(blob *git.Blob) (*SB100, error) {
+	buf, err := ReadFileFromBlob(blob)
+	if err != nil {
+		return nil, err
+	}
+	var s *SBMetadata
+	err = json.Unmarshal(buf, s)
+	if err != nil {
+		return nil, err
+	}
+	var sb100 *SB100
+	err = json.Unmarshal(s.Data, sb100)
+	if err != nil {
+		return nil, err
+	}
+	err = json.Unmarshal(s.Data, sb100.Metadata)
+	if err != nil {
+		return nil, err
+	}
+	return sb100, nil
 }
 
 // ReadJSONFromBlob reads a json file from a blob and unmarshals it

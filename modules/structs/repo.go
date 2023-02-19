@@ -126,7 +126,7 @@ type Repository struct {
 	// checking level from the manifest
 	CheckingLevel int `json:"checking_level"` // DCS Customiations
 	// latest catalog entry of each stage
-	Catalog *CatalogStages `json:"catalog"` // DCS Customiations
+	CatalogStages *CatalogStages `json:"catalog"` // DCS Customiations
 	// content format
 	ContentFormat string `json:"content_format"` // DCS Customizaitons
 }

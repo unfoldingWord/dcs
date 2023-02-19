@@ -220,9 +220,9 @@ func GetMetadataTypeCond(types []string, partialMatch bool) builder.Cond {
 	typeCond := builder.NewCond()
 	for _, t := range types {
 		if partialMatch {
-			typeCond = typeCond.Or(builder.Like{"LOWER(`door43_metadata`.metadata_type)", strings.ToLower(t)})
+			typeCond = typeCond.Or(builder.Like{"`door43_metadata`.metadata_type", strings.ToLower(t)})
 		} else {
-			typeCond = typeCond.Or(builder.Eq{"LOWER(`door43_metadata`.metadata_type)": strings.ToLower(t)})
+			typeCond = typeCond.Or(builder.Eq{"`door43_metadata`.metadata_type": strings.ToLower(t)})
 		}
 	}
 	return typeCond

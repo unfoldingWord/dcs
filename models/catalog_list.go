@@ -134,16 +134,12 @@ func searchDoor43MetadataFieldByCondition(ctx context.Context, opts *door43metad
 		Where(cond).
 		OrderBy(field)
 
-	for _, orderBy := range opts.OrderBy {
-		sess.OrderBy(orderBy.String())
-	}
-
 	if opts.PageSize > 0 || opts.Page > 1 {
 		sess.Limit(opts.PageSize, (opts.Page-1)*opts.PageSize)
 	}
 	err = sess.Find(&results)
 	if err != nil {
-		return nil, fmt.Errorf("Find: %v", err)
+		return nil, fmt.Errorf("find: %v", err)
 	}
 
 	return results, nil
