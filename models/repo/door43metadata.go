@@ -41,31 +41,32 @@ func InitDoor43Metadata() error {
 
 // Door43Metadata represents the metadata of repository's release or default branch (ReleaseID = 0).
 type Door43Metadata struct {
-	ID                int64                            `xorm:"pk autoincr"`
-	RepoID            int64                            `xorm:"INDEX UNIQUE(n) NOT NULL"`
-	Repo              *Repository                      `xorm:"-"`
-	ReleaseID         int64                            `xorm:"INDEX UNIQUE(n)"`
-	Release           *Release                         `xorm:"-"`
-	BranchOrTag       string                           `xorm:"NOT NULL"`
-	CommitID          string                           `xorm:"VARCHAR(40) NOT NULL"`
-	Stage             door43metadata.Stage             `xorm:"NOT NULL"`
-	MetadataType      string                           `xorm:"NOT NULL"`
-	MetadataVersion   string                           `xorm:"NOT NULL"`
-	Resource          string                           `xorm:"NOT NULL"`
-	Subject           string                           `xorm:"NOT NULL"`
-	Title             string                           `xorm:"NOT NULL"`
-	Language          string                           `xorm:"NOT NULL"`
-	LanguageTitle     string                           `xorm:"NOT NULL"`
-	LanguageDirection string                           `xorm:"NOT NULL"`
-	LanguageIsGL      bool                             `xorm:"NOT NULL"`
-	ContentFormat     string                           `xorm:"NOT NULL"`
-	CheckingLevel     int                              `xorm:"NOT NULL"`
-	Projects          []*structs.Door43MetadataProject `xorm:"JSON NOT NULL"`
-	Metadata          *map[string]interface{}          `xorm:"JSON NOT NULL"`
+	ID                int64                `xorm:"pk autoincr"`
+	RepoID            int64                `xorm:"INDEX UNIQUE(n) NOT NULL"`
+	Repo              *Repository          `xorm:"-"`
+	ReleaseID         int64                `xorm:"INDEX UNIQUE(n)"`
+	Release           *Release             `xorm:"-"`
+	BranchOrTag       string               `xorm:"NOT NULL"`
+	CommitID          string               `xorm:"VARCHAR(40) NOT NULL"`
+	Stage             door43metadata.Stage `xorm:"NOT NULL"`
+	MetadataType      string
+	MetadataVersion   string
+	Resource          string
+	Subject           string
+	Title             string
+	Language          string
+	LanguageTitle     string
+	LanguageDirection string
+	LanguageIsGL      bool
+	ContentFormat     string
+	CheckingLevel     int
+	Projects          []*structs.Door43MetadataProject `xorm:"JSON"`
+	Metadata          *map[string]interface{}          `xorm:"JSON"`
 	ReleaseDateUnix   timeutil.TimeStamp               `xorm:"NOT NULL"`
 	CreatedUnix       timeutil.TimeStamp               `xorm:"INDEX created NOT NULL"`
 	UpdatedUnix       timeutil.TimeStamp               `xorm:"INDEX updated"`
 	Reprocess         bool                             `xorm:"DEFAULT 0"`
+	Latest            bool                             `xorm:"DEFAULT 0"`
 }
 
 func init() {
@@ -411,6 +412,17 @@ func (dm *Door43Metadata) GetReleaseCount() (int64, error) {
 		Count(&Door43Metadata{})
 }
 
+// GetLatestDoor43MetadatasByRepoID returns the latest Door43Metadatas for all stages (if a higher stage is newer than the lower)
+func GetLatestDoor43MetadatasByRepoID(repoID int64) ([]*Door43Metadata, error) {
+	return getLatestDoor43MetadatasByRepoID(db.GetEngine(db.DefaultContext), repoID)
+}
+
+func getLatestDoor43MetadatasByRepoID(e db.Engine, repoID int64) ([]*Door43Metadata, error) {
+	var dms []*Door43Metadata
+	err := e.Where("repo_id=? AND latest=?", repoID, true).OrderBy("release_date_unix ASC").Find(&dms)
+	return dms, err
+}
+
 // GetDoor43MetadataByRepoIDAndReleaseID returns the metadata of a given release ID (0 = default branch).
 func GetDoor43MetadataByRepoIDAndReleaseID(repoID, releaseID int64) (*Door43Metadata, error) {
 	return getDoor43MetadataByRepoIDAndReleaseID(db.GetEngine(db.DefaultContext), repoID, releaseID)
@@ -482,9 +494,14 @@ func getLatestPreProdCatalogMetadata(ctx context.Context, repoID int64, e db.Eng
 
 // GetDefaultBranchMetadata gets the default branch's Door43 Metadata.
 func GetDefaultBranchMetadata(repoID int64) (*Door43Metadata, error) {
-	dm, err := GetDoor43MetadataByRepoIDAndReleaseID(repoID, 0)
-	if err != nil && !IsErrDoor43MetadataNotExist(err) {
-		return nil, err
+	dm, err := GetDoor43MetadataByRepoIDAndReleaseID(repoID, -1)
+	if err != nil {
+		if !IsErrDoor43MetadataNotExist(err) {
+			dm, err = GetDoor43MetadataByRepoIDAndReleaseID(repoID, 0)
+		}
+		if err != nil && !IsErrDoor43MetadataNotExist(err) {
+			return nil, err
+		}
 	}
 	return dm, nil
 }

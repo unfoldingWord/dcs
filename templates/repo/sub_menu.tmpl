@@ -20,6 +20,10 @@
 			{{end}}
 			<!-- DCS Customizations -->
 			{{$dm := (GetDefaultBranchMetadata .Repository.ID)}}
+			{{$metadataType := ""}}
+			{{$metadataVersion := ""}}
+			{{$metadataTypeTitle := ""}}
+			{{$metadataTypeIconURL := ""}}
 			{{$lang := ""}}
 			{{$langTitle := ""}}
 			{{$langDir := ""}}
@@ -29,6 +33,10 @@
 				{{$langTitle = $dm.LanguageTitle}}
 				{{$langDir = $dm.LanguageDirection}}
 				{{$langIsGL = $dm.LanguageIsGL}}
+				{{$metadataType = $dm.MetadataType}}
+				{{$metadataVersion = $dm.MetadataVersion}}
+				{{$metadataTypeTitle = (GetMetadataTypeTitle $metadataType)}}
+				{{$metadataTypeIconURL = (GetMetadataTypeIconURL $metadataType)}}
 			{{else}}
 				{{$lang = (GetLanguageFromRepoName .Repository.Name)}}
 				{{if $lang}}
@@ -40,6 +48,11 @@
 			{{if $lang}}
 				<div class="item">
 					<a class="ui" href="{{AppSubUrl}}/explore/repos?q=lang:{{$lang}}" title="Is a{{if $langIsGL}} Gateway{{else}}n Other{{end}} Language"><i class="fa fa-language"></i> <span style="font-weight: bold"><span data-language="{{$lang}}" data-language-direction="{{$langDir}}">{{$langTitle}}</span> ({{$lang}}){{if $langIsGL}}*{{end}}</span></a>
+				</div>
+			{{end}}
+			{{if $metadataType}}
+				<div class="item">
+					<a class="ui" href="{{AppSubUrl}}/explore/repos?q=metadata_type:{{$metadataType}}" title="Metadata Type: {{$metadataTypeTitle}} v{{$metadataVersion}}">{{svg "octicon-briefcase"}} <span style="font-weight: bold">{{$metadataType}}{{$metadataVersion}}</span> <img src="{{$metadataTypeIconURL}}" style="height:16px;vertical-align:middle"/></a>
 				</div>
 			{{end}}
 			<!-- END DCS Customizations -->

@@ -12,7 +12,6 @@ import (
 	"code.gitea.io/gitea/models/perm"
 	repo_model "code.gitea.io/gitea/models/repo"
 	unit_model "code.gitea.io/gitea/models/unit"
-	"code.gitea.io/gitea/modules/dcs"
 	"code.gitea.io/gitea/modules/log"
 	api "code.gitea.io/gitea/modules/structs"
 )
@@ -106,56 +105,6 @@ func innerToRepo(repo *repo_model.Repository, mode perm.AccessMode, isParent boo
 
 	numReleases, _ := repo_model.GetReleaseCountByRepoID(repo.ID, repo_model.FindReleasesOptions{IncludeDrafts: false, IncludeTags: false})
 
-	/*** DCS Customizations ***/
-
-	// TODO: Load in Repository's LoadAttributes() function and save to repo.Metadata
-	dm, err := repo_model.GetDoor43MetadataByRepoIDAndReleaseID(repo.ID, 0)
-	if err != nil && !repo_model.IsErrDoor43MetadataNotExist(err) {
-		log.Error("GetDoor43MetadataByRepoIDAndReleaseID: %v", err)
-	}
-	// if metadata == nil {
-	// 	metadata, err = repo.GetLatestPreProdCatalogMetadata()
-	// 	if err != nil {
-	// 		log.Error("GetLatestPreProdCatalogMetadata: %v", err)
-	// 	}
-	// }
-
-	var language, languageTitle, languageDir, title, subject, contentFormat string
-	var checkingLevel int
-	var languageIsGL bool
-	var books []string
-	var alignmentCounts map[string]int
-	var projects []*api.Door43MetadataProject
-	if dm != nil {
-		title = dm.Title
-		subject = dm.Subject
-		language = dm.Language
-		languageDir = dm.LanguageDirection
-		if languageDir == "" && language != "" {
-			languageDir = dcs.GetLanguageDirection(language)
-		}
-		languageTitle = dm.LanguageTitle
-		if languageTitle == "" && language != "" {
-			languageTitle = dcs.GetLanguageTitle(language)
-		}
-		languageIsGL = dm.LanguageIsGL
-		books = dm.GetBooks()
-		alignmentCounts = dm.GetAlignmentCounts()
-		checkingLevel = dm.CheckingLevel
-		contentFormat = dm.ContentFormat
-		projects = dm.Projects
-	} else {
-		subject = dcs.GetSubjectFromRepoName(repo.LowerName)
-		language = dcs.GetLanguageFromRepoName(repo.LowerName)
-		languageTitle = dcs.GetLanguageTitle(language)
-		languageDir = dcs.GetLanguageDirection(language)
-		languageIsGL = dcs.LanguageIsGL(language)
-		if repo.PrimaryLanguage != nil {
-			contentFormat = repo.PrimaryLanguage.Language
-		}
-	}
-	/*** END DCS Customizations ***/
-
 	mirrorInterval := ""
 	var mirrorUpdated time.Time
 	if repo.IsMirror {
@@ -183,7 +132,7 @@ func innerToRepo(repo *repo_model.Repository, mode perm.AccessMode, isParent boo
 
 	repoAPIURL := repo.APIURL()
 
-	return &api.Repository{
+	return toRepoDCS(repo, &api.Repository{
 		ID:                            repo.ID,
 		Owner:                         ToUserWithAccessMode(repo.Owner, mode),
 		Name:                          repo.Name,
@@ -233,18 +182,7 @@ func innerToRepo(repo *repo_model.Repository, mode perm.AccessMode, isParent boo
 		MirrorInterval:                mirrorInterval,
 		MirrorUpdated:                 mirrorUpdated,
 		RepoTransfer:                  transfer,
-		Language:                      language,        // DCS Customization
-		LanguageTitle:                 languageTitle,   // DCS Customization
-		LanguageDir:                   languageDir,     // DCS Customization
-		LanguageIsGL:                  languageIsGL,    // DCS Customization
-		Title:                         title,           // DCS Customization
-		Subject:                       subject,         // DCS Customization
-		Books:                         books,           // DCS Customization
-		AlignmentCounts:               alignmentCounts, // DCS Customization
-		Projects:                      projects,        // DCS Customization
-		ContentFormat:                 contentFormat,   // DCS Customization
-		CheckingLevel:                 checkingLevel,   // DCS Customization
-	}
+	})
 }
 
 // ToRepoTransfer convert a models.RepoTransfer to a structs.RepeTransfer

@@ -35,7 +35,7 @@ func (m *metadataNotifier) NotifyNewRelease(rel *repo_model.Release) {
 		ctx, _, finished := process.GetManager().AddContext(graceful.GetManager().HammerContext(), fmt.Sprintf("metadataNotifier.NotifyNewRelease rel[%d]%s in [%d]", rel.ID, rel.Title, rel.RepoID))
 		defer finished()
 
-		if err := door43metadata_service.ProcessDoor43MetadataForRepoRelease(ctx, rel.Repo, rel); err != nil {
+		if err := door43metadata_service.ProcessDoor43MetadataForRepoRelease(ctx, rel.Repo, rel, rel.TagName); err != nil {
 			log.Error("ProcessDoor43MetadataForRepoRelease: %v\n", err)
 		}
 	}
@@ -46,7 +46,7 @@ func (m *metadataNotifier) NotifyUpdateRelease(doer *user_model.User, rel *repo_
 		ctx, _, finished := process.GetManager().AddContext(graceful.GetManager().HammerContext(), fmt.Sprintf("metadataNotifier.NotifyUpdateRelease rel[%d]%s in [%d]", rel.ID, rel.Title, rel.RepoID))
 		defer finished()
 
-		if err := door43metadata_service.ProcessDoor43MetadataForRepoRelease(ctx, rel.Repo, rel); err != nil {
+		if err := door43metadata_service.ProcessDoor43MetadataForRepoRelease(ctx, rel.Repo, rel, rel.TagName); err != nil {
 			log.Error("ProcessDoor43MetadataForRepoRelease: %v\n", err)
 		}
 	}
@@ -59,11 +59,11 @@ func (m *metadataNotifier) NotifyDeleteRelease(doer *user_model.User, rel *repo_
 }
 
 func (m *metadataNotifier) NotifyPushCommits(pusher *user_model.User, repo *repo_model.Repository, opts *repository.PushUpdateOptions, commits *repository.PushCommits) {
-	if strings.HasPrefix(opts.RefFullName, git.BranchPrefix) && strings.TrimPrefix(opts.RefFullName, git.BranchPrefix) == repo.DefaultBranch {
+	if strings.HasPrefix(opts.RefFullName, git.BranchPrefix) {
 		ctx, _, finished := process.GetManager().AddContext(graceful.GetManager().HammerContext(), fmt.Sprintf("metadataNotifier.NotifyPushCommits User: %s[%d] in %s[%d]", pusher.Name, pusher.ID, repo.FullName(), repo.ID))
 		defer finished()
 
-		if err := door43metadata_service.ProcessDoor43MetadataForRepoRelease(ctx, repo, nil); err != nil {
+		if err := door43metadata_service.ProcessDoor43MetadataForRepoRelease(ctx, repo, nil, strings.TrimPrefix(opts.RefFullName, git.BranchPrefix)); err != nil {
 			log.Info("ProcessDoor43MetadataForRepoRelease: %v\n", err)
 		}
 	}

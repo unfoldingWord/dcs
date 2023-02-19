@@ -5,7 +5,6 @@
 package dcs
 
 import (
-	"fmt"
 	"net/http"
 	"strings"
 	"time"
@@ -29,7 +28,6 @@ func GetLangNames() map[string]interface{} {
 				log.Error("Unable to decode langnames.json from tD: %v", err)
 			}
 			for _, value := range *langNamesArr {
-				fmt.Printf("\n\n\n\nvalue: %#v\n\n\n", value)
 				langNames[value["lc"].(string)] = value
 			}
 		}

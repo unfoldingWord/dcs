@@ -127,3 +127,20 @@ func ToCatalogEntry(dm *repo.Door43Metadata, mode perm.AccessMode) *api.CatalogE
 		ContentFormat:          dm.ContentFormat,
 	}
 }
+
+// ToCatalogStage converts a Door43Metadata to an api.CatalogStage
+func ToCatalogStage(dm *repo.Door43Metadata) *api.CatalogStage {
+	catalogStage := &api.CatalogStage{
+		Tag:         dm.BranchOrTag,
+		Released:    dm.ReleaseDateUnix.AsTime(),
+		ZipballURL:  dm.GetZipballURL(),
+		TarballURL:  dm.GetTarballURL(),
+		GitTreesURL: dm.GetGitTreesURL(),
+		ContentsURL: dm.GetContentsURL(),
+	}
+	if dm.GetReleaseURL() != "" {
+		url := dm.GetReleaseURL()
+		catalogStage.ReleaseURL = &url
+	}
+	return catalogStage
+}

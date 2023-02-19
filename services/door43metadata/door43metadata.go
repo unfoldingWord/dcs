@@ -86,7 +86,7 @@ func GenerateDoor43Metadata(x *xorm.Engine) error {
 				continue
 			}
 		}
-		if err = ProcessDoor43MetadataForRepoRelease(ctx, repo, release); err != nil {
+		if err = ProcessDoor43MetadataForRepoRelease(ctx, repo, release, release.TagName); err != nil {
 			continue
 		}
 	}
@@ -185,7 +185,7 @@ func ProcessDoor43MetadataForRepo(repo *repo_model.Repository) error {
 			releaseRef = release.TagName
 		}
 		log.Info("Processing Metadata for repo %s (%d), %s (%d)\n", repo.Name, repo.ID, releaseRef, releaseID)
-		if err = ProcessDoor43MetadataForRepoRelease(ctx, repo, release); err != nil {
+		if err = ProcessDoor43MetadataForRepoRelease(ctx, repo, release, release.TagName); err != nil {
 			log.Error("Error processing metadata for repo %s (%d), %s (%d): %v\n", repo.Name, repo.ID, releaseRef, releaseID, err)
 		} else {
 			log.Info("Processed Metadata for repo %s (%d), %s (%d)\n", repo.Name, repo.ID, releaseRef, releaseID)
@@ -323,6 +323,129 @@ func GetNewDoor43MetadataFromRCManifest(manifest *map[string]interface{}, repo *
 	}, nil
 }
 
+func GetNewDoor43MetadataFromSBData(sbData *base.SB100, repo *repo_model.Repository, commit *git.Commit) (*repo_model.Door43Metadata, error) {
+	var metadataType string
+	var metadataVersion string
+	subject := "unknown"
+	var resource string
+	var title string
+	var language string
+	var languageTitle string
+	var languageDirection string
+	var languageIsGL bool
+	var contentFormat string
+	checkingLevel := 1
+	var projects []*structs.Door43MetadataProject
+
+	// subject = (*data)["dublin_core"].(map[string]interface{})["subject"].(string)
+	// resource = (*data)["dublin_core"].(map[string]interface{})["identifier"].(string)
+	// title = (*data)["dublin_core"].(map[string]interface{})["title"].(string)
+	// language = (*data)["dublin_core"].(map[string]interface{})["language"].(map[string]interface{})["identifier"].(string)
+	// languageTitle = (*data)["dublin_core"].(map[string]interface{})["language"].(map[string]interface{})["title"].(string)
+	// languageDirection = dcs.GetLanguageDirection(language)
+	// languageIsGL = dcs.LanguageIsGL(language)
+	// var bookPath string
+	// for _, prod := range (*data)["projects"].([]interface{}) {
+	// 	bookPath = prod.(map[string]interface{})["path"].(string)
+	// 	project := structs.Door43MetadataProject{
+	// 		Identifier: prod.(map[string]interface{})["identifier"].(string),
+	// 		Title:      prod.(map[string]interface{})["title"].(string),
+	// 		Path:       bookPath,
+	// 	}
+	// 	if subject == "Aligned Bible" && strings.HasSuffix(bookPath, ".usfm") {
+	// 		count, _ := GetBookAlignmentCount(bookPath, commit)
+	// 		project.AlignmentCount = &count
+	// 	}
+	// 	projects = append(projects, &project)
+	// }
+	// if subject == "Bible" || subject == "Aligned Bible" || subject == "Greek New Testament" || subject == "Hebrew Old Testament" {
+	// 	contentFormat = "usfm"
+	// } else if strings.HasPrefix(subject, "TSV ") {
+	// 	if strings.HasPrefix(fmt.Sprintf("./%s_", resource), bookPath) {
+	// 		contentFormat = "tsv7"
+	// 	} else {
+	// 		contentFormat = "tsv9"
+	// 	}
+	// } else if repo.PrimaryLanguage != nil {
+	// 	contentFormat = strings.ToLower(repo.PrimaryLanguage.Language)
+	// } else {
+	// 	contentFormat = "markdown"
+	// }
+	// var ok bool
+	// checkingLevel, ok = (*data)["checking"].(map[string]interface{})["checking_level"].(int)
+	// if !ok {
+	// 	cL, ok := (*data)["checking"].(map[string]interface{})["checking_level"].(string)
+	// 	if !ok {
+	// 		checkingLevel = 1
+	// 	} else {
+	// 		var err error
+	// 		checkingLevel, err = strconv.Atoi(cL)
+	// 		if err != nil {
+	// 			checkingLevel = 1
+	// 		}
+	// 	}
+	// }
+
+	metadataType = "sb"
+	metadataVersion = sbData.Meta.Version
+	title = sbData.Identification.Name.En
+
+	switch sbData.Type.FlavorType.Name {
+	case "scripture":
+		subject = "Bible"
+		resource = strings.ToLower(sbData.Identification.Abbreviation.En)
+		contentFormat = "usfm"
+		if sbData.LocalizedNames != nil {
+			for book, ln := range *sbData.LocalizedNames {
+				projects = append(projects, &structs.Door43MetadataProject{
+					Identifier: book,
+					Title:      ln.Short.En,
+					Path:       "./ingredients/" + book + ".usfm",
+				})
+			}
+		}
+	case "gloss":
+		switch sbData.Type.FlavorType.Name {
+		case "textStories":
+			subject = "Open Bible Stories"
+			resource = "obs"
+			contentFormat = "markdown"
+			projects = append(projects, &structs.Door43MetadataProject{
+				Identifier: "obs",
+				Title:      title,
+				Path:       "./ingredients",
+			})
+		}
+	}
+
+	if len(sbData.Languages) > 0 {
+		language = sbData.Languages[0].Tag
+		languageTitle = dcs.GetLanguageTitle(language)
+		if languageTitle == "" {
+			languageTitle = sbData.Languages[0].Name.En
+		}
+		languageDirection = dcs.GetLanguageDirection(language)
+		languageIsGL = dcs.LanguageIsGL(language)
+	}
+
+	return &repo_model.Door43Metadata{
+		RepoID:            repo.ID,
+		MetadataType:      metadataType,
+		MetadataVersion:   metadataVersion,
+		Subject:           subject,
+		Title:             title,
+		Resource:          resource,
+		Language:          language,
+		LanguageTitle:     languageTitle,
+		LanguageDirection: languageDirection,
+		LanguageIsGL:      languageIsGL,
+		ContentFormat:     contentFormat,
+		CheckingLevel:     checkingLevel,
+		Projects:          projects,
+		Metadata:          sbData.Metadata,
+	}, nil
+}
+
 func GetNewRCDoor43Metadata(repo *repo_model.Repository, commit *git.Commit) (*repo_model.Door43Metadata, error) {
 	var manifest *map[string]interface{}
 
@@ -337,7 +460,7 @@ func GetNewRCDoor43Metadata(repo *repo_model.Repository, commit *git.Commit) (*r
 	if err != nil {
 		return nil, err
 	}
-	validationResult, err := base.ValidateBlobByRC020Schema(manifest)
+	validationResult, err := base.ValidateMapByRC020Schema(manifest)
 	if err != nil {
 		return nil, err
 	}
@@ -364,9 +487,9 @@ func GetNewTcOrTsDoor43Metadata(repo *repo_model.Repository, commit *git.Commit)
 	var bookPath string
 	var contentFormat string
 	var count int
-	if tcManifest, err := base.GetTcManifestFromBlob(blob); err != nil || tcManifest == nil {
+	if tcManifest, err := base.GetTcManifestFromBlob(blob); err != nil || tcManifest == nil || tcManifest.TcVersion == 0 {
 		tsManifest, err := base.GetTsManifestFromBlob(blob)
-		if err != nil || tsManifest == nil {
+		if err != nil || tsManifest == nil || tsManifest.PackageVersion == 0 {
 			return nil, err
 		}
 		metadataType = "ts"
@@ -399,7 +522,7 @@ func GetNewTcOrTsDoor43Metadata(repo *repo_model.Repository, commit *git.Commit)
 		return nil, err
 	}
 
-	resource := tcTsManifest.Resource.ID
+	resource := strings.ToLower(tcTsManifest.Resource.ID)
 	title := tcTsManifest.Resource.Name
 	language := tcTsManifest.TargetLanguage.ID
 	languageTitle := tcTsManifest.TargetLanguage.Name
@@ -437,8 +560,35 @@ func GetNewTcOrTsDoor43Metadata(repo *repo_model.Repository, commit *git.Commit)
 	return dm, nil
 }
 
+func GetNewSBDoor43Metadata(repo *repo_model.Repository, commit *git.Commit) (*repo_model.Door43Metadata, error) {
+	blob, err := commit.GetBlobByPath("metadata.json")
+	if err != nil {
+		return nil, err
+	}
+	if blob == nil {
+		return nil, nil
+	}
+	sbData, err := base.GetSBDataFromBlob(blob)
+	if err != nil {
+		return nil, err
+	}
+	// validationResult, err := base.ValidateDataBySB100Schema(sbData)
+	// if err != nil {
+	// 	fmt.Printf("==========>\n\nERR VALIDATING!!! %#v\n\n", err)
+	// 	return nil, err
+	// }
+	// if validationResult != nil {
+	// 	log.Warn("%s: metadata.json's 'data' is not valid. see errors:", repo.FullName())
+	// 	log.Warn(base.ConvertValidationErrorToString(validationResult))
+	// 	return nil, fmt.Errorf("metadata.json's 'data' is not valid")
+	// }
+	// log.Info("%s: metadata.json's 'data' is valid.", repo.FullName())
+
+	return GetNewDoor43MetadataFromSBData(sbData, repo, commit)
+}
+
 // ProcessDoor43MetadataForRepoRelease handles the metadata for a given repo by release based on if the container is a valid RC or not
-func ProcessDoor43MetadataForRepoRelease(ctx context.Context, repo *repo_model.Repository, release *repo_model.Release) (err error) {
+func ProcessDoor43MetadataForRepoRelease(ctx context.Context, repo *repo_model.Repository, release *repo_model.Release, branchOrTag string) (err error) {
 	if repo == nil {
 		return fmt.Errorf("no repository provided")
 	}
@@ -457,11 +607,9 @@ func ProcessDoor43MetadataForRepoRelease(ctx context.Context, repo *repo_model.R
 	var stage door43metadata.Stage
 	var commit *git.Commit
 	var releaseDateUnix timeutil.TimeStamp
-	var branchOrTag string
 	var commitID string
 
 	if release == nil {
-		branchOrTag = repo.DefaultBranch
 		stage = door43metadata.StageLatest
 		commitID, err = gitRepo.GetBranchCommitID(branchOrTag)
 		if err != nil {
@@ -480,7 +628,6 @@ func ProcessDoor43MetadataForRepoRelease(ctx context.Context, repo *repo_model.R
 		}
 
 		if !release.IsDraft {
-			branchOrTag = release.TagName
 			releaseDateUnix = release.CreatedUnix
 			commitID, err = gitRepo.GetTagCommitID(branchOrTag)
 			if err != nil {
@@ -495,15 +642,18 @@ func ProcessDoor43MetadataForRepoRelease(ctx context.Context, repo *repo_model.R
 		}
 	}
 
-	oldDm, err := repo_model.GetDoor43MetadataByRepoIDAndReleaseID(repo.ID, releaseID)
-	if err != nil && !repo_model.IsErrDoor43MetadataNotExist(err) {
-		return err
+	var oldDM *repo_model.Door43Metadata
+	if release != nil || branchOrTag == repo.DefaultBranch {
+		oldDM, err = repo_model.GetDoor43MetadataByRepoIDAndReleaseID(repo.ID, releaseID)
+		if err != nil && !repo_model.IsErrDoor43MetadataNotExist(err) {
+			return err
+		}
 	}
-	if oldDm != nil && oldDm.Stage == door43metadata.StageDraft {
+	if oldDM != nil && (oldDM.Stage == door43metadata.StageDraft || oldDM.Stage == door43metadata.StageLatest) {
 		defer func() {
 			if err != nil {
-				// There was a proble updating the draft release, so we want to invalidated it by deleting it.
-				_ = repo_model.DeleteDoor43Metadata(oldDm)
+				// There was a problem updating the draft release or default branch, so we want to invalidated it by deleting it.
+				_ = repo_model.DeleteDoor43Metadata(oldDM)
 			}
 		}()
 	}
@@ -518,50 +668,94 @@ func ProcessDoor43MetadataForRepoRelease(ctx context.Context, repo *repo_model.R
 		releaseDateUnix = timeutil.TimeStamp(commit.Author.When.Unix())
 	}
 
-	dm, err := GetNewRCDoor43Metadata(repo, commit)
-	if err != nil && !git.IsErrNotExist(err) {
+	// Check for SB (Scripture Burrito)
+	dm, err := GetNewSBDoor43Metadata(repo, commit)
+	if err != nil && !git.IsErrNotExist((err)) {
 		return err
 	}
+
+	// Check for RC (Resource Container)
+
+	// Check for TC or TS
 	if dm == nil {
-		// Didn't get a RC DM so we try for a TC/TS DM
 		dm, err = GetNewTcOrTsDoor43Metadata(repo, commit)
-		if err != nil || dm == nil {
+		if err != nil && !git.IsErrNotExist(err) {
 			return err
 		}
 	}
+
+	// Check for RC
+	if dm == nil {
+		dm, err = GetNewRCDoor43Metadata(repo, commit)
+		if err != nil {
+			return err
+		}
+	}
+
 	dm.BranchOrTag = branchOrTag
 	dm.CommitID = commitID
 	dm.Release = release
 	dm.ReleaseID = releaseID
 	dm.ReleaseDateUnix = releaseDateUnix
 	dm.Stage = stage
+	dm.Latest = true // set true by default
 
-	if oldDm != nil {
-		dm.ID = oldDm.ID
-		err = repo_model.UpdateDoor43Metadata(dm)
+	if dm.ReleaseID > 0 {
+		latestDMs, err := repo_model.GetLatestDoor43MetadatasByRepoID(repo.ID)
 		if err != nil {
 			return err
 		}
-	} else {
-		err = repo_model.InsertDoor43Metadata(dm)
-		if err != nil {
-			return err
+		if len(latestDMs) > 0 {
+			for _, latestDM := range latestDMs {
+				if latestDM.ReleaseID > 0 {
+					if dm.ReleaseDateUnix >= latestDM.ReleaseDateUnix && dm.Stage <= latestDM.Stage {
+						latestDM.Latest = false
+						err = repo_model.UpdateDoor43MetadataCols(latestDM, "latest")
+						if err != nil {
+							return err
+						}
+					}
+					if dm.ReleaseDateUnix < latestDM.ReleaseDateUnix && dm.Stage >= latestDM.Stage {
+						dm.Latest = false
+					}
+				}
+			}
 		}
 	}
 
+	if release != nil || branchOrTag == repo.DefaultBranch {
+		if oldDM != nil {
+			dm.ID = oldDM.ID
+			err = repo_model.UpdateDoor43Metadata(dm)
+			if err != nil {
+				return err
+			}
+		} else {
+			err = repo_model.InsertDoor43Metadata(dm)
+			if err != nil {
+				return err
+			}
+		}
+	}
+
+	// Insert or Update the repo entry of StageRepo (4) and ReleaseID of -1
 	if releaseID == 0 {
-		dm.ReleaseID = -1
+		dm.ReleaseID = -1 // Need to set this to -1 so it is unique to the master branch, which is 0
+		dm.Stage = door43metadata.StageRepo
+		dm.Latest = false
 		// master branch was processed, so we make or update another entry with Stage = Repo and releaseID = -1 so we always retain repo metadata if master goes bad
-		oldDm, err = repo_model.GetDoor43MetadataByRepoIDAndReleaseID(repo.ID, -1)
+		oldDM, err = repo_model.GetDoor43MetadataByRepoIDAndStage(repo.ID, door43metadata.StageRepo)
 		if err != nil && !repo_model.IsErrDoor43MetadataNotExist(err) {
 			return err
 		}
-		if oldDm != nil {
-			dm.ID = oldDm.ID
-			return repo_model.UpdateDoor43Metadata(dm)
+		if oldDM == nil || oldDM.BranchOrTag == branchOrTag {
+			if oldDM != nil {
+				dm.ID = oldDM.ID
+				return repo_model.UpdateDoor43Metadata(dm)
+			}
+			dm.ID = 0
+			return repo_model.InsertDoor43Metadata(dm)
 		}
-		dm.ID = 0
-		return repo_model.InsertDoor43Metadata(dm)
 	}
 	return nil
 }

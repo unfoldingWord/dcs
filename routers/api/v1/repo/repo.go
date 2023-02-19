@@ -579,7 +579,7 @@ func Get(ctx *context.APIContext) {
 		return
 	}
 
-	ctx.JSON(http.StatusOK, convert.ToRepoDCS(ctx.Repo.Repository, ctx.Repo.AccessMode)) // DCS Customizations
+	ctx.JSON(http.StatusOK, convert.ToRepo(ctx.Repo.Repository, ctx.Repo.AccessMode))
 }
 
 // GetByID returns a single Repository
@@ -618,7 +618,7 @@ func GetByID(ctx *context.APIContext) {
 		ctx.NotFound()
 		return
 	}
-	ctx.JSON(http.StatusOK, convert.ToRepoDCS(repo, perm.AccessMode)) // DCS Customizations
+	ctx.JSON(http.StatusOK, convert.ToRepo(repo, perm.AccessMode)) // DCS Customizations
 }
 
 // Edit edit repository properties
@@ -680,7 +680,7 @@ func Edit(ctx *context.APIContext) {
 		return
 	}
 
-	ctx.JSON(http.StatusOK, convert.ToRepoDCS(repo, ctx.Repo.AccessMode)) // DCS Customizations
+	ctx.JSON(http.StatusOK, convert.ToRepo(repo, ctx.Repo.AccessMode)) // DCS Customizations
 }
 
 // updateBasicProperties updates the basic properties of a repo: Name, Description, Website and Visibility
