@@ -688,7 +688,11 @@ func ProcessDoor43MetadataForRepoRelease(ctx context.Context, repo *repo_model.R
 	if dm == nil {
 		dm, err = GetNewRCDoor43Metadata(repo, commit)
 		if err != nil {
-			return err
+			if !git.IsErrNotExist(err) {
+				return err
+			} else {
+				return nil // nothing to process, not a SB, TC, TS nor RC repo
+			}
 		}
 	}
 
