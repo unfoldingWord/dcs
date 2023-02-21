@@ -487,8 +487,16 @@ func GetNewTcOrTsDoor43Metadata(repo *repo_model.Repository, commit *git.Commit)
 	var bookPath string
 	var contentFormat string
 	var count int
-	if tcManifest, err := base.GetTcManifestFromBlob(blob); err != nil || tcManifest == nil || tcManifest.TcVersion < 7 {
+
+	tcManifest, err := base.GetTcManifestFromBlob(blob)
+	if tcManifest != nil && err == nil {
+		log.Info("%s: this is the version: %d\n\n", repo.FullName(), tcManifest.TcVersion)
+	}
+	if err != nil || tcManifest == nil || tcManifest.TcVersion < 7 {
 		tsManifest, err := base.GetTsManifestFromBlob(blob)
+		if tsManifest != nil && err == nil {
+			log.Info("%s: this is the tS version: %d\n\n", repo.FullName(), tsManifest.PackageVersion)
+		}
 		if err != nil || tsManifest == nil || tsManifest.PackageVersion < 6 {
 			return nil, err
 		}
