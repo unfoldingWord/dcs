@@ -503,6 +503,9 @@ func GetNewTcOrTsDoor43Metadata(repo *repo_model.Repository, commit *git.Commit)
 			subject = "Bible"
 		}
 	} else {
+		if tcManifest.TcVersion < 6 {
+			return nil, nil
+		}
 		metadataType = "tc"
 		metadataVersion = strconv.Itoa(tcManifest.TcVersion)
 		tcTsManifest = tcManifest.TcTsManifest
