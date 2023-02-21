@@ -798,7 +798,11 @@ func searchCatalog(ctx *context.APIContext) {
 		if ctx.Repo != nil && ctx.Repo.Repository != nil {
 			dm.Repo = ctx.Repo.Repository
 		} else {
-			dm.LoadAttributes()
+			err := dm.LoadAttributes()
+			if err != nil {
+				ctx.Error(http.StatusUnprocessableEntity, "", fmt.Errorf("invalid Door43Metadata entry, id: %d", dm.ID))
+				return
+			}
 		}
 		accessMode, err := access_model.AccessLevel(ctx.ContextUser, dm.Repo)
 		if err != nil {
