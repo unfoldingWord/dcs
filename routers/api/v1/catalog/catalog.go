@@ -795,7 +795,11 @@ func searchCatalog(ctx *context.APIContext) {
 	results := make([]*api.CatalogEntry, len(dms))
 	var lastUpdated time.Time
 	for i, dm := range dms {
-		dm.Repo = ctx.Repo.Repository
+		if ctx.Repo != nil && ctx.Repo.Repository != nil {
+			dm.Repo = ctx.Repo.Repository
+		} else {
+			dm.LoadAttributes()
+		}
 		accessMode, err := access_model.AccessLevel(ctx.ContextUser, dm.Repo)
 		if err != nil {
 			ctx.JSON(http.StatusInternalServerError, api.SearchError{
