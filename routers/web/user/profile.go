@@ -42,13 +42,6 @@ func Profile(ctx *context.Context) {
 		return
 	}
 
-	/*** DCS Customizaitons ***/
-	if !ctx.IsSigned {
-		ctx.NotFound("user", fmt.Errorf(ctx.ContextUser.Name))
-		return
-	}
-	/*** END DCS Customizaitons ***/
-
 	// check view permissions
 	if !user_model.IsUserVisibleToViewer(ctx, ctx.ContextUser, ctx.Doer) {
 		ctx.NotFound("user", fmt.Errorf(ctx.ContextUser.Name))
