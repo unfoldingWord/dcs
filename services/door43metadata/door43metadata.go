@@ -487,7 +487,7 @@ func GetNewTcOrTsDoor43Metadata(repo *repo_model.Repository, commit *git.Commit)
 	var bookPath string
 	var contentFormat string
 	var count int
-	if tcManifest, err := base.GetTcManifestFromBlob(blob); err != nil || tcManifest == nil || tcManifest.TcVersion < 6 {
+	if tcManifest, err := base.GetTcManifestFromBlob(blob); err != nil || tcManifest == nil || tcManifest.TcVersion < 7 {
 		tsManifest, err := base.GetTsManifestFromBlob(blob)
 		if err != nil || tsManifest == nil || tsManifest.PackageVersion < 6 {
 			return nil, err
@@ -503,9 +503,6 @@ func GetNewTcOrTsDoor43Metadata(repo *repo_model.Repository, commit *git.Commit)
 			subject = "Bible"
 		}
 	} else {
-		if tcManifest.TcVersion < 6 {
-			return nil, nil
-		}
 		metadataType = "tc"
 		metadataVersion = strconv.Itoa(tcManifest.TcVersion)
 		tcTsManifest = tcManifest.TcTsManifest
