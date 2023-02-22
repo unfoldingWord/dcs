@@ -125,6 +125,7 @@ func ToCatalogEntry(dm *repo.Door43Metadata, mode perm.AccessMode) *api.CatalogE
 		MetadataAPIContentsURL: dm.GetMetadataAPIContentsURL(),
 		Ingredients:            ingredients,
 		ContentFormat:          dm.ContentFormat,
+		Projects:               dm.Projects,
 	}
 }
 
