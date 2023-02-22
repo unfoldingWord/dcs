@@ -482,45 +482,25 @@ func GetNewTcOrTsDoor43Metadata(repo *repo_model.Repository, commit *git.Commit)
 	log.Info("%s: manifest.json exists so might be a tC or tS repo", repo.FullName())
 	var metadataType string
 	var metadataVersion string
-	var tcTsManifest *base.TcTsManifest
 	var subject string
 	var bookPath string
 	var contentFormat string
 	var count int
 
-	tcManifest, err := base.GetTcManifestFromBlob(blob)
-	if tcManifest != nil && err == nil {
-		log.Info("%s: this is the version: %d\n\n", repo.FullName(), tcManifest.TcVersion)
+	t, err := base.GetTcTsManifestFromBlob(blob)
+	if err != nil || t == nil {
+		return nil, err
 	}
-	if err != nil || tcManifest == nil || tcManifest.TcVersion < 7 {
-		tsManifest, err := base.GetTsManifestFromBlob(blob)
-		if tsManifest != nil && err == nil {
-			log.Info("%s: this is the tS version: %d\n\n", repo.FullName(), tsManifest.PackageVersion)
-		}
-		if err != nil || tsManifest == nil || tsManifest.PackageVersion < 6 {
-			return nil, err
-		}
-		metadataType = "ts"
-		metadataVersion = strconv.Itoa(tsManifest.PackageVersion)
-		tcTsManifest = tsManifest.TcTsManifest
+	if t.MetadataType == "ts" {
 		bookPath = "."
 		contentFormat = "text"
-		if tsManifest.Resource.ID == "obs" {
-			subject = "Open Bible Stories"
-		} else {
-			subject = "Bible"
-		}
 	} else {
-		metadataType = "tc"
-		metadataVersion = strconv.Itoa(tcManifest.TcVersion)
-		tcTsManifest = tcManifest.TcTsManifest
-		subject = "Aligned Bible"
-		contentFormat = "usfm"
 		bookPath = "./" + repo.Name + ".usfm"
 		count, _ = GetBookAlignmentCount(bookPath, commit)
+		contentFormat = "usfm"
 	}
 
-	if !dcs.BookIsValid(tcTsManifest.Project.ID) {
+	if !dcs.BookIsValid(t.Project.ID) {
 		return nil, fmt.Errorf("%s does not have a valid book in its manifest.json", repo.FullName())
 	}
 
@@ -530,29 +510,19 @@ func GetNewTcOrTsDoor43Metadata(repo *repo_model.Repository, commit *git.Commit)
 		return nil, err
 	}
 
-	resource := strings.ToLower(tcTsManifest.Resource.ID)
-	title := tcTsManifest.Resource.Name
-	if title == "" {
-		title = strings.ToUpper(tcTsManifest.Resource.ID)
-	}
-	if strings.ToLower(tcTsManifest.Resource.ID) != "obs" && tcTsManifest.Project.Name != "" && !strings.Contains(strings.ToLower(title), strings.ToLower(tcTsManifest.Project.Name)) {
-		title = tcTsManifest.Project.Name + " " + title
-	}
-	language := tcTsManifest.TargetLanguage.ID
-	languageTitle := tcTsManifest.TargetLanguage.Name
-	languageDirection := tcTsManifest.TargetLanguage.Direction
+	resource := strings.ToLower(t.Resource.ID)
+	title := t.Title
+	language := t.TargetLanguage.ID
+	languageTitle := t.TargetLanguage.Name
+	languageDirection := t.TargetLanguage.Direction
 	languageIsGL := dcs.LanguageIsGL(language)
 	checkingLevel := 1
 	projects := []*structs.Door43MetadataProject{{
-		Identifier:     tcTsManifest.Project.ID,
-		Title:          tcTsManifest.Project.Name,
+		Identifier:     t.Project.ID,
+		Title:          t.Project.Name,
 		Path:           bookPath,
 		AlignmentCount: &count,
 	}}
-
-	if checkingLevel < 1 || checkingLevel > 3 {
-		checkingLevel = 1
-	}
 
 	dm := &repo_model.Door43Metadata{
 		RepoID:            repo.ID,
