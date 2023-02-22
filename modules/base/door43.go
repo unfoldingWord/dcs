@@ -12,6 +12,7 @@ import (
 	"io"
 	"net/http"
 	"sort"
+	"strconv"
 	"strings"
 
 	"code.gitea.io/gitea/modules/charset"
@@ -355,19 +356,20 @@ type SB100LocalizedName struct {
 	Long  SB100En `json:"long"`
 }
 
-type TcManifest struct {
-	TcVersion int `json:"tc_version"`
-	*TcTsManifest
-}
-
-type TsManifest struct {
-	PackageVersion int `json:"package_version"`
-	*TcTsManifest
-}
-
+// tc v7: https://git.door43.org/qa99/en_ult_rom_book/raw/branch/master/manifest.json
+// tc v8: https://git.door43.org/pjoakes/en_ust_2co_book/src/branch/master/manifest.json
+// ts v3: https://git.door43.org/test2/uw-obs-aas/src/branch/master/manifest.json
+// ts v5: https://git.door43.org/69c530493aab80e7/uw-mrk-lol/raw/branch/master/manifest.json
+// ts v6: https://git.door43.org/Sitorabi/def_obs_text_obs/src/branch/master/manifest.json
 type TcTsManifest struct {
-	Format         string `json:"format"`
-	TargetLanguage struct {
+	TcVersion       int    `json:"tc_version"`      // for tC
+	TsVersion       int    `json:"package_version"` // for tS
+	MetadataVersion string // To be filled in below
+	MetadataType    string // To Be filled in below
+	Format          string `json:"format"`
+	Subject         string // To be filled in below
+	Title           string // To be filled in below
+	TargetLanguage  struct {
 		ID        string `json:"id"`
 		Name      string `json:"name"`
 		Direction string `json:"direction"`
@@ -376,7 +378,8 @@ type TcTsManifest struct {
 		ID   string `json:"id"`
 		Name string `json:"name"`
 	} `json:"type"`
-	Resource struct {
+	ResourceID string `json:"resource_id"` // for tS package_version < 5
+	Resource   *struct {
 		ID   string `json:"id"`
 		Name string `json:"name"`
 	} `json:"resource"`
@@ -386,29 +389,44 @@ type TcTsManifest struct {
 	}
 }
 
-func GetTcManifestFromBlob(blob *git.Blob) (*TcManifest, error) {
+func GetTcTsManifestFromBlob(blob *git.Blob) (*TcTsManifest, error) {
 	buf, err := ReadFileFromBlob(blob)
 	if err != nil {
 		return nil, err
 	}
-	t := &TcManifest{}
+	t := &TcTsManifest{}
 	err = json.Unmarshal(buf, t)
 	if err != nil {
 		return nil, err
 	}
-	return t, nil
-}
+	if t.TcVersion >= 7 {
+		t.MetadataVersion = strconv.Itoa(t.TcVersion)
+		t.MetadataType = "tc"
+		t.Format = "usfm"
+		t.Subject = "Aligned Bible"
+	} else if t.TsVersion >= 3 {
+		t.MetadataVersion = strconv.Itoa(t.TsVersion)
+		t.MetadataType = "ts"
+		if t.Resource.ID == "" {
+			t.Resource.ID = t.ResourceID
+		}
+		if t.Resource.Name == "" {
+			t.Resource.Name = strings.ToUpper(t.Resource.ID)
+		}
+		if t.Resource.ID == "obs" {
+			t.Subject = "Open Bible Stories"
+		} else {
+			t.Subject = "Bible"
+		}
+	} else {
+		return nil, nil
+	}
 
-func GetTsManifestFromBlob(blob *git.Blob) (*TsManifest, error) {
-	buf, err := ReadFileFromBlob(blob)
-	if err != nil {
-		return nil, err
+	t.Title = t.Resource.Name
+	if strings.ToLower(t.Resource.ID) != "obs" && t.Project.Name != "" && !strings.Contains(strings.ToLower(t.Title), strings.ToLower(t.Project.Name)) {
+		t.Title = t.Project.Name + " " + t.Title
 	}
-	t := &TsManifest{}
-	err = json.Unmarshal(buf, t)
-	if err != nil {
-		return nil, err
-	}
+
 	return t, nil
 }
 
