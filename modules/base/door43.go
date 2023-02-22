@@ -372,11 +372,11 @@ type TcTsManifest struct {
 		Name      string `json:"name"`
 		Direction string `json:"direction"`
 	} `json:"target_language"`
-	Type *struct {
+	Type struct {
 		ID   string `json:"id"`
 		Name string `json:"name"`
 	} `json:"type"`
-	Resource *struct {
+	Resource struct {
 		ID   string `json:"id"`
 		Name string `json:"name"`
 	} `json:"resource"`
