@@ -379,7 +379,7 @@ type TcTsManifest struct {
 		Name string `json:"name"`
 	} `json:"type"`
 	ResourceID string `json:"resource_id"` // for tS package_version < 5
-	Resource   *struct {
+	Resource   struct {
 		ID   string `json:"id"`
 		Name string `json:"name"`
 	} `json:"resource"`
