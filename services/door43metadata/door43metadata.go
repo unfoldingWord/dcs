@@ -535,6 +535,9 @@ func GetNewTcOrTsDoor43Metadata(repo *repo_model.Repository, commit *git.Commit)
 	if title == "" {
 		title = tcTsManifest.Resource.ID
 	}
+	if strings.ToLower(tcTsManifest.Resource.ID) != "obs" && tcTsManifest.Project.Name != "" && !strings.Contains(strings.ToLower(title), strings.ToLower(tcTsManifest.Project.Name)) {
+		title += " - " + tcTsManifest.Project.Name
+	}
 	language := tcTsManifest.TargetLanguage.ID
 	languageTitle := tcTsManifest.TargetLanguage.Name
 	languageDirection := tcTsManifest.TargetLanguage.Direction
