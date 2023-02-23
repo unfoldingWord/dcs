@@ -60,13 +60,13 @@ type Door43Metadata struct {
 	LanguageIsGL      bool
 	ContentFormat     string
 	CheckingLevel     int
-	Projects          []*structs.Door43MetadataProject `xorm:"JSON"`
-	Metadata          *map[string]interface{}          `xorm:"JSON"`
-	ReleaseDateUnix   timeutil.TimeStamp               `xorm:"NOT NULL"`
-	CreatedUnix       timeutil.TimeStamp               `xorm:"INDEX created NOT NULL"`
-	UpdatedUnix       timeutil.TimeStamp               `xorm:"INDEX updated"`
-	Reprocess         bool                             `xorm:"DEFAULT 0"`
-	Latest            bool                             `xorm:"DEFAULT 0"`
+	Ingredients       []*structs.Ingredient   `xorm:"JSON"`
+	Metadata          *map[string]interface{} `xorm:"JSON"`
+	ReleaseDateUnix   timeutil.TimeStamp      `xorm:"NOT NULL"`
+	CreatedUnix       timeutil.TimeStamp      `xorm:"INDEX created NOT NULL"`
+	UpdatedUnix       timeutil.TimeStamp      `xorm:"INDEX updated"`
+	Reprocess         bool                    `xorm:"DEFAULT 0"`
+	Latest            bool                    `xorm:"DEFAULT 0"`
 }
 
 func init() {
@@ -207,9 +207,9 @@ func (dm *Door43Metadata) GetContentsURL() string {
 // GetBooks get the books of the manifest
 func (dm *Door43Metadata) GetBooks() []string {
 	var books []string
-	if len(dm.Projects) > 0 {
-		for _, prod := range dm.Projects {
-			books = append(books, prod.Identifier)
+	if len(dm.Ingredients) > 0 {
+		for _, ing := range dm.Ingredients {
+			books = append(books, ing.Identifier)
 		}
 	}
 	return books
@@ -217,10 +217,10 @@ func (dm *Door43Metadata) GetBooks() []string {
 
 func (dm *Door43Metadata) GetAlignmentCounts() map[string]int {
 	counts := map[string]int{}
-	if len(dm.Projects) > 0 {
-		for _, prod := range dm.Projects {
-			if prod.AlignmentCount != nil {
-				counts[prod.Identifier] = *prod.AlignmentCount
+	if len(dm.Ingredients) > 0 {
+		for _, ing := range dm.Ingredients {
+			if ing.AlignmentCount != nil {
+				counts[ing.Identifier] = *ing.AlignmentCount
 			}
 		}
 	}
