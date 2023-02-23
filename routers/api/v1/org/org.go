@@ -218,8 +218,8 @@ func GetAll(ctx *context.APIContext) {
 		OrderBy:     db.SearchUserOrderByAlphabetically,
 		Visible:     vMode,
 		/*** DCS Customizations ***/
-		RepoLanguages: ctx.FormStrings("lang"),
-		RepoSubjects: ctx.FormStrings("subject"),
+		RepoLanguages:     ctx.FormStrings("lang"),
+		RepoSubjects:      ctx.FormStrings("subject"),
 		RepoMetadataTypes: ctx.FormStrings("metadata_type"),
 		/*** END DCS Customizations ***/
 	})

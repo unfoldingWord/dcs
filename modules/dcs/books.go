@@ -6,7 +6,7 @@ package dcs
 
 import "strconv"
 
-var BookNames = map[string]string{
+var BookNames = map[string]string{ //nolint
 	"frt": "Front Matter",
 	"bak": "Back Matter",
 	"gen": "Genesis",
@@ -78,7 +78,7 @@ var BookNames = map[string]string{
 	"obs": "Open Bible Stories",
 }
 
-var BookNumbers = map[string]string{
+var BookNumbers = map[string]string{ //nolint
 	"frt": "A0",
 	"bak": "B0",
 	"gen": "01",
