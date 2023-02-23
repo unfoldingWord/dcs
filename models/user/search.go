@@ -35,8 +35,8 @@ type SearchUserOptions struct {
 	IsProhibitLogin    util.OptionalBool
 
 	/*** DCS CUSTOMIZATIONS ***/
-	RepoLanguages []string // Find users that have the given language ids in a repo's manifest
-	RepoSubjects []string // Find users that have the given subjects in a repo's manifest
+	RepoLanguages     []string // Find users that have the given language ids in a repo's manifest
+	RepoSubjects      []string // Find users that have the given subjects in a repo's manifest
 	RepoMetadataTypes []string // Find users that have the given metadata types in a repo's manifest
 	/*** END DCS CUSTOMIZATIONS ***/
 

@@ -74,8 +74,8 @@ func Search(ctx *context.APIContext) {
 		Type:        user_model.UserTypeIndividual,
 		ListOptions: listOptions,
 		// DCS Customizations
-		RepoLanguages: ctx.FormStrings("lang"),
-		RepoSubjects: ctx.FormStrings("subject"),
+		RepoLanguages:     ctx.FormStrings("lang"),
+		RepoSubjects:      ctx.FormStrings("subject"),
 		RepoMetadataTypes: ctx.FormStrings("metadata_type"),
 		// END DCS Customizations
 	})
