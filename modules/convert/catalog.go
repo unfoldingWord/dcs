@@ -5,12 +5,9 @@
 package convert
 
 import (
-	"fmt"
-
 	"code.gitea.io/gitea/models/db"
 	"code.gitea.io/gitea/models/perm"
 	"code.gitea.io/gitea/models/repo"
-	"code.gitea.io/gitea/modules/json"
 	"code.gitea.io/gitea/modules/log"
 	api "code.gitea.io/gitea/modules/structs"
 )
@@ -18,7 +15,6 @@ import (
 // ToIngredient converts a Door43Metadata project to an api.Ingredient
 func ToIngredient(project map[string]interface{}) *api.Ingredient {
 	ingredient := &api.Ingredient{}
-	fmt.Printf("PROJECT: %v\n\n\n\n", project)
 	if val, ok := project["categories"].([]string); ok {
 		ingredient.Categories = val
 	}
@@ -28,7 +24,7 @@ func ToIngredient(project map[string]interface{}) *api.Ingredient {
 	if val, ok := project["path"].(string); ok {
 		ingredient.Path = val
 	}
-	if val, ok := project["sort"].(int64); ok {
+	if val, ok := project["sort"].(int); ok {
 		ingredient.Sort = val
 	}
 	if val, ok := project["title"].(string); ok {
@@ -57,43 +53,6 @@ func ToCatalogEntry(dm *repo.Door43Metadata, mode perm.AccessMode) *api.CatalogE
 		release = ToRelease(dm.Release)
 	}
 
-	language := dm.Language
-	languageTitle := dm.LanguageTitle
-	languageDir := dm.LanguageDirection
-	languageIsGL := dm.LanguageIsGL
-
-	var books []string
-	if val, ok := (*dm.Metadata)["books"].([]string); ok {
-		books = val
-	} else {
-		books = dm.GetBooks()
-	}
-
-	var alignmentCounts map[string]int64
-	if val, ok := (*dm.Metadata)["alignment_counts"]; ok {
-		// Marshal/Unmarshal to let Unmarshaliing convert interface{} to map[string]int64
-		if byteData, err := json.Marshal(val); err == nil {
-			if err := json.Unmarshal(byteData, &alignmentCounts); err != nil {
-				log.Error("Unable to Unmarshal alignment_counts: %v\n", val)
-			}
-		}
-	}
-
-	var ingredients []*api.Ingredient
-	if val, ok := (*dm.Metadata)["projects"].([]interface{}); ok {
-		ingredients = make([]*api.Ingredient, len(val))
-		for i, project := range val {
-			// Marshal/Unmarshal to let Unmarshaliing convert interface{} to Ingredient
-			if byteData, err := json.Marshal(project); err == nil {
-				err = json.Unmarshal(byteData, &ingredients[i])
-				if err != nil {
-					// Attempt our own conversation since Marshal/Unmarshal failed
-					ingredients[i] = ToIngredient(project.(map[string]interface{}))
-				}
-			}
-		}
-	}
-
 	return &api.CatalogEntry{
 		ID:                     dm.ID,
 		Self:                   dm.APIURL(),
@@ -108,14 +67,12 @@ func ToCatalogEntry(dm *repo.Door43Metadata, mode perm.AccessMode) *api.CatalogE
 		ContentsURL:            dm.GetContentsURL(),
 		BranchOrTag:            dm.BranchOrTag,
 		CommitID:               dm.CommitID,
-		Language:               language,
-		LanguageTitle:          languageTitle,
-		LanguageDir:            languageDir,
-		LanguageIsGL:           languageIsGL,
+		Language:               dm.Language,
+		LanguageTitle:          dm.LanguageTitle,
+		LanguageDir:            dm.LanguageDirection,
+		LanguageIsGL:           dm.LanguageIsGL,
 		Subject:                dm.Subject,
 		Title:                  dm.Title,
-		Books:                  books,
-		AlignmentCounts:        alignmentCounts,
 		Stage:                  dm.Stage.String(),
 		Released:               dm.ReleaseDateUnix.AsTime(),
 		MetadataType:           dm.MetadataType,
@@ -123,9 +80,8 @@ func ToCatalogEntry(dm *repo.Door43Metadata, mode perm.AccessMode) *api.CatalogE
 		MetadataURL:            dm.GetMetadataURL(),
 		MetadataJSONURL:        dm.GetMetadataJSONURL(),
 		MetadataAPIContentsURL: dm.GetMetadataAPIContentsURL(),
-		Ingredients:            ingredients,
+		Ingredients:            dm.Ingredients,
 		ContentFormat:          dm.ContentFormat,
-		Projects:               dm.Projects,
 	}
 }
 

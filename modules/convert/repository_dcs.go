@@ -36,10 +36,11 @@ func toRepoDCS(repo *repo_model.Repository, apiRepo *api.Repository) *api.Reposi
 			apiRepo.LanguageTitle = dcs.GetLanguageTitle(apiRepo.Language)
 		}
 		apiRepo.LanguageIsGL = dm.LanguageIsGL
-		apiRepo.Books = dm.GetBooks()
-		apiRepo.AlignmentCounts = dm.GetAlignmentCounts()
 		apiRepo.CheckingLevel = dm.CheckingLevel
 		apiRepo.ContentFormat = dm.ContentFormat
+		apiRepo.MetadataType = dm.MetadataType
+		apiRepo.MetadataVersion = dm.MetadataVersion
+		apiRepo.Ingredients = dm.Ingredients
 	} else {
 		apiRepo.Subject = dcs.GetSubjectFromRepoName(repo.LowerName)
 		apiRepo.Language = dcs.GetLanguageFromRepoName(repo.LowerName)

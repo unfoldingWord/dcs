@@ -422,7 +422,11 @@ func GetTcTsManifestFromBlob(blob *git.Blob) (*TcTsManifest, error) {
 		return nil, nil
 	}
 
-	t.Title = t.Resource.Name
+	if t.Resource.Name != "" {
+		t.Title = t.Resource.Name
+	} else {
+		t.Title = strings.ToUpper(t.Resource.ID)
+	}
 	if strings.ToLower(t.Resource.ID) != "obs" && t.Project.Name != "" && !strings.Contains(strings.ToLower(t.Title), strings.ToLower(t.Project.Name)) {
 		t.Title = t.Project.Name + " " + t.Title
 	}
@@ -435,16 +439,17 @@ func GetSBDataFromBlob(blob *git.Blob) (*SB100, error) {
 	if err != nil {
 		return nil, err
 	}
-	var s *SBMetadata
+	s := &SBMetadata{}
 	err = json.Unmarshal(buf, s)
 	if err != nil {
 		return nil, err
 	}
-	var sb100 *SB100
+	sb100 := &SB100{}
 	err = json.Unmarshal(s.Data, sb100)
 	if err != nil {
 		return nil, err
 	}
+	sb100.Metadata = &map[string]interface{}{}
 	err = json.Unmarshal(s.Data, sb100.Metadata)
 	if err != nil {
 		return nil, err

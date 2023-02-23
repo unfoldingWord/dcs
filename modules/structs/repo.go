@@ -117,12 +117,8 @@ type Repository struct {
 	Subject string `json:"subject"` // DCS Customiations
 	// title from the manifest
 	Title string `json:"title"` // DCS Customiations
-	// projects
-	Projects []*Door43MetadataProject `json:"projects"` // DCS Customizaitons
-	// project IDs from the manifest
-	Books []string `json:"books,omitempty"` // DCS Customiations
-	// the count of alignments of each book
-	AlignmentCounts map[string]int `json:"alignment_counts,omitempty"` // DCS Customiations
+	// ingredients
+	Ingredients []*Ingredient `json:"ingredients"` // DCS Customizaitons
 	// checking level from the manifest
 	CheckingLevel int `json:"checking_level"` // DCS Customiations
 	// latest catalog entry of each stage
