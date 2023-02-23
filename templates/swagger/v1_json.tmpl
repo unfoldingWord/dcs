@@ -14768,21 +14768,6 @@
       "description": "CatalogEntry represents a repository's metadata of a tag or default branch as an entry of the catalog",
       "type": "object",
       "properties": {
-        "alignment_counts": {
-          "type": "object",
-          "additionalProperties": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "x-go-name": "AlignmentCounts"
-        },
-        "books": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          },
-          "x-go-name": "Books"
-        },
         "branch_or_tag_name": {
           "type": "string",
           "x-go-name": "BranchOrTag"
@@ -14862,13 +14847,6 @@
         "owner": {
           "type": "string",
           "x-go-name": "Owner"
-        },
-        "projects": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/Door43MetadataProject"
-          },
-          "x-go-name": "Projects"
         },
         "release": {
           "$ref": "#/definitions/Release"
@@ -16531,29 +16509,6 @@
       },
       "x-go-package": "code.gitea.io/gitea/modules/structs"
     },
-    "Door43MetadataProject": {
-      "type": "object",
-      "properties": {
-        "alignment_count": {
-          "type": "integer",
-          "format": "int64",
-          "x-go-name": "AlignmentCount"
-        },
-        "identifier": {
-          "type": "string",
-          "x-go-name": "Identifier"
-        },
-        "path": {
-          "type": "string",
-          "x-go-name": "Path"
-        },
-        "title": {
-          "type": "string",
-          "x-go-name": "Title"
-        }
-      },
-      "x-go-package": "code.gitea.io/gitea/modules/structs"
-    },
     "EditAttachmentOptions": {
       "description": "EditAttachmentOptions options for editing attachments",
       "type": "object",
@@ -17875,6 +17830,11 @@
       "description": "Ingredient is a single project of a resource",
       "type": "object",
       "properties": {
+        "alignment_count": {
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "AlignmentCount"
+        },
         "categories": {
           "type": "array",
           "items": {
@@ -18691,6 +18651,14 @@
             "type": "string"
           },
           "x-go-name": "RepoLanguages"
+        },
+        "repo_metadata_types": {
+          "description": "All metadata types of the repos the org owns",
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "x-go-name": "RepoMetadataTypes"
         },
         "repo_subjects": {
           "description": "All subjects of the repos the org owns",
@@ -19538,15 +19506,6 @@
       "description": "Repository represents a repository",
       "type": "object",
       "properties": {
-        "alignment_counts": {
-          "description": "the count of alignments of each book",
-          "type": "object",
-          "additionalProperties": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "x-go-name": "AlignmentCounts"
-        },
         "allow_merge_commits": {
           "type": "boolean",
           "x-go-name": "AllowMerge"
@@ -19574,14 +19533,6 @@
         "avatar_url": {
           "type": "string",
           "x-go-name": "AvatarURL"
-        },
-        "books": {
-          "description": "project IDs from the manifest",
-          "type": "array",
-          "items": {
-            "type": "string"
-          },
-          "x-go-name": "Books"
         },
         "catalog": {
           "$ref": "#/definitions/CatalogStages"
@@ -19674,6 +19625,14 @@
           "type": "boolean",
           "x-go-name": "IgnoreWhitespaceConflicts"
         },
+        "ingredients": {
+          "description": "ingredients",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Ingredient"
+          },
+          "x-go-name": "Ingredients"
+        },
         "internal": {
           "type": "boolean",
           "x-go-name": "Internal"
@@ -19758,14 +19717,6 @@
         "private": {
           "type": "boolean",
           "x-go-name": "Private"
-        },
-        "projects": {
-          "description": "projects",
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/Door43MetadataProject"
-          },
-          "x-go-name": "Projects"
         },
         "release_counter": {
           "type": "integer",
@@ -20441,6 +20392,14 @@
             "type": "string"
           },
           "x-go-name": "RepoLanguages"
+        },
+        "repo_metadata_types": {
+          "description": "Repo metadata types",
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "x-go-name": "RepoMetadataTypes"
         },
         "repo_subjects": {
           "description": "Repo subjects",

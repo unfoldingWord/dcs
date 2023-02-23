@@ -19,6 +19,7 @@ func ToUserDCS(user, doer *user_model.User) *api.User {
 	result := ToUser(user, doer)
 	result.RepoLanguages = models.GetRepoLanguages(user)
 	result.RepoSubjects = models.GetRepoSubjects(user)
+	result.RepoMetadataTypes = models.GetRepoMetadataTypes(user)
 	return result
 }
 

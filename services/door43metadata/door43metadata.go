@@ -686,7 +686,7 @@ func ProcessDoor43MetadataForRepoRelease(ctx context.Context, repo *repo_model.R
 		if err != nil && !repo_model.IsErrDoor43MetadataNotExist(err) {
 			return err
 		}
-		if oldDM == nil || oldDM.BranchOrTag == branchOrTag {
+		if oldDM == nil || oldDM.BranchOrTag == branchOrTag || branchOrTag == repo.DefaultBranch {
 			if oldDM != nil {
 				dm.ID = oldDM.ID
 				return repo_model.UpdateDoor43Metadata(dm)

@@ -71,3 +71,24 @@ func GetRepoSubjects(u *user_model.User) []string {
 	sort.SliceStable(subjects, func(i, j int) bool { return strings.ToLower(subjects[i]) < strings.ToLower(subjects[j]) })
 	return subjects
 }
+
+// GetRepoMetadataTypes gets the metadata types of the user's repos and returns alphabetized list
+func GetRepoMetadataTypes(u *user_model.User) []string {
+	var metadataTypes []string
+	if repos, _, err := repo_model.GetUserRepositories(&repo_model.SearchRepoOptions{Actor: u, Private: false, ListOptions: db.ListOptions{PageSize: 0}}); err != nil {
+		log.Error("Error GetUserRepositories: %v", err)
+	} else {
+		for _, repo := range repos {
+			if dm, err := repo_model.GetDefaultBranchMetadata(repo.ID); err != nil {
+				log.Error("Error GetDefaultBranchMetadata: %v", err)
+			} else if dm != nil {
+				metadataType := dm.MetadataType
+				if metadataType != "" && !contains(metadataTypes, metadataType) {
+					metadataTypes = append(metadataTypes, metadataType)
+				}
+			}
+		}
+	}
+	sort.SliceStable(metadataTypes, func(i, j int) bool { return strings.ToLower(metadataTypes[i]) < strings.ToLower(metadataTypes[j]) })
+	return metadataTypes
+}

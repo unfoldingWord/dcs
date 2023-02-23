@@ -38,6 +38,8 @@ type User struct {
 	RepoLanguages []string `json:"repo_languages"` // DCS Customizations
 	// Repo subjects
 	RepoSubjects []string `json:"repo_subjects"` // DCS Customizations
+	// Repo metadata types
+	RepoMetadataTypes []string `json:"repo_metadata_types"` // DCS Customizations
 	// Is user restricted
 	Restricted bool `json:"restricted"`
 	// Is user active
