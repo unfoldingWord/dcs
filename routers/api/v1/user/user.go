@@ -39,8 +39,8 @@ func Search(ctx *context.APIContext) {
 	// - name: subject
 	//   in: query
 	//   description: If the user has one or more repos with the given subject(s), the org will be in the results. Multiple subjects are ORed.
-	//   type: metadata_type
-	// - name: metadata_type
+	//   type: string
+	// - name: metadataType
 	//   in: query
 	//   description: If the user has one or more repos with the given metadata type(s), the org will be in the results. Multiple metadata types are ORed.
 	//   type: string
