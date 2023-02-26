@@ -126,7 +126,7 @@ func Search(ctx *context.APIContext) {
 	//   type: boolean
 	// - name: showIngredients
 	//   in: query
-	//   description: if true, a list of the projects in the resource and their file paths will be listed for each entry. Default is false
+	//   description: if true, the list of ingredients (files/projects) in the resource and their file paths will be listed for each entry. Default is true
 	//   type: boolean
 	// - name: sort
 	//   in: query
@@ -235,7 +235,7 @@ func SearchOwner(ctx *context.APIContext) {
 	//   type: boolean
 	// - name: showIngredients
 	//   in: query
-	//   description: if true, a list of the projects in the resource and their file paths will be listed for each entry. Default is false
+	//   description: if true, the list of ingredients (files/projects) in the resource and their file paths will be listed for each entry. Default is true
 	//   type: boolean
 	// - name: sort
 	//   in: query
@@ -353,7 +353,7 @@ func SearchRepo(ctx *context.APIContext) {
 	//   type: boolean
 	// - name: showIngredients
 	//   in: query
-	//   description: if true, a list of the projects in the resource and their file paths will be listed for each entry. Default is false
+	//   description: if true, the list of ingredients (files/projects) in the resource and their file paths will be listed for each entry. Default is true
 	//   type: boolean
 	// - name: sort
 	//   in: query
