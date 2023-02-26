@@ -18,6 +18,7 @@ import (
 	"code.gitea.io/gitea/modules/context"
 	"code.gitea.io/gitea/modules/convert"
 	api "code.gitea.io/gitea/modules/structs"
+	"code.gitea.io/gitea/modules/util"
 )
 
 var searchOrderByMap = map[string]map[string]door43metadata.CatalogOrderBy{
@@ -747,7 +748,7 @@ func searchCatalog(ctx *context.APIContext) {
 		CheckingLevels:   QueryStrings(ctx, "checkingLevel"),
 		Books:            QueryStrings(ctx, "book"),
 		IncludeHistory:   ctx.FormBool("includeHistory"),
-		ShowIngredients:  ctx.FormBool("showIngredients"),
+		ShowIngredients:  ctx.FormOptionalBool("showIngredients"),
 		IncludeMetadata:  includeMetadata,
 		MetadataTypes:    metadataTypes,
 		MetadataVersions: metadataVersions,
@@ -806,7 +807,7 @@ func searchCatalog(ctx *context.APIContext) {
 			})
 		}
 		dmAPI := convert.ToCatalogEntry(dm, accessMode)
-		if !opts.ShowIngredients {
+		if opts.ShowIngredients == util.OptionalBoolFalse {
 			dmAPI.Ingredients = nil
 		}
 		if dmAPI.Released.After(lastUpdated) {
@@ -875,7 +876,7 @@ func listSingleDMField(ctx *context.APIContext, field string) {
 		CheckingLevels:   QueryStrings(ctx, "checkingLevel"),
 		Books:            QueryStrings(ctx, "book"),
 		IncludeHistory:   ctx.FormBool("includeHistory"),
-		ShowIngredients:  ctx.FormBool("showIngredients"),
+		ShowIngredients:  ctx.FormOptionalBool("showIngredients"),
 		MetadataTypes:    metadataTypes,
 		MetadataVersions: metadataVersions,
 		PartialMatch:     ctx.FormBool("partialMatch"),
