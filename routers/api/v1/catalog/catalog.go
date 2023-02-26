@@ -851,8 +851,6 @@ func listSingleDMField(ctx *context.APIContext, field string) {
 	if len(metadataTypes) == 1 && (metadataTypes[0] == "all" || metadataTypes[0] == "") {
 		metadataTypes = []string{}
 		metadataVersions = []string{}
-	} else if len(metadataTypes) == 0 {
-		metadataTypes = []string{"rc"}
 	}
 
 	listOptions := db.ListOptions{
