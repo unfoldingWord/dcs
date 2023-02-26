@@ -908,7 +908,7 @@
           },
           {
             "type": "boolean",
-            "description": "if true, a list of the projects in the resource and their file paths will be listed for each entry. Default is false",
+            "description": "if true, the list of ingredients (files/projects) in the resource and their file paths will be listed for each entry. Default is true",
             "name": "showIngredients",
             "in": "query"
           },
@@ -1057,7 +1057,7 @@
           },
           {
             "type": "boolean",
-            "description": "if true, a list of the projects in the resource and their file paths will be listed for each entry. Default is false",
+            "description": "if true, the list of ingredients (files/projects) in the resource and their file paths will be listed for each entry. Default is true",
             "name": "showIngredients",
             "in": "query"
           },
@@ -1219,7 +1219,7 @@
           },
           {
             "type": "boolean",
-            "description": "if true, a list of the projects in the resource and their file paths will be listed for each entry. Default is false",
+            "description": "if true, the list of ingredients (files/projects) in the resource and their file paths will be listed for each entry. Default is true",
             "name": "showIngredients",
             "in": "query"
           },
@@ -1708,7 +1708,7 @@
             "in": "query"
           },
           {
-            "type": "metadata_type",
+            "type": "string",
             "description": "If the user has one or more repos with the given subject(s), the org will be in the results. Multiple subjects are ORed.",
             "name": "subject",
             "in": "query"
@@ -1716,7 +1716,7 @@
           {
             "type": "string",
             "description": "If the user has one or more repos with the given metadata type(s), the org will be in the results. Multiple metadata types are ORed.",
-            "name": "metadata_type",
+            "name": "metadataType",
             "in": "query"
           },
           {
@@ -13819,7 +13819,7 @@
             "in": "query"
           },
           {
-            "type": "metadata_type",
+            "type": "string",
             "description": "If the user has one or more repos with the given subject(s), the org will be in the results. Multiple subjects are ORed.",
             "name": "subject",
             "in": "query"
@@ -13827,7 +13827,7 @@
           {
             "type": "string",
             "description": "If the user has one or more repos with the given metadata type(s), the org will be in the results. Multiple metadata types are ORed.",
-            "name": "metadata_type",
+            "name": "metadataType",
             "in": "query"
           },
           {
@@ -14988,42 +14988,6 @@
       },
       "x-go-package": "code.gitea.io/gitea/modules/structs"
     },
-    "CatalogVersionEndpoints": {
-      "description": "CatalogVersionEndpoints Info on the versions of the catalog",
-      "type": "object",
-      "properties": {
-        "latest": {
-          "type": "string",
-          "x-go-name": "Latest"
-        },
-        "versions": {
-          "type": "object",
-          "additionalProperties": {
-            "type": "string"
-          },
-          "x-go-name": "Versions"
-        }
-      },
-      "x-go-package": "code.gitea.io/gitea/modules/structs"
-    },
-    "CatalogVersionEndpointsResponse": {
-      "description": "CatalogVersionEndpointsResponse response with the endpoints for all versions of the catalog",
-      "type": "object",
-      "properties": {
-        "data": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/CatalogVersionEndpoints"
-          },
-          "x-go-name": "Data"
-        },
-        "ok": {
-          "type": "boolean",
-          "x-go-name": "OK"
-        }
-      },
-      "x-go-package": "code.gitea.io/gitea/modules/structs"
-    },
     "ChangedFile": {
       "description": "ChangedFile store information about files affected by the pull request",
       "type": "object",
@@ -16081,6 +16045,10 @@
         "remote_username": {
           "type": "string",
           "x-go-name": "RemoteUsername"
+        },
+        "sync_on_commit": {
+          "type": "boolean",
+          "x-go-name": "SyncOnCommit"
         }
       },
       "x-go-package": "code.gitea.io/gitea/modules/structs"
@@ -18096,11 +18064,7 @@
           "x-go-name": "FileName"
         },
         "labels": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          },
-          "x-go-name": "Labels"
+          "$ref": "#/definitions/IssueTemplateLabels"
         },
         "name": {
           "type": "string",
@@ -18114,6 +18078,13 @@
           "type": "string",
           "x-go-name": "Title"
         }
+      },
+      "x-go-package": "code.gitea.io/gitea/modules/structs"
+    },
+    "IssueTemplateLabels": {
+      "type": "array",
+      "items": {
+        "type": "string"
       },
       "x-go-package": "code.gitea.io/gitea/modules/structs"
     },
@@ -19322,6 +19293,10 @@
         "repo_name": {
           "type": "string",
           "x-go-name": "RepoName"
+        },
+        "sync_on_commit": {
+          "type": "boolean",
+          "x-go-name": "SyncOnCommit"
         }
       },
       "x-go-package": "code.gitea.io/gitea/modules/structs"
@@ -20772,12 +20747,6 @@
       "description": "CatalogSearchResults",
       "schema": {
         "$ref": "#/definitions/CatalogSearchResults"
-      }
-    },
-    "CatalogVersionEndpointsResponse": {
-      "description": "CatalogVersionEndpointsResponse",
-      "schema": {
-        "$ref": "#/definitions/CatalogVersionEndpointsResponse"
       }
     },
     "ChangedFileList": {
