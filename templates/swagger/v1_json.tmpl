@@ -21,7 +21,7 @@
     },
     "version": "{{AppVer | JSEscape | Safe}}"
   },
-  "basePath": "{{AppSubUrl | JSEscape | Safe}}/api/v1",
+  "basePath": "/api/v1",
   "paths": {
     "/activitypub/user/{username}": {
       "get": {
@@ -14988,42 +14988,6 @@
       },
       "x-go-package": "code.gitea.io/gitea/modules/structs"
     },
-    "CatalogVersionEndpoints": {
-      "description": "CatalogVersionEndpoints Info on the versions of the catalog",
-      "type": "object",
-      "properties": {
-        "latest": {
-          "type": "string",
-          "x-go-name": "Latest"
-        },
-        "versions": {
-          "type": "object",
-          "additionalProperties": {
-            "type": "string"
-          },
-          "x-go-name": "Versions"
-        }
-      },
-      "x-go-package": "code.gitea.io/gitea/modules/structs"
-    },
-    "CatalogVersionEndpointsResponse": {
-      "description": "CatalogVersionEndpointsResponse response with the endpoints for all versions of the catalog",
-      "type": "object",
-      "properties": {
-        "data": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/CatalogVersionEndpoints"
-          },
-          "x-go-name": "Data"
-        },
-        "ok": {
-          "type": "boolean",
-          "x-go-name": "OK"
-        }
-      },
-      "x-go-package": "code.gitea.io/gitea/modules/structs"
-    },
     "ChangedFile": {
       "description": "ChangedFile store information about files affected by the pull request",
       "type": "object",
@@ -20783,12 +20747,6 @@
       "description": "CatalogSearchResults",
       "schema": {
         "$ref": "#/definitions/CatalogSearchResults"
-      }
-    },
-    "CatalogVersionEndpointsResponse": {
-      "description": "CatalogVersionEndpointsResponse",
-      "schema": {
-        "$ref": "#/definitions/CatalogVersionEndpointsResponse"
       }
     },
     "ChangedFileList": {

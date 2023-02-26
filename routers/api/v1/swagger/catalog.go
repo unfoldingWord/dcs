@@ -28,10 +28,3 @@ type swaggerResponseCatalogMetadata struct {
 	// in:body
 	Body map[string]interface{} `json:"body"`
 }
-
-// CatalogVersionEndpointsResponse
-// swagger:response CatalogVersionEndpointsResponse
-type swaggerResponseCatalogVersionEndpointsResponse struct {
-	// in:body
-	Body api.CatalogVersionEndpointsResponse `json:"body"`
-}
