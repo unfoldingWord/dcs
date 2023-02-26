@@ -64,12 +64,6 @@ type CatalogVersionEndpoints struct {
 	Versions map[string]string `json:"versions"`
 }
 
-// CatalogVersionEndpointsResponse response with the endpoints for all versions of the catalog
-type CatalogVersionEndpointsResponse struct {
-	OK   bool                       `json:"ok"`
-	Data []*CatalogVersionEndpoints `json:"data"`
-}
-
 // CatalogStages a repo's catalog stages
 type CatalogStages struct {
 	Production    *CatalogStage `json:"prod"`
