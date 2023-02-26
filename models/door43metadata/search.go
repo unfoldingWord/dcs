@@ -9,6 +9,7 @@ import (
 
 	"code.gitea.io/gitea/models/db"
 	"code.gitea.io/gitea/modules/setting"
+	"code.gitea.io/gitea/modules/util"
 
 	"xorm.io/builder"
 )
@@ -64,7 +65,7 @@ type SearchCatalogOptions struct {
 	IncludeMetadata  bool
 	MetadataTypes    []string
 	MetadataVersions []string
-	ShowIngredients  bool
+	ShowIngredients  util.OptionalBool
 	Languages        []string
 	OrderBy          []CatalogOrderBy
 	PartialMatch     bool
