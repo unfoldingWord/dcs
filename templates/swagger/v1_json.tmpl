@@ -21,7 +21,7 @@
     },
     "version": "{{AppVer | JSEscape | Safe}}"
   },
-  "basePath": "/api/v1",
+  "basePath": "{{AppSubUrl | JSEscape | Safe}}/api/v1",
   "paths": {
     "/activitypub/user/{username}": {
       "get": {
@@ -908,7 +908,7 @@
           },
           {
             "type": "boolean",
-            "description": "if true, a list of the projects in the resource and their file paths will be listed for each entry. Default is false",
+            "description": "if true, the list of ingredients (files/projects) in the resource and their file paths will be listed for each entry. Default is true",
             "name": "showIngredients",
             "in": "query"
           },
@@ -1057,7 +1057,7 @@
           },
           {
             "type": "boolean",
-            "description": "if true, a list of the projects in the resource and their file paths will be listed for each entry. Default is false",
+            "description": "if true, the list of ingredients (files/projects) in the resource and their file paths will be listed for each entry. Default is true",
             "name": "showIngredients",
             "in": "query"
           },
@@ -1219,7 +1219,7 @@
           },
           {
             "type": "boolean",
-            "description": "if true, a list of the projects in the resource and their file paths will be listed for each entry. Default is false",
+            "description": "if true, the list of ingredients (files/projects) in the resource and their file paths will be listed for each entry. Default is true",
             "name": "showIngredients",
             "in": "query"
           },
