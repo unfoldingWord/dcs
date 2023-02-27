@@ -451,6 +451,9 @@ func GetNewTcOrTsDoor43Metadata(repo *repo_model.Repository, commit *git.Commit)
 	if t.MetadataType == "ts" {
 		bookPath = "."
 		contentFormat = "text"
+		if t.Project.ID != "obs" {
+			versification = "ufw"
+		}
 	} else {
 		bookPath = "./" + repo.Name + ".usfm"
 		count, _ = GetBookAlignmentCount(bookPath, commit)
