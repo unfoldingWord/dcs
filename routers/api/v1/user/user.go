@@ -92,7 +92,7 @@ func Search(ctx *context.APIContext) {
 
 	ctx.JSON(http.StatusOK, map[string]interface{}{
 		"ok":   true,
-		"data": convert.ToUsersDCS(ctx.Doer, users), // DCS Customizations
+		"data": convert.ToUsers(ctx.Doer, users),
 	})
 }
 
@@ -120,7 +120,7 @@ func GetInfo(ctx *context.APIContext) {
 		ctx.NotFound("GetUserByName", user_model.ErrUserNotExist{Name: ctx.Params(":username")})
 		return
 	}
-	ctx.JSON(http.StatusOK, convert.ToUserDCS(ctx.ContextUser, ctx.Doer)) // DCS Customizations
+	ctx.JSON(http.StatusOK, convert.ToUser(ctx.ContextUser, ctx.Doer))
 }
 
 // GetAuthenticatedUser get current user's information
@@ -134,7 +134,7 @@ func GetAuthenticatedUser(ctx *context.APIContext) {
 	//   "200":
 	//     "$ref": "#/responses/User"
 
-	ctx.JSON(http.StatusOK, convert.ToUserDCS(ctx.Doer, ctx.Doer)) // DCS Customizations
+	ctx.JSON(http.StatusOK, convert.ToUser(ctx.Doer, ctx.Doer))
 }
 
 // GetUserHeatmapData is the handler to get a users heatmap

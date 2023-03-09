@@ -446,7 +446,7 @@ func GetAllUsers(ctx *context.APIContext) {
 
 	results := make([]*api.User, len(users))
 	for i := range users {
-		results[i] = convert.ToUserDCS(users[i], ctx.Doer) // DCS Customizations
+		results[i] = convert.ToUser(users[i], ctx.Doer)
 	}
 
 	ctx.SetLinkHeader(int(maxResults), listOptions.PageSize)

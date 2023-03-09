@@ -178,7 +178,7 @@ func GetHistoryCond(includeHistory bool) builder.Cond {
 	if includeHistory {
 		return nil
 	}
-	return builder.And(builder.Expr("`door43_metadata`.release_date_unix = latest_unix"), builder.Expr("`door43_metadata`.stage = latest_stage"))
+	return builder.Eq{"`door43_metadata`.latest": true}
 }
 
 // GetSubjectCond gets the subject condition

@@ -5,90 +5,30 @@
 package models
 
 import (
-	"sort"
-	"strings"
-
-	"code.gitea.io/gitea/models/db"
-	repo_model "code.gitea.io/gitea/models/repo"
+	"code.gitea.io/gitea/models/door43metadata"
 	user_model "code.gitea.io/gitea/models/user"
-	"code.gitea.io/gitea/modules/dcs"
-	"code.gitea.io/gitea/modules/log"
 )
-
-func contains(strings []string, str string) bool {
-	for _, a := range strings {
-		if a == str {
-			return true
-		}
-	}
-	return false
-}
 
 // GetRepoLanguages gets the languages of the user's repos and returns alphabetized list
 func GetRepoLanguages(u *user_model.User) []string {
-	var languages []string
-	if repos, _, err := repo_model.GetUserRepositories(&repo_model.SearchRepoOptions{Actor: u, Private: false, ListOptions: db.ListOptions{PageSize: 0}}); err != nil {
-		log.Error("Error GetUserRepositories: %v", err)
-	} else {
-		for _, repo := range repos {
-			lang := dcs.GetLanguageFromRepoName(repo.LowerName)
-			if lang != "" && !contains(languages, lang) {
-				languages = append(languages, lang)
-			}
-			if dm, err := repo_model.GetDefaultBranchMetadata(repo.ID); err != nil {
-				log.Error("Error GetDefaultBranchMetadata: %v", err)
-			} else if dm != nil {
-				lang = dm.Language
-				if lang != "" && !contains(languages, lang) {
-					languages = append(languages, lang)
-				}
-			}
-		}
-	}
-	sort.SliceStable(languages, func(i, j int) bool { return strings.ToLower(languages[i]) < strings.ToLower(languages[j]) })
-	return languages
+	fields, _ := SearchDoor43MetadataField(&door43metadata.SearchCatalogOptions{
+		Owners: []string{u.LowerName},
+	}, "language")
+	return fields
 }
 
 // GetRepoSubjects gets the subjects of the user's repos and returns alphabetized list
 func GetRepoSubjects(u *user_model.User) []string {
-	var subjects []string
-	if repos, _, err := repo_model.GetUserRepositories(&repo_model.SearchRepoOptions{Actor: u, Private: false, ListOptions: db.ListOptions{PageSize: 0}}); err != nil {
-		log.Error("Error GetUserRepositories: %v", err)
-	} else {
-		for _, repo := range repos {
-			if dm, err := repo_model.GetDefaultBranchMetadata(repo.ID); err != nil {
-				log.Error("Error GetDefaultBranchMetadata: %v", err)
-			} else if dm != nil {
-				subject := dm.Subject
-				if subject != "" && !contains(subjects, subject) {
-					subjects = append(subjects, subject)
-				}
-			} else if subject := dcs.GetSubjectFromRepoName(repo.LowerName); subject != "" && !contains(subjects, subject) {
-				subjects = append(subjects, subject)
-			}
-		}
-	}
-	sort.SliceStable(subjects, func(i, j int) bool { return strings.ToLower(subjects[i]) < strings.ToLower(subjects[j]) })
-	return subjects
+	fields, _ := SearchDoor43MetadataField(&door43metadata.SearchCatalogOptions{
+		Owners: []string{u.LowerName},
+	}, "subject")
+	return fields
 }
 
 // GetRepoMetadataTypes gets the metadata types of the user's repos and returns alphabetized list
 func GetRepoMetadataTypes(u *user_model.User) []string {
-	var metadataTypes []string
-	if repos, _, err := repo_model.GetUserRepositories(&repo_model.SearchRepoOptions{Actor: u, Private: false, ListOptions: db.ListOptions{PageSize: 0}}); err != nil {
-		log.Error("Error GetUserRepositories: %v", err)
-	} else {
-		for _, repo := range repos {
-			if dm, err := repo_model.GetDefaultBranchMetadata(repo.ID); err != nil {
-				log.Error("Error GetDefaultBranchMetadata: %v", err)
-			} else if dm != nil {
-				metadataType := dm.MetadataType
-				if metadataType != "" && !contains(metadataTypes, metadataType) {
-					metadataTypes = append(metadataTypes, metadataType)
-				}
-			}
-		}
-	}
-	sort.SliceStable(metadataTypes, func(i, j int) bool { return strings.ToLower(metadataTypes[i]) < strings.ToLower(metadataTypes[j]) })
-	return metadataTypes
+	fields, _ := SearchDoor43MetadataField(&door43metadata.SearchCatalogOptions{
+		Owners: []string{u.LowerName},
+	}, "metadata_type")
+	return fields
 }

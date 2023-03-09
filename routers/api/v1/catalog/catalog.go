@@ -834,7 +834,6 @@ func searchCatalog(ctx *context.APIContext) {
 }
 
 func listSingleDMField(ctx *context.APIContext, field string) {
-	var owners, repos []string
 	stageStr := ctx.FormString("stage")
 	var stage door43metadata.Stage
 	if stageStr != "" {
@@ -863,8 +862,8 @@ func listSingleDMField(ctx *context.APIContext, field string) {
 
 	opts := &door43metadata.SearchCatalogOptions{
 		ListOptions:      listOptions,
-		Owners:           owners,
-		Repos:            repos,
+		Owners:           QueryStrings(ctx, "owner"),
+		Repos:            QueryStrings(ctx, "repos"),
 		Tags:             QueryStrings(ctx, "tag"),
 		Stage:            stage,
 		Languages:        QueryStrings(ctx, "lang"),

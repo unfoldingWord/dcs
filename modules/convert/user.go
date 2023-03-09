@@ -46,7 +46,7 @@ func ToUserWithAccessMode(user *user_model.User, accessMode perm.AccessMode) *ap
 // toUser convert user_model.User to api.User
 // signed shall only be set if requester is logged in. authed shall only be set if user is site admin or user himself
 func toUser(user *user_model.User, signed, authed bool) *api.User {
-	result := &api.User{
+	result := toUserDCS(user, &api.User{
 		ID:          user.ID,
 		UserName:    user.Name,
 		FullName:    user.FullName,
@@ -61,7 +61,7 @@ func toUser(user *user_model.User, signed, authed bool) *api.User {
 		Followers:    user.NumFollowers,
 		Following:    user.NumFollowing,
 		StarredRepos: user.NumStars,
-	}
+	})
 
 	result.Visibility = user.Visibility.String()
 
