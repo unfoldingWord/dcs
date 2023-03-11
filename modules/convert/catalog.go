@@ -87,6 +87,10 @@ func ToCatalogEntry(dm *repo.Door43Metadata, mode perm.AccessMode) *api.CatalogE
 
 // ToCatalogStage converts a Door43Metadata to an api.CatalogStage
 func ToCatalogStage(dm *repo.Door43Metadata) *api.CatalogStage {
+	if dm == nil {
+		return nil
+	}
+	_ = dm.LoadAttributes()
 	catalogStage := &api.CatalogStage{
 		Tag:         dm.BranchOrTag,
 		Released:    dm.ReleaseDateUnix.AsTime(),

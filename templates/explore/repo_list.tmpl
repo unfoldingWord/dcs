@@ -36,8 +36,8 @@
 						{{else if .IsMirror}}
 							<span class="tooltip" data-content="{{$.locale.Tr "mirror"}}" data-position="bottom center">{{svg "octicon-mirror"}}</span>
 						{{end}}
-						<!-- DCS Customizations -->
-						{{$prodDM := GetLatestProdCatalogMetadata .ID}}
+					<!-- DCS Customizations -->
+						{{$prodDM := .GetLatestProdDm}}
 						{{if $prodDM}}
 							<a href="{{.Link}}/releases/tag/{{$prodDM.Release.TagName | PathEscapeSegments}}" rel="nofollow">
 								<button class="ui green label compact icon button tooltip" data-content="Catalog: Production" aria-label="Catalog: Production">
@@ -45,7 +45,7 @@
 								</button>
 							</a>
 						{{end}}
-						{{$preProdDM := GetLatestPreProdCatalogMetadata .ID}}
+						{{$preProdDM := .GetLatestPreprodDm}}
 						{{if $preProdDM}}
 							<a href="{{.Link}}/releases/tag/{{$preProdDM.Release.TagName | PathEscapeSegments}}" rel="nofollow">
 								<button class="ui orange label compact icon button tooltip" data-content="Catalog: Pre-Production" aria-label="Catalog: Production">
