@@ -173,7 +173,26 @@ type Repository struct {
 	Avatar string `xorm:"VARCHAR(64)"`
 
 	/*** DCS Customizations ***/
-	Metadata *map[string]interface{} `xorm:"-"`
+	MetadataType      string
+	MetadataVersion   string
+	Resource          string
+	Subject           string
+	Title             string
+	Language          string
+	LanguageTitle     string
+	LanguageDirection string
+	LanguageIsGL      bool
+	ContentFormat     string
+	CheckingLevel     int
+	Ingredients       []*api.Ingredient `xorm:"JSON"`
+	LatestProdDmID    int64
+	LatestProdDm      *Door43Metadata `xorm:"-"`
+	LatestPreprodDmID int64
+	LatestPreprodDm   *Door43Metadata `xorm:"-"`
+	LatestDraftDmID   int64
+	LatestDraftDm     *Door43Metadata `xorm:"-"`
+	DefaultBranchDmID int64
+	DefaultBranchDm   *Door43Metadata `xorm:"-"`
 	/*** DCS Customizations ***/
 
 	CreatedUnix timeutil.TimeStamp `xorm:"INDEX created"`

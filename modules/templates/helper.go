@@ -466,33 +466,8 @@ func NewFuncMap() []template.FuncMap {
 		"Door43PreviewURL": func() string {
 			return setting.DCS.Door43PreviewURL
 		},
-		"GetDefaultBranchMetadata": func(repoID int64) *repo_model.Door43Metadata {
-			dm, err := repo_model.GetDefaultBranchMetadata(repoID)
-			if err != nil {
-				return nil
-			}
-			return dm
-		},
-		"GetLatestProdCatalogMetadata": func(repoID int64) *repo_model.Door43Metadata {
-			dm, err := repo_model.GetLatestProdCatalogMetadata(repoID)
-			if err != nil {
-				return nil
-			}
-			return dm
-		},
-		"GetLatestPreProdCatalogMetadata": func(repoID int64) *repo_model.Door43Metadata {
-			dm, err := repo_model.GetLatestPreProdCatalogMetadata(repoID)
-			if err != nil {
-				return nil
-			}
-			return dm
-		},
-		"GetLanguageFromRepoName": dcs.GetLanguageFromRepoName,
-		"GetLanguageTitle":        dcs.GetLanguageTitle,
-		"GetLanguageDirection":    dcs.GetLanguageDirection,
-		"GetLanguageIsGL":         dcs.LanguageIsGL,
-		"GetMetadataTypeTitle":    dcs.GetMetadataTypeTitle,
-		"GetMetadataTypeIconURL":  dcs.GetMetadataTypeIconURL,
+		"GetMetadataTypeTitle":   dcs.GetMetadataTypeTitle,
+		"GetMetadataTypeIconURL": dcs.GetMetadataTypeIconURL,
 		/*** END DCS Customizations ***/
 		"HasPrefix": strings.HasPrefix,
 		"CompareLink": func(baseRepo, repo *repo_model.Repository, branchName string) string {

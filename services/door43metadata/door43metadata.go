@@ -534,6 +534,11 @@ func ProcessDoor43MetadataForRepoRelease(ctx context.Context, repo *repo_model.R
 		return fmt.Errorf("release can only be a release, not a tag")
 	}
 
+	err = repo.LoadAttributes(ctx)
+	if err != nil {
+		return err
+	}
+
 	gitRepo, err := git.OpenRepository(ctx, repo.RepoPath())
 	if err != nil {
 		log.Error("OpenRepository Error: %v\n", err)
@@ -592,6 +597,9 @@ func ProcessDoor43MetadataForRepoRelease(ctx context.Context, repo *repo_model.R
 			if err != nil {
 				// There was a problem updating the draft release or default branch, so we want to invalidated it by deleting it.
 				_ = repo_model.DeleteDoor43Metadata(oldDM)
+				repo.DefaultBranchDm = nil
+				repo.DefaultBranchDmID = 0
+				_ = repo_model.UpdateRepositoryCols(ctx, repo, "default_branch_dm_id")
 			}
 		}()
 	}
@@ -611,8 +619,6 @@ func ProcessDoor43MetadataForRepoRelease(ctx context.Context, repo *repo_model.R
 	if err != nil && !git.IsErrNotExist((err)) {
 		return err
 	}
-
-	// Check for RC (Resource Container)
 
 	// Check for TC or TS
 	if dm == nil {
@@ -639,30 +645,6 @@ func ProcessDoor43MetadataForRepoRelease(ctx context.Context, repo *repo_model.R
 	dm.ReleaseID = releaseID
 	dm.ReleaseDateUnix = releaseDateUnix
 	dm.Stage = stage
-	dm.Latest = true // set true by default
-
-	if dm.ReleaseID > 0 {
-		latestDMs, err := repo_model.GetLatestDoor43MetadatasByRepoID(repo.ID)
-		if err != nil {
-			return err
-		}
-		if len(latestDMs) > 0 {
-			for _, latestDM := range latestDMs {
-				if latestDM.ReleaseID > 0 {
-					if dm.ReleaseDateUnix >= latestDM.ReleaseDateUnix && dm.Stage <= latestDM.Stage {
-						latestDM.Latest = false
-						err = repo_model.UpdateDoor43MetadataCols(latestDM, "latest")
-						if err != nil {
-							return err
-						}
-					}
-					if dm.ReleaseDateUnix < latestDM.ReleaseDateUnix && dm.Stage >= latestDM.Stage {
-						dm.Latest = false
-					}
-				}
-			}
-		}
-	}
 
 	if release != nil || branchOrTag == repo.DefaultBranch {
 		if oldDM != nil {
@@ -676,28 +658,93 @@ func ProcessDoor43MetadataForRepoRelease(ctx context.Context, repo *repo_model.R
 			if err != nil {
 				return err
 			}
+			if branchOrTag == repo.DefaultBranch {
+				repo.DefaultBranchDmID = dm.ID
+				err = repo_model.UpdateRepositoryCols(ctx, repo, "default_branch_dm_id")
+			}
 		}
 	}
 
-	// Insert or Update the repo entry of StageRepo (4) and ReleaseID of -1
-	if releaseID == 0 {
-		dm.ReleaseID = -1 // Need to set this to -1 so it is unique to the master branch, which is 0
-		dm.Stage = door43metadata.StageRepo
-		dm.Latest = branchOrTag != repo.DefaultBranch
-		// master branch was processed, so we make or update another entry with Stage = Repo and releaseID = -1 so we always retain repo metadata if master goes bad
-		oldDM, err = repo_model.GetDoor43MetadataByRepoIDAndStage(repo.ID, door43metadata.StageRepo)
-		if err != nil && !repo_model.IsErrDoor43MetadataNotExist(err) {
+	// Save metadata to repo if we don't have a title yet (use this dm's no matter what it is) or if this is the defaultBranch
+	if repo.Title == "" || dm.BranchOrTag == repo.DefaultBranch {
+		repo.MetadataType = dm.MetadataType
+		repo.MetadataVersion = dm.MetadataVersion
+		repo.Subject = dm.Subject
+		repo.Title = dm.Title
+		repo.Language = dm.Language
+		repo.LanguageTitle = dm.LanguageTitle
+		repo.LanguageDirection = dm.LanguageDirection
+		repo.LanguageIsGL = dm.LanguageIsGL
+		repo.ContentFormat = dm.ContentFormat
+		repo.CheckingLevel = dm.CheckingLevel
+		repo.Ingredients = dm.Ingredients
+		if repo.DefaultBranch == dm.BranchOrTag && dm.ID > 0 {
+			repo.DefaultBranchDmID = dm.ID
+		}
+		err = repo_model.UpdateRepositoryCols(ctx, repo, "metadata_type", "metadata_version", "subject", "title", "language", "language_title", "language_dir", "language_is_gl", "content_format", "checking_level", "ingredients", "default_branch_dm_id")
+		if err != nil {
 			return err
 		}
-		if oldDM == nil || oldDM.BranchOrTag == branchOrTag || branchOrTag == repo.DefaultBranch {
-			if oldDM != nil {
-				dm.ID = oldDM.ID
-				return repo_model.UpdateDoor43Metadata(dm)
-			}
-			dm.ID = 0
-			return repo_model.InsertDoor43Metadata(dm)
+	}
+
+	// Update a repo's LatestProdDmID if applicable
+	repo.LatestProdDm, err = repo_model.GetMostRecentDoor43MetadataByStage(repo.ID, door43metadata.StageProd)
+	if err != nil && !repo_model.IsErrDoor43MetadataNotExist(err) {
+		return err
+	}
+	if (repo.LatestProdDm == nil && repo.LatestProdDmID != 0) || (repo.LatestProdDm != nil && repo.LatestProdDmID != repo.LatestProdDm.ID) {
+		if repo.LatestProdDm == nil && repo.LatestProdDmID != 0 {
+			repo.LatestProdDmID = 0
+		} else {
+			repo.LatestProdDmID = repo.LatestProdDm.ID
+		}
+		err = repo_model.UpdateRepositoryCols(ctx, repo, "latest_prod_dm_id")
+		if err != nil {
+			return err
 		}
 	}
+
+	// Update a repo's LatestPreprodDmID if applicable
+	repo.LatestPreprodDm, err = repo_model.GetMostRecentDoor43MetadataByStage(repo.ID, door43metadata.StagePreProd)
+	if err != nil && !repo_model.IsErrDoor43MetadataNotExist(err) {
+		return err
+	}
+	if repo.LatestPreprodDm != nil && repo.LatestProdDm != nil && repo.LatestPreprodDm.ReleaseDateUnix <= repo.LatestProdDm.ReleaseDateUnix {
+		repo.LatestPreprodDm = nil
+	}
+	if (repo.LatestPreprodDm == nil && repo.LatestPreprodDmID != 0) || (repo.LatestPreprodDm != nil && repo.LatestPreprodDmID != repo.LatestPreprodDm.ID) {
+		if repo.LatestPreprodDm == nil && repo.LatestPreprodDmID != 0 {
+			repo.LatestPreprodDmID = 0
+		} else {
+			repo.LatestPreprodDmID = repo.LatestPreprodDm.ID
+		}
+		err = repo_model.UpdateRepositoryCols(ctx, repo, "latest_preprod_dm_id")
+		if err != nil {
+			return err
+		}
+	}
+
+	// Update a repo's LatestProdDmID if applicable
+	repo.LatestDraftDm, err = repo_model.GetMostRecentDoor43MetadataByStage(repo.ID, door43metadata.StageDraft)
+	if err != nil && !repo_model.IsErrDoor43MetadataNotExist(err) {
+		return err
+	}
+	if repo.LatestDraftDm != nil && ((repo.LatestProdDm != nil && repo.LatestDraftDm.ReleaseDateUnix <= repo.LatestProdDm.ReleaseDateUnix) ||
+		(repo.LatestPreprodDm != nil && repo.LatestDraftDm.ReleaseDateUnix <= repo.LatestPreprodDm.ReleaseDateUnix)) {
+		repo.LatestDraftDm = nil
+	}
+	if (repo.LatestDraftDm == nil && repo.LatestDraftDmID != 0) || (repo.LatestDraftDm != nil && repo.LatestDraftDmID != repo.LatestDraftDm.ID) {
+		if repo.LatestDraftDm == nil && repo.LatestDraftDmID != 0 {
+			repo.LatestDraftDmID = 0
+		} else {
+			repo.LatestDraftDmID = repo.LatestDraftDm.ID
+		}
+		err = repo_model.UpdateRepositoryCols(ctx, repo, "latest_draft_dm_id")
+		if err != nil {
+			return err
+		}
+	}
+
 	return nil
 }
 

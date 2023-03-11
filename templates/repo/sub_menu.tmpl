@@ -19,40 +19,16 @@
 				</div>
 			{{end}}
 			<!-- DCS Customizations -->
-			{{$dm := (GetDefaultBranchMetadata .Repository.ID)}}
-			{{$metadataType := ""}}
-			{{$metadataVersion := ""}}
-			{{$metadataTypeTitle := ""}}
-			{{$metadataTypeIconURL := ""}}
-			{{$lang := ""}}
-			{{$langTitle := ""}}
-			{{$langDir := ""}}
-			{{$langIsGL := false}}
-			{{if $dm}}
-				{{$lang = $dm.Language}}
-				{{$langTitle = $dm.LanguageTitle}}
-				{{$langDir = $dm.LanguageDirection}}
-				{{$langIsGL = $dm.LanguageIsGL}}
-				{{$metadataType = $dm.MetadataType}}
-				{{$metadataVersion = $dm.MetadataVersion}}
-				{{$metadataTypeTitle = (GetMetadataTypeTitle $metadataType)}}
-				{{$metadataTypeIconURL = (GetMetadataTypeIconURL $metadataType)}}
-			{{else}}
-				{{$lang = (GetLanguageFromRepoName .Repository.Name)}}
-				{{if $lang}}
-					{{$langTitle = (GetLanguageTitle $lang)}}
-					{{$langDir = (GetLanguageDirection $lang)}}
-					{{$langIsGL = (GetLanguageIsGL $lang)}}
-				{{end}}
-			{{end}}
-			{{if $lang}}
+			{{if .Repository.Language}}
 				<div class="item">
-					<a class="ui" href="{{AppSubUrl}}/explore/repos?q=lang:{{$lang}}" title="Is a{{if $langIsGL}} Gateway{{else}}n Other{{end}} Language"><i class="fa fa-language"></i> <span style="font-weight: bold"><span data-language="{{$lang}}" data-language-direction="{{$langDir}}">{{$langTitle}}</span> ({{$lang}}){{if $langIsGL}}*{{end}}</span></a>
+					<a class="ui" href="{{AppSubUrl}}/explore/repos?q=lang:{{.Repository.Language}}" title="Is a{{if .Repository.LanguageIsGL}} Gateway{{else}}n Other{{end}} Language"><i class="fa fa-language"></i> <span style="font-weight: bold"><span data-language="{{.Repository.Language}}" data-language-direction="{{.Repository.LanguageDirection}}">{{.Repository.LanguageTitle}}</span> ({{.Repository.Language}}){{if .Repository.LanguageIsGL}}*{{end}}</span></a>
 				</div>
 			{{end}}
-			{{if $metadataType}}
+			{{if .Repository.MetadataType}}
+				{{$metadataTypeTitle := (GetMetadataTypeTitle .Repository.MetadataType)}}
+				{{$metadataTypeIconURL := (GetMetadataTypeIconURL .Repository.MetadataType)}}
 				<div class="item">
-					<a class="ui" href="{{AppSubUrl}}/explore/repos?q=metadata_type:{{$metadataType}}" title="Metadata Type: {{$metadataTypeTitle}} v{{$metadataVersion}}">{{svg "octicon-briefcase"}} <span style="font-weight: bold">{{$metadataType}}{{$metadataVersion}}</span> <img src="{{$metadataTypeIconURL}}" style="height:16px;vertical-align:middle"/></a>
+					<a class="ui" href="{{AppSubUrl}}/explore/repos?q=metadata_type:{{.Repository.MetadataType}}" title="Metadata Type: {{$metadataTypeTitle}} v{{.Repository.MetadataVersion}}">{{svg "octicon-briefcase"}} <span style="font-weight: bold">{{.Repository.MetadataType}}{{.Repository.MetadataVersion}}</span> <img src="{{$metadataTypeIconURL}}" style="height:16px;vertical-align:middle"/></a>
 				</div>
 			{{end}}
 			<!-- END DCS Customizations -->

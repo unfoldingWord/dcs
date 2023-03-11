@@ -65,8 +65,6 @@ type Door43Metadata struct {
 	ReleaseDateUnix   timeutil.TimeStamp      `xorm:"NOT NULL"`
 	CreatedUnix       timeutil.TimeStamp      `xorm:"INDEX created NOT NULL"`
 	UpdatedUnix       timeutil.TimeStamp      `xorm:"INDEX updated"`
-	Reprocess         bool                    `xorm:"DEFAULT 0"`
-	Latest            bool                    `xorm:"DEFAULT 0"`
 }
 
 func init() {
@@ -119,6 +117,9 @@ func (dm *Door43Metadata) getRelease(ctx context.Context) error {
 
 func (dm *Door43Metadata) loadAttributes(ctx context.Context) error {
 	if err := dm.getRepo(ctx); err != nil {
+		return err
+	}
+	if err := dm.Repo.LoadAttributes(ctx); err != nil {
 		return err
 	}
 	if dm.Release == nil && dm.ReleaseID > 0 {
@@ -236,12 +237,19 @@ func IsDoor43MetadataExist(repoID, releaseID int64) (bool, error) {
 func InsertDoor43Metadata(dm *Door43Metadata) error {
 	if id, err := db.GetEngine(db.DefaultContext).Insert(dm); err != nil {
 		return err
-	} else if id > 0 && dm.ReleaseID > 0 {
+	} else if id > 0 {
+		dm.ID = id
 		if err := dm.LoadAttributes(); err != nil {
 			return err
 		}
-		if err := system.CreateRepositoryNotice("Door43 Metadata created for repo: %s, tag: %s", dm.Repo.Name, dm.Release.TagName); err != nil {
-			return err
+		if dm.ReleaseID > 0 {
+			if err := system.CreateRepositoryNotice("Door43 Metadata created for repo: %s, tag: %s", dm.Repo.Name, dm.Release.TagName); err != nil {
+				return err
+			}
+		} else {
+			if err := system.CreateRepositoryNotice("Door43 Metadata created for repo: %s, branch: %s", dm.Repo.Name, dm.BranchOrTag); err != nil {
+				return err
+			}
 		}
 	}
 	return nil
@@ -412,15 +420,25 @@ func (dm *Door43Metadata) GetReleaseCount() (int64, error) {
 		Count(&Door43Metadata{})
 }
 
-// GetLatestDoor43MetadatasByRepoID returns the latest Door43Metadatas for all stages (if a higher stage is newer than the lower)
-func GetLatestDoor43MetadatasByRepoID(repoID int64) ([]*Door43Metadata, error) {
-	return getLatestDoor43MetadatasByRepoID(db.GetEngine(db.DefaultContext), repoID)
+// GetMostRecentDoor43MetadataByStage returns the most recent Door43Metadatas of a given stage for a repo
+func GetMostRecentDoor43MetadataByStage(repoID int64, stage door43metadata.Stage) (*Door43Metadata, error) {
+	return getMostRecentDoor43MetadataByStage(db.GetEngine(db.DefaultContext), repoID, stage)
 }
 
-func getLatestDoor43MetadatasByRepoID(e db.Engine, repoID int64) ([]*Door43Metadata, error) {
-	var dms []*Door43Metadata
-	err := e.Where("repo_id=? AND latest=?", repoID, true).OrderBy("release_date_unix ASC").Find(&dms)
-	return dms, err
+func getMostRecentDoor43MetadataByStage(e db.Engine, repoID int64, stage door43metadata.Stage) (*Door43Metadata, error) {
+	var dm Door43Metadata
+	has, err := e.Table("door43_metadata").Select("*").
+		Where("`repo_id` = ?", repoID).
+		And("`stage` = ?", stage).
+		OrderBy("release_date_unix DESC").
+		Limit(1).
+		Get(&dm)
+	if err != nil {
+		return nil, err
+	} else if !has {
+		return nil, ErrDoor43MetadataNotExist{0, repoID, 0}
+	}
+	return &dm, nil
 }
 
 // GetDoor43MetadataByRepoIDAndReleaseID returns the metadata of a given release ID (0 = default branch).
@@ -442,54 +460,6 @@ func getDoor43MetadataByRepoIDAndReleaseID(e db.Engine, repoID, releaseID int64)
 		}
 	}
 	return nil, ErrDoor43MetadataNotExist{0, repoID, releaseID}
-}
-
-// GetDoor43MetadataByRepoIDAndStage returns the metadata of a given repo ID and stage.
-func GetDoor43MetadataByRepoIDAndStage(repoID int64, stage door43metadata.Stage) (*Door43Metadata, error) {
-	return getDoor43MetadataByRepoIDAndStage(db.GetEngine(db.DefaultContext), repoID, stage)
-}
-
-func getDoor43MetadataByRepoIDAndStage(e db.Engine, repoID int64, stage door43metadata.Stage) (*Door43Metadata, error) {
-	cond := builder.NewCond().
-		And(builder.Eq{"repo_id": repoID}).
-		And(builder.Eq{"stage": stage})
-	e = e.Where(cond).Desc("release_date_unix").Desc("branch_or_tag")
-
-	dm := &Door43Metadata{}
-	found, err := e.Get(dm)
-	if err != nil || !found {
-		return nil, err
-	}
-	return dm, err
-}
-
-// GetLatestProdCatalogMetadata gets the latest Door43 Metadata that is in the prod catalog.
-func GetLatestProdCatalogMetadata(repoID int64) (*Door43Metadata, error) {
-	return getLatestProdCatalogMetadata(repoID, db.GetEngine(db.DefaultContext))
-}
-
-func getLatestProdCatalogMetadata(repoID int64, e db.Engine) (*Door43Metadata, error) {
-	dm, err := GetLatestCatalogMetadataByRepoID(repoID, false)
-	if err != nil && !IsErrDoor43MetadataNotExist(err) {
-		return nil, err
-	}
-	return dm, nil
-}
-
-// GetLatestPreProdCatalogMetadata gets the latest Door43 Metadata that is in the pre-prod catalog.
-func GetLatestPreProdCatalogMetadata(repoID int64) (*Door43Metadata, error) {
-	return getLatestPreProdCatalogMetadata(db.DefaultContext, repoID, db.GetEngine(db.DefaultContext))
-}
-
-func getLatestPreProdCatalogMetadata(ctx context.Context, repoID int64, e db.Engine) (*Door43Metadata, error) {
-	dm, err := getLatestCatalogMetadataByRepoID(ctx, repoID, true)
-	if err != nil && !IsErrDoor43MetadataNotExist(err) {
-		return nil, err
-	}
-	if dm != nil && !dm.Release.IsPrerelease {
-		dm = nil
-	}
-	return dm, nil
 }
 
 // GetDefaultBranchMetadata gets the default branch's Door43 Metadata.

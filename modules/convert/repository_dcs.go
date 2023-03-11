@@ -5,69 +5,49 @@
 package convert
 
 import (
-	"code.gitea.io/gitea/models/door43metadata"
 	repo_model "code.gitea.io/gitea/models/repo"
 	"code.gitea.io/gitea/modules/dcs"
-	"code.gitea.io/gitea/modules/log"
 	api "code.gitea.io/gitea/modules/structs"
 )
 
 func toRepoDCS(repo *repo_model.Repository, apiRepo *api.Repository) *api.Repository {
-	latestDMs, err := repo_model.GetLatestDoor43MetadatasByRepoID(repo.ID)
-	if err != nil && !repo_model.IsErrDoor43MetadataNotExist(err) {
-		log.Error("GetDoor43MetadataByRepoIDAndReleaseID: %v", err)
-	}
-	var dm *repo_model.Door43Metadata
-	if len(latestDMs) > 0 {
-		dm = latestDMs[len(latestDMs)-1]
-		dm.Repo = repo
-	}
-
-	if dm != nil {
-		apiRepo.Title = dm.Title
-		apiRepo.Subject = dm.Subject
-		apiRepo.Language = dm.Language
-		apiRepo.LanguageDir = dm.LanguageDirection
-		if apiRepo.LanguageDir == "" && apiRepo.Language != "" {
-			apiRepo.LanguageDir = dcs.GetLanguageDirection(apiRepo.Language)
-		}
-		apiRepo.LanguageTitle = dm.LanguageTitle
-		if apiRepo.LanguageTitle == "" && apiRepo.Language != "" {
-			apiRepo.LanguageTitle = dcs.GetLanguageTitle(apiRepo.Language)
-		}
-		apiRepo.LanguageIsGL = dm.LanguageIsGL
-		apiRepo.CheckingLevel = dm.CheckingLevel
-		apiRepo.ContentFormat = dm.ContentFormat
-		apiRepo.MetadataType = dm.MetadataType
-		apiRepo.MetadataVersion = dm.MetadataVersion
-		apiRepo.Ingredients = dm.Ingredients
-	} else {
-		apiRepo.Subject = dcs.GetSubjectFromRepoName(repo.LowerName)
-		apiRepo.Language = dcs.GetLanguageFromRepoName(repo.LowerName)
-		apiRepo.LanguageTitle = dcs.GetLanguageTitle(apiRepo.Language)
+	apiRepo.Title = repo.Title
+	apiRepo.Subject = repo.Subject
+	apiRepo.Language = repo.Language
+	apiRepo.LanguageDir = repo.LanguageDirection
+	if apiRepo.LanguageDir == "" && apiRepo.Language != "" {
 		apiRepo.LanguageDir = dcs.GetLanguageDirection(apiRepo.Language)
+	}
+	apiRepo.LanguageTitle = repo.LanguageTitle
+	if apiRepo.LanguageTitle == "" && apiRepo.Language != "" {
+		apiRepo.LanguageTitle = dcs.GetLanguageTitle(apiRepo.Language)
+	}
+	apiRepo.LanguageIsGL = repo.LanguageIsGL
+	apiRepo.CheckingLevel = repo.CheckingLevel
+	apiRepo.ContentFormat = repo.ContentFormat
+	apiRepo.MetadataType = repo.MetadataType
+	apiRepo.MetadataVersion = repo.MetadataVersion
+	apiRepo.Ingredients = repo.Ingredients
+
+	if apiRepo.Subject == "" {
+		apiRepo.Subject = dcs.GetSubjectFromRepoName(repo.LowerName)
+	}
+	if apiRepo.Language == "" {
+		apiRepo.Language = dcs.GetLanguageFromRepoName(repo.LowerName)
 		apiRepo.LanguageIsGL = dcs.LanguageIsGL(apiRepo.Language)
-		if repo.PrimaryLanguage != nil {
-			apiRepo.ContentFormat = repo.PrimaryLanguage.Language
-		}
+	}
+	if apiRepo.LanguageTitle == "" {
+		apiRepo.LanguageTitle = dcs.GetLanguageTitle(apiRepo.Language)
+	}
+	if apiRepo.LanguageDir == "" {
+		apiRepo.LanguageDir = dcs.GetLanguageDirection(apiRepo.Language)
 	}
 
-	if len(latestDMs) > 0 {
-		apiRepo.CatalogStages = &api.CatalogStages{}
-		for _, latestDM := range latestDMs {
-			latestDM.Repo = repo
-			catalogStage := ToCatalogStage(latestDM)
-			switch latestDM.Stage {
-			case door43metadata.StageProd:
-				apiRepo.CatalogStages.Production = catalogStage
-			case door43metadata.StagePreProd:
-				apiRepo.CatalogStages.PreProduction = catalogStage
-			case door43metadata.StageDraft:
-				apiRepo.CatalogStages.Draft = catalogStage
-			case door43metadata.StageLatest:
-				apiRepo.CatalogStages.Latest = catalogStage
-			}
-		}
+	apiRepo.CatalogStages = &api.CatalogStages{
+		Production:    ToCatalogStage(repo.GetLatestProdDm()),
+		PreProduction: ToCatalogStage(repo.GetLatestPreprodDm()),
+		Draft:         ToCatalogStage(repo.GetLatestDraftDm()),
+		Latest:        ToCatalogStage(repo.GetDefaultBranchDm()),
 	}
 
 	return apiRepo
