@@ -6,7 +6,7 @@
 					<img class="ui avatar image" src="{{.Repo.RelAvatarLink}}">
 				{{end}}
 				{{if .Release}}
-				<a class="name" href="{{.Repo.Link}}/releases/tag/{{.Release.TagName | PathEscapeSegments}}">
+				<a class="name" href="{{.Repo.Link}}/releases/tag/{{.BranchOrTag | PathEscapeSegments}}">
 				{{else}}
 				<a class="name" href="{{.Repo.Link}}/src/branch/{{.Repo.DefaultBranch | PathEscapeSegments}}">
 				{{end}}
@@ -28,7 +28,7 @@
 						{{$type = "Pre-Release"}}
 					{{end}}
 					<button class="ui {{$color}} label compact icon button tooltip" data-content="Catalog: {{$type}}" aria-label="Catalog: {{$type}}">
-						{{.Release.TagName}}
+						{{.BranchOrTag}}
 					</button>
 				{{end}}
 				<div class="ui right metas">

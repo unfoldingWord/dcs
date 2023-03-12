@@ -13,6 +13,7 @@ import (
 func GetRepoLanguages(u *user_model.User) []string {
 	fields, _ := SearchDoor43MetadataField(&door43metadata.SearchCatalogOptions{
 		Owners: []string{u.LowerName},
+		Stage: door43metadata.StageLatest,
 	}, "language")
 	return fields
 }
@@ -21,6 +22,7 @@ func GetRepoLanguages(u *user_model.User) []string {
 func GetRepoSubjects(u *user_model.User) []string {
 	fields, _ := SearchDoor43MetadataField(&door43metadata.SearchCatalogOptions{
 		Owners: []string{u.LowerName},
+		Stage: door43metadata.StageLatest,
 	}, "subject")
 	return fields
 }
@@ -29,6 +31,7 @@ func GetRepoSubjects(u *user_model.User) []string {
 func GetRepoMetadataTypes(u *user_model.User) []string {
 	fields, _ := SearchDoor43MetadataField(&door43metadata.SearchCatalogOptions{
 		Owners: []string{u.LowerName},
+		Stage: door43metadata.StageLatest,
 	}, "metadata_type")
 	return fields
 }

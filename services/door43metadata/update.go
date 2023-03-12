@@ -25,7 +25,7 @@ func UpdateDoor43Metadata(ctx context.Context) error {
 	}
 
 	if err = db.Iterate(
-		db.DefaultContext,
+		ctx,
 		new(repo.Repository),
 		builder.In("id", repoIDs),
 		func(idx int, bean interface{}) error {
@@ -36,7 +36,7 @@ func UpdateDoor43Metadata(ctx context.Context) error {
 			default:
 			}
 			log.Trace("Running generate metadata on %v", repo)
-			if err := ProcessDoor43MetadataForRepo(repo); err != nil {
+			if err := ProcessDoor43MetadataForRepo(ctx, repo); err != nil {
 				log.Warn("Failed to process metadata for repo (%v): %v", repo, err)
 				if err = system.CreateRepositoryNotice("Failed to process metadata for repository (%s): %v", repo.FullName(), err); err != nil {
 					log.Error("ProcessDoor43MetadataForRepo: %v", err)

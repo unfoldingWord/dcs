@@ -16,7 +16,6 @@ func (repo *Repository) GetLatestProdDm() *Door43Metadata {
 			log.Warning("Unable to load LatestProdDm for %s: %#v", repo.FullName(), err)
 		}
 		dm.Repo = repo
-		_ = dm.LoadAttributes()
 		repo.LatestProdDm = dm
 	}
 	return repo.LatestProdDm
@@ -30,7 +29,6 @@ func (repo *Repository) GetLatestPreprodDm() *Door43Metadata {
 			log.Warning("Unable to load LatestPreprodDm for %s: %#v", repo.FullName(), err)
 		}
 		dm.Repo = repo
-		_ = dm.LoadAttributes()
 		repo.LatestPreprodDm = dm
 	}
 	return repo.LatestPreprodDm
@@ -44,7 +42,6 @@ func (repo *Repository) GetLatestDraftDm() *Door43Metadata {
 			log.Warning("Unable to load LatestDraftDm for %s: %#v", repo.FullName(), err)
 		}
 		dm.Repo = repo
-		_ = dm.LoadAttributes()
 		repo.LatestDraftDm = dm
 	}
 	return repo.LatestDraftDm
@@ -58,7 +55,6 @@ func (repo *Repository) GetDefaultBranchDm() *Door43Metadata {
 			log.Warning("Unable to load DefaultBranchDm for %s: %#v", repo.FullName(), err)
 		}
 		repo.DefaultBranchDm = dm
-		_ = dm.LoadAttributes()
 		dm.Repo = repo
 	}
 	return repo.DefaultBranchDm
