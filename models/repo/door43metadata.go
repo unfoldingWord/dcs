@@ -547,11 +547,11 @@ func SortDoorMetadatas(dms []*Door43Metadata) {
 
 // DeleteDoor43MetadataByID deletes a metadata from database by given ID.
 func DeleteDoor43MetadataByID(id int64) error {
-	if dm, err := GetDoor43MetadataByID(id); err != nil {
+	dm, err := GetDoor43MetadataByID(id)
+	if err != nil {
 		return err
-	} else {
-		return DeleteDoor43Metadata(dm)
 	}
+	return DeleteDoor43Metadata(dm)
 }
 
 // DeleteDoor43Metadata deletes a metadata from database by given ID.

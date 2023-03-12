@@ -108,7 +108,7 @@ func searchDoor43MetadataFieldByCondition(ctx context.Context, opts *door43metad
 	var results []string
 
 	if !strings.Contains(field, ".") {
-		field = "`door43_metadata`."+field
+		field = "`door43_metadata`." + field
 	}
 
 	sess := db.GetEngine(db.DefaultContext).Table("door43_metadata").
