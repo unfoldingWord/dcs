@@ -149,7 +149,7 @@ func ConvertGenericMapToRC020Manifest(manifest *map[string]interface{}) (*struct
 }
 
 // ProcessDoor43MetadataForRepo handles the metadata for a given repo for all its releases
-func ProcessDoor43MetadataForRepo(repo *repo_model.Repository) error {
+func ProcessDoor43MetadataForRepo(ctx context.Context, repo *repo_model.Repository) error {
 	if repo == nil {
 		return fmt.Errorf("no repository provided")
 	}
@@ -167,12 +167,6 @@ func ProcessDoor43MetadataForRepo(repo *repo_model.Repository) error {
 		log.Error("GetReleaseIDsNeedingDoor43Metadata: %v", err)
 		return err
 	}
-
-	ctx, commiter, err := db.TxContext()
-	if err != nil {
-		return err
-	}
-	defer commiter.Close()
 
 	for _, releaseID := range relIDs {
 		var release *repo_model.Release
@@ -681,7 +675,7 @@ func ProcessDoor43MetadataForRepoRelease(ctx context.Context, repo *repo_model.R
 		if repo.DefaultBranch == dm.BranchOrTag && dm.ID > 0 {
 			repo.DefaultBranchDmID = dm.ID
 		}
-		err = repo_model.UpdateRepositoryCols(ctx, repo, "metadata_type", "metadata_version", "subject", "title", "language", "language_title", "language_dir", "language_is_gl", "content_format", "checking_level", "ingredients", "default_branch_dm_id")
+		err = repo_model.UpdateRepositoryCols(ctx, repo, "metadata_type", "metadata_version", "subject", "title", "language", "language_title", "language_direction", "language_is_gl", "content_format", "checking_level", "ingredients", "default_branch_dm_id")
 		if err != nil {
 			return err
 		}

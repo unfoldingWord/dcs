@@ -7,6 +7,7 @@ package models
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"code.gitea.io/gitea/models/db"
 	"code.gitea.io/gitea/models/door43metadata"
@@ -105,6 +106,10 @@ func SearchDoor43MetadataFieldByCondition(opts *door43metadata.SearchCatalogOpti
 
 func searchDoor43MetadataFieldByCondition(ctx context.Context, opts *door43metadata.SearchCatalogOptions, cond builder.Cond, field string) ([]string, error) {
 	var results []string
+
+	if !strings.Contains(field, ".") {
+		field = "`door43_metadata`."+field
+	}
 
 	sess := db.GetEngine(db.DefaultContext).Table("door43_metadata").
 		Select("DISTINCT "+field).

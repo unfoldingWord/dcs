@@ -39,17 +39,17 @@
 					<!-- DCS Customizations -->
 						{{$prodDM := .GetLatestProdDm}}
 						{{if $prodDM}}
-							<a href="{{.Link}}/releases/tag/{{$prodDM.Release.TagName | PathEscapeSegments}}" rel="nofollow">
+							<a href="{{.Link}}/releases/tag/{{$prodDM.BranchOrTag | PathEscapeSegments}}" rel="nofollow">
 								<button class="ui green label compact icon button tooltip" data-content="Catalog: Production" aria-label="Catalog: Production">
-									{{$prodDM.Release.TagName}}
+									{{$prodDM.BranchOrTag}}
 								</button>
 							</a>
 						{{end}}
 						{{$preProdDM := .GetLatestPreprodDm}}
 						{{if $preProdDM}}
-							<a href="{{.Link}}/releases/tag/{{$preProdDM.Release.TagName | PathEscapeSegments}}" rel="nofollow">
+							<a href="{{.Link}}/releases/tag/{{$preProdDM.BranchOrTag | PathEscapeSegments}}" rel="nofollow">
 								<button class="ui orange label compact icon button tooltip" data-content="Catalog: Pre-Production" aria-label="Catalog: Production">
-									{{$preProdDM.Release.TagName}}
+									{{$preProdDM.BranchOrTag}}
 								</button>
 							</a>
 						{{end}}

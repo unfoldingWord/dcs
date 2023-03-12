@@ -76,25 +76,37 @@ func (m *metadataNotifier) NotifyDeleteRepository(doer *user_model.User, repo *r
 }
 
 func (m *metadataNotifier) NotifyMigrateRepository(doer, u *user_model.User, repo *repo_model.Repository) {
-	if err := door43metadata_service.ProcessDoor43MetadataForRepo(repo); err != nil {
+	ctx, _, finished := process.GetManager().AddContext(graceful.GetManager().HammerContext(), fmt.Sprintf("metadataNotifier.NotifyMigrateRepository User: %s[%d] in %s[%d]", doer.Name, doer.ID, repo.FullName(), repo.ID))
+	defer finished()
+
+	if err := door43metadata_service.ProcessDoor43MetadataForRepo(ctx, repo); err != nil {
 		log.Error("ProcessDoor43MetadataForRepo: %v\n", err)
 	}
 }
 
 func (m *metadataNotifier) NotifyTransferRepository(doer *user_model.User, repo *repo_model.Repository, newOwnerName string) {
-	if err := door43metadata_service.ProcessDoor43MetadataForRepo(repo); err != nil {
+	ctx, _, finished := process.GetManager().AddContext(graceful.GetManager().HammerContext(), fmt.Sprintf("metadataNotifier.NotifyTransferRepository User: %s[%d] in %s[%d]", doer.Name, doer.ID, repo.FullName(), repo.ID))
+	defer finished()
+
+	if err := door43metadata_service.ProcessDoor43MetadataForRepo(ctx, repo); err != nil {
 		log.Error("ProcessDoor43MetadataForRepo: %v\n", err)
 	}
 }
 
 func (m *metadataNotifier) NotifyForkRepository(doer *user_model.User, oldRepo, repo *repo_model.Repository) {
-	if err := door43metadata_service.ProcessDoor43MetadataForRepo(repo); err != nil {
+	ctx, _, finished := process.GetManager().AddContext(graceful.GetManager().HammerContext(), fmt.Sprintf("metadataNotifier.NotifyForkRepository User: %s[%d] in %s[%d]", doer.Name, doer.ID, repo.FullName(), repo.ID))
+	defer finished()
+
+	if err := door43metadata_service.ProcessDoor43MetadataForRepo(ctx, repo); err != nil {
 		log.Error("ProcessDoor43MetadataForRepo: %v\n", err)
 	}
 }
 
 func (m *metadataNotifier) NotifyRenameRepository(doer *user_model.User, repo *repo_model.Repository, oldName string) {
-	if err := door43metadata_service.ProcessDoor43MetadataForRepo(repo); err != nil {
+	ctx, _, finished := process.GetManager().AddContext(graceful.GetManager().HammerContext(), fmt.Sprintf("metadataNotifier.NotifyRenameRepository User: %s[%d] in %s[%d]", doer.Name, doer.ID, repo.FullName(), repo.ID))
+	defer finished()
+
+	if err := door43metadata_service.ProcessDoor43MetadataForRepo(ctx, repo); err != nil {
 		log.Error("ProcessDoor43MetadataForRepo: %v\n", err)
 	}
 }

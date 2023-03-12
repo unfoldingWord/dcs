@@ -107,19 +107,16 @@ func (dm *Door43Metadata) getRelease(ctx context.Context) error {
 			return err
 		}
 		dm.Release.Repo = dm.Repo
-		if err := dm.Release.LoadAttributes(); err != nil {
-			log.Warn("loadAttributes Error: %v\n", err)
-			return err
-		}
+		// if err := dm.Release.LoadAttributes(); err != nil {
+		// 	log.Warn("loadAttributes Error: %v\n", err)
+		// 	return err
+		// }
 	}
 	return nil
 }
 
 func (dm *Door43Metadata) loadAttributes(ctx context.Context) error {
 	if err := dm.getRepo(ctx); err != nil {
-		return err
-	}
-	if err := dm.Repo.LoadAttributes(ctx); err != nil {
 		return err
 	}
 	if dm.Release == nil && dm.ReleaseID > 0 {
@@ -146,11 +143,7 @@ func (dm *Door43Metadata) GetBranchOrTagType() string {
 
 // APIURL the api url for a door43 metadata. door43 metadata must have attributes loaded
 func (dm *Door43Metadata) APIURL() string {
-	ref := dm.Repo.DefaultBranch
-	if dm.ReleaseID > 0 {
-		ref = dm.Release.TagName
-	}
-	return fmt.Sprintf("%sapi/v1/catalog/entry/%s/%s/", setting.AppURL, dm.Repo.FullName(), ref)
+	return fmt.Sprintf("%sapi/v1/catalog/entry/%s/%s/", setting.AppURL, dm.Repo.FullName(), dm.BranchOrTag)
 }
 
 // GetTarballURL get the tarball URL of the tag or branch
@@ -239,11 +232,11 @@ func InsertDoor43Metadata(dm *Door43Metadata) error {
 		return err
 	} else if id > 0 {
 		dm.ID = id
-		if err := dm.LoadAttributes(); err != nil {
+		if err := dm.GetRepo(); err != nil {
 			return err
 		}
 		if dm.ReleaseID > 0 {
-			if err := system.CreateRepositoryNotice("Door43 Metadata created for repo: %s, tag: %s", dm.Repo.Name, dm.Release.TagName); err != nil {
+			if err := system.CreateRepositoryNotice("Door43 Metadata created for repo: %s, tag: %s", dm.Repo.Name, dm.BranchOrTag); err != nil {
 				return err
 			}
 		} else {
@@ -269,11 +262,11 @@ func UpdateDoor43MetadataCols(dm *Door43Metadata, cols ...string) error {
 func updateDoor43MetadataCols(e db.Engine, dm *Door43Metadata, cols ...string) error {
 	id, err := e.ID(dm.ID).Cols(cols...).Update(dm)
 	if id > 0 && dm.ReleaseID > 0 {
-		err := dm.LoadAttributes()
+		err := dm.GetRepo()
 		if err != nil {
 			return err
 		}
-		if err := system.CreateRepositoryNotice("Door43 Metadata updated for repo: %s, tag: %s", dm.Repo.Name, dm.Release.TagName); err != nil {
+		if err := system.CreateRepositoryNotice("Door43 Metadata updated for repo: %s, tag: %s", dm.Repo.Name, dm.BranchOrTag); err != nil {
 			log.Error("CreateRepositoryNotice: %v", err)
 		}
 	}
@@ -288,11 +281,11 @@ func UpdateDoor43Metadata(dm *Door43Metadata) error {
 func updateDoor43Metadata(e db.Engine, dm *Door43Metadata) error {
 	id, err := e.ID(dm.ID).AllCols().Update(dm)
 	if id > 0 && dm.ReleaseID > 0 {
-		err := dm.LoadAttributes()
+		err := dm.GetRepo()
 		if err != nil {
 			return err
 		}
-		if err := system.CreateRepositoryNotice("Door43 Metadata updated for repo: %s, tag: %s", dm.Repo.Name, dm.Release.TagName); err != nil {
+		if err := system.CreateRepositoryNotice("Door43 Metadata updated for repo: %s, tag: %s", dm.Repo.Name, dm.BranchOrTag); err != nil {
 			log.Error("CreateRepositoryNotice: %v", err)
 		}
 	}
@@ -556,8 +549,6 @@ func SortDoorMetadatas(dms []*Door43Metadata) {
 func DeleteDoor43MetadataByID(id int64) error {
 	if dm, err := GetDoor43MetadataByID(id); err != nil {
 		return err
-	} else if err := dm.LoadAttributes(); err != nil {
-		return err
 	} else {
 		return DeleteDoor43Metadata(dm)
 	}
@@ -567,9 +558,9 @@ func DeleteDoor43MetadataByID(id int64) error {
 func DeleteDoor43Metadata(dm *Door43Metadata) error {
 	id, err := db.GetEngine(db.DefaultContext).Delete(dm)
 	if id > 0 && dm.ReleaseID > 0 {
-		if err := dm.LoadAttributes(); err != nil {
+		if err := dm.GetRepo(); err != nil {
 			return err
-		} else if err := system.CreateRepositoryNotice("Door43 Metadata deleted for repo: %s, tag: %s", dm.Repo.Name, dm.Release.TagName); err != nil {
+		} else if err := system.CreateRepositoryNotice("Door43 Metadata deleted for repo: %s, tag: %s", dm.Repo.Name, dm.BranchOrTag); err != nil {
 			log.Error("CreateRepositoryNotice: %v", err)
 		}
 	}
