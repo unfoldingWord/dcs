@@ -12,8 +12,9 @@ import (
 func (repo *Repository) GetLatestProdDm() *Door43Metadata {
 	if repo.LatestProdDmID > 0 && repo.LatestProdDm == nil {
 		dm, err := GetDoor43MetadataByID(repo.LatestProdDmID)
-		if err != nil {
+		if err != nil || dm == nil {
 			log.Warning("Unable to load LatestProdDm for %s: %#v", repo.FullName(), err)
+			return nil
 		}
 		dm.Repo = repo
 		repo.LatestProdDm = dm
@@ -25,8 +26,9 @@ func (repo *Repository) GetLatestProdDm() *Door43Metadata {
 func (repo *Repository) GetLatestPreprodDm() *Door43Metadata {
 	if repo.LatestPreprodDmID > 0 && repo.LatestPreprodDm == nil {
 		dm, err := GetDoor43MetadataByID(repo.LatestPreprodDmID)
-		if err != nil {
+		if err != nil || dm == nil {
 			log.Warning("Unable to load LatestPreprodDm for %s: %#v", repo.FullName(), err)
+			return nil
 		}
 		dm.Repo = repo
 		repo.LatestPreprodDm = dm
@@ -34,28 +36,30 @@ func (repo *Repository) GetLatestPreprodDm() *Door43Metadata {
 	return repo.LatestPreprodDm
 }
 
-// GetLatestDraftDm gets the latest draft Door43Metadata
-func (repo *Repository) GetLatestDraftDm() *Door43Metadata {
-	if repo.LatestDraftDmID > 0 && repo.LatestDraftDm == nil {
-		dm, err := GetDoor43MetadataByID(repo.LatestDraftDmID)
-		if err != nil {
-			log.Warning("Unable to load LatestDraftDm for %s: %#v", repo.FullName(), err)
-		}
-		dm.Repo = repo
-		repo.LatestDraftDm = dm
-	}
-	return repo.LatestDraftDm
-}
-
 // GetDefaultBranchDm gets the default branch Door43Metadata
 func (repo *Repository) GetDefaultBranchDm() *Door43Metadata {
 	if repo.DefaultBranchDmID > 0 && repo.DefaultBranchDm == nil {
 		dm, err := GetDoor43MetadataByID(repo.DefaultBranchDmID)
-		if err != nil {
+		if err != nil || dm == nil {
 			log.Warning("Unable to load DefaultBranchDm for %s: %#v", repo.FullName(), err)
+			return nil
 		}
 		repo.DefaultBranchDm = dm
 		dm.Repo = repo
 	}
 	return repo.DefaultBranchDm
+}
+
+// GetRepoDm gets the Door43Metadata that a repo was updated with
+func (repo *Repository) GetRepoDm() *Door43Metadata {
+	if repo.RepoDmID > 0 && repo.RepoDm == nil {
+		dm, err := GetDoor43MetadataByID(repo.RepoDmID)
+		if err != nil || dm == nil {
+			log.Warning("Unable to load RepoDm for %s: %#v", repo.FullName(), err)
+			return nil
+		}
+		dm.Repo = repo
+		repo.RepoDm = dm
+	}
+	return repo.RepoDm
 }

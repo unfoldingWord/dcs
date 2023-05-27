@@ -181,7 +181,6 @@ func GetHistoryCond(includeHistory bool) builder.Cond {
 	return builder.Expr(
 		"`door43_metadata`.id = `repository`.latest_prod_dm_id OR " +
 			"`door43_metadata`.id = `repository`.latest_preprod_dm_id OR " +
-			"`door43_metadata`.id = `repository`.latest_draft_dm_id OR " +
 			"`door43_metadata`.id = `repository`.default_branch_dm_id")
 }
 

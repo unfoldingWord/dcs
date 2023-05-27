@@ -17,11 +17,11 @@
 					<!--- DCS Customizations -->
 					{{$prodDM := .GetLatestProdDm}}
 					{{if $prodDM}}
-						<span class="ui green label" title="Catalog: Production"><a href="{{.Link}}/releases/tag/{{$prodDM.BranchOrTag | PathEscapeSegments}}" rel="nofollow">{{$prodDM.BranchOrTag}}</a></span>
+						<span class="ui green label" title="Catalog: Production"><a href="{{.Link}}/releases/tag/{{$prodDM.Ref | PathEscapeSegments}}" rel="nofollow">{{$prodDM.Ref}}</a></span>
 					{{end}}
 					{{$preProdDM := .GetLatestPreprodDm}}
 					{{if $preProdDM}}
-						<span class="ui orange label" title="Catalog: Pre-Production"><a href="{{.Link}}/releases/tag/{{$preProdDM.BranchOrTag | PathEscapeSegments}}" rel="nofollow">{{$preProdDM.BranchOrTag}}</a></span>
+						<span class="ui orange label" title="Catalog: Pre-Production"><a href="{{.Link}}/releases/tag/{{$preProdDM.Ref | PathEscapeSegments}}" rel="nofollow">{{$preProdDM.Ref}}</a></span>
 					{{end}}
 					<!-- END DCS Customizations -->
 					<div class="labels df ac fw">
@@ -60,11 +60,11 @@
 					{{$prodDM := (.LatestProdDm)}}
 					{{if $prodDM}}
 					<div class="ui labeled button" tabindex="0">
-						<a type="submit" class="ui compact basic button" href="{{.Link}}/releases/tag/{{$prodDM.BranchOrTag | PathEscapeSegments}}">
+						<a type="submit" class="ui compact basic button" href="{{.Link}}/releases/tag/{{$prodDM.Ref | PathEscapeSegments}}">
 							<i class="icon fa-file-text"></i>{{$.locale.Tr "repo.metadata.catalog"}}
 						</a>
-						<a class="ui basic label" href="{{.Link}}/releases/tag/{{$prodDM.BranchOrTag | PathEscapeSegments}}">
-							{{$prodDM.BranchOrTag}}
+						<a class="ui basic label" href="{{.Link}}/releases/tag/{{$prodDM.Ref | PathEscapeSegments}}">
+							{{$prodDM.Ref}}
 						</a>
 					</div>
 					{{end}}

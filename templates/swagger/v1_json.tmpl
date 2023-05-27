@@ -641,7 +641,7 @@
           {
             "type": "string",
             "description": "release tag or default branch",
-            "name": "tag",
+            "name": "ref",
             "in": "path",
             "required": true
           }
@@ -14794,7 +14794,7 @@
       "properties": {
         "branch_or_tag_name": {
           "type": "string",
-          "x-go-name": "BranchOrTag"
+          "x-go-name": "Ref"
         },
         "commit_id": {
           "type": "string",
@@ -14872,6 +14872,10 @@
           "type": "string",
           "x-go-name": "Owner"
         },
+        "ref_type": {
+          "type": "string",
+          "x-go-name": "RefType"
+        },
         "release": {
           "$ref": "#/definitions/Release"
         },
@@ -14939,7 +14943,7 @@
       "properties": {
         "branch_or_tag_name": {
           "type": "string",
-          "x-go-name": "Tag"
+          "x-go-name": "Ref"
         },
         "contents_url": {
           "type": "string",
@@ -14973,9 +14977,6 @@
       "description": "CatalogStages a repo's catalog stages",
       "type": "object",
       "properties": {
-        "draft": {
-          "$ref": "#/definitions/CatalogStage"
-        },
         "latest": {
           "$ref": "#/definitions/CatalogStage"
         },
@@ -16045,10 +16046,6 @@
         "remote_username": {
           "type": "string",
           "x-go-name": "RemoteUsername"
-        },
-        "sync_on_commit": {
-          "type": "boolean",
-          "x-go-name": "SyncOnCommit"
         }
       },
       "x-go-package": "code.gitea.io/gitea/modules/structs"
@@ -18064,7 +18061,11 @@
           "x-go-name": "FileName"
         },
         "labels": {
-          "$ref": "#/definitions/IssueTemplateLabels"
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "x-go-name": "Labels"
         },
         "name": {
           "type": "string",
@@ -18078,13 +18079,6 @@
           "type": "string",
           "x-go-name": "Title"
         }
-      },
-      "x-go-package": "code.gitea.io/gitea/modules/structs"
-    },
-    "IssueTemplateLabels": {
-      "type": "array",
-      "items": {
-        "type": "string"
       },
       "x-go-package": "code.gitea.io/gitea/modules/structs"
     },
@@ -19293,10 +19287,6 @@
         "repo_name": {
           "type": "string",
           "x-go-name": "RepoName"
-        },
-        "sync_on_commit": {
-          "type": "boolean",
-          "x-go-name": "SyncOnCommit"
         }
       },
       "x-go-package": "code.gitea.io/gitea/modules/structs"

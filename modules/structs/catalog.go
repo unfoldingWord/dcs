@@ -27,7 +27,8 @@ type CatalogEntry struct {
 	LanguageIsGL           bool          `json:"language_is_gl"`
 	Subject                string        `json:"subject"`
 	Title                  string        `json:"title"`
-	BranchOrTag            string        `json:"branch_or_tag_name"`
+	Ref                    string        `json:"branch_or_tag_name"`
+	RefType                string        `json:"ref_type"`
 	CommitID               string        `json:"commit_id"`
 	Stage                  string        `json:"stage"`
 	MetadataURL            string        `json:"metadata_url"`
@@ -68,13 +69,12 @@ type CatalogVersionEndpoints struct {
 type CatalogStages struct {
 	Production    *CatalogStage `json:"prod"`
 	PreProduction *CatalogStage `json:"preprod"`
-	Draft         *CatalogStage `json:"draft"`
 	Latest        *CatalogStage `json:"latest"`
 }
 
 // CatalogStage a repo's catalog stage metadata
 type CatalogStage struct {
-	Tag         string    `json:"branch_or_tag_name"`
+	Ref         string    `json:"branch_or_tag_name"`
 	ReleaseURL  *string   `json:"release_url"`
 	Released    time.Time `json:"released"`
 	ZipballURL  string    `json:"zipball_url"`

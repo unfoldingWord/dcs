@@ -19,9 +19,9 @@ import (
 func UpdateDoor43Metadata(ctx context.Context) error {
 	log.Trace("Doing: UpdateDoor43Metadata")
 
-	repoIDs, err := repo.GetReposForMetadata()
+	repoIDs, err := repo.GetRepoIDsForMetadata(ctx)
 	if err != nil {
-		log.Error("GetReposForMetadata: %v", err)
+		log.Error("GetRepoIDsForMetadata: %v", err)
 	}
 
 	if err = db.Iterate(
@@ -36,7 +36,7 @@ func UpdateDoor43Metadata(ctx context.Context) error {
 			default:
 			}
 			log.Trace("Running generate metadata on %v", repo)
-			if err := ProcessDoor43MetadataForRepo(ctx, repo); err != nil {
+			if err := ProcessDoor43MetadataForRepo(ctx, repo, true); err != nil {
 				log.Warn("Failed to process metadata for repo (%v): %v", repo, err)
 				if err = system.CreateRepositoryNotice("Failed to process metadata for repository (%s): %v", repo.FullName(), err); err != nil {
 					log.Error("ProcessDoor43MetadataForRepo: %v", err)

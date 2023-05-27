@@ -11,26 +11,26 @@ type Stage int
 
 // Stage values
 const (
-	StageProd    Stage = iota // 0
-	StagePreProd Stage = 1
-	StageDraft   Stage = 2
+	StageProd    Stage = 1
+	StagePreProd Stage = 2
 	StageLatest  Stage = 3
+	StageBranch  Stage = 4
 )
 
 // StageMap map from string to Stage (int)
 var StageMap = map[string]Stage{
 	"prod":    StageProd,
 	"preprod": StagePreProd,
-	"draft":   StageDraft,
 	"latest":  StageLatest,
+	"branch":  StageBranch,
 }
 
 // StageToStringMap map from stage (int) to string
 var StageToStringMap = map[Stage]string{
 	StageProd:    "prod",
 	StagePreProd: "preprod",
-	StageDraft:   "draft",
 	StageLatest:  "latest",
+	StageBranch:  "branch",
 }
 
 // String returns string repensation of a Stage (int)

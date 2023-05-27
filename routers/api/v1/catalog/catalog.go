@@ -600,7 +600,7 @@ func GetCatalogEntry(ctx *context.APIContext) {
 	//   description: name of the repo
 	//   type: string
 	//   required: true
-	// - name: tag
+	// - name: ref
 	//   in: path
 	//   description: release tag or default branch
 	//   type: string
@@ -611,21 +611,16 @@ func GetCatalogEntry(ctx *context.APIContext) {
 	//   "422":
 	//     "$ref": "#/responses/validationError"
 
-	tag := ctx.Params("tag")
+	ref := ctx.Params("ref")
 	var dm *repo.Door43Metadata
 	var err error
-	if tag == ctx.Repo.Repository.DefaultBranch {
-		dm, err = repo.GetDoor43MetadataByRepoIDAndReleaseID(ctx.Repo.Repository.ID, 0)
-	} else {
-		dm, err = repo.GetDoor43MetadataByRepoIDAndTagName(ctx.Repo.Repository.ID, tag)
-		dm.Repo = ctx.Repo.Repository
-	}
+	dm, err = repo.GetDoor43MetadataByRepoIDAndRef(ctx, ctx.Repo.Repository.ID, ref)
 	if err != nil {
-		ctx.Error(http.StatusInternalServerError, "GetDoor43MetadataByRepoIDAndTagName", err)
+		ctx.Error(http.StatusInternalServerError, "GetDoor43MetadataByRepoIDAndRef", err)
 		return
 	}
 	if err := dm.LoadAttributes(); err != nil {
-		ctx.Error(http.StatusInternalServerError, "GetDoor43MetadataByRepoIDAndTagName", err)
+		ctx.Error(http.StatusInternalServerError, "LoadAttributes", err)
 		return
 	}
 	accessMode, err := access_model.AccessLevel(ctx.ContextUser, dm.Repo)
@@ -667,9 +662,9 @@ func GetCatalogMetadata(ctx *context.APIContext) {
 	//   "422":
 	//     "$ref": "#/responses/validationError"
 
-	dm, err := repo.GetDoor43MetadataByRepoIDAndTagName(ctx.Repo.Repository.ID, ctx.Repo.TagName)
+	dm, err := repo.GetDoor43MetadataByRepoIDAndRef(ctx, ctx.Repo.Repository.ID, ctx.Repo.TagName)
 	if err != nil {
-		ctx.Error(http.StatusInternalServerError, "GetDoor43MetadataByRepoIDAndTagName", err)
+		ctx.Error(http.StatusInternalServerError, "GetDoor43MetadataByRepoIDAndRef", err)
 		return
 	}
 	ctx.JSON(http.StatusOK, dm.Metadata)

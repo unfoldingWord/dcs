@@ -65,8 +65,9 @@ func ToCatalogEntry(dm *repo.Door43Metadata, mode perm.AccessMode) *api.CatalogE
 		ZipballURL:             dm.GetZipballURL(),
 		GitTreesURL:            dm.GetGitTreesURL(),
 		ContentsURL:            dm.GetContentsURL(),
-		BranchOrTag:            dm.BranchOrTag,
-		CommitID:               dm.CommitID,
+		Ref:                    dm.Ref,
+		RefType:                dm.RefType,
+		CommitID:               dm.CommitSHA,
 		Language:               dm.Language,
 		LanguageTitle:          dm.LanguageTitle,
 		LanguageDir:            dm.LanguageDirection,
@@ -92,7 +93,7 @@ func ToCatalogStage(dm *repo.Door43Metadata) *api.CatalogStage {
 	}
 	_ = dm.LoadAttributes()
 	catalogStage := &api.CatalogStage{
-		Tag:         dm.BranchOrTag,
+		Ref:         dm.Ref,
 		Released:    dm.ReleaseDateUnix.AsTime(),
 		ZipballURL:  dm.GetZipballURL(),
 		TarballURL:  dm.GetTarballURL(),

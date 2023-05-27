@@ -101,7 +101,7 @@ func (r *Release) loadAttributes(ctx context.Context) error {
 	}
 	/*** DCS Customizations ***/
 	if r.Door43Metadata == nil {
-		r.Door43Metadata, err = GetDoor43MetadataByRepoIDAndReleaseID(r.RepoID, r.ID)
+		r.Door43Metadata, err = GetDoor43MetadataByRepoIDAndRef(ctx, r.RepoID, r.TagName)
 		if err != nil && !IsErrDoor43MetadataNotExist(err) {
 			return err
 		}

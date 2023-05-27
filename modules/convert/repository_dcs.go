@@ -46,7 +46,6 @@ func toRepoDCS(repo *repo_model.Repository, apiRepo *api.Repository) *api.Reposi
 	apiRepo.CatalogStages = &api.CatalogStages{
 		Production:    ToCatalogStage(repo.GetLatestProdDm()),
 		PreProduction: ToCatalogStage(repo.GetLatestPreprodDm()),
-		Draft:         ToCatalogStage(repo.GetLatestDraftDm()),
 		Latest:        ToCatalogStage(repo.GetDefaultBranchDm()),
 	}
 

@@ -181,7 +181,7 @@ func releasesOrTags(ctx *context.Context, isTagList bool) {
 		}
 		/*** DCS Customizations ***/
 		if !r.IsTag {
-			r.Door43Metadata, err = repo_model.GetDoor43MetadataByRepoIDAndReleaseID(r.RepoID, r.ID)
+			r.Door43Metadata, err = repo_model.GetDoor43MetadataByRepoIDAndRef(ctx, r.RepoID, r.TagName)
 			if err != nil && !repo_model.IsErrDoor43MetadataNotExist(err) {
 				ctx.ServerError("GetDoor43Metadata", err)
 				return

@@ -22,7 +22,6 @@ import (
 	"code.gitea.io/gitea/modules/repository"
 	"code.gitea.io/gitea/modules/storage"
 	"code.gitea.io/gitea/modules/timeutil"
-	door43metadata_service "code.gitea.io/gitea/services/door43metadata"
 )
 
 func createTag(gitRepo *git.Repository, rel *repo_model.Release, msg string) (bool, error) {
@@ -141,16 +140,6 @@ func CreateRelease(gitRepo *git.Repository, rel *repo_model.Release, attachmentU
 	if !rel.IsDraft {
 		notification.NotifyNewRelease(rel)
 	}
-	/*** DCS Customizations ***/
-	if rel.IsDraft {
-		{
-			if err := rel.LoadAttributes(); err != nil {
-				return err
-			}
-			return door43metadata_service.ProcessDoor43MetadataForRepoRelease(gitRepo.Ctx, rel.Repo, rel, rel.Target)
-		}
-	}
-	/*** END DCS Customizations ***/
 
 	return nil
 }
