@@ -31,6 +31,18 @@ func Search(ctx *context.APIContext) {
 	//   description: ID of the user to search for
 	//   type: integer
 	//   format: int64
+	// - name: lang
+	//   in: query
+	//   description: If the user has one or more repos with the given language(s), the org will be in the results. Multiple lang's are ORed.
+	//   type: string
+	// - name: subject
+	//   in: query
+	//   description: If the user has one or more repos with the given subject(s), the org will be in the results. Multiple subjects are ORed.
+	//   type: string
+	// - name: metadataType
+	//   in: query
+	//   description: If the user has one or more repos with the given metadata type(s), the org will be in the results. Multiple metadata types are ORed.
+	//   type: string
 	// - name: page
 	//   in: query
 	//   description: page number of results to return (1-based)
@@ -60,6 +72,11 @@ func Search(ctx *context.APIContext) {
 		UID:         ctx.FormInt64("uid"),
 		Type:        user_model.UserTypeIndividual,
 		ListOptions: listOptions,
+		// DCS Customizations
+		RepoLanguages:     ctx.FormStrings("lang"),
+		RepoSubjects:      ctx.FormStrings("subject"),
+		RepoMetadataTypes: ctx.FormStrings("metadata_type"),
+		// END DCS Customizations
 	})
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, map[string]interface{}{

@@ -20,6 +20,20 @@
 					<span>{{svg "octicon-database"}} <b>{{.locale.PrettyNumber (index $fileSizeFields 0)}}</b> {{index $fileSizeFields 1}}</span>
 				</div>
 			{{end}}
+			<!-- DCS Customizations -->
+			{{if .Repository.Language}}
+				<div class="item">
+					<a class="ui" href="{{AppSubUrl}}/explore/repos?q=lang:{{.Repository.Language}}" title="Is a{{if .Repository.LanguageIsGL}} Gateway{{else}}n Other{{end}} Language"><i class="fa fa-language"></i> <span style="font-weight: bold"><span data-language="{{.Repository.Language}}" data-language-direction="{{.Repository.LanguageDirection}}">{{.Repository.LanguageTitle}}</span> ({{.Repository.Language}}){{if .Repository.LanguageIsGL}}*{{end}}</span></a>
+				</div>
+			{{end}}
+			{{if .Repository.MetadataType}}
+				{{$metadataTypeTitle := (GetMetadataTypeTitle .Repository.MetadataType)}}
+				{{$metadataTypeIconURL := (GetMetadataTypeIconURL .Repository.MetadataType)}}
+				<div class="item">
+					<a class="ui" href="{{AppSubUrl}}/explore/repos?q=metadata_type:{{.Repository.MetadataType}}" title="Metadata Type: {{$metadataTypeTitle}} v{{.Repository.MetadataVersion}}">{{svg "octicon-briefcase"}} <span style="font-weight: bold">{{.Repository.MetadataType}}{{.Repository.MetadataVersion}}</span> <img src="{{$metadataTypeIconURL}}" style="height:16px;vertical-align:middle"/></a>
+				</div>
+			{{end}}
+			<!-- END DCS Customizations -->
 		</div>
 	</div>
 	{{if and (.Permission.CanRead $.UnitTypeCode) (not .IsEmptyRepo) .LanguageStats}}

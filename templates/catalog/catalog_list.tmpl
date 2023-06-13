@@ -1,0 +1,53 @@
+<div class="ui repository list">
+	{{range .Door43Metadatas}}
+		<div class="item">
+			<div class="ui header">
+				{{if .Repo.RelAvatarLink}}
+					<img class="ui avatar image" src="{{.Repo.RelAvatarLink}}">
+				{{end}}
+				{{if .Release}}
+				<a class="name" href="{{.Repo.Link}}/releases/tag/{{.Ref | PathEscapeSegments}}">
+				{{else}}
+				<a class="name" href="{{.Repo.Link}}/src/branch/{{.Repo.DefaultBranch | PathEscapeSegments}}">
+				{{end}}
+					{{.Title}}
+				</a>
+				{{if .Repo.IsFork}}
+					<span class="middle">{{svg "octicon-repo-forked" 16}}</span>
+				{{else if .Repo.IsMirror}}
+					<span class="middle">{{svg "octicon-repo-clone" 16}}</span>
+				{{end}}
+				{{if .Release}}
+					{{$color := "green"}}
+					{{$type := "Production"}}
+					{{if .Release.IsDraft}}
+						{{$color = "yellow"}}
+						{{$type = "Draft"}}
+					{{else if .Release.IsPrerelease}}
+						{{$color = "orange"}}
+						{{$type = "Pre-Release"}}
+					{{end}}
+					<button class="ui {{$color}} label compact icon button tooltip" data-content="Catalog: {{$type}}" aria-label="Catalog: {{$type}}">
+						{{.Ref}}
+					</button>
+				{{end}}
+				<div class="ui right metas">
+					<span class="text grey" title="# stars">{{svg "octicon-star" 16}} {{.Repo.NumStars}}</span>
+					<span class="text grey" title="# forks">{{svg "octicon-git-branch" 16}} {{.Repo.NumForks}}</span>
+					<span class="text grey" title="# releases">{{svg "octicon-tag" 16}} {{.GetReleaseCount}}</span>
+				</div>
+			</div>
+			<div class="description">
+				<p>{{.Subject}}</p>
+				{{if .Release}}
+				<p class="time">{{$.locale.Tr "explore.released"}}: {{.ReleaseDateUnix.FormatDate}}</p>
+				{{end}}
+				<p class="time">{{$.locale.Tr "explore.language"}}: {{.LanguageTitle}} ({{.Language}})</p>
+			</div>
+		</div>
+	{{else}}
+	<div>
+		{{$.locale.Tr "explore.repo_no_results"}}
+	</div>
+	{{end}}
+</div>

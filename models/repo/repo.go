@@ -177,6 +177,29 @@ type Repository struct {
 	CreatedUnix  timeutil.TimeStamp `xorm:"INDEX created"`
 	UpdatedUnix  timeutil.TimeStamp `xorm:"INDEX updated"`
 	ArchivedUnix timeutil.TimeStamp `xorm:"DEFAULT 0"`
+	/*** DCS Customizations ***/
+	MetadataType        string `xorm:"index"`
+	MetadataVersion     string
+	Resource            string
+	Subject             string `xorm:"index"`
+	Title               string
+	Language            string `xorm:"index"`
+	LanguageTitle       string
+	LanguageDirection   string
+	LanguageIsGL        bool
+	ContentFormat       string
+	CheckingLevel       int
+	Ingredients         []*api.Ingredient `xorm:"JSON"`
+	LatestProdDmID      int64
+	LatestProdDm        *Door43Metadata `xorm:"-"`
+	LatestPreprodDmID   int64
+	LatestPreprodDm     *Door43Metadata `xorm:"-"`
+	DefaultBranchDmID   int64
+	DefaultBranchDm     *Door43Metadata `xorm:"-"`
+	RepoDmID            int64
+	RepoDm              *Door43Metadata `xorm:"-"`
+	MetadataUpdatedUnix timeutil.TimeStamp
+	/*** DCS Customizations ***/
 }
 
 func init() {

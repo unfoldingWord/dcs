@@ -37,7 +37,7 @@ GO_LICENSES_PACKAGE ?= github.com/google/go-licenses@v1.6.0
 GOVULNCHECK_PACKAGE ?= golang.org/x/vuln/cmd/govulncheck@latest
 ACTIONLINT_PACKAGE ?= github.com/rhysd/actionlint/cmd/actionlint@latest
 
-DOCKER_IMAGE ?= gitea/gitea
+DOCKER_IMAGE ?= unfoldingword/dcs
 DOCKER_TAG ?= latest
 DOCKER_REF := $(DOCKER_IMAGE):$(DOCKER_TAG)
 
@@ -84,7 +84,7 @@ ifneq ($(DRONE_TAG),)
 	GITEA_VERSION ?= $(VERSION)
 else
 	ifneq ($(DRONE_BRANCH),)
-		VERSION ?= $(subst release/v,,$(DRONE_BRANCH))
+		VERSION ?= $(subst release/dcs/v,,$(DRONE_BRANCH))
 	else
 		VERSION ?= main
 	endif
@@ -132,7 +132,7 @@ TAGS ?=
 TAGS_SPLIT := $(subst $(COMMA), ,$(TAGS))
 TAGS_EVIDENCE := $(MAKE_EVIDENCE_DIR)/tags
 
-TEST_TAGS ?= sqlite sqlite_unlock_notify
+TEST_TAGS ?= sqlite sqlite_unlock_notify sqlite_json
 
 TAR_EXCLUDES := .git data indexers queues log node_modules $(EXECUTABLE) $(FOMANTIC_WORK_DIR)/node_modules $(DIST) $(MAKE_EVIDENCE_DIR) $(AIR_TMP_DIR) $(GO_LICENSE_TMP_DIR)
 
@@ -1008,7 +1008,7 @@ generate-manpage:
 .PHONY: docker
 docker:
 	docker build --disable-content-trust=false -t $(DOCKER_REF) .
-# support also build args docker build --build-arg GITEA_VERSION=v1.2.3 --build-arg TAGS="bindata sqlite sqlite_unlock_notify"  .
+# support also build args docker build --build-arg GITEA_VERSION=v1.2.3 --build-arg TAGS="bindata sqlite sqlite_unlock_notify sqlite_json"  .
 
 .PHONY: docker-build
 docker-build:

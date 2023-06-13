@@ -63,4 +63,9 @@ type Notifier interface {
 	NotifyRepoPendingTransfer(ctx context.Context, doer, newOwner *user_model.User, repo *repo_model.Repository)
 	NotifyPackageCreate(ctx context.Context, doer *user_model.User, pd *packages_model.PackageDescriptor)
 	NotifyPackageDelete(ctx context.Context, doer *user_model.User, pd *packages_model.PackageDescriptor)
+	/*** DCS Customizations ***/
+	NotifyNewDoor43Metadata(doer *user_model.User, repo *repo_model.Repository, refType, refFullName string)
+	NotifyUpdateDoor43Metadata(doer *user_model.User, repo *repo_model.Repository, refType, refFullName string)
+	NotifyDeleteDoor43Metadata(doer *user_model.User, repo *repo_model.Repository, refType, refFullName string)
+	/*** END DCS Customizations ***/
 }

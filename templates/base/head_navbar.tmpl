@@ -26,6 +26,7 @@
 
 	{{if and .IsSigned .MustChangePassword}}
 		{{/* No links */}}
+	<!-- DCS Customizations - Removed explore if not logged in -->
 	{{else if .IsSigned}}
 		{{if not .UnitIssuesGlobalDisabled}}
 		<a class="item {{if .PageIsIssues}}active{{end}}" href="{{AppSubUrl}}/issues">{{.locale.Tr "issues"}}</a>
@@ -37,11 +38,10 @@
 		{{if .ShowMilestonesDashboardPage}}<a class="item {{if .PageIsMilestonesDashboard}}active{{end}}" href="{{AppSubUrl}}/milestones">{{.locale.Tr "milestones"}}</a>{{end}}
 		{{end}}
 		<a class="item {{if .PageIsExplore}}active{{end}}" href="{{AppSubUrl}}/explore/repos">{{.locale.Tr "explore"}}</a>
-	{{else if .IsLandingPageOrganizations}}
-		<a class="item {{if .PageIsExplore}}active{{end}}" href="{{AppSubUrl}}/explore/organizations">{{.locale.Tr "explore"}}</a>
-	{{else}}
-		<a class="item {{if .PageIsExplore}}active{{end}}" href="{{AppSubUrl}}/explore/repos">{{.locale.Tr "explore"}}</a>
+	{{else if .IsLandingPageHome}}
+		<a class="item {{if .PageIsHome}}active{{end}}" href="{{AppSubUrl}}/">{{.locale.Tr "home"}}</a>
 	{{end}}
+	<!-- END DCS Customizations -->
 
 	{{template "custom/extra_links" .}}
 
@@ -155,7 +155,7 @@
 					<span class="mobile-only">{{.SignedUser.Name}}</span>
 					<span class="fitted not-mobile" tabindex="-1">{{svg "octicon-triangle-down"}}</span>
 				</span>
-				<div class="menu user-menu" tabindex="-1">
+				<div class="menu" tabindex="-1">
 					<div class="ui header">
 						{{.locale.Tr "signed_in_as"}} <strong>{{.SignedUser.Name}}</strong>
 					</div>
@@ -179,10 +179,7 @@
 						{{svg "octicon-tools"}}
 						{{.locale.Tr "your_settings"}}<!-- Your settings -->
 					</a>
-					<a class="item" target="_blank" rel="noopener noreferrer" href="https://docs.gitea.io">
-						{{svg "octicon-question"}}
-						{{.locale.Tr "help"}}<!-- Help -->
-					</a>
+					<!-- DCS Customizations: Removed Gitea Help -->
 					{{if .IsAdmin}}
 						<div class="divider"></div>
 
@@ -201,7 +198,9 @@
 			</div><!-- end dropdown avatar menu -->
 		</div><!-- end signed user right menu -->
 	{{else}}
+		<!-- DCS Customizations - REMOVED
 		<a class="item" target="_blank" rel="noopener noreferrer" href="https://docs.gitea.io">{{.locale.Tr "help"}}</a>
+		-->
 		<div class="right stackable menu">
 			{{if .ShowRegistrationButton}}
 				<a class="item{{if .PageIsSignUp}} active{{end}}" href="{{AppSubUrl}}/user/sign_up">

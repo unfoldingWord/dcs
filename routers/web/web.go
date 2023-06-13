@@ -23,6 +23,7 @@ import (
 	"code.gitea.io/gitea/routers/common"
 	"code.gitea.io/gitea/routers/web/admin"
 	"code.gitea.io/gitea/routers/web/auth"
+	"code.gitea.io/gitea/routers/web/dcs" // DCS Customizations
 	"code.gitea.io/gitea/routers/web/devtest"
 	"code.gitea.io/gitea/routers/web/events"
 	"code.gitea.io/gitea/routers/web/explore"
@@ -1408,6 +1409,13 @@ func registerRoutes(m *web.Route) {
 		m.Any("/devtest", devtest.List)
 		m.Any("/devtest/{sub}", devtest.Tmpl)
 	}
+
+	/*** DCS Customizations ***/
+	m.Get("/about", dcs.About)
+	m.Group("/catalog", func() {
+		m.Get("", dcs.Catalog)
+	}, ignSignIn)
+	/*** END DCS Customizations ***/
 
 	m.NotFound(func(w http.ResponseWriter, req *http.Request) {
 		ctx := context.GetWebContext(req)

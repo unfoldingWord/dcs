@@ -36,6 +36,24 @@
 						{{else if .IsMirror}}
 							<span class="gt-df" data-tooltip-content="{{$.locale.Tr "mirror"}}">{{svg "octicon-mirror"}}</span>
 						{{end}}
+					<!-- DCS Customizations -->
+						{{$prodDM := .GetLatestProdDm}}
+						{{if $prodDM}}
+							<a href="{{.Link}}/releases/tag/{{$prodDM.Ref | PathEscapeSegments}}" rel="nofollow">
+								<button class="ui green label compact icon button tooltip" data-content="Catalog: Production" aria-label="Catalog: Production">
+									{{$prodDM.Ref}}
+								</button>
+							</a>
+						{{end}}
+						{{$preProdDM := .GetLatestPreprodDm}}
+						{{if $preProdDM}}
+							<a href="{{.Link}}/releases/tag/{{$preProdDM.Ref | PathEscapeSegments}}" rel="nofollow">
+								<button class="ui orange label compact icon button tooltip" data-content="Catalog: Pre-Production" aria-label="Catalog: Production">
+									{{$preProdDM.Ref}}
+								</button>
+							</a>
+						{{end}}
+						<!-- END DCS Customizations -->
 					</div>
 				</div>
 				<div class="gt-font-13 gt-df gt-ac text grey">

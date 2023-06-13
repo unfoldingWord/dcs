@@ -177,6 +177,18 @@ func GetAll(ctx *context.APIContext) {
 	// produces:
 	// - application/json
 	// parameters:
+	// - name: lang
+	//   in: query
+	//   description: If the org has one or more repos with the given language(s), the org will be in the results. Multiple lang's are ORed.
+	//   type: string
+	// - name: subject
+	//   in: query
+	//   description: If the user has one or more repos with the given subject(s), the org will be in the results. Multiple subjects are ORed.
+	//   type: string
+	// - name: metadataType
+	//   in: query
+	//   description: If the user has one or more repos with the given metadata type(s), the org will be in the results. Multiple metadata types are ORed.
+	//   type: string
 	// - name: page
 	//   in: query
 	//   description: page number of results to return (1-based)
@@ -203,8 +215,13 @@ func GetAll(ctx *context.APIContext) {
 		Actor:       ctx.Doer,
 		ListOptions: listOptions,
 		Type:        user_model.UserTypeOrganization,
-		OrderBy:     db.SearchOrderByAlphabetically,
+		OrderBy:     db.SearchUserOrderByAlphabetically,
 		Visible:     vMode,
+		/*** DCS Customizations ***/
+		RepoLanguages:     ctx.FormStrings("lang"),
+		RepoSubjects:      ctx.FormStrings("subject"),
+		RepoMetadataTypes: ctx.FormStrings("metadata_type"),
+		/*** END DCS Customizations ***/
 	})
 	if err != nil {
 		ctx.Error(http.StatusInternalServerError, "SearchOrganizations", err)

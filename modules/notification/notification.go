@@ -14,6 +14,7 @@ import (
 	"code.gitea.io/gitea/modules/log"
 	"code.gitea.io/gitea/modules/notification/action"
 	"code.gitea.io/gitea/modules/notification/base"
+	"code.gitea.io/gitea/modules/notification/door43metadata" // DCS Customizations
 	"code.gitea.io/gitea/modules/notification/indexer"
 	"code.gitea.io/gitea/modules/notification/mail"
 	"code.gitea.io/gitea/modules/notification/mirror"
@@ -39,6 +40,9 @@ func NewContext() {
 	RegisterNotifier(indexer.NewNotifier())
 	RegisterNotifier(action.NewNotifier())
 	RegisterNotifier(mirror.NewNotifier())
+	/*** DCS Customizations ***/
+	RegisterNotifier(door43metadata.NewNotifier())
+	/*** END DCS Customizations ***/
 }
 
 // NotifyNewWikiPage notifies creating new wiki pages to notifiers

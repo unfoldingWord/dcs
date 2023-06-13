@@ -1,0 +1,15 @@
+image: unfoldingword/dcs:{{trimPrefix "refs/heads/release/dcs/v" build.ref}}-dev
+tags:
+  - latest-qa
+manifests:
+  -
+    image: unfoldingword/dcs:{{trimPrefix "refs/heads/release/dcs/v" build.ref}}-dev-linux-amd64
+    platform:
+      architecture: amd64
+      os: linux
+  -
+    image: unfoldingword/dcs:{{trimPrefix "refs/heads/release/dcs/v" build.ref}}-dev-linux-arm64
+    platform:
+      architecture: arm64
+      os: linux
+      variant: v8

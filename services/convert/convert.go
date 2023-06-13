@@ -11,6 +11,7 @@ import (
 	"strings"
 	"time"
 
+	"code.gitea.io/gitea/models"
 	asymkey_model "code.gitea.io/gitea/models/asymkey"
 	"code.gitea.io/gitea/models/auth"
 	"code.gitea.io/gitea/models/db"
@@ -294,6 +295,11 @@ func ToOrganization(ctx context.Context, org *organization.Organization) *api.Or
 		Location:                  org.Location,
 		Visibility:                org.Visibility.String(),
 		RepoAdminChangeTeamAccess: org.RepoAdminChangeTeamAccess,
+		/*** DCS Customizations ***/
+		RepoLanguages:     models.GetRepoLanguages((*user_model.User)(org)),
+		RepoSubjects:      models.GetRepoSubjects((*user_model.User)(org)),
+		RepoMetadataTypes: models.GetRepoMetadataTypes((*user_model.User)(org)),
+		/*** END DCS Customizations ***/
 	}
 }
 

@@ -7,6 +7,10 @@
 @import "./modules/card.css";
 @import "./modules/comment.css";
 
+/* DCS Customizations */
+@import "./dcs.css";
+/* END DCS Customizations */
+
 @import "./shared/issuelist.css";
 @import "./shared/repoorg.css";
 @import "./shared/settings.css";
@@ -54,3 +58,4 @@
 @import "./review.css";
 @import "./actions.css";
 @import "./helpers.css";
+

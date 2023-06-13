@@ -22,6 +22,7 @@ import (
 	_ "code.gitea.io/gitea/modules/markup/csv"
 	_ "code.gitea.io/gitea/modules/markup/markdown"
 	_ "code.gitea.io/gitea/modules/markup/orgmode"
+	_ "code.gitea.io/gitea/modules/markup/tsv" // DCS Customizations
 
 	"github.com/urfave/cli"
 )
@@ -71,6 +72,7 @@ arguments - which can alternatively be run by running the subcommand web.`
 		cmd.CmdDoctor,
 		cmd.CmdManager,
 		cmd.Cmdembedded,
+		cmd.CmdDoor43MetadataGenerate,
 		cmd.CmdMigrateStorage,
 		cmd.CmdDocs,
 		cmd.CmdDumpRepository,

@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"code.gitea.io/gitea/models/db"
+	"code.gitea.io/gitea/models/door43metadata"
 	"code.gitea.io/gitea/models/organization"
 	repo_model "code.gitea.io/gitea/models/repo"
 	user_model "code.gitea.io/gitea/models/user"
@@ -94,6 +95,35 @@ func Home(ctx *context.Context) {
 		page = 1
 	}
 
+	/*** DCS Customizations ***/
+	var books, langs, keywords, subjects, resources, contentFormats, repoNames, owners, metadataTypes, metadataVersions []string
+	if keyword != "" {
+		for _, token := range door43metadata.SplitAtCommaNotInString(keyword, true) {
+			if strings.HasPrefix(token, "book:") {
+				books = append(books, strings.TrimPrefix(token, "book:"))
+			} else if strings.HasPrefix(token, "lang:") {
+				langs = append(langs, strings.TrimPrefix(token, "lang:"))
+			} else if strings.HasPrefix(token, "subject:") {
+				subjects = append(subjects, strings.Trim(strings.TrimPrefix(token, "subject:"), `"`))
+			} else if strings.HasPrefix(token, "resource:") {
+				resources = append(resources, strings.Trim(strings.TrimPrefix(token, "resource:"), `"`))
+			} else if strings.HasPrefix(token, "format:") {
+				contentFormats = append(contentFormats, strings.Trim(strings.TrimPrefix(token, "format:"), `"`))
+			} else if strings.HasPrefix(token, "repo:") {
+				repoNames = append(repoNames, strings.TrimPrefix(token, "repo:"))
+			} else if strings.HasPrefix(token, "owner:") {
+				owners = append(owners, strings.TrimPrefix(token, "owner:"))
+			} else if strings.HasPrefix(token, "metadata_type:") {
+				metadataTypes = append(metadataTypes, strings.TrimPrefix(token, "metadata_type:"))
+			} else if strings.HasPrefix(token, "metadata_version:") {
+				metadataVersions = append(metadataVersions, strings.TrimPrefix(token, "metadata_version:"))
+			} else {
+				keywords = append(keywords, token)
+			}
+		}
+	}
+	/*** END DCS Customizations ***/
+
 	var (
 		repos []*repo_model.Repository
 		count int64
@@ -104,13 +134,23 @@ func Home(ctx *context.Context) {
 			PageSize: setting.UI.User.RepoPagingNum,
 			Page:     page,
 		},
-		Keyword:            keyword,
+		Keyword:            strings.Join(keywords, ", "),
 		OwnerID:            org.ID,
 		OrderBy:            orderBy,
 		Private:            ctx.IsSigned,
 		Actor:              ctx.Doer,
 		Language:           language,
 		IncludeDescription: setting.UI.SearchRepoDescription,
+		Books:              books,            // DCS Customizations
+		Languages:          langs,            // DCS Customizations
+		Subjects:           subjects,         // DCS Customizations
+		Resources:          resources,        // DCS Customizations
+		ContentFormats:     contentFormats,   // DCS Customizations
+		Repos:              repoNames,        // DCS Customizations
+		Owners:             owners,           // DCS Customizations
+		MetadataTypes:      metadataTypes,    // DCS Customizations
+		MetadataVersions:   metadataVersions, // DCS Customizations
+		IncludeMetadata:    true,             // DCS Customizations
 	})
 	if err != nil {
 		ctx.ServerError("SearchRepository", err)

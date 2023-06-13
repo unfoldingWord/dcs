@@ -60,6 +60,7 @@ cpu.out
 !/custom/conf
 /custom/conf/*
 !/custom/conf/app.example.ini
+!/custom/bin
 /data
 /indexers
 /log
@@ -113,3 +114,9 @@ prime/
 
 # Manpage
 /man
+
+# Docker compose
+/mysql
+/data-main
+/data-release
+.history

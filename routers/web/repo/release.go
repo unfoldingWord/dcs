@@ -184,6 +184,15 @@ func releasesOrTags(ctx *context.Context, isTagList bool) {
 			ctx.ServerError("RenderString", err)
 			return
 		}
+		/*** DCS Customizations ***/
+		if !r.IsTag {
+			r.Door43Metadata, err = repo_model.GetDoor43MetadataByRepoIDAndRef(ctx, r.RepoID, r.TagName)
+			if err != nil && !repo_model.IsErrDoor43MetadataNotExist(err) {
+				ctx.ServerError("GetDoor43Metadata", err)
+				return
+			}
+		}
+		/*** END DCS Customizations ***/
 
 		if r.IsDraft {
 			continue
@@ -290,6 +299,13 @@ func SingleRelease(ctx *context.Context) {
 		ctx.ServerError("RenderString", err)
 		return
 	}
+
+	/*** DCS Customizations ***/
+	if err := release.LoadAttributes(ctx); err != nil {
+		ctx.ServerError("LoadAttributes", err)
+		return
+	}
+	/*** END DCS Customizations ***/
 
 	ctx.Data["Releases"] = []*repo_model.Release{release}
 	ctx.HTML(http.StatusOK, tplReleasesList)

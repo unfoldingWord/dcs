@@ -14,7 +14,7 @@ workspace:
 trigger:
   branch:
     - main
-    - "release/*"
+    - "release/dcs/*"
   event:
     - push
   paths:
@@ -57,7 +57,7 @@ steps:
       - make release
     environment:
       GOPROXY: https://goproxy.io # proxy.golang.org is blocked in China, this proxy is not
-      TAGS: bindata sqlite sqlite_unlock_notify
+      TAGS: bindata sqlite sqlite_unlock_notify sqlite_json
       DEBIAN_FRONTEND: noninteractive
     volumes:
       - name: deps
@@ -94,7 +94,7 @@ steps:
         from_secret: aws_s3_path_style
       source: "dist/release/*"
       strip_prefix: dist/release/
-      target: "/gitea/${DRONE_BRANCH##release/v}"
+      target: "/gitea/${DRONE_BRANCH##release/dcs/v}"
     environment:
       AWS_ACCESS_KEY_ID:
         from_secret: aws_access_key_id
@@ -102,7 +102,7 @@ steps:
         from_secret: aws_secret_access_key
     when:
       branch:
-        - "release/*"
+        - "release/dcs/*"
       event:
         - push
 
@@ -185,7 +185,7 @@ steps:
       - make release
     environment:
       GOPROXY: https://goproxy.io # proxy.golang.org is blocked in China, this proxy is not
-      TAGS: bindata sqlite sqlite_unlock_notify
+      TAGS: bindata sqlite sqlite_unlock_notify sqlite_json
       DEBIAN_FRONTEND: noninteractive
     depends_on: [fetch-tags]
     volumes:
@@ -256,7 +256,7 @@ platform:
 trigger:
   ref:
     include:
-      - "refs/tags/**"
+      - "refs/tags/**-dcs"
     exclude:
       - "refs/tags/**-rc*"
   paths:
@@ -276,7 +276,7 @@ steps:
     settings:
       auto_tag: true
       auto_tag_suffix: linux-amd64
-      repo: gitea/gitea
+      repo: unfoldingword/dcs
       build_args:
         - GOPROXY=https://goproxy.io
       password:
@@ -298,7 +298,7 @@ steps:
       dockerfile: Dockerfile.rootless
       auto_tag: true
       auto_tag_suffix: linux-amd64-rootless
-      repo: gitea/gitea
+      repo: unfoldingword/dcs
       build_args:
         - GOPROXY=https://goproxy.io
       password:
@@ -325,7 +325,7 @@ platform:
 
 trigger:
   ref:
-    - "refs/tags/**-rc*"
+    - "refs/tags/**-rc*-dcs"
   paths:
     exclude:
       - "docs/**"
@@ -342,7 +342,7 @@ steps:
     pull: always
     settings:
       tags: ${DRONE_TAG##v}-linux-amd64
-      repo: gitea/gitea
+      repo: unfoldingword/dcs
       build_args:
         - GOPROXY=https://goproxy.io
       password:
@@ -363,7 +363,7 @@ steps:
     settings:
       dockerfile: Dockerfile.rootless
       tags: ${DRONE_TAG##v}-linux-amd64-rootless
-      repo: gitea/gitea
+      repo: unfoldingword/dcs
       build_args:
         - GOPROXY=https://goproxy.io
       password:
@@ -405,7 +405,7 @@ steps:
     settings:
       auto_tag: false
       tags: nightly-linux-amd64
-      repo: gitea/gitea
+      repo: unfoldingword/dcs
       build_args:
         - GOPROXY=https://goproxy.io
       password:
@@ -427,7 +427,7 @@ steps:
       dockerfile: Dockerfile.rootless
       auto_tag: false
       tags: nightly-linux-amd64-rootless
-      repo: gitea/gitea
+      repo: unfoldingword/dcs
       build_args:
         - GOPROXY=https://goproxy.io
       password:
@@ -453,7 +453,7 @@ platform:
 
 trigger:
   ref:
-  - "refs/heads/release/v*"
+  - "refs/heads/release/dcs/v*"
 
 steps:
   - name: fetch-tags
@@ -467,8 +467,8 @@ steps:
     pull: always
     settings:
       auto_tag: false
-      tags: ${DRONE_BRANCH##release/v}-nightly-linux-amd64
-      repo: gitea/gitea
+      tags: ${DRONE_BRANCH##release/dcs/v}-nightly-linux-amd64
+      repo: unfoldingword/dcs
       build_args:
         - GOPROXY=https://goproxy.io
       password:
@@ -489,8 +489,8 @@ steps:
     settings:
       dockerfile: Dockerfile.rootless
       auto_tag: false
-      tags: ${DRONE_BRANCH##release/v}-nightly-linux-amd64-rootless
-      repo: gitea/gitea
+      tags: ${DRONE_BRANCH##release/dcs/v}-nightly-linux-amd64-rootless
+      repo: unfoldingword/dcs
       build_args:
         - GOPROXY=https://goproxy.io
       password:
@@ -518,7 +518,7 @@ platform:
 trigger:
   ref:
     include:
-      - "refs/tags/**"
+      - "refs/tags/**-dcs"
     exclude:
       - "refs/tags/**-rc*"
   paths:
@@ -538,7 +538,7 @@ steps:
     settings:
       auto_tag: true
       auto_tag_suffix: linux-arm64
-      repo: gitea/gitea
+      repo: unfoldingword/dcs
       build_args:
         - GOPROXY=https://goproxy.io
       password:
@@ -560,7 +560,7 @@ steps:
       dockerfile: Dockerfile.rootless
       auto_tag: true
       auto_tag_suffix: linux-arm64-rootless
-      repo: gitea/gitea
+      repo: unfoldingword/dcs
       build_args:
         - GOPROXY=https://goproxy.io
       password:
@@ -587,7 +587,7 @@ platform:
 
 trigger:
   ref:
-    - "refs/tags/**-rc*"
+    - "refs/tags/**-rc*-dcs"
   paths:
     exclude:
       - "docs/**"
@@ -604,7 +604,7 @@ steps:
     pull: always
     settings:
       tags: ${DRONE_TAG##v}-linux-arm64
-      repo: gitea/gitea
+      repo: unfoldingword/dcs
       build_args:
         - GOPROXY=https://goproxy.io
       password:
@@ -625,7 +625,7 @@ steps:
     settings:
       dockerfile: Dockerfile.rootless
       tags: ${DRONE_TAG##v}-linux-arm64-rootless
-      repo: gitea/gitea
+      repo: unfoldingword/dcs
       build_args:
         - GOPROXY=https://goproxy.io
       password:
@@ -670,7 +670,7 @@ steps:
     settings:
       auto_tag: false
       tags: nightly-linux-arm64
-      repo: gitea/gitea
+      repo: unfoldingword/dcs
       build_args:
         - GOPROXY=https://goproxy.io
       password:
@@ -692,7 +692,7 @@ steps:
       dockerfile: Dockerfile.rootless
       auto_tag: false
       tags: nightly-linux-arm64-rootless
-      repo: gitea/gitea
+      repo: unfoldingword/dcs
       build_args:
         - GOPROXY=https://goproxy.io
       password:
@@ -718,7 +718,7 @@ platform:
 
 trigger:
   ref:
-  - "refs/heads/release/v*"
+  - "refs/heads/release/dcs/v*"
 
 steps:
   - name: fetch-tags
@@ -732,8 +732,8 @@ steps:
     pull: always
     settings:
       auto_tag: false
-      tags: ${DRONE_BRANCH##release/v}-nightly-linux-arm64
-      repo: gitea/gitea
+      tags: ${DRONE_BRANCH##release/dcs/v}-nightly-linux-arm64
+      repo: unfoldingword/dcs
       build_args:
         - GOPROXY=https://goproxy.io
       password:
@@ -754,8 +754,8 @@ steps:
     settings:
       dockerfile: Dockerfile.rootless
       auto_tag: false
-      tags: ${DRONE_BRANCH##release/v}-nightly-linux-arm64-rootless
-      repo: gitea/gitea
+      tags: ${DRONE_BRANCH##release/dcs/v}-nightly-linux-arm64-rootless
+      repo: unfoldingword/dcs
       build_args:
         - GOPROXY=https://goproxy.io
       password:
@@ -806,7 +806,7 @@ steps:
 
 trigger:
   ref:
-  - "refs/tags/**"
+  - "refs/tags/**-dcs"
   paths:
     exclude:
       - "docs/**"
@@ -853,7 +853,7 @@ steps:
 trigger:
   ref:
   - refs/heads/main
-  - "refs/heads/release/v*"
+  - "refs/heads/release/dcs/v*"
   paths:
     exclude:
       - "docs/**"

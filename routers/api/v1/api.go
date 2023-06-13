@@ -2,9 +2,9 @@
 // Copyright 2016 The Gitea Authors. All rights reserved.
 // SPDX-License-Identifier: MIT
 
-// Package v1 Gitea API.
+// Package v1 DCS (Gitea) API.
 //
-// This documentation describes the Gitea API.
+// This documentation describes the DCS (Gitea) API.
 //
 //	Schemes: http, https
 //	BasePath: /api/v1
@@ -84,6 +84,7 @@ import (
 	"code.gitea.io/gitea/modules/web"
 	"code.gitea.io/gitea/routers/api/v1/activitypub"
 	"code.gitea.io/gitea/routers/api/v1/admin"
+	"code.gitea.io/gitea/routers/api/v1/catalog"
 	"code.gitea.io/gitea/routers/api/v1/misc"
 	"code.gitea.io/gitea/routers/api/v1/notify"
 	"code.gitea.io/gitea/routers/api/v1/org"
@@ -329,7 +330,10 @@ func reqToken() func(ctx *context.APIContext) {
 func reqExploreSignIn() func(ctx *context.APIContext) {
 	return func(ctx *context.APIContext) {
 		if setting.Service.Explore.RequireSigninView && !ctx.IsSigned {
-			ctx.Error(http.StatusUnauthorized, "reqExploreSignIn", "you must be signed in to search for users")
+			/*** DCS Customizations ***/
+			return
+			//ctx.Error(http.StatusUnauthorized, "reqExploreSignIn", "you must be signed in to search for users")
+			/*** END DCS Customizations ***/
 		}
 	}
 }
@@ -1107,8 +1111,15 @@ func Routes(ctx gocontext.Context) *web.Route {
 						m.Get("/{sha}", repo.GetSingleCommit)
 						m.Get("/{sha}.{diffType:diff|patch}", repo.DownloadCommitDiffOrPatch)
 					})
-					m.Get("/refs", repo.GetGitAllRefs)
-					m.Get("/refs/*", repo.GetGitRefs)
+					m.Group("/refs", func() {
+						m.Get("", repo.GetGitAllRefs)
+						m.Post("", reqToken(), reqRepoWriter(unit.TypeCode), bind(api.CreateGitRefOption{}), repo.CreateGitRef)
+						m.Get("/*", repo.GetGitRefs)
+						m.Group("/*", func() {
+							m.Patch("", bind(api.UpdateGitRefOption{}), repo.UpdateGitRef)
+							m.Delete("", repo.DeleteGitRef)
+						}, reqToken(), reqRepoWriter(unit.TypeCode))
+					})
 					m.Get("/trees/{sha}", repo.GetTree)
 					m.Get("/blobs/{sha}", repo.GetBlob)
 					m.Get("/tags/{sha}", repo.GetAnnotatedTag)
@@ -1386,6 +1397,29 @@ func Routes(ctx gocontext.Context) *web.Route {
 		m.Group("/topics", func() {
 			m.Get("/search", repo.TopicSearch)
 		}, tokenRequiresScopes(auth_model.AccessTokenScopeCategoryRepository))
+
+		/*** DCS Customizations ***/
+		m.Post("/yaml", bind(misc.YamlOption{}), misc.Yaml)
+		m.Group("/catalog", func() {
+			m.Get("", catalog.Search)
+			m.Get("/subjects", catalog.ListCatalogSubjects)
+			m.Get("/owners", catalog.ListCatalogOwners)
+			m.Get("/languages", catalog.ListCatalogLanguages)
+			m.Group("/search", func() {
+				m.Get("", catalog.Search)
+				m.Group("/{username}", func() {
+					m.Get("", catalog.SearchOwner)
+					m.Group("/{reponame}", func() {
+						m.Get("", catalog.SearchRepo)
+					}, repoAssignment())
+				})
+			})
+			m.Group("/entry/{username}/{reponame}/{tag}", func() {
+				m.Get("", catalog.GetCatalogEntry)
+				m.Get("/metadata", catalog.GetCatalogMetadata)
+			}, repoAssignment())
+		})
+		/*** END DCS Customizations ***/
 	}, sudo())
 
 	return m
