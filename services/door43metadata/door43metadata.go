@@ -894,7 +894,7 @@ func UnpackJSONAttachments(ctx context.Context, release *repo_model.Release) {
 // GetAttachmentsFromJSON gets the attachments from uploaded
 func GetAttachmentsFromJSON(attachment *repo_model.Attachment) ([]*repo_model.Attachment, error) {
 	var url string
-	if setting.Attachment.Storage.ServeDirect {
+	if setting.Attachment.Storage.MinioConfig.ServeDirect {
 		// If we have a signed url (S3, object storage), redirect to this directly.
 		urlObj, err := storage.Attachments.URL(attachment.RelativePath(), attachment.Name)
 
