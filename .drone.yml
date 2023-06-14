@@ -146,6 +146,8 @@ workspace:
   path: /
 
 trigger:
+  ref:
+  - "refs/tags/v**-dcs"
   event:
     - tag
 
