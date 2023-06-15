@@ -5,5 +5,5 @@ package options
 
 // Schemas reads the content of a specific schema from static/bindata or custom path.
 func Schemas(name string) ([]byte, error) {
-	return  AssetFS().ReadFile("schema", name)
+	return AssetFS().ReadFile("schema", name)
 }

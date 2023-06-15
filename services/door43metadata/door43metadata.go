@@ -1,6 +1,5 @@
 // Copyright 2020 The Gitea Authors. All rights reserved.
-// Use of this source code is governed by a MIT-style
-// license that can be found in the LICENSE file.
+// SPDX-License-Identifier: MIT
 
 package door43metadata
 
@@ -61,7 +60,10 @@ func GenerateDoor43Metadata(x *xorm.Engine) error {
 			continue
 		}
 		if repo.MetadataUpdatedUnix.AddDuration(24*time.Hour) <= timeutil.TimeStampNow() {
-			ProcessDoor43MetadataForRepo(ctx, repo, true)
+			err := ProcessDoor43MetadataForRepo(ctx, repo, true)
+			if err != nil {
+				log.Warn("ProcessDoor43MetadataForRepo Error: %v\n", err)
+			}
 		}
 	}
 	return nil
