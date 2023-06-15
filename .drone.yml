@@ -121,7 +121,7 @@ steps:
         from_secret: aws_s3_path_style
       source: "dist/release/*"
       strip_prefix: dist/release/
-      target: /gitea/main
+      target: /dcs/main
     environment:
       AWS_ACCESS_KEY_ID:
         from_secret: aws_access_key_id
@@ -226,7 +226,7 @@ steps:
         from_secret: aws_s3_path_style
       source: "dist/release/*"
       strip_prefix: dist/release/
-      target: "/gitea/${DRONE_TAG##v}"
+      target: "/dcs/releases/${DRONE_TAG##v}"
     environment:
       AWS_ACCESS_KEY_ID:
         from_secret: aws_access_key_id
