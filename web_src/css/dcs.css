@@ -52,7 +52,7 @@
 	 left: -5px;
 	 top: 10px;
 	 font-size: 1.2em;
-	 background-color: #fff;
+	 background-color: var(--color-body);
 }
  .blame .file-view.code-view {
 	 overflow-y: auto;
