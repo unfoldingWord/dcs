@@ -94,7 +94,7 @@ steps:
         from_secret: aws_s3_path_style
       source: "dist/release/*"
       strip_prefix: dist/release/
-      target: "/gitea/${DRONE_BRANCH##release/dcs/v}"
+      target: "/dcs/releases/${DRONE_BRANCH##release/dcs/v}"
     environment:
       AWS_ACCESS_KEY_ID:
         from_secret: aws_access_key_id
