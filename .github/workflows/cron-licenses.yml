@@ -7,7 +7,7 @@ on:
 jobs:
   cron-licenses:
     runs-on: ubuntu-latest
-    if: github.repository == 'unfoldingword/dcs'
+    if: github.repository == 'unfoldingWord/dcs'
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-go@v3
@@ -23,5 +23,5 @@ jobs:
           branch: main
           commit: true
           commit_message: "[skip ci] Updated licenses and gitignores"
-          remote: "git@github.com:unfoldingword/dcs.git"
+          remote: "git@github.com:unfoldingWord/dcs.git"
           ssh_key: ${{ secrets.DEPLOY_KEY }}
