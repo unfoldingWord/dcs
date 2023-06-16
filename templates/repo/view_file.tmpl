@@ -67,20 +67,13 @@
 		</div>
 	</h4>
 	<div class="ui attached table unstackable segment">
-<<<<<<< HEAD
 		{{if not (or .IsMarkup .IsRenderedHTML)}}
 			{{template "repo/unicode_escape_prompt" dict "EscapeStatus" .EscapeStatus "root" $}}
 		{{end}}
 		<div class="file-view{{if .IsMarkup}} markup {{.MarkupType}}{{else if .IsPlainText}} plain-text{{else if .IsTextSource}} code-view{{end}}">
-||||||| 3f7cab42d
-		{{template "repo/unicode_escape_prompt" dict "EscapeStatus" .EscapeStatus "root" $}}
-		<div class="file-view{{if .IsMarkup}} markup {{.MarkupType}}{{else if .IsRenderedHTML}} plain-text{{else if .IsTextSource}} code-view{{end}}">
-=======
-		{{template "repo/unicode_escape_prompt" dict "EscapeStatus" .EscapeStatus "root" $}}
 		<!-- DCS Customizations - Adds language identier and direction to this div -->
-		<div class="file-view{{if .IsMarkup}} markup {{.MarkupType}}{{else if .IsRenderedHTML}} plain-text{{else if .IsTextSource}} code-view{{end}}{{if .IsTocYaml}} markdown yaml{{end}}" data-language="{{.Repository.Language}}" data-language-direction="{{if not .IgnoreLanguageDirection}}{{.Repository.LanguageDirection}}{{else}}ltr{{end}}">
+		<div class="file-view{{if .IsMarkup}} markup {{.MarkupType}}{{else if .IsPlainText}} plain-text{{else if .IsTextSource}} code-view{{end}}{{if .IsTocYaml}} markdown yaml{{end}}" data-language="{{.Repository.Language}}" data-language-direction="{{if not .IgnoreLanguageDirection}}{{.Repository.LanguageDirection}}{{else}}ltr{{end}}">
 		<!-- END DCS Customizations -->
->>>>>>> root-v1.18-and-main
 			{{if .IsMarkup}}
 				{{if .FileContent}}{{.FileContent | Safe}}{{end}}
 			{{else if .IsPlainText}}
