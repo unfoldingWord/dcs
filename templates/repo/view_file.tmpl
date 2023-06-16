@@ -70,10 +70,7 @@
 		{{if not (or .IsMarkup .IsRenderedHTML)}}
 			{{template "repo/unicode_escape_prompt" dict "EscapeStatus" .EscapeStatus "root" $}}
 		{{end}}
-		<div class="file-view{{if .IsMarkup}} markup {{.MarkupType}}{{else if .IsPlainText}} plain-text{{else if .IsTextSource}} code-view{{end}}">
-		<!-- DCS Customizations - Adds language identier and direction to this div -->
 		<div class="file-view{{if .IsMarkup}} markup {{.MarkupType}}{{else if .IsPlainText}} plain-text{{else if .IsTextSource}} code-view{{end}}{{if .IsTocYaml}} markdown yaml{{end}}" data-language="{{.Repository.Language}}" data-language-direction="{{if not .IgnoreLanguageDirection}}{{.Repository.LanguageDirection}}{{else}}ltr{{end}}">
-		<!-- END DCS Customizations -->
 			{{if .IsMarkup}}
 				{{if .FileContent}}{{.FileContent | Safe}}{{end}}
 			{{else if .IsPlainText}}
