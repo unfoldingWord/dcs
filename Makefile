@@ -79,12 +79,15 @@ endif
 STORED_VERSION_FILE := VERSION
 HUGO_VERSION ?= 0.111.3
 
-ifneq ($(DRONE_TAG),)
-	VERSION ?= $(subst v,,$(DRONE_TAG))
-	GITEA_VERSION ?= $(VERSION)
+GITHUB_REF_TYPE ?= branch
+GITHUB_REF_NAME ?= $(shell git rev-parse --abbrev-ref HEAD)
+
+ifneq ($(GITHUB_REF_TYPE),branch)
+	VERSION ?= $(subst v,,$(GITHUB_REF_NAME))
+	GITEA_VERSION ?= $(GITHUB_REF_NAME)
 else
-	ifneq ($(DRONE_BRANCH),)
-		VERSION ?= $(subst release/dcs/v,,$(DRONE_BRANCH))
+	ifneq ($(GITHUB_REF_NAME),)
+		VERSION ?= $(subst release/dcs/v,,$(GITHUB_REF_NAME))
 	else
 		VERSION ?= main
 	endif
