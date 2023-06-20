@@ -50,7 +50,7 @@ jobs:
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           AWS_REGION: ${{ secrets.AWS_REGION }}
           SOURCE_DIR: dist/release
-          DEST_DIR: gitea/${{ steps.clean_name.outputs.branch }}
+          DEST_DIR: dcs/releases/${{ steps.clean_name.outputs.branch }}
   nightly-docker:
     runs-on: ubuntu-latest
     steps:
@@ -80,11 +80,11 @@ jobs:
         with:
           platforms: linux/amd64,linux/arm64
           push: true
-          tags: gitea/gitea:${{ steps.clean_name.outputs.branch }}
+          tags: unfoldingword/dcs:${{ steps.clean_name.outputs.branch }}
       - name: build rootless docker image
         uses: docker/build-push-action@v4
         with:
           platforms: linux/amd64,linux/arm64
           push: true
           file: Dockerfile.rootless
-          tags: gitea/gitea:${{ steps.clean_name.outputs.branch }}-rootless
+          tags: unfoldingword/dcs:${{ steps.clean_name.outputs.branch }}-rootless
