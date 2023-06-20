@@ -169,8 +169,6 @@ type SearchRepoOptions struct {
 	// query metadata type and version
 	MetadataTypes    []string // DCS Customizations
 	MetadataVersions []string // DCS Customizations
-	// include all metadata in keyword search
-	IncludeMetadata bool // DCS Customizations
 	// When specified true, apply some filters over the conditions:
 	// - Don't show forks, when opts.Fork is OptionalBoolNone.
 	// - Do not display repositories that don't have a description, an icon and topics.
@@ -463,7 +461,7 @@ func SearchRepositoryCondition(opts *SearchRepoOptions) builder.Cond {
 					likes = likes.Or(builder.Like{"LOWER(`repository`.description)", strings.ToLower(v)}) // DCS Customizations - adds `repository`.
 				}
 				/*** DCS Customizations ***/
-				likes = likes.Or(door43metadata.GetMetadataCondByDBType(setting.Database.Type, v, opts.IncludeMetadata))
+				likes = likes.Or(door43metadata.GetMetadataCond(v))
 				/*** END DCS Customizations ***/
 			}
 			keywordCond = keywordCond.Or(likes)

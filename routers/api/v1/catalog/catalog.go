@@ -119,10 +119,6 @@ func Search(ctx *context.APIContext) {
 	//   in: query
 	//   description: if true, all releases, not just the latest, are included. Default is false
 	//   type: boolean
-	// - name: includeMetadata
-	//   in: query
-	//   description: if false, only subject and title are searched with query terms, if true all metadata values are searched. Default is true
-	//   type: boolean
 	// - name: showIngredients
 	//   in: query
 	//   description: if true, the list of ingredients (files/projects) in the resource and their file paths will be listed for each entry. Default is true
@@ -227,10 +223,6 @@ func SearchOwner(ctx *context.APIContext) {
 	// - name: includeHistory
 	//   in: query
 	//   description: if true, all releases, not just the latest, are included. Default is false
-	//   type: boolean
-	// - name: includeMetadata
-	//   in: query
-	//   description: if false, only subject and title are searched with query terms, if true all metadata values are searched. Default is true
 	//   type: boolean
 	// - name: showIngredients
 	//   in: query
@@ -345,10 +337,6 @@ func SearchRepo(ctx *context.APIContext) {
 	// - name: includeHistory
 	//   in: query
 	//   description: if true, all releases, not just the latest, are included. Default is false
-	//   type: boolean
-	// - name: includeMetadata
-	//   in: query
-	//   description: if false, only subject and title are searched with query terms, if true all metadata values are searched. Default is true
 	//   type: boolean
 	// - name: showIngredients
 	//   in: query
@@ -685,7 +673,6 @@ func QueryStrings(ctx *context.APIContext, name string) []string {
 func searchCatalog(ctx *context.APIContext) {
 	var repoID int64
 	var owners, repos []string
-	includeMetadata := true
 	if ctx.Repo.Repository != nil {
 		repoID = ctx.Repo.Repository.ID
 	} else {
@@ -695,9 +682,6 @@ func searchCatalog(ctx *context.APIContext) {
 			owners = QueryStrings(ctx, "owner")
 		}
 		repos = QueryStrings(ctx, "repo")
-	}
-	if ctx.FormString("includeMetadata") != "" {
-		includeMetadata = ctx.FormBool("includeMetadata")
 	}
 
 	stageStr := ctx.FormString("stage")
@@ -743,7 +727,6 @@ func searchCatalog(ctx *context.APIContext) {
 		Books:            QueryStrings(ctx, "book"),
 		IncludeHistory:   ctx.FormBool("includeHistory"),
 		ShowIngredients:  ctx.FormOptionalBool("showIngredients"),
-		IncludeMetadata:  includeMetadata,
 		MetadataTypes:    metadataTypes,
 		MetadataVersions: metadataVersions,
 		PartialMatch:     ctx.FormBool("partialMatch"),

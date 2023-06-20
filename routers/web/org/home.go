@@ -150,7 +150,6 @@ func Home(ctx *context.Context) {
 		Owners:             owners,           // DCS Customizations
 		MetadataTypes:      metadataTypes,    // DCS Customizations
 		MetadataVersions:   metadataVersions, // DCS Customizations
-		IncludeMetadata:    true,             // DCS Customizations
 	})
 	if err != nil {
 		ctx.ServerError("SearchRepository", err)

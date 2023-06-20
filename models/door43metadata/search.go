@@ -7,7 +7,6 @@ import (
 	"strings"
 
 	"code.gitea.io/gitea/models/db"
-	"code.gitea.io/gitea/modules/setting"
 	"code.gitea.io/gitea/modules/util"
 
 	"xorm.io/builder"
@@ -61,7 +60,6 @@ type SearchCatalogOptions struct {
 	CheckingLevels   []string
 	Books            []string
 	IncludeHistory   bool
-	IncludeMetadata  bool
 	MetadataTypes    []string
 	MetadataVersions []string
 	ShowIngredients  util.OptionalBool
@@ -70,26 +68,14 @@ type SearchCatalogOptions struct {
 	PartialMatch     bool
 }
 
-// GetMetadataCondByDBType Get the metadata condition by DB type
-func GetMetadataCondByDBType(dbType setting.DatabaseType, keyword string, includeMetadata bool) builder.Cond {
+// GetMetadataCond Get the metadata condition
+func GetMetadataCond(keyword string) builder.Cond {
 	cond := builder.NewCond()
-	if dbType.IsMySQL() || dbType.IsSQLite3() {
-		cond = cond.Or(builder.Like{"LOWER(`door43_metadata`.title)", strings.ToLower(keyword)})
-		cond = cond.Or(builder.Like{"LOWER(`door43_metadata`.subject)", strings.ToLower(keyword)})
-		if includeMetadata {
-			if dbType.IsMySQL() {
-				cond = cond.Or(builder.Expr("JSON_SEARCH(LOWER(`door43_metadata`.metadata), 'one', ?) IS NOT NULL", "%"+strings.ToLower(keyword)+"%"))
-			} else {
-				cond = cond.Or(builder.Like{"`door43_metadata`.metadata", `": "%` + strings.ToLower(keyword) + `%"`})
-			}
-		}
-	} else {
-		cond = cond.Or(builder.Like{"`door43_metadata`.metadata", `"title": "%` + strings.ToLower(keyword) + `%"`})
-		cond = cond.Or(builder.Like{"`door43_metadata`.metadata", `"subject": "%` + strings.ToLower(keyword) + `%"`})
-		if includeMetadata {
-			cond = cond.Or(builder.Like{"`door43_metadata`.metadata", `": "%` + strings.ToLower(keyword) + `%"`})
-		}
-	}
+	cond = cond.And(builder.Like{"LOWER(`door43_metadata`.title)", strings.ToLower(keyword)})
+	cond = cond.Or(builder.Eq{"LOWER(`door43_metadata`.resource)": strings.ToLower(keyword)})
+	cond = cond.Or(builder.Like{"LOWER(`door43_metadata`.subject)", strings.ToLower(keyword)})
+	cond = cond.Or(builder.Eq{"LOWER(`door43_metadata`.language)": strings.ToLower(keyword)})
+	cond = cond.Or(builder.Like{"LOWER(`door43_metadata`.language_title)", strings.ToLower(keyword)})
 	return cond
 }
 
@@ -107,7 +93,7 @@ func SearchCatalogCondition(opts *SearchCatalogOptions) builder.Cond {
 	for _, keyword := range opts.Keywords {
 		keywordCond = keywordCond.Or(builder.Like{"`repository`.lower_name", strings.ToLower(keyword)})
 		keywordCond = keywordCond.Or(builder.Like{"`user`.lower_name", strings.ToLower(keyword)})
-		keywordCond = keywordCond.Or(GetMetadataCondByDBType(setting.Database.Type, keyword, opts.IncludeMetadata))
+		keywordCond = keywordCond.Or(GetMetadataCond(keyword))
 	}
 
 	stageCond := GetStageCond(opts.Stage)
