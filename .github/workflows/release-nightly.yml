@@ -2,7 +2,7 @@ name: release-nightly-assets
 
 on:
   push:
-    branches: [ main, release/v* ]
+    branches: [ main, release/dcs/v* ]
 
 jobs:
   nightly-binary:

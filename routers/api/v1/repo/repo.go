@@ -137,11 +137,6 @@ func Search(ctx *context.APIContext) {
 	//   in: query
 	//   description: return repos only with the version of metadata given. Does not apply if metadataType is "all"
 	//   type: string
-	// - name: includeMetadata
-	//   in: query
-	//   description: if false, q value will only be searched for in the repo name, owner, description and title and
-	//                subject; otherwise search all values of the manifest file. (defaults to false)
-	//   type: boolean
 	// - name: sort
 	//   in: query
 	//   description: sort repos by attribute. Supported values are
@@ -190,7 +185,6 @@ func Search(ctx *context.APIContext) {
 		Books:            catalog.QueryStrings(ctx, "book"),
 		MetadataTypes:    catalog.QueryStrings(ctx, "metadataType"),
 		MetadataVersions: catalog.QueryStrings(ctx, "metadataVersion"),
-		IncludeMetadata:  ctx.FormString("includeMetadata") == "" || ctx.FormBool("includeMetadata"),
 		/*** END DCS Customizations ***/
 	}
 
