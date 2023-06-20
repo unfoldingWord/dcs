@@ -135,7 +135,6 @@ func RenderCatalogSearch(ctx *context.Context, opts *CatalogSearchOptions) {
 		},
 		OrderBy:          []door43metadata.CatalogOrderBy{orderBy},
 		Keywords:         keywords,
-		IncludeMetadata:  true,
 		Stage:            stage,
 		IncludeHistory:   false,
 		Books:            books,

@@ -151,7 +151,6 @@ func RenderRepoSearch(ctx *context.Context, opts *RepoSearchOptions) {
 		ContentFormats:     contentFormats,   // DCS Customizations
 		Repos:              repoNames,        // DCS Customizaitons
 		Owners:             owners,           // DCS Customizaitons
-		IncludeMetadata:    true,             // DCS Customizaitons
 		MetadataTypes:      metadataTypes,    // DCS Customizaitons
 		MetadataVersions:   metadataVersions, // DCS Customizaitons
 		OnlyShowRelevant:   opts.OnlyShowRelevant,
