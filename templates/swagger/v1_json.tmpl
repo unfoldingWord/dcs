@@ -1184,12 +1184,6 @@
           },
           {
             "type": "boolean",
-            "description": "if false, only subject and title are searched with query terms, if true all metadata values are searched. Default is true",
-            "name": "includeMetadata",
-            "in": "query"
-          },
-          {
-            "type": "boolean",
             "description": "if true, the list of ingredients (files/projects) in the resource and their file paths will be listed for each entry. Default is true",
             "name": "showIngredients",
             "in": "query"
@@ -1329,12 +1323,6 @@
             "type": "boolean",
             "description": "if true, all releases, not just the latest, are included. Default is false",
             "name": "includeHistory",
-            "in": "query"
-          },
-          {
-            "type": "boolean",
-            "description": "if false, only subject and title are searched with query terms, if true all metadata values are searched. Default is true",
-            "name": "includeMetadata",
             "in": "query"
           },
           {
@@ -1491,12 +1479,6 @@
             "type": "boolean",
             "description": "if true, all releases, not just the latest, are included. Default is false",
             "name": "includeHistory",
-            "in": "query"
-          },
-          {
-            "type": "boolean",
-            "description": "if false, only subject and title are searched with query terms, if true all metadata values are searched. Default is true",
-            "name": "includeMetadata",
             "in": "query"
           },
           {
@@ -3711,12 +3693,6 @@
             "type": "string",
             "description": "return repos only with the version of metadata given. Does not apply if metadataType is \"all\"",
             "name": "metadataVersion",
-            "in": "query"
-          },
-          {
-            "type": "boolean",
-            "description": "if false, q value will only be searched for in the repo name, owner, description and title and subject; otherwise search all values of the manifest file. (defaults to false)",
-            "name": "includeMetadata",
             "in": "query"
           },
           {
