@@ -800,8 +800,10 @@ func ProcessDoor43MetadataForRef(ctx context.Context, repo *repo_model.Repositor
 		err = GetRCDoor43Metadata(dm, repo, commit)
 		if err != nil {
 			if !git.IsErrNotExist(err) {
+				log.Error("ProcessDoor43MetadataForRef: ERROR! Unable to populate DM for %s/%s from RC manifest.yaml: %v\n", repo.FullName(), ref, err)
 				return err
 			}
+			log.Info("ProcessDoor43MetadataForRef: %s/%s is not a SB, TC, TS nor RC repo. Not adding to door43_metadata\n", repo.FullName(), ref)
 			return nil // nothing to process, not a SB, TC, TS nor RC repo
 		}
 	}
