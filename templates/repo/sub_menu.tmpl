@@ -28,9 +28,9 @@
 			{{end}}
 			{{if .Repository.MetadataType}}
 				{{$metadataTypeTitle := (GetMetadataTypeTitle .Repository.MetadataType)}}
-				{{$metadataTypeIconURL := (GetMetadataTypeIconURL .Repository.MetadataType)}}
+				{{$metadataTypeIcon := (GetMetadataTypeIcon .Repository.MetadataType)}}
 				<div class="item">
-					<a class="ui" href="{{AppSubUrl}}/explore/repos?q=metadata_type:{{.Repository.MetadataType}}" title="Metadata Type: {{$metadataTypeTitle}} v{{.Repository.MetadataVersion}}">{{svg "octicon-briefcase"}} <span style="font-weight: bold">{{.Repository.MetadataType}}{{.Repository.MetadataVersion}}</span> <img src="{{$metadataTypeIconURL}}" style="height:16px;vertical-align:middle"/></a>
+					<a class="ui" href="{{AppSubUrl}}/explore/repos?q=metadata_type:{{.Repository.MetadataType}}" title="Metadata Type: {{$metadataTypeTitle}} v{{.Repository.MetadataVersion}}">{{svg "octicon-briefcase"}} <span style="font-weight: bold">{{.Repository.MetadataType}}{{.Repository.MetadataVersion}}</span> <img src="{{AssetUrlPrefix}}/img/dcs/{{$metadataTypeIcon}}" style="height:16px;vertical-align:middle"/></a>
 				</div>
 			{{end}}
 			<!-- END DCS Customizations -->

@@ -134,6 +134,7 @@ func ProcessDoor43MetadataForRepoRefs(ctx context.Context, repo *repo_model.Repo
 		log.Warn("git.OpenRepository Error %s: %v", repo.FullName(), err)
 	}
 	if gitRepo != nil {
+		defer gitRepo.Close()
 		branchNames, _, err := gitRepo.GetBranchNames(0, 0)
 		if err != nil {
 			log.Warn("git.GetBranchNames Error %s: %v", repo.FullName(), err)
