@@ -163,7 +163,7 @@ func NewFuncMap() template.FuncMap {
 			return setting.DCS.Door43PreviewURL
 		},
 		"GetMetadataTypeTitle":   dcs.GetMetadataTypeTitle,
-		"GetMetadataTypeIconURL": dcs.GetMetadataTypeIconURL,
+		"GetMetadataTypeIcon": dcs.GetMetadataTypeIcon,
 		/*** END DCS Customizations ***/
 
 		// -----------------------------------------------------------------
