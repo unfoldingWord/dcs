@@ -139,12 +139,18 @@ func (dm *Door43Metadata) APIURL() string {
 
 // GetTarballURL get the tarball URL of the tag or branch
 func (dm *Door43Metadata) GetTarballURL() string {
+	if dm.RefType == "branch" {
+		return fmt.Sprintf("%s/archive/%s.tar.gz", dm.Repo.HTMLURL(), dm.CommitSHA[0:10])
+	}
 	return fmt.Sprintf("%s/archive/%s.tar.gz", dm.Repo.HTMLURL(), dm.Ref)
 }
 
 // GetZipballURL get the zipball URL of the tag or branch
 func (dm *Door43Metadata) GetZipballURL() string {
-	return fmt.Sprintf("%s/archive/%s.zip", dm.Repo.HTMLURL(), dm.Ref)
+	if dm.RefType == "branch" {
+		return fmt.Sprintf("%s/archive/%s.zip", dm.Repo.HTMLURL(), dm.CommitSHA[0:10])
+	}
+	return fmt.Sprintf("%s/archive/%s.zip", dm.Repo.HTMLURL(), dm.CommitSHA)
 }
 
 // GetReleaseURL get the URL the release API
@@ -182,11 +188,17 @@ func (dm *Door43Metadata) GetMetadataAPIContentsURL() string {
 
 // GetGitTreesURL gets the git trees URL for a repo and branch or tag for all files
 func (dm *Door43Metadata) GetGitTreesURL() string {
+	if dm.RefType == "branch" {
+		return fmt.Sprintf("%s/git/trees/%s?recursive=1&per_page=99999", dm.Repo.APIURL(), dm.CommitSHA[0:10])
+	}
 	return fmt.Sprintf("%s/git/trees/%s?recursive=1&per_page=99999", dm.Repo.APIURL(), dm.Ref)
 }
 
 // GetContentsURL gets the contents URL for a repo and branch or tag for all files
 func (dm *Door43Metadata) GetContentsURL() string {
+	if dm.RefType == "branch" {
+		return fmt.Sprintf("%s/contents?ref=%s", dm.Repo.APIURL(), dm.CommitSHA[0:10])
+	}
 	return fmt.Sprintf("%s/contents?ref=%s", dm.Repo.APIURL(), dm.Ref)
 }
 
@@ -550,18 +562,19 @@ func GetReposForMetadata(ctx context.Context) ([]*Repository, error) {
 
 // GetRepoReleaseTagsForMetadata gets the releases tags for a repo used for getting metadata
 func GetRepoReleaseTagsForMetadata(ctx context.Context, repoID int64) ([]string, error) {
-	records, err := db.GetEngine(ctx).Query("SELECT rel.tag_name as tag FROM `release` rel "+
-		"INNER JOIN `repository` rep ON rel.repo_id = rep.id "+
-		"WHERE rel.is_tag = 0 AND rep.id = ? "+
-		"ORDER BY rel.created_unix ASC", repoID)
+	var releases []*Release
+	err := db.GetEngine(ctx).
+		Join("INNER", "repository", "`repository`.id = `release`.repo_id").
+		Where(builder.Eq{"`release`.is_tag": 0}.And(builder.Eq{"`repository`.id": repoID})).
+		OrderBy("`release`.created_unix").
+		Find(&releases)
 	if err != nil {
 		return nil, err
 	}
 
-	tags := make([]string, len(records))
-
-	for idx, record := range records {
-		tags[idx] = string(record["tag"])
+	tags := make([]string, len(releases))
+	for idx, release := range releases {
+		tags[idx] = string(release.TagName)
 	}
 
 	return tags, nil

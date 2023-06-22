@@ -28,7 +28,7 @@ type CatalogEntry struct {
 	Title                  string        `json:"title"`
 	Ref                    string        `json:"branch_or_tag_name"`
 	RefType                string        `json:"ref_type"`
-	CommitID               string        `json:"commit_id"`
+	CommitSHA               string       `json:"commit_sha"`
 	Stage                  string        `json:"stage"`
 	MetadataURL            string        `json:"metadata_url"`
 	MetadataJSONURL        string        `json:"metadata_json_url"`
@@ -75,6 +75,7 @@ type CatalogStages struct {
 type CatalogStage struct {
 	Ref         string    `json:"branch_or_tag_name"`
 	ReleaseURL  *string   `json:"release_url"`
+	CommitSHA   string    `json:"commit_sha"`
 	Released    time.Time `json:"released"`
 	ZipballURL  string    `json:"zipball_url"`
 	TarballURL  string    `json:"tarball_url"`

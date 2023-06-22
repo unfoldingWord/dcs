@@ -67,7 +67,7 @@ func ToCatalogEntry(ctx context.Context, dm *repo.Door43Metadata, mode perm.Acce
 		ContentsURL:            dm.GetContentsURL(),
 		Ref:                    dm.Ref,
 		RefType:                dm.RefType,
-		CommitID:               dm.CommitSHA,
+		CommitSHA:               dm.CommitSHA,
 		Language:               dm.Language,
 		LanguageTitle:          dm.LanguageTitle,
 		LanguageDir:            dm.LanguageDirection,
@@ -95,6 +95,7 @@ func ToCatalogStage(dm *repo.Door43Metadata) *api.CatalogStage {
 	catalogStage := &api.CatalogStage{
 		Ref:         dm.Ref,
 		Released:    dm.ReleaseDateUnix.AsTime(),
+		CommitSHA:   dm.CommitSHA,
 		ZipballURL:  dm.GetZipballURL(),
 		TarballURL:  dm.GetTarballURL(),
 		GitTreesURL: dm.GetGitTreesURL(),
