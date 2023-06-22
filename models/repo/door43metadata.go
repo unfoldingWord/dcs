@@ -7,7 +7,6 @@ import (
 	"context"
 	"fmt"
 	"sort"
-	"strconv"
 
 	"code.gitea.io/gitea/models/db"
 	"code.gitea.io/gitea/models/door43metadata"
@@ -532,29 +531,21 @@ func DeleteAllDoor43MetadatasByRepoID(ctx context.Context, repoID int64) (int64,
 	return db.GetEngine(ctx).Delete(Door43Metadata{RepoID: repoID})
 }
 
-// GetRepoIDsForMetadata gets the IDs of all the repos to process for metadata
-func GetRepoIDsForMetadata(ctx context.Context) ([]int64, error) {
-	records, err := db.GetEngine(ctx).Query("SELECT r.id FROM `repository` r " +
-		"JOIN `user` u ON u.id = r.owner_id " +
-		"WHERE r.is_archived = 0 AND is_private = 0 " +
-		"ORDER BY IF(u.lower_name = 'unfoldingword', 0, 1) ASC, " +
-		"  IF(u.lower_name = 'door34-catalog', 0, 1) ASC, " +
-		"  IF(u.lower_name LIKE '%_gl', 0, 1) ASC, " +
-		"  u.type DESC, " +
-		"  u.lower_name ASC, " +
-		"  r.lower_name ASC")
-	if err != nil {
-		return nil, err
-	}
-
-	repoIDs := make([]int64, len(records))
-
-	for idx, record := range records {
-		v, _ := strconv.ParseInt(string(record["id"]), 10, 64)
-		repoIDs[idx] = v
-	}
-
-	return repoIDs, nil
+// GetReposForMetadata gets all the repos to process for metadata
+func GetReposForMetadata(ctx context.Context) ([]*Repository, error) {
+	var repos []*Repository
+	err := db.GetEngine(ctx).
+		Join("INNER", "user", "`user`.id = `repository`.owner_id").
+		Where(builder.Eq{"`repository`.is_archived": 0}.And(builder.Eq{"`repository`.is_private": 0})).
+		OrderBy("CASE WHEN `user`.lower_name = 'unfoldingword' THEN 0 "+
+			"WHEN `user`.lower_name = 'door43-catalog' THEN 1 "+
+			"WHEN `user`.lower_name LIKE '%_gl' THEN 2 "+
+			"ELSE 3 END").
+		OrderBy("`user`.type DESC").
+		OrderBy("`user`.lower_name").
+		OrderBy("`repository`.lower_name").
+		Find(&repos)
+	return repos, err
 }
 
 // GetRepoReleaseTagsForMetadata gets the releases tags for a repo used for getting metadata
