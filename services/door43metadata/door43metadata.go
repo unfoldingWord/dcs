@@ -49,16 +49,11 @@ func GenerateDoor43Metadata(x *xorm.Engine) error {
 	defer commiter.Close()
 
 	// Query to find repos that need processing.
-	repoIDs, err := repo_model.GetRepoIDsForMetadata(ctx)
+	repos, err := repo_model.GetReposForMetadata(ctx)
 	if err != nil {
 		return err
 	}
-	for _, repoID := range repoIDs {
-		repo, err := repo_model.GetRepositoryByID(ctx, repoID)
-		if err != nil {
-			log.Warn("GetRepositoryByIDCtx Error: %v\n", err)
-			continue
-		}
+	for _, repo := range repos {
 		if repo.MetadataUpdatedUnix.AddDuration(24*time.Hour) <= timeutil.TimeStampNow() {
 			err := ProcessDoor43MetadataForRepo(ctx, repo, true)
 			if err != nil {
@@ -267,6 +262,10 @@ func ProcessRepoMetadata(ctx context.Context, repo *repo_model.Repository) error
 	if repo.Subject != dm.Subject {
 		repo.Subject = dm.Subject
 		cols = append(cols, "subject")
+	}
+	if repo.Resource != dm.Resource {
+		repo.Resource = dm.Resource
+		cols = append(cols, "resource")
 	}
 	if repo.Title != dm.Title {
 		repo.Title = dm.Title
