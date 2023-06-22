@@ -49,10 +49,11 @@
 }
  #dcs-info-icon {
 	 position: absolute;
-	 left: -5px;
-	 top: 10px;
+	 right: 5px;
+	 top: 5px;
 	 font-size: 1.2em;
-	 background-color: var(--color-body);
+	 background-color: transparent;
+	 color: var(--color-body) !important;
 }
  .blame .file-view.code-view {
 	 overflow-y: auto;
