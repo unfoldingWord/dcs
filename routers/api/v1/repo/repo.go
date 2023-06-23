@@ -260,14 +260,14 @@ func Search(ctx *context.APIContext) {
 			})
 			return
 		}
-		accessMode, err := access_model.AccessLevel(ctx, ctx.Doer, repo)
+		permission, err := access_model.GetUserRepoPermission(ctx, repo, ctx.Doer)
 		if err != nil {
 			ctx.JSON(http.StatusInternalServerError, api.SearchError{
 				OK:    false,
 				Error: err.Error(),
 			})
 		}
-		results[i] = convert.ToRepo(ctx, repo, accessMode)
+		results[i] = convert.ToRepo(ctx, repo, permission)
 	}
 	ctx.SetLinkHeader(int(count), opts.PageSize)
 	ctx.SetTotalCountHeader(count)
@@ -321,7 +321,7 @@ func CreateUserRepo(ctx *context.APIContext, owner *user_model.User, opt api.Cre
 		ctx.Error(http.StatusInternalServerError, "GetRepositoryByID", err)
 	}
 
-	ctx.JSON(http.StatusCreated, convert.ToRepo(ctx, repo, perm.AccessModeOwner))
+	ctx.JSON(http.StatusCreated, convert.ToRepo(ctx, repo, access_model.Permission{AccessMode: perm.AccessModeOwner}))
 }
 
 // Create one repository of mine
@@ -468,7 +468,7 @@ func Generate(ctx *context.APIContext) {
 	}
 	log.Trace("Repository generated [%d]: %s/%s", repo.ID, ctxUser.Name, repo.Name)
 
-	ctx.JSON(http.StatusCreated, convert.ToRepo(ctx, repo, perm.AccessModeOwner))
+	ctx.JSON(http.StatusCreated, convert.ToRepo(ctx, repo, access_model.Permission{AccessMode: perm.AccessModeOwner}))
 }
 
 // CreateOrgRepoDeprecated create one repository of the organization
@@ -586,7 +586,7 @@ func Get(ctx *context.APIContext) {
 		return
 	}
 
-	ctx.JSON(http.StatusOK, convert.ToRepo(ctx, ctx.Repo.Repository, ctx.Repo.AccessMode))
+	ctx.JSON(http.StatusOK, convert.ToRepo(ctx, ctx.Repo.Repository, ctx.Repo.Permission))
 }
 
 // GetByID returns a single Repository
@@ -617,15 +617,15 @@ func GetByID(ctx *context.APIContext) {
 		return
 	}
 
-	perm, err := access_model.GetUserRepoPermission(ctx, repo, ctx.Doer)
+	permission, err := access_model.GetUserRepoPermission(ctx, repo, ctx.Doer)
 	if err != nil {
-		ctx.Error(http.StatusInternalServerError, "AccessLevel", err)
+		ctx.Error(http.StatusInternalServerError, "GetUserRepoPermission", err)
 		return
-	} else if !perm.HasAccess() {
+	} else if !permission.HasAccess() {
 		ctx.NotFound()
 		return
 	}
-	ctx.JSON(http.StatusOK, convert.ToRepo(ctx, repo, perm.AccessMode))
+	ctx.JSON(http.StatusOK, convert.ToRepo(ctx, repo, permission))
 }
 
 // Edit edit repository properties
@@ -687,7 +687,7 @@ func Edit(ctx *context.APIContext) {
 		return
 	}
 
-	ctx.JSON(http.StatusOK, convert.ToRepo(ctx, repo, ctx.Repo.AccessMode))
+	ctx.JSON(http.StatusOK, convert.ToRepo(ctx, repo, ctx.Repo.Permission))
 }
 
 // updateBasicProperties updates the basic properties of a repo: Name, Description, Website and Visibility
