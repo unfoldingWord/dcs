@@ -549,9 +549,9 @@ func GetReposForMetadata(ctx context.Context) ([]*Repository, error) {
 	err := db.GetEngine(ctx).
 		Join("INNER", "user", "`user`.id = `repository`.owner_id").
 		Where(builder.Eq{"`repository`.is_archived": 0}.And(builder.Eq{"`repository`.is_private": 0})).
-		OrderBy("CASE WHEN `user`.lower_name = 'unfoldingword' THEN 0 "+
-			"WHEN `user`.lower_name = 'door43-catalog' THEN 1 "+
-			"WHEN `user`.lower_name LIKE '%_gl' THEN 2 "+
+		OrderBy("CASE WHEN `user`.lower_name = 'unfoldingword' THEN 0 " +
+			"WHEN `user`.lower_name = 'door43-catalog' THEN 1 " +
+			"WHEN `user`.lower_name LIKE '%_gl' THEN 2 " +
 			"ELSE 3 END").
 		OrderBy("`user`.type DESC").
 		OrderBy("`user`.lower_name").

@@ -404,6 +404,7 @@ func GetDoor43MetadataFromRCManifest(dm *repo_model.Door43Metadata, manifest *ma
 	var languageTitle string
 	var languageDirection string
 	var languageIsGL bool
+	var format string
 	var contentFormat string
 	var checkingLevel int
 	var ingredients []*structs.Ingredient
@@ -423,6 +424,7 @@ func GetDoor43MetadataFromRCManifest(dm *repo_model.Door43Metadata, manifest *ma
 	title = (*manifest)["dublin_core"].(map[string]interface{})["title"].(string)
 	language = (*manifest)["dublin_core"].(map[string]interface{})["language"].(map[string]interface{})["identifier"].(string)
 	languageTitle = (*manifest)["dublin_core"].(map[string]interface{})["language"].(map[string]interface{})["title"].(string)
+	format = (*manifest)["dublin_core"].(map[string]interface{})["format"].(string)
 	languageDirection = dcs.GetLanguageDirection(language)
 	languageIsGL = dcs.LanguageIsGL(language)
 	var bookPath string
@@ -449,6 +451,8 @@ func GetDoor43MetadataFromRCManifest(dm *repo_model.Door43Metadata, manifest *ma
 		} else {
 			contentFormat = "tsv9"
 		}
+	} else if strings.Contains(format, "/") {
+		contentFormat = strings.Split(format, "/")[1]
 	} else if repo.PrimaryLanguage != nil {
 		contentFormat = strings.ToLower(repo.PrimaryLanguage.Language)
 	} else {
