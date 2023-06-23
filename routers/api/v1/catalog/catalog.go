@@ -603,9 +603,9 @@ func GetCatalogEntry(ctx *context.APIContext) {
 	var err error
 	dm, err = repo.GetDoor43MetadataByRepoIDAndRef(ctx, ctx.Repo.Repository.ID, ref)
 	if err != nil {
-		if ! repo.IsErrDoor43MetadataNotExist(err) {
+		if !repo.IsErrDoor43MetadataNotExist(err) {
 			ctx.Error(http.StatusInternalServerError, "GetDoor43MetadataByRepoIDAndRef", err)
-		} else{
+		} else {
 			ctx.NotFound()
 		}
 		return
@@ -654,9 +654,9 @@ func GetCatalogMetadata(ctx *context.APIContext) {
 	ref := ctx.Params("ref")
 	dm, err := repo.GetDoor43MetadataByRepoIDAndRef(ctx, ctx.Repo.Repository.ID, ref)
 	if err != nil {
-		if ! repo.IsErrDoor43MetadataNotExist(err) {
+		if !repo.IsErrDoor43MetadataNotExist(err) {
 			ctx.Error(http.StatusInternalServerError, "GetDoor43MetadataByRepoIDAndRef", err)
-		} else{
+		} else {
 			ctx.NotFound()
 		}
 		return
