@@ -595,8 +595,8 @@ func GetCatalogEntry(ctx *context.APIContext) {
 	// responses:
 	//   "200":
 	//     "$ref": "#/responses/CatalogEntry"
-	//   "422":
-	//     "$ref": "#/responses/validationError"
+	//   "404":
+	//     "$ref": "#/responses/notFound"
 
 	ref := ctx.Params("ref")
 	var dm *repo.Door43Metadata
@@ -648,8 +648,8 @@ func GetCatalogMetadata(ctx *context.APIContext) {
 	// responses:
 	//   "200":
 	//     "$ref": "#/responses/CatalogMetadata"
-	//   "422":
-	//     "$ref": "#/responses/validationError"
+	//   "404":
+	//     "$ref": "#/responses/notFound"
 
 	ref := ctx.Params("ref")
 	dm, err := repo.GetDoor43MetadataByRepoIDAndRef(ctx, ctx.Repo.Repository.ID, ref)
