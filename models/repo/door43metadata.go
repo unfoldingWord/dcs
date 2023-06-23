@@ -414,17 +414,17 @@ func GetDoor43MetadataByRepoIDAndRef(ctx context.Context, repoID int64, ref stri
 }
 
 func getDoor43MetadataByRepoIDAndRef(e db.Engine, repoID int64, ref string) (*Door43Metadata, error) {
-	dm := Door43Metadata{
+	dm := &Door43Metadata{
 		RepoID: repoID,
 		Ref:    ref,
 	}
-	has, err := db.GetEngine(db.DefaultContext).Get(&dm)
+	has, err := e.Get(dm)
 	if err != nil {
 		return nil, err
 	} else if !has {
 		return nil, ErrDoor43MetadataNotExist{0, repoID, ref}
 	}
-	return &dm, nil
+	return dm, nil
 }
 
 // GetDoor43MetadataMapValues gets the values of a Door43Metadata map

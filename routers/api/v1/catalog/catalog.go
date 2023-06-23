@@ -603,7 +603,11 @@ func GetCatalogEntry(ctx *context.APIContext) {
 	var err error
 	dm, err = repo.GetDoor43MetadataByRepoIDAndRef(ctx, ctx.Repo.Repository.ID, ref)
 	if err != nil {
-		ctx.Error(http.StatusInternalServerError, "GetDoor43MetadataByRepoIDAndRef", err)
+		if ! repo.IsErrDoor43MetadataNotExist(err) {
+			ctx.Error(http.StatusInternalServerError, "GetDoor43MetadataByRepoIDAndRef", err)
+		} else{
+			ctx.NotFound()
+		}
 		return
 	}
 	if err := dm.LoadAttributes(); err != nil {
@@ -612,17 +616,15 @@ func GetCatalogEntry(ctx *context.APIContext) {
 	}
 	accessMode, err := access_model.AccessLevel(ctx, ctx.ContextUser, dm.Repo)
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, api.SearchError{
-			OK:    false,
-			Error: err.Error(),
-		})
+		ctx.Error(http.StatusInternalServerError, "GetUserRepoPermission", err)
+		return
 	}
 	ctx.JSON(http.StatusOK, convert.ToCatalogEntry(ctx, dm, accessMode))
 }
 
 // GetCatalogMetadata Get the metadata (RC 0.2.0 manifest) in JSON format for the given ownername, reponame and ref
 func GetCatalogMetadata(ctx *context.APIContext) {
-	// swagger:operation GET /catalog/entry/{owner}/{repo}/{tag}/metadata catalog catalogGetMetadata
+	// swagger:operation GET /catalog/entry/{owner}/{repo}/{ref}/metadata catalog catalogGetMetadata
 	// ---
 	// summary: Catalog entry metadata (manifest.yaml in JSON format)
 	// produces:
@@ -638,7 +640,7 @@ func GetCatalogMetadata(ctx *context.APIContext) {
 	//   description: name of the repo
 	//   type: string
 	//   required: true
-	// - name: tag
+	// - name: ref
 	//   in: path
 	//   description: release tag or default branch
 	//   type: string
@@ -649,9 +651,14 @@ func GetCatalogMetadata(ctx *context.APIContext) {
 	//   "422":
 	//     "$ref": "#/responses/validationError"
 
-	dm, err := repo.GetDoor43MetadataByRepoIDAndRef(ctx, ctx.Repo.Repository.ID, ctx.Repo.TagName)
+	ref := ctx.Params("ref")
+	dm, err := repo.GetDoor43MetadataByRepoIDAndRef(ctx, ctx.Repo.Repository.ID, ref)
 	if err != nil {
-		ctx.Error(http.StatusInternalServerError, "GetDoor43MetadataByRepoIDAndRef", err)
+		if ! repo.IsErrDoor43MetadataNotExist(err) {
+			ctx.Error(http.StatusInternalServerError, "GetDoor43MetadataByRepoIDAndRef", err)
+		} else{
+			ctx.NotFound()
+		}
 		return
 	}
 	ctx.JSON(http.StatusOK, dm.Metadata)

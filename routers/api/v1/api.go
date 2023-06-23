@@ -1414,7 +1414,7 @@ func Routes(ctx gocontext.Context) *web.Route {
 					}, repoAssignment())
 				})
 			})
-			m.Group("/entry/{username}/{reponame}/{tag}", func() {
+			m.Group("/entry/{username}/{reponame}/{ref}", func() {
 				m.Get("", catalog.GetCatalogEntry)
 				m.Get("/metadata", catalog.GetCatalogMetadata)
 			}, repoAssignment())
