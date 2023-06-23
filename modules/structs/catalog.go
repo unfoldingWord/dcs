@@ -28,7 +28,7 @@ type CatalogEntry struct {
 	Title                  string        `json:"title"`
 	Ref                    string        `json:"branch_or_tag_name"`
 	RefType                string        `json:"ref_type"`
-	CommitSHA               string       `json:"commit_sha"`
+	CommitSHA              string        `json:"commit_sha"`
 	Stage                  string        `json:"stage"`
 	MetadataURL            string        `json:"metadata_url"`
 	MetadataJSONURL        string        `json:"metadata_json_url"`

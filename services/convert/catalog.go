@@ -67,7 +67,7 @@ func ToCatalogEntry(ctx context.Context, dm *repo.Door43Metadata, mode perm.Acce
 		ContentsURL:            dm.GetContentsURL(),
 		Ref:                    dm.Ref,
 		RefType:                dm.RefType,
-		CommitSHA:               dm.CommitSHA,
+		CommitSHA:              dm.CommitSHA,
 		Language:               dm.Language,
 		LanguageTitle:          dm.LanguageTitle,
 		LanguageDir:            dm.LanguageDirection,
