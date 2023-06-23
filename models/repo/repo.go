@@ -179,7 +179,7 @@ type Repository struct {
 	ArchivedUnix timeutil.TimeStamp `xorm:"DEFAULT 0"`
 	/*** DCS Customizations ***/
 	MetadataType        string `xorm:"index"`
-	MetadataVersion     string
+	MetadataVersion     string `xorm:"index"`
 	Resource            string
 	Subject             string `xorm:"index"`
 	Title               string
