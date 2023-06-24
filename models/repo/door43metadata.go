@@ -574,7 +574,7 @@ func GetRepoReleaseTagsForMetadata(ctx context.Context, repoID int64) ([]string,
 
 	tags := make([]string, len(releases))
 	for idx, release := range releases {
-		tags[idx] = string(release.TagName)
+		tags[idx] = release.TagName
 	}
 
 	return tags, nil
