@@ -26,7 +26,7 @@ type CatalogEntry struct {
 	LanguageIsGL           bool          `json:"language_is_gl"`
 	Subject                string        `json:"subject"`
 	Title                  string        `json:"title"`
-	Ref                    string        `json:"ref"`
+	Ref                    string        `json:"branch_or_tag_name"`
 	RefType                string        `json:"ref_type"`
 	CommitSHA              string        `json:"commit_sha"`
 	Stage                  string        `json:"stage"`
@@ -73,7 +73,7 @@ type CatalogStages struct {
 
 // CatalogStage a repo's catalog stage metadata
 type CatalogStage struct {
-	Ref         string    `json:"ref"`
+	Ref         string    `json:"branch_or_tag_name"`
 	ReleaseURL  *string   `json:"release_url"`
 	CommitSHA   string    `json:"commit_sha"`
 	Released    time.Time `json:"released"`

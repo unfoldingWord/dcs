@@ -16915,6 +16915,10 @@
       "description": "CatalogEntry represents a repository's metadata of a tag or default branch as an entry of the catalog",
       "type": "object",
       "properties": {
+        "branch_or_tag_name": {
+          "type": "string",
+          "x-go-name": "Ref"
+        },
         "commit_sha": {
           "type": "string",
           "x-go-name": "CommitSHA"
@@ -16991,10 +16995,6 @@
           "type": "string",
           "x-go-name": "Owner"
         },
-        "ref": {
-          "type": "string",
-          "x-go-name": "Ref"
-        },
         "ref_type": {
           "type": "string",
           "x-go-name": "RefType"
@@ -17064,6 +17064,10 @@
       "description": "CatalogStage a repo's catalog stage metadata",
       "type": "object",
       "properties": {
+        "branch_or_tag_name": {
+          "type": "string",
+          "x-go-name": "Ref"
+        },
         "commit_sha": {
           "type": "string",
           "x-go-name": "CommitSHA"
@@ -17075,10 +17079,6 @@
         "git_trees_url": {
           "type": "string",
           "x-go-name": "GitTreesURL"
-        },
-        "ref": {
-          "type": "string",
-          "x-go-name": "Ref"
         },
         "release_url": {
           "type": "string",
