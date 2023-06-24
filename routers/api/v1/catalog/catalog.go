@@ -697,9 +697,11 @@ func searchCatalog(ctx *context.APIContext) {
 		var ok bool
 		stage, ok = door43metadata.StageMap[stageStr]
 		if !ok {
-			ctx.Error(http.StatusUnprocessableEntity, "", fmt.Errorf("invalid stage: \"%s\"", stageStr))
+			ctx.Error(http.StatusUnprocessableEntity, "", fmt.Errorf("invalid stage [%s]", stageStr))
 			return
 		}
+	} else {
+		stage = door43metadata.StageProd
 	}
 
 	metadataTypes := QueryStrings(ctx, "metadataType")
@@ -755,7 +757,7 @@ func searchCatalog(ctx *context.APIContext) {
 				}
 			}
 		} else {
-			ctx.Error(http.StatusUnprocessableEntity, "", fmt.Errorf("invalid sort order: \"%s\"", sortOrder))
+			ctx.Error(http.StatusUnprocessableEntity, "", fmt.Errorf("invalid sort order [%s]", sortOrder))
 			return
 		}
 	} else {
@@ -764,10 +766,7 @@ func searchCatalog(ctx *context.APIContext) {
 
 	dms, count, err := models.SearchCatalog(opts)
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, api.SearchError{
-			OK:    false,
-			Error: err.Error(),
-		})
+		ctx.Error(http.StatusInternalServerError, "SearchCatalog", err)
 		return
 	}
 
@@ -779,16 +778,13 @@ func searchCatalog(ctx *context.APIContext) {
 		} else {
 			err := dm.LoadAttributes()
 			if err != nil {
-				ctx.Error(http.StatusUnprocessableEntity, "", fmt.Errorf("invalid Door43Metadata entry, id: %d", dm.ID))
+				ctx.Error(http.StatusInternalServerError, "LoadAttributes", err)
 				return
 			}
 		}
 		perm, err := access_model.GetUserRepoPermission(ctx, dm.Repo, ctx.ContextUser)
 		if err != nil {
-			ctx.JSON(http.StatusInternalServerError, api.SearchError{
-				OK:    false,
-				Error: err.Error(),
-			})
+			ctx.Error(http.StatusInternalServerError, "GetUserRepoPermissions", err)
 		}
 		dmAPI := convert.ToCatalogEntry(ctx, dm, perm)
 		if opts.ShowIngredients == util.OptionalBoolFalse {
@@ -824,7 +820,7 @@ func listSingleDMField(ctx *context.APIContext, field string) {
 		var ok bool
 		stage, ok = door43metadata.StageMap[stageStr]
 		if !ok {
-			ctx.Error(http.StatusUnprocessableEntity, "", fmt.Errorf("invalid stage: \"%s\"", stageStr))
+			ctx.Error(http.StatusUnprocessableEntity, "", fmt.Errorf("invalid stage [%s]", stageStr))
 			return
 		}
 	}
@@ -874,12 +870,12 @@ func listSingleDMField(ctx *context.APIContext, field string) {
 				if orderBy, ok := searchModeMap[strings.ToLower(sortMode)]; ok {
 					opts.OrderBy = append(opts.OrderBy, orderBy)
 				} else {
-					ctx.Error(http.StatusUnprocessableEntity, "", fmt.Errorf("invalid sort mode: \"%s\"", sortMode))
+					ctx.Error(http.StatusUnprocessableEntity, "", fmt.Errorf("invalid sort mode [%s]", sortMode))
 					return
 				}
 			}
 		} else {
-			ctx.Error(http.StatusUnprocessableEntity, "", fmt.Errorf("invalid sort order: \"%s\"", sortOrder))
+			ctx.Error(http.StatusUnprocessableEntity, "", fmt.Errorf("invalid sort order [%s]", sortOrder))
 			return
 		}
 	} else {
@@ -888,10 +884,7 @@ func listSingleDMField(ctx *context.APIContext, field string) {
 
 	results, err := models.SearchDoor43MetadataField(opts, field)
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, api.SearchError{
-			OK:    false,
-			Error: err.Error(),
-		})
+		ctx.Error(http.StatusInternalServerError, "SearchDoor43MetadataField", err)
 		return
 	}
 
