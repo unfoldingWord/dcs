@@ -932,13 +932,13 @@
           "200": {
             "$ref": "#/responses/CatalogEntry"
           },
-          "422": {
-            "$ref": "#/responses/validationError"
+          "404": {
+            "$ref": "#/responses/notFound"
           }
         }
       }
     },
-    "/catalog/entry/{owner}/{repo}/{tag}/metadata": {
+    "/catalog/entry/{owner}/{repo}/{ref}/metadata": {
       "get": {
         "produces": [
           "application/json"
@@ -966,7 +966,7 @@
           {
             "type": "string",
             "description": "release tag or default branch",
-            "name": "tag",
+            "name": "ref",
             "in": "path",
             "required": true
           }
@@ -975,8 +975,8 @@
           "200": {
             "$ref": "#/responses/CatalogMetadata"
           },
-          "422": {
-            "$ref": "#/responses/validationError"
+          "404": {
+            "$ref": "#/responses/notFound"
           }
         }
       }
