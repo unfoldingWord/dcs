@@ -758,7 +758,8 @@ func ProcessDoor43MetadataForRef(ctx context.Context, repo *repo_model.Repositor
 		}
 		commit, err = gitRepo.GetTagCommit(ref)
 		if err != nil {
-			log.Error("GetTagCommit: %v\n", err)
+			log.Error("GetTagCommit [%s/%s]: %v\n", repo.FullName(), ref, err)
+			return err
 		}
 		commitID = commit.ID.String()
 		releaseDateUnix = release.CreatedUnix
