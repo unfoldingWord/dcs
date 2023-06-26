@@ -116,17 +116,17 @@ func CreateAccessToken(ctx *context.APIContext) {
 		/*** END DCS Customizations ***/
 	}
 
+	/*** DCS Customizations - set a default scope since our apps don't do that currently ***/
+	if len(form.Scopes) == 0 {
+		form.Scopes = []string{"write:activitypub","write:misc","write:notification","write:organization","write:package","write:issue","write:repository","write:user"}
+	}
+	/*** END DCS Customizations ***/
 	scope, err := auth_model.AccessTokenScope(strings.Join(form.Scopes, ",")).Normalize()
 	if err != nil {
 		ctx.Error(http.StatusBadRequest, "AccessTokenScope.Normalize", fmt.Errorf("invalid access token scope provided: %w", err))
 		return
 	}
 	t.Scope = scope
-	/*** DCS Customizations - set a default scope since our apps don't do that current ***/
-	if t.Scope == "" {
-		t.Scope = auth_model.AccessTokenScope("read:activitypub,write:misc,write:notification,write:organization,write:package,write:issue,write:repository,write:user")
-	}
-	/*** END DCS Customizations ***/
 
 	if err := auth_model.NewAccessToken(t); err != nil {
 		ctx.Error(http.StatusInternalServerError, "NewAccessToken", err)
