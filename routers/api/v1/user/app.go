@@ -123,7 +123,7 @@ func CreateAccessToken(ctx *context.APIContext) {
 	}
 	t.Scope = scope
 	/*** DCS Customizations - set a default scope since our apps don't do that current ***/
-	if t.Scope = "" {
+	if t.Scope == "" {
 		t.Scope = auth_model.AccessTokenScope("read:activitypub,write:misc,write:notification,write:organization,write:package,write:issue,write:repository,write:user")
 	}
 	/*** END DCS Customizations ***/
