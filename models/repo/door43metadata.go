@@ -150,7 +150,7 @@ func (dm *Door43Metadata) GetZipballURL() string {
 	if dm.RefType == "branch" {
 		return fmt.Sprintf("%s/archive/%s.zip", dm.Repo.HTMLURL(), dm.CommitSHA[0:10])
 	}
-	return fmt.Sprintf("%s/archive/%s.zip", dm.Repo.HTMLURL(), dm.CommitSHA)
+	return fmt.Sprintf("%s/archive/%s.zip", dm.Repo.HTMLURL(), dm.Ref)
 }
 
 // GetReleaseURL get the URL the release API
