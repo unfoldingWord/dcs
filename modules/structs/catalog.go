@@ -38,6 +38,7 @@ type CatalogEntry struct {
 	ContentFormat          string        `json:"content_format"`
 	Released               time.Time     `json:"released"`
 	Ingredients            []*Ingredient `json:"ingredients,omitempty"`
+	Books                  []string      `json:"books,omitempty"`
 }
 
 // Ingredient is a single project of a resource
