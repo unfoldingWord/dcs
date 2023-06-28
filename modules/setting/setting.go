@@ -143,6 +143,7 @@ func loadCommonSettingsFrom(cfg ConfigProvider) error {
 		return err
 	}
 	loadUIFrom(cfg)
+	loadDCSFrom(cfg) // DCS Customizations
 	loadAdminFrom(cfg)
 	loadAPIFrom(cfg)
 	loadMetricsFrom(cfg)
@@ -152,9 +153,6 @@ func loadCommonSettingsFrom(cfg ConfigProvider) error {
 	loadMirrorFrom(cfg)
 	loadMarkupFrom(cfg)
 	loadOtherFrom(cfg)
-	/*** DCS Customizations ***/
-	loadDCSFrom(cfg)
-	/*** END DCS Customizations ***/
 	return nil
 }
 

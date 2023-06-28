@@ -4,12 +4,12 @@
 package setting
 
 // DCS settings
-var DCS = struct {
+var DCS struct {
 	Door43PreviewURL string
-}{
-	Door43PreviewURL: "https://door43.org",
 }
 
 func loadDCSFrom(rootCfg ConfigProvider) {
 	mustMapSetting(rootCfg, "dcs", &DCS)
+	sec := rootCfg.Section("dcs")
+	DCS.Door43PreviewURL = sec.Key("DOOR43_PREVIEW_URL").MustString("https://git.door43.org")
 }
