@@ -230,6 +230,7 @@ func loadCommonSettingsFrom(cfg ConfigProvider) {
 	loadPackagesFrom(cfg)
 	loadActionsFrom(cfg)
 	loadUIFrom(cfg)
+	loadDCSFrom(cfg) // DCS Customizations
 	loadAdminFrom(cfg)
 	loadAPIFrom(cfg)
 	loadMetricsFrom(cfg)
@@ -239,7 +240,6 @@ func loadCommonSettingsFrom(cfg ConfigProvider) {
 	loadMirrorFrom(cfg)
 	loadMarkupFrom(cfg)
 	loadOtherFrom(cfg)
-	loadDCSFrom(cfg)
 }
 
 func loadRunModeFrom(rootCfg ConfigProvider) {
