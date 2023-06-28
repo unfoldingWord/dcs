@@ -241,7 +241,7 @@ func ProcessDoor43MetadataForRepoLatestDMs(ctx context.Context, repo *repo_model
 func ProcessRepoMetadata(ctx context.Context, repo *repo_model.Repository) error {
 	cols := []string{}
 	if repo.GetRepoDm() == nil || (repo.GetDefaultBranchDm() != nil && repo.RepoDmID != repo.DefaultBranchDmID) {
-		repo.RepoDm = repo.DefaultBranchDm
+		repo.RepoDm = repo.GetDefaultBranchDm()
 		if repo.RepoDm == nil {
 			if repo.RepoDmID == 0 || repo.Subject == "" {
 				dm, err := repo_model.GetMostRecentDoor43MetadataByStage(ctx, repo.ID, door43metadata.StageBranch)
@@ -338,6 +338,7 @@ func ProcessDoor43MetadataForRepo(ctx context.Context, repo *repo_model.Reposito
 		return err // No need to process any thing else below
 	}
 
+	log.Debug(">>>>>> PROCESSING REFS: %s", repo.FullName())
 	if processRefs {
 		if err := ProcessDoor43MetadataForRepoRefs(ctx, repo); err != nil {
 			// log error but keep on going
@@ -345,10 +346,12 @@ func ProcessDoor43MetadataForRepo(ctx context.Context, repo *repo_model.Reposito
 		}
 	}
 
+	log.Debug(">>>>>> PROCESSING LATEST DMs: %s", repo.FullName())
 	if err := ProcessDoor43MetadataForRepoLatestDMs(ctx, repo); err != nil {
 		log.Error("ProcessDoor43MetadataForRepoLatestDMs %s Error: %v", repo.FullName(), err)
 	}
 
+	log.Debug(">>>>>> PROCESSING REPO Metadata: %s", repo.FullName())
 	if err := ProcessRepoMetadata(ctx, repo); err != nil {
 		log.Error("ProcessRepoMetadata %s Error: %v", repo.FullName(), err)
 	}
@@ -602,7 +605,7 @@ func GetTcOrTsDoor43Metadata(dm *repo_model.Door43Metadata, repo *repo_model.Rep
 		return err
 	}
 
-	log.Info("%s: manifest.json exists so might be a tC or tS repo", repo.FullName())
+	log.Info("%s/%s: manifest.json exists so might be a tC or tS repo", repo.FullName(), commit.ID)
 	var bookPath string
 	var contentFormat string
 	var count int
