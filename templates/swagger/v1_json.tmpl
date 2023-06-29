@@ -16915,6 +16915,13 @@
       "description": "CatalogEntry represents a repository's metadata of a tag or default branch as an entry of the catalog",
       "type": "object",
       "properties": {
+        "books": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "x-go-name": "Books"
+        },
         "branch_or_tag_name": {
           "type": "string",
           "x-go-name": "Ref"
