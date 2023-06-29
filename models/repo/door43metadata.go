@@ -297,7 +297,7 @@ func updateDoor43Metadata(e db.Engine, dm *Door43Metadata) error {
 }
 
 // GetDoor43MetadataByID returns door43 metadata with given ID.
-func GetDoor43MetadataByID(id int64) (*Door43Metadata, error) {
+func GetDoor43MetadataByID(id, repoID int64) (*Door43Metadata, error) {
 	dm := new(Door43Metadata)
 	has, err := db.GetEngine(db.DefaultContext).
 		ID(id).
@@ -305,7 +305,7 @@ func GetDoor43MetadataByID(id int64) (*Door43Metadata, error) {
 	if err != nil {
 		return nil, err
 	} else if !has {
-		return nil, ErrDoor43MetadataNotExist{id, 0, ""}
+		return nil, ErrDoor43MetadataNotExist{id, repoID, ""}
 	}
 	return dm, nil
 }
@@ -504,9 +504,9 @@ func SortDoorMetadatas(dms []*Door43Metadata) {
 }
 
 // DeleteDoor43MetadataByID deletes a metadata from database by given ID.
-func DeleteDoor43MetadataByID(id int64) error {
-	dm, err := GetDoor43MetadataByID(id)
-	if err != nil {
+func DeleteDoor43MetadataByID(id, repoID int64) error {
+	dm, err := GetDoor43MetadataByID(id, repoID)
+	if err != nil || dm.RepoID != repoID {
 		return err
 	}
 	return DeleteDoor43Metadata(dm)
