@@ -4,86 +4,76 @@
 package repo
 
 import (
+	"context"
+
+	"code.gitea.io/gitea/models/db"
 	"code.gitea.io/gitea/models/door43metadata"
-	"code.gitea.io/gitea/modules/log"
+	"code.gitea.io/gitea/modules/dcs"
 )
 
-// GetLatestProdDm gets the latest prod Door43Metadata
-func (repo *Repository) GetLatestProdDm() *Door43Metadata {
-	if repo.LatestProdDmID > 0 && repo.LatestProdDm == nil {
-		dm, err := GetDoor43MetadataByID(repo.LatestProdDmID, repo.ID)
+// LoadLatestDMs loads the latest DMs
+func (repo *Repository) LoadLatestDMs(ctx context.Context) error {
+	if repo.LatestProdDM == nil {
+		dm := &Door43Metadata{RepoID: repo.ID, Stage: door43metadata.StageProd, IsLatestForStage: true}
+		has, err := db.GetEngine(ctx).Desc("release_date_unix").Get(dm)
 		if err != nil {
-			if IsErrDoor43MetadataNotExist(err) {
-				log.Warn("Unable to load LatestProdDm for %s: does not exist [%d]", repo.FullName(), repo.LatestProdDmID)
-			} else {
-				log.Error("GetDoor43MetadataByID Error [%s, %d]: %#v", repo.FullName(), repo.LatestProdDmID, err)
-			}
-			return nil
+			return err
 		}
-		if dm.RepoID == repo.ID && dm.Stage == door43metadata.StageProd {
-			dm.Repo = repo
-			repo.LatestProdDm = dm
+		if has {
+			repo.LatestProdDM = dm
 		}
 	}
-	return repo.LatestProdDm
-}
 
-// GetLatestPreprodDm gets the latest preprod Door43Metadata
-func (repo *Repository) GetLatestPreprodDm() *Door43Metadata {
-	if repo.LatestPreprodDmID > 0 && repo.LatestPreprodDm == nil {
-		dm, err := GetDoor43MetadataByID(repo.LatestPreprodDmID, repo.ID)
+	if repo.LatestPreprodDM == nil {
+		dm := &Door43Metadata{RepoID: repo.ID, Stage: door43metadata.StagePreProd, IsLatestForStage: true}
+		has, err := db.GetEngine(ctx).Desc("release_date_unix").Get(dm)
 		if err != nil {
-			if IsErrDoor43MetadataNotExist(err) {
-				log.Warn("Unable to load LatestPreprodDm for %s: does not exist [%d]", repo.FullName(), repo.LatestPreprodDmID)
-			} else {
-				log.Error("GetDoor43MetadataByID Error [%s, %d]: %#v", repo.FullName(), repo.LatestPreprodDmID, err)
-			}
-			return nil
+			return err
 		}
-		if dm.RepoID == repo.ID && dm.Stage == door43metadata.StagePreProd {
-			dm.Repo = repo
-			repo.LatestPreprodDm = dm
+		if has {
+			repo.LatestPreprodDM = dm
 		}
 	}
-	return repo.LatestPreprodDm
-}
 
-// GetDefaultBranchDm gets the default branch Door43Metadata
-func (repo *Repository) GetDefaultBranchDm() *Door43Metadata {
-	if repo.DefaultBranchDmID > 0 && repo.DefaultBranchDm == nil {
-		dm, err := GetDoor43MetadataByID(repo.DefaultBranchDmID, repo.ID)
+	if repo.DefaultBranchDM == nil {
+		dm := &Door43Metadata{RepoID: repo.ID, Stage: door43metadata.StageLatest, IsLatestForStage: true}
+		has, err := db.GetEngine(ctx).Desc("release_date_unix").Get(dm)
 		if err != nil {
-			if IsErrDoor43MetadataNotExist(err) {
-				log.Warn("Unable to load DefaultBranchDm for %s: does not exist [id: %d]", repo.FullName(), repo.DefaultBranchDmID)
-			} else {
-				log.Error("GetDoor43MetadataByID Error [%s, %d]: %#v", repo.FullName(), repo.LatestProdDmID, err)
-			}
-			return nil
+			return err
 		}
-		if dm.RepoID == repo.ID && dm.Stage == door43metadata.StageLatest {
-			repo.DefaultBranchDm = dm
-			dm.Repo = repo
+		if has {
+			repo.DefaultBranchDM = dm
 		}
 	}
-	return repo.DefaultBranchDm
-}
 
-// GetRepoDm gets the Door43Metadata that a repo was updated with
-func (repo *Repository) GetRepoDm() *Door43Metadata {
-	if repo.RepoDmID > 0 && repo.RepoDm == nil {
-		dm, err := GetDoor43MetadataByID(repo.RepoDmID, repo.ID)
-		if err != nil {
-			if IsErrDoor43MetadataNotExist(err) {
-				log.Warn("Unable to load RepoDm for %s: does not exist [id: %d]", repo.FullName(), repo.RepoDmID)
-			} else {
-				log.Error("GetDoor43MetadataByID Error [%s, %d]: %#v", repo.FullName(), repo.RepoDmID, err)
-			}
-			return nil
+	if repo.RepoDM == nil {
+		if repo.DefaultBranchDM != nil {
+			repo.RepoDM = repo.DefaultBranchDM
+		} else if repo.LatestProdDM != nil {
+			repo.RepoDM = repo.LatestProdDM
+		} else if repo.LatestPreprodDM != nil {
+			repo.RepoDM = repo.LatestPreprodDM
+		} else {
+			repo.RepoDM, _ = GetMostRecentDoor43MetadataByStage(ctx, repo.ID, door43metadata.StageBranch)
 		}
-		if dm.RepoID == repo.ID {
-			dm.Repo = repo
-			repo.RepoDm = dm
+		if repo.RepoDM == nil {
+			title := repo.Name
+			subject := dcs.GetSubjectFromRepoName(repo.Name)
+			lang := dcs.GetLanguageFromRepoName(repo.Name)
+			langDir := dcs.GetLanguageDirection(lang)
+			langTitle := dcs.GetLanguageTitle(lang)
+			langIsGL := dcs.LanguageIsGL(lang)
+			repo.RepoDM = &Door43Metadata{
+				RepoID:            repo.ID,
+				Title:             title,
+				Subject:           subject,
+				Language:          lang,
+				LanguageDirection: langDir,
+				LanguageTitle:     langTitle,
+				LanguageIsGL:      langIsGL,
+			}
 		}
 	}
-	return repo.RepoDm
+
+	return nil
 }

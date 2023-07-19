@@ -610,7 +610,7 @@ func GetCatalogEntry(ctx *context.APIContext) {
 		}
 		return
 	}
-	if err := dm.LoadAttributes(); err != nil {
+	if err := dm.LoadAttributes(ctx); err != nil {
 		ctx.Error(http.StatusInternalServerError, "LoadAttributes", err)
 		return
 	}
@@ -776,7 +776,7 @@ func searchCatalog(ctx *context.APIContext) {
 		if ctx.Repo != nil && ctx.Repo.Repository != nil {
 			dm.Repo = ctx.Repo.Repository
 		} else {
-			err := dm.LoadAttributes()
+			err := dm.LoadAttributes(ctx)
 			if err != nil {
 				ctx.Error(http.StatusInternalServerError, "LoadAttributes", err)
 				return

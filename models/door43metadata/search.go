@@ -161,12 +161,9 @@ func GetStageCond(stage Stage) builder.Cond {
 // GetHistoryCond gets the conditions if IncludeHistory is false
 func GetHistoryCond(includeHistory bool) builder.Cond {
 	if includeHistory {
-		return nil
+		return builder.Eq{"`door43_metadata`.include_in_catalog": true}
 	}
-	return builder.Expr(
-		"`door43_metadata`.id = `repository`.latest_prod_dm_id OR " +
-			"`door43_metadata`.id = `repository`.latest_preprod_dm_id OR " +
-			"`door43_metadata`.id = `repository`.default_branch_dm_id")
+	return builder.Eq{"`door43_metadata`.is_latest_for_stage": true}
 }
 
 // GetSubjectCond gets the subject condition

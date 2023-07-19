@@ -14,13 +14,11 @@
 					<div class="gt-mx-2">/</div>
 					<a href="{{$.RepoLink}}">{{.Name}}</a>
 					<!--- DCS Customizations -->
-					{{$prodDM := .GetLatestProdDm}}
-					{{if $prodDM}}
-						<span class="ui green label" title="Catalog: Production"><a href="{{.Link}}/releases/tag/{{$prodDM.Ref | PathEscapeSegments}}" rel="nofollow">{{$prodDM.Ref}}</a></span>
+					{{if .LatestProdDM}}
+						<span class="ui green label" title="Catalog: Production"><a href="{{.Link}}/releases/tag/{{.LatestProdDM.Ref | PathEscapeSegments}}" rel="nofollow">{{.LatestProdDM.Ref}}</a></span>
 					{{end}}
-					{{$preProdDM := .GetLatestPreprodDm}}
-					{{if $preProdDM}}
-						<span class="ui orange label" title="Catalog: Pre-Production"><a href="{{.Link}}/releases/tag/{{$preProdDM.Ref | PathEscapeSegments}}" rel="nofollow">{{$preProdDM.Ref}}</a></span>
+					{{if .LatestPreprodDM}}
+						<span class="ui orange label" title="Catalog: Pre-Production"><a href="{{.Link}}/releases/tag/{{.LatestPreprodDM.Ref | PathEscapeSegments}}" rel="nofollow">{{.LatestPreprodDM.Ref}}</a></span>
 					{{end}}
 					<!-- END DCS Customizations -->
 					<div class="labels gt-df gt-ac gt-fw">
@@ -59,14 +57,13 @@
 			{{if not (or .IsBeingCreated .IsBroken)}}
 				<div class="repo-buttons">
 					<!-- DCS Customizations -->
-					{{$prodDM := (.LatestProdDm)}}
-					{{if $prodDM}}
+					{{if .LatestProdDM}}
 					<div class="ui labeled button" tabindex="0">
-						<a type="submit" class="ui compact basic button" href="{{.Link}}/releases/tag/{{$prodDM.Ref | PathEscapeSegments}}">
+						<a type="submit" class="ui compact basic button" href="{{.Link}}/releases/tag/{{.LatestProdDM.Ref | PathEscapeSegments}}">
 							<i class="icon fa-file-text"></i>{{$.locale.Tr "repo.metadata.catalog"}}
 						</a>
-						<a class="ui basic label" href="{{.Link}}/releases/tag/{{$prodDM.Ref | PathEscapeSegments}}">
-							{{$prodDM.Ref}}
+						<a class="ui basic label" href="{{.Link}}/releases/tag/{{.LatestProdDM.Ref | PathEscapeSegments}}">
+							{{.LatestProdDM.Ref}}
 						</a>
 					</div>
 					{{end}}

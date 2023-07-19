@@ -342,9 +342,7 @@ func renderFile(ctx *context.Context, entry *git.TreeEntry, treeLink, rawLink st
 	/*** DCS Customizations ***/
 	fileExt := filepath.Ext(blob.Name())
 	ctx.Data["FileExt"] = fileExt
-	if fileExt != ".md" || blob.Name() == "README.md" || blob.Name() == "LICENSE.md" {
-		ctx.Data["IgnoreLanguageDirection"] = true
-	}
+	ctx.Data["IgnoreLanguageDirection"] = fileExt != ".md" || blob.Name() == "README.md" || blob.Name() == "LICENSE.md"
 	/*** END DCS Customizations ***/
 	ctx.Data["RawFileLink"] = rawLink + "/" + util.PathEscapeSegments(ctx.Repo.TreePath)
 

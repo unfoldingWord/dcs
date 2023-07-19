@@ -21,17 +21,19 @@
 				</div>
 			{{end}}
 			<!-- DCS Customizations -->
-			{{if .Repository.Language}}
-				<div class="item">
-					<a class="ui" href="{{AppSubUrl}}/explore/repos?q=lang:{{.Repository.Language}}" title="Is a{{if .Repository.LanguageIsGL}} Gateway{{else}}n Other{{end}} Language"><i class="fa fa-language"></i> <span style="font-weight: bold"><span data-language="{{.Repository.Language}}" data-language-direction="{{.Repository.LanguageDirection}}">{{.Repository.LanguageTitle}}</span> ({{.Repository.Language}}){{if .Repository.LanguageIsGL}}*{{end}}</span></a>
-				</div>
-			{{end}}
-			{{if .Repository.MetadataType}}
-				{{$metadataTypeTitle := (GetMetadataTypeTitle .Repository.MetadataType)}}
-				{{$metadataTypeIcon := (GetMetadataTypeIcon .Repository.MetadataType)}}
-				<div class="item">
-					<a class="ui" href="{{AppSubUrl}}/explore/repos?q=metadata_type:{{.Repository.MetadataType}}" title="Metadata Type: {{$metadataTypeTitle}} v{{.Repository.MetadataVersion}}">{{svg "octicon-briefcase"}} <span style="font-weight: bold">{{.Repository.MetadataType}}{{.Repository.MetadataVersion}}</span> <img src="{{AssetUrlPrefix}}/img/dcs/{{$metadataTypeIcon}}" style="height:16px;vertical-align:middle"/></a>
-				</div>
+			{{if .Repository.RepoDM}}
+				{{if .Repository.RepoDM.Language}}
+					<div class="item">
+						<a class="ui" href="{{AppSubUrl}}/explore/repos?q=lang:{{.Repository.RepoDM.Language}}" title="Is a{{if .Repository.RepoDM.LanguageIsGL}} Gateway{{else}}n Other{{end}} Language"><i class="fa fa-language"></i> <span style="font-weight: bold"><span data-language="{{.Repository.RepoDM.Language}}" data-language-direction="{{.Repository.RepoDM.LanguageDirection}}">{{.Repository.RepoDM.LanguageTitle}}</span> ({{.Repository.RepoDM.Language}}){{if .Repository.RepoDM.LanguageIsGL}}*{{end}}</span></a>
+					</div>
+				{{end}}
+				{{if .Repository.RepoDM.MetadataType}}
+					{{$metadataTypeTitle := (GetMetadataTypeTitle .Repository.RepoDM.MetadataType)}}
+					{{$metadataTypeIcon := (GetMetadataTypeIcon .Repository.RepoDM.MetadataType)}}
+					<div class="item">
+						<a class="ui" href="{{AppSubUrl}}/explore/repos?q=metadata_type:{{.Repository.RepoDM.MetadataType}}" title="Metadata Type: {{$metadataTypeTitle}} v{{.Repository.RepoDM.MetadataVersion}}">{{svg "octicon-briefcase"}} <span style="font-weight: bold">{{.Repository.RepoDM.MetadataType}}{{.Repository.RepoDM.MetadataVersion}}</span> <img src="{{AssetUrlPrefix}}/img/dcs/{{$metadataTypeIcon}}" style="height:16px;vertical-align:middle"/></a>
+					</div>
+				{{end}}
 			{{end}}
 			<!-- END DCS Customizations -->
 		</div>
