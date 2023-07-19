@@ -102,7 +102,6 @@ func main() {
 		cmd.CmdDoctor,
 		cmd.CmdManager,
 		cmd.CmdEmbedded,
-		cmd.CmdDoor43MetadataGenerate,
 		cmd.CmdMigrateStorage,
 		cmd.CmdDumpRepository,
 		cmd.CmdRestoreRepository,

@@ -38,7 +38,7 @@ func ToIngredient(project map[string]interface{}) *api.Ingredient {
 
 // ToCatalogEntry converts a Door43Metadata to an api.CatalogEntry
 func ToCatalogEntry(ctx context.Context, dm *repo.Door43Metadata, perm access_model.Permission) *api.CatalogEntry {
-	if err := dm.GetRepo(); err != nil {
+	if err := dm.LoadRepo(); err != nil {
 		log.Error("ToCatalogEntry: dm.LoadAttributes() ERROR: %v", err)
 		return nil
 	}
@@ -88,11 +88,11 @@ func ToCatalogEntry(ctx context.Context, dm *repo.Door43Metadata, perm access_mo
 }
 
 // ToCatalogStage converts a Door43Metadata to an api.CatalogStage
-func ToCatalogStage(dm *repo.Door43Metadata) *api.CatalogStage {
+func ToCatalogStage(ctx context.Context, dm *repo.Door43Metadata) *api.CatalogStage {
 	if dm == nil {
 		return nil
 	}
-	_ = dm.LoadAttributes()
+	_ = dm.LoadAttributes(ctx)
 	catalogStage := &api.CatalogStage{
 		Ref:         dm.Ref,
 		Released:    dm.ReleaseDateUnix.AsTime(),
@@ -102,8 +102,8 @@ func ToCatalogStage(dm *repo.Door43Metadata) *api.CatalogStage {
 		GitTreesURL: dm.GetGitTreesURL(),
 		ContentsURL: dm.GetContentsURL(),
 	}
-	if dm.GetReleaseURL() != "" {
-		url := dm.GetReleaseURL()
+	url := dm.GetReleaseURL(ctx)
+	if url != "" {
 		catalogStage.ReleaseURL = &url
 	}
 	return catalogStage

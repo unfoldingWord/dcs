@@ -178,27 +178,10 @@ type Repository struct {
 	UpdatedUnix  timeutil.TimeStamp `xorm:"INDEX updated"`
 	ArchivedUnix timeutil.TimeStamp `xorm:"DEFAULT 0"`
 	/*** DCS Customizations ***/
-	MetadataType        string `xorm:"index"`
-	MetadataVersion     string `xorm:"index"`
-	Resource            string
-	Subject             string `xorm:"index"`
-	Title               string
-	Language            string `xorm:"index"`
-	LanguageTitle       string
-	LanguageDirection   string
-	LanguageIsGL        bool
-	ContentFormat       string
-	CheckingLevel       int
-	Ingredients         []*api.Ingredient `xorm:"JSON"`
-	LatestProdDmID      int64
-	LatestProdDm        *Door43Metadata `xorm:"-"`
-	LatestPreprodDmID   int64
-	LatestPreprodDm     *Door43Metadata `xorm:"-"`
-	DefaultBranchDmID   int64
-	DefaultBranchDm     *Door43Metadata `xorm:"-"`
-	RepoDmID            int64
-	RepoDm              *Door43Metadata `xorm:"-"`
-	MetadataUpdatedUnix timeutil.TimeStamp
+	LatestProdDM    *Door43Metadata `xorm:"-"`
+	LatestPreprodDM *Door43Metadata `xorm:"-"`
+	DefaultBranchDM *Door43Metadata `xorm:"-"`
+	RepoDM          *Door43Metadata `xorm:"-"`
 	/*** DCS Customizations ***/
 }
 
@@ -277,6 +260,13 @@ func (repo *Repository) LoadAttributes(ctx context.Context) error {
 			break
 		}
 	}
+
+	/*** DCS Customizations ***/
+	if err := repo.LoadLatestDMs(ctx); err != nil {
+		return err
+	}
+	/*** END DCS Customizations ***/
+
 	return nil
 }
 

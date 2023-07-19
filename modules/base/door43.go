@@ -412,6 +412,7 @@ func GetTcTsManifestFromBlob(blob *git.Blob) (*TcTsManifest, error) {
 		if t.Resource.Name == "" {
 			t.Resource.Name = strings.ToUpper(t.Resource.ID)
 		}
+
 		if t.Project.Name == "" {
 			t.Project.Name = strings.ToUpper(t.Project.ID)
 		}
@@ -428,7 +429,10 @@ func GetTcTsManifestFromBlob(blob *git.Blob) (*TcTsManifest, error) {
 		t.Title = t.Resource.Name
 	}
 	if strings.ToLower(t.Resource.ID) != "obs" && t.Project.Name != "" && !strings.Contains(strings.ToLower(t.Title), strings.ToLower(t.Project.Name)) {
-		t.Title += " - " + t.Project.Name
+		if t.Title != "" {
+			t.Title += " - "
+		}
+		t.Title += t.Project.Name
 	}
 
 	return t, nil

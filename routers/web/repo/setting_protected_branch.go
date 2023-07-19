@@ -79,7 +79,7 @@ func SetDefaultBranchPost(ctx *context.Context) {
 				return
 			}
 			/*** DCS Customizations ***/
-			if err := door43metadata_service.ProcessDoor43MetadataForRef(ctx, repo, branch); err != nil {
+			if err := door43metadata_service.ProcessDoor43MetadataForRepo(ctx, repo, branch); err != nil {
 				ctx.ServerError("ProcessDoor43MetadataForRef", err)
 				return
 			}

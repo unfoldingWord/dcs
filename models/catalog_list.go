@@ -84,7 +84,7 @@ func searchCatalogByCondition(ctx context.Context, opts *door43metadata.SearchCa
 	}
 
 	if loadAttributes {
-		if err = dms.LoadAttributes(); err != nil {
+		if err = dms.LoadAttributes(ctx); err != nil {
 			return nil, 0, fmt.Errorf("LoadAttributes: %v", err)
 		}
 	}

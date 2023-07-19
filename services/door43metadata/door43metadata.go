@@ -9,7 +9,6 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"reflect"
 	"regexp"
 	"strconv"
 	"strings"
@@ -33,92 +32,10 @@ import (
 	"code.gitea.io/gitea/services/convert"
 
 	"github.com/google/uuid"
-	"github.com/mitchellh/mapstructure"
-	"xorm.io/xorm"
+	"xorm.io/builder"
 )
 
-// GenerateDoor43Metadata Generate door43 metadata for valid repos not in the door43_metadata table
-func GenerateDoor43Metadata(x *xorm.Engine) error {
-	sess := x.NewSession()
-	defer sess.Close()
-
-	ctx, commiter, err := db.TxContext(db.DefaultContext)
-	if err != nil {
-		return err
-	}
-	defer commiter.Close()
-
-	// Query to find repos that need processing.
-	repos, err := repo_model.GetReposForMetadata(ctx)
-	if err != nil {
-		return err
-	}
-	for _, repo := range repos {
-		if repo.MetadataUpdatedUnix.AddDuration(24*time.Hour) <= timeutil.TimeStampNow() {
-			err := ProcessDoor43MetadataForRepo(ctx, repo, true)
-			if err != nil {
-				log.Warn("ProcessDoor43MetadataForRepo Error: %v\n", err)
-			}
-		}
-	}
-	return nil
-}
-
-// ConvertGenericMapToRC020Manifest converts a generic map to a RC020Manifest object
-func ConvertGenericMapToRC020Manifest(manifest *map[string]interface{}) (*structs.RC020Manifest, error) {
-	var rc020manifest structs.RC020Manifest
-	err := mapstructure.Decode(*manifest, &rc020manifest)
-	if err != nil {
-		return nil, err
-	}
-
-	type Checking struct {
-		CheckingLevel string `mapstructure:"checking_level"`
-	}
-	type Language struct {
-		Identifier    string
-		LangDirection string `mapstructure:"lang_direction"`
-	}
-	type DublinCore struct {
-		Subject  string
-		Language Language
-		TestThis string `mapstructure:"test_this"`
-	}
-	type Project struct {
-		Identifier string
-	}
-	type Person struct {
-		Checking
-		DublinCore `mapstructure:"dublin_core"`
-		Projects   []Project
-	}
-
-	book1 := map[string]interface{}{"identifier": "gen"}
-	book2 := map[string]interface{}{"identifier": "exo"}
-	input := map[string]interface{}{
-		"dublin_core": map[string]interface{}{
-			"subject": "test",
-			"language": map[string]interface{}{
-				"identifier":     "en",
-				"lang_direction": "ltr",
-			},
-			"test_this": "ok",
-		},
-		"checking": map[string]interface{}{"checking_level": "1"},
-		"projects": []map[string]interface{}{book1, book2},
-	}
-
-	var result Person
-	err = mapstructure.Decode(input, &result)
-	if err != nil {
-		panic(err)
-	}
-
-	return &rc020manifest, err
-}
-
-// ProcessDoor43MetadataForRepoRefs processes the door43 metadata for all the refs of a repo
-func ProcessDoor43MetadataForRepoRefs(ctx context.Context, repo *repo_model.Repository) error {
+func processDoor43MetadataForRepoRefs(ctx context.Context, repo *repo_model.Repository) error {
 	refs, err := repo_model.GetRepoReleaseTagsForMetadata(ctx, repo.ID)
 	if err != nil {
 		log.Error("GetRepoReleaseTagsForMetadata Error %s: %v", repo.FullName(), err)
@@ -126,109 +43,53 @@ func ProcessDoor43MetadataForRepoRefs(ctx context.Context, repo *repo_model.Repo
 
 	gitRepo, err := git.OpenRepository(ctx, repo.RepoPath())
 	if err != nil {
-		log.Warn("git.OpenRepository Error %s: %v", repo.FullName(), err)
+		log.Error("git.OpenRepository Error %s: %v", repo.FullName(), err)
 	}
 	if gitRepo != nil {
 		defer gitRepo.Close()
 		branchNames, _, err := gitRepo.GetBranchNames(0, 0)
 		if err != nil {
-			log.Warn("git.GetBranchNames Error %s: %v", repo.FullName(), err)
+			log.Error("git.GetBranchNames Error %s: %v", repo.FullName(), err)
 		} else {
 			refs = append(refs, branchNames...)
 		}
 	}
 
 	for _, ref := range refs {
-		if err := ProcessDoor43MetadataForRef(ctx, repo, ref); err != nil {
-			log.Warn("Failed to process metadata for repo %s, ref %s: %v", repo.FullName(), ref, err)
+		if err := processDoor43MetadataForRepoRef(ctx, repo, ref); err != nil {
+			log.Info("Failed to process metadata for repo %s, ref %s: %v", repo.FullName(), ref, err)
 			if err = system.CreateRepositoryNotice("Failed to process metadata for repository (%s) ref (%s): %v", repo.FullName(), ref, err); err != nil {
-				log.Error("ProcessDoor43MetadataForRef: %v", err)
+				log.Error("processDoor43MetadataForRepoRef: %v", err)
 			}
 		}
 	}
 	return nil
 }
 
-// ProcessDoor43MetadataForRepoLatestDMs determines the latest DMs for a repo
-func ProcessDoor43MetadataForRepoLatestDMs(ctx context.Context, repo *repo_model.Repository) error {
-	cols := []string{}
-	repo.GetLatestProdDm()
-	repo.GetLatestPreprodDm()
-	repo.GetDefaultBranchDm()
-	repo.GetRepoDm()
-
-	// Handle Default Branch DM
-	if repo.DefaultBranchDm == nil || repo.DefaultBranchDm.Ref != repo.DefaultBranch {
-		dm, err := repo_model.GetDoor43MetadataByRepoIDAndRef(ctx, repo.ID, repo.DefaultBranch)
-		if err != nil && !repo_model.IsErrDoor43MetadataNotExist(err) {
-			return err
-		}
-		if dm != nil && dm.ID != repo.DefaultBranchDmID {
-			repo.DefaultBranchDmID = dm.ID
-			cols = append(cols, "default_branch_dm_id")
-			if dm.Stage != door43metadata.StageLatest {
-				dm.Stage = door43metadata.StageLatest
-				err = repo_model.UpdateDoor43MetadataCols(ctx, dm, "stage")
-				if err != nil {
-					return err
-				}
-			}
-			if repo.DefaultBranchDm != nil && repo.DefaultBranchDm.Stage != door43metadata.StageBranch {
-				repo.DefaultBranchDm.Stage = door43metadata.StageBranch
-				cols = append(cols, "default_branch_dm_id")
-				err = repo_model.UpdateDoor43MetadataCols(ctx, dm, "stage")
-				if err != nil {
-					return err
-				}
-				repo.DefaultBranchDm = dm
-			}
-		} else {
-			repo.DefaultBranchDmID = 0
-			repo.DefaultBranchDm = nil
-		}
+func handleLatestStageDM(ctx context.Context, repo *repo_model.Repository, stage door43metadata.Stage) error {
+	_, err := db.GetEngine(ctx).
+		Where(builder.Eq{"repo_id": repo.ID}).
+		And(builder.Eq{"stage": stage}).
+		SetExpr("is_latest_for_stage", false).
+		Update(&repo_model.Door43Metadata{})
+	if err != nil {
+		return err
 	}
 
-	// Handle Latest Prod DM
-	prodDm, err := repo_model.GetMostRecentDoor43MetadataByStage(ctx, repo.ID, door43metadata.StageProd)
+	var dm *repo_model.Door43Metadata
+	if stage == door43metadata.StageLatest {
+		dm, err = repo_model.GetDoor43MetadataByRepoIDAndRef(ctx, repo.ID, repo.DefaultBranch)
+	} else {
+		dm, err = repo_model.GetMostRecentDoor43MetadataByStage(ctx, repo.ID, stage)
+	}
 	if err != nil && !repo_model.IsErrDoor43MetadataNotExist(err) {
 		return err
 	}
-	if prodDm == nil {
-		if repo.LatestProdDmID != 0 {
-			repo.LatestProdDmID = 0
-			repo.LatestProdDm = nil
-			cols = append(cols, "latest_prod_dm_id")
-		}
-	} else if prodDm == nil || prodDm.ID != repo.LatestProdDmID {
-		repo.LatestProdDmID = prodDm.ID
-		repo.LatestProdDm = prodDm
-		cols = append(cols, "latest_prod_dm_id")
-	}
-
-	// Handle Latest Preprod DM
-	preprodDm, err := repo_model.GetMostRecentDoor43MetadataByStage(ctx, repo.ID, door43metadata.StagePreProd)
-	if err != nil && !repo_model.IsErrDoor43MetadataNotExist(err) {
-		return err
-	}
-	if repo.LatestProdDm != nil && preprodDm != nil && repo.LatestProdDm.ReleaseDateUnix >= preprodDm.ReleaseDateUnix {
-		preprodDm = nil
-	}
-	if preprodDm == nil {
-		if repo.LatestPreprodDmID != 0 {
-			repo.LatestPreprodDmID = 0
-			repo.LatestPreprodDm = nil
-			cols = append(cols, "latest_preprod_dm_id")
-		}
-	} else if repo.LatestPreprodDm == nil || preprodDm.ID != repo.LatestPreprodDm.RepoID {
-		repo.LatestPreprodDmID = preprodDm.ID
-		repo.LatestPreprodDm = preprodDm
-		cols = append(cols, "latest_preprod_dm_id")
-	}
-
-	if len(cols) > 0 {
-		repo.MetadataUpdatedUnix = timeutil.TimeStampNow()
-		cols = append(cols, "metadata_updated_unix")
-		err = repo_model.UpdateRepositoryCols(ctx, repo, cols...)
+	if dm != nil {
+		dm.IncludeInCatalog = true
+		dm.IsLatestForStage = true
+		dm.Stage = stage
+		err = repo_model.UpdateDoor43Metadata(ctx, dm)
 		if err != nil {
 			return err
 		}
@@ -237,132 +98,68 @@ func ProcessDoor43MetadataForRepoLatestDMs(ctx context.Context, repo *repo_model
 	return nil
 }
 
-// ProcessRepoMetadata process the metadata for a repo itself, either DefaultBranchDM or another branch
-func ProcessRepoMetadata(ctx context.Context, repo *repo_model.Repository) error {
-	cols := []string{}
-	if repo.GetRepoDm() == nil || (repo.GetDefaultBranchDm() != nil && repo.RepoDmID != repo.DefaultBranchDmID) {
-		repo.RepoDm = repo.GetDefaultBranchDm()
-		if repo.RepoDm == nil {
-			if repo.RepoDmID == 0 || repo.Subject == "" {
-				dm, err := repo_model.GetMostRecentDoor43MetadataByStage(ctx, repo.ID, door43metadata.StageBranch)
-				if err != nil && !repo_model.IsErrDoor43MetadataNotExist(err) {
-					return err
-				}
-				repo.RepoDm = dm
-			}
-		}
-		if repo.RepoDm == nil {
-			return nil
-		}
-		repo.RepoDmID = repo.RepoDm.ID
-		cols = append(cols, "repo_dm_id")
+// processDoor43MetadataForRepoLatestDMs determines the latest DMs for a repo
+func processDoor43MetadataForRepoLatestDMs(ctx context.Context, repo *repo_model.Repository) error {
+	// Handle Stage Latest
+	err := handleLatestStageDM(ctx, repo, door43metadata.StageLatest)
+	if err != nil {
+		log.Error("handleLatestStageDM for default branch [%s, %s]: %v", repo.FullName(), repo.DefaultBranch, err)
+		return err
 	}
 
-	dm := repo.RepoDm
-	if repo.Subject != dm.Subject {
-		repo.Subject = dm.Subject
-		cols = append(cols, "subject")
-	}
-	if repo.Resource != dm.Resource {
-		repo.Resource = dm.Resource
-		cols = append(cols, "resource")
-	}
-	if repo.Title != dm.Title {
-		repo.Title = dm.Title
-		cols = append(cols, "title")
-	}
-	if repo.MetadataType != dm.MetadataType {
-		repo.MetadataType = dm.MetadataType
-		cols = append(cols, "metadata_type")
-	}
-	if repo.MetadataVersion != dm.MetadataVersion {
-		repo.MetadataVersion = dm.MetadataVersion
-		cols = append(cols, "metadata_version")
-	}
-	if repo.Language != dm.Language {
-		repo.Language = dm.Language
-		cols = append(cols, "language")
-	}
-	if repo.LanguageTitle != dm.LanguageTitle {
-		repo.LanguageTitle = dm.LanguageTitle
-		cols = append(cols, "language_title")
-	}
-	if repo.LanguageDirection != dm.LanguageDirection {
-		repo.LanguageDirection = dm.LanguageDirection
-		cols = append(cols, "language_direction")
-	}
-	if repo.LanguageIsGL != dm.LanguageIsGL {
-		repo.LanguageIsGL = dm.LanguageIsGL
-		cols = append(cols, "language_is_gl")
-	}
-	if repo.ContentFormat != dm.ContentFormat {
-		repo.ContentFormat = dm.ContentFormat
-		cols = append(cols, "content_format")
-	}
-	if repo.CheckingLevel != dm.CheckingLevel {
-		repo.CheckingLevel = dm.CheckingLevel
-		cols = append(cols, "checking_level")
-	}
-	if !reflect.DeepEqual(repo.Ingredients, dm.Ingredients) {
-		repo.Ingredients = dm.Ingredients
-		cols = append(cols, "ingredients")
+	// Handle Stage Prod
+	err = handleLatestStageDM(ctx, repo, door43metadata.StageProd)
+	if err != nil {
+		log.Error("handleLatestStageDM for prod [%s]: %v", repo.FullName(), err)
+		return err
 	}
 
-	if len(cols) > 0 {
-		if err := repo_model.UpdateRepositoryCols(ctx, repo, cols...); err != nil {
-			return err
-		}
+	// Handle Stage Preprod
+	err = handleLatestStageDM(ctx, repo, door43metadata.StagePreProd)
+	if err != nil {
+		log.Error("handleLatestStageDM for preprod [%s]: %v", repo.FullName(), err)
+		return err
 	}
+
 	return nil
 }
 
 // ProcessDoor43MetadataForRepo handles the metadata for a given repo for all its releases
-func ProcessDoor43MetadataForRepo(ctx context.Context, repo *repo_model.Repository, processRefs bool) error {
-	if repo == nil {
+func ProcessDoor43MetadataForRepo(ctx context.Context, repo *repo_model.Repository, ref string) error {
+	if ctx == nil || repo == nil {
 		return fmt.Errorf("no repository provided")
 	}
 
 	if repo.IsArchived || repo.IsPrivate {
-		repo.LatestProdDmID = 0
-		repo.LatestPreprodDmID = 0
-		repo.DefaultBranchDmID = 0
-		repo.MetadataUpdatedUnix = timeutil.TimeStampNow()
-		err := repo_model.UpdateRepositoryCols(ctx, repo, "latest_prod_dm_id", "latest_preprod_dm_id", "default_branch_dm_id")
-		if err != nil {
-			log.Error("UpdateRepositoryCols: %v", err)
-		}
-		_, err = repo_model.DeleteAllDoor43MetadatasByRepoID(ctx, repo.ID)
+		_, err := repo_model.DeleteAllDoor43MetadatasByRepoID(ctx, repo.ID)
 		if err != nil {
 			log.Error("DeleteAllDoor43MetadatasByRepoID: %v", err)
 		}
 		return err // No need to process any thing else below
 	}
 
-	log.Debug(">>>>>> PROCESSING REFS: %s", repo.FullName())
-	if processRefs {
-		if err := ProcessDoor43MetadataForRepoRefs(ctx, repo); err != nil {
+	if ref == "" {
+		log.Debug(">>>>>> PROCESSING REFS: %s", repo.FullName())
+		if err := processDoor43MetadataForRepoRefs(ctx, repo); err != nil {
 			// log error but keep on going
-			log.Error("ProcessDoor43MetadataForRepoRefs %s Error: %v", repo.FullName(), err)
+			log.Error("processDoor43MetadataForRepoRefs %s Error: %v", repo.FullName(), err)
+		}
+	} else {
+		if err := processDoor43MetadataForRepoRef(ctx, repo, ref); err != nil {
+			// log error but keep on going
+			log.Error("processDoor43MetadataForRepoRefs %s Error: %v", repo.FullName(), err)
 		}
 	}
 
-	log.Debug(">>>>>> PROCESSING LATEST DMs: %s", repo.FullName())
-	if err := ProcessDoor43MetadataForRepoLatestDMs(ctx, repo); err != nil {
-		log.Error("ProcessDoor43MetadataForRepoLatestDMs %s Error: %v", repo.FullName(), err)
-	}
-
-	log.Debug(">>>>>> PROCESSING REPO Metadata: %s", repo.FullName())
-	if err := ProcessRepoMetadata(ctx, repo); err != nil {
-		log.Error("ProcessRepoMetadata %s Error: %v", repo.FullName(), err)
-	}
-
-	return nil
+	return processDoor43MetadataForRepoLatestDMs(ctx, repo)
 }
 
 func GetBookAlignmentCount(bookPath string, commit *git.Commit) (int, error) {
 	blob, err := commit.GetBlobByPath(bookPath)
 	if err != nil {
-		log.Warn("GetBlobByPath(%s) Error: %v\n", bookPath, err)
+		if !git.IsErrNotExist(err) {
+			log.Error("GetBlobByPath(%s) Error: %v\n", bookPath, err)
+		}
 		return 0, err
 	}
 	dataRc, err := blob.DataAsync()
@@ -591,8 +388,8 @@ func GetRCDoor43Metadata(dm *repo_model.Door43Metadata, repo *repo_model.Reposit
 		return err
 	}
 	if validationResult != nil {
-		log.Warn("%s: manifest.yaml is not valid. see errors:", repo.FullName())
-		log.Warn(base.ConvertValidationErrorToString(validationResult))
+		log.Info("%s: manifest.yaml is not valid. see errors:", repo.FullName())
+		log.Info(base.ConvertValidationErrorToString(validationResult))
 		return fmt.Errorf("manifest.yaml is not valid")
 	}
 	log.Info("%s: manifest.yaml is valid.", repo.FullName())
@@ -682,8 +479,8 @@ func GetSBDoor43Metadata(dm *repo_model.Door43Metadata, repo *repo_model.Reposit
 	// 	return nil, err
 	// }
 	// if validationResult != nil {
-	// 	log.Warn("%s: metadata.json's 'data' is not valid. see errors:", repo.FullName())
-	// 	log.Warn(base.ConvertValidationErrorToString(validationResult))
+	// 	log.Info("%s: metadata.json's 'data' is not valid. see errors:", repo.FullName())
+	// 	log.Info(base.ConvertValidationErrorToString(validationResult))
 	// 	return nil, fmt.Errorf("metadata.json's 'data' is not valid")
 	// }
 	// log.Info("%s: metadata.json's 'data' is valid.", repo.FullName())
@@ -691,8 +488,7 @@ func GetSBDoor43Metadata(dm *repo_model.Door43Metadata, repo *repo_model.Reposit
 	return GetNewDoor43MetadataFromSBData(dm, sbData, repo, commit)
 }
 
-// ProcessDoor43MetadataForRef handles the metadata for a given repo by release or branch (ref) based on if the container is a valid RC or not
-func ProcessDoor43MetadataForRef(ctx context.Context, repo *repo_model.Repository, ref string) (err error) {
+func processDoor43MetadataForRepoRef(ctx context.Context, repo *repo_model.Repository, ref string) (err error) {
 	if repo == nil {
 		return fmt.Errorf("no repository provided")
 	}
@@ -700,7 +496,7 @@ func ProcessDoor43MetadataForRef(ctx context.Context, repo *repo_model.Repositor
 		return fmt.Errorf("no ref profided")
 	}
 
-	err = repo.LoadAttributes(ctx)
+	err = repo.LoadLatestDMs(ctx)
 	if err != nil {
 		return err
 	}
@@ -710,19 +506,7 @@ func ProcessDoor43MetadataForRef(ctx context.Context, repo *repo_model.Repositor
 	if err != nil && !repo_model.IsErrDoor43MetadataNotExist(err) {
 		return err
 	}
-	if dm != nil {
-		defer func() {
-			if err != nil {
-				// There was a problem updating the branch metadata, so we want to invalidated it by setting
-				// default_branch_dm_id to 0 if it is this dm.
-				if dm != nil && repo.DefaultBranchDmID == dm.ID {
-					repo.DefaultBranchDm = nil
-					repo.DefaultBranchDmID = 0
-					_ = repo_model.UpdateRepositoryCols(ctx, repo, "default_branch_dm_id")
-				}
-			}
-		}()
-	} else {
+	if dm == nil {
 		dm = &repo_model.Door43Metadata{
 			RepoID: repo.ID,
 			Ref:    ref,
@@ -748,6 +532,7 @@ func ProcessDoor43MetadataForRef(ctx context.Context, repo *repo_model.Repositor
 		return err
 	}
 	if release != nil {
+		// We don't support releases that are just tags or are drafts
 		if release.IsTag || release.IsDraft {
 			return fmt.Errorf("ref for repo %s [%d] must be a branch or a (pre-)release: %s", repo.FullName(), repo.ID, ref)
 		}
@@ -806,10 +591,10 @@ func ProcessDoor43MetadataForRef(ctx context.Context, repo *repo_model.Repositor
 		err = GetRCDoor43Metadata(dm, repo, commit)
 		if err != nil {
 			if !git.IsErrNotExist(err) {
-				log.Error("ProcessDoor43MetadataForRef: ERROR! Unable to populate DM for %s/%s from RC manifest.yaml: %v\n", repo.FullName(), ref, err)
+				log.Error("processDoor43MetadataForRef: ERROR! Unable to populate DM for %s/%s from RC manifest.yaml: %v\n", repo.FullName(), ref, err)
 				return err
 			}
-			log.Info("ProcessDoor43MetadataForRef: %s/%s is not a SB, TC, TS nor RC repo. Not adding to door43_metadata\n", repo.FullName(), ref)
+			log.Info("processDoor43MetadataForRef: %s/%s is not a SB, TC, TS nor RC repo. Not adding to door43_metadata\n", repo.FullName(), ref)
 			return nil // nothing to process, not a SB, TC, TS nor RC repo
 		}
 	}
@@ -820,33 +605,49 @@ func ProcessDoor43MetadataForRef(ctx context.Context, repo *repo_model.Repositor
 	dm.ReleaseDateUnix = releaseDateUnix
 	dm.Stage = stage
 
-	if dm.ID > 0 && dm.Stage >= door43metadata.StageLatest {
-		defer func() {
-			if err != nil {
-				// There was a problem updating the branch metadata, so we want to invalidated it by deleting it.
-				_ = repo_model.DeleteDoor43Metadata(dm)
-				if dm.Stage == door43metadata.StageLatest {
-					repo.DefaultBranchDm = nil
-					repo.DefaultBranchDmID = 0
-					_ = repo_model.UpdateRepositoryCols(ctx, repo, "default_branch_dm_id")
-				}
-			}
-		}()
-	}
-
 	if dm.ID > 0 {
-		err = repo_model.UpdateDoor43Metadata(dm)
+		err = repo_model.UpdateDoor43Metadata(ctx, dm)
 		if err != nil {
 			return err
 		}
 	} else {
-		err = repo_model.InsertDoor43Metadata(dm)
+		err = repo_model.InsertDoor43Metadata(ctx, dm)
 		if err != nil {
 			return err
 		}
 	}
 
 	return nil
+}
+
+// UpdateDoor43Metadata generates door43_metadata table entries for valid repos/releases that don't have them
+func UpdateDoor43Metadata(ctx context.Context) error {
+	log.Trace("Doing: UpdateDoor43Metadata")
+
+	repos, err := repo_model.GetReposForMetadata(ctx)
+	if err != nil {
+		log.Error("GetReposForMetadata: %v", err)
+	}
+
+	for _, repo := range repos {
+		if err := ProcessDoor43MetadataForRepo(ctx, repo, ""); err != nil {
+			log.Info("Failed to process metadata for repo (%v): %v", repo, err)
+			if err = system.CreateRepositoryNotice("Failed to process metadata for repository (%s): %v", repo.FullName(), err); err != nil {
+				log.Error("ProcessDoor43MetadataForRepo: %v", err)
+			}
+		}
+	}
+	log.Trace("Finished: UpdateDoor43Metadata")
+	return nil
+}
+
+func DeleteDoor43MetadataByRepoRef(ctx context.Context, repo *repo_model.Repository, ref string) error {
+	err := repo_model.DeleteDoor43MetadataByRepoRef(ctx, repo, ref)
+	if err != nil {
+		return err
+	}
+
+	return processDoor43MetadataForRepoLatestDMs(ctx, repo)
 }
 
 func UnpackJSONAttachments(ctx context.Context, release *repo_model.Release) {
@@ -858,7 +659,7 @@ func UnpackJSONAttachments(ctx context.Context, release *repo_model.Release) {
 		if jsonFileNameSuffix.MatchString(attachment.Name) {
 			remoteAttachments, err := GetAttachmentsFromJSON(attachment)
 			if err != nil {
-				log.Warn("GetAttachmentsFromJSON Error: %v", err)
+				log.Error("GetAttachmentsFromJSON Error: %v", err)
 				continue
 			}
 			for _, remoteAttachment := range remoteAttachments {
@@ -876,7 +677,7 @@ func UnpackJSONAttachments(ctx context.Context, release *repo_model.Release) {
 						}
 						a.BrowserDownloadURL = remoteAttachment.BrowserDownloadURL
 						if err := repo_model.UpdateAttachment(ctx, a); err != nil {
-							log.Warn("UpdateAttachment [%d]: %v", a.ID, err)
+							log.Error("UpdateAttachment [%d]: %v", a.ID, err)
 							continue
 						}
 						foundExisting = true
@@ -889,7 +690,7 @@ func UnpackJSONAttachments(ctx context.Context, release *repo_model.Release) {
 				// No existing attachment was found with the same name, so we insert a new one
 				remoteAttachment.UUID = uuid.New().String()
 				if _, err = db.GetEngine(db.DefaultContext).Insert(remoteAttachment); err != nil {
-					log.Warn("insert attachment [%d]: %v", remoteAttachment.ID, err)
+					log.Error("insert attachment [%d]: %v", remoteAttachment.ID, err)
 					continue
 				}
 			}
