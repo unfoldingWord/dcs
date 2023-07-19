@@ -314,7 +314,7 @@ func DeleteProtectedBranchRulePost(ctx *context.Context) {
 	ruleID := ctx.ParamsInt64("id")
 	if ruleID <= 0 {
 		ctx.Flash.Error(ctx.Tr("repo.settings.remove_protected_branch_failed", fmt.Sprintf("%d", ruleID)))
-		ctx.JSON(http.StatusOK, map[string]interface{}{
+		ctx.JSON(http.StatusOK, map[string]any{
 			"redirect": fmt.Sprintf("%s/settings/branches", ctx.Repo.RepoLink),
 		})
 		return
@@ -323,7 +323,7 @@ func DeleteProtectedBranchRulePost(ctx *context.Context) {
 	rule, err := git_model.GetProtectedBranchRuleByID(ctx, ctx.Repo.Repository.ID, ruleID)
 	if err != nil {
 		ctx.Flash.Error(ctx.Tr("repo.settings.remove_protected_branch_failed", fmt.Sprintf("%d", ruleID)))
-		ctx.JSON(http.StatusOK, map[string]interface{}{
+		ctx.JSON(http.StatusOK, map[string]any{
 			"redirect": fmt.Sprintf("%s/settings/branches", ctx.Repo.RepoLink),
 		})
 		return
@@ -331,7 +331,7 @@ func DeleteProtectedBranchRulePost(ctx *context.Context) {
 
 	if rule == nil {
 		ctx.Flash.Error(ctx.Tr("repo.settings.remove_protected_branch_failed", fmt.Sprintf("%d", ruleID)))
-		ctx.JSON(http.StatusOK, map[string]interface{}{
+		ctx.JSON(http.StatusOK, map[string]any{
 			"redirect": fmt.Sprintf("%s/settings/branches", ctx.Repo.RepoLink),
 		})
 		return
@@ -339,14 +339,14 @@ func DeleteProtectedBranchRulePost(ctx *context.Context) {
 
 	if err := git_model.DeleteProtectedBranch(ctx, ctx.Repo.Repository.ID, ruleID); err != nil {
 		ctx.Flash.Error(ctx.Tr("repo.settings.remove_protected_branch_failed", rule.RuleName))
-		ctx.JSON(http.StatusOK, map[string]interface{}{
+		ctx.JSON(http.StatusOK, map[string]any{
 			"redirect": fmt.Sprintf("%s/settings/branches", ctx.Repo.RepoLink),
 		})
 		return
 	}
 
 	ctx.Flash.Success(ctx.Tr("repo.settings.remove_protected_branch_success", rule.RuleName))
-	ctx.JSON(http.StatusOK, map[string]interface{}{
+	ctx.JSON(http.StatusOK, map[string]any{
 		"redirect": fmt.Sprintf("%s/settings/branches", ctx.Repo.RepoLink),
 	})
 }

@@ -38,7 +38,7 @@ func ToIngredient(project map[string]interface{}) *api.Ingredient {
 
 // ToCatalogEntry converts a Door43Metadata to an api.CatalogEntry
 func ToCatalogEntry(ctx context.Context, dm *repo.Door43Metadata, perm access_model.Permission) *api.CatalogEntry {
-	if err := dm.LoadRepo(); err != nil {
+	if err := dm.LoadRepo(ctx); err != nil {
 		log.Error("ToCatalogEntry: dm.LoadAttributes() ERROR: %v", err)
 		return nil
 	}
@@ -50,7 +50,7 @@ func ToCatalogEntry(ctx context.Context, dm *repo.Door43Metadata, perm access_mo
 
 	var release *api.Release
 	if dm.Release != nil {
-		release = ToRelease(ctx, dm.Release)
+		release = ToAPIRelease(ctx, dm.Repo, dm.Release)
 	}
 
 	return &api.CatalogEntry{

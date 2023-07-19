@@ -585,12 +585,11 @@ func searchRepositoryByCondition(ctx context.Context, opts *SearchRepoOptions, c
 	if len(opts.OrderBy) == 0 {
 		opts.OrderBy = db.SearchOrderByAlphabetically
 	}
-
 	/*** DCS Customizations - Since we join with more tables we need to prefix the OrderBy with `repository` ***/
 	opts.OrderBy = "`repository`." + opts.OrderBy
 	/*** END DCS Customizaitons ***/
 
-	args := make([]interface{}, 0)
+	args := make([]any, 0)
 	if opts.PriorityOwnerID > 0 {
 		opts.OrderBy = db.SearchOrderBy(fmt.Sprintf("CASE WHEN owner_id = ? THEN 0 ELSE owner_id END, %s", opts.OrderBy))
 		args = append(args, opts.PriorityOwnerID)

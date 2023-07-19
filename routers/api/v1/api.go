@@ -1039,7 +1039,7 @@ func Routes(ctx gocontext.Context) *web.Route {
 						m.Group("/assets", func() {
 							m.Combo("").Get(repo.ListReleaseAttachments).
 								Post(reqToken(), reqRepoWriter(unit.TypeReleases), repo.CreateReleaseAttachment)
-							m.Combo("/{asset}").Get(repo.GetReleaseAttachment).
+							m.Combo("/{attachment_id}").Get(repo.GetReleaseAttachment).
 								Patch(reqToken(), reqRepoWriter(unit.TypeReleases), bind(api.EditAttachmentOptions{}), repo.EditReleaseAttachment).
 								Delete(reqToken(), reqRepoWriter(unit.TypeReleases), repo.DeleteReleaseAttachment)
 						})
@@ -1187,7 +1187,7 @@ func Routes(ctx gocontext.Context) *web.Route {
 								m.Combo("").
 									Get(repo.ListIssueCommentAttachments).
 									Post(reqToken(), mustNotBeArchived, repo.CreateIssueCommentAttachment)
-								m.Combo("/{asset}").
+								m.Combo("/{attachment_id}").
 									Get(repo.GetIssueCommentAttachment).
 									Patch(reqToken(), mustNotBeArchived, bind(api.EditAttachmentOptions{}), repo.EditIssueCommentAttachment).
 									Delete(reqToken(), mustNotBeArchived, repo.DeleteIssueCommentAttachment)
@@ -1239,7 +1239,7 @@ func Routes(ctx gocontext.Context) *web.Route {
 							m.Combo("").
 								Get(repo.ListIssueAttachments).
 								Post(reqToken(), mustNotBeArchived, repo.CreateIssueAttachment)
-							m.Combo("/{asset}").
+							m.Combo("/{attachment_id}").
 								Get(repo.GetIssueAttachment).
 								Patch(reqToken(), mustNotBeArchived, bind(api.EditAttachmentOptions{}), repo.EditIssueAttachment).
 								Delete(reqToken(), mustNotBeArchived, repo.DeleteIssueAttachment)

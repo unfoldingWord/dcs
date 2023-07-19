@@ -61,7 +61,7 @@ func Projects(ctx *context.Context) {
 		OwnerID:  ctx.ContextUser.ID,
 		Page:     page,
 		IsClosed: util.OptionalBoolOf(isShowClosed),
-		SortType: sortType,
+		OrderBy:  project_model.GetSearchOrderByBySortType(sortType),
 		Type:     projectType,
 	})
 	if err != nil {
@@ -218,7 +218,7 @@ func DeleteProject(ctx *context.Context) {
 		ctx.Flash.Success(ctx.Tr("repo.projects.deletion_success"))
 	}
 
-	ctx.JSON(http.StatusOK, map[string]interface{}{
+	ctx.JSON(http.StatusOK, map[string]any{
 		"redirect": ctx.ContextUser.HomeLink() + "/-/projects",
 	})
 }
@@ -436,9 +436,10 @@ func UpdateIssueProject(ctx *context.Context) {
 
 	projectID := ctx.FormInt64("id")
 	for _, issue := range issues {
-		oldProjectID := issue.Project.ID
-		if oldProjectID == projectID {
-			continue
+		if issue.Project != nil {
+			if issue.Project.ID == projectID {
+				continue
+			}
 		}
 
 		if err := issues_model.ChangeProjectAssign(issue, ctx.Doer, projectID); err != nil {
@@ -447,7 +448,7 @@ func UpdateIssueProject(ctx *context.Context) {
 		}
 	}
 
-	ctx.JSON(http.StatusOK, map[string]interface{}{
+	ctx.JSON(http.StatusOK, map[string]any{
 		"ok": true,
 	})
 }
@@ -495,7 +496,7 @@ func DeleteProjectBoard(ctx *context.Context) {
 		return
 	}
 
-	ctx.JSON(http.StatusOK, map[string]interface{}{
+	ctx.JSON(http.StatusOK, map[string]any{
 		"ok": true,
 	})
 }
@@ -524,7 +525,7 @@ func AddBoardToProjectPost(ctx *context.Context) {
 		return
 	}
 
-	ctx.JSON(http.StatusOK, map[string]interface{}{
+	ctx.JSON(http.StatusOK, map[string]any{
 		"ok": true,
 	})
 }
@@ -592,7 +593,7 @@ func EditProjectBoard(ctx *context.Context) {
 		return
 	}
 
-	ctx.JSON(http.StatusOK, map[string]interface{}{
+	ctx.JSON(http.StatusOK, map[string]any{
 		"ok": true,
 	})
 }
@@ -609,7 +610,7 @@ func SetDefaultProjectBoard(ctx *context.Context) {
 		return
 	}
 
-	ctx.JSON(http.StatusOK, map[string]interface{}{
+	ctx.JSON(http.StatusOK, map[string]any{
 		"ok": true,
 	})
 }
@@ -626,7 +627,7 @@ func UnsetDefaultProjectBoard(ctx *context.Context) {
 		return
 	}
 
-	ctx.JSON(http.StatusOK, map[string]interface{}{
+	ctx.JSON(http.StatusOK, map[string]any{
 		"ok": true,
 	})
 }
@@ -728,7 +729,7 @@ func MoveIssues(ctx *context.Context) {
 		return
 	}
 
-	ctx.JSON(http.StatusOK, map[string]interface{}{
+	ctx.JSON(http.StatusOK, map[string]any{
 		"ok": true,
 	})
 }
