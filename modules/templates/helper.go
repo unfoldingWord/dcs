@@ -164,6 +164,7 @@ func NewFuncMap() template.FuncMap {
 		},
 		"GetMetadataTypeTitle": dcs.GetMetadataTypeTitle,
 		"GetMetadataTypeIcon":  dcs.GetMetadataTypeIcon,
+		"GetCsvCellDiff":       dcs.GetCsvCellDiff,
 		/*** END DCS Customizations ***/
 
 		// -----------------------------------------------------------------

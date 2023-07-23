@@ -32,9 +32,9 @@
 	 direction: rtl;
 	 text-align: right;
 }
- .data-table .modified span {
+ /* .data-table .modified span {
 	 display: inline-block;
-}
+} */
  .validation-message-badge {
 	 cursor: pointer;
 }
