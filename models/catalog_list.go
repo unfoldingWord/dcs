@@ -17,17 +17,13 @@ import (
 
 // SearchCatalog returns catalog repositories based on search options,
 // it returns results in given range and number of total results.
-func SearchCatalog(opts *door43metadata.SearchCatalogOptions) (repo.Door43MetadataList, int64, error) {
+func SearchCatalog(ctx context.Context, opts *door43metadata.SearchCatalogOptions) (repo.Door43MetadataList, int64, error) {
 	cond := door43metadata.SearchCatalogCondition(opts)
-	return SearchCatalogByCondition(opts, cond, true)
+	return SearchCatalogByCondition(ctx, opts, cond)
 }
 
 // SearchCatalogByCondition search repositories by condition
-func SearchCatalogByCondition(opts *door43metadata.SearchCatalogOptions, cond builder.Cond, loadAttributes bool) (repo.Door43MetadataList, int64, error) {
-	return searchCatalogByCondition(db.DefaultContext, opts, cond, loadAttributes)
-}
-
-func searchCatalogByCondition(ctx context.Context, opts *door43metadata.SearchCatalogOptions, cond builder.Cond, loadAttributes bool) (repo.Door43MetadataList, int64, error) {
+func SearchCatalogByCondition(ctx context.Context, opts *door43metadata.SearchCatalogOptions, cond builder.Cond) (repo.Door43MetadataList, int64, error) {
 	if opts.Page <= 0 {
 		opts.Page = 1
 	}
@@ -83,10 +79,8 @@ func searchCatalogByCondition(ctx context.Context, opts *door43metadata.SearchCa
 		return nil, 0, fmt.Errorf("FindAndCount: %v", err)
 	}
 
-	if loadAttributes {
-		if err = dms.LoadAttributes(ctx); err != nil {
-			return nil, 0, fmt.Errorf("LoadAttributes: %v", err)
-		}
+	if err = dms.LoadAttributes(ctx); err != nil {
+		return nil, 0, fmt.Errorf("LoadAttributes: %v", err)
 	}
 
 	return dms, count, nil
