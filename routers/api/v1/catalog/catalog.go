@@ -764,7 +764,7 @@ func searchCatalog(ctx *context.APIContext) {
 		opts.OrderBy = []door43metadata.CatalogOrderBy{door43metadata.CatalogOrderByLangCode, door43metadata.CatalogOrderBySubject, door43metadata.CatalogOrderByReleaseDateReverse}
 	}
 
-	dms, count, err := models.SearchCatalog(opts)
+	dms, count, err := models.SearchCatalog(ctx, opts)
 	if err != nil {
 		ctx.Error(http.StatusInternalServerError, "SearchCatalog", err)
 		return

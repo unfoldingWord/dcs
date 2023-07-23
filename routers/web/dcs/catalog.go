@@ -128,7 +128,7 @@ func RenderCatalogSearch(ctx *context.Context, opts *CatalogSearchOptions) {
 		}
 	}
 
-	dms, count, err = models.SearchCatalog(&door43metadata.SearchCatalogOptions{
+	dms, count, err = models.SearchCatalog(ctx, &door43metadata.SearchCatalogOptions{
 		ListOptions: db.ListOptions{
 			Page:     page,
 			PageSize: opts.PageSize,
