@@ -66,14 +66,14 @@ func processDoor43MetadataForRepoRefs(ctx context.Context, repo *repo_model.Repo
 	return nil
 }
 
-func handleLatestStageDM(ctx context.Context, repo *repo_model.Repository, stage door43metadata.Stage) error {
+func handleLatestStageDM(ctx context.Context, repo *repo_model.Repository, stage door43metadata.Stage) (*repo_model.Door43Metadata, error) {
 	_, err := db.GetEngine(ctx).
 		Where(builder.Eq{"repo_id": repo.ID}).
 		And(builder.Eq{"stage": stage}).
-		SetExpr("is_latest_for_stage", false).
-		Update(&repo_model.Door43Metadata{})
+		Cols("is_latest_for_stage").
+		Update(&repo_model.Door43Metadata{IsLatestForStage: false})
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	var dm *repo_model.Door43Metadata
@@ -83,15 +83,47 @@ func handleLatestStageDM(ctx context.Context, repo *repo_model.Repository, stage
 		dm, err = repo_model.GetMostRecentDoor43MetadataByStage(ctx, repo.ID, stage)
 	}
 	if err != nil && !repo_model.IsErrDoor43MetadataNotExist(err) {
-		return err
+		return nil, err
 	}
 	if dm != nil {
+		dm.Stage = stage
 		dm.IncludeInCatalog = true
 		dm.IsLatestForStage = true
-		dm.Stage = stage
-		err = repo_model.UpdateDoor43Metadata(ctx, dm)
+		err = repo_model.UpdateDoor43MetadataCols(ctx, dm, "stage", "include_in_catalog", "is_latest_for_stage")
 		if err != nil {
-			return err
+			return nil, err
+		}
+	}
+
+	return dm, nil
+}
+
+func handleRepoDM(ctx context.Context, repo *repo_model.Repository) error {
+	if repo.DefaultBranchDM != nil {
+		repo.RepoDM = repo.DefaultBranchDM
+	} else if repo.LatestProdDM != nil {
+		repo.RepoDM = repo.LatestProdDM
+	} else if repo.LatestPreprodDM != nil {
+		repo.RepoDM = repo.LatestPreprodDM
+	} else {
+		repo.RepoDM, _ = repo_model.GetMostRecentDoor43MetadataByStage(ctx, repo.ID, door43metadata.StageBranch)
+	}
+
+	if repo.RepoDM == nil || !repo.RepoDM.IsRepoMetadata {
+		_, err := db.GetEngine(ctx).
+			Where(builder.Eq{"repo_id": repo.ID}).
+			Cols("is_repo_metadata").
+			Update(&repo_model.Door43Metadata{IsRepoMetadata: false})
+		if err != nil {
+			log.Error("handleRepoDM: failed to update all Door43Metadatas [%s]: %v", repo.FullName(), err)
+		}
+	}
+
+	if repo.RepoDM != nil && !repo.RepoDM.IsRepoMetadata {
+		repo.RepoDM.IsRepoMetadata = true
+		err := repo_model.UpdateDoor43MetadataCols(ctx, repo.RepoDM, "is_repo_metadata")
+		if err != nil {
+			log.Error("handleRepoDM: failed to update Door43Metadata [%s, %d]: %v", repo.FullName(), repo.RepoDM.ID, err)
 		}
 	}
 
@@ -101,24 +133,29 @@ func handleLatestStageDM(ctx context.Context, repo *repo_model.Repository, stage
 // processDoor43MetadataForRepoLatestDMs determines the latest DMs for a repo
 func processDoor43MetadataForRepoLatestDMs(ctx context.Context, repo *repo_model.Repository) error {
 	// Handle Stage Latest
-	err := handleLatestStageDM(ctx, repo, door43metadata.StageLatest)
+	dm, err := handleLatestStageDM(ctx, repo, door43metadata.StageLatest)
 	if err != nil {
 		log.Error("handleLatestStageDM for default branch [%s, %s]: %v", repo.FullName(), repo.DefaultBranch, err)
-		return err
 	}
+	repo.DefaultBranchDM = dm
 
 	// Handle Stage Prod
-	err = handleLatestStageDM(ctx, repo, door43metadata.StageProd)
+	dm, err = handleLatestStageDM(ctx, repo, door43metadata.StageProd)
 	if err != nil {
 		log.Error("handleLatestStageDM for prod [%s]: %v", repo.FullName(), err)
-		return err
 	}
+	repo.LatestProdDM = dm
 
 	// Handle Stage Preprod
-	err = handleLatestStageDM(ctx, repo, door43metadata.StagePreProd)
+	dm, err = handleLatestStageDM(ctx, repo, door43metadata.StagePreProd)
 	if err != nil {
 		log.Error("handleLatestStageDM for preprod [%s]: %v", repo.FullName(), err)
-		return err
+	}
+	repo.LatestPreprodDM = dm
+
+	err = handleRepoDM(ctx, repo)
+	if err != nil {
+		log.Error("handleRepoDM [%s]: %v", repo.FullName(), err)
 	}
 
 	return nil
