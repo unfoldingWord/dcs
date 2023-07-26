@@ -47,16 +47,14 @@ func (repo *Repository) LoadLatestDMs(ctx context.Context) error {
 	}
 
 	if repo.RepoDM == nil {
-		if repo.DefaultBranchDM != nil {
-			repo.RepoDM = repo.DefaultBranchDM
-		} else if repo.LatestProdDM != nil {
-			repo.RepoDM = repo.LatestProdDM
-		} else if repo.LatestPreprodDM != nil {
-			repo.RepoDM = repo.LatestPreprodDM
-		} else {
-			repo.RepoDM, _ = GetMostRecentDoor43MetadataByStage(ctx, repo.ID, door43metadata.StageBranch)
+		dm := &Door43Metadata{RepoID: repo.ID, IsRepoMetadata: true}
+		has, err := db.GetEngine(ctx).Desc("release_date_unix").Get(dm)
+		if err != nil {
+			return err
 		}
-		if repo.RepoDM == nil {
+		if has && dm != nil {
+			repo.RepoDM = dm
+		} else {
 			title := repo.Name
 			subject := dcs.GetSubjectFromRepoName(repo.Name)
 			lang := dcs.GetLanguageFromRepoName(repo.Name)
