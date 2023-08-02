@@ -300,12 +300,12 @@ func ReadYAMLFromBlob(blob *git.Blob) (*map[string]interface{}, error) {
 	return result, nil
 }
 
-type SBMetadata struct {
+type SBEncodedMetadata struct {
 	Type string `json:"type"`
 	Data []byte `json:"data"`
 }
 
-type SB100 struct {
+type SBMetadata100 struct {
 	Format         string                         `json:"format"`
 	Meta           SB100Meta                      `json:"meta"`
 	Identification SB100Identification            `json:"identification"`
@@ -438,26 +438,27 @@ func GetTcTsManifestFromBlob(blob *git.Blob) (*TcTsManifest, error) {
 	return t, nil
 }
 
-func GetSBDataFromBlob(blob *git.Blob) (*SB100, error) {
+func GetSBDataFromBlob(blob *git.Blob) (*SBMetadata100, error) {
 	buf, err := ReadFileFromBlob(blob)
 	if err != nil {
 		return nil, err
 	}
-	s := &SBMetadata{}
-	err = json.Unmarshal(buf, s)
-	if err != nil {
+	sbEncoded := &SBEncodedMetadata{}
+	if err = json.Unmarshal(buf, sbEncoded); err == nil {
+		buf = sbEncoded.Data
+	}
+
+	sb100 := &SBMetadata100{}
+	if err := json.Unmarshal(buf, sb100); err != nil {
 		return nil, err
 	}
-	sb100 := &SB100{}
-	err = json.Unmarshal(s.Data, sb100)
-	if err != nil {
-		return nil, err
-	}
+
+	// Now make a generic map of the buffer to store in the database table
 	sb100.Metadata = &map[string]interface{}{}
-	err = json.Unmarshal(s.Data, sb100.Metadata)
-	if err != nil {
+	if err := json.Unmarshal(buf, sb100.Metadata); err != nil {
 		return nil, err
 	}
+
 	return sb100, nil
 }
 

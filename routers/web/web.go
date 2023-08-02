@@ -919,6 +919,13 @@ func registerRoutes(m *web.Route) {
 				addWebhookEditRoutes()
 			}, webhooksEnabled)
 
+			// DCS Customizations
+			m.Group("/metadata", func() {
+				m.Get("", repo.Door43Metadata)
+				m.Get("/update", repo.UpdateDoor43Metadata)
+			})
+			// END DCS Customizations
+
 			m.Group("/keys", func() {
 				m.Combo("").Get(repo.DeployKeys).
 					Post(web.Bind(forms.AddKeyForm{}), repo.DeployKeysPost)
