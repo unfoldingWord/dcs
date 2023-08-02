@@ -327,7 +327,7 @@ func GetDoor43MetadataFromRCManifest(dm *repo_model.Door43Metadata, manifest *ma
 	return nil
 }
 
-func GetNewDoor43MetadataFromSBData(dm *repo_model.Door43Metadata, sbData *base.SB100, repo *repo_model.Repository, commit *git.Commit) error {
+func GetNewDoor43MetadataFromSBData(dm *repo_model.Door43Metadata, sbData *base.SBMetadata100, repo *repo_model.Repository, commit *git.Commit) error {
 	var metadataType string
 	var metadataVersion string
 	subject := "unknown"
