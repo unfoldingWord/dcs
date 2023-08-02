@@ -1,0 +1,26 @@
+{{template "repo/settings/layout_head" (dict "ctxData" . "pageClass" "repository settings webhooks")}}
+	<div class="repo-setting-content">
+
+<h4 class="ui top attached header">
+	{{.Title}}
+	<div class="ui right">
+		<a class="ui primary tiny button" href="{{.Repository.Link}}/settings/metadata/update">Update Metadata</a>
+	</div>
+</h4>
+<div class="ui attached segment">
+	<div class="ui list">
+			<div class="item truncated-item-container">
+			{{if .Metadata}}
+				<pre>
+{{.Metadata}}
+				</pre>
+			{{else}}
+				No Metadata for this Repository. Click&nbsp;<a href="{{.Repository.Link}}/settings/metadata/update">update</a>&nbsp;to scan the repo.
+			{{end}}
+			</div>
+	</div>
+</div>
+
+	</div>
+
+{{template "repo/settings/layout_footer" .}}
