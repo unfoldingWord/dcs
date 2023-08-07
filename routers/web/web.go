@@ -929,6 +929,7 @@ func registerRoutes(m *web.Route) {
 			m.Group("/metadata", func() {
 				m.Get("", repo.Door43Metadatas)
 				m.Get("/update", repo.UpdateDoor43Metadata)
+				m.Post("/update", repo.UpdateDoor43Metadata) // TODO: Make this /{id} for a single DM
 			})
 			// END DCS Customizations
 

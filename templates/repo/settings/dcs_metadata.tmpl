@@ -59,7 +59,7 @@
 							</a>
 							{{if or $.Permission.IsAdmin $.IsOrganizationOwner $.PageIsAdmin $.PageIsUserSettings}}
 							<div class="right menu">
-								<form class="item" action="{{$.Link}}/update/{{.ID}}" method="post">
+								<form class="item" action="{{$.Link}}/update" method="post">
 									{{$.CsrfTokenHtml}}
 									<button class="ui tiny button" data-tooltip-content="Update this ref">{{svg "octicon-sync"}}</button>
 								</form>
