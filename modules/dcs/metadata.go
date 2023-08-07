@@ -35,7 +35,7 @@ func writeDiffHTML(diffs []diffmatchpatch.Diff) string {
 	// write the diff
 	for _, chunk := range diffs {
 		txt := html.EscapeString(chunk.Text)
-		txt = strings.Replace(txt, "\n", "↩\n", -1)
+		txt = strings.ReplaceAll(txt, "\n", "↩\n", -1)
 		switch chunk.Type {
 		case diffmatchpatch.DiffInsert:
 			addedCode += `<span class="added-code">`
