@@ -25,7 +25,7 @@ func Door43Metadatas(ctx *context.Context) {
 	dms := make([]*repo_model.Door43Metadata, 0, 50)
 	err := db.GetEngine(ctx).
 		Where(builder.Eq{"repo_id": ctx.Repo.Repository.ID}).
-		OrderBy("is_repo_metadata DESC, is_latest_for_stage DESC, ref_type, ref").
+		OrderBy("is_repo_metadata DESC, is_latest_for_stage DESC, ref_type DESC, release_date_unix DESC").
 		Find(&dms)
 	if err != nil {
 		log.Error("ERROR: %v", err)
