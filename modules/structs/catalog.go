@@ -25,6 +25,7 @@ type CatalogEntry struct {
 	LanguageDir            string        `json:"language_direction"`
 	LanguageIsGL           bool          `json:"language_is_gl"`
 	Subject                string        `json:"subject"`
+	Resource                string        `json:"resource"`
 	Title                  string        `json:"title"`
 	Ref                    string        `json:"branch_or_tag_name"`
 	RefType                string        `json:"ref_type"`

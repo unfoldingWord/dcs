@@ -927,7 +927,7 @@ func registerRoutes(m *web.Route) {
 
 			// DCS Customizations
 			m.Group("/metadata", func() {
-				m.Get("", repo.Door43Metadata)
+				m.Get("", repo.Door43Metadatas)
 				m.Get("/update", repo.UpdateDoor43Metadata)
 			})
 			// END DCS Customizations

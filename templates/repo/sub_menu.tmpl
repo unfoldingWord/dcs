@@ -28,8 +28,8 @@
 					</div>
 				{{end}}
 				{{if .Repository.RepoDM.MetadataType}}
-					{{$metadataTypeTitle := (GetMetadataTypeTitle .Repository.RepoDM.MetadataType)}}
-					{{$metadataTypeIcon := (GetMetadataTypeIcon .Repository.RepoDM.MetadataType)}}
+					{{$metadataTypeTitle := (.Repository.RepoDM.GetMetadataTypeTitle)}}
+					{{$metadataTypeIcon := (.Repository.RepoDM.GetMetadataTypeIcon)}}
 					<div class="item">
 						<a class="ui" href="{{AppSubUrl}}/explore/repos?q=metadata_type:{{.Repository.RepoDM.MetadataType}}" title="Metadata Type: {{$metadataTypeTitle}} v{{.Repository.RepoDM.MetadataVersion}}">{{svg "octicon-briefcase"}} <span style="font-weight: bold">{{.Repository.RepoDM.MetadataType}}{{.Repository.RepoDM.MetadataVersion}}</span> <img src="{{AssetUrlPrefix}}/img/dcs/{{$metadataTypeIcon}}" style="height:16px;vertical-align:middle"/></a>
 					</div>
