@@ -12,6 +12,7 @@ import (
 	"code.gitea.io/gitea/modules/context"
 	"code.gitea.io/gitea/modules/log"
 	door43metadata_service "code.gitea.io/gitea/services/door43metadata"
+
 	"xorm.io/builder"
 )
 
@@ -26,7 +27,6 @@ func Door43Metadatas(ctx *context.Context) {
 		Where(builder.Eq{"repo_id": ctx.Repo.Repository.ID}).
 		OrderBy("is_repo_metadata DESC, ref_type, ref").
 		Find(&dms)
-
 	if err != nil {
 		log.Error("ERROR: %v", err)
 	}
