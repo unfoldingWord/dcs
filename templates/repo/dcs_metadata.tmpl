@@ -1,5 +1,12 @@
-{{template "repo/settings/layout_head" (dict "ctxData" . "pageClass" "repository settings webhooks")}}
-<div class="repo-setting-content">
+{{template "base/head" .}}
+<div role="main" aria-label="{{.Title}}" class="page-content repository settings">
+	{{template "repo/header" .}}
+	{{template "base/alert" .}}
+	<div class="ui container">
+		<h2 class="ui header metadata-header">
+			{{.locale.Tr "repo.metadata.metadata"}}
+		</h2>
+	<div class="repo-metadata-content">
 	<h4 class="ui top attached header">
 		{{.Title}}
 		{{if .Permission.IsAdmin}}
@@ -92,10 +99,11 @@
 				</div>
 			{{end}}
 		{{else}}
-			<span>No Metadata for this Repository. Click&nbsp;<a href="{{.Repository.Link}}/settings/metadata/update">update</a>&nbsp;to scan the repo.</span>
+			<span>No Metadata for this Repository. Click&nbsp;<a href="{{.Link}}/update">update</a>&nbsp;to scan the repo.</span>
 		{{end}}
 		</div>
 	</div>
 </div>
-
-{{template "repo/settings/layout_footer" .}}
+</div>
+</div>
+{{template "base/footer" .}}
