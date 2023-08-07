@@ -5,8 +5,10 @@ package repo
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"sort"
+	"strings"
 
 	"code.gitea.io/gitea/models/db"
 	"code.gitea.io/gitea/models/door43metadata"
@@ -167,6 +169,44 @@ func (dm *Door43Metadata) GetMetadataURL() string {
 	return fmt.Sprintf("%s/raw/commit/%s/manifest.json", dm.Repo.HTMLURL(), dm.CommitSHA)
 }
 
+// GetMetadataTypeTitle returns the metadata type title
+func (dm *Door43Metadata) GetMetadataTypeTitle() string {
+	switch dm.MetadataType {
+	case "ts":
+		return "translationStudio"
+	case "tc":
+		return "translationCore"
+	case "rc":
+		return "Resource Container"
+	case "sb":
+		return "Scripture Burrito"
+	default:
+		return dm.MetadataType
+	}
+}
+
+// GetMetadataTypeIcon returns the metadata type icon
+func (dm *Door43Metadata) GetMetadataTypeIcon() string {
+	switch dm.MetadataType {
+	case "rc":
+		return "rc.png"
+	case "ts":
+		return "ts.png"
+	case "tc":
+		return "tc.png"
+	case "sb":
+		return "sb.png"
+	default:
+		return "uw.png"
+	}
+}
+
+// GetMetadataJSONString returns the JSON in string format of a map
+func (dm *Door43Metadata) GetMetadataJSONString() string {
+	json, _ := json.MarshalIndent(dm.Metadata, "", "    ")
+	return string(json)
+}
+
 // GetMetadataJSONURL gets the json representation of the contents of the manifest.yaml file
 func (dm *Door43Metadata) GetMetadataJSONURL() string {
 	return fmt.Sprintf("%smetadata/", dm.APIURL())
@@ -202,6 +242,12 @@ func (dm *Door43Metadata) GetBooks() []string {
 		}
 	}
 	return books
+}
+
+// GetBooksString get the books of the manifest and returns as a comma-delimited string
+func (dm *Door43Metadata) GetBooksString() string {
+	books := dm.GetBooks()
+	return strings.Join(books, ", ")
 }
 
 func (dm *Door43Metadata) GetAlignmentCounts() map[string]int {

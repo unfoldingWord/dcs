@@ -6,29 +6,34 @@ package repo
 import (
 	"net/http"
 
+	"code.gitea.io/gitea/models/db"
+	repo_model "code.gitea.io/gitea/models/repo"
 	"code.gitea.io/gitea/modules/base"
 	"code.gitea.io/gitea/modules/context"
-	"code.gitea.io/gitea/modules/json"
 	"code.gitea.io/gitea/modules/log"
 	door43metadata_service "code.gitea.io/gitea/services/door43metadata"
+	"xorm.io/builder"
 )
 
 const (
 	tplDoor43Metadata base.TplName = "repo/settings/dcs_metadata"
 )
 
-// Door43Metadta render door43 metadata page
-func Door43Metadata(ctx *context.Context) {
+// Door43Metadtas renders door43 metadatas page
+func Door43Metadatas(ctx *context.Context) {
+	dms := make([]*repo_model.Door43Metadata, 0, 50)
+	err := db.GetEngine(ctx).
+		Where(builder.Eq{"repo_id": ctx.Repo.Repository.ID}).
+		OrderBy("is_repo_metadata DESC, ref_type, ref").
+		Find(&dms)
+
+	if err != nil {
+		log.Error("ERROR: %v", err)
+	}
+
 	ctx.Data["Title"] = "Door43 Metadata"
 	ctx.Data["PageIsSettingsDoor43Metadata"] = true
-	if ctx.Repo.Repository.RepoDM != nil && ctx.Repo.Repository.RepoDM.Metadata != nil {
-		if metadataBuf, err := json.MarshalIndent(ctx.Repo.Repository.RepoDM.Metadata, "", "    "); err != nil {
-			log.Error("Door43Metadata: JSON parse error: %v", err)
-			ctx.Data["Metadata"] = "There was an error reading the repo's metadata. Please try again."
-		} else {
-			ctx.Data["Metadata"] = string(metadataBuf)
-		}
-	}
+	ctx.Data["Door43Metadatas"] = dms
 	ctx.HTML(http.StatusOK, tplDoor43Metadata)
 }
 
