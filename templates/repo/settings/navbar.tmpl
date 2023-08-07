@@ -33,11 +33,6 @@
 				{{.locale.Tr "repo.settings.lfs"}}
 			</a>
 		{{end}}
-		<!-- DCS Customizations -->
-		<a class="{{if .PageIsSettingsDoor43Metadata}}active {{end}}item" href="{{.RepoLink}}/settings/metadata">
-			Door43 Metadata
-		</a>
-		<!-- END DCS Customizations -->
 		{{if and .EnableActions (not .UnitActionsGlobalDisabled) (.Permission.CanRead $.UnitTypeActions)}}
 		<details class="item toggleable-item" {{if or .PageIsSharedSettingsRunners .PageIsSharedSettingsSecrets}}open{{end}}>
 			<summary>{{.locale.Tr "actions.actions"}}</summary>

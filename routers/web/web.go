@@ -925,14 +925,6 @@ func registerRoutes(m *web.Route) {
 				addWebhookEditRoutes()
 			}, webhooksEnabled)
 
-			// DCS Customizations
-			m.Group("/metadata", func() {
-				m.Get("", repo.Door43Metadatas)
-				m.Get("/update", repo.UpdateDoor43Metadata)
-				m.Post("/update", repo.UpdateDoor43Metadata) // TODO: Make this /{id} for a single DM
-			})
-			// END DCS Customizations
-
 			m.Group("/keys", func() {
 				m.Combo("").Get(repo.DeployKeys).
 					Post(web.Bind(forms.AddKeyForm{}), repo.DeployKeysPost)
@@ -983,6 +975,13 @@ func registerRoutes(m *web.Route) {
 				m.Get("/info", repo.GetIssueInfo)
 			})
 		})
+		// DCS Customizations
+		m.Group("/metadata", func() {
+			m.Get("", repo.Door43Metadatas)
+			m.Get("/update", repo.UpdateDoor43Metadata)
+			m.Post("/update", repo.UpdateDoor43Metadata) // TODO: Make this /{id} for a single DM
+		})
+		// END DCS Customizations
 	}, ignSignIn, context.RepoAssignment, context.UnitTypes()) // for "/{username}/{reponame}" which doesn't require authentication
 
 	// Grouping for those endpoints that do require authentication

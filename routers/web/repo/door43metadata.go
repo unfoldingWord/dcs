@@ -17,7 +17,7 @@ import (
 )
 
 const (
-	tplDoor43Metadata base.TplName = "repo/settings/dcs_metadata"
+	tplDoor43Metadata base.TplName = "repo/dcs_metadata"
 )
 
 // Door43Metadtas renders door43 metadatas page
@@ -25,7 +25,7 @@ func Door43Metadatas(ctx *context.Context) {
 	dms := make([]*repo_model.Door43Metadata, 0, 50)
 	err := db.GetEngine(ctx).
 		Where(builder.Eq{"repo_id": ctx.Repo.Repository.ID}).
-		OrderBy("is_repo_metadata DESC, ref_type, ref").
+		OrderBy("is_repo_metadata DESC, is_latest_for_stage DESC, ref_type, ref").
 		Find(&dms)
 	if err != nil {
 		log.Error("ERROR: %v", err)
@@ -50,5 +50,5 @@ func UpdateDoor43Metadata(ctx *context.Context) {
 			ctx.Flash.Warning("No metadata found!")
 		}
 	}
-	ctx.Redirect(ctx.Repo.RepoLink + "/settings/metadata")
+	ctx.Redirect(ctx.Repo.RepoLink + "/metadata")
 }
