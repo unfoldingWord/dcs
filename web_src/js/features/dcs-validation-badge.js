@@ -18,6 +18,8 @@ export function initDCSValidationBadge() {
         allowHTML: true,
         maxWidth: 650,
         content: tooltips[0].innerHTML,
+        interactive: true,
+        hideOnClick: true,
       });
     }
   });

@@ -69,7 +69,30 @@ func ValidateManifestTreeEntry(entry *git.TreeEntry) (*jsonschema.ValidationErro
 	if err != nil {
 		return nil, err
 	}
-	return ValidateMapByRC020Schema(manifest)
+	return ValidateMapByRC02Schema(manifest)
+}
+
+// ValidateMetadataFileAsHTML validates a metadata file and returns the results as template.HTML
+func ValidateMetadataFileAsHTML(entry *git.TreeEntry) template.HTML {
+	var result *jsonschema.ValidationError
+	if r, err := ValidateMetadataTreeEntry(entry); err != nil {
+		log.Warn("ValidateManifestTreeEntry: %v\n", err)
+	} else {
+		result = r
+	}
+	return template.HTML(ConvertValidationErrorToHTML(result))
+}
+
+// ValidateMetadataTreeEntry validates a tree entry that is a metadata file and returns the results
+func ValidateMetadataTreeEntry(entry *git.TreeEntry) (*jsonschema.ValidationError, error) {
+	if entry == nil {
+		return nil, nil
+	}
+	metadata, err := ReadJSONFromBlob(entry.Blob())
+	if err != nil {
+		return nil, err
+	}
+	return ValidateMapBySB100Schema(metadata)
 }
 
 // ConvertValidationErrorToString returns a semi-colon & new line separated string of the validation errors
@@ -113,15 +136,15 @@ func convertValidationErrorToHTML(valErr, parentErr *jsonschema.ValidationError)
 	if valErr == nil {
 		return ""
 	}
+	var label string
 	var html string
 	if parentErr == nil {
-		html += fmt.Sprintf("<strong>Invalid:</strong> %s\n", strings.TrimSuffix(valErr.Message, "#"))
+		html = fmt.Sprintf("<strong>Invalid:</strong> %s\n", strings.TrimSuffix(valErr.Message, "#"))
 		html += "<ul>\n"
 		if len(valErr.Causes) > 0 {
-			html += "<li><strong>&lt;root&gt;:</strong></li>\n"
+			label += "<strong>&lt;root&gt;:</strong>\n"
 		}
 	} else {
-		html += "<ul>\n"
 		loc := ""
 		if valErr.InstanceLocation != "" {
 			loc = strings.ReplaceAll(strings.TrimPrefix(strings.TrimPrefix(valErr.InstanceLocation, parentErr.InstanceLocation), "/"), "/", ".")
@@ -129,31 +152,31 @@ func convertValidationErrorToHTML(valErr, parentErr *jsonschema.ValidationError)
 				loc = fmt.Sprintf("<strong>%s:</strong> ", strings.TrimPrefix(loc, "/"))
 			}
 		}
-		html += fmt.Sprintf("<li>%s%s</li>\n", loc, valErr.Message)
+		msg := ""
+		if valErr.Message != "if-else failed" {
+			msg = valErr.Message
+		}
+		label = loc+msg
 	}
 	sort.Slice(valErr.Causes, func(i, j int) bool { return valErr.Causes[i].InstanceLocation < valErr.Causes[j].InstanceLocation })
+	if label != "" {
+		html += "<ul><li>" + label + "</li>"
+	}
 	for _, cause := range valErr.Causes {
 		html += convertValidationErrorToHTML(cause, valErr)
 	}
-	html += "</ul>\n"
+	if label != "" {
+		html += "</ul>\n"
+	}
 	return html
 }
 
-// ValidateMapByRC020Schema Validates a blob by the RC v0.2.0 schema and returns the result
-func ValidateMapByRC020Schema(data *map[string]interface{}) (*jsonschema.ValidationError, error) {
+// ValidateMapBySB100Schema Validates a map structure by the RC v0.2.0 schema and returns the result
+func ValidateMapBySB100Schema(data *map[string]interface{}) (*jsonschema.ValidationError, error) {
 	if data == nil {
 		return &jsonschema.ValidationError{Message: "file cannot be empty"}, nil
 	}
-	schemaText, err := GetRC020Schema()
-	if err != nil {
-		return nil, err
-	}
-
-	compiler := jsonschema.NewCompiler()
-	if err := compiler.AddResource("schema.json", strings.NewReader(string(schemaText))); err != nil {
-		return nil, err
-	}
-	schema, err := compiler.Compile("schema.json")
+	schema, err := GetSB100Schema(false)
 	if err != nil {
 		return nil, err
 	}
@@ -168,13 +191,12 @@ func ValidateMapByRC020Schema(data *map[string]interface{}) (*jsonschema.Validat
 	return nil, nil
 }
 
-// ValidateDataBySB100Schema Validates a blob by the RC v0.2.0 schema and returns the result
-func ValidateDataBySB100Schema(data *map[string]interface{}) (*jsonschema.ValidationError, error) {
+// ValidateMapByRC02Schema Validates a map structure by the RC v0.2.0 schema and returns the result
+func ValidateMapByRC02Schema(data *map[string]interface{}) (*jsonschema.ValidationError, error) {
 	if data == nil {
 		return &jsonschema.ValidationError{Message: "file cannot be empty"}, nil
 	}
-	compiler := jsonschema.NewCompiler()
-	schema, err := compiler.Compile("https://raw.githubusercontent.com/bible-technology/scripture-burrito/v1.0.0-rc2/schema/index.js")
+	schema, err := GetRC02Schema(false)
 	if err != nil {
 		return nil, err
 	}
@@ -229,29 +251,67 @@ func ToStringKeys(val interface{}) (interface{}, error) {
 	}
 }
 
-var rc02Schema []byte
+var (
+	rc02Schema *jsonschema.Schema
+	sb100Schema *jsonschema.Schema
+)
 
-// GetRC020Schema Returns the schema for RC v0.2, first trying the online URL, then from file if not already done
-func GetRC020Schema() ([]byte, error) {
-	rc02SchmeFileName := "rc.schema.json"
-	schemaOnlineURL := "https://raw.githubusercontent.com/unfoldingWord/rc-schema/master/" + rc02SchmeFileName
-	if rc02Schema == nil {
-		var err error
-		if res, err := http.Get(schemaOnlineURL); err == nil {
-			defer res.Body.Close()
-			// read all
-			if body, err := io.ReadAll(res.Body); err == nil {
-				rc02Schema = body
+// GetRC02Schema returns the schema for RC v0.2
+func GetRC02Schema(reload bool) (*jsonschema.Schema, error) {
+	githubPrefix := "https://raw.githubusercontent.com/unfoldingWord/rc-schema/master/"
+	if rc02Schema == nil || reload {
+		jsonschema.Loaders["https"] = func(url string) (io.ReadCloser, error) {
+			if res, err := http.Get(url); err == nil && res != nil && res.StatusCode == 200 {
+				return res.Body, nil
+			} else {
+				log.Warn("GetRC02Schema: not able to get the schema file remotely [%q]: %v", url, err)
 			}
-		}
-		if rc02Schema == nil {
-			// Failed to get schema online, falling back to the one in the options dir
-			if rc02Schema, err = options.Schemas(rc02SchmeFileName); err != nil {
+			uriPath := strings.TrimPrefix(url, githubPrefix)
+			fileBuf, err := options.AssetFS().ReadFile("schema", "rc02", uriPath)
+			if err != nil {
+				log.Error("GetRC02Schema: local schema file not found: [options/schema/rc02/%s]: %v", uriPath, err)
 				return nil, err
 			}
+			return io.NopCloser(bytes.NewReader(fileBuf)), nil
+		}
+		var err error
+		rc02Schema, err = jsonschema.Compile(githubPrefix + "rc.schema.json")
+		if err != nil {
+			return nil, err
 		}
 	}
 	return rc02Schema, nil
+}
+
+// GetSB100Schema returns the schema for SB v1.0.0
+func GetSB100Schema(reload bool) (*jsonschema.Schema, error) {
+	// We must use githubURLPrefix due to certificate issues
+	burritoBiblePrefix := "https://burrito.bible/schema/"
+	githubPrefix := "https://raw.githubusercontent.com/bible-technology/scripture-burrito/v1.0.0/schema/"
+	if sb100Schema == nil || reload {
+		jsonschema.Loaders["https"] = func(url string) (io.ReadCloser, error) {
+			uriPath := strings.TrimPrefix(url, burritoBiblePrefix)
+			githubURL := githubPrefix + uriPath
+			res, err := http.Get(githubURL)
+			if err == nil && res != nil && res.StatusCode == 200 {
+				return res.Body, nil
+			} else {
+				log.Error("GetSB100Schema: not able to get the schema file remotely [%q]: %v", url, err)
+			}
+			fileBuf, err := options.AssetFS().ReadFile("schema", "sb100", uriPath)
+			if err != nil {
+				log.Error("GetSB100Schema: local schema file not found: [options/schema/sb100/%s]: %v", uriPath, err)
+				return nil, err
+			}
+			return io.NopCloser(bytes.NewReader(fileBuf)), nil
+		}
+		var err error
+		sb100Schema, err = jsonschema.Compile(burritoBiblePrefix + "metadata.schema.json")
+		if err != nil {
+			return nil, err
+		}
+	}
+	return sb100Schema, nil
 }
 
 // ReadFileFromBlob reads a file from a blob and returns the content

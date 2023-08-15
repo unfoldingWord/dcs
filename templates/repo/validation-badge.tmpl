@@ -1,15 +1,25 @@
 {{$errors := ""}}
+{{$showValidationBadge := false}}
 
 {{if StringHasSuffix $.file.Name ".yaml"}}
 	{{$errors = ValidateYAMLFile $.file}}
-	{{if and (eq $errors "") (eq $.file.Name "manifest.yaml")}}
+	{{if $errors}}
+		{{$showValidationBadge = true}}
+	{{else if and (eq $errors "") (eq $.file.Name $.root.Repository.RepoDM.GetMetadataFilename) (eq $.root.Repository.RepoDM.MetadataType "rc")}}
+		{{$showValidationBadge = true}}
 		{{$errors = ValidateManifestFileAsHTML $.file}}
 	{{end}}
 {{else if StringHasSuffix $.file.Name ".json"}}
 	{{$errors = ValidateJSONFile $.file}}
+	{{if $errors}}
+		{{$showValidationBadge = true}}
+	{{else if and (eq $errors "") (eq $.file.Name $.root.Repository.RepoDM.GetMetadataFilename) (eq $.root.Repository.RepoDM.MetadataType "sb")}}
+		{{$showValidationBadge = true}}
+		{{$errors = ValidateMetadataFileAsHTML $.file}}
+	{{end}}
 {{end}}
 
-{{if or (ne $errors "") (eq $.file.Name "manifest.yaml")}}
+{{if $showValidationBadge}}
 	<div class="ui label {{if eq $errors ""}}green{{else}}red{{end}} validation-message-badge" style="margin-left: 5px">
 		{{if eq $errors ""}}
 			{{$.root.locale.Tr "repo.metadata.valid"}}
@@ -17,7 +27,7 @@
 			{{$.root.locale.Tr "repo.metadata.invalid"}} {{svg "octicon-info"}}
 		{{end}}
 		<div class="validation-message-tooltip" style="display: none">
-			{{if $errors}}{{$errors}}{{else}}{{$.root.locale.Tr "repo.metadata.valid_manifest_tooltip"}}{{end}}
+			{{if $errors}}{{$errors}}{{else}}{{$.root.locale.Tr "repo.metadata.valid_metadata_tooltip" $.file.Name}}{{end}}
 		</div>
 	</div>
 {{end}}

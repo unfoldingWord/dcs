@@ -11,5 +11,5 @@ var DCS struct {
 func loadDCSFrom(rootCfg ConfigProvider) {
 	mustMapSetting(rootCfg, "dcs", &DCS)
 	sec := rootCfg.Section("dcs")
-	DCS.Door43PreviewURL = sec.Key("DOOR43_PREVIEW_URL").MustString("https://git.door43.org")
+	DCS.Door43PreviewURL = sec.Key("DOOR43_PREVIEW_URL").MustString("https://door43.org")
 }

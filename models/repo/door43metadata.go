@@ -270,6 +270,18 @@ func (dm *Door43Metadata) GetReleaseCount() (int64, error) {
 		Count(&Door43Metadata{})
 }
 
+// GetMetadataFilename returns the name of the metadata file, e.g. manifest.yaml or metadata.json
+func (dm *Door43Metadata) GetMetadataFilename() string {
+	if dm.MetadataType == "rc" {
+		return "manifest.yaml"
+	} else if dm.MetadataType == "sb" {
+		return "metadata.json"
+	} else if dm.MetadataType == "tc" || dm.MetadataType == "ts" {
+		return "manifest.json"
+	}
+	return ""
+}
+
 // IsDoor43MetadataExist returns true if door43 metadata with given release ID already exists.
 func IsDoor43MetadataExist(ctx context.Context, repoID, releaseID int64) (bool, error) {
 	return db.GetEngine(ctx).Get(&Door43Metadata{RepoID: repoID, ReleaseID: releaseID})

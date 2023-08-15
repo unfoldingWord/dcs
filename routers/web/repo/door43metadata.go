@@ -31,6 +31,7 @@ func Door43Metadatas(ctx *context.Context) {
 		log.Error("ERROR: %v", err)
 	}
 
+	ctx.Data["PageIsMetadata"] = true
 	ctx.Data["Title"] = "Door43 Metadata"
 	ctx.Data["PageIsSettingsDoor43Metadata"] = true
 	ctx.Data["Door43Metadatas"] = dms

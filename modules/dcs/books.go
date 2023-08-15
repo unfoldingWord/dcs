@@ -149,18 +149,18 @@ var BookNumbers = map[string]string{ //nolint
 	"obs": "0",
 }
 
-// BookIsValid returns true if string is a valid book or is obs
-func BookIsValid(book string) bool {
+// IsValidBook returns true if string is a valid book or is obs
+func IsValidBook(book string) bool {
 	_, ok := BookNames[book]
 	return ok
 }
 
 func BookIsOT(book string) bool {
-	return BookIsValid(book) && BookNumbers[book] > "0" && BookNumbers[book] < "40"
+	return IsValidBook(book) && BookNumbers[book] > "0" && BookNumbers[book] < "40"
 }
 
 func BookIsNT(book string) bool {
-	return BookIsValid(book) && BookNumbers[book] > "40" && BookNumbers[book] <= "67"
+	return IsValidBook(book) && BookNumbers[book] > "40" && BookNumbers[book] <= "67"
 }
 
 func GetTestament(book string) string {
