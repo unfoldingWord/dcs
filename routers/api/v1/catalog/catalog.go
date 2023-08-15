@@ -622,7 +622,7 @@ func GetCatalogEntry(ctx *context.APIContext) {
 	ctx.JSON(http.StatusOK, convert.ToCatalogEntry(ctx, dm, accessMode))
 }
 
-// GetCatalogMetadata Get the metadata (RC 0.2.0 manifest) in JSON format for the given ownername, reponame and ref
+// GetCatalogMetadata Get the metadata (RC 0.2 manifest) in JSON format for the given ownername, reponame and ref
 func GetCatalogMetadata(ctx *context.APIContext) {
 	// swagger:operation GET /catalog/entry/{owner}/{repo}/{ref}/metadata catalog catalogGetMetadata
 	// ---

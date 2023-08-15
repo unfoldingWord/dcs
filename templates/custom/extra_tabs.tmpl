@@ -1,6 +1,6 @@
-<a class="{{if .PageIsPreview}}active{{end}} item"  target="_blank" href="{{.RepoLink}}/metadata">
+<a class="{{if .PageIsMetadata}}active{{end}} item" href="{{.RepoLink}}/metadata">
 		{{svg "octicon-briefcase"}} {{.locale.Tr "repo.metadata.metadata"}}
 </a>
-<a class="{{if .PageIsPreview}}active{{end}} item"  target="_blank" href="{{Door43PreviewURL}}/u/{{.Owner.Name}}/{{.Repository.Name}}">
+<a class="item"  target="_blank" href="{{Door43PreviewURL}}/u/{{.Owner.Name}}/{{.Repository.Name}}">
 		{{svg "octicon-search"}} {{.locale.Tr "preview"}}
 </a>

@@ -66,7 +66,7 @@ func processDoor43MetadataForRepoRefs(ctx context.Context, repo *repo_model.Repo
 	return nil
 }
 
-func handleLatestStageDM(ctx context.Context, repo *repo_model.Repository, stage door43metadata.Stage) (*repo_model.Door43Metadata, error) {
+func handleLatestStageDM(ctx context.Context, repo *repo_model.Repository, stage door43metadata.Stage, earliestDate *timeutil.TimeStamp) (*repo_model.Door43Metadata, error) {
 	_, err := db.GetEngine(ctx).
 		Where(builder.Eq{"repo_id": repo.ID}).
 		And(builder.Eq{"stage": stage}).
@@ -85,7 +85,7 @@ func handleLatestStageDM(ctx context.Context, repo *repo_model.Repository, stage
 	if err != nil && !repo_model.IsErrDoor43MetadataNotExist(err) {
 		return nil, err
 	}
-	if dm != nil {
+	if dm != nil && (earliestDate == nil || dm.ReleaseDateUnix > *earliestDate) {
 		dm.Stage = stage
 		dm.IncludeInCatalog = true
 		dm.IsLatestForStage = true
@@ -133,21 +133,25 @@ func handleRepoDM(ctx context.Context, repo *repo_model.Repository) error {
 // processDoor43MetadataForRepoLatestDMs determines the latest DMs for a repo
 func processDoor43MetadataForRepoLatestDMs(ctx context.Context, repo *repo_model.Repository) error {
 	// Handle Stage Latest
-	dm, err := handleLatestStageDM(ctx, repo, door43metadata.StageLatest)
+	dm, err := handleLatestStageDM(ctx, repo, door43metadata.StageLatest, nil)
 	if err != nil {
 		log.Error("handleLatestStageDM for default branch [%s, %s]: %v", repo.FullName(), repo.DefaultBranch, err)
 	}
 	repo.DefaultBranchDM = dm
 
 	// Handle Stage Prod
-	dm, err = handleLatestStageDM(ctx, repo, door43metadata.StageProd)
+	dm, err = handleLatestStageDM(ctx, repo, door43metadata.StageProd, nil)
 	if err != nil {
 		log.Error("handleLatestStageDM for prod [%s]: %v", repo.FullName(), err)
 	}
 	repo.LatestProdDM = dm
 
 	// Handle Stage Preprod
-	dm, err = handleLatestStageDM(ctx, repo, door43metadata.StagePreProd)
+	var earliestDate *timeutil.TimeStamp
+	if repo.LatestProdDM != nil {
+		earliestDate = &repo.LatestProdDM.ReleaseDateUnix
+	}
+	dm, err = handleLatestStageDM(ctx, repo, door43metadata.StagePreProd, earliestDate)
 	if err != nil {
 		log.Error("handleLatestStageDM for preprod [%s]: %v", repo.FullName(), err)
 	}
@@ -327,7 +331,8 @@ func GetDoor43MetadataFromRCManifest(dm *repo_model.Door43Metadata, manifest *ma
 	return nil
 }
 
-func GetNewDoor43MetadataFromSBData(dm *repo_model.Door43Metadata, sbData *base.SBMetadata100, repo *repo_model.Repository, commit *git.Commit) error {
+// GetDoor43MetadataFromSBMetadata creates a Door43Metadata object from the SBMetadata100 object
+func GetDoor43MetadataFromSBMetadata(dm *repo_model.Door43Metadata, sbMetadata *base.SBMetadata100, repo *repo_model.Repository, commit *git.Commit) error {
 	var metadataType string
 	var metadataVersion string
 	subject := "unknown"
@@ -342,16 +347,16 @@ func GetNewDoor43MetadataFromSBData(dm *repo_model.Door43Metadata, sbData *base.
 	var ingredients []*structs.Ingredient
 
 	metadataType = "sb"
-	metadataVersion = sbData.Meta.Version
-	title = sbData.Identification.Name.En
+	metadataVersion = sbMetadata.Meta.Version
+	title = sbMetadata.Identification.Name.En
 
-	switch sbData.Type.FlavorType.Name {
+	switch sbMetadata.Type.FlavorType.Name {
 	case "scripture":
 		subject = "Bible"
-		resource = strings.ToLower(sbData.Identification.Abbreviation.En)
+		resource = strings.ToLower(sbMetadata.Identification.Abbreviation.En)
 		contentFormat = "usfm"
-		if sbData.LocalizedNames != nil {
-			for book, ln := range *sbData.LocalizedNames {
+		if sbMetadata.LocalizedNames != nil {
+			for book, ln := range *sbMetadata.LocalizedNames {
 				bookPath := "./ingredients/" + book + ".usfm"
 				count, _ := GetBookAlignmentCount(bookPath, commit)
 				ingredients = append(ingredients, &structs.Ingredient{
@@ -365,7 +370,7 @@ func GetNewDoor43MetadataFromSBData(dm *repo_model.Door43Metadata, sbData *base.
 			}
 		}
 	case "gloss":
-		switch sbData.Type.FlavorType.Flavor.Name {
+		switch sbMetadata.Type.FlavorType.Flavor.Name {
 		case "textStories":
 			subject = "Open Bible Stories"
 			resource = "obs"
@@ -378,11 +383,11 @@ func GetNewDoor43MetadataFromSBData(dm *repo_model.Door43Metadata, sbData *base.
 		}
 	}
 
-	if len(sbData.Languages) > 0 {
-		language = sbData.Languages[0].Tag
+	if len(sbMetadata.Languages) > 0 {
+		language = sbMetadata.Languages[0].Tag
 		languageTitle = dcs.GetLanguageTitle(language)
 		if languageTitle == "" {
-			languageTitle = sbData.Languages[0].Name.En
+			languageTitle = sbMetadata.Languages[0].Name.En
 		}
 		languageDirection = dcs.GetLanguageDirection(language)
 		languageIsGL = dcs.LanguageIsGL(language)
@@ -401,7 +406,7 @@ func GetNewDoor43MetadataFromSBData(dm *repo_model.Door43Metadata, sbData *base.
 	dm.ContentFormat = contentFormat
 	dm.CheckingLevel = checkingLevel
 	dm.Ingredients = ingredients
-	dm.Metadata = sbData.Metadata
+	dm.Metadata = sbMetadata.Metadata
 
 	return nil
 }
@@ -420,14 +425,14 @@ func GetRCDoor43Metadata(dm *repo_model.Door43Metadata, repo *repo_model.Reposit
 	if err != nil {
 		return err
 	}
-	validationResult, err := base.ValidateMapByRC020Schema(manifest)
+	validationResult, err := base.ValidateMapByRC02Schema(manifest)
 	if err != nil {
 		return err
 	}
 	if validationResult != nil {
 		log.Info("%s: manifest.yaml is not valid. see errors:", repo.FullName())
 		log.Info(base.ConvertValidationErrorToString(validationResult))
-		return fmt.Errorf("manifest.yaml is not valid")
+		return validationResult
 	}
 	log.Info("%s: manifest.yaml is valid.", repo.FullName())
 	return GetDoor43MetadataFromRCManifest(dm, manifest, repo, commit)
@@ -462,7 +467,7 @@ func GetTcOrTsDoor43Metadata(dm *repo_model.Door43Metadata, repo *repo_model.Rep
 		versification = "ufw"
 	}
 
-	if !dcs.BookIsValid(t.Project.ID) {
+	if !dcs.IsValidBook(t.Project.ID) {
 		return fmt.Errorf("%s does not have a valid book in its manifest.json", repo.FullName())
 	}
 
@@ -500,6 +505,8 @@ func GetTcOrTsDoor43Metadata(dm *repo_model.Door43Metadata, repo *repo_model.Rep
 }
 
 func GetSBDoor43Metadata(dm *repo_model.Door43Metadata, repo *repo_model.Repository, commit *git.Commit) error {
+	var metadata *map[string]interface{}
+
 	blob, err := commit.GetBlobByPath("metadata.json")
 	if err != nil {
 		return err
@@ -507,22 +514,26 @@ func GetSBDoor43Metadata(dm *repo_model.Door43Metadata, repo *repo_model.Reposit
 	if blob == nil {
 		return nil
 	}
-	sbData, err := base.GetSBDataFromBlob(blob)
+	sbMetadata, err := base.GetSBDataFromBlob(blob)
 	if err != nil {
 		return err
 	}
-	// validationResult, err := base.ValidateDataBySB100Schema(sbData)
-	// if err != nil {
-	// 	return nil, err
-	// }
-	// if validationResult != nil {
-	// 	log.Info("%s: metadata.json's 'data' is not valid. see errors:", repo.FullName())
-	// 	log.Info(base.ConvertValidationErrorToString(validationResult))
-	// 	return nil, fmt.Errorf("metadata.json's 'data' is not valid")
-	// }
-	// log.Info("%s: metadata.json's 'data' is valid.", repo.FullName())
+	metadata, err = base.ReadJSONFromBlob(blob)
+	if err != nil {
+		return err
+	}
+	validationResult, err := base.ValidateMapBySB100Schema(metadata)
+	if err != nil {
+		return err
+	}
+	if validationResult != nil {
+		log.Info("%s: metadata.json's 'data' is not valid. see errors:", repo.FullName())
+		log.Info(base.ConvertValidationErrorToString(validationResult))
+		return validationResult
+	}
+	log.Info("%s: metadata.json's 'data' is valid.", repo.FullName())
 
-	return GetNewDoor43MetadataFromSBData(dm, sbData, repo, commit)
+	return GetDoor43MetadataFromSBMetadata(dm, sbMetadata, repo, commit)
 }
 
 func processDoor43MetadataForRepoRef(ctx context.Context, repo *repo_model.Repository, ref string) (err error) {
@@ -572,6 +583,9 @@ func processDoor43MetadataForRepoRef(ctx context.Context, repo *repo_model.Repos
 		// We don't support releases that are just tags or are drafts
 		if release.IsTag || release.IsDraft {
 			return fmt.Errorf("ref for repo %s [%d] must be a branch or a (pre-)release: %s", repo.FullName(), repo.ID, ref)
+		}
+		if !release.IsCatalogVersion() {
+			return fmt.Errorf("release tag for repo %s [%d] must start with v and a digit or be a year: %s", repo.FullName(), repo.ID, release.TagName)
 		}
 		dm.RefType = "tag"
 		dm.Release = release
@@ -786,4 +800,17 @@ func GetAttachmentsFromJSON(attachment *repo_model.Attachment) ([]*repo_model.At
 		attachments = append(attachments, attachment)
 	}
 	return attachments, nil
+}
+
+// LoadMetadataSchemas loads the Metadata Schemas from the web and local file if not available online
+func LoadMetadataSchemas(ctx context.Context) error {
+	log.Trace("Doing: LoadMetadataSchemas")
+	if _, err := base.GetSB100Schema(true); err != nil {
+		log.Error("Error loading SB 100 Schema: %v", err)
+	}
+	if _, err := base.GetRC02Schema(true); err != nil {
+		log.Error("Error loading RC 0.2 Schema: %v", err)
+	}
+	log.Trace("Finished: LoadMetadataSchemas")
+	return nil
 }

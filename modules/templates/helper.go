@@ -159,6 +159,7 @@ func NewFuncMap() template.FuncMap {
 		"ValidateJSONFile":           base.ValidateJSONFile,
 		"ValidateYAMLFile":           base.ValidateYAMLFile,
 		"ValidateManifestFileAsHTML": base.ValidateManifestFileAsHTML,
+		"ValidateMetadataFileAsHTML": base.ValidateMetadataFileAsHTML,
 		"Door43PreviewURL": func() string {
 			return setting.DCS.Door43PreviewURL
 		},

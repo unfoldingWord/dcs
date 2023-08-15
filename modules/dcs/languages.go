@@ -40,6 +40,10 @@ func GetLanguageFromRepoName(repoName string) string {
 	if len(parts) >= 2 && IsValidLanguage(parts[0]) && IsValidSubject(parts[1]) {
 		return parts[0]
 	}
+	parts = strings.Split(strings.ToLower(repoName), "-")
+	if len(parts) == 3 && IsValidLanguage(parts[0]) && (parts[1] == "texttranslation" || parts[2] == "textstories") {
+		return parts[0]
+	}
 	return ""
 }
 

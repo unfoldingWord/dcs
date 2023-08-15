@@ -62,3 +62,39 @@ func writeDiffHTML(diffs []diffmatchpatch.Diff) string {
 	}
 	return fmt.Sprintf(`<div class="same-code">%s</div>`, addedCode)
 }
+
+// GetMetadataTypeFromRepoName determines the metadata type of a repo by its repo name format
+func GetMetadataTypeFromRepoName(repoName string) string {
+	parts := strings.Split(strings.ToLower(repoName), "_")
+	if len(parts) == 2 && IsValidLanguage(parts[0]) && IsValidSubject(parts[1]) {
+		return "rc"
+	}
+	if len(parts) == 4 && IsValidLanguage(parts[0]) && IsValidBook(parts[2]) && parts[3] == "book" {
+		return "tc"
+	}
+	if len(parts) == 4 && IsValidLanguage(parts[0]) && IsValidBook(parts[1]) && parts[2] == "text" {
+		return "ts"
+	}
+	parts = strings.Split(strings.ToLower(repoName), "-")
+	if len(parts) == 3 && IsValidLanguage(parts[0]) && (parts[1] == "textstories" || parts[1] == "texttranslation") {
+		return "sb"
+	}
+	return ""
+}
+
+// GetMetadataVersionFromRepoName returns the default version for each metadata type based on given metadata type
+func GetDefaultMetadataVersionForType(metadataType string) string {
+	if metadataType == "rc" {
+		return "0.2"
+	}
+	if metadataType == "sb" {
+		return "1.0.0"
+	}
+	if metadataType == "tc" {
+		return "8"
+	}
+	if metadataType == "ts" {
+		return "7"
+	}
+	return ""
+}

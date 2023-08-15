@@ -41,9 +41,26 @@ var Subjects = map[string]string{
 
 // GetSubjectFromRepoName determines the subject of a repo by its repo name
 func GetSubjectFromRepoName(repoName string) string {
-	parts := strings.Split(repoName, "_")
+	parts := strings.Split(strings.ToLower(repoName), "_")
 	if len(parts) == 2 && IsValidSubject(parts[1]) && IsValidLanguage(parts[0]) {
 		return Subjects[parts[1]]
+	}
+	if len(parts) == 4 && IsValidLanguage(parts[0]) && IsValidBook(parts[2]) && parts[3] == "book" {
+		return "Aligned Bible"
+	}
+	if len(parts) == 4 && IsValidLanguage(parts[0]) && IsValidBook(parts[1]) && parts[2] == "text" {
+		if parts[1] == "obs" {
+			return "Open Bible Stories"
+		}
+		return "Bible"
+	}
+	parts = strings.Split(repoName, "-")
+	if len(parts) == 3 && IsValidLanguage(parts[0]) {
+		if parts[1] == "textstories" {
+			return "Open Bible Stories"
+		} else if parts[2] == "texttranslation" {
+			return "Bible"
+		}
 	}
 	return ""
 }
