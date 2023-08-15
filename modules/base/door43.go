@@ -153,7 +153,7 @@ func convertValidationErrorToHTML(valErr, parentErr *jsonschema.ValidationError)
 			}
 		}
 		msg := ""
-		if valErr.Message != "if-else failed" {
+		if valErr.Message != "if-else failed" && valErr.Message != "if-then failed" {
 			msg = valErr.Message
 		}
 		label = loc+msg
