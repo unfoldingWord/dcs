@@ -73,6 +73,7 @@ func ToCatalogEntry(ctx context.Context, dm *repo.Door43Metadata, mode perm.Acce
 		LanguageDir:            dm.LanguageDirection,
 		LanguageIsGL:           dm.LanguageIsGL,
 		Subject:                dm.Subject,
+		Resource:               dm.Resource,
 		Title:                  dm.Title,
 		Stage:                  dm.Stage.String(),
 		Released:               dm.ReleaseDateUnix.AsTime(),

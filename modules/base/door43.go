@@ -156,7 +156,7 @@ func convertValidationErrorToHTML(valErr, parentErr *jsonschema.ValidationError)
 		if valErr.Message != "if-else failed" && valErr.Message != "if-then failed" {
 			msg = valErr.Message
 		}
-		label = loc+msg
+		label = loc + msg
 	}
 	sort.Slice(valErr.Causes, func(i, j int) bool { return valErr.Causes[i].InstanceLocation < valErr.Causes[j].InstanceLocation })
 	if label != "" {
@@ -252,7 +252,7 @@ func ToStringKeys(val interface{}) (interface{}, error) {
 }
 
 var (
-	rc02Schema *jsonschema.Schema
+	rc02Schema  *jsonschema.Schema
 	sb100Schema *jsonschema.Schema
 )
 
@@ -261,11 +261,11 @@ func GetRC02Schema(reload bool) (*jsonschema.Schema, error) {
 	githubPrefix := "https://raw.githubusercontent.com/unfoldingWord/rc-schema/master/"
 	if rc02Schema == nil || reload {
 		jsonschema.Loaders["https"] = func(url string) (io.ReadCloser, error) {
-			if res, err := http.Get(url); err == nil && res != nil && res.StatusCode == 200 {
+			res, err := http.Get(url)
+			if err == nil && res != nil && res.StatusCode == 200 {
 				return res.Body, nil
-			} else {
-				log.Warn("GetRC02Schema: not able to get the schema file remotely [%q]: %v", url, err)
 			}
+			log.Warn("GetRC02Schema: not able to get the schema file remotely [%q]: %v", url, err)
 			uriPath := strings.TrimPrefix(url, githubPrefix)
 			fileBuf, err := options.AssetFS().ReadFile("schema", "rc02", uriPath)
 			if err != nil {
@@ -295,9 +295,8 @@ func GetSB100Schema(reload bool) (*jsonschema.Schema, error) {
 			res, err := http.Get(githubURL)
 			if err == nil && res != nil && res.StatusCode == 200 {
 				return res.Body, nil
-			} else {
-				log.Error("GetSB100Schema: not able to get the schema file remotely [%q]: %v", url, err)
 			}
+			log.Error("GetSB100Schema: not able to get the schema file remotely [%q]: %v", url, err)
 			fileBuf, err := options.AssetFS().ReadFile("schema", "sb100", uriPath)
 			if err != nil {
 				log.Error("GetSB100Schema: local schema file not found: [options/schema/sb100/%s]: %v", uriPath, err)
