@@ -5,6 +5,6 @@ package repo
 
 import "regexp"
 
-func (release *Release) IsCatalogVersion() bool {
-	return regexp.MustCompile(`^v\d`).Match([]byte(release.TagName)) || regexp.MustCompile(`^\d\d\d\d`).Match([]byte(release.TagName))
+func (r *Release) IsCatalogVersion() bool {
+	return regexp.MustCompile(`^v\d`).Match([]byte(r.TagName)) || regexp.MustCompile(`^\d\d\d\d`).Match([]byte(r.TagName))
 }
