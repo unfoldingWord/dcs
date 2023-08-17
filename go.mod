@@ -79,7 +79,6 @@ require (
 	github.com/microcosm-cc/bluemonday v1.0.25
 	github.com/minio/minio-go/v7 v7.0.52
 	github.com/minio/sha256-simd v1.0.0
-	github.com/mitchellh/mapstructure v1.5.0
 	github.com/msteinert/pam v1.1.0
 	github.com/nektos/act v0.2.45
 	github.com/nfnt/resize v0.0.0-20180221191011-83c6a9932646
@@ -233,6 +232,7 @@ require (
 	github.com/miekg/dns v1.1.54 // indirect
 	github.com/minio/md5-simd v1.1.2 // indirect
 	github.com/mitchellh/copystructure v1.2.0 // indirect
+	github.com/mitchellh/mapstructure v1.5.0 // indirect
 	github.com/mitchellh/reflectwalk v1.0.2 // indirect
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
 	github.com/modern-go/reflect2 v1.0.2 // indirect
