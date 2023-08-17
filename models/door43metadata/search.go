@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"code.gitea.io/gitea/models/db"
+	dcs_module "code.gitea.io/gitea/modules/dcs"
 	"code.gitea.io/gitea/modules/util"
 
 	"xorm.io/builder"
@@ -170,10 +171,15 @@ func GetHistoryCond(includeHistory bool) builder.Cond {
 func GetSubjectCond(subjects []string, partialMatch bool) builder.Cond {
 	subjectCond := builder.NewCond()
 	for _, subject := range subjects {
-		if partialMatch {
-			subjectCond = subjectCond.Or(builder.Like{"LOWER(`door43_metadata`.subject)", strings.ToLower(subject)})
-		} else {
-			subjectCond = subjectCond.Or(builder.Eq{"LOWER(`door43_metadata`.subject)": strings.ToLower(subject)})
+		for _, v := range strings.Split(subject, ",") {
+			if !partialMatch && !dcs_module.IsValidSubject(v) {
+				continue
+			}
+			if partialMatch {
+				subjectCond = subjectCond.Or(builder.Like{"LOWER(`door43_metadata`.subject)", strings.ToLower(v)})
+			} else {
+				subjectCond = subjectCond.Or(builder.Eq{"LOWER(`door43_metadata`.subject)": strings.ToLower(v)})
+			}
 		}
 	}
 	return subjectCond
@@ -182,8 +188,10 @@ func GetSubjectCond(subjects []string, partialMatch bool) builder.Cond {
 // GetResourceCond gets the metdata type condition
 func GetResourceCond(resources []string) builder.Cond {
 	resourceCond := builder.NewCond()
-	for _, t := range resources {
-		resourceCond = resourceCond.Or(builder.Eq{"LOWER(`door43_metadata`.resource)": strings.ToLower(t)})
+	for _, resource := range resources {
+		for _, v := range strings.Split(resource, ",") {
+			resourceCond = resourceCond.Or(builder.Eq{"LOWER(`door43_metadata`.resource)": strings.ToLower(v)})
+		}
 	}
 	return resourceCond
 }
@@ -191,11 +199,13 @@ func GetResourceCond(resources []string) builder.Cond {
 // GetContentFormatCond gets the metdata type condition
 func GetContentFormatCond(formats []string, partialMatch bool) builder.Cond {
 	formatCond := builder.NewCond()
-	for _, t := range formats {
-		if partialMatch {
-			formatCond = formatCond.Or(builder.Like{"LOWER(`door43_metadata`.content_format)", strings.ToLower(t)})
-		} else {
-			formatCond = formatCond.Or(builder.Eq{"LOWER(`door43_metadata`.content_format)": strings.ToLower(t)})
+	for _, format := range formats {
+		for _, v := range strings.Split(format, ",") {
+			if partialMatch {
+				formatCond = formatCond.Or(builder.Like{"LOWER(`door43_metadata`.content_format)", strings.ToLower(v)})
+			} else {
+				formatCond = formatCond.Or(builder.Eq{"LOWER(`door43_metadata`.content_format)": strings.ToLower(v)})
+			}
 		}
 	}
 	return formatCond
@@ -203,25 +213,25 @@ func GetContentFormatCond(formats []string, partialMatch bool) builder.Cond {
 
 // GetMetadataTypeCond gets the metdata type condition
 func GetMetadataTypeCond(types []string, partialMatch bool) builder.Cond {
-	typeCond := builder.NewCond()
-	for _, t := range types {
-		if partialMatch {
-			typeCond = typeCond.Or(builder.Like{"`door43_metadata`.metadata_type", strings.ToLower(t)})
-		} else {
-			typeCond = typeCond.Or(builder.Eq{"`door43_metadata`.metadata_type": strings.ToLower(t)})
+	metadataTypeCond := builder.NewCond()
+	for _, metadataType := range types {
+		for _, v := range strings.Split(metadataType, ",") {
+			metadataTypeCond = metadataTypeCond.Or(builder.Eq{"`door43_metadata`.metadata_type": strings.ToLower(v)})
 		}
 	}
-	return typeCond
+	return metadataTypeCond
 }
 
 // GetMetadataTypeCond gets the metdata type condition
 func GetMetadataVersionCond(versions []string, partialMatch bool) builder.Cond {
 	versionCond := builder.NewCond()
 	for _, version := range versions {
-		if partialMatch {
-			versionCond = versionCond.Or(builder.Like{"LOWER(`door43_metadata`.metadata_version)", strings.ToLower(version)})
-		} else {
-			versionCond = versionCond.Or(builder.Eq{"LOWER(`door43_metadata`.metadata_version)": strings.ToLower(version)})
+		for _, v := range strings.Split(version, ",") {
+			if partialMatch {
+				versionCond = versionCond.Or(builder.Like{"LOWER(`door43_metadata`.metadata_version)", strings.ToLower(v)})
+			} else {
+				versionCond = versionCond.Or(builder.Eq{"LOWER(`door43_metadata`.metadata_version)": strings.ToLower(v)})
+			}
 		}
 	}
 	return versionCond
@@ -232,6 +242,9 @@ func GetLanguageCond(languages []string, partialMatch bool) builder.Cond {
 	langCond := builder.NewCond()
 	for _, lang := range languages {
 		for _, v := range strings.Split(lang, ",") {
+			if !partialMatch && !dcs_module.IsValidLanguage(v) {
+				continue
+			}
 			if partialMatch {
 				langCond = langCond.
 					Or(builder.Like{"LOWER(`door43_metadata`.language)", strings.ToLower(v)}).
