@@ -625,15 +625,21 @@ func processDoor43MetadataForRepoRef(ctx context.Context, repo *repo_model.Repos
 
 	// Check for SB (Scripture Burrito)
 	err = GetSBDoor43Metadata(dm, repo, commit)
-	if err != nil && !git.IsErrNotExist((err)) {
-		return err
+	if err != nil {
+		if !git.IsErrNotExist(err) {
+			log.Info("processDoor43MetadataForRef: ERROR! Unable to populate SB for %s/%s from TS or TC metadata.json: %v\n", repo.FullName(), ref, err)
+			return err
+		}
 	}
 
 	// Check for TC or TS
 	if err != nil {
 		err = GetTcOrTsDoor43Metadata(dm, repo, commit)
-		if err != nil && !git.IsErrNotExist(err) {
-			return err
+		if err != nil {
+			if !git.IsErrNotExist(err) {
+				log.Info("processDoor43MetadataForRef: ERROR! Unable to populate DM for %s/%s from TS or TC manifest.json: %v\n", repo.FullName(), ref, err)
+				return err
+			}
 		}
 	}
 
@@ -642,7 +648,7 @@ func processDoor43MetadataForRepoRef(ctx context.Context, repo *repo_model.Repos
 		err = GetRCDoor43Metadata(dm, repo, commit)
 		if err != nil {
 			if !git.IsErrNotExist(err) {
-				log.Error("processDoor43MetadataForRef: ERROR! Unable to populate DM for %s/%s from RC manifest.yaml: %v\n", repo.FullName(), ref, err)
+				log.Info("processDoor43MetadataForRef: ERROR! Unable to populate DM for %s/%s from RC manifest.yaml: %v\n", repo.FullName(), ref, err)
 				return err
 			}
 			log.Info("processDoor43MetadataForRef: %s/%s is not a SB, TC, TS nor RC repo. Not adding to door43_metadata\n", repo.FullName(), ref)
