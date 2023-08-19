@@ -36,7 +36,7 @@
 							{{$color = "green"}}
 							{{$title = "Production Release"}}
 						{{else if eq .Stage 2}}
-					  	{{$color = "orange"}}
+							{{$color = "orange"}}
 							{{$title = "Preprod"}}
 						{{else if eq .Stage 3}}
 							{{$color = "purple"}}
@@ -45,11 +45,11 @@
 							{{$color = "red"}}
 							{{$title = "Default Metadata"}}
 						{{end}}
-					
+
 						{{if .IsLatestForStage}}
 							{{$title = printf "%s - Latest" $title}}
 						{{end}}
-					  <span title="{{$type}}">{{svg $icon 16 "mr-3"}}</span>
+						<span title="{{$type}}">{{svg $icon 16 "mr-3"}}</span>
 						<span class="text {{$color}} gt-mr-3" title="{{$title}}">{{svg "octicon-dot-fill" 22}}</span>
 						<a class="ui primary sha label toggle button show-panel" data-panel="#info-{{.ID}}">{{.Ref}}</a>
 						<div class="ui right">
