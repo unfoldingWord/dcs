@@ -20,4 +20,4 @@ jobs:
       - uses: docker/build-push-action@v4
         with:
           push: false
-          tags: gitea/gitea:linux-amd64
+          tags: unfoldingword/dcs:linux-amd64
