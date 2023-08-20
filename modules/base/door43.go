@@ -370,7 +370,7 @@ type SBMetadata100 struct {
 	Identification SB100Identification            `json:"identification"`
 	Languages      []SB100Language                `json:"languages"`
 	Type           SB100Type                      `json:"type"`
-	LocalizedNames *map[string]SB100LocalizedName `json:"localizedName"`
+	LocalizedNames *map[string]SB100LocalizedName `json:"localizedNames"`
 	Metadata       *map[string]interface{}
 }
 
