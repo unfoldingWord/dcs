@@ -7,7 +7,6 @@ import (
 	"strings"
 
 	"code.gitea.io/gitea/models/db"
-	dcs_module "code.gitea.io/gitea/modules/dcs"
 	"code.gitea.io/gitea/modules/util"
 
 	"xorm.io/builder"
@@ -172,9 +171,6 @@ func GetSubjectCond(subjects []string, partialMatch bool) builder.Cond {
 	subjectCond := builder.NewCond()
 	for _, subject := range subjects {
 		for _, v := range strings.Split(subject, ",") {
-			if !partialMatch && !dcs_module.IsValidSubject(v) {
-				continue
-			}
 			if partialMatch {
 				subjectCond = subjectCond.Or(builder.Like{"LOWER(`door43_metadata`.subject)", strings.ToLower(v)})
 			} else {
@@ -242,9 +238,6 @@ func GetLanguageCond(languages []string, partialMatch bool) builder.Cond {
 	langCond := builder.NewCond()
 	for _, lang := range languages {
 		for _, v := range strings.Split(lang, ",") {
-			if !partialMatch && !dcs_module.IsValidLanguage(v) {
-				continue
-			}
 			if partialMatch {
 				langCond = langCond.
 					Or(builder.Like{"LOWER(`door43_metadata`.language)", strings.ToLower(v)}).
