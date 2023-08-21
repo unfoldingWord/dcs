@@ -7,8 +7,8 @@ import (
 	"strings"
 )
 
-// Subjects are the valid subjects keyed by their resource ID
-var Subjects = map[string]string{
+// ResourceToSubjectMap are the valid subjects keyed by their resource ID
+var ResourceToSubjectMap = map[string]string{
 	"glt":         "Aligned Bible",
 	"gst":         "Aligned Bible",
 	"obs-sn":      "OBS Study Notes",
@@ -42,8 +42,8 @@ var Subjects = map[string]string{
 // GetSubjectFromRepoName determines the subject of a repo by its repo name
 func GetSubjectFromRepoName(repoName string) string {
 	parts := strings.Split(strings.ToLower(repoName), "_")
-	if len(parts) == 2 && IsValidSubject(parts[1]) && IsValidLanguage(parts[0]) {
-		return Subjects[parts[1]]
+	if len(parts) == 2 && IsValidResource(parts[1]) && IsValidLanguage(parts[0]) {
+		return ResourceToSubjectMap[parts[1]]
 	}
 	if len(parts) == 4 && IsValidLanguage(parts[0]) && IsValidBook(parts[2]) && parts[3] == "book" {
 		return "Aligned Bible"
@@ -65,8 +65,8 @@ func GetSubjectFromRepoName(repoName string) string {
 	return ""
 }
 
-// IsValidSubject returns true if it is a valid subject
-func IsValidSubject(subject string) bool {
-	_, ok := Subjects[subject]
+// IsValidResource returns true if it is a valid resource
+func IsValidResource(str string) bool {
+	_, ok := ResourceToSubjectMap[str]
 	return ok
 }
