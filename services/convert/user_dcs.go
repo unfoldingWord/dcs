@@ -4,16 +4,18 @@
 package convert
 
 import (
+	"context"
+
 	"code.gitea.io/gitea/models"
 	user_model "code.gitea.io/gitea/models/user"
 	api "code.gitea.io/gitea/modules/structs"
 )
 
-func toUserDCS(user *user_model.User, apiUser *api.User) *api.User {
+func toUserDCS(ctx context.Context, user *user_model.User, apiUser *api.User) *api.User {
 	if user != nil && apiUser != nil {
-		apiUser.RepoLanguages = models.GetRepoLanguages(user)
-		apiUser.RepoSubjects = models.GetRepoSubjects(user)
-		apiUser.RepoMetadataTypes = models.GetRepoMetadataTypes(user)
+		apiUser.RepoLanguages = models.GetRepoLanguages(ctx, user)
+		apiUser.RepoSubjects = models.GetRepoSubjects(ctx, user)
+		apiUser.RepoMetadataTypes = models.GetRepoMetadataTypes(ctx, user)
 	}
 	return apiUser
 }

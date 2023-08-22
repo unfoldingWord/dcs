@@ -4,13 +4,15 @@
 package models
 
 import (
+	"context"
+
 	"code.gitea.io/gitea/models/door43metadata"
 	user_model "code.gitea.io/gitea/models/user"
 )
 
 // GetRepoLanguages gets the languages of the user's repos and returns alphabetized list
-func GetRepoLanguages(u *user_model.User) []string {
-	fields, _ := SearchDoor43MetadataField(&door43metadata.SearchCatalogOptions{
+func GetRepoLanguages(ctx context.Context, u *user_model.User) []string {
+	fields, _ := SearchDoor43MetadataField(ctx, &door43metadata.SearchCatalogOptions{
 		Owners: []string{u.LowerName},
 		Stage:  door43metadata.StageLatest,
 	}, "language")
@@ -18,8 +20,8 @@ func GetRepoLanguages(u *user_model.User) []string {
 }
 
 // GetRepoSubjects gets the subjects of the user's repos and returns alphabetized list
-func GetRepoSubjects(u *user_model.User) []string {
-	fields, _ := SearchDoor43MetadataField(&door43metadata.SearchCatalogOptions{
+func GetRepoSubjects(ctx context.Context, u *user_model.User) []string {
+	fields, _ := SearchDoor43MetadataField(ctx, &door43metadata.SearchCatalogOptions{
 		Owners: []string{u.LowerName},
 		Stage:  door43metadata.StageLatest,
 	}, "subject")
@@ -27,8 +29,8 @@ func GetRepoSubjects(u *user_model.User) []string {
 }
 
 // GetRepoMetadataTypes gets the metadata types of the user's repos and returns alphabetized list
-func GetRepoMetadataTypes(u *user_model.User) []string {
-	fields, _ := SearchDoor43MetadataField(&door43metadata.SearchCatalogOptions{
+func GetRepoMetadataTypes(ctx context.Context, u *user_model.User) []string {
+	fields, _ := SearchDoor43MetadataField(ctx, &door43metadata.SearchCatalogOptions{
 		Owners: []string{u.LowerName},
 		Stage:  door43metadata.StageLatest,
 	}, "metadata_type")

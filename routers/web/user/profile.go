@@ -18,6 +18,7 @@ import (
 	user_model "code.gitea.io/gitea/models/user"
 	"code.gitea.io/gitea/modules/context"
 	"code.gitea.io/gitea/modules/git"
+	"code.gitea.io/gitea/modules/log"
 	"code.gitea.io/gitea/modules/markup"
 	"code.gitea.io/gitea/modules/markup/markdown"
 	"code.gitea.io/gitea/modules/setting"
@@ -365,6 +366,14 @@ func Profile(ctx *context.Context) {
 
 		total = int(count)
 	}
+	/*** DCS Customizations ***/
+	for _, repo := range repos {
+		if err := repo.LoadLatestDMs(ctx); err != nil {
+			log.Error("Error LoadLatestDMs [%s]: %v", repo.FullName(), err)
+		}
+	}
+	/*** End DCS Customizations ***/
+
 	ctx.Data["Repos"] = repos
 	ctx.Data["Total"] = total
 

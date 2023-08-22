@@ -14,6 +14,7 @@ import (
 	user_model "code.gitea.io/gitea/models/user"
 	"code.gitea.io/gitea/modules/base"
 	"code.gitea.io/gitea/modules/context"
+	"code.gitea.io/gitea/modules/log"
 	"code.gitea.io/gitea/modules/markup"
 	"code.gitea.io/gitea/modules/markup/markdown"
 	"code.gitea.io/gitea/modules/setting"
@@ -154,6 +155,12 @@ func Home(ctx *context.Context) {
 	if err != nil {
 		ctx.ServerError("SearchRepository", err)
 		return
+	}
+	/*** DCS Customizations ***/
+	for _, repo := range repos {
+		if err := repo.LoadLatestDMs(ctx); err != nil {
+			log.Error("Error LoadLatestDMs [%s]: %v", repo.FullName(), err)
+		}
 	}
 
 	opts := &organization.FindOrgMembersOpts{
