@@ -882,7 +882,7 @@ func listSingleDMField(ctx *context.APIContext, field string) {
 		opts.OrderBy = []door43metadata.CatalogOrderBy{door43metadata.CatalogOrderByLangCode, door43metadata.CatalogOrderBySubject, door43metadata.CatalogOrderByReleaseDateReverse}
 	}
 
-	results, err := models.SearchDoor43MetadataField(opts, field)
+	results, err := models.SearchDoor43MetadataField(ctx, opts, field)
 	if err != nil {
 		ctx.Error(http.StatusInternalServerError, "SearchDoor43MetadataField", err)
 		return

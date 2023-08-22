@@ -87,17 +87,13 @@ func SearchCatalogByCondition(ctx context.Context, opts *door43metadata.SearchCa
 }
 
 // SearchDoor43MetadataField returns door43metadat field based on search options
-func SearchDoor43MetadataField(opts *door43metadata.SearchCatalogOptions, field string) ([]string, error) {
+func SearchDoor43MetadataField(ctx context.Context, opts *door43metadata.SearchCatalogOptions, field string) ([]string, error) {
 	cond := door43metadata.SearchCatalogCondition(opts)
-	return SearchDoor43MetadataFieldByCondition(opts, cond, field)
+	return SearchDoor43MetadataFieldByCondition(ctx, opts, cond, field)
 }
 
 // SearchDoor43MetadataFieldByCondition search door43metadata entries by condition for a single field
-func SearchDoor43MetadataFieldByCondition(opts *door43metadata.SearchCatalogOptions, cond builder.Cond, field string) ([]string, error) {
-	return searchDoor43MetadataFieldByCondition(db.DefaultContext, opts, cond, field)
-}
-
-func searchDoor43MetadataFieldByCondition(ctx context.Context, opts *door43metadata.SearchCatalogOptions, cond builder.Cond, field string) ([]string, error) {
+func SearchDoor43MetadataFieldByCondition(ctx context.Context, opts *door43metadata.SearchCatalogOptions, cond builder.Cond, field string) ([]string, error) {
 	var results []string
 
 	if !strings.Contains(field, ".") {
