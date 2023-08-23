@@ -36,7 +36,7 @@
 						{{else if .IsMirror}}
 							<span class="gt-df" data-tooltip-content="{{$.locale.Tr "mirror"}}">{{svg "octicon-mirror"}}</span>
 						{{end}}
-					<!-- DCS Customizations -->
+						<!-- DCS Customizations -->
 						{{if .LatestProdDM}}
 							<a href="{{.Link}}/releases/tag/{{.LatestProdDM.Ref | PathEscapeSegments}}" rel="nofollow">
 								<button class="ui green label compact icon button tooltip" data-content="Catalog: Production" aria-label="Catalog: Production">

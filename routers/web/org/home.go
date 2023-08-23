@@ -162,6 +162,7 @@ func Home(ctx *context.Context) {
 			log.Error("Error LoadLatestDMs [%s]: %v", repo.FullName(), err)
 		}
 	}
+	/*** End DCS Customizations ***/
 
 	opts := &organization.FindOrgMembersOpts{
 		OrgID:       org.ID,
