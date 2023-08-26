@@ -87,7 +87,6 @@ func handleLatestStageDM(ctx context.Context, repo *repo_model.Repository, stage
 	}
 	if dm != nil && (earliestDate == nil || dm.ReleaseDateUnix > *earliestDate) {
 		dm.Stage = stage
-		dm.IncludeInCatalog = true
 		dm.IsLatestForStage = true
 		err = repo_model.UpdateDoor43MetadataCols(ctx, dm, "stage", "include_in_catalog", "is_latest_for_stage")
 		if err != nil {

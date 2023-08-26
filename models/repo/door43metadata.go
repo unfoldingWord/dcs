@@ -65,7 +65,6 @@ type Door43Metadata struct {
 	Metadata          *map[string]interface{} `xorm:"JSON"`
 	ReleaseDateUnix   timeutil.TimeStamp      `xorm:"NOT NULL"`
 	IsLatestForStage  bool                    `xorm:"INDEX"`
-	IncludeInCatalog  bool                    `xorm:"INDEX"`
 	IsRepoMetadata    bool                    `xorm:"INDEX"`
 	CreatedUnix       timeutil.TimeStamp      `xorm:"INDEX created NOT NULL"`
 	UpdatedUnix       timeutil.TimeStamp      `xorm:"INDEX updated"`
@@ -98,15 +97,14 @@ func (dm *Door43Metadata) LoadRelease(ctx context.Context) error {
 			return err
 		}
 		dm.Release = rel
+	}
+	if dm.Release != nil {
 		dm.Release.Door43Metadata = dm
-		if err := dm.LoadRepo(ctx); err != nil {
+		dm.Release.Repo = dm.Repo
+		if err := dm.Release.LoadAttributes(ctx); err != nil {
+			log.Warn("LoadRelease - calling dm.Release.loadAttributes Error: %v\n", err)
 			return err
 		}
-		dm.Release.Repo = dm.Repo
-		// if err := dm.Release.LoadAttributes(); err != nil {
-		// 	log.Warn("loadAttributes Error: %v\n", err)
-		// 	return err
-		// }
 	}
 	return nil
 }
@@ -116,7 +114,7 @@ func (dm *Door43Metadata) LoadAttributes(ctx context.Context) error {
 	if err := dm.LoadRepo(ctx); err != nil {
 		return err
 	}
-	if dm.Release == nil && dm.ReleaseID > 0 {
+	if dm.ReleaseID > 0 {
 		if err := dm.LoadRelease(ctx); err != nil {
 			log.Error("LoadRelease: %v", err)
 			return nil
