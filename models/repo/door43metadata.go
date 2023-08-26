@@ -65,7 +65,6 @@ type Door43Metadata struct {
 	Metadata          *map[string]interface{} `xorm:"JSON"`
 	ReleaseDateUnix   timeutil.TimeStamp      `xorm:"NOT NULL"`
 	IsLatestForStage  bool                    `xorm:"INDEX"`
-	IncludeInCatalog  bool                    `xorm:"INDEX"`
 	IsRepoMetadata    bool                    `xorm:"INDEX"`
 	CreatedUnix       timeutil.TimeStamp      `xorm:"INDEX created NOT NULL"`
 	UpdatedUnix       timeutil.TimeStamp      `xorm:"INDEX updated"`
