@@ -692,7 +692,7 @@ func searchCatalog(ctx *context.APIContext) {
 	}
 
 	stageStr := ctx.FormString("stage")
-	var stage door43metadata.Stage
+	stage := door43metadata.StageProd
 	if stageStr != "" {
 		var ok bool
 		stage, ok = door43metadata.StageMap[stageStr]
@@ -815,7 +815,7 @@ func searchCatalog(ctx *context.APIContext) {
 
 func listSingleDMField(ctx *context.APIContext, field string) {
 	stageStr := ctx.FormString("stage")
-	var stage door43metadata.Stage
+	stage := door43metadata.StageProd
 	if stageStr != "" {
 		var ok bool
 		stage, ok = door43metadata.StageMap[stageStr]
