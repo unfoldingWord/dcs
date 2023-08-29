@@ -508,9 +508,9 @@ func SearchRepositoryCondition(opts *SearchRepoOptions) builder.Cond {
 		door43metadata.GetOwnerCond(opts.Owners, false),
 		door43metadata.GetSubjectCond(opts.Subjects, false),
 		door43metadata.GetResourceCond(opts.Resources),
-		door43metadata.GetContentFormatCond(opts.ContentFormats, true),
+		door43metadata.GetContentFormatCond(opts.ContentFormats, false),
 		door43metadata.GetBookCond(opts.Books),
-		door43metadata.GetLanguageCond(opts.Languages, true),
+		door43metadata.GetLanguageCond(opts.Languages, false),
 		door43metadata.GetMetadataTypeCond(opts.MetadataTypes, false),
 		door43metadata.GetMetadataVersionCond(opts.MetadataVersions, false))
 	/*** EMD DCS Customizations ***/

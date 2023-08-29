@@ -161,7 +161,7 @@ func innerToRepo(ctx context.Context, repo *repo_model.Repository, permissionInR
 
 	repoAPIURL := repo.APIURL()
 
-	return ToRepoDCS(ctx, repo, isParent, &api.Repository{
+	return ToRepoDCS(ctx, repo, &api.Repository{
 		ID:                            repo.ID,
 		Owner:                         ToUserWithAccessMode(ctx, repo.Owner, permissionInRepo.AccessMode),
 		Name:                          repo.Name,

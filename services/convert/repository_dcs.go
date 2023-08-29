@@ -11,13 +11,11 @@ import (
 )
 
 // ToRepoDCS adds Door43 metadata properties to the API Repo object
-func ToRepoDCS(ctx context.Context, repo *repo_model.Repository, isParent bool, apiRepo *api.Repository) *api.Repository {
+func ToRepoDCS(ctx context.Context, repo *repo_model.Repository, apiRepo *api.Repository) *api.Repository {
 	if err := repo.LoadLatestDMs(ctx); err != nil {
 		return apiRepo
 	}
-
 	dm := repo.RepoDM
-
 	apiRepo.Title = dm.Title
 	apiRepo.Subject = dm.Subject
 	apiRepo.Language = dm.Language
@@ -28,14 +26,10 @@ func ToRepoDCS(ctx context.Context, repo *repo_model.Repository, isParent bool, 
 	apiRepo.MetadataType = dm.MetadataType
 	apiRepo.MetadataVersion = dm.MetadataVersion
 	apiRepo.Ingredients = dm.Ingredients
-
-	if isParent {
-		apiRepo.CatalogStages = &api.CatalogStages{
-			Production:    ToCatalogStage(ctx, repo.LatestProdDM),
-			PreProduction: ToCatalogStage(ctx, repo.LatestPreprodDM),
-			Latest:        ToCatalogStage(ctx, repo.DefaultBranchDM),
-		}
+	apiRepo.CatalogStages = &api.CatalogStages{
+		Production:    ToCatalogStage(ctx, repo.LatestProdDM),
+		PreProduction: ToCatalogStage(ctx, repo.LatestPreprodDM),
+		Latest:        ToCatalogStage(ctx, repo.DefaultBranchDM),
 	}
-
 	return apiRepo
 }
