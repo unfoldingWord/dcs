@@ -80,7 +80,6 @@ func Search(ctx *context.APIContext) {
 	//   description: 'specifies which release stage to be return of these stages:
 	//                "prod" - return only the production releases (default);
 	//                "preprod" - return the pre-production release if it exists instead of the production release;
-	//                "draft" - return the draft release if it exists instead of pre-production or production release;
 	//                "latest" - return the default branch (e.g. master) if it is a valid RC instead of the above'
 	//   type: string
 	// - name: subject
@@ -185,7 +184,6 @@ func SearchOwner(ctx *context.APIContext) {
 	//   description: 'specifies which release stage to be return of these stages:
 	//                "prod" - return only the production releases (default);
 	//                "preprod" - return the pre-production release if it exists instead of the production release;
-	//                "draft" - return the draft release if it exists instead of pre-production or production release;
 	//                "latest" -return the default branch (e.g. master) if it is a valid RC instead of the above'
 	//   type: string
 	// - name: subject
@@ -299,7 +297,6 @@ func SearchRepo(ctx *context.APIContext) {
 	//   description: 'specifies which release stage to be return of these stages:
 	//                "prod" - return only the production releases (default);
 	//                "preprod" - return the pre-production release if it exists instead of the production release;
-	//                "draft" - return the draft release if it exists instead of pre-production or production release;
 	//                "latest" -return the default branch (e.g. master) if it is a valid RC instead of the above'
 	//   type: string
 	// - name: subject
@@ -370,6 +367,128 @@ func SearchRepo(ctx *context.APIContext) {
 	searchCatalog(ctx)
 }
 
+// ListCatalogSingleField list the given field of the door43_metadata table that's allowed with given criteria
+func ListCatalogSingleField(ctx *context.APIContext) {
+	// swagger:operation GET /catalog/list/{field} catalog catalogListCatalogSingleField
+	// ---
+	// summary: Catalog list single field of the catalog that match the given criteria.
+	// produces:
+	// - application/json
+	// parameters:
+	// - name: field
+	//   in: path
+	//   description: field to list. field can be: owner_name, repo_full_name, metadata_type, metadata_version, resource, subject, checking_level, book
+	//   required: true
+	//   type: string
+	// - name: owner
+	//   in: query
+	//   description: list only lannguages with entries in the given owners(s). To match multiple, give the parameter multiple times or give a list comma delimited. Will perform an exact match (case insensitive) unlesss partialMatch=true
+	//   type: string
+	// - name: lang
+	//   in: query
+	//   description: list only the given languages(s) if they have entries in the catalog meeting the criteria given (e.g. way to test an language has a given owner and/or subject)
+	//   type: string
+	// - name: stage
+	//   in: query
+	//   description: 'list only languages of the given stage or lower, with low to high being:
+	//                "prod" - return only the production subjects (default);
+	//                "preprod" - return pre-production and production subjects;
+	//                "latest" - return all subjects in the catalog for all stages'
+	//   type: string
+	// - name: subject
+	//   in: query
+	//   description: field will be included for the given subject(s). Multiple resources are ORed.
+	//   type: string
+	// - name: resource
+	//   in: query
+	//   description:  field will be included for the given given resource identifier(s). Multiple resources are ORed.
+	//   type: string
+	// - name: format
+	//   in: query
+	//   description:  field will be included for the given  the given content format (usfm, text, markdown, etc.). Multiple formats are ORed.
+	//   type: string
+	// - name: checkingLevel
+	//   in: query
+	//   description: list only for languages with the given checking level(s). Can be 1, 2 or 3
+	//   type: string
+	// - name: book
+	//   in: query
+	//   description: list only languages with the given book(s) (project ids). To match multiple, give the parameter multiple times or give a list comma delimited. Will perform an exact match (case insensitive)
+	//   type: string
+	// - name: metadataType
+	//   in: query
+	//   description: list only languages with the given metadata type (e.g. rc, tc, ts, sb). . <empty> or "all" for all. Default is rc
+	//   type: string
+	// - name: metadataVersion
+	//   in: query
+	//   description: list only languages with the  given metadatay version. Does not apply if metadataType is "all" or empty
+	//   type: string
+	// - name: direction
+	//   in: query
+	//   description: list only languages of the given language direction, "ltr" or "rtl".
+	//   type: string
+	// - name: isGL
+	//   in: query
+	//   description: list only languages of they are (true) or are not (false) a gatetway language.
+	//   type: boolean
+	// - name: partialMatch
+	//   in: query
+	//   description: if true, owner, language and subject search fields will use partial match (LIKE) when querying the catalog. Default is false
+	//   type: boolean
+	// responses:
+	//   "200":
+	//     "$ref": "#/responses/StringSlice"
+	//   "422":
+	//     "$ref": "#/responses/validationError"
+
+	field := strings.ToLower(ctx.GetParams("field"))
+	switch field {
+	case "repo_full_name":
+		field = "CONCAT('`user`.name', '/', '`repository`.name') repo_full_name"
+	case "owner_name":
+		field = "`user`.name"
+	case "book":
+		field = "ingredients"
+	case "metadata_type", "metadata_version", "resource, subject", "checking_level":
+		break
+	default:
+		ctx.JSON(http.StatusBadRequest, map[string]any{
+			"ok":    false,
+			"error": fmt.Sprintf("field not allowed: %s", field),
+		})
+		return
+	}
+
+	list, err := getSingleDMFieldList(ctx, "`door43_metadata`.language")
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, map[string]any{
+			"ok":    false,
+			"error": err.Error(),
+		})
+		return
+	}
+
+	if field == "book" {
+		booksDone := map[string]bool
+		for _, ingredient := range list.([]map[string]map[string]any) {
+			if ok := booksDone[ingredient["identifier"]]; ! ok {
+				booksDone[ingredient["identifier"]] = true
+			}
+		}
+		list := make([]string, 0, len(booksDone))
+		i := 0
+		for book := range booksDone {
+	  		list[i] = book
+	  		i++
+		}
+	}
+
+	ctx.JSON(http.StatusInternalServerError, map[string]any{
+		"ok":   true,
+		"data": list,
+	})
+}
+
 // ListCatalogSubjects list the subjects available in the catalog
 func ListCatalogSubjects(ctx *context.APIContext) {
 	// swagger:operation GET /catalog/subjects catalog catalogListSubjects
@@ -391,7 +510,6 @@ func ListCatalogSubjects(ctx *context.APIContext) {
 	//   description: 'list only subjects of the given stage or lower, with low to high being:
 	//                "prod" - return only the production subjects (default);
 	//                "preprod" - return pre-production and production subjects;
-	//                "draft" - return only draft, pre-product and production subjects;
 	//                "latest" - return all subjects in the catalog for all stages'
 	//   type: string
 	// - name: subject
@@ -456,12 +574,11 @@ func ListCatalogOwners(ctx *context.APIContext) {
 	//   description: 'list only owners of the given stage or lower, with low to high being:
 	//                "prod" - return only the production subjects (default);
 	//                "preprod" - return pre-production and production subjects;
-	//                "draft" - return only draft, pre-product and production subjects;
 	//                "latest" - return all subjects in the catalog for all stages'
 	//   type: string
 	// - name: subject
 	//   in: query
-	//   description: list only owners with the the given subject(s). Multiple resources are ORed.
+	//   description: list only owners with the given subject(s). Multiple resources are ORed.
 	//   type: string
 	// - name: resource
 	//   in: query
@@ -489,11 +606,28 @@ func ListCatalogOwners(ctx *context.APIContext) {
 	//   type: string
 	// responses:
 	//   "200":
-	//     "$ref": "#/responses/StringSlice"
+	//     description: "SearchResults of a successful catalog owner search"
+	//     schema:
+	//       type: object
+	//       properties:
+	//         ok:
+	//           type: boolean
+	//         data:
+	//           type: array
+	//           items:
+	//             "$ref": "#/definitions/User"
 	//   "422":
 	//     "$ref": "#/responses/validationError"
 
-	listSingleDMField(ctx, "`user`.lower_name")
+	err := getSingleDMField(ctx, "`repository`.owner_id")
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, map[string]any{
+			"ok":    false,
+			"error": err.Error(),
+		})
+		return
+	}
+
 }
 
 // ListCatalogLanguages list the languages available in the catalog
@@ -517,12 +651,11 @@ func ListCatalogLanguages(ctx *context.APIContext) {
 	//   description: 'list only languages of the given stage or lower, with low to high being:
 	//                "prod" - return only the production subjects (default);
 	//                "preprod" - return pre-production and production subjects;
-	//                "draft" - return only draft, pre-product and production subjects;
 	//                "latest" - return all subjects in the catalog for all stages'
 	//   type: string
 	// - name: subject
 	//   in: query
-	//   description: list only languages with the the given subject(s). Multiple resources are ORed.
+	//   description: list only languages with the given subject(s). Multiple resources are ORed.
 	//   type: string
 	// - name: resource
 	//   in: query
@@ -566,7 +699,7 @@ func ListCatalogLanguages(ctx *context.APIContext) {
 	//   "422":
 	//     "$ref": "#/responses/validationError"
 
-	listSingleDMField(ctx, "`door43_metadata`.language")
+	getSingleDMFieldList(ctx, "`door43_metadata`.language")
 }
 
 // GetCatalogEntry Get the catalog entry from the given ownername, reponame and ref
@@ -614,12 +747,12 @@ func GetCatalogEntry(ctx *context.APIContext) {
 		ctx.Error(http.StatusInternalServerError, "LoadAttributes", err)
 		return
 	}
-	accessMode, err := access_model.AccessLevel(ctx, ctx.ContextUser, dm.Repo)
+	perm, err := access_model.GetUserRepoPermission(ctx, dm.Repo, ctx.ContextUser)
 	if err != nil {
 		ctx.Error(http.StatusInternalServerError, "GetUserRepoPermission", err)
 		return
 	}
-	ctx.JSON(http.StatusOK, convert.ToCatalogEntry(ctx, dm, accessMode))
+	ctx.JSON(http.StatusOK, convert.ToCatalogEntry(ctx, dm, perm))
 }
 
 // GetCatalogMetadata Get the metadata (RC 0.2 manifest) in JSON format for the given ownername, reponame and ref
@@ -782,11 +915,11 @@ func searchCatalog(ctx *context.APIContext) {
 				return
 			}
 		}
-		accessMode, err := access_model.AccessLevel(ctx, ctx.ContextUser, dm.Repo)
+		perm, err := access_model.GetUserRepoPermission(ctx, dm.Repo, ctx.ContextUser)
 		if err != nil {
 			ctx.Error(http.StatusInternalServerError, "GetUserRepoPermissions", err)
 		}
-		dmAPI := convert.ToCatalogEntry(ctx, dm, accessMode)
+		dmAPI := convert.ToCatalogEntry(ctx, dm, perm)
 		if opts.ShowIngredients == util.OptionalBoolFalse {
 			dmAPI.Ingredients = nil
 		}
@@ -813,15 +946,14 @@ func searchCatalog(ctx *context.APIContext) {
 	})
 }
 
-func listSingleDMField(ctx *context.APIContext, field string) {
+func getSingleDMFieldList(ctx *context.APIContext, field string) ([]interface{}, error) {
 	stageStr := ctx.FormString("stage")
 	stage := door43metadata.StageProd
 	if stageStr != "" {
 		var ok bool
 		stage, ok = door43metadata.StageMap[stageStr]
 		if !ok {
-			ctx.Error(http.StatusUnprocessableEntity, "", fmt.Errorf("invalid stage [%s]", stageStr))
-			return
+			return nil, fmt.Errorf("invalid stage [%s]", stageStr)
 		}
 	}
 
@@ -870,24 +1002,15 @@ func listSingleDMField(ctx *context.APIContext, field string) {
 				if orderBy, ok := searchModeMap[strings.ToLower(sortMode)]; ok {
 					opts.OrderBy = append(opts.OrderBy, orderBy)
 				} else {
-					ctx.Error(http.StatusUnprocessableEntity, "", fmt.Errorf("invalid sort mode [%s]", sortMode))
-					return
+					return nil, fmt.Errorf("invalid sort mode [%s]", sortMode)
 				}
 			}
 		} else {
-			ctx.Error(http.StatusUnprocessableEntity, "", fmt.Errorf("invalid sort order [%s]", sortOrder))
-			return
+			return nil, fmt.Errorf("invalid sort order [%s]", sortOrder)
 		}
 	} else {
 		opts.OrderBy = []door43metadata.CatalogOrderBy{door43metadata.CatalogOrderByLangCode, door43metadata.CatalogOrderBySubject, door43metadata.CatalogOrderByReleaseDateReverse}
 	}
 
-	results, err := models.SearchDoor43MetadataField(ctx, opts, field)
-	if err != nil {
-		ctx.Error(http.StatusInternalServerError, "SearchDoor43MetadataField", err)
-		return
-	}
-
-	ctx.RespHeader().Set("X-Total-Count", fmt.Sprintf("%d", len(results)))
-	ctx.JSON(http.StatusOK, results)
+	return models.SearchDoor43MetadataField(ctx, opts, field)
 }
