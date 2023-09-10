@@ -984,7 +984,7 @@
         }
       }
     },
-    "/catalog/owners": {
+    "/catalog/languages": {
       "get": {
         "produces": [
           "application/json"
@@ -992,7 +992,7 @@
         "tags": [
           "catalog"
         ],
-        "summary": "Catalog list owners",
+        "summary": "Catalog list languages",
         "operationId": "catalogListLanguages",
         "parameters": [
           {
@@ -1009,13 +1009,13 @@
           },
           {
             "type": "string",
-            "description": "list only languages of the given stage or lower, with low to high being: \"prod\" - return only the production subjects (default); \"preprod\" - return pre-production and production subjects; \"draft\" - return only draft, pre-product and production subjects; \"latest\" - return all subjects in the catalog for all stages",
+            "description": "list only languages of the given stage or lower, with low to high being: \"prod\" - return only the production subjects (default); \"preprod\" - return pre-production and production subjects; \"latest\" - return all subjects in the catalog for all stages",
             "name": "stage",
             "in": "query"
           },
           {
             "type": "string",
-            "description": "list only languages with the the given subject(s). Multiple resources are ORed.",
+            "description": "list only languages with the given subject(s). Multiple resources are ORed.",
             "name": "subject",
             "in": "query"
           },
@@ -1039,7 +1039,7 @@
           },
           {
             "type": "string",
-            "description": "list only languages with the given book(s) (project ids). To match multiple, give the parameter multiple times or give a list comma delimited. Will perform an exact match (case insensitive)",
+            "description": "list only languages with the given book(s) (ingredient identifiers). To match multiple, give the parameter multiple times or give a list comma delimited. Will perform an exact match (case insensitive)",
             "name": "book",
             "in": "query"
           },
@@ -1077,6 +1077,102 @@
         "responses": {
           "200": {
             "$ref": "#/responses/StringSlice"
+          },
+          "422": {
+            "$ref": "#/responses/validationError"
+          }
+        }
+      }
+    },
+    "/catalog/owners": {
+      "get": {
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "catalog"
+        ],
+        "summary": "Catalog list owners",
+        "operationId": "catalogListOwners",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "list only the given owners(s) if they have entries in the catalog meeting the criteria given (e.g. way to test an owner has a given language or subject)",
+            "name": "owner",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "description": "list only owners with entries in the given language(s). To match multiple, give the parameter multiple times or give a list comma delimited. Will perform an exact match (case insensitive) unlesss partialMatch=true",
+            "name": "lang",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "description": "list only owners of the given stage or lower, with low to high being: \"prod\" - return only the production subjects (default); \"preprod\" - return pre-production and production subjects; \"latest\" - return all subjects in the catalog for all stages",
+            "name": "stage",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "description": "list only owners with the given subject(s). Multiple resources are ORed.",
+            "name": "subject",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "description": "list only owners with the given resource identifier(s). Multiple resources are ORed.",
+            "name": "resource",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "description": "list only owners with the given content format (usfm, text, markdown, etc.). Multiple formats are ORed.",
+            "name": "format",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "description": "list only for owners with the given checking level(s). Can be 1, 2 or 3",
+            "name": "checkingLevel",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "description": "list only owners with the given book(s) (ingredient identifiers). To match multiple, give the parameter multiple times or give a list comma delimited. Will perform an exact match (case insensitive)",
+            "name": "book",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "description": "list only owners with the given metadata type (e.g. rc, tc, ts, sb). . \u003cempty\u003e or \"all\" for all. Default is rc",
+            "name": "metadataType",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "description": "list only owners with the  given metadatay version. Does not apply if metadataType is \"all\" or empty",
+            "name": "metadataVersion",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "SearchResults of a successful catalog owner search",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "data": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/definitions/User"
+                  }
+                },
+                "ok": {
+                  "type": "boolean"
+                }
+              }
+            }
           },
           "422": {
             "$ref": "#/responses/validationError"
@@ -1127,7 +1223,7 @@
           },
           {
             "type": "string",
-            "description": "specifies which release stage to be return of these stages: \"prod\" - return only the production releases (default); \"preprod\" - return the pre-production release if it exists instead of the production release; \"draft\" - return the draft release if it exists instead of pre-production or production release; \"latest\" - return the default branch (e.g. master) if it is a valid RC instead of the above",
+            "description": "specifies which release stage to be return of these stages: \"prod\" - return only the production releases (default); \"preprod\" - return the pre-production release if it exists instead of the production release; \"latest\" - return the default branch (e.g. master) if it is a valid RC instead of the above",
             "name": "stage",
             "in": "query"
           },
@@ -1157,7 +1253,7 @@
           },
           {
             "type": "string",
-            "description": "search only for entries with the given book(s) (project ids). To match multiple, give the parameter multiple times or give a list comma delimited. Will perform an exact match (case insensitive)",
+            "description": "search only for entries with the given book(s) (ingredient identifiers). To match multiple, give the parameter multiple times or give a list comma delimited. Will perform an exact match (case insensitive)",
             "name": "book",
             "in": "query"
           },
@@ -1270,7 +1366,7 @@
           },
           {
             "type": "string",
-            "description": "specifies which release stage to be return of these stages: \"prod\" - return only the production releases (default); \"preprod\" - return the pre-production release if it exists instead of the production release; \"draft\" - return the draft release if it exists instead of pre-production or production release; \"latest\" -return the default branch (e.g. master) if it is a valid RC instead of the above",
+            "description": "specifies which release stage to be return of these stages: \"prod\" - return only the production releases (default); \"preprod\" - return the pre-production release if it exists instead of the production release; \"latest\" -return the default branch (e.g. master) if it is a valid RC instead of the above",
             "name": "stage",
             "in": "query"
           },
@@ -1300,7 +1396,7 @@
           },
           {
             "type": "string",
-            "description": "search only for entries with the given book(s) (project ids). To match multiple, give the parameter multiple times or give a list comma delimited. Will perform an exact match (case insensitive)",
+            "description": "search only for entries with the given book(s) (ingredient identifiers). To match multiple, give the parameter multiple times or give a list comma delimited. Will perform an exact match (case insensitive)",
             "name": "book",
             "in": "query"
           },
@@ -1426,7 +1522,7 @@
           },
           {
             "type": "string",
-            "description": "specifies which release stage to be return of these stages: \"prod\" - return only the production releases (default); \"preprod\" - return the pre-production release if it exists instead of the production release; \"draft\" - return the draft release if it exists instead of pre-production or production release; \"latest\" -return the default branch (e.g. master) if it is a valid RC instead of the above",
+            "description": "specifies which release stage to be return of these stages: \"prod\" - return only the production releases (default); \"preprod\" - return the pre-production release if it exists instead of the production release; \"latest\" -return the default branch (e.g. master) if it is a valid RC instead of the above",
             "name": "stage",
             "in": "query"
           },
@@ -1456,7 +1552,7 @@
           },
           {
             "type": "string",
-            "description": "search only for entries with the given book(s) (project ids). To match multiple, give the parameter multiple times or give a list comma delimited. Will perform an exact match (case insensitive)",
+            "description": "search only for entries with the given book(s) (ingredient identifiers). To match multiple, give the parameter multiple times or give a list comma delimited. Will perform an exact match (case insensitive)",
             "name": "book",
             "in": "query"
           },
@@ -1533,8 +1629,8 @@
         "tags": [
           "catalog"
         ],
-        "summary": "Catalog list subjects",
-        "operationId": "catalogListSubjects",
+        "summary": "Catalog list metadata types",
+        "operationId": "catalogListMetadataTypes",
         "parameters": [
           {
             "type": "string",
@@ -1550,7 +1646,7 @@
           },
           {
             "type": "string",
-            "description": "list only subjects of the given stage or lower, with low to high being: \"prod\" - return only the production subjects (default); \"preprod\" - return pre-production and production subjects; \"draft\" - return only draft, pre-product and production subjects; \"latest\" - return all subjects in the catalog for all stages",
+            "description": "list only subjects of the given stage or lower, with low to high being: \"prod\" - return only the production subjects (default); \"preprod\" - return pre-production and production subjects; \"latest\" - return all subjects in the catalog for all stages",
             "name": "stage",
             "in": "query"
           },
@@ -1580,7 +1676,7 @@
           },
           {
             "type": "string",
-            "description": "list only subjects with the given book(s) (project ids). To match multiple, give the parameter multiple times or give a list comma delimited. Will perform an exact match (case insensitive)",
+            "description": "list only subjects with the given book(s) (ingredient identifiers). To match multiple, give the parameter multiple times or give a list comma delimited. Will perform an exact match (case insensitive)",
             "name": "book",
             "in": "query"
           },
