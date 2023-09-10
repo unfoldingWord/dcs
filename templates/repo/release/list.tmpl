@@ -12,10 +12,7 @@
 							<!-- DCS Customizations -->
 							{{$stage := "prod"}}
 							{{$color := "green"}}
-							{{if .IsDraft}}
-								{{$stage = "draft"}}
-								{{$color = "yellow"}}
-							{{else if .IsPrerelease}}
+							{{if .IsPrerelease}}
 								{{$stage = "preprod"}}
 								{{$color = "orange"}}
 							{{end}}

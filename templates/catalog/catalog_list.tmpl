@@ -20,10 +20,7 @@
 				{{if .Release}}
 					{{$color := "green"}}
 					{{$type := "Production"}}
-					{{if .Release.IsDraft}}
-						{{$color = "yellow"}}
-						{{$type = "Draft"}}
-					{{else if .Release.IsPrerelease}}
+					{{if .Release.IsPrerelease}}
 						{{$color = "orange"}}
 						{{$type = "Pre-Release"}}
 					{{end}}

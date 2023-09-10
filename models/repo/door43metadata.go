@@ -231,20 +231,20 @@ func (dm *Door43Metadata) GetContentsURL() string {
 	return fmt.Sprintf("%s/contents?ref=%s", dm.Repo.APIURL(), dm.Ref)
 }
 
-// GetBooks get the books of the manifest
-func (dm *Door43Metadata) GetBooks() []string {
-	var books []string
+// GetIngredientsIdentifierList get the identifiers of the igredients and returns them as a list of strings
+func (dm *Door43Metadata) GetIngredientsIdentifierList() []string {
+	var ids []string
 	if len(dm.Ingredients) > 0 {
 		for _, ing := range dm.Ingredients {
-			books = append(books, ing.Identifier)
+			ids = append(ids, ing.Identifier)
 		}
 	}
-	return books
+	return ids
 }
 
-// GetBooksString get the books of the manifest and returns as a comma-delimited string
-func (dm *Door43Metadata) GetBooksString() string {
-	books := dm.GetBooks()
+// GetIngredientsAsString get the integredients of the repo and returns the identifiers as a comma-delimited string
+func (dm *Door43Metadata) GetIngredientsAsString() string {
+	books := dm.GetIngredientsIdentifierList()
 	return strings.Join(books, ", ")
 }
 

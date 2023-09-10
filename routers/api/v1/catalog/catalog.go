@@ -80,7 +80,6 @@ func Search(ctx *context.APIContext) {
 	//   description: 'specifies which release stage to be return of these stages:
 	//                "prod" - return only the production releases (default);
 	//                "preprod" - return the pre-production release if it exists instead of the production release;
-	//                "draft" - return the draft release if it exists instead of pre-production or production release;
 	//                "latest" - return the default branch (e.g. master) if it is a valid RC instead of the above'
 	//   type: string
 	// - name: subject
@@ -101,7 +100,7 @@ func Search(ctx *context.APIContext) {
 	//   type: string
 	// - name: book
 	//   in: query
-	//   description: search only for entries with the given book(s) (project ids). To match multiple, give the parameter multiple times or give a list comma delimited. Will perform an exact match (case insensitive)
+	//   description: search only for entries with the given book(s) (ingredient identifiers). To match multiple, give the parameter multiple times or give a list comma delimited. Will perform an exact match (case insensitive)
 	//   type: string
 	// - name: metadataType
 	//   in: query
@@ -185,7 +184,6 @@ func SearchOwner(ctx *context.APIContext) {
 	//   description: 'specifies which release stage to be return of these stages:
 	//                "prod" - return only the production releases (default);
 	//                "preprod" - return the pre-production release if it exists instead of the production release;
-	//                "draft" - return the draft release if it exists instead of pre-production or production release;
 	//                "latest" -return the default branch (e.g. master) if it is a valid RC instead of the above'
 	//   type: string
 	// - name: subject
@@ -206,7 +204,7 @@ func SearchOwner(ctx *context.APIContext) {
 	//   type: string
 	// - name: book
 	//   in: query
-	//   description: search only for entries with the given book(s) (project ids). To match multiple, give the parameter multiple times or give a list comma delimited. Will perform an exact match (case insensitive)
+	//   description: search only for entries with the given book(s) (ingredient identifiers). To match multiple, give the parameter multiple times or give a list comma delimited. Will perform an exact match (case insensitive)
 	//   type: string
 	// - name: metadataType
 	//   in: query
@@ -299,7 +297,6 @@ func SearchRepo(ctx *context.APIContext) {
 	//   description: 'specifies which release stage to be return of these stages:
 	//                "prod" - return only the production releases (default);
 	//                "preprod" - return the pre-production release if it exists instead of the production release;
-	//                "draft" - return the draft release if it exists instead of pre-production or production release;
 	//                "latest" -return the default branch (e.g. master) if it is a valid RC instead of the above'
 	//   type: string
 	// - name: subject
@@ -320,7 +317,7 @@ func SearchRepo(ctx *context.APIContext) {
 	//   type: string
 	// - name: book
 	//   in: query
-	//   description: search only for entries with the given book(s) (project ids). To match multiple, give the parameter multiple times or give a list comma delimited. Will perform an exact match (case insensitive)
+	//   description: search only for entries with the given book(s) (ingredient identifiers). To match multiple, give the parameter multiple times or give a list comma delimited. Will perform an exact match (case insensitive)
 	//   type: string
 	// - name: metadataType
 	//   in: query
@@ -391,7 +388,6 @@ func ListCatalogSubjects(ctx *context.APIContext) {
 	//   description: 'list only subjects of the given stage or lower, with low to high being:
 	//                "prod" - return only the production subjects (default);
 	//                "preprod" - return pre-production and production subjects;
-	//                "draft" - return only draft, pre-product and production subjects;
 	//                "latest" - return all subjects in the catalog for all stages'
 	//   type: string
 	// - name: subject
@@ -412,7 +408,7 @@ func ListCatalogSubjects(ctx *context.APIContext) {
 	//   type: string
 	// - name: book
 	//   in: query
-	//   description: list only subjects with the given book(s) (project ids). To match multiple, give the parameter multiple times or give a list comma delimited. Will perform an exact match (case insensitive)
+	//   description: list only subjects with the given book(s) (ingredient identifiers). To match multiple, give the parameter multiple times or give a list comma delimited. Will perform an exact match (case insensitive)
 	//   type: string
 	// - name: metadataType
 	//   in: query
@@ -432,7 +428,27 @@ func ListCatalogSubjects(ctx *context.APIContext) {
 	//   "422":
 	//     "$ref": "#/responses/validationError"
 
-	listSingleDMField(ctx, "`door43_metadata`.subject")
+	opts, err := getSearchOptions(ctx)
+	if err != nil {
+		ctx.JSON(http.StatusUnprocessableEntity, map[string]any{
+			"ok":    false,
+			"error": err.Error(),
+		})
+		return
+	}
+
+	subjects, err := models.SearchCatalogSubjects(ctx, opts)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, map[string]any{
+			"ok":    false,
+			"error": err.Error(),
+		})
+		return
+	}
+	ctx.JSON(http.StatusInternalServerError, map[string]any{
+		"ok":   true,
+		"data": subjects,
+	})
 }
 
 // ListCatalogOwners list the subjects available in the catalog
@@ -456,12 +472,11 @@ func ListCatalogOwners(ctx *context.APIContext) {
 	//   description: 'list only owners of the given stage or lower, with low to high being:
 	//                "prod" - return only the production subjects (default);
 	//                "preprod" - return pre-production and production subjects;
-	//                "draft" - return only draft, pre-product and production subjects;
 	//                "latest" - return all subjects in the catalog for all stages'
 	//   type: string
 	// - name: subject
 	//   in: query
-	//   description: list only owners with the the given subject(s). Multiple resources are ORed.
+	//   description: list only owners with the given subject(s). Multiple resources are ORed.
 	//   type: string
 	// - name: resource
 	//   in: query
@@ -477,7 +492,7 @@ func ListCatalogOwners(ctx *context.APIContext) {
 	//   type: string
 	// - name: book
 	//   in: query
-	//   description: list only owners with the given book(s) (project ids). To match multiple, give the parameter multiple times or give a list comma delimited. Will perform an exact match (case insensitive)
+	//   description: list only owners with the given book(s) (ingredient identifiers). To match multiple, give the parameter multiple times or give a list comma delimited. Will perform an exact match (case insensitive)
 	//   type: string
 	// - name: metadataType
 	//   in: query
@@ -489,18 +504,47 @@ func ListCatalogOwners(ctx *context.APIContext) {
 	//   type: string
 	// responses:
 	//   "200":
-	//     "$ref": "#/responses/StringSlice"
+	//     description: "SearchResults of a successful catalog owner search"
+	//     schema:
+	//       type: object
+	//       properties:
+	//         ok:
+	//           type: boolean
+	//         data:
+	//           type: array
+	//           items:
+	//             "$ref": "#/definitions/User"
 	//   "422":
 	//     "$ref": "#/responses/validationError"
 
-	listSingleDMField(ctx, "`user`.lower_name")
+	opts, err := getSearchOptions(ctx)
+	if err != nil {
+		ctx.JSON(http.StatusUnprocessableEntity, map[string]any{
+			"ok":    false,
+			"error": err.Error(),
+		})
+		return
+	}
+
+	owners, err := models.SearchCatalogOwners(ctx, opts)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, map[string]any{
+			"ok":    false,
+			"error": err.Error(),
+		})
+		return
+	}
+	ctx.JSON(http.StatusInternalServerError, map[string]any{
+		"ok":   true,
+		"data": owners,
+	})
 }
 
 // ListCatalogLanguages list the languages available in the catalog
 func ListCatalogLanguages(ctx *context.APIContext) {
-	// swagger:operation GET /catalog/owners catalog catalogListLanguages
+	// swagger:operation GET /catalog/languages catalog catalogListLanguages
 	// ---
-	// summary: Catalog list owners
+	// summary: Catalog list languages
 	// produces:
 	// - application/json
 	// parameters:
@@ -517,12 +561,11 @@ func ListCatalogLanguages(ctx *context.APIContext) {
 	//   description: 'list only languages of the given stage or lower, with low to high being:
 	//                "prod" - return only the production subjects (default);
 	//                "preprod" - return pre-production and production subjects;
-	//                "draft" - return only draft, pre-product and production subjects;
 	//                "latest" - return all subjects in the catalog for all stages'
 	//   type: string
 	// - name: subject
 	//   in: query
-	//   description: list only languages with the the given subject(s). Multiple resources are ORed.
+	//   description: list only languages with the given subject(s). Multiple resources are ORed.
 	//   type: string
 	// - name: resource
 	//   in: query
@@ -538,7 +581,7 @@ func ListCatalogLanguages(ctx *context.APIContext) {
 	//   type: string
 	// - name: book
 	//   in: query
-	//   description: list only languages with the given book(s) (project ids). To match multiple, give the parameter multiple times or give a list comma delimited. Will perform an exact match (case insensitive)
+	//   description: list only languages with the given book(s) (ingredient identifiers). To match multiple, give the parameter multiple times or give a list comma delimited. Will perform an exact match (case insensitive)
 	//   type: string
 	// - name: metadataType
 	//   in: query
@@ -566,7 +609,111 @@ func ListCatalogLanguages(ctx *context.APIContext) {
 	//   "422":
 	//     "$ref": "#/responses/validationError"
 
-	listSingleDMField(ctx, "`door43_metadata`.language")
+	opts, err := getSearchOptions(ctx)
+	if err != nil {
+		ctx.JSON(http.StatusUnprocessableEntity, map[string]any{
+			"ok":    false,
+			"error": err.Error(),
+		})
+		return
+	}
+
+	langs, err := models.SearchCatalogLanguages(ctx, opts)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, map[string]any{
+			"ok":    false,
+			"error": err.Error(),
+		})
+		return
+	}
+	ctx.JSON(http.StatusInternalServerError, map[string]any{
+		"ok":   true,
+		"data": langs,
+	})
+}
+
+// ListCatalogMetadataTypes list the metadata types available in the catalog
+func ListCatalogMetadataTypes(ctx *context.APIContext) {
+	// swagger:operation GET /catalog/subjects catalog catalogListMetadataTypes
+	// ---
+	// summary: Catalog list metadata types
+	// produces:
+	// - application/json
+	// parameters:
+	// - name: owner
+	//   in: query
+	//   description: list only subjects in the given owner(s). To match multiple, give the parameter multiple times or give a list comma delimited.
+	//   type: string
+	// - name: lang
+	//   in: query
+	//   description: list only subjects in the given language(s). To match multiple, give the parameter multiple times or give a list comma delimited. Will perform an exact match (case insensitive) unlesss partialMatch=true
+	//   type: string
+	// - name: stage
+	//   in: query
+	//   description: 'list only subjects of the given stage or lower, with low to high being:
+	//                "prod" - return only the production subjects (default);
+	//                "preprod" - return pre-production and production subjects;
+	//                "latest" - return all subjects in the catalog for all stages'
+	//   type: string
+	// - name: subject
+	//   in: query
+	//   description: list only the given subjects if they are in the catalog meeting the criteria given (e.g. way to test a given language has the given subject)
+	//   type: string
+	// - name: resource
+	//   in: query
+	//   description: list only subjects with the given resource identifier. Multiple resources are ORed.
+	//   type: string
+	// - name: format
+	//   in: query
+	//   description: list only subjects with the given content format (usfm, text, markdown, etc.). Multiple formats are ORed.
+	//   type: string
+	// - name: checkingLevel
+	//   in: query
+	//   description: list only for subjects with the given checking level(s). Can be 1, 2 or 3
+	//   type: string
+	// - name: book
+	//   in: query
+	//   description: list only subjects with the given book(s) (ingredient identifiers). To match multiple, give the parameter multiple times or give a list comma delimited. Will perform an exact match (case insensitive)
+	//   type: string
+	// - name: metadataType
+	//   in: query
+	//   description: list only subjects with the given metadata type (e.g. rc, tc, ts, sb). . <empty> or "all" for all. Default is rc
+	//   type: string
+	// - name: metadataVersion
+	//   in: query
+	//   description: list only subjects with the  given metadatay version. Does not apply if metadataType is "all" or empty
+	//   type: string
+	// - name: partialMatch
+	//   in: query
+	//   description: if true, owner, subject and language search fields will use partial match (LIKE) when querying the catalog. Default is false
+	//   type: boolean
+	// responses:
+	//   "200":
+	//     "$ref": "#/responses/StringSlice"
+	//   "422":
+	//     "$ref": "#/responses/validationError"
+
+	opts, err := getSearchOptions(ctx)
+	if err != nil {
+		ctx.JSON(http.StatusUnprocessableEntity, map[string]any{
+			"ok":    false,
+			"error": err.Error(),
+		})
+		return
+	}
+
+	types, err := models.SearchCatalogMetadataTypes(ctx, opts)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, map[string]any{
+			"ok":    false,
+			"error": err.Error(),
+		})
+		return
+	}
+	ctx.JSON(http.StatusInternalServerError, map[string]any{
+		"ok":   true,
+		"data": types,
+	})
 }
 
 // GetCatalogEntry Get the catalog entry from the given ownername, reponame and ref
@@ -619,7 +766,7 @@ func GetCatalogEntry(ctx *context.APIContext) {
 		ctx.Error(http.StatusInternalServerError, "GetUserRepoPermission", err)
 		return
 	}
-	ctx.JSON(http.StatusOK, convert.ToCatalogEntry(ctx, dm, perm))
+	ctx.JSON(http.StatusOK, convert.ToCatalogEntry(ctx, dm, perm.AccessMode))
 }
 
 // GetCatalogMetadata Get the metadata (RC 0.2 manifest) in JSON format for the given ownername, reponame and ref
@@ -677,7 +824,7 @@ func QueryStrings(ctx *context.APIContext, name string) []string {
 	return newStrs
 }
 
-func searchCatalog(ctx *context.APIContext) {
+func getSearchOptions(ctx *context.APIContext) (*door43metadata.SearchCatalogOptions, error) {
 	var repoID int64
 	var owners, repos []string
 	if ctx.Repo.Repository != nil {
@@ -697,8 +844,7 @@ func searchCatalog(ctx *context.APIContext) {
 		var ok bool
 		stage, ok = door43metadata.StageMap[stageStr]
 		if !ok {
-			ctx.Error(http.StatusUnprocessableEntity, "", fmt.Errorf("invalid stage [%s]", stageStr))
-			return
+			return nil, fmt.Errorf("invalid stage [%s]", stageStr)
 		}
 	} else {
 		stage = door43metadata.StageProd
@@ -752,16 +898,24 @@ func searchCatalog(ctx *context.APIContext) {
 				if orderBy, ok := searchModeMap[strings.ToLower(sortMode)]; ok {
 					opts.OrderBy = append(opts.OrderBy, orderBy)
 				} else {
-					ctx.Error(http.StatusUnprocessableEntity, "", fmt.Errorf("invalid sort mode: \"%s\"", sortMode))
-					return
+					return nil, fmt.Errorf("invalid sort mode: \"%s\"", sortMode)
 				}
 			}
 		} else {
-			ctx.Error(http.StatusUnprocessableEntity, "", fmt.Errorf("invalid sort order [%s]", sortOrder))
-			return
+			return nil, fmt.Errorf("invalid sort order [%s]", sortOrder)
 		}
 	} else {
 		opts.OrderBy = []door43metadata.CatalogOrderBy{door43metadata.CatalogOrderByLangCode, door43metadata.CatalogOrderBySubject, door43metadata.CatalogOrderByReleaseDateReverse}
+	}
+
+	return opts, nil
+}
+
+func searchCatalog(ctx *context.APIContext) {
+	opts, err := getSearchOptions(ctx)
+	if err != nil {
+		ctx.Error(http.StatusUnprocessableEntity, "", err)
+		return
 	}
 
 	dms, count, err := models.SearchCatalog(ctx, opts)
@@ -786,7 +940,7 @@ func searchCatalog(ctx *context.APIContext) {
 		if err != nil {
 			ctx.Error(http.StatusInternalServerError, "GetUserRepoPermissions", err)
 		}
-		dmAPI := convert.ToCatalogEntry(ctx, dm, perm)
+		dmAPI := convert.ToCatalogEntry(ctx, dm, perm.AccessMode)
 		if opts.ShowIngredients == util.OptionalBoolFalse {
 			dmAPI.Ingredients = nil
 		}
@@ -811,83 +965,4 @@ func searchCatalog(ctx *context.APIContext) {
 		Data:        results,
 		LastUpdated: lastUpdated,
 	})
-}
-
-func listSingleDMField(ctx *context.APIContext, field string) {
-	stageStr := ctx.FormString("stage")
-	stage := door43metadata.StageProd
-	if stageStr != "" {
-		var ok bool
-		stage, ok = door43metadata.StageMap[stageStr]
-		if !ok {
-			ctx.Error(http.StatusUnprocessableEntity, "", fmt.Errorf("invalid stage [%s]", stageStr))
-			return
-		}
-	}
-
-	metadataTypes := QueryStrings(ctx, "metadataType")
-	metadataVersions := QueryStrings(ctx, "metadataVersion")
-	if len(metadataTypes) == 1 && (metadataTypes[0] == "all" || metadataTypes[0] == "") {
-		metadataTypes = []string{}
-		metadataVersions = []string{}
-	}
-
-	listOptions := db.ListOptions{
-		Page:     ctx.FormInt("page"),
-		PageSize: ctx.FormInt("limit"),
-	}
-	if listOptions.Page < 1 {
-		listOptions.Page = 1
-	}
-
-	opts := &door43metadata.SearchCatalogOptions{
-		ListOptions:      listOptions,
-		Owners:           QueryStrings(ctx, "owner"),
-		Repos:            QueryStrings(ctx, "repos"),
-		Tags:             QueryStrings(ctx, "tag"),
-		Stage:            stage,
-		Languages:        QueryStrings(ctx, "lang"),
-		Subjects:         QueryStrings(ctx, "subject"),
-		Resources:        QueryStrings(ctx, "resource"),
-		ContentFormats:   QueryStrings(ctx, "format"),
-		CheckingLevels:   QueryStrings(ctx, "checkingLevel"),
-		Books:            QueryStrings(ctx, "book"),
-		IncludeHistory:   ctx.FormBool("includeHistory"),
-		ShowIngredients:  ctx.FormOptionalBool("showIngredients"),
-		MetadataTypes:    metadataTypes,
-		MetadataVersions: metadataVersions,
-		PartialMatch:     ctx.FormBool("partialMatch"),
-	}
-
-	sortModes := QueryStrings(ctx, "sort")
-	if len(sortModes) > 0 {
-		sortOrder := ctx.FormString("order")
-		if sortOrder == "" {
-			sortOrder = "asc"
-		}
-		if searchModeMap, ok := searchOrderByMap[sortOrder]; ok {
-			for _, sortMode := range sortModes {
-				if orderBy, ok := searchModeMap[strings.ToLower(sortMode)]; ok {
-					opts.OrderBy = append(opts.OrderBy, orderBy)
-				} else {
-					ctx.Error(http.StatusUnprocessableEntity, "", fmt.Errorf("invalid sort mode [%s]", sortMode))
-					return
-				}
-			}
-		} else {
-			ctx.Error(http.StatusUnprocessableEntity, "", fmt.Errorf("invalid sort order [%s]", sortOrder))
-			return
-		}
-	} else {
-		opts.OrderBy = []door43metadata.CatalogOrderBy{door43metadata.CatalogOrderByLangCode, door43metadata.CatalogOrderBySubject, door43metadata.CatalogOrderByReleaseDateReverse}
-	}
-
-	results, err := models.SearchDoor43MetadataField(ctx, opts, field)
-	if err != nil {
-		ctx.Error(http.StatusInternalServerError, "SearchDoor43MetadataField", err)
-		return
-	}
-
-	ctx.RespHeader().Set("X-Total-Count", fmt.Sprintf("%d", len(results)))
-	ctx.JSON(http.StatusOK, results)
 }
