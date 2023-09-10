@@ -5,6 +5,7 @@ package door43metadata
 
 import (
 	"context"
+	"time"
 
 	repo_model "code.gitea.io/gitea/models/repo"
 	user_model "code.gitea.io/gitea/models/user"
@@ -62,6 +63,7 @@ func (m *metadataNotifier) NotifyDeleteRelease(ctx context.Context, doer *user_m
 
 func (m *metadataNotifier) NotifyPushCommits(ctx context.Context, pusher *user_model.User, repo *repo_model.Repository, opts *repository.PushUpdateOptions, commits *repository.PushCommits) {
 	if opts.RefFullName.IsBranch() {
+		time.Sleep(2 * time.Second)
 		ref := opts.RefFullName.BranchName()
 		if err := door43metadata_service.ProcessDoor43MetadataForRepo(ctx, repo, ref); err != nil {
 			log.Error("NotifyPushCommits: ProcessDoor43MetadataForRepo failed [%s, %s]: %v", repo.FullName(), ref, err)
@@ -71,6 +73,7 @@ func (m *metadataNotifier) NotifyPushCommits(ctx context.Context, pusher *user_m
 
 func (m *metadataNotifier) NotifySyncPushCommits(ctx context.Context, pusher *user_model.User, repo *repo_model.Repository, opts *repository.PushUpdateOptions, commits *repository.PushCommits) {
 	if opts.RefFullName.IsBranch() {
+		time.Sleep(2 * time.Second)
 		ref := opts.RefFullName.BranchName()
 		if err := door43metadata_service.ProcessDoor43MetadataForRepo(ctx, repo, ref); err != nil {
 			log.Error("NotifyPushCommits: ProcessDoor43MetadataForRepo failed [%s, %s]: %v", repo.FullName(), ref, err)
