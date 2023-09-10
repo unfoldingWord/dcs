@@ -6,7 +6,6 @@ package catalog
 import (
 	"fmt"
 	"net/http"
-	"sort"
 	"strings"
 	"time"
 
@@ -438,7 +437,7 @@ func ListCatalogSubjects(ctx *context.APIContext) {
 		return
 	}
 
-	dms, _, err := models.SearchCatalog(ctx, opts)
+	subjects, err := models.SearchCatalogSubjects(ctx, opts)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, map[string]any{
 			"ok":    false,
@@ -446,19 +445,9 @@ func ListCatalogSubjects(ctx *context.APIContext) {
 		})
 		return
 	}
-
-	var fieldMap map[string]bool
-	for _, dm := range dms {
-		fieldMap[dm.Subject] = true
-	}
-	keys := make([]string, 0, len(fieldMap))
-	for k := range fieldMap {
-		keys = append(keys, k)
-	}
-	sort.Strings(keys)
 	ctx.JSON(http.StatusInternalServerError, map[string]any{
 		"ok":   true,
-		"data": keys,
+		"data": subjects,
 	})
 }
 
@@ -537,7 +526,7 @@ func ListCatalogOwners(ctx *context.APIContext) {
 		return
 	}
 
-	dms, _, err := models.SearchCatalog(ctx, opts)
+	owners, err := models.SearchCatalogOwners(ctx, opts)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, map[string]any{
 			"ok":    false,
@@ -545,33 +534,17 @@ func ListCatalogOwners(ctx *context.APIContext) {
 		})
 		return
 	}
-
-	var fieldMap map[string]bool
-	for _, dm := range dms {
-		if err := dm.LoadRepo(ctx); err != nil || dm.Repo == nil {
-			continue
-		}
-		if err := dm.Repo.LoadOwner(ctx); err != nil || dm.Repo.Owner == nil {
-			continue
-		}
-		fieldMap[dm.Repo.Owner.Name] = true
-	}
-	keys := make([]string, 0, len(fieldMap))
-	for k := range fieldMap {
-		keys = append(keys, k)
-	}
-	sort.Strings(keys)
 	ctx.JSON(http.StatusInternalServerError, map[string]any{
 		"ok":   true,
-		"data": keys,
+		"data": owners,
 	})
 }
 
 // ListCatalogLanguages list the languages available in the catalog
 func ListCatalogLanguages(ctx *context.APIContext) {
-	// swagger:operation GET /catalog/owners catalog catalogListLanguages
+	// swagger:operation GET /catalog/languages catalog catalogListLanguages
 	// ---
-	// summary: Catalog list owners
+	// summary: Catalog list languages
 	// produces:
 	// - application/json
 	// parameters:
@@ -645,7 +618,7 @@ func ListCatalogLanguages(ctx *context.APIContext) {
 		return
 	}
 
-	dms, _, err := models.SearchCatalog(ctx, opts)
+	langs, err := models.SearchCatalogLanguages(ctx, opts)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, map[string]any{
 			"ok":    false,
@@ -653,19 +626,93 @@ func ListCatalogLanguages(ctx *context.APIContext) {
 		})
 		return
 	}
-
-	var fieldMap map[string]bool
-	for _, dm := range dms {
-		fieldMap[dm.Language] = true
-	}
-	keys := make([]string, 0, len(fieldMap))
-	for k := range fieldMap {
-		keys = append(keys, k)
-	}
-	sort.Strings(keys)
 	ctx.JSON(http.StatusInternalServerError, map[string]any{
 		"ok":   true,
-		"data": keys,
+		"data": langs,
+	})
+}
+
+// ListCatalogMetadataTypes list the metadata types available in the catalog
+func ListCatalogMetadataTypes(ctx *context.APIContext) {
+	// swagger:operation GET /catalog/subjects catalog catalogListMetadataTypes
+	// ---
+	// summary: Catalog list metadata types
+	// produces:
+	// - application/json
+	// parameters:
+	// - name: owner
+	//   in: query
+	//   description: list only subjects in the given owner(s). To match multiple, give the parameter multiple times or give a list comma delimited.
+	//   type: string
+	// - name: lang
+	//   in: query
+	//   description: list only subjects in the given language(s). To match multiple, give the parameter multiple times or give a list comma delimited. Will perform an exact match (case insensitive) unlesss partialMatch=true
+	//   type: string
+	// - name: stage
+	//   in: query
+	//   description: 'list only subjects of the given stage or lower, with low to high being:
+	//                "prod" - return only the production subjects (default);
+	//                "preprod" - return pre-production and production subjects;
+	//                "latest" - return all subjects in the catalog for all stages'
+	//   type: string
+	// - name: subject
+	//   in: query
+	//   description: list only the given subjects if they are in the catalog meeting the criteria given (e.g. way to test a given language has the given subject)
+	//   type: string
+	// - name: resource
+	//   in: query
+	//   description: list only subjects with the given resource identifier. Multiple resources are ORed.
+	//   type: string
+	// - name: format
+	//   in: query
+	//   description: list only subjects with the given content format (usfm, text, markdown, etc.). Multiple formats are ORed.
+	//   type: string
+	// - name: checkingLevel
+	//   in: query
+	//   description: list only for subjects with the given checking level(s). Can be 1, 2 or 3
+	//   type: string
+	// - name: book
+	//   in: query
+	//   description: list only subjects with the given book(s) (ingredient identifiers). To match multiple, give the parameter multiple times or give a list comma delimited. Will perform an exact match (case insensitive)
+	//   type: string
+	// - name: metadataType
+	//   in: query
+	//   description: list only subjects with the given metadata type (e.g. rc, tc, ts, sb). . <empty> or "all" for all. Default is rc
+	//   type: string
+	// - name: metadataVersion
+	//   in: query
+	//   description: list only subjects with the  given metadatay version. Does not apply if metadataType is "all" or empty
+	//   type: string
+	// - name: partialMatch
+	//   in: query
+	//   description: if true, owner, subject and language search fields will use partial match (LIKE) when querying the catalog. Default is false
+	//   type: boolean
+	// responses:
+	//   "200":
+	//     "$ref": "#/responses/StringSlice"
+	//   "422":
+	//     "$ref": "#/responses/validationError"
+
+	opts, err := getSearchOptions(ctx)
+	if err != nil {
+		ctx.JSON(http.StatusUnprocessableEntity, map[string]any{
+			"ok":    false,
+			"error": err.Error(),
+		})
+		return
+	}
+
+	types, err := models.SearchCatalogMetadataTypes(ctx, opts)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, map[string]any{
+			"ok":    false,
+			"error": err.Error(),
+		})
+		return
+	}
+	ctx.JSON(http.StatusInternalServerError, map[string]any{
+		"ok":   true,
+		"data": types,
 	})
 }
 

@@ -1406,6 +1406,7 @@ func Routes(ctx gocontext.Context) *web.Route {
 				m.Get("/subjects", catalog.ListCatalogSubjects)
 				m.Get("/owners", catalog.ListCatalogOwners)
 				m.Get("/languages", catalog.ListCatalogLanguages)
+				m.Get("/metadata-types", catalog.ListCatalogMetadataTypes)
 			})
 			m.Group("/search", func() {
 				m.Get("", catalog.Search)
