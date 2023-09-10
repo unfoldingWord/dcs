@@ -16,7 +16,11 @@ func GetRepoLanguages(ctx context.Context, u *user_model.User) []string {
 		Owners: []string{u.LowerName},
 		Stage:  door43metadata.StageLatest,
 	}, "language")
-	return fields
+	langs := make([]string, len(fields))
+	for i, v := range fields {
+		langs[i] = v.(string)
+	}
+	return langs
 }
 
 // GetRepoSubjects gets the subjects of the user's repos and returns alphabetized list
@@ -25,7 +29,11 @@ func GetRepoSubjects(ctx context.Context, u *user_model.User) []string {
 		Owners: []string{u.LowerName},
 		Stage:  door43metadata.StageLatest,
 	}, "subject")
-	return fields
+	subs := make([]string, len(fields))
+	for i, v := range fields {
+		subs[i] = v.(string)
+	}
+	return subs
 }
 
 // GetRepoMetadataTypes gets the metadata types of the user's repos and returns alphabetized list
@@ -34,5 +42,9 @@ func GetRepoMetadataTypes(ctx context.Context, u *user_model.User) []string {
 		Owners: []string{u.LowerName},
 		Stage:  door43metadata.StageLatest,
 	}, "metadata_type")
-	return fields
+	types := make([]string, len(fields))
+	for i, v := range fields {
+		types[i] = v.(string)
+	}
+	return types
 }

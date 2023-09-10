@@ -83,7 +83,7 @@ func ToCatalogEntry(ctx context.Context, dm *repo.Door43Metadata, mode perm.Acce
 		MetadataJSONURL:        dm.GetMetadataJSONURL(),
 		MetadataAPIContentsURL: dm.GetMetadataAPIContentsURL(),
 		Ingredients:            dm.Ingredients,
-		Books:                  dm.GetBooks(),
+		Books:                  dm.GetIngredientsIdentifierList(),
 		ContentFormat:          dm.ContentFormat,
 	}
 }
