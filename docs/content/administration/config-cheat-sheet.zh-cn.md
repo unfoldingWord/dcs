@@ -98,7 +98,7 @@ menu:
 - `SSL_MODE`: MySQL 或 PostgreSQL数据库是否启用SSL模式。
 - `CHARSET`: **utf8mb4**: 仅当数据库为 MySQL 时有效, 可以为 "utf8" 或 "utf8mb4"。注意：如果使用 "utf8mb4"，你的 MySQL InnoDB 版本必须在 5.6 以上。
 - `PATH`: SQLite3 数据文件存放路径。
-- `LOG_SQL`: **true**: 显示生成的SQL，默认为真。
+- `LOG_SQL`: **false**: 显示生成的SQL，默认为真。
 - `MAX_IDLE_CONNS` **0**: 最大空闲数据库连接
 - `CONN_MAX_LIFETIME` **3s**: 数据库连接最大存活时间
 
@@ -200,7 +200,7 @@ menu:
 
 - `PROVIDER`: Session 内容存储方式，可选 `memory`, `file`, `redis` 或 `mysql`。
 - `PROVIDER_CONFIG`: 如果是文件，那么这里填根目录；其他的要填主机地址和端口。
-- `COOKIE_SECURE`: 强制使用 HTTPS 作为session访问。
+- `COOKIE_SECURE`: **_empty_**：`true` 或 `false`。启用此选项以强制在所有会话访问中使用 HTTPS。如果没有设置，当 ROOT_URL 是 https 链接的时候默认设置为 true。
 - `GC_INTERVAL_TIME`: Session失效时间。
 
 ## Picture (`picture`)
