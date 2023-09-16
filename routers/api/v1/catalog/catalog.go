@@ -1171,6 +1171,7 @@ func searchCatalog(ctx *context.APIContext) {
 		accessMode, err := access_model.AccessLevel(ctx, ctx.ContextUser, dm.Repo)
 		if err != nil {
 			ctx.Error(http.StatusInternalServerError, "GetUserRepoPermissions", err)
+			return
 		}
 		dmAPI := convert.ToCatalogEntry(ctx, dm, accessMode)
 		if opts.ShowIngredients == util.OptionalBoolFalse {
