@@ -27,3 +27,10 @@ type swaggerResponseCatalogMetadata struct {
 	// in:body
 	Body map[string]interface{} `json:"body"`
 }
+
+// Language
+// swagger:response Language
+type swaggerResponseLanguage struct {
+	// in:body
+	Body map[string]interface{} `json:"body"`
+}

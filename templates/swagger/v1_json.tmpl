@@ -370,12 +370,6 @@
         "operationId": "adminGetAllOrgs",
         "parameters": [
           {
-            "type": "string",
-            "description": "If the org has one or more repos with the given language(s), the org will be in the results. Multiple lang's are ORed.",
-            "name": "lang",
-            "in": "query"
-          },
-          {
             "type": "integer",
             "description": "page number of results to return (1-based)",
             "name": "page",
@@ -533,12 +527,6 @@
             "type": "string",
             "description": "user's login name to search for",
             "name": "login_name",
-            "in": "query"
-          },
-          {
-            "type": "string",
-            "description": "If the user has one or more repos with the given language(s), the org will be in the results. Multiple lang's are ORed.",
-            "name": "lang",
             "in": "query"
           },
           {
@@ -903,7 +891,7 @@
         "tags": [
           "catalog"
         ],
-        "summary": "Catalog entry",
+        "summary": "Get a catalog entry",
         "operationId": "catalogGetEntry",
         "parameters": [
           {
@@ -946,7 +934,7 @@
         "tags": [
           "catalog"
         ],
-        "summary": "Catalog entry metadata (manifest.yaml in JSON format)",
+        "summary": "Get the metdata metadata (metadata.json or manifest.yaml in JSON format) of a catalog entry",
         "operationId": "catalogGetMetadata",
         "parameters": [
           {
@@ -981,7 +969,7 @@
         }
       }
     },
-    "/catalog/languages": {
+    "/catalog/list/languages": {
       "get": {
         "produces": [
           "application/json"
@@ -989,79 +977,181 @@
         "tags": [
           "catalog"
         ],
-        "summary": "Catalog list languages",
+        "summary": "List languages in the catalog based on the given criteria",
         "operationId": "catalogListLanguages",
         "parameters": [
           {
             "type": "string",
-            "description": "list only lannguages with entries in the given owners(s). To match multiple, give the parameter multiple times or give a list comma delimited. Will perform an exact match (case insensitive) unlesss partialMatch=true",
+            "description": "list only those with the given owners(s). To match multiple, give the parameter multiple times or give a list comma delimited. Will perform an exact match (case insensitive) unlesss partialMatch=true",
             "name": "owner",
             "in": "query"
           },
           {
-            "type": "string",
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "collectionFormat": "multi",
             "description": "list only the given languages(s) if they have entries in the catalog meeting the criteria given (e.g. way to test an language has a given owner and/or subject)",
             "name": "lang",
             "in": "query"
           },
           {
-            "type": "string",
-            "description": "list only languages of the given stage or lower, with low to high being: \"prod\" - return only the production subjects (default); \"preprod\" - return pre-production and production subjects; \"latest\" - return all subjects in the catalog for all stages",
+            "type": "boolean",
+            "description": "search only entries that are a gateway language",
+            "name": "is_gl",
+            "in": "query"
+          },
+          {
+            "type": "array",
+            "items": {
+              "enum": [
+                "prod",
+                "preprod",
+                "latest"
+              ],
+              "type": "string"
+            },
+            "collectionFormat": "multi",
+            "description": "list only those of the given stage or lower, with low to high being: \"prod\" - return only the production subjects (default); \"preprod\" - return pre-production and production subjects; \"latest\" - return all subjects in the catalog for all stages",
             "name": "stage",
             "in": "query"
           },
           {
-            "type": "string",
-            "description": "list only languages with the given subject(s). Multiple resources are ORed.",
+            "type": "array",
+            "items": {
+              "enum": [
+                "Aligned Bible",
+                "Aramaic Grammar",
+                "Bible",
+                "Greek Grammar",
+                "Greek Lexicon",
+                "Greek New Testament",
+                "Hebrew Grammar",
+                "Hebrew Old Testament",
+                "Hebrew-Aramaic Lexicon",
+                "OBS Study Notes",
+                "OBS Study Questions",
+                "OBS Translation Notes",
+                "OBS Translation Questions",
+                "Open Bible Stories",
+                "Study Notes",
+                "Study Questions",
+                "Training Library",
+                "Translation Academy",
+                "Translation Notes",
+                "Translation Questions",
+                "Translation Words",
+                "TSV Study Notes",
+                "TSV Study Questions",
+                "TSV Translation Notes",
+                "TSV Translation Questions",
+                "TSV Translation Words Links",
+                "TSV OBS Study Notes",
+                "TSV OBS Study Questions",
+                "TSV OBS Translation Notes",
+                "TSV OBS Translation Questions",
+                "TSV OBS Translation Words Links"
+              ],
+              "type": "string"
+            },
+            "collectionFormat": "multi",
+            "description": "list only the those if they are in the catalog meeting the criteria given (e.g. way to test a given language has the given subject)",
             "name": "subject",
             "in": "query"
           },
           {
-            "type": "string",
-            "description": "list only languages with the given resource identifier(s). Multiple resources are ORed.",
+            "type": "array",
+            "items": {
+              "enum": [
+                "glt",
+                "gst",
+                "obs",
+                "obs-sn",
+                "obs-sq",
+                "obs-tn",
+                "obs-tq",
+                "obs-twl",
+                "sn",
+                "sq",
+                "ta",
+                "tn",
+                "tq",
+                "tw",
+                "twl",
+                "ugnt",
+                "uhb",
+                "ult",
+                "ust"
+              ],
+              "type": "string"
+            },
+            "collectionFormat": "multi",
+            "description": "list only those with the given resource identifier. Multiple resources are ORed.",
             "name": "resource",
             "in": "query"
           },
           {
             "type": "string",
-            "description": "list only languages with the given content format (usfm, text, markdown, etc.). Multiple formats are ORed.",
+            "description": "list only those with the given content format (usfm, text, markdown, etc.). Multiple formats are ORed.",
             "name": "format",
             "in": "query"
           },
           {
-            "type": "string",
-            "description": "list only for languages with the given checking level(s). Can be 1, 2 or 3",
+            "type": "array",
+            "items": {
+              "enum": [
+                1,
+                2,
+                3
+              ],
+              "type": "string"
+            },
+            "collectionFormat": "multi",
+            "description": "list only those with the given checking level(s)",
             "name": "checkingLevel",
             "in": "query"
           },
           {
-            "type": "string",
-            "description": "list only languages with the given book(s) (ingredient identifiers). To match multiple, give the parameter multiple times or give a list comma delimited. Will perform an exact match (case insensitive)",
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "collectionFormat": "multi",
+            "description": "list only those with the given book(s) (ingredient identifiers). To match multiple, give the parameter multiple times or give a list comma delimited. Will perform an exact match (case insensitive)",
             "name": "book",
             "in": "query"
           },
           {
-            "type": "string",
-            "description": "list only languages with the given metadata type (e.g. rc, tc, ts, sb). . \u003cempty\u003e or \"all\" for all. Default is rc",
+            "type": "array",
+            "items": {
+              "enum": [
+                "rc",
+                "sb",
+                "tc",
+                "ts"
+              ],
+              "type": "string"
+            },
+            "collectionFormat": "multi",
+            "description": "list only those with the given metadata type",
             "name": "metadataType",
             "in": "query"
           },
           {
-            "type": "string",
-            "description": "list only languages with the  given metadatay version. Does not apply if metadataType is \"all\" or empty",
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "collectionFormat": "multi",
+            "description": "list only those with the given metadatay version. Does not apply if metadataType is not given",
             "name": "metadataVersion",
             "in": "query"
           },
           {
-            "type": "string",
-            "description": "list only languages of the given language direction, \"ltr\" or \"rtl\".",
-            "name": "direction",
-            "in": "query"
-          },
-          {
             "type": "boolean",
-            "description": "list only languages of they are (true) or are not (false) a gatetway language.",
-            "name": "isGL",
+            "description": "list only those that are (true) or are not (false) a gatetway language.",
+            "name": "is_gl",
             "in": "query"
           },
           {
@@ -1073,15 +1163,26 @@
         ],
         "responses": {
           "200": {
-            "$ref": "#/responses/StringSlice"
-          },
-          "422": {
-            "$ref": "#/responses/validationError"
+            "description": "SearchResults of a successful catalog owner search",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "data": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/responses/Language"
+                  }
+                },
+                "ok": {
+                  "type": "boolean"
+                }
+              }
+            }
           }
         }
       }
     },
-    "/catalog/owners": {
+    "/catalog/list/metadata-types": {
       "get": {
         "produces": [
           "application/json"
@@ -1089,7 +1190,214 @@
         "tags": [
           "catalog"
         ],
-        "summary": "Catalog list owners",
+        "summary": "List of metadata types in the catalog based on the given criteria",
+        "operationId": "catalogListMetadataTypes",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "list only subjects in the given owner(s). To match multiple, give the parameter multiple times or give a list comma delimited.",
+            "name": "owner",
+            "in": "query"
+          },
+          {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "collectionFormat": "multi",
+            "description": "list only subjects in the given language(s). To match multiple, give the parameter multiple times or give a list comma delimited. Will perform an exact match (case insensitive) unlesss partialMatch=true",
+            "name": "lang",
+            "in": "query"
+          },
+          {
+            "type": "boolean",
+            "description": "search only entries that are a gateway language",
+            "name": "is_gl",
+            "in": "query"
+          },
+          {
+            "type": "array",
+            "items": {
+              "enum": [
+                "prod",
+                "preprod",
+                "latest"
+              ],
+              "type": "string"
+            },
+            "collectionFormat": "multi",
+            "description": "list only those of the given stage or lower, with low to high being: \"prod\" - return only the production subjects (default); \"preprod\" - return pre-production and production subjects; \"latest\" - return all subjects in the catalog for all stages",
+            "name": "stage",
+            "in": "query"
+          },
+          {
+            "type": "array",
+            "items": {
+              "enum": [
+                "Aligned Bible",
+                "Aramaic Grammar",
+                "Bible",
+                "Greek Grammar",
+                "Greek Lexicon",
+                "Greek New Testament",
+                "Hebrew Grammar",
+                "Hebrew Old Testament",
+                "Hebrew-Aramaic Lexicon",
+                "OBS Study Notes",
+                "OBS Study Questions",
+                "OBS Translation Notes",
+                "OBS Translation Questions",
+                "Open Bible Stories",
+                "Study Notes",
+                "Study Questions",
+                "Training Library",
+                "Translation Academy",
+                "Translation Notes",
+                "Translation Questions",
+                "Translation Words",
+                "TSV Study Notes",
+                "TSV Study Questions",
+                "TSV Translation Notes",
+                "TSV Translation Questions",
+                "TSV Translation Words Links",
+                "TSV OBS Study Notes",
+                "TSV OBS Study Questions",
+                "TSV OBS Translation Notes",
+                "TSV OBS Translation Questions",
+                "TSV OBS Translation Words Links"
+              ],
+              "type": "string"
+            },
+            "collectionFormat": "multi",
+            "description": "list only the those if they are in the catalog meeting the criteria given (e.g. way to test a given language has the given subject)",
+            "name": "subject",
+            "in": "query"
+          },
+          {
+            "type": "array",
+            "items": {
+              "enum": [
+                "glt",
+                "gst",
+                "obs",
+                "obs-sn",
+                "obs-sq",
+                "obs-tn",
+                "obs-tq",
+                "obs-twl",
+                "sn",
+                "sq",
+                "ta",
+                "tn",
+                "tq",
+                "tw",
+                "twl",
+                "ugnt",
+                "uhb",
+                "ult",
+                "ust"
+              ],
+              "type": "string"
+            },
+            "collectionFormat": "multi",
+            "description": "list only those with the given resource identifier. Multiple resources are ORed.",
+            "name": "resource",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "description": "list only those with the given content format (usfm, text, markdown, etc.). Multiple formats are ORed.",
+            "name": "format",
+            "in": "query"
+          },
+          {
+            "type": "array",
+            "items": {
+              "enum": [
+                1,
+                2,
+                3
+              ],
+              "type": "string"
+            },
+            "collectionFormat": "multi",
+            "description": "list only those with the given checking level(s)",
+            "name": "checkingLevel",
+            "in": "query"
+          },
+          {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "collectionFormat": "multi",
+            "description": "list only those with the given book(s) (ingredient identifiers). To match multiple, give the parameter multiple times or give a list comma delimited. Will perform an exact match (case insensitive)",
+            "name": "book",
+            "in": "query"
+          },
+          {
+            "type": "array",
+            "items": {
+              "enum": [
+                "rc",
+                "sb",
+                "tc",
+                "ts"
+              ],
+              "type": "string"
+            },
+            "collectionFormat": "multi",
+            "description": "list only those with the given metadata type",
+            "name": "metadataType",
+            "in": "query"
+          },
+          {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "collectionFormat": "multi",
+            "description": "list only those with the given metadatay version. Does not apply if metadataType is not given",
+            "name": "metadataVersion",
+            "in": "query"
+          },
+          {
+            "type": "boolean",
+            "description": "if true, owner, subject and language search fields will use partial match (LIKE) when querying the catalog. Default is false",
+            "name": "partialMatch",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "SearchResults of a successful catalog owner search",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "data": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/responses/StringSlice"
+                  }
+                },
+                "ok": {
+                  "type": "boolean"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/catalog/list/owners": {
+      "get": {
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "catalog"
+        ],
+        "summary": "List owners in the catalog based on the given criteria",
         "operationId": "catalogListOwners",
         "parameters": [
           {
@@ -1099,56 +1407,164 @@
             "in": "query"
           },
           {
-            "type": "string",
-            "description": "list only owners with entries in the given language(s). To match multiple, give the parameter multiple times or give a list comma delimited. Will perform an exact match (case insensitive) unlesss partialMatch=true",
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "collectionFormat": "multi",
+            "description": "list only those with entries in the given language(s). To match multiple, give the parameter multiple times or give a list comma delimited. Will perform an exact match (case insensitive) unlesss partialMatch=true",
             "name": "lang",
             "in": "query"
           },
           {
-            "type": "string",
-            "description": "list only owners of the given stage or lower, with low to high being: \"prod\" - return only the production subjects (default); \"preprod\" - return pre-production and production subjects; \"latest\" - return all subjects in the catalog for all stages",
+            "type": "boolean",
+            "description": "search only entries that are a gateway language",
+            "name": "is_gl",
+            "in": "query"
+          },
+          {
+            "type": "array",
+            "items": {
+              "enum": [
+                "prod",
+                "preprod",
+                "latest"
+              ],
+              "type": "string"
+            },
+            "collectionFormat": "multi",
+            "description": "list only those of the given stage or lower, with low to high being: \"prod\" - return only the production subjects (default); \"preprod\" - return pre-production and production subjects; \"latest\" - return all subjects in the catalog for all stages",
             "name": "stage",
             "in": "query"
           },
           {
-            "type": "string",
-            "description": "list only owners with the given subject(s). Multiple resources are ORed.",
+            "type": "array",
+            "items": {
+              "enum": [
+                "Aligned Bible",
+                "Aramaic Grammar",
+                "Bible",
+                "Greek Grammar",
+                "Greek Lexicon",
+                "Greek New Testament",
+                "Hebrew Grammar",
+                "Hebrew Old Testament",
+                "Hebrew-Aramaic Lexicon",
+                "OBS Study Notes",
+                "OBS Study Questions",
+                "OBS Translation Notes",
+                "OBS Translation Questions",
+                "Open Bible Stories",
+                "Study Notes",
+                "Study Questions",
+                "Training Library",
+                "Translation Academy",
+                "Translation Notes",
+                "Translation Questions",
+                "Translation Words",
+                "TSV Study Notes",
+                "TSV Study Questions",
+                "TSV Translation Notes",
+                "TSV Translation Questions",
+                "TSV Translation Words Links",
+                "TSV OBS Study Notes",
+                "TSV OBS Study Questions",
+                "TSV OBS Translation Notes",
+                "TSV OBS Translation Questions",
+                "TSV OBS Translation Words Links"
+              ],
+              "type": "string"
+            },
+            "collectionFormat": "multi",
+            "description": "list only the those if they are in the catalog meeting the criteria given (e.g. way to test a given language has the given subject)",
             "name": "subject",
             "in": "query"
           },
           {
-            "type": "string",
-            "description": "list only owners with the given resource identifier(s). Multiple resources are ORed.",
+            "type": "array",
+            "items": {
+              "enum": [
+                "glt",
+                "gst",
+                "obs",
+                "obs-sn",
+                "obs-sq",
+                "obs-tn",
+                "obs-tq",
+                "obs-twl",
+                "sn",
+                "sq",
+                "ta",
+                "tn",
+                "tq",
+                "tw",
+                "twl",
+                "ugnt",
+                "uhb",
+                "ult",
+                "ust"
+              ],
+              "type": "string"
+            },
+            "collectionFormat": "multi",
+            "description": "list only those with the given resource identifier. Multiple resources are ORed.",
             "name": "resource",
             "in": "query"
           },
           {
             "type": "string",
-            "description": "list only owners with the given content format (usfm, text, markdown, etc.). Multiple formats are ORed.",
+            "description": "list only those with the given content format (usfm, text, markdown, etc.). Multiple formats are ORed.",
             "name": "format",
             "in": "query"
           },
           {
-            "type": "string",
-            "description": "list only for owners with the given checking level(s). Can be 1, 2 or 3",
+            "type": "array",
+            "items": {
+              "enum": [
+                1,
+                2,
+                3
+              ],
+              "type": "string"
+            },
+            "collectionFormat": "multi",
+            "description": "list only those with the given checking level(s)",
             "name": "checkingLevel",
             "in": "query"
           },
           {
-            "type": "string",
-            "description": "list only owners with the given book(s) (ingredient identifiers). To match multiple, give the parameter multiple times or give a list comma delimited. Will perform an exact match (case insensitive)",
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "collectionFormat": "multi",
+            "description": "list only those with the given book(s) (ingredient identifiers). To match multiple, give the parameter multiple times or give a list comma delimited. Will perform an exact match (case insensitive)",
             "name": "book",
             "in": "query"
           },
           {
-            "type": "string",
-            "description": "list only owners with the given metadata type (e.g. rc, tc, ts, sb). . \u003cempty\u003e or \"all\" for all. Default is rc",
+            "type": "array",
+            "items": {
+              "enum": [
+                "rc",
+                "sb",
+                "tc",
+                "ts"
+              ],
+              "type": "string"
+            },
+            "collectionFormat": "multi",
+            "description": "list only those with the given metadata type",
             "name": "metadataType",
             "in": "query"
           },
           {
-            "type": "string",
-            "description": "list only owners with the  given metadatay version. Does not apply if metadataType is \"all\" or empty",
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "collectionFormat": "multi",
+            "description": "list only those with the given metadatay version. Does not apply if metadataType is not given",
             "name": "metadataVersion",
             "in": "query"
           }
@@ -1162,7 +1578,7 @@
                 "data": {
                   "type": "array",
                   "items": {
-                    "$ref": "#/definitions/User"
+                    "$ref": "#/responses/StringSlice"
                   }
                 },
                 "ok": {
@@ -1170,9 +1586,213 @@
                 }
               }
             }
+          }
+        }
+      }
+    },
+    "/catalog/list/subjects": {
+      "get": {
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "catalog"
+        ],
+        "summary": "List of subjects in the catalog based on the given criteria",
+        "operationId": "catalogListSubjects",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "list only subjects in the given owner(s). To match multiple, give the parameter multiple times or give a list comma delimited.",
+            "name": "owner",
+            "in": "query"
           },
-          "422": {
-            "$ref": "#/responses/validationError"
+          {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "collectionFormat": "multi",
+            "description": "list only subjects in the given language(s). To match multiple, give the parameter multiple times or give a list comma delimited. Will perform an exact match (case insensitive) unlesss partialMatch=true",
+            "name": "lang",
+            "in": "query"
+          },
+          {
+            "type": "boolean",
+            "description": "search only entries that are a gateway language",
+            "name": "is_gl",
+            "in": "query"
+          },
+          {
+            "type": "array",
+            "items": {
+              "enum": [
+                "prod",
+                "preprod",
+                "latest"
+              ],
+              "type": "string"
+            },
+            "collectionFormat": "multi",
+            "description": "list only those of the given stage or lower, with low to high being: \"prod\" - return only the production subjects (default); \"preprod\" - return pre-production and production subjects; \"latest\" - return all subjects in the catalog for all stages",
+            "name": "stage",
+            "in": "query"
+          },
+          {
+            "type": "array",
+            "items": {
+              "enum": [
+                "Aligned Bible",
+                "Aramaic Grammar",
+                "Bible",
+                "Greek Grammar",
+                "Greek Lexicon",
+                "Greek New Testament",
+                "Hebrew Grammar",
+                "Hebrew Old Testament",
+                "Hebrew-Aramaic Lexicon",
+                "OBS Study Notes",
+                "OBS Study Questions",
+                "OBS Translation Notes",
+                "OBS Translation Questions",
+                "Open Bible Stories",
+                "Study Notes",
+                "Study Questions",
+                "Training Library",
+                "Translation Academy",
+                "Translation Notes",
+                "Translation Questions",
+                "Translation Words",
+                "TSV Study Notes",
+                "TSV Study Questions",
+                "TSV Translation Notes",
+                "TSV Translation Questions",
+                "TSV Translation Words Links",
+                "TSV OBS Study Notes",
+                "TSV OBS Study Questions",
+                "TSV OBS Translation Notes",
+                "TSV OBS Translation Questions",
+                "TSV OBS Translation Words Links"
+              ],
+              "type": "string"
+            },
+            "collectionFormat": "multi",
+            "description": "list only the those if they are in the catalog meeting the criteria given (e.g. way to test a given language has the given subject)",
+            "name": "subject",
+            "in": "query"
+          },
+          {
+            "type": "array",
+            "items": {
+              "enum": [
+                "glt",
+                "gst",
+                "obs",
+                "obs-sn",
+                "obs-sq",
+                "obs-tn",
+                "obs-tq",
+                "obs-twl",
+                "sn",
+                "sq",
+                "ta",
+                "tn",
+                "tq",
+                "tw",
+                "twl",
+                "ugnt",
+                "uhb",
+                "ult",
+                "ust"
+              ],
+              "type": "string"
+            },
+            "collectionFormat": "multi",
+            "description": "list only those with the given resource identifier. Multiple resources are ORed.",
+            "name": "resource",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "description": "list only those with the given content format (usfm, text, markdown, etc.). Multiple formats are ORed.",
+            "name": "format",
+            "in": "query"
+          },
+          {
+            "type": "array",
+            "items": {
+              "enum": [
+                1,
+                2,
+                3
+              ],
+              "type": "string"
+            },
+            "collectionFormat": "multi",
+            "description": "list only those with the given checking level(s)",
+            "name": "checkingLevel",
+            "in": "query"
+          },
+          {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "collectionFormat": "multi",
+            "description": "list only those with the given book(s) (ingredient identifiers). To match multiple, give the parameter multiple times or give a list comma delimited. Will perform an exact match (case insensitive)",
+            "name": "book",
+            "in": "query"
+          },
+          {
+            "type": "array",
+            "items": {
+              "enum": [
+                "rc",
+                "sb",
+                "tc",
+                "ts"
+              ],
+              "type": "string"
+            },
+            "collectionFormat": "multi",
+            "description": "list only those with the given metadata type",
+            "name": "metadataType",
+            "in": "query"
+          },
+          {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "collectionFormat": "multi",
+            "description": "list only those with the given metadatay version. Does not apply if metadataType is not given",
+            "name": "metadataVersion",
+            "in": "query"
+          },
+          {
+            "type": "boolean",
+            "description": "if true, owner, subject and language search fields will use partial match (LIKE) when querying the catalog. Default is false",
+            "name": "partialMatch",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "SearchResults of a successful catalog owner search",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "data": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/responses/StringSlice"
+                  }
+                },
+                "ok": {
+                  "type": "boolean"
+                }
+              }
+            }
           }
         }
       }
@@ -1185,7 +1805,7 @@
         "tags": [
           "catalog"
         ],
-        "summary": "Catalog search",
+        "summary": "Search the catalog",
         "operationId": "catalogSearch",
         "parameters": [
           {
@@ -1213,56 +1833,168 @@
             "in": "query"
           },
           {
-            "type": "string",
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "collectionFormat": "multi",
             "description": "search only for entries with the given language(s). To match multiple, give the parameter multiple times or give a list comma delimited. Will perform an exact match (case insensitive) unlesss partialMatch=true",
             "name": "lang",
             "in": "query"
           },
           {
-            "type": "string",
-            "description": "specifies which release stage to be return of these stages: \"prod\" - return only the production releases (default); \"preprod\" - return the pre-production release if it exists instead of the production release; \"latest\" - return the default branch (e.g. master) if it is a valid RC instead of the above",
+            "type": "boolean",
+            "description": "search only entries that are a gateway language",
+            "name": "is_gl",
+            "in": "query"
+          },
+          {
+            "type": "array",
+            "items": {
+              "enum": [
+                "prod",
+                "preprod",
+                "latest"
+              ],
+              "type": "string"
+            },
+            "collectionFormat": "multi",
+            "description": "specifies which release stage to be return of these stages: \"prod\" - return only the production releases (default); \"preprod\" - return the pre-production release if it exists instead of the production release; \"latest\" - return the default branch (e.g. master) if it is a valid repo",
             "name": "stage",
             "in": "query"
           },
           {
-            "type": "string",
+            "type": "array",
+            "items": {
+              "enum": [
+                "Aligned Bible",
+                "Aramaic Grammar",
+                "Bible",
+                "Greek Grammar",
+                "Greek Lexicon",
+                "Greek New Testament",
+                "Hebrew Grammar",
+                "Hebrew Old Testament",
+                "Hebrew-Aramaic Lexicon",
+                "OBS Study Notes",
+                "OBS Study Questions",
+                "OBS Translation Notes",
+                "OBS Translation Questions",
+                "Open Bible Stories",
+                "Study Notes",
+                "Study Questions",
+                "Training Library",
+                "Translation Academy",
+                "Translation Notes",
+                "Translation Questions",
+                "Translation Words",
+                "TSV Study Notes",
+                "TSV Study Questions",
+                "TSV Translation Notes",
+                "TSV Translation Questions",
+                "TSV Translation Words Links",
+                "TSV OBS Study Notes",
+                "TSV OBS Study Questions",
+                "TSV OBS Translation Notes",
+                "TSV OBS Translation Questions",
+                "TSV OBS Translation Words Links"
+              ],
+              "type": "string"
+            },
+            "collectionFormat": "multi",
             "description": "search only for entries with the given subject(s). To match multiple, give the parameter multiple times or give a list comma delimited. Will perform an exact match (case insensitive) unlesss partialMatch=true",
             "name": "subject",
             "in": "query"
           },
           {
-            "type": "string",
+            "type": "array",
+            "items": {
+              "enum": [
+                "glt",
+                "gst",
+                "obs",
+                "obs-sn",
+                "obs-sq",
+                "obs-tn",
+                "obs-tq",
+                "obs-twl",
+                "sn",
+                "sq",
+                "ta",
+                "tn",
+                "tq",
+                "tw",
+                "twl",
+                "ugnt",
+                "uhb",
+                "ult",
+                "ust"
+              ],
+              "type": "string"
+            },
+            "collectionFormat": "multi",
             "description": "resource identifier. Multiple resources are ORed.",
             "name": "resource",
             "in": "query"
           },
           {
-            "type": "string",
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "collectionFormat": "multi",
             "description": "content format (usfm, text, markdown, etc.). Multiple formats are ORed.",
             "name": "format",
             "in": "query"
           },
           {
-            "type": "string",
-            "description": "search only for entries with the given checking level(s). Can be 1, 2 or 3",
+            "type": "array",
+            "items": {
+              "enum": [
+                1,
+                2,
+                3
+              ],
+              "type": "string"
+            },
+            "collectionFormat": "multi",
+            "description": "search only for entries with the given checking level(s)",
             "name": "checkingLevel",
             "in": "query"
           },
           {
-            "type": "string",
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "collectionFormat": "multi",
             "description": "search only for entries with the given book(s) (ingredient identifiers). To match multiple, give the parameter multiple times or give a list comma delimited. Will perform an exact match (case insensitive)",
             "name": "book",
             "in": "query"
           },
           {
-            "type": "string",
-            "description": "return repos only with metadata of this type (e.g. rc, tc, ts, sb). \u003cempty\u003e or \"all\" for all. Default is rc",
+            "type": "array",
+            "items": {
+              "enum": [
+                "rc",
+                "sb",
+                "tc",
+                "ts"
+              ],
+              "type": "string"
+            },
+            "collectionFormat": "multi",
+            "description": "return repos only with metadata of this type",
             "name": "metadataType",
             "in": "query"
           },
           {
-            "type": "string",
-            "description": "return repos only with the version of metadata given. Does not apply if metadataType is \"all\"",
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "collectionFormat": "multi",
+            "description": "return repos only with the version of metadata given. Does not apply if metadataType is not given",
             "name": "metadataVersion",
             "in": "query"
           },
@@ -1327,7 +2059,7 @@
         "tags": [
           "catalog"
         ],
-        "summary": "Catalog search by owner",
+        "summary": "Search the catalog by owner",
         "operationId": "catalogSearchOwner",
         "parameters": [
           {
@@ -1356,56 +2088,183 @@
             "in": "query"
           },
           {
-            "type": "string",
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "collectionFormat": "multi",
             "description": "search only for entries with the given language(s). To match multiple, give the parameter multiple times or give a list comma delimited. Will perform an exact match (case insensitive) unlesss partialMatch=true",
             "name": "lang",
             "in": "query"
           },
           {
-            "type": "string",
+            "type": "boolean",
+            "description": "search only entries that are a gateway language",
+            "name": "is_gl",
+            "in": "query"
+          },
+          {
+            "type": "array",
+            "items": {
+              "enum": [
+                "prod",
+                "preprod",
+                "latest"
+              ],
+              "type": "string"
+            },
+            "collectionFormat": "multi",
             "description": "specifies which release stage to be return of these stages: \"prod\" - return only the production releases (default); \"preprod\" - return the pre-production release if it exists instead of the production release; \"latest\" -return the default branch (e.g. master) if it is a valid RC instead of the above",
             "name": "stage",
             "in": "query"
           },
           {
-            "type": "string",
+            "type": "array",
+            "items": {
+              "enum": [
+                "prod",
+                "preprod",
+                "latest"
+              ],
+              "type": "string"
+            },
+            "collectionFormat": "multi",
+            "description": "specifies which release stage to be return of these stages: \"prod\" - return only the production releases (default); \"preprod\" - return the pre-production release if it exists instead of the production release; \"latest\" - return the default branch (e.g. master) if it is a valid repo",
+            "name": "stage",
+            "in": "query"
+          },
+          {
+            "type": "array",
+            "items": {
+              "enum": [
+                "Aligned Bible",
+                "Aramaic Grammar",
+                "Bible",
+                "Greek Grammar",
+                "Greek Lexicon",
+                "Greek New Testament",
+                "Hebrew Grammar",
+                "Hebrew Old Testament",
+                "Hebrew-Aramaic Lexicon",
+                "OBS Study Notes",
+                "OBS Study Questions",
+                "OBS Translation Notes",
+                "OBS Translation Questions",
+                "Open Bible Stories",
+                "Study Notes",
+                "Study Questions",
+                "Training Library",
+                "Translation Academy",
+                "Translation Notes",
+                "Translation Questions",
+                "Translation Words",
+                "TSV Study Notes",
+                "TSV Study Questions",
+                "TSV Translation Notes",
+                "TSV Translation Questions",
+                "TSV Translation Words Links",
+                "TSV OBS Study Notes",
+                "TSV OBS Study Questions",
+                "TSV OBS Translation Notes",
+                "TSV OBS Translation Questions",
+                "TSV OBS Translation Words Links"
+              ],
+              "type": "string"
+            },
+            "collectionFormat": "multi",
             "description": "search only for entries with the given subject(s). To match multiple, give the parameter multiple times or give a list comma delimited. Will perform an exact match (case insensitive) unlesss partialMatch=true",
             "name": "subject",
             "in": "query"
           },
           {
-            "type": "string",
+            "type": "array",
+            "items": {
+              "enum": [
+                "glt",
+                "gst",
+                "obs",
+                "obs-sn",
+                "obs-sq",
+                "obs-tn",
+                "obs-tq",
+                "obs-twl",
+                "sn",
+                "sq",
+                "ta",
+                "tn",
+                "tq",
+                "tw",
+                "twl",
+                "ugnt",
+                "uhb",
+                "ult",
+                "ust"
+              ],
+              "type": "string"
+            },
+            "collectionFormat": "multi",
             "description": "resource identifier. Multiple resources are ORed.",
             "name": "resource",
             "in": "query"
           },
           {
-            "type": "string",
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "collectionFormat": "multi",
             "description": "content format (usfm, text, markdown, etc.). Multiple formats are ORed.",
             "name": "format",
             "in": "query"
           },
           {
-            "type": "string",
-            "description": "search only for entries with the given checking level(s). Can be 1, 2 or 3",
+            "type": "array",
+            "items": {
+              "enum": [
+                1,
+                2,
+                3
+              ],
+              "type": "string"
+            },
+            "collectionFormat": "multi",
+            "description": "search only for entries with the given checking level(s)",
             "name": "checkingLevel",
             "in": "query"
           },
           {
-            "type": "string",
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "collectionFormat": "multi",
             "description": "search only for entries with the given book(s) (ingredient identifiers). To match multiple, give the parameter multiple times or give a list comma delimited. Will perform an exact match (case insensitive)",
             "name": "book",
             "in": "query"
           },
           {
-            "type": "string",
-            "description": "return repos only with metadata of this type (e.g. rc, tc, ts, sb). . \u003cempty\u003e or \"all\" for all. Default is rc",
+            "type": "array",
+            "items": {
+              "enum": [
+                "rc",
+                "sb",
+                "tc",
+                "ts"
+              ],
+              "type": "string"
+            },
+            "collectionFormat": "multi",
+            "description": "return repos only with metadata of this type",
             "name": "metadataType",
             "in": "query"
           },
           {
-            "type": "string",
-            "description": "return repos only with the version of metadata given. Does not apply if metadataType is \"all\"",
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "collectionFormat": "multi",
+            "description": "return repos only with the version of metadata given. Does not apply if metadataType is not given",
             "name": "metadataVersion",
             "in": "query"
           },
@@ -1470,7 +2329,7 @@
         "tags": [
           "catalog"
         ],
-        "summary": "Catalog search by repo",
+        "summary": "Search the catalog by owner and repo",
         "operationId": "catalogSearchRepo",
         "parameters": [
           {
@@ -1512,56 +2371,168 @@
             "in": "query"
           },
           {
-            "type": "string",
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "collectionFormat": "multi",
             "description": "search only for entries with the given language(s). To match multiple, give the parameter multiple times or give a list comma delimited. Will perform an exact match (case insensitive) unlesss partialMatch=true",
             "name": "lang",
             "in": "query"
           },
           {
-            "type": "string",
-            "description": "specifies which release stage to be return of these stages: \"prod\" - return only the production releases (default); \"preprod\" - return the pre-production release if it exists instead of the production release; \"latest\" -return the default branch (e.g. master) if it is a valid RC instead of the above",
+            "type": "boolean",
+            "description": "search only entries that are a gateway language",
+            "name": "is_gl",
+            "in": "query"
+          },
+          {
+            "type": "array",
+            "items": {
+              "enum": [
+                "prod",
+                "preprod",
+                "latest"
+              ],
+              "type": "string"
+            },
+            "collectionFormat": "multi",
+            "description": "specifies which release stage to be return of these stages: \"prod\" - return only the production releases (default); \"preprod\" - return the pre-production release if it exists instead of the production release; \"latest\" - return the default branch (e.g. master) if it is a valid repo",
             "name": "stage",
             "in": "query"
           },
           {
-            "type": "string",
+            "type": "array",
+            "items": {
+              "enum": [
+                "Aligned Bible",
+                "Aramaic Grammar",
+                "Bible",
+                "Greek Grammar",
+                "Greek Lexicon",
+                "Greek New Testament",
+                "Hebrew Grammar",
+                "Hebrew Old Testament",
+                "Hebrew-Aramaic Lexicon",
+                "OBS Study Notes",
+                "OBS Study Questions",
+                "OBS Translation Notes",
+                "OBS Translation Questions",
+                "Open Bible Stories",
+                "Study Notes",
+                "Study Questions",
+                "Training Library",
+                "Translation Academy",
+                "Translation Notes",
+                "Translation Questions",
+                "Translation Words",
+                "TSV Study Notes",
+                "TSV Study Questions",
+                "TSV Translation Notes",
+                "TSV Translation Questions",
+                "TSV Translation Words Links",
+                "TSV OBS Study Notes",
+                "TSV OBS Study Questions",
+                "TSV OBS Translation Notes",
+                "TSV OBS Translation Questions",
+                "TSV OBS Translation Words Links"
+              ],
+              "type": "string"
+            },
+            "collectionFormat": "multi",
             "description": "search only for entries with the given subject(s). To match multiple, give the parameter multiple times or give a list comma delimited. Will perform an exact match (case insensitive) unlesss partialMatch=true",
             "name": "subject",
             "in": "query"
           },
           {
-            "type": "string",
+            "type": "array",
+            "items": {
+              "enum": [
+                "glt",
+                "gst",
+                "obs",
+                "obs-sn",
+                "obs-sq",
+                "obs-tn",
+                "obs-tq",
+                "obs-twl",
+                "sn",
+                "sq",
+                "ta",
+                "tn",
+                "tq",
+                "tw",
+                "twl",
+                "ugnt",
+                "uhb",
+                "ult",
+                "ust"
+              ],
+              "type": "string"
+            },
+            "collectionFormat": "multi",
             "description": "resource identifier. Multiple resources are ORed.",
             "name": "resource",
             "in": "query"
           },
           {
-            "type": "string",
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "collectionFormat": "multi",
             "description": "content format (usfm, text, markdown, etc.). Multiple formats are ORed.",
             "name": "format",
             "in": "query"
           },
           {
-            "type": "string",
-            "description": "search only for entries with the given checking level(s). Can be 1, 2 or 3",
+            "type": "array",
+            "items": {
+              "enum": [
+                1,
+                2,
+                3
+              ],
+              "type": "string"
+            },
+            "collectionFormat": "multi",
+            "description": "search only for entries with the given checking level(s)",
             "name": "checkingLevel",
             "in": "query"
           },
           {
-            "type": "string",
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "collectionFormat": "multi",
             "description": "search only for entries with the given book(s) (ingredient identifiers). To match multiple, give the parameter multiple times or give a list comma delimited. Will perform an exact match (case insensitive)",
             "name": "book",
             "in": "query"
           },
           {
-            "type": "string",
-            "description": "return repos only with metadata of this type (e.g. rc, tc, ts, sb). \u003cempty\u003e or \"all\" for all. Default is rc",
+            "type": "array",
+            "items": {
+              "enum": [
+                "rc",
+                "sb",
+                "tc",
+                "ts"
+              ],
+              "type": "string"
+            },
+            "collectionFormat": "multi",
+            "description": "return repos only with metadata of this type",
             "name": "metadataType",
             "in": "query"
           },
           {
-            "type": "string",
-            "description": "return repos only with the version of metadata given. Does not apply if metadataType is \"all\"",
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "collectionFormat": "multi",
+            "description": "return repos only with the version of metadata given. Does not apply if metadataType is not given",
             "name": "metadataVersion",
             "in": "query"
           },
@@ -1611,94 +2582,6 @@
         "responses": {
           "200": {
             "$ref": "#/responses/CatalogSearchResults"
-          },
-          "422": {
-            "$ref": "#/responses/validationError"
-          }
-        }
-      }
-    },
-    "/catalog/subjects": {
-      "get": {
-        "produces": [
-          "application/json"
-        ],
-        "tags": [
-          "catalog"
-        ],
-        "summary": "Catalog list metadata types",
-        "operationId": "catalogListMetadataTypes",
-        "parameters": [
-          {
-            "type": "string",
-            "description": "list only subjects in the given owner(s). To match multiple, give the parameter multiple times or give a list comma delimited.",
-            "name": "owner",
-            "in": "query"
-          },
-          {
-            "type": "string",
-            "description": "list only subjects in the given language(s). To match multiple, give the parameter multiple times or give a list comma delimited. Will perform an exact match (case insensitive) unlesss partialMatch=true",
-            "name": "lang",
-            "in": "query"
-          },
-          {
-            "type": "string",
-            "description": "list only subjects of the given stage or lower, with low to high being: \"prod\" - return only the production subjects (default); \"preprod\" - return pre-production and production subjects; \"latest\" - return all subjects in the catalog for all stages",
-            "name": "stage",
-            "in": "query"
-          },
-          {
-            "type": "string",
-            "description": "list only the given subjects if they are in the catalog meeting the criteria given (e.g. way to test a given language has the given subject)",
-            "name": "subject",
-            "in": "query"
-          },
-          {
-            "type": "string",
-            "description": "list only subjects with the given resource identifier. Multiple resources are ORed.",
-            "name": "resource",
-            "in": "query"
-          },
-          {
-            "type": "string",
-            "description": "list only subjects with the given content format (usfm, text, markdown, etc.). Multiple formats are ORed.",
-            "name": "format",
-            "in": "query"
-          },
-          {
-            "type": "string",
-            "description": "list only for subjects with the given checking level(s). Can be 1, 2 or 3",
-            "name": "checkingLevel",
-            "in": "query"
-          },
-          {
-            "type": "string",
-            "description": "list only subjects with the given book(s) (ingredient identifiers). To match multiple, give the parameter multiple times or give a list comma delimited. Will perform an exact match (case insensitive)",
-            "name": "book",
-            "in": "query"
-          },
-          {
-            "type": "string",
-            "description": "list only subjects with the given metadata type (e.g. rc, tc, ts, sb). . \u003cempty\u003e or \"all\" for all. Default is rc",
-            "name": "metadataType",
-            "in": "query"
-          },
-          {
-            "type": "string",
-            "description": "list only subjects with the  given metadatay version. Does not apply if metadataType is \"all\" or empty",
-            "name": "metadataVersion",
-            "in": "query"
-          },
-          {
-            "type": "boolean",
-            "description": "if true, owner, subject and language search fields will use partial match (LIKE) when querying the catalog. Default is false",
-            "name": "partialMatch",
-            "in": "query"
-          }
-        ],
-        "responses": {
-          "200": {
-            "$ref": "#/responses/StringSlice"
           },
           "422": {
             "$ref": "#/responses/validationError"
@@ -2232,20 +3115,67 @@
         "operationId": "orgGetAll",
         "parameters": [
           {
-            "type": "string",
-            "description": "If the org has one or more repos with the given language(s), the org will be in the results. Multiple lang's are ORed.",
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "collectionFormat": "multi",
+            "description": "if the org has one or more repos with the given language(s), the org will be in the results. Multiple lang's are ORed.",
             "name": "lang",
             "in": "query"
           },
           {
-            "type": "string",
-            "description": "If the user has one or more repos with the given subject(s), the org will be in the results. Multiple subjects are ORed.",
+            "type": "boolean",
+            "description": "if the org has one or more repos that is a gateway laguage, the org will be in the results",
+            "name": "is_gl",
+            "in": "query"
+          },
+          {
+            "type": "array",
+            "items": {
+              "enum": [
+                "Aligned Bible",
+                "Aramaic Grammar",
+                "Bible",
+                "Greek Grammar",
+                "Greek Lexicon",
+                "Greek New Testament",
+                "Hebrew Grammar",
+                "Hebrew Old Testament",
+                "Hebrew-Aramaic Lexicon",
+                "OBS Study Notes",
+                "OBS Study Questions",
+                "OBS Translation Notes",
+                "OBS Translation Questions",
+                "Open Bible Stories",
+                "Study Notes",
+                "Study Questions",
+                "Training Library",
+                "Translation Academy",
+                "Translation Notes",
+                "Translation Questions",
+                "Translation Words",
+                "TSV Study Notes",
+                "TSV Study Questions",
+                "TSV Translation Notes",
+                "TSV Translation Questions",
+                "TSV Translation Words Links",
+                "TSV OBS Study Notes",
+                "TSV OBS Study Questions",
+                "TSV OBS Translation Notes",
+                "TSV OBS Translation Questions",
+                "TSV OBS Translation Words Links"
+              ],
+              "type": "string"
+            },
+            "collectionFormat": "multi",
+            "description": "if the org has one or more repos with the given subject(s), the org will be in the results. Multiple subjects are ORed.",
             "name": "subject",
             "in": "query"
           },
           {
             "type": "string",
-            "description": "If the user has one or more repos with the given metadata type(s), the org will be in the results. Multiple metadata types are ORed.",
+            "description": "if the org has one or more repos with the given metadata type(s), the org will be in the results. Multiple metadata types are ORed.",
             "name": "metadataType",
             "in": "query"
           },
@@ -3750,19 +4680,91 @@
             "in": "query"
           },
           {
-            "type": "string",
-            "description": "If the repo is a resource of the given language(s), the repo will be in the results. Multiple langs are ORed.",
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "collectionFormat": "multi",
+            "description": "if the repo is a resource of the given language(s), the repo will be in the results. Multiple langs are ORed.",
             "name": "lang",
             "in": "query"
           },
           {
-            "type": "string",
+            "type": "boolean",
+            "description": "if the repo is a gateway language resource, the repo will be in the results",
+            "name": "is_gl",
+            "in": "query"
+          },
+          {
+            "type": "array",
+            "items": {
+              "enum": [
+                "Aligned Bible",
+                "Aramaic Grammar",
+                "Bible",
+                "Greek Grammar",
+                "Greek Lexicon",
+                "Greek New Testament",
+                "Hebrew Grammar",
+                "Hebrew Old Testament",
+                "Hebrew-Aramaic Lexicon",
+                "OBS Study Notes",
+                "OBS Study Questions",
+                "OBS Translation Notes",
+                "OBS Translation Questions",
+                "Open Bible Stories",
+                "Study Notes",
+                "Study Questions",
+                "Training Library",
+                "Translation Academy",
+                "Translation Notes",
+                "Translation Questions",
+                "Translation Words",
+                "TSV Study Notes",
+                "TSV Study Questions",
+                "TSV Translation Notes",
+                "TSV Translation Questions",
+                "TSV Translation Words Links",
+                "TSV OBS Study Notes",
+                "TSV OBS Study Questions",
+                "TSV OBS Translation Notes",
+                "TSV OBS Translation Questions",
+                "TSV OBS Translation Words Links"
+              ],
+              "type": "string"
+            },
+            "collectionFormat": "multi",
             "description": "resource subject. Multiple subjects are ORed.",
             "name": "subject",
             "in": "query"
           },
           {
-            "type": "string",
+            "type": "array",
+            "items": {
+              "enum": [
+                "glt",
+                "gst",
+                "obs",
+                "obs-sn",
+                "obs-sq",
+                "obs-tn",
+                "obs-tq",
+                "obs-twl",
+                "sn",
+                "sq",
+                "ta",
+                "tn",
+                "tq",
+                "tw",
+                "twl",
+                "ugnt",
+                "uhb",
+                "ult",
+                "ust"
+              ],
+              "type": "string"
+            },
+            "collectionFormat": "multi",
             "description": "resource identifier. Multiple resources are ORed.",
             "name": "resource",
             "in": "query"
@@ -3774,20 +4776,38 @@
             "in": "query"
           },
           {
-            "type": "string",
-            "description": "book (project id) that exist in a resource. If the resource contains the the book, its repository will be included in the results. Multiple books are ORed.",
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "collectionFormat": "multi",
+            "description": "book (project id or ingredients id) that exist in a resource. If the resource contains the the book, its repository will be included in the results. Multiple books are ORed.",
             "name": "book",
             "in": "query"
           },
           {
-            "type": "string",
-            "description": "return repos only with metadata of this type (e.g. rc, tc, ts, sb)",
+            "type": "array",
+            "items": {
+              "enum": [
+                "rc",
+                "sb",
+                "tc",
+                "ts"
+              ],
+              "type": "string"
+            },
+            "collectionFormat": "multi",
+            "description": "return repos only with metadata of this type",
             "name": "metadataType",
             "in": "query"
           },
           {
-            "type": "string",
-            "description": "return repos only with the version of metadata given. Does not apply if metadataType is \"all\"",
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "collectionFormat": "multi",
+            "description": "return repos only with the version of metadata given. Does not apply if metadataType is not given",
             "name": "metadataVersion",
             "in": "query"
           },
@@ -15906,20 +16926,77 @@
             "in": "query"
           },
           {
-            "type": "string",
-            "description": "If the user has one or more repos with the given language(s), the org will be in the results. Multiple lang's are ORed.",
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "collectionFormat": "multi",
+            "description": "if the user has one or more repos with the given language(s), the org will be in the results. Multiple lang's are ORed.",
             "name": "lang",
             "in": "query"
           },
           {
-            "type": "string",
-            "description": "If the user has one or more repos with the given subject(s), the org will be in the results. Multiple subjects are ORed.",
+            "type": "boolean",
+            "description": "if the user has one or more repos that is a gateway laguage, the user will be in the results",
+            "name": "is_gl",
+            "in": "query"
+          },
+          {
+            "type": "array",
+            "items": {
+              "enum": [
+                "Aligned Bible",
+                "Aramaic Grammar",
+                "Bible",
+                "Greek Grammar",
+                "Greek Lexicon",
+                "Greek New Testament",
+                "Hebrew Grammar",
+                "Hebrew Old Testament",
+                "Hebrew-Aramaic Lexicon",
+                "OBS Study Notes",
+                "OBS Study Questions",
+                "OBS Translation Notes",
+                "OBS Translation Questions",
+                "Open Bible Stories",
+                "Study Notes",
+                "Study Questions",
+                "Training Library",
+                "Translation Academy",
+                "Translation Notes",
+                "Translation Questions",
+                "Translation Words",
+                "TSV Study Notes",
+                "TSV Study Questions",
+                "TSV Translation Notes",
+                "TSV Translation Questions",
+                "TSV Translation Words Links",
+                "TSV OBS Study Notes",
+                "TSV OBS Study Questions",
+                "TSV OBS Translation Notes",
+                "TSV OBS Translation Questions",
+                "TSV OBS Translation Words Links"
+              ],
+              "type": "string"
+            },
+            "collectionFormat": "multi",
+            "description": "if the user has one or more repos with the given subject(s), the org will be in the results. Multiple subjects are ORed.",
             "name": "subject",
             "in": "query"
           },
           {
-            "type": "string",
-            "description": "If the user has one or more repos with the given metadata type(s), the org will be in the results. Multiple metadata types are ORed.",
+            "type": "array",
+            "items": {
+              "enum": [
+                "rc",
+                "sb",
+                "tc",
+                "ts"
+              ],
+              "type": "string"
+            },
+            "collectionFormat": "multi",
+            "description": "if the user has one or more repos with the given metadata type(s), the org will be in the results. Multiple metadata types are ORed.",
             "name": "metadataType",
             "in": "query"
           },
@@ -23800,6 +24877,13 @@
         "items": {
           "type": "string"
         }
+      }
+    },
+    "Language": {
+      "description": "Language",
+      "schema": {
+        "type": "object",
+        "additionalProperties": {}
       }
     },
     "LanguageStatistics": {

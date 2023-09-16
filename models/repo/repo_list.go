@@ -159,13 +159,14 @@ type SearchRepoOptions struct {
 	HasMilestones util.OptionalBool
 	// LowerNames represents valid lower names to restrict to
 	LowerNames     []string
-	Owners         []string // DCS Customizations
-	Repos          []string // DCS Customizations
-	Subjects       []string // DCS Customizations
-	Resources      []string // DCS Customizations
-	ContentFormats []string // DCS Customization
-	Books          []string // DCS Customizations
-	Languages      []string // DCS Customizations
+	Owners         []string          // DCS Customizations
+	Repos          []string          // DCS Customizations
+	Subjects       []string          // DCS Customizations
+	Resources      []string          // DCS Customizations
+	ContentFormats []string          // DCS Customization
+	Books          []string          // DCS Customizations
+	Languages      []string          // DCS Customizations
+	LanguageIsGL   util.OptionalBool // DCS Customizations
 	// query metadata type and version
 	MetadataTypes    []string // DCS Customizations
 	MetadataVersions []string // DCS Customizations
@@ -511,8 +512,15 @@ func SearchRepositoryCondition(opts *SearchRepoOptions) builder.Cond {
 		door43metadata.GetContentFormatCond(opts.ContentFormats, false),
 		door43metadata.GetBookCond(opts.Books),
 		door43metadata.GetLanguageCond(opts.Languages, false),
-		door43metadata.GetMetadataTypeCond(opts.MetadataTypes, false),
-		door43metadata.GetMetadataVersionCond(opts.MetadataVersions, false))
+		door43metadata.GetMetadataTypeCond(opts.MetadataTypes, false))
+
+	if len(opts.MetadataTypes) > 0 {
+		cond.And(door43metadata.GetMetadataVersionCond(opts.MetadataVersions, false))
+	}
+
+	if opts.LanguageIsGL != util.OptionalBoolNone {
+		cond = cond.And(builder.Eq{"`door43_metadata`.is_gl`": opts.LanguageIsGL.IsTrue()})
+	}
 	/*** EMD DCS Customizations ***/
 
 	if opts.OnlyShowRelevant {

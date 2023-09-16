@@ -244,8 +244,8 @@ func (dm *Door43Metadata) GetIngredientsIdentifierList() []string {
 
 // GetIngredientsAsString get the integredients of the repo and returns the identifiers as a comma-delimited string
 func (dm *Door43Metadata) GetIngredientsAsString() string {
-	books := dm.GetIngredientsIdentifierList()
-	return strings.Join(books, ", ")
+	ids := dm.GetIngredientsIdentifierList()
+	return strings.Join(ids, ", ")
 }
 
 func (dm *Door43Metadata) GetAlignmentCounts() map[string]int {

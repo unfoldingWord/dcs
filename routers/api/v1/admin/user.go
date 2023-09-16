@@ -432,10 +432,6 @@ func SearchUsers(ctx *context.APIContext) {
 	//   in: query
 	//   description: user's login name to search for
 	//   type: string
-	// - name: lang
-	//   in: query
-	//   description: If the user has one or more repos with the given language(s), the org will be in the results. Multiple lang's are ORed.
-	//   type: string
 	// - name: page
 	//   in: query
 	//   description: page number of results to return (1-based)

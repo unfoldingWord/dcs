@@ -6,7 +6,7 @@ package models
 import (
 	"context"
 	"fmt"
-	"sort"
+	"strings"
 
 	"code.gitea.io/gitea/models/db"
 	"code.gitea.io/gitea/models/door43metadata"
@@ -86,84 +86,31 @@ func SearchCatalogByCondition(ctx context.Context, opts *door43metadata.SearchCa
 	return dms, count, nil
 }
 
-// SearchCatalogLanguages returns a list of unique strings of languages in the catalog for the given criteria
-func SearchCatalogLanguages(ctx context.Context, opts *door43metadata.SearchCatalogOptions) ([]string, error) {
-	dms, _, err := SearchCatalog(ctx, opts)
-	if err != nil {
-		return nil, err
-	}
-
-	fieldMap := map[string]bool{}
-	for _, dm := range dms {
-		fieldMap[dm.Language] = true
-	}
-	keys := make([]string, 0, len(fieldMap))
-	for k := range fieldMap {
-		keys = append(keys, k)
-	}
-	sort.Strings(keys)
-	return keys, nil
+// SearchDoor43MetadataField returns door43metadat field based on search options
+func SearchDoor43MetadataField(ctx context.Context, opts *door43metadata.SearchCatalogOptions, field string) ([]string, error) {
+	cond := door43metadata.SearchCatalogCondition(opts)
+	return SearchDoor43MetadataFieldByCondition(ctx, opts, cond, field)
 }
 
-// SearchCatalogSubjects returns a list of unique strings of subjects in the catalog for the given criteria
-func SearchCatalogSubjects(ctx context.Context, opts *door43metadata.SearchCatalogOptions) ([]string, error) {
-	dms, _, err := SearchCatalog(ctx, opts)
+// SearchDoor43MetadataFieldByCondition search door43metadata entries by condition for a single field
+func SearchDoor43MetadataFieldByCondition(ctx context.Context, opts *door43metadata.SearchCatalogOptions, cond builder.Cond, field string) ([]string, error) {
+	var results []string
+
+	if !strings.Contains(field, ".") {
+		field = "`door43_metadata`." + field
+	}
+
+	sess := db.GetEngine(db.DefaultContext).Table("door43_metadata").
+		Select("DISTINCT "+field).
+		Join("INNER", "repository", "`repository`.id = `door43_metadata`.repo_id").
+		Join("INNER", "user", "`repository`.owner_id = `user`.id").
+		Where(cond).
+		OrderBy(field)
+
+	err := sess.Find(&results)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("find: %v", err)
 	}
 
-	fieldMap := map[string]bool{}
-	for _, dm := range dms {
-		fieldMap[dm.Subject] = true
-	}
-	keys := make([]string, 0, len(fieldMap))
-	for k := range fieldMap {
-		keys = append(keys, k)
-	}
-	sort.Strings(keys)
-	return keys, nil
-}
-
-// SearchCatalogOwners returns a list of unique strings of owner names in the catalog for the given criteria
-func SearchCatalogOwners(ctx context.Context, opts *door43metadata.SearchCatalogOptions) ([]string, error) {
-	dms, _, err := SearchCatalog(ctx, opts)
-	if err != nil {
-		return nil, err
-	}
-
-	fieldMap := map[string]bool{}
-	for _, dm := range dms {
-		if err := dm.LoadRepo(ctx); err != nil || dm.Repo == nil {
-			continue
-		}
-		if err := dm.Repo.LoadOwner(ctx); err != nil || dm.Repo.Owner == nil {
-			continue
-		}
-		fieldMap[dm.Repo.Owner.Name] = true
-	}
-	keys := make([]string, 0, len(fieldMap))
-	for k := range fieldMap {
-		keys = append(keys, k)
-	}
-	sort.Strings(keys)
-	return keys, nil
-}
-
-// SearchCatalogMetadataTypes returns a list of unique strings of metadata tyupes in the catalog for the given criteria
-func SearchCatalogMetadataTypes(ctx context.Context, opts *door43metadata.SearchCatalogOptions) ([]string, error) {
-	dms, _, err := SearchCatalog(ctx, opts)
-	if err != nil {
-		return nil, err
-	}
-
-	fieldMap := map[string]bool{}
-	for _, dm := range dms {
-		fieldMap[dm.MetadataType] = true
-	}
-	keys := make([]string, 0, len(fieldMap))
-	for k := range fieldMap {
-		keys = append(keys, k)
-	}
-	sort.Strings(keys)
-	return keys, nil
+	return results, nil
 }

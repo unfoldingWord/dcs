@@ -36,9 +36,10 @@ type SearchUserOptions struct {
 	IsProhibitLogin    util.OptionalBool
 
 	/*** DCS CUSTOMIZATIONS ***/
-	RepoLanguages     []string // Find users that have the given language ids in a repo's manifest
-	RepoSubjects      []string // Find users that have the given subjects in a repo's manifest
-	RepoMetadataTypes []string // Find users that have the given metadata types in a repo's manifest
+	RepoLanguages     []string          // Find repos that have the given language ids in a repo's manifest
+	RepoSubjects      []string          // Find repos that have the given subjects in a repo's manifest
+	RepoMetadataTypes []string          // Find repos that have the given metadata types in a repo's manifest
+	RepoLanguageIsGL  util.OptionalBool // Find repos that are gateway languages
 	/*** END DCS CUSTOMIZATIONS ***/
 
 	ExtraParamStrings map[string]string
@@ -134,21 +135,31 @@ func SearchUsers(opts *SearchUserOptions) (users []*User, _ int64, _ error) {
 
 	/*** DCS Customizations ***/
 	if len(opts.RepoLanguages) > 0 || len(opts.RepoSubjects) > 0 || len(opts.RepoMetadataTypes) > 0 {
-		metadataCond := builder.NewCond()
+		repoLangsCond := builder.NewCond()
 		for _, values := range opts.RepoLanguages {
 			for _, value := range strings.Split(values, ",") {
-				metadataCond = metadataCond.Or(builder.Eq{"LOWER(`door43_metadata`.language)": strings.ToLower(value)})
+				repoLangsCond = repoLangsCond.Or(builder.Eq{"`door43_metadata`.language": strings.TrimSpace(value)})
 			}
 		}
+		repoSubsCond := builder.NewCond()
 		for _, values := range opts.RepoSubjects {
 			for _, value := range strings.Split(values, ",") {
-				metadataCond = metadataCond.Or(builder.Eq{"LOWER(`door43_metadata`.subject)": strings.ToLower(value)})
+				repoSubsCond = repoSubsCond.Or(builder.Eq{"`door43_metadata`.subject": strings.TrimSpace(value)})
 			}
 		}
+		repoTypesCond := builder.NewCond()
 		for _, values := range opts.RepoMetadataTypes {
 			for _, value := range strings.Split(values, ",") {
-				metadataCond = metadataCond.Or(builder.Eq{"LOWER(`door43_metadata`.metadata_type)": strings.ToLower(value)})
+				repoTypesCond = repoTypesCond.Or(builder.Eq{"`door43_metadata`.metadata_type": strings.TrimSpace(value)})
 			}
+		}
+		metadataCond := builder.NewCond().And(
+			repoLangsCond,
+			repoSubsCond,
+			repoTypesCond,
+		)
+		if opts.RepoLanguageIsGL != util.OptionalBoolNone {
+			metadataCond = metadataCond.And(builder.Eq{"`door43_metadata`.is_gl": opts.RepoLanguageIsGL.IsTrue()})
 		}
 		metadataSelect := builder.Select("owner_id").
 			From("repository").
