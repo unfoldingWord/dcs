@@ -2681,6 +2681,23 @@
         }
       }
     },
+    "/languages/langnames.json": {
+      "get": {
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "languages"
+        ],
+        "summary": "Fetches the langnames.json file",
+        "operationId": "languagesLangnames",
+        "responses": {
+          "200": {
+            "$ref": "#/responses/Langnames"
+          }
+        }
+      }
+    },
     "/licenses": {
       "get": {
         "produces": [
@@ -24877,6 +24894,13 @@
         "items": {
           "type": "string"
         }
+      }
+    },
+    "LangnamesJSON": {
+      "description": "LanguLangnamesJSONage",
+      "schema": {
+        "type": "object",
+        "additionalProperties": {}
       }
     },
     "Language": {

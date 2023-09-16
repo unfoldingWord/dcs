@@ -85,6 +85,7 @@ import (
 	"code.gitea.io/gitea/routers/api/v1/activitypub"
 	"code.gitea.io/gitea/routers/api/v1/admin"
 	"code.gitea.io/gitea/routers/api/v1/catalog"
+	"code.gitea.io/gitea/routers/api/v1/dcs"
 	"code.gitea.io/gitea/routers/api/v1/misc"
 	"code.gitea.io/gitea/routers/api/v1/notify"
 	"code.gitea.io/gitea/routers/api/v1/org"
@@ -1400,6 +1401,9 @@ func Routes(ctx gocontext.Context) *web.Route {
 
 		/*** DCS Customizations ***/
 		m.Post("/yaml", bind(misc.YamlOption{}), misc.Yaml)
+		m.Group("/languages", func() {
+			m.Get("/langnames.json", dcs.ServeLangnamesJSON)
+		})
 		m.Group("/catalog", func() {
 			m.Get("", catalog.Search)
 			m.Group("/list", func() {
