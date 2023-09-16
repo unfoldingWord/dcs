@@ -999,12 +999,12 @@ func GetCatalogEntry(ctx *context.APIContext) {
 		ctx.Error(http.StatusInternalServerError, "LoadAttributes", err)
 		return
 	}
-	accessMode, err := access_model.AccessLevel(ctx, ctx.ContextUser, dm.Repo)
+	permission, err := access_model.GetUserRepoPermission(ctx, dm.Repo, ctx.Doer)
 	if err != nil {
 		ctx.Error(http.StatusInternalServerError, "GetUserRepoPermission", err)
 		return
 	}
-	ctx.JSON(http.StatusOK, convert.ToCatalogEntry(ctx, dm, accessMode))
+	ctx.JSON(http.StatusOK, convert.ToCatalogEntry(ctx, dm, permission))
 }
 
 // GetCatalogMetadata Get the metadata (RC 0.2 manifest) in JSON format for the given ownername, reponame and ref
@@ -1168,17 +1168,12 @@ func searchCatalog(ctx *context.APIContext) {
 				return
 			}
 		}
-		accessMode, err := access_model.AccessLevel(ctx, ctx.ContextUser, dm.Repo)
+		permission, err := access_model.GetUserRepoPermission(ctx, dm.Repo, ctx.Doer)
 		if err != nil {
-			ctx.Error(http.StatusInternalServerError, "GetUserRepoPermissions", err)
+			ctx.Error(http.StatusInternalServerError, "GetUserRepoPermission", err)
+			return
 		}
-<<<<<<< HEAD
-		dmAPI := convert.ToCatalogEntry(ctx, dm, perm)
-||||||| 2f36c9947c
-		dmAPI := convert.ToCatalogEntry(ctx, dm, perm.AccessMode)
-=======
-		dmAPI := convert.ToCatalogEntry(ctx, dm, accessMode)
->>>>>>> root-v1.20-and-main
+		dmAPI := convert.ToCatalogEntry(ctx, dm, permission)
 		if opts.ShowIngredients == util.OptionalBoolFalse {
 			dmAPI.Ingredients = nil
 		}
