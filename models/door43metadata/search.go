@@ -64,6 +64,7 @@ type SearchCatalogOptions struct {
 	MetadataVersions []string
 	ShowIngredients  util.OptionalBool
 	Languages        []string
+	LanguageIsGL     util.OptionalBool
 	OrderBy          []CatalogOrderBy
 	PartialMatch     bool
 }
@@ -71,11 +72,11 @@ type SearchCatalogOptions struct {
 // GetMetadataCond Get the metadata condition
 func GetMetadataCond(keyword string) builder.Cond {
 	cond := builder.NewCond()
-	cond = cond.And(builder.Like{"LOWER(`door43_metadata`.title)", strings.ToLower(keyword)})
-	cond = cond.Or(builder.Eq{"LOWER(`door43_metadata`.resource)": strings.ToLower(keyword)})
-	cond = cond.Or(builder.Like{"LOWER(`door43_metadata`.subject)", strings.ToLower(keyword)})
-	cond = cond.Or(builder.Eq{"LOWER(`door43_metadata`.language)": strings.ToLower(keyword)})
-	cond = cond.Or(builder.Like{"LOWER(`door43_metadata`.language_title)", strings.ToLower(keyword)})
+	cond = cond.And(builder.Like{"`door43_metadata`.title", keyword})
+	cond = cond.Or(builder.Eq{"`door43_metadata`.resource": keyword})
+	cond = cond.Or(builder.Like{"`door43_metadata`.subject", keyword})
+	cond = cond.Or(builder.Eq{"`door43_metadata`.language": keyword})
+	cond = cond.Or(builder.Like{"`door43_metadata`.language_title", keyword})
 	return cond
 }
 
@@ -91,13 +92,18 @@ func SearchCatalogCondition(opts *SearchCatalogOptions) builder.Cond {
 
 	keywordCond := builder.NewCond()
 	for _, keyword := range opts.Keywords {
-		keywordCond = keywordCond.Or(builder.Like{"`repository`.lower_name", strings.ToLower(keyword)})
-		keywordCond = keywordCond.Or(builder.Like{"`user`.lower_name", strings.ToLower(keyword)})
+		keywordCond = keywordCond.Or(builder.Like{"`repository`.lower_name", strings.TrimSpace(keyword)})
+		keywordCond = keywordCond.Or(builder.Like{"`user`.lower_name", strings.TrimSpace(keyword)})
 		keywordCond = keywordCond.Or(GetMetadataCond(keyword))
 	}
 
 	stageCond := GetStageCond(opts.Stage)
 	historyCond := GetHistoryCond(opts.IncludeHistory)
+
+	langIsGLCond := builder.NewCond()
+	if opts.LanguageIsGL != util.OptionalBoolNone {
+		langIsGLCond = builder.Eq{"`door43_metadata`.language_is_gl": opts.LanguageIsGL.IsTrue()}
+	}
 
 	cond := builder.NewCond().And(
 		GetSubjectCond(opts.Subjects, opts.PartialMatch),
@@ -107,15 +113,19 @@ func SearchCatalogCondition(opts *SearchCatalogOptions) builder.Cond {
 		GetLanguageCond(opts.Languages, opts.PartialMatch),
 		GetCheckingLevelCond(opts.CheckingLevels),
 		GetMetadataTypeCond(opts.MetadataTypes, opts.PartialMatch),
-		GetMetadataVersionCond(opts.MetadataVersions, opts.PartialMatch),
 		GetTagCond(opts.Tags),
 		repoCond,
 		ownerCond,
 		stageCond,
 		historyCond,
+		langIsGLCond,
 		keywordCond,
 		builder.Eq{"`repository`.is_private": false},
 		builder.Eq{"`repository`.is_archived": false})
+
+	if len(opts.MetadataTypes) > 0 {
+		cond.And(GetMetadataVersionCond(opts.MetadataVersions, opts.PartialMatch))
+	}
 
 	return cond
 }
@@ -172,9 +182,9 @@ func GetSubjectCond(subjects []string, partialMatch bool) builder.Cond {
 	for _, subject := range subjects {
 		for _, v := range strings.Split(subject, ",") {
 			if partialMatch {
-				subjectCond = subjectCond.Or(builder.Like{"LOWER(`door43_metadata`.subject)", strings.ToLower(v)})
+				subjectCond = subjectCond.Or(builder.Like{"`door43_metadata`.subject", strings.TrimSpace(v)})
 			} else {
-				subjectCond = subjectCond.Or(builder.Eq{"LOWER(`door43_metadata`.subject)": strings.ToLower(v)})
+				subjectCond = subjectCond.Or(builder.Eq{"`door43_metadata`.subject": strings.TrimSpace(v)})
 			}
 		}
 	}
@@ -186,7 +196,7 @@ func GetResourceCond(resources []string) builder.Cond {
 	resourceCond := builder.NewCond()
 	for _, resource := range resources {
 		for _, v := range strings.Split(resource, ",") {
-			resourceCond = resourceCond.Or(builder.Eq{"LOWER(`door43_metadata`.resource)": strings.ToLower(v)})
+			resourceCond = resourceCond.Or(builder.Eq{"`door43_metadata`.resource": strings.TrimSpace(v)})
 		}
 	}
 	return resourceCond
@@ -198,9 +208,9 @@ func GetContentFormatCond(formats []string, partialMatch bool) builder.Cond {
 	for _, format := range formats {
 		for _, v := range strings.Split(format, ",") {
 			if partialMatch {
-				formatCond = formatCond.Or(builder.Like{"LOWER(`door43_metadata`.content_format)", strings.ToLower(v)})
+				formatCond = formatCond.Or(builder.Like{"`door43_metadata`.content_format", strings.TrimSpace(v)})
 			} else {
-				formatCond = formatCond.Or(builder.Eq{"LOWER(`door43_metadata`.content_format)": strings.ToLower(v)})
+				formatCond = formatCond.Or(builder.Eq{"`door43_metadata`.content_format": strings.TrimSpace(v)})
 			}
 		}
 	}
@@ -218,15 +228,15 @@ func GetMetadataTypeCond(types []string, partialMatch bool) builder.Cond {
 	return metadataTypeCond
 }
 
-// GetMetadataTypeCond gets the metdata type condition
+// GetMetadataVersionCond gets the metdata version condition
 func GetMetadataVersionCond(versions []string, partialMatch bool) builder.Cond {
 	versionCond := builder.NewCond()
 	for _, version := range versions {
 		for _, v := range strings.Split(version, ",") {
 			if partialMatch {
-				versionCond = versionCond.Or(builder.Like{"LOWER(`door43_metadata`.metadata_version)", strings.ToLower(v)})
+				versionCond = versionCond.Or(builder.Like{"`door43_metadata`.metadata_version", strings.TrimSpace(v)})
 			} else {
-				versionCond = versionCond.Or(builder.Eq{"LOWER(`door43_metadata`.metadata_version)": strings.ToLower(v)})
+				versionCond = versionCond.Or(builder.Eq{"`door43_metadata`.metadata_version": strings.TrimSpace(v)})
 			}
 		}
 	}
@@ -240,12 +250,12 @@ func GetLanguageCond(languages []string, partialMatch bool) builder.Cond {
 		for _, v := range strings.Split(lang, ",") {
 			if partialMatch {
 				langCond = langCond.
-					Or(builder.Like{"LOWER(`door43_metadata`.language)", strings.ToLower(v)}).
-					Or(builder.Like{"CONCAT(SUBSTRING_INDEX(`repository`.lower_name, '_', 1), '_')", strings.ToLower(v) + "\\_"})
+					Or(builder.Like{"`door43_metadata`.language", strings.TrimSpace(v)}).
+					Or(builder.Like{"CONCAT(SUBSTRING_INDEX(`repository`.lower_name, '_', 1), '_')", strings.TrimSpace(v) + "\\_"})
 			} else {
 				langCond = langCond.
-					Or(builder.Eq{"LOWER(`door43_metadata`.language)": strings.ToLower(v)}).
-					Or(builder.Eq{"CONCAT(SUBSTRING_INDEX(`repository`.lower_name, '_', 1), '_')": strings.ToLower(v) + "_"})
+					Or(builder.Eq{"`door43_metadata`.language": strings.TrimSpace(v)}).
+					Or(builder.Eq{"CONCAT(SUBSTRING_INDEX(`repository`.lower_name, '_', 1), '_')": strings.TrimSpace(v) + "_"})
 			}
 		}
 	}

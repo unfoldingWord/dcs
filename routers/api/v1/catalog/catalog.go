@@ -15,6 +15,7 @@ import (
 	access_model "code.gitea.io/gitea/models/perm/access"
 	"code.gitea.io/gitea/models/repo"
 	"code.gitea.io/gitea/modules/context"
+	"code.gitea.io/gitea/modules/dcs"
 	api "code.gitea.io/gitea/modules/structs"
 	"code.gitea.io/gitea/modules/util"
 	"code.gitea.io/gitea/services/convert"
@@ -51,7 +52,7 @@ var searchOrderByMap = map[string]map[string]door43metadata.CatalogOrderBy{
 func Search(ctx *context.APIContext) {
 	// swagger:operation GET /catalog/search catalog catalogSearch
 	// ---
-	// summary: Catalog search
+	// summary: Search the catalog
 	// produces:
 	// - application/json
 	// parameters:
@@ -74,42 +75,78 @@ func Search(ctx *context.APIContext) {
 	// - name: lang
 	//   in: query
 	//   description: search only for entries with the given language(s). To match multiple, give the parameter multiple times or give a list comma delimited. Will perform an exact match (case insensitive) unlesss partialMatch=true
-	//   type: string
+	//   type: array
+	//   collectionFormat: multi
+	//   items:
+	//     type: string
+	// - name: is_gl
+	//   in: query
+	//   description: search only entries that are a gateway language
+	//   type: boolean
 	// - name: stage
 	//   in: query
 	//   description: 'specifies which release stage to be return of these stages:
 	//                "prod" - return only the production releases (default);
 	//                "preprod" - return the pre-production release if it exists instead of the production release;
-	//                "latest" - return the default branch (e.g. master) if it is a valid RC instead of the above'
-	//   type: string
+	//                "latest" - return the default branch (e.g. master) if it is a valid repo'
+	//   type: array
+	//   collectionFormat: multi
+	//   items:
+	//     type: string
+	//     enum: [prod,preprod,latest]
 	// - name: subject
 	//   in: query
 	//   description: search only for entries with the given subject(s). To match multiple, give the parameter multiple times or give a list comma delimited. Will perform an exact match (case insensitive) unlesss partialMatch=true
-	//   type: string
+	//   type: array
+	//   collectionFormat: multi
+	//   items:
+	//     type: string
+	//     enum: [Aligned Bible,Aramaic Grammar,Bible,Greek Grammar,Greek Lexicon,Greek New Testament,Hebrew Grammar,Hebrew Old Testament,Hebrew-Aramaic Lexicon,OBS Study Notes,OBS Study Questions,OBS Translation Notes,OBS Translation Questions,Open Bible Stories,Study Notes,Study Questions,Training Library,Translation Academy,Translation Notes,Translation Questions,Translation Words,TSV Study Notes,TSV Study Questions,TSV Translation Notes,TSV Translation Questions,TSV Translation Words Links,TSV OBS Study Notes,TSV OBS Study Questions,TSV OBS Translation Notes,TSV OBS Translation Questions,TSV OBS Translation Words Links]
 	// - name: resource
 	//   in: query
 	//   description: resource identifier. Multiple resources are ORed.
-	//   type: string
+	//   type: array
+	//   collectionFormat: multi
+	//   items:
+	//     type: string
+	//     enum: [glt,gst,obs,obs-sn,obs-sq,obs-tn,obs-tq,obs-twl,sn,sq,ta,tn,tq,tw,twl,ugnt,uhb,ult,ust]
 	// - name: format
 	//   in: query
 	//   description: content format (usfm, text, markdown, etc.). Multiple formats are ORed.
-	//   type: string
+	//   type: array
+	//   collectionFormat: multi
+	//   items:
+	//     type: string
 	// - name: checkingLevel
 	//   in: query
-	//   description: search only for entries with the given checking level(s). Can be 1, 2 or 3
-	//   type: string
+	//   description: search only for entries with the given checking level(s)
+	//   type: array
+	//   collectionFormat: multi
+	//   items:
+	//     type: string
+	//     enum: [1,2,3]
 	// - name: book
 	//   in: query
 	//   description: search only for entries with the given book(s) (ingredient identifiers). To match multiple, give the parameter multiple times or give a list comma delimited. Will perform an exact match (case insensitive)
-	//   type: string
+	//   type: array
+	//   collectionFormat: multi
+	//   items:
+	//     type: string
 	// - name: metadataType
 	//   in: query
-	//   description: return repos only with metadata of this type (e.g. rc, tc, ts, sb). <empty> or "all" for all. Default is rc
-	//   type: string
+	//   description: return repos only with metadata of this type
+	//   type: array
+	//   collectionFormat: multi
+	//   items:
+	//     type: string
+	//     enum: [rc,sb,tc,ts]
 	// - name: metadataVersion
 	//   in: query
-	//   description: return repos only with the version of metadata given. Does not apply if metadataType is "all"
-	//   type: string
+	//   description: return repos only with the version of metadata given. Does not apply if metadataType is not given
+	//   type: array
+	//   collectionFormat: multi
+	//   items:
+	//     type: string
 	// - name: partialMatch
 	//   in: query
 	//   description: if true, subject, owner and repo search fields will use partial match (LIKE) when querying the catalog. Default is false
@@ -154,7 +191,7 @@ func Search(ctx *context.APIContext) {
 func SearchOwner(ctx *context.APIContext) {
 	// swagger:operation GET /catalog/search/{owner} catalog catalogSearchOwner
 	// ---
-	// summary: Catalog search by owner
+	// summary: Search the catalog by owner
 	// produces:
 	// - application/json
 	// parameters:
@@ -178,42 +215,89 @@ func SearchOwner(ctx *context.APIContext) {
 	// - name: lang
 	//   in: query
 	//   description: search only for entries with the given language(s). To match multiple, give the parameter multiple times or give a list comma delimited. Will perform an exact match (case insensitive) unlesss partialMatch=true
-	//   type: string
+	//   type: array
+	//   collectionFormat: multi
+	//   items:
+	//     type: string
+	// - name: is_gl
+	//   in: query
+	//   description: search only entries that are a gateway language
+	//   type: boolean
 	// - name: stage
 	//   in: query
 	//   description: 'specifies which release stage to be return of these stages:
 	//                "prod" - return only the production releases (default);
 	//                "preprod" - return the pre-production release if it exists instead of the production release;
 	//                "latest" -return the default branch (e.g. master) if it is a valid RC instead of the above'
-	//   type: string
+	//   type: array
+	//   collectionFormat: multi
+	//   items:
+	//     type: string
+	//     enum: [prod,preprod,latest]
+	// - name: stage
+	//   in: query
+	//   description: 'specifies which release stage to be return of these stages:
+	//                "prod" - return only the production releases (default);
+	//                "preprod" - return the pre-production release if it exists instead of the production release;
+	//                "latest" - return the default branch (e.g. master) if it is a valid repo'
+	//   type: array
+	//   collectionFormat: multi
+	//   items:
+	//     type: string
+	//     enum: [prod,preprod,latest]
 	// - name: subject
 	//   in: query
 	//   description: search only for entries with the given subject(s). To match multiple, give the parameter multiple times or give a list comma delimited. Will perform an exact match (case insensitive) unlesss partialMatch=true
-	//   type: string
+	//   type: array
+	//   collectionFormat: multi
+	//   items:
+	//     type: string
+	//     enum: [Aligned Bible,Aramaic Grammar,Bible,Greek Grammar,Greek Lexicon,Greek New Testament,Hebrew Grammar,Hebrew Old Testament,Hebrew-Aramaic Lexicon,OBS Study Notes,OBS Study Questions,OBS Translation Notes,OBS Translation Questions,Open Bible Stories,Study Notes,Study Questions,Training Library,Translation Academy,Translation Notes,Translation Questions,Translation Words,TSV Study Notes,TSV Study Questions,TSV Translation Notes,TSV Translation Questions,TSV Translation Words Links,TSV OBS Study Notes,TSV OBS Study Questions,TSV OBS Translation Notes,TSV OBS Translation Questions,TSV OBS Translation Words Links]
 	// - name: resource
 	//   in: query
 	//   description: resource identifier. Multiple resources are ORed.
-	//   type: string
+	//   type: array
+	//   collectionFormat: multi
+	//   items:
+	//     type: string
+	//     enum: [glt,gst,obs,obs-sn,obs-sq,obs-tn,obs-tq,obs-twl,sn,sq,ta,tn,tq,tw,twl,ugnt,uhb,ult,ust]
 	// - name: format
 	//   in: query
 	//   description: content format (usfm, text, markdown, etc.). Multiple formats are ORed.
-	//   type: string
+	//   type: array
+	//   collectionFormat: multi
+	//   items:
+	//     type: string
 	// - name: checkingLevel
 	//   in: query
-	//   description: search only for entries with the given checking level(s). Can be 1, 2 or 3
-	//   type: string
+	//   description: search only for entries with the given checking level(s)
+	//   type: array
+	//   collectionFormat: multi
+	//   items:
+	//     type: string
+	//     enum: [1,2,3]
 	// - name: book
 	//   in: query
 	//   description: search only for entries with the given book(s) (ingredient identifiers). To match multiple, give the parameter multiple times or give a list comma delimited. Will perform an exact match (case insensitive)
-	//   type: string
+	//   type: array
+	//   collectionFormat: multi
+	//   items:
+	//     type: string
 	// - name: metadataType
 	//   in: query
-	//   description: return repos only with metadata of this type (e.g. rc, tc, ts, sb). . <empty> or "all" for all. Default is rc
-	//   type: string
+	//   description: return repos only with metadata of this type
+	//   type: array
+	//   collectionFormat: multi
+	//   items:
+	//     type: string
+	//     enum: [rc,sb,tc,ts]
 	// - name: metadataVersion
 	//   in: query
-	//   description: return repos only with the version of metadata given. Does not apply if metadataType is "all"
-	//   type: string
+	//   description: return repos only with the version of metadata given. Does not apply if metadataType is not given
+	//   type: array
+	//   collectionFormat: multi
+	//   items:
+	//     type: string
 	// - name: partialMatch
 	//   in: query
 	//   description: if true, subject, owner and repo search fields will use partial match (LIKE) when querying the catalog. Default is false
@@ -258,7 +342,7 @@ func SearchOwner(ctx *context.APIContext) {
 func SearchRepo(ctx *context.APIContext) {
 	// swagger:operation GET /catalog/search/{owner}/{repo} catalog catalogSearchRepo
 	// ---
-	// summary: Catalog search by repo
+	// summary: Search the catalog by owner and repo
 	// produces:
 	// - application/json
 	// parameters:
@@ -291,42 +375,78 @@ func SearchRepo(ctx *context.APIContext) {
 	// - name: lang
 	//   in: query
 	//   description: search only for entries with the given language(s). To match multiple, give the parameter multiple times or give a list comma delimited. Will perform an exact match (case insensitive) unlesss partialMatch=true
-	//   type: string
+	//   type: array
+	//   collectionFormat: multi
+	//   items:
+	//     type: string
+	// - name: is_gl
+	//   in: query
+	//   description: search only entries that are a gateway language
+	//   type: boolean
 	// - name: stage
 	//   in: query
 	//   description: 'specifies which release stage to be return of these stages:
 	//                "prod" - return only the production releases (default);
 	//                "preprod" - return the pre-production release if it exists instead of the production release;
-	//                "latest" -return the default branch (e.g. master) if it is a valid RC instead of the above'
-	//   type: string
+	//                "latest" - return the default branch (e.g. master) if it is a valid repo'
+	//   type: array
+	//   collectionFormat: multi
+	//   items:
+	//     type: string
+	//     enum: [prod,preprod,latest]
 	// - name: subject
 	//   in: query
 	//   description: search only for entries with the given subject(s). To match multiple, give the parameter multiple times or give a list comma delimited. Will perform an exact match (case insensitive) unlesss partialMatch=true
-	//   type: string
+	//   type: array
+	//   collectionFormat: multi
+	//   items:
+	//     type: string
+	//     enum: [Aligned Bible,Aramaic Grammar,Bible,Greek Grammar,Greek Lexicon,Greek New Testament,Hebrew Grammar,Hebrew Old Testament,Hebrew-Aramaic Lexicon,OBS Study Notes,OBS Study Questions,OBS Translation Notes,OBS Translation Questions,Open Bible Stories,Study Notes,Study Questions,Training Library,Translation Academy,Translation Notes,Translation Questions,Translation Words,TSV Study Notes,TSV Study Questions,TSV Translation Notes,TSV Translation Questions,TSV Translation Words Links,TSV OBS Study Notes,TSV OBS Study Questions,TSV OBS Translation Notes,TSV OBS Translation Questions,TSV OBS Translation Words Links]
 	// - name: resource
 	//   in: query
 	//   description: resource identifier. Multiple resources are ORed.
-	//   type: string
+	//   type: array
+	//   collectionFormat: multi
+	//   items:
+	//     type: string
+	//     enum: [glt,gst,obs,obs-sn,obs-sq,obs-tn,obs-tq,obs-twl,sn,sq,ta,tn,tq,tw,twl,ugnt,uhb,ult,ust]
 	// - name: format
 	//   in: query
 	//   description: content format (usfm, text, markdown, etc.). Multiple formats are ORed.
-	//   type: string
+	//   type: array
+	//   collectionFormat: multi
+	//   items:
+	//     type: string
 	// - name: checkingLevel
 	//   in: query
-	//   description: search only for entries with the given checking level(s). Can be 1, 2 or 3
-	//   type: string
+	//   description: search only for entries with the given checking level(s)
+	//   type: array
+	//   collectionFormat: multi
+	//   items:
+	//     type: string
+	//     enum: [1,2,3]
 	// - name: book
 	//   in: query
 	//   description: search only for entries with the given book(s) (ingredient identifiers). To match multiple, give the parameter multiple times or give a list comma delimited. Will perform an exact match (case insensitive)
-	//   type: string
+	//   type: array
+	//   collectionFormat: multi
+	//   items:
+	//     type: string
 	// - name: metadataType
 	//   in: query
-	//   description: return repos only with metadata of this type (e.g. rc, tc, ts, sb). <empty> or "all" for all. Default is rc
-	//   type: string
+	//   description: return repos only with metadata of this type
+	//   type: array
+	//   collectionFormat: multi
+	//   items:
+	//     type: string
+	//     enum: [rc,sb,tc,ts]
 	// - name: metadataVersion
 	//   in: query
-	//   description: return repos only with the version of metadata given. Does not apply if metadataType is "all"
-	//   type: string
+	//   description: return repos only with the version of metadata given. Does not apply if metadataType is not given
+	//   type: array
+	//   collectionFormat: multi
+	//   items:
+	//     type: string
 	// - name: partialMatch
 	//   in: query
 	//   description: if true, subject, owner and repo search fields will use partial match (LIKE) when querying the catalog. Default is false
@@ -369,9 +489,9 @@ func SearchRepo(ctx *context.APIContext) {
 
 // ListCatalogSubjects list the subjects available in the catalog
 func ListCatalogSubjects(ctx *context.APIContext) {
-	// swagger:operation GET /catalog/subjects catalog catalogListSubjects
+	// swagger:operation GET /catalog/list/subjects catalog catalogListSubjects
 	// ---
-	// summary: Catalog list subjects
+	// summary: List of subjects in the catalog based on the given criteria
 	// produces:
 	// - application/json
 	// parameters:
@@ -382,126 +502,79 @@ func ListCatalogSubjects(ctx *context.APIContext) {
 	// - name: lang
 	//   in: query
 	//   description: list only subjects in the given language(s). To match multiple, give the parameter multiple times or give a list comma delimited. Will perform an exact match (case insensitive) unlesss partialMatch=true
-	//   type: string
+	//   type: array
+	//   collectionFormat: multi
+	//   items:
+	//     type: string
+	// - name: is_gl
+	//   in: query
+	//   description: search only entries that are a gateway language
+	//   type: boolean
 	// - name: stage
 	//   in: query
-	//   description: 'list only subjects of the given stage or lower, with low to high being:
+	//   description: 'list only those of the given stage or lower, with low to high being:
 	//                "prod" - return only the production subjects (default);
 	//                "preprod" - return pre-production and production subjects;
 	//                "latest" - return all subjects in the catalog for all stages'
-	//   type: string
+	//   type: array
+	//   collectionFormat: multi
+	//   items:
+	//     type: string
+	//     enum: [prod,preprod,latest]
 	// - name: subject
 	//   in: query
-	//   description: list only the given subjects if they are in the catalog meeting the criteria given (e.g. way to test a given language has the given subject)
-	//   type: string
+	//   description: list only the those if they are in the catalog meeting the criteria given (e.g. way to test a given language has the given subject)
+	//   type: array
+	//   collectionFormat: multi
+	//   items:
+	//     type: string
+	//     enum: [Aligned Bible,Aramaic Grammar,Bible,Greek Grammar,Greek Lexicon,Greek New Testament,Hebrew Grammar,Hebrew Old Testament,Hebrew-Aramaic Lexicon,OBS Study Notes,OBS Study Questions,OBS Translation Notes,OBS Translation Questions,Open Bible Stories,Study Notes,Study Questions,Training Library,Translation Academy,Translation Notes,Translation Questions,Translation Words,TSV Study Notes,TSV Study Questions,TSV Translation Notes,TSV Translation Questions,TSV Translation Words Links,TSV OBS Study Notes,TSV OBS Study Questions,TSV OBS Translation Notes,TSV OBS Translation Questions,TSV OBS Translation Words Links]
 	// - name: resource
 	//   in: query
-	//   description: list only subjects with the given resource identifier. Multiple resources are ORed.
-	//   type: string
+	//   description: list only those with the given resource identifier. Multiple resources are ORed.
+	//   type: array
+	//   collectionFormat: multi
+	//   items:
+	//     type: string
+	//     enum: [glt,gst,obs,obs-sn,obs-sq,obs-tn,obs-tq,obs-twl,sn,sq,ta,tn,tq,tw,twl,ugnt,uhb,ult,ust]
 	// - name: format
 	//   in: query
-	//   description: list only subjects with the given content format (usfm, text, markdown, etc.). Multiple formats are ORed.
+	//   description: list only those with the given content format (usfm, text, markdown, etc.). Multiple formats are ORed.
 	//   type: string
 	// - name: checkingLevel
 	//   in: query
-	//   description: list only for subjects with the given checking level(s). Can be 1, 2 or 3
-	//   type: string
+	//   description: list only those with the given checking level(s)
+	//   type: array
+	//   collectionFormat: multi
+	//   items:
+	//     type: string
+	//     enum: [1,2,3]
 	// - name: book
 	//   in: query
-	//   description: list only subjects with the given book(s) (ingredient identifiers). To match multiple, give the parameter multiple times or give a list comma delimited. Will perform an exact match (case insensitive)
-	//   type: string
+	//   description: list only those with the given book(s) (ingredient identifiers). To match multiple, give the parameter multiple times or give a list comma delimited. Will perform an exact match (case insensitive)
+	//   type: array
+	//   collectionFormat: multi
+	//   items:
+	//     type: string
 	// - name: metadataType
 	//   in: query
-	//   description: list only subjects with the given metadata type (e.g. rc, tc, ts, sb). . <empty> or "all" for all. Default is rc
-	//   type: string
+	//   description: list only those with the given metadata type
+	//   type: array
+	//   collectionFormat: multi
+	//   items:
+	//     type: string
+	//     enum: [rc,sb,tc,ts]
 	// - name: metadataVersion
 	//   in: query
-	//   description: list only subjects with the  given metadatay version. Does not apply if metadataType is "all" or empty
-	//   type: string
+	//   description: list only those with the given metadatay version. Does not apply if metadataType is not given
+	//   type: array
+	//   collectionFormat: multi
+	//   items:
+	//     type: string
 	// - name: partialMatch
 	//   in: query
 	//   description: if true, owner, subject and language search fields will use partial match (LIKE) when querying the catalog. Default is false
 	//   type: boolean
-	// responses:
-	//   "200":
-	//     "$ref": "#/responses/StringSlice"
-	//   "422":
-	//     "$ref": "#/responses/validationError"
-
-	opts, err := getSearchOptions(ctx)
-	if err != nil {
-		ctx.JSON(http.StatusUnprocessableEntity, map[string]any{
-			"ok":    false,
-			"error": err.Error(),
-		})
-		return
-	}
-
-	subjects, err := models.SearchCatalogSubjects(ctx, opts)
-	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, map[string]any{
-			"ok":    false,
-			"error": err.Error(),
-		})
-		return
-	}
-	ctx.JSON(http.StatusInternalServerError, map[string]any{
-		"ok":   true,
-		"data": subjects,
-	})
-}
-
-// ListCatalogOwners list the subjects available in the catalog
-func ListCatalogOwners(ctx *context.APIContext) {
-	// swagger:operation GET /catalog/owners catalog catalogListOwners
-	// ---
-	// summary: Catalog list owners
-	// produces:
-	// - application/json
-	// parameters:
-	// - name: owner
-	//   in: query
-	//   description: list only the given owners(s) if they have entries in the catalog meeting the criteria given (e.g. way to test an owner has a given language or subject)
-	//   type: string
-	// - name: lang
-	//   in: query
-	//   description: list only owners with entries in the given language(s). To match multiple, give the parameter multiple times or give a list comma delimited. Will perform an exact match (case insensitive) unlesss partialMatch=true
-	//   type: string
-	// - name: stage
-	//   in: query
-	//   description: 'list only owners of the given stage or lower, with low to high being:
-	//                "prod" - return only the production subjects (default);
-	//                "preprod" - return pre-production and production subjects;
-	//                "latest" - return all subjects in the catalog for all stages'
-	//   type: string
-	// - name: subject
-	//   in: query
-	//   description: list only owners with the given subject(s). Multiple resources are ORed.
-	//   type: string
-	// - name: resource
-	//   in: query
-	//   description: list only owners with the given resource identifier(s). Multiple resources are ORed.
-	//   type: string
-	// - name: format
-	//   in: query
-	//   description: list only owners with the given content format (usfm, text, markdown, etc.). Multiple formats are ORed.
-	//   type: string
-	// - name: checkingLevel
-	//   in: query
-	//   description: list only for owners with the given checking level(s). Can be 1, 2 or 3
-	//   type: string
-	// - name: book
-	//   in: query
-	//   description: list only owners with the given book(s) (ingredient identifiers). To match multiple, give the parameter multiple times or give a list comma delimited. Will perform an exact match (case insensitive)
-	//   type: string
-	// - name: metadataType
-	//   in: query
-	//   description: list only owners with the given metadata type (e.g. rc, tc, ts, sb). . <empty> or "all" for all. Default is rc
-	//   type: string
-	// - name: metadataVersion
-	//   in: query
-	//   description: list only owners with the  given metadatay version. Does not apply if metadataType is "all" or empty
-	//   type: string
 	// responses:
 	//   "200":
 	//     description: "SearchResults of a successful catalog owner search"
@@ -513,130 +586,27 @@ func ListCatalogOwners(ctx *context.APIContext) {
 	//         data:
 	//           type: array
 	//           items:
-	//             "$ref": "#/definitions/User"
-	//   "422":
-	//     "$ref": "#/responses/validationError"
+	//             "$ref": "#/responses/StringSlice"
 
-	opts, err := getSearchOptions(ctx)
+	list, err := getSingleDMFieldList(ctx, "`door43_metadata`.subject")
 	if err != nil {
 		ctx.JSON(http.StatusUnprocessableEntity, map[string]any{
 			"ok":    false,
 			"error": err.Error(),
 		})
-		return
 	}
-
-	owners, err := models.SearchCatalogOwners(ctx, opts)
-	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, map[string]any{
-			"ok":    false,
-			"error": err.Error(),
-		})
-		return
-	}
-	ctx.JSON(http.StatusInternalServerError, map[string]any{
+	ctx.RespHeader().Set("X-Total-Count", fmt.Sprintf("%d", len(list)))
+	ctx.JSON(http.StatusOK, map[string]any{
 		"ok":   true,
-		"data": owners,
-	})
-}
-
-// ListCatalogLanguages list the languages available in the catalog
-func ListCatalogLanguages(ctx *context.APIContext) {
-	// swagger:operation GET /catalog/languages catalog catalogListLanguages
-	// ---
-	// summary: Catalog list languages
-	// produces:
-	// - application/json
-	// parameters:
-	// - name: owner
-	//   in: query
-	//   description: list only lannguages with entries in the given owners(s). To match multiple, give the parameter multiple times or give a list comma delimited. Will perform an exact match (case insensitive) unlesss partialMatch=true
-	//   type: string
-	// - name: lang
-	//   in: query
-	//   description: list only the given languages(s) if they have entries in the catalog meeting the criteria given (e.g. way to test an language has a given owner and/or subject)
-	//   type: string
-	// - name: stage
-	//   in: query
-	//   description: 'list only languages of the given stage or lower, with low to high being:
-	//                "prod" - return only the production subjects (default);
-	//                "preprod" - return pre-production and production subjects;
-	//                "latest" - return all subjects in the catalog for all stages'
-	//   type: string
-	// - name: subject
-	//   in: query
-	//   description: list only languages with the given subject(s). Multiple resources are ORed.
-	//   type: string
-	// - name: resource
-	//   in: query
-	//   description: list only languages with the given resource identifier(s). Multiple resources are ORed.
-	//   type: string
-	// - name: format
-	//   in: query
-	//   description: list only languages with the given content format (usfm, text, markdown, etc.). Multiple formats are ORed.
-	//   type: string
-	// - name: checkingLevel
-	//   in: query
-	//   description: list only for languages with the given checking level(s). Can be 1, 2 or 3
-	//   type: string
-	// - name: book
-	//   in: query
-	//   description: list only languages with the given book(s) (ingredient identifiers). To match multiple, give the parameter multiple times or give a list comma delimited. Will perform an exact match (case insensitive)
-	//   type: string
-	// - name: metadataType
-	//   in: query
-	//   description: list only languages with the given metadata type (e.g. rc, tc, ts, sb). . <empty> or "all" for all. Default is rc
-	//   type: string
-	// - name: metadataVersion
-	//   in: query
-	//   description: list only languages with the  given metadatay version. Does not apply if metadataType is "all" or empty
-	//   type: string
-	// - name: direction
-	//   in: query
-	//   description: list only languages of the given language direction, "ltr" or "rtl".
-	//   type: string
-	// - name: isGL
-	//   in: query
-	//   description: list only languages of they are (true) or are not (false) a gatetway language.
-	//   type: boolean
-	// - name: partialMatch
-	//   in: query
-	//   description: if true, owner, language and subject search fields will use partial match (LIKE) when querying the catalog. Default is false
-	//   type: boolean
-	// responses:
-	//   "200":
-	//     "$ref": "#/responses/StringSlice"
-	//   "422":
-	//     "$ref": "#/responses/validationError"
-
-	opts, err := getSearchOptions(ctx)
-	if err != nil {
-		ctx.JSON(http.StatusUnprocessableEntity, map[string]any{
-			"ok":    false,
-			"error": err.Error(),
-		})
-		return
-	}
-
-	langs, err := models.SearchCatalogLanguages(ctx, opts)
-	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, map[string]any{
-			"ok":    false,
-			"error": err.Error(),
-		})
-		return
-	}
-	ctx.JSON(http.StatusInternalServerError, map[string]any{
-		"ok":   true,
-		"data": langs,
+		"data": list,
 	})
 }
 
 // ListCatalogMetadataTypes list the metadata types available in the catalog
 func ListCatalogMetadataTypes(ctx *context.APIContext) {
-	// swagger:operation GET /catalog/subjects catalog catalogListMetadataTypes
+	// swagger:operation GET /catalog/list/metadata-types catalog catalogListMetadataTypes
 	// ---
-	// summary: Catalog list metadata types
+	// summary: List of metadata types in the catalog based on the given criteria
 	// produces:
 	// - application/json
 	// parameters:
@@ -647,72 +617,340 @@ func ListCatalogMetadataTypes(ctx *context.APIContext) {
 	// - name: lang
 	//   in: query
 	//   description: list only subjects in the given language(s). To match multiple, give the parameter multiple times or give a list comma delimited. Will perform an exact match (case insensitive) unlesss partialMatch=true
-	//   type: string
+	//   type: array
+	//   collectionFormat: multi
+	//   items:
+	//     type: string
+	// - name: is_gl
+	//   in: query
+	//   description: search only entries that are a gateway language
+	//   type: boolean
 	// - name: stage
 	//   in: query
-	//   description: 'list only subjects of the given stage or lower, with low to high being:
+	//   description: 'list only those of the given stage or lower, with low to high being:
 	//                "prod" - return only the production subjects (default);
 	//                "preprod" - return pre-production and production subjects;
 	//                "latest" - return all subjects in the catalog for all stages'
-	//   type: string
+	//   type: array
+	//   collectionFormat: multi
+	//   items:
+	//     type: string
+	//     enum: [prod,preprod,latest]
 	// - name: subject
 	//   in: query
-	//   description: list only the given subjects if they are in the catalog meeting the criteria given (e.g. way to test a given language has the given subject)
-	//   type: string
+	//   description: list only the those if they are in the catalog meeting the criteria given (e.g. way to test a given language has the given subject)
+	//   type: array
+	//   collectionFormat: multi
+	//   items:
+	//     type: string
+	//     enum: [Aligned Bible,Aramaic Grammar,Bible,Greek Grammar,Greek Lexicon,Greek New Testament,Hebrew Grammar,Hebrew Old Testament,Hebrew-Aramaic Lexicon,OBS Study Notes,OBS Study Questions,OBS Translation Notes,OBS Translation Questions,Open Bible Stories,Study Notes,Study Questions,Training Library,Translation Academy,Translation Notes,Translation Questions,Translation Words,TSV Study Notes,TSV Study Questions,TSV Translation Notes,TSV Translation Questions,TSV Translation Words Links,TSV OBS Study Notes,TSV OBS Study Questions,TSV OBS Translation Notes,TSV OBS Translation Questions,TSV OBS Translation Words Links]
 	// - name: resource
 	//   in: query
-	//   description: list only subjects with the given resource identifier. Multiple resources are ORed.
-	//   type: string
+	//   description: list only those with the given resource identifier. Multiple resources are ORed.
+	//   type: array
+	//   collectionFormat: multi
+	//   items:
+	//     type: string
+	//     enum: [glt,gst,obs,obs-sn,obs-sq,obs-tn,obs-tq,obs-twl,sn,sq,ta,tn,tq,tw,twl,ugnt,uhb,ult,ust]
 	// - name: format
 	//   in: query
-	//   description: list only subjects with the given content format (usfm, text, markdown, etc.). Multiple formats are ORed.
+	//   description: list only those with the given content format (usfm, text, markdown, etc.). Multiple formats are ORed.
 	//   type: string
 	// - name: checkingLevel
 	//   in: query
-	//   description: list only for subjects with the given checking level(s). Can be 1, 2 or 3
-	//   type: string
+	//   description: list only those with the given checking level(s)
+	//   type: array
+	//   collectionFormat: multi
+	//   items:
+	//     type: string
+	//     enum: [1,2,3]
 	// - name: book
 	//   in: query
-	//   description: list only subjects with the given book(s) (ingredient identifiers). To match multiple, give the parameter multiple times or give a list comma delimited. Will perform an exact match (case insensitive)
-	//   type: string
+	//   description: list only those with the given book(s) (ingredient identifiers). To match multiple, give the parameter multiple times or give a list comma delimited. Will perform an exact match (case insensitive)
+	//   type: array
+	//   collectionFormat: multi
+	//   items:
+	//     type: string
 	// - name: metadataType
 	//   in: query
-	//   description: list only subjects with the given metadata type (e.g. rc, tc, ts, sb). . <empty> or "all" for all. Default is rc
-	//   type: string
+	//   description: list only those with the given metadata type
+	//   type: array
+	//   collectionFormat: multi
+	//   items:
+	//     type: string
+	//     enum: [rc,sb,tc,ts]
 	// - name: metadataVersion
 	//   in: query
-	//   description: list only subjects with the  given metadatay version. Does not apply if metadataType is "all" or empty
-	//   type: string
+	//   description: list only those with the given metadatay version. Does not apply if metadataType is not given
+	//   type: array
+	//   collectionFormat: multi
+	//   items:
+	//     type: string
 	// - name: partialMatch
 	//   in: query
 	//   description: if true, owner, subject and language search fields will use partial match (LIKE) when querying the catalog. Default is false
 	//   type: boolean
 	// responses:
 	//   "200":
-	//     "$ref": "#/responses/StringSlice"
-	//   "422":
-	//     "$ref": "#/responses/validationError"
+	//     description: "SearchResults of a successful catalog owner search"
+	//     schema:
+	//       type: object
+	//       properties:
+	//         ok:
+	//           type: boolean
+	//         data:
+	//           type: array
+	//           items:
+	//             "$ref": "#/responses/StringSlice"
 
-	opts, err := getSearchOptions(ctx)
+	list, err := getSingleDMFieldList(ctx, "`door43_metadata`.metadata_type")
 	if err != nil {
 		ctx.JSON(http.StatusUnprocessableEntity, map[string]any{
 			"ok":    false,
 			"error": err.Error(),
 		})
-		return
 	}
+	ctx.RespHeader().Set("X-Total-Count", fmt.Sprintf("%d", len(list)))
+	ctx.JSON(http.StatusOK, map[string]any{
+		"ok":   true,
+		"data": list,
+	})
+}
 
-	types, err := models.SearchCatalogMetadataTypes(ctx, opts)
+// ListCatalogOwners list the owners available in the catalog
+func ListCatalogOwners(ctx *context.APIContext) {
+	// swagger:operation GET /catalog/list/owners catalog catalogListOwners
+	// ---
+	// summary: List owners in the catalog based on the given criteria
+	// produces:
+	// - application/json
+	// parameters:
+	// - name: owner
+	//   in: query
+	//   description: list only the given owners(s) if they have entries in the catalog meeting the criteria given (e.g. way to test an owner has a given language or subject)
+	//   type: string
+	// - name: lang
+	//   in: query
+	//   description: list only those with entries in the given language(s). To match multiple, give the parameter multiple times or give a list comma delimited. Will perform an exact match (case insensitive) unlesss partialMatch=true
+	//   type: array
+	//   collectionFormat: multi
+	//   items:
+	//     type: string
+	// - name: is_gl
+	//   in: query
+	//   description: search only entries that are a gateway language
+	//   type: boolean
+	// - name: stage
+	//   in: query
+	//   description: 'list only those of the given stage or lower, with low to high being:
+	//                "prod" - return only the production subjects (default);
+	//                "preprod" - return pre-production and production subjects;
+	//                "latest" - return all subjects in the catalog for all stages'
+	//   type: array
+	//   collectionFormat: multi
+	//   items:
+	//     type: string
+	//     enum: [prod,preprod,latest]
+	// - name: subject
+	//   in: query
+	//   description: list only the those if they are in the catalog meeting the criteria given (e.g. way to test a given language has the given subject)
+	//   type: array
+	//   collectionFormat: multi
+	//   items:
+	//     type: string
+	//     enum: [Aligned Bible,Aramaic Grammar,Bible,Greek Grammar,Greek Lexicon,Greek New Testament,Hebrew Grammar,Hebrew Old Testament,Hebrew-Aramaic Lexicon,OBS Study Notes,OBS Study Questions,OBS Translation Notes,OBS Translation Questions,Open Bible Stories,Study Notes,Study Questions,Training Library,Translation Academy,Translation Notes,Translation Questions,Translation Words,TSV Study Notes,TSV Study Questions,TSV Translation Notes,TSV Translation Questions,TSV Translation Words Links,TSV OBS Study Notes,TSV OBS Study Questions,TSV OBS Translation Notes,TSV OBS Translation Questions,TSV OBS Translation Words Links]
+	// - name: resource
+	//   in: query
+	//   description: list only those with the given resource identifier. Multiple resources are ORed.
+	//   type: array
+	//   collectionFormat: multi
+	//   items:
+	//     type: string
+	//     enum: [glt,gst,obs,obs-sn,obs-sq,obs-tn,obs-tq,obs-twl,sn,sq,ta,tn,tq,tw,twl,ugnt,uhb,ult,ust]
+	// - name: format
+	//   in: query
+	//   description: list only those with the given content format (usfm, text, markdown, etc.). Multiple formats are ORed.
+	//   type: string
+	// - name: checkingLevel
+	//   in: query
+	//   description: list only those with the given checking level(s)
+	//   type: array
+	//   collectionFormat: multi
+	//   items:
+	//     type: string
+	//     enum: [1,2,3]
+	// - name: book
+	//   in: query
+	//   description: list only those with the given book(s) (ingredient identifiers). To match multiple, give the parameter multiple times or give a list comma delimited. Will perform an exact match (case insensitive)
+	//   type: array
+	//   collectionFormat: multi
+	//   items:
+	//     type: string
+	// - name: metadataType
+	//   in: query
+	//   description: list only those with the given metadata type
+	//   type: array
+	//   collectionFormat: multi
+	//   items:
+	//     type: string
+	//     enum: [rc,sb,tc,ts]
+	// - name: metadataVersion
+	//   in: query
+	//   description: list only those with the given metadatay version. Does not apply if metadataType is not given
+	//   type: array
+	//   collectionFormat: multi
+	//   items:
+	//     type: string
+	// responses:
+	//   "200":
+	//     description: "SearchResults of a successful catalog owner search"
+	//     schema:
+	//       type: object
+	//       properties:
+	//         ok:
+	//           type: boolean
+	//         data:
+	//           type: array
+	//           items:
+	//             "$ref": "#/responses/StringSlice"
+
+	list, err := getSingleDMFieldList(ctx, "`user`.name")
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, map[string]any{
+		ctx.JSON(http.StatusUnprocessableEntity, map[string]any{
 			"ok":    false,
 			"error": err.Error(),
 		})
-		return
 	}
-	ctx.JSON(http.StatusInternalServerError, map[string]any{
+	ctx.RespHeader().Set("X-Total-Count", fmt.Sprintf("%d", len(list)))
+	ctx.JSON(http.StatusOK, map[string]any{
 		"ok":   true,
-		"data": types,
+		"data": list,
+	})
+}
+
+// ListCatalogLanguages list the languages available in the catalog
+func ListCatalogLanguages(ctx *context.APIContext) {
+	// swagger:operation GET /catalog/list/languages catalog catalogListLanguages
+	// ---
+	// summary: List languages in the catalog based on the given criteria
+	// produces:
+	// - application/json
+	// parameters:
+	// - name: owner
+	//   in: query
+	//   description: list only those with the given owners(s). To match multiple, give the parameter multiple times or give a list comma delimited. Will perform an exact match (case insensitive) unlesss partialMatch=true
+	//   type: string
+	// - name: lang
+	//   in: query
+	//   description: list only the given languages(s) if they have entries in the catalog meeting the criteria given (e.g. way to test an language has a given owner and/or subject)
+	//   type: array
+	//   collectionFormat: multi
+	//   items:
+	//     type: string
+	// - name: is_gl
+	//   in: query
+	//   description: search only entries that are a gateway language
+	//   type: boolean
+	// - name: stage
+	//   in: query
+	//   description: 'list only those of the given stage or lower, with low to high being:
+	//                "prod" - return only the production subjects (default);
+	//                "preprod" - return pre-production and production subjects;
+	//                "latest" - return all subjects in the catalog for all stages'
+	//   type: array
+	//   collectionFormat: multi
+	//   items:
+	//     type: string
+	//     enum: [prod,preprod,latest]
+	// - name: subject
+	//   in: query
+	//   description: list only the those if they are in the catalog meeting the criteria given (e.g. way to test a given language has the given subject)
+	//   type: array
+	//   collectionFormat: multi
+	//   items:
+	//     type: string
+	//     enum: [Aligned Bible,Aramaic Grammar,Bible,Greek Grammar,Greek Lexicon,Greek New Testament,Hebrew Grammar,Hebrew Old Testament,Hebrew-Aramaic Lexicon,OBS Study Notes,OBS Study Questions,OBS Translation Notes,OBS Translation Questions,Open Bible Stories,Study Notes,Study Questions,Training Library,Translation Academy,Translation Notes,Translation Questions,Translation Words,TSV Study Notes,TSV Study Questions,TSV Translation Notes,TSV Translation Questions,TSV Translation Words Links,TSV OBS Study Notes,TSV OBS Study Questions,TSV OBS Translation Notes,TSV OBS Translation Questions,TSV OBS Translation Words Links]
+	// - name: resource
+	//   in: query
+	//   description: list only those with the given resource identifier. Multiple resources are ORed.
+	//   type: array
+	//   collectionFormat: multi
+	//   items:
+	//     type: string
+	//     enum: [glt,gst,obs,obs-sn,obs-sq,obs-tn,obs-tq,obs-twl,sn,sq,ta,tn,tq,tw,twl,ugnt,uhb,ult,ust]
+	// - name: format
+	//   in: query
+	//   description: list only those with the given content format (usfm, text, markdown, etc.). Multiple formats are ORed.
+	//   type: string
+	// - name: checkingLevel
+	//   in: query
+	//   description: list only those with the given checking level(s)
+	//   type: array
+	//   collectionFormat: multi
+	//   items:
+	//     type: string
+	//     enum: [1,2,3]
+	// - name: book
+	//   in: query
+	//   description: list only those with the given book(s) (ingredient identifiers). To match multiple, give the parameter multiple times or give a list comma delimited. Will perform an exact match (case insensitive)
+	//   type: array
+	//   collectionFormat: multi
+	//   items:
+	//     type: string
+	// - name: metadataType
+	//   in: query
+	//   description: list only those with the given metadata type
+	//   type: array
+	//   collectionFormat: multi
+	//   items:
+	//     type: string
+	//     enum: [rc,sb,tc,ts]
+	// - name: metadataVersion
+	//   in: query
+	//   description: list only those with the given metadatay version. Does not apply if metadataType is not given
+	//   type: array
+	//   collectionFormat: multi
+	//   items:
+	//     type: string
+	// - name: is_gl
+	//   in: query
+	//   description: list only those that are (true) or are not (false) a gatetway language.
+	//   type: boolean
+	// - name: partialMatch
+	//   in: query
+	//   description: if true, owner, language and subject search fields will use partial match (LIKE) when querying the catalog. Default is false
+	//   type: boolean
+	// responses:
+	//   "200":
+	//     description: "SearchResults of a successful catalog owner search"
+	//     schema:
+	//       type: object
+	//       properties:
+	//         ok:
+	//           type: boolean
+	//         data:
+	//           type: array
+	//           items:
+	//             "$ref": "#/responses/Language"
+
+	list, err := getSingleDMFieldList(ctx, "`door43_metadata`.language")
+	if err != nil {
+		ctx.JSON(http.StatusUnprocessableEntity, map[string]any{
+			"ok":    false,
+			"error": err.Error(),
+		})
+	}
+	var languages []map[string]interface{}
+	langNames := dcs.GetLangNames()
+	for _, lang := range list {
+		if val, ok := langNames[lang]; ok {
+			languages = append(languages, val.(map[string]interface{}))
+		}
+	}
+	ctx.RespHeader().Set("X-Total-Count", fmt.Sprintf("%d", len(list)))
+	ctx.JSON(http.StatusOK, map[string]any{
+		"ok":   true,
+		"data": languages,
 	})
 }
 
@@ -720,7 +958,7 @@ func ListCatalogMetadataTypes(ctx *context.APIContext) {
 func GetCatalogEntry(ctx *context.APIContext) {
 	// swagger:operation GET /catalog/entry/{owner}/{repo}/{ref} catalog catalogGetEntry
 	// ---
-	// summary: Catalog entry
+	// summary: Get a catalog entry
 	// produces:
 	// - application/json
 	// parameters:
@@ -761,19 +999,19 @@ func GetCatalogEntry(ctx *context.APIContext) {
 		ctx.Error(http.StatusInternalServerError, "LoadAttributes", err)
 		return
 	}
-	perm, err := access_model.GetUserRepoPermission(ctx, dm.Repo, ctx.ContextUser)
+	accessMode, err := access_model.AccessLevel(ctx, ctx.ContextUser, dm.Repo)
 	if err != nil {
 		ctx.Error(http.StatusInternalServerError, "GetUserRepoPermission", err)
 		return
 	}
-	ctx.JSON(http.StatusOK, convert.ToCatalogEntry(ctx, dm, perm))
+	ctx.JSON(http.StatusOK, convert.ToCatalogEntry(ctx, dm, accessMode))
 }
 
 // GetCatalogMetadata Get the metadata (RC 0.2 manifest) in JSON format for the given ownername, reponame and ref
 func GetCatalogMetadata(ctx *context.APIContext) {
 	// swagger:operation GET /catalog/entry/{owner}/{repo}/{ref}/metadata catalog catalogGetMetadata
 	// ---
-	// summary: Catalog entry metadata (manifest.yaml in JSON format)
+	// summary: Get the metdata metadata (metadata.json or manifest.yaml in JSON format) of a catalog entry
 	// produces:
 	// - application/json
 	// parameters:
@@ -824,7 +1062,7 @@ func QueryStrings(ctx *context.APIContext, name string) []string {
 	return newStrs
 }
 
-func getSearchOptions(ctx *context.APIContext) (*door43metadata.SearchCatalogOptions, error) {
+func searchCatalog(ctx *context.APIContext) {
 	var repoID int64
 	var owners, repos []string
 	if ctx.Repo.Repository != nil {
@@ -844,7 +1082,8 @@ func getSearchOptions(ctx *context.APIContext) (*door43metadata.SearchCatalogOpt
 		var ok bool
 		stage, ok = door43metadata.StageMap[stageStr]
 		if !ok {
-			return nil, fmt.Errorf("invalid stage [%s]", stageStr)
+			ctx.Error(http.StatusUnprocessableEntity, "", fmt.Errorf("invalid stage [%s]", stageStr))
+			return
 		}
 	} else {
 		stage = door43metadata.StageProd
@@ -875,6 +1114,7 @@ func getSearchOptions(ctx *context.APIContext) (*door43metadata.SearchCatalogOpt
 		Tags:             QueryStrings(ctx, "tag"),
 		Stage:            stage,
 		Languages:        QueryStrings(ctx, "lang"),
+		LanguageIsGL:     ctx.FormOptionalBool("is_gl"),
 		Subjects:         QueryStrings(ctx, "subject"),
 		Resources:        QueryStrings(ctx, "resource"),
 		ContentFormats:   QueryStrings(ctx, "format"),
@@ -898,24 +1138,16 @@ func getSearchOptions(ctx *context.APIContext) (*door43metadata.SearchCatalogOpt
 				if orderBy, ok := searchModeMap[strings.ToLower(sortMode)]; ok {
 					opts.OrderBy = append(opts.OrderBy, orderBy)
 				} else {
-					return nil, fmt.Errorf("invalid sort mode: \"%s\"", sortMode)
+					ctx.Error(http.StatusUnprocessableEntity, "", fmt.Errorf("invalid sort mode: \"%s\"", sortMode))
+					return
 				}
 			}
 		} else {
-			return nil, fmt.Errorf("invalid sort order [%s]", sortOrder)
+			ctx.Error(http.StatusUnprocessableEntity, "", fmt.Errorf("invalid sort order [%s]", sortOrder))
+			return
 		}
 	} else {
 		opts.OrderBy = []door43metadata.CatalogOrderBy{door43metadata.CatalogOrderByLangCode, door43metadata.CatalogOrderBySubject, door43metadata.CatalogOrderByReleaseDateReverse}
-	}
-
-	return opts, nil
-}
-
-func searchCatalog(ctx *context.APIContext) {
-	opts, err := getSearchOptions(ctx)
-	if err != nil {
-		ctx.Error(http.StatusUnprocessableEntity, "", err)
-		return
 	}
 
 	dms, count, err := models.SearchCatalog(ctx, opts)
@@ -936,11 +1168,17 @@ func searchCatalog(ctx *context.APIContext) {
 				return
 			}
 		}
-		perm, err := access_model.GetUserRepoPermission(ctx, dm.Repo, ctx.ContextUser)
+		accessMode, err := access_model.AccessLevel(ctx, ctx.ContextUser, dm.Repo)
 		if err != nil {
 			ctx.Error(http.StatusInternalServerError, "GetUserRepoPermissions", err)
 		}
+<<<<<<< HEAD
 		dmAPI := convert.ToCatalogEntry(ctx, dm, perm)
+||||||| 2f36c9947c
+		dmAPI := convert.ToCatalogEntry(ctx, dm, perm.AccessMode)
+=======
+		dmAPI := convert.ToCatalogEntry(ctx, dm, accessMode)
+>>>>>>> root-v1.20-and-main
 		if opts.ShowIngredients == util.OptionalBoolFalse {
 			dmAPI.Ingredients = nil
 		}
@@ -965,4 +1203,82 @@ func searchCatalog(ctx *context.APIContext) {
 		Data:        results,
 		LastUpdated: lastUpdated,
 	})
+}
+
+func getSingleDMFieldList(ctx *context.APIContext, field string) ([]string, error) {
+	stageStr := ctx.FormString("stage")
+	stage := door43metadata.StageProd
+	if stageStr != "" {
+		var ok bool
+		stage, ok = door43metadata.StageMap[stageStr]
+		if !ok {
+			err := fmt.Errorf("invalid stage [%s]", stageStr)
+			return nil, err
+		}
+	}
+
+	metadataTypes := QueryStrings(ctx, "metadataType")
+	metadataVersions := QueryStrings(ctx, "metadataVersion")
+
+	listOptions := db.ListOptions{
+		Page:     ctx.FormInt("page"),
+		PageSize: ctx.FormInt("limit"),
+	}
+	if listOptions.Page < 1 {
+		listOptions.Page = 1
+	}
+
+	opts := &door43metadata.SearchCatalogOptions{
+		ListOptions:      listOptions,
+		Owners:           QueryStrings(ctx, "owner"),
+		Repos:            QueryStrings(ctx, "repos"),
+		Tags:             QueryStrings(ctx, "tag"),
+		Stage:            stage,
+		Languages:        QueryStrings(ctx, "lang"),
+		LanguageIsGL:     ctx.FormOptionalBool("is_gl"),
+		Subjects:         QueryStrings(ctx, "subject"),
+		Resources:        QueryStrings(ctx, "resource"),
+		ContentFormats:   QueryStrings(ctx, "format"),
+		CheckingLevels:   QueryStrings(ctx, "checkingLevel"),
+		Books:            QueryStrings(ctx, "book"),
+		IncludeHistory:   ctx.FormBool("includeHistory"),
+		ShowIngredients:  ctx.FormOptionalBool("showIngredients"),
+		MetadataTypes:    metadataTypes,
+		MetadataVersions: metadataVersions,
+		PartialMatch:     ctx.FormBool("partialMatch"),
+	}
+
+	sortModes := QueryStrings(ctx, "sort")
+	if len(sortModes) > 0 {
+		sortOrder := ctx.FormString("order")
+		if sortOrder == "" {
+			sortOrder = "asc"
+		}
+		if searchModeMap, ok := searchOrderByMap[sortOrder]; ok {
+			for _, sortMode := range sortModes {
+				if orderBy, ok := searchModeMap[strings.ToLower(sortMode)]; ok {
+					opts.OrderBy = append(opts.OrderBy, orderBy)
+				} else {
+					err := fmt.Errorf("invalid sort mode [%s]", sortMode)
+					ctx.JSON(http.StatusUnprocessableEntity, map[string]any{
+						"ok":    false,
+						"error": err.Error(),
+					})
+					return nil, err
+				}
+			}
+		} else {
+			err := fmt.Errorf("invalid sort order [%s]", sortOrder)
+			return nil, err
+		}
+	} else {
+		opts.OrderBy = []door43metadata.CatalogOrderBy{door43metadata.CatalogOrderByLangCode, door43metadata.CatalogOrderBySubject, door43metadata.CatalogOrderByReleaseDateReverse}
+	}
+
+	results, err := models.SearchDoor43MetadataField(ctx, opts, field)
+	if err != nil {
+		return nil, err
+	}
+
+	return results, nil
 }
