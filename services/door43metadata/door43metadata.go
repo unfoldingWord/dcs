@@ -18,7 +18,6 @@ import (
 	"code.gitea.io/gitea/models/door43metadata"
 	repo_model "code.gitea.io/gitea/models/repo"
 	"code.gitea.io/gitea/models/system"
-	"code.gitea.io/gitea/modules/base"
 	"code.gitea.io/gitea/modules/charset"
 	"code.gitea.io/gitea/modules/dcs"
 	"code.gitea.io/gitea/modules/git"
@@ -331,7 +330,7 @@ func GetDoor43MetadataFromRCManifest(dm *repo_model.Door43Metadata, manifest *ma
 }
 
 // GetDoor43MetadataFromSBMetadata creates a Door43Metadata object from the SBMetadata100 object
-func GetDoor43MetadataFromSBMetadata(dm *repo_model.Door43Metadata, sbMetadata *base.SBMetadata100, repo *repo_model.Repository, commit *git.Commit) error {
+func GetDoor43MetadataFromSBMetadata(dm *repo_model.Door43Metadata, sbMetadata *dcs.SBMetadata100, repo *repo_model.Repository, commit *git.Commit) error {
 	var metadataType string
 	var metadataVersion string
 	subject := "unknown"
@@ -420,17 +419,17 @@ func GetRCDoor43Metadata(dm *repo_model.Door43Metadata, repo *repo_model.Reposit
 	if blob == nil {
 		return nil
 	}
-	manifest, err = base.ReadYAMLFromBlob(blob)
+	manifest, err = dcs.ReadYAMLFromBlob(blob)
 	if err != nil {
 		return err
 	}
-	validationResult, err := base.ValidateMapByRC02Schema(manifest)
+	validationResult, err := dcs.ValidateMapByRC02Schema(manifest)
 	if err != nil {
 		return err
 	}
 	if validationResult != nil {
 		log.Info("%s: manifest.yaml is not valid. see errors:", repo.FullName())
-		log.Info(base.ConvertValidationErrorToString(validationResult))
+		log.Info(dcs.ConvertValidationErrorToString(validationResult))
 		return validationResult
 	}
 	log.Info("%s: manifest.yaml is valid.", repo.FullName())
@@ -449,7 +448,7 @@ func GetTcOrTsDoor43Metadata(dm *repo_model.Door43Metadata, repo *repo_model.Rep
 	var count int
 	var versification string
 
-	t, err := base.GetTcTsManifestFromBlob(blob)
+	t, err := dcs.GetTcTsManifestFromBlob(blob)
 	if err != nil || t == nil {
 		return err
 	}
@@ -471,7 +470,7 @@ func GetTcOrTsDoor43Metadata(dm *repo_model.Door43Metadata, repo *repo_model.Rep
 	}
 
 	// Get the manifest again in map[string]interface{} format for the DM object
-	manifest, err := base.ReadJSONFromBlob(blob)
+	manifest, err := dcs.ReadJSONFromBlob(blob)
 	if err != nil {
 		return err
 	}
@@ -513,21 +512,21 @@ func GetSBDoor43Metadata(dm *repo_model.Door43Metadata, repo *repo_model.Reposit
 	if blob == nil {
 		return nil
 	}
-	sbMetadata, err := base.GetSBDataFromBlob(blob)
+	sbMetadata, err := dcs.GetSBDataFromBlob(blob)
 	if err != nil {
 		return err
 	}
-	metadata, err = base.ReadJSONFromBlob(blob)
+	metadata, err = dcs.ReadJSONFromBlob(blob)
 	if err != nil {
 		return err
 	}
-	validationResult, err := base.ValidateMapBySB100Schema(metadata)
+	validationResult, err := dcs.ValidateMapBySB100Schema(metadata)
 	if err != nil {
 		return err
 	}
 	if validationResult != nil {
 		log.Info("%s: metadata.json's 'data' is not valid. see errors:", repo.FullName())
-		log.Info(base.ConvertValidationErrorToString(validationResult))
+		log.Info(dcs.ConvertValidationErrorToString(validationResult))
 		return validationResult
 	}
 	log.Info("%s: metadata.json's 'data' is valid.", repo.FullName())
@@ -810,10 +809,10 @@ func GetAttachmentsFromJSON(attachment *repo_model.Attachment) ([]*repo_model.At
 // LoadMetadataSchemas loads the Metadata Schemas from the web and local file if not available online
 func LoadMetadataSchemas(ctx context.Context) error {
 	log.Trace("Doing: LoadMetadataSchemas")
-	if _, err := base.GetSB100Schema(true); err != nil {
+	if _, err := dcs.GetSB100Schema(true); err != nil {
 		log.Error("Error loading SB 100 Schema: %v", err)
 	}
-	if _, err := base.GetRC02Schema(true); err != nil {
+	if _, err := dcs.GetRC02Schema(true); err != nil {
 		log.Error("Error loading RC 0.2 Schema: %v", err)
 	}
 	log.Trace("Finished: LoadMetadataSchemas")

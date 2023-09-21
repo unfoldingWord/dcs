@@ -1403,6 +1403,7 @@ func Routes(ctx gocontext.Context) *web.Route {
 		m.Post("/yaml", bind(misc.YamlOption{}), misc.Yaml)
 		m.Group("/languages", func() {
 			m.Get("/langnames.json", dcs.ServeLangnamesJSON)
+			m.Get("/langnames_keyed.json", dcs.ServeLangnamesJSONKeyed)
 		})
 		m.Group("/catalog", func() {
 			m.Get("", catalog.Search)

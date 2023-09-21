@@ -941,10 +941,10 @@ func ListCatalogLanguages(ctx *context.APIContext) {
 		})
 	}
 	var languages []map[string]interface{}
-	langNames := dcs.GetLangNames()
+	langnames := dcs.GetLangnamesJSONKeyed()
 	for _, lang := range list {
-		if val, ok := langNames[lang]; ok {
-			languages = append(languages, val.(map[string]interface{}))
+		if val, ok := langnames[lang]; ok {
+			languages = append(languages, val)
 		}
 	}
 	ctx.RespHeader().Set("X-Total-Count", fmt.Sprintf("%d", len(list)))

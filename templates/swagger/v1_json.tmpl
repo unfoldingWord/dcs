@@ -2690,7 +2690,100 @@
           "languages"
         ],
         "summary": "Fetches the langnames.json file",
-        "operationId": "languagesLangnames",
+        "operationId": "languagesLangnamesJSON",
+        "parameters": [
+          {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "collectionFormat": "multi",
+            "description": "list only the given language codes",
+            "name": "lc",
+            "in": "query"
+          },
+          {
+            "type": "boolean",
+            "description": "if true, only show gateway languages, if false, only non-gateway languages (other languages)",
+            "name": "gw",
+            "in": "query"
+          },
+          {
+            "type": "array",
+            "items": {
+              "enum": [
+                "ltr",
+                "rtl"
+              ],
+              "type": "string"
+            },
+            "collectionFormat": "multi",
+            "description": "direction of the language",
+            "name": "ld",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "description": "sort alphanumerically by attribute. Supported values are \"ang\", \"hc\", \"lc\", \"ld\", \"ln\", \"lr\". Default is \"lc\"",
+            "name": "sort",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "description": "sort order, either \"asc\" (ascending) or \"desc\" (descending). Default is \"asc\"",
+            "name": "order",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/Langnames"
+          }
+        }
+      }
+    },
+    "/languages/langnames_keyed.json": {
+      "get": {
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "languages"
+        ],
+        "summary": "Fetches the langnames.json file",
+        "operationId": "languagesLangnamesJSONKeyed",
+        "parameters": [
+          {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "collectionFormat": "multi",
+            "description": "list only the given language codes",
+            "name": "lc",
+            "in": "query"
+          },
+          {
+            "type": "boolean",
+            "description": "if true, only show gateway languages, if false, only non-gateway languages (other languages)",
+            "name": "gw",
+            "in": "query"
+          },
+          {
+            "type": "array",
+            "items": {
+              "enum": [
+                "ltr",
+                "rtl"
+              ],
+              "type": "string"
+            },
+            "collectionFormat": "multi",
+            "description": "direction of the language",
+            "name": "ld",
+            "in": "query"
+          }
+        ],
         "responses": {
           "200": {
             "$ref": "#/responses/Langnames"
