@@ -4,34 +4,75 @@
 package dcs
 
 import (
+	"bytes"
+	"fmt"
 	"net/http"
 	"strings"
 	"time"
 
 	"code.gitea.io/gitea/modules/json"
 	"code.gitea.io/gitea/modules/log"
+	"code.gitea.io/gitea/modules/options"
 )
 
-var langNames = map[string]interface{}{}
+var _langnamesJSON []map[string]interface{}
+var _langnamesJSONKeyed map[string]map[string]interface{}
 
-// GetLangNames returns the langnames.json file from tD in a keyed map, loads from tD if not already loaded
-func GetLangNames() map[string]interface{} {
-	myClient := &http.Client{Timeout: 10 * time.Second}
-	if len(langNames) == 0 {
-		url := "https://td.unfoldingword.org/exports/langnames.json"
-		response, err := myClient.Get(url)
-		if err == nil {
-			defer response.Body.Close()
-			langNamesArr := &[]map[string]interface{}{}
-			if err := json.NewDecoder(response.Body).Decode(langNamesArr); err != nil {
-				log.Error("Unable to decode langnames.json from tD: %v", err)
-			}
-			for _, value := range *langNamesArr {
-				langNames[value["lc"].(string)] = value
+// GetLangnamesJSON returns an array of maps from https://td.door43.org/exports/langnames.json
+// Will use custom/options/languages/langnames.json instead if exists
+func GetLangnamesJSON() []map[string]interface{} {
+	if _langnamesJSON == nil {
+		if langnames, err := GetLangnamesJSONFromCustom(); err == nil && langnames != nil {
+			_langnamesJSON = langnames
+		} else {
+			langnames, err := GetLangnamesJSONFromTD()
+			if err != nil {
+				log.Error(err.Error())
+			} else {
+				_langnamesJSON = langnames
 			}
 		}
 	}
-	return langNames
+	return _langnamesJSON
+}
+
+func GetLangnamesJSONFromCustom() ([]map[string]interface{}, error) {
+	fileBuf, err := options.AssetFS().ReadFile("languages", "langnames.json")
+	if err != nil {
+		log.Debug("HERE: %s: %v", fileBuf, err)
+		return nil, err
+	}
+	reader := bytes.NewReader(fileBuf)
+	langnames := []map[string]interface{}{}
+	if err := json.NewDecoder(reader).Decode(&langnames); err != nil {
+		return nil, fmt.Errorf("unable to decode langnames.json from custom/options/languages/langnames.json: %v", err)
+	}
+	return langnames, nil
+}
+
+func GetLangnamesJSONFromTD() ([]map[string]interface{}, error) {
+	langnames := []map[string]interface{}{}
+	url := "https://td.unfoldingword.org/exports/langnames.json"
+	myClient := &http.Client{Timeout: 10 * time.Second}
+	response, err := myClient.Get(url)
+	if err == nil {
+		defer response.Body.Close()
+		if err := json.NewDecoder(response.Body).Decode(&langnames); err != nil {
+			return nil, fmt.Errorf("unable to decode langnames.json from tD: %v", err)
+		}
+	}
+	return langnames, nil
+}
+
+func GetLangnamesJSONKeyed() map[string]map[string]interface{} {
+	if _langnamesJSONKeyed == nil {
+		_langnamesJSONKeyed = map[string]map[string]interface{}{}
+		langnames := GetLangnamesJSON()
+		for _, value := range langnames {
+			_langnamesJSONKeyed[value["lc"].(string)] = value
+		}
+	}
+	return _langnamesJSONKeyed
 }
 
 // GetLanguageFromRepoName determines the language of a repo by its repo name
@@ -49,16 +90,16 @@ func GetLanguageFromRepoName(repoName string) string {
 
 // IsValidLanguage returns true if string is a valid language code
 func IsValidLanguage(lang string) bool {
-	ln := GetLangNames()
-	_, ok := ln[lang]
+	langnames := GetLangnamesJSONKeyed()
+	_, ok := langnames[lang]
 	return ok
 }
 
 // GetLanguageDirection returns the language direction
 func GetLanguageDirection(lang string) string {
-	ln := GetLangNames()
-	if data, ok := ln[lang]; ok {
-		if val, ok := data.(map[string]interface{})["ld"].(string); ok {
+	langnames := GetLangnamesJSONKeyed()
+	if data, ok := langnames[lang]; ok {
+		if val, ok := data["ld"].(string); ok {
 			return val
 		}
 	}
@@ -67,9 +108,9 @@ func GetLanguageDirection(lang string) string {
 
 // GetLanguageTitle returns the language title
 func GetLanguageTitle(lang string) string {
-	ln := GetLangNames()
-	if data, ok := ln[lang]; ok {
-		if val, ok := data.(map[string]interface{})["ln"].(string); ok {
+	langnames := GetLangnamesJSONKeyed()
+	if data, ok := langnames[lang]; ok {
+		if val, ok := data["ln"].(string); ok {
 			return val
 		}
 	}
@@ -78,9 +119,9 @@ func GetLanguageTitle(lang string) string {
 
 // LanguageIsGL returns true if string is a valid language and is a GL
 func LanguageIsGL(lang string) bool {
-	ln := GetLangNames()
-	if data, ok := ln[lang]; ok {
-		if val, ok := data.(map[string]interface{})["gw"].(bool); ok {
+	langnames := GetLangnamesJSONKeyed()
+	if data, ok := langnames[lang]; ok {
+		if val, ok := data["gw"].(bool); ok {
 			return val
 		}
 	}
