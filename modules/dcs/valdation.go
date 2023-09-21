@@ -15,6 +15,7 @@ import (
 	"code.gitea.io/gitea/modules/json"
 	"code.gitea.io/gitea/modules/log"
 	"code.gitea.io/gitea/modules/util"
+
 	"github.com/santhosh-tekuri/jsonschema/v5"
 )
 

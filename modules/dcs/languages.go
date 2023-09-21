@@ -15,8 +15,10 @@ import (
 	"code.gitea.io/gitea/modules/options"
 )
 
-var _langnamesJSON []map[string]interface{}
-var _langnamesJSONKeyed map[string]map[string]interface{}
+var (
+	_langnamesJSON      []map[string]interface{}
+	_langnamesJSONKeyed map[string]map[string]interface{}
+)
 
 // GetLangnamesJSON returns an array of maps from https://td.door43.org/exports/langnames.json
 // Will use custom/options/languages/langnames.json instead if exists
