@@ -139,7 +139,7 @@ func SearchUsers(ctx context.Context, opts *SearchUserOptions) (users []*User, _
 	}
 
 	if len(opts.OrderBy) == 0 {
-		opts.OrderBy = db.SearchUserOrderByAlphabetically // DCS Customizations - uses custom option
+		opts.OrderBy = db.SearchOrderByAlphabetically
 	}
 
 	sessQuery := opts.toSearchQueryBase(ctx).OrderBy(opts.OrderBy.String())

@@ -12,7 +12,6 @@ import (
 	"code.gitea.io/gitea/modules/log"
 	"code.gitea.io/gitea/modules/setting"
 	"code.gitea.io/gitea/routers/web/repo"
-	door43metadata_service "code.gitea.io/gitea/services/doo43metadata"
 	notify_service "code.gitea.io/gitea/services/notify"
 )
 
@@ -56,13 +55,6 @@ func SetDefaultBranchPost(ctx *context.Context) {
 		}
 
 		log.Trace("Repository basic settings updated: %s/%s", ctx.Repo.Owner.Name, repo.Name)
-
-		/*** DCS Customizations ***/
-		if err := door43metadata_service.ProcessDoor43MetadataForRepo(ctx, repo, branch); err != nil {
-			ctx.ServerError("ProcessDoor43MetadataForRef", err)
-			return
-		}
-		/*** END DCS Customizations ***/
 
 		ctx.Flash.Success(ctx.Tr("repo.settings.update_settings_success"))
 		ctx.Redirect(setting.AppSubURL + ctx.Req.URL.EscapedPath())

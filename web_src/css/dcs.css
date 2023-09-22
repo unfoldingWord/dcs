@@ -1,61 +1,60 @@
 /* DCS Customizations */
 
 .markup.tsv {
-	 padding: 10px;
-	 overflow: scroll;
+  padding: 10px;
+  overflow: scroll;
 }
- .markup.tsv table.tsv {
-	 border: 1px solid var(--color-secondary);
+.markup.tsv table.tsv {
+  border: 1px solid var(--color-secondary);
 }
- .markup.tsv table.tsv th, .markup.tsv table.tsv td {
-	 vertical-align: top;
-	 line-height: normal !important;
+.markup.tsv table.tsv th, .markup.tsv table.tsv td {
+  vertical-align: top;
+  line-height: normal !important;
 }
- .markup.tsv table.tsv th.line-num, .markup.tsv table.tsv td.line-num {
-	 text-align: left;
-	 color: var(--color-secondary-dark-2);
+.markup.tsv table.tsv th.line-num, .markup.tsv table.tsv td.line-num {
+  text-align: left;
+  color: var(--color-secondary-dark-2);
 }
- .markup.tsv table.tsv th h1, .markup.tsv table.tsv th h2, .markup.tsv table.tsv th h3, .markup.tsv table.tsv th h4, .markup.tsv table.tsv th h5, .markup.tsv table.tsv th h6, .markup.tsv table.tsv td h1, .markup.tsv table.tsv td h2, .markup.tsv table.tsv td h3, .markup.tsv table.tsv td h4, .markup.tsv table.tsv td h5, .markup.tsv table.tsv td h6 {
-	 margin: 0;
-	 border-bottom: none;
-	 white-space: nowrap;
-	 line-height: normal;
+.markup.tsv table.tsv th h1, .markup.tsv table.tsv th h2, .markup.tsv table.tsv th h3, .markup.tsv table.tsv th h4, .markup.tsv table.tsv th h5, .markup.tsv table.tsv th h6, .markup.tsv table.tsv td h1, .markup.tsv table.tsv td h2, .markup.tsv table.tsv td h3, .markup.tsv table.tsv td h4, .markup.tsv table.tsv td h5, .markup.tsv table.tsv td h6 {
+  margin: 0;
+  border-bottom: none;
+  white-space: nowrap;
+  line-height: normal;
 }
- .markup.tsv table.tsv th ol, .markup.tsv table.tsv th ul, .markup.tsv table.tsv td ol, .markup.tsv table.tsv td ul {
-	 display: flex;
-	 flex-direction: column;
+.markup.tsv table.tsv th ol, .markup.tsv table.tsv th ul, .markup.tsv table.tsv td ol, .markup.tsv table.tsv td ul {
+  display: flex;
+  flex-direction: column;
 }
- .markup.tsv table.tsv th p, .markup.tsv table.tsv th ul, .markup.tsv table.tsv th ol, .markup.tsv table.tsv td p, .markup.tsv table.tsv td ul, .markup.tsv table.tsv td ol {
-	 margin: 0;
+.markup.tsv table.tsv th p, .markup.tsv table.tsv th ul, .markup.tsv table.tsv th ol, .markup.tsv table.tsv td p, .markup.tsv table.tsv td ul, .markup.tsv table.tsv td ol {
+  margin: 0;
 }
- [data-language-direction="rtl"] {
-	 direction: rtl;
-	 text-align: right;
+[data-language-direction="rtl"] {
+  direction: rtl;
+  text-align: right;
 }
- /* .data-table .modified span {
-	 display: inline-block;
+/* .data-table .modified span {
+  display: inline-block;
 } */
- .validation-message-badge {
-	 cursor: pointer;
+.validation-message-badge {
+  cursor: pointer;
 }
- .validation-message-badge .svg {
-	 margin-right: 0 !important;
-	 width: 14px !important;
+.validation-message-badge .svg {
+  margin-right: 0 !important;
+  width: 14px !important;
 }
- .catalog-badge {
-	 display: block;
-	 margin-top: 10px;
-	 cursor: pointer;
+.catalog-badge {
+  display: block;
+  margin-top: 10px;
+  cursor: pointer;
 }
- #dcs-info-icon {
-	 position: absolute;
-	 right: 5px;
-	 top: 5px;
-	 font-size: 1.2em;
-	 background-color: transparent;
-	 color: var(--color-body) !important;
+#dcs-info-icon {
+  position: absolute;
+  right: 5px;
+  top: 5px;
+  font-size: 1.2em;
+  background-color: transparent;
+  color: var(--color-body) !important;
 }
- .blame .file-view.code-view {
-	 overflow-y: auto;
+.blame .file-view.code-view {
+  overflow-y: auto;
 }
-

@@ -455,7 +455,7 @@ func SearchUsers(ctx *context.APIContext) {
 		Type:        user_model.UserTypeIndividual,
 		LoginName:   ctx.FormTrim("login_name"),
 		SourceID:    ctx.FormInt64("source_id"),
-		OrderBy:     db.SearchUserOrderByAlphabetically,
+		OrderBy:     db.SearchOrderByAlphabetically,
 		ListOptions: listOptions,
 	})
 	if err != nil {
