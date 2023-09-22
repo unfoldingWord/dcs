@@ -103,7 +103,7 @@ func TestUser_GetTeams(t *testing.T) {
 func TestUser_GetMembers(t *testing.T) {
 	assert.NoError(t, unittest.PrepareTestDatabase())
 	org := unittest.AssertExistsAndLoadBean(t, &organization.Organization{ID: 3})
-	members, _, err := org.GetMembers()
+	members, _, err := org.GetMembers(db.DefaultContext)
 	assert.NoError(t, err)
 	if assert.Len(t, members, 3) {
 		assert.Equal(t, int64(2), members[0].ID)
@@ -115,10 +115,10 @@ func TestUser_GetMembers(t *testing.T) {
 func TestGetOrgByName(t *testing.T) {
 	assert.NoError(t, unittest.PrepareTestDatabase())
 
-	org, err := organization.GetOrgByName(db.DefaultContext, "user3")
+	org, err := organization.GetOrgByName(db.DefaultContext, "org3")
 	assert.NoError(t, err)
 	assert.EqualValues(t, 3, org.ID)
-	assert.Equal(t, "user3", org.Name)
+	assert.Equal(t, "org3", org.Name)
 
 	_, err = organization.GetOrgByName(db.DefaultContext, "user2") // user2 is an individual
 	assert.True(t, organization.IsErrOrgNotExist(err))
@@ -205,42 +205,6 @@ func TestFindOrgs(t *testing.T) {
 	})
 	assert.NoError(t, err)
 	assert.EqualValues(t, 1, total)
-}
-
-func TestGetOrgUsersByUserID(t *testing.T) {
-	assert.NoError(t, unittest.PrepareTestDatabase())
-
-	orgUsers, err := organization.GetOrgUsersByUserID(5, &organization.SearchOrganizationsOptions{All: true})
-	assert.NoError(t, err)
-	if assert.Len(t, orgUsers, 3) {
-		assert.Equal(t, organization.OrgUser{
-			ID:       orgUsers[0].ID,
-			OrgID:    23,
-			UID:      5,
-			IsPublic: false,
-		}, *orgUsers[0])
-		assert.Equal(t, organization.OrgUser{
-			ID:       orgUsers[1].ID,
-			OrgID:    6,
-			UID:      5,
-			IsPublic: true,
-		}, *orgUsers[1])
-		assert.Equal(t, organization.OrgUser{
-			ID:       orgUsers[2].ID,
-			OrgID:    7,
-			UID:      5,
-			IsPublic: false,
-		}, *orgUsers[2])
-	}
-
-	publicOrgUsers, err := organization.GetOrgUsersByUserID(5, &organization.SearchOrganizationsOptions{All: false})
-	assert.NoError(t, err)
-	assert.Len(t, publicOrgUsers, 1)
-	assert.Equal(t, *orgUsers[1], *publicOrgUsers[0])
-
-	orgUsers, err = organization.GetOrgUsersByUserID(1, &organization.SearchOrganizationsOptions{All: true})
-	assert.NoError(t, err)
-	assert.Len(t, orgUsers, 0)
 }
 
 func TestGetOrgUsersByOrgID(t *testing.T) {
@@ -379,7 +343,7 @@ func TestAccessibleReposEnv_MirrorRepos(t *testing.T) {
 func TestHasOrgVisibleTypePublic(t *testing.T) {
 	assert.NoError(t, unittest.PrepareTestDatabase())
 	owner := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: 2})
-	user3 := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: 3})
+	org3 := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: 3})
 
 	const newOrgName = "test-org-public"
 	org := &organization.Organization{
@@ -392,7 +356,7 @@ func TestHasOrgVisibleTypePublic(t *testing.T) {
 	org = unittest.AssertExistsAndLoadBean(t,
 		&organization.Organization{Name: org.Name, Type: user_model.UserTypeOrganization})
 	test1 := organization.HasOrgOrUserVisible(db.DefaultContext, org.AsUser(), owner)
-	test2 := organization.HasOrgOrUserVisible(db.DefaultContext, org.AsUser(), user3)
+	test2 := organization.HasOrgOrUserVisible(db.DefaultContext, org.AsUser(), org3)
 	test3 := organization.HasOrgOrUserVisible(db.DefaultContext, org.AsUser(), nil)
 	assert.True(t, test1) // owner of org
 	assert.True(t, test2) // user not a part of org
@@ -402,7 +366,7 @@ func TestHasOrgVisibleTypePublic(t *testing.T) {
 func TestHasOrgVisibleTypeLimited(t *testing.T) {
 	assert.NoError(t, unittest.PrepareTestDatabase())
 	owner := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: 2})
-	user3 := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: 3})
+	org3 := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: 3})
 
 	const newOrgName = "test-org-limited"
 	org := &organization.Organization{
@@ -415,7 +379,7 @@ func TestHasOrgVisibleTypeLimited(t *testing.T) {
 	org = unittest.AssertExistsAndLoadBean(t,
 		&organization.Organization{Name: org.Name, Type: user_model.UserTypeOrganization})
 	test1 := organization.HasOrgOrUserVisible(db.DefaultContext, org.AsUser(), owner)
-	test2 := organization.HasOrgOrUserVisible(db.DefaultContext, org.AsUser(), user3)
+	test2 := organization.HasOrgOrUserVisible(db.DefaultContext, org.AsUser(), org3)
 	test3 := organization.HasOrgOrUserVisible(db.DefaultContext, org.AsUser(), nil)
 	assert.True(t, test1)  // owner of org
 	assert.True(t, test2)  // user not a part of org
@@ -425,7 +389,7 @@ func TestHasOrgVisibleTypeLimited(t *testing.T) {
 func TestHasOrgVisibleTypePrivate(t *testing.T) {
 	assert.NoError(t, unittest.PrepareTestDatabase())
 	owner := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: 2})
-	user3 := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: 3})
+	org3 := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: 3})
 
 	const newOrgName = "test-org-private"
 	org := &organization.Organization{
@@ -438,7 +402,7 @@ func TestHasOrgVisibleTypePrivate(t *testing.T) {
 	org = unittest.AssertExistsAndLoadBean(t,
 		&organization.Organization{Name: org.Name, Type: user_model.UserTypeOrganization})
 	test1 := organization.HasOrgOrUserVisible(db.DefaultContext, org.AsUser(), owner)
-	test2 := organization.HasOrgOrUserVisible(db.DefaultContext, org.AsUser(), user3)
+	test2 := organization.HasOrgOrUserVisible(db.DefaultContext, org.AsUser(), org3)
 	test3 := organization.HasOrgOrUserVisible(db.DefaultContext, org.AsUser(), nil)
 	assert.True(t, test1)  // owner of org
 	assert.False(t, test2) // user not a part of org
@@ -529,7 +493,7 @@ func TestCreateOrganization3(t *testing.T) {
 	assert.NoError(t, unittest.PrepareTestDatabase())
 
 	owner := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: 2})
-	org := &organization.Organization{Name: "user3"}                      // should already exist
+	org := &organization.Organization{Name: "org3"}                       // should already exist
 	unittest.AssertExistsAndLoadBean(t, &user_model.User{Name: org.Name}) // sanity check
 	err := organization.CreateOrganization(org, owner)
 	assert.Error(t, err)

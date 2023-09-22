@@ -1,140 +1,5 @@
 ---
 kind: pipeline
-type: docker
-name: release-latest
-
-platform:
-  os: linux
-  arch: amd64
-
-workspace:
-  base: /source
-  path: /
-
-trigger:
-  branch:
-    - main
-    - "release/dcs/*"
-  event:
-    - push
-  paths:
-    exclude:
-      - "docs/**"
-
-volumes:
-  - name: deps
-    temp: {}
-
-steps:
-  - name: fetch-tags
-    image: docker:git
-    pull: always
-    commands:
-      - git fetch --tags --force
-
-  - name: deps-frontend
-    image: node:20
-    pull: always
-    commands:
-      - make deps-frontend
-
-  - name: deps-backend
-    image: gitea/test_env:linux-1.20-amd64
-    pull: always
-    commands:
-      - make deps-backend
-    volumes:
-      - name: deps
-        path: /go
-
-  - name: static
-    image: techknowlogick/xgo:go-1.20.x
-    pull: always
-    commands:
-      # Upgrade to node 20 once https://github.com/techknowlogick/xgo/issues/163 is resolved
-      - curl -sL https://deb.nodesource.com/setup_16.x | bash - && apt-get -qqy install nodejs
-      - export PATH=$PATH:$GOPATH/bin
-      - make release
-    environment:
-      GOPROXY: https://goproxy.io # proxy.golang.org is blocked in China, this proxy is not
-      TAGS: bindata sqlite sqlite_unlock_notify sqlite_json
-      DEBIAN_FRONTEND: noninteractive
-    volumes:
-      - name: deps
-        path: /go
-
-  - name: gpg-sign
-    image: plugins/gpgsign:1
-    pull: always
-    settings:
-      detach_sign: true
-      excludes:
-        - "dist/release/*.sha256"
-      files:
-        - "dist/release/*"
-    environment:
-      GPGSIGN_KEY:
-        from_secret: gpgsign_key
-      GPGSIGN_PASSPHRASE:
-        from_secret: gpgsign_passphrase
-
-  - name: release-branch
-    image: woodpeckerci/plugin-s3:latest
-    pull: always
-    settings:
-      acl:
-        from_secret: aws_s3_acl
-      region:
-        from_secret: aws_s3_region
-      bucket:
-        from_secret: aws_s3_bucket
-      endpoint:
-        from_secret: aws_s3_endpoint
-      path_style:
-        from_secret: aws_s3_path_style
-      source: "dist/release/*"
-      strip_prefix: dist/release/
-      target: "/dcs/releases/${DRONE_BRANCH##release/dcs/v}"
-    environment:
-      AWS_ACCESS_KEY_ID:
-        from_secret: aws_access_key_id
-      AWS_SECRET_ACCESS_KEY:
-        from_secret: aws_secret_access_key
-    when:
-      branch:
-        - "release/dcs/*"
-      event:
-        - push
-
-  - name: release-main
-    image: woodpeckerci/plugin-s3:latest
-    settings:
-      acl:
-        from_secret: aws_s3_acl
-      region:
-        from_secret: aws_s3_region
-      bucket:
-        from_secret: aws_s3_bucket
-      endpoint:
-        from_secret: aws_s3_endpoint
-      path_style:
-        from_secret: aws_s3_path_style
-      source: "dist/release/*"
-      strip_prefix: dist/release/
-      target: /dcs/main
-    environment:
-      AWS_ACCESS_KEY_ID:
-        from_secret: aws_access_key_id
-      AWS_SECRET_ACCESS_KEY:
-        from_secret: aws_secret_access_key
-    when:
-      branch:
-        - main
-      event:
-        - push
-
----
-kind: pipeline
 name: release-version
 
 platform:
@@ -178,11 +43,10 @@ steps:
         path: /go
 
   - name: static
-    image: techknowlogick/xgo:go-1.20.x
+    image: techknowlogick/xgo:go-1.21.x
     pull: always
     commands:
-      # Upgrade to node 20 once https://github.com/techknowlogick/xgo/issues/163 is resolved
-      - curl -sL https://deb.nodesource.com/setup_16.x | bash - && apt-get -qqy install nodejs
+      - curl -sL https://deb.nodesource.com/setup_20.x | bash - && apt-get -qqy install nodejs
       - export PATH=$PATH:$GOPATH/bin
       - make release
     environment:
@@ -292,7 +156,7 @@ steps:
     when:
       event:
         exclude:
-        - pull_request
+          - pull_request
 
   - name: publish-rootless
     image: plugins/docker:latest
@@ -314,7 +178,7 @@ steps:
     when:
       event:
         exclude:
-        - pull_request
+          - pull_request
 ---
 
 kind: pipeline
@@ -358,7 +222,7 @@ steps:
     when:
       event:
         exclude:
-        - pull_request
+          - pull_request
 
   - name: publish-rootless
     image: plugins/docker:latest
@@ -379,134 +243,7 @@ steps:
     when:
       event:
         exclude:
-        - pull_request
-
----
-kind: pipeline
-type: docker
-name: docker-linux-amd64-release
-
-platform:
-  os: linux
-  arch: amd64
-
-trigger:
-  ref:
-  - refs/heads/main
-
-steps:
-  - name: fetch-tags
-    image: docker:git
-    pull: always
-    commands:
-      - git fetch --tags --force
-
-  - name: publish
-    image: plugins/docker:latest
-    pull: always
-    settings:
-      auto_tag: false
-      tags: nightly-linux-amd64
-      repo: unfoldingword/dcs
-      build_args:
-        - GOPROXY=https://goproxy.io
-      password:
-        from_secret: docker_password
-      username:
-        from_secret: docker_username
-    environment:
-      PLUGIN_MIRROR:
-        from_secret: plugin_mirror
-      DOCKER_BUILDKIT: 1
-    when:
-      event:
-        exclude:
-        - pull_request
-
-  - name: publish-rootless
-    image: plugins/docker:latest
-    settings:
-      dockerfile: Dockerfile.rootless
-      auto_tag: false
-      tags: nightly-linux-amd64-rootless
-      repo: unfoldingword/dcs
-      build_args:
-        - GOPROXY=https://goproxy.io
-      password:
-        from_secret: docker_password
-      username:
-        from_secret: docker_username
-    environment:
-      PLUGIN_MIRROR:
-        from_secret: plugin_mirror
-      DOCKER_BUILDKIT: 1
-    when:
-      event:
-        exclude:
-        - pull_request
-
----
-kind: pipeline
-name: docker-linux-amd64-release-branch
-
-platform:
-  os: linux
-  arch: amd64
-
-trigger:
-  ref:
-  - "refs/heads/release/dcs/v*"
-
-steps:
-  - name: fetch-tags
-    image: docker:git
-    pull: always
-    commands:
-      - git fetch --tags --force
-
-  - name: publish
-    image: plugins/docker:latest
-    pull: always
-    settings:
-      auto_tag: false
-      tags: ${DRONE_BRANCH##release/dcs/v}-nightly-linux-amd64
-      repo: unfoldingword/dcs
-      build_args:
-        - GOPROXY=https://goproxy.io
-      password:
-        from_secret: docker_password
-      username:
-        from_secret: docker_username
-    environment:
-      PLUGIN_MIRROR:
-        from_secret: plugin_mirror
-      DOCKER_BUILDKIT: 1
-    when:
-      event:
-        exclude:
-        - pull_request
-
-  - name: publish-rootless
-    image: plugins/docker:latest
-    settings:
-      dockerfile: Dockerfile.rootless
-      auto_tag: false
-      tags: ${DRONE_BRANCH##release/dcs/v}-nightly-linux-amd64-rootless
-      repo: unfoldingword/dcs
-      build_args:
-        - GOPROXY=https://goproxy.io
-      password:
-        from_secret: docker_password
-      username:
-        from_secret: docker_username
-    environment:
-      PLUGIN_MIRROR:
-        from_secret: plugin_mirror
-      DOCKER_BUILDKIT: 1
-    when:
-      event:
-        exclude:
-        - pull_request
+          - pull_request
 
 ---
 kind: pipeline
@@ -554,7 +291,7 @@ steps:
     when:
       event:
         exclude:
-        - pull_request
+          - pull_request
 
   - name: publish-rootless
     image: plugins/docker:latest
@@ -576,7 +313,7 @@ steps:
     when:
       event:
         exclude:
-        - pull_request
+          - pull_request
 
 ---
 kind: pipeline
@@ -620,7 +357,7 @@ steps:
     when:
       event:
         exclude:
-        - pull_request
+          - pull_request
 
   - name: publish-rootless
     image: plugins/docker:latest
@@ -641,137 +378,7 @@ steps:
     when:
       event:
         exclude:
-        - pull_request
-
----
-kind: pipeline
-type: docker
-name: docker-linux-arm64-release
-
-platform:
-  os: linux
-  arch: arm64
-
-trigger:
-  ref:
-  - refs/heads/main
-  paths:
-    exclude:
-      - "docs/**"
-
-steps:
-  - name: fetch-tags
-    image: docker:git
-    pull: always
-    commands:
-      - git fetch --tags --force
-
-  - name: publish
-    image: plugins/docker:latest
-    pull: always
-    settings:
-      auto_tag: false
-      tags: nightly-linux-arm64
-      repo: unfoldingword/dcs
-      build_args:
-        - GOPROXY=https://goproxy.io
-      password:
-        from_secret: docker_password
-      username:
-        from_secret: docker_username
-    environment:
-      PLUGIN_MIRROR:
-        from_secret: plugin_mirror
-      DOCKER_BUILDKIT: 1
-    when:
-      event:
-        exclude:
-        - pull_request
-
-  - name: publish-rootless
-    image: plugins/docker:latest
-    settings:
-      dockerfile: Dockerfile.rootless
-      auto_tag: false
-      tags: nightly-linux-arm64-rootless
-      repo: unfoldingword/dcs
-      build_args:
-        - GOPROXY=https://goproxy.io
-      password:
-        from_secret: docker_password
-      username:
-        from_secret: docker_username
-    environment:
-      PLUGIN_MIRROR:
-        from_secret: plugin_mirror
-      DOCKER_BUILDKIT: 1
-    when:
-      event:
-        exclude:
-        - pull_request
-
----
-kind: pipeline
-name: docker-linux-arm64-release-branch
-
-platform:
-  os: linux
-  arch: arm64
-
-trigger:
-  ref:
-  - "refs/heads/release/dcs/v*"
-
-steps:
-  - name: fetch-tags
-    image: docker:git
-    pull: always
-    commands:
-      - git fetch --tags --force
-
-  - name: publish
-    image: plugins/docker:latest
-    pull: always
-    settings:
-      auto_tag: false
-      tags: ${DRONE_BRANCH##release/dcs/v}-nightly-linux-arm64
-      repo: unfoldingword/dcs
-      build_args:
-        - GOPROXY=https://goproxy.io
-      password:
-        from_secret: docker_password
-      username:
-        from_secret: docker_username
-    environment:
-      PLUGIN_MIRROR:
-        from_secret: plugin_mirror
-      DOCKER_BUILDKIT: 1
-    when:
-      event:
-        exclude:
-        - pull_request
-
-  - name: publish-rootless
-    image: plugins/docker:latest
-    settings:
-      dockerfile: Dockerfile.rootless
-      auto_tag: false
-      tags: ${DRONE_BRANCH##release/dcs/v}-nightly-linux-arm64-rootless
-      repo: unfoldingword/dcs
-      build_args:
-        - GOPROXY=https://goproxy.io
-      password:
-        from_secret: docker_password
-      username:
-        from_secret: docker_username
-    environment:
-      PLUGIN_MIRROR:
-        from_secret: plugin_mirror
-      DOCKER_BUILDKIT: 1
-    when:
-      event:
-        exclude:
-        - pull_request
+          - pull_request
 
 ---
 kind: pipeline
@@ -808,7 +415,7 @@ steps:
 
 trigger:
   ref:
-  - "refs/tags/**-dcs"
+    - "refs/tags/**-dcs"
   paths:
     exclude:
       - "docs/**"
@@ -818,50 +425,3 @@ depends_on:
   - docker-linux-amd64-release-candidate-version
   - docker-linux-arm64-release-version
   - docker-linux-arm64-release-candidate-version
-
----
-kind: pipeline
-type: docker
-name: docker-manifest
-
-platform:
-  os: linux
-  arch: amd64
-
-steps:
-  - name: manifest-rootless
-    image: plugins/manifest
-    pull: always
-    settings:
-      auto_tag: false
-      ignore_missing: true
-      spec: docker/manifest.rootless.tmpl
-      password:
-        from_secret: docker_password
-      username:
-        from_secret: docker_username
-
-  - name: manifest
-    image: plugins/manifest
-    settings:
-      auto_tag: false
-      ignore_missing: true
-      spec: docker/manifest.tmpl
-      password:
-        from_secret: docker_password
-      username:
-        from_secret: docker_username
-
-trigger:
-  ref:
-  - refs/heads/main
-  - "refs/heads/release/dcs/v*"
-  paths:
-    exclude:
-      - "docs/**"
-
-depends_on:
-  - docker-linux-amd64-release
-  - docker-linux-arm64-release
-  - docker-linux-amd64-release-branch
-  - docker-linux-arm64-release-branch

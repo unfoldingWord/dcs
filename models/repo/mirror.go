@@ -31,7 +31,7 @@ type Mirror struct {
 	LFS         bool   `xorm:"lfs_enabled NOT NULL DEFAULT false"`
 	LFSEndpoint string `xorm:"lfs_endpoint TEXT"`
 
-	Address string `xorm:"-"`
+	RemoteAddress string `xorm:"VARCHAR(2048)"`
 }
 
 func init() {
@@ -105,7 +105,7 @@ func DeleteMirrorByRepoID(repoID int64) error {
 }
 
 // MirrorsIterate iterates all mirror repositories.
-func MirrorsIterate(limit int, f func(idx int, bean interface{}) error) error {
+func MirrorsIterate(limit int, f func(idx int, bean any) error) error {
 	sess := db.GetEngine(db.DefaultContext).
 		Where("next_update_unix<=?", time.Now().Unix()).
 		And("next_update_unix!=0").

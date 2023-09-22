@@ -7,6 +7,7 @@ package repo
 import (
 	"fmt"
 	"net/http"
+	"slices"
 	"strings"
 	"time"
 
@@ -286,14 +287,14 @@ func Search(ctx *context.APIContext) {
 			})
 			return
 		}
-		accessMode, err := access_model.AccessLevel(ctx, ctx.Doer, repo)
+		permission, err := access_model.GetUserRepoPermission(ctx, repo, ctx.Doer)
 		if err != nil {
 			ctx.JSON(http.StatusInternalServerError, api.SearchError{
 				OK:    false,
 				Error: err.Error(),
 			})
 		}
-		results[i] = convert.ToRepo(ctx, repo, accessMode)
+		results[i] = convert.ToRepo(ctx, repo, permission)
 	}
 	ctx.SetLinkHeader(int(count), opts.PageSize)
 	ctx.SetTotalCountHeader(count)
@@ -310,12 +311,12 @@ func CreateUserRepo(ctx *context.APIContext, owner *user_model.User, opt api.Cre
 	}
 
 	// If the readme template does not exist, a 400 will be returned.
-	if opt.AutoInit && len(opt.Readme) > 0 && !util.SliceContains(repo_module.Readmes, opt.Readme) {
+	if opt.AutoInit && len(opt.Readme) > 0 && !slices.Contains(repo_module.Readmes, opt.Readme) {
 		ctx.Error(http.StatusBadRequest, "", fmt.Errorf("readme template does not exist, available templates: %v", repo_module.Readmes))
 		return
 	}
 
-	repo, err := repo_service.CreateRepository(ctx, ctx.Doer, owner, repo_module.CreateRepoOptions{
+	repo, err := repo_service.CreateRepository(ctx, ctx.Doer, owner, repo_service.CreateRepoOptions{
 		Name:          opt.Name,
 		Description:   opt.Description,
 		IssueLabels:   opt.IssueLabels,
@@ -347,7 +348,7 @@ func CreateUserRepo(ctx *context.APIContext, owner *user_model.User, opt api.Cre
 		ctx.Error(http.StatusInternalServerError, "GetRepositoryByID", err)
 	}
 
-	ctx.JSON(http.StatusCreated, convert.ToRepo(ctx, repo, perm.AccessModeOwner))
+	ctx.JSON(http.StatusCreated, convert.ToRepo(ctx, repo, access_model.Permission{AccessMode: perm.AccessModeOwner}))
 }
 
 // Create one repository of mine
@@ -430,16 +431,17 @@ func Generate(ctx *context.APIContext) {
 	}
 
 	opts := repo_module.GenerateRepoOptions{
-		Name:          form.Name,
-		DefaultBranch: form.DefaultBranch,
-		Description:   form.Description,
-		Private:       form.Private,
-		GitContent:    form.GitContent,
-		Topics:        form.Topics,
-		GitHooks:      form.GitHooks,
-		Webhooks:      form.Webhooks,
-		Avatar:        form.Avatar,
-		IssueLabels:   form.Labels,
+		Name:            form.Name,
+		DefaultBranch:   form.DefaultBranch,
+		Description:     form.Description,
+		Private:         form.Private,
+		GitContent:      form.GitContent,
+		Topics:          form.Topics,
+		GitHooks:        form.GitHooks,
+		Webhooks:        form.Webhooks,
+		Avatar:          form.Avatar,
+		IssueLabels:     form.Labels,
+		ProtectedBranch: form.ProtectedBranch,
 	}
 
 	if !opts.IsValid() {
@@ -453,7 +455,7 @@ func Generate(ctx *context.APIContext) {
 		ctxUser, err = user_model.GetUserByName(ctx, form.Owner)
 		if err != nil {
 			if user_model.IsErrUserNotExist(err) {
-				ctx.JSON(http.StatusNotFound, map[string]interface{}{
+				ctx.JSON(http.StatusNotFound, map[string]any{
 					"error": "request owner `" + form.Owner + "` does not exist",
 				})
 				return
@@ -494,7 +496,7 @@ func Generate(ctx *context.APIContext) {
 	}
 	log.Trace("Repository generated [%d]: %s/%s", repo.ID, ctxUser.Name, repo.Name)
 
-	ctx.JSON(http.StatusCreated, convert.ToRepo(ctx, repo, perm.AccessModeOwner))
+	ctx.JSON(http.StatusCreated, convert.ToRepo(ctx, repo, access_model.Permission{AccessMode: perm.AccessModeOwner}))
 }
 
 // CreateOrgRepoDeprecated create one repository of the organization
@@ -524,6 +526,8 @@ func CreateOrgRepoDeprecated(ctx *context.APIContext) {
 	//     "$ref": "#/responses/validationError"
 	//   "403":
 	//     "$ref": "#/responses/forbidden"
+	//   "404":
+	//     "$ref": "#/responses/notFound"
 
 	CreateOrgRepo(ctx)
 }
@@ -606,13 +610,15 @@ func Get(ctx *context.APIContext) {
 	// responses:
 	//   "200":
 	//     "$ref": "#/responses/Repository"
+	//   "404":
+	//     "$ref": "#/responses/notFound"
 
 	if err := ctx.Repo.Repository.LoadAttributes(ctx); err != nil {
 		ctx.Error(http.StatusInternalServerError, "Repository.LoadAttributes", err)
 		return
 	}
 
-	ctx.JSON(http.StatusOK, convert.ToRepo(ctx, ctx.Repo.Repository, ctx.Repo.AccessMode))
+	ctx.JSON(http.StatusOK, convert.ToRepo(ctx, ctx.Repo.Repository, ctx.Repo.Permission))
 }
 
 // GetByID returns a single Repository
@@ -632,6 +638,8 @@ func GetByID(ctx *context.APIContext) {
 	// responses:
 	//   "200":
 	//     "$ref": "#/responses/Repository"
+	//   "404":
+	//     "$ref": "#/responses/notFound"
 
 	repo, err := repo_model.GetRepositoryByID(ctx, ctx.ParamsInt64(":id"))
 	if err != nil {
@@ -643,15 +651,15 @@ func GetByID(ctx *context.APIContext) {
 		return
 	}
 
-	perm, err := access_model.GetUserRepoPermission(ctx, repo, ctx.Doer)
+	permission, err := access_model.GetUserRepoPermission(ctx, repo, ctx.Doer)
 	if err != nil {
-		ctx.Error(http.StatusInternalServerError, "AccessLevel", err)
+		ctx.Error(http.StatusInternalServerError, "GetUserRepoPermission", err)
 		return
-	} else if !perm.HasAccess() {
+	} else if !permission.HasAccess() {
 		ctx.NotFound()
 		return
 	}
-	ctx.JSON(http.StatusOK, convert.ToRepo(ctx, repo, perm.AccessMode))
+	ctx.JSON(http.StatusOK, convert.ToRepo(ctx, repo, permission))
 }
 
 // Edit edit repository properties
@@ -682,6 +690,8 @@ func Edit(ctx *context.APIContext) {
 	//     "$ref": "#/responses/Repository"
 	//   "403":
 	//     "$ref": "#/responses/forbidden"
+	//   "404":
+	//     "$ref": "#/responses/notFound"
 	//   "422":
 	//     "$ref": "#/responses/validationError"
 
@@ -713,7 +723,7 @@ func Edit(ctx *context.APIContext) {
 		return
 	}
 
-	ctx.JSON(http.StatusOK, convert.ToRepo(ctx, repo, ctx.Repo.AccessMode))
+	ctx.JSON(http.StatusOK, convert.ToRepo(ctx, repo, ctx.Repo.Permission))
 }
 
 // updateBasicProperties updates the basic properties of a repo: Name, Description, Website and Visibility
@@ -1068,14 +1078,14 @@ func updateRepoArchivedState(ctx *context.APIContext, opts api.EditRepoOption) e
 			return err
 		}
 		if *opts.Archived {
-			if err := repo_model.SetArchiveRepoState(repo, *opts.Archived); err != nil {
+			if err := repo_model.SetArchiveRepoState(ctx, repo, *opts.Archived); err != nil {
 				log.Error("Tried to archive a repo: %s", err)
 				ctx.Error(http.StatusInternalServerError, "ArchiveRepoState", err)
 				return err
 			}
 			log.Trace("Repository was archived: %s/%s", ctx.Repo.Owner.Name, repo.Name)
 		} else {
-			if err := repo_model.SetArchiveRepoState(repo, *opts.Archived); err != nil {
+			if err := repo_model.SetArchiveRepoState(ctx, repo, *opts.Archived); err != nil {
 				log.Error("Tried to un-archive a repo: %s", err)
 				ctx.Error(http.StatusInternalServerError, "ArchiveRepoState", err)
 				return err
@@ -1173,6 +1183,8 @@ func Delete(ctx *context.APIContext) {
 	//     "$ref": "#/responses/empty"
 	//   "403":
 	//     "$ref": "#/responses/forbidden"
+	//   "404":
+	//     "$ref": "#/responses/notFound"
 
 	owner := ctx.Repo.Owner
 	repo := ctx.Repo.Repository
@@ -1220,6 +1232,8 @@ func GetIssueTemplates(ctx *context.APIContext) {
 	// responses:
 	//   "200":
 	//     "$ref": "#/responses/IssueTemplates"
+	//   "404":
+	//     "$ref": "#/responses/notFound"
 	ret, err := issue.GetTemplatesFromDefaultBranch(ctx.Repo.Repository, ctx.Repo.GitRepo)
 	if err != nil {
 		ctx.Error(http.StatusInternalServerError, "GetTemplatesFromDefaultBranch", err)
@@ -1249,6 +1263,8 @@ func GetIssueConfig(ctx *context.APIContext) {
 	// responses:
 	//   "200":
 	//     "$ref": "#/responses/RepoIssueConfig"
+	//   "404":
+	//     "$ref": "#/responses/notFound"
 	issueConfig, _ := issue.GetTemplateConfigFromDefaultBranch(ctx.Repo.Repository, ctx.Repo.GitRepo)
 	ctx.JSON(http.StatusOK, issueConfig)
 }
@@ -1274,6 +1290,8 @@ func ValidateIssueConfig(ctx *context.APIContext) {
 	// responses:
 	//   "200":
 	//     "$ref": "#/responses/RepoIssueConfigValidation"
+	//   "404":
+	//     "$ref": "#/responses/notFound"
 	_, err := issue.GetTemplateConfigFromDefaultBranch(ctx.Repo.Repository, ctx.Repo.GitRepo)
 
 	if err == nil {

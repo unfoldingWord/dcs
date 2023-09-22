@@ -32,6 +32,7 @@ import (
 	"code.gitea.io/gitea/modules/util"
 	"code.gitea.io/gitea/modules/web"
 	"code.gitea.io/gitea/modules/web/middleware"
+	"code.gitea.io/gitea/routers/common"
 	"code.gitea.io/gitea/services/forms"
 
 	"gitea.com/go-chi/session"
@@ -55,25 +56,24 @@ func getSupportedDbTypeNames() (dbTypeNames []map[string]string) {
 func Contexter() func(next http.Handler) http.Handler {
 	rnd := templates.HTMLRenderer()
 	dbTypeNames := getSupportedDbTypeNames()
+	envConfigKeys := setting.CollectEnvConfigKeys()
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(resp http.ResponseWriter, req *http.Request) {
 			base, baseCleanUp := context.NewBaseContext(resp, req)
-			ctx := &context.Context{
-				Base:    base,
-				Flash:   &middleware.Flash{},
-				Render:  rnd,
-				Session: session.GetSession(req),
-			}
 			defer baseCleanUp()
 
+			ctx := context.NewWebContext(base, rnd, session.GetSession(req))
 			ctx.AppendContextValue(context.WebContextKey, ctx)
 			ctx.Data.MergeFrom(middleware.CommonTemplateContextData())
 			ctx.Data.MergeFrom(middleware.ContextData{
-				"locale":        ctx.Locale,
-				"Title":         ctx.Locale.Tr("install.install"),
-				"PageIsInstall": true,
-				"DbTypeNames":   dbTypeNames,
-				"AllLangs":      translation.AllLangs(),
+				"Context":        ctx, // TODO: use "ctx" in template and remove this
+				"locale":         ctx.Locale,
+				"Title":          ctx.Locale.Tr("install.install"),
+				"PageIsInstall":  true,
+				"DbTypeNames":    dbTypeNames,
+				"EnvConfigKeys":  envConfigKeys,
+				"CustomConfFile": setting.CustomConf,
+				"AllLangs":       translation.AllLangs(),
 
 				"PasswordHashAlgorithms": hash.RecommendedHashAlgorithms,
 			})
@@ -98,7 +98,7 @@ func Install(ctx *context.Context) {
 	form.DbName = setting.Database.Name
 	form.DbPath = setting.Database.Path
 	form.DbSchema = setting.Database.Schema
-	form.Charset = setting.Database.Charset
+	form.SSLMode = setting.Database.SSLMode
 
 	curDBType := setting.Database.Type.String()
 	var isCurDBTypeSupported bool
@@ -116,7 +116,7 @@ func Install(ctx *context.Context) {
 	// Application general settings
 	form.AppName = setting.AppName
 	form.RepoRootPath = setting.RepoRootPath
-	form.LFSRootPath = setting.LFS.Path
+	form.LFSRootPath = setting.LFS.Storage.Path
 
 	// Note(unknown): it's hard for Windows users change a running user,
 	// 	so just use current one if config says default.
@@ -181,7 +181,7 @@ func checkDatabase(ctx *context.Context, form *forms.InstallForm) bool {
 	if err = db.InitEngine(ctx); err != nil {
 		if strings.Contains(err.Error(), `Unknown database type: sqlite3`) {
 			ctx.Data["Err_DbType"] = true
-			ctx.RenderWithErr(ctx.Tr("install.sqlite3_not_available", "https://docs.gitea.io/en-us/install-from-binary/"), tplInstall, form)
+			ctx.RenderWithErr(ctx.Tr("install.sqlite3_not_available", "https://docs.gitea.com/installation/install-from-binary"), tplInstall, form)
 		} else {
 			ctx.Data["Err_DbSetting"] = true
 			ctx.RenderWithErr(ctx.Tr("install.invalid_db_setting", err), tplInstall, form)
@@ -218,7 +218,7 @@ func checkDatabase(ctx *context.Context, form *forms.InstallForm) bool {
 			return false
 		}
 
-		log.Info("User confirmed reinstallation of Gitea into a pre-existing database")
+		log.Info("User confirmed re-installation of Gitea into a pre-existing database")
 	}
 
 	if hasPostInstallationUser || dbMigrationVersion > 0 {
@@ -268,7 +268,6 @@ func SubmitInstall(ctx *context.Context) {
 	setting.Database.Name = form.DbName
 	setting.Database.Schema = form.DbSchema
 	setting.Database.SSLMode = form.SSLMode
-	setting.Database.Charset = form.Charset
 	setting.Database.Path = form.DbPath
 	setting.Database.LogSQL = !setting.IsProd
 
@@ -370,10 +369,15 @@ func SubmitInstall(ctx *context.Context) {
 	}
 
 	// Save settings.
-	cfg, err := setting.NewConfigProviderFromFile(&setting.Options{CustomConf: setting.CustomConf, AllowEmpty: true})
+	cfg, err := setting.NewConfigProviderFromFile(setting.CustomConf)
 	if err != nil {
 		log.Error("Failed to load custom conf '%s': %v", setting.CustomConf, err)
 	}
+
+	cfg.Section("").Key("APP_NAME").SetValue(form.AppName)
+	cfg.Section("").Key("RUN_USER").SetValue(form.RunUser)
+	cfg.Section("").Key("WORK_PATH").SetValue(setting.AppWorkPath)
+	cfg.Section("").Key("RUN_MODE").SetValue("prod")
 
 	cfg.Section("database").Key("DB_TYPE").SetValue(setting.Database.Type.String())
 	cfg.Section("database").Key("HOST").SetValue(setting.Database.Host)
@@ -382,17 +386,15 @@ func SubmitInstall(ctx *context.Context) {
 	cfg.Section("database").Key("PASSWD").SetValue(setting.Database.Passwd)
 	cfg.Section("database").Key("SCHEMA").SetValue(setting.Database.Schema)
 	cfg.Section("database").Key("SSL_MODE").SetValue(setting.Database.SSLMode)
-	cfg.Section("database").Key("CHARSET").SetValue(setting.Database.Charset)
 	cfg.Section("database").Key("PATH").SetValue(setting.Database.Path)
 	cfg.Section("database").Key("LOG_SQL").SetValue("false") // LOG_SQL is rarely helpful
 
-	cfg.Section("").Key("APP_NAME").SetValue(form.AppName)
 	cfg.Section("repository").Key("ROOT").SetValue(form.RepoRootPath)
-	cfg.Section("").Key("RUN_USER").SetValue(form.RunUser)
 	cfg.Section("server").Key("SSH_DOMAIN").SetValue(form.Domain)
 	cfg.Section("server").Key("DOMAIN").SetValue(form.Domain)
 	cfg.Section("server").Key("HTTP_PORT").SetValue(form.HTTPPort)
 	cfg.Section("server").Key("ROOT_URL").SetValue(form.AppURL)
+	cfg.Section("server").Key("APP_DATA_PATH").SetValue(setting.AppDataPath)
 
 	if form.SSHPort == 0 {
 		cfg.Section("server").Key("DISABLE_SSH").SetValue("true")
@@ -405,7 +407,7 @@ func SubmitInstall(ctx *context.Context) {
 		cfg.Section("server").Key("LFS_START_SERVER").SetValue("true")
 		cfg.Section("lfs").Key("PATH").SetValue(form.LFSRootPath)
 		var lfsJwtSecret string
-		if lfsJwtSecret, err = generate.NewJwtSecretBase64(); err != nil {
+		if _, lfsJwtSecret, err = generate.NewJwtSecretBase64(); err != nil {
 			ctx.RenderWithErr(ctx.Tr("install.lfs_jwt_secret_failed", err), tplInstall, &form)
 			return
 		}
@@ -449,14 +451,11 @@ func SubmitInstall(ctx *context.Context) {
 	cfg.Section("service").Key("NO_REPLY_ADDRESS").SetValue(fmt.Sprint(form.NoReplyAddress))
 	cfg.Section("cron.update_checker").Key("ENABLED").SetValue(fmt.Sprint(form.EnableUpdateChecker))
 
-	cfg.Section("").Key("RUN_MODE").SetValue("prod")
-
 	cfg.Section("session").Key("PROVIDER").SetValue("file")
 
-	cfg.Section("log").Key("MODE").SetValue("console")
+	cfg.Section("log").Key("MODE").MustString("console")
 	cfg.Section("log").Key("LEVEL").SetValue(setting.Log.Level.String())
 	cfg.Section("log").Key("ROOT_PATH").SetValue(form.LogRootPath)
-	cfg.Section("log").Key("ROUTER").SetValue("console")
 
 	cfg.Section("repository.pull-request").Key("DEFAULT_MERGE_STYLE").SetValue("merge")
 
@@ -503,6 +502,8 @@ func SubmitInstall(ctx *context.Context) {
 		return
 	}
 
+	setting.EnvironmentToConfig(cfg, os.Environ())
+
 	if err = cfg.SaveTo(setting.CustomConf); err != nil {
 		ctx.RenderWithErr(ctx.Tr("install.save_config_failed", err), tplInstall, &form)
 		return
@@ -514,7 +515,13 @@ func SubmitInstall(ctx *context.Context) {
 	// ---- All checks are passed
 
 	// Reload settings (and re-initialize database connection)
-	reloadSettings(ctx)
+	setting.InitCfgProvider(setting.CustomConf)
+	setting.LoadCommonSettings()
+	setting.MustInstalled()
+	setting.LoadDBSetting()
+	if err := common.InitDBEngine(ctx); err != nil {
+		log.Fatal("ORM engine initialization failed: %v", err)
+	}
 
 	// Create admin account
 	if len(form.AdminName) > 0 {
@@ -529,7 +536,7 @@ func SubmitInstall(ctx *context.Context) {
 			IsActive:     util.OptionalBoolTrue,
 		}
 
-		if err = user_model.CreateUser(u, overwriteDefault); err != nil {
+		if err = user_model.CreateUser(ctx, u, overwriteDefault); err != nil {
 			if !user_model.IsErrUserAlreadyExist(err) {
 				setting.InstallLock = false
 				ctx.Data["Err_AdminName"] = true
@@ -563,6 +570,7 @@ func SubmitInstall(ctx *context.Context) {
 		}
 	}
 
+	setting.ClearEnvConfigKeys()
 	log.Info("First-time run install finished!")
 	InstallDone(ctx)
 

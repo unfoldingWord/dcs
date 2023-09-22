@@ -23,7 +23,7 @@
 							<div class="item gt-df gt-ac">
 								<span class="gt-f1"> {{svg "octicon-file-directory-fill"}} {{$dir}}</span>
 								<div>
-									<button class="ui button green show-modal gt-p-3" data-modal="#adopt-unadopted-modal-{{$dirI}}">{{svg "octicon-plus"}} {{$.locale.Tr "repo.adopt_preexisting_label"}}</button>
+									<button class="ui button primary show-modal gt-p-3" data-modal="#adopt-unadopted-modal-{{$dirI}}">{{svg "octicon-plus"}} {{$.locale.Tr "repo.adopt_preexisting_label"}}</button>
 									<div class="ui g-modal-confirm modal" id="adopt-unadopted-modal-{{$dirI}}">
 										<div class="header">
 											<span class="label">{{$.locale.Tr "repo.adopt_preexisting"}}</span>
@@ -31,7 +31,7 @@
 										<div class="content">
 											<p>{{$.locale.Tr "repo.adopt_preexisting_content" $dir}}</p>
 										</div>
-										<form class="ui form" method="POST" action="{{AppSubUrl}}/admin/repos/unadopted">
+										<form class="ui form" method="post" action="{{AppSubUrl}}/admin/repos/unadopted">
 											{{$.CsrfTokenHtml}}
 											<input type="hidden" name="id" value="{{$dir}}">
 											<input type="hidden" name="action" value="adopt">
@@ -48,7 +48,7 @@
 										<div class="content">
 											<p>{{$.locale.Tr "repo.delete_preexisting_content" $dir}}</p>
 										</div>
-										<form class="ui form" method="POST" action="{{AppSubUrl}}/admin/repos/unadopted">
+										<form class="ui form" method="post" action="{{AppSubUrl}}/admin/repos/unadopted">
 											{{$.CsrfTokenHtml}}
 											<input type="hidden" name="id" value="{{$dir}}">
 											<input type="hidden" name="action" value="delete">

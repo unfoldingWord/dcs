@@ -20,10 +20,11 @@ var ErrPushMirrorNotExist = util.NewNotExistErrorf("PushMirror does not exist")
 
 // PushMirror represents mirror information of a repository.
 type PushMirror struct {
-	ID         int64       `xorm:"pk autoincr"`
-	RepoID     int64       `xorm:"INDEX"`
-	Repo       *Repository `xorm:"-"`
-	RemoteName string
+	ID            int64       `xorm:"pk autoincr"`
+	RepoID        int64       `xorm:"INDEX"`
+	Repo          *Repository `xorm:"-"`
+	RemoteName    string
+	RemoteAddress string `xorm:"VARCHAR(2048)"`
 
 	SyncOnCommit   bool `xorm:"NOT NULL DEFAULT true"`
 	Interval       time.Duration
@@ -31,6 +32,7 @@ type PushMirror struct {
 	LastUpdateUnix timeutil.TimeStamp `xorm:"INDEX last_update"`
 	LastError      string             `xorm:"text"`
 }
+
 type PushMirrorOptions struct {
 	ID         int64
 	RepoID     int64
@@ -85,6 +87,12 @@ func UpdatePushMirror(ctx context.Context, m *PushMirror) error {
 	return err
 }
 
+// UpdatePushMirrorInterval updates the push-mirror
+func UpdatePushMirrorInterval(ctx context.Context, m *PushMirror) error {
+	_, err := db.GetEngine(ctx).ID(m.ID).Cols("interval").Update(m)
+	return err
+}
+
 func DeletePushMirrors(ctx context.Context, opts PushMirrorOptions) error {
 	if opts.RepoID > 0 {
 		_, err := db.GetEngine(ctx).Where(opts.toConds()).Delete(&PushMirror{})
@@ -122,12 +130,12 @@ func GetPushMirrorsByRepoID(ctx context.Context, repoID int64, listOptions db.Li
 func GetPushMirrorsSyncedOnCommit(ctx context.Context, repoID int64) ([]*PushMirror, error) {
 	mirrors := make([]*PushMirror, 0, 10)
 	return mirrors, db.GetEngine(ctx).
-		Where("repo_id=? AND sync_on_commit=?", repoID, true).
+		Where("repo_id = ? AND sync_on_commit = ?", repoID, true).
 		Find(&mirrors)
 }
 
 // PushMirrorsIterate iterates all push-mirror repositories.
-func PushMirrorsIterate(ctx context.Context, limit int, f func(idx int, bean interface{}) error) error {
+func PushMirrorsIterate(ctx context.Context, limit int, f func(idx int, bean any) error) error {
 	sess := db.GetEngine(ctx).
 		Where("last_update + (`interval` / ?) <= ?", time.Second, time.Now().Unix()).
 		And("`interval` != 0").

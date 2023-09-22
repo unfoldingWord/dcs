@@ -23,7 +23,7 @@
 				<input type="checkbox" name="match_full_name" {{if .CleanupRule.MatchFullName}}checked{{end}}>
 			</div>
 		</div>
-		<div class="ui divider"></div>
+		<div class="divider"></div>
 		<p>{{.locale.Tr "packages.owner.settings.cleanuprules.keep.title"}}</p>
 		<div class="field {{if .Err_KeepCount}}error{{end}}">
 			<label>{{.locale.Tr "packages.owner.settings.cleanuprules.keep.count"}}:</label>
@@ -42,7 +42,7 @@
 			<input name="keep_pattern" type="text" value="{{.CleanupRule.KeepPattern}}">
 			<p>{{.locale.Tr "packages.owner.settings.cleanuprules.keep.pattern.container" | Safe}}</p>
 		</div>
-		<div class="ui divider"></div>
+		<div class="divider"></div>
 		<p>{{.locale.Tr "packages.owner.settings.cleanuprules.remove.title"}}</p>
 		<div class="field {{if .Err_RemoveDays}}error{{end}}">
 			<label>{{.locale.Tr "packages.owner.settings.cleanuprules.remove.days"}}:</label>
@@ -62,11 +62,11 @@
 		</div>
 		<div class="field">
 			{{if .IsEditRule}}
-			<button class="ui green button" name="action" value="save">{{.locale.Tr "save"}}</button>
+			<button class="ui primary button" name="action" value="save">{{.locale.Tr "save"}}</button>
 			<button class="ui red button" name="action" value="remove">{{.locale.Tr "remove"}}</button>
 			<a class="ui button" href="{{.Link}}/preview">{{.locale.Tr "packages.owner.settings.cleanuprules.preview"}}</a>
 			{{else}}
-			<button class="ui green button" name="action" value="save">{{.locale.Tr "add"}}</button>
+			<button class="ui primary button" name="action" value="save">{{.locale.Tr "add"}}</button>
 			{{end}}
 		</div>
 	</form>

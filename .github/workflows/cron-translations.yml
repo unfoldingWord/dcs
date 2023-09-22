@@ -3,13 +3,14 @@ name: cron-translations
 on:
   schedule:
     - cron: "7 0 * * *" # every day at 00:07 UTC
+  workflow_dispatch:
 
 jobs:
   crowdin-pull:
     runs-on: ubuntu-latest
     if: github.repository == 'unfoldingWord/dcs'
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: download from crowdin
         uses: docker://jonasfranz/crowdin
         env:
@@ -34,7 +35,7 @@ jobs:
     runs-on: ubuntu-latest
     if: github.repository == 'unfoldingWord/dcs'
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: push translations to crowdin
         uses: docker://jonasfranz/crowdin
         env:

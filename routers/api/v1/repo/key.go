@@ -13,6 +13,7 @@ import (
 	asymkey_model "code.gitea.io/gitea/models/asymkey"
 	"code.gitea.io/gitea/models/db"
 	"code.gitea.io/gitea/models/perm"
+	access_model "code.gitea.io/gitea/models/perm/access"
 	repo_model "code.gitea.io/gitea/models/repo"
 	"code.gitea.io/gitea/modules/context"
 	"code.gitea.io/gitea/modules/setting"
@@ -27,13 +28,13 @@ import (
 func appendPrivateInformation(ctx stdCtx.Context, apiKey *api.DeployKey, key *asymkey_model.DeployKey, repository *repo_model.Repository) (*api.DeployKey, error) {
 	apiKey.ReadOnly = key.Mode == perm.AccessModeRead
 	if repository.ID == key.RepoID {
-		apiKey.Repository = convert.ToRepo(ctx, repository, key.Mode)
+		apiKey.Repository = convert.ToRepo(ctx, repository, access_model.Permission{AccessMode: key.Mode})
 	} else {
 		repo, err := repo_model.GetRepositoryByID(ctx, key.RepoID)
 		if err != nil {
 			return apiKey, err
 		}
-		apiKey.Repository = convert.ToRepo(ctx, repo, key.Mode)
+		apiKey.Repository = convert.ToRepo(ctx, repo, access_model.Permission{AccessMode: key.Mode})
 	}
 	return apiKey, nil
 }
@@ -79,6 +80,8 @@ func ListDeployKeys(ctx *context.APIContext) {
 	// responses:
 	//   "200":
 	//     "$ref": "#/responses/DeployKeyList"
+	//   "404":
+	//     "$ref": "#/responses/notFound"
 
 	opts := &asymkey_model.ListDeployKeysOptions{
 		ListOptions: utils.GetListOptions(ctx),
@@ -143,6 +146,8 @@ func GetDeployKey(ctx *context.APIContext) {
 	// responses:
 	//   "200":
 	//     "$ref": "#/responses/DeployKey"
+	//   "404":
+	//     "$ref": "#/responses/notFound"
 
 	key, err := asymkey_model.GetDeployKeyByID(ctx, ctx.ParamsInt64(":id"))
 	if err != nil {
@@ -221,6 +226,8 @@ func CreateDeployKey(ctx *context.APIContext) {
 	// responses:
 	//   "201":
 	//     "$ref": "#/responses/DeployKey"
+	//   "404":
+	//     "$ref": "#/responses/notFound"
 	//   "422":
 	//     "$ref": "#/responses/validationError"
 
@@ -269,6 +276,8 @@ func DeleteDeploykey(ctx *context.APIContext) {
 	//     "$ref": "#/responses/empty"
 	//   "403":
 	//     "$ref": "#/responses/forbidden"
+	//   "404":
+	//     "$ref": "#/responses/notFound"
 
 	if err := asymkey_service.DeleteDeployKey(ctx.Doer, ctx.ParamsInt64(":id")); err != nil {
 		if asymkey_model.IsErrKeyAccessDenied(err) {

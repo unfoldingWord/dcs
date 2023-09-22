@@ -6,8 +6,8 @@
 		<div class="ui attached segment">
 			<p>{{.locale.Tr "settings.scan_this_image"}}</p>
 			<img src="{{.QrUri}}" alt="{{.TwofaSecret}}">
-			<p>{{.locale.Tr "settings.or_enter_secret" .TwofaSecret}}
-			<p>{{.locale.Tr "settings.then_enter_passcode"}}
+			<p>{{.locale.Tr "settings.or_enter_secret" .TwofaSecret}}</p>
+			<p>{{.locale.Tr "settings.then_enter_passcode"}}</p>
 			<form class="ui form" action="{{.Link}}" method="post">
 				{{.CsrfTokenHtml}}
 				<div class="inline required field {{if .Err_Passcode}}error{{end}}">
@@ -16,7 +16,7 @@
 				</div>
 				<div class="inline field">
 					<label></label>
-					<button class="ui green button">{{.locale.Tr "auth.verify"}}</button>
+					<button class="ui primary button">{{.locale.Tr "auth.verify"}}</button>
 				</div>
 			</form>
 		</div>

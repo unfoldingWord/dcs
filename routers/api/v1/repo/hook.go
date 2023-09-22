@@ -8,6 +8,7 @@ import (
 	"net/http"
 
 	"code.gitea.io/gitea/models/perm"
+	access_model "code.gitea.io/gitea/models/perm/access"
 	"code.gitea.io/gitea/models/webhook"
 	"code.gitea.io/gitea/modules/context"
 	"code.gitea.io/gitea/modules/git"
@@ -49,6 +50,8 @@ func ListHooks(ctx *context.APIContext) {
 	// responses:
 	//   "200":
 	//     "$ref": "#/responses/HookList"
+	//   "404":
+	//     "$ref": "#/responses/notFound"
 
 	opts := &webhook.ListWebhookOptions{
 		ListOptions: utils.GetListOptions(ctx),
@@ -156,6 +159,8 @@ func TestHook(ctx *context.APIContext) {
 	// responses:
 	//   "204":
 	//     "$ref": "#/responses/empty"
+	//   "404":
+	//     "$ref": "#/responses/notFound"
 
 	if ctx.Repo.Commit == nil {
 		// if repo does not have any commits, then don't send a webhook
@@ -185,7 +190,7 @@ func TestHook(ctx *context.APIContext) {
 		Commits:      []*api.PayloadCommit{commit},
 		TotalCommits: 1,
 		HeadCommit:   commit,
-		Repo:         convert.ToRepo(ctx, ctx.Repo.Repository, perm.AccessModeNone),
+		Repo:         convert.ToRepo(ctx, ctx.Repo.Repository, access_model.Permission{AccessMode: perm.AccessModeNone}),
 		Pusher:       convert.ToUserWithAccessMode(ctx, ctx.Doer, perm.AccessModeNone),
 		Sender:       convert.ToUserWithAccessMode(ctx, ctx.Doer, perm.AccessModeNone),
 	}); err != nil {
@@ -223,6 +228,8 @@ func CreateHook(ctx *context.APIContext) {
 	// responses:
 	//   "201":
 	//     "$ref": "#/responses/Hook"
+	//   "404":
+	//     "$ref": "#/responses/notFound"
 
 	utils.AddRepoHook(ctx, web.GetForm(ctx).(*api.CreateHookOption))
 }
@@ -258,6 +265,8 @@ func EditHook(ctx *context.APIContext) {
 	// responses:
 	//   "200":
 	//     "$ref": "#/responses/Hook"
+	//   "404":
+	//     "$ref": "#/responses/notFound"
 	form := web.GetForm(ctx).(*api.EditHookOption)
 	hookID := ctx.ParamsInt64(":id")
 	utils.EditRepoHook(ctx, form, hookID)

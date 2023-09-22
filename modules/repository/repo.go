@@ -151,6 +151,10 @@ func MigrateRepositoryGitData(ctx context.Context, u *user_model.User,
 			}
 		}
 
+		if _, err := SyncRepoBranchesWithRepo(ctx, repo, gitRepo, u.ID); err != nil {
+			return repo, fmt.Errorf("SyncRepoBranchesWithRepo: %v", err)
+		}
+
 		if !opts.Releases {
 			// note: this will greatly improve release (tag) sync
 			// for pull-mirrors with many tags
@@ -169,19 +173,24 @@ func MigrateRepositoryGitData(ctx context.Context, u *user_model.User,
 		}
 	}
 
-	ctx, committer, err := db.TxContext(db.DefaultContext)
+	ctx, committer, err := db.TxContext(ctx)
 	if err != nil {
 		return nil, err
 	}
 	defer committer.Close()
 
 	if opts.Mirror {
+		remoteAddress, err := util.SanitizeURL(opts.CloneAddr)
+		if err != nil {
+			return repo, err
+		}
 		mirrorModel := repo_model.Mirror{
 			RepoID:         repo.ID,
 			Interval:       setting.Mirror.DefaultInterval,
 			EnablePrune:    true,
 			NextUpdateUnix: timeutil.TimeStampNow().AddDuration(setting.Mirror.DefaultInterval),
 			LFS:            opts.LFS,
+			RemoteAddress:  remoteAddress,
 		}
 		if opts.LFS {
 			mirrorModel.LFSEndpoint = opts.LFSEndpoint
@@ -252,11 +261,11 @@ func cleanUpMigrateGitConfig(ctx context.Context, repoPath string) error {
 // CleanUpMigrateInfo finishes migrating repository and/or wiki with things that don't need to be done for mirrors.
 func CleanUpMigrateInfo(ctx context.Context, repo *repo_model.Repository) (*repo_model.Repository, error) {
 	repoPath := repo.RepoPath()
-	if err := createDelegateHooks(repoPath); err != nil {
+	if err := CreateDelegateHooks(repoPath); err != nil {
 		return repo, fmt.Errorf("createDelegateHooks: %w", err)
 	}
 	if repo.HasWiki() {
-		if err := createDelegateHooks(repo.WikiPath()); err != nil {
+		if err := CreateDelegateHooks(repo.WikiPath()); err != nil {
 			return repo, fmt.Errorf("createDelegateHooks.(wiki): %w", err)
 		}
 	}
