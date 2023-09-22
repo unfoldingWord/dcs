@@ -3,7 +3,7 @@
 
 package swagger
 
-// LanguLangnamesJSONage
+// LanguLangnamesJSON
 // swagger:response LangnamesJSON
 type swaggerResponseLangnamesJSON struct {
 	// in:body

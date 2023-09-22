@@ -81,7 +81,7 @@ func Search(ctx *context.APIContext) {
 	//     type: string
 	// - name: is_gl
 	//   in: query
-	//   description: search only entries that are a gateway language
+	//   description: list only those that are (true) or are not (false) a gatetway language
 	//   type: boolean
 	// - name: stage
 	//   in: query
@@ -124,7 +124,7 @@ func Search(ctx *context.APIContext) {
 	//   collectionFormat: multi
 	//   items:
 	//     type: string
-	//     enum: [1,2,3]
+	//     enum: ["1","2","3"]
 	// - name: book
 	//   in: query
 	//   description: search only for entries with the given book(s) (ingredient identifiers). To match multiple, give the parameter multiple times or give a list comma delimited. Will perform an exact match (case insensitive)
@@ -221,7 +221,7 @@ func SearchOwner(ctx *context.APIContext) {
 	//     type: string
 	// - name: is_gl
 	//   in: query
-	//   description: search only entries that are a gateway language
+	//   description: list only those that are (true) or are not (false) a gatetway language
 	//   type: boolean
 	// - name: stage
 	//   in: query
@@ -229,17 +229,6 @@ func SearchOwner(ctx *context.APIContext) {
 	//                "prod" - return only the production releases (default);
 	//                "preprod" - return the pre-production release if it exists instead of the production release;
 	//                "latest" -return the default branch (e.g. master) if it is a valid RC instead of the above'
-	//   type: array
-	//   collectionFormat: multi
-	//   items:
-	//     type: string
-	//     enum: [prod,preprod,latest]
-	// - name: stage
-	//   in: query
-	//   description: 'specifies which release stage to be return of these stages:
-	//                "prod" - return only the production releases (default);
-	//                "preprod" - return the pre-production release if it exists instead of the production release;
-	//                "latest" - return the default branch (e.g. master) if it is a valid repo'
 	//   type: array
 	//   collectionFormat: multi
 	//   items:
@@ -275,7 +264,7 @@ func SearchOwner(ctx *context.APIContext) {
 	//   collectionFormat: multi
 	//   items:
 	//     type: string
-	//     enum: [1,2,3]
+	//     enum: ["1","2","3"]
 	// - name: book
 	//   in: query
 	//   description: search only for entries with the given book(s) (ingredient identifiers). To match multiple, give the parameter multiple times or give a list comma delimited. Will perform an exact match (case insensitive)
@@ -381,7 +370,7 @@ func SearchRepo(ctx *context.APIContext) {
 	//     type: string
 	// - name: is_gl
 	//   in: query
-	//   description: search only entries that are a gateway language
+	//   description: list only those that are (true) or are not (false) a gatetway language
 	//   type: boolean
 	// - name: stage
 	//   in: query
@@ -424,7 +413,7 @@ func SearchRepo(ctx *context.APIContext) {
 	//   collectionFormat: multi
 	//   items:
 	//     type: string
-	//     enum: [1,2,3]
+	//     enum: ["1","2","3"]
 	// - name: book
 	//   in: query
 	//   description: search only for entries with the given book(s) (ingredient identifiers). To match multiple, give the parameter multiple times or give a list comma delimited. Will perform an exact match (case insensitive)
@@ -508,7 +497,7 @@ func ListCatalogSubjects(ctx *context.APIContext) {
 	//     type: string
 	// - name: is_gl
 	//   in: query
-	//   description: search only entries that are a gateway language
+	//   description: list only those that are (true) or are not (false) a gatetway language
 	//   type: boolean
 	// - name: stage
 	//   in: query
@@ -548,7 +537,7 @@ func ListCatalogSubjects(ctx *context.APIContext) {
 	//   collectionFormat: multi
 	//   items:
 	//     type: string
-	//     enum: [1,2,3]
+	//     enum: ["1","2","3"]
 	// - name: book
 	//   in: query
 	//   description: list only those with the given book(s) (ingredient identifiers). To match multiple, give the parameter multiple times or give a list comma delimited. Will perform an exact match (case insensitive)
@@ -623,7 +612,7 @@ func ListCatalogMetadataTypes(ctx *context.APIContext) {
 	//     type: string
 	// - name: is_gl
 	//   in: query
-	//   description: search only entries that are a gateway language
+	//   description: list only those that are (true) or are not (false) a gatetway language
 	//   type: boolean
 	// - name: stage
 	//   in: query
@@ -663,7 +652,7 @@ func ListCatalogMetadataTypes(ctx *context.APIContext) {
 	//   collectionFormat: multi
 	//   items:
 	//     type: string
-	//     enum: [1,2,3]
+	//     enum: ["1","2","3"]
 	// - name: book
 	//   in: query
 	//   description: list only those with the given book(s) (ingredient identifiers). To match multiple, give the parameter multiple times or give a list comma delimited. Will perform an exact match (case insensitive)
@@ -738,7 +727,7 @@ func ListCatalogOwners(ctx *context.APIContext) {
 	//     type: string
 	// - name: is_gl
 	//   in: query
-	//   description: search only entries that are a gateway language
+	//   description: list only those that are (true) or are not (false) a gatetway language
 	//   type: boolean
 	// - name: stage
 	//   in: query
@@ -778,7 +767,7 @@ func ListCatalogOwners(ctx *context.APIContext) {
 	//   collectionFormat: multi
 	//   items:
 	//     type: string
-	//     enum: [1,2,3]
+	//     enum: ["1","2","3"]
 	// - name: book
 	//   in: query
 	//   description: list only those with the given book(s) (ingredient identifiers). To match multiple, give the parameter multiple times or give a list comma delimited. Will perform an exact match (case insensitive)
@@ -849,7 +838,7 @@ func ListCatalogLanguages(ctx *context.APIContext) {
 	//     type: string
 	// - name: is_gl
 	//   in: query
-	//   description: search only entries that are a gateway language
+	//   description: list only those that are (true) or are not (false) a gatetway language
 	//   type: boolean
 	// - name: stage
 	//   in: query
@@ -889,7 +878,7 @@ func ListCatalogLanguages(ctx *context.APIContext) {
 	//   collectionFormat: multi
 	//   items:
 	//     type: string
-	//     enum: [1,2,3]
+	//     enum: ["1","2","3"]
 	// - name: book
 	//   in: query
 	//   description: list only those with the given book(s) (ingredient identifiers). To match multiple, give the parameter multiple times or give a list comma delimited. Will perform an exact match (case insensitive)
@@ -912,14 +901,6 @@ func ListCatalogLanguages(ctx *context.APIContext) {
 	//   collectionFormat: multi
 	//   items:
 	//     type: string
-	// - name: is_gl
-	//   in: query
-	//   description: list only those that are (true) or are not (false) a gatetway language.
-	//   type: boolean
-	// - name: partialMatch
-	//   in: query
-	//   description: if true, owner, language and subject search fields will use partial match (LIKE) when querying the catalog. Default is false
-	//   type: boolean
 	// responses:
 	//   "200":
 	//     description: "SearchResults of a successful catalog owner search"
@@ -1085,8 +1066,6 @@ func searchCatalog(ctx *context.APIContext) {
 			ctx.Error(http.StatusUnprocessableEntity, "", fmt.Errorf("invalid stage [%s]", stageStr))
 			return
 		}
-	} else {
-		stage = door43metadata.StageProd
 	}
 
 	metadataTypes := QueryStrings(ctx, "metadataType")

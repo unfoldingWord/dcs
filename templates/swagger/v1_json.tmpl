@@ -998,7 +998,7 @@
           },
           {
             "type": "boolean",
-            "description": "search only entries that are a gateway language",
+            "description": "list only those that are (true) or are not (false) a gatetway language",
             "name": "is_gl",
             "in": "query"
           },
@@ -1101,9 +1101,9 @@
             "type": "array",
             "items": {
               "enum": [
-                1,
-                2,
-                3
+                "1",
+                "2",
+                "3"
               ],
               "type": "string"
             },
@@ -1146,18 +1146,6 @@
             "collectionFormat": "multi",
             "description": "list only those with the given metadatay version. Does not apply if metadataType is not given",
             "name": "metadataVersion",
-            "in": "query"
-          },
-          {
-            "type": "boolean",
-            "description": "list only those that are (true) or are not (false) a gatetway language.",
-            "name": "is_gl",
-            "in": "query"
-          },
-          {
-            "type": "boolean",
-            "description": "if true, owner, language and subject search fields will use partial match (LIKE) when querying the catalog. Default is false",
-            "name": "partialMatch",
             "in": "query"
           }
         ],
@@ -1211,7 +1199,7 @@
           },
           {
             "type": "boolean",
-            "description": "search only entries that are a gateway language",
+            "description": "list only those that are (true) or are not (false) a gatetway language",
             "name": "is_gl",
             "in": "query"
           },
@@ -1314,9 +1302,9 @@
             "type": "array",
             "items": {
               "enum": [
-                1,
-                2,
-                3
+                "1",
+                "2",
+                "3"
               ],
               "type": "string"
             },
@@ -1418,7 +1406,7 @@
           },
           {
             "type": "boolean",
-            "description": "search only entries that are a gateway language",
+            "description": "list only those that are (true) or are not (false) a gatetway language",
             "name": "is_gl",
             "in": "query"
           },
@@ -1521,9 +1509,9 @@
             "type": "array",
             "items": {
               "enum": [
-                1,
-                2,
-                3
+                "1",
+                "2",
+                "3"
               ],
               "type": "string"
             },
@@ -1619,7 +1607,7 @@
           },
           {
             "type": "boolean",
-            "description": "search only entries that are a gateway language",
+            "description": "list only those that are (true) or are not (false) a gatetway language",
             "name": "is_gl",
             "in": "query"
           },
@@ -1722,9 +1710,9 @@
             "type": "array",
             "items": {
               "enum": [
-                1,
-                2,
-                3
+                "1",
+                "2",
+                "3"
               ],
               "type": "string"
             },
@@ -1844,7 +1832,7 @@
           },
           {
             "type": "boolean",
-            "description": "search only entries that are a gateway language",
+            "description": "list only those that are (true) or are not (false) a gatetway language",
             "name": "is_gl",
             "in": "query"
           },
@@ -1951,9 +1939,9 @@
             "type": "array",
             "items": {
               "enum": [
-                1,
-                2,
-                3
+                "1",
+                "2",
+                "3"
               ],
               "type": "string"
             },
@@ -2099,7 +2087,7 @@
           },
           {
             "type": "boolean",
-            "description": "search only entries that are a gateway language",
+            "description": "list only those that are (true) or are not (false) a gatetway language",
             "name": "is_gl",
             "in": "query"
           },
@@ -2115,21 +2103,6 @@
             },
             "collectionFormat": "multi",
             "description": "specifies which release stage to be return of these stages: \"prod\" - return only the production releases (default); \"preprod\" - return the pre-production release if it exists instead of the production release; \"latest\" -return the default branch (e.g. master) if it is a valid RC instead of the above",
-            "name": "stage",
-            "in": "query"
-          },
-          {
-            "type": "array",
-            "items": {
-              "enum": [
-                "prod",
-                "preprod",
-                "latest"
-              ],
-              "type": "string"
-            },
-            "collectionFormat": "multi",
-            "description": "specifies which release stage to be return of these stages: \"prod\" - return only the production releases (default); \"preprod\" - return the pre-production release if it exists instead of the production release; \"latest\" - return the default branch (e.g. master) if it is a valid repo",
             "name": "stage",
             "in": "query"
           },
@@ -2221,9 +2194,9 @@
             "type": "array",
             "items": {
               "enum": [
-                1,
-                2,
-                3
+                "1",
+                "2",
+                "3"
               ],
               "type": "string"
             },
@@ -2382,7 +2355,7 @@
           },
           {
             "type": "boolean",
-            "description": "search only entries that are a gateway language",
+            "description": "list only those that are (true) or are not (false) a gatetway language",
             "name": "is_gl",
             "in": "query"
           },
@@ -2489,9 +2462,9 @@
             "type": "array",
             "items": {
               "enum": [
-                1,
-                2,
-                3
+                "1",
+                "2",
+                "3"
               ],
               "type": "string"
             },
@@ -2737,7 +2710,7 @@
         ],
         "responses": {
           "200": {
-            "$ref": "#/responses/Langnames"
+            "$ref": "#/responses/LangnamesJSON"
           }
         }
       }
@@ -2786,7 +2759,7 @@
         ],
         "responses": {
           "200": {
-            "$ref": "#/responses/Langnames"
+            "$ref": "#/responses/LangnamesJSON"
           }
         }
       }
@@ -24990,7 +24963,7 @@
       }
     },
     "LangnamesJSON": {
-      "description": "LanguLangnamesJSONage",
+      "description": "LanguLangnamesJSON",
       "schema": {
         "type": "object",
         "additionalProperties": {}
