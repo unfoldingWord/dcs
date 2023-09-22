@@ -1,0 +1,55 @@
+#Build stage
+FROM golang:1.18-alpine3.16
+
+ARG GOPROXY
+ENV GOPROXY ${GOPROXY:-direct}
+
+ARG GITEA_VERSION
+ARG TAGS="sqlite sqlite_unlock_notify sqlite_json"
+ENV TAGS "bindata timetzdata $TAGS"
+ARG CGO_EXTRA_CFLAGS
+
+#Setup repo
+COPY . ${GOPATH}/src/code.gitea.io/gitea
+WORKDIR ${GOPATH}/src/code.gitea.io/gitea
+
+EXPOSE 22 3000 80
+
+RUN apk --no-cache add \
+    bash \
+    ca-certificates \
+    curl \
+    gettext \
+    linux-pam \
+    openssh \
+    s6 \
+    sqlite \
+    su-exec \
+    gnupg \
+    make \
+    build-base \
+    git \
+    nodejs \
+    npm \
+    build-base
+
+RUN apk add git --repository=http://dl-cdn.alpinelinux.org/alpine/v3.16/main
+
+RUN addgroup \
+    -S -g 1000 \
+    git && \
+  adduser \
+    -S -H -D \
+    -h /data/git \
+    -s /bin/bash \
+    -u 1000 \
+    -G git \
+    git && \
+  echo "git:*" | chpasswd -e
+
+ENV USER git
+ENV GITEA_CUSTOM /data/gitea
+
+VOLUME ["/data"]
+
+CMD sh -c 'ln -s /go/src/code.gitea.io /app'; tail -f /data/gitea/log/gitea.log

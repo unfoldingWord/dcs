@@ -135,7 +135,7 @@ func GetIssueDependencies(ctx *context.APIContext) {
 					Issue: issues_model.Issue{
 						RepoID:   blocker.Issue.RepoID,
 						Index:    blocker.Index,
-						Title:    blocker.Title,
+						Title:    blocker.Issue.Title,
 						IsClosed: blocker.IsClosed,
 						IsPull:   blocker.IsPull,
 					},

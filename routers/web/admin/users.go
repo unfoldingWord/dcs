@@ -79,6 +79,9 @@ func Users(ctx *context.Context) {
 		IsProhibitLogin:    util.OptionalBoolParse(statusFilterMap["is_prohibit_login"]),
 		IncludeReserved:    true, // administrator needs to list all acounts include reserved, bot, remote ones
 		ExtraParamStrings:  extraParamStrings,
+		/*** DCS Customizations ***/
+		RepoLanguages: ctx.FormStrings("lang"),
+		/*** END DCS Customizations ***/
 	}, tplUsers)
 }
 

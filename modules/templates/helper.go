@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"code.gitea.io/gitea/modules/base"
+	"code.gitea.io/gitea/modules/dcs"
 	"code.gitea.io/gitea/modules/emoji"
 	"code.gitea.io/gitea/modules/markup"
 	"code.gitea.io/gitea/modules/setting"
@@ -145,6 +146,17 @@ func NewFuncMap() template.FuncMap {
 		"MermaidMaxSourceCharacters": func() int {
 			return setting.MermaidMaxSourceCharacters
 		},
+		/*** DCS Customizations ***/
+		"StringHasSuffix":            dcs.StringHasSuffix,
+		"ValidateJSONFile":           dcs.ValidateJSONFile,
+		"ValidateYAMLFile":           dcs.ValidateYAMLFile,
+		"ValidateManifestFileAsHTML": dcs.ValidateManifestFileAsHTML,
+		"ValidateMetadataFileAsHTML": dcs.ValidateMetadataFileAsHTML,
+		"Door43PreviewURL": func() string {
+			return setting.DCS.Door43PreviewURL
+		},
+		"GetCsvCellDiff": dcs.GetCsvCellDiff,
+		/*** END DCS Customizations ***/
 
 		// -----------------------------------------------------------------
 		// render

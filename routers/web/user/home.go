@@ -231,6 +231,13 @@ func Milestones(ctx *context.Context) {
 		return
 	}
 	sort.Sort(showRepos)
+	/*** DCS Customizations ***/
+	for _, repo := range showRepos {
+		if err := repo.LoadLatestDMs(ctx); err != nil {
+			log.Error("Error LoadLatestDMs [%s]: %v", repo.FullName(), err)
+		}
+	}
+	/*** End DCS Customizations ***/
 
 	for i := 0; i < len(milestones); {
 		for _, repo := range showRepos {

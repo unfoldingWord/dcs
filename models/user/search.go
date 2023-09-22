@@ -37,6 +37,13 @@ type SearchUserOptions struct {
 	IsProhibitLogin    util.OptionalBool
 	IncludeReserved    bool
 
+	/*** DCS CUSTOMIZATIONS ***/
+	RepoLanguages     []string          // Find repos that have the given language ids in a repo's manifest
+	RepoSubjects      []string          // Find repos that have the given subjects in a repo's manifest
+	RepoMetadataTypes []string          // Find repos that have the given metadata types in a repo's manifest
+	RepoLanguageIsGL  util.OptionalBool // Find repos that are gateway languages
+	/*** END DCS CUSTOMIZATIONS ***/
+
 	ExtraParamStrings map[string]string
 }
 
@@ -140,6 +147,42 @@ func SearchUsers(ctx context.Context, opts *SearchUserOptions) (users []*User, _
 	if opts.Page != 0 {
 		sessQuery = db.SetSessionPagination(sessQuery, opts)
 	}
+
+	/*** DCS Customizations ***/
+	if len(opts.RepoLanguages) > 0 || len(opts.RepoSubjects) > 0 || len(opts.RepoMetadataTypes) > 0 {
+		repoLangsCond := builder.NewCond()
+		for _, values := range opts.RepoLanguages {
+			for _, value := range strings.Split(values, ",") {
+				repoLangsCond = repoLangsCond.Or(builder.Eq{"`door43_metadata`.language": strings.TrimSpace(value)})
+			}
+		}
+		repoSubsCond := builder.NewCond()
+		for _, values := range opts.RepoSubjects {
+			for _, value := range strings.Split(values, ",") {
+				repoSubsCond = repoSubsCond.Or(builder.Eq{"`door43_metadata`.subject": strings.TrimSpace(value)})
+			}
+		}
+		repoTypesCond := builder.NewCond()
+		for _, values := range opts.RepoMetadataTypes {
+			for _, value := range strings.Split(values, ",") {
+				repoTypesCond = repoTypesCond.Or(builder.Eq{"`door43_metadata`.metadata_type": strings.TrimSpace(value)})
+			}
+		}
+		metadataCond := builder.NewCond().And(
+			repoLangsCond,
+			repoSubsCond,
+			repoTypesCond,
+		)
+		if opts.RepoLanguageIsGL != util.OptionalBoolNone {
+			metadataCond = metadataCond.And(builder.Eq{"`door43_metadata`.is_gl": opts.RepoLanguageIsGL.IsTrue()})
+		}
+		metadataSelect := builder.Select("owner_id").
+			From("repository").
+			Join("INNER", "`door43_metadata`", "repo_id = `repository`.id").
+			Where(metadataCond)
+		sessQuery.In("`user`.id", metadataSelect)
+	}
+	/*** END DCS Customizations ***/
 
 	// the sql may contain JOIN, so we must only select User related columns
 	sessQuery = sessQuery.Select("`user`.*")

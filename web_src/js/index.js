@@ -75,6 +75,11 @@ import {initRepoBranchButton} from './features/repo-branch.js';
 import {initCommonOrganization} from './features/common-organization.js';
 import {initRepoWikiForm} from './features/repo-wiki.js';
 import {initRepoCommentForm, initRepository} from './features/repo-legacy.js';
+/** DCS Customizations **/
+import {initDCSInfoIcon} from './features/dcs-info-icon.js';
+import {initDCSValidationBadge} from './features/dcs-validation-badge.js';
+import {initDCSLanguageFonts} from './features/dcs-language-fonts.js';
+/** END DCS Customizations **/
 import {initCopyContent} from './features/copycontent.js';
 import {initCaptcha} from './features/captcha.js';
 import {initRepositoryActionView} from './components/RepoActionView.vue';
@@ -131,6 +136,12 @@ onDomReady(() => {
   initAdminConfigs();
 
   initDashboardRepoList();
+
+  /** DCS Customizations **/
+  initDCSInfoIcon();
+  initDCSValidationBadge();
+  initDCSLanguageFonts();
+  /** END DCS Customizations **/
 
   initNotificationCount();
   initNotificationsTable();

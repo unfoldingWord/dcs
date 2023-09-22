@@ -85,6 +85,7 @@ type Release struct {
 	IsTag            bool               `xorm:"NOT NULL DEFAULT false"` // will be true only if the record is a tag and has no related releases
 	Attachments      []*Attachment      `xorm:"-"`
 	CreatedUnix      timeutil.TimeStamp `xorm:"INDEX"`
+	Door43Metadata   *Door43Metadata    `xorm:"-"`
 }
 
 func init() {
@@ -100,6 +101,14 @@ func (r *Release) LoadAttributes(ctx context.Context) error {
 			return err
 		}
 	}
+	/*** DCS Customizations ***/
+	if r.Door43Metadata == nil {
+		r.Door43Metadata, err = GetDoor43MetadataByRepoIDAndRef(ctx, r.RepoID, r.TagName)
+		if err != nil && !IsErrDoor43MetadataNotExist(err) {
+			return err
+		}
+	}
+	/*** END DCS Customizations ***/
 	if r.Publisher == nil {
 		r.Publisher, err = user_model.GetUserByID(ctx, r.PublisherID)
 		if err != nil {

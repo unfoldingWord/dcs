@@ -11,6 +11,7 @@ import (
 
 	activities_model "code.gitea.io/gitea/models/activities"
 	"code.gitea.io/gitea/models/db"
+	"code.gitea.io/gitea/models/door43metadata"
 	repo_model "code.gitea.io/gitea/models/repo"
 	user_model "code.gitea.io/gitea/models/user"
 	"code.gitea.io/gitea/modules/context"
@@ -245,13 +246,42 @@ func prepareUserProfileTabData(ctx *context.Context, showPrivate bool, profileGi
 			}
 		}
 	default: // default to "repositories"
+		/*** DCS Customizations ***/
+		var books, langs, keywords, subjects, resources, contentFormats, repoNames, owners, metadataTypes, metadataVersions []string
+		if keyword != "" {
+			for _, token := range door43metadata.SplitAtCommaNotInString(keyword, true) {
+				if strings.HasPrefix(token, "book:") {
+					books = append(books, strings.TrimPrefix(token, "book:"))
+				} else if strings.HasPrefix(token, "lang:") {
+					langs = append(langs, strings.TrimPrefix(token, "lang:"))
+				} else if strings.HasPrefix(token, "subject:") {
+					subjects = append(subjects, strings.Trim(strings.TrimPrefix(token, "subject:"), `"`))
+				} else if strings.HasPrefix(token, "resource:") {
+					resources = append(resources, strings.Trim(strings.TrimPrefix(token, "resource:"), `"`))
+				} else if strings.HasPrefix(token, "format:") {
+					contentFormats = append(contentFormats, strings.Trim(strings.TrimPrefix(token, "format:"), `"`))
+				} else if strings.HasPrefix(token, "repo:") {
+					repoNames = append(repoNames, strings.TrimPrefix(token, "repo:"))
+				} else if strings.HasPrefix(token, "owner:") {
+					owners = append(owners, strings.TrimPrefix(token, "owner:"))
+				} else if strings.HasPrefix(token, "metadata_type:") {
+					metadataTypes = append(metadataTypes, strings.TrimPrefix(token, "metadata_type:"))
+				} else if strings.HasPrefix(token, "metadata_version:") {
+					metadataVersions = append(metadataVersions, strings.TrimPrefix(token, "metadata_version:"))
+				} else {
+					keywords = append(keywords, token)
+				}
+			}
+		}
+		/*** END DCS Customizations ***/
+
 		repos, count, err = repo_model.SearchRepository(ctx, &repo_model.SearchRepoOptions{
 			ListOptions: db.ListOptions{
 				PageSize: pagingNum,
 				Page:     page,
 			},
 			Actor:              ctx.Doer,
-			Keyword:            keyword,
+			Keyword:            strings.Join(keywords, ", "), // DCS Customizations
 			OwnerID:            ctx.ContextUser.ID,
 			OrderBy:            orderBy,
 			Private:            ctx.IsSigned,
@@ -259,6 +289,15 @@ func prepareUserProfileTabData(ctx *context.Context, showPrivate bool, profileGi
 			TopicOnly:          topicOnly,
 			Language:           language,
 			IncludeDescription: setting.UI.SearchRepoDescription,
+			Books:              books,            // DCS Customizations
+			Languages:          langs,            // DCS Customizations
+			Subjects:           subjects,         // DCS Customizations
+			Resources:          resources,        // DCS Customizations
+			ContentFormats:     contentFormats,   // DCS Customizations
+			Repos:              repoNames,        // DCS Customizations
+			Owners:             owners,           // DCS Customizations
+			MetadataTypes:      metadataTypes,    // DCS Customizations
+			MetadataVersions:   metadataVersions, // DCS Customizations
 		})
 		if err != nil {
 			ctx.ServerError("SearchRepository", err)
@@ -267,6 +306,14 @@ func prepareUserProfileTabData(ctx *context.Context, showPrivate bool, profileGi
 
 		total = int(count)
 	}
+	/*** DCS Customizations ***/
+	for _, repo := range repos {
+		if err := repo.LoadLatestDMs(ctx); err != nil {
+			log.Error("Error LoadLatestDMs [%s]: %v", repo.FullName(), err)
+		}
+	}
+	/*** End DCS Customizations ***/
+
 	ctx.Data["Repos"] = repos
 	ctx.Data["Total"] = total
 

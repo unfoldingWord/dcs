@@ -30,7 +30,7 @@ func (Renderer) Name() string {
 
 // Extensions implements markup.Renderer
 func (Renderer) Extensions() []string {
-	return []string{".csv", ".tsv"}
+	return []string{".csv"} // DCS Customizations - removes .tsv and adds custom tsv parser
 }
 
 // SanitizerRules implements markup.Renderer

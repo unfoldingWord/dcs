@@ -180,6 +180,10 @@ func initBasicTasks() {
 	registerArchiveCleanup()
 	registerSyncExternalUsers()
 	registerDeletedBranchesCleanup()
+	/*** DCS Customizations ***/
+	registerUpdateDoor43MetadataTask()
+	registerLoadMetadataSchemasTask()
+	/*** END DCS Customizations ***/
 	if !setting.Repository.DisableMigrations {
 		registerUpdateMigrationPosterID()
 	}

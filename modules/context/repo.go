@@ -395,6 +395,14 @@ func repoAssignment(ctx *Context, repo *repo_model.Repository) {
 		return
 	}
 
+	/*** DCS Customizations ***/
+	err = repo.LoadLatestDMs(ctx)
+	if err != nil {
+		ctx.ServerError("LoadLatestDMs", err)
+		return
+	}
+	/*** END DCS Customizations ***/
+
 	ctx.Repo.Repository = repo
 	ctx.Data["PushMirrors"] = pushMirrors
 	ctx.Data["RepoName"] = ctx.Repo.Repository.Name

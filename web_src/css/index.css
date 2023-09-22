@@ -12,7 +12,9 @@
 @import "./modules/divider.css";
 @import "./modules/svg.css";
 @import "./modules/flexcontainer.css";
-
+/*** DCS Customizations ***/
+@import "./dcs.css";
+/*** END DCS Customizations ***/
 @import "./shared/flex-list.css";
 @import "./shared/milestone.css";
 @import "./shared/repoorg.css";

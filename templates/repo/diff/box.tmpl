@@ -136,6 +136,11 @@
 								{{else if $file.Mode}}
 									<span class="gt-ml-4 gt-mono">{{$.locale.Tr ($file.ModeTranslationKey $file.Mode)}}</span>
 								{{end}}
+								<!-- DCS Customizations -->
+								{{if $file.Entry}}
+									{{template "repo/validation-badge" dict "file" $file.Entry "root" $}}
+								{{end}}
+								<!-- END DCS Customizations -->
 							</div>
 							<div class="diff-file-header-actions gt-df gt-ac gt-gap-2 gt-fw">
 								{{if $showFileViewToggle}}

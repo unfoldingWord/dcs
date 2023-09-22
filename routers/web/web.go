@@ -26,6 +26,7 @@ import (
 	"code.gitea.io/gitea/routers/common"
 	"code.gitea.io/gitea/routers/web/admin"
 	"code.gitea.io/gitea/routers/web/auth"
+	"code.gitea.io/gitea/routers/web/dcs" // DCS Customizations
 	"code.gitea.io/gitea/routers/web/devtest"
 	"code.gitea.io/gitea/routers/web/events"
 	"code.gitea.io/gitea/routers/web/explore"
@@ -1094,6 +1095,13 @@ func registerRoutes(m *web.Route) {
 				m.Get("/info", repo.GetIssueInfo)
 			})
 		})
+		// DCS Customizations
+		m.Group("/metadata", func() {
+			m.Get("", repo.Door43Metadatas)
+			m.Get("/update", repo.UpdateDoor43Metadata)
+			m.Post("/update", repo.UpdateDoor43Metadata) // TODO: Make this /{id} for a single DM
+		})
+		// END DCS Customizations
 	}, ignSignIn, context.RepoAssignment, context.UnitTypes()) // for "/{username}/{reponame}" which doesn't require authentication
 
 	// Grouping for those endpoints that do require authentication
@@ -1548,6 +1556,13 @@ func registerRoutes(m *web.Route) {
 		m.Any("/devtest/fetch-action-test", devtest.FetchActionTest)
 		m.Any("/devtest/{sub}", devtest.Tmpl)
 	}
+
+	/*** DCS Customizations ***/
+	m.Get("/about", dcs.About)
+	m.Group("/catalog", func() {
+		m.Get("", dcs.Catalog)
+	}, ignSignIn)
+	/*** END DCS Customizations ***/
 
 	m.NotFound(func(w http.ResponseWriter, req *http.Request) {
 		ctx := context.GetWebContext(req)

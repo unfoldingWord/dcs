@@ -5,7 +5,6 @@
 package user
 
 import (
-	"errors"
 	"fmt"
 	"net/http"
 	"strconv"
@@ -13,6 +12,7 @@ import (
 
 	auth_model "code.gitea.io/gitea/models/auth"
 	"code.gitea.io/gitea/modules/context"
+	"code.gitea.io/gitea/modules/log"
 	api "code.gitea.io/gitea/modules/structs"
 	"code.gitea.io/gitea/modules/web"
 	"code.gitea.io/gitea/routers/api/v1/utils"
@@ -113,10 +113,18 @@ func CreateAccessToken(ctx *context.APIContext) {
 		return
 	}
 	if exist {
-		ctx.Error(http.StatusBadRequest, "AccessTokenByNameExists", errors.New("access token name has been used already"))
-		return
+		/*** DCS Customizations - Commented out so tokens can have the same name for translationCore ***/
+		//ctx.Error(http.StatusBadRequest, "AccessTokenByNameExists", errors.New("access token name has been used already"))
+		//return
+		log.Info("Ignoring existing Access Token for DCS/translationCore, UID: %v, Token Name: %v", ctx.ContextUser.ID, form.Name)
+		/*** END DCS Customizations ***/
 	}
 
+	/*** DCS Customizations - set a default scope since our apps don't do that currently ***/
+	if len(form.Scopes) == 0 {
+		form.Scopes = []string{"write:activitypub", "write:misc", "write:notification", "write:organization", "write:package", "write:issue", "write:repository", "write:user"}
+	}
+	/*** END DCS Customizations ***/
 	scope, err := auth_model.AccessTokenScope(strings.Join(form.Scopes, ",")).Normalize()
 	if err != nil {
 		ctx.Error(http.StatusBadRequest, "AccessTokenScope.Normalize", fmt.Errorf("invalid access token scope provided: %w", err))

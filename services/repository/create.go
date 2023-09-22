@@ -124,7 +124,7 @@ func prepareRepoCommit(ctx context.Context, repo *repo_model.Repository, tmpDir,
 			return fmt.Errorf("getLicense[%s]: %w", opts.License, err)
 		}
 
-		if err = os.WriteFile(filepath.Join(tmpDir, "LICENSE"), data, 0o644); err != nil {
+		if err = os.WriteFile(filepath.Join(tmpDir, "LICENSE.md"), data, 0o644); err != nil { // DCS Customizations - adds .md
 			return fmt.Errorf("write LICENSE: %w", err)
 		}
 	}

@@ -1409,3 +1409,7 @@ Like `uses: https://gitea.com/actions/checkout@v3` or `uses: http://your-git-ser
 - `SHOW_FOOTER_TEMPLATE_LOAD_TIME`: **true**: Show time of template execution in the footer.
 - `ENABLE_SITEMAP`: **true**: Generate sitemap.
 - `ENABLE_FEED`: **true**: Enable/Disable RSS/Atom feed.
+
+## DCS (`dcs`)
+
+- `DOOR43_PREVIEW_URL`: **https://door43.org**: Door43 Preview URL, URL for the website that has the previews. Do not included trailing /'s and any path.
