@@ -20,7 +20,7 @@ jobs:
       - uses: docker/build-push-action@v4
         with:
           push: false
-          tags: gitea/gitea:linux-amd64
+          tags: unfoldingword/dcs:linux-amd64
 
   rootless:
     if: needs.files-changed.outputs.docker == 'true' || needs.files-changed.outputs.actions == 'true'
@@ -32,4 +32,4 @@ jobs:
         with:
           push: false
           file: Dockerfile.rootless
-          tags: gitea/gitea:linux-amd64
+          tags: unfoldingword/dcs:linux-amd64

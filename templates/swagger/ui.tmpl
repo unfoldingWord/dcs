@@ -1,11 +1,13 @@
 <!DOCTYPE html>
 <html lang="en">
 	<head>
-		<title>Gitea API</title>
+		<title>DCS (Gitea) API</title>
 		<link href="{{AssetUrlPrefix}}/css/swagger.css?v={{AssetVersion}}" rel="stylesheet">
 	</head>
 	<body>
-		<a class="swagger-back-link" href="{{AppSubUrl}}/">{{svg "octicon-reply"}}{{.locale.Tr "return_to_gitea"}}</a>
+		<!-- DCS Customizations -->
+		<a class="swagger-back-link" href="{{AppSubUrl}}/">{{svg "octicon-reply"}}Return to DCS</a>
+		<!-- END DCS Customizations -->
 		<div id="swagger-ui" data-source="{{AppSubUrl}}/swagger.{{.APIJSONVersion}}.json"></div>
 		<script src="{{AssetUrlPrefix}}/js/swagger.js?v={{AssetVersion}}"></script>
 	</body>

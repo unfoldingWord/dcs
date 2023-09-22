@@ -1,0 +1,109 @@
+{{template "base/head" .}}
+<div role="main" aria-label="{{.Title}}" class="page-content repository settings">
+	{{template "repo/header" .}}
+	{{template "base/alert" .}}
+	<div class="ui container">
+		<h2 class="ui header metadata-header">
+			{{.locale.Tr "repo.metadata.metadata"}}
+		</h2>
+	<div class="repo-metadata-content">
+	<h4 class="ui top attached header">
+		{{.Title}}
+		{{if .Permission.IsAdmin}}
+			<div class="ui right">
+				<a class="ui teal tiny button" href="{{.Link}}/update">Update Metadata</a>
+			</div>
+		{{end}}
+	</h4>
+	<div class="ui attached segment">
+		<div class="ui list">
+		{{if .Door43Metadatas}}
+			{{range $i, $dm := .Door43Metadatas}}
+				<div class="item">
+					<div class="meta">
+						{{$color := "grey"}}
+						{{$type := "Branch"}}
+						{{$icon := "octicon-git-branch"}}
+						{{$title := "branch"}}
+
+						{{if eq .RefType "tag"}}
+							{{$type = "Release"}}
+							{{$icon = "octicon-tag"}}
+							{{$title = "release"}}
+						{{end}}
+
+						{{if eq .Stage 1}}
+							{{$color = "green"}}
+							{{$title = "Production Release"}}
+						{{else if eq .Stage 2}}
+							{{$color = "orange"}}
+							{{$title = "Preprod"}}
+						{{else if eq .Stage 3}}
+							{{$color = "purple"}}
+							{{$title = "Default Branch / Metadata"}}
+						{{else if and (eq .Stage 4) (.IsRepoMetadata)}}
+							{{$color = "red"}}
+							{{$title = "Default Metadata"}}
+						{{end}}
+
+						{{if .IsLatestForStage}}
+							{{$title = printf "%s - Latest" $title}}
+						{{end}}
+						<span title="{{$type}}">{{svg $icon 16 "mr-3"}}</span>
+						<span class="text {{$color}} gt-mr-3" title="{{$title}}">{{svg "octicon-dot-fill" 22}}</span>
+						<a class="ui primary sha label toggle button show-panel" data-panel="#info-{{.ID}}">{{.Ref}}</a>
+						<div class="ui right">
+							<span class="text grey time">
+								{{TimeSince .ReleaseDateUnix.AsTime $.locale}}
+							</span>
+						</div>
+					</div>
+					<div class="info gt-hidden" id="info-{{.ID}}">
+						<div class="ui top attached tabular menu">
+							<a class="item active" data-tab="db-{{.ID}}">Metadata (DB)</a>
+							<a class="item" data-tab="json-{{.ID}}">
+								Metadata (JSON)
+							</a>
+							{{if or $.Permission.IsAdmin $.IsOrganizationOwner $.PageIsAdmin $.PageIsUserSettings}}
+							<div class="right menu">
+								<form class="item" action="{{$.Link}}/update" method="post">
+									{{$.CsrfTokenHtml}}
+									<button class="ui tiny button" data-tooltip-content="Update this ref">{{svg "octicon-sync"}}</button>
+								</form>
+							</div>
+							{{end}}
+						</div>
+						<div class="ui bottom attached tab segment active" data-tab="db-{{.ID}}">
+							<table>
+								<tr>
+									<td><strong>Title:</strong></td><td>{{.Title}}</td>
+								</tr><tr>
+									<td><strong>Subject:</strong></td><td>{{.Subject}}</td>
+								</tr><tr>
+									<td><strong>Resource:</strong></td><td>{{.Resource}}</td>
+								</tr><tr>
+									<td><strong>Metadata Type:</strong></td><td><img src="{{AssetUrlPrefix}}/img/dcs/{{.GetMetadataTypeIcon}}" style="height:16px;vertical-align:middle"/> {{.GetMetadataTypeTitle}} ({{.MetadataType}}, {{.MetadataVersion}})</td>
+								</tr><tr>
+									<td><strong>Language:</strong></td><td>{{.LanguageTitle}} ({{.Language}}, {{.LanguageDirection}})</td>
+								</tr><tr>
+									<td><strong>Ingredients:</strong></td><td>{{.GetIngredientsAsString}}</td>
+								</tr><tr>
+									<td><strong>Release Date:</strong></td><td>{{DateTime "full" .ReleaseDateUnix.AsTime}}</td>
+								</tr>
+							</table>
+						</div>
+						<div class="ui bottom attached tab segment" data-tab="json-{{.ID}}">
+							<pre>{{.GetMetadataJSONString}}</pre>
+						</div>
+					</div>
+				</div>
+			{{end}}
+		{{else}}
+			<span>No Metadata for this Repository. Click&nbsp;<a href="{{.Link}}/update">update</a>&nbsp;to scan the repo.</span>
+		{{end}}
+		</div>
+	</div>
+</div>
+</div>
+</div>
+{{template "base/footer" .}}

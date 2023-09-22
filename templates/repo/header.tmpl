@@ -10,6 +10,14 @@
 					<a href="{{.Owner.HomeLink}}">{{.Owner.Name}}</a>
 					<div class="gt-mx-2">/</div>
 					<a href="{{$.RepoLink}}">{{.Name}}</a>
+					<!--- DCS Customizations -->
+					{{if .LatestProdDM}}
+						<span class="ui green label" title="Catalog: Production"><a href="{{.Link}}/releases/tag/{{.LatestProdDM.Ref | PathEscapeSegments}}" rel="nofollow">{{.LatestProdDM.Ref}}</a></span>
+					{{end}}
+					{{if .LatestPreprodDM}}
+						<span class="ui orange label" title="Catalog: Pre-Production"><a href="{{.Link}}/releases/tag/{{.LatestPreprodDM.Ref | PathEscapeSegments}}" rel="nofollow">{{.LatestPreprodDM.Ref}}</a></span>
+					{{end}}
+					<!-- END DCS Customizations -->
 					<div class="labels gt-df gt-ac gt-fw">
 						{{if .IsTemplate}}
 							{{if .IsPrivate}}
@@ -44,6 +52,18 @@
 			</div>
 			{{if not (or .IsBeingCreated .IsBroken)}}
 				<div class="repo-buttons">
+					<!-- DCS Customizations -->
+					{{if .LatestProdDM}}
+					<div class="ui labeled button" tabindex="0">
+						<a type="submit" class="ui compact basic button" href="{{.Link}}/releases/tag/{{.LatestProdDM.Ref | PathEscapeSegments}}">
+							<i class="icon fa-file-text"></i>{{$.locale.Tr "repo.metadata.catalog"}}
+						</a>
+						<a class="ui basic label" href="{{.Link}}/releases/tag/{{.LatestProdDM.Ref | PathEscapeSegments}}">
+							{{.LatestProdDM.Ref}}
+						</a>
+					</div>
+					{{end}}
+					<!-- END DCS Customizations -->
 					{{if $.RepoTransfer}}
 						<form method="post" action="{{$.RepoLink}}/action/accept_transfer?redirect_to={{$.RepoLink}}">
 							{{$.CsrfTokenHtml}}

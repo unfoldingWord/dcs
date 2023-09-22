@@ -29,6 +29,7 @@ import (
 	"code.gitea.io/gitea/modules/util"
 	"code.gitea.io/gitea/modules/validation"
 	"code.gitea.io/gitea/modules/web"
+	"code.gitea.io/gitea/routers/api/v1/catalog"
 	"code.gitea.io/gitea/routers/api/v1/utils"
 	"code.gitea.io/gitea/services/convert"
 	"code.gitea.io/gitea/services/issue"
@@ -53,7 +54,7 @@ func Search(ctx *context.APIContext) {
 	//   type: boolean
 	// - name: includeDesc
 	//   in: query
-	//   description: include search of keyword within repository description
+	//   description: include search of keyword within repository description (defaults to false)
 	//   type: boolean
 	// - name: uid
 	//   in: query
@@ -100,6 +101,68 @@ func Search(ctx *context.APIContext) {
 	//   in: query
 	//   description: if `uid` is given, search only for repos that the user owns
 	//   type: boolean
+	// - name: repo
+	//   in: query
+	//   description: name of the repo. Multiple repos are ORed.
+	//   type: string
+	// - name: owner
+	//   in: query
+	//   description: owner of the repo. Multiple owners are ORed.
+	//   type: string
+	// - name: lang
+	//   in: query
+	//   description: if the repo is a resource of the given language(s), the repo will be in the results. Multiple langs are ORed.
+	//   type: array
+	//   collectionFormat: multi
+	//   items:
+	//     type: string
+	// - name: is_gl
+	//   in: query
+	//   description: if the repo is a gateway language resource, the repo will be in the results
+	//   type: boolean
+	// - name: subject
+	//   in: query
+	//   description: resource subject. Multiple subjects are ORed.
+	//   type: array
+	//   collectionFormat: multi
+	//   items:
+	//     type: string
+	//     enum: [Aligned Bible,Aramaic Grammar,Bible,Greek Grammar,Greek Lexicon,Greek New Testament,Hebrew Grammar,Hebrew Old Testament,Hebrew-Aramaic Lexicon,OBS Study Notes,OBS Study Questions,OBS Translation Notes,OBS Translation Questions,Open Bible Stories,Study Notes,Study Questions,Training Library,Translation Academy,Translation Notes,Translation Questions,Translation Words,TSV Study Notes,TSV Study Questions,TSV Translation Notes,TSV Translation Questions,TSV Translation Words Links,TSV OBS Study Notes,TSV OBS Study Questions,TSV OBS Translation Notes,TSV OBS Translation Questions,TSV OBS Translation Words Links]
+	// - name: resource
+	//   in: query
+	//   description: resource identifier. Multiple resources are ORed.
+	//   type: array
+	//   collectionFormat: multi
+	//   items:
+	//     type: string
+	//     enum: [glt,gst,obs,obs-sn,obs-sq,obs-tn,obs-tq,obs-twl,sn,sq,ta,tn,tq,tw,twl,ugnt,uhb,ult,ust]
+	// - name: format
+	//   in: query
+	//   description: content format (usfm, text, markdown, etc.). Multiple formats are ORed.
+	//   type: string
+	// - name: book
+	//   in: query
+	//   description: book (project id or ingredients id) that exist in a resource. If the resource contains the
+	//                the book, its repository will be included in the results. Multiple books are ORed.
+	//   type: array
+	//   collectionFormat: multi
+	//   items:
+	//     type: string
+	// - name: metadataType
+	//   in: query
+	//   description: return repos only with metadata of this type
+	//   type: array
+	//   collectionFormat: multi
+	//   items:
+	//     type: string
+	//     enum: [rc,sb,tc,ts]
+	// - name: metadataVersion
+	//   in: query
+	//   description: return repos only with the version of metadata given. Does not apply if metadataType is not given
+	//   type: array
+	//   collectionFormat: multi
+	//   items:
+	//     type: string
 	// - name: sort
 	//   in: query
 	//   description: sort repos by attribute. Supported values are
@@ -138,6 +201,18 @@ func Search(ctx *context.APIContext) {
 		Template:           util.OptionalBoolNone,
 		StarredByID:        ctx.FormInt64("starredBy"),
 		IncludeDescription: ctx.FormBool("includeDesc"),
+		/*** DCS Customizations ***/
+		Languages:        catalog.QueryStrings(ctx, "lang"),
+		Repos:            catalog.QueryStrings(ctx, "repo"),
+		Owners:           catalog.QueryStrings(ctx, "owner"),
+		Subjects:         catalog.QueryStrings(ctx, "subject"),
+		Resources:        catalog.QueryStrings(ctx, "resource"),
+		ContentFormats:   catalog.QueryStrings(ctx, "format"),
+		Books:            catalog.QueryStrings(ctx, "book"),
+		MetadataTypes:    catalog.QueryStrings(ctx, "metadataType"),
+		MetadataVersions: catalog.QueryStrings(ctx, "metadataVersion"),
+		LanguageIsGL:     ctx.FormOptionalBool("is_gl"),
+		/*** END DCS Customizations ***/
 	}
 
 	if ctx.FormString("template") != "" {

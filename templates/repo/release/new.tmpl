@@ -63,6 +63,9 @@
 				{{range .attachments}}
 					<div class="field flex-text-block" id="attachment-{{.ID}}">
 						<div class="flex-text-inline gt-f1">
+							<!-- DCS Customizations -->
+							<input name="attachment-edit-{{.UUID}}" class="mr-3 attachment_edit" required value="{{.Name}}{{if .BrowserDownloadURL}}|{{.BrowserDownloadURL}}{{end}}"/>
+							<!-- END DCS Customizations -->
 							<input name="attachment-edit-{{.UUID}}"  class="attachment_edit" required value="{{.Name}}">
 							<input name="attachment-del-{{.UUID}}" type="hidden" value="false">
 							<span class="ui text grey gt-whitespace-nowrap">{{.Size | FileSize}}</span>

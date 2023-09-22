@@ -8,7 +8,7 @@ on:
 jobs:
   crowdin-pull:
     runs-on: ubuntu-latest
-    if: github.repository == 'go-gitea/gitea'
+    if: github.repository == 'unfoldingWord/dcs'
     steps:
       - uses: actions/checkout@v4
       - name: download from crowdin
@@ -29,11 +29,11 @@ jobs:
           branch: main
           commit: true
           commit_message: "[skip ci] Updated translations via Crowdin"
-          remote: "git@github.com:go-gitea/gitea.git"
+          remote: "git@github.com:unfoldingWord/dcs.git"
           ssh_key: ${{ secrets.DEPLOY_KEY }}
   crowdin-push:
     runs-on: ubuntu-latest
-    if: github.repository == 'go-gitea/gitea'
+    if: github.repository == 'unfoldingWord/dcs'
     steps:
       - uses: actions/checkout@v4
       - name: push translations to crowdin

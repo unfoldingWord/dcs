@@ -38,6 +38,10 @@
 
 		{{template "custom/body_inner_pre" .}}
 
+		<!-- DCS Customizations -->
+		{{template "dcs_testing_banner" .}}
+		<!-- END DCS Customizations -->
+
 		{{if not .PageIsInstall}}
 			{{template "base/head_navbar" .}}
 		{{end}}
