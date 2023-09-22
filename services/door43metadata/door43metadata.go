@@ -267,9 +267,6 @@ func GetDoor43MetadataFromRCManifest(dm *repo_model.Door43Metadata, manifest *ma
 	languageDirection = dcs.GetLanguageDirection(language)
 	languageIsGL = dcs.LanguageIsGL(language)
 	var bookPath string
-	fmt.Printf("GOING INTO SLEEP!!!!!!!!!!!!!!!!!!")
-	time.Sleep(1 * time.Minute)
-	fmt.Printf("COMING OUT OF SLEEP!!!!!!!!!!!!!!!!!!")
 	for _, prod := range (*manifest)["projects"].([]interface{}) {
 		if prodMap, ok := prod.(map[string]interface{}); ok {
 			ingredient := convert.ToIngredient(prodMap)
