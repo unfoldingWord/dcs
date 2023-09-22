@@ -1195,11 +1195,7 @@ func getSingleDMFieldList(ctx *context.APIContext, field string) ([]string, erro
 	metadataVersions := QueryStrings(ctx, "metadataVersion")
 
 	listOptions := db.ListOptions{
-		Page:     ctx.FormInt("page"),
-		PageSize: ctx.FormInt("limit"),
-	}
-	if listOptions.Page < 1 {
-		listOptions.Page = 1
+		ListAll: true,
 	}
 
 	opts := &door43metadata.SearchCatalogOptions{
