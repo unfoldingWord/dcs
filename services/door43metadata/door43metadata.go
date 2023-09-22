@@ -267,6 +267,9 @@ func GetDoor43MetadataFromRCManifest(dm *repo_model.Door43Metadata, manifest *ma
 	languageDirection = dcs.GetLanguageDirection(language)
 	languageIsGL = dcs.LanguageIsGL(language)
 	var bookPath string
+	fmt.Printf("GOING INTO SLEEP!!!!!!!!!!!!!!!!!!")
+	time.Sleep(1 * time.Minute)
+	fmt.Printf("COMING OUT OF SLEEP!!!!!!!!!!!!!!!!!!")
 	for _, prod := range (*manifest)["projects"].([]interface{}) {
 		if prodMap, ok := prod.(map[string]interface{}); ok {
 			ingredient := convert.ToIngredient(prodMap)
@@ -761,7 +764,7 @@ func UnpackJSONAttachments(ctx context.Context, release *repo_model.Release) {
 // GetAttachmentsFromJSON gets the attachments from uploaded
 func GetAttachmentsFromJSON(attachment *repo_model.Attachment) ([]*repo_model.Attachment, error) {
 	var url string
-	if setting.Attachment.Storage.MinioConfig.ServeDirect {
+	if setting.Attachment.Storage.ServeDirect {
 		// If we have a signed url (S3, object storage), redirect to this directly.
 		urlObj, err := storage.Attachments.URL(attachment.RelativePath(), attachment.Name)
 
