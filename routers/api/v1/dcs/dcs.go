@@ -62,7 +62,7 @@ func ServeLangnamesJSON(ctx *context.APIContext) {
 func ServeLangnamesJSONKeyed(ctx *context.APIContext) {
 	// swagger:operation GET /languages/langnames_keyed.json languages languagesLangnamesJSONKeyed
 	// ---
-	// summary: Fetches the langnames.json file
+	// summary: Fetches the langnames.json file and keys it by language code (lc)
 	// produces:
 	// - application/json
 	// parameters:
