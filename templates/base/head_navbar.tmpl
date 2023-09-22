@@ -39,16 +39,13 @@
 				{{end}}
 			{{end}}
 			<a class="item{{if .PageIsExplore}} active{{end}}" href="{{AppSubUrl}}/explore/repos">{{.locale.Tr "explore"}}</a>
-		{{else if .IsLandingPageOrganizations}}
-			<a class="item{{if .PageIsExplore}} active{{end}}" href="{{AppSubUrl}}/explore/organizations">{{.locale.Tr "explore"}}</a>
-		{{else}}
-			<a class="item{{if .PageIsExplore}} active{{end}}" href="{{AppSubUrl}}/explore/repos">{{.locale.Tr "explore"}}</a>
+			<!-- DCS CUSTOMIZATION: REMOVED EXPLORE LINKS FOR NOT SIGNED IN. -->
 		{{end}}
 
 		{{template "custom/extra_links" .}}
 
 		{{if not .IsSigned}}
-			<a class="item" target="_blank" rel="noopener noreferrer" href="https://docs.gitea.com">{{.locale.Tr "help"}}</a>
+			<a class="item" target="_blank" rel="noopener noreferrer" href="https://docs.gitea.com">Gitea Docs</a>
 		{{end}}
 	</div>
 
@@ -173,7 +170,7 @@
 					</a>
 					<a class="item" target="_blank" rel="noopener noreferrer" href="https://docs.gitea.com">
 						{{svg "octicon-question"}}
-						Help (Gitea)
+						{{.locale.Tr "help"}}
 					</a>
 					{{if .IsAdmin}}
 						<div class="divider"></div>
