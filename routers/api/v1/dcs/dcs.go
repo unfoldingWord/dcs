@@ -53,7 +53,7 @@ func ServeLangnamesJSON(ctx *context.APIContext) {
 	//   type: string
 	// responses:
 	//   "200":
-	//     "$ref": "#/responses/Langnames"
+	//     "$ref": "#/responses/LangnamesJSON"
 
 	ctx.JSON(http.StatusOK, searchLangnamesJSON(ctx))
 }
@@ -87,7 +87,7 @@ func ServeLangnamesJSONKeyed(ctx *context.APIContext) {
 	//     enum: [ltr,rtl]
 	// responses:
 	//   "200":
-	//     "$ref": "#/responses/Langnames"
+	//     "$ref": "#/responses/LangnamesJSON"
 
 	ctx.JSON(http.StatusOK, searchLangnamesJSONKeyed(ctx))
 }
@@ -160,9 +160,8 @@ func searchLangnamesJSON(ctx *context.APIContext) []map[string]interface{} {
 		}
 		if orderAsc {
 			return iStr < jStr
-		} else {
-			return jStr < iStr
 		}
+		return iStr > jStr
 	})
 
 	return langnames
