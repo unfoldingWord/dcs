@@ -573,7 +573,7 @@ func processDoor43MetadataForRepoRef(ctx context.Context, repo *repo_model.Repos
 	var releaseDateUnix timeutil.TimeStamp
 	var releaseID int64
 
-	release, err := repo_model.GetRelease(repo.ID, ref)
+	release, err := repo_model.GetRelease(ctx, repo.ID, ref)
 	if err != nil && !repo_model.IsErrReleaseNotExist(err) {
 		return err
 	}

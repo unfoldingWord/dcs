@@ -1569,7 +1569,7 @@
                 "data": {
                   "type": "array",
                   "items": {
-                    "$ref": "#/responses/StringSlice"
+                    "$ref": "#/responses/UserList"
                   }
                 },
                 "ok": {
@@ -24611,6 +24611,10 @@
           "type": "string",
           "format": "date-time",
           "x-go-name": "Updated"
+        },
+        "url": {
+          "type": "string",
+          "x-go-name": "URL"
         },
         "watchers_count": {
           "type": "integer",
