@@ -56,7 +56,7 @@ func (m *metadataNotifier) NotifyUpdateRelease(ctx context.Context, doer *user_m
 		}
 
 		// A separate job that handles files.json or links.json files (can be singular file.json and link.json too) as attachments
-		UnpackJSONAttachments(ctx, rel)
+		door43metadata_service.UnpackJSONAttachments(ctx, rel)
 	}
 }
 
