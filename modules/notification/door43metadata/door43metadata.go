@@ -54,6 +54,9 @@ func (m *metadataNotifier) NotifyUpdateRelease(ctx context.Context, doer *user_m
 		if err := door43metadata_service.ProcessDoor43MetadataForRepo(ctx, rel.Repo, rel.TagName); err != nil {
 			log.Error("NotifyUpdateRelease: ProcessDoor43MetadataForRepo failed [%s, %s]: %v", rel.Repo.FullName(), rel.TagName, err)
 		}
+
+		// A separate job that handles files.json or links.json files (can be singular file.json and link.json too) as attachments
+		UnpackJSONAttachments(ctx, rel)
 	}
 }
 
