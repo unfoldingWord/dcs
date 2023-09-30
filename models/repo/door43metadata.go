@@ -215,6 +215,11 @@ func (dm *Door43Metadata) GetMetadataAPIContentsURL() string {
 	return fmt.Sprintf("%s/contents/manifest.yaml?ref=%s", dm.Repo.APIURL(), dm.Ref)
 }
 
+// StageStr gets the string representation of a stage int
+func (dm *Door43Metadata) StageStr() string {
+	return door43metadata.StageToStringMap[dm.Stage]
+}
+
 // GetGitTreesURL gets the git trees URL for a repo and branch or tag for all files
 func (dm *Door43Metadata) GetGitTreesURL() string {
 	if dm.RefType == "branch" {
