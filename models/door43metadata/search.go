@@ -171,7 +171,7 @@ func GetStageCond(stage Stage) builder.Cond {
 // GetHistoryCond gets the conditions if IncludeHistory is false
 func GetHistoryCond(includeHistory bool) builder.Cond {
 	if includeHistory {
-		return builder.Lte{"`door43_metadata`.stage": StageLatest}
+		return builder.Lte{"`door43_metadata`.stage": StageBranch}
 	}
 	return builder.Eq{"`door43_metadata`.is_latest_for_stage": true}
 }
