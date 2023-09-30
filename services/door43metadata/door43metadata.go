@@ -611,6 +611,7 @@ func processDoor43MetadataForRepoRef(ctx context.Context, repo *repo_model.Repos
 		} else {
 			stage = door43metadata.StageBranch
 		}
+		dm.IsLatestForStage = true
 		dm.RefType = "branch"
 		commit, err = gitRepo.GetBranchCommit(ref)
 		if err != nil {

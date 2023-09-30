@@ -20,7 +20,8 @@
 		{{if .Door43Metadatas}}
 			{{range $i, $dm := .Door43Metadatas}}
 				<div class="item">
-					<div class="meta">
+					<div class="flex-text-block gt-sb">
+						<div class="flex-text-inline">
 						{{$color := "grey"}}
 						{{$type := "Branch"}}
 						{{$icon := "octicon-git-branch"}}
@@ -46,17 +47,16 @@
 							{{$title = "Default Metadata"}}
 						{{end}}
 
-						{{if .IsLatestForStage}}
+						{{if and .IsLatestForStage (ne .Stage 4)}}
 							{{$title = printf "%s - Latest" $title}}
 						{{end}}
-						<span title="{{$type}}">{{svg $icon 16 "mr-3"}}</span>
-						<span class="text {{$color}} gt-mr-3" title="{{$title}}">{{svg "octicon-dot-fill" 22}}</span>
-						<a class="ui primary sha label toggle button show-panel" data-panel="#info-{{.ID}}">{{.Ref}}</a>
-						<div class="ui right">
-							<span class="text grey time">
-								{{TimeSince .ReleaseDateUnix.AsTime $.locale}}
-							</span>
+							<span title="{{$type}}">{{svg $icon 16 "mr-3"}}</span>
+							<span class="text {{$color}} gt-mr-3" title="{{$title}}">{{svg "octicon-dot-fill" 22}}</span>
+							<a class="ui primary sha label toggle button show-panel" data-panel="#info-{{.ID}}">{{.Ref}}</a>
 						</div>
+						<span class="text grey">
+							{{TimeSince .ReleaseDateUnix.AsTime $.locale}}
+						</span>
 					</div>
 					<div class="info gt-hidden" id="info-{{.ID}}">
 						<div class="ui top attached tabular menu">
@@ -87,6 +87,8 @@
 									<td><strong>Language:</strong></td><td>{{.LanguageTitle}} ({{.Language}}, {{.LanguageDirection}})</td>
 								</tr><tr>
 									<td><strong>Ingredients:</strong></td><td>{{.GetIngredientsAsString}}</td>
+								</tr><tr>
+									<td><strong>Stage:</strong></td><td>{{.StageStr}}</td>
 								</tr><tr>
 									<td><strong>Release Date:</strong></td><td>{{DateTime "full" .ReleaseDateUnix.AsTime}}</td>
 								</tr>
