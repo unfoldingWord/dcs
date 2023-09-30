@@ -53,7 +53,6 @@ func userProfile(ctx *context.Context) {
 
 	ctx.Data["Title"] = ctx.ContextUser.DisplayName()
 	ctx.Data["PageIsUserProfile"] = true
-	ctx.Data["UserLocationMapURL"] = setting.Service.UserLocationMapURL
 
 	// prepare heatmap data
 	if setting.Service.EnableUserHeatmap {
