@@ -4,6 +4,3 @@
 <a class="item"  target="_blank" href="{{Door43PreviewURL}}/u/{{.Owner.Name}}/{{.Repository.Name}}">
 		{{svg "octicon-search"}} {{.locale.Tr "preview"}}
 </a>
-<a class="item"  target="_blank" href="https://door43-preview.netlify.app/u/{{.Owner.Name}}/{{.Repository.Name}}/{{if and .IsViewTag (not .noTag)}}{{.TagName}}{{else if .IsViewBranch}}{{.BranchName}}{{else}}{{.Repository.DefaultBranch}}{{end}}">
-		{{svg "octicon-beaker"}} {{.locale.Tr "preview"}} (BETA)
-</a>
