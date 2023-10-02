@@ -14,6 +14,7 @@ import (
 	"code.gitea.io/gitea/models/door43metadata"
 	access_model "code.gitea.io/gitea/models/perm/access"
 	"code.gitea.io/gitea/models/repo"
+	user_model "code.gitea.io/gitea/models/user"
 	"code.gitea.io/gitea/modules/context"
 	"code.gitea.io/gitea/modules/dcs"
 	api "code.gitea.io/gitea/modules/structs"
@@ -801,19 +802,48 @@ func ListCatalogOwners(ctx *context.APIContext) {
 	//         data:
 	//           type: array
 	//           items:
-	//             "$ref": "#/responses/StringSlice"
+	//             "$ref": "#/responses/UserList"
 
-	list, err := getSingleDMFieldList(ctx, "`user`.name")
+	stageStr := ctx.FormString("stage")
+	stage := door43metadata.StageProd
+	if stageStr != "" {
+		var ok bool
+		stage, ok = door43metadata.StageMap[stageStr]
+		if !ok {
+			ctx.Error(http.StatusUnprocessableEntity, "", fmt.Errorf("invalid stage [%s]", stageStr))
+			return
+		}
+	}
+
+	users, maxResults, err := user_model.SearchUsers(&user_model.SearchUserOptions{
+		Actor:   ctx.Doer,
+		Keyword: ctx.FormTrim("q"),
+		ListOptions: db.ListOptions{
+			ListAll: true,
+		},
+		// DCS Customizations
+		RepoLanguages:     ctx.FormStrings("lang"),
+		RepoSubjects:      ctx.FormStrings("subject"),
+		RepoMetadataTypes: ctx.FormStrings("metadata_type"),
+		RepoLanguageIsGL:  ctx.FormOptionalBool("is_gl"),
+		RepoCatalogStage:  stage,
+		// END DCS Customizations
+	})
+
 	if err != nil {
-		ctx.JSON(http.StatusUnprocessableEntity, map[string]any{
+		ctx.JSON(http.StatusInternalServerError, map[string]interface{}{
 			"ok":    false,
 			"error": err.Error(),
 		})
+		return
 	}
-	ctx.RespHeader().Set("X-Total-Count", fmt.Sprintf("%d", len(list)))
-	ctx.JSON(http.StatusOK, map[string]any{
+
+	ctx.SetLinkHeader(int(maxResults), len(users))
+	ctx.SetTotalCountHeader(maxResults)
+
+	ctx.JSON(http.StatusOK, map[string]interface{}{
 		"ok":   true,
-		"data": list,
+		"data": convert.ToUsers(ctx, ctx.Doer, users),
 	})
 }
 
