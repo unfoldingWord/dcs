@@ -17,6 +17,7 @@ import (
 	user_model "code.gitea.io/gitea/models/user"
 	"code.gitea.io/gitea/modules/context"
 	"code.gitea.io/gitea/modules/dcs"
+	"code.gitea.io/gitea/modules/log"
 	api "code.gitea.io/gitea/modules/structs"
 	"code.gitea.io/gitea/modules/util"
 	"code.gitea.io/gitea/services/convert"
@@ -804,46 +805,25 @@ func ListCatalogOwners(ctx *context.APIContext) {
 	//           items:
 	//             "$ref": "#/responses/UserList"
 
-	stageStr := ctx.FormString("stage")
-	stage := door43metadata.StageProd
-	if stageStr != "" {
-		var ok bool
-		stage, ok = door43metadata.StageMap[stageStr]
-		if !ok {
-			ctx.Error(http.StatusUnprocessableEntity, "", fmt.Errorf("invalid stage [%s]", stageStr))
-			return
-		}
-	}
-
-	users, maxResults, err := user_model.SearchUsers(&user_model.SearchUserOptions{
-		Actor:   ctx.Doer,
-		Keyword: ctx.FormTrim("q"),
-		ListOptions: db.ListOptions{
-			ListAll: true,
-		},
-		// DCS Customizations
-		RepoLanguages:     ctx.FormStrings("lang"),
-		RepoSubjects:      ctx.FormStrings("subject"),
-		RepoMetadataTypes: ctx.FormStrings("metadata_type"),
-		RepoLanguageIsGL:  ctx.FormOptionalBool("is_gl"),
-		RepoCatalogStage:  stage,
-		// END DCS Customizations
-	})
-
+	list, err := getSingleDMFieldList(ctx, "`user`.name")
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, map[string]interface{}{
+		ctx.JSON(http.StatusUnprocessableEntity, map[string]any{
 			"ok":    false,
 			"error": err.Error(),
 		})
-		return
 	}
-
-	ctx.SetLinkHeader(int(maxResults), len(users))
-	ctx.SetTotalCountHeader(maxResults)
-
-	ctx.JSON(http.StatusOK, map[string]interface{}{
+	var users []*api.User
+	for _, name := range list {
+		user, err := user_model.GetUserByName(ctx, name)
+		if err != nil {
+			log.Error("unable to get user [%s]: %v", name, err)
+		}
+		users = append(users, convert.ToUser(ctx, user, ctx.Doer))
+	}
+	ctx.RespHeader().Set("X-Total-Count", fmt.Sprintf("%d", len(users)))
+	ctx.JSON(http.StatusOK, map[string]any{
 		"ok":   true,
-		"data": convert.ToUsers(ctx, ctx.Doer, users),
+		"data": users,
 	})
 }
 
