@@ -14,8 +14,10 @@ import (
 	"code.gitea.io/gitea/models/door43metadata"
 	access_model "code.gitea.io/gitea/models/perm/access"
 	"code.gitea.io/gitea/models/repo"
+	user_model "code.gitea.io/gitea/models/user"
 	"code.gitea.io/gitea/modules/context"
 	"code.gitea.io/gitea/modules/dcs"
+	"code.gitea.io/gitea/modules/log"
 	api "code.gitea.io/gitea/modules/structs"
 	"code.gitea.io/gitea/modules/util"
 	"code.gitea.io/gitea/services/convert"
@@ -801,7 +803,7 @@ func ListCatalogOwners(ctx *context.APIContext) {
 	//         data:
 	//           type: array
 	//           items:
-	//             "$ref": "#/responses/StringSlice"
+	//             "$ref": "#/responses/UserList"
 
 	list, err := getSingleDMFieldList(ctx, "`user`.name")
 	if err != nil {
@@ -810,10 +812,18 @@ func ListCatalogOwners(ctx *context.APIContext) {
 			"error": err.Error(),
 		})
 	}
-	ctx.RespHeader().Set("X-Total-Count", fmt.Sprintf("%d", len(list)))
+	var users []*api.User
+	for _, name := range list {
+		user, err := user_model.GetUserByName(ctx, name)
+		if err != nil {
+			log.Error("unable to get user [%s]: %v", name, err)
+		}
+		users = append(users, convert.ToUser(ctx, user, ctx.Doer))
+	}
+	ctx.RespHeader().Set("X-Total-Count", fmt.Sprintf("%d", len(users)))
 	ctx.JSON(http.StatusOK, map[string]any{
 		"ok":   true,
-		"data": list,
+		"data": users,
 	})
 }
 
