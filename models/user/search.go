@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"code.gitea.io/gitea/models/db"
+	"code.gitea.io/gitea/models/door43metadata"
 	"code.gitea.io/gitea/modules/structs"
 	"code.gitea.io/gitea/modules/util"
 
@@ -38,10 +39,11 @@ type SearchUserOptions struct {
 	IncludeReserved    bool
 
 	/*** DCS CUSTOMIZATIONS ***/
-	RepoLanguages     []string          // Find repos that have the given language ids in a repo's manifest
-	RepoSubjects      []string          // Find repos that have the given subjects in a repo's manifest
-	RepoMetadataTypes []string          // Find repos that have the given metadata types in a repo's manifest
-	RepoLanguageIsGL  util.OptionalBool // Find repos that are gateway languages
+	RepoLanguages     []string             // Find repos that have the given language ids in a repo's manifest
+	RepoSubjects      []string             // Find repos that have the given subjects in a repo's manifest
+	RepoMetadataTypes []string             // Find repos that have the given metadata types in a repo's manifest
+	RepoLanguageIsGL  util.OptionalBool    // Find repos that are gateway languages
+	RepoCatalogStage  door43metadata.Stage // Finds repos that have a catalog entry equal or less than stage
 	/*** END DCS CUSTOMIZATIONS ***/
 
 	ExtraParamStrings map[string]string
@@ -149,7 +151,7 @@ func SearchUsers(ctx context.Context, opts *SearchUserOptions) (users []*User, _
 	}
 
 	/*** DCS Customizations ***/
-	if len(opts.RepoLanguages) > 0 || len(opts.RepoSubjects) > 0 || len(opts.RepoMetadataTypes) > 0 {
+	if len(opts.RepoLanguages) > 0 || len(opts.RepoSubjects) > 0 || len(opts.RepoMetadataTypes) > 0 || opts.Stage > 0 {
 		repoLangsCond := builder.NewCond()
 		for _, values := range opts.RepoLanguages {
 			for _, value := range strings.Split(values, ",") {
@@ -175,6 +177,9 @@ func SearchUsers(ctx context.Context, opts *SearchUserOptions) (users []*User, _
 		)
 		if opts.RepoLanguageIsGL != util.OptionalBoolNone {
 			metadataCond = metadataCond.And(builder.Eq{"`door43_metadata`.is_gl": opts.RepoLanguageIsGL.IsTrue()})
+		}
+		if opts.RepoCatalogStage > 0 {
+			metadataCond = metadataCond.And(builder.Lte{"`door43_metadata`.stage": opts.RepoCatalogStage})
 		}
 		metadataSelect := builder.Select("owner_id").
 			From("repository").
