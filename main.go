@@ -70,6 +70,7 @@ arguments - which can alternatively be run by running the subcommand web.`
 		cmd.CmdKeys,
 		cmd.CmdConvert,
 		cmd.CmdDoctor,
+		cmd.CmdDoor43Metadata, // DCS Customizations
 		cmd.CmdManager,
 		cmd.Cmdembedded,
 		cmd.CmdMigrateStorage,
