@@ -921,7 +921,7 @@ func SettingsPost(ctx *context.Context) {
 
 		if ctx.Repo.Owner.IsOrganization() {
 			org := organization.OrgFromUser(ctx.Repo.Owner)
-			owned, err := org.IsOwnedBy(ctx.ContextUser.ID)
+			owned, err := org.IsOwnedBy(ctx, ctx.ContextUser.ID)
 			if err != nil {
 				ctx.ServerError("IsOwnedBy", err)
 				return
@@ -948,7 +948,7 @@ func SettingsPost(ctx *context.Context) {
 					units = append(units, *unit)
 				}
 			}
-			if err := repo_model.UpdateRepositoryUnits(repo, units, deleteUnitTypes); err != nil {
+			if err := repo_model.UpdateRepositoryUnits(ctx, repo, units, deleteUnitTypes); err != nil {
 				ctx.ServerError("UpdateRepositoryUnits", err)
 				return
 			}
