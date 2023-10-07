@@ -100,6 +100,7 @@ func main() {
 		cmd.CmdKeys,
 		cmd.CmdConvert,
 		cmd.CmdDoctor,
+		cmd.CmdDoor43Metadata, // DCS Customizations
 		cmd.CmdManager,
 		cmd.CmdEmbedded,
 		cmd.CmdMigrateStorage,
