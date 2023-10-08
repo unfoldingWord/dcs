@@ -5,6 +5,8 @@ on:
     tags: [ v**-dcs ]
 
 jobs:
+  disk-clean:
+    uses: ./.github/workflows/disk-clean.yml
   release-docker:
     runs-on: ubuntu-latest
     steps:
@@ -38,11 +40,3 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-      # - name: build rootless docker image
-      #   uses: docker/build-push-action@v4
-      #   with:
-      #     context: .
-      #     platforms: linux/amd64,linux/arm64
-      #     push: true
-      #     file: Dockerfile.rootless
-      #     tags: unfoldingword/dcs:${{ steps.clean_name.outputs.branch }}-rootless
