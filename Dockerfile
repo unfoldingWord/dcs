@@ -41,6 +41,9 @@ RUN apk --no-cache add \
     su-exec \
     gnupg
 
+#For DCS local scripts
+RUN apk --no-cache jq yq
+
 RUN addgroup \
     -S -g 1000 \
     git && \

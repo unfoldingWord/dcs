@@ -38,6 +38,7 @@ type SearchUserOptions struct {
 	IncludeReserved    bool
 
 	/*** DCS CUSTOMIZATIONS ***/
+	IsSpamUser        util.OptionalBool
 	RepoLanguages     []string          // Find repos that have the given language ids in a repo's manifest
 	RepoSubjects      []string          // Find repos that have the given subjects in a repo's manifest
 	RepoMetadataTypes []string          // Find repos that have the given metadata types in a repo's manifest
@@ -108,6 +109,12 @@ func (opts *SearchUserOptions) toSearchQueryBase(ctx context.Context) *xorm.Sess
 	if !opts.IsProhibitLogin.IsNone() {
 		cond = cond.And(builder.Eq{"prohibit_login": opts.IsProhibitLogin.IsTrue()})
 	}
+
+	/*** DCS Customizations ***/
+	if opts.IsSpamUser.IsTrue() {
+		cond = cond.And(builder.Expr("FROM_UNIXTIME(last_login_unix, '%Y-%m-%d') = FROM_UNIXTIME(created_unix, '%Y-%m-%d') AND description != '' AND website != ''"))
+	}
+	/*** END DCS Customizations ***/
 
 	e := db.GetEngine(ctx)
 	if opts.IsTwoFactorEnabled.IsNone() {
