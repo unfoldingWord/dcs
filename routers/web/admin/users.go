@@ -40,7 +40,7 @@ func Users(ctx *context.Context) {
 	ctx.Data["PageIsAdminUsers"] = true
 
 	extraParamStrings := map[string]string{}
-	statusFilterKeys := []string{"is_active", "is_admin", "is_restricted", "is_2fa_enabled", "is_prohibit_login"}
+	statusFilterKeys := []string{"is_active", "is_admin", "is_restricted", "is_2fa_enabled", "is_prohibit_login", "is_spam_user"} // DCS Customizations - adds "is_spam_user"
 	statusFilterMap := map[string]string{}
 	for _, filterKey := range statusFilterKeys {
 		paramKey := "status_filter[" + filterKey + "]"
@@ -75,6 +75,7 @@ func Users(ctx *context.Context) {
 		IsProhibitLogin:    util.OptionalBoolParse(statusFilterMap["is_prohibit_login"]),
 		ExtraParamStrings:  extraParamStrings,
 		/*** DCS Customizations ***/
+		IsSpamUser:    util.OptionalBoolParse(statusFilterMap["is_spam_user"]),
 		RepoLanguages: ctx.FormStrings("lang"),
 		/*** END DCS Customizations ***/
 	}, tplUsers)
