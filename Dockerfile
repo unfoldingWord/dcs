@@ -42,7 +42,7 @@ RUN apk --no-cache add \
     gnupg
 
 #For DCS local scripts
-RUN apk --no-cache jq yq
+RUN apk --no-cache add jq yq
 
 RUN addgroup \
     -S -g 1000 \
