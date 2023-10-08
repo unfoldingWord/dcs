@@ -82,11 +82,11 @@ jobs:
           platforms: linux/amd64,linux/arm64
           push: true
           tags: unfoldingword/dcs:${{ steps.clean_name.outputs.branch }}
-      - name: build rootless docker image
-        # uses: docker/build-push-action@v4
-        # with:
-        #   context: .
-        #   platforms: linux/amd64,linux/arm64
-        #   push: true
-        #   file: Dockerfile.rootless
-        #   tags: unfoldingword/dcs:${{ steps.clean_name.outputs.branch }}-rootless
+      # - name: build rootless docker image
+      #   uses: docker/build-push-action@v4
+      #   with:
+      #     context: .
+      #     platforms: linux/amd64,linux/arm64
+      #     push: true
+      #     file: Dockerfile.rootless
+      #     tags: unfoldingword/dcs:${{ steps.clean_name.outputs.branch }}-rootless
