@@ -19,6 +19,52 @@ import (
 	user_service "code.gitea.io/gitea/services/user"
 )
 
+// ListSpamUsers API for getting all users considered to be spam
+func ListSpamUsers(ctx *context.APIContext) {
+	// swagger:operation GET /admin/users/spam admin adminListSpamUsers
+	// ---
+	// summary: List all users considered to be spam. NOTE - not all will be deleted in the DELETE action. see its description
+	// produces:
+	// - application/json
+	// parameters:
+	// - name: page
+	//   in: query
+	//   description: page number of results to return (1-based)
+	//   type: integer
+	// - name: limit
+	//   in: query
+	//   description: page size of results
+	//   type: integer
+	// responses:
+	//   "200":
+	//     "$ref": "#/responses/UserList"
+	//   "403":
+	//     "$ref": "#/responses/forbidden"
+
+	listOptions := utils.GetListOptions(ctx)
+
+	users, maxResults, err := user_model.SearchUsers(&user_model.SearchUserOptions{
+		Actor:       ctx.Doer,
+		Type:        user_model.UserTypeIndividual,
+		OrderBy:     db.SearchUserOrderByAlphabetically,
+		IsSpamUser:  util.OptionalBoolTrue,
+		ListOptions: listOptions,
+	})
+	if err != nil {
+		ctx.Error(http.StatusInternalServerError, "ListSpamUsers", err)
+		return
+	}
+
+	results := make([]*api.User, len(users))
+	for i := range users {
+		results[i] = convert.ToUser(ctx, users[i], ctx.Doer)
+	}
+
+	ctx.SetLinkHeader(int(maxResults), listOptions.PageSize)
+	ctx.SetTotalCountHeader(maxResults)
+	ctx.JSON(http.StatusOK, &results)
+}
+
 // DeleteSpamUsers api for deleting all spam users
 func DeleteSpamUsers(ctx *context.APIContext) {
 	// swagger:operation DELETE /admin/users/spam admin adminDeleteSpamUsers
@@ -68,50 +114,4 @@ func DeleteSpamUsers(ctx *context.APIContext) {
 	}
 
 	ctx.Status(http.StatusNoContent)
-}
-
-// ListSpamUsers API for getting all users considered to be spam
-func ListSpamUsers(ctx *context.APIContext) {
-	// swagger:operation GET /admin/users admin adminSearchUsers
-	// ---
-	// summary: List all users considered to be spam (NOTE: not all will be deleted in the DELETE action. see its description)
-	// produces:
-	// - application/json
-	// parameters:
-	// - name: page
-	//   in: query
-	//   description: page number of results to return (1-based)
-	//   type: integer
-	// - name: limit
-	//   in: query
-	//   description: page size of results
-	//   type: integer
-	// responses:
-	//   "200":
-	//     "$ref": "#/responses/UserList"
-	//   "403":
-	//     "$ref": "#/responses/forbidden"
-
-	listOptions := utils.GetListOptions(ctx)
-
-	users, maxResults, err := user_model.SearchUsers(&user_model.SearchUserOptions{
-		Actor:       ctx.Doer,
-		Type:        user_model.UserTypeIndividual,
-		OrderBy:     db.SearchUserOrderByAlphabetically,
-		IsSpamUser:  util.OptionalBoolTrue,
-		ListOptions: listOptions,
-	})
-	if err != nil {
-		ctx.Error(http.StatusInternalServerError, "ListSpamUsers", err)
-		return
-	}
-
-	results := make([]*api.User, len(users))
-	for i := range users {
-		results[i] = convert.ToUser(ctx, users[i], ctx.Doer)
-	}
-
-	ctx.SetLinkHeader(int(maxResults), listOptions.PageSize)
-	ctx.SetTotalCountHeader(maxResults)
-	ctx.JSON(http.StatusOK, &results)
 }
