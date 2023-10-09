@@ -1363,6 +1363,12 @@ func Routes(ctx gocontext.Context) *web.Route {
 			m.Get("/orgs", admin.GetAllOrgs)
 			m.Group("/users", func() {
 				m.Get("", admin.SearchUsers)
+				/*** DCS Customizations ***/
+				m.Group("/spam", func() {
+					m.Get("", admin.ListSpamUsers)
+					m.Delete("", admin.DeleteSpamUsers)
+				})
+				/*** END DCS Customizations ***/
 				m.Post("", bind(api.CreateUserOption{}), admin.CreateUser)
 				m.Group("/{username}", func() {
 					m.Combo("").Patch(bind(api.EditUserOption{}), admin.EditUser).

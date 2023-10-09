@@ -186,7 +186,7 @@ func GetAll(ctx *context.APIContext) {
 	//     type: string
 	// - name: is_gl
 	//   in: query
-	//   description: if the org has one or more repos that is a gateway laguage, the org will be in the results
+	//   description: if the org has one or more repos that is a gateway language, the org will be in the results
 	//   type: boolean
 	// - name: subject
 	//   in: query

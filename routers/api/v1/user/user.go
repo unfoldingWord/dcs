@@ -33,18 +33,18 @@ func Search(ctx *context.APIContext) {
 	//   format: int64
 	// - name: lang
 	//   in: query
-	//   description: if the user has one or more repos with the given language(s), the org will be in the results. Multiple lang's are ORed.
+	//   description: if the user has one or more repos with the given language(s), the user will be in the results. Multiple lang's are ORed.
 	//   type: array
 	//   collectionFormat: multi
 	//   items:
 	//     type: string
 	// - name: is_gl
 	//   in: query
-	//   description: if the user has one or more repos that is a gateway laguage, the user will be in the results
+	//   description: if the user has one or more repos that is a gateway language, the user will be in the results
 	//   type: boolean
 	// - name: subject
 	//   in: query
-	//   description: if the user has one or more repos with the given subject(s), the org will be in the results. Multiple subjects are ORed.
+	//   description: if the user has one or more repos with the given subject(s), the user will be in the results. Multiple subjects are ORed.
 	//   type: array
 	//   collectionFormat: multi
 	//   items:
@@ -52,7 +52,7 @@ func Search(ctx *context.APIContext) {
 	//     enum: [Aligned Bible,Aramaic Grammar,Bible,Greek Grammar,Greek Lexicon,Greek New Testament,Hebrew Grammar,Hebrew Old Testament,Hebrew-Aramaic Lexicon,OBS Study Notes,OBS Study Questions,OBS Translation Notes,OBS Translation Questions,Open Bible Stories,Study Notes,Study Questions,Training Library,Translation Academy,Translation Notes,Translation Questions,Translation Words,TSV Study Notes,TSV Study Questions,TSV Translation Notes,TSV Translation Questions,TSV Translation Words Links,TSV OBS Study Notes,TSV OBS Study Questions,TSV OBS Translation Notes,TSV OBS Translation Questions,TSV OBS Translation Words Links]
 	// - name: metadataType
 	//   in: query
-	//   description: if the user has one or more repos with the given metadata type(s), the org will be in the results. Multiple metadata types are ORed.
+	//   description: if the user has one or more repos with the given metadata type(s), the user will be in the results. Multiple metadata types are ORed.
 	//   type: array
 	//   collectionFormat: multi
 	//   items:
