@@ -97,7 +97,7 @@ func (opts *SearchUserOptions) toSearchQueryBase() *xorm.Session {
 
 	/*** DCS Customizations ***/
 	if opts.IsSpamUser.IsTrue() {
-		cond = cond.And(builder.Expr("FROM_UNIXTIME(last_login_unix, '%Y-%m-%d') = FROM_UNIXTIME(created_unix, '%Y-%m-%d') AND description != '' AND website != ''"))
+		cond = cond.And(builder.Expr("type = 0 AND description != '' AND website != ''"))
 	}
 	/*** END DCS Customizations ***/
 
