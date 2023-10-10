@@ -13,8 +13,6 @@ import (
 	"code.gitea.io/gitea/modules/context"
 	"code.gitea.io/gitea/modules/log"
 	api "code.gitea.io/gitea/modules/structs"
-	"code.gitea.io/gitea/modules/util"
-	"code.gitea.io/gitea/routers/api/v1/utils"
 	"code.gitea.io/gitea/services/convert"
 	user_service "code.gitea.io/gitea/services/user"
 )
@@ -23,33 +21,16 @@ import (
 func ListSpamUsers(ctx *context.APIContext) {
 	// swagger:operation GET /admin/users/spam admin adminListSpamUsers
 	// ---
-	// summary: List all users considered to be spam. NOTE - not all will be deleted in the DELETE action. see its description
+	// summary: List all users considered to be spam. (have a description & website, last logged in on the day they signed up, and is older than a week)
 	// produces:
 	// - application/json
-	// parameters:
-	// - name: page
-	//   in: query
-	//   description: page number of results to return (1-based)
-	//   type: integer
-	// - name: limit
-	//   in: query
-	//   description: page size of results
-	//   type: integer
 	// responses:
 	//   "200":
 	//     "$ref": "#/responses/UserList"
 	//   "403":
 	//     "$ref": "#/responses/forbidden"
 
-	listOptions := utils.GetListOptions(ctx)
-
-	users, maxResults, err := user_model.SearchUsers(&user_model.SearchUserOptions{
-		Actor:       ctx.Doer,
-		Type:        user_model.UserTypeIndividual,
-		OrderBy:     db.SearchUserOrderByAlphabetically,
-		IsSpamUser:  util.OptionalBoolTrue,
-		ListOptions: listOptions,
-	})
+	users, err := getSpamUsers(ctx)
 	if err != nil {
 		ctx.Error(http.StatusInternalServerError, "ListSpamUsers", err)
 		return
@@ -60,8 +41,6 @@ func ListSpamUsers(ctx *context.APIContext) {
 		results[i] = convert.ToUser(ctx, users[i], ctx.Doer)
 	}
 
-	ctx.SetLinkHeader(int(maxResults), listOptions.PageSize)
-	ctx.SetTotalCountHeader(maxResults)
 	ctx.JSON(http.StatusOK, &results)
 }
 
@@ -85,15 +64,7 @@ func DeleteSpamUsers(ctx *context.APIContext) {
 	//   "422":
 	//     "$ref": "#/responses/validationError"
 
-	users := make([]*user_model.User, 0)
-	err := db.GetEngine(ctx).
-		OrderBy("id").
-		Where("type = ?", user_model.UserTypeIndividual).
-		And("TIMESTAMPDIFF(DAY, FROM_UNIXTIME(created_unix),  FROM_UNIXTIME(last_login_unix)) <= 2").
-		And("description != ''").
-		And("website != ''").
-		And("num_repos = 0").
-		And("last_login_unix < UNIX_TIMESTAMP(NOW() - INTERVAL 1 WEEK)").Find(&users)
+	users, err := getSpamUsers(ctx)
 	if err != nil {
 		ctx.Error(http.StatusInternalServerError, "DeleteSpamUsers", err)
 		return
@@ -110,8 +81,21 @@ func DeleteSpamUsers(ctx *context.APIContext) {
 			}
 			return
 		}
-		log.Trace("Account deleted by admin(%s) due to being spam: %s", ctx.Doer.Name, user.Name)
+		log.Info("Account deleted by admin(%s) due to being spam: %s", ctx.Doer.Name, user.Name)
 	}
 
 	ctx.Status(http.StatusNoContent)
+}
+
+func getSpamUsers(ctx *context.APIContext) ([]*user_model.User, error) {
+	users := make([]*user_model.User, 0)
+	err := db.GetEngine(ctx).
+		OrderBy("id").
+		Where("type = ?", user_model.UserTypeIndividual).
+		And("TIMESTAMPDIFF(DAY, FROM_UNIXTIME(created_unix),  FROM_UNIXTIME(last_login_unix)) <= 2").
+		And("description != ''").
+		And("website != ''").
+		And("num_repos = 0").
+		And("last_login_unix < UNIX_TIMESTAMP(NOW() - INTERVAL 1 WEEK)").Find(&users)
+	return users, err
 }
