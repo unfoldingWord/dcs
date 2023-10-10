@@ -56,10 +56,12 @@
 					</div>
 				</div>
 				<div class="gt-font-13 gt-df gt-ac text grey">
-					{{if .RepoDM}}
+					{{if .RepoDM.Language}}
 						<a class="muted" href="{{$.Link}}?sort={{$.SortType}}&q=lang%3A{{.RepoDM.Language}}">
 							<span class="gt-df gt-ac gt-mr-3"><i class="color-icon gt-mr-3" style="background-color: {{GetColorFromString .RepoDM.Language}}"></i>{{.RepoDM.Language}}</span>
 						</a>
+					{{end}}
+					{{if .RepoDM.Subject}}
 						<a class="muted" href="{{$.Link}}?sort={{$.SortType}}&q=subject%3A{{.RepoDM.Subject}}">
 							<span class="gt-df gt-ac gt-mr-3"><i class="color-icon gt-mr-3" style="background-color: {{GetColorFromString .RepoDM.Subject}}"></i>{{.RepoDM.Subject}}</span>
 						</a>
@@ -68,6 +70,7 @@
 						<a class="text grey gt-df gt-ac gt-mr-3" href="{{.Link}}/stars">{{svg "octicon-star" 16 "gt-mr-3"}}{{.NumStars}}</a>
 					{{end}}
 					<a class="text grey gt-df gt-ac gt-mr-3" href="{{.Link}}/forks">{{svg "octicon-git-branch" 16 "gt-mr-3"}}{{.NumForks}}</a>
+					<a class="text grey gt-df gt-ac gt-mr-3" href="{{.Link}}/releases" title="# of releases">{{svg "octicon-tag" 16 "gt-mr-3"}} {{.RepoDM.GetReleaseCount}}</a>
 				</div>
 			</div>
 			<div class="description">
