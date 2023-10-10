@@ -47,30 +47,33 @@
 			<table>
 				<tr>
 					<td><strong>{{if .Release}}{{$.locale.Tr "repo.metadata.publisher"}}{{else}}{{$.locale.Tr "repo.metadata.provider"}}{{end}}:</strong></td>
-					<td><a href="?q=owner%3A{{.Repo.OwnerName}}">{{.Repo.OwnerName}}</a></td>
+					<td><a href="?sort={{$.SortType}}&q=owner%3A{{.Repo.OwnerName}}">{{.Repo.OwnerName}}</a></td>
 				<tr>
 					<td><strong>{{$.locale.Tr "repo.metadata.subject"}}:</strong></td>
-					<td><a href="?q=subject%3A{{.Subject}}">{{.Subject}}</a></td>
+					<td><a href="?sort={{$.SortType}}&q=subject%3A{{.Subject}}">{{.Subject}}</a></td>
 				</tr>
 				<tr>
 					<td><strong>{{$.locale.Tr "repo.metadata.resource"}}:</strong></td>
-					<td><a href="?q=resource%3A{{.Resource}}">{{.Resource}}</a></td>
+					<td><a href="?sort={{$.SortType}}&q=resource%3A{{.Resource}}">{{.Resource}}</a></td>
 				</tr>
 				<tr>
 					<td><strong>{{$.locale.Tr "repo.metadata.metadata_type"}}:</strong></td>
-					<td><img src="{{AssetUrlPrefix}}/img/dcs/{{.GetMetadataTypeIcon}}"
-							style="height:16px;vertical-align:middle" /> <a href="?q=metadata_type%3A{{.MetadataType}}">{{.GetMetadataTypeTitle}} ({{.MetadataType}}
-						{{.MetadataVersion}})</a></td>
+					<td>
+						<img src="{{AssetUrlPrefix}}/img/dcs/{{.GetMetadataTypeIcon}}" style="height:16px;vertical-align:middle" /> 
+						<a href="?sort={{$.SortType}}&q=metadata_type%3A{{.MetadataType}}">
+						{{.GetMetadataTypeTitle}} ({{.MetadataType}} {{.MetadataVersion}})
+						</a>
+					</td>
 				</tr>
 				<tr>
 					<td><strong>{{$.locale.Tr "repo.metadata.language"}}:</strong></td>
-					<td><a href="?q=lang%3A{{.Language}}">{{.LanguageTitle}} ({{.Language}}, {{.LanguageDirection}})</a></td>
+					<td><a href="?sort={{$.SortType}}&q=lang%3A{{.Language}}">{{.LanguageTitle}} ({{.Language}}, {{.LanguageDirection}})</a></td>
 				</tr>
 				<tr>
 					<td><strong>{{$.locale.Tr "repo.metadata.ingredients"}}:</strong></td>
 					<td>
 						{{range .Ingredients}}
-							<a href="?q=book%3A{{.Identifier}}">{{.Identifier}}</a>
+							<a href="?sort={{$.SortType}}&q=book%3A{{.Identifier}}">{{.Identifier}}</a>
 						{{end}}
 					</td>
 				</tr>

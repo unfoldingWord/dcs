@@ -163,7 +163,8 @@ func NewFuncMap() template.FuncMap {
 		"Door43PreviewURL": func() string {
 			return setting.DCS.Door43PreviewURL
 		},
-		"GetCsvCellDiff": dcs.GetCsvCellDiff,
+		"GetCsvCellDiff":     dcs.GetCsvCellDiff,
+		"GetColorFromString": dcs.GetColorFromString,
 		/*** END DCS Customizations ***/
 
 		// -----------------------------------------------------------------
