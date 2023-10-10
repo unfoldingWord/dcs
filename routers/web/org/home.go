@@ -126,7 +126,7 @@ func Home(ctx *context.Context) {
 	/*** END DCS Customizations ***/
 
 	var (
-		repos []*repo_model.Repository
+		repos repo_model.RepositoryList // DCS Customizations - Fixed this
 		count int64
 		err   error
 	)
@@ -156,11 +156,11 @@ func Home(ctx *context.Context) {
 		ctx.ServerError("SearchRepository", err)
 		return
 	}
+
 	/*** DCS Customizations ***/
-	for _, repo := range repos {
-		if err := repo.LoadLatestDMs(ctx); err != nil {
-			log.Error("Error LoadLatestDMs [%s]: %v", repo.FullName(), err)
-		}
+	err = repos.LoadLatestDMs(ctx)
+	if err != nil {
+		log.Error("LoadLatestDMs: unable to load DMs for repos")
 	}
 	/*** End DCS Customizations ***/
 

@@ -53,7 +53,7 @@ func RenderRepoSearch(ctx *context.Context, opts *RepoSearchOptions) {
 	}
 
 	var (
-		repos   []*repo_model.Repository
+		repos   repo_model.RepositoryList // DCS Customizations - Fixed this
 		count   int64
 		err     error
 		orderBy db.SearchOrderBy
@@ -159,6 +159,14 @@ func RenderRepoSearch(ctx *context.Context, opts *RepoSearchOptions) {
 		ctx.ServerError("SearchRepository", err)
 		return
 	}
+
+	/*** DCS Customizations ***/
+	err = repos.LoadLatestDMs(ctx)
+	if err != nil {
+		log.Error("LoadLatestDMs: unable to load DMs for repos")
+	}
+	/*** END DCS Customizations ***/
+
 	if isSitemap {
 		m := sitemap.NewSitemap()
 		for _, item := range repos {
@@ -174,7 +182,6 @@ func RenderRepoSearch(ctx *context.Context, opts *RepoSearchOptions) {
 	ctx.Data["Keyword"] = origKeyword // DCS Customizations
 	ctx.Data["Total"] = count
 	ctx.Data["Repos"] = repos
-	ctx.Data["ctx"] = ctx // DCS Customizations
 	ctx.Data["IsRepoIndexerEnabled"] = setting.Indexer.RepoIndexerEnabled
 
 	pager := context.NewPagination(int(count), opts.PageSize, page, 5)
