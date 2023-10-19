@@ -94,7 +94,7 @@ func NewUser(ctx *context.Context) {
 
 	ctx.Data["login_type"] = "0-0"
 
-	sources, err := auth.Sources()
+	sources, err := auth.Sources(ctx)
 	if err != nil {
 		ctx.ServerError("auth.Sources", err)
 		return
@@ -113,7 +113,7 @@ func NewUserPost(ctx *context.Context) {
 	ctx.Data["DefaultUserVisibilityMode"] = setting.Service.DefaultUserVisibilityMode
 	ctx.Data["AllowedUserVisibilityModes"] = setting.Service.AllowedUserVisibilityModesSlice.ToVisibleTypeSlice()
 
-	sources, err := auth.Sources()
+	sources, err := auth.Sources(ctx)
 	if err != nil {
 		ctx.ServerError("auth.Sources", err)
 		return
@@ -225,7 +225,7 @@ func prepareUserInfo(ctx *context.Context) *user_model.User {
 	ctx.Data["User"] = u
 
 	if u.LoginSource > 0 {
-		ctx.Data["LoginSource"], err = auth.GetSourceByID(u.LoginSource)
+		ctx.Data["LoginSource"], err = auth.GetSourceByID(ctx, u.LoginSource)
 		if err != nil {
 			ctx.ServerError("auth.GetSourceByID", err)
 			return nil
@@ -234,7 +234,7 @@ func prepareUserInfo(ctx *context.Context) *user_model.User {
 		ctx.Data["LoginSource"] = &auth.Source{}
 	}
 
-	sources, err := auth.Sources()
+	sources, err := auth.Sources(ctx)
 	if err != nil {
 		ctx.ServerError("auth.Sources", err)
 		return nil
@@ -536,7 +536,7 @@ func DeleteAvatar(ctx *context.Context) {
 		return
 	}
 
-	if err := user_service.DeleteAvatar(u); err != nil {
+	if err := user_service.DeleteAvatar(ctx, u); err != nil {
 		ctx.Flash.Error(err.Error())
 	}
 

@@ -31,7 +31,7 @@ import {
   initRepoIssueWipTitle,
   initRepoPullRequestMergeInstruction,
   initRepoPullRequestAllowMaintainerEdit,
-  initRepoPullRequestReview, initRepoIssueSidebarList
+  initRepoPullRequestReview, initRepoIssueSidebarList, initArchivedLabelHandler,
 } from './features/repo-issue.js';
 import {
   initRepoEllipsisButton,
@@ -163,6 +163,7 @@ onDomReady(() => {
   initRepoIssueDue();
   initRepoIssueList();
   initRepoIssueSidebarList();
+  initArchivedLabelHandler();
   initRepoIssueReferenceRepositorySearch();
   initRepoIssueTimeTracking();
   initRepoIssueWipTitle();
