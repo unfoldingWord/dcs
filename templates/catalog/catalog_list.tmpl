@@ -1,15 +1,16 @@
 <div class="ui repository list">
 	{{range .Door43Metadatas}}
-		<div class="item">
-			<div class="ui header">
-				{{if .Repo.RelAvatarLink}}
-					<img class="ui avatar image" src="{{.Repo.RelAvatarLink}}">
-				{{end}}
-				{{if .Release}}
+	<div class="item">
+		<div class="ui header gt-df gt-ac">
+			<div class="repo-title">
+			{{if .Repo.RelAvatarLink}}
+			<img class="ui avatar image" src="{{.Repo.RelAvatarLink}}">
+			{{end}}
+			{{if .Release}}
 				<a class="name" href="{{.Repo.Link}}/releases/tag/{{.Ref | PathEscapeSegments}}">
-				{{else}}
+			{{else}}
 				<a class="name" href="{{.Repo.Link}}/src/branch/{{.Repo.DefaultBranch | PathEscapeSegments}}">
-				{{end}}
+			{{end}}
 					{{.Title}}
 				</a>
 				{{if .Repo.IsFork}}
@@ -20,34 +21,72 @@
 				{{if .Release}}
 					{{$color := "green"}}
 					{{$type := "Production"}}
-					{{if .Release.IsDraft}}
-						{{$color = "yellow"}}
-						{{$type = "Draft"}}
-					{{else if .Release.IsPrerelease}}
+					{{if .Release.IsPrerelease}}
 						{{$color = "orange"}}
 						{{$type = "Pre-Release"}}
 					{{end}}
-					<button class="ui {{$color}} label compact icon button tooltip" data-content="Catalog: {{$type}}" aria-label="Catalog: {{$type}}">
-						{{.Ref}}
-					</button>
+					<a class="catalog-badge" href="{{.Release.HTMLURL}}" rel="nofollow" style="opacity: inherit !important">
+						<button class="ui {{$color}} label compact icon button tooltip" data-content="Catalog: {{$type}}" aria-label="Catalog: {{$type}}">
+							{{.Ref}}
+						</button>
+					</a>
 				{{end}}
-				<div class="ui right metas">
-					<span class="text grey" title="# stars">{{svg "octicon-star" 16}} {{.Repo.NumStars}}</span>
-					<span class="text grey" title="# forks">{{svg "octicon-git-branch" 16}} {{.Repo.NumForks}}</span>
-					<span class="text grey" title="# releases">{{svg "octicon-tag" 16}} {{.GetReleaseCount}}</span>
+			</div>
+			<div class="gt-font-13 gt-df gt-ac text grey">
+				<div class="gt-font-13 gt-df gt-ac text grey">
+					{{if not $.DisableStars}}
+						<a class="text grey gt-df gt-ac gt-mr-3" href="{{.Repo.Link}}/stars">{{svg "octicon-star" 16 "gt-mr-3"}}{{.Repo.NumStars}}</a>
+					{{end}}
+					<a class="text grey gt-df gt-ac gt-mr-3" href="{{.Repo.Link}}/forks">{{svg "octicon-git-branch" 16 "gt-mr-3"}}{{.Repo.NumForks}}</a>
+					<a class="text grey gt-df gt-ac gt-mr-3" href="{{.Repo.Link}}/releases" title="# of releases">{{svg "octicon-tag" 16 "gt-mr-3"}} {{.GetReleaseCount}}</a>
 				</div>
 			</div>
-			<div class="description">
-				<p>{{.Subject}}</p>
-				{{if .Release}}
-				<p class="time">{{$.locale.Tr "explore.released"}}: {{.ReleaseDateUnix.FormatDate}}</p>
-				{{end}}
-				<p class="time">{{$.locale.Tr "explore.language"}}: {{.LanguageTitle}} ({{.Language}})</p>
-			</div>
 		</div>
+		<div class="description">
+			<table>
+				<tr>
+					<td><strong>{{if .Release}}{{ctx.Locale.Tr "repo.metadata.publisher"}}{{else}}{{ctx.Locale.Tr "repo.metadata.provider"}}{{end}}:</strong></td>
+					<td><a href="?q=owner%3A{{.Repo.OwnerName}}">{{.Repo.OwnerName}}</a></td>
+				<tr>
+					<td><strong>{{ctx.Locale.Tr "repo.metadata.subject"}}:</strong></td>
+					<td><a href="?q=subject%3A{{.Subject}}">{{.Subject}}</a></td>
+				</tr>
+				<tr>
+					<td><strong>{{ctx.Locale.Tr "repo.metadata.resource"}}:</strong></td>
+					<td><a href="?q=resource%3A{{.Resource}}">{{.Resource}}</a></td>
+				</tr>
+				<tr>
+					<td><strong>{{ctx.Locale.Tr "repo.metadata.metadata_type"}}:</strong></td>
+					<td><img src="{{AssetUrlPrefix}}/img/dcs/{{.GetMetadataTypeIcon}}"
+							style="height:16px;vertical-align:middle" /> <a href="?q=metadata_type%3A{{.MetadataType}}">{{.GetMetadataTypeTitle}} ({{.MetadataType}}
+						{{.MetadataVersion}})</a></td>
+				</tr>
+				<tr>
+					<td><strong>{{ctx.Locale.Tr "repo.metadata.language"}}:</strong></td>
+					<td><a href="?q=lang%3A{{.Language}}">{{.LanguageTitle}} ({{.Language}}, {{.LanguageDirection}})</a></td>
+				</tr>
+				<tr>
+					<td><strong>{{ctx.Locale.Tr "repo.metadata.stage"}}:</strong></td>
+					<td>{{.StageStr}}</td>
+				</tr>
+				<tr>
+					<td><strong>{{ctx.Locale.Tr "repo.metadata.ingredients"}}:</strong></td>
+					<td>
+						{{range .Ingredients}}
+							<a href="?q=book%3A{{.Identifier}}">{{.Identifier}}</a>
+						{{end}}
+					</td>
+				</tr>
+				<tr>
+					<td><strong>{{if .Release}}{{ctx.Locale.Tr "repo.metadata.release_date"}}{{else}}{{ctx.Locale.Tr "repo.metadata.last_updated"}}{{end}}:</strong></td>
+					<td>{{DateTime "full" .ReleaseDateUnix.AsTime}}</td>
+				</tr>
+			</table>
+		</div>
+	</div>
 	{{else}}
 	<div>
-		{{$.locale.Tr "explore.repo_no_results"}}
+		{{ctx.Locale.Tr "explore.repo_no_results"}}
 	</div>
 	{{end}}
 </div>
