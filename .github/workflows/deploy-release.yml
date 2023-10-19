@@ -1,8 +1,9 @@
 name: deploy-official-release-rootless
 
+# THIS WAS MY (RICH) RELEASE DEPLOY BEFORE GITEA ADDED THEIR OWN GITHUB WORKFLOW. CHANGED v1 TO v1111111
 on:
   push:
-    tags: [ v**-dcs ]
+    tags: [ v1111111**-dcs ]
 
 jobs:
   disk-clean:
