@@ -596,22 +596,8 @@
         "tags": [
           "admin"
         ],
-        "summary": "List all users considered to be spam. NOTE - not all will be deleted in the DELETE action. see its description",
+        "summary": "List all users considered to be spam. (have a description \u0026 website, last logged in on the day they signed up, and is older than a week)",
         "operationId": "adminListSpamUsers",
-        "parameters": [
-          {
-            "type": "integer",
-            "description": "page number of results to return (1-based)",
-            "name": "page",
-            "in": "query"
-          },
-          {
-            "type": "integer",
-            "description": "page size of results",
-            "name": "limit",
-            "in": "query"
-          }
-        ],
         "responses": {
           "200": {
             "$ref": "#/responses/UserList"
@@ -22849,6 +22835,9 @@
       "description": "PullRequest represents a pull request",
       "type": "object",
       "properties": {
+        "HasConflicts": {
+          "type": "boolean"
+        },
         "allow_maintainer_edit": {
           "type": "boolean",
           "x-go-name": "AllowMaintainerEdit"
@@ -22893,6 +22882,13 @@
           "type": "string",
           "format": "date-time",
           "x-go-name": "Deadline"
+        },
+        "files_conflicting": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "x-go-name": "FilesConflicting"
         },
         "head": {
           "$ref": "#/definitions/PRBranchInfo"
