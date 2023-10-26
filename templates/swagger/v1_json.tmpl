@@ -22821,9 +22821,6 @@
       "description": "PullRequest represents a pull request",
       "type": "object",
       "properties": {
-        "HasConflicts": {
-          "type": "boolean"
-        },
         "allow_maintainer_edit": {
           "type": "boolean",
           "x-go-name": "AllowMaintainerEdit"
@@ -22875,6 +22872,10 @@
             "type": "string"
           },
           "x-go-name": "FilesConflicting"
+        },
+        "has_conflicts": {
+          "type": "boolean",
+          "x-go-name": "HasConflicts"
         },
         "head": {
           "$ref": "#/definitions/PRBranchInfo"
