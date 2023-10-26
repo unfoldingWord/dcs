@@ -52,7 +52,7 @@ type PullRequest struct {
 
 	PinOrder int `json:"pin_order"`
 
-	HasConflicts     bool     `json:"HasConflicts"`      // DCS Customizations
+	HasConflicts     bool     `json:"has_conflicts"`     // DCS Customizations
 	FilesConflicting []string `json:"files_conflicting"` // DCS Customizations
 }
 
