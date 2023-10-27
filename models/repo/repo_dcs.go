@@ -85,3 +85,17 @@ func (repo *Repository) LoadLatestDMs(ctx context.Context) error {
 
 	return nil
 }
+
+// LoadLatestDMs loads the latest Door43Metadatas for the given RepositoryList
+func (rl RepositoryList) LoadLatestDMs(ctx context.Context) error {
+	if rl.Len() == 0 {
+		return nil
+	}
+	var lastErr error
+	for _, repo := range rl {
+		if err := repo.LoadLatestDMs(ctx); err != nil && lastErr == nil {
+			lastErr = err
+		}
+	}
+	return lastErr
+}
