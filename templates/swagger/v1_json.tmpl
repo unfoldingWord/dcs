@@ -22852,6 +22852,13 @@
           "format": "int64",
           "x-go-name": "Comments"
         },
+        "conflicted_files": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "x-go-name": "ConflictedFiles"
+        },
         "created_at": {
           "type": "string",
           "format": "date-time",
@@ -22865,13 +22872,6 @@
           "type": "string",
           "format": "date-time",
           "x-go-name": "Deadline"
-        },
-        "files_conflicting": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          },
-          "x-go-name": "FilesConflicting"
         },
         "has_conflicts": {
           "type": "boolean",

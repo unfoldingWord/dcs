@@ -52,8 +52,8 @@ type PullRequest struct {
 
 	PinOrder int `json:"pin_order"`
 
-	HasConflicts     bool     `json:"has_conflicts"`     // DCS Customizations
-	FilesConflicting []string `json:"files_conflicting"` // DCS Customizations
+	HasConflicts    bool     `json:"has_conflicts"`    // DCS Customizations
+	ConflictedFiles []string `json:"conflicted_files"` // DCS Customizations
 }
 
 // PRBranchInfo information about a branch
