@@ -66,6 +66,20 @@
 						<a class="text grey flex-text-inline" href="{{.Link}}/forks">{{svg "octicon-git-branch" 16}}{{.NumForks}}</a>
 					</div>
 				</div>
+				<div class="gt-font-13 gt-df gt-ac text grey">
+					{{if .RepoDM.Language}}
+						<a class="muted" href="{{$.Link}}?sort={{$.SortType}}&q=lang%3A{{.RepoDM.Language}}" title="{{.RepoDM.LanguageTitle}}">
+							<span class="gt-df gt-ac gt-mr-3"><i class="color-icon gt-mr-3" style="background-color: {{GetColorFromString .RepoDM.Language}}"></i>{{.RepoDM.Language}}</span>
+						</a>
+					{{end}}
+					{{if .RepoDM.Subject}}
+						<a class="muted" href="{{$.Link}}?sort={{$.SortType}}&q=subject%3A{{.RepoDM.Subject}}" title="Resource: {{.RepoDM.Resource}}">
+							<span class="gt-df gt-ac gt-mr-3"><i class="color-icon gt-mr-3" style="background-color: {{GetColorFromString .RepoDM.Subject}}"></i>{{.RepoDM.Subject}}</span>
+						</a>
+					{{end}}
+				</div>
+			</div>
+			<div class="description">
 				{{$description := .DescriptionHTML $.Context}}
 				{{if $description}}
 					<div class="flex-item-body">{{$description}}</div>

@@ -393,6 +393,14 @@ func NotificationWatching(ctx *context.Context) {
 		return
 	}
 	total := int(count)
+
+	/*** DCS Customizations ***/
+	err = repos.LoadLatestDMs(ctx)
+	if err != nil {
+		log.Error("LoadLatestDMs: unable to load DMs for repos")
+	}
+	/*** END DCS Customizations ***/
+
 	ctx.Data["Total"] = total
 	ctx.Data["Repos"] = repos
 

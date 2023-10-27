@@ -588,6 +588,55 @@
         }
       }
     },
+    "/admin/users/spam": {
+      "get": {
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "admin"
+        ],
+        "summary": "List all users considered to be spam. (have a description \u0026 website, last logged in on the day they signed up, and is older than a week)",
+        "operationId": "adminListSpamUsers",
+        "responses": {
+          "200": {
+            "$ref": "#/responses/UserList"
+          },
+          "403": {
+            "$ref": "#/responses/forbidden"
+          }
+        }
+      },
+      "delete": {
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "admin"
+        ],
+        "summary": "Delete spam users - deletes those listed in the spam users list, but WILL NOT delete those that logged in more than 2 days from signing up, have repos, or was created in the last week.",
+        "operationId": "adminDeleteSpamUsers",
+        "parameters": [
+          {
+            "type": "boolean",
+            "description": "purge the users from the system completely",
+            "name": "purge",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "204": {
+            "$ref": "#/responses/empty"
+          },
+          "403": {
+            "$ref": "#/responses/forbidden"
+          },
+          "422": {
+            "$ref": "#/responses/validationError"
+          }
+        }
+      }
+    },
     "/admin/users/{username}": {
       "delete": {
         "produces": [
@@ -3215,7 +3264,7 @@
           },
           {
             "type": "boolean",
-            "description": "if the org has one or more repos that is a gateway laguage, the org will be in the results",
+            "description": "if the org has one or more repos that is a gateway language, the org will be in the results",
             "name": "is_gl",
             "in": "query"
           },
@@ -17929,13 +17978,13 @@
               "type": "string"
             },
             "collectionFormat": "multi",
-            "description": "if the user has one or more repos with the given language(s), the org will be in the results. Multiple lang's are ORed.",
+            "description": "if the user has one or more repos with the given language(s), the user will be in the results. Multiple lang's are ORed.",
             "name": "lang",
             "in": "query"
           },
           {
             "type": "boolean",
-            "description": "if the user has one or more repos that is a gateway laguage, the user will be in the results",
+            "description": "if the user has one or more repos that is a gateway language, the user will be in the results",
             "name": "is_gl",
             "in": "query"
           },
@@ -17978,7 +18027,7 @@
               "type": "string"
             },
             "collectionFormat": "multi",
-            "description": "if the user has one or more repos with the given subject(s), the org will be in the results. Multiple subjects are ORed.",
+            "description": "if the user has one or more repos with the given subject(s), the user will be in the results. Multiple subjects are ORed.",
             "name": "subject",
             "in": "query"
           },
@@ -17994,7 +18043,7 @@
               "type": "string"
             },
             "collectionFormat": "multi",
-            "description": "if the user has one or more repos with the given metadata type(s), the org will be in the results. Multiple metadata types are ORed.",
+            "description": "if the user has one or more repos with the given metadata type(s), the user will be in the results. Multiple metadata types are ORed.",
             "name": "metadataType",
             "in": "query"
           },
@@ -23803,6 +23852,13 @@
           "format": "int64",
           "x-go-name": "Comments"
         },
+        "conflicted_files": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "x-go-name": "ConflictedFiles"
+        },
         "created_at": {
           "type": "string",
           "format": "date-time",
@@ -23816,6 +23872,10 @@
           "type": "string",
           "format": "date-time",
           "x-go-name": "Deadline"
+        },
+        "has_conflicts": {
+          "type": "boolean",
+          "x-go-name": "HasConflicts"
         },
         "head": {
           "$ref": "#/definitions/PRBranchInfo"
