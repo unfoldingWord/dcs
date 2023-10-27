@@ -5,6 +5,7 @@ package dcs
 
 import (
 	"errors"
+	"fmt"
 	"strings"
 )
 
@@ -51,4 +52,18 @@ func ToStringKeys(val interface{}) (interface{}, error) {
 	default:
 		return val, nil
 	}
+}
+
+// GetColorFromString gets a hexidecimal number for a color based on string
+func GetColorFromString(str string) string {
+	hash := 0
+	for i := 0; i < len(str); i++ {
+		hash = int(str[i]) + ((hash << 5) - hash)
+	}
+	color := "#"
+	for i := 0; i < 3; i++ {
+		value := (hash >> (i * 8)) & 0xFF
+		color += fmt.Sprintf("%02x", value)
+	}
+	return color
 }

@@ -51,6 +51,9 @@ type PullRequest struct {
 	Closed *time.Time `json:"closed_at"`
 
 	PinOrder int `json:"pin_order"`
+
+	HasConflicts    bool     `json:"has_conflicts"`    // DCS Customizations
+	ConflictedFiles []string `json:"conflicted_files"` // DCS Customizations
 }
 
 // PRBranchInfo information about a branch
