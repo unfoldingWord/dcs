@@ -3,10 +3,7 @@
 	<div class="item">
 		<div class="ui header gt-df gt-ac">
 			<div class="repo-title">
-			{{$avatar := (repoAvatar .Repo 32 "gt-mr-3")}}
-			{{if $avatar}}
-				{{$avatar}}
-			{{end}}
+			{{template "repo/icon" .Repo}}
 			{{if .Release}}
 				<a class="name" href="{{.Repo.Link}}/releases/tag/{{.Ref | PathEscapeSegments}}">
 			{{else}}
@@ -52,18 +49,18 @@
 		<div class="description">
 			<table>
 				<tr>
-					<td><strong>{{if .Release}}{{$ctx.Locale.Tr "repo.metadata.publisher"}}{{else}}{{$ctx.Locale.Tr "repo.metadata.provider"}}{{end}}:</strong></td>
+					<td><strong>{{if .Release}}{{$.locale.Tr "repo.metadata.publisher"}}{{else}}{{$.locale.Tr "repo.metadata.provider"}}{{end}}:</strong></td>
 					<td><a href="?sort={{$.SortType}}&q=owner%3A{{.Repo.OwnerName}}">{{.Repo.OwnerName}}</a></td>
 				<tr>
-					<td><strong>{{$ctx.Locale.Tr "repo.metadata.subject"}}:</strong></td>
+					<td><strong>{{$.locale.Tr "repo.metadata.subject"}}:</strong></td>
 					<td><a href="?sort={{$.SortType}}&q=subject%3A{{.Subject}}">{{.Subject}}</a></td>
 				</tr>
 				<tr>
-					<td><strong>{{$ctx.Locale.Tr "repo.metadata.resource"}}:</strong></td>
+					<td><strong>{{$.locale.Tr "repo.metadata.resource"}}:</strong></td>
 					<td><a href="?sort={{$.SortType}}&q=resource%3A{{.Resource}}">{{.Resource}}</a></td>
 				</tr>
 				<tr>
-					<td><strong>{{$ctx.Locale.Tr "repo.metadata.metadata_type"}}:</strong></td>
+					<td><strong>{{$.locale.Tr "repo.metadata.metadata_type"}}:</strong></td>
 					<td>
 						<img src="{{AssetUrlPrefix}}/img/dcs/{{.GetMetadataTypeIcon}}" style="height:16px;vertical-align:middle" /> 
 						<a href="?sort={{$.SortType}}&q=metadata_type%3A{{.MetadataType}}">
@@ -72,15 +69,15 @@
 					</td>
 				</tr>
 				<tr>
-					<td><strong>{{$ctx.Locale.Tr "repo.metadata.language"}}:</strong></td>
+					<td><strong>{{$.locale.Tr "repo.metadata.language"}}:</strong></td>
 					<td><a href="?sort={{$.SortType}}&q=lang%3A{{.Language}}">{{.LanguageTitle}} ({{.Language}}, {{.LanguageDirection}})</a></td>
 				</tr>
 				<tr>
-					<td><strong>{{ctx.Locale.Tr "repo.metadata.stage"}}:</strong></td>
+					<td><strong>{{$.locale.Tr "repo.metadata.stage"}}:</strong></td>
 					<td>{{.StageStr}}</td>
 				</tr>
 				<tr>
-					<td><strong>{{ctx.Locale.Tr "repo.metadata.ingredients"}}:</strong></td>
+					<td><strong>{{$.locale.Tr "repo.metadata.ingredients"}}:</strong></td>
 					<td>
 						{{range .Ingredients}}
 							<a href="?sort={{$.SortType}}&q=book%3A{{.Identifier}}">{{.Identifier}}</a>
@@ -88,7 +85,7 @@
 					</td>
 				</tr>
 				<tr>
-					<td><strong>{{if .Release}}{{ctx.Locale.Tr "repo.metadata.release_date"}}{{else}}{{ctx.Locale.Tr "repo.metadata.last_updated"}}{{end}}:</strong></td>
+					<td><strong>{{if .Release}}{{$.locale.Tr "repo.metadata.release_date"}}{{else}}{{$.locale.Tr "repo.metadata.last_updated"}}{{end}}:</strong></td>
 					<td>{{DateTime "full" .ReleaseDateUnix.AsTime}}</td>
 				</tr>
 			</table>
@@ -96,7 +93,7 @@
 	</div>
 	{{else}}
 	<div>
-		{{ctx.Locale.Tr "explore.repo_no_results"}}
+		{{$.locale.Tr "explore.repo_no_results"}}
 	</div>
 	{{end}}
 </div>
