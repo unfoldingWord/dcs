@@ -171,7 +171,7 @@ func NewFuncMap() template.FuncMap {
 		"GetCatalogEntryCount":  dcs.GetCatalogEntryCount,
 		"GetLanguageCount":      dcs.GetLanguageCount,
 		"GetPublisherCount":     dcs.GetPublisherCount,
-		"GetActiveProjectCount": dcs.GetActiveProjctCount,
+		"GetActiveProjectCount": dcs.GetActiveProjectCount,
 		/*** END DCS Customizations ***/
 
 		// -----------------------------------------------------------------
