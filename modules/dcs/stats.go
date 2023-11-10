@@ -87,9 +87,9 @@ func GetPublisherCount() int64 {
 }
 
 // GetActiveProjectCount return the number of repos with a door43metadata release_date_unix in the last 7 days
-func GetActiveProjctCount() int64 {
+func GetActiveProjectCount() int64 {
 	sess := db.GetEngine(db.DefaultContext).Table("door43_metadata").
-		Where("release_date_unix > UNIX_TIMESTAMP(NOW() - INTERVAL 1 WEEK)").
+		Where("release_date_unix > UNIX_TIMESTAMP(NOW() - INTERVAL 30 DAY)").
 		GroupBy("repo_id")
 	count, err := sess.Count()
 	if err != nil {
