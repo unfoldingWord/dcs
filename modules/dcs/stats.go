@@ -53,7 +53,7 @@ func GetUserCount() int64 {
 func GetCatalogEntryCount() int64 {
 	sess := db.GetEngine(db.DefaultContext).Table("door43_metadata").
 		Select("DISTINCT repo_id").
-		Where(builder.Eq{"`door43metadata`.stage": door43metadata.StageProd})
+		Where(builder.Eq{"`door43_metadata`.stage": door43metadata.StageProd})
 	count, err := sess.Count()
 	if err != nil {
 		log.Error("Failed to get number of top catalog entries for stats: %v", err)
