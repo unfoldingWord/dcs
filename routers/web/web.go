@@ -1411,6 +1411,7 @@ func registerRoutes(m *web.Route) {
 
 	/*** DCS Customizations ***/
 	m.Get("/about", dcs.About)
+	m.Get("/tools", dcs.Tools)
 	m.Group("/catalog", func() {
 		m.Get("", dcs.Catalog)
 	}, ignSignIn)
