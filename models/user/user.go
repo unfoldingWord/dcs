@@ -548,6 +548,11 @@ var (
 		"user",
 		"v2",
 		"gitea-actions",
+		/*** DCS Customizations ***/
+		"about",
+		"catalog",
+		"tools",
+		/*** END DCS Customizations ***/
 	}
 
 	// DON'T ADD ANY NEW STUFF, WE SOLVE THIS WITH `/user/{obj}` PATHS!
