@@ -128,6 +128,11 @@ func TestRenameReservedUsername(t *testing.T) {
 		"swagger.v1.json",
 		"user",
 		"v2",
+		/*** DCS Customizations ***/
+		"about",
+		"catalog",
+		"tools",
+		/*** END DCS Customizations ***/
 	}
 
 	session := loginUser(t, "user2")
