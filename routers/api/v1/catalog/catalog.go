@@ -23,33 +23,6 @@ import (
 	"code.gitea.io/gitea/services/convert"
 )
 
-var searchOrderByMap = map[string]map[string]door43metadata.CatalogOrderBy{
-	"asc": {
-		"title":    door43metadata.CatalogOrderByTitle,
-		"subject":  door43metadata.CatalogOrderBySubject,
-		"resource": door43metadata.CatalogOrderByResource,
-		"reponame": door43metadata.CatalogOrderByRepoName,
-		"released": door43metadata.CatalogOrderByOldest,
-		"lang":     door43metadata.CatalogOrderByLangCode,
-		"releases": door43metadata.CatalogOrderByReleases,
-		"stars":    door43metadata.CatalogOrderByStars,
-		"forks":    door43metadata.CatalogOrderByForks,
-		"tag":      door43metadata.CatalogOrderByTag,
-	},
-	"desc": {
-		"title":    door43metadata.CatalogOrderByTitleReverse,
-		"subject":  door43metadata.CatalogOrderBySubjectReverse,
-		"resouce":  door43metadata.CatalogOrderByResourceReverse,
-		"reponame": door43metadata.CatalogOrderByRepoNameReverse,
-		"released": door43metadata.CatalogOrderByNewest,
-		"lang":     door43metadata.CatalogOrderByLangCodeReverse,
-		"releases": door43metadata.CatalogOrderByReleasesReverse,
-		"stars":    door43metadata.CatalogOrderByStarsReverse,
-		"forks":    door43metadata.CatalogOrderByForksReverse,
-		"tag":      door43metadata.CatalogOrderByTagReverse,
-	},
-}
-
 // Search search the catalog via options
 func Search(ctx *context.APIContext) {
 	// swagger:operation GET /catalog/search catalog catalogSearch
@@ -1040,19 +1013,6 @@ func GetCatalogMetadata(ctx *context.APIContext) {
 	ctx.JSON(http.StatusOK, dm.Metadata)
 }
 
-// QueryStrings After calling QueryStrings on the context, it also separates strings that have commas into substrings
-func QueryStrings(ctx *context.APIContext, name string) []string {
-	strs := ctx.FormStrings(name)
-	if len(strs) == 0 {
-		return strs
-	}
-	var newStrs []string
-	for _, str := range strs {
-		newStrs = append(newStrs, door43metadata.SplitAtCommaNotInString(str, false)...)
-	}
-	return newStrs
-}
-
 func searchCatalog(ctx *context.APIContext) {
 	var repoID int64
 	var owners, repos []string
@@ -1062,9 +1022,9 @@ func searchCatalog(ctx *context.APIContext) {
 		if ctx.Params("username") != "" {
 			owners = []string{ctx.Params("username")}
 		} else {
-			owners = QueryStrings(ctx, "owner")
+			owners = ctx.QueryStrings("owner")
 		}
-		repos = QueryStrings(ctx, "repo")
+		repos = ctx.QueryStrings("repo")
 	}
 
 	stageStr := ctx.FormString("stage")
@@ -1078,13 +1038,13 @@ func searchCatalog(ctx *context.APIContext) {
 		}
 	}
 
-	metadataTypes := QueryStrings(ctx, "metadataType")
-	metadataVersions := QueryStrings(ctx, "metadataVersion")
+	metadataTypes := ctx.QueryStrings("metadataType")
+	metadataVersions := ctx.QueryStrings("metadataVersion")
 
 	keywords := []string{}
 	query := strings.Trim(ctx.FormString("q"), " ")
 	if query != "" {
-		keywords = door43metadata.SplitAtCommaNotInString(query, false)
+		keywords = util.SplitAtCommaNotInString(query, false)
 	}
 	listOptions := db.ListOptions{
 		Page:     ctx.FormInt("page"),
@@ -1100,15 +1060,15 @@ func searchCatalog(ctx *context.APIContext) {
 		Owners:           owners,
 		Repos:            repos,
 		RepoID:           repoID,
-		Tags:             QueryStrings(ctx, "tag"),
+		Tags:             ctx.QueryStrings("tag"),
 		Stage:            stage,
-		Languages:        QueryStrings(ctx, "lang"),
+		Languages:        ctx.QueryStrings("lang"),
 		LanguageIsGL:     ctx.FormOptionalBool("is_gl"),
-		Subjects:         QueryStrings(ctx, "subject"),
-		Resources:        QueryStrings(ctx, "resource"),
-		ContentFormats:   QueryStrings(ctx, "format"),
-		CheckingLevels:   QueryStrings(ctx, "checkingLevel"),
-		Books:            QueryStrings(ctx, "book"),
+		Subjects:         ctx.QueryStrings("subject"),
+		Resources:        ctx.QueryStrings("resource"),
+		ContentFormats:   ctx.QueryStrings("format"),
+		CheckingLevels:   ctx.QueryStrings("checkingLevel"),
+		Books:            ctx.QueryStrings("book"),
 		IncludeHistory:   ctx.FormBool("includeHistory"),
 		ShowIngredients:  ctx.FormOptionalBool("showIngredients"),
 		MetadataTypes:    metadataTypes,
@@ -1116,7 +1076,7 @@ func searchCatalog(ctx *context.APIContext) {
 		PartialMatch:     ctx.FormBool("partialMatch"),
 	}
 
-	sortModes := QueryStrings(ctx, "sort")
+	sortModes := ctx.QueryStrings("sort")
 	if len(sortModes) > 0 {
 		sortOrder := ctx.FormString("order")
 		if sortOrder == "" {
@@ -1201,8 +1161,8 @@ func getSingleDMFieldList(ctx *context.APIContext, field string) ([]string, erro
 		}
 	}
 
-	metadataTypes := QueryStrings(ctx, "metadataType")
-	metadataVersions := QueryStrings(ctx, "metadataVersion")
+	metadataTypes := ctx.QueryStrings("metadataType")
+	metadataVersions := ctx.QueryStrings("metadataVersion")
 
 	listOptions := db.ListOptions{
 		ListAll: true,
@@ -1210,17 +1170,17 @@ func getSingleDMFieldList(ctx *context.APIContext, field string) ([]string, erro
 
 	opts := &door43metadata.SearchCatalogOptions{
 		ListOptions:      listOptions,
-		Owners:           QueryStrings(ctx, "owner"),
-		Repos:            QueryStrings(ctx, "repos"),
-		Tags:             QueryStrings(ctx, "tag"),
+		Owners:           ctx.QueryStrings("owner"),
+		Repos:            ctx.QueryStrings("repos"),
+		Tags:             ctx.QueryStrings("tag"),
 		Stage:            stage,
-		Languages:        QueryStrings(ctx, "lang"),
+		Languages:        ctx.QueryStrings("lang"),
 		LanguageIsGL:     ctx.FormOptionalBool("is_gl"),
-		Subjects:         QueryStrings(ctx, "subject"),
-		Resources:        QueryStrings(ctx, "resource"),
-		ContentFormats:   QueryStrings(ctx, "format"),
-		CheckingLevels:   QueryStrings(ctx, "checkingLevel"),
-		Books:            QueryStrings(ctx, "book"),
+		Subjects:         ctx.QueryStrings("subject"),
+		Resources:        ctx.QueryStrings("resource"),
+		ContentFormats:   ctx.QueryStrings("format"),
+		CheckingLevels:   ctx.QueryStrings("checkingLevel"),
+		Books:            ctx.QueryStrings("book"),
 		IncludeHistory:   ctx.FormBool("includeHistory"),
 		ShowIngredients:  ctx.FormOptionalBool("showIngredients"),
 		MetadataTypes:    metadataTypes,
@@ -1228,7 +1188,7 @@ func getSingleDMFieldList(ctx *context.APIContext, field string) ([]string, erro
 		PartialMatch:     ctx.FormBool("partialMatch"),
 	}
 
-	sortModes := QueryStrings(ctx, "sort")
+	sortModes := ctx.QueryStrings("sort")
 	if len(sortModes) > 0 {
 		sortOrder := ctx.FormString("order")
 		if sortOrder == "" {

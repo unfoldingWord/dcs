@@ -15,21 +15,26 @@ import (
 	"code.gitea.io/gitea/modules/base"
 	"code.gitea.io/gitea/modules/context"
 	"code.gitea.io/gitea/modules/setting"
+	"code.gitea.io/gitea/modules/util"
 )
 
 const (
 	// tplCatalog catalog page template.
-	tplCatalog base.TplName = "catalog/catalog"
+	tplCatalogEntries    base.TplName = "catalog/entries"
+	tplCatalogLanguages  base.TplName = "catalog/languages"
+	tplCatalogPublishers base.TplName = "catalog/publishers"
 )
 
 // CatalogSearchOptions when calling search catalog
 type CatalogSearchOptions struct {
-	PageSize int
-	TplName  base.TplName
+	PageSize    int
+	TplName     base.TplName
+	GroupBy     door43metadata.CatalogGroupBy
+	DefaultSort string
 }
 
-// RenderCatalogSearch render catalog search page
-func RenderCatalogSearch(ctx *context.Context, opts *CatalogSearchOptions) {
+// RenderCatalogEntriesSearch render catalog entries search page
+func RenderCatalogEntriesSearch(ctx *context.Context, opts *CatalogSearchOptions) {
 	page := ctx.FormInt("page")
 	if page <= 0 {
 		page = 1
@@ -42,8 +47,12 @@ func RenderCatalogSearch(ctx *context.Context, opts *CatalogSearchOptions) {
 		orderBy door43metadata.CatalogOrderBy
 	)
 
-	ctx.Data["SortType"] = ctx.FormString("sort")
-	switch ctx.FormString("sort") {
+	sort := ctx.FormString("sort")
+	if sort == "" {
+		sort = opts.DefaultSort
+	}
+	ctx.Data["SortType"] = sort
+	switch sort {
 	case "newest":
 		orderBy = door43metadata.CatalogOrderByNewest
 	case "oldest":
@@ -64,6 +73,10 @@ func RenderCatalogSearch(ctx *context.Context, opts *CatalogSearchOptions) {
 		orderBy = door43metadata.CatalogOrderByRepoNameReverse
 	case "repo":
 		orderBy = door43metadata.CatalogOrderByRepoName
+	case "reverseowner":
+		orderBy = door43metadata.CatalogOrderByOwnerReverse
+	case "owner":
+		orderBy = door43metadata.CatalogOrderByOwner
 	case "reversetag":
 		orderBy = door43metadata.CatalogOrderByTagReverse
 	case "tag":
@@ -72,6 +85,8 @@ func RenderCatalogSearch(ctx *context.Context, opts *CatalogSearchOptions) {
 		orderBy = door43metadata.CatalogOrderByLangCodeReverse
 	case "langcode":
 		orderBy = door43metadata.CatalogOrderByLangCode
+	case "langtitle":
+		orderBy = door43metadata.CatalogOrderByLangTitle
 	case "mostreleases":
 		orderBy = door43metadata.CatalogOrderByReleasesReverse
 	case "fewestreleases":
@@ -93,7 +108,7 @@ func RenderCatalogSearch(ctx *context.Context, opts *CatalogSearchOptions) {
 	stage := door43metadata.StageProd
 	query := strings.Trim(ctx.FormString("q"), " ")
 	if query != "" {
-		for _, token := range door43metadata.SplitAtCommaNotInString(query, true) {
+		for _, token := range util.SplitAtCommaNotInString(query, true) {
 			if strings.HasPrefix(token, "book:") {
 				books = append(books, strings.TrimPrefix(token, "book:"))
 			} else if strings.HasPrefix(token, "lang:") {
@@ -148,6 +163,7 @@ func RenderCatalogSearch(ctx *context.Context, opts *CatalogSearchOptions) {
 		MetadataVersions: metadataVersions,
 		Tags:             tags,
 		CheckingLevels:   checkingLevels,
+		GroupBy:          opts.GroupBy,
 	})
 	if err != nil {
 		ctx.ServerError("SearchCatalog", err)
@@ -166,14 +182,40 @@ func RenderCatalogSearch(ctx *context.Context, opts *CatalogSearchOptions) {
 	ctx.HTML(200, opts.TplName)
 }
 
-// Catalog render catalog page
-func Catalog(ctx *context.Context) {
-	ctx.Data["Title"] = ctx.Tr("catalog")
-	ctx.Data["PageIsCatalog"] = true
-	ctx.Data["IsRepoIndexerEnabled"] = setting.Indexer.RepoIndexerEnabled
+// CatalogEntries render catalog entries page
+func CatalogEntries(ctx *context.Context) {
+	ctx.Data["Title"] = ctx.Tr("catalog.entries")
+	ctx.Data["PageIsCatalogEntries"] = true
 
-	RenderCatalogSearch(ctx, &CatalogSearchOptions{
-		PageSize: setting.UI.ExplorePagingNum,
-		TplName:  tplCatalog,
+	RenderCatalogEntriesSearch(ctx, &CatalogSearchOptions{
+		PageSize:    setting.UI.ExplorePagingNum,
+		TplName:     tplCatalogEntries,
+		DefaultSort: "newest",
+	})
+}
+
+// CatalogLanguages render catalog languages page
+func CatalogLanguages(ctx *context.Context) {
+	ctx.Data["Title"] = ctx.Tr("catalog.languages")
+	ctx.Data["PageIsCatalogLanguages"] = true
+
+	RenderCatalogEntriesSearch(ctx, &CatalogSearchOptions{
+		PageSize:    setting.UI.ExplorePagingNum,
+		TplName:     tplCatalogLanguages,
+		DefaultSort: "langcode",
+		GroupBy:     door43metadata.CatalogGroupByLanguage,
+	})
+}
+
+// CatalogPublishers render catalog publishers page
+func CatalogPublishers(ctx *context.Context) {
+	ctx.Data["Title"] = ctx.Tr("catalog.publishers")
+	ctx.Data["PageIsCatalogPublishers"] = true
+
+	RenderCatalogEntriesSearch(ctx, &CatalogSearchOptions{
+		PageSize:    setting.UI.ExplorePagingNum,
+		TplName:     tplCatalogPublishers,
+		DefaultSort: "owner",
+		GroupBy:     door43metadata.CatalogGroupByOwner,
 	})
 }

@@ -8,7 +8,6 @@ import (
 	"strings"
 
 	"code.gitea.io/gitea/models/db"
-	"code.gitea.io/gitea/models/door43metadata"
 	"code.gitea.io/gitea/models/organization"
 	repo_model "code.gitea.io/gitea/models/repo"
 	user_model "code.gitea.io/gitea/models/user"
@@ -18,6 +17,7 @@ import (
 	"code.gitea.io/gitea/modules/markup"
 	"code.gitea.io/gitea/modules/markup/markdown"
 	"code.gitea.io/gitea/modules/setting"
+	"code.gitea.io/gitea/modules/util"
 )
 
 const (
@@ -99,7 +99,7 @@ func Home(ctx *context.Context) {
 	/*** DCS Customizations ***/
 	var books, langs, keywords, subjects, resources, contentFormats, repoNames, owners, metadataTypes, metadataVersions []string
 	if keyword != "" {
-		for _, token := range door43metadata.SplitAtCommaNotInString(keyword, true) {
+		for _, token := range util.SplitAtCommaNotInString(keyword, true) {
 			if strings.HasPrefix(token, "book:") {
 				books = append(books, strings.TrimPrefix(token, "book:"))
 			} else if strings.HasPrefix(token, "lang:") {

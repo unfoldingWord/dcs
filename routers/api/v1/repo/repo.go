@@ -28,7 +28,6 @@ import (
 	"code.gitea.io/gitea/modules/util"
 	"code.gitea.io/gitea/modules/validation"
 	"code.gitea.io/gitea/modules/web"
-	"code.gitea.io/gitea/routers/api/v1/catalog"
 	"code.gitea.io/gitea/routers/api/v1/utils"
 	"code.gitea.io/gitea/services/convert"
 	"code.gitea.io/gitea/services/issue"
@@ -201,15 +200,15 @@ func Search(ctx *context.APIContext) {
 		StarredByID:        ctx.FormInt64("starredBy"),
 		IncludeDescription: ctx.FormBool("includeDesc"),
 		/*** DCS Customizations ***/
-		Languages:        catalog.QueryStrings(ctx, "lang"),
-		Repos:            catalog.QueryStrings(ctx, "repo"),
-		Owners:           catalog.QueryStrings(ctx, "owner"),
-		Subjects:         catalog.QueryStrings(ctx, "subject"),
-		Resources:        catalog.QueryStrings(ctx, "resource"),
-		ContentFormats:   catalog.QueryStrings(ctx, "format"),
-		Books:            catalog.QueryStrings(ctx, "book"),
-		MetadataTypes:    catalog.QueryStrings(ctx, "metadataType"),
-		MetadataVersions: catalog.QueryStrings(ctx, "metadataVersion"),
+		Languages:        catalog.ctx.QueryStrings("lang"),
+		Repos:            catalog.ctx.QueryStrings("repo"),
+		Owners:           catalog.ctx.QueryStrings("owner"),
+		Subjects:         catalog.ctx.QueryStrings("subject"),
+		Resources:        catalog.ctx.QueryStrings("resource"),
+		ContentFormats:   catalog.ctx.QueryStrings("format"),
+		Books:            catalog.ctx.QueryStrings("book"),
+		MetadataTypes:    catalog.ctx.QueryStrings("metadataType"),
+		MetadataVersions: catalog.ctx.QueryStrings("metadataVersion"),
 		LanguageIsGL:     ctx.FormOptionalBool("is_gl"),
 		/*** END DCS Customizations ***/
 	}

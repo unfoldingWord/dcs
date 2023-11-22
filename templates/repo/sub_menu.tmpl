@@ -24,7 +24,7 @@
 			{{if .Repository.RepoDM}}
 				{{if .Repository.RepoDM.Language}}
 					<div class="item">
-						<a class="ui" href="{{AppSubUrl}}/explore/repos?q=lang:{{.Repository.RepoDM.Language}}" title="Is a{{if .Repository.RepoDM.LanguageIsGL}} Gateway{{else}}n Other{{end}} Language"><i class="fa fa-language"></i> <span style="font-weight: bold"><span data-language="{{.Repository.RepoDM.Language}}" data-language-direction="{{.Repository.RepoDM.LanguageDirection}}">{{.Repository.RepoDM.LanguageTitle}}</span> ({{.Repository.RepoDM.Language}}){{if .Repository.RepoDM.LanguageIsGL}}*{{end}}</span></a>
+						<a class="ui" href="{{AppSubUrl}}/explore/repos?q=lang:{{.Repository.RepoDM.Language}}" title="Is a{{if .Repository.RepoDM.LanguageIsGL}} Gateway{{else}}n Other{{end}} Language">{{svg "octicon-globe"}} <span style="font-weight: bold"><span data-language="{{.Repository.RepoDM.Language}}" data-language-direction="{{.Repository.RepoDM.LanguageDirection}}">{{.Repository.RepoDM.LanguageTitle}}</span> ({{.Repository.RepoDM.Language}}){{if .Repository.RepoDM.LanguageIsGL}}*{{end}}</span></a>
 					</div>
 				{{end}}
 				{{if .Repository.RepoDM.MetadataType}}

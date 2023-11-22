@@ -75,6 +75,10 @@ func SearchCatalogByCondition(ctx context.Context, opts *door43metadata.SearchCa
 		sess.OrderBy(orderBy.String())
 	}
 
+	if opts.GroupBy != "" {
+		sess.GroupBy(opts.GroupBy.String())
+	}
+
 	if opts.PageSize > 0 || opts.Page > 1 {
 		sess.Limit(opts.PageSize, (opts.Page-1)*opts.PageSize)
 	}
@@ -83,8 +87,10 @@ func SearchCatalogByCondition(ctx context.Context, opts *door43metadata.SearchCa
 		return nil, 0, fmt.Errorf("FindAndCount: %v", err)
 	}
 
-	if err = dms.LoadAttributes(ctx); err != nil {
-		return nil, 0, fmt.Errorf("LoadAttributes: %v", err)
+	if opts.GroupBy == "" {
+		if err = dms.LoadAttributes(ctx); err != nil {
+			return nil, 0, fmt.Errorf("LoadAttributes: %v", err)
+		}
 	}
 
 	return dms, count, nil

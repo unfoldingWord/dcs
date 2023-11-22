@@ -1,5 +1,6 @@
 {{template "base/head" .}}
-<div class="explore repositories catalog" style="padding-top: 15px;">
+<div role="main" aria-label="{{.Title}}" class="page-content explore repositories catalog" style="padding-top: 15px;">
+	{{template "catalog/navbar" .}}
 	<div class="ui container">
 		{{template "catalog/catalog_search" .}}
 		{{template "catalog/catalog_list" .}}

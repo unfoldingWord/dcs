@@ -1,0 +1,11 @@
+<div class="ui secondary pointing tabular top attached borderless menu new-menu navbar">
+	<a class="{{if .PageIsCatalogEntries}}active {{end}}item" href="{{AppSubUrl}}/catalog/entries">
+		{{svg "octicon-repo"}} {{.locale.Tr "catalog.entries"}}
+	</a>
+	<a class="{{if .PageIsCatalogLanguages}}active {{end}}item" href="{{AppSubUrl}}/catalog/languages">
+		{{svg "octicon-globe"}} {{.locale.Tr "catalog.languages"}}
+	</a>
+	<a class="{{if .PageIsCatalogPublishers}}active {{end}}item" href="{{AppSubUrl}}/catalog/publishers">
+		{{svg "octicon-book"}} {{.locale.Tr "catalog.publishers"}}
+	</a>
+</div>
