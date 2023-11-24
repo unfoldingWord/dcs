@@ -1,699 +1,720 @@
 {{template "base/head" .}}
 <style>
-.full.height {
-  padding-bottom: 0 !important;
-}
-/*** FROM HOME ***/
-.container-width {
-  max-width: 1364px;
-  margin: 0 auto;
-  padding-left: 32px;
-  padding-right: 32px;
-  width: 100%;
-}
-.card {
-  padding: 56px 36px;
-  background: #333333;
-  border-radius: 24px;
-  width: 100%;
-  flex: 0 1 auto;
-}
-.card-link {
-  color: white;
-  text-decoration: underline;
-}
-.card-link:hover,
-.card-link:active {
-  color: #78b4ef;
-}
-@media (max-width: 1180px) {
-  .card {
-    flex: 1 0 45%;
-  }
-}
-@media (max-width: 767px) {
-  .card {
-    background: initial;
-    padding: 16px 0px;
-  }
-}
-
-@media (max-width: 575px) {
-  .container-width {
-    padding-left: 12px;
-    padding-right: 12px;
-  }
-}
-/*** END FROM HOME ***/
-
-.tools-bg {
-  padding: 156px 0px 254px;
-  color: white;
-  background: url(assets/img/dcs/tools.jpg);
-  background-position: 53% 28%;
-  background-repeat: no-repeat;
-  background-size: cover;
-}
-.tools-bg .card {
-  width: 60%;
-  padding: 32px;
-}
-.tools-bg h1 {
-  font-weight: 600;
-  font-size: 40px;
-  margin-bottom: 24px;
-}
-.tools-content {
-  color: #1e1e1e;
-  font-size: 16px;
-  font-weight: 400;
-  font-family: Inter, sans-serif;
-  word-wrap: break-word;
-  padding-bottom: 80px;
-  background-color: white;
-}
-.tools-header {
-  font-size: 36px;
-  font-weight: 800;
-  margin-top: 150px;
-  margin-bottom: 24px;
-}
-.tools {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 40px 32px;
-}
-.tool {
-  padding: 32px 32px 0px;
-  background: #f4f4f4;
-  border-radius: 12px;
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  min-height: 360px;
-}
-.tool-title {
-  color: #aac906;
-  font-size: 20px;
-  font-weight: 600;
-  margin-bottom: 8px;
-  margin-right: 24px;
-}
-.tool-subtitle {
-  font-weight: 600;
-}
-.tool-content {
-  margin-top: 32px;
-  margin-bottom: 32px;
-  flex-grow: 1;
-}
-.tool-more {
-  padding: 24px;
-  border-top: 1px solid #333;
-  text-align: center;
-  cursor: pointer;
-}
-.tool-links {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-.tool-button {
-  display: block;
-  padding: 12px;
-  border-radius: 12px;
-  text-align: center;
-  cursor: pointer;
-  background-color: white;
-  font-weight: 600;
-  color: #333;
-}
-.tool-button:hover {
-  background-color: #aac906;
-  color: white;
-  text-decoration: none;
-}
-.tool-link {
-  text-decoration: underline;
-  color: #1e1e1e;
-}
-.tool-link:hover {
-  color: #78b4ef;
-}
-.tool-content ul li {
-  padding-top: 8px;
-}
-.extra {
-  /* display: none; */
-  padding: 32px;
-  overflow: hidden;
-  background: #333333;
-  border-radius: 12px;
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  box-shadow: 0px 4px 104px #0008;
-  color: white;
-  z-index: 2;
-  visibility: hidden;
-  max-height: 100%;
-  opacity: 0;
-  transition: opacity 0.25s, visibility 0s 0.25s, max-height 0s 0.25s;
-}
-.extra.show {
-  /* display: block; */
-  max-height: 400%;
-  visibility: visible;
-  opacity: 1;
-  transition: opacity 0.25s, visibility 0s, max-height 0s;
-}
-
-.extra-close {
-  position: absolute;
-  right: 16px;
-  top: 16px;
-  width: 24px;
-  height: 24px;
-  opacity: 0.3;
-  cursor: pointer;
-}
-.extra-close:hover {
-  opacity: 1;
-}
-.extra-close:before,
-.extra-close:after {
-  position: absolute;
-  left: 11px;
-  content: ' ';
-  height: 25px;
-  width: 2px;
-  background-color: white;
-}
-.extra-close:before {
-  transform: rotate(45deg);
-}
-.extra-close:after {
-  transform: rotate(-45deg);
-}
-
-@media (max-width: 1180px) {
-  .tools-bg {
-    background-position: 69% 28%;
-  }
-  .tools {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-}
-
-@media (max-width: 991px) {
-  .tools-bg {
-    background-position: 73% 28%;
-  }
-  .tools-bg .card {
-    width: 100%;
-  }
-}
-
-@media (max-width: 767px) {
-  .tools-bg {
-    background-position: 80% 28%;
-    padding: 100px 0px 200px;
-  }
-  .tools {
-    grid-template-columns: repeat(1, minmax(0, 1fr));
-  }
-  .tools-header,
-  .tools-bg h1 {
-    font-size: 32px;
-  }
-  .tools-bg .card {
-    background-color: #333333;
-  }
-}
-
-@media (max-width: 575px) {
-  .tools-bg .card {
-    padding: 16px;
-  }
-  .tool,
-  .extra {
-    padding-left: 16px;
-    padding-right: 16px;
-  }
-}
+   .full.height {
+   padding-bottom: 0 !important;
+   }
+   /*** FROM HOME ***/
+   .container-width {
+   max-width: 1364px;
+   margin: 0 auto;
+   padding-left: 32px;
+   padding-right: 32px;
+   width: 100%;
+   }
+   .card {
+   padding: 56px 36px;
+   background: #333333;
+   border-radius: 24px;
+   width: 100%;
+   flex: 0 1 auto;
+   }
+   .card-link {
+   color: white;
+   text-decoration: underline;
+   }
+   .card-link:hover,
+   .card-link:active {
+   color: #78b4ef;
+   }
+   @media (max-width: 1180px) {
+   .card {
+   flex: 1 0 45%;
+   }
+   }
+   @media (max-width: 767px) {
+   .card {
+   background: initial;
+   padding: 16px 0px;
+   }
+   }
+   @media (max-width: 575px) {
+   .container-width {
+   padding-left: 12px;
+   padding-right: 12px;
+   }
+   }
+   /*** END FROM HOME ***/
+   .tools-bg {
+   padding: 156px 0px 254px;
+   color: white;
+   background: url(assets/img/dcs/tools.jpg);
+   background-position: 53% 28%;
+   background-repeat: no-repeat;
+   background-size: cover;
+   }
+   .tools-bg .card {
+   width: 60%;
+   padding: 32px;
+   }
+   .tools-bg h1 {
+   font-weight: 600;
+   font-size: 40px;
+   margin-bottom: 24px;
+   }
+   .tools-content {
+   color: #1e1e1e;
+   font-size: 16px;
+   font-weight: 400;
+   font-family: Inter, sans-serif;
+   word-wrap: break-word;
+   padding-bottom: 80px;
+   background-color: white;
+   }
+   .tools-header {
+   font-size: 36px;
+   font-weight: 800;
+   margin-top: 150px;
+   margin-bottom: 24px;
+   }
+   .tools {
+   display: grid;
+   grid-template-columns: repeat(3, minmax(0, 1fr));
+   gap: 40px 32px;
+   }
+   .tool {
+   padding: 32px 32px 0px;
+   background: #f4f4f4;
+   border-radius: 12px;
+   position: relative;
+   display: flex;
+   flex-direction: column;
+   min-height: 360px;
+   }
+   .tool-title {
+   color: #aac906;
+   font-size: 20px;
+   font-weight: 600;
+   margin-bottom: 8px;
+   margin-right: 24px;
+   }
+   .tool-subtitle {
+   font-weight: 600;
+   }
+   .tool-content {
+   margin-top: 32px;
+   margin-bottom: 32px;
+   flex-grow: 1;
+   }
+   .tool-more {
+   padding: 24px;
+   border-top: 1px solid #333;
+   text-align: center;
+   cursor: pointer;
+   }
+   .tool-links {
+   display: flex;
+   flex-direction: column;
+   gap: 12px;
+   }
+   .tool-button {
+   display: block;
+   padding: 12px;
+   border-radius: 12px;
+   text-align: center;
+   cursor: pointer;
+   background-color: white;
+   font-weight: 600;
+   color: #333;
+   }
+   .tool-button:hover {
+   background-color: #aac906;
+   color: white;
+   text-decoration: none;
+   }
+   .tool-link {
+   text-decoration: underline;
+   color: #1e1e1e;
+   }
+   .tool-link:hover {
+   color: #78b4ef;
+   }
+   .tool-content ul li {
+   padding-top: 8px;
+   }
+   .extra {
+   /* display: none; */
+   padding: 32px;
+   overflow: hidden;
+   background: #333333;
+   border-radius: 12px;
+   position: absolute;
+   top: 0;
+   left: 0;
+   right: 0;
+   box-shadow: 0px 4px 104px #0008;
+   color: white;
+   z-index: 2;
+   visibility: hidden;
+   max-height: 100%;
+   opacity: 0;
+   transition: opacity 0.25s, visibility 0s 0.25s, max-height 0s 0.25s;
+   }
+   .extra.show {
+   /* display: block; */
+   max-height: 400%;
+   visibility: visible;
+   opacity: 1;
+   transition: opacity 0.25s, visibility 0s, max-height 0s;
+   }
+   .extra-close {
+   position: absolute;
+   right: 16px;
+   top: 16px;
+   width: 24px;
+   height: 24px;
+   opacity: 0.3;
+   cursor: pointer;
+   }
+   .extra-close:hover {
+   opacity: 1;
+   }
+   .extra-close:before,
+   .extra-close:after {
+   position: absolute;
+   left: 11px;
+   content: ' ';
+   height: 25px;
+   width: 2px;
+   background-color: white;
+   }
+   .extra-close:before {
+   transform: rotate(45deg);
+   }
+   .extra-close:after {
+   transform: rotate(-45deg);
+   }
+   @media (max-width: 1180px) {
+   .tools-bg {
+   background-position: 69% 28%;
+   }
+   .tools {
+   grid-template-columns: repeat(2, minmax(0, 1fr));
+   }
+   }
+   @media (max-width: 991px) {
+   .tools-bg {
+   background-position: 73% 28%;
+   }
+   .tools-bg .card {
+   width: 100%;
+   }
+   }
+   @media (max-width: 767px) {
+   .tools-bg {
+   background-position: 80% 28%;
+   padding: 100px 0px 200px;
+   }
+   .tools {
+   grid-template-columns: repeat(1, minmax(0, 1fr));
+   }
+   .tools-header,
+   .tools-bg h1 {
+   font-size: 32px;
+   }
+   .tools-bg .card {
+   background-color: #333333;
+   }
+   }
+   @media (max-width: 575px) {
+   .tools-bg .card {
+   padding: 16px;
+   }
+   .tool,
+   .extra {
+   padding-left: 16px;
+   padding-right: 16px;
+   }
+   }
 </style>
-
 <!-- Tools Page -->
-    <div class="tools-content">
-      <div class="tools-bg">
-        <div class="container-width">
-          <div class="card">
+<div class="tools-content">
+   <div class="tools-bg">
+      <div class="container-width">
+         <div class="card">
             <h1>translationCore toolset overview</h1>
             <p>The translationCore toolset is a suite of open-licensed tools for creating, revising,
-              translating, and checking biblical materials. This toolset enables translation teams to
-              review their text against Gateway Language resources that are accessible in a growing
-              number of major languages. These resources are developed by Gateway Language
-              church networks using various tools within the translationCore toolset and serve as
-              essential aids throughout their Scripture translation process. Our goal with the
-              translationCore toolset is to enhance the overall quality of translations across every
-              process step. The toolset includes:</p>
-          </div>
-        </div>
+               translating, and checking biblical materials. This toolset enables translation teams to
+               review their text against Gateway Language resources that are accessible in a growing
+               number of major languages. These resources are developed by Gateway Language
+               church networks using various tools within the translationCore toolset and serve as
+               essential aids throughout their Scripture translation process. Our goal with the
+               translationCore toolset is to enhance the overall quality of translations across every
+               process step. The toolset includes:
+            </p>
+         </div>
       </div>
-      <div class="container-width" style="margin-top: -150px;">
-        <h1 class="tools-header" style="color: white;">Translation</h1>
-        <div class="tools">
-          <div class="tool Scribe">
+   </div>
+   <div class="container-width" style="margin-top: -150px;">
+      <h1 class="tools-header" style="color: white;">Translation</h1>
+      <div class="tools">
+         <div class="tool Scribe">
             <div>
-              <div class="tool-title">Scribe Scripture Editor (Scribe SE)</div>
-              <div class="tool-subtitle">Desktop Scripture translation editor</div>
+               <div class="tool-title">Scribe Scripture Editor (Scribe SE)</div>
+               <div class="tool-subtitle">Desktop Scripture translation editor</div>
             </div>
             <div class="tool-content">
-              <p>Scribe SE is an offline and online tool that facilitates the translation and drafting of Scripture
-                text,
-                audio
-                Scripture, and foundational Bible stories, namely Open Bible Stories (OBS). The translators can access
-                para-scriptural
-                resources that help provide contextual accuracy to the translated text.</p>
-            </div>
-            <div class="tool-more tool-link" onclick="showExtra(this)">
-              Learn more
-            </div>
-            <div class="extra">
-              <div class="extra-close"></div>
-              <div class="tool-title">Scribe Scripture Editor (Scribe SE)</div>
-              <div class="tool-subtitle">Desktop Scripture translation editor</div>
-              <div class="tool-content">
-                <p>Scribe SE is an offline and online tool that facilitates the translation and drafting of Scripture
+               <p>Scribe SE is an offline and online tool that facilitates the translation and drafting of Scripture
                   text,
                   audio
                   Scripture, and foundational Bible stories, namely Open Bible Stories (OBS). The translators can access
                   para-scriptural
-                  resources that help provide contextual accuracy to the translated text.</p>
-                <p>The primary users of Scribe SE are minority language translators who use it to:</p>
-                <ul>
-                  <li>translate Scripture</li>
-                  <li>translate oral Bible communication</li>
-                  <li>translate foundational Bible stories (OBS)</li>
-                </ul>
-              </div>
-              <div class="tool-links">
-                <a class="tool-button" href="https://scribe.bible/" target="_blank">Website</a>
-                <a class="tool-button" href="https://github.com/bible-technology/scribe-scripture-editor/releases/"
-                  target="_blank">Download</a>
-                <a class="tool-button" href="https://github.com/bible-technology/scribe-scripture-editor/"
-                  target="_blank">Code
-                  base</a>
-                <a class="tool-button" href="https://docs.scribe.bible/" target="_blank">Documentation</a>
-              </div>
-            </div>
-          </div>
-          <div class="tool gTranslate">
-            <div>
-              <div class="tool-title">gatewayTranslate</div>
-              <div class="tool-subtitle">Bible resource translation tool</div>
-            </div>
-            <div class="tool-content">
-              <p>gatewayTranslate is a comprehensive tool for developing biblical resources such as
-                Translation Notes, Key Terms, etc. This tool aims to support Scripture translation,
-                alignment editing, and creation of para-scriptural resources. The Gateway Language
-                Book Packages developed using gatewayTranslate will become the basis for quality
-                assurance and checks of any translated Scripture text associated with that specific
-                language.</p>
+                  resources that help provide contextual accuracy to the translated text.
+               </p>
             </div>
             <div class="tool-more tool-link" onclick="showExtra(this)">
-              Learn more
+               Learn more
             </div>
             <div class="extra">
-              <div class="extra-close"></div>
-              <div class="tool-title">gatewayTranslate</div>
-              <div class="tool-subtitle">Bible resource translation tool</div>
-              <div class="tool-content">
-                <p>gatewayTranslate is a comprehensive tool for developing biblical resources such as
+               <div class="extra-close"></div>
+               <div class="tool-title">Scribe Scripture Editor (Scribe SE)</div>
+               <div class="tool-subtitle">Desktop Scripture translation editor</div>
+               <div class="tool-content">
+                  <p>Scribe SE is an offline and online tool that facilitates the translation and drafting of Scripture
+                     text,
+                     audio
+                     Scripture, and foundational Bible stories, namely Open Bible Stories (OBS). The translators can access
+                     para-scriptural
+                     resources that help provide contextual accuracy to the translated text.
+                  </p>
+                  <p>The primary users of Scribe SE are minority language translators who use it to:</p>
+                  <ul>
+                     <li>translate Scripture</li>
+                     <li>translate oral Bible communication</li>
+                     <li>translate foundational Bible stories (OBS)</li>
+                  </ul>
+               </div>
+               <div class="tool-links">
+                  <a class="tool-button" href="https://scribe.bible/" target="_blank">Website</a>
+                  <a class="tool-button" href="https://github.com/bible-technology/scribe-scripture-editor/releases/"
+                     target="_blank">Download</a>
+                  <a class="tool-button" href="https://github.com/bible-technology/scribe-scripture-editor/"
+                     target="_blank">Code
+                  base</a>
+                  <a class="tool-button" href="https://docs.scribe.bible/" target="_blank">Documentation</a>
+               </div>
+            </div>
+         </div>
+         <div class="tool gTranslate">
+            <div>
+               <div class="tool-title">gatewayTranslate</div>
+               <div class="tool-subtitle">Bible resource translation tool</div>
+            </div>
+            <div class="tool-content">
+               <p>gatewayTranslate is a comprehensive tool for developing biblical resources such as
                   Translation Notes, Key Terms, etc. This tool aims to support Scripture translation,
                   alignment editing, and creation of para-scriptural resources. The Gateway Language
                   Book Packages developed using gatewayTranslate will become the basis for quality
                   assurance and checks of any translated Scripture text associated with that specific
-                  language.</p>
-                <p>The primary users of gatewayTranslate are Gateway Language editors who use it to:</p>
-                <ul>
-                  <li>translate parascripture resources such as Notes, Questions, Words, and Open Bible
-                    Stories</li>
-                  <li>translate Scripture</li>
-                  <li>edit the alignment of Scripture text</li>
-                </ul>
-              </div>
-              <div class="tool-links">
-                <a class="tool-button" href="https://gateway-translate.netlify.app/login" target="_blank">Website</a>
-                <a class="tool-button" href="https://github.com/unfoldingWord/gateway-translate" target="_blank">Code
-                  base</a>
-                <a class="tool-button" href="https://github.com/unfoldingWord/gateway-translate/wiki/Milestones"
-                  target="_blank">Product Roadmap</a>
-              </div>
-            </div>
-          </div>
-          <div class="tool tCCreate">
-            <div>
-              <div class="tool-title">tC Create</div>
-              <div class="tool-subtitle">Creating resources for translationCore</div>
-            </div>
-            <div class="tool-content">
-              <p>tC Create is a web-based application (<a href="https://create.translationcore.com" target="_blank"
-                  class="tool-link">https://create.translationcore.com</a>) that
-                enables users to translate and edit unfoldingWord’s Gateway Language
-                resources. This tool will greatly expedite the production of the resources needed
-                to further unfoldingWord’s Gateway Language Strategy.</p>
+                  language.
+               </p>
             </div>
             <div class="tool-more tool-link" onclick="showExtra(this)">
-              Learn more
+               Learn more
             </div>
             <div class="extra">
-              <div class="extra-close"></div>
-              <div class="tool-title">tC Create</div>
-              <div class="tool-subtitle">Creating resources for translationCore</div>
-              <div class="tool-content">
-                <p>tC Create is a web-based application (<a href="https://create.translationcore.com" target="_blank"
-                    class="card-link">https://create.translationcore.com</a>) that
+               <div class="extra-close"></div>
+               <div class="tool-title">gatewayTranslate</div>
+               <div class="tool-subtitle">Bible resource translation tool</div>
+               <div class="tool-content">
+                  <p>gatewayTranslate is a comprehensive tool for developing biblical resources such as
+                     Translation Notes, Key Terms, etc. This tool aims to support Scripture translation,
+                     alignment editing, and creation of para-scriptural resources. The Gateway Language
+                     Book Packages developed using gatewayTranslate will become the basis for quality
+                     assurance and checks of any translated Scripture text associated with that specific
+                     language.
+                  </p>
+                  <p>The primary users of gatewayTranslate are Gateway Language editors who use it to:</p>
+                  <ul>
+                     <li>translate parascripture resources such as Notes, Questions, Words, and Open Bible
+                        Stories
+                     </li>
+                     <li>translate Scripture</li>
+                     <li>edit the alignment of Scripture text</li>
+                  </ul>
+               </div>
+               <div class="tool-links">
+                  <a class="tool-button" href="https://gateway-translate.netlify.app/login" target="_blank">Website</a>
+                  <a class="tool-button" href="https://github.com/unfoldingWord/gateway-translate" target="_blank">Code
+                  base</a>
+                  <a class="tool-button" href="https://github.com/unfoldingWord/gateway-translate/wiki/Milestones"
+                     target="_blank">Product Roadmap</a>
+               </div>
+            </div>
+         </div>
+         <div class="tool tCCreate">
+            <div>
+               <div class="tool-title">tC Create</div>
+               <div class="tool-subtitle">Creating resources for translationCore</div>
+            </div>
+            <div class="tool-content">
+               <p>tC Create is a web-based application (<a href="https://create.translationcore.com" target="_blank"
+                  class="tool-link">https://create.translationcore.com</a>) that
                   enables users to translate and edit unfoldingWord’s Gateway Language
                   resources. This tool will greatly expedite the production of the resources needed
-                  to further unfoldingWord’s Gateway Language Strategy.</p>
-              </div>
-              <div class="tool-links">
-                <a class="tool-button" href="https://create.translationcore.com" target="_blank">Website</a>
-                <a class="tool-button" href="https://github.com/unfoldingWord/tc-create-app/" target="_blank">Code
-                  base</a>
-                <a class="tool-button" href="https://github.com/unfoldingWord/tc-create-app/wiki/Milestones"
-                  target="_blank">Product Roadmap</a>
-              </div>
-            </div>
-          </div>
-          <div class="tool gEdit">
-            <div>
-              <div class="tool-title">gatewayEdit</div>
-              <div class="tool-subtitle">Online Bible & OBS Book Package revision tool</div>
-            </div>
-            <div class="tool-content">
-              <p>gatewayEdit is an online editor designed to review and edit para-scriptural resources in
-                a side-by-side interface. The process referred to as harmonization ensures consistency
-                and cohesion in a Book Package.</p>
+                  to further unfoldingWord’s Gateway Language Strategy.
+               </p>
             </div>
             <div class="tool-more tool-link" onclick="showExtra(this)">
-              Learn more
+               Learn more
             </div>
             <div class="extra">
-              <div class="extra-close"></div>
-              <div class="tool-title">gatewayEdit</div>
-              <div class="tool-subtitle">Online Bible & OBS Book Package revision tool</div>
-              <div class="tool-content">
-                <p>gatewayEdit is an online editor designed to review and edit para-scriptural resources in
+               <div class="extra-close"></div>
+               <div class="tool-title">tC Create</div>
+               <div class="tool-subtitle">Creating resources for translationCore</div>
+               <div class="tool-content">
+                  <p>tC Create is a web-based application (<a href="https://create.translationcore.com" target="_blank"
+                     class="card-link">https://create.translationcore.com</a>) that
+                     enables users to translate and edit unfoldingWord’s Gateway Language
+                     resources. This tool will greatly expedite the production of the resources needed
+                     to further unfoldingWord’s Gateway Language Strategy.
+                  </p>
+               </div>
+               <div class="tool-links">
+                  <a class="tool-button" href="https://create.translationcore.com" target="_blank">Website</a>
+                  <a class="tool-button" href="https://github.com/unfoldingWord/tc-create-app/" target="_blank">Code
+                  base</a>
+                  <a class="tool-button" href="https://github.com/unfoldingWord/tc-create-app/wiki/Milestones"
+                     target="_blank">Product Roadmap</a>
+               </div>
+            </div>
+         </div>
+         <div class="tool gEdit">
+            <div>
+               <div class="tool-title">gatewayEdit</div>
+               <div class="tool-subtitle">Online Bible & OBS Book Package revision tool</div>
+            </div>
+            <div class="tool-content">
+               <p>gatewayEdit is an online editor designed to review and edit para-scriptural resources in
                   a side-by-side interface. The process referred to as harmonization ensures consistency
-                  and cohesion in a Book Package.</p>
-                <p>The primary users of gatewayTranslate are Gateway Language editors, proofreaders,
-                  and reviewers who use it to:</p>
-                <ul>
-                  <li>thoroughly revise and harmonize all resources associated with a Bible book at
-                    varying levels (book, chapter, verse)</li>
-                  <li>prepare Gateway Language source materials for use in other translation tools, such
-                    as Scribe, translationCore, or Bible Aquifer apps</li>
-                </ul>
-              </div>
-              <div class="tool-links">
-                <a class="tool-button" href="https://gatewayedit.com/" target="_blank">Website</a>
-                <a class="tool-button" href="https://github.com/unfoldingWord/gateway-edit" target="_blank">Code
-                  base</a>
-                <a class="tool-button" href="https://github.com/unfoldingWord/gateway-edit/wiki/Milestones"
-                  target="_blank">Product Roadmap</a>
-              </div>
-            </div>
-          </div>
-          <div class="tool vcana">
-            <div>
-              <div class="tool-title">VCANA</div>
-              <div class="tool-subtitle">Guided Scripture translation tool</div>
-            </div>
-            <div class="tool-content">
-              <p>VCANA (Virtual - Clear, Accurate, Natural, and Approved) is a step-by-step Scripture
-                translation editor that provides a structured workflow for learning the translation
-                process. VCANA ensures the translation teams have a comprehensive understanding of
-                the translation process and quality assurance measures within Scripture translation.</p>
+                  and cohesion in a Book Package.
+               </p>
             </div>
             <div class="tool-more tool-link" onclick="showExtra(this)">
-              Learn more
+               Learn more
             </div>
             <div class="extra">
-              <div class="extra-close"></div>
-              <div class="tool-title">VCANA</div>
-              <div class="tool-subtitle">Guided Scripture translation tool</div>
-              <div class="tool-content">
-                <p>VCANA (Virtual - Clear, Accurate, Natural, and Approved) is a step-by-step Scripture
+               <div class="extra-close"></div>
+               <div class="tool-title">gatewayEdit</div>
+               <div class="tool-subtitle">Online Bible & OBS Book Package revision tool</div>
+               <div class="tool-content">
+                  <p>gatewayEdit is an online editor designed to review and edit para-scriptural resources in
+                     a side-by-side interface. The process referred to as harmonization ensures consistency
+                     and cohesion in a Book Package.
+                  </p>
+                  <p>The primary users of gatewayTranslate are Gateway Language editors, proofreaders,
+                     and reviewers who use it to:
+                  </p>
+                  <ul>
+                     <li>thoroughly revise and harmonize all resources associated with a Bible book at
+                        varying levels (book, chapter, verse)
+                     </li>
+                     <li>prepare Gateway Language source materials for use in other translation tools, such
+                        as Scribe, translationCore, or Bible Aquifer apps
+                     </li>
+                  </ul>
+               </div>
+               <div class="tool-links">
+                  <a class="tool-button" href="https://gatewayedit.com/" target="_blank">Website</a>
+                  <a class="tool-button" href="https://github.com/unfoldingWord/gateway-edit" target="_blank">Code
+                  base</a>
+                  <a class="tool-button" href="https://github.com/unfoldingWord/gateway-edit/wiki/Milestones"
+                     target="_blank">Product Roadmap</a>
+               </div>
+            </div>
+         </div>
+         <div class="tool vcana">
+            <div>
+               <div class="tool-title">VCANA</div>
+               <div class="tool-subtitle">Guided Scripture translation tool</div>
+            </div>
+            <div class="tool-content">
+               <p>VCANA (Virtual - Clear, Accurate, Natural, and Approved) is a step-by-step Scripture
                   translation editor that provides a structured workflow for learning the translation
                   process. VCANA ensures the translation teams have a comprehensive understanding of
-                  the translation process and quality assurance measures within Scripture translation.</p>
-                <p>The primary users of VCANA are Gateway Language and minority language translation
-                  teams to:</p>
-                <ul>
-                  <li>gain proficiency in the Scripture translation process</li>
-                  <li>draft Scripture in a guided workflow</li>
-                  <li>monitor the progress of Bible translation projects</li>
-                </ul>
-              </div>
-              <div class="tool-links">
-                <a class="tool-button" href="https://v-cana.com/" target="_blank">Website</a>
-                <a class="tool-button" href="https://github.com/texttree/v-cana" target="_blank">Code
-                  base</a>
-                <a class="tool-button" href="https://github.com/texttree/v-cana/wiki/Project-Canvas-(en)"
-                  target="_blank">Documentation</a>
-              </div>
-            </div>
-          </div>
-          <div class="tool tCore">
-            <div>
-              <div class="tool-title">translationCore</div>
-              <div class="tool-subtitle">Scripture checking and alignment tool</div>
-            </div>
-            <div class="tool-content">
-              <p>translationCore is a desktop application designed to assist the quality assurance
-                process in Scripture translation and increase church networks’ capacity in translation
-                skills. It enables translation teams to conduct checks in their native language, allowing
-                them to review key theological and lexical terms and enhance the consistency and
-                accuracy of the translated resources.</p>
+                  the translation process and quality assurance measures within Scripture translation.
+               </p>
             </div>
             <div class="tool-more tool-link" onclick="showExtra(this)">
-              Learn more
+               Learn more
             </div>
             <div class="extra">
-              <div class="extra-close"></div>
-              <div class="tool-title">translationCore</div>
-              <div class="tool-subtitle">Scripture checking and alignment tool</div>
-              <div class="tool-content">
-                <p>translationCore is a desktop application designed to assist the quality assurance
+               <div class="extra-close"></div>
+               <div class="tool-title">VCANA</div>
+               <div class="tool-subtitle">Guided Scripture translation tool</div>
+               <div class="tool-content">
+                  <p>VCANA (Virtual - Clear, Accurate, Natural, and Approved) is a step-by-step Scripture
+                     translation editor that provides a structured workflow for learning the translation
+                     process. VCANA ensures the translation teams have a comprehensive understanding of
+                     the translation process and quality assurance measures within Scripture translation.
+                  </p>
+                  <p>The primary users of VCANA are Gateway Language and minority language translation
+                     teams to:
+                  </p>
+                  <ul>
+                     <li>gain proficiency in the Scripture translation process</li>
+                     <li>draft Scripture in a guided workflow</li>
+                     <li>monitor the progress of Bible translation projects</li>
+                  </ul>
+               </div>
+               <div class="tool-links">
+                  <a class="tool-button" href="https://v-cana.com/" target="_blank">Website</a>
+                  <a class="tool-button" href="https://github.com/texttree/v-cana" target="_blank">Code
+                  base</a>
+                  <a class="tool-button" href="https://github.com/texttree/v-cana/wiki/Project-Canvas-(en)"
+                     target="_blank">Documentation</a>
+               </div>
+            </div>
+         </div>
+         <div class="tool tCore">
+            <div>
+               <div class="tool-title">translationCore</div>
+               <div class="tool-subtitle">Scripture checking and alignment tool</div>
+            </div>
+            <div class="tool-content">
+               <p>translationCore is a desktop application designed to assist the quality assurance
                   process in Scripture translation and increase church networks’ capacity in translation
                   skills. It enables translation teams to conduct checks in their native language, allowing
                   them to review key theological and lexical terms and enhance the consistency and
-                  accuracy of the translated resources.</p>
-                <p>The primary users of translationCore are Gateway Language and minority language
-                  translation checkers, community language reviewers and church leaders to:</p>
-                <ul>
-                  <li>lead a thorough, systematic check of key terms, difficult words, concepts, names,
-                    and translation difficulties. translationCore allows the translation checkers to focus
-                    on one concept at a time in the context of an entire book. This helps ensure
-                    consistent treatment of terms throughout the Scripture text.</li>
-                  <li>directly align a translation with the original Greek or Hebrew, providing the teams of
-                    translators with another powerful checking tool.</li>
-                </ul>
-              </div>
-              <div class="tool-links">
-                <a class="tool-button" href="https://www.translationcore.com/" target="_blank">Website</a>
-                <a class="tool-button" href="https://www.translationcore.com/#download" target="_blank">Download</a>
-                <a class="tool-button" href="https://github.com/unfoldingWord/translationCore/" target="_blank">Code
-                  base</a>
-                <a class="tool-button" href="https://github.com/unfoldingWord/translationCore/wiki"
-                  target="_blank">Documentation</a>
-              </div>
-            </div>
-          </div>
-        </div>
-        <h1 class="tools-header">Content Management</h1>
-        <div class="tools">
-          <div class="tool gAdmin">
-            <div>
-              <div class="tool-title">gatewayAdmin</div>
-              <div class="tool-subtitle">Administrator tool for file management and publication</div>
-            </div>
-            <div class="tool-content">
-              <p>gatewayAdmin is an online web application with a range of functions, including setting
-                up file repositories, accepting resource file changes, and facilitating publishing of
-                resources on Door43 Content Service (DCS).</p>
+                  accuracy of the translated resources.
+               </p>
             </div>
             <div class="tool-more tool-link" onclick="showExtra(this)">
-              Learn more
+               Learn more
             </div>
             <div class="extra">
-              <div class="extra-close"></div>
-              <div class="tool-title">gatewayAdmin</div>
-              <div class="tool-subtitle">Administrator tool for file management and publication</div>
-              <div class="tool-content">
-                <p>gatewayAdmin is an online web application with a range of functions, including setting
+               <div class="extra-close"></div>
+               <div class="tool-title">translationCore</div>
+               <div class="tool-subtitle">Scripture checking and alignment tool</div>
+               <div class="tool-content">
+                  <p>translationCore is a desktop application designed to assist the quality assurance
+                     process in Scripture translation and increase church networks’ capacity in translation
+                     skills. It enables translation teams to conduct checks in their native language, allowing
+                     them to review key theological and lexical terms and enhance the consistency and
+                     accuracy of the translated resources.
+                  </p>
+                  <p>The primary users of translationCore are Gateway Language and minority language
+                     translation checkers, community language reviewers and church leaders to:
+                  </p>
+                  <ul>
+                     <li>lead a thorough, systematic check of key terms, difficult words, concepts, names,
+                        and translation difficulties. translationCore allows the translation checkers to focus
+                        on one concept at a time in the context of an entire book. This helps ensure
+                        consistent treatment of terms throughout the Scripture text.
+                     </li>
+                     <li>directly align a translation with the original Greek or Hebrew, providing the teams of
+                        translators with another powerful checking tool.
+                     </li>
+                  </ul>
+               </div>
+               <div class="tool-links">
+                  <a class="tool-button" href="https://www.translationcore.com/" target="_blank">Website</a>
+                  <a class="tool-button" href="https://www.translationcore.com/#download" target="_blank">Download</a>
+                  <a class="tool-button" href="https://github.com/unfoldingWord/translationCore/" target="_blank">Code
+                  base</a>
+                  <a class="tool-button" href="https://github.com/unfoldingWord/translationCore/wiki"
+                     target="_blank">Documentation</a>
+               </div>
+            </div>
+         </div>
+      </div>
+      <h1 class="tools-header">Content Management</h1>
+      <div class="tools">
+         <div class="tool gAdmin">
+            <div>
+               <div class="tool-title">gatewayAdmin</div>
+               <div class="tool-subtitle">Administrator tool for file management and publication</div>
+            </div>
+            <div class="tool-content">
+               <p>gatewayAdmin is an online web application with a range of functions, including setting
                   up file repositories, accepting resource file changes, and facilitating publishing of
-                  resources on Door43 Content Service (DCS).</p>
-                <p>The primary users of gatewayAdmin are national church planting team leaders who use
-                  it to:</p>
-                <ul>
-                  <li>set up file repositories</li>
-                  <li>validate the health of each repository and the files within it</li>
-                  <li>accept changes submitted toward a project file</li>
-                  <li>publish resources in DCS</li>
-                </ul>
-              </div>
-              <div class="tool-links">
-                <a class="tool-button" href="https://gateway-admin.netlify.app/" target="_blank">Website</a>
-                <a class="tool-button" href="https://github.com/unfoldingWord/gateway-admin" target="_blank">Code
-                  base</a>
-                <a class="tool-button"
-                  href="https://www.notion.so/signed/https%3A%2F%2Fprod-files-secure.s3.us-west-2.amazonaws.com%2F7b829fae-29ab-4052-b834-67abccc5ae48%2F75671609-9088-4a39-b5bd-46223dcaa596%2FgatewayAdmin_-_Getting_Started_Guide.pdf?table=block&id=d367739e-40db-46bd-ba75-b76c346d1e6a"
-                  target="_blank">Documentation</a>
-              </div>
-            </div>
-          </div>
-          <div class="tool DCS">
-            <div>
-              <div class="tool-title">DCS</div>
-              <div class="tool-subtitle">Door43 Content Service</div>
-            </div>
-            <div class="tool-content">
-              <p>DCS is a git-based content management system for open-licensed biblical resources, managed by unfoldingWord and many volunteers.</p>
+                  resources on Door43 Content Service (DCS).
+               </p>
             </div>
             <div class="tool-more tool-link" onclick="showExtra(this)">
-              Learn more
+               Learn more
             </div>
             <div class="extra">
-              <div class="extra-close"></div>
-              <div class="tool-title">DCS</div>
-              <div class="tool-subtitle">Door43 Content Service</div>
-              <div class="tool-content">
-                <p>DCS is a git-based content management system for open-licensed biblical resources, managed by unfoldingWord and many volunteers.</p>
-                <p>The primary users of DCS are Gateway Language and minority language teams
-                  for:</p>
-                <ul>
-                  <li>storage of resources</li>
-                  <li>version control of resources</li>
-                  <li>preview resources</li>
-                  <li>change management</li>
-                  <li>publishing to <a href="https://door43.org" target="_blank"
-                      class="card-link">https://door43.org</a></li>
-                </ul>
-              </div>
-              <div class="tool-links">
-                <a class="tool-button" href="https://git.door43.org/">Website</a>
-                <a class="tool-button" href="https://github.com/unfoldingWord/dcs" target="_blank">Code
+               <div class="extra-close"></div>
+               <div class="tool-title">gatewayAdmin</div>
+               <div class="tool-subtitle">Administrator tool for file management and publication</div>
+               <div class="tool-content">
+                  <p>gatewayAdmin is an online web application with a range of functions, including setting
+                     up file repositories, accepting resource file changes, and facilitating publishing of
+                     resources on Door43 Content Service (DCS).
+                  </p>
+                  <p>The primary users of gatewayAdmin are national church planting team leaders who use
+                     it to:
+                  </p>
+                  <ul>
+                     <li>set up file repositories</li>
+                     <li>validate the health of each repository and the files within it</li>
+                     <li>accept changes submitted toward a project file</li>
+                     <li>publish resources in DCS</li>
+                  </ul>
+               </div>
+               <div class="tool-links">
+                  <a class="tool-button" href="https://gateway-admin.netlify.app/" target="_blank">Website</a>
+                  <a class="tool-button" href="https://github.com/unfoldingWord/gateway-admin" target="_blank">Code
                   base</a>
-              </div>
+                  <a class="tool-button"
+                     href="https://www.notion.so/signed/https%3A%2F%2Fprod-files-secure.s3.us-west-2.amazonaws.com%2F7b829fae-29ab-4052-b834-67abccc5ae48%2F75671609-9088-4a39-b5bd-46223dcaa596%2FgatewayAdmin_-_Getting_Started_Guide.pdf?table=block&id=d367739e-40db-46bd-ba75-b76c346d1e6a"
+                     target="_blank">Documentation</a>
+               </div>
             </div>
-          </div>
-        </div>
-        <h1 class="tools-header">Publishing</h1>
-        <div class="tools">
-          <div class="tool gAdmin">
+         </div>
+         <div class="tool DCS">
             <div>
-              <div class="tool-title">Open Bible Text</div>
-              <div class="tool-subtitle">Tool for community checking of published resources</div>
+               <div class="tool-title">DCS</div>
+               <div class="tool-subtitle">Door43 Content Service</div>
             </div>
             <div class="tool-content">
-              <p>Open Bible Text is a simple tool that enables Gateway Language and minority language
-                teams to access open-licensed translated biblical resources, conduct thorough studies,
-                test their translations, and seek constructive feedback.</p>
+               <p>DCS is a git-based content management system for open-licensed biblical resources, managed by unfoldingWord and many volunteers.</p>
             </div>
             <div class="tool-more tool-link" onclick="showExtra(this)">
-              Learn more
+               Learn more
             </div>
             <div class="extra">
-              <div class="extra-close"></div>
-              <div class="tool-title">Open Bible Text</div>
-              <div class="tool-subtitle">Tool for community checking of published resources</div>
-              <div class="tool-content">
-                <p>Open Bible Text is a simple tool that enables Gateway Language and minority language
+               <div class="extra-close"></div>
+               <div class="tool-title">DCS</div>
+               <div class="tool-subtitle">Door43 Content Service</div>
+               <div class="tool-content">
+                  <p>DCS is a git-based content management system for open-licensed biblical resources, managed by unfoldingWord and many volunteers.</p>
+                  <p>The primary users of DCS are Gateway Language and minority language teams
+                     for:
+                  </p>
+                  <ul>
+                     <li>storage of resources</li>
+                     <li>version control of resources</li>
+                     <li>preview resources</li>
+                     <li>change management</li>
+                     <li>publishing to <a href="https://door43.org" target="_blank"
+                        class="card-link">https://door43.org</a></li>
+                  </ul>
+               </div>
+               <div class="tool-links">
+                  <a class="tool-button" href="https://git.door43.org/">Website</a>
+                  <a class="tool-button" href="https://github.com/unfoldingWord/dcs" target="_blank">Code
+                  base</a>
+               </div>
+            </div>
+         </div>
+      </div>
+      <h1 class="tools-header">Publishing</h1>
+      <div class="tools">
+         <div class="tool gAdmin">
+            <div>
+               <div class="tool-title">Open Bible Text</div>
+               <div class="tool-subtitle">Tool for community checking of published resources</div>
+            </div>
+            <div class="tool-content">
+               <p>Open Bible Text is a simple tool that enables Gateway Language and minority language
                   teams to access open-licensed translated biblical resources, conduct thorough studies,
-                  test their translations, and seek constructive feedback.</p>
-                <p>The primary users of Open Bible Text are minority language churches and their
-                  translation teams who use it to:</p>
-                <ul>
-                  <li>engage with biblical resources</li>
-                  <li>test and validate their work and receive valuable feedback</li>
-                </ul>
-              </div>
-              <div class="tool-links">
-                <a class="tool-button" href="https://openbibletext.com/" target="_blank">Website</a>
-                <a class="tool-button" href="https://github.com/texttree/obt" target="_blank">Code
-                  base</a>
-              </div>
-            </div>
-          </div>
-          <div class="tool DCS">
-            <div>
-              <div class="tool-title">Door43 Website</div>
-              <div class="tool-subtitle">An online catalog of unrestricted biblical content in every language</div>
-            </div>
-            <div class="tool-content">
-              <p>The <a href="https://door43.org" target="_blank" class="tool-link">Door43 website</a> is the publishing outlet for content that is being developed via several translation applications and stored on <a href="https://git.door43.org" class="tool-link">DCS</a>. Published content can exist in various stages of development.</p>
+                  test their translations, and seek constructive feedback.
+               </p>
             </div>
             <div class="tool-more tool-link" onclick="showExtra(this)">
-              Learn more
+               Learn more
             </div>
             <div class="extra">
-              <div class="extra-close"></div>
-              <div class="tool-title">Door43 Website</div>
-              <div class="tool-subtitle">An online catalog of unrestricted biblical content in every language</div>
-              <div class="tool-content">
-                <p>The <a href="https://door43.org" target="_blank" class="card-link">Door43 website</a> is the publishing outlet for content that is being developed via several translation applications and stored on <a href="https://git.door43.org" class="card-link">DCS</a>. Published content can exist in various stages of development.</p>
-                <p>The primary users of DCS are Gateway Language and minority language teams for
-                  publishing their translated work. It includes an online <a href="https://forum.door43.org/" target="_blank" class="card-link">forum</a> that enables the community
-                  to collaborate on open licensed Biblical content creation.</p>
-              </div>
-              <div class="tool-links">
-                <a class="tool-button" href="https://door43.org/" target="_blank">Website</a>
-                <a class="tool-button" href="https://github.com/unfoldingWord/door43.org" target="_blank">Code
+               <div class="extra-close"></div>
+               <div class="tool-title">Open Bible Text</div>
+               <div class="tool-subtitle">Tool for community checking of published resources</div>
+               <div class="tool-content">
+                  <p>Open Bible Text is a simple tool that enables Gateway Language and minority language
+                     teams to access open-licensed translated biblical resources, conduct thorough studies,
+                     test their translations, and seek constructive feedback.
+                  </p>
+                  <p>The primary users of Open Bible Text are minority language churches and their
+                     translation teams who use it to:
+                  </p>
+                  <ul>
+                     <li>engage with biblical resources</li>
+                     <li>test and validate their work and receive valuable feedback</li>
+                  </ul>
+               </div>
+               <div class="tool-links">
+                  <a class="tool-button" href="https://openbibletext.com/" target="_blank">Website</a>
+                  <a class="tool-button" href="https://github.com/texttree/obt" target="_blank">Code
                   base</a>
-              </div>
+               </div>
             </div>
-          </div>
-        </div>
-        <h1 class="tools-header">Research</h1>
-        <div class="tools">
-          <div class="tool openlang">
+         </div>
+         <div class="tool DCS">
             <div>
-              <div class="tool-title">Open Languages Website</div>
+               <div class="tool-title">Door43 Website</div>
+               <div class="tool-subtitle">An online catalog of unrestricted biblical content in every language</div>
             </div>
             <div class="tool-content">
-              <p>This is an project in development and is expected to be ready by October, 2023.</p>
-              <p>Click <a href="https://www.notion.so/c17e6fc7ab874ee484c4cfcd09cb85e8?pvs=25" target="_blank"
+               <p>The <a href="https://door43.org" target="_blank" class="tool-link">Door43 website</a> is the publishing outlet for content that is being developed via several translation applications and stored on <a href="https://git.door43.org" class="tool-link">DCS</a>. Published content can exist in various stages of development.</p>
+            </div>
+            <div class="tool-more tool-link" onclick="showExtra(this)">
+               Learn more
+            </div>
+            <div class="extra">
+               <div class="extra-close"></div>
+               <div class="tool-title">Door43 Website</div>
+               <div class="tool-subtitle">An online catalog of unrestricted biblical content in every language</div>
+               <div class="tool-content">
+                  <p>The <a href="https://door43.org" target="_blank" class="card-link">Door43 website</a> is the publishing outlet for content that is being developed via several translation applications and stored on <a href="https://git.door43.org" class="card-link">DCS</a>. Published content can exist in various stages of development.</p>
+                  <p>The primary users of DCS are Gateway Language and minority language teams for
+                     publishing their translated work. It includes an online <a href="https://forum.door43.org/" target="_blank" class="card-link">forum</a> that enables the community
+                     to collaborate on open licensed Biblical content creation.
+                  </p>
+               </div>
+               <div class="tool-links">
+                  <a class="tool-button" href="https://door43.org/" target="_blank">Website</a>
+                  <a class="tool-button" href="https://github.com/unfoldingWord/door43.org" target="_blank">Code
+                  base</a>
+               </div>
+            </div>
+         </div>
+      </div>
+      <h1 class="tools-header">Research</h1>
+      <div class="tools">
+         <div class="tool openlang">
+            <div>
+               <div class="tool-title">Open Languages Website</div>
+            </div>
+            <div class="tool-content">
+               <p>This is an project in development and is expected to be ready by October, 2023.</p>
+               <p>Click <a href="https://www.notion.so/c17e6fc7ab874ee484c4cfcd09cb85e8?pvs=25" target="_blank"
                   class="tool-link">here</a> for more details</p>
             </div>
-          </div>
-        </div>
+         </div>
       </div>
-    </div>
-  </div>
-  <script>
-    document.addEventListener("DOMContentLoaded", function () {
-      document.addEventListener('click', (e) => {
-        document.querySelectorAll('.extra').forEach(el => {
-          if (!el.contains(e.target) && !e.target.classList.contains('tool-more')) {
-            el.classList.remove('show');
-          }
-        })
-      })
-      document.querySelectorAll('.extra-close').forEach(el => el.addEventListener('click', () => {
-        el.parentElement.classList.remove('show');
-      }))
-    });
+   </div>
+</div>
+</div>
+<script>
+   document.addEventListener("DOMContentLoaded", function () {
+     document.addEventListener('click', (e) => {
+       document.querySelectorAll('.extra').forEach(el => {
+         if (!el.contains(e.target) && !e.target.classList.contains('tool-more')) {
+           el.classList.remove('show');
+         }
+       })
+     })
+     document.querySelectorAll('.extra-close').forEach(el => el.addEventListener('click', () => {
+       el.parentElement.classList.remove('show');
+     }))
+   });
 
-    const showExtra = (el) => {
-      document.querySelectorAll('.extra').forEach((element) => {
-        element.classList.remove('show');
-      });
-      el.parentElement.querySelector('.extra').classList.add('show')
-    }
-  </script>
+   const showExtra = (el) => {
+     document.querySelectorAll('.extra').forEach((element) => {
+       element.classList.remove('show');
+     });
+     el.parentElement.querySelector('.extra').classList.add('show')
+   }
+</script>
 <!-- END Tools Page -->
 {{template "base/footer" .}}
