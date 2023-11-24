@@ -1,414 +1,406 @@
 {{template "base/head" .}}
 <!-- Home/About Page -->
 <style>
-.full.height {
-  padding-bottom: 0 !important;
-}
-
-.main-content {
-  font-size: 18px;
-  color: black;
-  background-color: white !important;
-  font-family: Inter, sans-serif;
-  font-weight: 400;
-  word-wrap: break-word;
-}
-
-.container-width {
-  max-width: 1364px;
-  margin: 0 auto;
-  padding-left: 32px;
-  padding-right: 32px;
-  width: 100%;
-}
-
-.bg-gradient {
-  width: 100%;
-  height: 100%;
-  top: 0;
-  left: 0;
-  background: linear-gradient(180deg, #ecf2cc 0%, transparent 100%);
-  position: absolute;
-}
-
-.bg-image {
-  background-image: url(assets/img/dcs/bg.png);
-  background-position: top center;
-  background-repeat: no-repeat;
-  background-size: 1800px;
-  width: 100%;
-  height: 100%;
-  position: absolute;
-  top: 0;
-  left: 0;
-}
-
-.card-block {
-  color: white;
-  min-height: 800px;
-  position: relative;
-  padding-top: 250px;
-}
-.cards-header {
-  display: none;
-}
-.cards {
-  display: flex;
-  gap: 32px;
-  position: relative;
-}
-.card {
-  padding: 56px 36px;
-  background: #333333;
-  border-radius: 24px;
-  width: 100%;
-  flex: 0 1 auto;
-}
-.card-header {
-  font-size: 24px;
-  font-weight: 600;
-}
-.card-link {
-  color: white;
-  text-decoration: underline;
-}
-.card-link:hover,
-.card-link:active {
-  color: #78b4ef;
-}
-
-.register-button {
-  padding: 16px 40px;
-  margin-top: 16px;
-  background: #aac906;
-  border-radius: 12px;
-  font-size: 18px;
-  display: inline-block;
-  font-weight: 600;
-  cursor: pointer;
-  color: white;
-  text-decoration: none;
-}
-.register-button:hover,
-.register-button:active {
-  color: white;
-  text-decoration: none;
-}
-
-.stats-block {
-  text-transform: uppercase;
-  font-size: 20px;
-  line-height: 1.2;
-  margin-top: 64px;
-}
-.stats {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 40px 32px;
-}
-.stat {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-}
-.stat:nth-child(-n + 3) {
-  border-bottom: 6px solid #aac906;
-  padding-bottom: 40px;
-}
-.stat-count {
-  font-size: 64px;
-  font-weight: 800;
-}
-.stat-title a {
-	color: black;
-}
-
-.help-block {
-  padding-top: 160px;
-  padding-bottom: 80px !important;
-}
-.help-title {
-  text-align: center;
-  font-size: 36px;
-  font-weight: 800;
-  margin-bottom: 48px;
-}
-.help-cards {
-  display: flex;
-  flex-direction: row;
-  gap: 32px;
-}
-.help-card {
-  border-radius: 10px;
-  background-color: #f4f4f4;
-  height: 128px;
-  width: 100%;
-  padding-left: 32px;
-  padding-right: 32px;
-  flex: 0 1 auto;
-  display: flex;
-  align-items: center;
-}
-.help-card-title {
-  font-size: 24px;
-  color: #aac906;
-  font-weight: 600;
-  margin-right: 24px;
-  max-width: 50%;
-  word-wrap: normal;
-  display: flex;
-  align-items: center;
-}
-.help-card:nth-child(3) .help-card-title {
-  font-size: 20px;
-}
-.help-card-link {
-  font-size: 16px;
-  color: black;
-  text-decoration: none;
-}
-.help-card-link:hover {
-  color: black;
-  text-decoration: underline;
-}
-.green-dot {
-  width: 0;
-  height: 0;
-  border: 6px solid #aac906;
-  border-radius: 100px;
-  margin-right: 24px;
-}
-
-@media (max-width: 1180px) {
-  .bg-image {
-    background-size: 1200px;
-  }
-  .card-block {
-    padding-top: 200px;
-  }
-  .cards {
-    flex-wrap: wrap;
-  }
-  .card {
-    flex: 1 0 45%;
-  }
-  .help-cards {
-    max-width: 512px;
-    margin: 0 auto;
-    align-items: center;
-    flex-direction: column;
-  }
-  .help-card-title {
-    width: 50%;
-  }
-}
-
-@media (max-width: 991px) {
-  .stats-block {
-    font-size: 16px;
-  }
-  .stat-count {
-    font-size: 48px;
-  }
-}
-
-@media (max-width: 767px) {
-  .bg-image {
-    background-size: 700px;
-  }
-  .card-block {
-    padding: 250px 32px 0px 32px;
-  }
-  .cards {
-    flex-direction: column;
-    background: #333333;
-    border-radius: 24px;
-    padding: 24px;
-    gap: 16px;
-  }
-  .cards-header {
-    display: block;
-    font-size: 24px;
-    font-weight: 800;
-  }
-  .card {
-    background: initial;
-    padding: 16px 0px;
-  }
-  .cards > div:nth-child(2) {
-    order: 5;
-    padding-bottom: 0;
-  }
-  .card-header {
-    font-size: 18px;
-  }
-  .card-content {
-    font-size: 16px;
-  }
-  .register-button {
-    display: block;
-    text-align: center;
-    margin-top: 32px;
-  }
-  .stat-count {
-    font-size: 40px;
-  }
-  .stats {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 32px 16px;
-  }
-  .stat {
-    height: 132px;
-    align-items: start;
-    justify-content: space-between;
-    border-left: 6px solid #aac906;
-    padding: 12px 0px 8px 16px;
-  }
-  .stat:nth-child(-n + 3) {
-    border-bottom-width: 0px;
-    padding-bottom: 8px;
-  }
-}
-
-@media (max-width: 575px) {
-  .container-width {
-    padding-left: 12px;
-    padding-right: 12px;
-  }
-  .cards {
-    padding: 16px;
-  }
-  .card-block {
-    padding: 250px 12px 0px 12px;
-  }
-  .help-title {
-    font-size: 24px;
-    text-align: left;
-    margin-bottom: 32px;
-  }
-  .help-card {
-    height: 80px;
-    padding-left: 16px;
-    padding-right: 16px;
-  }
-  .green-dot {
-    margin-right: 16px;
-    border-width: 4px;
-  }
-  .help-card:nth-child(3) .help-card-title,
-  .help-card-title {
-    font-size: 18px;
-  }
-}
+   .full.height {
+   padding-bottom: 0 !important;
+   }
+   .main-content {
+   font-size: 18px;
+   color: black;
+   background-color: white !important;
+   font-family: Inter, sans-serif;
+   font-weight: 400;
+   word-wrap: break-word;
+   }
+   .container-width {
+   max-width: 1364px;
+   margin: 0 auto;
+   padding-left: 32px;
+   padding-right: 32px;
+   width: 100%;
+   }
+   .bg-gradient {
+   width: 100%;
+   height: 100%;
+   top: 0;
+   left: 0;
+   background: linear-gradient(180deg, #ecf2cc 0%, transparent 100%);
+   position: absolute;
+   }
+   .bg-image {
+   background-image: url(assets/img/dcs/bg.png);
+   background-position: top center;
+   background-repeat: no-repeat;
+   background-size: 1800px;
+   width: 100%;
+   height: 100%;
+   position: absolute;
+   top: 0;
+   left: 0;
+   }
+   .card-block {
+   color: white;
+   min-height: 800px;
+   position: relative;
+   padding-top: 250px;
+   }
+   .cards-header {
+   display: none;
+   }
+   .cards {
+   display: flex;
+   gap: 32px;
+   position: relative;
+   }
+   .card {
+   padding: 56px 36px;
+   background: #333333;
+   border-radius: 24px;
+   width: 100%;
+   flex: 0 1 auto;
+   }
+   .card-header {
+   font-size: 24px;
+   font-weight: 600;
+   }
+   .card-link {
+   color: white;
+   text-decoration: underline;
+   }
+   .card-link:hover,
+   .card-link:active {
+   color: #78b4ef;
+   }
+   .register-button {
+   padding: 16px 40px;
+   margin-top: 16px;
+   background: #aac906;
+   border-radius: 12px;
+   font-size: 18px;
+   display: inline-block;
+   font-weight: 600;
+   cursor: pointer;
+   color: white;
+   text-decoration: none;
+   }
+   .register-button:hover,
+   .register-button:active {
+   color: white;
+   text-decoration: none;
+   }
+   .stats-block {
+   text-transform: uppercase;
+   font-size: 20px;
+   line-height: 1.2;
+   margin-top: 64px;
+   }
+   .stats {
+   display: grid;
+   grid-template-columns: repeat(3, minmax(0, 1fr));
+   gap: 40px 32px;
+   }
+   .stat {
+   display: flex;
+   flex-direction: column;
+   align-items: center;
+   justify-content: center;
+   }
+   .stat:nth-child(-n + 3) {
+   border-bottom: 6px solid #aac906;
+   padding-bottom: 40px;
+   }
+   .stat-count {
+   font-size: 64px;
+   font-weight: 800;
+   }
+   .stat-title a {
+   color: black;
+   }
+   .help-block {
+   padding-top: 160px;
+   padding-bottom: 80px !important;
+   }
+   .help-title {
+   text-align: center;
+   font-size: 36px;
+   font-weight: 800;
+   margin-bottom: 48px;
+   }
+   .help-cards {
+   display: flex;
+   flex-direction: row;
+   gap: 32px;
+   }
+   .help-card {
+   border-radius: 10px;
+   background-color: #f4f4f4;
+   height: 128px;
+   width: 100%;
+   padding-left: 32px;
+   padding-right: 32px;
+   flex: 0 1 auto;
+   display: flex;
+   align-items: center;
+   }
+   .help-card-title {
+   font-size: 24px;
+   color: #aac906;
+   font-weight: 600;
+   margin-right: 24px;
+   max-width: 50%;
+   word-wrap: normal;
+   display: flex;
+   align-items: center;
+   }
+   .help-card:nth-child(3) .help-card-title {
+   font-size: 20px;
+   }
+   .help-card-link {
+   font-size: 16px;
+   color: black;
+   text-decoration: none;
+   }
+   .help-card-link:hover {
+   color: black;
+   text-decoration: underline;
+   }
+   .green-dot {
+   width: 0;
+   height: 0;
+   border: 6px solid #aac906;
+   border-radius: 100px;
+   margin-right: 24px;
+   }
+   @media (max-width: 1180px) {
+   .bg-image {
+   background-size: 1200px;
+   }
+   .card-block {
+   padding-top: 200px;
+   }
+   .cards {
+   flex-wrap: wrap;
+   }
+   .card {
+   flex: 1 0 45%;
+   }
+   .help-cards {
+   max-width: 512px;
+   margin: 0 auto;
+   align-items: center;
+   flex-direction: column;
+   }
+   .help-card-title {
+   width: 50%;
+   }
+   }
+   @media (max-width: 991px) {
+   .stats-block {
+   font-size: 16px;
+   }
+   .stat-count {
+   font-size: 48px;
+   }
+   }
+   @media (max-width: 767px) {
+   .bg-image {
+   background-size: 700px;
+   }
+   .card-block {
+   padding: 250px 32px 0px 32px;
+   }
+   .cards {
+   flex-direction: column;
+   background: #333333;
+   border-radius: 24px;
+   padding: 24px;
+   gap: 16px;
+   }
+   .cards-header {
+   display: block;
+   font-size: 24px;
+   font-weight: 800;
+   }
+   .card {
+   background: initial;
+   padding: 16px 0px;
+   }
+   .cards > div:nth-child(2) {
+   order: 5;
+   padding-bottom: 0;
+   }
+   .card-header {
+   font-size: 18px;
+   }
+   .card-content {
+   font-size: 16px;
+   }
+   .register-button {
+   display: block;
+   text-align: center;
+   margin-top: 32px;
+   }
+   .stat-count {
+   font-size: 40px;
+   }
+   .stats {
+   grid-template-columns: repeat(2, minmax(0, 1fr));
+   gap: 32px 16px;
+   }
+   .stat {
+   height: 132px;
+   align-items: start;
+   justify-content: space-between;
+   border-left: 6px solid #aac906;
+   padding: 12px 0px 8px 16px;
+   }
+   .stat:nth-child(-n + 3) {
+   border-bottom-width: 0px;
+   padding-bottom: 8px;
+   }
+   }
+   @media (max-width: 575px) {
+   .container-width {
+   padding-left: 12px;
+   padding-right: 12px;
+   }
+   .cards {
+   padding: 16px;
+   }
+   .card-block {
+   padding: 250px 12px 0px 12px;
+   }
+   .help-title {
+   font-size: 24px;
+   text-align: left;
+   margin-bottom: 32px;
+   }
+   .help-card {
+   height: 80px;
+   padding-left: 16px;
+   padding-right: 16px;
+   }
+   .green-dot {
+   margin-right: 16px;
+   border-width: 4px;
+   }
+   .help-card:nth-child(3) .help-card-title,
+   .help-card-title {
+   font-size: 18px;
+   }
+   }
 </style>
-    <div class="main-content">
-      <div class="card-block">
-        <div class="bg-gradient"></div>
-        <div class="bg-image"></div>
-        <div class="cards container-width">
-          <div class="cards-header">Outline of content</div>
-          <div class="card">
+<div class="main-content">
+   <div class="card-block">
+      <div class="bg-gradient"></div>
+      <div class="bg-image"></div>
+      <div class="cards container-width">
+         <div class="cards-header">Outline of content</div>
+         <div class="card">
             <h3 class="card-header">How do I start?</h3>
             <div class="card-content">
-              <p>
-                First <a href="https://git.door43.org/user/sign_up" class="card-link">register</a> for a
-                Door43 account. This account can both be used here on DCS
-                and in apps that connect to DCS
-              </p>
-              <p>Then we suggest you install <a href="https://scribe.bible/" target="_blank"
+               <p>
+                  First <a href="https://git.door43.org/user/sign_up" class="card-link">register</a> for a
+                  Door43 account. This account can both be used here on DCS
+                  and in apps that connect to DCS
+               </p>
+               <p>Then we suggest you install <a href="https://scribe.bible/" target="_blank"
                   class="card-link">Scribe</a> or <a href="https://www.translationcore.com/" target="_blank"
                   class="card-link">translationCore</a> to start translating. Both applications allow you to
-                synchronize
-                your work with DCS.</p>
-              <a class="register-button" href="https://git.door43.org/user/sign_up">Register now</a>
+                  synchronize
+                  your work with DCS.
+               </p>
+               <a class="register-button" href="https://git.door43.org/user/sign_up">Register now</a>
             </div>
-          </div>
-          <div class="card">
+         </div>
+         <div class="card">
             <h3 class="card-header">About DCS</h3>
             <div class="card-content">
-              <p>Door43 Content Service (DCS) is an online repository for open-licensed Biblical content in
-                any language.</p>
-              <p>DCS is an open project that is managed by unfoldingWord and many volunteers.</p>
-              <p>Every change made in DCS is automatically being processed into a web page on <a
+               <p>Door43 Content Service (DCS) is an online repository for open-licensed Biblical content in
+                  any language.
+               </p>
+               <p>DCS is an open project that is managed by unfoldingWord and many volunteers.</p>
+               <p>Every change made in DCS is automatically being processed into a web page on <a
                   href="https://door43.org" target="_blank" class="card-link">Door43</a>.</p>
             </div>
-          </div>
-          <div class="card">
+         </div>
+         <div class="card">
             <h3 class="card-header">What tools are available?</h3>
             <div class="card-content">
-              <p>If you are a translator, find out more about our <a href="{{AppSubUrl}}/tools" class="card-link">Bible
-                  translation tools</a>.</p>
-              <p>To learn how to translate, check, publish, and use our tools, check out <a
+               <p>If you are a translator, find out more about our <a href="{{AppSubUrl}}/tools" class="card-link">Bible
+                  translation tools</a>.
+               </p>
+               <p>To learn how to translate, check, publish, and use our tools, check out <a
                   href="https://unfoldingword.org/academy" target="_blank" class="card-link">translationAcademy</a> or
-                view the
-                <a href="http://help.door43.org/en/knowledgebase/15-door43-content-service" target="_blank"
-                  class="card-link">DCS knowledgebase articles</a>.
-              </p>
-              <p>If you are a developer, you can connect your own tool or script to the <a
+                  view the
+                  <a href="http://help.door43.org/en/knowledgebase/15-door43-content-service" target="_blank"
+                     class="card-link">DCS knowledgebase articles</a>.
+               </p>
+               <p>If you are a developer, you can connect your own tool or script to the <a
                   href="https://git.door43.org/api/swagger" target="_blank" class="card-link">DCS API</a>. We have
-                already
-                prepared a <a href="https://github.com/unfoldingWord/python-dcs-api-client" target="_blank"
-                  class="card-link">Python DCS API client</a> for you.</p>
+                  already
+                  prepared a <a href="https://github.com/unfoldingWord/python-dcs-api-client" target="_blank"
+                     class="card-link">Python DCS API client</a> for you.
+               </p>
             </div>
-          </div>
-        </div>
+         </div>
       </div>
-      <div class="stats-block container-width">
-        <div class="stats">
-          <div class="stat" data-tooltip-content="Total number of repositories">
-        	<div class="stat-title"><a href="{{AppSubUrl}}/explore/repos">repositories</a></div>
+   </div>
+   <div id="stats" class="stats-block container-width">
+      <div class="stats">
+         <div class="stat" data-tooltip-content="Total number of repositories">
+            <div class="stat-title"><a href="{{AppSubUrl}}/explore/repos">repositories</a></div>
             <div class="stat-count">{{GetRepoCount}}</div>
-          </div>
-          <div class="stat" data-tooltip-content="Total number of users">
+         </div>
+         <div class="stat" data-tooltip-content="Total number of users">
             <div class="stat-title"><a href="{{AppSubUrl}}/explore/users">users</a></div>
             <div class="stat-count">{{GetUserCount}}</div>
-          </div>
-          <div class="stat" data-tooltip-content="Number of projects with activity in the last 30 days">
+         </div>
+         <div class="stat" data-tooltip-content="Number of projects with activity in the last 30 days">
             <div class="stat-title"><a href="{{AppSubUrl}}/explore/repos">active projects</a></div>
             <div class="stat-count">{{GetActiveProjectCount}}</div>
-          </div>
-          <div class="stat" data-tooltip-content="Number of entries in the production catalog">
+         </div>
+         <div class="stat" data-tooltip-content="Number of entries in the production catalog">
             <div class="stat-title"><a href="{{AppSubUrl}}/catalog">Catalog Entries</a></div>
             <div class="stat-count">{{GetCatalogEntryCount}}</div>
-          </div>
-          <div class="stat" data-tooltip-content="Total number of publishers that have entries in the catalog">
+         </div>
+         <div class="stat" data-tooltip-content="Total number of publishers that have entries in the catalog">
             <div class="stat-title"><a href="{{AppSubUrl}}/explore/organizations">Publishers</a></div>
             <div class="stat-count">{{GetPublisherCount}}</div>
-          </div>
-          <div class="stat" data-tooltip-content="Total number of languages in the catalog">
+         </div>
+         <div class="stat" data-tooltip-content="Total number of languages in the catalog">
             <div class="stat-title"><a href="{{AppSubUrl}}/catalog">Languages</a></div>
             <div class="stat-count">{{GetLanguageCount}}</div>
-          </div>
-		</div>
+         </div>
       </div>
-      <div class="help-block container-width">
-        <h3 class="help-title">Where to find help?</h3>
-        <div class="help-cards">
-          <div class="help-card">
+   </div>
+   <div id="help" class="help-block container-width">
+      <h3 class="help-title">Where to find help?</h3>
+      <div class="help-cards">
+         <div class="help-card">
             <div class="help-card-title">
-              <div class="green-dot"></div>
-              <span>Email us:</span>
+               <div class="green-dot"></div>
+               <span>Email us:</span>
             </div>
             <a class="help-card-link" target="_blank" href="mailto:help@door43.org">help@door43.org</a>
-          </div>
-          <div class="help-card">
+         </div>
+         <div class="help-card">
             <div class="help-card-title">
-              <div class="green-dot"></div>
-              <span>Community:</span>
+               <div class="green-dot"></div>
+               <span>Community:</span>
             </div>
             <a class="help-card-link" target="_blank" href="https://forum.door43.org">forum.door43.org</a>
-          </div>
-          <div class="help-card">
+         </div>
+         <div class="help-card">
             <div class="help-card-title">
-              <div class="green-dot"></div>
-              <span>Learn about Gitea:</span>
+               <div class="green-dot"></div>
+               <span>Learn about Gitea:</span>
             </div>
             <a class="help-card-link" target="_blank" href="https://docs.gitea.com">docs.gitea.com</a>
-          </div>
-        </div>
+         </div>
       </div>
-    </div>
-  </div>
+   </div>
+</div>
+</div>
 <!-- END Home/About Page -->
 {{template "base/footer" .}}
