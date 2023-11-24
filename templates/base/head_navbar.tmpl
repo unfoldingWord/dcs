@@ -45,7 +45,11 @@
 
 	{{template "custom/extra_links" .}}
 
-	<a class="item" href="{{AppSubUrl}}/about#help">{{.locale.Tr "help"}}</a>
+	{{if not .IsSigned}}
+		<!-- DCS Customizations - change help to about page -->
+		<a class="item" href="{{AppSubUrl}}/about#help">{{.locale.Tr "help"}}</a>
+		<!-- END DCS Customizations -->
+	{{end}}
 
 	{{/* TODO
 		<div class="item">
@@ -181,7 +185,11 @@
 						{{svg "octicon-tools"}}
 						{{.locale.Tr "your_settings"}}<!-- Your settings -->
 					</a>
-					<!-- DCS Customizations: Link help to bottom of about page -->
+					<!-- DCS Customizations: Adds usage stats and links help to bottom of about page -->
+					<a class="item" href="{{AppSubUrl}}/about#stats">
+						{{svg "octicon-graph"}}
+						Usage Stats
+					</a>
 					<a class="item" href="{{AppSubUrl}}/about#helpdesk">
 						{{svg "octicon-question"}}
 						{{.locale.Tr "help"}
