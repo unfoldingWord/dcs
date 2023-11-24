@@ -45,6 +45,8 @@
 
 	{{template "custom/extra_links" .}}
 
+	<a class="item" href="{{AppSubUrl}}/about#help">{{.locale.Tr "help"}}</a>
+
 	{{/* TODO
 		<div class="item">
 		<div class="ui icon input">
@@ -179,7 +181,12 @@
 						{{svg "octicon-tools"}}
 						{{.locale.Tr "your_settings"}}<!-- Your settings -->
 					</a>
-					<!-- DCS Customizations: Removed Gitea Help -->
+					<!-- DCS Customizations: Link help to bottom of about page -->
+					<a class="item" href="{{AppSubUrl}}/about#helpdesk">
+						{{svg "octicon-question"}}
+						{{.locale.Tr "help"}
+					</a>
+					<!-- END DCS Customizations -->
 					{{if .IsAdmin}}
 						<div class="divider"></div>
 
