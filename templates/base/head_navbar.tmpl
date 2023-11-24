@@ -213,9 +213,7 @@
 			</div><!-- end dropdown avatar menu -->
 		</div><!-- end signed user right menu -->
 	{{else}}
-		<!-- DCS Customizations - REMOVED
-		<a class="item" target="_blank" rel="noopener noreferrer" href="https://docs.gitea.io">{{.locale.Tr "help"}}</a>
-		-->
+		<!-- DCS Customizations: removed help link -->
 		<div class="right stackable menu">
 			{{if .ShowRegistrationButton}}
 				<a class="item{{if .PageIsSignUp}} active{{end}}" href="{{AppSubUrl}}/user/sign_up">
