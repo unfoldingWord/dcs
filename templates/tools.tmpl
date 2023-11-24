@@ -1,5 +1,268 @@
 {{template "base/head" .}}
 <style>
+/*** FROM HOME ***/
+.container-width {
+  max-width: 1364px;
+  margin: 0 auto;
+  padding-left: 32px;
+  padding-right: 32px;
+  width: 100%;
+}
+.card-block {
+  color: white;
+  min-height: 800px;
+  position: relative;
+  padding-top: 250px;
+}
+.cards-header {
+  display: none;
+}
+.cards {
+  display: flex;
+  gap: 32px;
+  position: relative;
+}
+.card {
+  padding: 56px 36px;
+  background: #333333;
+  border-radius: 24px;
+  width: 100%;
+  flex: 0 1 auto;
+}
+.card-header {
+  font-size: 24px;
+  font-weight: 600;
+}
+.card-link {
+  color: white;
+  text-decoration: underline;
+}
+.card-link:hover,
+.card-link:active {
+  color: #78b4ef;
+}
+
+.register-button {
+  padding: 16px 40px;
+  margin-top: 16px;
+  background: #aac906;
+  border-radius: 12px;
+  font-size: 18px;
+  display: inline-block;
+  font-weight: 600;
+  cursor: pointer;
+  color: white;
+  text-decoration: none;
+}
+.register-button:hover,
+.register-button:active {
+  color: white;
+  text-decoration: none;
+}
+
+.stats-block {
+  text-transform: uppercase;
+  font-size: 20px;
+  line-height: 1.2;
+  margin-top: 64px;
+}
+.stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 40px 32px;
+}
+.stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+.stat:nth-child(-n + 3) {
+  border-bottom: 6px solid #aac906;
+  padding-bottom: 40px;
+}
+.stat-count {
+  font-size: 64px;
+  font-weight: 800;
+}
+.stat-title a {
+	color: black;
+}
+
+.help-block {
+  margin-top: 160px;
+  margin-bottom: 80px;
+}
+.help-title {
+  text-align: center;
+  font-size: 36px;
+  font-weight: 800;
+  margin-bottom: 48px;
+}
+.help-cards {
+  display: flex;
+  flex-direction: row;
+  gap: 32px;
+}
+.help-card {
+  border-radius: 10px;
+  background-color: #f4f4f4;
+  height: 128px;
+  width: 100%;
+  padding-left: 32px;
+  padding-right: 32px;
+  flex: 0 1 auto;
+  display: flex;
+  align-items: center;
+}
+.help-card-title {
+  font-size: 24px;
+  color: #aac906;
+  font-weight: 600;
+  margin-right: 24px;
+  max-width: 50%;
+  word-wrap: normal;
+  display: flex;
+  align-items: center;
+}
+.help-card:nth-child(3) .help-card-title {
+  font-size: 20px;
+}
+.help-card-link {
+  font-size: 16px;
+  color: black;
+  text-decoration: none;
+}
+.help-card-link:hover {
+  color: black;
+  text-decoration: underline;
+}
+.green-dot {
+  width: 0;
+  height: 0;
+  border: 6px solid #aac906;
+  border-radius: 100px;
+  margin-right: 24px;
+}
+
+@media (max-width: 1180px) {
+  .card-block {
+    padding-top: 200px;
+  }
+  .cards {
+    flex-wrap: wrap;
+  }
+  .card {
+    flex: 1 0 45%;
+  }
+  .help-cards {
+    max-width: 512px;
+    margin: 0 auto;
+    align-items: center;
+    flex-direction: column;
+  }
+  .help-card-title {
+    width: 50%;
+  }
+}
+
+@media (max-width: 991px) {
+  .stats-block {
+    font-size: 16px;
+  }
+  .stat-count {
+    font-size: 48px;
+  }
+}
+
+@media (max-width: 767px) {
+  .card-block {
+    padding: 250px 32px 0px 32px;
+  }
+  .cards {
+    flex-direction: column;
+    background: #333333;
+    border-radius: 24px;
+    padding: 24px;
+    gap: 16px;
+  }
+  .cards-header {
+    display: block;
+    font-size: 24px;
+    font-weight: 800;
+  }
+  .card {
+    background: initial;
+    padding: 16px 0px;
+  }
+  .cards > div:nth-child(2) {
+    order: 5;
+    padding-bottom: 0;
+  }
+  .card-header {
+    font-size: 18px;
+  }
+  .card-content {
+    font-size: 16px;
+  }
+  .register-button {
+    display: block;
+    text-align: center;
+    margin-top: 32px;
+  }
+  .stat-count {
+    font-size: 40px;
+  }
+  .stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 32px 16px;
+  }
+  .stat {
+    height: 132px;
+    align-items: start;
+    justify-content: space-between;
+    border-left: 6px solid #aac906;
+    padding: 12px 0px 8px 16px;
+  }
+  .stat:nth-child(-n + 3) {
+    border-bottom-width: 0px;
+    padding-bottom: 8px;
+  }
+}
+
+@media (max-width: 575px) {
+  .container-width {
+    padding-left: 12px;
+    padding-right: 12px;
+  }
+  .cards {
+    padding: 16px;
+  }
+  .card-block {
+    padding: 250px 12px 0px 12px;
+  }
+  .help-title {
+    font-size: 24px;
+    text-align: left;
+    margin-bottom: 32px;
+  }
+  .help-card {
+    height: 80px;
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+  .green-dot {
+    margin-right: 16px;
+    border-width: 4px;
+  }
+  .help-card:nth-child(3) .help-card-title,
+  .help-card-title {
+    font-size: 18px;
+  }
+}
+/*** END FROM HOME ***/
+
+
 .container-width {
   padding: 0 20px 0 20px;
 }
@@ -26,7 +289,11 @@
   font-weight: 400;
   font-family: Inter, sans-serif;
   word-wrap: break-word;
-  margin-bottom: 80px;
+  padding-bottom: 80px;
+  background-color: white;
+}
+.full.height {
+  padding-bottom: 0 !important;
 }
 .tools-header {
   font-size: 36px;
