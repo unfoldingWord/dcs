@@ -39,13 +39,17 @@
 				{{end}}
 			{{end}}
 			<a class="item{{if .PageIsExplore}} active{{end}}" href="{{AppSubUrl}}/explore/repos">{{.locale.Tr "explore"}}</a>
-			<!-- DCS CUSTOMIZATION: REMOVED EXPLORE LINKS FOR NOT SIGNED IN. -->
+			<a class="item{{if .PageIsExplore}} active{{end}}" href="{{AppSubUrl}}/explore/repos">{{ctx.Locale.Tr "explore"}}</a>
+		{{else if .IsLandingPageOrganizations}}
+			<a class="item{{if .PageIsExplore}} active{{end}}" href="{{AppSubUrl}}/explore/organizations">{{ctx.Locale.Tr "explore"}}</a>
+		{{else}}
+			<a class="item{{if .PageIsExplore}} active{{end}}" href="{{AppSubUrl}}/explore/repos">{{ctx.Locale.Tr "explore"}}</a>
 		{{end}}
 
 		{{template "custom/extra_links" .}}
 
 		{{if not .IsSigned}}
-			<a class="item" target="_blank" rel="noopener noreferrer" href="https://docs.gitea.com">Gitea Docs</a>
+			<a class="item" href="{{AppSubUrl}}/about#help">{{ctx.Locale.Tr "help"}}</a>
 		{{end}}
 	</div>
 
@@ -168,10 +172,16 @@
 						{{svg "octicon-tools"}}
 						{{.locale.Tr "your_settings"}}
 					</a>
-					<a class="item" target="_blank" rel="noopener noreferrer" href="https://docs.gitea.com">
+					<!-- DCS Customizations: Adds usage stats and links help to bottom of about page -->
+					<a class="item" href="{{AppSubUrl}}/about#stats">
+						{{svg "octicon-graph"}}
+						Usage Stats
+					</a>
+					<a class="item" href="{{AppSubUrl}}/about#help">
 						{{svg "octicon-question"}}
 						{{.locale.Tr "help"}}
 					</a>
+					<!-- END DCS Customizations -->
 					{{if .IsAdmin}}
 						<div class="divider"></div>
 
