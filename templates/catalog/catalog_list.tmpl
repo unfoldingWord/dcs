@@ -77,7 +77,7 @@
 					<td>{{.StageStr}}</td>
 				</tr>
 				<tr>
-					<td><strong>{{$.locale.Tr "repo.metadata.ingredients"}}:</strong></td>
+					<td><strong>{{ctx.Locale.Tr "repo.metadata.ingredients"}}:</strong></td>
 					<td>
 						{{range .Ingredients}}
 							<a href="?sort={{$.SortType}}&q=book%3A{{.Identifier}}">{{.Identifier}}</a>
