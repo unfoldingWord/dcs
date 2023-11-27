@@ -23901,10 +23901,6 @@
           "format": "date-time",
           "x-go-name": "Deadline"
         },
-        "has_conflicts": {
-          "type": "boolean",
-          "x-go-name": "HasConflicts"
-        },
         "head": {
           "$ref": "#/definitions/PRBranchInfo"
         },
@@ -23978,6 +23974,10 @@
         },
         "state": {
           "$ref": "#/definitions/StateType"
+        },
+        "status": {
+          "type": "string",
+          "x-go-name": "Status"
         },
         "title": {
           "type": "string",

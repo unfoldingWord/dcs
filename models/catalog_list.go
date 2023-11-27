@@ -56,15 +56,19 @@ func SearchCatalogByCondition(ctx context.Context, opts *door43metadata.SearchCa
 		GroupBy("`door43_metadata`.repo_id").
 		ToBoundSQL()
 	if err != nil {
-		return nil,
-			0, err
+		return nil, 0, err
+	}
+
+	releaseInfoJoinCondition := "release_info.repo_id = `door43_metadata`.repo_id"
+	if !opts.IncludeHistory {
+		releaseInfoJoinCondition += " AND release_info.latest_unix = `door43_metadata`.release_date_unix AND release_info.latest_stage = `door43_metadata`.stage"
 	}
 
 	sess := db.GetEngine(db.DefaultContext).
 		Join("INNER", "repository", "`repository`.id = `door43_metadata`.repo_id").
 		Join("INNER", "user", "`repository`.owner_id = `user`.id").
 		Join("LEFT", "release", "`release`.id = `door43_metadata`.release_id").
-		Join("INNER", "("+releaseInfoOuter+") release_info", "release_info.repo_id = `door43_metadata`.repo_id").
+		Join("INNER", "("+releaseInfoOuter+") release_info", releaseInfoJoinCondition).
 		Where(cond)
 
 	for _, orderBy := range opts.OrderBy {
