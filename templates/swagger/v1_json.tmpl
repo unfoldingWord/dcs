@@ -14,7 +14,7 @@
   "swagger": "2.0",
   "info": {
     "description": "This documentation describes the DCS (Gitea) API.",
-    "title": "DCS (Gitea) API.",
+    "title": "DCS (Gitea) API",
     "license": {
       "name": "MIT",
       "url": "http://opensource.org/licenses/MIT"
@@ -7259,6 +7259,18 @@
             "name": "sha",
             "in": "path",
             "required": true
+          },
+          {
+            "type": "boolean",
+            "description": "include verification for every commit (disable for speedup, default 'true')",
+            "name": "verification",
+            "in": "query"
+          },
+          {
+            "type": "boolean",
+            "description": "include a list of affected files for every commit (disable for speedup, default 'true')",
+            "name": "files",
+            "in": "query"
           }
         ],
         "responses": {
@@ -7392,18 +7404,6 @@
             "name": "ref",
             "in": "path",
             "required": true
-          },
-          {
-            "type": "boolean",
-            "description": "include verification for every commit (disable for speedup, default 'true')",
-            "name": "verification",
-            "in": "query"
-          },
-          {
-            "type": "boolean",
-            "description": "include a list of affected files for every commit (disable for speedup, default 'true')",
-            "name": "files",
-            "in": "query"
           }
         ],
         "responses": {
