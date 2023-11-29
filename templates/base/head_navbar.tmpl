@@ -49,6 +49,7 @@
 
 		{{if not .IsSigned}}
 			<a class="item" href="{{AppSubUrl}}/about#help">{{ctx.Locale.Tr "help"}}</a>
+			<a class="item" href="/api/swagger" target="_blank" rel="noreferrer">API</a>
 		{{end}}
 	</div>
 
@@ -178,7 +179,11 @@
 					</a>
 					<a class="item" href="{{AppSubUrl}}/about#help">
 						{{svg "octicon-question"}}
-						{{.locale.Tr "help"}}
+						{{ctx.Locale.Tr "help"}}
+					</a>
+					<a class="item" href="{{AppSubUrl}}/api/swagger">
+						{{svg "octicon-code"}}
+						API
 					</a>
 					<!-- END DCS Customizations -->
 					{{if .IsAdmin}}
