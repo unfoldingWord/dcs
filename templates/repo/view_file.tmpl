@@ -62,7 +62,7 @@
 				<button class="ui mini basic button escape-button gt-mr-2">{{.locale.Tr "repo.escape_control_characters"}}</button>
 			{{end}}
 			<!-- DCS Customizations -->
-			<i id="expand-view-button" class="fa fa-expand btn-octicon poping up" data-content="{{.locale.Tr "repo.expand_view"}}" data-tr-expand="{{.locale.Tr "repo.expand_view"}}" data-tr-compact="{{.locale.Tr "repo.compact_view"}}" data-position="bottom center" data-variation="tiny inverted" style="cursor:pointer"></i>
+			<span id="expand-view-button" class="btn-octicon" data-tooltip-content="{{ctx.Locale.Tr "repo.expand_view"}}">{{svg "octicon-move-to-start"}}{{svg "octicon-move-to-end"}}</span>
 			<!-- END DCS Customizations -->
 		</div>
 	</h4>
@@ -134,23 +134,19 @@
 <script>
 const expandViewButton = document.querySelector('#expand-view-button');
 let isExpandedView = false;
+const expandTooltip = "{{ctx.Locale.Tr "repo.expand_view"}}";
+const compactTooltip = "{{ctx.Locale.Tr "repo.compact_view"}}";
 expandViewButton.addEventListener('click', () => {
 	const container = expandViewButton.closest('.container');
-	const trExpand = expandViewButton.getAttribute('data-tr-expand');
-	const trCompact = expandViewButton.getAttribute('data-tr-compact');
 	if (isExpandedView) {
 		container.classList.remove('fluid', 'padded');
-		expandViewButton.classList.add('fa-expand');
-		expandViewButton.classList.remove('fa-compress');
-		expandViewButton.setAttribute('data-content', trExpand);
-		isExpandedView = false;
+		expandViewButton.setAttribute('data-tooltip-content', expandTooltip);
 	} else {
 		container.classList.add('fluid', 'padded');
-		expandViewButton.classList.remove('fa-expand');
-		expandViewButton.classList.add('fa-compress');
-		expandViewButton.setAttribute('data-content', trCompact);
-		isExpandedView = true;
+		expandViewButton.setAttribute('data-tooltip-content', compactTooltip);
 	}
+	isExpandedView = !isExpandedView;
+	expandViewButton.children[0].before(expandViewButton.children[1]);
 }, false);
 </script>
 <!-- END DCS Customizations -->
