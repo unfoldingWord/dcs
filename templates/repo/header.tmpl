@@ -49,7 +49,7 @@
 					{{if .LatestProdDM}}
 					<div class="ui labeled button" tabindex="0">
 						<a type="submit" class="ui compact basic button" href="{{.Link}}/releases/tag/{{.LatestProdDM.Ref | PathEscapeSegments}}">
-							<i class="icon fa-file-text"></i>{{ctx.Locale.Tr "repo.metadata.catalog"}}
+							{{svg "octicon-tag"}} {{ctx.Locale.Tr "repo.metadata.catalog"}}
 						</a>
 						<a class="ui basic label" href="{{.Link}}/releases/tag/{{.LatestProdDM.Ref | PathEscapeSegments}}">
 							{{.LatestProdDM.Ref}}
