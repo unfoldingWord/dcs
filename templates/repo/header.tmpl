@@ -12,10 +12,10 @@
 					<a href="{{$.RepoLink}}">{{.Name}}</a>
 					<!--- DCS Customizations -->
 					{{if .LatestProdDM}}
-						<span class="ui green label" title="Catalog: Production"><a href="{{.Link}}/releases/tag/{{.LatestProdDM.Ref | PathEscapeSegments}}" rel="nofollow">{{.LatestProdDM.Ref}}</a></span>
+						<span class="ui green label" data-tooltip-content="Catalog: Production"><a href="{{.Link}}/releases/tag/{{.LatestProdDM.Ref | PathEscapeSegments}}" rel="nofollow">{{.LatestProdDM.Ref}}</a></span>
 					{{end}}
 					{{if .LatestPreprodDM}}
-						<span class="ui orange label" title="Catalog: Pre-Production"><a href="{{.Link}}/releases/tag/{{.LatestPreprodDM.Ref | PathEscapeSegments}}" rel="nofollow">{{.LatestPreprodDM.Ref}}</a></span>
+						<span class="ui orange label" data-tooltip-content="Catalog: Pre-Production"><a href="{{.Link}}/releases/tag/{{.LatestPreprodDM.Ref | PathEscapeSegments}}" rel="nofollow">{{.LatestPreprodDM.Ref}}</a></span>
 					{{end}}
 					<!-- END DCS Customizations -->
 					<div class="labels gt-df gt-ac gt-fw">
