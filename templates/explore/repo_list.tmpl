@@ -45,12 +45,12 @@
 					<div class="flex-item-trailing">
 						<!-- DCS Customizations -->
 						{{if .RepoDM.Language}}
-							<a class="muted" href="{{$.Link}}?sort={{$.SortType}}&q=lang%3A{{.RepoDM.Language}}" title="{{.RepoDM.LanguageTitle}}">
+							<a class="muted" href="{{$.Link}}?sort={{$.SortType}}&q=lang%3A{{.RepoDM.Language}}" data-tooltip-content="{{.RepoDM.LanguageTitle}} ({{.RepoDM.Language}}, {{.RepoDM.LanguageDirection}})">
 								<span class="gt-df gt-ac gt-mr-3"><i class="color-icon gt-mr-3" style="background-color: {{GetColorFromString .RepoDM.Language}}"></i>{{.RepoDM.Language}}</span>
 							</a>
 						{{end}}
 						{{if .RepoDM.Subject}}
-							<a class="muted" href="{{$.Link}}?sort={{$.SortType}}&q=subject%3A{{.RepoDM.Subject}}" title="Resource: {{.RepoDM.Resource}}">
+							<a class="muted" href="{{$.Link}}?sort={{$.SortType}}&q=subject%3A{{.RepoDM.Subject}}" data-tooltip-content="Resource: {{.RepoDM.Resource}}">
 								<span class="gt-df gt-ac gt-mr-3"><i class="color-icon gt-mr-3" style="background-color: {{GetColorFromString .RepoDM.Subject}}"></i>{{.RepoDM.Subject}}</span>
 							</a>
 						{{end}}

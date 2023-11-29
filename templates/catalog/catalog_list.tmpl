@@ -46,7 +46,7 @@
 						<a class="text grey gt-df gt-ac gt-mr-3" href="{{.Repo.Link}}/stars">{{svg "octicon-star" 16 "gt-mr-3"}}{{.Repo.NumStars}}</a>
 					{{end}}
 					<a class="text grey gt-df gt-ac gt-mr-3" href="{{.Repo.Link}}/forks">{{svg "octicon-git-branch" 16 "gt-mr-3"}}{{.Repo.NumForks}}</a>
-					<a class="text grey gt-df gt-ac gt-mr-3" href="{{.Repo.Link}}/releases" title="# of releases">{{svg "octicon-tag" 16 "gt-mr-3"}} {{.GetReleaseCount}}</a>
+					<a class="text grey gt-df gt-ac gt-mr-3" href="{{.Repo.Link}}/releases" data-tooltip-content="# of releases">{{svg "octicon-tag" 16 "gt-mr-3"}} {{.GetReleaseCount}}</a>
 				</div>
 			</div>
 			
