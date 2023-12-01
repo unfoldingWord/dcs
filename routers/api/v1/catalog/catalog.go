@@ -98,23 +98,42 @@ func Search(ctx *context.APIContext) {
 	//     enum: [prod,preprod,latest]
 	// - name: subject
 	//   in: query
-	//   description: search only for entries with the given subject(s). To match multiple, give the parameter multiple times or give a list comma delimited. Will perform an exact match (case insensitive) unlesss partialMatch=true
+	//   description: resource subject. Multiple values are ORed.
 	//   type: array
 	//   collectionFormat: multi
 	//   items:
 	//     type: string
-	//     enum: [Aligned Bible,Aramaic Grammar,Bible,Greek Grammar,Greek Lexicon,Greek New Testament,Hebrew Grammar,Hebrew Old Testament,Hebrew-Aramaic Lexicon,OBS Study Notes,OBS Study Questions,OBS Translation Notes,OBS Translation Questions,Open Bible Stories,Study Notes,Study Questions,Training Library,Translation Academy,Translation Notes,Translation Questions,Translation Words,TSV Study Notes,TSV Study Questions,TSV Translation Notes,TSV Translation Questions,TSV Translation Words Links,TSV OBS Study Notes,TSV OBS Study Questions,TSV OBS Translation Notes,TSV OBS Translation Questions,TSV OBS Translation Words Links]
+	// - name: flavorType
+	//   in: query
+	//   description: resource flavorType. Multiple values are ORed.
+	//   type: array
+	//   collectionFormat: multi
+	//   items:
+	//     type: string
+	// - name: flavor
+	//   in: query
+	//   description: resource flavor. Multiple values are ORed.
+	//   type: array
+	//   collectionFormat: multi
+	//   items:
+	//     type: string
 	// - name: resource
 	//   in: query
-	//   description: resource identifier. Multiple resources are ORed.
+	//   description: resource identifier. Multiple values are ORed.
 	//   type: array
 	//   collectionFormat: multi
 	//   items:
 	//     type: string
-	//     enum: [glt,gst,obs,obs-sn,obs-sq,obs-tn,obs-tq,obs-twl,sn,sq,ta,tn,tq,tw,twl,ugnt,uhb,ult,ust]
+	// - name: abbreviation
+	//   in: query
+	//   description: resource abbreviation (identifier). Multiple values are ORed.
+	//   type: array
+	//   collectionFormat: multi
+	//   items:
+	//     type: string
 	// - name: format
 	//   in: query
-	//   description: content format (usfm, text, markdown, etc.). Multiple formats are ORed.
+	//   description: content format (usfm, text, markdown, etc.). Multiple values are ORed.
 	//   type: array
 	//   collectionFormat: multi
 	//   items:
@@ -145,6 +164,13 @@ func Search(ctx *context.APIContext) {
 	// - name: metadataVersion
 	//   in: query
 	//   description: return repos only with the version of metadata given. Does not apply if metadataType is not given
+	//   type: array
+	//   collectionFormat: multi
+	//   items:
+	//     type: string
+	// - name: metadata.*
+	//   in: query
+	//   description: You can specify key=value pairs where the key is prefixed with `metadata.`. The rest of the key will be used to search the metadata for the given value. Example: metadata.type.flavorType.flavor=textStory
 	//   type: array
 	//   collectionFormat: multi
 	//   items:
@@ -238,21 +264,39 @@ func SearchOwner(ctx *context.APIContext) {
 	//     enum: [prod,preprod,latest]
 	// - name: subject
 	//   in: query
-	//   description: search only for entries with the given subject(s). To match multiple, give the parameter multiple times or give a list comma delimited. Will perform an exact match (case insensitive) unlesss partialMatch=true
+	//   description: resource subject. Multiple values are ORed.
 	//   type: array
 	//   collectionFormat: multi
 	//   items:
 	//     type: string
-	//     enum: [Aligned Bible,Aramaic Grammar,Bible,Greek Grammar,Greek Lexicon,Greek New Testament,Hebrew Grammar,Hebrew Old Testament,Hebrew-Aramaic Lexicon,OBS Study Notes,OBS Study Questions,OBS Translation Notes,OBS Translation Questions,Open Bible Stories,Study Notes,Study Questions,Training Library,Translation Academy,Translation Notes,Translation Questions,Translation Words,TSV Study Notes,TSV Study Questions,TSV Translation Notes,TSV Translation Questions,TSV Translation Words Links,TSV OBS Study Notes,TSV OBS Study Questions,TSV OBS Translation Notes,TSV OBS Translation Questions,TSV OBS Translation Words Links]
+	// - name: flavorType
+	//   in: query
+	//   description: resource flavorType. Multiple values are ORed.
+	//   type: array
+	//   collectionFormat: multi
+	//   items:
+	//     type: string
+	// - name: flavor
+	//   in: query
+	//   description: resource flavor. Multiple values are ORed.
+	//   type: array
+	//   collectionFormat: multi
+	//   items:
+	//     type: string
 	// - name: resource
 	//   in: query
-	//   description: resource identifier. Multiple resources are ORed.
+	//   description: resource identifier. Multiple values are ORed.
 	//   type: array
 	//   collectionFormat: multi
 	//   items:
 	//     type: string
-	//     enum: [glt,gst,obs,obs-sn,obs-sq,obs-tn,obs-tq,obs-twl,sn,sq,ta,tn,tq,tw,twl,ugnt,uhb,ult,ust]
-	// - name: format
+	// - name: abbreviation
+	//   in: query
+	//   description: resource abbreviation (identifier). Multiple values are ORed.
+	//   type: array
+	//   collectionFormat: multi
+	//   items:
+	//     type: string	// - name: format
 	//   in: query
 	//   description: content format (usfm, text, markdown, etc.). Multiple formats are ORed.
 	//   type: array
@@ -285,6 +329,13 @@ func SearchOwner(ctx *context.APIContext) {
 	// - name: metadataVersion
 	//   in: query
 	//   description: return repos only with the version of metadata given. Does not apply if metadataType is not given
+	//   type: array
+	//   collectionFormat: multi
+	//   items:
+	//     type: string
+	// - name: metadata.*
+	//   in: query
+	//   description: You can specify key=value pairs where the key is prefixed with `metadata.`. The rest of the key will be used to search the metadata for the given value. Example: metadata.type.flavorType.flavor=textStory
 	//   type: array
 	//   collectionFormat: multi
 	//   items:
@@ -387,20 +438,39 @@ func SearchRepo(ctx *context.APIContext) {
 	//     enum: [prod,preprod,latest]
 	// - name: subject
 	//   in: query
-	//   description: search only for entries with the given subject(s). To match multiple, give the parameter multiple times or give a list comma delimited. Will perform an exact match (case insensitive) unlesss partialMatch=true
+	//   description: resource subject. Multiple values are ORed.
 	//   type: array
 	//   collectionFormat: multi
 	//   items:
 	//     type: string
-	//     enum: [Aligned Bible,Aramaic Grammar,Bible,Greek Grammar,Greek Lexicon,Greek New Testament,Hebrew Grammar,Hebrew Old Testament,Hebrew-Aramaic Lexicon,OBS Study Notes,OBS Study Questions,OBS Translation Notes,OBS Translation Questions,Open Bible Stories,Study Notes,Study Questions,Training Library,Translation Academy,Translation Notes,Translation Questions,Translation Words,TSV Study Notes,TSV Study Questions,TSV Translation Notes,TSV Translation Questions,TSV Translation Words Links,TSV OBS Study Notes,TSV OBS Study Questions,TSV OBS Translation Notes,TSV OBS Translation Questions,TSV OBS Translation Words Links]
+	// - name: flavorType
+	//   in: query
+	//   description: resource flavorType. Multiple values are ORed.
+	//   type: array
+	//   collectionFormat: multi
+	//   items:
+	//     type: string
+	// - name: flavor
+	//   in: query
+	//   description: resource flavor. Multiple values are ORed.
+	//   type: array
+	//   collectionFormat: multi
+	//   items:
+	//     type: string
 	// - name: resource
 	//   in: query
-	//   description: resource identifier. Multiple resources are ORed.
+	//   description: resource identifier. Multiple values are ORed.
 	//   type: array
 	//   collectionFormat: multi
 	//   items:
 	//     type: string
-	//     enum: [glt,gst,obs,obs-sn,obs-sq,obs-tn,obs-tq,obs-twl,sn,sq,ta,tn,tq,tw,twl,ugnt,uhb,ult,ust]
+	// - name: abbreviation
+	//   in: query
+	//   description: resource abbreviation (identifier). Multiple values are ORed.
+	//   type: array
+	//   collectionFormat: multi
+	//   items:
+	//     type: string
 	// - name: format
 	//   in: query
 	//   description: content format (usfm, text, markdown, etc.). Multiple formats are ORed.
@@ -434,6 +504,13 @@ func SearchRepo(ctx *context.APIContext) {
 	// - name: metadataVersion
 	//   in: query
 	//   description: return repos only with the version of metadata given. Does not apply if metadataType is not given
+	//   type: array
+	//   collectionFormat: multi
+	//   items:
+	//     type: string
+	// - name: metadata.*
+	//   in: query
+	//   description: You can specify key=value pairs where the key is prefixed with `metadata.`. The rest of the key will be used to search the metadata for the given value. Example: metadata.type.flavorType.flavor=textStory
 	//   type: array
 	//   collectionFormat: multi
 	//   items:
@@ -514,20 +591,39 @@ func ListCatalogSubjects(ctx *context.APIContext) {
 	//     enum: [prod,preprod,latest]
 	// - name: subject
 	//   in: query
-	//   description: list only the those if they are in the catalog meeting the criteria given (e.g. way to test a given language has the given subject)
+	//   description: resource subject. Multiple values are ORed.
 	//   type: array
 	//   collectionFormat: multi
 	//   items:
 	//     type: string
-	//     enum: [Aligned Bible,Aramaic Grammar,Bible,Greek Grammar,Greek Lexicon,Greek New Testament,Hebrew Grammar,Hebrew Old Testament,Hebrew-Aramaic Lexicon,OBS Study Notes,OBS Study Questions,OBS Translation Notes,OBS Translation Questions,Open Bible Stories,Study Notes,Study Questions,Training Library,Translation Academy,Translation Notes,Translation Questions,Translation Words,TSV Study Notes,TSV Study Questions,TSV Translation Notes,TSV Translation Questions,TSV Translation Words Links,TSV OBS Study Notes,TSV OBS Study Questions,TSV OBS Translation Notes,TSV OBS Translation Questions,TSV OBS Translation Words Links]
+	// - name: flavorType
+	//   in: query
+	//   description: resource flavorType. Multiple values are ORed.
+	//   type: array
+	//   collectionFormat: multi
+	//   items:
+	//     type: string
+	// - name: flavor
+	//   in: query
+	//   description: resource flavor. Multiple values are ORed.
+	//   type: array
+	//   collectionFormat: multi
+	//   items:
+	//     type: string
 	// - name: resource
 	//   in: query
-	//   description: list only those with the given resource identifier. Multiple resources are ORed.
+	//   description: resource identifier. Multiple values are ORed.
 	//   type: array
 	//   collectionFormat: multi
 	//   items:
 	//     type: string
-	//     enum: [glt,gst,obs,obs-sn,obs-sq,obs-tn,obs-tq,obs-twl,sn,sq,ta,tn,tq,tw,twl,ugnt,uhb,ult,ust]
+	// - name: abbreviation
+	//   in: query
+	//   description: resource abbreviation (identifier). Multiple values are ORed.
+	//   type: array
+	//   collectionFormat: multi
+	//   items:
+	//     type: string
 	// - name: format
 	//   in: query
 	//   description: list only those with the given content format (usfm, text, markdown, etc.). Multiple formats are ORed.
@@ -562,10 +658,6 @@ func ListCatalogSubjects(ctx *context.APIContext) {
 	//   collectionFormat: multi
 	//   items:
 	//     type: string
-	// - name: partialMatch
-	//   in: query
-	//   description: if true, owner, subject and language search fields will use partial match (LIKE) when querying the catalog. Default is false
-	//   type: boolean
 	// responses:
 	//   "200":
 	//     description: "SearchResults of a successful catalog owner search"
@@ -629,20 +721,39 @@ func ListCatalogMetadataTypes(ctx *context.APIContext) {
 	//     enum: [prod,preprod,latest]
 	// - name: subject
 	//   in: query
-	//   description: list only the those if they are in the catalog meeting the criteria given (e.g. way to test a given language has the given subject)
+	//   description: resource subject. Multiple values are ORed.
 	//   type: array
 	//   collectionFormat: multi
 	//   items:
 	//     type: string
-	//     enum: [Aligned Bible,Aramaic Grammar,Bible,Greek Grammar,Greek Lexicon,Greek New Testament,Hebrew Grammar,Hebrew Old Testament,Hebrew-Aramaic Lexicon,OBS Study Notes,OBS Study Questions,OBS Translation Notes,OBS Translation Questions,Open Bible Stories,Study Notes,Study Questions,Training Library,Translation Academy,Translation Notes,Translation Questions,Translation Words,TSV Study Notes,TSV Study Questions,TSV Translation Notes,TSV Translation Questions,TSV Translation Words Links,TSV OBS Study Notes,TSV OBS Study Questions,TSV OBS Translation Notes,TSV OBS Translation Questions,TSV OBS Translation Words Links]
+	// - name: flavorType
+	//   in: query
+	//   description: resource flavorType. Multiple values are ORed.
+	//   type: array
+	//   collectionFormat: multi
+	//   items:
+	//     type: string
+	// - name: flavor
+	//   in: query
+	//   description: resource flavor. Multiple values are ORed.
+	//   type: array
+	//   collectionFormat: multi
+	//   items:
+	//     type: string
 	// - name: resource
 	//   in: query
-	//   description: list only those with the given resource identifier. Multiple resources are ORed.
+	//   description: resource identifier. Multiple values are ORed.
 	//   type: array
 	//   collectionFormat: multi
 	//   items:
 	//     type: string
-	//     enum: [glt,gst,obs,obs-sn,obs-sq,obs-tn,obs-tq,obs-twl,sn,sq,ta,tn,tq,tw,twl,ugnt,uhb,ult,ust]
+	// - name: abbreviation
+	//   in: query
+	//   description: resource abbreviation (identifier). Multiple values are ORed.
+	//   type: array
+	//   collectionFormat: multi
+	//   items:
+	//     type: string
 	// - name: format
 	//   in: query
 	//   description: list only those with the given content format (usfm, text, markdown, etc.). Multiple formats are ORed.
@@ -677,10 +788,6 @@ func ListCatalogMetadataTypes(ctx *context.APIContext) {
 	//   collectionFormat: multi
 	//   items:
 	//     type: string
-	// - name: partialMatch
-	//   in: query
-	//   description: if true, owner, subject and language search fields will use partial match (LIKE) when querying the catalog. Default is false
-	//   type: boolean
 	// responses:
 	//   "200":
 	//     description: "SearchResults of a successful catalog owner search"
@@ -744,20 +851,39 @@ func ListCatalogOwners(ctx *context.APIContext) {
 	//     enum: [prod,preprod,latest]
 	// - name: subject
 	//   in: query
-	//   description: list only the those if they are in the catalog meeting the criteria given (e.g. way to test a given language has the given subject)
+	//   description: resource subject. Multiple values are ORed.
 	//   type: array
 	//   collectionFormat: multi
 	//   items:
 	//     type: string
-	//     enum: [Aligned Bible,Aramaic Grammar,Bible,Greek Grammar,Greek Lexicon,Greek New Testament,Hebrew Grammar,Hebrew Old Testament,Hebrew-Aramaic Lexicon,OBS Study Notes,OBS Study Questions,OBS Translation Notes,OBS Translation Questions,Open Bible Stories,Study Notes,Study Questions,Training Library,Translation Academy,Translation Notes,Translation Questions,Translation Words,TSV Study Notes,TSV Study Questions,TSV Translation Notes,TSV Translation Questions,TSV Translation Words Links,TSV OBS Study Notes,TSV OBS Study Questions,TSV OBS Translation Notes,TSV OBS Translation Questions,TSV OBS Translation Words Links]
+	// - name: flavorType
+	//   in: query
+	//   description: resource flavorType. Multiple values are ORed.
+	//   type: array
+	//   collectionFormat: multi
+	//   items:
+	//     type: string
+	// - name: flavor
+	//   in: query
+	//   description: resource flavor. Multiple values are ORed.
+	//   type: array
+	//   collectionFormat: multi
+	//   items:
+	//     type: string
 	// - name: resource
 	//   in: query
-	//   description: list only those with the given resource identifier. Multiple resources are ORed.
+	//   description: resource identifier. Multiple values are ORed.
 	//   type: array
 	//   collectionFormat: multi
 	//   items:
 	//     type: string
-	//     enum: [glt,gst,obs,obs-sn,obs-sq,obs-tn,obs-tq,obs-twl,sn,sq,ta,tn,tq,tw,twl,ugnt,uhb,ult,ust]
+	// - name: abbreviation
+	//   in: query
+	//   description: resource abbreviation (identifier). Multiple values are ORed.
+	//   type: array
+	//   collectionFormat: multi
+	//   items:
+	//     type: string
 	// - name: format
 	//   in: query
 	//   description: list only those with the given content format (usfm, text, markdown, etc.). Multiple formats are ORed.
@@ -792,6 +918,17 @@ func ListCatalogOwners(ctx *context.APIContext) {
 	//   collectionFormat: multi
 	//   items:
 	//     type: string
+	// - name: metadata.*
+	//   in: query
+	//   description: You can specify key=value pairs where the key is prefixed with `metadata.`. The rest of the key will be used to search the metadata for the given value. Example: metadata.type.flavorType.flavor=textStory
+	//   type: array
+	//   collectionFormat: multi
+	//   items:
+	//     type: string
+	// - name: partialMatch
+	//   in: query
+	//   description: If true, many of the above fields will do a partial match, allowing characters to come before or after your given value. Default: false
+	//   type: boolean
 	// responses:
 	//   "200":
 	//     description: "SearchResults of a successful catalog owner search"
@@ -863,20 +1000,39 @@ func ListCatalogLanguages(ctx *context.APIContext) {
 	//     enum: [prod,preprod,latest]
 	// - name: subject
 	//   in: query
-	//   description: list only the those if they are in the catalog meeting the criteria given (e.g. way to test a given language has the given subject)
+	//   description: resource subject. Multiple values are ORed.
 	//   type: array
 	//   collectionFormat: multi
 	//   items:
 	//     type: string
-	//     enum: [Aligned Bible,Aramaic Grammar,Bible,Greek Grammar,Greek Lexicon,Greek New Testament,Hebrew Grammar,Hebrew Old Testament,Hebrew-Aramaic Lexicon,OBS Study Notes,OBS Study Questions,OBS Translation Notes,OBS Translation Questions,Open Bible Stories,Study Notes,Study Questions,Training Library,Translation Academy,Translation Notes,Translation Questions,Translation Words,TSV Study Notes,TSV Study Questions,TSV Translation Notes,TSV Translation Questions,TSV Translation Words Links,TSV OBS Study Notes,TSV OBS Study Questions,TSV OBS Translation Notes,TSV OBS Translation Questions,TSV OBS Translation Words Links]
+	// - name: flavorType
+	//   in: query
+	//   description: resource flavorType. Multiple values are ORed.
+	//   type: array
+	//   collectionFormat: multi
+	//   items:
+	//     type: string
+	// - name: flavor
+	//   in: query
+	//   description: resource flavor. Multiple values are ORed.
+	//   type: array
+	//   collectionFormat: multi
+	//   items:
+	//     type: string
 	// - name: resource
 	//   in: query
-	//   description: list only those with the given resource identifier. Multiple resources are ORed.
+	//   description: resource identifier. Multiple values are ORed.
 	//   type: array
 	//   collectionFormat: multi
 	//   items:
 	//     type: string
-	//     enum: [glt,gst,obs,obs-sn,obs-sq,obs-tn,obs-tq,obs-twl,sn,sq,ta,tn,tq,tw,twl,ugnt,uhb,ult,ust]
+	// - name: abbreviation
+	//   in: query
+	//   description: resource abbreviation (identifier). Multiple values are ORed.
+	//   type: array
+	//   collectionFormat: multi
+	//   items:
+	//     type: string
 	// - name: format
 	//   in: query
 	//   description: list only those with the given content format (usfm, text, markdown, etc.). Multiple formats are ORed.
@@ -911,6 +1067,17 @@ func ListCatalogLanguages(ctx *context.APIContext) {
 	//   collectionFormat: multi
 	//   items:
 	//     type: string
+	// - name: metadata.*
+	//   in: query
+	//   description: You can specify key=value pairs where the key is prefixed with `metadata.`. The rest of the key will be used to search the metadata for the given value. Example: metadata.type.flavorType.flavor=textStory
+	//   type: array
+	//   collectionFormat: multi
+	//   items:
+	//     type: string
+	// - name: partialMatch
+	//   in: query
+	//   description: If true, many of the above fields will do a partial match, allowing characters to come before or after your given value. Default: false
+	//   type: boolean
 	// responses:
 	//   "200":
 	//     description: "SearchResults of a successful catalog owner search"
@@ -1081,6 +1248,13 @@ func searchCatalog(ctx *context.APIContext) {
 	metadataTypes := QueryStrings(ctx, "metadataType")
 	metadataVersions := QueryStrings(ctx, "metadataVersion")
 
+	metadataQueries := map[string][]string{}
+	for k := range ctx.Req.Form {
+		if strings.HasPrefix("metadata.", k) {
+			metadataQueries["$."+strings.TrimPrefix("metadata.", k)] = ctx.FormStrings(k)
+		}
+	}
+
 	keywords := []string{}
 	query := strings.Trim(ctx.FormString("q"), " ")
 	if query != "" {
@@ -1113,6 +1287,7 @@ func searchCatalog(ctx *context.APIContext) {
 		ShowIngredients:  ctx.FormOptionalBool("showIngredients"),
 		MetadataTypes:    metadataTypes,
 		MetadataVersions: metadataVersions,
+		MetadataQueries:  metadataQueries,
 		PartialMatch:     ctx.FormBool("partialMatch"),
 	}
 

@@ -41,33 +41,36 @@ func InitDoor43Metadata() error {
 
 // Door43Metadata represents the metadata of repository's release or default branch (ReleaseID = 0).
 type Door43Metadata struct {
-	ID                int64                   `xorm:"pk autoincr"`
-	RepoID            int64                   `xorm:"INDEX UNIQUE(repo_ref) NOT NULL"`
-	Repo              *Repository             `xorm:"-"`
-	ReleaseID         int64                   `xorm:"NOT NULL"`
-	Release           *Release                `xorm:"-"`
-	Ref               string                  `xorm:"INDEX UNIQUE(repo_ref) NOT NULL"`
-	RefType           string                  `xorm:"NOT NULL"`
-	CommitSHA         string                  `xorm:"NOT NULL VARCHAR(40)"`
-	Stage             door43metadata.Stage    `xorm:"INDEX NOT NULL"`
-	MetadataType      string                  `xorm:"INDEX NOT NULL"`
-	MetadataVersion   string                  `xorm:"NOT NULL"`
-	Resource          string                  `xorm:"NOT NULL"`
-	Subject           string                  `xorm:"INDEX NOT NULL"`
-	Title             string                  `xorm:"NOT NULL"`
-	Language          string                  `xorm:"INDEX NOT NULL"`
-	LanguageTitle     string                  `xorm:"NOT NULL"`
-	LanguageDirection string                  `xorm:"NOT NULL"`
-	LanguageIsGL      bool                    `xorm:"NOT NULL"`
-	ContentFormat     string                  `xorm:"NOT NULL"`
-	CheckingLevel     int                     `xorm:"NOT NULL"`
-	Ingredients       []*structs.Ingredient   `xorm:"JSON"`
-	Metadata          *map[string]interface{} `xorm:"JSON"`
-	ReleaseDateUnix   timeutil.TimeStamp      `xorm:"NOT NULL"`
-	IsLatestForStage  bool                    `xorm:"INDEX"`
-	IsRepoMetadata    bool                    `xorm:"INDEX"`
-	CreatedUnix       timeutil.TimeStamp      `xorm:"INDEX created NOT NULL"`
-	UpdatedUnix       timeutil.TimeStamp      `xorm:"INDEX updated"`
+	ID                int64                  `xorm:"pk autoincr"`
+	RepoID            int64                  `xorm:"INDEX UNIQUE(repo_ref) NOT NULL"`
+	Repo              *Repository            `xorm:"-"`
+	ReleaseID         int64                  `xorm:"NOT NULL"`
+	Release           *Release               `xorm:"-"`
+	Ref               string                 `xorm:"INDEX UNIQUE(repo_ref) NOT NULL"`
+	RefType           string                 `xorm:"NOT NULL"`
+	CommitSHA         string                 `xorm:"NOT NULL VARCHAR(40)"`
+	Stage             door43metadata.Stage   `xorm:"INDEX NOT NULL"`
+	MetadataType      string                 `xorm:"INDEX NOT NULL"`
+	MetadataVersion   string                 `xorm:"NOT NULL"`
+	Resource          string                 `xorm:"NOT NULL"`
+	Subject           string                 `xorm:"INDEX NOT NULL"`
+	FlavorType        string                 `xorm:"INDEX NOT NULL"`
+	Flavor            string                 `xorm:"INDEX NOT NULL"`
+	Abbreviation      string                 `xorm:"INDEX NOT NULL"`
+	Title             string                 `xorm:"NOT NULL"`
+	Language          string                 `xorm:"INDEX NOT NULL"`
+	LanguageTitle     string                 `xorm:"NOT NULL"`
+	LanguageDirection string                 `xorm:"NOT NULL"`
+	LanguageIsGL      bool                   `xorm:"NOT NULL"`
+	ContentFormat     string                 `xorm:"NOT NULL"`
+	CheckingLevel     int                    `xorm:"NOT NULL"`
+	Ingredients       []*structs.Ingredient  `xorm:"JSON"`
+	Metadata          map[string]interface{} `xorm:"JSON"`
+	ReleaseDateUnix   timeutil.TimeStamp     `xorm:"NOT NULL"`
+	IsLatestForStage  bool                   `xorm:"INDEX"`
+	IsRepoMetadata    bool                   `xorm:"INDEX"`
+	CreatedUnix       timeutil.TimeStamp     `xorm:"INDEX created NOT NULL"`
+	UpdatedUnix       timeutil.TimeStamp     `xorm:"INDEX updated"`
 }
 
 func init() {

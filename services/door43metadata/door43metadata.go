@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"path/filepath"
 	"regexp"
 	"strconv"
 	"strings"
@@ -223,21 +224,24 @@ func GetBookAlignmentCount(bookPath string, commit *git.Commit) (int, error) {
 }
 
 // GetBooks get the books of the manifest
-func GetBooks(manifest *map[string]interface{}) []string {
+func GetBooks(manifest map[string]interface{}) []string {
 	var books []string
-	if len((*manifest)["projects"].([]interface{})) > 0 {
-		for _, prod := range (*manifest)["projects"].([]interface{}) {
+	if len((manifest)["projects"].([]interface{})) > 0 {
+		for _, prod := range (manifest)["projects"].([]interface{}) {
 			books = append(books, prod.(map[string]interface{})["identifier"].(string))
 		}
 	}
 	return books
 }
 
-func GetDoor43MetadataFromRCManifest(dm *repo_model.Door43Metadata, manifest *map[string]interface{}, repo *repo_model.Repository, commit *git.Commit) error {
+func GetDoor43MetadataFromRCManifest(dm *repo_model.Door43Metadata, manifest map[string]interface{}, repo *repo_model.Repository, commit *git.Commit) error {
 	var metadataType string
 	var metadataVersion string
 	var subject string
+	var flavorType string
+	var flavor string
 	var resource string
+	var abbreviation string
 	var title string
 	var language string
 	var languageTitle string
@@ -249,7 +253,7 @@ func GetDoor43MetadataFromRCManifest(dm *repo_model.Door43Metadata, manifest *ma
 	var ingredients []*structs.Ingredient
 
 	re := regexp.MustCompile("^([^0-9]+)(.*)$")
-	matches := re.FindStringSubmatch((*manifest)["dublin_core"].(map[string]interface{})["conformsto"].(string))
+	matches := re.FindStringSubmatch(manifest["dublin_core"].(map[string]interface{})["conformsto"].(string))
 	if len(matches) == 3 {
 		metadataType = matches[1]
 		metadataVersion = matches[2]
@@ -258,16 +262,17 @@ func GetDoor43MetadataFromRCManifest(dm *repo_model.Door43Metadata, manifest *ma
 		metadataType = "rc"
 		metadataVersion = "0.2"
 	}
-	subject = (*manifest)["dublin_core"].(map[string]interface{})["subject"].(string)
-	resource = (*manifest)["dublin_core"].(map[string]interface{})["identifier"].(string)
-	title = (*manifest)["dublin_core"].(map[string]interface{})["title"].(string)
-	language = (*manifest)["dublin_core"].(map[string]interface{})["language"].(map[string]interface{})["identifier"].(string)
-	languageTitle = (*manifest)["dublin_core"].(map[string]interface{})["language"].(map[string]interface{})["title"].(string)
-	format = (*manifest)["dublin_core"].(map[string]interface{})["format"].(string)
+	subject = manifest["dublin_core"].(map[string]interface{})["subject"].(string)
+	resource = manifest["dublin_core"].(map[string]interface{})["identifier"].(string)
+	abbreviation = resource
+	title = manifest["dublin_core"].(map[string]interface{})["title"].(string)
+	language = manifest["dublin_core"].(map[string]interface{})["language"].(map[string]interface{})["identifier"].(string)
+	languageTitle = manifest["dublin_core"].(map[string]interface{})["language"].(map[string]interface{})["title"].(string)
+	format = manifest["dublin_core"].(map[string]interface{})["format"].(string)
 	languageDirection = dcs.GetLanguageDirection(language)
 	languageIsGL = dcs.LanguageIsGL(language)
 	var bookPath string
-	for _, prod := range (*manifest)["projects"].([]interface{}) {
+	for _, prod := range manifest["projects"].([]interface{}) {
 		if prodMap, ok := prod.(map[string]interface{}); ok {
 			ingredient := convert.ToIngredient(prodMap)
 			book := ingredient.Identifier
@@ -283,23 +288,35 @@ func GetDoor43MetadataFromRCManifest(dm *repo_model.Door43Metadata, manifest *ma
 	}
 	if subject == "Bible" || subject == "Aligned Bible" || subject == "Greek New Testament" || subject == "Hebrew Old Testament" {
 		contentFormat = "usfm"
+		flavorType = "scripture"
+		flavor = "textTranslation"
 	} else if strings.HasPrefix(subject, "TSV ") {
 		if strings.HasPrefix(fmt.Sprintf("./%s_", resource), bookPath) {
 			contentFormat = "tsv7"
 		} else {
 			contentFormat = "tsv9"
 		}
-	} else if strings.Contains(format, "/") {
-		contentFormat = strings.Split(format, "/")[1]
-	} else if repo.PrimaryLanguage != nil {
-		contentFormat = strings.ToLower(repo.PrimaryLanguage.Language)
-	} else {
+		flavorType = "parascriptural"
+		flavor = "x-" + strings.Replace(strings.TrimPrefix("TSV ", subject), " ", "", -1)
+	} else if subject == "Open Bible Stories" {
 		contentFormat = "markdown"
+		flavorType = "gloss"
+		flavor = "textStories"
+	} else {
+		if strings.Contains(format, "/") {
+			contentFormat = strings.Split(format, "/")[1]
+		} else if repo.PrimaryLanguage != nil {
+			contentFormat = strings.ToLower(repo.PrimaryLanguage.Language)
+		} else {
+			contentFormat = "markdown"
+		}
+		flavor = "gloss"
+		flavor = "x-" + strings.Replace(subject, " ", "", -1)
 	}
 	var ok bool
-	checkingLevel, ok = (*manifest)["checking"].(map[string]interface{})["checking_level"].(int)
+	checkingLevel, ok = manifest["checking"].(map[string]interface{})["checking_level"].(int)
 	if !ok {
-		cL, ok := (*manifest)["checking"].(map[string]interface{})["checking_level"].(string)
+		cL, ok := manifest["checking"].(map[string]interface{})["checking_level"].(string)
 		if !ok {
 			checkingLevel = 1
 		} else {
@@ -315,8 +332,11 @@ func GetDoor43MetadataFromRCManifest(dm *repo_model.Door43Metadata, manifest *ma
 	dm.MetadataType = metadataType
 	dm.MetadataVersion = metadataVersion
 	dm.Subject = subject
+	dm.FlavorType = flavorType
+	dm.Flavor = flavor
 	dm.Title = title
 	dm.Resource = resource
+	dm.Abbreviation = abbreviation
 	dm.Language = language
 	dm.LanguageTitle = languageTitle
 	dm.LanguageDirection = languageDirection
@@ -333,8 +353,11 @@ func GetDoor43MetadataFromRCManifest(dm *repo_model.Door43Metadata, manifest *ma
 func GetDoor43MetadataFromSBMetadata(dm *repo_model.Door43Metadata, sbMetadata *dcs.SBMetadata100, repo *repo_model.Repository, commit *git.Commit) error {
 	var metadataType string
 	var metadataVersion string
-	subject := "unknown"
+	var subject string
+	var flavorType string
+	var flavor string
 	var resource string
+	var abbreviation string
 	var title string
 	var language string
 	var languageTitle string
@@ -346,23 +369,68 @@ func GetDoor43MetadataFromSBMetadata(dm *repo_model.Door43Metadata, sbMetadata *
 
 	metadataType = "sb"
 	metadataVersion = sbMetadata.Meta.Version
-	title = sbMetadata.Identification.Name.En
+	title = sbMetadata.Identification.Name.DetermineLocalizedTextToUse()
+	flavorType = sbMetadata.Type.FlavorType.Name
+	flavor = sbMetadata.Type.FlavorType.Flavor.Name
 
 	switch sbMetadata.Type.FlavorType.Name {
 	case "scripture":
-		subject = "Bible"
-		resource = strings.ToLower(sbMetadata.Identification.Abbreviation.En)
-		contentFormat = "usfm"
-		if sbMetadata.LocalizedNames != nil {
-			for book, ln := range *sbMetadata.LocalizedNames {
-				bookPath := "./ingredients/" + book + ".usfm"
-				count, _ := GetBookAlignmentCount(bookPath, commit)
+		if strings.HasPrefix("x-", flavor) {
+			subject = strings.ToTitle(strings.TrimPrefix("x-", flavor))
+		} else if flavor == "textTranslation" {
+			subject = "Bible"
+		} else {
+			subject = flavor
+		}
+		resource = strings.ToLower(sbMetadata.Identification.Abbreviation.DetermineLocalizedTextToUse())
+		abbreviation = resource
+		var contentFormat string
+		if sbMetadata.Ingredients != nil {
+			for filePath, ingredient := range sbMetadata.Ingredients {
+				if ingredient.Scope != nil && len(*ingredient.Scope) > 0 {
+					bookID := ingredient.Scope.GetBookID()
+					var ln *dcs.SB100LocalizedName
+					if value, ok := sbMetadata.LocalizedNames[bookID]; ok {
+						ln = &value
+					}
+					if ln == nil {
+						continue
+					}
+					filePath = "./" + filePath
+					count := 0
+					if strings.HasSuffix(".usfm", filePath) {
+						count, _ = GetBookAlignmentCount(filePath, commit)
+						if count > 0 && subject == "Bible" {
+							subject = "Aligned Bible"
+						}
+						contentFormat = "usfm"
+					} else if contentFormat == "" {
+						contentFormat = strings.TrimPrefix(".", filepath.Ext(filePath))
+					}
+					ingredients = append(ingredients, &structs.Ingredient{
+						Categories:     dcs.GetBookCategories(bookID),
+						Identifier:     bookID,
+						Title:          ln.Short.DetermineLocalizedTextToUse(),
+						Path:           filePath,
+						Sort:           dcs.GetBookSort(bookID),
+						AlignmentCount: &count,
+					})
+				}
+			}
+		} else if sbMetadata.LocalizedNames != nil {
+			contentFormat = "usfm"
+			for bookID, localizedName := range sbMetadata.LocalizedNames {
+				filePath := "./ingredients/" + bookID + ".usfm"
+				count, _ := GetBookAlignmentCount(filePath, commit)
+				if count > 0 {
+					subject = "Aligned Bible"
+				}
 				ingredients = append(ingredients, &structs.Ingredient{
-					Categories:     dcs.GetBookCategories(book),
-					Identifier:     book,
-					Title:          ln.Short.En,
-					Path:           bookPath,
-					Sort:           dcs.GetBookSort(book),
+					Categories:     dcs.GetBookCategories(bookID),
+					Identifier:     bookID,
+					Title:          localizedName.Short.DetermineLocalizedTextToUse(),
+					Path:           filePath,
+					Sort:           dcs.GetBookSort(bookID),
 					AlignmentCount: &count,
 				})
 			}
@@ -385,7 +453,7 @@ func GetDoor43MetadataFromSBMetadata(dm *repo_model.Door43Metadata, sbMetadata *
 		language = sbMetadata.Languages[0].Tag
 		languageTitle = dcs.GetLanguageTitle(language)
 		if languageTitle == "" {
-			languageTitle = sbMetadata.Languages[0].Name.En
+			languageTitle = sbMetadata.Languages[0].Name.DetermineLocalizedTextToUse()
 		}
 		languageDirection = dcs.GetLanguageDirection(language)
 		languageIsGL = dcs.LanguageIsGL(language)
@@ -395,8 +463,11 @@ func GetDoor43MetadataFromSBMetadata(dm *repo_model.Door43Metadata, sbMetadata *
 	dm.MetadataType = metadataType
 	dm.MetadataVersion = metadataVersion
 	dm.Subject = subject
+	dm.FlavorType = flavorType
+	dm.Flavor = flavor
 	dm.Title = title
 	dm.Resource = resource
+	dm.Abbreviation = abbreviation
 	dm.Language = language
 	dm.LanguageTitle = languageTitle
 	dm.LanguageDirection = languageDirection
@@ -410,7 +481,7 @@ func GetDoor43MetadataFromSBMetadata(dm *repo_model.Door43Metadata, sbMetadata *
 }
 
 func GetRCDoor43Metadata(dm *repo_model.Door43Metadata, repo *repo_model.Repository, commit *git.Commit) error {
-	var manifest *map[string]interface{}
+	var manifest map[string]interface{}
 
 	blob, err := commit.GetBlobByPath("manifest.yaml")
 	if err != nil {
@@ -503,7 +574,7 @@ func GetTcOrTsDoor43Metadata(dm *repo_model.Door43Metadata, repo *repo_model.Rep
 }
 
 func GetSBDoor43Metadata(dm *repo_model.Door43Metadata, repo *repo_model.Repository, commit *git.Commit) error {
-	var metadata *map[string]interface{}
+	var metadata map[string]interface{}
 
 	blob, err := commit.GetBlobByPath("metadata.json")
 	if err != nil {
