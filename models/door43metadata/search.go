@@ -55,13 +55,17 @@ type SearchCatalogOptions struct {
 	Tags             []string
 	Stage            Stage
 	Subjects         []string
+	FlavorTypes      []string
+	Flavors          []string
 	Resources        []string
+	Abbreviations    []string
 	ContentFormats   []string
 	CheckingLevels   []string
 	Books            []string
 	IncludeHistory   bool
 	MetadataTypes    []string
 	MetadataVersions []string
+	MetadataQueries  map[string][]string
 	ShowIngredients  util.OptionalBool
 	Languages        []string
 	LanguageIsGL     util.OptionalBool
@@ -107,12 +111,16 @@ func SearchCatalogCondition(opts *SearchCatalogOptions) builder.Cond {
 
 	cond := builder.NewCond().And(
 		GetSubjectCond(opts.Subjects, opts.PartialMatch),
+		GetFlavorTypeCond(opts.FlavorTypes, opts.PartialMatch),
+		GetFlavorCond(opts.Flavors, opts.PartialMatch),
 		GetResourceCond(opts.Resources),
+		GetAbbreviationCond(opts.Abbreviations),
 		GetContentFormatCond(opts.ContentFormats, opts.PartialMatch),
 		GetBookCond(opts.Books),
 		GetLanguageCond(opts.Languages, opts.PartialMatch),
 		GetCheckingLevelCond(opts.CheckingLevels),
 		GetMetadataTypeCond(opts.MetadataTypes, opts.PartialMatch),
+		GetMetadataQueryCond(opts.MetadataQueries, opts.PartialMatch),
 		GetTagCond(opts.Tags),
 		repoCond,
 		ownerCond,
@@ -191,6 +199,36 @@ func GetSubjectCond(subjects []string, partialMatch bool) builder.Cond {
 	return subjectCond
 }
 
+// GetFlavorTypeCond gets the flavor type condition
+func GetFlavorTypeCond(flavorTypes []string, partialMatch bool) builder.Cond {
+	flavorTypeCond := builder.NewCond()
+	for _, flavorType := range flavorTypes {
+		for _, v := range strings.Split(flavorType, ",") {
+			if partialMatch {
+				flavorTypeCond = flavorTypeCond.Or(builder.Like{"`door43_metadata`.flavor_type", strings.TrimSpace(v)})
+			} else {
+				flavorTypeCond = flavorTypeCond.Or(builder.Eq{"`door43_metadata`.flavor_type": strings.TrimSpace(v)})
+			}
+		}
+	}
+	return flavorTypeCond
+}
+
+// GetFlavorCond gets the flavor type condition
+func GetFlavorCond(flavors []string, partialMatch bool) builder.Cond {
+	flavorCond := builder.NewCond()
+	for _, flavor := range flavors {
+		for _, v := range strings.Split(flavor, ",") {
+			if partialMatch {
+				flavorCond = flavorCond.Or(builder.Like{"`door43_metadata`.flavor", strings.TrimSpace(v)})
+			} else {
+				flavorCond = flavorCond.Or(builder.Eq{"`door43_metadata`.flavor": strings.TrimSpace(v)})
+			}
+		}
+	}
+	return flavorCond
+}
+
 // GetResourceCond gets the metdata type condition
 func GetResourceCond(resources []string) builder.Cond {
 	resourceCond := builder.NewCond()
@@ -200,6 +238,17 @@ func GetResourceCond(resources []string) builder.Cond {
 		}
 	}
 	return resourceCond
+}
+
+// GetAbbreviationCond gets the abbreviation condition
+func GetAbbreviationCond(abberviations []string) builder.Cond {
+	abbreviationCond := builder.NewCond()
+	for _, abbreviation := range abberviations {
+		for _, v := range strings.Split(abbreviation, ",") {
+			abbreviationCond = abbreviationCond.Or(builder.Eq{"`door43_metadata`.abbreviation": strings.TrimSpace(v)})
+		}
+	}
+	return abbreviationCond
 }
 
 // GetContentFormatCond gets the metdata type condition
@@ -241,6 +290,23 @@ func GetMetadataVersionCond(versions []string, partialMatch bool) builder.Cond {
 		}
 	}
 	return versionCond
+}
+
+// GetMetadataQueryCond gets the metdata query condition
+func GetMetadataQueryCond(queries map[string][]string, partialMatch bool) builder.Cond {
+	metadataQueryCond := builder.NewCond()
+	for field, values := range queries {
+		for _, value := range values {
+			for _, v := range strings.Split(value, ",") {
+				if partialMatch {
+					metadataQueryCond = metadataQueryCond.Or(builder.Like{field, v})
+				} else {
+					metadataQueryCond = metadataQueryCond.Or(builder.Eq{field: v})
+				}
+			}
+		}
+	}
+	return metadataQueryCond
 }
 
 // GetLanguageCond gets the language condition

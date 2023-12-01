@@ -37,7 +37,7 @@ func GetSBDataFromBlob(blob *git.Blob) (*SBMetadata100, error) {
 	}
 
 	// Now make a generic map of the buffer to store in the database table
-	sb100.Metadata = &map[string]interface{}{}
+	sb100.Metadata = map[string]interface{}{}
 	if err := json.Unmarshal(buf, sb100.Metadata); err != nil {
 		return nil, err
 	}
@@ -76,7 +76,7 @@ func GetSB100Schema(reload bool) (*jsonschema.Schema, error) {
 }
 
 // ValidateMapBySB100Schema Validates a map structure by the RC v0.2.0 schema and returns the result
-func ValidateMapBySB100Schema(data *map[string]interface{}) (*jsonschema.ValidationError, error) {
+func ValidateMapBySB100Schema(data map[string]interface{}) (*jsonschema.ValidationError, error) {
 	if data == nil {
 		return &jsonschema.ValidationError{Message: "file cannot be empty"}, nil
 	}
@@ -84,7 +84,7 @@ func ValidateMapBySB100Schema(data *map[string]interface{}) (*jsonschema.Validat
 	if err != nil {
 		return nil, err
 	}
-	if err = schema.Validate(*data); err != nil {
+	if err = schema.Validate(data); err != nil {
 		switch e := err.(type) {
 		case *jsonschema.ValidationError:
 			return e, nil
@@ -101,13 +101,37 @@ type SBEncodedMetadata struct {
 }
 
 type SBMetadata100 struct {
-	Format         string                         `json:"format"`
-	Meta           SB100Meta                      `json:"meta"`
-	Identification SB100Identification            `json:"identification"`
-	Languages      []SB100Language                `json:"languages"`
-	Type           SB100Type                      `json:"type"`
-	LocalizedNames *map[string]SB100LocalizedName `json:"localizedNames"`
-	Metadata       *map[string]interface{}
+	Format         string                        `json:"format"`
+	Meta           SB100Meta                     `json:"meta"`
+	Identification SB100Identification           `json:"identification"`
+	Languages      []SB100Language               `json:"languages"`
+	Type           SB100Type                     `json:"type"`
+	LocalizedNames map[string]SB100LocalizedName `json:"localizedNames"`
+	Metadata       map[string]interface{}
+	Ingredients    map[string]SB100Ingredient `xorm:"JSON"`
+}
+
+type LocalizedText map[string]string
+
+// DetermineLocalizedTextToUse returns the value if there is an English "en" value, otherwise the first value
+func (nm LocalizedText) DetermineLocalizedTextToUse() string {
+	if value, ok := nm["en"]; ok {
+		return value
+	}
+	for k := range nm {
+		return nm[k]
+	}
+	return ""
+}
+
+type ScopeMap map[string][]interface{}
+
+// GetBookID returns the first key of the scope to be used at the book name
+func (sm ScopeMap) GetBookID() string {
+	for k := range sm {
+		return k
+	}
+	return ""
 }
 
 type SB100Meta struct {
@@ -118,17 +142,14 @@ type SB100Meta struct {
 }
 
 type SB100Identification struct {
-	Name         SB100En `json:"name"`
-	Abbreviation SB100En `json:"abbreviation"`
-}
-
-type SB100En struct {
-	En string `json:"en"`
+	Name         LocalizedText `json:"name"`
+	Abbreviation LocalizedText `json:"abbreviation"`
 }
 
 type SB100Language struct {
-	Tag  string  `json:"tag"`
-	Name SB100En `json:"name"`
+	Tag             string        `json:"tag"`
+	Name            LocalizedText `json:"name"`
+	ScriptDirection string        `json:"scriptDirection"`
 }
 
 type SB100Type struct {
@@ -136,8 +157,9 @@ type SB100Type struct {
 }
 
 type SB100FlavorType struct {
-	Name   string      `json:"name"`
-	Flavor SB100Flavor `json:"flavor"`
+	Name         string      `json:"name"`
+	Flavor       SB100Flavor `json:"flavor"`
+	CurrentScope *ScopeMap   `json:"currentScope"`
 }
 
 type SB100Flavor struct {
@@ -145,7 +167,15 @@ type SB100Flavor struct {
 }
 
 type SB100LocalizedName struct {
-	Short SB100En `json:"short"`
-	Abbr  SB100En `json:"abbr"`
-	Long  SB100En `json:"long"`
+	Short LocalizedText `json:"short"`
+	Abbr  LocalizedText `json:"abbr"`
+	Long  LocalizedText `json:"long"`
+}
+
+type SB100Ingredient struct {
+	Checksum map[string]string `json:"checksum"`
+	Mimetype string            `json:"mimetype"`
+	Size     int64             `json:"size"`
+	Scope    *ScopeMap         `json:"scope"`
+	Role     string            `json:"role"`
 }
