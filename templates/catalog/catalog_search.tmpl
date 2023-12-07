@@ -12,8 +12,8 @@
 			<a class="{{if eq .SortType "reversetitle"}}active{{end}} item" href="{{$.Link}}?sort=reversetitle&q={{$.Keyword}}">{{ctx.Locale.Tr "repo.metadata.label.filter_sort.reverse_title"}}</a>
 			<a class="{{if eq .SortType "subject"}}active{{end}} item" href="{{$.Link}}?sort=subject&q={{$.Keyword}}">{{ctx.Locale.Tr "repo.metadata.label.filter_sort.subject"}}</a>
 			<a class="{{if eq .SortType "reversesubject"}}active{{end}} item" href="{{$.Link}}?sort=reversesubject&q={{$.Keyword}}">{{ctx.Locale.Tr "repo.metadata.label.filter_sort.reverse_subject"}}</a>
-			<a class="{{if eq .SortType "identifier"}}active{{end}} item" href="{{$.Link}}?sort=identifier&q={{$.Keyword}}">{{ctx.Locale.Tr "repo.metadata.label.filter_sort.resource"}}</a>
-			<a class="{{if eq .SortType "reverseidentifier"}}active{{end}} item" href="{{$.Link}}?sort=reverseidentifier&q={{$.Keyword}}">{{ctx.Locale.Tr "repo.metadata.label.filter_sort.reverse_resource"}}</a>
+			<a class="{{if eq .SortType "identifier"}}active{{end}} item" href="{{$.Link}}?sort=identifier&q={{$.Keyword}}">{{ctx.Locale.Tr "repo.metadata.label.filter_sort.abbreviation"}}</a>
+			<a class="{{if eq .SortType "reverseidentifier"}}active{{end}} item" href="{{$.Link}}?sort=reverseidentifier&q={{$.Keyword}}">{{ctx.Locale.Tr "repo.metadata.label.filter_sort.reverse_abbreviation"}}</a>
 			<a class="{{if eq .SortType "reponame"}}active{{end}} item" href="{{$.Link}}?sort=reponame&q={{$.Keyword}}">{{ctx.Locale.Tr "repo.metadata.label.filter_sort.reponame"}}</a>
 			<a class="{{if eq .SortType "reversereponame"}}active{{end}} item" href="{{$.Link}}?sort=reversereponame&q={{$.Keyword}}">{{ctx.Locale.Tr "repo.metadata.label.filter_sort.reverse_reponame"}}</a>
 			<a class="{{if eq .SortType "tag"}}active{{end}} item" href="{{$.Link}}?sort=title&q={{$.Keyword}}">{{ctx.Locale.Tr "repo.metadata.label.filter_sort.tag"}}</a>

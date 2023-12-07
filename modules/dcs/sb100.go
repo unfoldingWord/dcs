@@ -26,19 +26,17 @@ func GetSBDataFromBlob(blob *git.Blob) (*SBMetadata100, error) {
 	if err != nil {
 		return nil, err
 	}
-	sbEncoded := &SBEncodedMetadata{}
-	if err = json.Unmarshal(buf, sbEncoded); err == nil {
-		buf = sbEncoded.Data
-	}
 
 	sb100 := &SBMetadata100{}
 	if err := json.Unmarshal(buf, sb100); err != nil {
+		log.Error("ERROR: %v", err)
 		return nil, err
 	}
 
 	// Now make a generic map of the buffer to store in the database table
 	sb100.Metadata = map[string]interface{}{}
-	if err := json.Unmarshal(buf, sb100.Metadata); err != nil {
+	if err := json.Unmarshal(buf, &sb100.Metadata); err != nil {
+		log.Error("ERROR: %v", err)
 		return nil, err
 	}
 
@@ -95,20 +93,15 @@ func ValidateMapBySB100Schema(data map[string]interface{}) (*jsonschema.Validati
 	return nil, nil
 }
 
-type SBEncodedMetadata struct {
-	Type string `json:"type"`
-	Data []byte `json:"data"`
-}
-
 type SBMetadata100 struct {
-	Format         string                        `json:"format"`
-	Meta           SB100Meta                     `json:"meta"`
-	Identification SB100Identification           `json:"identification"`
-	Languages      []SB100Language               `json:"languages"`
-	Type           SB100Type                     `json:"type"`
-	LocalizedNames map[string]SB100LocalizedName `json:"localizedNames"`
+	Format         string                         `json:"format"`
+	Meta           *SB100Meta                     `json:"meta"`
+	Identification *SB100Identification           `json:"identification"`
+	Languages      []*SB100Language               `json:"languages"`
+	Type           *SB100Type                     `json:"type"`
+	LocalizedNames map[string]*SB100LocalizedName `json:"localizedNames"`
 	Metadata       map[string]interface{}
-	Ingredients    map[string]SB100Ingredient `xorm:"JSON"`
+	Ingredients    map[string]*SB100Ingredient `xorm:"JSON"`
 }
 
 type LocalizedText map[string]string

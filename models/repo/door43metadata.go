@@ -52,7 +52,6 @@ type Door43Metadata struct {
 	Stage             door43metadata.Stage   `xorm:"INDEX NOT NULL"`
 	MetadataType      string                 `xorm:"INDEX NOT NULL"`
 	MetadataVersion   string                 `xorm:"NOT NULL"`
-	Resource          string                 `xorm:"NOT NULL"`
 	Subject           string                 `xorm:"INDEX NOT NULL"`
 	FlavorType        string                 `xorm:"INDEX NOT NULL"`
 	Flavor            string                 `xorm:"INDEX NOT NULL"`

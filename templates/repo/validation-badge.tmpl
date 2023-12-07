@@ -22,12 +22,12 @@
 {{if $showValidationBadge}}
 	<div class="ui label {{if eq $errors ""}}green{{else}}red{{end}} validation-message-badge" style="margin-left: 5px">
 		{{if eq $errors ""}}
-			{{$.root.locale.Tr "repo.metadata.valid"}}
+			{{ctx.Locale.Tr "repo.metadata.valid"}}
 		{{else}}
-			{{$.root.locale.Tr "repo.metadata.invalid"}} {{svg "octicon-info"}}
+			{{ctx.Locale.Tr "repo.metadata.invalid"}} {{svg "octicon-info"}}
 		{{end}}
 		<div class="validation-message-tooltip" style="display: none">
-			{{if $errors}}{{$errors}}{{else}}{{$.root.locale.Tr "repo.metadata.valid_metadata_tooltip" $.file.Name}}{{end}}
+			{{if $errors}}{{$errors}}{{else}}{{ctx.Locale.Tr "repo.metadata.valid_metadata_tooltip" $.file.Name}}{{end}}
 		</div>
 	</div>
 {{end}}

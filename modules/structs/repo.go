@@ -121,6 +121,12 @@ type Repository struct {
 	LanguageIsGL bool `json:"language_is_gl"` // DCS Customiations
 	// subject from the manifest
 	Subject string `json:"subject"` // DCS Customiations
+	// flavor type from the manifest
+	FlavorType string `json:"flavor_type"` // DCS Customiations
+	// flavor from the manifest
+	Flavor string `json:"flavor"` // DCS Customiations
+	// abbreviation from the manifest
+	Abbreviation string `json:"abbreviation"` // DCS Customizations
 	// title from the manifest
 	Title string `json:"title"` // DCS Customiations
 	// ingredients

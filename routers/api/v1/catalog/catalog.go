@@ -6,6 +6,8 @@ package catalog
 import (
 	"fmt"
 	"net/http"
+	"net/url"
+	"path"
 	"strings"
 	"time"
 
@@ -18,6 +20,7 @@ import (
 	"code.gitea.io/gitea/modules/context"
 	"code.gitea.io/gitea/modules/dcs"
 	"code.gitea.io/gitea/modules/log"
+	"code.gitea.io/gitea/modules/setting"
 	api "code.gitea.io/gitea/modules/structs"
 	"code.gitea.io/gitea/modules/util"
 	"code.gitea.io/gitea/services/convert"
@@ -25,28 +28,32 @@ import (
 
 var searchOrderByMap = map[string]map[string]door43metadata.CatalogOrderBy{
 	"asc": {
-		"title":    door43metadata.CatalogOrderByTitle,
-		"subject":  door43metadata.CatalogOrderBySubject,
-		"resource": door43metadata.CatalogOrderByResource,
-		"reponame": door43metadata.CatalogOrderByRepoName,
-		"released": door43metadata.CatalogOrderByOldest,
-		"lang":     door43metadata.CatalogOrderByLangCode,
-		"releases": door43metadata.CatalogOrderByReleases,
-		"stars":    door43metadata.CatalogOrderByStars,
-		"forks":    door43metadata.CatalogOrderByForks,
-		"tag":      door43metadata.CatalogOrderByTag,
+		"title":        door43metadata.CatalogOrderByTitle,
+		"subject":      door43metadata.CatalogOrderBySubject,
+		"flavortype":   door43metadata.CatalogOrderByFlavorType,
+		"flavor":       door43metadata.CatalogOrderByFlavor,
+		"abbreviation": door43metadata.CatalogOrderByAbbreviation,
+		"reponame":     door43metadata.CatalogOrderByRepoName,
+		"released":     door43metadata.CatalogOrderByOldest,
+		"lang":         door43metadata.CatalogOrderByLangCode,
+		"releases":     door43metadata.CatalogOrderByReleases,
+		"stars":        door43metadata.CatalogOrderByStars,
+		"forks":        door43metadata.CatalogOrderByForks,
+		"tag":          door43metadata.CatalogOrderByTag,
 	},
 	"desc": {
-		"title":    door43metadata.CatalogOrderByTitleReverse,
-		"subject":  door43metadata.CatalogOrderBySubjectReverse,
-		"resouce":  door43metadata.CatalogOrderByResourceReverse,
-		"reponame": door43metadata.CatalogOrderByRepoNameReverse,
-		"released": door43metadata.CatalogOrderByNewest,
-		"lang":     door43metadata.CatalogOrderByLangCodeReverse,
-		"releases": door43metadata.CatalogOrderByReleasesReverse,
-		"stars":    door43metadata.CatalogOrderByStarsReverse,
-		"forks":    door43metadata.CatalogOrderByForksReverse,
-		"tag":      door43metadata.CatalogOrderByTagReverse,
+		"title":        door43metadata.CatalogOrderByTitleReverse,
+		"subject":      door43metadata.CatalogOrderBySubjectReverse,
+		"flavortype":   door43metadata.CatalogOrderByFlavorType,
+		"flavor":       door43metadata.CatalogOrderByFlavor,
+		"abbreviation": door43metadata.CatalogOrderByAbbreviationReverse,
+		"reponame":     door43metadata.CatalogOrderByRepoNameReverse,
+		"released":     door43metadata.CatalogOrderByNewest,
+		"lang":         door43metadata.CatalogOrderByLangCodeReverse,
+		"releases":     door43metadata.CatalogOrderByReleasesReverse,
+		"stars":        door43metadata.CatalogOrderByStarsReverse,
+		"forks":        door43metadata.CatalogOrderByForksReverse,
+		"tag":          door43metadata.CatalogOrderByTagReverse,
 	},
 }
 
@@ -117,13 +124,6 @@ func Search(ctx *context.APIContext) {
 	//   collectionFormat: multi
 	//   items:
 	//     type: string
-	// - name: resource
-	//   in: query
-	//   description: resource identifier. Multiple values are ORed.
-	//   type: array
-	//   collectionFormat: multi
-	//   items:
-	//     type: string
 	// - name: abbreviation
 	//   in: query
 	//   description: resource abbreviation (identifier). Multiple values are ORed.
@@ -140,7 +140,7 @@ func Search(ctx *context.APIContext) {
 	//     type: string
 	// - name: checkingLevel
 	//   in: query
-	//   description: search only for entries with the given checking level(s)
+	//   description: checking level. Returns items with a checking level equal or greater than the number given
 	//   type: array
 	//   collectionFormat: multi
 	//   items:
@@ -148,14 +148,14 @@ func Search(ctx *context.APIContext) {
 	//     enum: ["1","2","3"]
 	// - name: book
 	//   in: query
-	//   description: search only for entries with the given book(s) (ingredient identifiers). To match multiple, give the parameter multiple times or give a list comma delimited. Will perform an exact match (case insensitive)
+	//   description: book (ingredient identifier). Multiple values are ORed
 	//   type: array
 	//   collectionFormat: multi
 	//   items:
 	//     type: string
 	// - name: metadataType
 	//   in: query
-	//   description: return repos only with metadata of this type
+	//   description: metadata type. Multiple values are ORed
 	//   type: array
 	//   collectionFormat: multi
 	//   items:
@@ -163,29 +163,22 @@ func Search(ctx *context.APIContext) {
 	//     enum: [rc,sb,tc,ts]
 	// - name: metadataVersion
 	//   in: query
-	//   description: return repos only with the version of metadata given. Does not apply if metadataType is not given
-	//   type: array
-	//   collectionFormat: multi
-	//   items:
-	//     type: string
-	// - name: metadata.*
-	//   in: query
-	//   description: You can specify key=value pairs where the key is prefixed with `metadata.`. The rest of the key will be used to search the metadata for the given value. Example: metadata.type.flavorType.flavor=textStory
+	//   description: metadata version. Does not apply if metadataType is not given. Multiple values are ORed
 	//   type: array
 	//   collectionFormat: multi
 	//   items:
 	//     type: string
 	// - name: partialMatch
 	//   in: query
-	//   description: if true, subject, owner and repo search fields will use partial match (LIKE) when querying the catalog. Default is false
+	//   description: if true, subject, owner and repo search fields will use partial match (LIKE) when querying the catalog, default is false
 	//   type: boolean
 	// - name: includeHistory
 	//   in: query
-	//   description: if true, all releases, not just the latest, are included. Default is false
+	//   description: if true, all releases, not just the latest, are included, default is false
 	//   type: boolean
 	// - name: showIngredients
 	//   in: query
-	//   description: if true, the list of ingredients (files/projects) in the resource and their file paths will be listed for each entry. Default is true
+	//   description: if true, the list of ingredients (files/projects) in the resource and their file paths will be listed for each entry, default is true
 	//   type: boolean
 	// - name: sort
 	//   in: query
@@ -215,344 +208,26 @@ func Search(ctx *context.APIContext) {
 	searchCatalog(ctx)
 }
 
-// SearchOwner search the catalog via owner and via options
+// SearchOwner  redirects to /catalog/search with owner as param - DEPRICATED!
 func SearchOwner(ctx *context.APIContext) {
-	// swagger:operation GET /catalog/search/{owner} catalog catalogSearchOwner
-	// ---
-	// summary: Search the catalog by owner
-	// produces:
-	// - application/json
-	// parameters:
-	// - name: owner
-	//   in: path
-	//   description: owner of the returned entries
-	//   type: string
-	//   required: true
-	// - name: q
-	//   in: query
-	//   description: keyword(s). Can use multiple `q=<keyword>`s or a comma-delimited string for more than one keyword. Is case insensitive
-	//   type: string
-	// - name: repo
-	//   in: query
-	//   description: search only for entries with the given repo name(s). To match multiple, give the parameter multiple times or give a list comma delimited. Will perform an exact match (case insensitive) unlesss partialMatch=true
-	//   type: string
-	// - name: tag
-	//   in: query
-	//   description: search only for entries with the given release tag(s). To match multiple, give the parameter multiple times or give a list comma delimited. Will perform an exact match (case insensitive)
-	//   type: string
-	// - name: lang
-	//   in: query
-	//   description: search only for entries with the given language(s). To match multiple, give the parameter multiple times or give a list comma delimited. Will perform an exact match (case insensitive) unlesss partialMatch=true
-	//   type: array
-	//   collectionFormat: multi
-	//   items:
-	//     type: string
-	// - name: is_gl
-	//   in: query
-	//   description: list only those that are (true) or are not (false) a gatetway language
-	//   type: boolean
-	// - name: stage
-	//   in: query
-	//   description: 'specifies which release stage to be return of these stages:
-	//                "prod" - return only the production releases (default);
-	//                "preprod" - return the pre-production release if it exists instead of the production release;
-	//                "latest" -return the default branch (e.g. master) if it is a valid RC instead of the above'
-	//   type: array
-	//   collectionFormat: multi
-	//   items:
-	//     type: string
-	//     enum: [prod,preprod,latest]
-	// - name: subject
-	//   in: query
-	//   description: resource subject. Multiple values are ORed.
-	//   type: array
-	//   collectionFormat: multi
-	//   items:
-	//     type: string
-	// - name: flavorType
-	//   in: query
-	//   description: resource flavorType. Multiple values are ORed.
-	//   type: array
-	//   collectionFormat: multi
-	//   items:
-	//     type: string
-	// - name: flavor
-	//   in: query
-	//   description: resource flavor. Multiple values are ORed.
-	//   type: array
-	//   collectionFormat: multi
-	//   items:
-	//     type: string
-	// - name: resource
-	//   in: query
-	//   description: resource identifier. Multiple values are ORed.
-	//   type: array
-	//   collectionFormat: multi
-	//   items:
-	//     type: string
-	// - name: abbreviation
-	//   in: query
-	//   description: resource abbreviation (identifier). Multiple values are ORed.
-	//   type: array
-	//   collectionFormat: multi
-	//   items:
-	//     type: string	// - name: format
-	//   in: query
-	//   description: content format (usfm, text, markdown, etc.). Multiple formats are ORed.
-	//   type: array
-	//   collectionFormat: multi
-	//   items:
-	//     type: string
-	// - name: checkingLevel
-	//   in: query
-	//   description: search only for entries with the given checking level(s)
-	//   type: array
-	//   collectionFormat: multi
-	//   items:
-	//     type: string
-	//     enum: ["1","2","3"]
-	// - name: book
-	//   in: query
-	//   description: search only for entries with the given book(s) (ingredient identifiers). To match multiple, give the parameter multiple times or give a list comma delimited. Will perform an exact match (case insensitive)
-	//   type: array
-	//   collectionFormat: multi
-	//   items:
-	//     type: string
-	// - name: metadataType
-	//   in: query
-	//   description: return repos only with metadata of this type
-	//   type: array
-	//   collectionFormat: multi
-	//   items:
-	//     type: string
-	//     enum: [rc,sb,tc,ts]
-	// - name: metadataVersion
-	//   in: query
-	//   description: return repos only with the version of metadata given. Does not apply if metadataType is not given
-	//   type: array
-	//   collectionFormat: multi
-	//   items:
-	//     type: string
-	// - name: metadata.*
-	//   in: query
-	//   description: You can specify key=value pairs where the key is prefixed with `metadata.`. The rest of the key will be used to search the metadata for the given value. Example: metadata.type.flavorType.flavor=textStory
-	//   type: array
-	//   collectionFormat: multi
-	//   items:
-	//     type: string
-	// - name: partialMatch
-	//   in: query
-	//   description: if true, subject, owner and repo search fields will use partial match (LIKE) when querying the catalog. Default is false
-	//   type: boolean
-	// - name: includeHistory
-	//   in: query
-	//   description: if true, all releases, not just the latest, are included. Default is false
-	//   type: boolean
-	// - name: showIngredients
-	//   in: query
-	//   description: if true, the list of ingredients (files/projects) in the resource and their file paths will be listed for each entry. Default is true
-	//   type: boolean
-	// - name: sort
-	//   in: query
-	//   description: sort repos alphanumerically by attribute. Supported values are
-	//                "subject", "title", "reponame", "tag", "released", "lang", "releases", "stars", "forks".
-	//                Default is by "language", "subject" and then "tag"
-	//   type: string
-	// - name: order
-	//   in: query
-	//   description: sort order, either "asc" (ascending) or "desc" (descending).
-	//                Default is "asc", ignored if "sort" is not specified.
-	//   type: string
-	// - name: page
-	//   in: query
-	//   description: page number of results to return (1-based)
-	//   type: integer
-	// - name: limit
-	//   in: query
-	//   description: page size of results, defaults to no limit
-	//   type: integer
-	// responses:
-	//   "200":
-	//     "$ref": "#/responses/CatalogSearchResults"
-	//   "422":
-	//     "$ref": "#/responses/validationError"
-
-	searchCatalog(ctx)
+	pathParts := strings.Split(strings.TrimSuffix(ctx.Req.URL.EscapedPath(), "/"), "/")
+	redirectPath := strings.Join(pathParts[:len(pathParts)-1], "/")
+	redirectPath += "?owner=" + url.QueryEscape(ctx.Params("username"))
+	if ctx.Req.URL.RawQuery != "" {
+		redirectPath += "&" + ctx.Req.URL.RawQuery
+	}
+	ctx.Redirect(path.Join(setting.AppSubURL, redirectPath), http.StatusPermanentRedirect)
 }
 
-// SearchRepo search the catalog via repo and options
+// SearchRepo redirects to /catalog/search with owner and repo as params - DEPRICATED!
 func SearchRepo(ctx *context.APIContext) {
-	// swagger:operation GET /catalog/search/{owner}/{repo} catalog catalogSearchRepo
-	// ---
-	// summary: Search the catalog by owner and repo
-	// produces:
-	// - application/json
-	// parameters:
-	// - name: owner
-	//   in: path
-	//   description: owner of the returned entries
-	//   type: string
-	//   required: true
-	// - name: repo
-	//   in: path
-	//   description: name of the repo of the returned entries
-	//   type: string
-	//   required: true
-	// - name: q
-	//   in: query
-	//   description: keyword(s). Can use multiple `q=<keyword>`s or a comma-delimited string for more than one keyword. Is case insensitive
-	//   type: string
-	// - name: owner
-	//   in: query
-	//   description: search only for entries with the given owner name(s). Will perform an exact match (case insensitive) unlesss partialMatch=true
-	//   type: string
-	// - name: repo
-	//   in: query
-	//   description: search only for entries with the given repo name(s). To match multiple, give the parameter multiple times or give a list comma delimited. Will perform an exact match (case insensitive) unlesss partialMatch=true
-	//   type: string
-	// - name: tag
-	//   in: query
-	//   description: search only for entries with the given release tag(s). To match multiple, give the parameter multiple times or give a list comma delimited. Will perform an exact match (case insensitive)
-	//   type: string
-	// - name: lang
-	//   in: query
-	//   description: search only for entries with the given language(s). To match multiple, give the parameter multiple times or give a list comma delimited. Will perform an exact match (case insensitive) unlesss partialMatch=true
-	//   type: array
-	//   collectionFormat: multi
-	//   items:
-	//     type: string
-	// - name: is_gl
-	//   in: query
-	//   description: list only those that are (true) or are not (false) a gatetway language
-	//   type: boolean
-	// - name: stage
-	//   in: query
-	//   description: 'specifies which release stage to be return of these stages:
-	//                "prod" - return only the production releases (default);
-	//                "preprod" - return the pre-production release if it exists instead of the production release;
-	//                "latest" - return the default branch (e.g. master) if it is a valid repo'
-	//   type: array
-	//   collectionFormat: multi
-	//   items:
-	//     type: string
-	//     enum: [prod,preprod,latest]
-	// - name: subject
-	//   in: query
-	//   description: resource subject. Multiple values are ORed.
-	//   type: array
-	//   collectionFormat: multi
-	//   items:
-	//     type: string
-	// - name: flavorType
-	//   in: query
-	//   description: resource flavorType. Multiple values are ORed.
-	//   type: array
-	//   collectionFormat: multi
-	//   items:
-	//     type: string
-	// - name: flavor
-	//   in: query
-	//   description: resource flavor. Multiple values are ORed.
-	//   type: array
-	//   collectionFormat: multi
-	//   items:
-	//     type: string
-	// - name: resource
-	//   in: query
-	//   description: resource identifier. Multiple values are ORed.
-	//   type: array
-	//   collectionFormat: multi
-	//   items:
-	//     type: string
-	// - name: abbreviation
-	//   in: query
-	//   description: resource abbreviation (identifier). Multiple values are ORed.
-	//   type: array
-	//   collectionFormat: multi
-	//   items:
-	//     type: string
-	// - name: format
-	//   in: query
-	//   description: content format (usfm, text, markdown, etc.). Multiple formats are ORed.
-	//   type: array
-	//   collectionFormat: multi
-	//   items:
-	//     type: string
-	// - name: checkingLevel
-	//   in: query
-	//   description: search only for entries with the given checking level(s)
-	//   type: array
-	//   collectionFormat: multi
-	//   items:
-	//     type: string
-	//     enum: ["1","2","3"]
-	// - name: book
-	//   in: query
-	//   description: search only for entries with the given book(s) (ingredient identifiers). To match multiple, give the parameter multiple times or give a list comma delimited. Will perform an exact match (case insensitive)
-	//   type: array
-	//   collectionFormat: multi
-	//   items:
-	//     type: string
-	// - name: metadataType
-	//   in: query
-	//   description: return repos only with metadata of this type
-	//   type: array
-	//   collectionFormat: multi
-	//   items:
-	//     type: string
-	//     enum: [rc,sb,tc,ts]
-	// - name: metadataVersion
-	//   in: query
-	//   description: return repos only with the version of metadata given. Does not apply if metadataType is not given
-	//   type: array
-	//   collectionFormat: multi
-	//   items:
-	//     type: string
-	// - name: metadata.*
-	//   in: query
-	//   description: You can specify key=value pairs where the key is prefixed with `metadata.`. The rest of the key will be used to search the metadata for the given value. Example: metadata.type.flavorType.flavor=textStory
-	//   type: array
-	//   collectionFormat: multi
-	//   items:
-	//     type: string
-	// - name: partialMatch
-	//   in: query
-	//   description: if true, subject, owner and repo search fields will use partial match (LIKE) when querying the catalog. Default is false
-	//   type: boolean
-	// - name: includeHistory
-	//   in: query
-	//   description: if true, all releases, not just the latest, are included. Default is false
-	//   type: boolean
-	// - name: showIngredients
-	//   in: query
-	//   description: if true, the list of ingredients (files/projects) in the resource and their file paths will be listed for each entry. Default is true
-	//   type: boolean
-	// - name: sort
-	//   in: query
-	//   description: sort repos alphanumerically by attribute. Supported values are
-	//                "subject", "title", "reponame", "tag", "released", "lang", "releases", "stars", "forks".
-	//                Default is by "language", "subject" and then "tag"
-	//   type: string
-	// - name: order
-	//   in: query
-	//   description: sort order, either "asc" (ascending) or "desc" (descending).
-	//                Default is "asc", ignored if "sort" is not specified.
-	//   type: string
-	// - name: page
-	//   in: query
-	//   description: page number of results to return (1-based)
-	//   type: integer
-	// - name: limit
-	//   in: query
-	//   description: page size of results, defaults to no limit
-	//   type: integer
-	// responses:
-	//   "200":
-	//     "$ref": "#/responses/CatalogSearchResults"
-	//   "422":
-	//     "$ref": "#/responses/validationError"
-
-	searchCatalog(ctx)
+	pathParts := strings.Split(strings.TrimSuffix(ctx.Req.URL.EscapedPath(), "/"), "/")
+	redirectPath := strings.Join(pathParts[:len(pathParts)-2], "/")
+	redirectPath += "?owner=" + url.QueryEscape(ctx.Repo.Repository.OwnerName) + "&repo=" + url.QueryEscape(ctx.Repo.Repository.LowerName)
+	if ctx.Req.URL.RawQuery != "" {
+		redirectPath += "&" + ctx.Req.URL.RawQuery
+	}
+	ctx.Redirect(path.Join(setting.AppSubURL, redirectPath), http.StatusPermanentRedirect)
 }
 
 // ListCatalogSubjects list the subjects available in the catalog
@@ -610,13 +285,6 @@ func ListCatalogSubjects(ctx *context.APIContext) {
 	//   collectionFormat: multi
 	//   items:
 	//     type: string
-	// - name: resource
-	//   in: query
-	//   description: resource identifier. Multiple values are ORed.
-	//   type: array
-	//   collectionFormat: multi
-	//   items:
-	//     type: string
 	// - name: abbreviation
 	//   in: query
 	//   description: resource abbreviation (identifier). Multiple values are ORed.
@@ -626,11 +294,14 @@ func ListCatalogSubjects(ctx *context.APIContext) {
 	//     type: string
 	// - name: format
 	//   in: query
-	//   description: list only those with the given content format (usfm, text, markdown, etc.). Multiple formats are ORed.
-	//   type: string
+	//   description: content format (usfm, text, markdown, etc.). Multiple values are ORed.
+	//   type: array
+	//   collectionFormat: multi
+	//   items:
+	//     type: string
 	// - name: checkingLevel
 	//   in: query
-	//   description: list only those with the given checking level(s)
+	//   description: checking level. Returns items with a checking level equal or greater than the number given
 	//   type: array
 	//   collectionFormat: multi
 	//   items:
@@ -638,14 +309,14 @@ func ListCatalogSubjects(ctx *context.APIContext) {
 	//     enum: ["1","2","3"]
 	// - name: book
 	//   in: query
-	//   description: list only those with the given book(s) (ingredient identifiers). To match multiple, give the parameter multiple times or give a list comma delimited. Will perform an exact match (case insensitive)
+	//   description: book (ingredient identifier). Multiple values are ORed
 	//   type: array
 	//   collectionFormat: multi
 	//   items:
 	//     type: string
 	// - name: metadataType
 	//   in: query
-	//   description: list only those with the given metadata type
+	//   description: metadata type. Multiple values are ORed
 	//   type: array
 	//   collectionFormat: multi
 	//   items:
@@ -653,7 +324,7 @@ func ListCatalogSubjects(ctx *context.APIContext) {
 	//     enum: [rc,sb,tc,ts]
 	// - name: metadataVersion
 	//   in: query
-	//   description: list only those with the given metadatay version. Does not apply if metadataType is not given
+	//   description: metadata version. Does not apply if metadataType is not given. Multiple values are ORed
 	//   type: array
 	//   collectionFormat: multi
 	//   items:
@@ -740,13 +411,6 @@ func ListCatalogMetadataTypes(ctx *context.APIContext) {
 	//   collectionFormat: multi
 	//   items:
 	//     type: string
-	// - name: resource
-	//   in: query
-	//   description: resource identifier. Multiple values are ORed.
-	//   type: array
-	//   collectionFormat: multi
-	//   items:
-	//     type: string
 	// - name: abbreviation
 	//   in: query
 	//   description: resource abbreviation (identifier). Multiple values are ORed.
@@ -756,11 +420,14 @@ func ListCatalogMetadataTypes(ctx *context.APIContext) {
 	//     type: string
 	// - name: format
 	//   in: query
-	//   description: list only those with the given content format (usfm, text, markdown, etc.). Multiple formats are ORed.
-	//   type: string
+	//   description: content format (usfm, text, markdown, etc.). Multiple values are ORed.
+	//   type: array
+	//   collectionFormat: multi
+	//   items:
+	//     type: string
 	// - name: checkingLevel
 	//   in: query
-	//   description: list only those with the given checking level(s)
+	//   description: checking level. Returns items with a checking level equal or greater than the number given
 	//   type: array
 	//   collectionFormat: multi
 	//   items:
@@ -768,14 +435,14 @@ func ListCatalogMetadataTypes(ctx *context.APIContext) {
 	//     enum: ["1","2","3"]
 	// - name: book
 	//   in: query
-	//   description: list only those with the given book(s) (ingredient identifiers). To match multiple, give the parameter multiple times or give a list comma delimited. Will perform an exact match (case insensitive)
+	//   description: book (ingredient identifier). Multiple values are ORed
 	//   type: array
 	//   collectionFormat: multi
 	//   items:
 	//     type: string
 	// - name: metadataType
 	//   in: query
-	//   description: list only those with the given metadata type
+	//   description: metadata type. Multiple values are ORed
 	//   type: array
 	//   collectionFormat: multi
 	//   items:
@@ -783,7 +450,7 @@ func ListCatalogMetadataTypes(ctx *context.APIContext) {
 	//     enum: [rc,sb,tc,ts]
 	// - name: metadataVersion
 	//   in: query
-	//   description: list only those with the given metadatay version. Does not apply if metadataType is not given
+	//   description: metadata version. Does not apply if metadataType is not given. Multiple values are ORed
 	//   type: array
 	//   collectionFormat: multi
 	//   items:
@@ -870,13 +537,6 @@ func ListCatalogOwners(ctx *context.APIContext) {
 	//   collectionFormat: multi
 	//   items:
 	//     type: string
-	// - name: resource
-	//   in: query
-	//   description: resource identifier. Multiple values are ORed.
-	//   type: array
-	//   collectionFormat: multi
-	//   items:
-	//     type: string
 	// - name: abbreviation
 	//   in: query
 	//   description: resource abbreviation (identifier). Multiple values are ORed.
@@ -886,11 +546,14 @@ func ListCatalogOwners(ctx *context.APIContext) {
 	//     type: string
 	// - name: format
 	//   in: query
-	//   description: list only those with the given content format (usfm, text, markdown, etc.). Multiple formats are ORed.
-	//   type: string
+	//   description: content format (usfm, text, markdown, etc.). Multiple values are ORed.
+	//   type: array
+	//   collectionFormat: multi
+	//   items:
+	//     type: string
 	// - name: checkingLevel
 	//   in: query
-	//   description: list only those with the given checking level(s)
+	//   description: checking level. Returns items with a checking level equal or greater than the number given
 	//   type: array
 	//   collectionFormat: multi
 	//   items:
@@ -898,14 +561,14 @@ func ListCatalogOwners(ctx *context.APIContext) {
 	//     enum: ["1","2","3"]
 	// - name: book
 	//   in: query
-	//   description: list only those with the given book(s) (ingredient identifiers). To match multiple, give the parameter multiple times or give a list comma delimited. Will perform an exact match (case insensitive)
+	//   description: book (ingredient identifier). Multiple values are ORed
 	//   type: array
 	//   collectionFormat: multi
 	//   items:
 	//     type: string
 	// - name: metadataType
 	//   in: query
-	//   description: list only those with the given metadata type
+	//   description: metadata type. Multiple values are ORed
 	//   type: array
 	//   collectionFormat: multi
 	//   items:
@@ -913,21 +576,14 @@ func ListCatalogOwners(ctx *context.APIContext) {
 	//     enum: [rc,sb,tc,ts]
 	// - name: metadataVersion
 	//   in: query
-	//   description: list only those with the given metadatay version. Does not apply if metadataType is not given
-	//   type: array
-	//   collectionFormat: multi
-	//   items:
-	//     type: string
-	// - name: metadata.*
-	//   in: query
-	//   description: You can specify key=value pairs where the key is prefixed with `metadata.`. The rest of the key will be used to search the metadata for the given value. Example: metadata.type.flavorType.flavor=textStory
+	//   description: metadata version. Does not apply if metadataType is not given. Multiple values are ORed
 	//   type: array
 	//   collectionFormat: multi
 	//   items:
 	//     type: string
 	// - name: partialMatch
 	//   in: query
-	//   description: If true, many of the above fields will do a partial match, allowing characters to come before or after your given value. Default: false
+	//   description: If true, many of the above fields will do a partial match, allowing characters to come before or after your given value, default is false
 	//   type: boolean
 	// responses:
 	//   "200":
@@ -1019,13 +675,6 @@ func ListCatalogLanguages(ctx *context.APIContext) {
 	//   collectionFormat: multi
 	//   items:
 	//     type: string
-	// - name: resource
-	//   in: query
-	//   description: resource identifier. Multiple values are ORed.
-	//   type: array
-	//   collectionFormat: multi
-	//   items:
-	//     type: string
 	// - name: abbreviation
 	//   in: query
 	//   description: resource abbreviation (identifier). Multiple values are ORed.
@@ -1035,11 +684,14 @@ func ListCatalogLanguages(ctx *context.APIContext) {
 	//     type: string
 	// - name: format
 	//   in: query
-	//   description: list only those with the given content format (usfm, text, markdown, etc.). Multiple formats are ORed.
-	//   type: string
+	//   description: content format (usfm, text, markdown, etc.). Multiple values are ORed.
+	//   type: array
+	//   collectionFormat: multi
+	//   items:
+	//     type: string
 	// - name: checkingLevel
 	//   in: query
-	//   description: list only those with the given checking level(s)
+	//   description: checking level. Returns items with a checking level equal or greater than the number given
 	//   type: array
 	//   collectionFormat: multi
 	//   items:
@@ -1047,14 +699,14 @@ func ListCatalogLanguages(ctx *context.APIContext) {
 	//     enum: ["1","2","3"]
 	// - name: book
 	//   in: query
-	//   description: list only those with the given book(s) (ingredient identifiers). To match multiple, give the parameter multiple times or give a list comma delimited. Will perform an exact match (case insensitive)
+	//   description: book (ingredient identifier). Multiple values are ORed
 	//   type: array
 	//   collectionFormat: multi
 	//   items:
 	//     type: string
 	// - name: metadataType
 	//   in: query
-	//   description: list only those with the given metadata type
+	//   description: metadata type. Multiple values are ORed
 	//   type: array
 	//   collectionFormat: multi
 	//   items:
@@ -1062,21 +714,14 @@ func ListCatalogLanguages(ctx *context.APIContext) {
 	//     enum: [rc,sb,tc,ts]
 	// - name: metadataVersion
 	//   in: query
-	//   description: list only those with the given metadatay version. Does not apply if metadataType is not given
-	//   type: array
-	//   collectionFormat: multi
-	//   items:
-	//     type: string
-	// - name: metadata.*
-	//   in: query
-	//   description: You can specify key=value pairs where the key is prefixed with `metadata.`. The rest of the key will be used to search the metadata for the given value. Example: metadata.type.flavorType.flavor=textStory
+	//   description: metadata version. Does not apply if metadataType is not given. Multiple values are ORed
 	//   type: array
 	//   collectionFormat: multi
 	//   items:
 	//     type: string
 	// - name: partialMatch
 	//   in: query
-	//   description: If true, many of the above fields will do a partial match, allowing characters to come before or after your given value. Default: false
+	//   description: If true, many of the above fields will do a partial match, allowing characters to come before or after your given value, default is false
 	//   type: boolean
 	// responses:
 	//   "200":
@@ -1141,7 +786,7 @@ func GetCatalogEntry(ctx *context.APIContext) {
 	//   "404":
 	//     "$ref": "#/responses/notFound"
 
-	ref := ctx.Params("ref")
+	ref := ctx.Params("*")
 	var dm *repo.Door43Metadata
 	var err error
 	dm, err = repo.GetDoor43MetadataByRepoIDAndRef(ctx, ctx.Repo.Repository.ID, ref)
@@ -1167,7 +812,7 @@ func GetCatalogEntry(ctx *context.APIContext) {
 
 // GetCatalogMetadata Get the metadata (RC 0.2 manifest) in JSON format for the given ownername, reponame and ref
 func GetCatalogMetadata(ctx *context.APIContext) {
-	// swagger:operation GET /catalog/entry/{owner}/{repo}/{ref}/metadata catalog catalogGetMetadata
+	// swagger:operation GET /catalog/metadata/{owner}/{repo}/{ref} catalog catalogGetMetadata
 	// ---
 	// summary: Get the metdata metadata (metadata.json or manifest.yaml in JSON format) of a catalog entry
 	// produces:
@@ -1194,6 +839,24 @@ func GetCatalogMetadata(ctx *context.APIContext) {
 	//   "404":
 	//     "$ref": "#/responses/notFound"
 
+	ref := ctx.Params("*")
+	if ref == "" {
+		ref = ctx.Params("ref")
+	}
+	dm, err := repo.GetDoor43MetadataByRepoIDAndRef(ctx, ctx.Repo.Repository.ID, ref)
+	if err != nil {
+		if !repo.IsErrDoor43MetadataNotExist(err) {
+			ctx.Error(http.StatusInternalServerError, "GetDoor43MetadataByRepoIDAndRef", err)
+		} else {
+			ctx.NotFound()
+		}
+		return
+	}
+	ctx.JSON(http.StatusOK, dm.Metadata)
+}
+
+// GetCatalogMetadataOLD is depricated
+func GetCatalogMetadataOLD(ctx *context.APIContext) {
 	ref := ctx.Params("ref")
 	dm, err := repo.GetDoor43MetadataByRepoIDAndRef(ctx, ctx.Repo.Repository.ID, ref)
 	if err != nil {
@@ -1221,19 +884,6 @@ func QueryStrings(ctx *context.APIContext, name string) []string {
 }
 
 func searchCatalog(ctx *context.APIContext) {
-	var repoID int64
-	var owners, repos []string
-	if ctx.Repo.Repository != nil {
-		repoID = ctx.Repo.Repository.ID
-	} else {
-		if ctx.Params("username") != "" {
-			owners = []string{ctx.Params("username")}
-		} else {
-			owners = QueryStrings(ctx, "owner")
-		}
-		repos = QueryStrings(ctx, "repo")
-	}
-
 	stageStr := ctx.FormString("stage")
 	stage := door43metadata.StageProd
 	if stageStr != "" {
@@ -1248,13 +898,6 @@ func searchCatalog(ctx *context.APIContext) {
 	metadataTypes := QueryStrings(ctx, "metadataType")
 	metadataVersions := QueryStrings(ctx, "metadataVersion")
 
-	metadataQueries := map[string][]string{}
-	for k := range ctx.Req.Form {
-		if strings.HasPrefix("metadata.", k) {
-			metadataQueries["$."+strings.TrimPrefix("metadata.", k)] = ctx.FormStrings(k)
-		}
-	}
-
 	keywords := []string{}
 	query := strings.Trim(ctx.FormString("q"), " ")
 	if query != "" {
@@ -1268,18 +911,22 @@ func searchCatalog(ctx *context.APIContext) {
 		listOptions.Page = 1
 	}
 
+	abbreviations := QueryStrings(ctx, "abbreviation")
+	abbreviations = append(abbreviations, QueryStrings(ctx, "resource")...) // For non-breaking changes, support "resource" argument
+
 	opts := &door43metadata.SearchCatalogOptions{
 		ListOptions:      listOptions,
 		Keywords:         keywords,
-		Owners:           owners,
-		Repos:            repos,
-		RepoID:           repoID,
+		Owners:           QueryStrings(ctx, "owner"),
+		Repos:            QueryStrings(ctx, "repo"),
 		Tags:             QueryStrings(ctx, "tag"),
 		Stage:            stage,
 		Languages:        QueryStrings(ctx, "lang"),
 		LanguageIsGL:     ctx.FormOptionalBool("is_gl"),
 		Subjects:         QueryStrings(ctx, "subject"),
-		Resources:        QueryStrings(ctx, "resource"),
+		FlavorTypes:      QueryStrings(ctx, "flavorType"),
+		Flavors:          QueryStrings(ctx, "flavor"),
+		Abbreviations:    abbreviations,
 		ContentFormats:   QueryStrings(ctx, "format"),
 		CheckingLevels:   QueryStrings(ctx, "checkingLevel"),
 		Books:            QueryStrings(ctx, "book"),
@@ -1287,7 +934,6 @@ func searchCatalog(ctx *context.APIContext) {
 		ShowIngredients:  ctx.FormOptionalBool("showIngredients"),
 		MetadataTypes:    metadataTypes,
 		MetadataVersions: metadataVersions,
-		MetadataQueries:  metadataQueries,
 		PartialMatch:     ctx.FormBool("partialMatch"),
 	}
 
@@ -1376,9 +1022,6 @@ func getSingleDMFieldList(ctx *context.APIContext, field string) ([]string, erro
 		}
 	}
 
-	metadataTypes := QueryStrings(ctx, "metadataType")
-	metadataVersions := QueryStrings(ctx, "metadataVersion")
-
 	listOptions := db.ListOptions{
 		ListAll: true,
 	}
@@ -1392,14 +1035,16 @@ func getSingleDMFieldList(ctx *context.APIContext, field string) ([]string, erro
 		Languages:        QueryStrings(ctx, "lang"),
 		LanguageIsGL:     ctx.FormOptionalBool("is_gl"),
 		Subjects:         QueryStrings(ctx, "subject"),
-		Resources:        QueryStrings(ctx, "resource"),
+		FlavorTypes:      QueryStrings(ctx, "flavorType"),
+		Flavors:          QueryStrings(ctx, "flavor"),
+		Abbreviations:    QueryStrings(ctx, "abbreviation"),
 		ContentFormats:   QueryStrings(ctx, "format"),
 		CheckingLevels:   QueryStrings(ctx, "checkingLevel"),
 		Books:            QueryStrings(ctx, "book"),
 		IncludeHistory:   ctx.FormBool("includeHistory"),
 		ShowIngredients:  ctx.FormOptionalBool("showIngredients"),
-		MetadataTypes:    metadataTypes,
-		MetadataVersions: metadataVersions,
+		MetadataTypes:    QueryStrings(ctx, "metadataType"),
+		MetadataVersions: QueryStrings(ctx, "metadataVersion"),
 		PartialMatch:     ctx.FormBool("partialMatch"),
 	}
 

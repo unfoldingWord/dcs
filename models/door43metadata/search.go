@@ -21,28 +21,32 @@ func (s CatalogOrderBy) String() string {
 
 // Strings for sorting result
 const (
-	CatalogOrderByTitle              CatalogOrderBy = "`door43_metadata`.title ASC"
-	CatalogOrderByTitleReverse       CatalogOrderBy = "`door43_metadata`.title DESC"
-	CatalogOrderBySubject            CatalogOrderBy = "`door43_metadata`.subject ASC"
-	CatalogOrderBySubjectReverse     CatalogOrderBy = "`door43_metadata`.subject DESC"
-	CatalogOrderByResource           CatalogOrderBy = "`door43_metadata`.resource ASC"
-	CatalogOrderByResourceReverse    CatalogOrderBy = "`door43_metadata`.resource DESC"
-	CatalogOrderByRepoName           CatalogOrderBy = "`repository`.lower_name ASC"
-	CatalogOrderByRepoNameReverse    CatalogOrderBy = "`repository`.lower_name DESC"
-	CatalogOrderByTag                CatalogOrderBy = "`door43_metadata`.ref ASC"
-	CatalogOrderByTagReverse         CatalogOrderBy = "`door43_metadata`.ref DESC"
-	CatalogOrderByReleaseDate        CatalogOrderBy = "`door43_metadata`.ref ASC"
-	CatalogOrderByReleaseDateReverse CatalogOrderBy = "`door43_metadata`.ref DESC"
-	CatalogOrderByLangCode           CatalogOrderBy = "`door43_metadata`.language ASC"
-	CatalogOrderByLangCodeReverse    CatalogOrderBy = "`door43_metadata`.language DESC"
-	CatalogOrderByOldest             CatalogOrderBy = "`door43_metadata`.release_date_unix ASC"
-	CatalogOrderByNewest             CatalogOrderBy = "`door43_metadata`.release_date_unix DESC"
-	CatalogOrderByReleases           CatalogOrderBy = "release_count ASC"
-	CatalogOrderByReleasesReverse    CatalogOrderBy = "release_count DESC"
-	CatalogOrderByStars              CatalogOrderBy = "`repository`.num_stars ASC"
-	CatalogOrderByStarsReverse       CatalogOrderBy = "`repository`.num_stars DESC"
-	CatalogOrderByForks              CatalogOrderBy = "`repository`.num_forks ASC"
-	CatalogOrderByForksReverse       CatalogOrderBy = "`repository`.num_forks DESC"
+	CatalogOrderByTitle               CatalogOrderBy = "`door43_metadata`.title ASC"
+	CatalogOrderByTitleReverse        CatalogOrderBy = "`door43_metadata`.title DESC"
+	CatalogOrderBySubject             CatalogOrderBy = "`door43_metadata`.subject ASC"
+	CatalogOrderBySubjectReverse      CatalogOrderBy = "`door43_metadata`.subject DESC"
+	CatalogOrderByFlavorType          CatalogOrderBy = "`door43_metadata`.flavor_type ASC"
+	CatalogOrderByFlavorTypeReverse   CatalogOrderBy = "`door43_metadata`.flavor_type DESC"
+	CatalogOrderByFlavor              CatalogOrderBy = "`door43_metadata`.flavor ASC"
+	CatalogOrderByFlavorReverse       CatalogOrderBy = "`door43_metadata`.flavor DESC"
+	CatalogOrderByAbbreviation        CatalogOrderBy = "`door43_metadata`.abbreviation ASC"
+	CatalogOrderByAbbreviationReverse CatalogOrderBy = "`door43_metadata`.abbreviation DESC"
+	CatalogOrderByRepoName            CatalogOrderBy = "`repository`.lower_name ASC"
+	CatalogOrderByRepoNameReverse     CatalogOrderBy = "`repository`.lower_name DESC"
+	CatalogOrderByTag                 CatalogOrderBy = "`door43_metadata`.ref ASC"
+	CatalogOrderByTagReverse          CatalogOrderBy = "`door43_metadata`.ref DESC"
+	CatalogOrderByReleaseDate         CatalogOrderBy = "`door43_metadata`.ref ASC"
+	CatalogOrderByReleaseDateReverse  CatalogOrderBy = "`door43_metadata`.ref DESC"
+	CatalogOrderByLangCode            CatalogOrderBy = "`door43_metadata`.language ASC"
+	CatalogOrderByLangCodeReverse     CatalogOrderBy = "`door43_metadata`.language DESC"
+	CatalogOrderByOldest              CatalogOrderBy = "`door43_metadata`.release_date_unix ASC"
+	CatalogOrderByNewest              CatalogOrderBy = "`door43_metadata`.release_date_unix DESC"
+	CatalogOrderByReleases            CatalogOrderBy = "release_count ASC"
+	CatalogOrderByReleasesReverse     CatalogOrderBy = "release_count DESC"
+	CatalogOrderByStars               CatalogOrderBy = "`repository`.num_stars ASC"
+	CatalogOrderByStarsReverse        CatalogOrderBy = "`repository`.num_stars DESC"
+	CatalogOrderByForks               CatalogOrderBy = "`repository`.num_forks ASC"
+	CatalogOrderByForksReverse        CatalogOrderBy = "`repository`.num_forks DESC"
 )
 
 // SearchCatalogOptions holds the search options
@@ -57,7 +61,6 @@ type SearchCatalogOptions struct {
 	Subjects         []string
 	FlavorTypes      []string
 	Flavors          []string
-	Resources        []string
 	Abbreviations    []string
 	ContentFormats   []string
 	CheckingLevels   []string
@@ -65,7 +68,6 @@ type SearchCatalogOptions struct {
 	IncludeHistory   bool
 	MetadataTypes    []string
 	MetadataVersions []string
-	MetadataQueries  map[string][]string
 	ShowIngredients  util.OptionalBool
 	Languages        []string
 	LanguageIsGL     util.OptionalBool
@@ -77,7 +79,7 @@ type SearchCatalogOptions struct {
 func GetMetadataCond(keyword string) builder.Cond {
 	cond := builder.NewCond()
 	cond = cond.And(builder.Like{"`door43_metadata`.title", keyword})
-	cond = cond.Or(builder.Eq{"`door43_metadata`.resource": keyword})
+	cond = cond.Or(builder.Eq{"`door43_metadata`.abbreviation": keyword})
 	cond = cond.Or(builder.Like{"`door43_metadata`.subject", keyword})
 	cond = cond.Or(builder.Eq{"`door43_metadata`.language": keyword})
 	cond = cond.Or(builder.Like{"`door43_metadata`.language_title", keyword})
@@ -113,14 +115,12 @@ func SearchCatalogCondition(opts *SearchCatalogOptions) builder.Cond {
 		GetSubjectCond(opts.Subjects, opts.PartialMatch),
 		GetFlavorTypeCond(opts.FlavorTypes, opts.PartialMatch),
 		GetFlavorCond(opts.Flavors, opts.PartialMatch),
-		GetResourceCond(opts.Resources),
 		GetAbbreviationCond(opts.Abbreviations),
 		GetContentFormatCond(opts.ContentFormats, opts.PartialMatch),
 		GetBookCond(opts.Books),
 		GetLanguageCond(opts.Languages, opts.PartialMatch),
 		GetCheckingLevelCond(opts.CheckingLevels),
 		GetMetadataTypeCond(opts.MetadataTypes, opts.PartialMatch),
-		GetMetadataQueryCond(opts.MetadataQueries, opts.PartialMatch),
 		GetTagCond(opts.Tags),
 		repoCond,
 		ownerCond,
@@ -229,17 +229,6 @@ func GetFlavorCond(flavors []string, partialMatch bool) builder.Cond {
 	return flavorCond
 }
 
-// GetResourceCond gets the metdata type condition
-func GetResourceCond(resources []string) builder.Cond {
-	resourceCond := builder.NewCond()
-	for _, resource := range resources {
-		for _, v := range strings.Split(resource, ",") {
-			resourceCond = resourceCond.Or(builder.Eq{"`door43_metadata`.resource": strings.TrimSpace(v)})
-		}
-	}
-	return resourceCond
-}
-
 // GetAbbreviationCond gets the abbreviation condition
 func GetAbbreviationCond(abberviations []string) builder.Cond {
 	abbreviationCond := builder.NewCond()
@@ -290,23 +279,6 @@ func GetMetadataVersionCond(versions []string, partialMatch bool) builder.Cond {
 		}
 	}
 	return versionCond
-}
-
-// GetMetadataQueryCond gets the metdata query condition
-func GetMetadataQueryCond(queries map[string][]string, partialMatch bool) builder.Cond {
-	metadataQueryCond := builder.NewCond()
-	for field, values := range queries {
-		for _, value := range values {
-			for _, v := range strings.Split(value, ",") {
-				if partialMatch {
-					metadataQueryCond = metadataQueryCond.Or(builder.Like{field, v})
-				} else {
-					metadataQueryCond = metadataQueryCond.Or(builder.Eq{field: v})
-				}
-			}
-		}
-	}
-	return metadataQueryCond
 }
 
 // GetLanguageCond gets the language condition

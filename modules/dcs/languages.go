@@ -41,7 +41,6 @@ func GetLangnamesJSON() []map[string]interface{} {
 func GetLangnamesJSONFromCustom() ([]map[string]interface{}, error) {
 	fileBuf, err := options.AssetFS().ReadFile("languages", "langnames.json")
 	if err != nil {
-		log.Debug("HERE: %s: %v", fileBuf, err)
 		return nil, err
 	}
 	reader := bytes.NewReader(fileBuf)

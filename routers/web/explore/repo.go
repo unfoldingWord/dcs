@@ -104,7 +104,7 @@ func RenderRepoSearch(ctx *context.Context, opts *RepoSearchOptions) {
 	ctx.Data["TopicOnly"] = topicOnly
 
 	/*** DCS Customizations ***/
-	var books, langs, keywords, subjects, resources, contentFormats, repoNames, owners, metadataTypes, metadataVersions []string
+	var books, langs, keywords, subjects, flavorTypes, flavors, abbreviations, contentFormats, repoNames, owners, metadataTypes, metadataVersions []string
 	origKeyword := keyword
 	if keyword != "" {
 		for _, token := range door43metadata.SplitAtCommaNotInString(keyword, true) {
@@ -114,8 +114,12 @@ func RenderRepoSearch(ctx *context.Context, opts *RepoSearchOptions) {
 				langs = append(langs, strings.TrimPrefix(token, "lang:"))
 			} else if strings.HasPrefix(token, "subject:") {
 				subjects = append(subjects, strings.Trim(strings.TrimPrefix(token, "subject:"), `"`))
-			} else if strings.HasPrefix(token, "resource:") {
-				resources = append(resources, strings.Trim(strings.TrimPrefix(token, "resouce:"), `"`))
+			} else if strings.HasPrefix(token, "flavor_type:") {
+				flavorTypes = append(flavorTypes, strings.Trim(strings.TrimPrefix(token, "flavor_type:"), `"`))
+			} else if strings.HasPrefix(token, "flavor:") {
+				flavors = append(flavors, strings.Trim(strings.TrimPrefix(token, "flavor:"), `"`))
+			} else if strings.HasPrefix(token, "abbreviation:") {
+				abbreviations = append(abbreviations, strings.Trim(strings.TrimPrefix(token, "abbreviation:"), `"`))
 			} else if strings.HasPrefix(token, "format:") {
 				contentFormats = append(contentFormats, strings.Trim(strings.TrimPrefix(token, "format:"), `"`))
 			} else if strings.HasPrefix(token, "repo:") {
@@ -155,7 +159,9 @@ func RenderRepoSearch(ctx *context.Context, opts *RepoSearchOptions) {
 		Books:              books,            // DCS Customizaitons
 		Languages:          langs,            // DCS Customizaitons
 		Subjects:           subjects,         // DCS Customizaitons
-		Resources:          resources,        // DCS Customizations
+		FlavorTypes:        flavorTypes,      // DCS Customizations
+		Flavors:            flavors,          // DCS Customizations
+		Abbreviations:      abbreviations,    // DCS Customizations
 		ContentFormats:     contentFormats,   // DCS Customizations
 		Repos:              repoNames,        // DCS Customizaitons
 		Owners:             owners,           // DCS Customizaitons

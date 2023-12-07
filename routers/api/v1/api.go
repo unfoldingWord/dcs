@@ -1530,6 +1530,7 @@ func Routes() *web.Route {
 			})
 			m.Group("/search", func() {
 				m.Get("", catalog.Search)
+				// The below are depricated
 				m.Group("/{username}", func() {
 					m.Get("", catalog.SearchOwner)
 					m.Group("/{reponame}", func() {
@@ -1537,9 +1538,12 @@ func Routes() *web.Route {
 					}, repoAssignment())
 				})
 			})
-			m.Group("/entry/{username}/{reponame}/{ref}", func() {
-				m.Get("", catalog.GetCatalogEntry)
-				m.Get("/metadata", catalog.GetCatalogMetadata)
+			m.Group("/entry/{username}/{reponame}", func() {
+				m.Get("/{ref}/metadata", catalog.GetCatalogMetadataOLD) // DEPRICATED
+				m.Get("/*", catalog.GetCatalogEntry)
+			}, repoAssignment())
+			m.Group("/metadata/{username}/{reponame}/*", func() {
+				m.Get("", catalog.GetCatalogMetadata)
 			}, repoAssignment())
 		})
 		/*** END DCS Customizations ***/
