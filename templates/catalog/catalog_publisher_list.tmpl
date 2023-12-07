@@ -1,0 +1,17 @@
+<div class="ui repository list">
+	{{range .Door43Metadatas}}
+	<div class="item">
+		<div class="ui header gt-df gt-ac">
+			<div class="publisher-title">
+				<a class="name" href="#">
+					{{.Language}}
+				</a>
+			</div>
+		</div>
+	</div>
+	{{else}}
+	<div>
+		{{ctx.Locale.Tr "explore.repo_no_results"}}
+	</div>
+	{{end}}
+</div>
