@@ -18,3 +18,8 @@ func (repo *Repository) CatalogSearchURL() string {
 func (repo *Repository) CatalogEntryURL() string {
 	return setting.AppURL + "api/v1/catalog/entry/" + url.PathEscape(repo.OwnerName) + "/" + url.PathEscape(repo.Name)
 }
+
+// CatalogMetadataURL returns the repository catalog metadata API URL
+func (repo *Repository) CatalogMetadataURL() string {
+	return setting.AppURL + "api/v1/catalog/metadata/" + url.PathEscape(repo.OwnerName) + "/" + url.PathEscape(repo.Name)
+}

@@ -18,7 +18,11 @@ func ToRepoDCS(ctx context.Context, repo *repo_model.Repository, apiRepo *api.Re
 	dm := repo.RepoDM
 	apiRepo.Title = dm.Title
 	apiRepo.Subject = dm.Subject
+	apiRepo.FlavorType = dm.FlavorType
+	apiRepo.Flavor = dm.Flavor
+	apiRepo.Abbreviation = dm.Abbreviation
 	apiRepo.Language = dm.Language
+	apiRepo.LanguageTitle = dm.LanguageTitle
 	apiRepo.LanguageDir = dm.LanguageDirection
 	apiRepo.LanguageIsGL = dm.LanguageIsGL
 	apiRepo.CheckingLevel = dm.CheckingLevel

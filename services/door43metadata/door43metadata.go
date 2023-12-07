@@ -240,7 +240,6 @@ func GetDoor43MetadataFromRCManifest(dm *repo_model.Door43Metadata, manifest map
 	var subject string
 	var flavorType string
 	var flavor string
-	var resource string
 	var abbreviation string
 	var title string
 	var language string
@@ -263,8 +262,7 @@ func GetDoor43MetadataFromRCManifest(dm *repo_model.Door43Metadata, manifest map
 		metadataVersion = "0.2"
 	}
 	subject = manifest["dublin_core"].(map[string]interface{})["subject"].(string)
-	resource = manifest["dublin_core"].(map[string]interface{})["identifier"].(string)
-	abbreviation = resource
+	abbreviation = manifest["dublin_core"].(map[string]interface{})["identifier"].(string)
 	title = manifest["dublin_core"].(map[string]interface{})["title"].(string)
 	language = manifest["dublin_core"].(map[string]interface{})["language"].(map[string]interface{})["identifier"].(string)
 	languageTitle = manifest["dublin_core"].(map[string]interface{})["language"].(map[string]interface{})["title"].(string)
@@ -291,7 +289,7 @@ func GetDoor43MetadataFromRCManifest(dm *repo_model.Door43Metadata, manifest map
 		flavorType = "scripture"
 		flavor = "textTranslation"
 	} else if strings.HasPrefix(subject, "TSV ") {
-		if strings.HasPrefix(fmt.Sprintf("./%s_", resource), bookPath) {
+		if strings.HasPrefix(fmt.Sprintf("./%s_", abbreviation), bookPath) {
 			contentFormat = "tsv7"
 		} else {
 			contentFormat = "tsv9"
@@ -335,7 +333,6 @@ func GetDoor43MetadataFromRCManifest(dm *repo_model.Door43Metadata, manifest map
 	dm.FlavorType = flavorType
 	dm.Flavor = flavor
 	dm.Title = title
-	dm.Resource = resource
 	dm.Abbreviation = abbreviation
 	dm.Language = language
 	dm.LanguageTitle = languageTitle
@@ -356,7 +353,6 @@ func GetDoor43MetadataFromSBMetadata(dm *repo_model.Door43Metadata, sbMetadata *
 	var subject string
 	var flavorType string
 	var flavor string
-	var resource string
 	var abbreviation string
 	var title string
 	var language string
@@ -372,6 +368,7 @@ func GetDoor43MetadataFromSBMetadata(dm *repo_model.Door43Metadata, sbMetadata *
 	title = sbMetadata.Identification.Name.DetermineLocalizedTextToUse()
 	flavorType = sbMetadata.Type.FlavorType.Name
 	flavor = sbMetadata.Type.FlavorType.Flavor.Name
+	abbreviation = strings.ToLower(sbMetadata.Identification.Abbreviation.DetermineLocalizedTextToUse())
 
 	switch sbMetadata.Type.FlavorType.Name {
 	case "scripture":
@@ -382,8 +379,6 @@ func GetDoor43MetadataFromSBMetadata(dm *repo_model.Door43Metadata, sbMetadata *
 		} else {
 			subject = flavor
 		}
-		resource = strings.ToLower(sbMetadata.Identification.Abbreviation.DetermineLocalizedTextToUse())
-		abbreviation = resource
 		var contentFormat string
 		if sbMetadata.Ingredients != nil {
 			for filePath, ingredient := range sbMetadata.Ingredients {
@@ -391,7 +386,7 @@ func GetDoor43MetadataFromSBMetadata(dm *repo_model.Door43Metadata, sbMetadata *
 					bookID := ingredient.Scope.GetBookID()
 					var ln *dcs.SB100LocalizedName
 					if value, ok := sbMetadata.LocalizedNames[bookID]; ok {
-						ln = &value
+						ln = value
 					}
 					if ln == nil {
 						continue
@@ -439,7 +434,6 @@ func GetDoor43MetadataFromSBMetadata(dm *repo_model.Door43Metadata, sbMetadata *
 		switch sbMetadata.Type.FlavorType.Flavor.Name {
 		case "textStories":
 			subject = "Open Bible Stories"
-			resource = "obs"
 			contentFormat = "markdown"
 			ingredients = append(ingredients, &structs.Ingredient{
 				Identifier: "obs",
@@ -466,7 +460,6 @@ func GetDoor43MetadataFromSBMetadata(dm *repo_model.Door43Metadata, sbMetadata *
 	dm.FlavorType = flavorType
 	dm.Flavor = flavor
 	dm.Title = title
-	dm.Resource = resource
 	dm.Abbreviation = abbreviation
 	dm.Language = language
 	dm.LanguageTitle = languageTitle
@@ -552,7 +545,7 @@ func GetTcOrTsDoor43Metadata(dm *repo_model.Door43Metadata, repo *repo_model.Rep
 	dm.MetadataVersion = t.MetadataVersion
 	dm.Subject = t.Subject
 	dm.Title = t.Title
-	dm.Resource = strings.ToLower(t.Resource.ID)
+	dm.Abbreviation = strings.ToLower(t.Resource.ID)
 	dm.Language = t.TargetLanguage.ID
 	dm.LanguageTitle = t.TargetLanguage.Name
 	dm.LanguageDirection = t.TargetLanguage.Direction
@@ -585,6 +578,7 @@ func GetSBDoor43Metadata(dm *repo_model.Door43Metadata, repo *repo_model.Reposit
 	}
 	sbMetadata, err := dcs.GetSBDataFromBlob(blob)
 	if err != nil {
+		log.Error("ERROR: %v", err)
 		return err
 	}
 	metadata, err = dcs.ReadJSONFromBlob(blob)
@@ -596,11 +590,11 @@ func GetSBDoor43Metadata(dm *repo_model.Door43Metadata, repo *repo_model.Reposit
 		return err
 	}
 	if validationResult != nil {
-		log.Info("%s: metadata.json's 'data' is not valid. see errors:", repo.FullName())
+		log.Info("%s: metadata.json is not valid. see errors:", repo.FullName())
 		log.Info(dcs.ConvertValidationErrorToString(validationResult))
 		return validationResult
 	}
-	log.Info("%s: metadata.json's 'data' is valid.", repo.FullName())
+	log.Info("%s: metadata.json is valid.", repo.FullName())
 
 	return GetDoor43MetadataFromSBMetadata(dm, sbMetadata, repo, commit)
 }
@@ -697,7 +691,7 @@ func processDoor43MetadataForRepoRef(ctx context.Context, repo *repo_model.Repos
 	err = GetSBDoor43Metadata(dm, repo, commit)
 	if err != nil {
 		if !git.IsErrNotExist(err) {
-			log.Info("processDoor43MetadataForRef: ERROR! Unable to populate SB for %s/%s from TS or TC metadata.json: %v\n", repo.FullName(), ref, err)
+			log.Info("processDoor43MetadataForRef: ERROR! Unable to populate DM for %s/%s/metadata.json for SB: %v\n", repo.FullName(), ref, err)
 			return err
 		}
 	}
@@ -707,7 +701,7 @@ func processDoor43MetadataForRepoRef(ctx context.Context, repo *repo_model.Repos
 		err = GetTcOrTsDoor43Metadata(dm, repo, commit)
 		if err != nil {
 			if !git.IsErrNotExist(err) {
-				log.Info("processDoor43MetadataForRef: ERROR! Unable to populate DM for %s/%s from TS or TC manifest.json: %v\n", repo.FullName(), ref, err)
+				log.Info("processDoor43MetadataForRef: ERROR! Unable to populate DM for %s/%s/manifest.json for TS or TC: %v\n", repo.FullName(), ref, err)
 				return err
 			}
 		}
@@ -718,7 +712,7 @@ func processDoor43MetadataForRepoRef(ctx context.Context, repo *repo_model.Repos
 		err = GetRCDoor43Metadata(dm, repo, commit)
 		if err != nil {
 			if !git.IsErrNotExist(err) {
-				log.Info("processDoor43MetadataForRef: ERROR! Unable to populate DM for %s/%s from RC manifest.yaml: %v\n", repo.FullName(), ref, err)
+				log.Info("processDoor43MetadataForRef: ERROR! Unable to populate DM for %s/%s/manifest.yaml for RC: %v\n", repo.FullName(), ref, err)
 				return err
 			}
 			log.Info("processDoor43MetadataForRef: %s/%s is not a SB, TC, TS nor RC repo. Not adding to door43_metadata\n", repo.FullName(), ref)

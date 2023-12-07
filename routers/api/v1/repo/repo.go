@@ -141,13 +141,6 @@ func Search(ctx *context.APIContext) {
 	//   collectionFormat: multi
 	//   items:
 	//     type: string
-	// - name: resource
-	//   in: query
-	//   description: resource identifier. Multiple values are ORed.
-	//   type: array
-	//   collectionFormat: multi
-	//   items:
-	//     type: string
 	// - name: abbreviation
 	//   in: query
 	//   description: resource abbreviation (identifier). Multiple values are ORed.
@@ -182,16 +175,9 @@ func Search(ctx *context.APIContext) {
 	//   collectionFormat: multi
 	//   items:
 	//     type: string
-	// - name: metadata.*
-	//   in: query
-	//   description: You can specify key=value pairs where the key is prefixed with `metadata.`. The rest of the key will be used to search the metadata for the given value. Example: metadata.type.flavorType.flavor=textStory
-	//   type: array
-	//   collectionFormat: multi
-	//   items:
-	//     type: string
 	// - name: partialMatch
 	//   in: query
-	//   description: If true, many of the above fields will do a partial match, allowing characters to come before or after your given value. Default: false
+	//   description: If true, many of the above fields will do a partial match, allowing characters to come before or after your given value, default is false
 	//   type: boolean
 	// - name: sort
 	//   in: query
@@ -218,12 +204,8 @@ func Search(ctx *context.APIContext) {
 	//   "422":
 	//     "$ref": "#/responses/validationError"
 
-	metadataQueries := map[string][]string{}
-	for k := range ctx.Req.Form {
-		if strings.HasPrefix("metadata.", k) {
-			metadataQueries["$."+strings.TrimPrefix("metadata.", k)] = ctx.FormStrings(k)
-		}
-	}
+	abbreviations := catalog.QueryStrings(ctx, "abbreviation")
+	abbreviations = append(abbreviations, catalog.QueryStrings(ctx, "resource")...) // For non-breaking changes, support "resource" argument
 
 	opts := &repo_model.SearchRepoOptions{
 		ListOptions:        utils.GetListOptions(ctx),
@@ -245,14 +227,12 @@ func Search(ctx *context.APIContext) {
 		Subjects:         catalog.QueryStrings(ctx, "subject"),
 		FlavorTypes:      catalog.QueryStrings(ctx, "flavorType"),
 		Flavors:          catalog.QueryStrings(ctx, "flavor"),
-		Resources:        catalog.QueryStrings(ctx, "resource"),
-		Abbreviations:    catalog.QueryStrings(ctx, "abbreviations"),
+		Abbreviations:    abbreviations,
 		ContentFormats:   catalog.QueryStrings(ctx, "format"),
 		Books:            catalog.QueryStrings(ctx, "book"),
 		MetadataTypes:    catalog.QueryStrings(ctx, "metadataType"),
 		MetadataVersions: catalog.QueryStrings(ctx, "metadataVersion"),
 		LanguageIsGL:     ctx.FormOptionalBool("is_gl"),
-		MetadataQueries:  metadataQueries,
 		PartialMatch:     ctx.FormBool("partialMatch"),
 		/*** END DCS Customizations ***/
 	}

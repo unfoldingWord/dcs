@@ -158,8 +158,8 @@
 								<a class="item" href="{{.Repository.APIURL}}/commits?sha={{PathEscapeSegments $.BranchName}}" target="_blank">{{svg "octicon-git-commit" 16 "mr-3"}} API: {{.locale.Tr "repo.commits"}}</a>
 								<a class="item" href="{{.Repository.APIURL}}/contents?ref={{PathEscapeSegments $.BranchName}}" target="_blank">{{svg "octicon-file-directory" 16 "mr-3"}} API: {{.locale.Tr "repo.code"}}</a>
 								{{if .Repository.RepoDM.Ref}}
-								<a class="item" href="{{.Repository.CatalogSearchURL}}?stage=latest&includeHistory=1&sort=released&order=desc" target="_blank">{{svg "octicon-book" 16 "mr-3"}} API: {{.locale.Tr "catalog"}}</a>
-								<a class="item" href="{{.Repository.CatalogEntryURL}}/{{.Repository.RepoDM.Ref}}/metadata" target="_blank">{{svg "octicon-briefcase" 16 "mr-3"}} API: {{.locale.Tr "repo.metadata.metadata"}}</a>
+								<a class="item" href="{{.Repository.CatalogSearchURL}}?stage=latest&includeHistory=1&sort=released&order=desc" target="_blank">{{svg "octicon-book" 16 "mr-3"}} API: {{ctx.Locale.Tr "catalog"}}</a>
+								<a class="item" href="{{.Repository.CatalogMetadataURL}}/{{.Repository.RepoDM.Ref}}" target="_blank">{{svg "octicon-briefcase" 16 "mr-3"}} API: {{ctx.Locale.Tr "repo.metadata.metadata"}}</a>
 								{{end}}
 								<a class="item" href="{{AppSubUrl}}/api/swagger" target="_blank">{{svg "octicon-list-unordered" 16 "mr-3"}} More...</a>
 							</div>

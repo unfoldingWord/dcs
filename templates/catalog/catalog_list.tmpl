@@ -7,7 +7,7 @@
 			<div class="flex-item-main">
 				<div class="flex-item-header">
 					<div class="flex-item-title">
-					<a class="name" href="{{.Repo.Link}}/{{if .Release}}releases/tag{{else}}src/branch{{end}}/{{.Ref | PathEscapeSegments}}" data-tooltip-content="{{ctx.Locale.Tr "repo.metadata.resource"}}: {{.Resource}}">
+					<a class="name" href="{{.Repo.Link}}/{{if .Release}}releases/tag{{else}}src/branch{{end}}/{{.Ref | PathEscapeSegments}}" data-tooltip-content="{{ctx.Locale.Tr "repo.metadata.abbreviation"}}: {{.Abbreviation}}">
 							{{.Title}}
 					</a>
 					<span class="label-list">

@@ -66,12 +66,12 @@
 							<td class="text right"><button type="submit" class="ui primary button" name="op" value="sync_repo_branches">{{svg "octicon-play"}} {{.locale.Tr "admin.dashboard.operation_run"}}</button></td>
 						</tr>
 						<tr>
-							<td>{{.locale.Tr "admin.dashboard.update_metadata"}}</td>
-							<td class="text right"><button type="submit" class="ui green button" name="op" value="update_metadata">{{svg "octicon-play"}} {{.locale.Tr "admin.dashboard.operation_run"}}</button></td>
+							<td>{{ctx.Locale.Tr "admin.dashboard.update_metadata"}}</td>
+							<td class="text right"><button type="submit" class="ui primary button" name="op" value="update_metadata">{{svg "octicon-play"}} {{ctx.Locale.Tr "admin.dashboard.operation_run"}}</button></td>
 						</tr>
 						<tr>
-							<td>{{.locale.Tr "admin.dashboard.load_schemas"}}</td>
-							<td class="text right"><button type="submit" class="ui green button" name="op" value="load_schemas">{{svg "octicon-play"}} {{.locale.Tr "admin.dashboard.operation_run"}}</button></td>
+							<td>{{ctx.Locale.Tr "admin.dashboard.load_schemas"}}</td>
+							<td class="text right"><button type="submit" class="ui primary button" name="op" value="load_schemas">{{svg "octicon-play"}} {{ctx.Locale.Tr "admin.dashboard.operation_run"}}</button></td>
 						</tr>
 					</tbody>
 				</table>

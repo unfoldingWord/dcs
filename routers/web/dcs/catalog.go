@@ -56,10 +56,18 @@ func RenderCatalogSearch(ctx *context.Context, opts *CatalogSearchOptions) {
 		orderBy = door43metadata.CatalogOrderBySubjectReverse
 	case "subject":
 		orderBy = door43metadata.CatalogOrderBySubject
-	case "reverserresource":
-		orderBy = door43metadata.CatalogOrderByResourceReverse
-	case "resource":
-		orderBy = door43metadata.CatalogOrderByResource
+	case "reverseflavortype":
+		orderBy = door43metadata.CatalogOrderByFlavorTypeReverse
+	case "falvortype":
+		orderBy = door43metadata.CatalogOrderByFlavorType
+	case "reverseflavor":
+		orderBy = door43metadata.CatalogOrderByFlavorReverse
+	case "falvor":
+		orderBy = door43metadata.CatalogOrderByFlavor
+	case "reverserabbreviation":
+		orderBy = door43metadata.CatalogOrderByAbbreviationReverse
+	case "abbreviation":
+		orderBy = door43metadata.CatalogOrderByAbbreviation
 	case "reverserepo":
 		orderBy = door43metadata.CatalogOrderByRepoNameReverse
 	case "repo":
@@ -89,7 +97,7 @@ func RenderCatalogSearch(ctx *context.Context, opts *CatalogSearchOptions) {
 		orderBy = door43metadata.CatalogOrderByNewest
 	}
 
-	var keywords, books, langs, subjects, resources, contentFormats, repos, owners, tags, checkingLevels, metadataTypes, metadataVersions []string
+	var keywords, books, langs, subjects, flavorTypes, flavors, abbreviations, contentFormats, repos, owners, tags, checkingLevels, metadataTypes, metadataVersions []string
 	stage := door43metadata.StageProd
 	query := strings.Trim(ctx.FormString("q"), " ")
 	if query != "" {
@@ -100,8 +108,12 @@ func RenderCatalogSearch(ctx *context.Context, opts *CatalogSearchOptions) {
 				langs = append(langs, strings.TrimPrefix(token, "lang:"))
 			} else if strings.HasPrefix(token, "subject:") {
 				subjects = append(subjects, strings.Trim(strings.TrimPrefix(token, "subject:"), `"`))
-			} else if strings.HasPrefix(token, "resource:") {
-				resources = append(resources, strings.Trim(strings.TrimPrefix(token, "resource:"), `"`))
+			} else if strings.HasPrefix(token, "flavor_type:") {
+				flavorTypes = append(flavorTypes, strings.Trim(strings.TrimPrefix(token, "flavor_type:"), `"`))
+			} else if strings.HasPrefix(token, "flavor:") {
+				flavors = append(flavors, strings.Trim(strings.TrimPrefix(token, "flavor:"), `"`))
+			} else if strings.HasPrefix(token, "abbreviation:") {
+				abbreviations = append(abbreviations, strings.Trim(strings.TrimPrefix(token, "abberviation:"), `"`))
 			} else if strings.HasPrefix(token, "format:") {
 				contentFormats = append(contentFormats, strings.Trim(strings.TrimPrefix(token, "format:"), `"`))
 			} else if strings.HasPrefix(token, "repo:") {
@@ -139,7 +151,9 @@ func RenderCatalogSearch(ctx *context.Context, opts *CatalogSearchOptions) {
 		IncludeHistory:   false,
 		Books:            books,
 		Subjects:         subjects,
-		Resources:        resources,
+		FlavorTypes:      flavorTypes,
+		Flavors:          flavors,
+		Abbreviations:    abbreviations,
 		ContentFormats:   contentFormats,
 		Languages:        langs,
 		Repos:            repos,

@@ -39,9 +39,11 @@ type SearchUserOptions struct {
 
 	/*** DCS CUSTOMIZATIONS ***/
 	IsSpamUser        util.OptionalBool
-	RepoLanguages     []string          // Find repos that have the given language ids in a repo's manifest
-	RepoSubjects      []string          // Find repos that have the given subjects in a repo's manifest
-	RepoMetadataTypes []string          // Find repos that have the given metadata types in a repo's manifest
+	RepoLanguages     []string          // Find repos that have the given language ids in a repo's metadata
+	RepoSubjects      []string          // Find repos that have the given subjects in a repo's metadata
+	RepoFlavorTypes   []string          // Find repos that have the given flavor types in a repo's metadata
+	RepoFlavors       []string          // Find repos that have the given flavors in a repo's metadata
+	RepoMetadataTypes []string          // Find repos that have the given metadata types in a repo's metadata
 	RepoLanguageIsGL  util.OptionalBool // Find repos that are gateway languages
 	/*** END DCS CUSTOMIZATIONS ***/
 
@@ -156,39 +158,42 @@ func SearchUsers(ctx context.Context, opts *SearchUserOptions) (users []*User, _
 	}
 
 	/*** DCS Customizations ***/
-	if len(opts.RepoLanguages) > 0 || len(opts.RepoSubjects) > 0 || len(opts.RepoMetadataTypes) > 0 {
+	repoMetadataCond := builder.NewCond()
+	if len(opts.RepoLanguages) > 0 {
 		repoLangsCond := builder.NewCond()
 		for _, values := range opts.RepoLanguages {
 			for _, value := range strings.Split(values, ",") {
 				repoLangsCond = repoLangsCond.Or(builder.Eq{"`door43_metadata`.language": strings.TrimSpace(value)})
 			}
 		}
+		repoMetadataCond = repoMetadataCond.And(repoLangsCond)
+	}
+	if len(opts.RepoSubjects) > 0 {
 		repoSubsCond := builder.NewCond()
 		for _, values := range opts.RepoSubjects {
 			for _, value := range strings.Split(values, ",") {
 				repoSubsCond = repoSubsCond.Or(builder.Eq{"`door43_metadata`.subject": strings.TrimSpace(value)})
 			}
 		}
+		repoMetadataCond = repoMetadataCond.And(repoSubsCond)
+	}
+	if len(opts.RepoMetadataTypes) > 0 {
 		repoTypesCond := builder.NewCond()
 		for _, values := range opts.RepoMetadataTypes {
 			for _, value := range strings.Split(values, ",") {
 				repoTypesCond = repoTypesCond.Or(builder.Eq{"`door43_metadata`.metadata_type": strings.TrimSpace(value)})
 			}
 		}
-		metadataCond := builder.NewCond().And(
-			repoLangsCond,
-			repoSubsCond,
-			repoTypesCond,
-		)
-		if opts.RepoLanguageIsGL != util.OptionalBoolNone {
-			metadataCond = metadataCond.And(builder.Eq{"`door43_metadata`.is_gl": opts.RepoLanguageIsGL.IsTrue()})
-		}
-		metadataSelect := builder.Select("owner_id").
-			From("repository").
-			Join("INNER", "`door43_metadata`", "repo_id = `repository`.id").
-			Where(metadataCond)
-		sessQuery.In("`user`.id", metadataSelect)
+		repoMetadataCond = repoMetadataCond.And(repoTypesCond)
 	}
+	if opts.RepoLanguageIsGL != util.OptionalBoolNone {
+		repoMetadataCond = repoMetadataCond.And(builder.Eq{"`door43_metadata`.is_gl": opts.RepoLanguageIsGL.IsTrue()})
+	}
+	metadataSelect := builder.Select("owner_id").
+		From("repository").
+		Join("INNER", "`door43_metadata`", "repo_id = `repository`.id").
+		Where(repoMetadataCond)
+	sessQuery.In("`user`.id", metadataSelect)
 	/*** END DCS Customizations ***/
 
 	// the sql may contain JOIN, so we must only select User related columns
