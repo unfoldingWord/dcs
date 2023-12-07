@@ -32,6 +32,8 @@ import (
 	"code.gitea.io/gitea/services/convert"
 
 	"github.com/google/uuid"
+	text_cases "golang.org/x/text/cases"
+	text_language "golang.org/x/text/language"
 	"xorm.io/builder"
 )
 
@@ -373,7 +375,7 @@ func GetDoor43MetadataFromSBMetadata(dm *repo_model.Door43Metadata, sbMetadata *
 	switch sbMetadata.Type.FlavorType.Name {
 	case "scripture":
 		if strings.HasPrefix(flavor, "x-") {
-			subject = strings.ToTitle(strings.TrimPrefix(flavor, "x-"))
+			subject = text_cases.Title(text_language.English).String(strings.TrimPrefix(flavor, "x-"))
 		} else if flavor == "textTranslation" {
 			subject = "Bible"
 		} else {
