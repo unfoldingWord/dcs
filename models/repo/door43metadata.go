@@ -55,6 +55,7 @@ type Door43Metadata struct {
 	Subject           string                 `xorm:"INDEX NOT NULL"`
 	FlavorType        string                 `xorm:"INDEX NOT NULL"`
 	Flavor            string                 `xorm:"INDEX NOT NULL"`
+	Resource          string                 `xorm:"INDEX"` // DEPRICATED FOR ABBREVIATION
 	Abbreviation      string                 `xorm:"INDEX NOT NULL"`
 	Title             string                 `xorm:"NOT NULL"`
 	Language          string                 `xorm:"INDEX NOT NULL"`
