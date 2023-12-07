@@ -295,7 +295,7 @@ func GetDoor43MetadataFromRCManifest(dm *repo_model.Door43Metadata, manifest map
 			contentFormat = "tsv9"
 		}
 		flavorType = "parascriptural"
-		flavor = "x-" + strings.Replace(strings.TrimPrefix("TSV ", subject), " ", "", -1)
+		flavor = "x-" + strings.Replace(strings.TrimPrefix(subject, "TSV "), " ", "", -1)
 	} else if subject == "Open Bible Stories" {
 		contentFormat = "markdown"
 		flavorType = "gloss"
@@ -373,7 +373,7 @@ func GetDoor43MetadataFromSBMetadata(dm *repo_model.Door43Metadata, sbMetadata *
 	switch sbMetadata.Type.FlavorType.Name {
 	case "scripture":
 		if strings.HasPrefix("x-", flavor) {
-			subject = strings.ToTitle(strings.TrimPrefix("x-", flavor))
+			subject = strings.ToTitle(strings.TrimPrefix(flavor, "x-"))
 		} else if flavor == "textTranslation" {
 			subject = "Bible"
 		} else {
@@ -400,7 +400,7 @@ func GetDoor43MetadataFromSBMetadata(dm *repo_model.Door43Metadata, sbMetadata *
 						}
 						contentFormat = "usfm"
 					} else if contentFormat == "" {
-						contentFormat = strings.TrimPrefix(".", filepath.Ext(filePath))
+						contentFormat = strings.TrimPrefix(filepath.Ext(filePath), ".")
 					}
 					ingredients = append(ingredients, &structs.Ingredient{
 						Categories:     dcs.GetBookCategories(bookID),
