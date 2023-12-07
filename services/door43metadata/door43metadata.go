@@ -372,7 +372,7 @@ func GetDoor43MetadataFromSBMetadata(dm *repo_model.Door43Metadata, sbMetadata *
 
 	switch sbMetadata.Type.FlavorType.Name {
 	case "scripture":
-		if strings.HasPrefix("x-", flavor) {
+		if strings.HasPrefix(flavor, "x-") {
 			subject = strings.ToTitle(strings.TrimPrefix(flavor, "x-"))
 		} else if flavor == "textTranslation" {
 			subject = "Bible"
@@ -393,7 +393,7 @@ func GetDoor43MetadataFromSBMetadata(dm *repo_model.Door43Metadata, sbMetadata *
 					}
 					filePath = "./" + filePath
 					count := 0
-					if strings.HasSuffix(".usfm", filePath) {
+					if strings.HasSuffix(filePath, ".usfm") {
 						count, _ = GetBookAlignmentCount(filePath, commit)
 						if count > 0 && subject == "Bible" {
 							subject = "Aligned Bible"
