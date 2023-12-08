@@ -191,7 +191,7 @@ func SearchUsers(ctx context.Context, opts *SearchUserOptions) (users []*User, _
 	}
 	metadataSelect := builder.Select("owner_id").
 		From("repository").
-		Join("INNER", "`door43_metadata`", "repo_id = `repository`.id").
+		Join("LEFT", "`door43_metadata`", "repo_id = `repository`.id").
 		Where(repoMetadataCond)
 	sessQuery.In("`user`.id", metadataSelect)
 	/*** END DCS Customizations ***/
