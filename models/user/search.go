@@ -180,15 +180,35 @@ func SearchUsers(ctx context.Context, opts *SearchUserOptions) (users []*User, _
 		}
 		repoMetadataCond = repoMetadataCond.And(repoSubsCond)
 	}
-	if len(opts.RepoMetadataTypes) > 0 {
+	if len(opts.RepoFlavorTypes) > 0 {
 		hasMetadataCond = true
-		repoTypesCond := builder.NewCond()
-		for _, values := range opts.RepoMetadataTypes {
+		repoFlavorTypesCond := builder.NewCond()
+		for _, values := range opts.RepoFlavorTypes {
 			for _, value := range strings.Split(values, ",") {
-				repoTypesCond = repoTypesCond.Or(builder.Eq{"`door43_metadata`.metadata_type": strings.TrimSpace(value)})
+				repoFlavorTypesCond = repoFlavorTypesCond.Or(builder.Eq{"`door43_metadata`.flavor_type": strings.TrimSpace(value)})
 			}
 		}
-		repoMetadataCond = repoMetadataCond.And(repoTypesCond)
+		repoMetadataCond = repoMetadataCond.And(repoFlavorTypesCond)
+	}
+	if len(opts.RepoFlavors) > 0 {
+		hasMetadataCond = true
+		repoFlavorCond := builder.NewCond()
+		for _, values := range opts.RepoFlavorTypes {
+			for _, value := range strings.Split(values, ",") {
+				repoFlavorCond = repoFlavorCond.Or(builder.Eq{"`door43_metadata`.flavor": strings.TrimSpace(value)})
+			}
+		}
+		repoMetadataCond = repoMetadataCond.And(repoFlavorCond)
+	}
+	if len(opts.RepoMetadataTypes) > 0 {
+		hasMetadataCond = true
+		repoMetadataTypesCond := builder.NewCond()
+		for _, values := range opts.RepoMetadataTypes {
+			for _, value := range strings.Split(values, ",") {
+				repoMetadataTypesCond = repoMetadataTypesCond.Or(builder.Eq{"`door43_metadata`.metadata_type": strings.TrimSpace(value)})
+			}
+		}
+		repoMetadataCond = repoMetadataCond.And(repoMetadataTypesCond)
 	}
 	if opts.RepoLanguageIsGL != util.OptionalBoolNone {
 		hasMetadataCond = true

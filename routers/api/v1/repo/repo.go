@@ -118,7 +118,7 @@ func Search(ctx *context.APIContext) {
 	//     type: string
 	// - name: is_gl
 	//   in: query
-	//   description: if the repo is a gateway language resource, the repo will be in the results
+	//   description: list only those that are (true) or are not (false) a gatetway language
 	//   type: boolean
 	// - name: subject
 	//   in: query
