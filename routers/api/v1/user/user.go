@@ -33,26 +33,39 @@ func Search(ctx *context.APIContext) {
 	//   format: int64
 	// - name: lang
 	//   in: query
-	//   description: if the user has one or more repos with the given language(s), the user will be in the results. Multiple lang's are ORed.
+	//   description: has repos of the given language. Multiple values are ORed.
 	//   type: array
 	//   collectionFormat: multi
 	//   items:
 	//     type: string
 	// - name: is_gl
 	//   in: query
-	//   description: if the user has one or more repos that is a gateway language, the user will be in the results
+	//   description: has repos with a repo that is or is not a gateway language.
 	//   type: boolean
 	// - name: subject
 	//   in: query
-	//   description: if the user has one or more repos with the given subject(s), the user will be in the results. Multiple subjects are ORed.
+	//   description: has repos with the given subject. Multiple values are ORed.
 	//   type: array
 	//   collectionFormat: multi
 	//   items:
 	//     type: string
-	//     enum: [Aligned Bible,Aramaic Grammar,Bible,Greek Grammar,Greek Lexicon,Greek New Testament,Hebrew Grammar,Hebrew Old Testament,Hebrew-Aramaic Lexicon,OBS Study Notes,OBS Study Questions,OBS Translation Notes,OBS Translation Questions,Open Bible Stories,Study Notes,Study Questions,Training Library,Translation Academy,Translation Notes,Translation Questions,Translation Words,TSV Study Notes,TSV Study Questions,TSV Translation Notes,TSV Translation Questions,TSV Translation Words Links,TSV OBS Study Notes,TSV OBS Study Questions,TSV OBS Translation Notes,TSV OBS Translation Questions,TSV OBS Translation Words Links]
+	// - name: flavorType
+	//   in: query
+	//   description: org has repos of given flavorType. Multiple values are ORed.
+	//   type: array
+	//   collectionFormat: multi
+	//   items:
+	//     type: string
+	// - name: flavor
+	//   in: query
+	//   description: has repos of given flavor. Multiple values are ORed.
+	//   type: array
+	//   collectionFormat: multi
+	//   items:
+	//     type: string
 	// - name: metadataType
 	//   in: query
-	//   description: if the user has one or more repos with the given metadata type(s), the user will be in the results. Multiple metadata types are ORed.
+	//   description: has repos of given metadataType. Multiple values are ORed.
 	//   type: array
 	//   collectionFormat: multi
 	//   items:
@@ -90,7 +103,9 @@ func Search(ctx *context.APIContext) {
 		// DCS Customizations
 		RepoLanguages:     ctx.FormStrings("lang"),
 		RepoSubjects:      ctx.FormStrings("subject"),
-		RepoMetadataTypes: ctx.FormStrings("metadata_type"),
+		RepoMetadataTypes: ctx.FormStrings("metadataType"),
+		RepoFlavorTypes:   ctx.FormStrings("flavorType"),
+		RepoFlavors:       ctx.FormStrings("flavor"),
 		RepoLanguageIsGL:  ctx.FormOptionalBool("is_gl"),
 		// END DCS Customizations
 	})
