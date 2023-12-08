@@ -2581,62 +2581,59 @@
               "type": "string"
             },
             "collectionFormat": "multi",
-            "description": "if the org has one or more repos with the given language(s), the org will be in the results. Multiple lang's are ORed.",
+            "description": "has repos of the given language. Multiple values are ORed.",
             "name": "lang",
             "in": "query"
           },
           {
             "type": "boolean",
-            "description": "if the org has one or more repos that is a gateway language, the org will be in the results",
+            "description": "has repos with a repo that is or is not a gateway language.",
             "name": "is_gl",
             "in": "query"
           },
           {
             "type": "array",
             "items": {
-              "enum": [
-                "Aligned Bible",
-                "Aramaic Grammar",
-                "Bible",
-                "Greek Grammar",
-                "Greek Lexicon",
-                "Greek New Testament",
-                "Hebrew Grammar",
-                "Hebrew Old Testament",
-                "Hebrew-Aramaic Lexicon",
-                "OBS Study Notes",
-                "OBS Study Questions",
-                "OBS Translation Notes",
-                "OBS Translation Questions",
-                "Open Bible Stories",
-                "Study Notes",
-                "Study Questions",
-                "Training Library",
-                "Translation Academy",
-                "Translation Notes",
-                "Translation Questions",
-                "Translation Words",
-                "TSV Study Notes",
-                "TSV Study Questions",
-                "TSV Translation Notes",
-                "TSV Translation Questions",
-                "TSV Translation Words Links",
-                "TSV OBS Study Notes",
-                "TSV OBS Study Questions",
-                "TSV OBS Translation Notes",
-                "TSV OBS Translation Questions",
-                "TSV OBS Translation Words Links"
-              ],
               "type": "string"
             },
             "collectionFormat": "multi",
-            "description": "if the org has one or more repos with the given subject(s), the org will be in the results. Multiple subjects are ORed.",
+            "description": "has repos with the given subject. Multiple values are ORed.",
             "name": "subject",
             "in": "query"
           },
           {
-            "type": "string",
-            "description": "if the org has one or more repos with the given metadata type(s), the org will be in the results. Multiple metadata types are ORed.",
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "collectionFormat": "multi",
+            "description": "org has repos of given flavorType. Multiple values are ORed.",
+            "name": "flavorType",
+            "in": "query"
+          },
+          {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "collectionFormat": "multi",
+            "description": "has repos of given flavor. Multiple values are ORed.",
+            "name": "flavor",
+            "in": "query"
+          },
+          {
+            "type": "array",
+            "items": {
+              "enum": [
+                "rc",
+                "sb",
+                "tc",
+                "ts"
+              ],
+              "type": "string"
+            },
+            "collectionFormat": "multi",
+            "description": "has repos of given metadataType. Multiple values are ORed.",
             "name": "metadataType",
             "in": "query"
           },
@@ -4417,7 +4414,7 @@
           },
           {
             "type": "boolean",
-            "description": "if the repo is a gateway language resource, the repo will be in the results",
+            "description": "list only those that are (true) or are not (false) a gatetway language",
             "name": "is_gl",
             "in": "query"
           },
@@ -17297,57 +17294,44 @@
               "type": "string"
             },
             "collectionFormat": "multi",
-            "description": "if the user has one or more repos with the given language(s), the user will be in the results. Multiple lang's are ORed.",
+            "description": "has repos of the given language. Multiple values are ORed.",
             "name": "lang",
             "in": "query"
           },
           {
             "type": "boolean",
-            "description": "if the user has one or more repos that is a gateway language, the user will be in the results",
+            "description": "has repos with a repo that is or is not a gateway language.",
             "name": "is_gl",
             "in": "query"
           },
           {
             "type": "array",
             "items": {
-              "enum": [
-                "Aligned Bible",
-                "Aramaic Grammar",
-                "Bible",
-                "Greek Grammar",
-                "Greek Lexicon",
-                "Greek New Testament",
-                "Hebrew Grammar",
-                "Hebrew Old Testament",
-                "Hebrew-Aramaic Lexicon",
-                "OBS Study Notes",
-                "OBS Study Questions",
-                "OBS Translation Notes",
-                "OBS Translation Questions",
-                "Open Bible Stories",
-                "Study Notes",
-                "Study Questions",
-                "Training Library",
-                "Translation Academy",
-                "Translation Notes",
-                "Translation Questions",
-                "Translation Words",
-                "TSV Study Notes",
-                "TSV Study Questions",
-                "TSV Translation Notes",
-                "TSV Translation Questions",
-                "TSV Translation Words Links",
-                "TSV OBS Study Notes",
-                "TSV OBS Study Questions",
-                "TSV OBS Translation Notes",
-                "TSV OBS Translation Questions",
-                "TSV OBS Translation Words Links"
-              ],
               "type": "string"
             },
             "collectionFormat": "multi",
-            "description": "if the user has one or more repos with the given subject(s), the user will be in the results. Multiple subjects are ORed.",
+            "description": "has repos with the given subject. Multiple values are ORed.",
             "name": "subject",
+            "in": "query"
+          },
+          {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "collectionFormat": "multi",
+            "description": "org has repos of given flavorType. Multiple values are ORed.",
+            "name": "flavorType",
+            "in": "query"
+          },
+          {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "collectionFormat": "multi",
+            "description": "has repos of given flavor. Multiple values are ORed.",
+            "name": "flavor",
             "in": "query"
           },
           {
@@ -17362,7 +17346,7 @@
               "type": "string"
             },
             "collectionFormat": "multi",
-            "description": "if the user has one or more repos with the given metadata type(s), the user will be in the results. Multiple metadata types are ORed.",
+            "description": "has repos of given metadataType. Multiple values are ORed.",
             "name": "metadataType",
             "in": "query"
           },
