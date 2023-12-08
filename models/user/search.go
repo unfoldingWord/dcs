@@ -159,7 +159,9 @@ func SearchUsers(ctx context.Context, opts *SearchUserOptions) (users []*User, _
 
 	/*** DCS Customizations ***/
 	repoMetadataCond := builder.NewCond()
+	hasMetadataCond := false
 	if len(opts.RepoLanguages) > 0 {
+		hasMetadataCond = true
 		repoLangsCond := builder.NewCond()
 		for _, values := range opts.RepoLanguages {
 			for _, value := range strings.Split(values, ",") {
@@ -169,6 +171,7 @@ func SearchUsers(ctx context.Context, opts *SearchUserOptions) (users []*User, _
 		repoMetadataCond = repoMetadataCond.And(repoLangsCond)
 	}
 	if len(opts.RepoSubjects) > 0 {
+		hasMetadataCond = true
 		repoSubsCond := builder.NewCond()
 		for _, values := range opts.RepoSubjects {
 			for _, value := range strings.Split(values, ",") {
@@ -178,6 +181,7 @@ func SearchUsers(ctx context.Context, opts *SearchUserOptions) (users []*User, _
 		repoMetadataCond = repoMetadataCond.And(repoSubsCond)
 	}
 	if len(opts.RepoMetadataTypes) > 0 {
+		hasMetadataCond = true
 		repoTypesCond := builder.NewCond()
 		for _, values := range opts.RepoMetadataTypes {
 			for _, value := range strings.Split(values, ",") {
@@ -187,13 +191,16 @@ func SearchUsers(ctx context.Context, opts *SearchUserOptions) (users []*User, _
 		repoMetadataCond = repoMetadataCond.And(repoTypesCond)
 	}
 	if opts.RepoLanguageIsGL != util.OptionalBoolNone {
+		hasMetadataCond = true
 		repoMetadataCond = repoMetadataCond.And(builder.Eq{"`door43_metadata`.is_gl": opts.RepoLanguageIsGL.IsTrue()})
 	}
-	metadataSelect := builder.Select("owner_id").
-		From("repository").
-		Join("LEFT", "`door43_metadata`", "repo_id = `repository`.id").
-		Where(repoMetadataCond)
-	sessQuery.In("`user`.id", metadataSelect)
+	if hasMetadataCond {
+		metadataSelect := builder.Select("owner_id").
+			From("repository").
+			Join("INNER", "`door43_metadata`", "repo_id = `repository`.id").
+			Where(repoMetadataCond)
+		sessQuery.In("`user`.id", metadataSelect)
+	}
 	/*** END DCS Customizations ***/
 
 	// the sql may contain JOIN, so we must only select User related columns
