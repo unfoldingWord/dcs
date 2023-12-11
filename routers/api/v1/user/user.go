@@ -94,27 +94,41 @@ func Search(ctx *context.APIContext) {
 
 	listOptions := utils.GetListOptions(ctx)
 
-	users, maxResults, err := user_model.SearchUsers(ctx, &user_model.SearchUserOptions{
-		Actor:       ctx.Doer,
-		Keyword:     ctx.FormTrim("q"),
-		UID:         ctx.FormInt64("uid"),
-		Type:        user_model.UserTypeIndividual,
-		ListOptions: listOptions,
-		// DCS Customizations
-		RepoLanguages:     ctx.FormStrings("lang"),
-		RepoSubjects:      ctx.FormStrings("subject"),
-		RepoMetadataTypes: ctx.FormStrings("metadataType"),
-		RepoFlavorTypes:   ctx.FormStrings("flavorType"),
-		RepoFlavors:       ctx.FormStrings("flavor"),
-		RepoLanguageIsGL:  ctx.FormOptionalBool("is_gl"),
-		// END DCS Customizations
-	})
-	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, map[string]any{
-			"ok":    false,
-			"error": err.Error(),
+	uid := ctx.FormInt64("uid")
+	var users []*user_model.User
+	var maxResults int64
+	var err error
+
+	switch uid {
+	case user_model.GhostUserID:
+		maxResults = 1
+		users = []*user_model.User{user_model.NewGhostUser()}
+	case user_model.ActionsUserID:
+		maxResults = 1
+		users = []*user_model.User{user_model.NewActionsUser()}
+	default:
+		users, maxResults, err = user_model.SearchUsers(ctx, &user_model.SearchUserOptions{
+			Actor:       ctx.Doer,
+			Keyword:     ctx.FormTrim("q"),
+			UID:         uid,
+			Type:        user_model.UserTypeIndividual,
+			ListOptions: listOptions,
+			// DCS Customizations
+			RepoLanguages:     ctx.FormStrings("lang"),
+			RepoSubjects:      ctx.FormStrings("subject"),
+			RepoMetadataTypes: ctx.FormStrings("metadataType"),
+			RepoFlavorTypes:   ctx.FormStrings("flavorType"),
+			RepoFlavors:       ctx.FormStrings("flavor"),
+			RepoLanguageIsGL:  ctx.FormOptionalBool("is_gl"),
+			// END DCS Customizations
 		})
-		return
+		if err != nil {
+			ctx.JSON(http.StatusInternalServerError, map[string]any{
+				"ok":    false,
+				"error": err.Error(),
+			})
+			return
+		}
 	}
 
 	ctx.SetLinkHeader(int(maxResults), listOptions.PageSize)
