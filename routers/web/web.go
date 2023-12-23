@@ -1125,7 +1125,7 @@ func registerRoutes(m *web.Route) {
 		m.Group("/preview", func() {
 			m.Get("", repo.PreviewRepo)
 			m.Get("/*", repo.PreviewRepo)
-		}, repo.MustBeNotEmpty, context.RepoRef())
+		}, repo.MustBeNotEmpty)
 		// END DCS Customizations
 	}, ignSignIn, context.RepoAssignment, context.UnitTypes()) // for "/{username}/{reponame}" which doesn't require authentication
 
