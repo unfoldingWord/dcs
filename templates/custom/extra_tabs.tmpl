@@ -1,6 +1,16 @@
 <a class="{{if .PageIsMetadata}}active{{end}} item" href="{{.RepoLink}}/metadata">
                 {{svg "octicon-briefcase"}} {{ctx.Locale.Tr "repo.metadata.metadata"}}
 </a>
-<a class="item"  target="_blank" href="{{Door43PreviewURL}}/u/{{.Owner.Name}}/{{.Repository.Name}}{{if .IsViewTag}}?ref={{QueryEscape .TagName}}{{else if .IsViewBranch}}?ref={{QueryEscape .BranchName}}{{end}}">
+{{$refToPreview := .Repository.DefaultBranch}}
+{{if .IsViewTag}}
+    {{$refToPreview = .TagName}}
+{{else if .IsViewBranch}}
+	{{$refToPreview = .BranchName}}
+{{end}}
+
+<a class="{{if .PageIsPreview}}active{{end}} item" data-tooltip-content="Preview on DCS" href="{{.RepoLink}}/preview/{{$refToPreview | PathEscapeSegments}}">
+                {{svg "octicon-book"}} {{ctx.Locale.Tr "preview"}} (Beta)
+</a>
+<a class="item" data-tooltip-content="Preview on door43.org" target="_blank" href="{{Door43PreviewURL}}/u/{{.Owner.Name}}/{{.Repository.Name}}/{{$refToPreview | PathEscapeSegments}}">
                 {{svg "octicon-search"}} {{ctx.Locale.Tr "preview"}}
 </a>
