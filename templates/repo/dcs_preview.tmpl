@@ -1,0 +1,11 @@
+{{template "base/head" .}}
+<div role="main" aria-label="{{.Title}}" class="page-content repository settings">
+	{{template "repo/header" .}}
+	{{template "base/alert" .}}
+	<div class="ui container">
+        <script type="module" crossorigin src="/assets/js/preview.js"></script>
+        <link rel="stylesheet" href="/assets/css/preview.css">
+        <div id="root"></div>
+    </div>
+</div>
+{{template "base/footer" .}}
