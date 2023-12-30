@@ -7,10 +7,9 @@
 {{else if .IsViewBranch}}
 	{{$refToPreview = .BranchName}}
 {{end}}
-
 <a class="{{if .PageIsPreview}}active{{end}} item" data-tooltip-content="Preview on DCS" href="{{.RepoLink}}/preview/{{$refToPreview | PathEscapeSegments}}">
                 {{svg "octicon-book"}} {{ctx.Locale.Tr "preview"}} (Beta)
 </a>
-<a class="item" data-tooltip-content="Preview on door43.org" target="_blank" href="{{Door43PreviewURL}}/u/{{.Owner.Name}}/{{.Repository.Name}}/{{$refToPreview | PathEscapeSegments}}">
-                {{svg "octicon-search"}} {{ctx.Locale.Tr "preview"}}
+<a class="item" data-tooltip-content="Preview on Door43.org" target="_blank" href="{{Door43PreviewURL}}/u/{{.Owner.Name}}/{{.Repository.Name}}/{{$refToPreview | PathEscapeSegments}}{{if eq AppUrl "https://qa.door43.org/"}}?server=QA{{end}}">
+                {{svg "octicon-link-external"}} {{ctx.Locale.Tr "preview"}}
 </a>
