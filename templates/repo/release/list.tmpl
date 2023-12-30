@@ -114,6 +114,13 @@
 										<li>
 											<a class="archive-link" href="{{$.RepoLink}}/archive/{{.TagName | PathEscapeSegments}}.tar.gz" rel="nofollow"><strong>{{svg "octicon-file-zip" 16 "gt-mr-2"}}{{ctx.Locale.Tr "repo.release.source_code"}} (TAR.GZ)</strong></a>
 										</li>
+										<!-- DCS Customization -->
+										{{if .Door43Metadata}}
+										<li>
+											<a href="{{$.RepoLink}}/preview/{{.TagName | PathEscapeSegments}}"><strong>{{svg "octicon-book" 16 "gt-mr-2"}}{{ctx.Locale.Tr "preview"}} / PDF</strong></a>
+										</li>
+										{{end}}
+										<!-- END DCS Customizations -->
 									{{end}}
 									{{if .Attachments}}
 										{{range .Attachments}}
