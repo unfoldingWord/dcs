@@ -399,7 +399,13 @@ func GetDoor43MetadataFromSBMetadata(dm *repo_model.Door43Metadata, sbMetadata *
 						ln = value
 					}
 					if ln == nil {
-						ln = &dcs.SB100LocalizedName{Short: map[string]string{language: bookID}, Abbr: map[string]string{language: bookID}, Long: map[string]string{language: bookID}}
+						var long string
+						if value, ok := dcs.BookNames[bookID]; ok {
+							long = value
+						} else {
+							long = bookID
+						}
+						ln = &dcs.SB100LocalizedName{Short: map[string]string{"en": bookID}, Abbr: map[string]string{"en": bookID}, Long: map[string]string{"en": long}}
 					}
 					filePath = "./" + filePath
 					count := 0
