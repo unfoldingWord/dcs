@@ -21,6 +21,7 @@ import (
 
 var sb100Schema *jsonschema.Schema
 
+// GetSBDataFromBlob reads a blob of text and unmarshals it into an SBMetadata100 object
 func GetSBDataFromBlob(blob *git.Blob) (*SBMetadata100, error) {
 	buf, err := ReadFileFromBlob(blob)
 	if err != nil {
@@ -100,8 +101,8 @@ type SBMetadata100 struct {
 	Languages      []*SB100Language               `json:"languages"`
 	Type           *SB100Type                     `json:"type"`
 	LocalizedNames map[string]*SB100LocalizedName `json:"localizedNames"`
+	Ingredients    map[string]*SB100Ingredient    `json:"ingredients"`
 	Metadata       map[string]interface{}
-	Ingredients    map[string]*SB100Ingredient `xorm:"JSON"`
 }
 
 type LocalizedText map[string]string
@@ -167,7 +168,7 @@ type SB100LocalizedName struct {
 
 type SB100Ingredient struct {
 	Checksum map[string]string `json:"checksum"`
-	Mimetype string            `json:"mimetype"`
+	Mimetype string            `json:"mimeType"`
 	Size     int64             `json:"size"`
 	Scope    *ScopeMap         `json:"scope"`
 	Role     string            `json:"role"`
