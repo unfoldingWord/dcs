@@ -70,17 +70,16 @@ func ReadJSONFromBlob(blob *git.Blob) (map[string]interface{}, error) {
 	}
 
 	var result map[string]interface{}
-	if err := json.Unmarshal(buf, &result); err != nil {
+	if err = json.Unmarshal(buf, &result); err != nil {
 		log.Error("json.Unmarshal: %v", err)
 		return nil, err
 	}
-	if result != nil {
-		for k, v := range result {
-			if val, err := ToStringKeys(v); err != nil {
-				log.Error("ToStringKeys: %v", err)
-			} else {
-				(result)[k] = val
-			}
+
+	for k, v := range result {
+		if val, err := ToStringKeys(v); err != nil {
+			log.Error("ToStringKeys: %v", err)
+		} else {
+			(result)[k] = val
 		}
 	}
 	return result, nil

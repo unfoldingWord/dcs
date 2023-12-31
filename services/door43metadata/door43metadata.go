@@ -372,6 +372,14 @@ func GetDoor43MetadataFromSBMetadata(dm *repo_model.Door43Metadata, sbMetadata *
 	flavor = sbMetadata.Type.FlavorType.Flavor.Name
 	abbreviation = strings.ToLower(sbMetadata.Identification.Abbreviation.DetermineLocalizedTextToUse())
 
+	language = sbMetadata.Languages[0].Tag
+	languageTitle = dcs.GetLanguageTitle(language)
+	if languageTitle == "" {
+		languageTitle = sbMetadata.Languages[0].Name.DetermineLocalizedTextToUse()
+	}
+	languageDirection = dcs.GetLanguageDirection(language)
+	languageIsGL = dcs.LanguageIsGL(language)
+
 	switch sbMetadata.Type.FlavorType.Name {
 	case "scripture":
 		if strings.HasPrefix(flavor, "x-") {
@@ -391,7 +399,7 @@ func GetDoor43MetadataFromSBMetadata(dm *repo_model.Door43Metadata, sbMetadata *
 						ln = value
 					}
 					if ln == nil {
-						continue
+						ln = &dcs.SB100LocalizedName{Short: map[string]string{language: bookID}, Abbr: map[string]string{language: bookID}, Long: map[string]string{language: bookID}}
 					}
 					filePath = "./" + filePath
 					count := 0
@@ -443,16 +451,6 @@ func GetDoor43MetadataFromSBMetadata(dm *repo_model.Door43Metadata, sbMetadata *
 				Path:       "./ingredients",
 			})
 		}
-	}
-
-	if len(sbMetadata.Languages) > 0 {
-		language = sbMetadata.Languages[0].Tag
-		languageTitle = dcs.GetLanguageTitle(language)
-		if languageTitle == "" {
-			languageTitle = sbMetadata.Languages[0].Name.DetermineLocalizedTextToUse()
-		}
-		languageDirection = dcs.GetLanguageDirection(language)
-		languageIsGL = dcs.LanguageIsGL(language)
 	}
 
 	dm.RepoID = repo.ID
@@ -569,8 +567,6 @@ func GetTcOrTsDoor43Metadata(dm *repo_model.Door43Metadata, repo *repo_model.Rep
 }
 
 func GetSBDoor43Metadata(dm *repo_model.Door43Metadata, repo *repo_model.Repository, commit *git.Commit) error {
-	var metadata map[string]interface{}
-
 	blob, err := commit.GetBlobByPath("metadata.json")
 	if err != nil {
 		return err
@@ -583,11 +579,8 @@ func GetSBDoor43Metadata(dm *repo_model.Door43Metadata, repo *repo_model.Reposit
 		log.Error("ERROR: %v", err)
 		return err
 	}
-	metadata, err = dcs.ReadJSONFromBlob(blob)
-	if err != nil {
-		return err
-	}
-	validationResult, err := dcs.ValidateMapBySB100Schema(metadata)
+
+	validationResult, err := dcs.ValidateMapBySB100Schema(sbMetadata.Metadata)
 	if err != nil {
 		return err
 	}
