@@ -400,7 +400,7 @@ func GetDoor43MetadataFromSBMetadata(dm *repo_model.Door43Metadata, sbMetadata *
 					}
 					if ln == nil {
 						var long string
-						if value, ok := dcs.BookNames[bookID]; ok {
+						if value, ok := dcs.BookNames[strings.ToLower(bookID)]; ok {
 							long = value
 						} else {
 							long = bookID
