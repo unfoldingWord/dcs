@@ -155,6 +155,15 @@ func IsValidBook(book string) bool {
 	return ok
 }
 
+func GetBookName(book string) string {
+	value, ok := BookNames[book]
+	if ok {
+		return value
+	} else {
+		return book
+	}
+}
+
 func BookIsOT(book string) bool {
 	return IsValidBook(book) && BookNumbers[book] > "0" && BookNumbers[book] < "40"
 }

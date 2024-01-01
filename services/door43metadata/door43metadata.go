@@ -394,18 +394,14 @@ func GetDoor43MetadataFromSBMetadata(dm *repo_model.Door43Metadata, sbMetadata *
 			for filePath, ingredient := range sbMetadata.Ingredients {
 				if ingredient.Scope != nil && len(*ingredient.Scope) > 0 {
 					bookID := ingredient.Scope.GetBookID()
+					lowerBookID := strings.ToLower(bookID)
 					var ln *dcs.SB100LocalizedName
 					if value, ok := sbMetadata.LocalizedNames[bookID]; ok {
 						ln = value
 					}
 					if ln == nil {
-						var long string
-						if value, ok := dcs.BookNames[strings.ToLower(bookID)]; ok {
-							long = value
-						} else {
-							long = bookID
-						}
-						ln = &dcs.SB100LocalizedName{Short: map[string]string{"en": bookID}, Abbr: map[string]string{"en": bookID}, Long: map[string]string{"en": long}}
+						name := dcs.GetBookName(lowerBookID)
+						ln = &dcs.SB100LocalizedName{Short: map[string]string{"en": name}, Abbr: map[string]string{"en": lowerBookID}, Long: map[string]string{"en": name}}
 					}
 					filePath = "./" + filePath
 					count := 0
@@ -419,11 +415,12 @@ func GetDoor43MetadataFromSBMetadata(dm *repo_model.Door43Metadata, sbMetadata *
 						contentFormat = strings.TrimPrefix(filepath.Ext(filePath), ".")
 					}
 					ingredients = append(ingredients, &structs.Ingredient{
-						Categories:     dcs.GetBookCategories(bookID),
-						Identifier:     bookID,
+						Categories:     dcs.GetBookCategories(lowerBookID),
+						Identifier:     lowerBookID,
 						Title:          ln.Short.DetermineLocalizedTextToUse(),
 						Path:           filePath,
-						Sort:           dcs.GetBookSort(bookID),
+						Sort:           dcs.GetBookSort(lowerBookID),
+						Versification:  "ufw",
 						AlignmentCount: &count,
 					})
 				}
@@ -431,18 +428,20 @@ func GetDoor43MetadataFromSBMetadata(dm *repo_model.Door43Metadata, sbMetadata *
 		} else if sbMetadata.LocalizedNames != nil {
 			contentFormat = "usfm"
 			for bookID, localizedName := range sbMetadata.LocalizedNames {
+				lowerBookID := strings.ToLower(bookID)
 				filePath := "./ingredients/" + bookID + ".usfm"
 				count, _ := GetBookAlignmentCount(filePath, commit)
 				if count > 0 {
 					subject = "Aligned Bible"
 				}
 				ingredients = append(ingredients, &structs.Ingredient{
-					Categories:     dcs.GetBookCategories(bookID),
-					Identifier:     bookID,
+					Categories:     dcs.GetBookCategories(lowerBookID),
+					Identifier:     lowerBookID,
 					Title:          localizedName.Short.DetermineLocalizedTextToUse(),
 					Path:           filePath,
-					Sort:           dcs.GetBookSort(bookID),
+					Sort:           dcs.GetBookSort(lowerBookID),
 					AlignmentCount: &count,
+					Versification:  "ufw",
 				})
 			}
 		}
