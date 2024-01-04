@@ -1,10 +1,14 @@
+{{$previewFilesUrl := "https://preview.door43.org"}}
+{{if ne AppUrl "https://git.door43.org/"}}
+    {{$previewFilesUrl = "https://develop--door43-preview.netlify.app"}}
+{{end}}
 {{template "base/head" .}}
 <div role="main" aria-label="{{.Title}}" class="page-content repository settings">
 	{{template "repo/header" .}}
 	{{template "base/alert" .}}
 	<div class="ui container">
-        <script type="module" crossorigin src="/assets/js/preview.js"></script>
-        <link rel="stylesheet" href="/assets/css/preview.css">
+        <script type="module" crossorigin src="{{$previewFilesUrl}}/assets/index.js"></script>
+        <link rel="stylesheet" href="{{$previewFilesUrl}}/assets/index.css">
         <div id="root"></div>
     </div>
 </div>
