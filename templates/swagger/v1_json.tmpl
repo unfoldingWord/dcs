@@ -1017,12 +1017,13 @@
               "enum": [
                 "prod",
                 "preprod",
-                "latest"
+                "latest",
+                "branch"
               ],
               "type": "string"
             },
             "collectionFormat": "multi",
-            "description": "list only those of the given stage or lower, with low to high being: \"prod\" - return only the production subjects (default); \"preprod\" - return pre-production and production subjects; \"latest\" - return all subjects in the catalog for all stages",
+            "description": "list only those of the given stage or lower, with low to high being: \"prod\" - return only those of production releases (default); \"preprod\" - return only those of all (production \u0026 pre-production) releases; \"latest\" - return only those of all releases and the default branch; \"branch\" - return all those in the catalog for all branches",
             "name": "stage",
             "in": "query"
           },
@@ -1194,12 +1195,13 @@
               "enum": [
                 "prod",
                 "preprod",
-                "latest"
+                "latest",
+                "branch"
               ],
               "type": "string"
             },
             "collectionFormat": "multi",
-            "description": "list only those of the given stage or lower, with low to high being: \"prod\" - return only the production subjects (default); \"preprod\" - return pre-production and production subjects; \"latest\" - return all subjects in the catalog for all stages",
+            "description": "list only those of the given stage or lower, with low to high being: \"prod\" - return only those of production releases (default); \"preprod\" - return only those of all (production \u0026 pre-production) releases; \"latest\" - return only those of all releases and the default branch; \"branch\" - return all those in the catalog for all branches",
             "name": "stage",
             "in": "query"
           },
@@ -1365,12 +1367,13 @@
               "enum": [
                 "prod",
                 "preprod",
-                "latest"
+                "latest",
+                "branch"
               ],
               "type": "string"
             },
             "collectionFormat": "multi",
-            "description": "list only those of the given stage or lower, with low to high being: \"prod\" - return only the production subjects (default); \"preprod\" - return pre-production and production subjects; \"latest\" - return all subjects in the catalog for all stages",
+            "description": "list only those of the given stage or lower, with low to high being: \"prod\" - return only those of production releases (default); \"preprod\" - return only those of all (production \u0026 pre-production) releases; \"latest\" - return only those of all releases and the default branch; \"branch\" - return all those in the catalog for all branches",
             "name": "stage",
             "in": "query"
           },
@@ -1542,12 +1545,13 @@
               "enum": [
                 "prod",
                 "preprod",
-                "latest"
+                "latest",
+                "branch"
               ],
               "type": "string"
             },
             "collectionFormat": "multi",
-            "description": "list only those of the given stage or lower, with low to high being: \"prod\" - return only the production subjects (default); \"preprod\" - return pre-production and production subjects; \"latest\" - return all subjects in the catalog for all stages",
+            "description": "list only those of the given stage or lower, with low to high being: \"prod\" - return only those of production releases (default); \"preprod\" - return only those of all (production \u0026 pre-production) releases; \"latest\" - return only those of all releases and the default branch; \"branch\" - return all those in the catalog for all branches",
             "name": "stage",
             "in": "query"
           },
@@ -1774,12 +1778,13 @@
               "enum": [
                 "prod",
                 "preprod",
-                "latest"
+                "latest",
+                "branch"
               ],
               "type": "string"
             },
             "collectionFormat": "multi",
-            "description": "specifies which release stage to be return of these stages: \"prod\" - return only the production releases (default); \"preprod\" - return the pre-production release if it exists instead of the production release; \"latest\" - return the default branch (e.g. master) if it is a valid repo",
+            "description": "list only those of the given stage or lower, with low to high being: \"prod\" - return only those of production releases (default); \"preprod\" - return only those of all (production \u0026 pre-production) releases; \"latest\" - return only those of all releases and the default branch; \"branch\" - return all those in the catalog for all branches",
             "name": "stage",
             "in": "query"
           },

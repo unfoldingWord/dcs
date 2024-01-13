@@ -94,10 +94,11 @@ func Search(ctx *context.APIContext) {
 	//   type: boolean
 	// - name: stage
 	//   in: query
-	//   description: 'specifies which release stage to be return of these stages:
-	//                "prod" - return only the production releases (default);
-	//                "preprod" - return the pre-production release if it exists instead of the production release;
-	//                "latest" - return the default branch (e.g. master) if it is a valid repo'
+	//   description: 'list only those of the given stage or lower, with low to high being:
+	//                "prod" - return only those of production releases (default);
+	//                "preprod" - return only those of all (production & pre-production) releases;
+	//                "latest" - return only those of all releases and the default branch;
+	//                "branch" - return all those in the catalog for all branches'
 	//   type: array
 	//   collectionFormat: multi
 	//   items:
@@ -256,9 +257,10 @@ func ListCatalogSubjects(ctx *context.APIContext) {
 	// - name: stage
 	//   in: query
 	//   description: 'list only those of the given stage or lower, with low to high being:
-	//                "prod" - return only the production subjects (default);
-	//                "preprod" - return pre-production and production subjects;
-	//                "latest" - return all subjects in the catalog for all stages'
+	//                "prod" - return only those of production releases (default);
+	//                "preprod" - return only those of all (production & pre-production) releases;
+	//                "latest" - return only those of all releases and the default branch;
+	//                "branch" - return all those in the catalog for all branches'
 	//   type: array
 	//   collectionFormat: multi
 	//   items:
@@ -382,9 +384,10 @@ func ListCatalogMetadataTypes(ctx *context.APIContext) {
 	// - name: stage
 	//   in: query
 	//   description: 'list only those of the given stage or lower, with low to high being:
-	//                "prod" - return only the production subjects (default);
-	//                "preprod" - return pre-production and production subjects;
-	//                "latest" - return all subjects in the catalog for all stages'
+	//                "prod" - return only those of production releases (default);
+	//                "preprod" - return only those of all (production & pre-production) releases;
+	//                "latest" - return only those of all releases and the default branch;
+	//                "branch" - return all those in the catalog for all branches'
 	//   type: array
 	//   collectionFormat: multi
 	//   items:
@@ -508,9 +511,10 @@ func ListCatalogOwners(ctx *context.APIContext) {
 	// - name: stage
 	//   in: query
 	//   description: 'list only those of the given stage or lower, with low to high being:
-	//                "prod" - return only the production subjects (default);
-	//                "preprod" - return pre-production and production subjects;
-	//                "latest" - return all subjects in the catalog for all stages'
+	//                "prod" - return only those of production releases (default);
+	//                "preprod" - return only those of all (production & pre-production) releases;
+	//                "latest" - return only those of all releases and the default branch;
+	//                "branch" - return all those in the catalog for all branches'
 	//   type: array
 	//   collectionFormat: multi
 	//   items:
@@ -646,9 +650,10 @@ func ListCatalogLanguages(ctx *context.APIContext) {
 	// - name: stage
 	//   in: query
 	//   description: 'list only those of the given stage or lower, with low to high being:
-	//                "prod" - return only the production subjects (default);
-	//                "preprod" - return pre-production and production subjects;
-	//                "latest" - return all subjects in the catalog for all stages'
+	//                "prod" - return only those of production releases (default);
+	//                "preprod" - return only those of all (production & pre-production) releases;
+	//                "latest" - return only those of all releases and the default branch;
+	//                "branch" - return all those in the catalog for all branches'
 	//   type: array
 	//   collectionFormat: multi
 	//   items:
