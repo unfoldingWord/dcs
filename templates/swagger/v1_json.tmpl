@@ -996,6 +996,12 @@
             "in": "query"
           },
           {
+            "type": "string",
+            "description": "list only those for the given repo(s). To match multiple, give the parameter multiple times or give a list comma delimited.",
+            "name": "repo",
+            "in": "query"
+          },
+          {
             "type": "array",
             "items": {
               "type": "string"
@@ -1169,8 +1175,14 @@
         "parameters": [
           {
             "type": "string",
-            "description": "list only subjects in the given owner(s). To match multiple, give the parameter multiple times or give a list comma delimited.",
+            "description": "list only those in the given owner(s). To match multiple, give the parameter multiple times or give a list comma delimited.",
             "name": "owner",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "description": "list only those for the given repo(s). To match multiple, give the parameter multiple times or give a list comma delimited.",
+            "name": "repo",
             "in": "query"
           },
           {
@@ -1179,7 +1191,7 @@
               "type": "string"
             },
             "collectionFormat": "multi",
-            "description": "list only subjects in the given language(s). To match multiple, give the parameter multiple times or give a list comma delimited. Will perform an exact match (case insensitive) unlesss partialMatch=true",
+            "description": "list only those in the given language(s). To match multiple, give the parameter multiple times or give a list comma delimited. Will perform an exact match (case insensitive) unlesss partialMatch=true",
             "name": "lang",
             "in": "query"
           },
@@ -1343,6 +1355,12 @@
             "type": "string",
             "description": "list only the given owners(s) if they have entries in the catalog meeting the criteria given (e.g. way to test an owner has a given language or subject)",
             "name": "owner",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "description": "list only those with the given repo(s). To match multiple, give the parameter multiple times or give a list comma delimited.",
+            "name": "repo",
             "in": "query"
           },
           {
@@ -1519,8 +1537,14 @@
         "parameters": [
           {
             "type": "string",
-            "description": "list only subjects in the given owner(s). To match multiple, give the parameter multiple times or give a list comma delimited.",
+            "description": "list only those for the given owner(s). To match multiple, give the parameter multiple times or give a list comma delimited.",
             "name": "owner",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "description": "list only those for the given repo(s). To match multiple, give the parameter multiple times or give a list comma delimited.",
+            "name": "repo",
             "in": "query"
           },
           {
@@ -1529,7 +1553,7 @@
               "type": "string"
             },
             "collectionFormat": "multi",
-            "description": "list only subjects in the given language(s). To match multiple, give the parameter multiple times or give a list comma delimited. Will perform an exact match (case insensitive) unlesss partialMatch=true",
+            "description": "list only those for the given language(s). To match multiple, give the parameter multiple times or give a list comma delimited. Will perform an exact match (case insensitive) unlesss partialMatch=true",
             "name": "lang",
             "in": "query"
           },

@@ -241,11 +241,15 @@ func ListCatalogSubjects(ctx *context.APIContext) {
 	// parameters:
 	// - name: owner
 	//   in: query
-	//   description: list only subjects in the given owner(s). To match multiple, give the parameter multiple times or give a list comma delimited.
+	//   description: list only those for the given owner(s). To match multiple, give the parameter multiple times or give a list comma delimited.
+	//   type: string
+	// - name: repo
+	//   in: query
+	//   description: list only those for the given repo(s). To match multiple, give the parameter multiple times or give a list comma delimited.
 	//   type: string
 	// - name: lang
 	//   in: query
-	//   description: list only subjects in the given language(s). To match multiple, give the parameter multiple times or give a list comma delimited. Will perform an exact match (case insensitive) unlesss partialMatch=true
+	//   description: list only those for the given language(s). To match multiple, give the parameter multiple times or give a list comma delimited. Will perform an exact match (case insensitive) unlesss partialMatch=true
 	//   type: array
 	//   collectionFormat: multi
 	//   items:
@@ -368,11 +372,15 @@ func ListCatalogMetadataTypes(ctx *context.APIContext) {
 	// parameters:
 	// - name: owner
 	//   in: query
-	//   description: list only subjects in the given owner(s). To match multiple, give the parameter multiple times or give a list comma delimited.
+	//   description: list only those in the given owner(s). To match multiple, give the parameter multiple times or give a list comma delimited.
+	//   type: string
+	// - name: repo
+	//   in: query
+	//   description: list only those for the given repo(s). To match multiple, give the parameter multiple times or give a list comma delimited.
 	//   type: string
 	// - name: lang
 	//   in: query
-	//   description: list only subjects in the given language(s). To match multiple, give the parameter multiple times or give a list comma delimited. Will perform an exact match (case insensitive) unlesss partialMatch=true
+	//   description: list only those in the given language(s). To match multiple, give the parameter multiple times or give a list comma delimited. Will perform an exact match (case insensitive) unlesss partialMatch=true
 	//   type: array
 	//   collectionFormat: multi
 	//   items:
@@ -496,6 +504,10 @@ func ListCatalogOwners(ctx *context.APIContext) {
 	// - name: owner
 	//   in: query
 	//   description: list only the given owners(s) if they have entries in the catalog meeting the criteria given (e.g. way to test an owner has a given language or subject)
+	//   type: string
+	// - name: repo
+	//   in: query
+	//   description: list only those with the given repo(s). To match multiple, give the parameter multiple times or give a list comma delimited.
 	//   type: string
 	// - name: lang
 	//   in: query
@@ -635,6 +647,10 @@ func ListCatalogLanguages(ctx *context.APIContext) {
 	// - name: owner
 	//   in: query
 	//   description: list only those with the given owners(s). To match multiple, give the parameter multiple times or give a list comma delimited. Will perform an exact match (case insensitive) unlesss partialMatch=true
+	//   type: string
+	// - name: repo
+	//   in: query
+	//   description: list only those for the given repo(s). To match multiple, give the parameter multiple times or give a list comma delimited.
 	//   type: string
 	// - name: lang
 	//   in: query
@@ -1034,7 +1050,7 @@ func getSingleDMFieldList(ctx *context.APIContext, field string) ([]string, erro
 	opts := &door43metadata.SearchCatalogOptions{
 		ListOptions:      listOptions,
 		Owners:           QueryStrings(ctx, "owner"),
-		Repos:            QueryStrings(ctx, "repos"),
+		Repos:            QueryStrings(ctx, "repo"),
 		Tags:             QueryStrings(ctx, "tag"),
 		Stage:            stage,
 		Languages:        QueryStrings(ctx, "lang"),
