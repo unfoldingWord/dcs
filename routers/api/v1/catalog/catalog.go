@@ -102,7 +102,7 @@ func Search(ctx *context.APIContext) {
 	//   collectionFormat: multi
 	//   items:
 	//     type: string
-	//     enum: [prod,preprod,latest]
+	//     enum: [prod,preprod,latest,branch]
 	// - name: subject
 	//   in: query
 	//   description: resource subject. Multiple values are ORed.
@@ -263,7 +263,7 @@ func ListCatalogSubjects(ctx *context.APIContext) {
 	//   collectionFormat: multi
 	//   items:
 	//     type: string
-	//     enum: [prod,preprod,latest]
+	//     enum: [prod,preprod,latest,branch]
 	// - name: subject
 	//   in: query
 	//   description: resource subject. Multiple values are ORed.
@@ -389,7 +389,7 @@ func ListCatalogMetadataTypes(ctx *context.APIContext) {
 	//   collectionFormat: multi
 	//   items:
 	//     type: string
-	//     enum: [prod,preprod,latest]
+	//     enum: [prod,preprod,latest,branch]
 	// - name: subject
 	//   in: query
 	//   description: resource subject. Multiple values are ORed.
@@ -515,7 +515,7 @@ func ListCatalogOwners(ctx *context.APIContext) {
 	//   collectionFormat: multi
 	//   items:
 	//     type: string
-	//     enum: [prod,preprod,latest]
+	//     enum: [prod,preprod,latest,branch]
 	// - name: subject
 	//   in: query
 	//   description: resource subject. Multiple values are ORed.
@@ -653,7 +653,7 @@ func ListCatalogLanguages(ctx *context.APIContext) {
 	//   collectionFormat: multi
 	//   items:
 	//     type: string
-	//     enum: [prod,preprod,latest]
+	//     enum: [prod,preprod,latest,branch]
 	// - name: subject
 	//   in: query
 	//   description: resource subject. Multiple values are ORed.
