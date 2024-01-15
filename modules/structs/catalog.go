@@ -36,8 +36,8 @@ type CatalogEntry struct {
 	MetadataURL            string        `json:"metadata_url"`
 	MetadataJSONURL        string        `json:"metadata_json_url"`
 	MetadataAPIContentsURL string        `json:"metadata_api_contents_url"`
-	MetadataVersion        string        `json:"metadata_version"`
 	MetadataType           string        `json:"metadata_type"`
+	MetadataVersion        string        `json:"metadata_version"`
 	ContentFormat          string        `json:"content_format"`
 	Released               time.Time     `json:"released"`
 	Ingredients            []*Ingredient `json:"ingredients,omitempty"`
