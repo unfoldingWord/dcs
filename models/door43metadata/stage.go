@@ -13,7 +13,7 @@ const (
 	StageProd    Stage = 1
 	StagePreProd Stage = 2
 	StageLatest  Stage = 3
-	StageBranch  Stage = 4
+	StageOther   Stage = 4
 )
 
 // StageMap map from string to Stage (int)
@@ -21,7 +21,9 @@ var StageMap = map[string]Stage{
 	"prod":    StageProd,
 	"preprod": StagePreProd,
 	"latest":  StageLatest,
-	"branch":  StageBranch,
+	"other":   StageOther,
+	"tag":     StageOther,
+	"branch":  StageOther,
 }
 
 // StageToStringMap map from stage (int) to string
@@ -29,7 +31,7 @@ var StageToStringMap = map[Stage]string{
 	StageProd:    "prod",
 	StagePreProd: "preprod",
 	StageLatest:  "latest",
-	StageBranch:  "branch",
+	StageOther:   "other",
 }
 
 // String returns string repensation of a Stage (int)

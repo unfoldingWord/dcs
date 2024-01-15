@@ -527,7 +527,7 @@ func GetRepoReleaseTagsForMetadata(ctx context.Context, repoID int64) ([]string,
 	var releases []*Release
 	err := db.GetEngine(ctx).
 		Join("INNER", "repository", "`repository`.id = `release`.repo_id").
-		Where(builder.Eq{"`release`.is_tag": 0}.And(builder.Eq{"`repository`.id": repoID})).
+		Where(builder.Eq{"`repository`.id": repoID}).
 		OrderBy("`release`.created_unix").
 		Find(&releases)
 	if err != nil {
