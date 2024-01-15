@@ -107,7 +107,7 @@ func handleRepoDM(ctx context.Context, repo *repo_model.Repository) error {
 	} else if repo.LatestPreprodDM != nil {
 		repo.RepoDM = repo.LatestPreprodDM
 	} else {
-		repo.RepoDM, _ = repo_model.GetMostRecentDoor43MetadataByStage(ctx, repo.ID, door43metadata.StageBranch)
+		repo.RepoDM, _ = repo_model.GetMostRecentDoor43MetadataByStage(ctx, repo.ID, door43metadata.StageOther)
 	}
 
 	if repo.RepoDM == nil || !repo.RepoDM.IsRepoMetadata {
@@ -604,7 +604,7 @@ func processDoor43MetadataForRepoRef(ctx context.Context, repo *repo_model.Repos
 		return fmt.Errorf("no repository provided")
 	}
 	if ref == "" {
-		return fmt.Errorf("no ref profided")
+		return fmt.Errorf("no ref provided")
 	}
 
 	err = repo.LoadLatestDMs(ctx)
@@ -642,11 +642,7 @@ func processDoor43MetadataForRepoRef(ctx context.Context, repo *repo_model.Repos
 	if err != nil && !repo_model.IsErrReleaseNotExist(err) {
 		return err
 	}
-	if release != nil {
-		// We don't support releases that are just tags or are drafts
-		if release.IsTag || release.IsDraft {
-			return fmt.Errorf("ref for repo %s [%d] must be a branch or a (pre-)release: %s", repo.FullName(), repo.ID, ref)
-		}
+	if release != nil && !release.IsTag && !release.IsDraft {
 		if !release.IsCatalogVersion() {
 			return fmt.Errorf("release tag for repo %s [%d] must start with v and a digit or be a year: %s", repo.FullName(), repo.ID, release.TagName)
 		}
@@ -668,23 +664,39 @@ func processDoor43MetadataForRepoRef(ctx context.Context, repo *repo_model.Repos
 	} else {
 		if branch, err := gitRepo.GetBranch(ref); err != nil && !git.IsErrBranchNotExist(err) {
 			return err
-		} else if branch == nil {
+		} else if branch != nil {
+			if ref == repo.DefaultBranch {
+				stage = door43metadata.StageLatest
+			} else {
+				stage = door43metadata.StageOther
+			}
+			dm.IsLatestForStage = true
+			dm.RefType = "branch"
+			commit, err = gitRepo.GetBranchCommit(ref)
+			if err != nil {
+				log.Error("GetBranchCommit: %v\n", err)
+				return err
+			}
+			commitID = commit.ID.String()
+			releaseDateUnix = timeutil.TimeStamp(commit.Author.When.Unix())
+		} else if tag_release, err := repo_model.GetRelease(repo.ID, ref); err != nil && !git.IsErrNotExist(err) {
+			return err
+		} else if tag_release != nil {
+			stage = door43metadata.StageOther
+			dm.ReleaseID = tag_release.ID
+			dm.Release = tag_release
+			dm.RefType = "tag"
+			dm.IsLatestForStage = true
+			commit, err = gitRepo.GetTagCommit(ref)
+			if err != nil {
+				log.Error("GetTagCommit: %v\n", err)
+				return err
+			}
+			commitID = commit.ID.String()
+			releaseDateUnix = timeutil.TimeStamp(commit.Author.When.Unix())
+		} else {
 			return fmt.Errorf("ref for repo %s [%d] does not exist: %s", repo.FullName(), repo.ID, ref)
 		}
-		if ref == repo.DefaultBranch {
-			stage = door43metadata.StageLatest
-		} else {
-			stage = door43metadata.StageBranch
-		}
-		dm.IsLatestForStage = true
-		dm.RefType = "branch"
-		commit, err = gitRepo.GetBranchCommit(ref)
-		if err != nil {
-			log.Error("GetBranchCommit: %v\n", err)
-			return err
-		}
-		commitID = commit.ID.String()
-		releaseDateUnix = timeutil.TimeStamp(commit.Author.When.Unix())
 	}
 
 	// Check for SB (Scripture Burrito)
