@@ -493,6 +493,7 @@ func GetRCDoor43Metadata(dm *repo_model.Door43Metadata, repo *repo_model.Reposit
 	}
 	manifest, err = dcs.ReadYAMLFromBlob(blob)
 	if err != nil {
+		log.Error("ReadYAMLFromBlob: %v", err)
 		return err
 	}
 	dm.Metadata = manifest
@@ -587,11 +588,11 @@ func GetSBDoor43Metadata(dm *repo_model.Door43Metadata, repo *repo_model.Reposit
 		return nil
 	}
 	sbMetadata, err := dcs.GetSBDataFromBlob(blob)
-	dm.Metadata = sbMetadata.Metadata
 	if err != nil {
-		log.Error("ERROR: %v", err)
+		log.Error("GetSBDataFromBlob: %v", err)
 		return err
 	}
+	dm.Metadata = sbMetadata.Metadata
 
 	dm.ValidationError, err = dcs.ValidateMapBySB100Schema(sbMetadata.Metadata)
 	if err != nil {
