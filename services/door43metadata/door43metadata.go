@@ -521,7 +521,6 @@ func GetTcOrTsDoor43Metadata(dm *repo_model.Door43Metadata, repo *repo_model.Rep
 
 	log.Info("%s/%s: manifest.json exists so might be a tC or tS repo", repo.FullName(), commit.ID)
 	var bookPath string
-	var contentFormat string
 	var count int
 	var versification string
 
@@ -531,14 +530,12 @@ func GetTcOrTsDoor43Metadata(dm *repo_model.Door43Metadata, repo *repo_model.Rep
 	}
 	if t.MetadataType == "ts" {
 		bookPath = "."
-		contentFormat = "text"
 		if t.Project.ID != "obs" {
 			versification = "ufw"
 		}
 	} else {
 		bookPath = "./" + repo.Name + ".usfm"
 		count, _ = GetBookAlignmentCount(bookPath, commit)
-		contentFormat = "usfm"
 		versification = "ufw"
 	}
 
@@ -557,13 +554,15 @@ func GetTcOrTsDoor43Metadata(dm *repo_model.Door43Metadata, repo *repo_model.Rep
 	dm.MetadataType = t.MetadataType
 	dm.MetadataVersion = t.MetadataVersion
 	dm.Subject = t.Subject
+	dm.FlavorType = t.FlavorType
+	dm.Flavor = t.Flavor
 	dm.Title = t.Title
 	dm.Abbreviation = strings.ToLower(t.Resource.ID)
 	dm.Language = t.TargetLanguage.ID
 	dm.LanguageTitle = t.TargetLanguage.Name
 	dm.LanguageDirection = t.TargetLanguage.Direction
 	dm.LanguageIsGL = dcs.LanguageIsGL(t.TargetLanguage.ID)
-	dm.ContentFormat = contentFormat
+	dm.ContentFormat = t.Format
 	dm.CheckingLevel = 1
 	dm.Ingredients = []*structs.Ingredient{{
 		Categories:     dcs.GetBookCategories(t.Project.ID),

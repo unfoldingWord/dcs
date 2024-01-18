@@ -9,13 +9,15 @@ package structs
 // ts v5: https://git.door43.org/69c530493aab80e7/uw-mrk-lol/raw/branch/master/manifest.json
 // ts v6: https://git.door43.org/Sitorabi/def_obs_text_obs/src/branch/master/manifest.json
 type TcTsManifest struct {
-	TcVersion       int    `json:"tc_version"`      // for tC
-	TsVersion       int    `json:"package_version"` // for tS
-	MetadataVersion string // To be filled in below
-	MetadataType    string // To Be filled in below
+	TcVersion       int `json:"tc_version"`      // for tC
+	TsVersion       int `json:"package_version"` // for tS
+	MetadataVersion string
+	MetadataType    string
 	Format          string `json:"format"`
-	Subject         string // To be filled in below
-	Title           string // To be filled in below
+	Subject         string
+	FlavorType      string
+	Flavor          string
+	Title           string
 	TargetLanguage  struct {
 		ID        string `json:"id"`
 		Name      string `json:"name"`
