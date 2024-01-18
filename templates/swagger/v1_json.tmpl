@@ -1710,7 +1710,7 @@
         "tags": [
           "catalog"
         ],
-        "summary": "Get the metdata metadata (metadata.json or manifest.yaml in JSON format) of a catalog entry",
+        "summary": "Get the metadata of a catalog entry",
         "operationId": "catalogGetMetadata",
         "parameters": [
           {
@@ -1962,6 +1962,49 @@
           },
           "422": {
             "$ref": "#/responses/validationError"
+          }
+        }
+      }
+    },
+    "/catalog/validation/{owner}/{repo}/{ref}": {
+      "get": {
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "catalog"
+        ],
+        "summary": "Get the validation errors, if any, of a catalog entry in JSON format",
+        "operationId": "catalogGetValidation",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "name of the owner",
+            "name": "owner",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "description": "name of the repo",
+            "name": "repo",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "description": "release tag or default branch",
+            "name": "ref",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/CatalogValidation"
+          },
+          "404": {
+            "$ref": "#/responses/notFound"
           }
         }
       }
@@ -18531,6 +18574,10 @@
           },
           "x-go-name": "Ingredients"
         },
+        "is_valid": {
+          "type": "boolean",
+          "x-go-name": "IsValid"
+        },
         "language": {
           "type": "string",
           "x-go-name": "Language"
@@ -18609,6 +18656,10 @@
         "url": {
           "type": "string",
           "x-go-name": "Self"
+        },
+        "validation_errors_url": {
+          "type": "string",
+          "x-go-name": "ValidationErrorURL"
         },
         "zipball_url": {
           "type": "string",
@@ -25053,6 +25104,13 @@
       "description": "CatalogSearchResults",
       "schema": {
         "$ref": "#/definitions/CatalogSearchResults"
+      }
+    },
+    "CatalogValidation": {
+      "description": "CatalogValidation",
+      "schema": {
+        "type": "object",
+        "additionalProperties": {}
       }
     },
     "ChangedFileList": {
