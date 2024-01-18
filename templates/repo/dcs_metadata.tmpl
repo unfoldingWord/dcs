@@ -42,7 +42,7 @@
 							{{$color = "purple"}}
 							{{$tooltip = "Stage: latest - Default Branch / Metadata"}}
 						{{else if and (eq .Stage 4) (.IsRepoMetadata)}}
-							{{$color = "cyan"}}
+							{{$color = "blue"}}
 							{{$tooltip = "Stage: other; Default Metadata"}}
 						{{end}}
 
@@ -54,7 +54,7 @@
 						{{end}}
 							<a data-tooltip-content="{{$type}}" href="{{$.RepoLink}}/src/{{.RefType}}/{{.Ref}}">{{svg $icon 16 "mr-3"}}</a>
 							<span data-tooltip-content="{{$tooltip}}" class="text {{$color}} gt-mr-3">{{svg "octicon-dot-fill" 22}}</span>
-							<a class="ui primary sha label toggle button show-panel" data-panel="#info-{{.ID}}">{{.Ref}}</a>
+							<a class="ui {{if .ValidationError}}red{{else}}green{{end}} sha label toggle button show-panel" data-panel="#info-{{.ID}}">{{.Ref}}</a>
 						</div>
 						<span class="text grey">
 							{{TimeSince .ReleaseDateUnix.AsTime ctx.Locale}}

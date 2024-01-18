@@ -486,7 +486,7 @@ func GetMostRecentDoor43MetadataByStage(ctx context.Context, repoID int64, stage
 	has, err := db.GetEngine(ctx).
 		Where(builder.Eq{"repo_id": repoID}).
 		And(builder.Eq{"stage": stage}).
-		And(builder.Eq{"validation_error": nil}).
+		And(builder.IsNull{"validation_error"}).
 		Desc("release_date_unix").
 		Get(dm)
 	if err != nil {
