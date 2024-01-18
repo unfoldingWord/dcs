@@ -17,8 +17,8 @@ import (
 )
 
 const (
-	tplDoor43Metadata base.TplName = "repo/dcs_metadata"
-	tplPreview        base.TplName = "repo/dcs_preview"
+	tplDCSMetadata base.TplName = "repo/dcs_metadata"
+	tplPreview     base.TplName = "repo/dcs_preview"
 )
 
 // Door43Metadtas renders door43 metadatas page
@@ -26,7 +26,7 @@ func Door43Metadatas(ctx *context.Context) {
 	dms := make([]*repo_model.Door43Metadata, 0, 50)
 	err := db.GetEngine(ctx).
 		Where(builder.Eq{"repo_id": ctx.Repo.Repository.ID}).
-		OrderBy("is_repo_metadata DESC, is_latest_for_stage DESC, ref_type DESC, release_date_unix DESC").
+		OrderBy("is_repo_metadata DESC, ref_type ASC, release_date_unix DESC").
 		Find(&dms)
 	if err != nil {
 		log.Error("ERROR: %v", err)
@@ -36,7 +36,7 @@ func Door43Metadatas(ctx *context.Context) {
 	ctx.Data["Title"] = "Door43 Metadata"
 	ctx.Data["PageIsSettingsDoor43Metadata"] = true
 	ctx.Data["Door43Metadatas"] = dms
-	ctx.HTML(http.StatusOK, tplDoor43Metadata)
+	ctx.HTML(http.StatusOK, tplDCSMetadata)
 }
 
 // UpdateDoor43Metadata updates the repo's metadata
@@ -57,7 +57,13 @@ func UpdateDoor43Metadata(ctx *context.Context) {
 
 // PreviewRepo creates a page for a react component app
 func PreviewRepo(ctx *context.Context) {
+	commitsCount, err := ctx.Repo.GetCommitsCount()
+	if err != nil {
+		ctx.ServerError("GetCommitsCount", err)
+		return
+	}
 	ctx.Data["PageIsPreview"] = true
+	ctx.Data["CommitsCount"] = commitsCount
 	ctx.Data["Title"] = "Preview of " + ctx.Repo.Repository.FullName() + " - " + ctx.Repo.RefName
 	ctx.HTML(http.StatusOK, tplPreview)
 }

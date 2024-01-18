@@ -36,6 +36,10 @@
 											<a class="archive-link gt-mr-3 muted" href="{{$.RepoLink}}/archive/{{.TagName | PathEscapeSegments}}.tar.gz" rel="nofollow">{{svg "octicon-file-zip" 16 "gt-mr-2"}}TAR.GZ</a>
 										{{end}}
 
+										<!-- DCS Customizations -->
+										<a class="gt-mr-3 muted" href="{{$.RepoLink}}/preview/tag/{{.TagName | PathEscapeSegments}}">{{svg "octicon-book" 16 "gt-mr-2"}}{{ctx.Locale.Tr "preview"}} / PDF</a>
+										<!-- END DCS Customizations -->
+
 										{{if (and $canReadReleases $.CanCreateRelease $release.IsTag)}}
 											<a class="gt-mr-3 muted" href="{{$.RepoLink}}/releases/new?tag={{.TagName}}">{{svg "octicon-tag" 16 "gt-mr-2"}}{{$.locale.Tr "repo.release.new_release"}}</a>
 										{{end}}
@@ -49,6 +53,7 @@
 										{{if and $canReadReleases (not $release.IsTag)}}
 											<a class="gt-mr-3 muted" href="{{$.RepoLink}}/releases/tag/{{.TagName | PathEscapeSegments}}">{{svg "octicon-tag" 16 "gt-mr-2"}}{{$.locale.Tr "repo.release.detail"}}</a>
 										{{end}}
+
 									{{end}}
 								</div>
 							</td>

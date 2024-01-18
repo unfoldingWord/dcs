@@ -44,7 +44,7 @@ func (m *metadataNotifier) SyncCreateRepository(ctx context.Context, doer, u *us
 }
 
 func (m *metadataNotifier) NewRelease(ctx context.Context, rel *repo_model.Release) {
-	if rel != nil && !rel.IsTag {
+	if rel != nil && !rel.IsDraft {
 		if err := ProcessDoor43MetadataForRepo(ctx, rel.Repo, rel.TagName); err != nil {
 			log.Error("NewRelease: ProcessDoor43MetadataForRepo failed [%s, %s]: %v", rel.Repo.FullName(), rel.TagName, err)
 		}
@@ -55,7 +55,7 @@ func (m *metadataNotifier) NewRelease(ctx context.Context, rel *repo_model.Relea
 }
 
 func (m *metadataNotifier) UpdateRelease(ctx context.Context, doer *user_model.User, rel *repo_model.Release) {
-	if rel != nil && !rel.IsTag {
+	if rel != nil && !rel.IsDraft {
 		if err := ProcessDoor43MetadataForRepo(ctx, rel.Repo, rel.TagName); err != nil {
 			log.Error("UpdateRelease: ProcessDoor43MetadataForRepo failed [%s, %s]: %v", rel.Repo.FullName(), rel.TagName, err)
 		}
@@ -69,6 +69,10 @@ func (m *metadataNotifier) DeleteRelease(ctx context.Context, doer *user_model.U
 	if err := DeleteDoor43MetadataByRepoRef(ctx, rel.Repo, rel.TagName); err != nil {
 		log.Error("DeleteRelease: DeleteDoor43MetadataByRepoRef failed [%s, %s]: %v", rel.Repo.FullName(), rel.TagName, err)
 	}
+}
+
+func (m *metadataNotifier) NewTagRelease(ctx context.Context, rel *repo_model.Release) {
+	m.NewRelease(ctx, rel)
 }
 
 func (m *metadataNotifier) PushCommits(ctx context.Context, pusher *user_model.User, repo *repo_model.Repository, opts *repository.PushUpdateOptions, commits *repository.PushCommits) {

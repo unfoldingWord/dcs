@@ -14,17 +14,17 @@
 				</a>
 			{{end}}
 			<!-- DCS Customizations -->
-			{{if .Repository.RepoDM}}
-				{{if .Repository.RepoDM.Language}}
-					<a class="item muted" href="{{AppSubUrl}}/explore/repos?q=lang:{{.Repository.RepoDM.Language}}" data-tooltip-content="{{if .Repository.RepoDM.LanguageIsGL}}*Is a Gateway{{else}}Is an Other{{end}} Language; Direction: {{.Repository.RepoDM.LanguageDirection}}">
-						{{svg "octicon-globe"}} <span style="font-weight: bold"><span data-language="{{.Repository.RepoDM.Language}}" data-language-direction="{{.Repository.RepoDM.LanguageDirection}}">{{.Repository.RepoDM.LanguageTitle}}</span> ({{.Repository.RepoDM.Language}}){{if .Repository.RepoDM.LanguageIsGL}}*{{end}}</span>
+			{{if .RepoDM}}
+				{{if .RepoDM.Language}}
+					<a class="item muted" href="{{AppSubUrl}}/explore/repos?q=lang:{{.RepoDM.Language}}" data-tooltip-content="{{if .RepoDM.LanguageIsGL}}*Is a Gateway{{else}}Is an Other{{end}} Language; Direction: {{.RepoDM.LanguageDirection}}">
+						{{svg "octicon-globe"}} <span style="font-weight: bold"><span data-language="{{.RepoDM.Language}}" data-language-direction="{{.RepoDM.LanguageDirection}}">{{.RepoDM.LanguageTitle}}</span> ({{.RepoDM.Language}}){{if .RepoDM.LanguageIsGL}}*{{end}}</span>
 					</a>
 				{{end}}
-				{{if .Repository.RepoDM.MetadataType}}
-					{{$metadataTypeTitle := (.Repository.RepoDM.GetMetadataTypeTitle)}}
-					{{$metadataTypeIcon := (.Repository.RepoDM.GetMetadataTypeIcon)}}
-					<a class="item muted" href="{{AppSubUrl}}/explore/repos?q=metadata_type:{{.Repository.RepoDM.MetadataType}}" data-tooltip-content="Metadata Type: {{$metadataTypeTitle}} v{{.Repository.RepoDM.MetadataVersion}}">
-						<img src="{{AssetUrlPrefix}}/img/dcs/{{$metadataTypeIcon}}" style="height:16px;vertical-align:middle"/> <span style="font-weight: bold">{{.Repository.RepoDM.MetadataType}}{{.Repository.RepoDM.MetadataVersion}}</span>
+				{{if .RepoDM.MetadataType}}
+					{{$metadataTypeTitle := (.RepoDM.MetadataTypeTitle)}}
+					{{$metadataTypeIcon := (.RepoDM.MetadataTypeIcon)}}
+					<a class="item muted" href="{{AppSubUrl}}/explore/repos?q=metadata_type:{{.RepoDM.MetadataType}}" data-tooltip-content="Metadata Type: {{$metadataTypeTitle}} v{{.RepoDM.MetadataVersion}}">
+						<img src="{{AssetUrlPrefix}}/img/dcs/{{$metadataTypeIcon}}" style="height:16px;vertical-align:middle"/> <span style="font-weight: bold">{{.RepoDM.MetadataType}}{{.RepoDM.MetadataVersion}}</span>
 					</a>
 				{{end}}
 			{{end}}

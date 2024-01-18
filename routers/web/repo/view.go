@@ -47,7 +47,6 @@ import (
 	"code.gitea.io/gitea/modules/structs"
 	"code.gitea.io/gitea/modules/typesniffer"
 	"code.gitea.io/gitea/modules/util"
-	"code.gitea.io/gitea/modules/yaml" // DCS Customizations
 	"code.gitea.io/gitea/routers/web/feed"
 	issue_service "code.gitea.io/gitea/services/issue"
 
@@ -458,11 +457,6 @@ func renderFile(ctx *context.Context, entry *git.TreeEntry, treeLink, rawLink st
 		readmeExist := util.IsReadmeFileName(blob.Name())
 		ctx.Data["ReadmeExist"] = readmeExist
 
-		/*** DCS Customizations ***/
-		isTocYaml := blob.Name() == "toc.yaml"
-		ctx.Data["IsTocYaml"] = isTocYaml
-		/*** END DCS Customizations ***/
-
 		markupType := markup.Type(blob.Name())
 		// If the markup is detected by custom markup renderer it should not be reset later on
 		// to not pass it down to the render context.
@@ -497,18 +491,6 @@ func renderFile(ctx *context.Context, entry *git.TreeEntry, treeLink, rawLink st
 			}
 			// to prevent iframe load third-party url
 			ctx.Resp.Header().Add("Content-Security-Policy", "frame-src 'self'")
-			/*** DCS Customizations ***/
-		} else if isTocYaml {
-			ctx.Data["IsRenderedHTML"] = true
-			if rendered, err := yaml.Render(buf); err != nil {
-				log.Error("RenderYaml: %v", err)
-				ctx.Flash.ErrorMsg = fmt.Sprintf("Unable to parse %v", err)
-				ctx.Data["Flash"] = ctx.Flash
-				ctx.Data["FileContent"] = string(buf)
-			} else {
-				ctx.Data["FileContent"] = string(rendered)
-			}
-			/*** END DCS Customizations ***/
 		} else {
 			buf, _ := io.ReadAll(rd)
 

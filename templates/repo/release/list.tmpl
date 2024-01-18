@@ -10,16 +10,16 @@
 					<div class="ui four wide column meta">
 							<a class="muted" href="{{if not .Sha1}}#{{else}}{{$.RepoLink}}/src/tag/{{.TagName | PathEscapeSegments}}{{end}}" rel="nofollow">{{svg "octicon-tag" 16 "gt-mr-2"}}{{.TagName}}</a>
 							<!-- DCS Customizations -->
-							{{$stage := "prod"}}
-							{{$color := "green"}}
-							{{if .IsDraft}}
-								{{$stage = "draft"}}
-								{{$color = "yellow"}}
-							{{else if .IsPrerelease}}
+							{{$stage := ""}}
+							{{$color := ""}}
+							{{if .IsPrerelease}}
 								{{$stage = "preprod"}}
 								{{$color = "orange"}}
+							{{else if not .IsDraft}}
+								{{$stage = "prod"}}
+								{{$color = "green"}}
 							{{end}}
-							{{if .Door43Metadata}}
+							{{if and .Door43Metadata (not .Door43Metadata.ValidationError) (lt .Door43Metadata.Stage 3) (gt .Door43Metadata.Stage 0)}}
 								<a class="catalog-badge" href="{{$.RepoLink}}/src/tag/{{.TagName | PathEscapeSegments}}" rel="nofollow" style="opacity: inherit !important">
 									<button class="ui {{$color}} label compact icon button tooltip" data-content="Stage: {{$stage}}" aria-label="Stage: {{$stage}}">
 										{{$.locale.Tr "repo.metadata.catalog"}} ({{$stage}})
@@ -117,7 +117,7 @@
 										<!-- DCS Customization -->
 										{{if .Door43Metadata}}
 										<li>
-											<a href="{{$.RepoLink}}/preview/{{.TagName | PathEscapeSegments}}"><strong>{{svg "octicon-book" 16 "gt-mr-2"}}{{ctx.Locale.Tr "preview"}} / PDF</strong></a>
+											<a href="{{$.RepoLink}}/preview/tag/{{.TagName | PathEscapeSegments}}"><strong>{{svg "octicon-book" 16 "gt-mr-2"}}{{ctx.Locale.Tr "preview"}} / PDF</strong></a>
 										</li>
 										{{end}}
 										<!-- END DCS Customizations -->

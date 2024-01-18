@@ -42,6 +42,8 @@ type CatalogEntry struct {
 	Released               time.Time     `json:"released"`
 	Ingredients            []*Ingredient `json:"ingredients,omitempty"`
 	Books                  []string      `json:"books,omitempty"`
+	IsValid                bool          `json:"is_valid"`
+	ValidationErrorURL     string        `json:"validation_errors_url"`
 }
 
 // Ingredient is a single project of a resource

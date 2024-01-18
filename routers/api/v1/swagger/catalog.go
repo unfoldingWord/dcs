@@ -28,6 +28,13 @@ type swaggerResponseCatalogMetadata struct {
 	Body map[string]interface{} `json:"body"`
 }
 
+// CatalogValidation
+// swagger:response CatalogValidation
+type swaggerResponseCatalogValidation struct {
+	// in:body
+	Body map[string]interface{} `json:"body"`
+}
+
 // Language
 // swagger:response Language
 type swaggerResponseLanguage struct {

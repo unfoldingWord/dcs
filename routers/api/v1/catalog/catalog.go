@@ -835,7 +835,7 @@ func GetCatalogEntry(ctx *context.APIContext) {
 func GetCatalogMetadata(ctx *context.APIContext) {
 	// swagger:operation GET /catalog/metadata/{owner}/{repo}/{ref} catalog catalogGetMetadata
 	// ---
-	// summary: Get the metdata metadata (metadata.json or manifest.yaml in JSON format) of a catalog entry
+	// summary: Get the metadata of a catalog entry
 	// produces:
 	// - application/json
 	// parameters:
@@ -874,6 +874,51 @@ func GetCatalogMetadata(ctx *context.APIContext) {
 		return
 	}
 	ctx.JSON(http.StatusOK, dm.Metadata)
+}
+
+// GetCatalogValidation Get the validation errors in JSON format for the given ownername, reponame and ref
+func GetCatalogValidation(ctx *context.APIContext) {
+	// swagger:operation GET /catalog/validation/{owner}/{repo}/{ref} catalog catalogGetValidation
+	// ---
+	// summary: Get the validation errors, if any, of a catalog entry in JSON format
+	// produces:
+	// - application/json
+	// parameters:
+	// - name: owner
+	//   in: path
+	//   description: name of the owner
+	//   type: string
+	//   required: true
+	// - name: repo
+	//   in: path
+	//   description: name of the repo
+	//   type: string
+	//   required: true
+	// - name: ref
+	//   in: path
+	//   description: release tag or default branch
+	//   type: string
+	//   required: true
+	// responses:
+	//   "200":
+	//     "$ref": "#/responses/CatalogValidation"
+	//   "404":
+	//     "$ref": "#/responses/notFound"
+
+	ref := ctx.Params("*")
+	if ref == "" {
+		ref = ctx.Params("ref")
+	}
+	dm, err := repo.GetDoor43MetadataByRepoIDAndRef(ctx, ctx.Repo.Repository.ID, ref)
+	if err != nil {
+		if !repo.IsErrDoor43MetadataNotExist(err) {
+			ctx.Error(http.StatusInternalServerError, "GetDoor43MetadataByRepoIDAndRef", err)
+		} else {
+			ctx.NotFound()
+		}
+		return
+	}
+	ctx.JSON(http.StatusOK, dm.ValidationError)
 }
 
 // GetCatalogMetadataOLD is depricated

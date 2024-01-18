@@ -87,7 +87,7 @@ func handleLatestStageDM(ctx context.Context, repo *repo_model.Repository, stage
 	if err != nil && !repo_model.IsErrDoor43MetadataNotExist(err) {
 		return nil, err
 	}
-	if dm != nil && (earliestDate == nil || dm.ReleaseDateUnix > *earliestDate) {
+	if dm != nil && dm.ValidationError == nil && (earliestDate == nil || dm.ReleaseDateUnix > *earliestDate) {
 		dm.Stage = stage
 		dm.IsLatestForStage = true
 		err = repo_model.UpdateDoor43MetadataCols(ctx, dm, "stage", "is_latest_for_stage")
@@ -310,7 +310,7 @@ func GetDoor43MetadataFromRCManifest(dm *repo_model.Door43Metadata, manifest map
 		} else {
 			contentFormat = "markdown"
 		}
-		flavor = "gloss"
+		flavorType = "gloss"
 		flavor = "x-" + strings.Replace(subject, " ", "", -1)
 	}
 	var ok bool
@@ -343,7 +343,6 @@ func GetDoor43MetadataFromRCManifest(dm *repo_model.Door43Metadata, manifest map
 	dm.ContentFormat = contentFormat
 	dm.CheckingLevel = checkingLevel
 	dm.Ingredients = ingredients
-	dm.Metadata = manifest
 
 	return nil
 }
@@ -473,7 +472,6 @@ func GetDoor43MetadataFromSBMetadata(dm *repo_model.Door43Metadata, sbMetadata *
 	dm.ContentFormat = contentFormat
 	dm.CheckingLevel = checkingLevel
 	dm.Ingredients = ingredients
-	dm.Metadata = sbMetadata.Metadata
 
 	return nil
 }
@@ -492,14 +490,17 @@ func GetRCDoor43Metadata(dm *repo_model.Door43Metadata, repo *repo_model.Reposit
 	if err != nil {
 		return err
 	}
-	validationResult, err := dcs.ValidateMapByRC02Schema(manifest)
+	dm.Metadata = manifest
+
+	dm.ValidationError, err = dcs.ValidateMapByRC02Schema(manifest)
 	if err != nil {
 		return err
 	}
-	if validationResult != nil {
+	if dm.ValidationError != nil {
 		log.Info("%s: manifest.yaml is not valid. see errors:", repo.FullName())
-		log.Info(dcs.ConvertValidationErrorToString(validationResult))
-		return validationResult
+		log.Info(dcs.ConvertValidationErrorToString(dm.ValidationError))
+		dm.IsLatestForStage = false
+		return nil
 	}
 	log.Info("%s: manifest.yaml is valid.", repo.FullName())
 	return GetDoor43MetadataFromRCManifest(dm, manifest, repo, commit)
@@ -580,19 +581,21 @@ func GetSBDoor43Metadata(dm *repo_model.Door43Metadata, repo *repo_model.Reposit
 		return nil
 	}
 	sbMetadata, err := dcs.GetSBDataFromBlob(blob)
+	dm.Metadata = sbMetadata.Metadata
 	if err != nil {
 		log.Error("ERROR: %v", err)
 		return err
 	}
 
-	validationResult, err := dcs.ValidateMapBySB100Schema(sbMetadata.Metadata)
+	dm.ValidationError, err = dcs.ValidateMapBySB100Schema(sbMetadata.Metadata)
 	if err != nil {
 		return err
 	}
-	if validationResult != nil {
+	if dm.ValidationError != nil {
+		dm.IsLatestForStage = false
 		log.Info("%s: metadata.json is not valid. see errors:", repo.FullName())
-		log.Info(dcs.ConvertValidationErrorToString(validationResult))
-		return validationResult
+		log.Info(dcs.ConvertValidationErrorToString(dm.ValidationError))
+		return nil
 	}
 	log.Info("%s: metadata.json is valid.", repo.FullName())
 
@@ -621,7 +624,11 @@ func processDoor43MetadataForRepoRef(ctx context.Context, repo *repo_model.Repos
 		dm = &repo_model.Door43Metadata{
 			RepoID: repo.ID,
 			Ref:    ref,
+			Stage:  door43metadata.StageOther,
 		}
+	}
+	if dm.Stage < 1 {
+		dm.Stage = door43metadata.StageOther
 	}
 	dm.Repo = repo
 
@@ -633,79 +640,63 @@ func processDoor43MetadataForRepoRef(ctx context.Context, repo *repo_model.Repos
 	defer gitRepo.Close()
 
 	var commit *git.Commit
-	var commitID string
-	var stage door43metadata.Stage
-	var releaseDateUnix timeutil.TimeStamp
-	var releaseID int64
 
-	release, err := repo_model.GetRelease(repo.ID, ref)
+	dm.Release, err = repo_model.GetRelease(ctx, repo.ID, ref)
 	if err != nil && !repo_model.IsErrReleaseNotExist(err) {
 		return err
 	}
-	if release != nil && !release.IsTag && !release.IsDraft {
-		if !release.IsCatalogVersion() {
-			return fmt.Errorf("release tag for repo %s [%d] must start with v and a digit or be a year: %s", repo.FullName(), repo.ID, release.TagName)
+	if dm.Release != nil {
+		if dm.Release.IsDraft {
+			return nil
 		}
 		dm.RefType = "tag"
-		dm.Release = release
-		if release.IsPrerelease {
-			stage = door43metadata.StagePreProd
+		if !dm.Release.IsTag && dm.Release.IsCatalogVersion() {
+			dm.ReleaseID = dm.Release.ID
+			dm.Release = dm.Release
+			if dm.Release.IsPrerelease {
+				dm.Stage = door43metadata.StagePreProd
+			} else {
+				dm.Stage = door43metadata.StageProd
+			}
 		} else {
-			stage = door43metadata.StageProd
+			dm.Stage = door43metadata.StageOther
+			dm.IsLatestForStage = false
 		}
 		commit, err = gitRepo.GetTagCommit(ref)
 		if err != nil {
 			log.Error("GetTagCommit [%s/%s]: %v\n", repo.FullName(), ref, err)
 			return err
 		}
-		commitID = commit.ID.String()
-		releaseDateUnix = release.CreatedUnix
-		releaseID = release.ID
-	} else {
-		if branch, err := gitRepo.GetBranch(ref); err != nil && !git.IsErrBranchNotExist(err) {
-			return err
-		} else if branch != nil {
-			if ref == repo.DefaultBranch {
-				stage = door43metadata.StageLatest
-			} else {
-				stage = door43metadata.StageOther
-			}
-			dm.IsLatestForStage = true
-			dm.RefType = "branch"
-			commit, err = gitRepo.GetBranchCommit(ref)
-			if err != nil {
-				log.Error("GetBranchCommit: %v\n", err)
-				return err
-			}
-			commitID = commit.ID.String()
-			releaseDateUnix = timeutil.TimeStamp(commit.Author.When.Unix())
-		} else if tag_release, err := repo_model.GetRelease(repo.ID, ref); err != nil && !git.IsErrNotExist(err) {
-			return err
-		} else if tag_release != nil {
-			stage = door43metadata.StageOther
-			dm.ReleaseID = tag_release.ID
-			dm.Release = tag_release
-			dm.RefType = "tag"
-			dm.IsLatestForStage = true
-			commit, err = gitRepo.GetTagCommit(ref)
-			if err != nil {
-				log.Error("GetTagCommit: %v\n", err)
-				return err
-			}
-			commitID = commit.ID.String()
-			releaseDateUnix = timeutil.TimeStamp(commit.Author.When.Unix())
-		} else {
+		dm.CommitSHA = commit.ID.String()
+		dm.ReleaseDateUnix = dm.Release.CreatedUnix
+	} else if branch, err := gitRepo.GetBranch(ref); err != nil {
+		if git.IsErrBranchNotExist(err) {
 			return fmt.Errorf("ref for repo %s [%d] does not exist: %s", repo.FullName(), repo.ID, ref)
 		}
+		return err
+	} else if branch != nil {
+		if ref == repo.DefaultBranch {
+			dm.Stage = door43metadata.StageLatest
+			dm.IsLatestForStage = true
+		} else {
+			dm.Stage = door43metadata.StageOther
+			dm.IsLatestForStage = false
+		}
+		dm.RefType = "branch"
+		commit, err = gitRepo.GetBranchCommit(ref)
+		if err != nil {
+			log.Error("GetBranchCommit: %v\n", err)
+			return err
+		}
+		dm.CommitSHA = commit.ID.String()
+		dm.ReleaseDateUnix = timeutil.TimeStamp(commit.Author.When.Unix())
 	}
 
 	// Check for SB (Scripture Burrito)
 	err = GetSBDoor43Metadata(dm, repo, commit)
-	if err != nil {
-		if !git.IsErrNotExist(err) {
-			log.Info("processDoor43MetadataForRef: ERROR! Unable to populate DM for %s/%s/metadata.json for SB: %v\n", repo.FullName(), ref, err)
-			return err
-		}
+	if err != nil && !git.IsErrNotExist(err) {
+		log.Info("processDoor43MetadataForRef: ERROR! Unable to populate DM for %s/%s/metadata.json for SB: %v\n", repo.FullName(), ref, err)
+		return err
 	}
 
 	// Check for TC or TS
@@ -732,18 +723,16 @@ func processDoor43MetadataForRepoRef(ctx context.Context, repo *repo_model.Repos
 		}
 	}
 
-	dm.CommitSHA = commitID
-	dm.ReleaseID = releaseID
-	dm.Release = release
-	dm.ReleaseDateUnix = releaseDateUnix
-	dm.Stage = stage
-
 	if dm.ID > 0 {
 		err = repo_model.UpdateDoor43Metadata(ctx, dm)
 		if err != nil {
 			return err
 		}
 	} else {
+		if dm.ValidationError != nil {
+			// We didn't get any properties from the metadata file since it was invalid
+			dm.CopyEmptyPropertiesFromRepoDM(ctx)
+		}
 		err = repo_model.InsertDoor43Metadata(ctx, dm)
 		if err != nil {
 			return err

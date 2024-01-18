@@ -1,11 +1,28 @@
+{{$previewFilesUrl := "https://preview.door43.org"}}
+{{if ne AppUrl "https://git.door43.org/"}}
+    {{$previewFilesUrl = "https://develop--door43-preview.netlify.app"}}
+{{end}}
 {{template "base/head" .}}
-<div role="main" aria-label="{{.Title}}" class="page-content repository settings">
+<div role="main" aria-label="{{.Title}}" class="page-content repository metadata">
 	{{template "repo/header" .}}
-	{{template "base/alert" .}}
 	<div class="ui container">
-        <script type="module" crossorigin src="/assets/js/preview.js"></script>
-        <link rel="stylesheet" href="/assets/css/preview.css">
-        <div id="root"></div>
+		{{template "repo/sub_menu" .}}
+        <div class="repo-button-row">
+            <div class="gt-df gt-ac">
+	        	{{template "repo/branch_dropdown" dict "root" . "ContainerClasses" "gt-mr-2"}}
+    	    </div>
+        </div>
+    	<h4 class="file-header ui top attached header gt-df gt-ac gt-sb gt-fw">
+		    <div class="file-header-left gt-df gt-ac gt-py-3 gt-pr-4">
+    	    	{{svg "octicon-book" 16 "gt-mr-3"}}
+			    <strong>{{ctx.Locale.Tr "preview"}}</strong>
+    		</div>
+	    </h4>
+	    <div class="ui attached table unstackable segment" style="min-height: 400px">
+            <script type="module" crossorigin src="{{$previewFilesUrl}}/assets/index.js"></script>
+            <link rel="stylesheet" href="{{$previewFilesUrl}}/assets/index.css">
+            <div id="root"></div>
+        </div>
     </div>
 </div>
 {{template "base/footer" .}}

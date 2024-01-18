@@ -70,7 +70,7 @@
 		{{if not (or .IsMarkup .IsRenderedHTML)}}
 			{{template "repo/unicode_escape_prompt" dict "EscapeStatus" .EscapeStatus "root" $}}
 		{{end}}
-		<div class="file-view{{if .IsMarkup}} markup {{.MarkupType}}{{else if .IsPlainText}} plain-text{{else if .IsTextSource}} code-view{{end}}{{if .IsTocYaml}} markdown yaml{{end}}" data-language="{{.Repository.RepoDM.Language}}" data-language-direction="{{if not .IgnoreLanguageDirection}}{{.Repository.RepoDM.LanguageDirection}}{{else}}ltr{{end}}">
+		<div class="file-view{{if .IsMarkup}} markup {{.MarkupType}}{{else if .IsPlainText}} plain-text{{else if .IsTextSource}} code-view{{end}}{{if .IsTocYaml}} markdown yaml{{end}}" data-language="{{.RepoDM.Language}}" data-language-direction="{{if not .IgnoreLanguageDirection}}{{.RepoDM.LanguageDirection}}{{else}}ltr{{end}}">
 			{{if .IsMarkup}}
 				{{if .FileContent}}{{.FileContent | Safe}}{{end}}
 			{{else if .IsPlainText}}
