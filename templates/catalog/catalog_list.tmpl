@@ -41,9 +41,9 @@
 					<a class="muted" href="?sort={{$.SortType}}&q=metadata_type%3A{{.MetadataType}}" data-tooltip-content="{{ctx.Locale.Tr "repo.metadata.metadata_type"}}: {{.MetadataTypeTitle}} ({{.MetadataType}} {{.MetadataVersion}})">
 						<img src="{{AssetUrlPrefix}}/img/dcs/{{.MetadataTypeIcon}}" style="height:16px;vertical-align:middle" />
 							{{.MetadataType}} {{.MetadataVersion}}
-						</a>
+					</a>
 					{{if not $.DisableStars}}
-						<a class="text grey gt-df gt-ac gt-mr-3" href="{{.Repo.Link}}/stars">{{svg "octicon-star" 16 "gt-mr-3"}}{{.Repo.NumStars}}</a>
+					<a class="text grey gt-df gt-ac gt-mr-3" href="{{.Repo.Link}}/stars">{{svg "octicon-star" 16 "gt-mr-3"}}{{.Repo.NumStars}}</a>
 					{{end}}
 					<a class="text grey gt-df gt-ac gt-mr-3" href="{{.Repo.Link}}/forks">{{svg "octicon-git-branch" 16 "gt-mr-3"}}{{.Repo.NumForks}}</a>
 					<a class="text grey gt-df gt-ac gt-mr-3" href="{{.Repo.Link}}/releases" data-tooltip-content="# of releases">{{svg "octicon-tag" 16 "gt-mr-3"}} {{.ReleaseCount}}</a>
