@@ -27,6 +27,8 @@ func GetTcTsManifestFromBlob(blob *git.Blob) (*structs.TcTsManifest, error) {
 		t.MetadataType = "tc"
 		t.Format = "usfm"
 		t.Subject = "Aligned Bible"
+		t.FlavorType = "scripture"
+		t.Flavor = "textTranslation"
 	} else if t.TsVersion >= 3 {
 		t.MetadataVersion = strconv.Itoa(t.TsVersion)
 		t.MetadataType = "ts"
@@ -36,14 +38,18 @@ func GetTcTsManifestFromBlob(blob *git.Blob) (*structs.TcTsManifest, error) {
 		if t.Resource.Name == "" {
 			t.Resource.Name = strings.ToUpper(t.Resource.ID)
 		}
-
 		if t.Project.Name == "" {
 			t.Project.Name = strings.ToUpper(t.Project.ID)
 		}
 		if t.Resource.ID == "obs" {
 			t.Subject = "Open Bible Stories"
+			t.FlavorType = "gloss"
+			t.Flavor = "textStories"
 		} else {
 			t.Subject = "Bible"
+			t.FlavorType = "scripture"
+			t.Flavor = "textTranslation"
+
 		}
 	} else {
 		return nil, nil
