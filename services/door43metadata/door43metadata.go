@@ -81,12 +81,17 @@ func handleLatestStageDM(ctx context.Context, repo *repo_model.Repository, stage
 	var dm *repo_model.Door43Metadata
 	if stage == door43metadata.StageLatest {
 		dm, err = repo_model.GetDoor43MetadataByRepoIDAndRef(ctx, repo.ID, repo.DefaultBranch)
+		if dm.ValidationError != nil {
+			dm = nil
+		}
 	} else {
 		dm, err = repo_model.GetMostRecentDoor43MetadataByStage(ctx, repo.ID, stage)
 	}
+
 	if err != nil && !repo_model.IsErrDoor43MetadataNotExist(err) {
 		return nil, err
 	}
+
 	if dm != nil && dm.ValidationError == nil && (earliestDate == nil || dm.ReleaseDateUnix > *earliestDate) {
 		dm.Stage = stage
 		dm.IsLatestForStage = true
@@ -497,9 +502,10 @@ func GetRCDoor43Metadata(dm *repo_model.Door43Metadata, repo *repo_model.Reposit
 		return err
 	}
 	if dm.ValidationError != nil {
+		dm.IsLatestForStage = false
+		dm.Stage = door43metadata.StageOther
 		log.Info("%s: manifest.yaml is not valid. see errors:", repo.FullName())
 		log.Info(dcs.ConvertValidationErrorToString(dm.ValidationError))
-		dm.IsLatestForStage = false
 		return nil
 	}
 	log.Info("%s: manifest.yaml is valid.", repo.FullName())
@@ -593,6 +599,7 @@ func GetSBDoor43Metadata(dm *repo_model.Door43Metadata, repo *repo_model.Reposit
 	}
 	if dm.ValidationError != nil {
 		dm.IsLatestForStage = false
+		dm.Stage = door43metadata.StageOther
 		log.Info("%s: metadata.json is not valid. see errors:", repo.FullName())
 		log.Info(dcs.ConvertValidationErrorToString(dm.ValidationError))
 		return nil
@@ -675,13 +682,8 @@ func processDoor43MetadataForRepoRef(ctx context.Context, repo *repo_model.Repos
 		}
 		return err
 	} else if branch != nil {
-		if ref == repo.DefaultBranch {
-			dm.Stage = door43metadata.StageLatest
-			dm.IsLatestForStage = true
-		} else {
-			dm.Stage = door43metadata.StageOther
-			dm.IsLatestForStage = false
-		}
+		dm.Stage = door43metadata.StageOther
+		dm.IsLatestForStage = false
 		dm.RefType = "branch"
 		commit, err = gitRepo.GetBranchCommit(ref)
 		if err != nil {

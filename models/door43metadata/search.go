@@ -130,7 +130,7 @@ func SearchCatalogCondition(opts *SearchCatalogOptions) builder.Cond {
 		keywordCond,
 		builder.Eq{"`repository`.is_private": false},
 		builder.Eq{"`repository`.is_archived": false},
-		builder.Eq{"`door43_metadata`.is_invalid": false})
+		builder.IsNull{"`door43_metadata`.validation_error"})
 
 	if len(opts.MetadataTypes) > 0 {
 		cond.And(GetMetadataVersionCond(opts.MetadataVersions, opts.PartialMatch))
