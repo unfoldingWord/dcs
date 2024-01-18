@@ -54,6 +54,12 @@
 								<span class="gt-df gt-ac gt-mr-3"><i class="color-icon gt-mr-3" style="background-color: {{GetColorFromString .RepoDM.Subject}}"></i>{{.RepoDM.Subject}}</span>
 							</a>
 						{{end}}
+						{{if and .RepoDM.MetadataType .MetadataVersion}}
+						<a class="muted" href="?sort={{$.SortType}}&q=metadata_type%3A{{.MetadataType}}" data-tooltip-content="{{ctx.Locale.Tr "repo.metadata.metadata_type"}}: {{.MetadataTypeTitle}} ({{.MetadataType}} {{.MetadataVersion}})">
+							<img src="{{AssetUrlPrefix}}/img/dcs/{{.MetadataTypeIcon}}" style="height:16px;vertical-align:middle" />
+								{{.MetadataType}} {{.MetadataVersion}}
+						</a>
+						{{end}}
 						<!-- END DCS Customizations -->
 						{{if not $.DisableStars}}
 							<a class="text grey flex-text-inline" href="{{.Link}}/stars">{{svg "octicon-star" 16}}{{.NumStars}}</a>
