@@ -81,7 +81,7 @@ func handleLatestStageDM(ctx context.Context, repo *repo_model.Repository, stage
 	var dm *repo_model.Door43Metadata
 	if stage == door43metadata.StageLatest {
 		dm, err = repo_model.GetDoor43MetadataByRepoIDAndRef(ctx, repo.ID, repo.DefaultBranch)
-		if dm.ValidationError != nil {
+		if dm != nil && dm.ValidationError != nil {
 			dm = nil
 		}
 	} else {
