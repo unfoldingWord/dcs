@@ -21,7 +21,7 @@ func (repo *Repository) LoadLatestDMs(ctx context.Context) error {
 			Where(builder.Eq{"repo_id": repo.ID}).
 			And(builder.Eq{"stage": door43metadata.StageProd}).
 			And(builder.Eq{"is_latest_for_stage": true}).
-			And(builder.Eq{"is_invalid": false}).
+			And(builder.Eq{"validation_error": nil}).
 			Desc("release_date_unix").
 			Get(dm)
 		if err != nil {
@@ -38,7 +38,7 @@ func (repo *Repository) LoadLatestDMs(ctx context.Context) error {
 			Where(builder.Eq{"repo_id": repo.ID}).
 			And(builder.Eq{"stage": door43metadata.StagePreProd}).
 			And(builder.Eq{"is_latest_for_stage": true}).
-			And(builder.Eq{"is_invalid": false}).
+			And(builder.Eq{"validation_error": nil}).
 			Desc("release_date_unix").
 			Get(dm)
 		if err != nil {
@@ -55,7 +55,7 @@ func (repo *Repository) LoadLatestDMs(ctx context.Context) error {
 			Where(builder.Eq{"repo_id": repo.ID}).
 			And(builder.Eq{"stage": door43metadata.StageLatest}).
 			And(builder.Eq{"is_latest_for_stage": true}).
-			And(builder.Eq{"is_invalid": false}).
+			And(builder.Eq{"validation_error": nil}).
 			Desc("release_date_unix").
 			Get(dm)
 		if err != nil {
