@@ -29,7 +29,7 @@ func Door43Metadatas(ctx *context.Context) {
 		OrderBy("is_repo_metadata DESC, ref_type ASC, release_date_unix DESC").
 		Find(&dms)
 	if err != nil {
-		log.Error("ERROR: %v", err)
+		log.Error("Find(dms): %v", err)
 	}
 
 	ctx.Data["PageIsMetadata"] = true
