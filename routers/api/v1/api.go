@@ -1542,7 +1542,6 @@ func Routes() *web.Route {
 		}, tokenRequiresScopes(auth_model.AccessTokenScopeCategoryRepository))
 
 		/*** DCS Customizations ***/
-		m.Post("/yaml", bind(misc.YamlOption{}), misc.Yaml)
 		m.Group("/languages", func() {
 			m.Get("/langnames.json", dcs.ServeLangnamesJSON)
 			m.Get("/langnames_keyed.json", dcs.ServeLangnamesJSONKeyed)
@@ -1565,12 +1564,13 @@ func Routes() *web.Route {
 					}, repoAssignment())
 				})
 			})
-			m.Group("/entry/{username}/{reponame}", func() {
-				m.Get("/{ref}/metadata", catalog.GetCatalogMetadataOLD) // DEPRICATED
-				m.Get("/*", catalog.GetCatalogEntry)
-			}, repoAssignment())
-			m.Group("/metadata/{username}/{reponame}/*", func() {
-				m.Get("", catalog.GetCatalogMetadata)
+			m.Group("", func() {
+				m.Group("/entry/{username}/{reponame}", func() {
+					m.Get("/{ref}/metadata", catalog.GetCatalogMetadataOLD) // DEPRICATED
+					m.Get("/*", catalog.GetCatalogEntry)
+				})
+				m.Get("/metadata/{username}/{reponame}/*", catalog.GetCatalogMetadata)
+				m.Get("/validation/{username}/{reponame}/*", catalog.GetCatalogValidation)
 			}, repoAssignment())
 		})
 		/*** END DCS Customizations ***/

@@ -5,12 +5,10 @@ package dcs
 
 import (
 	"bytes"
-	"html/template"
 	"io"
 	"net/http"
 	"strings"
 
-	"code.gitea.io/gitea/modules/git"
 	"code.gitea.io/gitea/modules/log"
 	"code.gitea.io/gitea/modules/options"
 
@@ -46,52 +44,6 @@ func GetRC02Schema(reload bool) (*jsonschema.Schema, error) {
 		}
 	}
 	return rc02Schema, nil
-}
-
-// ValidateManifestFileAsHTML validates a manifest file and returns the results as template.HTML
-func ValidateManifestFileAsHTML(entry *git.TreeEntry) template.HTML {
-	var result *jsonschema.ValidationError
-	if r, err := ValidateManifestTreeEntry(entry); err != nil {
-		log.Warn("ValidateManifestTreeEntry: %v\n", err)
-	} else {
-		result = r
-	}
-	return template.HTML(ConvertValidationErrorToHTML(result))
-}
-
-// ValidateManifestTreeEntry validates a tree entry that is a manifest file and returns the results
-func ValidateManifestTreeEntry(entry *git.TreeEntry) (*jsonschema.ValidationError, error) {
-	if entry == nil {
-		return nil, nil
-	}
-	manifest, err := ReadYAMLFromBlob(entry.Blob())
-	if err != nil {
-		return nil, err
-	}
-	return ValidateMapByRC02Schema(manifest)
-}
-
-// ValidateMetadataFileAsHTML validates a metadata file and returns the results as template.HTML
-func ValidateMetadataFileAsHTML(entry *git.TreeEntry) template.HTML {
-	var result *jsonschema.ValidationError
-	if r, err := ValidateMetadataTreeEntry(entry); err != nil {
-		log.Warn("ValidateManifestTreeEntry: %v\n", err)
-	} else {
-		result = r
-	}
-	return template.HTML(ConvertValidationErrorToHTML(result))
-}
-
-// ValidateMetadataTreeEntry validates a tree entry that is a metadata file and returns the results
-func ValidateMetadataTreeEntry(entry *git.TreeEntry) (*jsonschema.ValidationError, error) {
-	if entry == nil {
-		return nil, nil
-	}
-	metadata, err := ReadJSONFromBlob(entry.Blob())
-	if err != nil {
-		return nil, err
-	}
-	return ValidateMapBySB100Schema(metadata)
 }
 
 // ValidateMapByRC02Schema Validates a map structure by the RC v0.2.0 schema and returns the result

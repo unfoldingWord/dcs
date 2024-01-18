@@ -6,6 +6,8 @@ package repo
 import (
 	"context"
 	"fmt"
+	"html/template"
+	"net/url"
 	"sort"
 	"strings"
 
@@ -17,6 +19,7 @@ import (
 	"code.gitea.io/gitea/modules/setting"
 	"code.gitea.io/gitea/modules/structs"
 	"code.gitea.io/gitea/modules/timeutil"
+	"github.com/santhosh-tekuri/jsonschema/v5"
 
 	"xorm.io/builder"
 )
@@ -41,36 +44,37 @@ func InitDoor43Metadata() error {
 
 // Door43Metadata represents the metadata of repository's release or default branch (ReleaseID = 0).
 type Door43Metadata struct {
-	ID                int64                  `xorm:"pk autoincr"`
-	RepoID            int64                  `xorm:"INDEX UNIQUE(repo_ref) NOT NULL"`
-	Repo              *Repository            `xorm:"-"`
-	ReleaseID         int64                  `xorm:"NOT NULL"`
-	Release           *Release               `xorm:"-"`
-	Ref               string                 `xorm:"INDEX UNIQUE(repo_ref) NOT NULL"`
-	RefType           string                 `xorm:"NOT NULL"`
-	CommitSHA         string                 `xorm:"NOT NULL VARCHAR(40)"`
-	Stage             door43metadata.Stage   `xorm:"INDEX NOT NULL"`
-	MetadataType      string                 `xorm:"INDEX NOT NULL"`
-	MetadataVersion   string                 `xorm:"NOT NULL"`
-	Subject           string                 `xorm:"INDEX NOT NULL"`
-	FlavorType        string                 `xorm:"INDEX NOT NULL"`
-	Flavor            string                 `xorm:"INDEX NOT NULL"`
-	Resource          string                 `xorm:"INDEX"` // DEPRICATED FOR ABBREVIATION
-	Abbreviation      string                 `xorm:"INDEX NOT NULL"`
-	Title             string                 `xorm:"NOT NULL"`
-	Language          string                 `xorm:"INDEX NOT NULL"`
-	LanguageTitle     string                 `xorm:"NOT NULL"`
-	LanguageDirection string                 `xorm:"NOT NULL"`
-	LanguageIsGL      bool                   `xorm:"NOT NULL"`
-	ContentFormat     string                 `xorm:"NOT NULL"`
-	CheckingLevel     int                    `xorm:"NOT NULL"`
-	Ingredients       []*structs.Ingredient  `xorm:"JSON"`
-	Metadata          map[string]interface{} `xorm:"JSON"`
-	ReleaseDateUnix   timeutil.TimeStamp     `xorm:"NOT NULL"`
-	IsLatestForStage  bool                   `xorm:"INDEX"`
-	IsRepoMetadata    bool                   `xorm:"INDEX"`
-	CreatedUnix       timeutil.TimeStamp     `xorm:"INDEX created NOT NULL"`
-	UpdatedUnix       timeutil.TimeStamp     `xorm:"INDEX updated"`
+	ID                int64                       `xorm:"pk autoincr"`
+	RepoID            int64                       `xorm:"INDEX UNIQUE(repo_ref) NOT NULL"`
+	Repo              *Repository                 `xorm:"-"`
+	ReleaseID         int64                       `xorm:"NOT NULL"`
+	Release           *Release                    `xorm:"-"`
+	Ref               string                      `xorm:"INDEX UNIQUE(repo_ref) NOT NULL"`
+	RefType           string                      `xorm:"NOT NULL"`
+	CommitSHA         string                      `xorm:"NOT NULL VARCHAR(40)"`
+	Stage             door43metadata.Stage        `xorm:"INDEX NOT NULL"`
+	MetadataType      string                      `xorm:"INDEX NOT NULL"`
+	MetadataVersion   string                      `xorm:"NOT NULL"`
+	Subject           string                      `xorm:"INDEX NOT NULL"`
+	FlavorType        string                      `xorm:"INDEX NOT NULL"`
+	Flavor            string                      `xorm:"INDEX NOT NULL"`
+	Resource          string                      `xorm:"INDEX"` // DEPRICATED FOR ABBREVIATION
+	Abbreviation      string                      `xorm:"INDEX NOT NULL"`
+	Title             string                      `xorm:"NOT NULL"`
+	Language          string                      `xorm:"INDEX NOT NULL"`
+	LanguageTitle     string                      `xorm:"NOT NULL"`
+	LanguageDirection string                      `xorm:"NOT NULL"`
+	LanguageIsGL      bool                        `xorm:"NOT NULL DEFAULT false"`
+	ContentFormat     string                      `xorm:"NOT NULL"`
+	CheckingLevel     int                         `xorm:"NOT NULL"`
+	Ingredients       []*structs.Ingredient       `xorm:"JSON"`
+	IsLatestForStage  bool                        `xorm:"INDEX NOT NULL DEFAULT false"`
+	IsRepoMetadata    bool                        `xorm:"INDEX NOT NULL DEFAULT false"`
+	Metadata          map[string]interface{}      `xorm:"JSON"`
+	ValidationError   *jsonschema.ValidationError `xorm:"JSON"`
+	ReleaseDateUnix   timeutil.TimeStamp          `xorm:"NOT NULL"`
+	CreatedUnix       timeutil.TimeStamp          `xorm:"INDEX created NOT NULL"`
+	UpdatedUnix       timeutil.TimeStamp          `xorm:"INDEX updated"`
 }
 
 func init() {
@@ -126,29 +130,39 @@ func (dm *Door43Metadata) LoadAttributes(ctx context.Context) error {
 	return nil
 }
 
-// APIURL the api url for a door43 metadata. door43 metadata must have attributes loaded
-func (dm *Door43Metadata) APIURL() string {
-	return fmt.Sprintf("%sapi/v1/catalog/entry/%s/%s/", setting.AppURL, dm.Repo.FullName(), dm.Ref)
+// CatalogEntryURL the api url for a door43 metadata. door43 metadata must have attributes loaded
+func (dm *Door43Metadata) CatalogEntryURL() string {
+	return setting.AppURL + "api/v1/catalog/entry/" + url.PathEscape(dm.Repo.OwnerName) + "/" + url.PathEscape(dm.Repo.Name) + "/" + url.PathEscape(dm.Ref)
 }
 
-// GetTarballURL get the tarball URL of the tag or branch
-func (dm *Door43Metadata) GetTarballURL() string {
+// CatalogMetadataJSONURL the api url for a catalog metadata. door43 metadata must have attributes loaded
+func (dm *Door43Metadata) CatalogMetatadataJSONURL() string {
+	return setting.AppURL + "api/v1/catalog/metadata/" + url.PathEscape(dm.Repo.OwnerName) + "/" + url.PathEscape(dm.Repo.Name) + "/" + url.PathEscape(dm.Ref)
+}
+
+// CatalogValidationErrorURL the api url for a catalog metadata. door43 metadata must have attributes loaded
+func (dm *Door43Metadata) CatalogValidationErrorURL() string {
+	return setting.AppURL + "api/v1/catalog/validation/" + url.PathEscape(dm.Repo.OwnerName) + "/" + url.PathEscape(dm.Repo.Name) + "/" + url.PathEscape(dm.Ref)
+}
+
+// TarballURL the tarball URL of the tag or branch
+func (dm *Door43Metadata) TarballURL() string {
 	if dm.RefType == "branch" {
 		return fmt.Sprintf("%s/archive/%s.tar.gz", dm.Repo.HTMLURL(), dm.CommitSHA[0:10])
 	}
 	return fmt.Sprintf("%s/archive/%s.tar.gz", dm.Repo.HTMLURL(), dm.Ref)
 }
 
-// GetZipballURL get the zipball URL of the tag or branch
-func (dm *Door43Metadata) GetZipballURL() string {
+// ZipballURL the zipball URL of the tag or branch
+func (dm *Door43Metadata) ZipballURL() string {
 	if dm.RefType == "branch" {
 		return fmt.Sprintf("%s/archive/%s.zip", dm.Repo.HTMLURL(), dm.CommitSHA[0:10])
 	}
 	return fmt.Sprintf("%s/archive/%s.zip", dm.Repo.HTMLURL(), dm.Ref)
 }
 
-// GetReleaseURL get the URL the release API
-func (dm *Door43Metadata) GetReleaseURL(ctx context.Context) string {
+// ReleaseURL the URL the release API
+func (dm *Door43Metadata) ReleaseURL(ctx context.Context) string {
 	if dm.ReleaseID > 0 {
 		if dm.Release != nil {
 			return dm.Release.APIURL()
@@ -160,18 +174,14 @@ func (dm *Door43Metadata) GetReleaseURL(ctx context.Context) string {
 	return ""
 }
 
-// GetMetadataURL gets the url to the raw manifest.yaml file
-func (dm *Door43Metadata) GetMetadataURL() string {
+// RawMetadataFileURL the url to the raw manifest or metadata file
+func (dm *Door43Metadata) RawMetadataFileURL() string {
 	// Use CommitID because of race condition to a branch
-	if dm.MetadataType == "rc" {
-		return fmt.Sprintf("%s/raw/commit/%s/manifest.yaml", dm.Repo.HTMLURL(), dm.CommitSHA)
-	}
-	// so far this means we have a ts or tc metadata entry, but need to change for scripture burrito!
-	return fmt.Sprintf("%s/raw/commit/%s/manifest.json", dm.Repo.HTMLURL(), dm.CommitSHA)
+	return fmt.Sprintf("%s/raw/commit/%s/%s", dm.Repo.HTMLURL(), dm.CommitSHA, dm.MetadataFilename())
 }
 
-// GetMetadataTypeTitle returns the metadata type title
-func (dm *Door43Metadata) GetMetadataTypeTitle() string {
+// MetadataTypeTitle the metadata type title
+func (dm *Door43Metadata) MetadataTypeTitle() string {
 	switch dm.MetadataType {
 	case "ts":
 		return "translationStudio"
@@ -186,8 +196,8 @@ func (dm *Door43Metadata) GetMetadataTypeTitle() string {
 	}
 }
 
-// GetMetadataTypeIcon returns the metadata type icon
-func (dm *Door43Metadata) GetMetadataTypeIcon() string {
+// MetadataTypeIcon the metadata type icon
+func (dm *Door43Metadata) MetadataTypeIcon() string {
 	switch dm.MetadataType {
 	case "rc":
 		return "rc.png"
@@ -202,45 +212,49 @@ func (dm *Door43Metadata) GetMetadataTypeIcon() string {
 	}
 }
 
-// GetMetadataJSONString returns the JSON in string format of a map
-func (dm *Door43Metadata) GetMetadataJSONString() string {
+// MetadataJSONString the JSON in string format of a map
+func (dm *Door43Metadata) MetadataJSONString() string {
 	json, _ := json.MarshalIndent(dm.Metadata, "", "    ")
 	return string(json)
 }
 
-// GetMetadataJSONURL gets the json representation of the contents of the manifest.yaml file
-func (dm *Door43Metadata) GetMetadataJSONURL() string {
-	return fmt.Sprintf("%smetadata/", dm.APIURL())
+// ValidationErrorJSONString the JSON in string format of a map
+func (dm *Door43Metadata) ValidationErrorJSONString() string {
+	if dm.ValidationError == nil {
+		return ""
+	}
+	json, _ := json.MarshalIndent(dm.ValidationError.BasicOutput(), "", "    ")
+	return string(json)
 }
 
-// GetMetadataAPIContentsURL gets the metadata API contents URL of the manifest.yaml file
-func (dm *Door43Metadata) GetMetadataAPIContentsURL() string {
-	return fmt.Sprintf("%s/contents/manifest.yaml?ref=%s", dm.Repo.APIURL(), dm.Ref)
+// MetadataAPIContentsURL the metadata API contents URL of the manifest or metadata file
+func (dm *Door43Metadata) MetadataAPIContentsURL() string {
+	return fmt.Sprintf("%s/contents/%s?ref=%s", dm.Repo.APIURL(), dm.MetadataFilename(), dm.Ref)
 }
 
-// StageStr gets the string representation of a stage int
+// StageStr the string representation of a stage int
 func (dm *Door43Metadata) StageStr() string {
 	return door43metadata.StageToStringMap[dm.Stage]
 }
 
-// GetGitTreesURL gets the git trees URL for a repo and branch or tag for all files
-func (dm *Door43Metadata) GetGitTreesURL() string {
+// GitTreesURL the git trees URL for a repo and branch or tag for all files
+func (dm *Door43Metadata) GitTreesURL() string {
 	if dm.RefType == "branch" {
 		return fmt.Sprintf("%s/git/trees/%s?recursive=1&per_page=99999", dm.Repo.APIURL(), dm.CommitSHA[0:10])
 	}
 	return fmt.Sprintf("%s/git/trees/%s?recursive=1&per_page=99999", dm.Repo.APIURL(), dm.Ref)
 }
 
-// GetContentsURL gets the contents URL for a repo and branch or tag for all files
-func (dm *Door43Metadata) GetContentsURL() string {
+// ContentsURL the contents URL for a repo and branch or tag for all files
+func (dm *Door43Metadata) ContentsURL() string {
 	if dm.RefType == "branch" {
 		return fmt.Sprintf("%s/contents?ref=%s", dm.Repo.APIURL(), dm.CommitSHA[0:10])
 	}
 	return fmt.Sprintf("%s/contents?ref=%s", dm.Repo.APIURL(), dm.Ref)
 }
 
-// GetIngredientsIdentifierList get the identifiers of the igredients and returns them as a list of strings
-func (dm *Door43Metadata) GetIngredientsIdentifierList() []string {
+// IngredientsIdentifierList the identifiers of the igredients and returns them as a list of strings
+func (dm *Door43Metadata) IngredientsIdentifierList() []string {
 	var ids []string
 	if len(dm.Ingredients) > 0 {
 		for _, ing := range dm.Ingredients {
@@ -250,13 +264,14 @@ func (dm *Door43Metadata) GetIngredientsIdentifierList() []string {
 	return ids
 }
 
-// GetIngredientsAsString get the integredients of the repo and returns the identifiers as a comma-delimited string
-func (dm *Door43Metadata) GetIngredientsAsString() string {
-	ids := dm.GetIngredientsIdentifierList()
+// IngredientsAsString the integredients of the repo and returns the identifiers as a comma-delimited string
+func (dm *Door43Metadata) IngredientsAsString() string {
+	ids := dm.IngredientsIdentifierList()
 	return strings.Join(ids, ", ")
 }
 
-func (dm *Door43Metadata) GetAlignmentCounts() map[string]int {
+// AlignmenetCounts the alignment counts of all the books of a book repo
+func (dm *Door43Metadata) AlignmentCounts() map[string]int {
 	counts := map[string]int{}
 	if len(dm.Ingredients) > 0 {
 		for _, ing := range dm.Ingredients {
@@ -268,16 +283,16 @@ func (dm *Door43Metadata) GetAlignmentCounts() map[string]int {
 	return counts
 }
 
-// GetReleaseCount returns the count of releases of repository of the Door43Metadata's stage
-func (dm *Door43Metadata) GetReleaseCount() (int64, error) {
+// ReleaseCount the count of releases of repository of the Door43Metadata's stage
+func (dm *Door43Metadata) ReleaseCount() (int64, error) {
 	stageCond := door43metadata.GetStageCond(dm.Stage)
 	return db.GetEngine(db.DefaultContext).Join("LEFT", "release", "`release`.id = `door43_metadata`.release_id").
 		Where(builder.And(builder.Eq{"`door43_metadata`.repo_id": dm.RepoID}, stageCond)).
 		Count(&Door43Metadata{})
 }
 
-// GetMetadataFilename returns the name of the metadata file, e.g. manifest.yaml or metadata.json
-func (dm *Door43Metadata) GetMetadataFilename() string {
+// MetadataFilename the file name of the manifest or metadata file
+func (dm *Door43Metadata) MetadataFilename() string {
 	if dm.MetadataType == "rc" {
 		return "manifest.yaml"
 	} else if dm.MetadataType == "sb" {
@@ -286,6 +301,110 @@ func (dm *Door43Metadata) GetMetadataFilename() string {
 		return "manifest.json"
 	}
 	return ""
+}
+
+// ValidationErrorAsTemplateHTML the validation error object as a template.HTML
+func (dm *Door43Metadata) ValidationErrorAsTemplateHTML() *template.HTML {
+	if dm.ValidationError == nil {
+		return nil
+	}
+	html := template.HTML(convertValidationErrorToHTML(dm.ValidationError, nil))
+	return &html
+}
+
+func convertValidationErrorToHTML(valErr, parentErr *jsonschema.ValidationError) string {
+	if valErr == nil {
+		return ""
+	}
+	var label string
+	var html string
+	if parentErr == nil {
+		html = fmt.Sprintf("<strong>Invalid:</strong> %s\n", strings.TrimSuffix(valErr.Message, "#"))
+		html += "<ul>\n"
+		if len(valErr.Causes) > 0 {
+			label += "<strong>&lt;root&gt;:</strong>\n"
+		}
+	} else {
+		loc := ""
+		if valErr.InstanceLocation != "" {
+			loc = strings.ReplaceAll(strings.TrimPrefix(strings.TrimPrefix(valErr.InstanceLocation, parentErr.InstanceLocation), "/"), "/", ".")
+			if loc != "" {
+				loc = fmt.Sprintf("<strong>%s:</strong> ", strings.TrimPrefix(loc, "/"))
+			}
+		}
+		msg := ""
+		if valErr.Message != "if-else failed" && valErr.Message != "if-then failed" {
+			msg = valErr.Message
+		}
+		label = loc + msg
+	}
+	sort.Slice(valErr.Causes, func(i, j int) bool { return valErr.Causes[i].InstanceLocation < valErr.Causes[j].InstanceLocation })
+	if label != "" {
+		html += "<ul><li>" + label + "</li>"
+	}
+	for _, cause := range valErr.Causes {
+		html += convertValidationErrorToHTML(cause, valErr)
+	}
+	if label != "" {
+		html += "</ul>\n"
+	}
+	return html
+}
+
+// CopyEmptyPropertiesFromRepoDM copies all general properties from the main repo DM if empty
+func (dm *Door43Metadata) CopyEmptyPropertiesFromRepoDM(ctx context.Context) {
+	if dm.Repo == nil {
+		return
+	}
+	dm.Repo.LoadLatestDMs(ctx)
+	if dm.Repo.RepoDM == nil {
+		return
+	}
+	if dm.Title == "" {
+		dm.Title = dm.Repo.RepoDM.Title
+	}
+	if dm.Abbreviation == "" {
+		dm.Abbreviation = dm.Repo.RepoDM.Abbreviation
+	}
+	if dm.MetadataType == "" {
+		dm.MetadataType = dm.Repo.RepoDM.MetadataType
+	}
+	if dm.MetadataVersion == "" {
+		dm.MetadataVersion = dm.Repo.RepoDM.MetadataVersion
+	}
+	if dm.Subject == "" {
+		dm.Subject = dm.Repo.RepoDM.Subject
+	}
+	if dm.FlavorType == "" {
+		dm.FlavorType = dm.Repo.RepoDM.FlavorType
+	}
+	if dm.Flavor == "" {
+		dm.Flavor = dm.Repo.RepoDM.Flavor
+	}
+	if dm.Resource == "" {
+		dm.Resource = dm.Repo.RepoDM.Resource
+	}
+	if dm.Abbreviation == "" {
+		dm.Abbreviation = dm.Repo.RepoDM.Abbreviation
+	}
+	if dm.Title == "" {
+		dm.Title = dm.Repo.RepoDM.Title
+	}
+	if dm.Language == "" {
+		dm.Language = dm.Repo.RepoDM.Language
+	}
+	if dm.LanguageTitle == "" {
+		dm.LanguageTitle = dm.Repo.RepoDM.LanguageTitle
+	}
+	if dm.LanguageDirection == "" {
+		dm.LanguageDirection = dm.Repo.RepoDM.LanguageDirection
+	}
+	if !dm.LanguageIsGL {
+		dm.LanguageIsGL = dm.Repo.RepoDM.LanguageIsGL
+	}
+	if dm.ContentFormat == "" {
+		dm.ContentFormat = dm.Repo.RepoDM.ContentFormat
+	}
 }
 
 // IsDoor43MetadataExist returns true if door43 metadata with given release ID already exists.
@@ -367,28 +486,33 @@ func GetDoor43MetadataByID(ctx context.Context, id, repoID int64) (*Door43Metada
 
 // GetMostRecentDoor43MetadataByStage returns the most recent Door43Metadatas of a given stage for a repo
 func GetMostRecentDoor43MetadataByStage(ctx context.Context, repoID int64, stage door43metadata.Stage) (*Door43Metadata, error) {
-	dm := &Door43Metadata{RepoID: repoID, Stage: stage}
-	has, err := db.GetEngine(ctx).Desc("release_date_unix").Get(dm)
+	dm := &Door43Metadata{}
+	has, err := db.GetEngine(ctx).
+		Where(builder.Eq{"repo_id": repoID}).
+		And(builder.Eq{"stage": stage}).
+		And(builder.Eq{"is_invalid": false}).
+		Desc("release_date_unix").
+		Get(dm)
 	if err != nil {
 		return nil, err
-	} else if !has {
+	}
+	if !has {
 		return nil, ErrDoor43MetadataNotExist{0, repoID, ""}
 	}
 	return dm, nil
 }
 
-// GetDoor43MetdataLatestInStage(ctx context.Context, repoID)
-
 // GetDoor43MetadataByRepoIDAndReleaseID returns the metadata of a given release ID (0 = default branch).
 func GetDoor43MetadataByRepoIDAndRef(ctx context.Context, repoID int64, ref string) (*Door43Metadata, error) {
-	dm := &Door43Metadata{
-		RepoID: repoID,
-		Ref:    ref,
-	}
-	has, err := db.GetEngine(ctx).Get(dm)
+	dm := &Door43Metadata{}
+	has, err := db.GetEngine(ctx).
+		Where(builder.Eq{"repo_id": repoID}).
+		And(builder.Eq{"ref": ref}).
+		Get(dm)
 	if err != nil {
 		return nil, err
-	} else if !has {
+	}
+	if !has {
 		return nil, ErrDoor43MetadataNotExist{0, repoID, ref}
 	}
 	return dm, nil

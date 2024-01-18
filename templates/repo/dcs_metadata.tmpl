@@ -23,35 +23,37 @@
 					<div class="flex-text-block gt-sb">
 						<div class="flex-text-inline">
 						{{$color := "grey"}}
-						{{$type := "Branch"}}
-						{{$icon := "octicon-git-branch"}}
-						{{$title := "branch"}}
-
-						{{if eq .RefType "tag"}}
-							{{$type = "Release"}}
+						{{$type := .RefType}}
+						{{$icon := ""}}
+						{{if eq .RefType "branch"}}
+							{{$icon = "octicon-git-branch"}}
+						{{else}}
 							{{$icon = "octicon-tag"}}
-							{{$title = "release"}}
 						{{end}}
+						{{$tooltip := "Stage: other"}}
 
 						{{if eq .Stage 1}}
 							{{$color = "green"}}
-							{{$title = "Production Release"}}
+							{{$tooltip = "Stage: prod - Production Release"}}
 						{{else if eq .Stage 2}}
 							{{$color = "orange"}}
-							{{$title = "Preprod"}}
+							{{$tooltip = "Stage: preprod - Pre-Release"}}
 						{{else if eq .Stage 3}}
 							{{$color = "purple"}}
-							{{$title = "Default Branch / Metadata"}}
+							{{$tooltip = "Stage: latest - Default Branch / Metadata"}}
 						{{else if and (eq .Stage 4) (.IsRepoMetadata)}}
-							{{$color = "red"}}
-							{{$title = "Default Metadata"}}
+							{{$color = "cyan"}}
+							{{$tooltip = "Stage: other; Default Metadata"}}
 						{{end}}
 
-						{{if and .IsLatestForStage (ne .Stage 4)}}
-							{{$title = printf "%s - Latest" $title}}
+						{{if .ValidationError}}
+							{{$color = "red"}}
+							{{$tooltip = printf "%s; INVALID" $tooltip}}
+						{{else if and .IsLatestForStage (lt .Stage 3)}}
+							{{$tooltip = printf "%s; Latest" $tooltip}}
 						{{end}}
-							<span title="{{$type}}">{{svg $icon 16 "mr-3"}}</span>
-							<span class="text {{$color}} gt-mr-3" title="{{$title}}">{{svg "octicon-dot-fill" 22}}</span>
+							<a data-tooltip-content="{{$type}}" href="{{$.RepoLink}}/src/{{.RefType}}/{{.Ref}}">{{svg $icon 16 "mr-3"}}</a>
+							<span data-tooltip-content="{{$tooltip}}" class="text {{$color}} gt-mr-3">{{svg "octicon-dot-fill" 22}}</span>
 							<a class="ui primary sha label toggle button show-panel" data-panel="#info-{{.ID}}">{{.Ref}}</a>
 						</div>
 						<span class="text grey">
@@ -60,9 +62,19 @@
 					</div>
 					<div class="info gt-hidden" id="info-{{.ID}}">
 						<div class="ui top attached tabular menu">
-							<a class="item active" data-tab="db-{{.ID}}">Metadata (DB)</a>
+							<a class="item active" data-tab="db-{{.ID}}">
+								Metadata (DB)
+							</a>
 							<a class="item" data-tab="json-{{.ID}}">
 								Metadata (JSON)
+							</a>
+							{{if .ValidationError}}
+							<a class="item" data-tab="validation-errors-{{.ID}}">
+								Validation Errors (JSON)
+							</a>
+							{{end}}
+							<a class="item" href="{{$.RepoLink}}/preview/{{.RefType | PathEscapeSegments}}/{{.Ref | PathEscapeSegments}}">
+								Preview
 							</a>
 							{{if or $.Permission.IsAdmin $.IsOrganizationOwner $.PageIsAdmin $.PageIsUserSettings}}
 							<div class="right menu">
@@ -75,38 +87,59 @@
 						</div>
 						<div class="ui bottom attached tab segment active" data-tab="db-{{.ID}}">
 							<table>
+							{{if .ValidationError}}
+								<tr><td colspan="2"><div style="color:red; padding: 10px;">INVALID <a href="{{$.RepoLink}}/src/{{.RefType}}/{{.Ref}}/{{.MetadataFilename}}">{{.MetadataFilename}}</a> FILE</div></td></tr>
+							{{else}}
 								<tr>
 									<td><strong>{{ctx.Locale.Tr "repo.metadata.title"}}:</strong></td><td>{{.Title}}</td>
-								</tr><tr>
+								</tr>
+								<tr>
 									<td><strong>{{ctx.Locale.Tr "repo.metadata.subject"}}:</strong></td><td>{{.Subject}}</td>
-								</tr><tr>
+								</tr>
+								<tr>
 									<td><strong>{{ctx.Locale.Tr "repo.metadata.flavor_type"}}:</strong></td><td>{{.FlavorType}}</td>
-								</tr><tr>
+								</tr>
+								<tr>
 									<td><strong>{{ctx.Locale.Tr "repo.metadata.flavor"}}:</strong></td><td>{{.Flavor}}</td>
-								</tr><tr>
+								</tr>
+								<tr>
 									<td><strong>{{ctx.Locale.Tr "repo.metadata.abbreviation"}}:</strong></td><td>{{.Abbreviation}}</td>
-								</tr><tr>
-									<td><strong>{{ctx.Locale.Tr "repo.metadata.metadata_type"}}:</strong></td><td><img src="{{AssetUrlPrefix}}/img/dcs/{{.GetMetadataTypeIcon}}" style="height:16px;vertical-align:middle"/> {{.GetMetadataTypeTitle}} ({{.MetadataType}} {{.MetadataVersion}})</td>
-								</tr><tr>
+								</tr>
+								<tr>
+									<td><strong>{{ctx.Locale.Tr "repo.metadata.metadata_type"}}:</strong></td><td><img src="{{AssetUrlPrefix}}/img/dcs/{{.MetadataTypeIcon}}" style="height:16px;vertical-align:middle"/> {{.MetadataTypeTitle}} ({{.MetadataType}} {{.MetadataVersion}})</td>
+								</tr>
+								<tr>
 									<td><strong>{{ctx.Locale.Tr "repo.metadata.language"}}:</strong></td><td>{{.LanguageTitle}} ({{.Language}}, {{.LanguageDirection}})</td>
-								</tr><tr>
+								</tr>
+								<tr>
 									<td><strong>{{ctx.Locale.Tr "repo.metadata.ingredients"}}:</strong></td>
 									<td>
 										{{range .Ingredients}}
 											{{.Identifier}}
 										{{end}}
 									</td>
-								</tr><tr>
+								</tr>
+								<tr>
 									<td><strong>{{ctx.Locale.Tr "repo.metadata.stage"}}:</strong></td><td>{{.StageStr}}</td>
-								</tr><tr>
+								</tr>
+							{{end}}
+								<tr>
+									<td><strong>SHA:</strong></td><td>{{.CommitSHA}}</td>
+								</tr>
+								<tr>
 									<td><strong>{{if .Release}}{{ctx.Locale.Tr "repo.metadata.release_date"}}{{else}}{{ctx.Locale.Tr "repo.metadata.last_updated"}}{{end}}:</strong></td>
 									<td>{{DateTime "full" .ReleaseDateUnix.AsTime}}</td>
 								</tr>
 							</table>
 						</div>
 						<div class="ui bottom attached tab segment" data-tab="json-{{.ID}}">
-							<pre>{{.GetMetadataJSONString}}</pre>
+							<pre style="white-space: pre-wrap; word-wrap: break-word;">{{.MetadataJSONString}}</pre>
 						</div>
+						{{if .ValidationError}}
+						<div class="ui bottom attached tab segment" data-tab="validation-errors-{{.ID}}">
+							<pre style="white-space: pre-wrap; word-wrap: break-word;">{{.ValidationErrorJSONString}}</pre>
+						</div>
+						{{end}}
 					</div>
 				</div>
 			{{end}}

@@ -948,7 +948,7 @@ func SettingsPost(ctx *context.Context) {
 					units = append(units, *unit)
 				}
 			}
-			if err := repo_model.UpdateRepositoryUnits(repo, units, deleteUnitTypes); err != nil {
+			if err := repo_service.UpdateRepositoryUnits(ctx, repo, units, deleteUnitTypes); err != nil {
 				ctx.ServerError("UpdateRepositoryUnits", err)
 				return
 			}

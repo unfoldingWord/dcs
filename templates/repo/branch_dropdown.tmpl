@@ -49,9 +49,9 @@
 		'repoDefaultBranch': {{.root.Repository.DefaultBranch}},
 		'enableFeed': {{.root.EnableFeed}},
 		'rssURLPrefix': '{{$.root.RepoLink}}/rss/branch/',
-		'branchURLPrefix': '{{if .branchURLPrefix}}{{.branchURLPrefix}}{{else}}{{$.root.RepoLink}}/{{if $.root.PageIsCommits}}commits{{else}}src{{end}}/branch/{{end}}',
+		'branchURLPrefix': '{{if .branchURLPrefix}}{{.branchURLPrefix}}{{else}}{{$.root.RepoLink}}/{{if $.root.PageIsCommits}}commits{{else if $.root.PageIsPreview}}preview{{else}}src{{end}}/branch/{{end}}', // DCS Customizations - added preview
 		'branchURLSuffix': '{{if .branchURLSuffix}}{{.branchURLSuffix}}{{else}}{{if $.root.TreePath}}/{{PathEscapeSegments $.root.TreePath}}{{end}}{{end}}',
-		'tagURLPrefix': '{{if .tagURLPrefix}}{{.tagURLPrefix}}{{else if .release}}{{$.root.RepoLink}}/compare/{{else}}{{$.root.RepoLink}}/{{if $.root.PageIsCommits}}commits{{else}}src{{end}}/tag/{{end}}',
+		'tagURLPrefix': '{{if .tagURLPrefix}}{{.tagURLPrefix}}{{else if .release}}{{$.root.RepoLink}}/compare/{{else}}{{$.root.RepoLink}}/{{if $.root.PageIsCommits}}commits{{else if $.root.PageIsPreview}}preview{{else}}src{{end}}/tag/{{end}}',  // DCS Customizations - added preview
 		'tagURLSuffix': '{{if .tagURLSuffix}}{{.tagURLSuffix}}{{else if .release}}...{{if .release.IsDraft}}{{PathEscapeSegments .release.Target}}{{else}}{{if .release.TagName}}{{PathEscapeSegments .release.TagName}}{{else}}{{PathEscapeSegments .release.Sha1}}{{end}}{{end}}{{else}}{{if $.root.TreePath}}/{{PathEscapeSegments $.root.TreePath}}{{end}}{{end}}',
 		'repoLink': {{.root.RepoLink}},
 		'treePath': {{.root.TreePath}},

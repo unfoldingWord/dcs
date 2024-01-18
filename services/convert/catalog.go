@@ -55,16 +55,16 @@ func ToCatalogEntry(ctx context.Context, dm *repo.Door43Metadata, perm access_mo
 
 	return &api.CatalogEntry{
 		ID:                     dm.ID,
-		Self:                   dm.APIURL(),
+		Self:                   dm.CatalogEntryURL(),
 		Name:                   dm.Repo.Name,
 		Owner:                  dm.Repo.OwnerName,
 		FullName:               dm.Repo.FullName(),
 		Repo:                   innerToRepo(ctx, dm.Repo, perm, true),
 		Release:                release,
-		TarballURL:             dm.GetTarballURL(),
-		ZipballURL:             dm.GetZipballURL(),
-		GitTreesURL:            dm.GetGitTreesURL(),
-		ContentsURL:            dm.GetContentsURL(),
+		TarballURL:             dm.TarballURL(),
+		ZipballURL:             dm.ZipballURL(),
+		GitTreesURL:            dm.GitTreesURL(),
+		ContentsURL:            dm.ContentsURL(),
 		Ref:                    dm.Ref,
 		RefType:                dm.RefType,
 		CommitSHA:              dm.CommitSHA,
@@ -81,12 +81,14 @@ func ToCatalogEntry(ctx context.Context, dm *repo.Door43Metadata, perm access_mo
 		Released:               dm.ReleaseDateUnix.AsTime(),
 		MetadataType:           dm.MetadataType,
 		MetadataVersion:        dm.MetadataVersion,
-		MetadataURL:            dm.GetMetadataURL(),
-		MetadataJSONURL:        dm.GetMetadataJSONURL(),
-		MetadataAPIContentsURL: dm.GetMetadataAPIContentsURL(),
+		MetadataURL:            dm.RawMetadataFileURL(),
+		MetadataJSONURL:        dm.CatalogMetatadataJSONURL(),
+		MetadataAPIContentsURL: dm.MetadataAPIContentsURL(),
 		Ingredients:            dm.Ingredients,
-		Books:                  dm.GetIngredientsIdentifierList(),
+		Books:                  dm.IngredientsIdentifierList(),
 		ContentFormat:          dm.ContentFormat,
+		IsValid:                dm.ValidationError == nil,
+		ValidationErrorURL:     dm.CatalogValidationErrorURL(),
 	}
 }
 
@@ -100,12 +102,12 @@ func ToCatalogStage(ctx context.Context, dm *repo.Door43Metadata) *api.CatalogSt
 		Ref:         dm.Ref,
 		Released:    dm.ReleaseDateUnix.AsTime(),
 		CommitSHA:   dm.CommitSHA,
-		ZipballURL:  dm.GetZipballURL(),
-		TarballURL:  dm.GetTarballURL(),
-		GitTreesURL: dm.GetGitTreesURL(),
-		ContentsURL: dm.GetContentsURL(),
+		ZipballURL:  dm.ZipballURL(),
+		TarballURL:  dm.TarballURL(),
+		GitTreesURL: dm.GitTreesURL(),
+		ContentsURL: dm.ContentsURL(),
 	}
-	url := dm.GetReleaseURL(ctx)
+	url := dm.ReleaseURL(ctx)
 	if url != "" {
 		catalogStage.ReleaseURL = &url
 	}

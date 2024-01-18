@@ -178,7 +178,15 @@ func CreateNewTag(ctx context.Context, doer *user_model.User, repo *repo_model.R
 		return err
 	}
 
-	return db.Insert(ctx, rel)
+	/*** DCS Customizations ***/
+	if err = db.Insert(ctx, rel); err != nil {
+		return err
+	}
+
+	notify_service.NewTagRelease(gitRepo.Ctx, rel)
+
+	return nil
+	/*** END DCS Customizations ***/
 }
 
 // UpdateRelease updates information, attachments of a release and will create tag if it's not a draft and tag not exist.

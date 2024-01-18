@@ -68,50 +68,6 @@ func convertValidationErrorToString(valErr, parentErr *jsonschema.ValidationErro
 	return str
 }
 
-// ConvertValidationErrorToHTML converts a validation error object to an HTML string
-func ConvertValidationErrorToHTML(valErr *jsonschema.ValidationError) string {
-	return convertValidationErrorToHTML(valErr, nil)
-}
-
-func convertValidationErrorToHTML(valErr, parentErr *jsonschema.ValidationError) string {
-	if valErr == nil {
-		return ""
-	}
-	var label string
-	var html string
-	if parentErr == nil {
-		html = fmt.Sprintf("<strong>Invalid:</strong> %s\n", strings.TrimSuffix(valErr.Message, "#"))
-		html += "<ul>\n"
-		if len(valErr.Causes) > 0 {
-			label += "<strong>&lt;root&gt;:</strong>\n"
-		}
-	} else {
-		loc := ""
-		if valErr.InstanceLocation != "" {
-			loc = strings.ReplaceAll(strings.TrimPrefix(strings.TrimPrefix(valErr.InstanceLocation, parentErr.InstanceLocation), "/"), "/", ".")
-			if loc != "" {
-				loc = fmt.Sprintf("<strong>%s:</strong> ", strings.TrimPrefix(loc, "/"))
-			}
-		}
-		msg := ""
-		if valErr.Message != "if-else failed" && valErr.Message != "if-then failed" {
-			msg = valErr.Message
-		}
-		label = loc + msg
-	}
-	sort.Slice(valErr.Causes, func(i, j int) bool { return valErr.Causes[i].InstanceLocation < valErr.Causes[j].InstanceLocation })
-	if label != "" {
-		html += "<ul><li>" + label + "</li>"
-	}
-	for _, cause := range valErr.Causes {
-		html += convertValidationErrorToHTML(cause, valErr)
-	}
-	if label != "" {
-		html += "</ul>\n"
-	}
-	return html
-}
-
 // ValidateJSONFromBlob reads a json file from a blob and unmarshals it returning any errors
 func ValidateJSONFromBlob(blob *git.Blob) error {
 	dataRc, err := blob.DataAsync()

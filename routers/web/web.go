@@ -1135,9 +1135,9 @@ func registerRoutes(m *web.Route) {
 			m.Post("/update", repo.UpdateDoor43Metadata) // TODO: Make this /{id} for a single DM
 		})
 		m.Group("/preview", func() {
-			m.Get("", repo.PreviewRepo)
-			m.Get("/*", repo.PreviewRepo)
-		}, repo.MustBeNotEmpty)
+			m.Get("/branch/*", context.RepoRefByType(context.RepoRefBranch), repo.PreviewRepo)
+			m.Get("/tag/*", context.RepoRefByType(context.RepoRefTag), repo.PreviewRepo)
+		}, repo.MustBeNotEmpty, reqRepoCodeReader)
 		// END DCS Customizations
 	}, ignSignIn, context.RepoAssignment, context.UnitTypes()) // for "/{username}/{reponame}" which doesn't require authentication
 

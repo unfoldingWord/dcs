@@ -16,34 +16,52 @@ import (
 // LoadLatestDMs loads the latest DMs
 func (repo *Repository) LoadLatestDMs(ctx context.Context) error {
 	if repo.LatestProdDM == nil {
-		dm := &Door43Metadata{RepoID: repo.ID, Stage: door43metadata.StageProd, IsLatestForStage: true}
-		has, err := db.GetEngine(ctx).Desc("release_date_unix").Get(dm)
+		dm := &Door43Metadata{}
+		has, err := db.GetEngine(ctx).
+			Where(builder.Eq{"repo_id": repo.ID}).
+			And(builder.Eq{"stage": door43metadata.StageProd}).
+			And(builder.Eq{"is_latest_for_stage": true}).
+			And(builder.Eq{"is_invalid": false}).
+			Desc("release_date_unix").
+			Get(dm)
 		if err != nil {
 			return err
 		}
-		if has {
+		if has && dm != nil {
 			repo.LatestProdDM = dm
 		}
 	}
 
 	if repo.LatestPreprodDM == nil {
-		dm := &Door43Metadata{RepoID: repo.ID, Stage: door43metadata.StagePreProd, IsLatestForStage: true}
-		has, err := db.GetEngine(ctx).Desc("release_date_unix").Get(dm)
+		dm := &Door43Metadata{}
+		has, err := db.GetEngine(ctx).
+			Where(builder.Eq{"repo_id": repo.ID}).
+			And(builder.Eq{"stage": door43metadata.StagePreProd}).
+			And(builder.Eq{"is_latest_for_stage": true}).
+			And(builder.Eq{"is_invalid": false}).
+			Desc("release_date_unix").
+			Get(dm)
 		if err != nil {
 			return err
 		}
-		if has {
+		if has && dm != nil {
 			repo.LatestPreprodDM = dm
 		}
 	}
 
 	if repo.DefaultBranchDM == nil {
-		dm := &Door43Metadata{RepoID: repo.ID, Stage: door43metadata.StageLatest, IsLatestForStage: true}
-		has, err := db.GetEngine(ctx).Desc("release_date_unix").Get(dm)
+		dm := &Door43Metadata{}
+		has, err := db.GetEngine(ctx).
+			Where(builder.Eq{"repo_id": repo.ID}).
+			And(builder.Eq{"stage": door43metadata.StageLatest}).
+			And(builder.Eq{"is_latest_for_stage": true}).
+			And(builder.Eq{"is_invalid": false}).
+			Desc("release_date_unix").
+			Get(dm)
 		if err != nil {
 			return err
 		}
-		if has {
+		if has && dm != nil {
 			repo.DefaultBranchDM = dm
 		}
 	}

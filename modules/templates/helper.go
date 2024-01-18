@@ -147,11 +147,9 @@ func NewFuncMap() template.FuncMap {
 			return setting.MermaidMaxSourceCharacters
 		},
 		/*** DCS Customizations ***/
-		"StringHasSuffix":            dcs.StringHasSuffix,
-		"ValidateJSONFile":           dcs.ValidateJSONFile,
-		"ValidateYAMLFile":           dcs.ValidateYAMLFile,
-		"ValidateManifestFileAsHTML": dcs.ValidateManifestFileAsHTML,
-		"ValidateMetadataFileAsHTML": dcs.ValidateMetadataFileAsHTML,
+		"StringHasSuffix":  dcs.StringHasSuffix,
+		"ValidateJSONFile": dcs.ValidateJSONFile,
+		"ValidateYAMLFile": dcs.ValidateYAMLFile,
 		"Door43PreviewURL": func() string {
 			return setting.DCS.Door43PreviewURL
 		},
