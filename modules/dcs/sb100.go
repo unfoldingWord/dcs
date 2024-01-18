@@ -30,14 +30,14 @@ func GetSBDataFromBlob(blob *git.Blob) (*SBMetadata100, error) {
 
 	sb100 := &SBMetadata100{}
 	if err := json.Unmarshal(buf, sb100); err != nil {
-		log.Error("ERROR: %v", err)
+		log.Error("SBMetadata100{} Unmarshal: %v", err)
 		return nil, err
 	}
 
 	// Now make a generic map of the buffer to store in the database table
 	sb100.Metadata = map[string]interface{}{}
 	if err := json.Unmarshal(buf, &sb100.Metadata); err != nil {
-		log.Error("ERROR: %v", err)
+		log.Error("sb100 map[string]interface{}{} Unmarshal: %v", err)
 		return nil, err
 	}
 
