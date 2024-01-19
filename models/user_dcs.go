@@ -15,6 +15,7 @@ func GetRepoLanguages(ctx context.Context, u *user_model.User) []string {
 	fields, _ := SearchDoor43MetadataField(ctx, &door43metadata.SearchCatalogOptions{
 		Owners:         []string{u.LowerName},
 		IsRepoMetadata: true,
+		Stage:          door43metadata.StageOther,
 	}, "language")
 	return fields
 }
@@ -24,6 +25,7 @@ func GetRepoSubjects(ctx context.Context, u *user_model.User) []string {
 	fields, _ := SearchDoor43MetadataField(ctx, &door43metadata.SearchCatalogOptions{
 		Owners:         []string{u.LowerName},
 		IsRepoMetadata: true,
+		Stage:          door43metadata.StageOther,
 	}, "subject")
 	return fields
 }
@@ -33,6 +35,7 @@ func GetRepoMetadataTypes(ctx context.Context, u *user_model.User) []string {
 	fields, _ := SearchDoor43MetadataField(ctx, &door43metadata.SearchCatalogOptions{
 		Owners:         []string{u.LowerName},
 		IsRepoMetadata: true,
+		Stage:          door43metadata.StageOther,
 	}, "metadata_type")
 	return fields
 }
