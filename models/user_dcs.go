@@ -13,8 +13,8 @@ import (
 // GetRepoLanguages gets the languages of the user's repos and returns alphabetized list
 func GetRepoLanguages(ctx context.Context, u *user_model.User) []string {
 	fields, _ := SearchDoor43MetadataField(ctx, &door43metadata.SearchCatalogOptions{
-		Owners:   []string{u.LowerName},
-		IsRepoDM: true,
+		Owners:         []string{u.LowerName},
+		IsRepoMetadata: true,
 	}, "language")
 	return fields
 }
@@ -22,8 +22,8 @@ func GetRepoLanguages(ctx context.Context, u *user_model.User) []string {
 // GetRepoSubjects gets the subjects of the user's repos and returns alphabetized list
 func GetRepoSubjects(ctx context.Context, u *user_model.User) []string {
 	fields, _ := SearchDoor43MetadataField(ctx, &door43metadata.SearchCatalogOptions{
-		Owners:   []string{u.LowerName},
-		IsRepoDM: true,
+		Owners:         []string{u.LowerName},
+		IsRepoMetadata: true,
 	}, "subject")
 	return fields
 }
@@ -31,8 +31,8 @@ func GetRepoSubjects(ctx context.Context, u *user_model.User) []string {
 // GetRepoMetadataTypes gets the metadata types of the user's repos and returns alphabetized list
 func GetRepoMetadataTypes(ctx context.Context, u *user_model.User) []string {
 	fields, _ := SearchDoor43MetadataField(ctx, &door43metadata.SearchCatalogOptions{
-		Owners:   []string{u.LowerName},
-		IsRepoDM: true,
+		Owners:         []string{u.LowerName},
+		IsRepoMetadata: true,
 	}, "metadata_type")
 	return fields
 }
