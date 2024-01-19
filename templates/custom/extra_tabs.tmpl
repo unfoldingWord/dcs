@@ -9,7 +9,7 @@
 {{else if .IsViewBranch}}
 	{{$refToPreview = .BranchName}}
 {{end}}
-{{if $.RepoDM.ID }}
+{{if $.RepoDM.ID}}
 <a class="{{if .PageIsPreview}}active{{end}} item" data-tooltip-content="Preview on DCS" href="{{.RepoLink}}/preview/{{$refType | PathEscapeSegments}}/{{$refToPreview | PathEscapeSegments}}">
     {{svg "octicon-book"}} {{ctx.Locale.Tr "preview"}} / PDF
 </a>
