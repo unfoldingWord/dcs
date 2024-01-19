@@ -58,6 +58,7 @@ type SearchCatalogOptions struct {
 	Repos            []string
 	Tags             []string
 	Stage            Stage
+	ExactStage       bool
 	Subjects         []string
 	FlavorTypes      []string
 	Flavors          []string
@@ -65,6 +66,7 @@ type SearchCatalogOptions struct {
 	ContentFormats   []string
 	CheckingLevels   []string
 	Books            []string
+	IsRepoDM         bool
 	IncludeHistory   bool
 	MetadataTypes    []string
 	MetadataVersions []string
@@ -103,12 +105,17 @@ func SearchCatalogCondition(opts *SearchCatalogOptions) builder.Cond {
 		keywordCond = keywordCond.Or(GetMetadataCond(keyword))
 	}
 
-	stageCond := GetStageCond(opts.Stage)
+	stageCond := GetStageCond(opts.Stage, opts.ExactStage)
 	historyCond := GetHistoryCond(opts.IncludeHistory)
 
 	langIsGLCond := builder.NewCond()
 	if opts.LanguageIsGL != util.OptionalBoolNone {
 		langIsGLCond = builder.Eq{"`door43_metadata`.language_is_gl": opts.LanguageIsGL.IsTrue()}
+	}
+
+	isRepoDMCond := builder.NewCond()
+	if opts.IsRepoDM {
+		isRepoDMCond = builder.Eq(builder.Eq{"is_repo_dm": true})
 	}
 
 	cond := builder.NewCond().And(
@@ -128,6 +135,7 @@ func SearchCatalogCondition(opts *SearchCatalogOptions) builder.Cond {
 		historyCond,
 		langIsGLCond,
 		keywordCond,
+		isRepoDMCond,
 		builder.Eq{"`repository`.is_private": false},
 		builder.Eq{"`repository`.is_archived": false},
 		builder.IsNull{"`door43_metadata`.validation_error"})
@@ -173,7 +181,10 @@ func SplitAtCommaNotInString(s string, requireSpaceAfterComma bool) []string {
 }
 
 // GetStageCond gets the condition for the given stage
-func GetStageCond(stage Stage) builder.Cond {
+func GetStageCond(stage Stage, exact bool) builder.Cond {
+	if exact {
+		return builder.Eq{"`door43_metadata`.stage": stage}
+	}
 	return builder.Lte{"`door43_metadata`.stage": stage}
 }
 
