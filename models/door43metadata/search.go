@@ -65,7 +65,7 @@ type SearchCatalogOptions struct {
 	ContentFormats   []string
 	CheckingLevels   []string
 	Books            []string
-	IsRepoDM         bool
+	IsRepoMetadata   bool
 	IncludeHistory   bool
 	MetadataTypes    []string
 	MetadataVersions []string
@@ -112,9 +112,9 @@ func SearchCatalogCondition(opts *SearchCatalogOptions) builder.Cond {
 		langIsGLCond = builder.Eq{"`door43_metadata`.language_is_gl": opts.LanguageIsGL.IsTrue()}
 	}
 
-	isRepoDMCond := builder.NewCond()
-	if opts.IsRepoDM {
-		isRepoDMCond = builder.Eq(builder.Eq{"`door43_metadata`.is_repo_metadata": true})
+	isRepoMetadataCond := builder.NewCond()
+	if opts.IsRepoMetadata {
+		isRepoMetadataCond = builder.Eq(builder.Eq{"`door43_metadata`.is_repo_metadata": true})
 	}
 
 	cond := builder.NewCond().And(
@@ -134,7 +134,7 @@ func SearchCatalogCondition(opts *SearchCatalogOptions) builder.Cond {
 		historyCond,
 		langIsGLCond,
 		keywordCond,
-		isRepoDMCond,
+		isRepoMetadataCond,
 		builder.Eq{"`repository`.is_private": false},
 		builder.Eq{"`repository`.is_archived": false},
 		builder.IsNull{"`door43_metadata`.validation_error"})
