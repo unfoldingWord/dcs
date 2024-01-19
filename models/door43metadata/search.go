@@ -114,7 +114,7 @@ func SearchCatalogCondition(opts *SearchCatalogOptions) builder.Cond {
 
 	isRepoDMCond := builder.NewCond()
 	if opts.IsRepoDM {
-		isRepoDMCond = builder.Eq(builder.Eq{"is_repo_dm": true})
+		isRepoDMCond = builder.Eq(builder.Eq{"is_repo_metadata": true})
 	}
 
 	cond := builder.NewCond().And(
