@@ -19,8 +19,8 @@ import (
 	"code.gitea.io/gitea/modules/setting"
 	"code.gitea.io/gitea/modules/structs"
 	"code.gitea.io/gitea/modules/timeutil"
-	"github.com/santhosh-tekuri/jsonschema/v5"
 
+	"github.com/santhosh-tekuri/jsonschema/v5"
 	"xorm.io/builder"
 )
 

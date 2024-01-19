@@ -61,7 +61,7 @@
 									</button>
 								{{end}}
 								<!-- DCS Customizations -->
-								{{if $.Repository.DefaultBranchDM }}
+								{{if $.Repository.DefaultBranchDM}}
 									<a role="button" class="btn interact-bg gt-p-3" href="{{$.RepoLink}}/preview/branch/{{PathEscapeSegments .DefaultBranchBranch.DBBranch.Name}}" data-tooltip-content="{{ctx.Locale.Tr "preview"}} {{$.Repository.DefaultBranchDM.CommitSHA}}">{{svg "octicon-book"}}</a>
 								{{end}}
 								<!-- END DCS Customizations -->
@@ -199,7 +199,7 @@
 										{{end}}
 									{{end}}
 									<!-- DCS Customizations -->
-									{{if $.RepoDM.ID }}
+									{{if $.RepoDM.ID}}
 										<a role="button" class="btn interact-bg gt-p-3" href="{{$.RepoLink}}/preview/branch/{{PathEscapeSegments .DBBranch.Name}}" data-tooltip-content="{{ctx.Locale.Tr "preview"}}">{{svg "octicon-book"}}</a>
 									{{end}}
 									<!-- END DCS Customizations -->

@@ -58,7 +58,6 @@ type SearchCatalogOptions struct {
 	Repos            []string
 	Tags             []string
 	Stage            Stage
-	ExactStage       bool
 	Subjects         []string
 	FlavorTypes      []string
 	Flavors          []string
@@ -105,7 +104,7 @@ func SearchCatalogCondition(opts *SearchCatalogOptions) builder.Cond {
 		keywordCond = keywordCond.Or(GetMetadataCond(keyword))
 	}
 
-	stageCond := GetStageCond(opts.Stage, opts.ExactStage)
+	stageCond := GetStageCond(opts.Stage)
 	historyCond := GetHistoryCond(opts.IncludeHistory)
 
 	langIsGLCond := builder.NewCond()
@@ -181,10 +180,7 @@ func SplitAtCommaNotInString(s string, requireSpaceAfterComma bool) []string {
 }
 
 // GetStageCond gets the condition for the given stage
-func GetStageCond(stage Stage, exact bool) builder.Cond {
-	if exact {
-		return builder.Eq{"`door43_metadata`.stage": stage}
-	}
+func GetStageCond(stage Stage) builder.Cond {
 	return builder.Lte{"`door43_metadata`.stage": stage}
 }
 
