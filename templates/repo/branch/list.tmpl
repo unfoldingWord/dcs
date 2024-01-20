@@ -185,6 +185,11 @@
 											{{svg "octicon-pencil"}}
 										</button>
 									{{end}}
+									<!-- DCS Customizations -->
+									{{if $.RepoDM.ID}}
+										<a role="button" class="btn interact-bg gt-p-3" href="{{$.RepoLink}}/preview/branch/{{PathEscapeSegments .DBBranch.Name}}" data-tooltip-content="{{ctx.Locale.Tr "preview"}}">{{svg "octicon-book"}}</a>
+									{{end}}
+									<!-- END DCS Customizations -->
 									{{if and $.IsWriter (not $.IsMirror) (not $.Repository.IsArchived) (not .IsProtected)}}
 										{{if .DBBranch.IsDeleted}}
 											<button class="btn interact-bg gt-p-3 link-action restore-branch-button" data-url="{{$.Link}}/restore?branch_id={{.DBBranch.ID}}&name={{.DBBranch.Name}}&page={{$.Page.Paginater.Current}}" data-tooltip-content="{{ctx.Locale.Tr "repo.branch.restore" (.DBBranch.Name)}}">
@@ -198,11 +203,6 @@
 											</button>
 										{{end}}
 									{{end}}
-									<!-- DCS Customizations -->
-									{{if $.RepoDM.ID}}
-										<a role="button" class="btn interact-bg gt-p-3" href="{{$.RepoLink}}/preview/branch/{{PathEscapeSegments .DBBranch.Name}}" data-tooltip-content="{{ctx.Locale.Tr "preview"}}">{{svg "octicon-book"}}</a>
-									{{end}}
-									<!-- END DCS Customizations -->
 								</td>
 							</tr>
 						{{end}}

@@ -29,5 +29,8 @@ func ToAPIRelease(ctx context.Context, repo *repo_model.Repository, r *repo_mode
 		PublishedAt:  r.CreatedUnix.AsTime(),
 		Publisher:    ToUser(ctx, r.Publisher, nil),
 		Attachments:  ToAPIAttachments(repo, r.Attachments),
+		/*** DCS Customizations ***/
+		Door43Metadata: ToCatalogEntry(ctx, r.Door43Metadata, nil, nil),
+		/*** END DCS Customizations ***/
 	}
 }

@@ -36,8 +36,12 @@ func ToIngredient(project map[string]interface{}) *api.Ingredient {
 	return ingredient
 }
 
-// ToCatalogEntry converts a Door43Metadata to an api.CatalogEntry
-func ToCatalogEntry(ctx context.Context, dm *repo.Door43Metadata, perm access_model.Permission) *api.CatalogEntry {
+// ToCatalogEntryLoadRepoRelease converts a Door43Metadata to an api.CatalogEntry with repo and release
+func ToCatalogEntryLoadRepoRelease(ctx context.Context, dm *repo.Door43Metadata, perm access_model.Permission) *api.CatalogEntry {
+	if dm == nil {
+		return nil
+	}
+
 	if err := dm.LoadRepo(ctx); err != nil {
 		log.Error("dm.LoadAttributes(): %v", err)
 		return nil
@@ -48,18 +52,31 @@ func ToCatalogEntry(ctx context.Context, dm *repo.Door43Metadata, perm access_mo
 		return nil
 	}
 
+	var repo *api.Repository
+	if dm.Repo != nil {
+		repo = innerToRepo(ctx, dm.Repo, perm, false)
+	}
+
 	var release *api.Release
 	if dm.Release != nil {
 		release = ToAPIRelease(ctx, dm.Repo, dm.Release)
 	}
 
+	return ToCatalogEntry(ctx, dm, repo, release)
+}
+
+// ToCatalogEntry converts a Door43Metadata to an api.CatalogEntry given dm, API repo and API release
+func ToCatalogEntry(ctx context.Context, dm *repo.Door43Metadata, repo *api.Repository, release *api.Release) *api.CatalogEntry {
+	if dm == nil {
+		return nil
+	}
 	return &api.CatalogEntry{
 		ID:                     dm.ID,
 		Self:                   dm.CatalogEntryURL(),
 		Name:                   dm.Repo.Name,
 		Owner:                  dm.Repo.OwnerName,
 		FullName:               dm.Repo.FullName(),
-		Repo:                   innerToRepo(ctx, dm.Repo, perm, true),
+		Repo:                   repo,
 		Release:                release,
 		TarballURL:             dm.TarballURL(),
 		ZipballURL:             dm.ZipballURL(),
