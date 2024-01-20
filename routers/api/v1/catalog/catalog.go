@@ -828,7 +828,7 @@ func GetCatalogEntry(ctx *context.APIContext) {
 		ctx.Error(http.StatusInternalServerError, "GetUserRepoPermission", err)
 		return
 	}
-	ctx.JSON(http.StatusOK, convert.ToCatalogEntry(ctx, dm, perm))
+	ctx.JSON(http.StatusOK, convert.ToCatalogEntryLoadRepoRelease(ctx, dm, perm))
 }
 
 // GetCatalogMetadata Get the metadata (RC 0.2 manifest) in JSON format for the given ownername, reponame and ref
@@ -1049,7 +1049,7 @@ func searchCatalog(ctx *context.APIContext) {
 			ctx.Error(http.StatusInternalServerError, "GetUserRepoPermission", err)
 			return
 		}
-		dmAPI := convert.ToCatalogEntry(ctx, dm, perm)
+		dmAPI := convert.ToCatalogEntryLoadRepoRelease(ctx, dm, perm)
 		if opts.ShowIngredients == util.OptionalBoolFalse {
 			dmAPI.Ingredients = nil
 		}

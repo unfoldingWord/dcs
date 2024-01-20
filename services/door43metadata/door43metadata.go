@@ -177,7 +177,7 @@ func ProcessDoor43MetadataForRepo(ctx context.Context, repo *repo_model.Reposito
 		return fmt.Errorf("no repository provided")
 	}
 
-	if repo.IsArchived || repo.IsPrivate {
+	if repo.IsArchived || repo.IsPrivate || repo.IsMirror || repo.IsEmpty {
 		_, err := repo_model.DeleteAllDoor43MetadatasByRepoID(ctx, repo.ID)
 		if err != nil {
 			log.Error("DeleteAllDoor43MetadatasByRepoID: %v", err)
@@ -617,6 +617,10 @@ func processDoor43MetadataForRepoRef(ctx context.Context, repo *repo_model.Repos
 		return fmt.Errorf("no ref provided")
 	}
 
+	if repo.IsArchived || repo.IsEmpty || repo.IsMirror || repo.IsPrivate {
+		return fmt.Errorf("repo must not be empty, an arhcive, a mirror or private")
+	}
+
 	err = repo.LoadLatestDMs(ctx)
 	if err != nil {
 		return err
@@ -656,10 +660,9 @@ func processDoor43MetadataForRepoRef(ctx context.Context, repo *repo_model.Repos
 		if dm.Release.IsDraft {
 			return nil
 		}
+		dm.ReleaseID = dm.Release.ID
 		dm.RefType = "tag"
 		if !dm.Release.IsTag && dm.Release.IsCatalogVersion() {
-			dm.ReleaseID = dm.Release.ID
-			dm.Release = dm.Release
 			if dm.Release.IsPrerelease {
 				dm.Stage = door43metadata.StagePreProd
 			} else {
@@ -765,9 +768,10 @@ func UpdateDoor43Metadata(ctx context.Context) error {
 	return nil
 }
 
-func DeleteDoor43MetadataByRepoRef(ctx context.Context, repo *repo_model.Repository, ref string) error {
-	err := repo_model.DeleteDoor43MetadataByRepoRef(ctx, repo, ref)
+func DeleteDoor43MetadataByRepoAndRef(ctx context.Context, repo *repo_model.Repository, ref string) error {
+	err := repo_model.DeleteDoor43MetadataByRepoIDAndRef(ctx, repo.ID, ref)
 	if err != nil {
+		log.Error("DeleteDoor43MetadataByRepoIDAndRef %v", err)
 		return err
 	}
 

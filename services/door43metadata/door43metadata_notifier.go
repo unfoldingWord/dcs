@@ -6,6 +6,7 @@ package door43metadata
 import (
 	"context"
 
+	"code.gitea.io/gitea/models/door43metadata"
 	repo_model "code.gitea.io/gitea/models/repo"
 	user_model "code.gitea.io/gitea/models/user"
 	"code.gitea.io/gitea/modules/git"
@@ -66,8 +67,32 @@ func (m *metadataNotifier) UpdateRelease(ctx context.Context, doer *user_model.U
 }
 
 func (m *metadataNotifier) DeleteRelease(ctx context.Context, doer *user_model.User, rel *repo_model.Release) {
-	if err := DeleteDoor43MetadataByRepoRef(ctx, rel.Repo, rel.TagName); err != nil {
-		log.Error("DeleteRelease: DeleteDoor43MetadataByRepoRef failed [%s, %s]: %v", rel.Repo.FullName(), rel.TagName, err)
+	log.Error("WE ARE IN DELETE RELEASE!!!! %s: %s", rel.Repo.FullName(), rel.TagName)
+	relDB, err := repo_model.GetReleaseByID(ctx, rel.ID)
+	if err != nil && !repo_model.IsErrReleaseNotExist(err) {
+		log.Error("GetReleaseByID: %v", err)
+	}
+	if relDB != nil {
+		log.Error("RELDB IS NOT NIL")
+		dm, err := repo_model.GetDoor43MetadataByRepoIDAndReleaseID(ctx, rel.RepoID, rel.ID)
+		if err != nil {
+			if !repo_model.IsErrDoor43MetadataNotExist(err) {
+				log.Error("GetDoor43MetadataByRepoIDAndReleaseID: %v", err)
+			}
+			return
+		}
+		log.Error("DM IS NOT NIL")
+		dm.Stage = door43metadata.StageOther
+		err = repo_model.UpdateDoor43MetadataCols(ctx, dm, "stage")
+		if err != nil {
+			log.Error("UpdateDoor43MetadataCols: %v", err)
+		}
+		return
+	}
+	log.Error("DELETING %s %d", rel.TagName, rel.ID)
+	err = repo_model.DeleteDoor43MetadataByRepoIDAndReleaseID(ctx, rel.RepoID, rel.ID)
+	if err != nil {
+		log.Error("DeleteRelease: DeleteDoor43MetadataByRepoIDAndReleaseID failed [repo: %s, releaseID: %d]: %v", rel.Repo.FullName(), rel.ID, err)
 	}
 }
 
@@ -132,10 +157,11 @@ func (m *metadataNotifier) RenameRepository(ctx context.Context, doer *user_mode
 }
 
 func (m *metadataNotifier) DeleteRef(ctx context.Context, doer *user_model.User, repo *repo_model.Repository, refFullName git.RefName) {
+	log.Error("WE ARE IN DELETE REF!!!! %s: %v", repo.FullName(), refFullName)
 	if refFullName.IsBranch() {
 		ref := refFullName.ShortName()
-		if err := DeleteDoor43MetadataByRepoRef(ctx, repo, ref); err != nil {
-			log.Error("DeleteRef: DeleteDoor43MetadataByRepoRef failed [%s, %s]: %v", repo.FullName(), ref, err)
+		if err := repo_model.DeleteDoor43MetadataByRepoIDAndRef(ctx, repo.ID, ref); err != nil {
+			log.Error("DeleteRef: DeleteDoor43MetadataByRepoIDAndRef failed [%s, %s]: %v", repo.FullName(), ref, err)
 		}
 	}
 }

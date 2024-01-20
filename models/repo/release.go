@@ -13,6 +13,7 @@ import (
 	"strings"
 
 	"code.gitea.io/gitea/models/db"
+	"code.gitea.io/gitea/models/door43metadata"
 	user_model "code.gitea.io/gitea/models/user"
 	"code.gitea.io/gitea/modules/container"
 	"code.gitea.io/gitea/modules/structs"
@@ -106,6 +107,10 @@ func (r *Release) LoadAttributes(ctx context.Context) error {
 		r.Door43Metadata, err = GetDoor43MetadataByRepoIDAndRef(ctx, r.RepoID, r.TagName)
 		if err != nil && !IsErrDoor43MetadataNotExist(err) {
 			return err
+		}
+		if r.Door43Metadata != nil {
+			r.Door43Metadata.Release = r
+			r.Door43Metadata.Repo = r.Repo
 		}
 	}
 	/*** END DCS Customizations ***/
@@ -225,42 +230,56 @@ type FindReleasesOptions struct {
 	IsDraft       util.OptionalBool
 	TagNames      []string
 	HasSha1       util.OptionalBool // useful to find draft releases which are created with existing tags
+	/*** DCS Customizations ***/
+	InCatalog util.OptionalBool
+	/*** END DCS Customizations ***/
 }
 
 func (opts *FindReleasesOptions) toConds(repoID int64) builder.Cond {
 	cond := builder.NewCond()
-	cond = cond.And(builder.Eq{"repo_id": repoID})
+	/*** DCS Customizations - refactored for joining with the door43_metadata table, prefix `release` ***/
+	cond = cond.And(builder.Eq{"`release`.repo_id": repoID})
 
 	if !opts.IncludeDrafts {
-		cond = cond.And(builder.Eq{"is_draft": false})
+		cond = cond.And(builder.Eq{"`release`.is_draft": false})
 	}
 	if !opts.IncludeTags {
-		cond = cond.And(builder.Eq{"is_tag": false})
+		cond = cond.And(builder.Eq{"`release`.is_tag": false})
 	}
 	if len(opts.TagNames) > 0 {
-		cond = cond.And(builder.In("tag_name", opts.TagNames))
+		cond = cond.And(builder.In("`release`.tag_name", opts.TagNames))
 	}
 	if !opts.IsPreRelease.IsNone() {
-		cond = cond.And(builder.Eq{"is_prerelease": opts.IsPreRelease.IsTrue()})
+		cond = cond.And(builder.Eq{"`release`.is_prerelease": opts.IsPreRelease.IsTrue()})
 	}
 	if !opts.IsDraft.IsNone() {
-		cond = cond.And(builder.Eq{"is_draft": opts.IsDraft.IsTrue()})
+		cond = cond.And(builder.Eq{"`release`.is_draft": opts.IsDraft.IsTrue()})
 	}
 	if !opts.HasSha1.IsNone() {
 		if opts.HasSha1.IsTrue() {
-			cond = cond.And(builder.Neq{"sha1": ""})
+			cond = cond.And(builder.Neq{"`release`.sha1": ""})
 		} else {
-			cond = cond.And(builder.Eq{"sha1": ""})
+			cond = cond.And(builder.Eq{"`release`.sha1": ""})
 		}
 	}
+	/*** END DCS Customizations ***/
 	return cond
 }
 
 // GetReleasesByRepoID returns a list of releases of repository.
 func GetReleasesByRepoID(ctx context.Context, repoID int64, opts FindReleasesOptions) ([]*Release, error) {
+	/*** DCS Customizations - refactor to include InCatalog option ***/
 	sess := db.GetEngine(ctx).
-		Desc("created_unix", "id").
+		Desc("`release`.created_unix", "`release`.id").
 		Where(opts.toConds(repoID))
+
+	if opts.InCatalog.IsTrue() {
+		sess = sess.
+			Join("INNER", "door43_metadata", "`door43_metadata`.release_id = `release`.id").
+			Where(builder.Lte{"`door43_metadata`.stage": door43metadata.StagePreProd}).
+			And(builder.IsNull{"`door43_metadata`.validation_error"})
+	}
+	/*** END DCS Customizations ***/
 
 	if opts.PageSize != 0 {
 		sess = db.SetSessionPagination(sess, &opts.ListOptions)
@@ -298,23 +317,36 @@ func CountReleasesByRepoID(repoID int64, opts FindReleasesOptions) (int64, error
 }
 
 // GetLatestReleaseByRepoID returns the latest release for a repository
-func GetLatestReleaseByRepoID(repoID int64) (*Release, error) {
+func GetLatestReleaseByRepoID(ctx context.Context, repoID int64, includePreRelease bool, inCatalog util.OptionalBool) (*Release, error) {
+	/*** DCS Customizations - Refactored to use includePreRelease and inCatalog booleans ***/
 	cond := builder.NewCond().
-		And(builder.Eq{"repo_id": repoID}).
-		And(builder.Eq{"is_draft": false}).
-		And(builder.Eq{"is_prerelease": false}).
-		And(builder.Eq{"is_tag": false})
+		And(builder.Eq{"`release`.repo_id": repoID}).
+		And(builder.Eq{"`release`.is_draft": false}).
+		And(builder.Eq{"`release`.is_tag": false})
+
+	if !includePreRelease {
+		cond = cond.And(builder.Eq{"`release`.is_prerelease": false})
+	}
+
+	e := db.GetEngine(ctx)
+	if inCatalog.IsTrue() {
+		e = e.Join("INNER", "door43_metadata", "`release`.id = `door43_metadata`.release_id")
+		cond = cond.And(builder.IsNull{"`door43_metadata`.validation_error"}).
+			And(builder.Lte{"`door43_metadata`.stage": door43metadata.StagePreProd})
+	}
 
 	rel := new(Release)
-	has, err := db.GetEngine(db.DefaultContext).
+	has, err := db.GetEngine(ctx).
 		Desc("created_unix", "id").
 		Where(cond).
+		Desc("`release`.created_unix", "`release`.id").
 		Get(rel)
 	if err != nil {
 		return nil, err
 	} else if !has {
 		return nil, ErrReleaseNotExist{0, "latest"}
 	}
+	/*** END DCS Customizations ***/
 
 	return rel, nil
 }

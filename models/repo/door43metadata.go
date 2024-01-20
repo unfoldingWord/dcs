@@ -380,9 +380,6 @@ func (dm *Door43Metadata) CopyEmptyPropertiesFromRepoDM(ctx context.Context) {
 	if dm.Flavor == "" {
 		dm.Flavor = dm.Repo.RepoDM.Flavor
 	}
-	if dm.Resource == "" {
-		dm.Resource = dm.Repo.RepoDM.Resource
-	}
 	if dm.Abbreviation == "" {
 		dm.Abbreviation = dm.Repo.RepoDM.Abbreviation
 	}
@@ -470,7 +467,7 @@ func UpdateDoor43Metadata(ctx context.Context, dm *Door43Metadata) error {
 }
 
 // GetDoor43MetadataByID returns door43 metadata with given ID.
-func GetDoor43MetadataByID(ctx context.Context, id, repoID int64) (*Door43Metadata, error) {
+func GetDoor43MetadataByID(ctx context.Context, id int64) (*Door43Metadata, error) {
 	dm := new(Door43Metadata)
 	has, err := db.GetEngine(ctx).
 		ID(id).
@@ -478,7 +475,7 @@ func GetDoor43MetadataByID(ctx context.Context, id, repoID int64) (*Door43Metada
 	if err != nil {
 		return nil, err
 	} else if !has {
-		return nil, ErrDoor43MetadataNotExist{id, repoID, ""}
+		return nil, ErrDoor43MetadataNotExist{id, 0, 0, ""}
 	}
 	return dm, nil
 }
@@ -496,12 +493,31 @@ func GetMostRecentDoor43MetadataByStage(ctx context.Context, repoID int64, stage
 		return nil, err
 	}
 	if !has {
-		return nil, ErrDoor43MetadataNotExist{0, repoID, ""}
+		return nil, ErrDoor43MetadataNotExist{0, repoID, 0, ""}
 	}
 	return dm, nil
 }
 
-// GetDoor43MetadataByRepoIDAndReleaseID returns the metadata of a given release ID (0 = default branch).
+// GetDoor43MetadataByRepoIDAndReleaseID returns the metadata of a given release ID.
+func GetDoor43MetadataByRepoIDAndReleaseID(ctx context.Context, repoID, relID int64) (*Door43Metadata, error) {
+	if repoID == 0 || relID == 0 {
+		return nil, fmt.Errorf("must provide a repo ID and a release ID")
+	}
+	dm := &Door43Metadata{}
+	has, err := db.GetEngine(ctx).
+		Where(builder.Eq{"repo_id": repoID}).
+		And(builder.Eq{"release_id": relID}).
+		Get(dm)
+	if err != nil {
+		return nil, err
+	}
+	if !has {
+		return nil, ErrDoor43MetadataNotExist{0, repoID, relID, ""}
+	}
+	return dm, nil
+}
+
+// GetDoor43MetadataByRepoIDAndRef returns the metadata of a given repo ID and ref.
 func GetDoor43MetadataByRepoIDAndRef(ctx context.Context, repoID int64, ref string) (*Door43Metadata, error) {
 	dm := &Door43Metadata{}
 	has, err := db.GetEngine(ctx).
@@ -512,7 +528,7 @@ func GetDoor43MetadataByRepoIDAndRef(ctx context.Context, repoID int64, ref stri
 		return nil, err
 	}
 	if !has {
-		return nil, ErrDoor43MetadataNotExist{0, repoID, ref}
+		return nil, ErrDoor43MetadataNotExist{0, repoID, 0, ref}
 	}
 	return dm, nil
 }
@@ -590,9 +606,10 @@ func SortDoorMetadatas(dms []*Door43Metadata) {
 }
 
 // DeleteDoor43MetadataByID deletes a metadata from database by given ID.
-func DeleteDoor43MetadataByID(ctx context.Context, id, repoID int64) error {
-	dm, err := GetDoor43MetadataByID(ctx, id, repoID)
-	if err != nil || dm.RepoID != repoID {
+func DeleteDoor43MetadataByID(ctx context.Context, id int64) error {
+	dm, err := GetDoor43MetadataByID(ctx, id)
+	if err != nil {
+		log.Error("GetDoor43MetadataByID: %v", err)
 		return err
 	}
 	return DeleteDoor43Metadata(ctx, dm)
@@ -611,9 +628,25 @@ func DeleteDoor43Metadata(ctx context.Context, dm *Door43Metadata) error {
 	return err
 }
 
-// DeleteDoor43MetadataByRepoRef deletes a metadata from database by given repo and ref.
-func DeleteDoor43MetadataByRepoRef(ctx context.Context, repo *Repository, ref string) error {
-	dm, err := GetDoor43MetadataByRepoIDAndRef(ctx, repo.ID, ref)
+// DeleteDoor43MetadataByRepoIDAndReleaseID deletes a metadata from database by given repo ID and release ID.
+func DeleteDoor43MetadataByRepoIDAndReleaseID(ctx context.Context, repoID, relID int64) error {
+	if repoID == 0 || relID == 0 {
+		return fmt.Errorf("cannot delete door43_metadata with repo ID or release ID as 0")
+	}
+	dm, err := GetDoor43MetadataByRepoIDAndReleaseID(ctx, repoID, relID)
+	if err != nil {
+		if !IsErrDoor43MetadataNotExist(err) {
+			return err
+		}
+		return nil
+	}
+	_, err = db.GetEngine(db.DefaultContext).ID(dm.ID).Delete(dm)
+	return err
+}
+
+// DeleteDoor43MetadataByRepoIDAndRef deletes a metadata from database by given repo ID and ref.
+func DeleteDoor43MetadataByRepoIDAndRef(ctx context.Context, repoID int64, ref string) error {
+	dm, err := GetDoor43MetadataByRepoIDAndRef(ctx, repoID, ref)
 	if err != nil {
 		if !IsErrDoor43MetadataNotExist(err) {
 			return err
@@ -686,6 +719,7 @@ func (err ErrDoor43MetadataAlreadyExist) Error() string {
 type ErrDoor43MetadataNotExist struct {
 	ID     int64
 	RepoID int64
+	RelID  int64
 	Ref    string
 }
 
@@ -696,7 +730,11 @@ func IsErrDoor43MetadataNotExist(err error) bool {
 }
 
 func (err ErrDoor43MetadataNotExist) Error() string {
-	return fmt.Sprintf("door43 metadata does not exist [id: %d, repo_id: %d, ref: %s]", err.ID, err.RepoID, err.Ref)
+	if err.Ref != "" {
+		return fmt.Sprintf("door43 metadata does not exist [id: %d, repo_id: %d, ref: %s]", err.ID, err.RepoID, err.Ref)
+	} else {
+		return fmt.Sprintf("door43 metadata does not exist [id: %d, repo_id: %d, release_id: %d]", err.ID, err.RepoID, err.RelID)
+	}
 }
 
 // ErrInvalidRelease represents a "InvalidRelease" kind of error.

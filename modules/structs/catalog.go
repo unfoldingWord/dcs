@@ -14,8 +14,8 @@ type CatalogEntry struct {
 	Name                   string        `json:"name"`
 	Owner                  string        `json:"owner"`
 	FullName               string        `json:"full_name"`
-	Repo                   *Repository   `json:"repo"`
-	Release                *Release      `json:"release"`
+	Repo                   *Repository   `json:"repo,omitempty"`
+	Release                *Release      `json:"release,omitempty"`
 	TarballURL             string        `json:"tarbar_url"`
 	ZipballURL             string        `json:"zipball_url"`
 	GitTreesURL            string        `json:"git_trees_url"`

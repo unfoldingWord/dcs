@@ -313,7 +313,7 @@ func SingleRelease(ctx *context.Context) {
 
 // LatestRelease redirects to the latest release
 func LatestRelease(ctx *context.Context) {
-	release, err := repo_model.GetLatestReleaseByRepoID(ctx.Repo.Repository.ID)
+	release, err := repo_model.GetLatestReleaseByRepoID(ctx, ctx.Repo.Repository.ID, false, util.OptionalBoolNone)
 	if err != nil {
 		if repo_model.IsErrReleaseNotExist(err) {
 			ctx.NotFound("LatestRelease", err)
@@ -504,7 +504,15 @@ func NewReleasePost(ctx *context.Context) {
 		rel.PublisherID = ctx.Doer.ID
 		rel.IsTag = false
 
-		if err = releaseservice.UpdateRelease(ctx.Doer, ctx.Repo.GitRepo, rel, attachmentUUIDs, nil, nil); err != nil {
+		/*** DCS Customizations ***/
+		err := rel.LoadAttributes(ctx)
+		if err != nil {
+			ctx.ServerError("LoadAttributes", err)
+			return
+		}
+		/*** END DCS Customizations ***/
+
+		if err = releaseservice.UpdateRelease(ctx, ctx.Doer, ctx.Repo.GitRepo, rel, attachmentUUIDs, nil, nil); err != nil {
 			ctx.Data["Err_TagName"] = true
 			ctx.ServerError("UpdateRelease", err)
 			return

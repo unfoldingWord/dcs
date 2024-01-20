@@ -89,7 +89,7 @@
 							<table>
 							{{if .ValidationError}}
 								<tr><td colspan="2"><div style="color:red; padding: 10px;">INVALID <a href="{{$.RepoLink}}/src/{{.RefType}}/{{.Ref}}/{{.MetadataFilename}}">{{.MetadataFilename}}</a> FILE</div></td></tr>
-							{{else}}
+							{{end}}
 								<tr>
 									<td><strong>{{ctx.Locale.Tr "repo.metadata.title"}}:</strong></td><td>{{.Title}}</td>
 								</tr>
@@ -122,7 +122,6 @@
 								<tr>
 									<td><strong>{{ctx.Locale.Tr "repo.metadata.stage"}}:</strong></td><td>{{.StageStr}}</td>
 								</tr>
-							{{end}}
 								<tr>
 									<td><strong>SHA:</strong></td><td>{{.CommitSHA}}</td>
 								</tr>
