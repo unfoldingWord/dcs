@@ -13199,6 +13199,12 @@
             "in": "query"
           },
           {
+            "type": "boolean",
+            "description": "show only releases that are valid catalog entries. Default is false",
+            "name": "in-catalog",
+            "in": "query"
+          },
+          {
             "type": "integer",
             "description": "page size of results, deprecated - use limit",
             "name": "per_page",
@@ -13298,6 +13304,18 @@
             "name": "repo",
             "in": "path",
             "required": true
+          },
+          {
+            "type": "boolean",
+            "description": "include pre-release as latest if one is newer than prod release. Default is false",
+            "name": "pre-release",
+            "in": "query"
+          },
+          {
+            "type": "boolean",
+            "description": "show only the latest release that is a valid catalog entry. Default is false",
+            "name": "in-catalog",
+            "in": "query"
           }
         ],
         "responses": {
@@ -23607,6 +23625,9 @@
           "type": "string",
           "format": "date-time",
           "x-go-name": "CreatedAt"
+        },
+        "door43_metadata": {
+          "$ref": "#/definitions/CatalogEntry"
         },
         "draft": {
           "type": "boolean",
