@@ -418,13 +418,13 @@ func InsertDoor43Metadata(ctx context.Context, dm *Door43Metadata) error {
 			return err
 		}
 		if dm.ReleaseID > 0 {
-			if err := system.CreateRepositoryNotice("Door43 Metadata created for repo: %s, tag: %s", dm.Repo.Name, dm.Ref); err != nil {
-				return err
-			}
+			// if err := system.CreateRepositoryNotice("Door43 Metadata created for repo: %s, tag: %s", dm.Repo.Name, dm.Ref); err != nil {
+			// 	return err
+			// }
 		} else {
-			if err := system.CreateRepositoryNotice("Door43 Metadata created for repo: %s, branch: %s", dm.Repo.Name, dm.Ref); err != nil {
-				return err
-			}
+			// if err := system.CreateRepositoryNotice("Door43 Metadata created for repo: %s, branch: %s", dm.Repo.Name, dm.Ref); err != nil {
+			// 	return err
+			// }
 		}
 	}
 	return nil
@@ -444,9 +444,9 @@ func UpdateDoor43MetadataCols(ctx context.Context, dm *Door43Metadata, cols ...s
 		if err != nil {
 			return err
 		}
-		if err := system.CreateRepositoryNotice("Door43 Metadata updated for repo: %s, tag: %s", dm.Repo.Name, dm.Ref); err != nil {
-			log.Error("CreateRepositoryNotice: %v", err)
-		}
+		// if err := system.CreateRepositoryNotice("Door43 Metadata updated for repo: %s, tag: %s", dm.Repo.Name, dm.Ref); err != nil {
+		// 	log.Error("CreateRepositoryNotice: %v", err)
+		// }
 	}
 	return err
 }
@@ -459,9 +459,9 @@ func UpdateDoor43Metadata(ctx context.Context, dm *Door43Metadata) error {
 		if err != nil {
 			return err
 		}
-		if err := system.CreateRepositoryNotice("Door43 Metadata updated for repo: %s, tag: %s", dm.Repo.Name, dm.Ref); err != nil {
-			log.Error("CreateRepositoryNotice: %v", err)
-		}
+		// if err := system.CreateRepositoryNotice("Door43 Metadata updated for repo: %s, tag: %s", dm.Repo.Name, dm.Ref); err != nil {
+		// 	log.Error("CreateRepositoryNotice: %v", err)
+		// }
 	}
 	return err
 }
