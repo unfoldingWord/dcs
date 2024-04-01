@@ -244,6 +244,7 @@ type FindReleasesOptions struct {
 	IsPreRelease  util.OptionalBool
 	IsDraft       util.OptionalBool
 	TagNames      []string
+	RepoID        int64
 	HasSha1       util.OptionalBool // useful to find draft releases which are created with existing tags
 	/*** DCS Customizations ***/
 	InCatalog util.OptionalBool
@@ -251,9 +252,14 @@ type FindReleasesOptions struct {
 }
 
 func (opts *FindReleasesOptions) toConds(repoID int64) builder.Cond {
+	opts.RepoID = repoID
+	return opts.ToConds()
+}
+
+func (opts *FindReleasesOptions) ToConds() builder.Cond {
 	cond := builder.NewCond()
 	/*** DCS Customizations - refactored for joining with the door43_metadata table, prefix `release` ***/
-	cond = cond.And(builder.Eq{"`release`.repo_id": repoID})
+	cond = cond.And(builder.Eq{"`release`.repo_id": opts.RepoID})
 
 	if !opts.IncludeDrafts {
 		cond = cond.And(builder.Eq{"`release`.is_draft": false})

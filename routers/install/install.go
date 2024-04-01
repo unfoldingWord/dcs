@@ -7,6 +7,7 @@ package install
 import (
 	"fmt"
 	"net/http"
+	"net/mail"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -407,7 +408,7 @@ func SubmitInstall(ctx *context.Context) {
 		cfg.Section("server").Key("LFS_START_SERVER").SetValue("true")
 		cfg.Section("lfs").Key("PATH").SetValue(form.LFSRootPath)
 		var lfsJwtSecret string
-		if _, lfsJwtSecret, err = generate.NewJwtSecretBase64(); err != nil {
+		if _, lfsJwtSecret, err = generate.NewJwtSecretWithBase64(); err != nil {
 			ctx.RenderWithErr(ctx.Tr("install.lfs_jwt_secret_failed", err), tplInstall, &form)
 			return
 		}
@@ -417,6 +418,11 @@ func SubmitInstall(ctx *context.Context) {
 	}
 
 	if len(strings.TrimSpace(form.SMTPAddr)) > 0 {
+		if _, err := mail.ParseAddress(form.SMTPFrom); err != nil {
+			ctx.RenderWithErr(ctx.Tr("install.smtp_from_invalid"), tplInstall, &form)
+			return
+		}
+
 		cfg.Section("mailer").Key("ENABLED").SetValue("true")
 		cfg.Section("mailer").Key("SMTP_ADDR").SetValue(form.SMTPAddr)
 		cfg.Section("mailer").Key("SMTP_PORT").SetValue(form.SMTPPort)

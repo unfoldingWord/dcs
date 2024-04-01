@@ -61,17 +61,17 @@ func List(ctx *context.Context) {
 
 	var workflows []Workflow
 	if empty, err := ctx.Repo.GitRepo.IsEmpty(); err != nil {
-		ctx.Error(http.StatusInternalServerError, err.Error())
+		ctx.ServerError("IsEmpty", err)
 		return
 	} else if !empty {
 		commit, err := ctx.Repo.GitRepo.GetBranchCommit(ctx.Repo.Repository.DefaultBranch)
 		if err != nil {
-			ctx.Error(http.StatusInternalServerError, err.Error())
+			ctx.ServerError("GetBranchCommit", err)
 			return
 		}
 		entries, err := actions.ListWorkflows(commit)
 		if err != nil {
-			ctx.Error(http.StatusInternalServerError, err.Error())
+			ctx.ServerError("ListWorkflows", err)
 			return
 		}
 
@@ -96,7 +96,7 @@ func List(ctx *context.Context) {
 			workflow := Workflow{Entry: *entry}
 			content, err := actions.GetContentFromEntry(entry)
 			if err != nil {
-				ctx.Error(http.StatusInternalServerError, err.Error())
+				ctx.ServerError("GetContentFromEntry", err)
 				return
 			}
 			wf, err := model.ReadWorkflow(bytes.NewReader(content))
@@ -105,8 +105,13 @@ func List(ctx *context.Context) {
 				workflows = append(workflows, workflow)
 				continue
 			}
-			// Check whether have matching runner
+			// The workflow must contain at least one job without "needs". Otherwise, a deadlock will occur and no jobs will be able to run.
+			hasJobWithoutNeeds := false
+			// Check whether have matching runner and a job without "needs"
 			for _, j := range wf.Jobs {
+				if !hasJobWithoutNeeds && len(j.Needs()) == 0 {
+					hasJobWithoutNeeds = true
+				}
 				runsOnList := j.RunsOn()
 				for _, ro := range runsOnList {
 					if strings.Contains(ro, "${{") {
@@ -123,6 +128,9 @@ func List(ctx *context.Context) {
 				if workflow.ErrMsg != "" {
 					break
 				}
+			}
+			if !hasJobWithoutNeeds {
+				workflow.ErrMsg = ctx.Locale.Tr("actions.runs.no_job_without_needs")
 			}
 			workflows = append(workflows, workflow)
 		}
@@ -173,7 +181,7 @@ func List(ctx *context.Context) {
 
 	runs, total, err := actions_model.FindRuns(ctx, opts)
 	if err != nil {
-		ctx.Error(http.StatusInternalServerError, err.Error())
+		ctx.ServerError("FindAndCount", err)
 		return
 	}
 
@@ -182,7 +190,7 @@ func List(ctx *context.Context) {
 	}
 
 	if err := runs.LoadTriggerUser(ctx); err != nil {
-		ctx.Error(http.StatusInternalServerError, err.Error())
+		ctx.ServerError("LoadTriggerUser", err)
 		return
 	}
 
@@ -190,7 +198,7 @@ func List(ctx *context.Context) {
 
 	actors, err := actions_model.GetActors(ctx, ctx.Repo.Repository.ID)
 	if err != nil {
-		ctx.Error(http.StatusInternalServerError, err.Error())
+		ctx.ServerError("GetActors", err)
 		return
 	}
 	ctx.Data["Actors"] = repo.MakeSelfOnTop(ctx.Doer, actors)

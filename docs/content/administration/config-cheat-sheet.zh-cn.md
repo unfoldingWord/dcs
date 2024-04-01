@@ -29,7 +29,7 @@ menu:
 [ini](https://github.com/go-ini/ini/#recursive-values) 这里的说明。
 标注了 :exclamation: 的配置项表明除非你真的理解这个配置项的意义，否则最好使用默认值。
 
-在下面的默认值中,`$XYZ`代表环境变量`XYZ`的值(详见:`enviroment-to-ini`)。 _`XxYyZz`_是指默认配置的一部分列出的值。这些在 app.ini 文件中不起作用，仅在此处列出作为文档说明。
+在下面的默认值中,`$XYZ`代表环境变量`XYZ`的值(详见:`environment-to-ini`)。 _`XxYyZz`_是指默认配置的一部分列出的值。这些在 app.ini 文件中不起作用，仅在此处列出作为文档说明。
 
 包含`#`或者`;`的变量必须使用引号(`` ` ``或者`""""`)包裹，否则会被解析为注释。
 
@@ -559,7 +559,7 @@ Gitea 创建以下非唯一队列：
 
 ## OpenID (`openid`)
 
-- `ENABLE_OPENID_SIGNIN`: **false**：允许通过OpenID进行身份验证。
+- `ENABLE_OPENID_SIGNIN`: **true**：允许通过OpenID进行身份验证。
 - `ENABLE_OPENID_SIGNUP`: **! DISABLE\_REGISTRATION**：允许通过OpenID进行注册。
 - `WHITELISTED_URIS`: **_empty_**：如果非空，是一组匹配OpenID URI的POSIX正则表达式模式，用于允许访问。
 - `BLACKLISTED_URIS`: **_empty_**：如果非空，是一组匹配OpenID URI的POSIX正则表达式模式，用于阻止访问。

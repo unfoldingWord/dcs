@@ -220,7 +220,7 @@ func GetBookAlignmentCount(bookPath string, commit *git.Commit) (int, error) {
 	n, _ := util.ReadAtMost(dataRc, buf)
 	buf = buf[:n]
 
-	rd := charset.ToUTF8WithFallbackReader(io.MultiReader(bytes.NewReader(buf), dataRc))
+	rd := charset.ToUTF8WithFallbackReader(io.MultiReader(bytes.NewReader(buf), dataRc), charset.ConvertOpts{})
 	buf, err = io.ReadAll(rd)
 	if err != nil {
 		log.Error("io.ReadAll Error: %v", err)

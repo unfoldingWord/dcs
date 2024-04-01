@@ -7,11 +7,13 @@ package contexttest
 import (
 	gocontext "context"
 	"io"
+	"maps"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
 	"strings"
 	"testing"
+	"time"
 
 	access_model "code.gitea.io/gitea/models/perm/access"
 	repo_model "code.gitea.io/gitea/models/repo"
@@ -35,13 +37,24 @@ func mockRequest(t *testing.T, reqPath string) *http.Request {
 	}
 	requestURL, err := url.Parse(path)
 	assert.NoError(t, err)
-	req := &http.Request{Method: method, URL: requestURL, Form: url.Values{}}
+	req := &http.Request{Method: method, URL: requestURL, Form: maps.Clone(requestURL.Query()), Header: http.Header{}}
 	req = req.WithContext(middleware.WithContextData(req.Context()))
 	return req
 }
 
+type MockContextOption struct {
+	Render context.Render
+}
+
 // MockContext mock context for unit tests
-func MockContext(t *testing.T, reqPath string) (*context.Context, *httptest.ResponseRecorder) {
+func MockContext(t *testing.T, reqPath string, opts ...MockContextOption) (*context.Context, *httptest.ResponseRecorder) {
+	var opt MockContextOption
+	if len(opts) > 0 {
+		opt = opts[0]
+	}
+	if opt.Render == nil {
+		opt.Render = &MockRender{}
+	}
 	resp := httptest.NewRecorder()
 	req := mockRequest(t, reqPath)
 	base, baseCleanUp := context.NewBaseContext(resp, req)
@@ -49,8 +62,9 @@ func MockContext(t *testing.T, reqPath string) (*context.Context, *httptest.Resp
 	base.Data = middleware.GetContextData(req.Context())
 	base.Locale = &translation.MockLocale{}
 
-	ctx := context.NewWebContext(base, &MockRender{}, nil)
-
+	ctx := context.NewWebContext(base, opt.Render, nil)
+	ctx.PageData = map[string]any{}
+	ctx.Data["PageStartTime"] = time.Now()
 	chiCtx := chi.NewRouteContext()
 	ctx.Base.AppendContextValue(chi.RouteCtxKey, chiCtx)
 	return ctx, resp

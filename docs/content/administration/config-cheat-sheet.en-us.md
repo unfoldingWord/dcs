@@ -581,7 +581,7 @@ And the following unique queues:
 
 ## OpenID (`openid`)
 
-- `ENABLE_OPENID_SIGNIN`: **false**: Allow authentication in via OpenID.
+- `ENABLE_OPENID_SIGNIN`: **true**: Allow authentication in via OpenID.
 - `ENABLE_OPENID_SIGNUP`: **! DISABLE\_REGISTRATION**: Allow registering via OpenID.
 - `WHITELISTED_URIS`: **_empty_**: If non-empty, list of POSIX regex patterns matching
    OpenID URI's to permit.
@@ -620,7 +620,7 @@ And the following unique queues:
 - `REQUIRE_SIGNIN_VIEW`: **false**: Enable this to force users to log in to view any page or to use API.
 - `ENABLE_NOTIFY_MAIL`: **false**: Enable this to send e-mail to watchers of a repository when
    something happens, like creating issues. Requires `Mailer` to be enabled.
-- `ENABLE_BASIC_AUTHENTICATION`: **true**: Disable this to disallow authenticaton using HTTP
+- `ENABLE_BASIC_AUTHENTICATION`: **true**: Disable this to disallow authentication using HTTP
    BASIC and the user's password. Please note if you disable this you will not be able to access the
    tokens API endpoints using a password. Further, this only disables BASIC authentication using the
    password - not tokens or OAuth Basic.

@@ -393,10 +393,14 @@ func (a *Action) GetCreate() time.Time {
 	return a.CreatedUnix.AsTime()
 }
 
-// GetIssueInfos returns a list of issues associated with
-// the action.
+// GetIssueInfos returns a list of associated information with the action.
 func (a *Action) GetIssueInfos() []string {
-	return strings.SplitN(a.Content, "|", 3)
+	// make sure it always returns 3 elements, because there are some access to the a[1] and a[2] without checking the length
+	ret := strings.SplitN(a.Content, "|", 3)
+	for len(ret) < 3 {
+		ret = append(ret, "")
+	}
+	return ret
 }
 
 // GetIssueTitle returns the title of first issue associated with the action.
@@ -446,12 +450,9 @@ func GetFeeds(ctx context.Context, opts GetFeedsOptions) (ActionList, int64, err
 		return nil, 0, err
 	}
 
-	sess := db.GetEngine(ctx).Where(cond)
-	if setting.Database.Type.IsMySQL() {
-		sess = sess.IndexHint("USE", "JOIN", "IDX_action_c_u_d")
-	}
-	sess = sess.Select("`action`.*"). // this line will avoid select other joined table's columns
-						Join("INNER", "repository", "`repository`.id = `action`.repo_id")
+	sess := db.GetEngine(ctx).Where(cond).
+		Select("`action`.*"). // this line will avoid select other joined table's columns
+		Join("INNER", "repository", "`repository`.id = `action`.repo_id")
 
 	opts.SetDefaultValues()
 	sess = db.SetSessionPagination(sess, &opts)

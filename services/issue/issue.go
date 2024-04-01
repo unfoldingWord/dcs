@@ -16,20 +16,30 @@ import (
 	system_model "code.gitea.io/gitea/models/system"
 	user_model "code.gitea.io/gitea/models/user"
 	"code.gitea.io/gitea/modules/git"
+	"code.gitea.io/gitea/modules/log"
 	"code.gitea.io/gitea/modules/storage"
 	notify_service "code.gitea.io/gitea/services/notify"
 )
 
 // NewIssue creates new issue with labels for repository.
-func NewIssue(ctx context.Context, repo *repo_model.Repository, issue *issues_model.Issue, labelIDs []int64, uuids []string, assigneeIDs []int64) error {
-	if err := issues_model.NewIssue(ctx, repo, issue, labelIDs, uuids); err != nil {
-		return err
-	}
-
-	for _, assigneeID := range assigneeIDs {
-		if _, err := AddAssigneeIfNotAssigned(ctx, issue, issue.Poster, assigneeID, true); err != nil {
+func NewIssue(ctx context.Context, repo *repo_model.Repository, issue *issues_model.Issue, labelIDs []int64, uuids []string, assigneeIDs []int64, projectID int64) error {
+	if err := db.WithTx(ctx, func(ctx context.Context) error {
+		if err := issues_model.NewIssue(ctx, repo, issue, labelIDs, uuids); err != nil {
 			return err
 		}
+		for _, assigneeID := range assigneeIDs {
+			if _, err := AddAssigneeIfNotAssigned(ctx, issue, issue.Poster, assigneeID, true); err != nil {
+				return err
+			}
+		}
+		if projectID > 0 {
+			if err := issues_model.ChangeProjectAssign(ctx, issue, issue.Poster, projectID); err != nil {
+				return err
+			}
+		}
+		return nil
+	}); err != nil {
+		return err
 	}
 
 	mentions, err := issues_model.FindAndUpdateIssueMentions(ctx, issue, issue.Poster, issue.Content)
@@ -57,17 +67,25 @@ func ChangeTitle(ctx context.Context, issue *issues_model.Issue, doer *user_mode
 		return nil
 	}
 
+	if err := issue.LoadRepo(ctx); err != nil {
+		return err
+	}
+
 	if err := issues_model.ChangeIssueTitle(ctx, issue, doer, oldTitle); err != nil {
 		return err
 	}
 
+	var reviewNotifers []*ReviewRequestNotifier
 	if issue.IsPull && issues_model.HasWorkInProgressPrefix(oldTitle) && !issues_model.HasWorkInProgressPrefix(title) {
-		if err := issues_model.PullRequestCodeOwnersReview(ctx, issue, issue.PullRequest); err != nil {
-			return err
+		var err error
+		reviewNotifers, err = PullRequestCodeOwnersReview(ctx, issue, issue.PullRequest)
+		if err != nil {
+			log.Error("PullRequestCodeOwnersReview: %v", err)
 		}
 	}
 
 	notify_service.IssueChangeTitle(ctx, doer, issue, oldTitle)
+	ReviewRequestNotify(ctx, issue, issue.Poster, reviewNotifers)
 
 	return nil
 }

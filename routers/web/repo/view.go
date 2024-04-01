@@ -304,7 +304,7 @@ func renderReadmeFile(ctx *context.Context, subfolder string, readmeFile *git.Tr
 		return
 	}
 
-	rd := charset.ToUTF8WithFallbackReader(io.MultiReader(bytes.NewReader(buf), dataRc))
+	rd := charset.ToUTF8WithFallbackReader(io.MultiReader(bytes.NewReader(buf), dataRc), charset.ConvertOpts{})
 
 	if markupType := markup.Type(readmeFile.Name()); markupType != "" {
 		ctx.Data["IsMarkup"] = true
@@ -455,7 +455,7 @@ func renderFile(ctx *context.Context, entry *git.TreeEntry) {
 			break
 		}
 
-		rd := charset.ToUTF8WithFallbackReader(io.MultiReader(bytes.NewReader(buf), dataRc))
+		rd := charset.ToUTF8WithFallbackReader(io.MultiReader(bytes.NewReader(buf), dataRc), charset.ConvertOpts{})
 
 		shouldRenderSource := ctx.FormString("display") == "source"
 		readmeExist := util.IsReadmeFileName(blob.Name())

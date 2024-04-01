@@ -159,6 +159,14 @@ func (r *Review) LoadReviewer(ctx context.Context) (err error) {
 		return err
 	}
 	r.Reviewer, err = user_model.GetPossibleUserByID(ctx, r.ReviewerID)
+	if err != nil {
+		if !user_model.IsErrUserNotExist(err) {
+			return fmt.Errorf("GetPossibleUserByID [%d]: %w", r.ReviewerID, err)
+		}
+		r.ReviewerID = user_model.GhostUserID
+		r.Reviewer = user_model.NewGhostUser()
+		return nil
+	}
 	return err
 }
 
@@ -232,11 +240,11 @@ type CreateReviewOptions struct {
 
 // IsOfficialReviewer check if at least one of the provided reviewers can make official reviews in issue (counts towards required approvals)
 func IsOfficialReviewer(ctx context.Context, issue *Issue, reviewer *user_model.User) (bool, error) {
-	pr, err := GetPullRequestByIssueID(ctx, issue.ID)
-	if err != nil {
+	if err := issue.LoadPullRequest(ctx); err != nil {
 		return false, err
 	}
 
+	pr := issue.PullRequest
 	rule, err := git_model.GetFirstMatchProtectedBranchRule(ctx, pr.BaseRepoID, pr.BaseBranch)
 	if err != nil {
 		return false, err
@@ -264,11 +272,10 @@ func IsOfficialReviewer(ctx context.Context, issue *Issue, reviewer *user_model.
 
 // IsOfficialReviewerTeam check if reviewer in this team can make official reviews in issue (counts towards required approvals)
 func IsOfficialReviewerTeam(ctx context.Context, issue *Issue, team *organization.Team) (bool, error) {
-	pr, err := GetPullRequestByIssueID(ctx, issue.ID)
-	if err != nil {
+	if err := issue.LoadPullRequest(ctx); err != nil {
 		return false, err
 	}
-	pb, err := git_model.GetFirstMatchProtectedBranchRule(ctx, pr.BaseRepoID, pr.BaseBranch)
+	pb, err := git_model.GetFirstMatchProtectedBranchRule(ctx, issue.PullRequest.BaseRepoID, issue.PullRequest.BaseBranch)
 	if err != nil {
 		return false, err
 	}
@@ -285,8 +292,14 @@ func IsOfficialReviewerTeam(ctx context.Context, issue *Issue, team *organizatio
 
 // CreateReview creates a new review based on opts
 func CreateReview(ctx context.Context, opts CreateReviewOptions) (*Review, error) {
+	ctx, committer, err := db.TxContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+	defer committer.Close()
+	sess := db.GetEngine(ctx)
+
 	review := &Review{
-		Type:         opts.Type,
 		Issue:        opts.Issue,
 		IssueID:      opts.Issue.ID,
 		Reviewer:     opts.Reviewer,
@@ -296,15 +309,39 @@ func CreateReview(ctx context.Context, opts CreateReviewOptions) (*Review, error
 		CommitID:     opts.CommitID,
 		Stale:        opts.Stale,
 	}
+
 	if opts.Reviewer != nil {
+		review.Type = opts.Type
 		review.ReviewerID = opts.Reviewer.ID
-	} else {
-		if review.Type != ReviewTypeRequest {
-			review.Type = ReviewTypeRequest
+
+		reviewCond := builder.Eq{"reviewer_id": opts.Reviewer.ID, "issue_id": opts.Issue.ID}
+		// make sure user review requests are cleared
+		if opts.Type != ReviewTypePending {
+			if _, err := sess.Where(reviewCond.And(builder.Eq{"type": ReviewTypeRequest})).Delete(new(Review)); err != nil {
+				return nil, err
+			}
 		}
+		// make sure if the created review gets dismissed no old review surface
+		// other types can be ignored, as they don't affect branch protection
+		if opts.Type == ReviewTypeApprove || opts.Type == ReviewTypeReject {
+			if _, err := sess.Where(reviewCond.And(builder.In("type", ReviewTypeApprove, ReviewTypeReject))).
+				Cols("dismissed").Update(&Review{Dismissed: true}); err != nil {
+				return nil, err
+			}
+		}
+
+	} else if opts.ReviewerTeam != nil {
+		review.Type = ReviewTypeRequest
 		review.ReviewerTeamID = opts.ReviewerTeam.ID
+
+	} else {
+		return nil, fmt.Errorf("provide either reviewer or reviewer team")
 	}
-	return review, db.Insert(ctx, review)
+
+	if _, err := sess.Insert(review); err != nil {
+		return nil, err
+	}
+	return review, committer.Commit()
 }
 
 // GetCurrentReview returns the current pending review of reviewer for given issue
@@ -584,7 +621,7 @@ func AddReviewRequest(ctx context.Context, issue *Issue, reviewer, doer *user_mo
 
 	// skip it when reviewer hase been request to review
 	if review != nil && review.Type == ReviewTypeRequest {
-		return nil, nil
+		return nil, committer.Commit() // still commit the transaction, or committer.Close() will rollback it, even if it's a reused transaction.
 	}
 
 	// if the reviewer is an official reviewer,
@@ -621,6 +658,9 @@ func AddReviewRequest(ctx context.Context, issue *Issue, reviewer, doer *user_mo
 	if err != nil {
 		return nil, err
 	}
+
+	// func caller use the created comment to retrieve created review too.
+	comment.Review = review
 
 	return comment, committer.Commit()
 }

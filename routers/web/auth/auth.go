@@ -109,9 +109,21 @@ func resetLocale(ctx *context.Context, u *user_model.User) error {
 	return nil
 }
 
+func RedirectAfterLogin(ctx *context.Context) {
+	redirectTo := ctx.FormString("redirect_to")
+	if redirectTo == "" {
+		redirectTo = ctx.GetSiteCookie("redirect_to")
+	}
+	middleware.DeleteRedirectToCookie(ctx.Resp)
+	nextRedirectTo := setting.AppSubURL + string(setting.LandingPageURL)
+	if setting.LandingPageURL == setting.LandingPageLogin {
+		nextRedirectTo = setting.AppSubURL + "/" // do not cycle-redirect to the login page
+	}
+	ctx.RedirectToFirst(redirectTo, nextRedirectTo)
+}
+
 func checkAutoLogin(ctx *context.Context) bool {
-	// Check auto-login
-	isSucceed, err := AutoSignIn(ctx)
+	isSucceed, err := AutoSignIn(ctx) // try to auto-login
 	if err != nil {
 		ctx.ServerError("AutoSignIn", err)
 		return true
@@ -120,17 +132,10 @@ func checkAutoLogin(ctx *context.Context) bool {
 	redirectTo := ctx.FormString("redirect_to")
 	if len(redirectTo) > 0 {
 		middleware.SetRedirectToCookie(ctx.Resp, redirectTo)
-	} else {
-		redirectTo = ctx.GetSiteCookie("redirect_to")
 	}
 
 	if isSucceed {
-		middleware.DeleteRedirectToCookie(ctx.Resp)
-		nextRedirectTo := setting.AppSubURL + string(setting.LandingPageURL)
-		if setting.LandingPageURL == setting.LandingPageLogin {
-			nextRedirectTo = setting.AppSubURL + "/" // do not cycle-redirect to the login page
-		}
-		ctx.RedirectToFirst(redirectTo, nextRedirectTo)
+		RedirectAfterLogin(ctx)
 		return true
 	}
 
@@ -146,7 +151,11 @@ func SignIn(ctx *context.Context) {
 		return
 	}
 
-	orderedOAuth2Names, oauth2Providers, err := oauth2.GetActiveOAuth2Providers()
+	if ctx.IsSigned {
+		RedirectAfterLogin(ctx)
+		return
+	}
+	orderedOAuth2Names, oauth2Providers, err := oauth2.GetOAuth2ProvidersMap(true)
 	if err != nil {
 		ctx.ServerError("UserSignIn", err)
 		return
@@ -170,7 +179,7 @@ func SignIn(ctx *context.Context) {
 func SignInPost(ctx *context.Context) {
 	ctx.Data["Title"] = ctx.Tr("sign_in")
 
-	orderedOAuth2Names, oauth2Providers, err := oauth2.GetActiveOAuth2Providers()
+	orderedOAuth2Names, oauth2Providers, err := oauth2.GetOAuth2ProvidersMap(true)
 	if err != nil {
 		ctx.ServerError("UserSignIn", err)
 		return
@@ -392,7 +401,7 @@ func SignUp(ctx *context.Context) {
 
 	ctx.Data["SignUpLink"] = setting.AppSubURL + "/user/sign_up"
 
-	orderedOAuth2Names, oauth2Providers, err := oauth2.GetActiveOAuth2Providers()
+	orderedOAuth2Names, oauth2Providers, err := oauth2.GetOAuth2ProvidersMap(true)
 	if err != nil {
 		ctx.ServerError("UserSignUp", err)
 		return
@@ -422,7 +431,7 @@ func SignUpPost(ctx *context.Context) {
 
 	ctx.Data["SignUpLink"] = setting.AppSubURL + "/user/sign_up"
 
-	orderedOAuth2Names, oauth2Providers, err := oauth2.GetActiveOAuth2Providers()
+	orderedOAuth2Names, oauth2Providers, err := oauth2.GetOAuth2ProvidersMap(true)
 	if err != nil {
 		ctx.ServerError("UserSignUp", err)
 		return
