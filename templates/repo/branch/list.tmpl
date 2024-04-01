@@ -64,7 +64,7 @@
 								{{end}}
 								<!-- DCS Customizations -->
 								{{if $.Repository.DefaultBranchDM}}
-									<a role="button" class="btn interact-bg gt-p-3" href="{{$.RepoLink}}/preview/branch/{{PathEscapeSegments .DefaultBranchBranch.DBBranch.Name}}" data-tooltip-content="{{ctx.Locale.Tr "preview"}} {{$.Repository.DefaultBranchDM.CommitSHA}}">{{svg "octicon-book"}}</a>
+									<a role="button" class="btn interact-bg gt-p-3" href="{{$.RepoLink}}/preview/branch/{{PathEscapeSegments .DefaultBranchBranch.DBBranch.Name}}" data-tooltip-content="{{ctx.Locale.Tr "preview"}} / PDF">{{svg "octicon-book"}}</a>
 								{{end}}
 								<!-- END DCS Customizations -->
 							</td>
@@ -191,7 +191,7 @@
 									{{end}}
 									<!-- DCS Customizations -->
 									{{if $.RepoDM.ID}}
-										<a role="button" class="btn interact-bg gt-p-3" href="{{$.RepoLink}}/preview/branch/{{PathEscapeSegments .DBBranch.Name}}" data-tooltip-content="{{ctx.Locale.Tr "preview"}}">{{svg "octicon-book"}}</a>
+										<a role="button" class="btn interact-bg gt-p-3" href="{{$.RepoLink}}/preview/branch/{{PathEscapeSegments .DBBranch.Name}}" data-tooltip-content="{{ctx.Locale.Tr "preview"}} / PDF">{{svg "octicon-book"}}</a>
 									{{end}}
 									<!-- END DCS Customizations -->
 									{{if and $.IsWriter (not $.IsMirror) (not $.Repository.IsArchived) (not .IsProtected)}}

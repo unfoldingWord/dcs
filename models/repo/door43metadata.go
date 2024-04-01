@@ -417,15 +417,15 @@ func InsertDoor43Metadata(ctx context.Context, dm *Door43Metadata) error {
 		if err := dm.LoadRepo(ctx); err != nil {
 			return err
 		}
-		if dm.ReleaseID > 0 {
-			// if err := system.CreateRepositoryNotice("Door43 Metadata created for repo: %s, tag: %s", dm.Repo.Name, dm.Ref); err != nil {
-			// 	return err
-			// }
-		} else {
-			// if err := system.CreateRepositoryNotice("Door43 Metadata created for repo: %s, branch: %s", dm.Repo.Name, dm.Ref); err != nil {
-			// 	return err
-			// }
-		}
+		// if dm.ReleaseID > 0 {
+		// 	if err := system.CreateRepositoryNotice("Door43 Metadata created for repo: %s, tag: %s", dm.Repo.Name, dm.Ref); err != nil {
+		// 		return err
+		// 	}
+		// } else {
+		// 	if err := system.CreateRepositoryNotice("Door43 Metadata created for repo: %s, branch: %s", dm.Repo.Name, dm.Ref); err != nil {
+		// 		return err
+		// 	}
+		// }
 	}
 	return nil
 }

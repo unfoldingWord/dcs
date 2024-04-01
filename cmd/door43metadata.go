@@ -7,6 +7,7 @@ import (
 	"fmt"
 
 	repo_model "code.gitea.io/gitea/models/repo"
+	"code.gitea.io/gitea/models/system"
 	"code.gitea.io/gitea/modules/log"
 	"code.gitea.io/gitea/modules/storage"
 	door43metadata_service "code.gitea.io/gitea/services/door43metadata"
@@ -65,15 +66,18 @@ func runDoor43Metadata(ctx *cli.Context) error {
 		return door43metadata_service.ProcessDoor43MetadataForRepo(stdCtx, repo, "")
 	}
 
+	if err := system.CreateRepositoryNotice("Starting FULL Door43 Metadata Update - PROCESSING ALL REPOS AND REFS"); err != nil {
+		return err
+	}
+
 	err := door43metadata_service.UpdateDoor43Metadata(stdCtx)
 	if err != nil {
 		return err
 	}
 
-	if repoName != "" {
-		log.Info("Finished gathering the door43metadata for %s/%s", ownerName, repoName)
-	} else {
-		log.Info("Finished gathering the door43metadaa for all repos")
+	log.Info("Finished gathering the door43metadata for all repos")
+	if err := system.CreateRepositoryNotice("FINSIEHD FULL Door43 Metadata Update - PROCESSED ALL REPOS AND REFS"); err != nil {
+		return err
 	}
 
 	return nil

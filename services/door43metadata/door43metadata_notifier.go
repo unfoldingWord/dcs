@@ -67,13 +67,12 @@ func (m *metadataNotifier) UpdateRelease(ctx context.Context, doer *user_model.U
 }
 
 func (m *metadataNotifier) DeleteRelease(ctx context.Context, doer *user_model.User, rel *repo_model.Release) {
-	log.Error("WE ARE IN DELETE RELEASE!!!! %s: %s", rel.Repo.FullName(), rel.TagName)
+	// See if the release really was deleted or was just made into a tag
 	relDB, err := repo_model.GetReleaseByID(ctx, rel.ID)
 	if err != nil && !repo_model.IsErrReleaseNotExist(err) {
 		log.Error("GetReleaseByID: %v", err)
 	}
 	if relDB != nil {
-		log.Error("RELDB IS NOT NIL")
 		dm, err := repo_model.GetDoor43MetadataByRepoIDAndReleaseID(ctx, rel.RepoID, rel.ID)
 		if err != nil {
 			if !repo_model.IsErrDoor43MetadataNotExist(err) {
@@ -81,7 +80,6 @@ func (m *metadataNotifier) DeleteRelease(ctx context.Context, doer *user_model.U
 			}
 			return
 		}
-		log.Error("DM IS NOT NIL")
 		dm.Stage = door43metadata.StageOther
 		err = repo_model.UpdateDoor43MetadataCols(ctx, dm, "stage")
 		if err != nil {
@@ -89,7 +87,6 @@ func (m *metadataNotifier) DeleteRelease(ctx context.Context, doer *user_model.U
 		}
 		return
 	}
-	log.Error("DELETING %s %d", rel.TagName, rel.ID)
 	err = repo_model.DeleteDoor43MetadataByRepoIDAndReleaseID(ctx, rel.RepoID, rel.ID)
 	if err != nil {
 		log.Error("DeleteRelease: DeleteDoor43MetadataByRepoIDAndReleaseID failed [repo: %s, releaseID: %d]: %v", rel.Repo.FullName(), rel.ID, err)
@@ -157,7 +154,6 @@ func (m *metadataNotifier) RenameRepository(ctx context.Context, doer *user_mode
 }
 
 func (m *metadataNotifier) DeleteRef(ctx context.Context, doer *user_model.User, repo *repo_model.Repository, refFullName git.RefName) {
-	log.Error("WE ARE IN DELETE REF!!!! %s: %v", repo.FullName(), refFullName)
 	if refFullName.IsBranch() {
 		ref := refFullName.ShortName()
 		if err := repo_model.DeleteDoor43MetadataByRepoIDAndRef(ctx, repo.ID, ref); err != nil {
