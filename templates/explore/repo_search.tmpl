@@ -10,6 +10,7 @@
 				<input type="hidden" name="tab" value="{{.TabName}}">
 			{{end}}
 			<button class="ui primary button">{{ctx.Locale.Tr "explore.search"}}</button>
+			{{template "explore/info_icon" .}}
 		</div>
 	</form>
 	<!-- Sort -->
