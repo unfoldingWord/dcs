@@ -15,6 +15,7 @@ import (
 	"net/http"
 	"net/url"
 	"path"
+	"path/filepath"
 	"slices"
 	"strings"
 	"time"
@@ -385,6 +386,11 @@ func renderFile(ctx *context.Context, entry *git.TreeEntry) {
 	ctx.Data["Title"] = ctx.Tr("repo.file.title", ctx.Repo.Repository.Name+"/"+path.Base(ctx.Repo.TreePath), ctx.Repo.RefName)
 	ctx.Data["FileIsSymlink"] = entry.IsLink()
 	ctx.Data["FileName"] = blob.Name()
+	/*** DCS Customizations ***/
+	fileExt := filepath.Ext(blob.Name())
+	ctx.Data["FileExt"] = fileExt
+	ctx.Data["IgnoreLanguageDirection"] = fileExt != ".md" || blob.Name() == "README.md" || blob.Name() == "LICENSE.md"
+	/*** END DCS Customizations ***/
 	ctx.Data["RawFileLink"] = ctx.Repo.RepoLink + "/raw/" + ctx.Repo.BranchNameSubURL() + "/" + util.PathEscapeSegments(ctx.Repo.TreePath)
 
 	commit, err := ctx.Repo.Commit.GetCommitByPath(ctx.Repo.TreePath)
@@ -1012,6 +1018,9 @@ func renderHomeCode(ctx *context.Context) {
 
 	if entry.IsDir() {
 		renderDirectory(ctx)
+		/*** DCS Customizations ***/
+		ctx.Data["IgnoreLanguageDirection"] = true
+		/*** END DCS Customizations ***/
 	} else {
 		renderFile(ctx, entry)
 	}
@@ -1063,6 +1072,11 @@ func renderHomeCode(ctx *context.Context) {
 	ctx.Data["TreeLink"] = treeLink
 	ctx.Data["TreeNames"] = treeNames
 	ctx.Data["BranchLink"] = branchLink
+
+	/*** DCS Customizations ***/
+	ctx.Data["Entry"] = entry
+	/*** END DCS Customizations ***/
+
 	ctx.HTML(http.StatusOK, tplRepoHome)
 }
 

@@ -24,6 +24,7 @@
 					</div>
 				</div>
 				{{if not .Repository.IsFork}}
+					{{if .SignedUser.IsAdmin}}<!--- DCS Customizations -- Adds if .SignedUser.IsAdmin -->
 					<div class="inline field">
 						<label>{{ctx.Locale.Tr "repo.visibility"}}</label>
 						<div class="ui checkbox" {{if and (not .Repository.IsPrivate) (gt .Repository.NumStars 0)}}data-tooltip-content="{{ctx.Locale.Tr "repo.stars_remove_warning"}}"{{end}}>
@@ -35,6 +36,7 @@
 							<label>{{ctx.Locale.Tr "repo.visibility_helper"}} {{if .Repository.NumForks}}<span class="text red">{{ctx.Locale.Tr "repo.visibility_fork_helper"}}</span>{{end}}</label>
 						</div>
 					</div>
+					{{end}}
 				{{end}}
 				<div class="field {{if .Err_Description}}error{{end}}">
 					<label for="description">{{ctx.Locale.Tr "repo.repo_desc"}}</label>
@@ -837,7 +839,7 @@
 					</div>
 				</div>
 				{{if not .Repository.IsMirror}}
-					<div class="flex-item tw-items-center">
+					<div class="flex-item gt-ac">
 						<div class="flex-item-main">
 							{{if .Repository.IsArchived}}
 								<div class="flex-item-title">{{ctx.Locale.Tr "repo.settings.unarchive.header"}}</div>

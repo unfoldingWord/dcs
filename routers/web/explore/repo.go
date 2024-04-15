@@ -6,8 +6,10 @@ package explore
 import (
 	"fmt"
 	"net/http"
+	"strings" // DCS Customizations
 
 	"code.gitea.io/gitea/models/db"
+	"code.gitea.io/gitea/models/door43metadata"
 	repo_model "code.gitea.io/gitea/models/repo"
 	"code.gitea.io/gitea/modules/base"
 	"code.gitea.io/gitea/modules/log"
@@ -51,7 +53,7 @@ func RenderRepoSearch(ctx *context.Context, opts *RepoSearchOptions) {
 	}
 
 	var (
-		repos   []*repo_model.Repository
+		repos   repo_model.RepositoryList // DCS Customizations - Fixed this
 		count   int64
 		err     error
 		orderBy db.SearchOrderBy
@@ -106,6 +108,41 @@ func RenderRepoSearch(ctx *context.Context, opts *RepoSearchOptions) {
 	topicOnly := ctx.FormBool("topic")
 	ctx.Data["TopicOnly"] = topicOnly
 
+	/*** DCS Customizations ***/
+	var books, langs, keywords, subjects, flavorTypes, flavors, abbreviations, contentFormats, repoNames, owners, metadataTypes, metadataVersions []string
+	origKeyword := keyword
+	if keyword != "" {
+		for _, token := range door43metadata.SplitAtCommaNotInString(keyword, true) {
+			if strings.HasPrefix(token, "book:") {
+				books = append(books, strings.TrimPrefix(token, "book:"))
+			} else if strings.HasPrefix(token, "lang:") {
+				langs = append(langs, strings.TrimPrefix(token, "lang:"))
+			} else if strings.HasPrefix(token, "subject:") {
+				subjects = append(subjects, strings.Trim(strings.TrimPrefix(token, "subject:"), `"`))
+			} else if strings.HasPrefix(token, "flavor_type:") {
+				flavorTypes = append(flavorTypes, strings.Trim(strings.TrimPrefix(token, "flavor_type:"), `"`))
+			} else if strings.HasPrefix(token, "flavor:") {
+				flavors = append(flavors, strings.Trim(strings.TrimPrefix(token, "flavor:"), `"`))
+			} else if strings.HasPrefix(token, "abbreviation:") {
+				abbreviations = append(abbreviations, strings.Trim(strings.TrimPrefix(token, "abbreviation:"), `"`))
+			} else if strings.HasPrefix(token, "format:") {
+				contentFormats = append(contentFormats, strings.Trim(strings.TrimPrefix(token, "format:"), `"`))
+			} else if strings.HasPrefix(token, "repo:") {
+				repoNames = append(repoNames, strings.TrimPrefix(token, "repo:"))
+			} else if strings.HasPrefix(token, "owner:") {
+				owners = append(owners, strings.TrimPrefix(token, "owner:"))
+			} else if strings.HasPrefix(token, "metadata_type:") {
+				metadataTypes = append(metadataTypes, strings.TrimPrefix(token, "metadata_type:"))
+			} else if strings.HasPrefix(token, "metadata_version:") {
+				metadataVersions = append(metadataVersions, strings.TrimPrefix(token, "metadata_version:"))
+			} else {
+				keywords = append(keywords, token)
+			}
+		}
+		keyword = strings.Join(keywords, ", ")
+	}
+	/*** END DCS Customizations ***/
+
 	language := ctx.FormTrim("language")
 	ctx.Data["Language"] = language
 
@@ -139,6 +176,17 @@ func RenderRepoSearch(ctx *context.Context, opts *RepoSearchOptions) {
 		TopicOnly:          topicOnly,
 		Language:           language,
 		IncludeDescription: setting.UI.SearchRepoDescription,
+		Books:              books,            // DCS Customizaitons
+		Languages:          langs,            // DCS Customizaitons
+		Subjects:           subjects,         // DCS Customizaitons
+		FlavorTypes:        flavorTypes,      // DCS Customizations
+		Flavors:            flavors,          // DCS Customizations
+		Abbreviations:      abbreviations,    // DCS Customizations
+		ContentFormats:     contentFormats,   // DCS Customizations
+		Repos:              repoNames,        // DCS Customizaitons
+		Owners:             owners,           // DCS Customizaitons
+		MetadataTypes:      metadataTypes,    // DCS Customizaitons
+		MetadataVersions:   metadataVersions, // DCS Customizaitons
 		OnlyShowRelevant:   opts.OnlyShowRelevant,
 		Archived:           archived,
 		Fork:               fork,
@@ -150,6 +198,14 @@ func RenderRepoSearch(ctx *context.Context, opts *RepoSearchOptions) {
 		ctx.ServerError("SearchRepository", err)
 		return
 	}
+
+	/*** DCS Customizations ***/
+	err = repos.LoadLatestDMs(ctx)
+	if err != nil {
+		log.Error("LoadLatestDMs: unable to load DMs for repos")
+	}
+	/*** END DCS Customizations ***/
+
 	if isSitemap {
 		m := sitemap.NewSitemap()
 		for _, item := range repos {
@@ -162,7 +218,7 @@ func RenderRepoSearch(ctx *context.Context, opts *RepoSearchOptions) {
 		return
 	}
 
-	ctx.Data["Keyword"] = keyword
+	ctx.Data["Keyword"] = origKeyword // DCS Customizations
 	ctx.Data["Total"] = count
 	ctx.Data["Repos"] = repos
 	ctx.Data["IsRepoIndexerEnabled"] = setting.Indexer.RepoIndexerEnabled

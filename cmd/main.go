@@ -137,6 +137,7 @@ func NewMainApp(version, versionExtra string) *cli.App {
 		CmdMigrateStorage,
 		CmdDumpRepository,
 		CmdRestoreRepository,
+		CmdDoor43Metadata,
 		CmdActions,
 	}
 

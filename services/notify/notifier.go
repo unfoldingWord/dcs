@@ -63,6 +63,10 @@ type Notifier interface {
 	UpdateRelease(ctx context.Context, doer *user_model.User, rel *repo_model.Release)
 	DeleteRelease(ctx context.Context, doer *user_model.User, rel *repo_model.Release)
 
+	/*** DCS Customizations ***/
+	NewTagRelease(ctx context.Context, rel *repo_model.Release)
+	/*** DCS Customizations ***/
+
 	PushCommits(ctx context.Context, pusher *user_model.User, repo *repo_model.Repository, opts *repository.PushUpdateOptions, commits *repository.PushCommits)
 	CreateRef(ctx context.Context, doer *user_model.User, repo *repo_model.Repository, refFullName git.RefName, refID string)
 	DeleteRef(ctx context.Context, doer *user_model.User, repo *repo_model.Repository, refFullName git.RefName)

@@ -55,7 +55,9 @@ cpu.out
 /dist
 /custom/*
 !/custom/conf/app.example.ini
+!/custom/bin
 /data
+/data-*
 /indexers
 /log
 /public/assets/img/avatar
@@ -111,3 +113,9 @@ prime/
 
 # Manpage
 /man
+
+# Docker compose
+/mysql
+/data-main
+/data-release
+.history

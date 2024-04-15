@@ -7,6 +7,7 @@
 		<div class="ui small fluid action input tw-flex-1">
 			{{template "shared/search/input" dict "Value" .Keyword "Placeholder" (ctx.Locale.Tr "search.repo_kind")}}
 			{{template "shared/search/button"}}
+			{{template "shared/search/info_icon" .}}
 		</div>
 		<!-- Filter -->
 		<div class="item ui small dropdown jump">

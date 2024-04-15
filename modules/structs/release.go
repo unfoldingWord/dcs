@@ -24,9 +24,10 @@ type Release struct {
 	// swagger:strfmt date-time
 	CreatedAt time.Time `json:"created_at"`
 	// swagger:strfmt date-time
-	PublishedAt time.Time     `json:"published_at"`
-	Publisher   *User         `json:"author"`
-	Attachments []*Attachment `json:"assets"`
+	PublishedAt    time.Time     `json:"published_at"`
+	Publisher      *User         `json:"author"`
+	Attachments    []*Attachment `json:"assets"`          // DCS Customizations
+	Door43Metadata *CatalogEntry `json:"door43_metadata"` // DCS Customizations
 }
 
 // CreateReleaseOption options when creating a release

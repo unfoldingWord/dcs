@@ -371,6 +371,7 @@ type DiffFile struct {
 	IsViewed                  bool // User specific
 	HasChangedSinceLastReview bool // User specific
 	Language                  string
+	Entry                     *git.TreeEntry // DCS Customizations
 	Mode                      string
 	OldMode                   string
 }
