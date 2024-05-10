@@ -92,6 +92,7 @@ import {initRepoDiffCommitBranchesAndTags} from './features/repo-diff-commit.js'
 import {initDirAuto} from './modules/dirauto.js';
 import {initRepositorySearch} from './features/repo-search.js';
 import {initColorPickers} from './features/colorpicker.js';
+import {initAdminSelfCheck} from './features/admin/selfcheck.js';
 
 // Init Gitea's Fomantic settings
 initGiteaFomantic();
@@ -137,6 +138,7 @@ onDomReady(() => {
   initAdminEmails();
   initAdminUserListSearchForm();
   initAdminConfigs();
+  initAdminSelfCheck();
 
   initDashboardRepoList();
 
