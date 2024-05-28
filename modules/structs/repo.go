@@ -112,8 +112,7 @@ type Repository struct {
 	// swagger:strfmt date-time
 	MirrorUpdated time.Time     `json:"mirror_updated,omitempty"`
 	RepoTransfer  *RepoTransfer `json:"repo_transfer"`
-	// topics
-	Topics []string `json:"topics"` // DCS Customizations
+	Topics        []string      `json:"topics"`
 	// language from the manifest
 	MetadataType string `json:"metadata_type"` // DCS Customiations
 	// language from the manifest
