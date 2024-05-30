@@ -5,12 +5,15 @@ package repo
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/url"
+	"os"
 	"path"
 	"strings" // DCS Customizations
 
 	"code.gitea.io/gitea/models/db"
+	"code.gitea.io/gitea/modules/log"
 	"code.gitea.io/gitea/modules/setting"
 	"code.gitea.io/gitea/modules/storage"
 	"code.gitea.io/gitea/modules/timeutil"
@@ -233,7 +236,10 @@ func DeleteAttachments(ctx context.Context, attachments []*Attachment, remove bo
 	if remove {
 		for i, a := range attachments {
 			if err := storage.Attachments.Delete(a.RelativePath()); err != nil {
-				return i, err
+				if !errors.Is(err, os.ErrNotExist) {
+					return i, err
+				}
+				log.Warn("Attachment file not found when deleting: %s", a.RelativePath())
 			}
 		}
 	}
