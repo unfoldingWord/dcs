@@ -269,6 +269,7 @@ func Milestones(ctx *context.Context) {
 			},
 			Metas: milestones[i].Repo.ComposeMetas(ctx),
 			Ctx:   ctx,
+			Repo:  milestones[i].Repo,
 		}, milestones[i].Content)
 		if err != nil {
 			ctx.ServerError("RenderString", err)
