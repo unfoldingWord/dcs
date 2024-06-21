@@ -89,13 +89,7 @@ ifneq ($(GITHUB_REF_TYPE),branch)
 	GITEA_VERSION ?= $(VERSION)
 else
 	ifneq ($(GITHUB_REF_NAME),)
-<<<<<<< HEAD
-		VERSION ?= $(subst release/dcs/v,,$(GITHUB_REF_NAME))
-||||||| parent of 90f4cf51a3 (align s3 files with docker naming (#31050))
-		VERSION ?= $(subst release/v,,$(GITHUB_REF_NAME))
-=======
-		VERSION ?= $(subst release/v,,$(GITHUB_REF_NAME))-nightly
->>>>>>> 90f4cf51a3 (align s3 files with docker naming (#31050))
+		VERSION ?= $(subst release/dcs/v,,$(GITHUB_REF_NAME))-nightly
 	else
 		VERSION ?= main
 	endif
