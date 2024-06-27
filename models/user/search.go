@@ -215,7 +215,7 @@ func SearchUsers(ctx context.Context, opts *SearchUserOptions) (users []*User, _
 	}
 	if opts.RepoLanguageIsGL != util.OptionalBoolNone {
 		hasMetadataCond = true
-		repoMetadataCond = repoMetadataCond.And(builder.Eq{"`door43_metadata`.is_gl": opts.RepoLanguageIsGL.IsTrue()})
+		repoMetadataCond = repoMetadataCond.And(builder.Eq{"`door43_metadata`.language_is_gl": opts.RepoLanguageIsGL.IsTrue()})
 	}
 	if hasMetadataCond {
 		metadataSelect := builder.Select("owner_id").
