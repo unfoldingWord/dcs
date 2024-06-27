@@ -7,7 +7,6 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	"net/url"
 	"strconv"
 	"strings"
 
@@ -19,6 +18,7 @@ import (
 	"code.gitea.io/gitea/modules/context"
 	"code.gitea.io/gitea/modules/json"
 	"code.gitea.io/gitea/modules/setting"
+	"code.gitea.io/gitea/modules/templates"
 	"code.gitea.io/gitea/modules/util"
 	"code.gitea.io/gitea/modules/web"
 	shared_user "code.gitea.io/gitea/routers/web/shared/user"
@@ -100,7 +100,7 @@ func Projects(ctx *context.Context) {
 	}
 
 	for _, project := range projects {
-		project.RenderedContent = project.Description
+		project.RenderedContent = string(templates.RenderMarkdownToHtml(ctx, project.Description))
 	}
 
 	err = shared_user.LoadHeaderCount(ctx)
@@ -190,14 +190,15 @@ func NewProjectPost(ctx *context.Context) {
 
 // ChangeProjectStatus updates the status of a project between "open" and "close"
 func ChangeProjectStatus(ctx *context.Context) {
-	toClose := false
+	var toClose bool
 	switch ctx.Params(":action") {
 	case "open":
 		toClose = false
 	case "close":
 		toClose = true
 	default:
-		ctx.Redirect(ctx.ContextUser.HomeLink() + "/-/projects")
+		ctx.JSONRedirect(ctx.ContextUser.HomeLink() + "/-/projects")
+		return
 	}
 	id := ctx.ParamsInt64(":id")
 
@@ -209,7 +210,7 @@ func ChangeProjectStatus(ctx *context.Context) {
 		}
 		return
 	}
-	ctx.Redirect(ctx.ContextUser.HomeLink() + "/-/projects?state=" + url.QueryEscape(ctx.Params(":action")))
+	ctx.JSONRedirect(fmt.Sprintf("%s/-/projects/%d", ctx.ContextUser.HomeLink(), id))
 }
 
 // DeleteProject delete a project
@@ -391,7 +392,7 @@ func ViewProject(ctx *context.Context) {
 		}
 	}
 
-	project.RenderedContent = project.Description
+	project.RenderedContent = string(templates.RenderMarkdownToHtml(ctx, project.Description))
 	ctx.Data["LinkedPRs"] = linkedPrsMap
 	ctx.Data["PageIsViewProjects"] = true
 	ctx.Data["CanWriteProjects"] = canWriteProjects(ctx)

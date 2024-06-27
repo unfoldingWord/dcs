@@ -7,7 +7,7 @@ require (
 	code.gitea.io/gitea-vet v0.2.3
 	code.gitea.io/sdk/gitea v0.16.0
 	codeberg.org/gusted/mcaptcha v0.0.0-20220723083913-4f3072e1d570
-	gitea.com/go-chi/binding v0.0.0-20230415142243-04b515c6d669
+	gitea.com/go-chi/binding v0.0.0-20240430071103-39a851e106ed
 	gitea.com/go-chi/cache v0.2.0
 	gitea.com/go-chi/captcha v0.0.0-20230415143339-2c0754df4384
 	gitea.com/go-chi/session v0.0.0-20230613035928-39541325faa3
@@ -15,7 +15,6 @@ require (
 	gitea.com/lunny/levelqueue v0.4.2-0.20230414023320-3c0159fe0fe4
 	github.com/42wim/sshsig v0.0.0-20211121163825-841cf5bbc121
 	github.com/Azure/go-ntlmssp v0.0.0-20221128193559-754e69321358
-	github.com/NYTimes/gziphandler v1.1.1
 	github.com/PuerkitoBio/goquery v1.8.1
 	github.com/alecthomas/chroma/v2 v2.13.0
 	github.com/blakesmith/ar v0.0.0-20190502131153-809d4375e1fb

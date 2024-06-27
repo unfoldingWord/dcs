@@ -959,8 +959,9 @@ webpack: $(WEBPACK_DEST)
 
 $(WEBPACK_DEST): $(WEBPACK_SOURCES) $(WEBPACK_CONFIGS) package-lock.json
 	@$(MAKE) -s node-check node_modules
-	rm -rf $(WEBPACK_DEST_ENTRIES)
-	npx webpack
+	@rm -rf $(WEBPACK_DEST_ENTRIES)
+	@echo "Running webpack..."
+	@BROWSERSLIST_IGNORE_OLD_DATA=true npx webpack
 	@touch $(WEBPACK_DEST)
 
 .PHONY: svg
@@ -1009,7 +1010,7 @@ generate-gitignore:
 
 .PHONY: generate-images
 generate-images: | node_modules
-	npm install --no-save --no-package-lock fabric@5 imagemin-zopfli@7
+	npm install --no-save fabric@6.0.0-rc1 imagemin-zopfli@7
 	node build/generate-images.js $(TAGS)
 
 .PHONY: generate-manpage

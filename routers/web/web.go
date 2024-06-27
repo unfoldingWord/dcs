@@ -49,9 +49,9 @@ import (
 	_ "code.gitea.io/gitea/modules/session" // to registers all internal adapters
 
 	"gitea.com/go-chi/captcha"
-	"github.com/NYTimes/gziphandler"
 	chi_middleware "github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/cors"
+	"github.com/klauspost/compress/gzhttp"
 	"github.com/prometheus/client_golang/prometheus"
 )
 
@@ -101,14 +101,14 @@ func optionsCorsHandler() func(next http.Handler) http.Handler {
 // The Session plugin is expected to be executed second, in order to skip authentication
 // for users that have already signed in.
 func buildAuthGroup() *auth_service.Group {
-	group := auth_service.NewGroup(
-		&auth_service.OAuth2{}, // FIXME: this should be removed and only applied in download and oauth related routers
-		&auth_service.Basic{},  // FIXME: this should be removed and only applied in download and git/lfs routers
-		&auth_service.Session{},
-	)
+	group := auth_service.NewGroup()
+	group.Add(&auth_service.OAuth2{}) // FIXME: this should be removed and only applied in download and oauth related routers
+	group.Add(&auth_service.Basic{})  // FIXME: this should be removed and only applied in download and git/lfs routers
+
 	if setting.Service.EnableReverseProxyAuth {
-		group.Add(&auth_service.ReverseProxy{})
+		group.Add(&auth_service.ReverseProxy{}) // reverseproxy should before Session, otherwise the header will be ignored if user has login
 	}
+	group.Add(&auth_service.Session{})
 
 	if setting.IsWindows && auth_model.IsSSPIEnabled() {
 		group.Add(&auth_service.SSPI{}) // it MUST be the last, see the comment of SSPI
@@ -245,11 +245,13 @@ func Routes() *web.Route {
 	var mid []any
 
 	if setting.EnableGzip {
-		h, err := gziphandler.GzipHandlerWithOpts(gziphandler.MinSize(GzipMinSize))
+		// random jitter is recommended by: https://pkg.go.dev/github.com/klauspost/compress/gzhttp#readme-breach-mitigation
+		// compression level 6 is the gzip default and a good general tradeoff between speed, CPU usage, and compression
+		wrapper, err := gzhttp.NewWrapper(gzhttp.RandomJitter(32, 0, false), gzhttp.MinSize(GzipMinSize), gzhttp.CompressionLevel(6))
 		if err != nil {
-			log.Fatal("GzipHandlerWithOpts failed: %v", err)
+			log.Fatal("gzhttp.NewWrapper failed: %v", err)
 		}
-		mid = append(mid, h)
+		mid = append(mid, wrapper)
 	}
 
 	if setting.Service.EnableCaptcha {
@@ -262,7 +264,7 @@ func Routes() *web.Route {
 		routes.Get("/metrics", append(mid, Metrics)...)
 	}
 
-	routes.Get("/robots.txt", append(mid, misc.RobotsTxt)...)
+	routes.Methods("GET,HEAD", "/robots.txt", append(mid, misc.RobotsTxt)...)
 	routes.Get("/ssh_info", misc.SSHInfo)
 	routes.Get("/api/healthz", healthcheck.Check)
 
