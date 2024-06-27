@@ -534,7 +534,7 @@ func SearchRepositoryCondition(opts *SearchRepoOptions) builder.Cond {
 	}
 
 	if opts.LanguageIsGL != util.OptionalBoolNone {
-		cond = cond.And(builder.Eq{"`door43_metadata`.is_gl`": opts.LanguageIsGL.IsTrue()})
+		cond = cond.And(builder.Eq{"`door43_metadata`.language_is_gl`": opts.LanguageIsGL.IsTrue()})
 	}
 	/*** EMD DCS Customizations ***/
 
