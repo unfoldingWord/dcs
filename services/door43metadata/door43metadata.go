@@ -15,10 +15,12 @@ import (
 	"strings"
 	"time"
 
+	"code.gitea.io/gitea/models"
 	"code.gitea.io/gitea/models/db"
 	"code.gitea.io/gitea/models/door43metadata"
 	repo_model "code.gitea.io/gitea/models/repo"
 	"code.gitea.io/gitea/models/system"
+	user_model "code.gitea.io/gitea/models/user"
 	"code.gitea.io/gitea/modules/charset"
 	"code.gitea.io/gitea/modules/dcs"
 	"code.gitea.io/gitea/modules/git"
@@ -171,6 +173,26 @@ func processDoor43MetadataForRepoLatestDMs(ctx context.Context, repo *repo_model
 	return nil
 }
 
+// processDoor43MetadataForRepoOwner determines a repo's owner's languages, subjects, and metadata_types and puts them in those user fields to save to DB
+func processDoor43MetadataForRepoOwner(ctx context.Context, repo *repo_model.Repository) error {
+	if repo == nil {
+		return fmt.Errorf("no repository provided")
+	}
+
+	if repo.Owner == nil {
+		err := repo.LoadOwner(ctx)
+		if err != nil {
+			return err
+		}
+	}
+
+	repo.Owner.RepoLanguages = models.GetRepoLanguages(ctx, repo.Owner)
+	repo.Owner.RepoSubjects = models.GetRepoSubjects(ctx, repo.Owner)
+	repo.Owner.RepoMetadataTypes = models.GetRepoMetadataTypes(ctx, repo.Owner)
+
+	return user_model.UpdateUserCols(ctx, repo.Owner, "repo_languages", "repo_subjects", "repo_metadata_types")
+}
+
 // ProcessDoor43MetadataForRepo handles the metadata for a given repo for all its releases
 func ProcessDoor43MetadataForRepo(ctx context.Context, repo *repo_model.Repository, ref string) error {
 	if ctx == nil || repo == nil {
@@ -198,7 +220,15 @@ func ProcessDoor43MetadataForRepo(ctx context.Context, repo *repo_model.Reposito
 		}
 	}
 
-	return processDoor43MetadataForRepoLatestDMs(ctx, repo)
+	err := processDoor43MetadataForRepoLatestDMs(ctx, repo)
+	if err != nil {
+		return err
+	}
+	err = processDoor43MetadataForRepoOwner(ctx, repo)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 func GetBookAlignmentCount(bookPath string, commit *git.Commit) (int, error) {
