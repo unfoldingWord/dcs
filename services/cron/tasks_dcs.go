@@ -24,7 +24,7 @@ func registerUpdateUserMetadataTask() {
 	RegisterTaskFatal("update_user_metadata", &BaseConfig{
 		Enabled:    true,
 		RunAtStart: false,
-		Schedule:   "",
+		Schedule:   "@every 72h",
 	}, func(ctx context.Context, _ *user_model.User, _ Config) error {
 		return metadata_service.UpdateUserMetadata(ctx)
 	})
