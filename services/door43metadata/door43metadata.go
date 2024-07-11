@@ -780,6 +780,7 @@ func UpdateUserMetadata(ctx context.Context) error {
 
 	var users []*user_model.User
 	err := db.GetEngine(ctx).
+		Select("`user`.*").
 		Join("INNER", "repository", "`repository`.owner_id = `user`.id").
 		Join("INNER", "door43_metadata", "`door43_metadata`.repo_id = `repository`.id").
 		GroupBy("`user`.id").
