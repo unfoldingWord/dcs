@@ -20,6 +20,16 @@ func registerUpdateDoor43MetadataTask() {
 	})
 }
 
+func registerUpdateUserMetadataTask() {
+	RegisterTaskFatal("update_user_metadata", &BaseConfig{
+		Enabled:    true,
+		RunAtStart: false,
+		Schedule:   "",
+	}, func(ctx context.Context, _ *user_model.User, _ Config) error {
+		return metadata_service.UpdateUserMetadata(ctx)
+	})
+}
+
 func registerLoadMetadataSchemasTask() {
 	RegisterTaskFatal("load_schemas", &BaseConfig{
 		Enabled:    true,

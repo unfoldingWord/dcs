@@ -173,24 +173,17 @@ func processDoor43MetadataForRepoLatestDMs(ctx context.Context, repo *repo_model
 	return nil
 }
 
-// processDoor43MetadataForRepoOwner determines a repo's owner's languages, subjects, and metadata_types and puts them in those user fields to save to DB
-func processDoor43MetadataForRepoOwner(ctx context.Context, repo *repo_model.Repository) error {
-	if repo == nil {
-		return fmt.Errorf("no repository provided")
+// processDoor43MetadataForUser determines the given user's languages, subjects, and metadata_types and puts them in those user fields to save to DB
+func processDoor43MetadataForUser(ctx context.Context, user *user_model.User) error {
+	if user == nil {
+		return fmt.Errorf("no user provided")
 	}
 
-	if repo.Owner == nil {
-		err := repo.LoadOwner(ctx)
-		if err != nil {
-			return err
-		}
-	}
+	user.RepoLanguages = models.GetRepoLanguages(ctx, user)
+	user.RepoSubjects = models.GetRepoSubjects(ctx, user)
+	user.RepoMetadataTypes = models.GetRepoMetadataTypes(ctx, user)
 
-	repo.Owner.RepoLanguages = models.GetRepoLanguages(ctx, repo.Owner)
-	repo.Owner.RepoSubjects = models.GetRepoSubjects(ctx, repo.Owner)
-	repo.Owner.RepoMetadataTypes = models.GetRepoMetadataTypes(ctx, repo.Owner)
-
-	return user_model.UpdateUserCols(ctx, repo.Owner, "repo_languages", "repo_subjects", "repo_metadata_types")
+	return user_model.UpdateUserCols(ctx, user, "repo_languages", "repo_subjects", "repo_metadata_types")
 }
 
 // ProcessDoor43MetadataForRepo handles the metadata for a given repo for all its releases
@@ -224,7 +217,11 @@ func ProcessDoor43MetadataForRepo(ctx context.Context, repo *repo_model.Reposito
 	if err != nil {
 		return err
 	}
-	err = processDoor43MetadataForRepoOwner(ctx, repo)
+	err = repo.LoadOwner(ctx)
+	if err != nil {
+		return err
+	}
+	err = processDoor43MetadataForUser(ctx, repo.Owner)
 	if err != nil {
 		return err
 	}
@@ -774,6 +771,32 @@ func processDoor43MetadataForRepoRef(ctx context.Context, repo *repo_model.Repos
 		}
 	}
 
+	return nil
+}
+
+// UpdateUserMetadata updates the user table with their repo langauges, subjects and metadata types
+func UpdateUserMetadata(ctx context.Context) error {
+	log.Trace("Doing: UpdateUserMetadata")
+
+	var users []*user_model.User
+	err := db.GetEngine(ctx).
+		Join("INNER", "repository", "`repository`.owner_id = `user`.id").
+		Join("INNER", "door43_metadata", "`door43_metadata`.repo_id = `repository`.id").
+		GroupBy("`user`.id").
+		Find(&users)
+	if err != nil {
+		log.Error("UpdateUserMetadata: %v", err)
+	}
+
+	for _, user := range users {
+		if err := processDoor43MetadataForUser(ctx, user); err != nil {
+			log.Info("Failed to process metadata for user (%v): %v", user, err)
+			if err = system.CreateRepositoryNotice("Failed to process metadata for user (%s): %v", user.Name, err); err != nil {
+				log.Error("ProcessDoor43MetadataForUser: %v", err)
+			}
+		}
+	}
+	log.Trace("Finished: UpdateUserMetadata")
 	return nil
 }
 
