@@ -182,6 +182,7 @@ func initBasicTasks() {
 	registerDeletedBranchesCleanup()
 	/*** DCS Customizations ***/
 	registerUpdateDoor43MetadataTask()
+	registerUpdateUserMetadataTask()
 	registerLoadMetadataSchemasTask()
 	/*** END DCS Customizations ***/
 	if !setting.Repository.DisableMigrations {
