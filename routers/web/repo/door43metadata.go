@@ -18,7 +18,6 @@ import (
 
 const (
 	tplDCSMetadata base.TplName = "repo/dcs_metadata"
-	tplPreview     base.TplName = "repo/dcs_preview"
 )
 
 // Door43Metadtas renders door43 metadatas page
@@ -53,17 +52,4 @@ func UpdateDoor43Metadata(ctx *context.Context) {
 		}
 	}
 	ctx.Redirect(ctx.Repo.RepoLink + "/metadata")
-}
-
-// PreviewRepo creates a page for a react component app
-func PreviewRepo(ctx *context.Context) {
-	commitsCount, err := ctx.Repo.GetCommitsCount()
-	if err != nil {
-		ctx.ServerError("GetCommitsCount", err)
-		return
-	}
-	ctx.Data["PageIsPreview"] = true
-	ctx.Data["CommitsCount"] = commitsCount
-	ctx.Data["Title"] = "Preview of " + ctx.Repo.Repository.FullName() + " - " + ctx.Repo.RefName
-	ctx.HTML(http.StatusOK, tplPreview)
 }
