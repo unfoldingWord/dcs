@@ -1,19 +1,16 @@
 <a class="{{if .PageIsMetadata}}active{{end}} item" href="{{.RepoLink}}/metadata">
-                {{svg "octicon-briefcase"}} {{ctx.Locale.Tr "repo.metadata.metadata"}}
+	{{svg "octicon-briefcase"}} {{ctx.Locale.Tr "repo.metadata.metadata"}}
 </a>
 {{$refToPreview := .Repository.DefaultBranch}}
 {{$refType := "branch"}}
 {{if .IsViewTag}}
-    {{$refType = "tag"}}
-    {{$refToPreview = .TagName}}
+	{{$refType = "tag"}}
+	{{$refToPreview = .TagName}}
 {{else if .IsViewBranch}}
 	{{$refToPreview = .BranchName}}
 {{end}}
 {{if $.RepoDM.ID}}
-<a class="{{if .PageIsPreview}}active{{end}} item" data-tooltip-content="Preview on DCS" href="{{.RepoLink}}/preview/{{$refType | PathEscapeSegments}}/{{$refToPreview | PathEscapeSegments}}">
-    {{svg "octicon-book"}} {{ctx.Locale.Tr "preview"}} / PDF
-</a>
-<a class="item" data-tooltip-content="Preview on Door43.org" target="_blank" href="{{Door43PreviewURL}}/u/{{.Owner.Name}}/{{.Repository.Name}}/{{$refToPreview | PathEscapeSegments}}{{if eq AppUrl "https://qa.door43.org/"}}?server=QA{{end}}">
-                {{svg "octicon-link-external"}} {{ctx.Locale.Tr "preview"}}
+<a class="item" data-tooltip-content="Preview.Door43.org" target="_blank" href="{{Door43PreviewURL}}/u/{{.Owner.Name}}/{{.Repository.Name}}/{{$refToPreview | PathEscapeSegments}}{{if eq AppUrl "https://qa.door43.org/"}}?server=QA{{end}}{{if eq AppUrl "https://develop.door43.org/"}}?server=DEV{{end}}">
+	{{svg "octicon-book"}} {{ctx.Locale.Tr "preview"}} / PDF
 </a>
 {{end}}
