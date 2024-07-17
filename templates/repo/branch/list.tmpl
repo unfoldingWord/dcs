@@ -1,4 +1,9 @@
 {{template "base/head" .}}
+<!-- DCS Customizaitons --->
+{{if and .RepoDM (eq .RepoDM.Subject "Aligned Bible")}}
+<script src="{{AssetUrlPrefix}}/js-dcs/usfm-alignment-remover.js"></script>
+{{end}}
+<!-- END DCS Customizaitons -->
 <div role="main" aria-label="{{.Title}}" class="page-content ui repository branches">
 	{{template "repo/header" .}}
 	<div class="ui container">
@@ -176,6 +181,9 @@
 											<div class="menu">
 												<a class="item archive-link" href="{{$.RepoLink}}/archive/{{PathEscapeSegments .DBBranch.Name}}.zip" rel="nofollow">{{svg "octicon-file-zip"}}&nbsp;ZIP</a>
 												<a class="item archive-link" href="{{$.RepoLink}}/archive/{{PathEscapeSegments .DBBranch.Name}}.tar.gz" rel="nofollow">{{svg "octicon-file-zip"}}&nbsp;TAR.GZ</a>
+												{{if and $.Repository.RepoDM (eq $.Repository.RepoDM.Subject "Aligned Bible")}}
+												<a class="item " href="#" onclick="window.downloadUnalignedUSFM('{{PathEscapeSegments $.Repository.OwnerName}}', '{{PathEscapeSegments $.Repository.Name}}', '{{PathEscapeSegments .DBBranch.Name}}'); return false;" rel="nofollow">{{svg "octicon-file-zip"}}&nbsp;USFM (ZIP)</a>
+												{{end}}
 											</div>
 										</div>
 									{{end}}

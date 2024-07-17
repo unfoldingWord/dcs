@@ -73,8 +73,8 @@
 								Validation Errors (JSON)
 							</a>
 							{{end}}
-							<a class="item" href="{{$.RepoLink}}/preview/{{.RefType | PathEscapeSegments}}/{{.Ref | PathEscapeSegments}}">
-								Preview
+							<a class="item" href="{{Door43PreviewURL}}/u/{{.Repository.Owner.Name}}/{{.Repository.Name}}/{{PathEscapeSegments .Ref}}">
+								Preview / PDF
 							</a>
 							{{if or $.Permission.IsAdmin $.IsOrganizationOwner $.PageIsAdmin $.PageIsUserSettings}}
 							<div class="right menu">
