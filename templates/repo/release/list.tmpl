@@ -1,11 +1,11 @@
 {{template "base/head" .}}
+<!-- DCS Customizaitons --->
+{{if and .RepoDM (eq .RepoDM.Subject "Aligned Bible")}}
+<script src="{{AssetUrlPrefix}}/js-dcs/usfm-alignment-remover.js"></script>
+{{end}}
+<!-- END DCS Customizaitons --->
 <div role="main" aria-label="{{.Title}}" class="page-content repository releases">
 	{{template "repo/header" .}}
-	<!-- DCS Customizaitons --->
-	{{if and .RepoDM (eq .RepoDM.Subject "Aligned Bible")}}
-	<script src="{{AssetUrlPrefix}}/js-dcs/usfm-alignment-remover.js"></script>
-	{{end}}
-	<!-- END DCS Customizaitons --->
 	<div class="ui container">
 		{{template "base/alert" .}}
 		{{template "repo/release_tag_header" .}}
