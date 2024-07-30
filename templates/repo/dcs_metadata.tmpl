@@ -73,7 +73,7 @@
 								Validation Errors (JSON)
 							</a>
 							{{end}}
-							<a class="item" href="{{Door43PreviewURL}}/u/{{.Repository.Owner.Name}}/{{.Repository.Name}}/{{PathEscapeSegments .Ref}}">
+							<a class="item" href="{{Door43PreviewURL}}/u/{{$.Repository.OwnerName}}/{{$.Repository.Name}}/{{PathEscapeSegments .Ref}}">
 								Preview / PDF
 							</a>
 							{{if or $.Permission.IsAdmin $.IsOrganizationOwner $.PageIsAdmin $.PageIsUserSettings}}
