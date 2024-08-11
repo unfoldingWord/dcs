@@ -1,4 +1,4 @@
-import {createTippy} from '../modules/tippy.js';
+import {createTippy} from '../modules/tippy.ts';
 
 export function initDCSInfoIcon() {
   const icon = document.getElementById('dcs-info-icon');

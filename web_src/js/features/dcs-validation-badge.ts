@@ -1,4 +1,4 @@
-import {createTippy} from '../modules/tippy.js';
+import {createTippy} from '../modules/tippy.ts';
 
 export function initDCSValidationBadge() {
   const badges = document.getElementsByClassName('validation-message-badge');

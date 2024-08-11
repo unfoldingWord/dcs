@@ -26,7 +26,6 @@ import (
 	"code.gitea.io/gitea/modules/indexer/stats"
 	"code.gitea.io/gitea/modules/lfs"
 	"code.gitea.io/gitea/modules/log"
-	"code.gitea.io/gitea/modules/scrubber"
 	"code.gitea.io/gitea/modules/setting"
 	"code.gitea.io/gitea/modules/structs"
 	"code.gitea.io/gitea/modules/util"
@@ -171,15 +170,7 @@ func SettingsPost(ctx *context.Context) {
 			form.Private = repo.BaseRepo.IsPrivate || repo.BaseRepo.Owner.Visibility == structs.VisibleTypePrivate
 		}
 
-		visibilityChanged := repo.IsPrivate != form.Private
-		// when ForcePrivate enabled, you could change public repo to private, but only admin users can change private to public
-		if visibilityChanged && setting.Repository.ForcePrivate && !form.Private && !ctx.Doer.IsAdmin {
-			ctx.RenderWithErr(ctx.Tr("form.repository_force_private"), tplSettingsOptions, form)
-			return
-		}
-
-		repo.IsPrivate = form.Private && ctx.ContextUser.IsAdmin // DCS Customizations - must be admin
-		if err := repo_service.UpdateRepository(ctx, repo, visibilityChanged); err != nil {
+		if err := repo_service.UpdateRepository(ctx, repo, false); err != nil {
 			ctx.ServerError("UpdateRepository", err)
 			return
 		}
@@ -941,54 +932,38 @@ func SettingsPost(ctx *context.Context) {
 		log.Trace("Repository was un-archived: %s/%s", ctx.Repo.Owner.Name, repo.Name)
 		ctx.Redirect(ctx.Repo.RepoLink + "/settings")
 
-	/*** DCS Customizations ***/
-	case "scrub":
-		if !ctx.Repo.IsOwner() {
-			ctx.Error(404)
-			return
-		}
-		if repo.Name != form.RepoName {
-			ctx.RenderWithErr(ctx.Tr("form.enterred_invalid_repo_name"), tplSettingsOptions, nil)
+	case "visibility":
+		if repo.IsFork {
+			ctx.Flash.Error(ctx.Tr("repo.settings.visibility.fork_error"))
+			ctx.Redirect(ctx.Repo.RepoLink + "/settings")
 			return
 		}
 
-		if ctx.Repo.Owner.IsOrganization() {
-			org := organization.OrgFromUser(ctx.Repo.Owner)
-			owned, err := org.IsOwnedBy(ctx, ctx.ContextUser.ID)
-			if err != nil {
-				ctx.ServerError("IsOwnedBy", err)
-				return
-			} else if !owned {
-				ctx.Error(404)
-				return
-			}
+		var err error
+
+		// when ForcePrivate enabled, you could change public repo to private, but only admin users can change private to public
+		if setting.Repository.ForcePrivate && repo.IsPrivate && !ctx.Doer.IsAdmin {
+			ctx.RenderWithErr(ctx.Tr("form.repository_force_private"), tplSettingsOptions, form)
+			return
 		}
 
-		if err := scrubber.ScrubSensitiveData(&ctx.Repo.GitRepo.Ctx, repo, ctx.ContextUser, scrubber.ScrubSensitiveDataOptions{
-			LastCommitID:  ctx.Repo.CommitID,
-			CommitMessage: string(ctx.Tr("repo.settings.scrub_commit_message")),
-		}); err != nil {
-			log.Error("%v", err)
-			ctx.Flash.Error(ctx.Tr("repo.settings.scrub_error"))
+		if repo.IsPrivate {
+			err = repo_service.MakeRepoPublic(ctx, repo)
 		} else {
-			log.Trace("Repository scrubbed: %s/%s", ctx.Repo.Owner.Name, repo.Name)
-
-			units := make([]repo_model.RepoUnit, 0, len(repo.Units))
-			var deleteUnitTypes []unit_model.Type
-
-			for _, unit := range repo.Units {
-				if unit.Type != unit_model.TypeWiki {
-					units = append(units, *unit)
-				}
-			}
-			if err := repo_service.UpdateRepositoryUnits(ctx, repo, units, deleteUnitTypes); err != nil {
-				ctx.ServerError("UpdateRepositoryUnits", err)
-				return
-			}
-			ctx.Flash.Success(ctx.Tr("repo.settings.scrub_success"))
+			err = repo_service.MakeRepoPrivate(ctx, repo)
 		}
+
+		if err != nil {
+			log.Error("Tried to change the visibility of the repo: %s", err)
+			ctx.Flash.Error(ctx.Tr("repo.settings.visibility.error"))
+			ctx.Redirect(ctx.Repo.RepoLink + "/settings")
+			return
+		}
+
+		ctx.Flash.Success(ctx.Tr("repo.settings.visibility.success"))
+
+		log.Trace("Repository visibility changed: %s/%s", ctx.Repo.Owner.Name, repo.Name)
 		ctx.Redirect(ctx.Repo.RepoLink + "/settings")
-	/*** END DCS Customizations ***/
 
 	default:
 		ctx.NotFound("", nil)
