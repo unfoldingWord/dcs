@@ -60,7 +60,7 @@ import {initCompWebHookEditor} from './features/comp/WebHookEditor.ts';
 import {initRepoBranchButton} from './features/repo-branch.ts';
 import {initCommonOrganization} from './features/common-organization.ts';
 import {initRepoWikiForm} from './features/repo-wiki.ts';
-import {initRepoCommentForm, initRepository} from './features/repo-legacy.ts';
+import {initRepoCommentForm, initRepository, initBranchSelectorTabs} from './features/repo-legacy.ts';
 /** DCS Customizations **/
 import {initDCSInfoIcon} from './features/dcs-info-icon.ts';
 import {initDCSValidationBadge} from './features/dcs-validation-badge.ts';
@@ -193,6 +193,7 @@ onDomReady(() => {
     initRepoBranchButton,
     initRepoCodeView,
     initRepoCommentForm,
+    initBranchSelectorTabs,
     initRepoEllipsisButton,
     initRepoDiffCommitBranchesAndTags,
     initRepoEditor,
