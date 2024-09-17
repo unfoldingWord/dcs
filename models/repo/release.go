@@ -248,6 +248,7 @@ type FindReleasesOptions struct {
 	IsDraft       optional.Option[bool]
 	TagNames      []string
 	HasSha1       optional.Option[bool] // useful to find draft releases which are created with existing tags
+	NamePattern   optional.Option[string]
 	/*** DCS Customizations ***/
 	InCatalog optional.Option[bool]
 	/*** END DCS Customizations ***/
@@ -280,6 +281,11 @@ func (opts FindReleasesOptions) ToConds() builder.Cond {
 		}
 	}
 	/*** END DCS Customizations ***/
+
+	if opts.NamePattern.Has() && opts.NamePattern.Value() != "" {
+		cond = cond.And(builder.Like{"lower_tag_name", strings.ToLower(opts.NamePattern.Value())})
+	}
+
 	return cond
 }
 
