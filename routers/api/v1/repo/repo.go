@@ -161,6 +161,13 @@ func Search(ctx *context.APIContext) {
 	//   collectionFormat: multi
 	//   items:
 	//     type: string
+	// - name: topic
+	//   in: query
+	//   description: topic of repo. Multiple values are ORed.
+	//   type: array
+	//   collectionFormat: multi
+	//   items:
+	//     type: string
 	// - name: metadataType
 	//   in: query
 	//   description: return repos only with metadata of this type
@@ -233,6 +240,7 @@ func Search(ctx *context.APIContext) {
 		Books:            catalog.QueryStrings(ctx, "book"),
 		MetadataTypes:    catalog.QueryStrings(ctx, "metadataType"),
 		MetadataVersions: catalog.QueryStrings(ctx, "metadataVersion"),
+		Topics:           catalog.QueryStrings(ctx, "topic"),
 		LanguageIsGL:     ctx.FormOptionalBool("is_gl"),
 		PartialMatch:     ctx.FormBool("partialMatch"),
 		/*** END DCS Customizations ***/

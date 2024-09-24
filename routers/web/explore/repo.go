@@ -104,7 +104,7 @@ func RenderRepoSearch(ctx *context.Context, opts *RepoSearchOptions) {
 	ctx.Data["TopicOnly"] = topicOnly
 
 	/*** DCS Customizations ***/
-	var books, langs, keywords, subjects, flavorTypes, flavors, abbreviations, contentFormats, repoNames, owners, metadataTypes, metadataVersions []string
+	var books, langs, keywords, subjects, flavorTypes, flavors, abbreviations, contentFormats, repoNames, owners, metadataTypes, metadataVersions, topics []string
 	origKeyword := keyword
 	if keyword != "" {
 		for _, token := range door43metadata.SplitAtCommaNotInString(keyword, true) {
@@ -130,6 +130,8 @@ func RenderRepoSearch(ctx *context.Context, opts *RepoSearchOptions) {
 				metadataTypes = append(metadataTypes, strings.TrimPrefix(token, "metadata_type:"))
 			} else if strings.HasPrefix(token, "metadata_version:") {
 				metadataVersions = append(metadataVersions, strings.TrimPrefix(token, "metadata_version:"))
+			} else if strings.HasPrefix(token, "topic:") {
+				topics = append(topics, strings.TrimPrefix(token, "topic:"))
 			} else {
 				keywords = append(keywords, token)
 			}
@@ -167,6 +169,7 @@ func RenderRepoSearch(ctx *context.Context, opts *RepoSearchOptions) {
 		Owners:             owners,           // DCS Customizaitons
 		MetadataTypes:      metadataTypes,    // DCS Customizaitons
 		MetadataVersions:   metadataVersions, // DCS Customizaitons
+		Topics:             topics,           // DCS Customizaitons
 		OnlyShowRelevant:   opts.OnlyShowRelevant,
 	})
 	if err != nil {

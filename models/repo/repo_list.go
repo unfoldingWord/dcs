@@ -176,6 +176,7 @@ type SearchRepoOptions struct {
 	// query metadata type and version
 	MetadataTypes    []string // DCS Customizations
 	MetadataVersions []string // DCS Customizations
+	Topics           []string // DCS Customizations
 	PartialMatch     bool     // DCS Customizations
 	// When specified true, apply some filters over the conditions:
 	// - Don't show forks, when opts.Fork is OptionalBoolNone.
@@ -527,7 +528,8 @@ func SearchRepositoryCondition(opts *SearchRepoOptions) builder.Cond {
 		door43metadata.GetContentFormatCond(opts.ContentFormats, false),
 		door43metadata.GetBookCond(opts.Books),
 		door43metadata.GetLanguageCond(opts.Languages, opts.PartialMatch),
-		door43metadata.GetMetadataTypeCond(opts.MetadataTypes, false))
+		door43metadata.GetMetadataTypeCond(opts.MetadataTypes, false),
+		door43metadata.GetTopicCond(opts.Topics, opts.PartialMatch))
 
 	if len(opts.MetadataTypes) > 0 {
 		cond.And(door43metadata.GetMetadataVersionCond(opts.MetadataVersions, false))

@@ -97,7 +97,7 @@ func RenderCatalogSearch(ctx *context.Context, opts *CatalogSearchOptions) {
 		orderBy = door43metadata.CatalogOrderByNewest
 	}
 
-	var keywords, books, langs, subjects, flavorTypes, flavors, abbreviations, contentFormats, repos, owners, tags, checkingLevels, metadataTypes, metadataVersions []string
+	var keywords, books, langs, subjects, flavorTypes, flavors, abbreviations, contentFormats, repos, owners, tags, checkingLevels, metadataTypes, metadataVersions, topics []string
 	stage := door43metadata.StageProd
 	query := strings.Trim(ctx.FormString("q"), " ")
 	if query != "" {
@@ -128,6 +128,8 @@ func RenderCatalogSearch(ctx *context.Context, opts *CatalogSearchOptions) {
 				metadataTypes = append(metadataTypes, strings.TrimPrefix(token, "metadata_type:"))
 			} else if strings.HasPrefix(token, "metadata_version:") {
 				metadataVersions = append(metadataVersions, strings.TrimPrefix(token, "metadata_version:"))
+			} else if strings.HasPrefix(token, "topic:") {
+				topics = append(topics, strings.TrimPrefix(token, "topic:"))
 			} else if strings.HasPrefix(token, "stage:") {
 				if s, ok := door43metadata.StageMap[strings.Trim(strings.TrimPrefix(token, "stage:"), `"`)]; ok {
 					stage = s
@@ -160,6 +162,7 @@ func RenderCatalogSearch(ctx *context.Context, opts *CatalogSearchOptions) {
 		Owners:           owners,
 		MetadataTypes:    metadataTypes,
 		MetadataVersions: metadataVersions,
+		Topics:           topics,
 		Tags:             tags,
 		CheckingLevels:   checkingLevels,
 	})
