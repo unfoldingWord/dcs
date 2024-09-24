@@ -69,6 +69,7 @@ type SearchCatalogOptions struct {
 	IncludeHistory   bool
 	MetadataTypes    []string
 	MetadataVersions []string
+	Topics           []string
 	ShowIngredients  util.OptionalBool
 	Languages        []string
 	LanguageIsGL     util.OptionalBool
@@ -127,6 +128,7 @@ func SearchCatalogCondition(opts *SearchCatalogOptions) builder.Cond {
 		GetLanguageCond(opts.Languages, opts.PartialMatch),
 		GetCheckingLevelCond(opts.CheckingLevels),
 		GetMetadataTypeCond(opts.MetadataTypes, opts.PartialMatch),
+		GetTopicCond(opts.Topics, opts.PartialMatch),
 		GetTagCond(opts.Tags),
 		repoCond,
 		ownerCond,
@@ -272,6 +274,21 @@ func GetMetadataTypeCond(types []string, partialMatch bool) builder.Cond {
 		}
 	}
 	return metadataTypeCond
+}
+
+// GetTopicCond gets the topic condition
+func GetTopicCond(topics []string, partialMatch bool) builder.Cond {
+	topicCond := builder.NewCond()
+	for _, topic := range topics {
+		for _, v := range strings.Split(topic, ",") {
+			if partialMatch {
+				topicCond = topicCond.Or(builder.In("`door43_metadata`.repo_id", builder.Select("repo_id").From("repo_topic").InnerJoin("topic", "`repo_topic`.topic_id = `topic`.id").Where(builder.Like{"`topic`.name", strings.TrimSpace(v)})))
+			} else {
+				topicCond = topicCond.Or(builder.In("`door43_metadata`.repo_id", builder.Select("repo_id").From("repo_topic").InnerJoin("topic", "`repo_topic`.topic_id = `topic`.id").Where(builder.Eq{"`topic`.name": strings.TrimSpace(v)})))
+			}
+		}
+	}
+	return topicCond
 }
 
 // GetMetadataVersionCond gets the metdata version condition

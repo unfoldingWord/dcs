@@ -56,6 +56,13 @@
 					{{if .Repo.Owner.FullName}}{{.Repo.Owner.FullName}}{{else}}{{.Repo.OwnerName}}{{end}}
 				</a>
 			</div>
+			{{if .Repo.Topics}}
+				<div class="label-list">
+					{{range .Repo.Topics}}
+						{{if ne . ""}}<a class="ui label" href="{{AppSubUrl}}/catalog?q=topic%3A{{.}}">{{.}}</a>{{end}}
+					{{end}}
+				</div>
+			{{end}}
 			<div class="flex-item-body">
 				{{if .Release}}{{ctx.Locale.Tr "explore.released"}}{{else}}{{ctx.Locale.Tr "org.repo_updated"}}{{end}} {{TimeSinceUnix .ReleaseDateUnix ctx.Locale}}</div>
 			</div>

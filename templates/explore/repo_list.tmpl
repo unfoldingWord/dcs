@@ -74,7 +74,7 @@
 				{{if .Topics}}
 					<div class="label-list">
 					{{range .Topics}}
-						{{if ne . ""}}<a class="ui label" href="{{AppSubUrl}}/explore/repos?q={{.}}&topic=1">{{.}}</a>{{end}}
+						{{if ne . ""}}<a class="ui label" href="{{AppSubUrl}}/explore/repos?q=topic%3A{{.}}">{{.}}</a>{{end}}
 					{{end}}
 					</div>
 				{{end}}
