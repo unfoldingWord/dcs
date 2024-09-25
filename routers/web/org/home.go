@@ -8,7 +8,6 @@ import (
 	"strings"
 
 	"code.gitea.io/gitea/models/db"
-	"code.gitea.io/gitea/models/door43metadata"
 	"code.gitea.io/gitea/models/organization"
 	repo_model "code.gitea.io/gitea/models/repo"
 	user_model "code.gitea.io/gitea/models/user"
@@ -98,35 +97,26 @@ func Home(ctx *context.Context) {
 	}
 
 	/*** DCS Customizations ***/
-	var books, langs, keywords, subjects, flavorTypes, flavors, abbreviations, contentFormats, repoNames, owners, metadataTypes, metadataVersions []string
+	searchFields := []string{"keyword", "book", "lang", "subject", "flavor_type", "flavor", "abbreviation", "content_format", "repo", "owner", "tag", "checking_level", "metadata_type", "metadata_version", "topic", "stage"}
+	searchMap := map[string][]string{}
+	for _, field := range searchFields {
+		searchMap[field] = []string{}
+	}
+	currentField := "keyword"
 	if keyword != "" {
-		for _, token := range door43metadata.SplitAtCommaNotInString(keyword, true) {
-			if strings.HasPrefix(token, "book:") {
-				books = append(books, strings.TrimPrefix(token, "book:"))
-			} else if strings.HasPrefix(token, "lang:") {
-				langs = append(langs, strings.TrimPrefix(token, "lang:"))
-			} else if strings.HasPrefix(token, "subject:") {
-				subjects = append(subjects, strings.Trim(strings.TrimPrefix(token, "subject:"), `"`))
-			} else if strings.HasPrefix(token, "flavor_type:") {
-				flavorTypes = append(flavorTypes, strings.Trim(strings.TrimPrefix(token, "flavor_type:"), `"`))
-			} else if strings.HasPrefix(token, "flavor:") {
-				flavors = append(flavors, strings.Trim(strings.TrimPrefix(token, "flavor:"), `"`))
-			} else if strings.HasPrefix(token, "abbreviation:") {
-				abbreviations = append(abbreviations, strings.Trim(strings.TrimPrefix(token, "abbreviations:"), `"`))
-			} else if strings.HasPrefix(token, "format:") {
-				contentFormats = append(contentFormats, strings.Trim(strings.TrimPrefix(token, "format:"), `"`))
-			} else if strings.HasPrefix(token, "repo:") {
-				repoNames = append(repoNames, strings.TrimPrefix(token, "repo:"))
-			} else if strings.HasPrefix(token, "owner:") {
-				owners = append(owners, strings.TrimPrefix(token, "owner:"))
-			} else if strings.HasPrefix(token, "metadata_type:") {
-				metadataTypes = append(metadataTypes, strings.TrimPrefix(token, "metadata_type:"))
-			} else if strings.HasPrefix(token, "metadata_version:") {
-				metadataVersions = append(metadataVersions, strings.TrimPrefix(token, "metadata_version:"))
-			} else {
-				keywords = append(keywords, token)
+		for _, token := range strings.Split(keyword, ",") {
+			token = strings.TrimSpace(token)
+			value := token
+			for key := range searchMap {
+				if strings.HasPrefix(token, key+":") {
+					currentField = key
+					value = strings.TrimSpace(strings.TrimPrefix(token, key+":"))
+					break
+				}
 			}
+			searchMap[currentField] = append(searchMap[currentField], value)
 		}
+		keyword = strings.Join(searchMap["keyword"], ", ")
 	}
 	/*** END DCS Customizations ***/
 
@@ -140,24 +130,24 @@ func Home(ctx *context.Context) {
 			PageSize: setting.UI.User.RepoPagingNum,
 			Page:     page,
 		},
-		Keyword:            strings.Join(keywords, ", "),
+		Keyword:            keyword,
 		OwnerID:            org.ID,
 		OrderBy:            orderBy,
 		Private:            ctx.IsSigned,
 		Actor:              ctx.Doer,
 		Language:           language,
 		IncludeDescription: setting.UI.SearchRepoDescription,
-		Books:              books,            // DCS Customizations
-		Languages:          langs,            // DCS Customizations
-		Subjects:           subjects,         // DCS Customizations
-		FlavorTypes:        flavorTypes,      // DCS Customizations
-		Flavors:            flavors,          // DCS Customizations
-		Abbreviations:      abbreviations,    // DCS Customizations
-		ContentFormats:     contentFormats,   // DCS Customizations
-		Repos:              repoNames,        // DCS Customizations
-		Owners:             owners,           // DCS Customizations
-		MetadataTypes:      metadataTypes,    // DCS Customizations
-		MetadataVersions:   metadataVersions, // DCS Customizations
+		Books:              searchMap["book"],             // DCS Customizations
+		Languages:          searchMap["lang"],             // DCS Customizations
+		Subjects:           searchMap["subject"],          // DCS Customizations
+		FlavorTypes:        searchMap["flavor_type"],      // DCS Customizations
+		Flavors:            searchMap["flavor"],           // DCS Customizations
+		Abbreviations:      searchMap["abbreviation"],     // DCS Customizations
+		ContentFormats:     searchMap["content_format"],   // DCS Customizations
+		Repos:              searchMap["repo"],             // DCS Customizations
+		Owners:             searchMap["owner"],            // DCS Customizations
+		MetadataTypes:      searchMap["metadata_type"],    // DCS Customizations
+		MetadataVersions:   searchMap["metadata_version"], // DCS Customizations
 	})
 	if err != nil {
 		ctx.ServerError("SearchRepository", err)

@@ -1,10 +1,23 @@
-<div class="ui right floated secondary filter menu">
+<div class="ui secondary filter menu gt-ac gt-mx-0">
+	<form class="ui form ignore-dirty gt-f1">
+		<input type="hidden" name="sort" value="{{$.SortType}}">
+		<input type="hidden" name="language" value="{{$.Language}}">
+		<div class="ui fluid action input">
+			{{template "shared/searchinput" dict "Value" .Keyword "AutoFocus" true}}
+			{{if .PageIsExploreRepositories}}
+				<input type="hidden" name="only_show_relevant" value="{{.OnlyShowRelevant}}">
+			{{else if .TabName}}
+				<input type="hidden" name="tab" value="{{.TabName}}">
+			{{end}}
+			<button class="ui primary button">{{ctx.Locale.Tr "explore.search"}}</button>
+		</div>
+	</form>
 	<!-- Sort -->
-	<div class="ui right dropdown type jump item">
+	<div class="ui dropdown type jump item gt-mr-0">
 		<span class="text">
-			{{.locale.Tr "repo.issues.filter_sort"}}
-				{{svg "octicon-triangle-down" 14 "dropdown icon"}}
+			{{ctx.Locale.Tr "repo.issues.filter_sort"}}
 		</span>
+		{{svg "octicon-triangle-down" 14 "dropdown icon"}}
 		<div class="menu">
 			<a class="{{if eq .SortType "newest"}}active{{end}} item" href="{{$.Link}}?sort=newest&q={{$.Keyword}}">{{ctx.Locale.Tr "repo.issues.filter_sort.latest"}}</a>
 			<a class="{{if eq .SortType "oldest"}}active{{end}} item" href="{{$.Link}}?sort=oldest&q={{$.Keyword}}">{{ctx.Locale.Tr "repo.issues.filter_sort.oldest"}}</a>
@@ -29,6 +42,7 @@
 		</div>
 	</div>
 </div>
+<<<<<<< HEAD
 <form class="ui form ignore-dirty" style="max-width: 90%">
 	<input type="hidden" name="tab" value="{{$.TabName}}">
 	<input type="hidden" name="sort" value="{{$.SortType}}">
@@ -36,6 +50,20 @@
 		<input name="q" value="{{.Keyword}}" placeholder="{{.locale.Tr "explore.search"}}..." autofocus>
 		<button class="ui blue button">{{.locale.Tr "explore.search"}}</button>
 		{{template "catalog/info_icon" .}}
+||||||| parent of bfd92b1586 (Adds search builder)
+<form class="ui form ignore-dirty" style="max-width: 90%">
+	<input type="hidden" name="tab" value="{{$.TabName}}">
+	<input type="hidden" name="sort" value="{{$.SortType}}">
+	<div class="ui fluid action input">
+		<input name="q" value="{{.Keyword}}" placeholder="{{ctx.Locale.Tr "explore.search"}}..." autofocus>
+		<button class="ui blue button">{{ctx.Locale.Tr "explore.search"}}</button>
+		{{template "catalog/info_icon" .}}
+=======
+{{if and .PageIsExploreRepositories .OnlyShowRelevant}}
+	<div class="ui message explore-relevancy-note">
+		<span data-tooltip-content="{{ctx.Locale.Tr "explore.relevant_repositories_tooltip"}}">{{ctx.Locale.Tr "explore.relevant_repositories" ((printf "?only_show_relevant=0&sort=%s&q=%s&language=%s" $.SortType (QueryEscape $.Keyword) (QueryEscape $.Language))|Escape) | Safe}}</span>
+>>>>>>> bfd92b1586 (Adds search builder)
 	</div>
-</form>
-<div class="ui divider"></div>
+{{end}}
+{{template "shared/searchbuilder" dict "IsCatalogSearch" true}}
+<div class="divider"></div>
