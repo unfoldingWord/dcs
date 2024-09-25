@@ -97,48 +97,31 @@ func RenderCatalogSearch(ctx *context.Context, opts *CatalogSearchOptions) {
 		orderBy = door43metadata.CatalogOrderByNewest
 	}
 
-	var keywords, books, langs, subjects, flavorTypes, flavors, abbreviations, contentFormats, repos, owners, tags, checkingLevels, metadataTypes, metadataVersions, topics []string
-	stage := door43metadata.StageProd
-	query := strings.Trim(ctx.FormString("q"), " ")
+	query := ctx.FormTrim("q")
+	searchFields := []string{"keyword", "book", "lang", "subject", "flavor_type", "flavor", "abbreviation", "content_format", "repo", "owner", "tag", "checking_level", "metadata_type", "metadata_version", "topic", "stage"}
+	searchMap := map[string][]string{}
+	for _, field := range searchFields {
+		searchMap[field] = []string{}
+	}
+	currentField := "keyword"
 	if query != "" {
-		for _, token := range door43metadata.SplitAtCommaNotInString(query, true) {
-			if strings.HasPrefix(token, "book:") {
-				books = append(books, strings.TrimPrefix(token, "book:"))
-			} else if strings.HasPrefix(token, "lang:") {
-				langs = append(langs, strings.TrimPrefix(token, "lang:"))
-			} else if strings.HasPrefix(token, "subject:") {
-				subjects = append(subjects, strings.Trim(strings.TrimPrefix(token, "subject:"), `"`))
-			} else if strings.HasPrefix(token, "flavor_type:") {
-				flavorTypes = append(flavorTypes, strings.Trim(strings.TrimPrefix(token, "flavor_type:"), `"`))
-			} else if strings.HasPrefix(token, "flavor:") {
-				flavors = append(flavors, strings.Trim(strings.TrimPrefix(token, "flavor:"), `"`))
-			} else if strings.HasPrefix(token, "abbreviation:") {
-				abbreviations = append(abbreviations, strings.Trim(strings.TrimPrefix(token, "abberviation:"), `"`))
-			} else if strings.HasPrefix(token, "format:") {
-				contentFormats = append(contentFormats, strings.Trim(strings.TrimPrefix(token, "format:"), `"`))
-			} else if strings.HasPrefix(token, "repo:") {
-				repos = append(repos, strings.TrimPrefix(token, "repo:"))
-			} else if strings.HasPrefix(token, "owner:") {
-				owners = append(owners, strings.TrimPrefix(token, "owner:"))
-			} else if strings.HasPrefix(token, "tag:") {
-				tags = append(tags, strings.TrimPrefix(token, "tag:"))
-			} else if strings.HasPrefix(token, "checkinglevel:") {
-				checkingLevels = append(checkingLevels, strings.TrimPrefix(token, "checkinglevel:"))
-			} else if strings.HasPrefix(token, "metadata_type:") {
-				metadataTypes = append(metadataTypes, strings.TrimPrefix(token, "metadata_type:"))
-			} else if strings.HasPrefix(token, "metadata_version:") {
-				metadataVersions = append(metadataVersions, strings.TrimPrefix(token, "metadata_version:"))
-			} else if strings.HasPrefix(token, "topic:") {
-				topics = append(topics, strings.TrimPrefix(token, "topic:"))
-			} else if strings.HasPrefix(token, "stage:") {
-				if s, ok := door43metadata.StageMap[strings.Trim(strings.TrimPrefix(token, "stage:"), `"`)]; ok {
-					stage = s
-				} else {
-					stage = 0 // Makes it invalid, return no results
+		for _, token := range strings.Split(query, ",") {
+			token = strings.TrimSpace(token)
+			value := token
+			for key := range searchMap {
+				if strings.HasPrefix(token, key+":") {
+					currentField = key
+					value = strings.TrimSpace(strings.TrimPrefix(token, key+":"))
+					break
 				}
-			} else {
-				keywords = append(keywords, token)
 			}
+			searchMap[currentField] = append(searchMap[currentField], value)
+		}
+	}
+	stage := door43metadata.StageProd
+	if len(searchMap["stage"]) > 0 {
+		if val, ok := door43metadata.StageMap[searchMap["stage"][0]]; ok {
+			stage = val
 		}
 	}
 
@@ -148,23 +131,23 @@ func RenderCatalogSearch(ctx *context.Context, opts *CatalogSearchOptions) {
 			PageSize: opts.PageSize,
 		},
 		OrderBy:          []door43metadata.CatalogOrderBy{orderBy},
-		Keywords:         keywords,
+		Keywords:         searchMap["keyword"],
 		Stage:            stage,
 		IncludeHistory:   false,
-		Books:            books,
-		Subjects:         subjects,
-		FlavorTypes:      flavorTypes,
-		Flavors:          flavors,
-		Abbreviations:    abbreviations,
-		ContentFormats:   contentFormats,
-		Languages:        langs,
-		Repos:            repos,
-		Owners:           owners,
-		MetadataTypes:    metadataTypes,
-		MetadataVersions: metadataVersions,
-		Topics:           topics,
-		Tags:             tags,
-		CheckingLevels:   checkingLevels,
+		Books:            searchMap["book"],
+		Subjects:         searchMap["subject"],
+		FlavorTypes:      searchMap["flavor_type"],
+		Flavors:          searchMap["flavor"],
+		Abbreviations:    searchMap["abbreviation"],
+		ContentFormats:   searchMap["content_format"],
+		Languages:        searchMap["lang"],
+		Repos:            searchMap["repo"],
+		Owners:           searchMap["owner"],
+		MetadataTypes:    searchMap["metadata_type"],
+		MetadataVersions: searchMap["metadata_version"],
+		Topics:           searchMap["topic"],
+		Tags:             searchMap["tag"],
+		CheckingLevels:   searchMap["checking_level"],
 	})
 	if err != nil {
 		ctx.ServerError("SearchCatalog", err)
