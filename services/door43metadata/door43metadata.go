@@ -323,7 +323,7 @@ func GetDoor43MetadataFromRCManifest(dm *repo_model.Door43Metadata, manifest map
 		flavorType = "scripture"
 		flavor = "textTranslation"
 	} else if strings.HasPrefix(subject, "TSV ") {
-		if strings.HasPrefix(fmt.Sprintf("./%s_", abbreviation), bookPath) {
+		if strings.HasPrefix(bookPath, fmt.Sprintf("./%s_", abbreviation)) {
 			contentFormat = "tsv7"
 		} else {
 			contentFormat = "tsv9"
