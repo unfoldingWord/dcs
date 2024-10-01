@@ -113,6 +113,7 @@ type Repository struct {
 	MirrorUpdated time.Time     `json:"mirror_updated,omitempty"`
 	RepoTransfer  *RepoTransfer `json:"repo_transfer"`
 	Topics        []string      `json:"topics"`
+	Licenses      []string      `json:"licenses"`
 	// language from the manifest
 	MetadataType string `json:"metadata_type"` // DCS Customiations
 	// language from the manifest

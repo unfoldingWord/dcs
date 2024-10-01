@@ -170,6 +170,18 @@ func innerToRepo(ctx context.Context, repo *repo_model.Repository, permissionInR
 		}
 	}
 
+	/*** DCS Customizations ***/
+	// var language string
+	// if repo.PrimaryLanguage != nil {
+	// 	language = repo.PrimaryLanguage.Language
+	// }
+	/*** END DCS Customizations ***/
+
+	repoLicenses, err := repo_model.GetRepoLicenses(ctx, repo)
+	if err != nil {
+		return nil
+	}
+
 	repoAPIURL := repo.APIURL()
 
 	return ToRepoDCS(ctx, repo, &api.Repository{
@@ -232,6 +244,7 @@ func innerToRepo(ctx context.Context, repo *repo_model.Repository, permissionInR
 		RepoTransfer:                  transfer,
 		Topics:                        repo.Topics,
 		ObjectFormatName:              repo.ObjectFormatName,
+		Licenses:                      repoLicenses.StringList(),
 	})
 }
 
