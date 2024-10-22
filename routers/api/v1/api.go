@@ -358,11 +358,19 @@ func reqToken() func(ctx *context.APIContext) {
 
 func reqExploreSignIn() func(ctx *context.APIContext) {
 	return func(ctx *context.APIContext) {
-		if setting.Service.Explore.RequireSigninView && !ctx.IsSigned {
+		if (setting.Service.RequireSignInView || setting.Service.Explore.RequireSigninView) && !ctx.IsSigned {
 			/*** DCS Customizations ***/
 			return
-			//ctx.Error(http.StatusUnauthorized, "reqExploreSignIn", "you must be signed in to search for users")
+			// ctx.Error(http.StatusUnauthorized, "reqExploreSignIn", "you must be signed in to search for users")
 			/*** END DCS Customizations ***/
+		}
+	}
+}
+
+func reqUsersExploreEnabled() func(ctx *context.APIContext) {
+	return func(ctx *context.APIContext) {
+		if setting.Service.Explore.DisableUsersPage {
+			ctx.NotFound()
 		}
 	}
 }
@@ -960,7 +968,7 @@ func Routes() *web.Router {
 
 		// Users (requires user scope)
 		m.Group("/users", func() {
-			m.Get("/search", reqExploreSignIn(), user.Search)
+			m.Get("/search", reqExploreSignIn(), reqUsersExploreEnabled(), user.Search)
 
 			m.Group("/{username}", func() {
 				m.Get("", reqExploreSignIn(), user.GetInfo)
