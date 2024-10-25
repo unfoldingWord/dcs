@@ -69,7 +69,8 @@
   border-radius: 0 0 0.28571429rem 0.28571429rem;
 }
 
-.ui.segments:not(.horizontal) > .segment:only-child {
+.ui.segments:not(.horizontal) > .segment:only-child,
+.ui.segments:not(.horizontal) > .segment:has(~ .tw-hidden) { /* workaround issue with :last-child ignoring hidden elements */
   border-radius: 0.28571429rem;
 }
 
@@ -148,6 +149,11 @@
 }
 .ui.attached:not(.message) + .ui.attached.segment:not(.top) {
   border-top: none;
+}
+
+.ui.attached.segment:has(+ .ui[class*="top attached"].header),
+.ui.attached.segment:last-child {
+  border-radius: 0 0 0.28571429rem 0.28571429rem;
 }
 
 .ui[class*="top attached"].segment {

@@ -199,4 +199,10 @@ type swaggerParameterBodies struct {
 
 	// in:body
 	UserBadgeOption api.UserBadgeOption
+
+	// in:body
+	CreateVariableOption api.CreateVariableOption
+
+	// in:body
+	UpdateVariableOption api.UpdateVariableOption
 }

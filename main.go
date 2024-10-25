@@ -43,7 +43,7 @@ func main() {
 		log.GetManager().Close()
 		os.Exit(code)
 	}
-	app := cmd.NewMainApp(Version, formatBuiltWith())
+	app := cmd.NewMainApp(cmd.AppVersion{Version: Version, Extra: formatBuiltWith()})
 	_ = cmd.RunMainApp(app, os.Args...) // all errors should have been handled by the RunMainApp
 	log.GetManager().Close()
 }
