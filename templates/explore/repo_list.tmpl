@@ -98,7 +98,7 @@
 						</a>
 					</div>
 				</div>
-				{{$description := .DescriptionHTML $.Context}}
+				{{$description := .DescriptionHTML ctx}}
 				{{if $description}}
 					<div class="flex-item-body">{{$description}}</div>
 				{{end}}
