@@ -1336,7 +1336,7 @@ func registerRoutes(m *web.Router) {
 			m.Get(".rss", feedEnabled, repo.TagsListFeedRSS)
 			m.Get(".atom", feedEnabled, repo.TagsListFeedAtom)
 		}, ctxDataSet("EnableFeed", setting.Other.EnableFeed),
-			repo.MustBeNotEmpty, context.RepoRefByType(context.RepoRefTag, true))
+			repo.MustBeNotEmpty, context.RepoRefByType(context.RepoRefTag, context.RepoRefByTypeOptions{IgnoreNotExistErr: true}))
 		m.Post("/tags/delete", repo.DeleteTag, reqSignIn,
 			repo.MustBeNotEmpty, context.RepoMustNotBeArchived(), reqRepoCodeWriter, context.RepoRef())
 	}, ignSignIn, context.RepoAssignment, reqRepoCodeReader)
@@ -1350,7 +1350,7 @@ func registerRoutes(m *web.Router) {
 			m.Get(".rss", feedEnabled, repo.ReleasesFeedRSS)
 			m.Get(".atom", feedEnabled, repo.ReleasesFeedAtom)
 		}, ctxDataSet("EnableFeed", setting.Other.EnableFeed),
-			repo.MustBeNotEmpty, context.RepoRefByType(context.RepoRefTag, true))
+			repo.MustBeNotEmpty, context.RepoRefByType(context.RepoRefTag, context.RepoRefByTypeOptions{IgnoreNotExistErr: true}))
 		m.Get("/releases/attachments/{uuid}", repo.MustBeNotEmpty, repo.GetAttachment)
 		m.Get("/releases/download/{vTag}/{fileName}", repo.MustBeNotEmpty, repo.RedirectDownload)
 		m.Group("/releases", func() {
@@ -1548,7 +1548,7 @@ func registerRoutes(m *web.Router) {
 			m.Get("/commit/*", context.RepoRefByType(context.RepoRefCommit), repo.SingleDownloadOrLFS)
 			m.Get("/blob/{sha}", context.RepoRefByType(context.RepoRefBlob), repo.DownloadByIDOrLFS)
 			// "/*" route is deprecated, and kept for backward compatibility
-			m.Get("/*", context.RepoRefByType(context.RepoRefLegacy), repo.SingleDownloadOrLFS)
+			m.Get("/*", context.RepoRefByType(context.RepoRefUnknown), repo.SingleDownloadOrLFS)
 		}, repo.MustBeNotEmpty)
 
 		m.Group("/raw", func() {
@@ -1557,7 +1557,7 @@ func registerRoutes(m *web.Router) {
 			m.Get("/commit/*", context.RepoRefByType(context.RepoRefCommit), repo.SingleDownload)
 			m.Get("/blob/{sha}", context.RepoRefByType(context.RepoRefBlob), repo.DownloadByID)
 			// "/*" route is deprecated, and kept for backward compatibility
-			m.Get("/*", context.RepoRefByType(context.RepoRefLegacy), repo.SingleDownload)
+			m.Get("/*", context.RepoRefByType(context.RepoRefUnknown), repo.SingleDownload)
 		}, repo.MustBeNotEmpty)
 
 		m.Group("/render", func() {
@@ -1572,7 +1572,7 @@ func registerRoutes(m *web.Router) {
 			m.Get("/tag/*", context.RepoRefByType(context.RepoRefTag), repo.RefCommits)
 			m.Get("/commit/*", context.RepoRefByType(context.RepoRefCommit), repo.RefCommits)
 			// "/*" route is deprecated, and kept for backward compatibility
-			m.Get("/*", context.RepoRefByType(context.RepoRefLegacy), repo.RefCommits)
+			m.Get("/*", context.RepoRefByType(context.RepoRefUnknown), repo.RefCommits)
 		}, repo.MustBeNotEmpty, reqSignIn) // DCS Customizations: requiring login for commit-related web routes
 
 		m.Group("/blame", func() {
@@ -1595,7 +1595,7 @@ func registerRoutes(m *web.Router) {
 			m.Get("/branch/*", context.RepoRefByType(context.RepoRefBranch), repo.Home)
 			m.Get("/tag/*", context.RepoRefByType(context.RepoRefTag), repo.Home)
 			m.Get("/commit/*", context.RepoRefByType(context.RepoRefCommit), repo.Home)
-			m.Get("/*", context.RepoRefByType(context.RepoRefLegacy), repo.Home) // "/*" route is deprecated, and kept for backward compatibility
+			m.Get("/*", context.RepoRefByType(context.RepoRefUnknown), repo.Home) // "/*" route is deprecated, and kept for backward compatibility
 		}, repo.SetEditorconfigIfExists)
 
 		m.Get("/forks", context.RepoRef(), repo.Forks)
