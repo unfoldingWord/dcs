@@ -231,7 +231,7 @@ func prepareOrgProfileReadme(ctx *context.Context, viewRepositories bool) bool {
 				Base:       profileDbRepo.Link(),
 				BranchPath: path.Join("branch", util.PathEscapeSegments(profileDbRepo.DefaultBranch)),
 			},
-			Metas: map[string]string{"mode": "document"},
+			Metas: markup.ComposeSimpleDocumentMetas(),
 		}, bytes); err != nil {
 			log.Error("failed to RenderString: %v", err)
 		} else {
