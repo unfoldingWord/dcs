@@ -88,7 +88,11 @@ import {
   initGlobalButtons,
   initGlobalDeleteButton,
 } from './features/common-button.ts';
-import {initGlobalEnterQuickSubmit, initGlobalFormDirtyLeaveConfirm} from './features/common-form.ts';
+import {
+  initGlobalComboMarkdownEditor,
+  initGlobalEnterQuickSubmit,
+  initGlobalFormDirtyLeaveConfirm,
+} from './features/common-form.ts';
 
 initGiteaFomantic();
 initDirAuto();
@@ -132,6 +136,7 @@ onDomReady(() => {
     initGlobalCopyToClipboardListener,
     initGlobalEnterQuickSubmit,
     initGlobalFormDirtyLeaveConfirm,
+    initGlobalComboMarkdownEditor,
     initGlobalDeleteButton,
 
     initCommonOrganization,
