@@ -118,12 +118,6 @@ func RefBlame(ctx *context.Context) {
 	ctx.Data["Entry"] = entry
 	/*** END DCS Customizations ***/
 
-	// Get Topics of this repo
-	renderRepoTopics(ctx)
-	if ctx.Written() {
-		return
-	}
-
 	commitNames := processBlameParts(ctx, result.Parts)
 	if ctx.Written() {
 		return
