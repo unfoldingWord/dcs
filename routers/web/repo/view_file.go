@@ -32,7 +32,7 @@ import (
 	"github.com/nektos/act/pkg/model"
 )
 
-func renderFile(ctx *context.Context, entry *git.TreeEntry) {
+func prepareToRenderFile(ctx *context.Context, entry *git.TreeEntry) {
 	ctx.Data["IsViewFile"] = true
 	ctx.Data["HideRepoInfo"] = true
 	blob := entry.Blob()
