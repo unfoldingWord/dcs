@@ -338,8 +338,7 @@
 >>>>>>> faf5705d29 (GitHub like repo home page (#32213))
 					</div>
 
-					{{/* by default, the row-right flex grows, but on non-root tree path, it should not because the row-left might contain a long path */}}
-					<div class="repo-button-row-right {{if not $isTreePathRoot}}tw-flex-grow-0{{end}}">
+					<div class="repo-button-row-right">
 						<!-- Only show clone panel in repository home page -->
 						{{if $isTreePathRoot}}
 							{{template "repo/clone_panel" .}}
@@ -360,6 +359,9 @@
 						{{template "repo/code/upstream_diverging_info" .}}
 					{{end}}
 					{{template "repo/view_list" .}}
+					{{if and .ReadmeExist (or .IsMarkup .IsPlainText)}}
+						{{template "repo/view_file" .}}
+					{{end}}
 				{{end}}
 			</div>
 
