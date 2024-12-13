@@ -121,8 +121,8 @@ var IssueCodeNegatives = map[IssueCode]string{
 	IssueCodeAbbreviation:      "Abbreviation is not valid for given subject",
 	IssueCodeLanguage:          "Language is still English",
 	IssueCodeIngredientTitle:   "Ingredient is still in English",
-	IssueCodeIngredientMissing: "Ingredient's path is missing",
-	IssueCodeIngredientEmpty:   "Ingredient's file is empty",
+	IssueCodeIngredientMissing: "Ingredient path is missing",
+	IssueCodeIngredientEmpty:   "Ingredient file is empty",
 	IssueCodeReleaseNeeded:     "A release is needed for the resource",
 }
 
@@ -134,9 +134,9 @@ var IssueCodePositives = map[IssueCode]string{
 	IssueCodeTitle:             "Title has been properly changed",
 	IssueCodeAbbreviation:      "Abbreviation is valid for given subject",
 	IssueCodeLanguage:          "Language has been set",
-	IssueCodeIngredientTitle:   "Ingredients titles have been translated",
-	IssueCodeIngredientMissing: "Ingredients paths exists",
-	IssueCodeIngredientEmpty:   "Ingredients files are not empty",
+	IssueCodeIngredientTitle:   "Ingredient titles have been translated",
+	IssueCodeIngredientMissing: "Ingredient paths exists",
+	IssueCodeIngredientEmpty:   "Ingredient files are not empty",
 	IssueCodeReleaseNeeded:     "A release has been created",
 }
 
