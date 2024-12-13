@@ -14,6 +14,7 @@ import (
 	"code.gitea.io/gitea/models/db"
 	"code.gitea.io/gitea/models/door43metadata"
 	"code.gitea.io/gitea/models/system"
+	"code.gitea.io/gitea/modules/git"
 	"code.gitea.io/gitea/modules/json"
 	"code.gitea.io/gitea/modules/log"
 	"code.gitea.io/gitea/modules/setting"
@@ -52,6 +53,7 @@ type Door43Metadata struct {
 	Ref               string                      `xorm:"INDEX UNIQUE(repo_ref) NOT NULL"`
 	RefType           string                      `xorm:"NOT NULL"`
 	CommitSHA         string                      `xorm:"NOT NULL VARCHAR(40)"`
+	Commit            *git.Commit                 `xorm:"-"`
 	Stage             door43metadata.Stage        `xorm:"INDEX NOT NULL"`
 	MetadataType      string                      `xorm:"INDEX NOT NULL"`
 	MetadataVersion   string                      `xorm:"NOT NULL"`
@@ -60,6 +62,7 @@ type Door43Metadata struct {
 	Flavor            string                      `xorm:"INDEX NOT NULL"`
 	Abbreviation      string                      `xorm:"INDEX NOT NULL"`
 	Title             string                      `xorm:"NOT NULL"`
+	Publisher         string                      `xorm:"NOT NULL"`
 	Language          string                      `xorm:"INDEX NOT NULL"`
 	LanguageTitle     string                      `xorm:"NOT NULL"`
 	LanguageDirection string                      `xorm:"NOT NULL"`
@@ -67,10 +70,12 @@ type Door43Metadata struct {
 	ContentFormat     string                      `xorm:"NOT NULL"`
 	CheckingLevel     int                         `xorm:"NOT NULL"`
 	Ingredients       []*structs.Ingredient       `xorm:"JSON"`
+	Relations         []*structs.Relation         `xorm:"JSON"`
 	IsLatestForStage  bool                        `xorm:"INDEX NOT NULL DEFAULT false"`
 	IsRepoMetadata    bool                        `xorm:"INDEX NOT NULL DEFAULT false"`
-	Metadata          map[string]interface{}      `xorm:"JSON"`
-	ValidationError   *jsonschema.ValidationError `xorm:"JSON"`
+	Metadata          map[string]interface{}      `xorm:"JSON MEDIUMTEXT"`
+	ValidationError   *jsonschema.ValidationError `xorm:"JSON MEDIUMTEXT"`
+	HealthcheckIssues []*Door43HealthcheckIssue   `xorm:"-"`
 	ReleaseDateUnix   timeutil.TimeStamp          `xorm:"NOT NULL"`
 	CreatedUnix       timeutil.TimeStamp          `xorm:"INDEX created NOT NULL"`
 	UpdatedUnix       timeutil.TimeStamp          `xorm:"INDEX updated"`
@@ -115,6 +120,17 @@ func (dm *Door43Metadata) LoadRelease(ctx context.Context) error {
 	return nil
 }
 
+func (dm *Door43Metadata) LoadHealthcheckIssues(ctx context.Context) error {
+	if dm.HealthcheckIssues == nil {
+		issues, err := GetDoor43HealthcheckIssuesByDoor43MetadataID(ctx, dm.ID)
+		if err != nil {
+			return err
+		}
+		dm.HealthcheckIssues = issues
+	}
+	return nil
+}
+
 // LoadAttributes load repo and release attributes for a door43 metadata
 func (dm *Door43Metadata) LoadAttributes(ctx context.Context) error {
 	if err := dm.LoadRepo(ctx); err != nil {
@@ -139,8 +155,8 @@ func (dm *Door43Metadata) CatalogMetatadataJSONURL() string {
 	return setting.AppURL + "api/v1/catalog/metadata/" + url.PathEscape(dm.Repo.OwnerName) + "/" + url.PathEscape(dm.Repo.Name) + "/" + url.PathEscape(dm.Ref)
 }
 
-// CatalogValidationErrorURL the api url for a catalog metadata. door43 metadata must have attributes loaded
-func (dm *Door43Metadata) CatalogValidationErrorURL() string {
+// CatalogValidationErrorsURL the api url for a catalog metadata. door43 metadata must have attributes loaded
+func (dm *Door43Metadata) CatalogValidationErrorsURL() string {
 	return setting.AppURL + "api/v1/catalog/validation/" + url.PathEscape(dm.Repo.OwnerName) + "/" + url.PathEscape(dm.Repo.Name) + "/" + url.PathEscape(dm.Ref)
 }
 
@@ -410,6 +426,7 @@ func IsDoor43MetadataExist(ctx context.Context, repoID, releaseID int64) (bool, 
 
 // InsertDoor43Metadata inserts a door43 metadata
 func InsertDoor43Metadata(ctx context.Context, dm *Door43Metadata) error {
+	// dm.ValidationError = pruneValidationError(dm.ValidationError, 65535) // Adjust maxLength as needed
 	if id, err := db.GetEngine(ctx).Insert(dm); err != nil {
 		return err
 	} else if id > 0 {
@@ -432,12 +449,42 @@ func InsertDoor43Metadata(ctx context.Context, dm *Door43Metadata) error {
 
 // InsertDoor43Metadatas inserts door43 metadatas
 func InsertDoor43Metadatas(ctx context.Context, dms []*Door43Metadata) error {
+	// for _, dm := range dms {
+	// 	dm.ValidationError = pruneValidationError(dm.ValidationError, 65535)
+	// }
 	_, err := db.GetEngine(ctx).Insert(dms)
 	return err
 }
 
+func pruneValidationError(valErr *jsonschema.ValidationError, maxLength int) *jsonschema.ValidationError {
+	if valErr == nil {
+		return nil
+	}
+	pruned := *valErr
+	pruned.Causes = nil
+
+	// Convert to JSON to check length
+	jsonStr, _ := json.Marshal(pruned)
+	if len(jsonStr) <= maxLength {
+		return &pruned
+	}
+
+	// Prune causes if necessary
+	for _, cause := range valErr.Causes {
+		pruned.Causes = append(pruned.Causes, pruneValidationError(cause, maxLength))
+		jsonStr, _ := json.Marshal(pruned)
+		if len(jsonStr) <= maxLength {
+			break
+		}
+		pruned.Causes = pruned.Causes[:len(pruned.Causes)-1]
+	}
+
+	return &pruned
+}
+
 // UpdateDoor43MetadataCols update door43 metadata according special columns
 func UpdateDoor43MetadataCols(ctx context.Context, dm *Door43Metadata, cols ...string) error {
+	// dm.ValidationError = pruneValidationError(dm.ValidationError, 65535) // Adjust maxLength as needed
 	id, err := db.GetEngine(ctx).ID(dm.ID).Cols(cols...).Update(dm)
 	if id > 0 && dm.ReleaseID > 0 {
 		err := dm.LoadRepo(ctx)
@@ -453,6 +500,7 @@ func UpdateDoor43MetadataCols(ctx context.Context, dm *Door43Metadata, cols ...s
 
 // UpdateDoor43Metadata update a;ll door43 metadata
 func UpdateDoor43Metadata(ctx context.Context, dm *Door43Metadata) error {
+	// dm.ValidationError = pruneValidationError(dm.ValidationError, 65535) // Adjust maxLength as needed
 	id, err := db.GetEngine(ctx).ID(dm.ID).AllCols().Update(dm)
 	if id > 0 && dm.ReleaseID > 0 {
 		err := dm.LoadRepo(ctx)

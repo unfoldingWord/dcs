@@ -1,5 +1,5 @@
-<a class="{{if .PageIsMetadata}}active{{end}} item" href="{{.RepoLink}}/metadata">
-	{{svg "octicon-briefcase"}} {{ctx.Locale.Tr "repo.metadata.metadata"}}
+<a class="{{if .PageIsHealthcheck}}active{{end}} item" href="{{.RepoLink}}/healthcheck">
+	{{svg "octicon-shield-check"}} {{ctx.Locale.Tr "repo.metadata.healthcheck"}}
 </a>
 {{$refToPreview := .Repository.DefaultBranch}}
 {{$refType := "branch"}}

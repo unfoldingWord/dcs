@@ -7,6 +7,7 @@ import (
 	"net/http"
 
 	"code.gitea.io/gitea/models/db"
+	"code.gitea.io/gitea/models/door43metadata"
 	repo_model "code.gitea.io/gitea/models/repo"
 	"code.gitea.io/gitea/modules/base"
 	"code.gitea.io/gitea/modules/context"
@@ -17,24 +18,49 @@ import (
 )
 
 const (
-	tplDCSMetadata base.TplName = "repo/dcs_metadata"
+	tplDCSMetadata base.TplName = "repo/dcs_healthcheck"
 )
 
-// Door43Metadtas renders door43 metadatas page
-func Door43Metadatas(ctx *context.Context) {
-	dms := make([]*repo_model.Door43Metadata, 0, 50)
+// Healthcheck renders healthcheck and door43metadata page
+func Healthcheck(ctx *context.Context) {
+	branchDms := make([]*repo_model.Door43Metadata, 0, 50)
 	err := db.GetEngine(ctx).
 		Where(builder.Eq{"repo_id": ctx.Repo.Repository.ID}).
-		OrderBy("is_repo_metadata DESC, ref_type ASC, release_date_unix DESC").
-		Find(&dms)
+		And(builder.Gte{"stage": door43metadata.StageLatest}).
+		OrderBy("is_repo_metadata DESC, stage ASC, release_date_unix DESC").
+		Find(&branchDms)
 	if err != nil {
-		log.Error("Find(dms): %v", err)
+		log.Error("Find(dms) for branches: %v", err)
+	}
+	releaseDms := make([]*repo_model.Door43Metadata, 0, 50)
+	err = db.GetEngine(ctx).
+		Where(builder.Eq{"repo_id": ctx.Repo.Repository.ID}).
+		And(builder.Lte{"stage": door43metadata.StagePreProd}).
+		OrderBy("release_date_unix DESC").
+		Find(&releaseDms)
+	if err != nil {
+		log.Error("Find(dms) for releases: %v", err)
+	}
+	var healthcheck *repo_model.OrderedIssuesMap
+
+	dm, err := repo_model.GetDoor43MetadataByRepoIDAndRef(ctx, ctx.Repo.Repository.ID, ctx.Repo.Repository.DefaultBranch)
+	if err != nil {
+		log.Error("Error getting door43 metadata for healthcheck: %v", err)
+	}
+	if dm != nil {
+		if h, err := repo_model.GetOrderedHealthcheck(ctx, dm.ID); err != nil {
+			log.Error("Error getting health check issues: %v", err)
+		} else {
+			healthcheck = h
+		}
 	}
 
 	ctx.Data["PageIsMetadata"] = true
-	ctx.Data["Title"] = "Door43 Metadata"
-	ctx.Data["PageIsSettingsDoor43Metadata"] = true
-	ctx.Data["Door43Metadatas"] = dms
+	ctx.Data["Title"] = "Health Check"
+	ctx.Data["PageIsHealthcheck"] = true
+	ctx.Data["BranchDMs"] = branchDms
+	ctx.Data["ReleaseDMs"] = releaseDms
+	ctx.Data["Healthcheck"] = healthcheck
 	ctx.HTML(http.StatusOK, tplDCSMetadata)
 }
 

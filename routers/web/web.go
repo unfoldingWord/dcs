@@ -1131,10 +1131,13 @@ func registerRoutes(m *web.Route) {
 			})
 		})
 		// DCS Customizations
-		m.Group("/metadata", func() {
-			m.Get("", repo.Door43Metadatas)
+		m.Group("/healthcheck", func() {
+			m.Get("", repo.Healthcheck)
 			m.Get("/update", repo.UpdateDoor43Metadata)
 			m.Post("/update", repo.UpdateDoor43Metadata) // TODO: Make this /{id} for a single DM
+		})
+		m.Get("/metadata", func(ctx *context.Context) {
+			ctx.Redirect(ctx.Repo.RepoLink + "/healthcheck")
 		})
 		// END DCS Customizations
 	}, ignSignIn, context.RepoAssignment, context.UnitTypes()) // for "/{username}/{reponame}" which doesn't require authentication

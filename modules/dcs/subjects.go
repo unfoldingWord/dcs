@@ -39,6 +39,15 @@ var ResourceToSubjectMap = map[string]string{
 	"ust":         "Aligned Bible",
 }
 
+// SubjectToResourceMap is the inverse of ResourceToSubjectMap
+var SubjectToResourceMap = func() map[string][]string {
+	m := make(map[string][]string)
+	for k, v := range ResourceToSubjectMap {
+		m[v] = append(m[v], k)
+	}
+	return m
+}()
+
 // GetSubjectFromRepoName determines the subject of a repo by its repo name
 func GetSubjectFromRepoName(repoName string) string {
 	parts := strings.Split(strings.ToLower(repoName), "_")
