@@ -32,6 +32,7 @@ func Healthcheck(ctx *context.Context) {
 	if err != nil {
 		log.Error("Find(dms) for branches: %v", err)
 	}
+
 	releaseDms := make([]*repo_model.Door43Metadata, 0, 50)
 	err = db.GetEngine(ctx).
 		Where(builder.Eq{"repo_id": ctx.Repo.Repository.ID}).
@@ -41,17 +42,25 @@ func Healthcheck(ctx *context.Context) {
 	if err != nil {
 		log.Error("Find(dms) for releases: %v", err)
 	}
-	var healthcheck *repo_model.OrderedIssuesMap
 
+	var healthcheck *repo_model.HealthcheckGroupedIssues
 	dm, err := repo_model.GetDoor43MetadataByRepoIDAndRef(ctx, ctx.Repo.Repository.ID, ctx.Repo.Repository.DefaultBranch)
 	if err != nil {
 		log.Error("Error getting door43 metadata for healthcheck: %v", err)
 	}
 	if dm != nil {
-		if h, err := repo_model.GetOrderedHealthcheck(ctx, dm.ID); err != nil {
-			log.Error("Error getting health check issues: %v", err)
+		dm.LoadRepo(ctx)
+		dm.Repo.LoadLatestDMs(ctx)
+		if true || dm.HealthchckUnix == 0 || (dm.Repo.LatestProdDM != nil && (dm.Repo.LatestProdDM.HealthchckUnix == 0 || dm.Repo.LatestProdDM.ReleaseDateUnix > dm.HealthchckUnix)) {
+			healthcheck, err = door43metadata_service.PerformHealthcheck(ctx, dm)
+			if err != nil {
+				log.Error("Error performing healthcheck: %v", err)
+			}
 		} else {
-			healthcheck = h
+			healthcheck, err = repo_model.GetHealthcheckGroupedIssues(ctx, dm.ID)
+			if err != nil {
+				log.Error("Error getting healthcheck issues for healthcheck: %v", err)
+			}
 		}
 	}
 

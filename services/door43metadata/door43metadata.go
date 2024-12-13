@@ -67,7 +67,7 @@ func processDoor43MetadataForRepoRefs(ctx context.Context, repo *repo_model.Repo
 			} else {
 				if dm != nil && dm.ID > 0 {
 					dm.Repo = repo
-					err := PerformHealthcheck(ctx, dm)
+					_, err := PerformHealthcheck(ctx, dm)
 					if err != nil {
 						log.Error("PerformHealthcheck repo: %s, ref: %s Error: %v", repo.FullName(), dm.Ref, err)
 					}
@@ -221,7 +221,7 @@ func ProcessDoor43MetadataForRepo(ctx context.Context, repo *repo_model.Reposito
 		} else {
 			if dm != nil && dm.ID > 0 {
 				dm.Repo = repo
-				err := PerformHealthcheck(ctx, dm)
+				_, err := PerformHealthcheck(ctx, dm)
 				if err != nil {
 					log.Error("PerformHealthcheck repo: %s, ref: %s Error: %v", repo.FullName(), dm.Ref, err)
 				}

@@ -79,6 +79,7 @@ type Door43Metadata struct {
 	ReleaseDateUnix   timeutil.TimeStamp          `xorm:"NOT NULL"`
 	CreatedUnix       timeutil.TimeStamp          `xorm:"INDEX created NOT NULL"`
 	UpdatedUnix       timeutil.TimeStamp          `xorm:"INDEX updated"`
+	HealthchckUnix    timeutil.TimeStamp          `xorm:"INDEX"`
 }
 
 func init() {
@@ -121,7 +122,7 @@ func (dm *Door43Metadata) LoadRelease(ctx context.Context) error {
 }
 
 func (dm *Door43Metadata) LoadHealthcheckIssues(ctx context.Context) error {
-	if dm.HealthcheckIssues == nil {
+	if dm.HealthcheckIssues == nil && dm.HealthchckUnix > 0 {
 		issues, err := GetDoor43HealthcheckIssuesByDoor43MetadataID(ctx, dm.ID)
 		if err != nil {
 			return err

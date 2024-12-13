@@ -13,15 +13,37 @@ import (
 )
 
 // SeverityLevel represents the level of severity or concern for a health check
-type SeverityLevel string
+type SeverityLevel int
 
 const (
-	SeverityLevelError   SeverityLevel = "error"
-	SeverityLevelWarning SeverityLevel = "warning"
-	SeverityLevelInfo    SeverityLevel = "info"
-	SeverityLevelSuccess SeverityLevel = "success"
+	SeverityLevelError SeverityLevel = iota
+	SeverityLevelWarning
+	SeverityLevelInfo
+	SeverityLevelSuccess
 )
 
+// SeverityLevelMap map from string to SeverityLevel (int)
+var SeverityLevelMap = map[string]SeverityLevel{
+	"error":   SeverityLevelError,
+	"warning": SeverityLevelWarning,
+	"info":    SeverityLevelInfo,
+	"success": SeverityLevelSuccess,
+}
+
+// SeverityLevelToStringMap map from SeverityLevel (int) to string
+var SeverityLevelToStringMap = map[SeverityLevel]string{
+	SeverityLevelError:   "error",
+	SeverityLevelWarning: "warning",
+	SeverityLevelInfo:    "info",
+	SeverityLevelSuccess: "success",
+}
+
+// String returns string repensation of a SeverityLevel (int)
+func (sl SeverityLevel) String() string {
+	return SeverityLevelToStringMap[sl]
+}
+
+// IssueCode represents a specific issue type for a health check
 type IssueCode string
 
 // IssueCode values
@@ -53,29 +75,40 @@ var IssueCodeOrder = []IssueCode{
 	IssueCodeReleaseNeeded,
 }
 
-type OrderedIssuesMap struct {
-	Issues map[IssueCode][]*Door43HealthcheckIssue
+type HealthcheckGroupedIssues struct {
+	Issues               map[IssueCode][]*Door43HealthcheckIssue
+	OverallSeverityLevel SeverityLevel
+	SeverityLevelCount   map[SeverityLevel]int
 }
 
-func NewOrderedIssuesMap() *OrderedIssuesMap {
-	oim := &OrderedIssuesMap{
-		Issues: make(map[IssueCode][]*Door43HealthcheckIssue),
+func NewHealthcheckGroupedIssues(issues []*Door43HealthcheckIssue) *HealthcheckGroupedIssues {
+	hgi := &HealthcheckGroupedIssues{
+		Issues:               make(map[IssueCode][]*Door43HealthcheckIssue),
+		OverallSeverityLevel: SeverityLevelSuccess,
+		SeverityLevelCount:   make(map[SeverityLevel]int),
 	}
 	for _, code := range IssueCodeOrder {
-		oim.Issues[code] = []*Door43HealthcheckIssue{}
+		hgi.Issues[code] = []*Door43HealthcheckIssue{}
 	}
-	return oim
+	for _, issue := range issues {
+		hgi.AddIssue(issue)
+	}
+	return hgi
 }
 
-func (oim *OrderedIssuesMap) AddIssue(issue *Door43HealthcheckIssue) {
-	oim.Issues[issue.IssueCode] = append(oim.Issues[issue.IssueCode], issue)
+func (hgi *HealthcheckGroupedIssues) AddIssue(issue *Door43HealthcheckIssue) {
+	hgi.Issues[issue.IssueCode] = append(hgi.Issues[issue.IssueCode], issue)
+	if issue.SeverityLevel < hgi.OverallSeverityLevel {
+		hgi.OverallSeverityLevel = issue.SeverityLevel
+	}
+	hgi.SeverityLevelCount[issue.SeverityLevel]++
 }
 
-func (oim *OrderedIssuesMap) GetIssues(issueCode IssueCode) []*Door43HealthcheckIssue {
-	return oim.Issues[issueCode]
+func (hgi *HealthcheckGroupedIssues) GetIssues(issueCode IssueCode) []*Door43HealthcheckIssue {
+	return hgi.Issues[issueCode]
 }
 
-func (oim *OrderedIssuesMap) GetOrder() []IssueCode {
+func (hgi *HealthcheckGroupedIssues) GetOrder() []IssueCode {
 	return IssueCodeOrder
 }
 
@@ -114,25 +147,25 @@ var IssueDetailsFormatStrings = map[IssueCode]string{
 	IssueCodePublisher:         "Publisher in manifest.yaml is still 'unfoldingWord'.",
 	IssueCodeTitle:             "Resouce title in manifest.yaml still contains 'unfoldingWord'.",
 	IssueCodeAbbreviation:      "Abbreviation in manifest.yaml should not be **`%s`** for the subject **`%s`**.",
-	IssueCodeLanguage:          "Language in manifest.yaml is still English (en).",
+	IssueCodeLanguage:          "Language in manifest.yaml is still English **`en`**.",
 	IssueCodeIngredientTitle:   "The title in for the project '%s' is still in English: %s",
-	IssueCodeIngredientMissing: "The path for project '%s' is does not exist: %s",
-	IssueCodeIngredientEmpty:   "The file for project '%s' is empty: %s",
+	IssueCodeIngredientMissing: "The path for project **`%s`** is does not exist in the repo: **`%s`**",
+	IssueCodeIngredientEmpty:   "The file for project **`%s`** is empty: **`%s`**",
 	IssueCodeReleaseNeeded:     "A release is needed for the resource.",
 }
 
 var IssueSuggestionsFormatStrings = map[IssueCode]string{
 	IssueCodeNoMetadata:        "Add a manifest.yaml file to the repository to describe the resource.",
-	IssueCodeMetadataInvalid:   "Edit the [manifest.yaml file](%s/src/branch/%s/manifest.yaml) and fix these errors:\n\n<pre>%s</pre>",
-	IssueCodeRelation:          "Edit the [manifest.yaml file](%s/src/branch/%s/manifest.yaml) and change **`%s`** to **`%s/%s`**.",
-	IssueCodePublisher:         "Edit the [manifest.yaml file](%s/src/branch/%s/manifest.yaml) and change `unfoldingWord` to the correct publisher, e.g. %s.",
-	IssueCodeTitle:             "Edit the [manifest.yaml file](%s/src/branch/%s/manifest.yaml) and remove 'unfoldingWord ' from the beginning of title, or translate into your language.",
-	IssueCodeAbbreviation:      "Edit the [manifest.yaml file](%s/src/branch/%s/manifest.yaml) and change `%s` to the correct abbreviation for the subject %s, which is %s.",
-	IssueCodeLanguage:          "Edit the [manifest.yaml file](%s/src/branch/%s/manifest.yaml) and change `en` to the correct language code for your project's language, the title of the language, and the direction.",
-	IssueCodeIngredientTitle:   "Edit the [manifest.yaml file](%s/src/branch/%s/manifest.yaml) and translate the title of the project from '%s' to the resource's language.",
-	IssueCodeIngredientMissing: "Either edit the [manifest.yaml file](%s/src/branch/%s/manifest.yaml) remove the project '%s' or add the missing file or path to the repository.",
-	IssueCodeIngredientEmpty:   "Either edit the [manifest.yaml file](%s/src/branch/%s/manifest.yaml) remove the project '%s' or add content to the file '%s'.",
-	IssueCodeReleaseNeeded:     "Create a release for the resource with gatewayAdmin.",
+	IssueCodeMetadataInvalid:   "Edit the [manifest.yaml](%s/src/branch/%s/manifest.yaml) file and fix these errors:\n\n<pre>%s</pre>",
+	IssueCodeRelation:          "Edit the [manifest.yaml](%s/src/branch/%s/manifest.yaml) file and change **`%s`** to **`%s/%s`**.",
+	IssueCodePublisher:         "Edit the [manifest.yaml](%s/src/branch/%s/manifest.yaml) file and change `unfoldingWord` to the correct publisher, e.g. %s.",
+	IssueCodeTitle:             "Edit the [manifest.yaml](%s/src/branch/%s/manifest.yaml) file and remove 'unfoldingWord ' from the beginning of title, **`%s`** => **`%s`**, or translate into your language.",
+	IssueCodeAbbreviation:      "Edit the [manifest.yaml](%s/src/branch/%s/manifest.yaml) file and change **`%s`** to the correct abbreviation for the subject **`%s`**, which is **`%s`**.",
+	IssueCodeLanguage:          "Edit the [manifest.yaml](%s/src/branch/%s/manifest.yaml) file and change **`en`** to the correct language code for your project's language, the title of the language, and the direction.",
+	IssueCodeIngredientTitle:   "Edit the [manifest.yaml](%s/src/branch/%s/manifest.yaml) file and translate the title of the projects. For example, translate **'%s'** to the resource's language.",
+	IssueCodeIngredientMissing: "Either edit the [manifest.yaml](%s/src/branch/%s/manifest.yaml) file and remove the project **`%s`** or add the missing file or path, **`%s`**, to the repository.",
+	IssueCodeIngredientEmpty:   "Either edit the [manifest.yaml](%s/src/branch/%s/manifest.yaml) file and remove the project **`%s`** or add content to the file **`%s`**.",
+	IssueCodeReleaseNeeded:     "It looks like %s of the **`%s`** branch's %ss has been fixed. You should create a release for the resource with [gatewayAdmin](https://gateway-admin.netlify.app/).",
 }
 
 // IssuePositiveString returns the summary format string for the issue in possitive form
@@ -157,12 +190,13 @@ func (id IssueCode) IssueSuggestionFormatString() string {
 
 // Door43HealtcheckIssue represents a single health check issue for a resource
 type Door43HealthcheckIssue struct {
-	ID               int64         `xorm:"pk autoincr"`
-	Door43MetadataID int64         `xorm:"INDEX"`
-	IssueCode        IssueCode     `xorm:"INDEX"`
-	SeverityLevel    SeverityLevel `xorm:"INDEX"`
+	ID               int64 `xorm:"pk autoincr"`
+	Door43MetadataID int64 `xorm:"INDEX"`
+	IssueCode        IssueCode
+	SeverityLevel    SeverityLevel
 	Details          string
 	Suggestion       string             `xorm:"MEDIUMTEXT"`
+	Current          bool               `xorm:"default true"`
 	CreatedUnix      timeutil.TimeStamp `xorm:"created"`
 }
 
@@ -172,10 +206,6 @@ func init() {
 
 func (h *Door43HealthcheckIssue) TableName() string {
 	return "door43_healthcheck_issue"
-}
-
-// HealthcheckGrouped is a class for full health check info
-type HealthcheckGrouped struct {
 }
 
 // GetDoor43HealthcheckIssuesByDoor43MetadataID returns all health check issues for a resource
@@ -188,6 +218,7 @@ func GetDoor43HealthcheckIssuesByDoor43MetadataID(ctx context.Context, dmID int6
 
 	err := db.GetEngine(ctx).
 		Where(builder.Eq{"door43_metadata_id": dmID}).
+		And(builder.Eq{"current": true}).
 		OrderBy("severity_level").
 		Find(&issues)
 	if err != nil {
@@ -196,15 +227,12 @@ func GetDoor43HealthcheckIssuesByDoor43MetadataID(ctx context.Context, dmID int6
 	return issues, err
 }
 
-func GetOrderedHealthcheck(ctx context.Context, dmID int64) (*OrderedIssuesMap, error) {
+func GetHealthcheckGroupedIssues(ctx context.Context, dmID int64) (*HealthcheckGroupedIssues, error) {
 	issues, err := GetDoor43HealthcheckIssuesByDoor43MetadataID(ctx, dmID)
 	if err != nil {
 		log.Error("Error getting health check issues: %v", err)
 		return nil, err
 	}
-	healthcheck := NewOrderedIssuesMap()
-	for _, issue := range issues {
-		healthcheck.AddIssue(issue)
-	}
+	healthcheck := NewHealthcheckGroupedIssues(issues)
 	return healthcheck, nil
 }
