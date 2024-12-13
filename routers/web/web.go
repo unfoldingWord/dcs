@@ -1131,8 +1131,13 @@ func registerRoutes(m *web.Route) {
 			})
 		})
 		// DCS Customizations
+		m.Group("/healthcheck", func() {
+			m.Get("", repo.GetRepoHealthcheck)
+			m.Get("/update", repo.UpdateDoor43Metadata)
+			m.Post("/update", repo.UpdateDoor43Metadata) // TODO: Make this /{id} for a single DM
+		})
 		m.Group("/metadata", func() {
-			m.Get("", repo.Door43Metadatas)
+			m.Get("", repo.GetAllRepoDoor43Metadata)
 			m.Get("/update", repo.UpdateDoor43Metadata)
 			m.Post("/update", repo.UpdateDoor43Metadata) // TODO: Make this /{id} for a single DM
 		})

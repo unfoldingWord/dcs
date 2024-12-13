@@ -103,7 +103,7 @@
 										<!-- DCS Customization -->
 										{{if .Door43Metadata}}
 										<li>
-											<a href="{{Door43PreviewURL}}/u/{{.Repo.Owner.Name}}/{{.Repo.Name}}/{{PathEscapeSegments .TagName}}{{if eq AppUrl "https://qa.door43.org/"}}?server=QA{{end}}{{if eq AppUrl "https://develop.door43.org/"}}?server=DEV{{end}}" target="_blank"><strong>{{svg "octicon-book" 16 "gt-mr-2"}}{{ctx.Locale.Tr "preview"}} / PDF</strong></a>
+											<a href="{{Door43PreviewURL}}/u/{{.Repo.Owner.Name}}/{{.Repo.Name}}/{{PathEscapeSegments .TagName}}{{if eq AppUrl "https://qa.door43.org/"}}?server=QA{{end}}{{if eq AppUrl "https://develop.door43.org/"}}?server=DEV{{end}}" target="_blank" rel="nofollow noopener"><strong>{{svg "octicon-book" 16 "gt-mr-2"}}{{ctx.Locale.Tr "preview"}} / PDF</strong></a>
 										</li>
 											{{if eq .Door43Metadata.Subject "Aligned Bible"}}
 											<li style="display: block">

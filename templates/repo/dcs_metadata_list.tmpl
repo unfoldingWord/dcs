@@ -1,0 +1,21 @@
+<script>
+	function toggleShowTable(element, type) {
+		var content = element.parentElement.nextElementSibling;
+		if (content.style.display === "none") {
+			if (content.tagName.toLowerCase() === "table") {
+				content.style.display = "table";
+			} else {
+				content.style.display = "block";
+			}
+			element.innerText = "Click to collapse "+type;
+		} else {
+			content.style.display = "none";
+			element.innerText = "Click to see "+type;
+		}
+	}
+</script>
+{{range $i, $dm := .Door43Metadatas}}
+<div class="ui list">
+	{{template "repo/dcs_metadata_list_item" (dict "ctxData" $.ctxData "Door43Metadata" $dm "ShowHealthcheck" $.ShowHealthcheck)}}
+</div>
+{{end}}

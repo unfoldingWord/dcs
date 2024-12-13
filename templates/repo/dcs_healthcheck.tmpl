@@ -26,34 +26,41 @@
 	.item-text {
 			padding-left: 20px;
 			margin-top: 10px;
-	}
+	}pextra_
 </style>
 <div role="main" aria-label="{{.Title}}" class="page-content repository settings">
 	{{template "repo/header" .}}
 	{{template "base/alert" .}}
 	<div class="ui container">
-<a href="healthcheck" class="ui back link">
-	{{svg "octicon-arrow-left" 16}}
-	Back to Health Check Page
-</a>
-			<h2 class="ui top attached header">
-				{{ctx.Locale.Tr "repo.metadata.metadata"}}
-				{{if .Permission.IsAdmin}}
-				<div class="ui right">
-					<a class="ui teal tiny button" href="{{.Link}}/update">Update Metadata</a>
-				</div>
-				{{end}}
-			</h2>
+		<h2 class="ui header metadata-header">
+			{{ctx.Locale.Tr "repo.metadata.healthcheck"}} {{svg "octicon-shield-check"}}
+		</h2>
+		<div class="repo-metadata-content">
+			<h4 class="ui top attached header">
+				Overall {{.Title}}
+			</h4>
 			<div class="ui attached segment">
-					{{if or .BranchDMs .ReleaseDMs}}
-						<h3 class="ui top attached header toggle show-panel" data-panel="#branches">{{ctx.Locale.Tr "repo.branches"}}</h3>
-						<div class="ui attached segment gt-hidden" id="branches">
-							{{template "repo/dcs_metadata_list" (dict "ctxData" . "Door43Metadatas" .BranchDMs)}}
-						</div>
-						<h3 class="ui top attached header toggle show-panel" data-panel="#releases">Releases</h3>
-						<div class="ui attached segment gt-hidden" id="releases">
-							{{template "repo/dcs_metadata_list" (dict "ctxData" . "Door43Metadatas" .ReleaseDMs)}}
-						</div>
+				{{if and (eq .Repo.RepoDM.MetadataType "rc") (.Repo.DefaultBranchDM)}}
+					{{template "repo/dcs_healthcheck_list" (dict "ctxData" . "Door43Metadata" .Repo.DefaultBranchDM)}}
+				{{else}}
+					<span>
+						No Health Check could be performed for this Repository. Click&nbsp;<a href="{{.Link}}/update">update</a>&nbsp;to scan the repo.
+					</span>
+				{{end}}
+			</div>
+
+			<h4 class="ui top attached header">
+				{{ctx.Locale.Tr "repo.metadata.metadata"}}
+				<div class="ui right">
+					<a class="ui teal tiny button" href="{{.RepoLink}}/metadata">See for all Branches/Releases</a>
+					{{if .Permission.IsAdmin}}
+						<a class="ui teal tiny button" href="{{.RepoLink}}/metadata/update">Update Metadata</a>
+					{{end}}
+				</div>
+			</h4>
+			<div class="ui attached segment">
+					{{if .Door43Metadatas}}
+						{{template "repo/dcs_metadata_list" (dict "ctxData" . "Door43Metadatas" .Door43Metadatas "ShowHealthcheck" true)}}
 					{{else}}
 						<span>
 							No Metadata for this Repository. Click&nbsp;<a href="{{.Link}}/update">update</a>&nbsp;to scan the repo.

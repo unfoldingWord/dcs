@@ -176,6 +176,13 @@ func Search(ctx *context.APIContext) {
 	//   collectionFormat: multi
 	//   items:
 	//     type: string
+	// - name: withoutTopic
+	//   in: query
+	//   description: Entries with a repository without this topic will be returned. Multiple values are ANDed.
+	//   type: array
+	//   collectionFormat: multi
+	//   items:
+	//     type: string
 	// - name: partialMatch
 	//   in: query
 	//   description: if true, subject, owner and repo search fields will use partial match (LIKE) when querying the catalog, default is false
@@ -1008,6 +1015,7 @@ func searchCatalog(ctx *context.APIContext) {
 		MetadataTypes:    metadataTypes,
 		MetadataVersions: metadataVersions,
 		Topics:           QueryStrings(ctx, "topic"),
+		InvertedTopics:   QueryStrings(ctx, "withoutTopic"),
 		PartialMatch:     ctx.FormBool("partialMatch"),
 	}
 
