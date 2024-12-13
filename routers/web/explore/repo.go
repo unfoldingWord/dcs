@@ -104,7 +104,7 @@ func RenderRepoSearch(ctx *context.Context, opts *RepoSearchOptions) {
 
 	/*** DCS Customizations ***/
 	origKeyword := keyword
-	searchFields := []string{"keyword", "book", "lang", "subject", "flavor_type", "flavor", "abbreviation", "content_format", "repo", "owner", "tag", "checking_level", "metadata_type", "metadata_version", "topic", "stage"}
+	searchFields := []string{"keyword", "book", "lang", "subject", "flavor_type", "flavor", "abbreviation", "content_format", "repo", "owner", "tag", "checking_level", "metadata_type", "metadata_version", "topic", "without_topic", "healthcheck", "stage"}
 	searchMap := map[string][]string{}
 	for _, field := range searchFields {
 		searchMap[field] = []string{}
@@ -157,6 +157,8 @@ func RenderRepoSearch(ctx *context.Context, opts *RepoSearchOptions) {
 		MetadataTypes:      searchMap["metadata_type"],    // DCS Customizations
 		MetadataVersions:   searchMap["metadata_version"], // DCS Customizations
 		Topics:             searchMap["topic"],            // DCS Customizations
+		InvertedTopics:     searchMap["without_topic"],    // DCS Customizations
+		Healthchecks:       searchMap["healthcheck"],      // DCS Customizations
 		OnlyShowRelevant:   opts.OnlyShowRelevant,
 	})
 	if err != nil {

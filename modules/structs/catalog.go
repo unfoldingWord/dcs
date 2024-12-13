@@ -43,7 +43,7 @@ type CatalogEntry struct {
 	Ingredients            []*Ingredient `json:"ingredients,omitempty"`
 	Books                  []string      `json:"books,omitempty"`
 	IsValid                bool          `json:"is_valid"`
-	ValidationErrorURL     string        `json:"validation_errors_url"`
+	ValidationErrorsURL    string        `json:"validation_errors_url"`
 }
 
 // Ingredient is a single project of a resource
@@ -55,6 +55,17 @@ type Ingredient struct {
 	Title          string   `json:"title"`
 	Versification  string   `json:"versification"`
 	AlignmentCount *int     `json:"alignment_count,omitempty"`
+	Exists         bool     `json:"exists"`
+	IsDir          bool     `json:"is_dir"`
+	Size           int64    `json:"size"`
+}
+
+// Relation is a single relation of a resource
+type Relation struct {
+	FullRelation string `json:"full_relation"`
+	Language     string `json:"lang"`
+	Identifier   string `json:"identifier"`
+	Version      string `json:"version"`
 }
 
 // CatalogSearchResults results of a successful catalog search

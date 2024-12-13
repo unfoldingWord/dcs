@@ -105,7 +105,7 @@ func ToCatalogEntry(ctx context.Context, dm *repo.Door43Metadata, repo *api.Repo
 		Books:                  dm.IngredientsIdentifierList(),
 		ContentFormat:          dm.ContentFormat,
 		IsValid:                dm.ValidationError == nil,
-		ValidationErrorURL:     dm.CatalogValidationErrorURL(),
+		ValidationErrorsURL:    dm.CatalogValidationErrorsURL(),
 	}
 }
 

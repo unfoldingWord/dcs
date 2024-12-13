@@ -302,6 +302,7 @@ func prepareUserProfileTabData(ctx *context.Context, showPrivate bool, profileGi
 
 		total = int(count)
 	}
+
 	/*** DCS Customizations ***/
 	for _, repo := range repos {
 		if err := repo.LoadLatestDMs(ctx); err != nil {

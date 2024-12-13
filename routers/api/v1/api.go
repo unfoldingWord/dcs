@@ -1287,6 +1287,9 @@ func Routes() *web.Route {
 					m.Post("", bind(api.UpdateRepoAvatarOption{}), repo.UpdateAvatar)
 					m.Delete("", repo.DeleteAvatar)
 				}, reqAdmin(), reqToken())
+
+				// DCS Customizations
+				m.Get("/healthcheck", repo.GetHealthcheck)
 			}, repoAssignment())
 		}, tokenRequiresScopes(auth_model.AccessTokenScopeCategoryRepository))
 

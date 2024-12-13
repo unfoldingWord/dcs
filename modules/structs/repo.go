@@ -106,6 +106,8 @@ type Repository struct {
 	// swagger:strfmt date-time
 	MirrorUpdated time.Time     `json:"mirror_updated,omitempty"`
 	RepoTransfer  *RepoTransfer `json:"repo_transfer"`
+	// topics
+	Topics []string `json:"topics"` // DCS Customizations
 	// language from the manifest
 	MetadataType string `json:"metadata_type"` // DCS Customiations
 	// language from the manifest
@@ -136,6 +138,10 @@ type Repository struct {
 	CatalogStages *CatalogStages `json:"catalog"` // DCS Customiations
 	// content format
 	ContentFormat string `json:"content_format"` // DCS Customizaitons
+	// healthcheck severity
+	HealthcheckSeverity string `json:"healthcheck_severity"` // DCS Customizations
+	// healthcheck URL
+	HealthcheckURL string `json:"healthcheck_url"` // DCS Customizations
 }
 
 // CreateRepoOption options when creating repository

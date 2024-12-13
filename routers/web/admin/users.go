@@ -283,6 +283,13 @@ func ViewUser(ctx *context.Context) {
 		return
 	}
 
+	/*** DCS Customizations ***/
+	err = repos.LoadLatestDMs(ctx)
+	if err != nil {
+		log.Error("LoadLatestDMs: unable to load DMs for repos")
+	}
+	/*** End DCS Customizations ***/
+
 	ctx.Data["Repos"] = repos
 	ctx.Data["ReposTotal"] = int(count)
 

@@ -23,6 +23,7 @@
     #search-builder .input-group {
         display: flex;
         flex-wrap: wrap;
+        max-width: 50%;
         margin-bottom: 10px;
         flex: 1 1 45%;
         /* Grow to fill space, but not more than 45% */
@@ -78,10 +79,12 @@
     const qInput = document.querySelector('[name="q"]');
     const advancedSearchContainer = document.getElementById('search-builder');
     const catalogOnlyFields = ['stage', 'tag'];
+    const repoOnlyFields = ['healthcheck'];
     const searchFields = [
         { name: 'query', tooltip: 'queries repo name, owner, description & topics. Allows partial match' },
-        { name: 'topic', tooltip: 'the topic of a repo, e.g. tc-ready' },
         { name: 'lang', tooltip: 'language code, e.g. en, fr' },
+        { name: 'topic', tooltip: 'the topic of a repo, e.g. tc-ready' },
+        { name: 'without_topic', tooltip: 'show entries that do NOT have this topic' },
         { name: 'subject', tooltip: 'type of resource, e.g. Aligned Bible, Open Bibles Stories', options: ["Aligned Bible", "Aramaic Grammar", "Bible", "Greek Grammar", "Greek Lexicon", "Greek New Testament", "Hebrew Grammar", "Hebrew Old Testament", "Hebrew-Aramaic Lexicon", "OBS Study Notes", "OBS Study Questions", "OBS Translation Notes", "OBS Translation Questions", "Open Bible Stories", "Study Notes", "Study Questions", "Training Library", "Translation Academy", "Translation Notes", "Translation Questions", "Translation Words", "TSV Study Notes", "TSV Study Questions", "TSV Translation Notes", "TSV Translation Questions", "TSV Translation Words Links", "TSV OBS Study Notes", "TSV OBS Study Questions", "TSV OBS Translation Notes", "TSV OBS Translation Questions", "TSV OBS Translation Words Links"] },
         { name: 'owner', tooltip: 'user or organization, e.g. unfoldingWord' },
         { name: 'repo', tooltip: 'repository name, e.g. en_ult' },
@@ -93,6 +96,7 @@
         { name: 'content_format', tooltip: 'content format, e.g. markdown, tsv7, tsv9, usfm', options: ['markdown', 'tsv7', 'tsv9', 'usfm'] },
         { name: 'tag', tooltip: 'released with the given tag, e.g. v3' },
         { name: 'stage', tooltip: 'stage of the release: prod, preprod, latest or other', options: ['prod', 'preprod', 'latest', 'other'] },
+        { name: 'healthcheck', tooltip: 'healthcheck severity level: error, warning, info or success', options: ['error', 'warning', 'info', 'success'] }
     ];
 
     qInput.addEventListener('input', updateAdvancedFields);
@@ -105,7 +109,7 @@
             const label = document.createElement('label');
             label.className = 'input-label';
             label.setAttribute('for', fieldObj.name);
-            label.textContent = fieldObj.name + ':';
+            label.textContent = fieldObj.name.replace('_', ' ') + ':';
             label.setAttribute('title', fieldObj.tooltip);
 
             const input = document.createElement('input');
@@ -130,6 +134,9 @@
             inputGroup.appendChild(label);
             inputGroup.appendChild(input);
             if (!isCatalogSearch && catalogOnlyFields.includes(fieldObj.name)) {
+                inputGroup.style.display = 'none';
+            }
+            if (isCatalogSearch && repoOnlyFields.includes(fieldObj.name)) {
                 inputGroup.style.display = 'none';
             }
             advancedSearchContainer.appendChild(inputGroup);
