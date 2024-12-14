@@ -123,13 +123,13 @@ var IssueCodeNegatives = map[IssueCode]string{
 	IssueCodeIngredientTitle:   "Ingredient is still in English",
 	IssueCodeIngredientMissing: "Ingredient path is missing",
 	IssueCodeIngredientEmpty:   "Ingredient file is empty",
-	IssueCodeReleaseNeeded:     "A release is needed for the resource",
+	IssueCodeReleaseNeeded:     "An error-free release needs to be published for the resource",
 }
 
 var IssueCodePositives = map[IssueCode]string{
 	IssueCodeNoMetadata:        "Metadata found for the repository",
 	IssueCodeMetadataInvalid:   "Valid Metadata",
-	IssueCodeRelation:          "Relation is the language of the resource",
+	IssueCodeRelation:          "Relations use the language of the resource",
 	IssueCodePublisher:         "Publisher has been properly changed",
 	IssueCodeTitle:             "Title has been properly changed",
 	IssueCodeAbbreviation:      "Abbreviation is valid for given subject",
@@ -137,7 +137,7 @@ var IssueCodePositives = map[IssueCode]string{
 	IssueCodeIngredientTitle:   "Ingredient titles have been translated",
 	IssueCodeIngredientMissing: "Ingredient paths exists",
 	IssueCodeIngredientEmpty:   "Ingredient files are not empty",
-	IssueCodeReleaseNeeded:     "A release has been created",
+	IssueCodeReleaseNeeded:     "An error-free release has been published",
 }
 
 var IssueDetailsFormatStrings = map[IssueCode]string{
@@ -151,7 +151,7 @@ var IssueDetailsFormatStrings = map[IssueCode]string{
 	IssueCodeIngredientTitle:   "The title in for the project '%s' is still in English: %s",
 	IssueCodeIngredientMissing: "The path for project **`%s`** is does not exist in the repo: **`%s`**",
 	IssueCodeIngredientEmpty:   "The file for project **`%s`** is empty: **`%s`**",
-	IssueCodeReleaseNeeded:     "A release is needed for the resource.",
+	IssueCodeReleaseNeeded:     "An error-free release needs to be published for the resource.",
 }
 
 var IssueSuggestionsFormatStrings = map[IssueCode]string{

@@ -90,7 +90,7 @@ func PerformHealthcheck(ctx context.Context, dm *repo_model.Door43Metadata) (*re
 		}
 	}
 
-	if dm.Language == "en" && !strings.HasPrefix("en_", dm.Repo.Name) {
+	if dm.Language == "en" && !strings.HasPrefix(dm.Repo.Name, "en_") {
 		item := &repo_model.Door43HealthcheckIssue{
 			Door43MetadataID: dm.ID,
 			IssueCode:        repo_model.IssueCodeLanguage,
@@ -158,7 +158,7 @@ func PerformHealthcheck(ctx context.Context, dm *repo_model.Door43Metadata) (*re
 				issues = append(issues, item)
 			}
 
-			if ingredient.Size == 0 && !ingredient.IsDir {
+			if ingredient.Exists && ingredient.Size == 0 && !ingredient.IsDir {
 				item := &repo_model.Door43HealthcheckIssue{
 					Door43MetadataID: dm.ID,
 					IssueCode:        repo_model.IssueCodeIngredientEmpty,
@@ -208,7 +208,7 @@ func PerformHealthcheck(ctx context.Context, dm *repo_model.Door43Metadata) (*re
 				}
 			}
 
-			if healthcheckGroupedIssues.SeverityLevelCount[repo_model.SeverityLevelError] == 0 && releaseHealthcheckGroupedIssues.SeverityLevelCount[repo_model.SeverityLevelError] > 0 {
+			if healthcheckGroupedIssues.SeverityLevelCount[repo_model.SeverityLevelError] == 0 && releaseHealthcheckGroupedIssues != nil && releaseHealthcheckGroupedIssues.SeverityLevelCount[repo_model.SeverityLevelError] > 0 {
 				item := &repo_model.Door43HealthcheckIssue{
 					Door43MetadataID: dm.ID,
 					IssueCode:        repo_model.IssueCodeReleaseNeeded,
@@ -221,7 +221,7 @@ func PerformHealthcheck(ctx context.Context, dm *repo_model.Door43Metadata) (*re
 					return nil, err
 				}
 				healthcheckGroupedIssues.AddIssue(item)
-			} else if healthcheckGroupedIssues.SeverityLevelCount[repo_model.SeverityLevelWarning] < releaseHealthcheckGroupedIssues.SeverityLevelCount[repo_model.SeverityLevelWarning] {
+			} else if releaseHealthcheckGroupedIssues != nil && healthcheckGroupedIssues.SeverityLevelCount[repo_model.SeverityLevelWarning] < releaseHealthcheckGroupedIssues.SeverityLevelCount[repo_model.SeverityLevelWarning] {
 				item := &repo_model.Door43HealthcheckIssue{
 					Door43MetadataID: dm.ID,
 					IssueCode:        repo_model.IssueCodeReleaseNeeded,
