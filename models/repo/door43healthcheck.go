@@ -157,9 +157,9 @@ var IssueDetailsFormatStrings = map[IssueCode]string{
 var IssueSuggestionsFormatStrings = map[IssueCode]string{
 	IssueCodeNoMetadata:        "Add a manifest.yaml file to the repository to describe the resource.",
 	IssueCodeMetadataInvalid:   "Edit the [manifest.yaml](%s/src/branch/%s/manifest.yaml) file and fix these errors:\n\n<pre>%s</pre>",
-	IssueCodeRelation:          "Edit the [manifest.yaml](%s/src/branch/%s/manifest.yaml) file and change **`%s`** to **`%s/%s`**.",
-	IssueCodePublisher:         "Edit the [manifest.yaml](%s/src/branch/%s/manifest.yaml) file and change `unfoldingWord` to the correct publisher, e.g. %s.",
-	IssueCodeTitle:             "Edit the [manifest.yaml](%s/src/branch/%s/manifest.yaml) file and remove 'unfoldingWord ' from the beginning of title, **`%s`** => **`%s`**, or translate into your language.",
+	IssueCodeRelation:          "Edit the [manifest.yaml](%s/src/branch/%s/manifest.yaml) file and change **`%s`** to **`%s/%s`** in the **`relation`** field.",
+	IssueCodePublisher:         "Edit the [manifest.yaml](%s/src/branch/%s/manifest.yaml) file and change `unfoldingWord` to the correct publisher in the **`publisher`** field, e.g. %s.",
+	IssueCodeTitle:             "Edit the [manifest.yaml](%s/src/branch/%s/manifest.yaml) file and remove 'unfoldingWord ' from the beginning of **`title`**, **`%s`** => **`%s`**, or translate into your language.",
 	IssueCodeIdentifier:        "Edit the [manifest.yaml](%s/src/branch/%s/manifest.yaml) file and change **`%s`** to the correct **`identifier`** for the subject **`%s`**, which is **`%s`**.",
 	IssueCodeLanguage:          "Edit the [manifest.yaml](%s/src/branch/%s/manifest.yaml) file and change **`en`** to the correct **`language code`** for your project's language, the **`title`** of the language, and the **`direction`**.",
 	IssueCodeIngredientTitle:   "Edit the [manifest.yaml](%s/src/branch/%s/manifest.yaml) file and translate the **`title`** of the projects. For example, translate **'%s'** to the resource's language.",
