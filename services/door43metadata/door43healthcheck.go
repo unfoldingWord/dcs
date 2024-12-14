@@ -43,7 +43,7 @@ func PerformHealthcheck(ctx context.Context, dm *repo_model.Door43Metadata) (*re
 		issues = append(issues, item)
 	}
 
-	if dm.Repo.Owner.LowerName != "unfoldingword" && dm.Publisher == "" || strings.HasPrefix(strings.TrimSpace(dm.Publisher), "unfoldingWord") {
+	if dm.Repo.Owner.LowerName != "unfoldingword" && (dm.Publisher == "" || strings.HasPrefix(strings.TrimSpace(dm.Publisher), "unfoldingWord")) {
 		item := &repo_model.Door43HealthcheckIssue{
 			Door43MetadataID: dm.ID,
 			IssueCode:        repo_model.IssueCodePublisher,
@@ -58,7 +58,7 @@ func PerformHealthcheck(ctx context.Context, dm *repo_model.Door43Metadata) (*re
 		issues = append(issues, item)
 	}
 
-	if dm.Repo.Owner.LowerName != "unfoldingword" && dm.Title == "" || strings.HasPrefix(strings.TrimSpace(dm.Title), "unfoldingWord") {
+	if dm.Repo.Owner.LowerName != "unfoldingword" && (dm.Title == "" || strings.HasPrefix(strings.TrimSpace(dm.Title), "unfoldingWord")) {
 		item := &repo_model.Door43HealthcheckIssue{
 			Door43MetadataID: dm.ID,
 			IssueCode:        repo_model.IssueCodeTitle,
@@ -126,14 +126,14 @@ func PerformHealthcheck(ctx context.Context, dm *repo_model.Door43Metadata) (*re
 	if dm.Ingredients != nil {
 		doneIngredientTitle := false
 		for _, ingredient := range dm.Ingredients {
-			// Acts, Numbers and Deuteronomy are only in Englisn and not other languages, so using those
-			if !doneIngredientTitle && (ingredient.Title == "" || ingredient.Title == "Numbers" || ingredient.Title == "Deuteronomy" || ingredient.Title == "Acts") {
+			// Acts, Numbers and Deuteronomy are only in English and not other languages, so using those
+			if !doneIngredientTitle && (ingredient.Title == "" || (dm.Language != "en" && (ingredient.Title == "Numbers" || ingredient.Title == "Deuteronomy" || ingredient.Title == "Acts"))) {
 				doneIngredientTitle = true
 				item := &repo_model.Door43HealthcheckIssue{
 					Door43MetadataID: dm.ID,
 					IssueCode:        repo_model.IssueCodeIngredientTitle,
 					SeverityLevel:    repo_model.SeverityLevelError,
-					Details:          repo_model.IssueCodeIngredientTitle.IssueDetailsFormatString(),
+					Details:          fmt.Sprintf(repo_model.IssueCodeIngredientTitle.IssueDetailsFormatString(), ingredient.Identifier, ingredient.Title),
 					Suggestion:       fmt.Sprintf(repo_model.IssueCodeIngredientTitle.IssueSuggestionFormatString(), dm.Repo.Link(), dm.Ref, ingredient.Title),
 					Current:          true,
 				}
