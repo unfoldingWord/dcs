@@ -59,9 +59,15 @@
 							<div class="ui item">
 								<div class="toggle show-panel" data-panel="#{{$issueCode}}">
 								{{if not $issues}}
-									<span style="color: green;">&#10003;</span>
+									<span style="color: green;">{{svg "octicon-check-circle-fill" 16}}</span>
 								{{else}}
-									<span style="color: red;">&#10007;</span>
+									{{if eq ((index $issues 0).SeverityLevel) 0}}
+										<span style="color: red;">{{svg "octicon-x-circle-fill" 16}}</span>
+									{{else if eq ((index $issues 0).SeverityLevel) 1}}
+										<span style="color: orange;">{{svg "octicon-stop" 16}}</span>
+									{{else if eq ((index $issues 0).SeverityLevel) 2}}
+										<span style="color: blue;">{{svg "octicon-info" 16}}</span>
+									{{end}}
 								{{end}}
 								{{$issueCode.IssuePositiveString}}
 								</div>
