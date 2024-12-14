@@ -77,10 +77,10 @@ func PerformHealthcheck(ctx context.Context, dm *repo_model.Door43Metadata) (*re
 		if subject, ok := dcs.ResourceToSubjectMap[dm.Abbreviation]; !ok || subject != dm.Subject {
 			item := &repo_model.Door43HealthcheckIssue{
 				Door43MetadataID: dm.ID,
-				IssueCode:        repo_model.IssueCodeAbbreviation,
+				IssueCode:        repo_model.IssueCodeIdentifier,
 				SeverityLevel:    repo_model.SeverityLevelError,
-				Details:          fmt.Sprintf(repo_model.IssueCodeAbbreviation.IssueDetailsFormatString(), dm.Abbreviation, dm.Subject),
-				Suggestion:       fmt.Sprintf(repo_model.IssueCodeAbbreviation.IssueSuggestionFormatString(), dm.Repo.Link(), dm.Ref, dm.Abbreviation, dm.Subject, dcs.SubjectToResourceMap[dm.Subject]),
+				Details:          fmt.Sprintf(repo_model.IssueCodeIdentifier.IssueDetailsFormatString(), dm.Abbreviation, dm.Subject),
+				Suggestion:       fmt.Sprintf(repo_model.IssueCodeIdentifier.IssueSuggestionFormatString(), dm.Repo.Link(), dm.Ref, dm.Abbreviation, dm.Subject, dcs.SubjectToResourceMap[dm.Subject]),
 				Current:          true,
 			}
 			if _, err := db.GetEngine(ctx).Insert(item); err != nil {

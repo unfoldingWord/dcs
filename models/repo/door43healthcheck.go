@@ -53,7 +53,7 @@ const (
 	IssueCodeRelation          IssueCode = "relation_lang_invalid"  // relation not valid
 	IssueCodePublisher         IssueCode = "publisher_has_uw"       // publisher empty or is 'unfoldingWord'
 	IssueCodeTitle             IssueCode = "title_has_uw"           // title is empty or still contains 'unfoldingWord'
-	IssueCodeAbbreviation      IssueCode = "abbreviation_invalid"   // abbreviation is not valid for given subject
+	IssueCodeIdentifier        IssueCode = "abbreviation_invalid"   // abbreviation is not valid for given subject
 	IssueCodeLanguage          IssueCode = "language_is_en"         // language is empty or still English
 	IssueCodeIngredientTitle   IssueCode = "ingredient_title_is_en" // ingredient title is empty or still English
 	IssueCodeIngredientMissing IssueCode = "ingredient_missing"     // ingredient's path is missing
@@ -67,7 +67,7 @@ var IssueCodeOrder = []IssueCode{
 	IssueCodeRelation,
 	IssueCodePublisher,
 	IssueCodeTitle,
-	IssueCodeAbbreviation,
+	IssueCodeIdentifier,
 	IssueCodeLanguage,
 	IssueCodeIngredientTitle,
 	IssueCodeIngredientMissing,
@@ -118,7 +118,7 @@ var IssueCodeNegatives = map[IssueCode]string{
 	IssueCodeRelation:          "Relation is not the language of the resource",
 	IssueCodePublisher:         "Publisher is still 'unfoldingWord'",
 	IssueCodeTitle:             "Title still contains 'unfoldingWord'",
-	IssueCodeAbbreviation:      "Abbreviation is not valid for given subject",
+	IssueCodeIdentifier:        "Identifier is not valid for the resource's subject",
 	IssueCodeLanguage:          "Language is still English",
 	IssueCodeIngredientTitle:   "Ingredient is still in English",
 	IssueCodeIngredientMissing: "Ingredient path is missing",
@@ -132,7 +132,7 @@ var IssueCodePositives = map[IssueCode]string{
 	IssueCodeRelation:          "Relations use the language of the resource",
 	IssueCodePublisher:         "Publisher has been properly changed",
 	IssueCodeTitle:             "Title has been properly changed",
-	IssueCodeAbbreviation:      "Abbreviation is valid for given subject",
+	IssueCodeIdentifier:        "Identifier is valid for the resource's subject",
 	IssueCodeLanguage:          "Language has been set",
 	IssueCodeIngredientTitle:   "Ingredient titles have been translated",
 	IssueCodeIngredientMissing: "Ingredient paths exists",
@@ -146,7 +146,7 @@ var IssueDetailsFormatStrings = map[IssueCode]string{
 	IssueCodeRelation:          "Relation in manifest.yaml **`%s`** does not match resource language **`%s`**.",
 	IssueCodePublisher:         "Publisher in manifest.yaml is still 'unfoldingWord'.",
 	IssueCodeTitle:             "Resouce title in manifest.yaml still contains 'unfoldingWord'.",
-	IssueCodeAbbreviation:      "Abbreviation in manifest.yaml should not be **`%s`** for the subject **`%s`**.",
+	IssueCodeIdentifier:        "Identifier in manifest.yaml should not be **`%s`** for the subject **`%s`**.",
 	IssueCodeLanguage:          "Language in manifest.yaml is still English **`en`**.",
 	IssueCodeIngredientTitle:   "The title in for the project '%s' is still in English: %s",
 	IssueCodeIngredientMissing: "The path for project **`%s`** is does not exist in the repo: **`%s`**",
@@ -160,9 +160,9 @@ var IssueSuggestionsFormatStrings = map[IssueCode]string{
 	IssueCodeRelation:          "Edit the [manifest.yaml](%s/src/branch/%s/manifest.yaml) file and change **`%s`** to **`%s/%s`**.",
 	IssueCodePublisher:         "Edit the [manifest.yaml](%s/src/branch/%s/manifest.yaml) file and change `unfoldingWord` to the correct publisher, e.g. %s.",
 	IssueCodeTitle:             "Edit the [manifest.yaml](%s/src/branch/%s/manifest.yaml) file and remove 'unfoldingWord ' from the beginning of title, **`%s`** => **`%s`**, or translate into your language.",
-	IssueCodeAbbreviation:      "Edit the [manifest.yaml](%s/src/branch/%s/manifest.yaml) file and change **`%s`** to the correct abbreviation for the subject **`%s`**, which is **`%s`**.",
-	IssueCodeLanguage:          "Edit the [manifest.yaml](%s/src/branch/%s/manifest.yaml) file and change **`en`** to the correct language code for your project's language, the title of the language, and the direction.",
-	IssueCodeIngredientTitle:   "Edit the [manifest.yaml](%s/src/branch/%s/manifest.yaml) file and translate the title of the projects. For example, translate **'%s'** to the resource's language.",
+	IssueCodeIdentifier:        "Edit the [manifest.yaml](%s/src/branch/%s/manifest.yaml) file and change **`%s`** to the correct **`identifier`** for the subject **`%s`**, which is **`%s`**.",
+	IssueCodeLanguage:          "Edit the [manifest.yaml](%s/src/branch/%s/manifest.yaml) file and change **`en`** to the correct **`language code`** for your project's language, the **`title`** of the language, and the **`direction`**.",
+	IssueCodeIngredientTitle:   "Edit the [manifest.yaml](%s/src/branch/%s/manifest.yaml) file and translate the **`title`** of the projects. For example, translate **'%s'** to the resource's language.",
 	IssueCodeIngredientMissing: "Either edit the [manifest.yaml](%s/src/branch/%s/manifest.yaml) file and remove the project **`%s`** or add the missing file or path, **`%s`**, to the repository.",
 	IssueCodeIngredientEmpty:   "Either edit the [manifest.yaml](%s/src/branch/%s/manifest.yaml) file and remove the project **`%s`** or add content to the file **`%s`**.",
 	IssueCodeReleaseNeeded:     "It looks like %s of the **`%s`** branch's %ss has been fixed. You should create a release for the resource with [gatewayAdmin](https://gateway-admin.netlify.app/).",
