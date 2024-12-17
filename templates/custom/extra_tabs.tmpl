@@ -1,4 +1,4 @@
-<a class="{{if .PageIsHealthcheck}}active{{end}} item" href="{{.RepoLink}}/healthcheck">
+<a class="{{if .PageIsMetadata}}active{{end}} item" href="{{.RepoLink}}/healthcheck">
 	{{svg "octicon-shield-check"}} {{ctx.Locale.Tr "repo.metadata.healthcheck"}}
 </a>
 {{$refToPreview := .Repository.DefaultBranch}}

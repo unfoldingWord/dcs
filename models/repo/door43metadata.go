@@ -75,11 +75,11 @@ type Door43Metadata struct {
 	IsRepoMetadata    bool                        `xorm:"INDEX NOT NULL DEFAULT false"`
 	Metadata          map[string]interface{}      `xorm:"JSON MEDIUMTEXT"`
 	ValidationError   *jsonschema.ValidationError `xorm:"JSON MEDIUMTEXT"`
-	HealthcheckIssues []*Door43HealthcheckIssue   `xorm:"-"`
+	Healthcheck       *HealthcheckGroupedIssues   `xorm:"-"`
 	ReleaseDateUnix   timeutil.TimeStamp          `xorm:"NOT NULL"`
 	CreatedUnix       timeutil.TimeStamp          `xorm:"INDEX created NOT NULL"`
 	UpdatedUnix       timeutil.TimeStamp          `xorm:"INDEX updated"`
-	HealthchckUnix    timeutil.TimeStamp          `xorm:"INDEX"`
+	HealthcheckUnix   timeutil.TimeStamp          `xorm:"INDEX"`
 }
 
 func init() {
@@ -121,13 +121,13 @@ func (dm *Door43Metadata) LoadRelease(ctx context.Context) error {
 	return nil
 }
 
-func (dm *Door43Metadata) LoadHealthcheckIssues(ctx context.Context) error {
-	if dm.HealthcheckIssues == nil && dm.HealthchckUnix > 0 {
+func (dm *Door43Metadata) LoadHealthcheck(ctx context.Context) error {
+	if dm.HealthcheckUnix > 0 {
 		issues, err := GetDoor43HealthcheckIssuesByDoor43MetadataID(ctx, dm.ID)
 		if err != nil {
 			return err
 		}
-		dm.HealthcheckIssues = issues
+		dm.Healthcheck = NewHealthcheckGroupedIssues(issues)
 	}
 	return nil
 }
@@ -143,6 +143,7 @@ func (dm *Door43Metadata) LoadAttributes(ctx context.Context) error {
 			return nil
 		}
 	}
+	dm.LoadHealthcheck(ctx)
 	return nil
 }
 

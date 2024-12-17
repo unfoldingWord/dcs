@@ -18,11 +18,29 @@ import (
 )
 
 const (
-	tplDCSMetadata base.TplName = "repo/dcs_healthcheck"
+	tplDCSHealthcheck base.TplName = "repo/dcs_healthcheck"
+	tplDCSMetadata    base.TplName = "repo/dcs_metadata"
 )
 
-// Healthcheck renders healthcheck and door43metadata page
-func Healthcheck(ctx *context.Context) {
+// GetRepoHealthcheck renders healthcheck for a repo
+func GetRepoHealthcheck(ctx *context.Context) {
+	dm, err := repo_model.GetDoor43MetadataByRepoIDAndRef(ctx, ctx.Repo.Repository.ID, ctx.Repo.Repository.DefaultBranch)
+	if err != nil {
+		log.Error("Error getting door43 metadata for healthcheck: %v", err)
+	}
+	if dm != nil {
+		dm.LoadHealthcheck(ctx)
+	}
+	ctx.Data["Title"] = "Health Check"
+	ctx.Data["PageIsMetadata"] = true
+	ctx.Data["Repo"] = ctx.Repo.Repository
+	ctx.Data["DefaultBranchDM"] = dm
+	ctx.Data["Door43Metadatas"] = []*repo_model.Door43Metadata{dm, ctx.Repo.Repository.LatestProdDM}
+	ctx.HTML(http.StatusOK, tplDCSHealthcheck)
+}
+
+// GetAllRepoDoor43Metadata renders all the door43metadatas for a repo
+func GetAllRepoDoor43Metadata(ctx *context.Context) {
 	branchDms := make([]*repo_model.Door43Metadata, 0, 50)
 	err := db.GetEngine(ctx).
 		Where(builder.Eq{"repo_id": ctx.Repo.Repository.ID}).
@@ -43,33 +61,10 @@ func Healthcheck(ctx *context.Context) {
 		log.Error("Find(dms) for releases: %v", err)
 	}
 
-	var healthcheck *repo_model.HealthcheckGroupedIssues
-	dm, err := repo_model.GetDoor43MetadataByRepoIDAndRef(ctx, ctx.Repo.Repository.ID, ctx.Repo.Repository.DefaultBranch)
-	if err != nil {
-		log.Error("Error getting door43 metadata for healthcheck: %v", err)
-	}
-	if dm != nil {
-		dm.LoadRepo(ctx)
-		dm.Repo.LoadLatestDMs(ctx)
-		if true || dm.HealthchckUnix == 0 || (dm.Repo.LatestProdDM != nil && (dm.Repo.LatestProdDM.HealthchckUnix == 0 || dm.Repo.LatestProdDM.ReleaseDateUnix > dm.HealthchckUnix)) {
-			healthcheck, err = door43metadata_service.PerformHealthcheck(ctx, dm)
-			if err != nil {
-				log.Error("Error performing healthcheck: %v", err)
-			}
-		} else {
-			healthcheck, err = repo_model.GetHealthcheckGroupedIssues(ctx, dm.ID)
-			if err != nil {
-				log.Error("Error getting healthcheck issues for healthcheck: %v", err)
-			}
-		}
-	}
-
+	ctx.Data["Title"] = "Door43 Metadata"
 	ctx.Data["PageIsMetadata"] = true
-	ctx.Data["Title"] = "Health Check"
-	ctx.Data["PageIsHealthcheck"] = true
 	ctx.Data["BranchDMs"] = branchDms
 	ctx.Data["ReleaseDMs"] = releaseDms
-	ctx.Data["Healthcheck"] = healthcheck
 	ctx.HTML(http.StatusOK, tplDCSMetadata)
 }
 

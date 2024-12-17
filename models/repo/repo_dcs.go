@@ -28,6 +28,8 @@ func (repo *Repository) LoadLatestDMs(ctx context.Context) error {
 			return err
 		}
 		if has && dm != nil {
+			dm.Repo = repo
+			dm.LoadAttributes(ctx)
 			repo.LatestProdDM = dm
 		}
 	}
@@ -45,6 +47,7 @@ func (repo *Repository) LoadLatestDMs(ctx context.Context) error {
 			return err
 		}
 		if has && dm != nil {
+			dm.Repo = repo
 			repo.LatestPreprodDM = dm
 		}
 	}
@@ -62,6 +65,7 @@ func (repo *Repository) LoadLatestDMs(ctx context.Context) error {
 			return err
 		}
 		if has && dm != nil {
+			dm.Repo = repo
 			repo.DefaultBranchDM = dm
 		}
 	}
@@ -89,6 +93,7 @@ func (repo *Repository) LoadLatestDMs(ctx context.Context) error {
 			langIsGL := dcs.LanguageIsGL(lang)
 			repo.RepoDM = &Door43Metadata{
 				RepoID:            repo.ID,
+				Repo:              repo,
 				MetadataType:      metadataType,
 				MetadataVersion:   metadataVersion,
 				Title:             title,

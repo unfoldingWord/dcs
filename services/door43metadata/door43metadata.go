@@ -60,18 +60,10 @@ func processDoor43MetadataForRepoRefs(ctx context.Context, repo *repo_model.Repo
 	}
 
 	for _, ref := range refs {
-		if dm, err := processDoor43MetadataForRepoRef(ctx, repo, ref); err != nil {
+		if _, err := processDoor43MetadataForRepoRef(ctx, repo, ref); err != nil {
 			log.Info("Failed to process metadata for repo %s, ref %s: %v", repo.FullName(), ref, err)
 			if err = system.CreateRepositoryNotice("Failed to process metadata for repository (%s) ref (%s): %v", repo.FullName(), ref, err); err != nil {
 				log.Error("processDoor43MetadataForRepoRef: %v", err)
-			} else {
-				if dm != nil && dm.ID > 0 {
-					dm.Repo = repo
-					_, err := PerformHealthcheck(ctx, dm)
-					if err != nil {
-						log.Error("PerformHealthcheck repo: %s, ref: %s Error: %v", repo.FullName(), dm.Ref, err)
-					}
-				}
 			}
 		}
 	}
@@ -214,19 +206,9 @@ func ProcessDoor43MetadataForRepo(ctx context.Context, repo *repo_model.Reposito
 			// log error but keep on going
 			log.Error("processDoor43MetadataForRepoRefs %s Error: %v", repo.FullName(), err)
 		}
-	} else {
-		if dm, err := processDoor43MetadataForRepoRef(ctx, repo, ref); err != nil {
-			// log error but keep on going
-			log.Error("processDoor43MetadataForRepoRefs %s Error: %v", repo.FullName(), err)
-		} else {
-			if dm != nil && dm.ID > 0 {
-				dm.Repo = repo
-				_, err := PerformHealthcheck(ctx, dm)
-				if err != nil {
-					log.Error("PerformHealthcheck repo: %s, ref: %s Error: %v", repo.FullName(), dm.Ref, err)
-				}
-			}
-		}
+	} else if _, err := processDoor43MetadataForRepoRef(ctx, repo, ref); err != nil {
+		// log error but keep on going
+		log.Error("processDoor43MetadataForRepoRefs %s Error: %v", repo.FullName(), err)
 	}
 
 	err := processDoor43MetadataForRepoLatestDMs(ctx, repo)
@@ -241,6 +223,18 @@ func ProcessDoor43MetadataForRepo(ctx context.Context, repo *repo_model.Reposito
 	if err != nil {
 		return err
 	}
+
+	if ref == "" || ref == repo.DefaultBranch {
+		dm, err := repo_model.GetDoor43MetadataByRepoIDAndRef(ctx, repo.ID, repo.DefaultBranch)
+		if err != nil {
+			return err
+		}
+		_, err = repo_model.PerformHealthcheck(ctx, dm)
+		if err != nil {
+			return err
+		}
+	}
+
 	return nil
 }
 
