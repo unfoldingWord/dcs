@@ -148,9 +148,9 @@ var IssueCodeNegatives = map[IssueCode]string{
 	IssueCodeTitle:             "Title still contains 'unfoldingWord'",
 	IssueCodeIdentifier:        "Identifier is not valid for the resource's subject",
 	IssueCodeLanguage:          "Language is still English",
-	IssueCodeIngredientTitle:   "Ingredient is still in English",
-	IssueCodeIngredientMissing: "Ingredient path is missing",
-	IssueCodeIngredientEmpty:   "Ingredient file is empty",
+	IssueCodeIngredientTitle:   "Book is still in English",
+	IssueCodeIngredientMissing: "Book file is missing",
+	IssueCodeIngredientEmpty:   "Book file is empty",
 	IssueCodeReleaseNeeded:     "An error-free release needs to be published for the resource",
 }
 
@@ -162,9 +162,9 @@ var IssueCodePositives = map[IssueCode]string{
 	IssueCodeTitle:             "Title has been properly changed",
 	IssueCodeIdentifier:        "Identifier is valid for the resource's subject",
 	IssueCodeLanguage:          "Language has been set",
-	IssueCodeIngredientTitle:   "Ingredient titles have been translated",
-	IssueCodeIngredientMissing: "Ingredient paths exists",
-	IssueCodeIngredientEmpty:   "Ingredient files are not empty",
+	IssueCodeIngredientTitle:   "Book titles have been translated",
+	IssueCodeIngredientMissing: "Book files exist",
+	IssueCodeIngredientEmpty:   "Book files are not empty",
 	IssueCodeReleaseNeeded:     "An error-free release has been published",
 }
 
@@ -177,7 +177,7 @@ var IssueDetailsFormatStrings = map[IssueCode]string{
 	IssueCodeIdentifier:        "Identifier in manifest.yaml should not be **`%s`** for the subject **`%s`**.",
 	IssueCodeLanguage:          "Language in manifest.yaml is still English **`en`**.",
 	IssueCodeIngredientTitle:   "The title in for the project '%s' is still in English: %s",
-	IssueCodeIngredientMissing: "The path for project **`%s`** is does not exist in the repo: **`%s`**",
+	IssueCodeIngredientMissing: "The file for project **`%s`** is does not exist in the repo: **`%s`**",
 	IssueCodeIngredientEmpty:   "The file for project **`%s`** is empty: **`%s`**",
 	IssueCodeReleaseNeeded:     "An error-free release needs to be published for the resource.",
 }
@@ -191,8 +191,8 @@ var IssueSuggestionsFormatStrings = map[IssueCode]string{
 	IssueCodeIdentifier:        "Edit the <a href=\"%s/src/branch/%s/manifest.yaml\" target=\"_blank\">manifest.yaml</a> file and change **`%s`** to the correct **`identifier`** for the subject **`%s`**, which is **`%s`**.",
 	IssueCodeLanguage:          "Edit the <a href=\"%s/src/branch/%s/manifest.yaml\" target=\"_blank\">manifest.yaml</a> file and change **`en`** to the correct **`language code`** for your project's language, the **`title`** of the language, and the **`direction`**.",
 	IssueCodeIngredientTitle:   "Edit the <a href=\"%s/src/branch/%s/manifest.yaml\" target=\"_blank\">manifest.yaml</a> file and translate the **`title`** of the projects. For example, translate **'%s'** to the resource's language.",
-	IssueCodeIngredientMissing: "Either edit the <a href=\"%s/src/branch/%s/manifest.yaml\" target=\"_blank\">manifest.yaml</a> file and remove the project **`%s`** or add the missing file or path, **`%s`**, to the repository.",
-	IssueCodeIngredientEmpty:   "Either edit the <a href=\"%s/src/branch/%s/manifest.yaml\" target=\"_blank\">manifest.yaml</a> file and remove the project **`%s`** or add content to the file **`%s`**.",
+	IssueCodeIngredientMissing: "Either edit the <a href=\"%s/src/branch/%s/manifest.yaml\" target=\"_blank\">manifest.yaml</a> file and remove the project with the identifier of **`%s`** or add the missing file, **`%s`**, to the repository.",
+	IssueCodeIngredientEmpty:   "Either edit the <a href=\"%s/src/branch/%s/manifest.yaml\" target=\"_blank\">manifest.yaml</a> file and remove the project with the identifier of **`%s`** or add content to the file **`%s`**.",
 	IssueCodeReleaseNeeded:     "It looks like %s of the **`%s`** branch's %ss has been fixed. You should create a release for the resource with <a href=\"https://gateway-admin.netlify.app/\" target=\"_blank\">**`gatewayAdmin`**</a>.",
 }
 
@@ -232,6 +232,9 @@ func (h *Door43HealthcheckIssue) TableName() string {
 
 // GetHealthcheck on Door43Metadata
 func (dm *Door43Metadata) GetHealthcheck(ctx context.Context) *HealthcheckGroupedIssues {
+	if dm.MetadataType != "rc" {
+		return nil
+	}
 	dm.LoadRepo(ctx)
 	issues := []*Door43HealthcheckIssue{}
 

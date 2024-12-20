@@ -11,24 +11,41 @@
 							{{.Title}}
 					</a>
 					<span class="label-list">
-					{{if .Repo.IsFork}}
-						<span class="middle">{{svg "octicon-repo-forked" 16}}</span>
-					{{else if .Repo.IsMirror}}
-						<span class="middle">{{svg "octicon-repo-clone" 16}}</span>
-					{{end}}
-					{{if .Release}}
-						{{$color := "green"}}
-						{{$type := "Production"}}
-						{{if .Release.IsPrerelease}}
-							{{$color = "orange"}}
-							{{$type = "Pre-Release"}}
+						{{if .Repo.IsFork}}
+							<span class="middle">{{svg "octicon-repo-forked" 16}}</span>
+						{{else if .Repo.IsMirror}}
+							<span class="middle">{{svg "octicon-repo-clone" 16}}</span>
 						{{end}}
-						<a class="catalog-badge" href="{{.Release.HTMLURL}}" rel="nofollow" style="opacity: inherit !important; margin: 0">
-							<button class="ui {{$color}} label compact icon button tooltip" data-content="Catalog: {{$type}}" aria-label="Catalog: {{$type}}">
-								{{.Ref}}
-							</button>
-						</a>
-					{{end}}
+  {{$color := ""}}
+	{{$icon := ""}}
+	{{if eq .HealthcheckSeverity.String "error"}}
+		{{$color = "red"}}
+		{{$icon = "octicon-shield-x"}}
+	{{else if eq .HealthcheckSeverity.String "warning"}}
+		{{$color = "octicon-shield"}}
+	{{else if eq .HealthcheckSeverity.String "info"}}
+		{{$color = "octicon-shield-lock"}}
+	{{end}}
+	{{if ne $icon ""}}
+<span class="ui basic label" data-tooltip-content="Healthcheck: {{.HealthcheckSeverity.String}}">
+	<a class="muted" href="{{.Repo.Link}}/healthcheck" style="color: {{$color}}">
+		{{svg $icon 16}}
+	</a>
+</span>
+	{{end}}
+						{{if .Release}}
+							{{$color := "green"}}
+							{{$type := "Production"}}
+							{{if .Release.IsPrerelease}}
+								{{$color = "orange"}}
+								{{$type = "Pre-Release"}}
+							{{end}}
+							<a href="{{.Release.HTMLURL}}" rel="nofollow" style="opacity: inherit !important; margin: 0">
+								<button class="ui {{$color}} label compact icon button tooltip" data-content="Catalog: {{$type}}" aria-label="Catalog: {{$type}}">
+									{{.Ref}}
+								</button>
+							</a>
+						{{end}}
 					</span>
 				</div>
 				<div class="flex-item-trailing">

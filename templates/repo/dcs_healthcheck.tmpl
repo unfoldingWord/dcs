@@ -1,20 +1,4 @@
 {{template "base/head" .}}
-<script>
-	function toggleShowTable(element, type) {
-		var content = element.parentElement.nextElementSibling;
-		if (content.style.display === "none") {
-			if (content.tagName.toLowerCase() === "table") {
-				content.style.display = "table";
-			} else {
-				content.style.display = "block";
-			}
-			element.innerText = "Click to collapse "+type;
-		} else {
-			content.style.display = "none";
-			element.innerText = "Click to see "+type;
-		}
-	}
-</script>
 <style>
 	.status-item {
 			padding: 10px;
@@ -42,7 +26,7 @@
 	.item-text {
 			padding-left: 20px;
 			margin-top: 10px;
-	}
+	}pextra_
 </style>
 <div role="main" aria-label="{{.Title}}" class="page-content repository settings">
 	{{template "repo/header" .}}
@@ -56,7 +40,7 @@
 				Overall {{.Title}}
 			</h4>
 			<div class="ui attached segment">
-				{{if .Repo.RepoDM}}
+				{{if eq .Repo.RepoDM.MetadataType "rc"}}
 					{{template "repo/dcs_healthcheck_list" (dict "ctxData" . "Door43Metadata" .Repo.RepoDM)}}
 				{{else}}
 					<span>

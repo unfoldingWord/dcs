@@ -1180,15 +1180,36 @@ func GetHealthcheck(ctx *context.APIContext) {
 	//     "$ref": "#/responses/Door43Healthcheck"
 	//   "404":
 	//     "$ref": "#/responses/notFound"
+	//   "422":
+	//     "$ref": "#/responses/validationError"
 
 	ctx.Repo.Repository.LoadLatestDMs(ctx)
 
-	if ctx.Repo.Repository.RepoDM != nil || ctx.Repo.Repository.RepoDM.GetHealthcheck(ctx) == nil {
-		ctx.NotFound()
-		return
+	if ctx.Repo.Repository.RepoDM == nil || ctx.Repo.Repository.RepoDM.ID == 0 {
+		ctx.JSON(http.StatusUnprocessableEntity, map[string]any{
+			"ok":    false,
+			"error": fmt.Sprintf("no metadata found for repo [%s]", ctx.Repo.Repository.FullName()),
+		})
 	}
+
+	if ctx.Repo.Repository.RepoDM.MetadataType != "rc" {
+		ctx.JSON(http.StatusUnprocessableEntity, map[string]any{
+			"ok":    false,
+			"error": "currently only repositories of the 'rc' metadata type are supported",
+		})
+	}
+
+	healthcheck := ctx.Repo.Repository.RepoDM.GetHealthcheck(ctx)
+
+	if healthcheck == nil {
+		ctx.JSON(http.StatusUnprocessableEntity, map[string]any{
+			"ok":    false,
+			"error": fmt.Sprintf("unable to perform a healthcheck on this repository [%s]", ctx.Repo.Repository.FullName()),
+		})
+	}
+
 	ctx.JSON(http.StatusOK, map[string]any{
 		"ok":   true,
-		"data": ctx.Repo.Repository.RepoDM.GetHealthcheck(ctx),
+		"data": healthcheck,
 	})
 }

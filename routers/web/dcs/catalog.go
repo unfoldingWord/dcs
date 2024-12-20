@@ -19,7 +19,7 @@ import (
 
 const (
 	// tplCatalog catalog page template.
-	tplCatalog base.TplName = "healthcheck/healthcheck"
+	tplCatalog base.TplName = "catalog/catalog"
 )
 
 // CatalogSearchOptions when calling search catalog
