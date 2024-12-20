@@ -357,6 +357,9 @@ func (dm *Door43Metadata) GetHealthcheck(ctx context.Context) *HealthcheckGroupe
 	}
 
 	healthcheckGroupedIssues := NewHealthcheckGroupedIssues(issues)
+
+	dm.LoadRepo(ctx)
+	dm.Repo.LoadLatestDMs(ctx)
 	if dm.Ref == dm.Repo.DefaultBranch {
 		if healthcheckGroupedIssues.SeverityLevelCount[SeverityLevelError] > 0 {
 			item := &Door43HealthcheckIssue{
@@ -379,12 +382,6 @@ func (dm *Door43Metadata) GetHealthcheck(ctx context.Context) *HealthcheckGroupe
 			}
 			healthcheckGroupedIssues.AddIssue(item)
 		} else {
-			dm.LoadRepo(ctx)
-			err := dm.Repo.LoadLatestDMs(ctx)
-			if err != nil {
-				log.Error("Error loading latest DMs: %v", err)
-				return nil
-			}
 			var releaseHealthcheckGroupedIssues *HealthcheckGroupedIssues
 			if dm.Repo.LatestProdDM != nil {
 				releaseHealthcheckGroupedIssues = dm.Repo.LatestProdDM.GetHealthcheck(ctx)
