@@ -224,14 +224,9 @@ func ProcessDoor43MetadataForRepo(ctx context.Context, repo *repo_model.Reposito
 		return err
 	}
 
-	if ref == "" || ref == repo.DefaultBranch {
-		err := repo.LoadLatestDMs(ctx)
-		if err != nil {
-			return err
-		}
-		if repo.RepoDM != nil {
-			repo.RepoDM.GetHealthcheck(ctx)
-		}
+	repo.LoadLatestDMs(ctx)
+	if repo.RepoDM != nil {
+		repo.RepoDM.GetHealthcheck(ctx)
 	}
 
 	return nil
