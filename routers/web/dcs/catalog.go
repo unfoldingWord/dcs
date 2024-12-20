@@ -1,7 +1,7 @@
 // Copyright 2020 The Gitea Authors. All rights reserved.
 // SPDX-License-Identifier: MIT
 
-/*** DCS Customizations - Router for Healthcheck page ***/
+/*** DCS Customizations - Router for Catalog page ***/
 
 package dcs
 
@@ -18,25 +18,25 @@ import (
 )
 
 const (
-	// tplHealthcheck healthcheck page template.
-	tplHealthcheck base.TplName = "catalog/catalog"
+	// tplCatalog catalog page template.
+	tplCatalog base.TplName = "healthcheck/healthcheck"
 )
 
-// HealthcheckOptions when calling healthcheck
-type HealthcheckOptions struct {
+// CatalogSearchOptions when calling search catalog
+type CatalogSearchOptions struct {
 	PageSize int
 	TplName  base.TplName
 }
 
-// RenderHealthSearch render healthcheck search page
-func RenderHealthcheckSearch(ctx *context.Context, opts *HealthcheckOptions) {
+// RenderCatalogSearch render catalog search page
+func RenderCatalogSearch(ctx *context.Context, opts *CatalogSearchOptions) {
 	page := ctx.FormInt("page")
 	if page <= 0 {
 		page = 1
 	}
 
 	var (
-		dms     []*repo.Door43Metadata
+		dms     repo.Door43MetadataList
 		count   int64
 		err     error
 		orderBy door43metadata.CatalogOrderBy
@@ -166,14 +166,14 @@ func RenderHealthcheckSearch(ctx *context.Context, opts *HealthcheckOptions) {
 	ctx.HTML(200, opts.TplName)
 }
 
-// Healthcheck render healthcheck page
-func Healthcheck(ctx *context.Context) {
-	ctx.Data["Title"] = ctx.Tr("healthcheck")
-	ctx.Data["PageIsHealtcheck"] = true
+// Catalog render catalog page
+func Catalog(ctx *context.Context) {
+	ctx.Data["Title"] = ctx.Tr("catalog")
+	ctx.Data["PageIsCatalog"] = true
 	ctx.Data["IsRepoIndexerEnabled"] = setting.Indexer.RepoIndexerEnabled
 
-	RenderHealthcheckSearch(ctx, &HealthcheckOptions{
+	RenderCatalogSearch(ctx, &CatalogSearchOptions{
 		PageSize: setting.UI.ExplorePagingNum,
-		TplName:  tplHealthcheck,
+		TplName:  tplCatalog,
 	})
 }

@@ -41,3 +41,10 @@ type swaggerResponseLanguage struct {
 	// in:body
 	Body map[string]interface{} `json:"body"`
 }
+
+// Door43Healthcheck
+// swagger:response Door43Healthcheck
+type swaggerResponseDoor43Healthcheck struct {
+	// in:body
+	Body map[string]interface{} `json:"body"`
+}

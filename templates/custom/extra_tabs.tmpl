@@ -1,5 +1,19 @@
 <a class="{{if .PageIsMetadata}}active{{end}} item" href="{{.RepoLink}}/healthcheck">
-	{{svg "octicon-shield-check"}} {{ctx.Locale.Tr "repo.metadata.healthcheck"}}
+  {{$color := "inherit"}}
+	{{$icon := "octicon-shield-slash"}}
+	{{if eq $.RepoDM.HealthcheckSeverity.String "error"}}
+		{{$color = "red"}}
+		{{$icon = "octicon-shield-x"}}
+	{{else if eq $.RepoDM.HealthcheckSeverity.String "warning"}}
+		{{$color = "octicon-shield"}}
+	{{else if eq $.RepoDM.HealthcheckSeverity.String "info"}}
+		{{$color = "octicon-shield-lock"}}
+	{{else if eq $.RepoDM.HealthcheckSeverity.String "success"}}
+		{{$color = "green"}}
+		{{$icon = "octicon-shield-check"}}
+	{{end}}
+	<span style="color: {{$color}}">{{svg $icon 16}}</span>
+	{{ctx.Locale.Tr "repo.metadata.healthcheck"}}
 </a>
 {{$refToPreview := .Repository.DefaultBranch}}
 {{$refType := "branch"}}

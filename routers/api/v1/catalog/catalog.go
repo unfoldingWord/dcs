@@ -1156,3 +1156,39 @@ func getSingleDMFieldList(ctx *context.APIContext, field string) ([]string, erro
 
 	return results, nil
 }
+
+// GetHealthcheck returns a simple healthcheck response
+func GetHealthcheck(ctx *context.APIContext) {
+	// swagger:operation GET /repos/{owner}/{repo}/healthcheck repo repoGetHealthcheck
+	// ---
+	// summary: Get the healthcheck of a repo in JSON format
+	// produces:
+	// - application/json
+	// parameters:
+	// - name: owner
+	//   in: path
+	//   description: name of the owner
+	//   type: string
+	//   required: true
+	// - name: repo
+	//   in: path
+	//   description: name of the repo
+	//   type: string
+	//   required: true
+	// responses:
+	//   "200":
+	//     "$ref": "#/responses/Door43Healthcheck"
+	//   "404":
+	//     "$ref": "#/responses/notFound"
+
+	ctx.Repo.Repository.LoadLatestDMs(ctx)
+
+	if ctx.Repo.Repository.RepoDM != nil || ctx.Repo.Repository.RepoDM.GetHealthcheck(ctx) == nil {
+		ctx.NotFound()
+		return
+	}
+	ctx.JSON(http.StatusOK, map[string]any{
+		"ok":   true,
+		"data": ctx.Repo.Repository.RepoDM.GetHealthcheck(ctx),
+	})
+}

@@ -7,7 +7,6 @@ import (
 	"net/http"
 
 	"code.gitea.io/gitea/models/db"
-	"code.gitea.io/gitea/models/door43metadata"
 	repo_model "code.gitea.io/gitea/models/repo"
 	"code.gitea.io/gitea/modules/base"
 	"code.gitea.io/gitea/modules/context"
@@ -24,18 +23,19 @@ const (
 
 // GetRepoHealthcheck renders healthcheck for a repo
 func GetRepoHealthcheck(ctx *context.Context) {
-	dm, err := repo_model.GetDoor43MetadataByRepoIDAndRef(ctx, ctx.Repo.Repository.ID, ctx.Repo.Repository.DefaultBranch)
-	if err != nil {
-		log.Error("Error getting door43 metadata for healthcheck: %v", err)
+	ctx.Repo.Repository.LoadLatestDMs(ctx)
+	door43Metadatas := []*repo_model.Door43Metadata{}
+	if ctx.Repo.Repository.RepoDM != nil && ctx.Repo.Repository.RepoDM.ID > 0 {
+		door43Metadatas = append(door43Metadatas, ctx.Repo.Repository.RepoDM)
 	}
-	if dm != nil {
-		dm.LoadHealthcheck(ctx)
+	if ctx.Repo.Repository.LatestProdDM != nil {
+		door43Metadatas = append(door43Metadatas, ctx.Repo.Repository.LatestProdDM)
 	}
+
 	ctx.Data["Title"] = "Health Check"
 	ctx.Data["PageIsMetadata"] = true
 	ctx.Data["Repo"] = ctx.Repo.Repository
-	ctx.Data["DefaultBranchDM"] = dm
-	ctx.Data["Door43Metadatas"] = []*repo_model.Door43Metadata{dm, ctx.Repo.Repository.LatestProdDM}
+	ctx.Data["Door43Metadatas"] = door43Metadatas
 	ctx.HTML(http.StatusOK, tplDCSHealthcheck)
 }
 
@@ -44,7 +44,7 @@ func GetAllRepoDoor43Metadata(ctx *context.Context) {
 	branchDms := make([]*repo_model.Door43Metadata, 0, 50)
 	err := db.GetEngine(ctx).
 		Where(builder.Eq{"repo_id": ctx.Repo.Repository.ID}).
-		And(builder.Gte{"stage": door43metadata.StageLatest}).
+		And(builder.Eq{"ref_type": "branch"}).
 		OrderBy("is_repo_metadata DESC, stage ASC, release_date_unix DESC").
 		Find(&branchDms)
 	if err != nil {
@@ -54,7 +54,7 @@ func GetAllRepoDoor43Metadata(ctx *context.Context) {
 	releaseDms := make([]*repo_model.Door43Metadata, 0, 50)
 	err = db.GetEngine(ctx).
 		Where(builder.Eq{"repo_id": ctx.Repo.Repository.ID}).
-		And(builder.Lte{"stage": door43metadata.StagePreProd}).
+		And(builder.Eq{"ref_type": "tag"}).
 		OrderBy("release_date_unix DESC").
 		Find(&releaseDms)
 	if err != nil {

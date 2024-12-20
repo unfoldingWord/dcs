@@ -1,16 +1,4 @@
 {{template "base/head" .}}
-<script>
-	function toggleShowTable(element, type) {
-		var content = element.parentElement.nextElementSibling;
-		if (content.style.display === "none") {
-			content.style.display = "table";
-			element.innerText = "Click to collapse "+type;
-		} else {
-			content.style.display = "none";
-			element.innerText = "Click to see "+type;
-		}
-	}
-</script>
 <style>
 	.status-item {
 			padding: 10px;

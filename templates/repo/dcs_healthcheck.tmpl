@@ -3,7 +3,11 @@
 	function toggleShowTable(element, type) {
 		var content = element.parentElement.nextElementSibling;
 		if (content.style.display === "none") {
-			content.style.display = "table";
+			if (content.tagName.toLowerCase() === "table") {
+				content.style.display = "table";
+			} else {
+				content.style.display = "block";
+			}
 			element.innerText = "Click to collapse "+type;
 		} else {
 			content.style.display = "none";
@@ -52,10 +56,14 @@
 				Overall {{.Title}}
 			</h4>
 			<div class="ui attached segment">
-				<div class="ui list">
-					{{template "repo/dcs_healthcheck_list" (dict "ctxData" . "Door43Metadata" .DefaultBranchDM)}}
-				</div>
-		</div>
+				{{if .Repo.RepoDM}}
+					{{template "repo/dcs_healthcheck_list" (dict "ctxData" . "Door43Metadata" .Repo.RepoDM)}}
+				{{else}}
+					<span>
+						No Health Check could be performed for this Repository. Click&nbsp;<a href="{{.Link}}/update">update</a>&nbsp;to scan the repo.
+					</span>
+				{{end}}
+			</div>
 
 			<h4 class="ui top attached header">
 				{{ctx.Locale.Tr "repo.metadata.metadata"}}
@@ -68,7 +76,7 @@
 			</h4>
 			<div class="ui attached segment">
 					{{if .Door43Metadatas}}
-						{{template "repo/dcs_metadata_list" (dict "ctxData" . "Door43Metadatas" .Door43Metadatas)}}
+						{{template "repo/dcs_metadata_list" (dict "ctxData" . "Door43Metadatas" .Door43Metadatas "ShowHealthcheck" true)}}
 					{{else}}
 						<span>
 							No Metadata for this Repository. Click&nbsp;<a href="{{.Link}}/update">update</a>&nbsp;to scan the repo.

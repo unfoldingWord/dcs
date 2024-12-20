@@ -27,7 +27,7 @@ func (repo *Repository) LoadLatestDMs(ctx context.Context) error {
 		if err != nil {
 			return err
 		}
-		if has && dm != nil {
+		if has {
 			dm.Repo = repo
 			dm.LoadAttributes(ctx)
 			repo.LatestProdDM = dm

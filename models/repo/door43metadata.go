@@ -45,41 +45,41 @@ func InitDoor43Metadata() error {
 
 // Door43Metadata represents the metadata of repository's release or default branch (ReleaseID = 0).
 type Door43Metadata struct {
-	ID                int64                       `xorm:"pk autoincr"`
-	RepoID            int64                       `xorm:"INDEX UNIQUE(repo_ref) NOT NULL"`
-	Repo              *Repository                 `xorm:"-"`
-	ReleaseID         int64                       `xorm:"NOT NULL"`
-	Release           *Release                    `xorm:"-"`
-	Ref               string                      `xorm:"INDEX UNIQUE(repo_ref) NOT NULL"`
-	RefType           string                      `xorm:"NOT NULL"`
-	CommitSHA         string                      `xorm:"NOT NULL VARCHAR(40)"`
-	Commit            *git.Commit                 `xorm:"-"`
-	Stage             door43metadata.Stage        `xorm:"INDEX NOT NULL"`
-	MetadataType      string                      `xorm:"INDEX NOT NULL"`
-	MetadataVersion   string                      `xorm:"NOT NULL"`
-	Subject           string                      `xorm:"INDEX NOT NULL"`
-	FlavorType        string                      `xorm:"INDEX NOT NULL"`
-	Flavor            string                      `xorm:"INDEX NOT NULL"`
-	Abbreviation      string                      `xorm:"INDEX NOT NULL"`
-	Title             string                      `xorm:"NOT NULL"`
-	Publisher         string                      `xorm:"NOT NULL"`
-	Language          string                      `xorm:"INDEX NOT NULL"`
-	LanguageTitle     string                      `xorm:"NOT NULL"`
-	LanguageDirection string                      `xorm:"NOT NULL"`
-	LanguageIsGL      bool                        `xorm:"NOT NULL DEFAULT false"`
-	ContentFormat     string                      `xorm:"NOT NULL"`
-	CheckingLevel     int                         `xorm:"NOT NULL"`
-	Ingredients       []*structs.Ingredient       `xorm:"JSON"`
-	Relations         []*structs.Relation         `xorm:"JSON"`
-	IsLatestForStage  bool                        `xorm:"INDEX NOT NULL DEFAULT false"`
-	IsRepoMetadata    bool                        `xorm:"INDEX NOT NULL DEFAULT false"`
-	Metadata          map[string]interface{}      `xorm:"JSON MEDIUMTEXT"`
-	ValidationError   *jsonschema.ValidationError `xorm:"JSON MEDIUMTEXT"`
-	Healthcheck       *HealthcheckGroupedIssues   `xorm:"-"`
-	ReleaseDateUnix   timeutil.TimeStamp          `xorm:"NOT NULL"`
-	CreatedUnix       timeutil.TimeStamp          `xorm:"INDEX created NOT NULL"`
-	UpdatedUnix       timeutil.TimeStamp          `xorm:"INDEX updated"`
-	HealthcheckUnix   timeutil.TimeStamp          `xorm:"INDEX"`
+	ID                  int64                       `xorm:"pk autoincr"`
+	RepoID              int64                       `xorm:"INDEX UNIQUE(repo_ref) NOT NULL"`
+	Repo                *Repository                 `xorm:"-"`
+	ReleaseID           int64                       `xorm:"NOT NULL"`
+	Release             *Release                    `xorm:"-"`
+	Ref                 string                      `xorm:"INDEX UNIQUE(repo_ref) NOT NULL"`
+	RefType             string                      `xorm:"NOT NULL"`
+	CommitSHA           string                      `xorm:"NOT NULL VARCHAR(40)"`
+	Commit              *git.Commit                 `xorm:"-"`
+	Stage               door43metadata.Stage        `xorm:"INDEX NOT NULL"`
+	MetadataType        string                      `xorm:"INDEX NOT NULL"`
+	MetadataVersion     string                      `xorm:"NOT NULL"`
+	Subject             string                      `xorm:"INDEX NOT NULL"`
+	FlavorType          string                      `xorm:"INDEX NOT NULL"`
+	Flavor              string                      `xorm:"INDEX NOT NULL"`
+	Abbreviation        string                      `xorm:"INDEX NOT NULL"`
+	Title               string                      `xorm:"NOT NULL"`
+	Publisher           string                      `xorm:"NOT NULL"`
+	Language            string                      `xorm:"INDEX NOT NULL"`
+	LanguageTitle       string                      `xorm:"NOT NULL"`
+	LanguageDirection   string                      `xorm:"NOT NULL"`
+	LanguageIsGL        bool                        `xorm:"NOT NULL DEFAULT false"`
+	ContentFormat       string                      `xorm:"NOT NULL"`
+	CheckingLevel       int                         `xorm:"NOT NULL"`
+	Ingredients         []*structs.Ingredient       `xorm:"JSON"`
+	Relations           []*structs.Relation         `xorm:"JSON"`
+	IsLatestForStage    bool                        `xorm:"INDEX NOT NULL DEFAULT false"`
+	IsRepoMetadata      bool                        `xorm:"INDEX NOT NULL DEFAULT false"`
+	Metadata            map[string]interface{}      `xorm:"JSON MEDIUMTEXT"`
+	ValidationError     *jsonschema.ValidationError `xorm:"JSON MEDIUMTEXT"`
+	HealthcheckSeverity SeverityLevel               `xorm:"NULL DEFAULT NULL"`
+	HealthcheckCounts   map[SeverityLevel]int       `xorm:"JSON"`
+	ReleaseDateUnix     timeutil.TimeStamp          `xorm:"NOT NULL"`
+	CreatedUnix         timeutil.TimeStamp          `xorm:"INDEX created NOT NULL"`
+	UpdatedUnix         timeutil.TimeStamp          `xorm:"INDEX updated"`
 }
 
 func init() {
@@ -121,17 +121,6 @@ func (dm *Door43Metadata) LoadRelease(ctx context.Context) error {
 	return nil
 }
 
-func (dm *Door43Metadata) LoadHealthcheck(ctx context.Context) error {
-	if dm.HealthcheckUnix > 0 {
-		issues, err := GetDoor43HealthcheckIssuesByDoor43MetadataID(ctx, dm.ID)
-		if err != nil {
-			return err
-		}
-		dm.Healthcheck = NewHealthcheckGroupedIssues(issues)
-	}
-	return nil
-}
-
 // LoadAttributes load repo and release attributes for a door43 metadata
 func (dm *Door43Metadata) LoadAttributes(ctx context.Context) error {
 	if err := dm.LoadRepo(ctx); err != nil {
@@ -143,7 +132,6 @@ func (dm *Door43Metadata) LoadAttributes(ctx context.Context) error {
 			return nil
 		}
 	}
-	dm.LoadHealthcheck(ctx)
 	return nil
 }
 
@@ -456,32 +444,6 @@ func InsertDoor43Metadatas(ctx context.Context, dms []*Door43Metadata) error {
 	// }
 	_, err := db.GetEngine(ctx).Insert(dms)
 	return err
-}
-
-func pruneValidationError(valErr *jsonschema.ValidationError, maxLength int) *jsonschema.ValidationError {
-	if valErr == nil {
-		return nil
-	}
-	pruned := *valErr
-	pruned.Causes = nil
-
-	// Convert to JSON to check length
-	jsonStr, _ := json.Marshal(pruned)
-	if len(jsonStr) <= maxLength {
-		return &pruned
-	}
-
-	// Prune causes if necessary
-	for _, cause := range valErr.Causes {
-		pruned.Causes = append(pruned.Causes, pruneValidationError(cause, maxLength))
-		jsonStr, _ := json.Marshal(pruned)
-		if len(jsonStr) <= maxLength {
-			break
-		}
-		pruned.Causes = pruned.Causes[:len(pruned.Causes)-1]
-	}
-
-	return &pruned
 }
 
 // UpdateDoor43MetadataCols update door43 metadata according special columns

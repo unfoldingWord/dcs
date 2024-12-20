@@ -225,13 +225,12 @@ func ProcessDoor43MetadataForRepo(ctx context.Context, repo *repo_model.Reposito
 	}
 
 	if ref == "" || ref == repo.DefaultBranch {
-		dm, err := repo_model.GetDoor43MetadataByRepoIDAndRef(ctx, repo.ID, repo.DefaultBranch)
+		err := repo.LoadLatestDMs(ctx)
 		if err != nil {
 			return err
 		}
-		_, err = repo_model.PerformHealthcheck(ctx, dm)
-		if err != nil {
-			return err
+		if repo.RepoDM != nil {
+			repo.RepoDM.GetHealthcheck(ctx)
 		}
 	}
 

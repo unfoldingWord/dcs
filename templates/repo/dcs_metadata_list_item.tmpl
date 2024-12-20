@@ -1,4 +1,5 @@
 {{$dm := .Door43Metadata}}
+{{if $dm}}
 <div class="item">
 	<div class="flex-text-block gt-sb">
 		<div class="flex-text-inline">
@@ -70,7 +71,7 @@
 			{{end}}
 		</div>
 		<div class="ui bottom attached tab segment active" data-tab="db-{{$dm.ID}}">
-			<table>
+			<table style="margin-bottom: 15px">
 				{{if $dm.ValidationError}}
 				<tr>
 					<td colspan="2">
@@ -197,10 +198,21 @@
 					<td style="vertical-align: top">{{$dm.CommitSHA}}</td>
 				</tr>
 				<tr>
-					<td style="vertical-align: top" d><strong>{{if $dm.Release}}{{ctx.Locale.Tr
+					<td style="vertical-align: top"><strong>{{if $dm.Release}}{{ctx.Locale.Tr
 							"repo.metadata.release_date"}}{{else}}{{ctx.Locale.Tr
 							"repo.metadata.last_updated"}}{{end}}:</strong></td>
 					<td style="vertical-align: top">{{DateTime "full" $dm.ReleaseDateUnix.AsTime}}</td>
+				</tr>
+				<tr>
+					<td style="vertical-align: top"><strong>{{ctx.Locale.Tr "repo.metadata.healthcheck"}}:</td>
+					<td style="vertical-align: top">
+						<div class="ingredients-toggle">
+							<a href="javascript:void(0);" onclick="toggleShowTable(this, 'health check')">Click to see health check</a>
+						</div>
+						<div style="display: none">
+							{{template "repo/dcs_healthcheck_list" (dict "ctxData" .ctxData "Door43Metadata" $dm)}}
+						</div>
+					</td>
 				</tr>
 			</table>
 		</div>
@@ -214,3 +226,4 @@
 		{{end}}
 	</div>
 </div>
+{{end}}
