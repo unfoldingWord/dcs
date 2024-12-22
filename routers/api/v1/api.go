@@ -1280,7 +1280,7 @@ func Routes() *web.Route {
 				}, reqAdmin(), reqToken())
 
 				// DCS Customizations
-				m.Get("/healthcheck", catalog.GetHealthcheck)
+				m.Get("/healthcheck", repo.GetHealthcheck)
 			}, repoAssignment())
 		}, tokenRequiresScopes(auth_model.AccessTokenScopeCategoryRepository))
 
