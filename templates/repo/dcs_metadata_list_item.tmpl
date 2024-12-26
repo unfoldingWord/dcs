@@ -57,7 +57,8 @@
 			</a>
 			{{end}}
 			<a class="item"
-				href="{{Door43PreviewURL}}/u/{{.ctxData.Repository.OwnerName}}/{{.ctxData.Repository.Name}}/{{PathEscapeSegments $dm.Ref}}">
+				href="{{Door43PreviewURL}}/u/{{.ctxData.Repository.OwnerName}}/{{.ctxData.Repository.Name}}/{{PathEscapeSegments $dm.Ref}}"
+				target="_blank" rel="nofollow noopener">
 				Preview / PDF
 			</a>
 			{{if or $.ctxData.Permission.IsAdmin $.ctxData.IsOrganizationOwner $.ctxData.PageIsAdmin $.ctxData.PageIsUserSettings}}
