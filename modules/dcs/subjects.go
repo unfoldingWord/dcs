@@ -33,6 +33,8 @@ var ResourceToSubjectMap = map[string]string{
 	"obs-sq-tsv": "TSV OBS Study Questions",
 	"obs-tn-tsv": "TSV OBS Translation Notes",
 	"obs-tq-tsv": "TSV OBS Translation Questions",
+	"ugnt":       "Greek New Testament",
+	"uhb":        "Hebrew Old Testament",
 	"ult":        "Aligned Bible",
 	"ust":        "Aligned Bible",
 }

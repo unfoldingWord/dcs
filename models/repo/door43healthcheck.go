@@ -303,7 +303,7 @@ func (dm *Door43Metadata) GetHealthcheck(ctx context.Context) *HealthcheckGroupe
 
 	// Check for relations in other languages
 	for _, relation := range dm.Relations {
-		if relation.Language != dm.Language && relation.Language != "hbo" && relation.Language != "el-x-koine" {
+		if relation.Language != dm.Language && relation.Language != "hbo" && relation.Language != "el-x-koine" && dm.Repo.Owner.LowerName != "unfoldingword" {
 			item := &Door43HealthcheckIssue{
 				IssueCode:     IssueCodeRelation,
 				SeverityLevel: SeverityLevelError,
@@ -320,7 +320,7 @@ func (dm *Door43Metadata) GetHealthcheck(ctx context.Context) *HealthcheckGroupe
 		doneIngredientTitle := false
 		for _, ingredient := range dm.Ingredients {
 			// Acts, Numbers and Deuteronomy are only in English and not other languages, so using those
-			if !doneIngredientTitle && (ingredient.Title == "" || (dm.Language != "en" && (ingredient.Title == "Numbers" || ingredient.Title == "Deuteronomy" || ingredient.Title == "Acts"))) {
+			if !doneIngredientTitle && dm.Repo.Owner.LowerName != "unfoldingword" && (ingredient.Title == "" || (dm.Language != "en" && (ingredient.Title == "Numbers" || ingredient.Title == "Deuteronomy" || ingredient.Title == "Acts"))) {
 				doneIngredientTitle = true
 				item := &Door43HealthcheckIssue{
 					IssueCode:     IssueCodeIngredientTitle,
