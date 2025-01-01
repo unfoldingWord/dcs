@@ -164,9 +164,9 @@ func Search(ctx *context.APIContext) {
 	//   collectionFormat: multi
 	//   items:
 	//     type: string
-	// - name: invertedTopic
+	// - name: withoutTopic
 	//   in: query
-	//   description: Inverted topic. Repositories that do NOT have this topic will be returned. Multiple values are ANDed.
+	//   description: Repositories without this topic will be returned. Multiple values are ANDed.
 	//   type: array
 	//   collectionFormat: multi
 	//   items:
@@ -252,7 +252,7 @@ func Search(ctx *context.APIContext) {
 		MetadataTypes:    catalog.QueryStrings(ctx, "metadataType"),
 		MetadataVersions: catalog.QueryStrings(ctx, "metadataVersion"),
 		Topics:           catalog.QueryStrings(ctx, "topic"),
-		InvertedTopics:   catalog.QueryStrings(ctx, "invertedTopic"),
+		InvertedTopics:   catalog.QueryStrings(ctx, "withoutTopic"),
 		Healthchecks:     catalog.QueryStrings(ctx, "healthcheckSeverity"),
 		LanguageIsGL:     ctx.FormOptionalBool("is_gl"),
 		PartialMatch:     ctx.FormBool("partialMatch"),

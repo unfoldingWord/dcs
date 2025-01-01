@@ -1932,24 +1932,8 @@
               "type": "string"
             },
             "collectionFormat": "multi",
-            "description": "Inverted topic. Repos that do NOT have this topic will be returned. Multiple values are ANDed.",
-            "name": "invertedTopic",
-            "in": "query"
-          },
-          {
-            "type": "array",
-            "items": {
-              "enum": [
-                "error",
-                "warning",
-                "info",
-                "success"
-              ],
-              "type": "string"
-            },
-            "collectionFormat": "multi",
-            "description": "Healthcheck severity. Options are error, warning, info, success. Multiple values are ORed.",
-            "name": "healthcheck",
+            "description": "Entries with a repository without this topic will be returned. Multiple values are ANDed.",
+            "name": "withoutTopic",
             "in": "query"
           },
           {
@@ -4595,8 +4579,8 @@
               "type": "string"
             },
             "collectionFormat": "multi",
-            "description": "Inverted topic. Repos that do NOT have this topic will be returned. Multiple values are ANDed.",
-            "name": "invertedTopic",
+            "description": "Repositories without this topic will be returned. Multiple values are ANDed.",
+            "name": "withoutTopic",
             "in": "query"
           },
           {
@@ -4612,7 +4596,7 @@
             },
             "collectionFormat": "multi",
             "description": "Healthcheck severity. Options are error, warning, info, success. Multiple values are ORed.",
-            "name": "healthcheck",
+            "name": "healthcheckSeverity",
             "in": "query"
           },
           {
@@ -18712,6 +18696,10 @@
           "type": "string",
           "x-go-name": "GitTreesURL"
         },
+        "healthcheck_severity": {
+          "type": "string",
+          "x-go-name": "HealthcheckSeverity"
+        },
         "id": {
           "type": "integer",
           "format": "int64",
@@ -24072,6 +24060,16 @@
           "type": "boolean",
           "x-go-name": "HasWiki"
         },
+        "healthcheck_severity": {
+          "description": "healthcheck severity",
+          "type": "string",
+          "x-go-name": "HealthcheckSeverity"
+        },
+        "healthcheck_url": {
+          "description": "healthcheck URL",
+          "type": "string",
+          "x-go-name": "HealthcheckURL"
+        },
         "html_url": {
           "type": "string",
           "x-go-name": "HTMLURL"
@@ -24217,6 +24215,14 @@
           "description": "title from the manifest",
           "type": "string",
           "x-go-name": "Title"
+        },
+        "topics": {
+          "description": "topics",
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "x-go-name": "Topics"
         },
         "updated_at": {
           "type": "string",
