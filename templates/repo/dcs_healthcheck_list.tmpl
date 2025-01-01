@@ -25,7 +25,7 @@
 							<div class="item-text">
 								{{RenderMarkdownToHtml $.Context $issue.Details}}
 							</div>
-							{{if eq .Door43Metadata.RefType "branch"}}
+							{{if eq $.Door43Metadata.RefType "branch"}}
 								<div class="item-text">
 									{{RenderMarkdownToHtml $.Context $issue.Suggestion}}
 								</div>
