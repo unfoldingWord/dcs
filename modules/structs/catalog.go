@@ -44,7 +44,6 @@ type CatalogEntry struct {
 	Books                  []string      `json:"books,omitempty"`
 	IsValid                bool          `json:"is_valid"`
 	ValidationErrorsURL    string        `json:"validation_errors_url"`
-	HealthcheckSeverity    string        `json:"healthcheck_severity"`
 }
 
 // Ingredient is a single project of a resource
