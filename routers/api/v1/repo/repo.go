@@ -49,10 +49,6 @@ func Search(ctx *context.APIContext) {
 	//   in: query
 	//   description: keyword
 	//   type: string
-	// - name: topic
-	//   in: query
-	//   description: Limit search to repositories with keyword as topic
-	//   type: boolean
 	// - name: includeDesc
 	//   in: query
 	//   description: include search of keyword within repository description (defaults to false)
@@ -168,6 +164,21 @@ func Search(ctx *context.APIContext) {
 	//   collectionFormat: multi
 	//   items:
 	//     type: string
+	// - name: invertedTopic
+	//   in: query
+	//   description: Inverted topic. Repos that do NOT have this topic will be returned. Multiple values are ANDed.
+	//   type: array
+	//   collectionFormat: multi
+	//   items:
+	//     type: string
+	// - name: healthcheck
+	//   in: query
+	//   description: Healthcheck severity. Options are error, warning, info, success. Multiple values are ORed.
+	//   type: array
+	//   collectionFormat: multi
+	//   items:
+	//     type: string
+	//     enum: [error,warning,info,success]
 	// - name: metadataType
 	//   in: query
 	//   description: return repos only with metadata of this type
@@ -216,13 +227,13 @@ func Search(ctx *context.APIContext) {
 	abbreviations = append(abbreviations, catalog.QueryStrings(ctx, "resource")...) // For non-breaking changes, support "resource" argument
 
 	opts := &repo_model.SearchRepoOptions{
-		ListOptions:        utils.GetListOptions(ctx),
-		Actor:              ctx.Doer,
-		Keyword:            ctx.FormTrim("q"),
-		OwnerID:            ctx.FormInt64("uid"),
-		PriorityOwnerID:    ctx.FormInt64("priority_owner_id"),
-		TeamID:             ctx.FormInt64("team_id"),
-		TopicOnly:          ctx.FormBool("topic"),
+		ListOptions:     utils.GetListOptions(ctx),
+		Actor:           ctx.Doer,
+		Keyword:         ctx.FormTrim("q"),
+		OwnerID:         ctx.FormInt64("uid"),
+		PriorityOwnerID: ctx.FormInt64("priority_owner_id"),
+		TeamID:          ctx.FormInt64("team_id"),
+		// TopicOnly:          ctx.FormBool("topic"), // DCS Customization
 		Collaborate:        util.OptionalBoolNone,
 		Private:            ctx.IsSigned && (ctx.FormString("private") == "" || ctx.FormBool("private")),
 		Template:           util.OptionalBoolNone,

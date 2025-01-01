@@ -1927,6 +1927,32 @@
             "in": "query"
           },
           {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "collectionFormat": "multi",
+            "description": "Inverted topic. Repos that do NOT have this topic will be returned. Multiple values are ANDed.",
+            "name": "invertedTopic",
+            "in": "query"
+          },
+          {
+            "type": "array",
+            "items": {
+              "enum": [
+                "error",
+                "warning",
+                "info",
+                "success"
+              ],
+              "type": "string"
+            },
+            "collectionFormat": "multi",
+            "description": "Healthcheck severity. Options are error, warning, info, success. Multiple values are ORed.",
+            "name": "healthcheck",
+            "in": "query"
+          },
+          {
             "type": "boolean",
             "description": "if true, subject, owner and repo search fields will use partial match (LIKE) when querying the catalog, default is false",
             "name": "partialMatch",
@@ -4401,12 +4427,6 @@
           },
           {
             "type": "boolean",
-            "description": "Limit search to repositories with keyword as topic",
-            "name": "topic",
-            "in": "query"
-          },
-          {
-            "type": "boolean",
             "description": "include search of keyword within repository description (defaults to false)",
             "name": "includeDesc",
             "in": "query"
@@ -4567,6 +4587,32 @@
             "collectionFormat": "multi",
             "description": "topic of repo. Multiple values are ORed.",
             "name": "topic",
+            "in": "query"
+          },
+          {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "collectionFormat": "multi",
+            "description": "Inverted topic. Repos that do NOT have this topic will be returned. Multiple values are ANDed.",
+            "name": "invertedTopic",
+            "in": "query"
+          },
+          {
+            "type": "array",
+            "items": {
+              "enum": [
+                "error",
+                "warning",
+                "info",
+                "success"
+              ],
+              "type": "string"
+            },
+            "collectionFormat": "multi",
+            "description": "Healthcheck severity. Options are error, warning, info, success. Multiple values are ORed.",
+            "name": "healthcheck",
             "in": "query"
           },
           {
