@@ -1008,6 +1008,8 @@ func searchCatalog(ctx *context.APIContext) {
 		MetadataTypes:    metadataTypes,
 		MetadataVersions: metadataVersions,
 		Topics:           QueryStrings(ctx, "topic"),
+		InvertedTopics:   QueryStrings(ctx, "invertedTopic"),
+		Healthchecks:     QueryStrings(ctx, "healthcheck"),
 		PartialMatch:     ctx.FormBool("partialMatch"),
 	}
 

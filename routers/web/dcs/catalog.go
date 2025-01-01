@@ -98,7 +98,7 @@ func RenderCatalogSearch(ctx *context.Context, opts *CatalogSearchOptions) {
 	}
 
 	query := ctx.FormTrim("q")
-	searchFields := []string{"keyword", "book", "lang", "subject", "flavor_type", "flavor", "abbreviation", "content_format", "repo", "owner", "tag", "checking_level", "metadata_type", "metadata_version", "topic", "stage"}
+	searchFields := []string{"keyword", "book", "lang", "subject", "flavor_type", "flavor", "abbreviation", "content_format", "repo", "owner", "tag", "checking_level", "metadata_type", "metadata_version", "topic", "topic_inverted", "healthcheck", "stage"}
 	searchMap := map[string][]string{}
 	for _, field := range searchFields {
 		searchMap[field] = []string{}
@@ -146,6 +146,8 @@ func RenderCatalogSearch(ctx *context.Context, opts *CatalogSearchOptions) {
 		MetadataTypes:    searchMap["metadata_type"],
 		MetadataVersions: searchMap["metadata_version"],
 		Topics:           searchMap["topic"],
+		InvertedTopics:   searchMap["topic_inverted"],
+		Healthchecks:     searchMap["healthcheck"],
 		Tags:             searchMap["tag"],
 		CheckingLevels:   searchMap["checking_level"],
 	})

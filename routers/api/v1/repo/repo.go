@@ -241,6 +241,8 @@ func Search(ctx *context.APIContext) {
 		MetadataTypes:    catalog.QueryStrings(ctx, "metadataType"),
 		MetadataVersions: catalog.QueryStrings(ctx, "metadataVersion"),
 		Topics:           catalog.QueryStrings(ctx, "topic"),
+		InvertedTopics:   catalog.QueryStrings(ctx, "invertedTopic"),
+		Healthchecks:     catalog.QueryStrings(ctx, "healthcheck"),
 		LanguageIsGL:     ctx.FormOptionalBool("is_gl"),
 		PartialMatch:     ctx.FormBool("partialMatch"),
 		/*** END DCS Customizations ***/
