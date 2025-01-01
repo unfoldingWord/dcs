@@ -27,6 +27,8 @@ func ToRepoDCS(ctx context.Context, repo *repo_model.Repository, apiRepo *api.Re
 	apiRepo.LanguageIsGL = dm.LanguageIsGL
 	apiRepo.CheckingLevel = dm.CheckingLevel
 	apiRepo.ContentFormat = dm.ContentFormat
+	apiRepo.HealthcheckSeverity = dm.HealthcheckSeverity.String()
+	apiRepo.HealthcheckURL = repo.RepoHealthcheckURL()
 	apiRepo.MetadataType = dm.MetadataType
 	apiRepo.MetadataVersion = dm.MetadataVersion
 	apiRepo.Ingredients = dm.Ingredients
@@ -35,5 +37,6 @@ func ToRepoDCS(ctx context.Context, repo *repo_model.Repository, apiRepo *api.Re
 		PreProduction: ToCatalogStage(ctx, repo.LatestPreprodDM),
 		Latest:        ToCatalogStage(ctx, repo.DefaultBranchDM),
 	}
+	apiRepo.Topics = repo.Topics
 	return apiRepo
 }

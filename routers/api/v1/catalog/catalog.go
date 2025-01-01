@@ -178,19 +178,11 @@ func Search(ctx *context.APIContext) {
 	//     type: string
 	// - name: invertedTopic
 	//   in: query
-	//   description: Inverted topic. Repos that do NOT have this topic will be returned. Multiple values are ANDed.
+	//   description: Inverted topic. Entries with a repository that do NOT have this topic will be returned. Multiple values are ANDed.
 	//   type: array
 	//   collectionFormat: multi
 	//   items:
 	//     type: string
-	// - name: healthcheck
-	//   in: query
-	//   description: Healthcheck severity. Options are error, warning, info, success. Multiple values are ORed.
-	//   type: array
-	//   collectionFormat: multi
-	//   items:
-	//     type: string
-	//     enum: [error,warning,info,success]
 	// - name: partialMatch
 	//   in: query
 	//   description: if true, subject, owner and repo search fields will use partial match (LIKE) when querying the catalog, default is false
@@ -1024,7 +1016,6 @@ func searchCatalog(ctx *context.APIContext) {
 		MetadataVersions: metadataVersions,
 		Topics:           QueryStrings(ctx, "topic"),
 		InvertedTopics:   QueryStrings(ctx, "invertedTopic"),
-		Healthchecks:     QueryStrings(ctx, "healthcheck"),
 		PartialMatch:     ctx.FormBool("partialMatch"),
 	}
 

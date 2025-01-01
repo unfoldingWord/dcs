@@ -25,9 +25,11 @@
 							<div class="item-text">
 								{{RenderMarkdownToHtml $.Context $issue.Details}}
 							</div>
-							<div class="item-text">
-								{{RenderMarkdownToHtml $.Context $issue.Suggestion}}
-							</div>
+							{{if eq .Door43Metadata.RefType "branch"}}
+								<div class="item-text">
+									{{RenderMarkdownToHtml $.Context $issue.Suggestion}}
+								</div>
+							{{end}}
 						</div>
 					{{end}}
 				</div>

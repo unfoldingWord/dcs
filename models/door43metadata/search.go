@@ -71,7 +71,6 @@ type SearchCatalogOptions struct {
 	MetadataVersions []string
 	Topics           []string
 	InvertedTopics   []string
-	Healthchecks     []string
 	ShowIngredients  util.OptionalBool
 	Languages        []string
 	LanguageIsGL     util.OptionalBool
@@ -132,7 +131,6 @@ func SearchCatalogCondition(opts *SearchCatalogOptions) builder.Cond {
 		GetMetadataTypeCond(opts.MetadataTypes, opts.PartialMatch),
 		GetTopicCond(opts.Topics, opts.PartialMatch),
 		GetInvertedTopicCond(opts.InvertedTopics, opts.PartialMatch),
-		GetHealthcheckCond(opts.Healthchecks),
 		GetTagCond(opts.Tags),
 		repoCond,
 		ownerCond,

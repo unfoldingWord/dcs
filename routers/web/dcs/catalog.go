@@ -147,7 +147,6 @@ func RenderCatalogSearch(ctx *context.Context, opts *CatalogSearchOptions) {
 		MetadataVersions: searchMap["metadata_version"],
 		Topics:           searchMap["topic"],
 		InvertedTopics:   searchMap["topic_inverted"],
-		Healthchecks:     searchMap["healthcheck"],
 		Tags:             searchMap["tag"],
 		CheckingLevels:   searchMap["checking_level"],
 	})

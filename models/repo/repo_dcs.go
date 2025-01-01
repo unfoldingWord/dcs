@@ -5,13 +5,20 @@ package repo
 
 import (
 	"context"
+	"net/url"
 
 	"code.gitea.io/gitea/models/db"
 	"code.gitea.io/gitea/models/door43metadata"
 	"code.gitea.io/gitea/modules/dcs"
+	"code.gitea.io/gitea/modules/setting"
 
 	"xorm.io/builder"
 )
+
+// HealthcheckURL the api url for a repo's healthcheck
+func (repo *Repository) RepoHealthcheckURL() string {
+	return setting.AppURL + "api/v1/repos/" + url.PathEscape(repo.OwnerName) + "/" + url.PathEscape(repo.Name) + "/healthcheck"
+}
 
 // LoadLatestDMs loads the latest DMs
 func (repo *Repository) LoadLatestDMs(ctx context.Context) error {

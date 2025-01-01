@@ -166,12 +166,12 @@ func Search(ctx *context.APIContext) {
 	//     type: string
 	// - name: invertedTopic
 	//   in: query
-	//   description: Inverted topic. Repos that do NOT have this topic will be returned. Multiple values are ANDed.
+	//   description: Inverted topic. Repositories that do NOT have this topic will be returned. Multiple values are ANDed.
 	//   type: array
 	//   collectionFormat: multi
 	//   items:
 	//     type: string
-	// - name: healthcheck
+	// - name: healthcheckSeverity
 	//   in: query
 	//   description: Healthcheck severity. Options are error, warning, info, success. Multiple values are ORed.
 	//   type: array
@@ -253,7 +253,7 @@ func Search(ctx *context.APIContext) {
 		MetadataVersions: catalog.QueryStrings(ctx, "metadataVersion"),
 		Topics:           catalog.QueryStrings(ctx, "topic"),
 		InvertedTopics:   catalog.QueryStrings(ctx, "invertedTopic"),
-		Healthchecks:     catalog.QueryStrings(ctx, "healthcheck"),
+		Healthchecks:     catalog.QueryStrings(ctx, "healthcheckSeverity"),
 		LanguageIsGL:     ctx.FormOptionalBool("is_gl"),
 		PartialMatch:     ctx.FormBool("partialMatch"),
 		/*** END DCS Customizations ***/

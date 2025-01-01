@@ -79,6 +79,7 @@
     const qInput = document.querySelector('[name="q"]');
     const advancedSearchContainer = document.getElementById('search-builder');
     const catalogOnlyFields = ['stage', 'tag'];
+    const repoOnlyFields = ['healthcheck'];
     const searchFields = [
         { name: 'query', tooltip: 'queries repo name, owner, description & topics. Allows partial match' },
         { name: 'lang', tooltip: 'language code, e.g. en, fr' },
@@ -133,6 +134,9 @@
             inputGroup.appendChild(label);
             inputGroup.appendChild(input);
             if (!isCatalogSearch && catalogOnlyFields.includes(fieldObj.name)) {
+                inputGroup.style.display = 'none';
+            }
+            if (isCatalogSearch && repoOnlyFields.includes(fieldObj.name)) {
                 inputGroup.style.display = 'none';
             }
             advancedSearchContainer.appendChild(inputGroup);
