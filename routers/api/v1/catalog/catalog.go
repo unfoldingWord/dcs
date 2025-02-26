@@ -777,7 +777,7 @@ func ListCatalogLanguages(ctx *context.APIContext) {
 			"error": err.Error(),
 		})
 	}
-	var languages []map[string]interface{}
+	var languages []map[string]any
 	langnames := dcs.GetLangnamesJSONKeyed()
 	for _, lang := range list {
 		if val, ok := langnames[lang]; ok {

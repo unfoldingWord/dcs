@@ -7,5 +7,5 @@ package swagger
 // swagger:response LangnamesJSON
 type swaggerResponseLangnamesJSON struct {
 	// in:body
-	Body map[string]interface{} `json:"body"`
+	Body map[string]any `json:"body"`
 }

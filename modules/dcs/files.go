@@ -39,13 +39,13 @@ func ReadFileFromBlob(blob *git.Blob) ([]byte, error) {
 }
 
 // ReadYAMLFromBlob reads a yaml file from a blob and unmarshals it
-func ReadYAMLFromBlob(blob *git.Blob) (map[string]interface{}, error) {
+func ReadYAMLFromBlob(blob *git.Blob) (map[string]any, error) {
 	buf, err := ReadFileFromBlob(blob)
 	if err != nil {
 		return nil, err
 	}
 
-	var result map[string]interface{}
+	var result map[string]any
 	if err := yaml.Unmarshal(buf, &result); err != nil {
 		log.Error("yaml.Unmarshal: %v", err)
 		return nil, err
@@ -63,13 +63,13 @@ func ReadYAMLFromBlob(blob *git.Blob) (map[string]interface{}, error) {
 }
 
 // ReadJSONFromBlob reads a json file from a blob and unmarshals it
-func ReadJSONFromBlob(blob *git.Blob) (map[string]interface{}, error) {
+func ReadJSONFromBlob(blob *git.Blob) (map[string]any, error) {
 	buf, err := ReadFileFromBlob(blob)
 	if err != nil {
 		return nil, err
 	}
 
-	var result map[string]interface{}
+	var result map[string]any
 	if err = json.Unmarshal(buf, &result); err != nil {
 		log.Error("json.Unmarshal: %v", err)
 		return nil, err

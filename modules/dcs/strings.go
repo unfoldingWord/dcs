@@ -15,11 +15,11 @@ func StringHasSuffix(str, suffix string) bool {
 }
 
 // ToStringKeys takes an interface and change it to map[string]interface{} on all levels
-func ToStringKeys(val interface{}) (interface{}, error) {
+func ToStringKeys(val any) (any, error) {
 	var err error
 	switch val := val.(type) {
-	case map[interface{}]interface{}:
-		m := make(map[string]interface{})
+	case map[any]any:
+		m := make(map[string]any)
 		for k, v := range val {
 			k, ok := k.(string)
 			if !ok {
@@ -31,8 +31,8 @@ func ToStringKeys(val interface{}) (interface{}, error) {
 			}
 		}
 		return m, nil
-	case map[string]interface{}:
-		m := make(map[string]interface{})
+	case map[string]any:
+		m := make(map[string]any)
 		for k, v := range val {
 			m[k], err = ToStringKeys(v)
 			if err != nil {
@@ -40,8 +40,8 @@ func ToStringKeys(val interface{}) (interface{}, error) {
 			}
 		}
 		return m, nil
-	case []interface{}:
-		l := make([]interface{}, len(val))
+	case []any:
+		l := make([]any, len(val))
 		for i, v := range val {
 			l[i], err = ToStringKeys(v)
 			if err != nil {

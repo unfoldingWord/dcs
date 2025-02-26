@@ -117,7 +117,7 @@ func ScrubJSONFiles(ctx *context.Context, localPath string) error {
 func scrubJSONFile(ctx *context.Context, localPath, fileName string) error {
 	jsonPath := path.Join(localPath, fileName)
 
-	var jsonData interface{}
+	var jsonData any
 	if _, err := os.Stat(jsonPath); os.IsNotExist(err) {
 		return nil // path does not exist, nothing to scrub!
 	} else if fileContent, err := os.ReadFile(jsonPath); err != nil {
@@ -128,7 +128,7 @@ func scrubJSONFile(ctx *context.Context, localPath, fileName string) error {
 		return err // error unmarhalling file
 	}
 
-	m := jsonData.(map[string]interface{})
+	m := jsonData.(map[string]any)
 	ScrubMap(m)
 
 	if fileContent, err := json.MarshalIndent(m, "", "  "); err != nil {
@@ -143,7 +143,7 @@ func scrubJSONFile(ctx *context.Context, localPath, fileName string) error {
 }
 
 // ScrubMap will scrub a map
-func ScrubMap(m map[string]interface{}) {
+func ScrubMap(m map[string]any) {
 	for _, field := range jsonFieldsToScrub {
 		if _, ok := m[field]; ok {
 			m[field] = []string{}
@@ -151,7 +151,7 @@ func ScrubMap(m map[string]interface{}) {
 	}
 	for _, v := range m {
 		if reflect.ValueOf(v).Kind() == reflect.Map {
-			vm := v.(map[string]interface{})
+			vm := v.(map[string]any)
 			ScrubMap(vm)
 		}
 	}

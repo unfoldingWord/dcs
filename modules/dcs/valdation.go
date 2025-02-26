@@ -88,7 +88,7 @@ func ValidateJSONFromBlob(blob *git.Blob) error {
 		return err
 	}
 
-	var result interface{}
+	var result any
 	err = json.Unmarshal(buf, &result)
 	if err != nil {
 		log.Error("json.Unmarshal: %v", err)

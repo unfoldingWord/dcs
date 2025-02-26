@@ -35,7 +35,7 @@ func GetSBDataFromBlob(blob *git.Blob) (*SBMetadata100, error) {
 	}
 
 	// Now make a generic map of the buffer to store in the database table
-	sb100.Metadata = map[string]interface{}{}
+	sb100.Metadata = map[string]any{}
 	if err := json.Unmarshal(buf, &sb100.Metadata); err != nil {
 		log.Error("sb100 map[string]interface{}{} Unmarshal: %v", err)
 		return nil, err
@@ -75,7 +75,7 @@ func GetSB100Schema(reload bool) (*jsonschema.Schema, error) {
 }
 
 // ValidateMapBySB100Schema Validates a map structure by the RC v0.2.0 schema and returns the result
-func ValidateMapBySB100Schema(data map[string]interface{}) (*jsonschema.ValidationError, error) {
+func ValidateMapBySB100Schema(data map[string]any) (*jsonschema.ValidationError, error) {
 	if data == nil {
 		return &jsonschema.ValidationError{Message: "file cannot be empty"}, nil
 	}
@@ -102,7 +102,7 @@ type SBMetadata100 struct {
 	Type           *SB100Type                     `json:"type"`
 	LocalizedNames map[string]*SB100LocalizedName `json:"localizedNames"`
 	Ingredients    map[string]*SB100Ingredient    `json:"ingredients"`
-	Metadata       map[string]interface{}
+	Metadata       map[string]any
 }
 
 type LocalizedText map[string]string
@@ -118,7 +118,7 @@ func (nm LocalizedText) DetermineLocalizedTextToUse() string {
 	return ""
 }
 
-type ScopeMap map[string][]interface{}
+type ScopeMap map[string][]any
 
 // GetBookID returns the first key of the scope to be used at the book name
 func (sm ScopeMap) GetBookID() string {

@@ -91,7 +91,7 @@ func ServeLangnamesJSONKeyed(ctx *context.APIContext) {
 	ctx.JSON(http.StatusOK, searchLangnamesJSONKeyed(ctx))
 }
 
-func searchLangnamesJSON(ctx *context.APIContext) []map[string]interface{} {
+func searchLangnamesJSON(ctx *context.APIContext) []map[string]any {
 	langnames := dcs.GetLangnamesJSON()
 	if len(langnames) == 0 {
 		return langnames
@@ -110,7 +110,7 @@ func searchLangnamesJSON(ctx *context.APIContext) []map[string]interface{} {
 	}
 
 	if len(lcArr) > 0 || gw.Has() || ld != "" {
-		filteredLangnames := []map[string]interface{}{}
+		filteredLangnames := []map[string]any{}
 		for _, data := range langnames {
 			lcMatches := true
 			gwMatches := true
@@ -166,9 +166,9 @@ func searchLangnamesJSON(ctx *context.APIContext) []map[string]interface{} {
 	return langnames
 }
 
-func searchLangnamesJSONKeyed(ctx *context.APIContext) map[string]map[string]interface{} {
+func searchLangnamesJSONKeyed(ctx *context.APIContext) map[string]map[string]any {
 	langnames := searchLangnamesJSON(ctx)
-	langnamesKeyed := map[string]map[string]interface{}{}
+	langnamesKeyed := map[string]map[string]any{}
 	for _, data := range langnames {
 		langnamesKeyed[data["lc"].(string)] = data
 	}

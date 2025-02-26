@@ -25,26 +25,26 @@ type swaggerResponseCatalogEntry struct {
 // swagger:response CatalogMetadata
 type swaggerResponseCatalogMetadata struct {
 	// in:body
-	Body map[string]interface{} `json:"body"`
+	Body map[string]any `json:"body"`
 }
 
 // CatalogValidation
 // swagger:response CatalogValidation
 type swaggerResponseCatalogValidation struct {
 	// in:body
-	Body map[string]interface{} `json:"body"`
+	Body map[string]any `json:"body"`
 }
 
 // Language
 // swagger:response Language
 type swaggerResponseLanguage struct {
 	// in:body
-	Body map[string]interface{} `json:"body"`
+	Body map[string]any `json:"body"`
 }
 
 // Door43Healthcheck
 // swagger:response Door43Healthcheck
 type swaggerResponseDoor43Healthcheck struct {
 	// in:body
-	Body map[string]interface{} `json:"body"`
+	Body map[string]any `json:"body"`
 }
