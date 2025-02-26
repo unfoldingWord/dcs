@@ -926,7 +926,7 @@ func GetAttachmentsFromJSON(attachment *repo_model.Attachment) ([]*repo_model.At
 	var url string
 	if setting.Attachment.Storage.MinioConfig.ServeDirect {
 		// If we have a signed url (S3, object storage), redirect to this directly.
-		urlObj, err := storage.Attachments.URL(attachment.RelativePath(), attachment.Name)
+		urlObj, err := storage.Attachments.URL(attachment.RelativePath(), attachment.Name, nil)
 
 		if urlObj != nil && err == nil {
 			url = urlObj.String()

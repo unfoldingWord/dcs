@@ -149,6 +149,7 @@ func RenderCatalogSearch(ctx *context.Context, opts *CatalogSearchOptions) {
 		InvertedTopics:   searchMap["without_topic"],
 		Tags:             searchMap["tag"],
 		CheckingLevels:   searchMap["checking_level"],
+		PartialMatch:     true,
 	})
 	if err != nil {
 		ctx.ServerError("SearchCatalog", err)
