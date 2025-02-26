@@ -255,7 +255,7 @@ type FindReleasesOptions struct {
 
 func (opts FindReleasesOptions) ToConds() builder.Cond {
 	/*** DCS Customizations - refactored for joining with the door43_metadata table, prefix `release` ***/
-	var cond builder.Cond = builder.Eq{"`release`repo_id": opts.RepoID}
+	var cond builder.Cond = builder.Eq{"`release`.repo_id": opts.RepoID}
 
 	if !opts.IncludeDrafts {
 		cond = cond.And(builder.Eq{"`release`.is_draft": false})
