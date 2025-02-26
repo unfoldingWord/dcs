@@ -17,25 +17,54 @@ import (
 )
 
 const (
-	tplDCSMetadata base.TplName = "repo/dcs_metadata"
-	tplPreview     base.TplName = "repo/dcs_preview"
+	tplDCSHealthcheck base.TplName = "repo/dcs_healthcheck"
+	tplDCSMetadata    base.TplName = "repo/dcs_metadata"
 )
 
-// Door43Metadtas renders door43 metadatas page
-func Door43Metadatas(ctx *context.Context) {
-	dms := make([]*repo_model.Door43Metadata, 0, 50)
-	err := db.GetEngine(ctx).
-		Where(builder.Eq{"repo_id": ctx.Repo.Repository.ID}).
-		OrderBy("is_repo_metadata DESC, ref_type ASC, release_date_unix DESC").
-		Find(&dms)
-	if err != nil {
-		log.Error("Find(dms): %v", err)
+// GetRepoHealthcheck renders healthcheck for a repo
+func GetRepoHealthcheck(ctx *context.Context) {
+	ctx.Repo.Repository.LoadLatestDMs(ctx)
+	door43Metadatas := []*repo_model.Door43Metadata{}
+	if ctx.Repo.Repository.RepoDM != nil && ctx.Repo.Repository.RepoDM.ID > 0 {
+		door43Metadatas = append(door43Metadatas, ctx.Repo.Repository.RepoDM)
+	}
+	if ctx.Repo.Repository.LatestProdDM != nil {
+		door43Metadatas = append(door43Metadatas, ctx.Repo.Repository.LatestProdDM)
 	}
 
+	ctx.Data["Title"] = "Health Check"
 	ctx.Data["PageIsMetadata"] = true
+	ctx.Data["Repo"] = ctx.Repo.Repository
+	ctx.Data["Door43Metadatas"] = door43Metadatas
+	ctx.HTML(http.StatusOK, tplDCSHealthcheck)
+}
+
+// GetAllRepoDoor43Metadata renders all the door43metadatas for a repo
+func GetAllRepoDoor43Metadata(ctx *context.Context) {
+	branchDms := make([]*repo_model.Door43Metadata, 0, 50)
+	err := db.GetEngine(ctx).
+		Where(builder.Eq{"repo_id": ctx.Repo.Repository.ID}).
+		And(builder.Eq{"ref_type": "branch"}).
+		OrderBy("is_repo_metadata DESC, stage ASC, release_date_unix DESC").
+		Find(&branchDms)
+	if err != nil {
+		log.Error("Find(dms) for branches: %v", err)
+	}
+
+	releaseDms := make([]*repo_model.Door43Metadata, 0, 50)
+	err = db.GetEngine(ctx).
+		Where(builder.Eq{"repo_id": ctx.Repo.Repository.ID}).
+		And(builder.Eq{"ref_type": "tag"}).
+		OrderBy("release_date_unix DESC").
+		Find(&releaseDms)
+	if err != nil {
+		log.Error("Find(dms) for releases: %v", err)
+	}
+
 	ctx.Data["Title"] = "Door43 Metadata"
-	ctx.Data["PageIsSettingsDoor43Metadata"] = true
-	ctx.Data["Door43Metadatas"] = dms
+	ctx.Data["PageIsMetadata"] = true
+	ctx.Data["BranchDMs"] = branchDms
+	ctx.Data["ReleaseDMs"] = releaseDms
 	ctx.HTML(http.StatusOK, tplDCSMetadata)
 }
 
@@ -53,17 +82,4 @@ func UpdateDoor43Metadata(ctx *context.Context) {
 		}
 	}
 	ctx.Redirect(ctx.Repo.RepoLink + "/metadata")
-}
-
-// PreviewRepo creates a page for a react component app
-func PreviewRepo(ctx *context.Context) {
-	commitsCount, err := ctx.Repo.GetCommitsCount()
-	if err != nil {
-		ctx.ServerError("GetCommitsCount", err)
-		return
-	}
-	ctx.Data["PageIsPreview"] = true
-	ctx.Data["CommitsCount"] = commitsCount
-	ctx.Data["Title"] = "Preview of " + ctx.Repo.Repository.FullName() + " - " + ctx.Repo.RefName
-	ctx.HTML(http.StatusOK, tplPreview)
 }

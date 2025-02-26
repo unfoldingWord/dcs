@@ -29,22 +29,43 @@
 								<span class="ui basic label">{{ctx.Locale.Tr "repo.desc.sha256"}}</span>
 							{{end}}
 						</span>
-						<!-- DCS Customizations -->
-						{{if .LatestProdDM}}
-							<a href="{{.Link}}/releases/tag/{{.LatestProdDM.Ref | PathEscapeSegments}}" rel="nofollow">
-								<button class="ui green label compact icon button tooltip" data-content="Catalog: Production" aria-label="Catalog: Production">
-									{{.LatestProdDM.Ref}}
-								</button>
-							</a>
-						{{end}}
-						{{if .LatestPreprodDM}}
-							<a href="{{.Link}}/releases/tag/{{.LatestPreprodDM.Ref | PathEscapeSegments}}" rel="nofollow">
-								<button class="ui orange label compact icon button tooltip" data-content="Catalog: Pre-Production" aria-label="Catalog: Production">
-									{{.LatestPreprodDM.Ref}}
-								</button>
-							</a>
-						{{end}}
-						<!-- END DCS Customizations -->
+							<!-- DCS Customizations -->
+							{{if .RepoDM}}
+								{{$color := ""}}
+								{{$icon := ""}}
+								{{if eq .RepoDM.HealthcheckSeverity.String "error"}}
+									{{$color = "red"}}
+									{{$icon = "octicon-shield-x"}}
+								{{else if eq .RepoDM.HealthcheckSeverity.String "warning"}}
+									{{$color = "orange"}}
+									{{$icon = "octicon-shield"}}
+								{{else if eq .RepoDM.HealthcheckSeverity.String "info"}}
+									{{$color = "blue"}}
+									{{$icon = "octicon-shield-lock"}}
+								{{end}}
+								{{if ne $icon ""}}
+									<span class="ui basic label" data-tooltip-content="Healthcheck: {{.RepoDM.HealthcheckSeverity.String}}">
+										<a class="muted" href="{{.Link}}/healthcheck" style="color: {{$color}}">
+											{{svg $icon 16}}
+										</a>
+									</span>
+								{{end}}
+								{{if .LatestProdDM}}
+									<a href="{{.Link}}/releases/tag/{{.LatestProdDM.Ref | PathEscapeSegments}}" rel="nofollow">
+										<button class="ui green label compact icon button tooltip" data-content="Catalog: Production" aria-label="Catalog: Production">
+											{{.LatestProdDM.Ref}}
+										</button>
+									</a>
+								{{end}}
+								{{if .LatestPreprodDM}}
+									<a href="{{.Link}}/releases/tag/{{.LatestPreprodDM.Ref | PathEscapeSegments}}" rel="nofollow">
+										<button class="ui orange label compact icon button tooltip" data-content="Catalog: Pre-Production" aria-label="Catalog: Production">
+											{{.LatestPreprodDM.Ref}}
+										</button>
+									</a>
+								{{end}}
+							{{end}}
+							<!-- END DCS Customizations -->
 					</div>
 					<div class="flex-item-trailing">
 						<!-- DCS Customizations -->
@@ -84,7 +105,7 @@
 				{{if .Topics}}
 					<div class="label-list">
 					{{range .Topics}}
-						{{if ne . ""}}<a class="ui label" href="{{AppSubUrl}}/explore/repos?q={{.}}&topic=1">{{.}}</a>{{end}}
+						{{if ne . ""}}<a class="ui label" href="{{AppSubUrl}}/explore/repos?q=topic%3A{{.}}">{{.}}</a>{{end}}
 					{{end}}
 					</div>
 				{{end}}

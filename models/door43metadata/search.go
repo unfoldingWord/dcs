@@ -69,6 +69,8 @@ type SearchCatalogOptions struct {
 	IncludeHistory   bool
 	MetadataTypes    []string
 	MetadataVersions []string
+	Topics           []string
+	InvertedTopics   []string
 	ShowIngredients  optional.Option[bool]
 	Languages        []string
 	LanguageIsGL     optional.Option[bool]
@@ -127,6 +129,8 @@ func SearchCatalogCondition(opts *SearchCatalogOptions) builder.Cond {
 		GetLanguageCond(opts.Languages, opts.PartialMatch),
 		GetCheckingLevelCond(opts.CheckingLevels),
 		GetMetadataTypeCond(opts.MetadataTypes, opts.PartialMatch),
+		GetTopicCond(opts.Topics, opts.PartialMatch),
+		GetInvertedTopicCond(opts.InvertedTopics, opts.PartialMatch),
 		GetTagCond(opts.Tags),
 		repoCond,
 		ownerCond,
@@ -272,6 +276,68 @@ func GetMetadataTypeCond(types []string, partialMatch bool) builder.Cond {
 		}
 	}
 	return metadataTypeCond
+}
+
+// GetTopicCond gets the topic condition
+func GetTopicCond(topics []string, partialMatch bool) builder.Cond {
+	topicCond := builder.NewCond()
+	for _, topic := range topics {
+		for _, v := range strings.Split(topic, ",") {
+			if partialMatch {
+				topicCond = topicCond.Or(builder.In("`repository`.id", builder.Select("repo_id").From("repo_topic").InnerJoin("topic", "`repo_topic`.topic_id = `topic`.id").Where(builder.Like{"`topic`.name", strings.TrimSpace(v)})))
+			} else {
+				topicCond = topicCond.Or(builder.In("`repository`.id", builder.Select("repo_id").From("repo_topic").InnerJoin("topic", "`repo_topic`.topic_id = `topic`.id").Where(builder.Eq{"`topic`.name": strings.TrimSpace(v)})))
+			}
+		}
+	}
+	return topicCond
+}
+
+// GetInvertedTopicCond gets the inverted topic condition
+func GetInvertedTopicCond(topics []string, partialMatch bool) builder.Cond {
+	topicCond := builder.NewCond()
+	for _, topic := range topics {
+		for _, v := range strings.Split(topic, ",") {
+			if partialMatch {
+				topicCond = topicCond.And(builder.NotIn("`repository`.id", builder.Select("repo_id").From("repo_topic").InnerJoin("topic", "`repo_topic`.topic_id = `topic`.id").Where(builder.Like{"`topic`.name", strings.TrimSpace(v)})))
+			} else {
+				topicCond = topicCond.And(builder.NotIn("`repository`.id", builder.Select("repo_id").From("repo_topic").InnerJoin("topic", "`repo_topic`.topic_id = `topic`.id").Where(builder.Eq{"`topic`.name": strings.TrimSpace(v)})))
+			}
+		}
+	}
+	return topicCond
+}
+
+// SeverityLevel represents the level of severity or concern for a health check
+type SeverityLevel int
+
+const (
+	SeverityLevelSuccess SeverityLevel = iota + 1 // 1
+	SeverityLevelInfo                             // 2
+	SeverityLevelWarning                          // 3
+	SeverityLevelError                            // 4
+)
+
+// SeverityLevelMap map from string to SeverityLevel (int)
+var SeverityLevelMap = map[string]SeverityLevel{
+	"error":   SeverityLevelError,
+	"warning": SeverityLevelWarning,
+	"info":    SeverityLevelInfo,
+	"success": SeverityLevelSuccess,
+}
+
+// GetHealthcheckCond gets the healthcheck condition
+func GetHealthcheckCond(healthchecks []string) builder.Cond {
+	healthcheckCond := builder.NewCond()
+	for _, healthcheck := range healthchecks {
+		for _, v := range strings.Split(healthcheck, ",") {
+			v = strings.ToLower(strings.TrimSpace(v))
+			if _, ok := SeverityLevelMap[v]; ok {
+				healthcheckCond = healthcheckCond.Or(builder.Eq{"`door43_metadata`.healthcheck_severity": SeverityLevelMap[v]})
+			}
+		}
+	}
+	return healthcheckCond
 }
 
 // GetMetadataVersionCond gets the metdata version condition

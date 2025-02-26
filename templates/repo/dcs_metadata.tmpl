@@ -1,153 +1,65 @@
 {{template "base/head" .}}
+<style>
+	.status-item {
+			padding: 10px;
+			margin-bottom: 10px;
+			border-radius: 5px;
+			border: 2px solid;
+	}
+	.status-item.error {
+			background-color: #ffcccc; /* Light red background */
+			border-color: #cc0000; /* Dark red border */
+	}
+	.status-item.warning {
+			background-color: #ffebcc; /* Light orange background */
+			border-color: #cc7a00; /* Dark orange border */
+	}
+	.status-item.info {
+			background-color: #cce5ff; /* Light blue background */
+			border-color: #004085; /* Dark blue border */
+	}
+	.status-item.success {
+			background-color: #d4edda; /* Light green background */
+			border-color: #155724; /* Dark green border */
+	}
+
+	.item-text {
+			padding-left: 20px;
+			margin-top: 10px;
+	}
+</style>
 <div role="main" aria-label="{{.Title}}" class="page-content repository settings">
 	{{template "repo/header" .}}
 	{{template "base/alert" .}}
 	<div class="ui container">
-		<h2 class="ui header metadata-header">
+		<a href="healthcheck" class="ui back link">
+			{{svg "octicon-arrow-left" 16}}
+			Back to Health Check Page
+		</a>
+		<h2 class="ui top attached header">
 			{{ctx.Locale.Tr "repo.metadata.metadata"}}
-		</h2>
-	<div class="repo-metadata-content">
-	<h4 class="ui top attached header">
-		{{.Title}}
-		{{if .Permission.IsAdmin}}
+			{{if .Permission.IsAdmin}}
 			<div class="ui right">
 				<a class="ui teal tiny button" href="{{.Link}}/update">Update Metadata</a>
 			</div>
-		{{end}}
-	</h4>
-	<div class="ui attached segment">
-		<div class="ui list">
-		{{if .Door43Metadatas}}
-			{{range $i, $dm := .Door43Metadatas}}
-				<div class="item">
-					<div class="flex-text-block gt-sb">
-						<div class="flex-text-inline">
-						{{$color := "grey"}}
-						{{$type := .RefType}}
-						{{$icon := ""}}
-						{{if eq .RefType "branch"}}
-							{{$icon = "octicon-git-branch"}}
-						{{else}}
-							{{$icon = "octicon-tag"}}
-						{{end}}
-						{{$tooltip := "Stage: other"}}
-
-						{{if eq .Stage 1}}
-							{{$color = "green"}}
-							{{$tooltip = "Stage: prod - Production Release"}}
-						{{else if eq .Stage 2}}
-							{{$color = "orange"}}
-							{{$tooltip = "Stage: preprod - Pre-Release"}}
-						{{else if eq .Stage 3}}
-							{{$color = "purple"}}
-							{{$tooltip = "Stage: latest - Default Branch / Metadata"}}
-						{{else if and (eq .Stage 4) (.IsRepoMetadata)}}
-							{{$color = "cyan"}}
-							{{$tooltip = "Stage: other; Default Metadata"}}
-						{{end}}
-
-						{{if .ValidationError}}
-							{{$color = "red"}}
-							{{$tooltip = printf "%s; INVALID" $tooltip}}
-						{{else if and .IsLatestForStage (lt .Stage 3)}}
-							{{$tooltip = printf "%s; Latest" $tooltip}}
-						{{end}}
-							<a data-tooltip-content="{{$type}}" href="{{$.RepoLink}}/src/{{.RefType}}/{{.Ref}}">{{svg $icon 16 "mr-3"}}</a>
-							<span data-tooltip-content="{{$tooltip}}" class="text {{$color}} gt-mr-3">{{svg "octicon-dot-fill" 22}}</span>
-							<a class="ui primary sha label toggle button show-panel" data-panel="#info-{{.ID}}">{{.Ref}}</a>
-						</div>
-						<span class="text grey">
-							{{TimeSince .ReleaseDateUnix.AsTime ctx.Locale}}
-						</span>
-					</div>
-					<div class="info gt-hidden" id="info-{{.ID}}">
-						<div class="ui top attached tabular menu">
-							<a class="item active" data-tab="db-{{.ID}}">
-								Metadata (DB)
-							</a>
-							<a class="item" data-tab="json-{{.ID}}">
-								Metadata (JSON)
-							</a>
-							{{if .ValidationError}}
-							<a class="item" data-tab="validation-errors-{{.ID}}">
-								Validation Errors (JSON)
-							</a>
-							{{end}}
-							<a class="item" href="{{$.RepoLink}}/preview/{{.RefType | PathEscapeSegments}}/{{.Ref | PathEscapeSegments}}">
-								Preview
-							</a>
-							{{if or $.Permission.IsAdmin $.IsOrganizationOwner $.PageIsAdmin $.PageIsUserSettings}}
-							<div class="right menu">
-								<form class="item" action="{{$.Link}}/update" method="post">
-									{{$.CsrfTokenHtml}}
-									<button class="ui tiny button" data-tooltip-content="Update this ref">{{svg "octicon-sync"}}</button>
-								</form>
-							</div>
-							{{end}}
-						</div>
-						<div class="ui bottom attached tab segment active" data-tab="db-{{.ID}}">
-							<table>
-							{{if .ValidationError}}
-								<tr><td colspan="2"><div style="color:red; padding: 10px;">INVALID <a href="{{$.RepoLink}}/src/{{.RefType}}/{{.Ref}}/{{.MetadataFilename}}">{{.MetadataFilename}}</a> FILE</div></td></tr>
-							{{end}}
-								<tr>
-									<td><strong>{{ctx.Locale.Tr "repo.metadata.title"}}:</strong></td><td>{{.Title}}</td>
-								</tr>
-								<tr>
-									<td><strong>{{ctx.Locale.Tr "repo.metadata.subject"}}:</strong></td><td>{{.Subject}}</td>
-								</tr>
-								<tr>
-									<td><strong>{{ctx.Locale.Tr "repo.metadata.flavor_type"}}:</strong></td><td>{{.FlavorType}}</td>
-								</tr>
-								<tr>
-									<td><strong>{{ctx.Locale.Tr "repo.metadata.flavor"}}:</strong></td><td>{{.Flavor}}</td>
-								</tr>
-								<tr>
-									<td><strong>{{ctx.Locale.Tr "repo.metadata.abbreviation"}}:</strong></td><td>{{.Abbreviation}}</td>
-								</tr>
-								<tr>
-									<td><strong>{{ctx.Locale.Tr "repo.metadata.metadata_type"}}:</strong></td><td><img src="{{AssetUrlPrefix}}/img/dcs/{{.MetadataTypeIcon}}" style="height:16px;vertical-align:middle"/> {{.MetadataTypeTitle}} ({{.MetadataType}} {{.MetadataVersion}})</td>
-								</tr>
-								<tr>
-									<td><strong>{{ctx.Locale.Tr "repo.metadata.language"}}:</strong></td><td>{{.LanguageTitle}} ({{.Language}}, {{.LanguageDirection}})</td>
-								</tr>
-								<tr>
-									<td><strong>{{ctx.Locale.Tr "repo.metadata.ingredients"}}:</strong></td>
-									<td>
-										{{range .Ingredients}}
-											{{.Identifier}}
-										{{end}}
-									</td>
-								</tr>
-								<tr>
-									<td><strong>{{ctx.Locale.Tr "repo.metadata.stage"}}:</strong></td><td>{{.StageStr}}</td>
-								</tr>
-								<tr>
-									<td><strong>SHA:</strong></td><td>{{.CommitSHA}}</td>
-								</tr>
-								<tr>
-									<td><strong>{{if .Release}}{{ctx.Locale.Tr "repo.metadata.release_date"}}{{else}}{{ctx.Locale.Tr "repo.metadata.last_updated"}}{{end}}:</strong></td>
-									<td>{{DateTime "full" .ReleaseDateUnix.AsTime}}</td>
-								</tr>
-							</table>
-						</div>
-						<div class="ui bottom attached tab segment" data-tab="json-{{.ID}}">
-							<pre style="white-space: pre-wrap; word-wrap: break-word;">{{.MetadataJSONString}}</pre>
-						</div>
-						{{if .ValidationError}}
-						<div class="ui bottom attached tab segment" data-tab="validation-errors-{{.ID}}">
-							<pre style="white-space: pre-wrap; word-wrap: break-word;">{{.ValidationErrorJSONString}}</pre>
-						</div>
-						{{end}}
-					</div>
-				</div>
 			{{end}}
-		{{else}}
-			<span>No Metadata for this Repository. Click&nbsp;<a href="{{.Link}}/update">update</a>&nbsp;to scan the repo.</span>
-		{{end}}
+		</h2>
+		<div class="ui attached segment">
+			{{if or .BranchDMs .ReleaseDMs}}
+				<h3 class="ui top attached header toggle show-panel" data-panel="#branches">{{ctx.Locale.Tr "repo.branches"}}</h3>
+				<div class="ui attached segment gt-hidden" id="branches">
+					{{template "repo/dcs_metadata_list" (dict "ctxData" . "Door43Metadatas" .BranchDMs)}}
+				</div>
+				<h3 class="ui top attached header toggle show-panel" data-panel="#releases">Releases</h3>
+				<div class="ui attached segment gt-hidden" id="releases">
+					{{template "repo/dcs_metadata_list" (dict "ctxData" . "Door43Metadatas" .ReleaseDMs)}}
+				</div>
+			{{else}}
+				<span>
+					No Metadata for this Repository. Click&nbsp;<a href="{{.Link}}/update">update</a>&nbsp;to scan the repo.
+				</span>
+			{{end}}
 		</div>
 	</div>
-</div>
-</div>
 </div>
 {{template "base/footer" .}}

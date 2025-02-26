@@ -1167,15 +1167,16 @@ func registerRoutes(m *web.Route) {
 			})
 		})
 		// DCS Customizations
-		m.Group("/metadata", func() {
-			m.Get("", repo.Door43Metadatas)
+		m.Group("/healthcheck", func() {
+			m.Get("", repo.GetRepoHealthcheck)
 			m.Get("/update", repo.UpdateDoor43Metadata)
 			m.Post("/update", repo.UpdateDoor43Metadata) // TODO: Make this /{id} for a single DM
 		})
-		m.Group("/preview", func() {
-			m.Get("/branch/*", context.RepoRefByType(context.RepoRefBranch), repo.PreviewRepo)
-			m.Get("/tag/*", context.RepoRefByType(context.RepoRefTag), repo.PreviewRepo)
-		}, repo.MustBeNotEmpty, reqRepoCodeReader)
+		m.Group("/metadata", func() {
+			m.Get("", repo.GetAllRepoDoor43Metadata)
+			m.Get("/update", repo.UpdateDoor43Metadata)
+			m.Post("/update", repo.UpdateDoor43Metadata) // TODO: Make this /{id} for a single DM
+		})
 		// END DCS Customizations
 	}, ignSignIn, context.RepoAssignment, context.RequireRepoReaderOr(unit.TypeIssues, unit.TypePullRequests, unit.TypeExternalTracker))
 	// end "/{username}/{reponame}": issue/pull list, issue/pull view, external tracker
@@ -1544,20 +1545,20 @@ func registerRoutes(m *web.Route) {
 			m.Get("/commit/*", context.RepoRefByType(context.RepoRefCommit), repo.RefCommits)
 			// "/*" route is deprecated, and kept for backward compatibility
 			m.Get("/*", context.RepoRefByType(context.RepoRefLegacy), repo.RefCommits)
-		}, repo.MustBeNotEmpty)
+		}, repo.MustBeNotEmpty, reqSignIn) // DCS Customizations: requiring login for commit-related web routes
 
 		m.Group("/blame", func() {
 			m.Get("/branch/*", context.RepoRefByType(context.RepoRefBranch), repo.RefBlame)
 			m.Get("/tag/*", context.RepoRefByType(context.RepoRefTag), repo.RefBlame)
 			m.Get("/commit/*", context.RepoRefByType(context.RepoRefCommit), repo.RefBlame)
-		}, repo.MustBeNotEmpty)
+		}, repo.MustBeNotEmpty, reqSignIn) // DCS Customizations: requiring login for commit-related web routes
 
 		m.Group("", func() {
 			m.Get("/graph", repo.Graph)
 			m.Get("/commit/{sha:([a-f0-9]{7,64})$}", repo.SetEditorconfigIfExists, repo.SetDiffViewStyle, repo.SetWhitespaceBehavior, repo.Diff)
 			m.Get("/commit/{sha:([a-f0-9]{7,64})$}/load-branches-and-tags", repo.LoadBranchesAndTags)
 			m.Get("/cherry-pick/{sha:([a-f0-9]{7,64})$}", repo.SetEditorconfigIfExists, repo.CherryPick)
-		}, repo.MustBeNotEmpty, context.RepoRef())
+		}, repo.MustBeNotEmpty, context.RepoRef(), reqSignIn) // DCS Customizations: requiring login for commit-related web routes
 
 		m.Get("/rss/branch/*", context.RepoRefByType(context.RepoRefBranch), feedEnabled, feed.RenderBranchFeed)
 		m.Get("/atom/branch/*", context.RepoRefByType(context.RepoRefBranch), feedEnabled, feed.RenderBranchFeed)

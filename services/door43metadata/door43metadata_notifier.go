@@ -85,6 +85,11 @@ func (m *metadataNotifier) DeleteRelease(ctx context.Context, doer *user_model.U
 		if err != nil {
 			log.Error("UpdateDoor43MetadataCols: %v", err)
 		}
+
+		if err := ProcessDoor43MetadataForRepo(ctx, rel.Repo, rel.TagName); err != nil {
+			log.Error("DeleteRelease: ProcessDoor43MetadataForRepo failed [%s, %s]: %v", rel.Repo.FullName(), rel.TagName, err)
+		}
+
 		return
 	}
 	err = repo_model.DeleteDoor43MetadataByRepoIDAndReleaseID(ctx, rel.RepoID, rel.ID)

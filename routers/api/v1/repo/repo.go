@@ -52,10 +52,6 @@ func Search(ctx *context.APIContext) {
 	//   in: query
 	//   description: keyword
 	//   type: string
-	// - name: topic
-	//   in: query
-	//   description: Limit search to repositories with keyword as topic
-	//   type: boolean
 	// - name: includeDesc
 	//   in: query
 	//   description: include search of keyword within repository description (defaults to false)
@@ -164,6 +160,28 @@ func Search(ctx *context.APIContext) {
 	//   collectionFormat: multi
 	//   items:
 	//     type: string
+	// - name: topic
+	//   in: query
+	//   description: topic of repo. Multiple values are ORed.
+	//   type: array
+	//   collectionFormat: multi
+	//   items:
+	//     type: string
+	// - name: withoutTopic
+	//   in: query
+	//   description: Repositories without this topic will be returned. Multiple values are ANDed.
+	//   type: array
+	//   collectionFormat: multi
+	//   items:
+	//     type: string
+	// - name: healthcheckSeverity
+	//   in: query
+	//   description: Healthcheck severity. Options are error, warning, info, success. Multiple values are ORed.
+	//   type: array
+	//   collectionFormat: multi
+	//   items:
+	//     type: string
+	//     enum: [error,warning,info,success]
 	// - name: metadataType
 	//   in: query
 	//   description: return repos only with metadata of this type
@@ -212,13 +230,13 @@ func Search(ctx *context.APIContext) {
 	abbreviations = append(abbreviations, catalog.QueryStrings(ctx, "resource")...) // For non-breaking changes, support "resource" argument
 
 	opts := &repo_model.SearchRepoOptions{
-		ListOptions:        utils.GetListOptions(ctx),
-		Actor:              ctx.Doer,
-		Keyword:            ctx.FormTrim("q"),
-		OwnerID:            ctx.FormInt64("uid"),
-		PriorityOwnerID:    ctx.FormInt64("priority_owner_id"),
-		TeamID:             ctx.FormInt64("team_id"),
-		TopicOnly:          ctx.FormBool("topic"),
+		ListOptions:     utils.GetListOptions(ctx),
+		Actor:           ctx.Doer,
+		Keyword:         ctx.FormTrim("q"),
+		OwnerID:         ctx.FormInt64("uid"),
+		PriorityOwnerID: ctx.FormInt64("priority_owner_id"),
+		TeamID:          ctx.FormInt64("team_id"),
+		// TopicOnly:          ctx.FormBool("topic"),
 		Collaborate:        optional.None[bool](),
 		Private:            ctx.IsSigned && (ctx.FormString("private") == "" || ctx.FormBool("private")),
 		Template:           optional.None[bool](),
@@ -236,6 +254,9 @@ func Search(ctx *context.APIContext) {
 		Books:            catalog.QueryStrings(ctx, "book"),
 		MetadataTypes:    catalog.QueryStrings(ctx, "metadataType"),
 		MetadataVersions: catalog.QueryStrings(ctx, "metadataVersion"),
+		Topics:           catalog.QueryStrings(ctx, "topic"),
+		InvertedTopics:   catalog.QueryStrings(ctx, "withoutTopic"),
+		Healthchecks:     catalog.QueryStrings(ctx, "healthcheckSeverity"),
 		LanguageIsGL:     ctx.FormOptionalBool("is_gl"),
 		PartialMatch:     ctx.FormBool("partialMatch"),
 		/*** END DCS Customizations ***/

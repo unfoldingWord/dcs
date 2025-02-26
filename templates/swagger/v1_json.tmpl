@@ -2037,6 +2037,26 @@
             "in": "query"
           },
           {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "collectionFormat": "multi",
+            "description": "topic of a repo. Multiple values are ORed",
+            "name": "topic",
+            "in": "query"
+          },
+          {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "collectionFormat": "multi",
+            "description": "Entries with a repository without this topic will be returned. Multiple values are ANDed.",
+            "name": "withoutTopic",
+            "in": "query"
+          },
+          {
             "type": "boolean",
             "description": "if true, subject, owner and repo search fields will use partial match (LIKE) when querying the catalog, default is false",
             "name": "partialMatch",
@@ -4908,12 +4928,6 @@
           },
           {
             "type": "boolean",
-            "description": "Limit search to repositories with keyword as topic",
-            "name": "topic",
-            "in": "query"
-          },
-          {
-            "type": "boolean",
             "description": "include search of keyword within repository description (defaults to false)",
             "name": "includeDesc",
             "in": "query"
@@ -5064,6 +5078,42 @@
             "collectionFormat": "multi",
             "description": "book (project id or ingredients id) that exist in a resource. If the resource contains the the book, its repository will be included in the results. Multiple values are ORed.",
             "name": "book",
+            "in": "query"
+          },
+          {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "collectionFormat": "multi",
+            "description": "topic of repo. Multiple values are ORed.",
+            "name": "topic",
+            "in": "query"
+          },
+          {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "collectionFormat": "multi",
+            "description": "Repositories without this topic will be returned. Multiple values are ANDed.",
+            "name": "withoutTopic",
+            "in": "query"
+          },
+          {
+            "type": "array",
+            "items": {
+              "enum": [
+                "error",
+                "warning",
+                "info",
+                "success"
+              ],
+              "type": "string"
+            },
+            "collectionFormat": "multi",
+            "description": "Healthcheck severity. Options are error, warning, info, success. Multiple values are ORed.",
+            "name": "healthcheckSeverity",
             "in": "query"
           },
           {
@@ -7926,6 +7976,45 @@
           },
           "404": {
             "$ref": "#/responses/notFound"
+          }
+        }
+      }
+    },
+    "/repos/{owner}/{repo}/healthcheck": {
+      "get": {
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "repository"
+        ],
+        "summary": "Get the healthcheck of a repo in JSON format",
+        "operationId": "repoGetHealthcheck",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "name of the owner",
+            "name": "owner",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "description": "name of the repo",
+            "name": "repo",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/Door43Healthcheck"
+          },
+          "404": {
+            "$ref": "#/responses/notFound"
+          },
+          "422": {
+            "$ref": "#/responses/validationError"
           }
         }
       }
@@ -20174,7 +20263,7 @@
         },
         "validation_errors_url": {
           "type": "string",
-          "x-go-name": "ValidationErrorURL"
+          "x-go-name": "ValidationErrorsURL"
         },
         "zipball_url": {
           "type": "string",
@@ -23412,13 +23501,26 @@
           },
           "x-go-name": "Categories"
         },
+        "exists": {
+          "type": "boolean",
+          "x-go-name": "Exists"
+        },
         "identifier": {
           "type": "string",
           "x-go-name": "Identifier"
         },
+        "is_dir": {
+          "type": "boolean",
+          "x-go-name": "IsDir"
+        },
         "path": {
           "type": "string",
           "x-go-name": "Path"
+        },
+        "size": {
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "Size"
         },
         "sort": {
           "type": "integer",
@@ -25508,6 +25610,16 @@
           "type": "boolean",
           "x-go-name": "HasWiki"
         },
+        "healthcheck_severity": {
+          "description": "healthcheck severity",
+          "type": "string",
+          "x-go-name": "HealthcheckSeverity"
+        },
+        "healthcheck_url": {
+          "description": "healthcheck URL",
+          "type": "string",
+          "x-go-name": "HealthcheckURL"
+        },
         "html_url": {
           "type": "string",
           "x-go-name": "HTMLURL"
@@ -25666,6 +25778,14 @@
           "description": "title from the manifest",
           "type": "string",
           "x-go-name": "Title"
+        },
+        "topics": {
+          "description": "topics",
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "x-go-name": "Topics"
         },
         "updated_at": {
           "type": "string",
@@ -26949,6 +27069,13 @@
         "items": {
           "$ref": "#/definitions/DeployKey"
         }
+      }
+    },
+    "Door43Healthcheck": {
+      "description": "Door43Healthcheck",
+      "schema": {
+        "type": "object",
+        "additionalProperties": {}
       }
     },
     "EmailList": {

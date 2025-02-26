@@ -105,10 +105,11 @@ func SearchDoor43MetadataFieldByCondition(ctx context.Context, opts *door43metad
 	}
 
 	sess := db.GetEngine(db.DefaultContext).Table("door43_metadata").
-		Select("DISTINCT "+field).
+		Distinct(field).
 		Join("INNER", "repository", "`repository`.id = `door43_metadata`.repo_id").
 		Join("INNER", "user", "`repository`.owner_id = `user`.id").
 		Where(cond).
+		And(builder.Neq{field: ""}).
 		OrderBy(field)
 
 	err := sess.Find(&results)

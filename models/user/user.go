@@ -146,6 +146,12 @@ type User struct {
 	DiffViewStyle       string `xorm:"NOT NULL DEFAULT ''"`
 	Theme               string `xorm:"NOT NULL DEFAULT ''"`
 	KeepActivityPrivate bool   `xorm:"NOT NULL DEFAULT false"`
+
+	/*** DCS Customizations ***/
+	RepoLanguages     []string `xorm:"JSON TEXT"`
+	RepoSubjects      []string `xorm:"JSON TEXT"`
+	RepoMetadataTypes []string `xorm:"JSON TEXT"`
+	/*** END DCS Customizations ***/
 }
 
 func init() {

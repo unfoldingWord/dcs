@@ -48,7 +48,7 @@ export function initRepoTopicBar() {
             // it should match the code in repo/home.tmpl
             const link = document.createElement('a');
             link.classList.add('repo-topic', 'ui', 'large', 'label');
-            link.href = `${appSubUrl}/explore/repos?q=${encodeURIComponent(topic)}&topic=1`;
+            link.href = `${appSubUrl}/explore/repos?q=topic%3A${encodeURIComponent(topic)}`; // DCS Customizations - Topic is now a field of q
             link.textContent = topic;
             mgrBtn.parentNode.insertBefore(link, mgrBtn); // insert all new topics before manage button
           }
