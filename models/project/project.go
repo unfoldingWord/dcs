@@ -109,6 +109,13 @@ type Project struct {
 	ClosedDateUnix timeutil.TimeStamp
 }
 
+// Ghost Project is a project which has been deleted
+const GhostProjectID = -1
+
+func (p *Project) IsGhost() bool {
+	return p.ID == GhostProjectID
+}
+
 func (p *Project) LoadOwner(ctx context.Context) (err error) {
 	if p.Owner != nil {
 		return nil
@@ -159,6 +166,13 @@ func (p *Project) IsOrganizationProject() bool {
 
 func (p *Project) IsRepositoryProject() bool {
 	return p.Type == TypeRepository
+}
+
+func (p *Project) CanBeAccessedByOwnerRepo(ownerID int64, repo *repo_model.Repository) bool {
+	if p.Type == TypeRepository {
+		return repo != nil && p.RepoID == repo.ID // if a project belongs to a repository, then its OwnerID is 0 and can be ignored
+	}
+	return p.OwnerID == ownerID && p.RepoID == 0
 }
 
 func init() {
@@ -243,6 +257,7 @@ func GetSearchOrderByBySortType(sortType string) db.SearchOrderBy {
 }
 
 // NewProject creates a new Project
+// The title will be cut off at 255 characters if it's longer than 255 characters.
 func NewProject(ctx context.Context, p *Project) error {
 	if !IsBoardTypeValid(p.BoardType) {
 		p.BoardType = BoardTypeNone
@@ -261,6 +276,8 @@ func NewProject(ctx context.Context, p *Project) error {
 		return err
 	}
 	defer committer.Close()
+
+	p.Title, _ = util.SplitStringAtByteN(p.Title, 255)
 
 	if err := db.Insert(ctx, p); err != nil {
 		return err
@@ -305,12 +322,19 @@ func GetProjectForRepoByID(ctx context.Context, repoID, id int64) (*Project, err
 	return p, nil
 }
 
+// GetAllProjectsIDsByOwnerID returns the all projects ids it owns
+func GetAllProjectsIDsByOwnerIDAndType(ctx context.Context, ownerID int64, projectType Type) ([]int64, error) {
+	projects := make([]int64, 0)
+	return projects, db.GetEngine(ctx).Table(&Project{}).Where("owner_id=? AND type=?", ownerID, projectType).Cols("id").Find(&projects)
+}
+
 // UpdateProject updates project properties
 func UpdateProject(ctx context.Context, p *Project) error {
 	if !IsCardTypeValid(p.CardType) {
 		p.CardType = CardTypeTextOnly
 	}
 
+	p.Title, _ = util.SplitStringAtByteN(p.Title, 255)
 	_, err := db.GetEngine(ctx).ID(p.ID).Cols(
 		"title",
 		"description",

@@ -4,6 +4,7 @@ import {getComboMarkdownEditor, initComboMarkdownEditor} from './comp/ComboMarkd
 import {createDropzone} from './dropzone.js';
 import {GET, POST} from '../modules/fetch.js';
 import {hideElem, showElem} from '../utils/dom.js';
+import {isImageFile} from '../utils/image.js';
 import {attachRefIssueContextPopup} from './contextpopup.js';
 import {initCommentContent, initMarkupContent} from '../markup/content.js';
 
@@ -84,10 +85,12 @@ async function onEditContent(event) {
             for (const attachment of data) {
               const imgSrc = `${dropzone.getAttribute('data-link-url')}/${attachment.uuid}`;
               dz.emit('addedfile', attachment);
-              dz.emit('thumbnail', attachment, imgSrc);
+              if (isImageFile(attachment.name)) {
+                dz.emit('thumbnail', attachment, imgSrc);
+                dropzone.querySelector(`img[src='${imgSrc}']`).style.maxWidth = '100%';
+              }
               dz.emit('complete', attachment);
               fileUuidDict[attachment.uuid] = {submitted: true};
-              dropzone.querySelector(`img[src='${imgSrc}']`).style.maxWidth = '100%';
               const input = document.createElement('input');
               input.id = attachment.uuid;
               input.name = 'files';
@@ -125,7 +128,9 @@ async function onEditContent(event) {
         content: comboMarkdownEditor.value(),
         context: editContentZone.getAttribute('data-context'),
       });
-      for (const fileInput of dropzoneInst?.element.querySelectorAll('.files [name=files]')) params.append('files[]', fileInput.value);
+      for (const fileInput of dropzoneInst?.element.querySelectorAll('.files [name=files]') ?? []) {
+        params.append('files[]', fileInput.value);
+      }
 
       const response = await POST(editContentZone.getAttribute('data-update-url'), {data: params});
       const data = await response.json();
@@ -172,6 +177,7 @@ async function onEditContent(event) {
   if (!comboMarkdownEditor.value()) {
     comboMarkdownEditor.value(rawContent.textContent);
   }
+  comboMarkdownEditor.switchTabToEditor();
   comboMarkdownEditor.focus();
 }
 

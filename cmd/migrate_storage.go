@@ -5,7 +5,9 @@ package cmd
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"io/fs"
 	"strings"
 
 	actions_model "code.gitea.io/gitea/models/actions"
@@ -34,7 +36,7 @@ var CmdMigrateStorage = &cli.Command{
 			Name:    "type",
 			Aliases: []string{"t"},
 			Value:   "",
-			Usage:   "Type of stored files to copy.  Allowed types: 'attachments', 'lfs', 'avatars', 'repo-avatars', 'repo-archivers', 'packages', 'actions-log'",
+			Usage:   "Type of stored files to copy.  Allowed types: 'attachments', 'lfs', 'avatars', 'repo-avatars', 'repo-archivers', 'packages', 'actions-log', 'actions-artifacts",
 		},
 		&cli.StringFlag{
 			Name:    "storage",
@@ -160,6 +162,25 @@ func migrateActionsLog(ctx context.Context, dstStorage storage.ObjectStorage) er
 	})
 }
 
+func migrateActionsArtifacts(ctx context.Context, dstStorage storage.ObjectStorage) error {
+	return db.Iterate(ctx, nil, func(ctx context.Context, artifact *actions_model.ActionArtifact) error {
+		if artifact.Status == int64(actions_model.ArtifactStatusExpired) {
+			return nil
+		}
+
+		_, err := storage.Copy(dstStorage, artifact.StoragePath, storage.ActionsArtifacts, artifact.StoragePath)
+		if err != nil {
+			// ignore files that do not exist
+			if errors.Is(err, fs.ErrNotExist) {
+				return nil
+			}
+			return err
+		}
+
+		return nil
+	})
+}
+
 func runMigrateStorage(ctx *cli.Context) error {
 	stdCtx, cancel := installSignals()
 	defer cancel()
@@ -223,13 +244,14 @@ func runMigrateStorage(ctx *cli.Context) error {
 	}
 
 	migratedMethods := map[string]func(context.Context, storage.ObjectStorage) error{
-		"attachments":    migrateAttachments,
-		"lfs":            migrateLFS,
-		"avatars":        migrateAvatars,
-		"repo-avatars":   migrateRepoAvatars,
-		"repo-archivers": migrateRepoArchivers,
-		"packages":       migratePackages,
-		"actions-log":    migrateActionsLog,
+		"attachments":       migrateAttachments,
+		"lfs":               migrateLFS,
+		"avatars":           migrateAvatars,
+		"repo-avatars":      migrateRepoAvatars,
+		"repo-archivers":    migrateRepoArchivers,
+		"packages":          migratePackages,
+		"actions-log":       migrateActionsLog,
+		"actions-artifacts": migrateActionsArtifacts,
 	}
 
 	tp := strings.ToLower(ctx.String("type"))

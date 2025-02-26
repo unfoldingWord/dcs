@@ -99,8 +99,7 @@ func (repos RepositoryList) IDs() []int64 {
 	return repoIDs
 }
 
-// LoadAttributes loads the attributes for the given RepositoryList
-func (repos RepositoryList) LoadAttributes(ctx context.Context) error {
+func (repos RepositoryList) LoadOwners(ctx context.Context) error {
 	if len(repos) == 0 {
 		return nil
 	}
@@ -108,10 +107,6 @@ func (repos RepositoryList) LoadAttributes(ctx context.Context) error {
 	userIDs := container.FilterSlice(repos, func(repo *Repository) (int64, bool) {
 		return repo.OwnerID, true
 	})
-	repoIDs := make([]int64, len(repos))
-	for i := range repos {
-		repoIDs[i] = repos[i].ID
-	}
 
 	// Load owners.
 	users := make(map[int64]*user_model.User, len(userIDs))
@@ -124,12 +119,19 @@ func (repos RepositoryList) LoadAttributes(ctx context.Context) error {
 	for i := range repos {
 		repos[i].Owner = users[repos[i].OwnerID]
 	}
+	return nil
+}
+
+func (repos RepositoryList) LoadLanguageStats(ctx context.Context) error {
+	if len(repos) == 0 {
+		return nil
+	}
 
 	// Load primary language.
 	stats := make(LanguageStatList, 0, len(repos))
 	if err := db.GetEngine(ctx).
 		Where("`is_primary` = ? AND `language` != ?", true, "other").
-		In("`repo_id`", repoIDs).
+		In("`repo_id`", repos.IDs()).
 		Find(&stats); err != nil {
 		return fmt.Errorf("find primary languages: %w", err)
 	}
@@ -142,8 +144,16 @@ func (repos RepositoryList) LoadAttributes(ctx context.Context) error {
 			}
 		}
 	}
-
 	return nil
+}
+
+// LoadAttributes loads the attributes for the given RepositoryList
+func (repos RepositoryList) LoadAttributes(ctx context.Context) error {
+	if err := repos.LoadOwners(ctx); err != nil {
+		return err
+	}
+
+	return repos.LoadLanguageStats(ctx)
 }
 
 // SearchRepoOptions holds the search options
@@ -176,6 +186,8 @@ type SearchRepoOptions struct {
 	// True -> include just forks
 	// False -> include just non-forks
 	Fork optional.Option[bool]
+	// If Fork option is True, you can use this option to limit the forks of a special repo by repo id.
+	ForkFrom int64
 	// None -> include templates AND non-templates
 	// True -> include just templates
 	// False -> include just non-templates
@@ -535,6 +547,10 @@ func SearchRepositoryCondition(opts *SearchRepoOptions) builder.Cond {
 			cond = cond.And(builder.Eq{"is_fork": false})
 		} else {
 			cond = cond.And(builder.Eq{"is_fork": opts.Fork.Value()})
+
+			if opts.ForkFrom > 0 && opts.Fork.Value() {
+				cond = cond.And(builder.Eq{"fork_id": opts.ForkFrom})
+			}
 		}
 	}
 

@@ -519,6 +519,8 @@ func CreatePullRequest(ctx *context.APIContext) {
 			ctx.Error(http.StatusBadRequest, "UserDoesNotHaveAccessToRepo", err)
 		} else if errors.Is(err, user_model.ErrBlockedUser) {
 			ctx.Error(http.StatusForbidden, "BlockedUser", err)
+		} else if errors.Is(err, issues_model.ErrMustCollaborator) {
+			ctx.Error(http.StatusForbidden, "MustCollaborator", err)
 		} else {
 			ctx.Error(http.StatusInternalServerError, "NewPullRequest", err)
 		}
@@ -602,12 +604,19 @@ func EditPullRequest(ctx *context.APIContext) {
 		return
 	}
 
-	oldTitle := issue.Title
 	if len(form.Title) > 0 {
-		issue.Title = form.Title
+		err = issue_service.ChangeTitle(ctx, issue, ctx.Doer, form.Title)
+		if err != nil {
+			ctx.Error(http.StatusInternalServerError, "ChangeTitle", err)
+			return
+		}
 	}
-	if len(form.Body) > 0 {
-		issue.Content = form.Body
+	if form.Body != nil {
+		err = issue_service.ChangeContent(ctx, issue, ctx.Doer, *form.Body)
+		if err != nil {
+			ctx.Error(http.StatusInternalServerError, "ChangeContent", err)
+			return
+		}
 	}
 
 	// Update or remove deadline if set
@@ -686,24 +695,28 @@ func EditPullRequest(ctx *context.APIContext) {
 			ctx.Error(http.StatusPreconditionFailed, "MergedPRState", "cannot change state of this pull request, it was already merged")
 			return
 		}
-		issue.IsClosed = api.StateClosed == api.StateType(*form.State)
-	}
-	statusChangeComment, titleChanged, err := issues_model.UpdateIssueByAPI(ctx, issue, ctx.Doer)
-	if err != nil {
-		if issues_model.IsErrDependenciesLeft(err) {
-			ctx.Error(http.StatusPreconditionFailed, "DependenciesLeft", "cannot close this pull request because it still has open dependencies")
+
+		var isClosed bool
+		switch state := api.StateType(*form.State); state {
+		case api.StateOpen:
+			isClosed = false
+		case api.StateClosed:
+			isClosed = true
+		default:
+			ctx.Error(http.StatusPreconditionFailed, "UnknownPRStateError", fmt.Sprintf("unknown state: %s", state))
 			return
 		}
-		ctx.Error(http.StatusInternalServerError, "UpdateIssueByAPI", err)
-		return
-	}
 
-	if titleChanged {
-		notify_service.IssueChangeTitle(ctx, ctx.Doer, issue, oldTitle)
-	}
-
-	if statusChangeComment != nil {
-		notify_service.IssueChangeStatus(ctx, ctx.Doer, "", issue, statusChangeComment, issue.IsClosed)
+		if issue.IsClosed != isClosed {
+			if err := issue_service.ChangeStatus(ctx, issue, ctx.Doer, "", isClosed); err != nil {
+				if issues_model.IsErrDependenciesLeft(err) {
+					ctx.Error(http.StatusPreconditionFailed, "DependenciesLeft", "cannot close this pull request because it still has open dependencies")
+					return
+				}
+				ctx.Error(http.StatusInternalServerError, "ChangeStatus", err)
+				return
+			}
+		}
 	}
 
 	// change pull target branch
@@ -884,7 +897,7 @@ func MergePullRequest(ctx *context.APIContext) {
 	}
 
 	// start with merging by checking
-	if err := pull_service.CheckPullMergable(ctx, ctx.Doer, &ctx.Repo.Permission, pr, mergeCheckType, form.ForceMerge); err != nil {
+	if err := pull_service.CheckPullMergeable(ctx, ctx.Doer, &ctx.Repo.Permission, pr, mergeCheckType, form.ForceMerge); err != nil {
 		if errors.Is(err, pull_service.ErrIsClosed) {
 			ctx.NotFound()
 		} else if errors.Is(err, pull_service.ErrUserNotAllowedToMerge) {
@@ -893,7 +906,7 @@ func MergePullRequest(ctx *context.APIContext) {
 			ctx.Error(http.StatusMethodNotAllowed, "PR already merged", "")
 		} else if errors.Is(err, pull_service.ErrIsWorkInProgress) {
 			ctx.Error(http.StatusMethodNotAllowed, "PR is a work in progress", "Work in progress PRs cannot be merged")
-		} else if errors.Is(err, pull_service.ErrNotMergableState) {
+		} else if errors.Is(err, pull_service.ErrNotMergeableState) {
 			ctx.Error(http.StatusMethodNotAllowed, "PR not in mergeable state", "Please try again later")
 		} else if models.IsErrDisallowedToMerge(err) {
 			ctx.Error(http.StatusMethodNotAllowed, "PR is not ready to be merged", err)
@@ -987,49 +1000,54 @@ func MergePullRequest(ctx *context.APIContext) {
 	}
 	log.Trace("Pull request merged: %d", pr.ID)
 
-	if form.DeleteBranchAfterMerge {
-		// Don't cleanup when there are other PR's that use this branch as head branch.
-		exist, err := issues_model.HasUnmergedPullRequestsByHeadInfo(ctx, pr.HeadRepoID, pr.HeadBranch)
-		if err != nil {
-			ctx.ServerError("HasUnmergedPullRequestsByHeadInfo", err)
-			return
-		}
-		if exist {
-			ctx.Status(http.StatusOK)
-			return
-		}
-
-		var headRepo *git.Repository
-		if ctx.Repo != nil && ctx.Repo.Repository != nil && ctx.Repo.Repository.ID == pr.HeadRepoID && ctx.Repo.GitRepo != nil {
-			headRepo = ctx.Repo.GitRepo
-		} else {
-			headRepo, err = gitrepo.OpenRepository(ctx, pr.HeadRepo)
+	// for agit flow, we should not delete the agit reference after merge
+	if form.DeleteBranchAfterMerge && pr.Flow == issues_model.PullRequestFlowGithub {
+		// check permission even it has been checked in repo_service.DeleteBranch so that we don't need to
+		// do RetargetChildrenOnMerge
+		if err := repo_service.CanDeleteBranch(ctx, pr.HeadRepo, pr.HeadBranch, ctx.Doer); err == nil {
+			// Don't cleanup when there are other PR's that use this branch as head branch.
+			exist, err := issues_model.HasUnmergedPullRequestsByHeadInfo(ctx, pr.HeadRepoID, pr.HeadBranch)
 			if err != nil {
-				ctx.ServerError(fmt.Sprintf("OpenRepository[%s]", pr.HeadRepo.FullName()), err)
+				ctx.ServerError("HasUnmergedPullRequestsByHeadInfo", err)
 				return
 			}
-			defer headRepo.Close()
-		}
-		if err := pull_service.RetargetChildrenOnMerge(ctx, ctx.Doer, pr); err != nil {
-			ctx.Error(http.StatusInternalServerError, "RetargetChildrenOnMerge", err)
-			return
-		}
-		if err := repo_service.DeleteBranch(ctx, ctx.Doer, pr.HeadRepo, headRepo, pr.HeadBranch); err != nil {
-			switch {
-			case git.IsErrBranchNotExist(err):
-				ctx.NotFound(err)
-			case errors.Is(err, repo_service.ErrBranchIsDefault):
-				ctx.Error(http.StatusForbidden, "DefaultBranch", fmt.Errorf("can not delete default branch"))
-			case errors.Is(err, git_model.ErrBranchIsProtected):
-				ctx.Error(http.StatusForbidden, "IsProtectedBranch", fmt.Errorf("branch protected"))
-			default:
-				ctx.Error(http.StatusInternalServerError, "DeleteBranch", err)
+			if exist {
+				ctx.Status(http.StatusOK)
+				return
 			}
-			return
-		}
-		if err := issues_model.AddDeletePRBranchComment(ctx, ctx.Doer, pr.BaseRepo, pr.Issue.ID, pr.HeadBranch); err != nil {
-			// Do not fail here as branch has already been deleted
-			log.Error("DeleteBranch: %v", err)
+
+			var headRepo *git.Repository
+			if ctx.Repo != nil && ctx.Repo.Repository != nil && ctx.Repo.Repository.ID == pr.HeadRepoID && ctx.Repo.GitRepo != nil {
+				headRepo = ctx.Repo.GitRepo
+			} else {
+				headRepo, err = gitrepo.OpenRepository(ctx, pr.HeadRepo)
+				if err != nil {
+					ctx.ServerError(fmt.Sprintf("OpenRepository[%s]", pr.HeadRepo.FullName()), err)
+					return
+				}
+				defer headRepo.Close()
+			}
+			if err := pull_service.RetargetChildrenOnMerge(ctx, ctx.Doer, pr); err != nil {
+				ctx.Error(http.StatusInternalServerError, "RetargetChildrenOnMerge", err)
+				return
+			}
+			if err := repo_service.DeleteBranch(ctx, ctx.Doer, pr.HeadRepo, headRepo, pr.HeadBranch); err != nil {
+				switch {
+				case git.IsErrBranchNotExist(err):
+					ctx.NotFound(err)
+				case errors.Is(err, repo_service.ErrBranchIsDefault):
+					ctx.Error(http.StatusForbidden, "DefaultBranch", fmt.Errorf("can not delete default branch"))
+				case errors.Is(err, git_model.ErrBranchIsProtected):
+					ctx.Error(http.StatusForbidden, "IsProtectedBranch", fmt.Errorf("branch protected"))
+				default:
+					ctx.Error(http.StatusInternalServerError, "DeleteBranch", err)
+				}
+				return
+			}
+			if err := issues_model.AddDeletePRBranchComment(ctx, ctx.Doer, pr.BaseRepo, pr.Issue.ID, pr.HeadBranch); err != nil {
+				// Do not fail here as branch has already been deleted
+				log.Error("DeleteBranch: %v", err)
+			}
 		}
 	}
 
@@ -1090,9 +1108,20 @@ func parseCompareInfo(ctx *context.APIContext, form api.CreatePullRequestOption)
 	// Check if current user has fork of repository or in the same repository.
 	headRepo := repo_model.GetForkedRepo(ctx, headUser.ID, baseRepo.ID)
 	if headRepo == nil && !isSameRepo {
-		log.Trace("parseCompareInfo[%d]: does not have fork or in same repository", baseRepo.ID)
-		ctx.NotFound("GetForkedRepo")
-		return nil, nil, nil, nil, "", ""
+		err := baseRepo.GetBaseRepo(ctx)
+		if err != nil {
+			ctx.Error(http.StatusInternalServerError, "GetBaseRepo", err)
+			return nil, nil, nil, nil, "", ""
+		}
+
+		// Check if baseRepo's base repository is the same as headUser's repository.
+		if baseRepo.BaseRepo == nil || baseRepo.BaseRepo.OwnerID != headUser.ID {
+			log.Trace("parseCompareInfo[%d]: does not have fork or in same repository", baseRepo.ID)
+			ctx.NotFound("GetBaseRepo")
+			return nil, nil, nil, nil, "", ""
+		}
+		// Assign headRepo so it can be used below.
+		headRepo = baseRepo.BaseRepo
 	}
 
 	var headGitRepo *git.Repository

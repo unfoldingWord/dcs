@@ -221,8 +221,14 @@ func pushUpdates(optsList []*repo_module.PushUpdateOptions) error {
 				}
 
 				// delete cache for divergence
-				if err := DelDivergenceFromCache(repo.ID, branch); err != nil {
-					log.Error("DelDivergenceFromCache: %v", err)
+				if branch == repo.DefaultBranch {
+					if err := DelRepoDivergenceFromCache(ctx, repo.ID); err != nil {
+						log.Error("DelRepoDivergenceFromCache: %v", err)
+					}
+				} else {
+					if err := DelDivergenceFromCache(repo.ID, branch); err != nil {
+						log.Error("DelDivergenceFromCache: %v", err)
+					}
 				}
 
 				commits := repo_module.GitToPushCommits(l)
@@ -314,8 +320,10 @@ func pushUpdateAddTags(ctx context.Context, repo *repo_model.Repository, gitRepo
 	}
 
 	releases, err := db.Find[repo_model.Release](ctx, repo_model.FindReleasesOptions{
-		RepoID:   repo.ID,
-		TagNames: tags,
+		RepoID:        repo.ID,
+		TagNames:      tags,
+		IncludeDrafts: true,
+		IncludeTags:   true,
 	})
 	if err != nil {
 		return fmt.Errorf("db.Find[repo_model.Release]: %w", err)
@@ -376,12 +384,12 @@ func pushUpdateAddTags(ctx context.Context, repo *repo_model.Repository, gitRepo
 
 		rel, has := relMap[lowerTag]
 
+		parts := strings.SplitN(tag.Message, "\n", 2)
+		note := ""
+		if len(parts) > 1 {
+			note = parts[1]
+		}
 		if !has {
-			parts := strings.SplitN(tag.Message, "\n", 2)
-			note := ""
-			if len(parts) > 1 {
-				note = parts[1]
-			}
 			rel = &repo_model.Release{
 				RepoID:       repo.ID,
 				Title:        parts[0],
@@ -405,9 +413,14 @@ func pushUpdateAddTags(ctx context.Context, repo *repo_model.Repository, gitRepo
 			rel.Sha1 = commit.ID.String()
 			rel.CreatedUnix = timeutil.TimeStamp(createdAt.Unix())
 			rel.NumCommits = commitsCount
-			rel.IsDraft = false
-			if rel.IsTag && author != nil {
-				rel.PublisherID = author.ID
+			if rel.IsTag {
+				rel.Title = parts[0]
+				rel.Note = note
+				if author != nil {
+					rel.PublisherID = author.ID
+				}
+			} else {
+				rel.IsDraft = false
 			}
 			if err = repo_model.UpdateRelease(ctx, rel); err != nil {
 				return fmt.Errorf("Update: %w", err)

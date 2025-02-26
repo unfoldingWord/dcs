@@ -24,6 +24,7 @@ import (
 	"code.gitea.io/gitea/modules/log"
 	packages_module "code.gitea.io/gitea/modules/packages"
 	maven_module "code.gitea.io/gitea/modules/packages/maven"
+	"code.gitea.io/gitea/modules/sync"
 	"code.gitea.io/gitea/routers/api/packages/helper"
 	"code.gitea.io/gitea/services/context"
 	packages_service "code.gitea.io/gitea/services/packages"
@@ -114,7 +115,9 @@ func serveMavenMetadata(ctx *context.Context, params parameters) {
 	xmlMetadataWithHeader := append([]byte(xml.Header), xmlMetadata...)
 
 	latest := pds[len(pds)-1]
-	ctx.Resp.Header().Set("Last-Modified", latest.Version.CreatedUnix.Format(http.TimeFormat))
+	// http.TimeFormat required a UTC time, refer to https://pkg.go.dev/net/http#TimeFormat
+	lastModifed := latest.Version.CreatedUnix.AsTime().UTC().Format(http.TimeFormat)
+	ctx.Resp.Header().Set("Last-Modified", lastModifed)
 
 	ext := strings.ToLower(filepath.Ext(params.Filename))
 	if isChecksumExtension(ext) {
@@ -140,9 +143,7 @@ func serveMavenMetadata(ctx *context.Context, params parameters) {
 	ctx.Resp.Header().Set("Content-Length", strconv.Itoa(len(xmlMetadataWithHeader)))
 	ctx.Resp.Header().Set("Content-Type", contentTypeXML)
 
-	if _, err := ctx.Resp.Write(xmlMetadataWithHeader); err != nil {
-		log.Error("write bytes failed: %v", err)
-	}
+	_, _ = ctx.Resp.Write(xmlMetadataWithHeader)
 }
 
 func servePackageFile(ctx *context.Context, params parameters, serveContent bool) {
@@ -214,7 +215,7 @@ func servePackageFile(ctx *context.Context, params parameters, serveContent bool
 		return
 	}
 
-	s, u, _, err := packages_service.GetPackageBlobStream(ctx, pf, pb)
+	s, u, _, err := packages_service.GetPackageBlobStream(ctx, pf, pb, nil)
 	if err != nil {
 		apiError(ctx, http.StatusInternalServerError, err)
 		return
@@ -224,6 +225,8 @@ func servePackageFile(ctx *context.Context, params parameters, serveContent bool
 
 	helper.ServePackageFile(ctx, s, u, pf, opts)
 }
+
+var mavenUploadLock = sync.NewExclusivePool()
 
 // UploadPackageFile adds a file to the package. If the package does not exist, it gets created.
 func UploadPackageFile(ctx *context.Context) {
@@ -242,6 +245,9 @@ func UploadPackageFile(ctx *context.Context) {
 	}
 
 	packageName := params.GroupID + "-" + params.ArtifactID
+
+	mavenUploadLock.CheckIn(packageName)
+	defer mavenUploadLock.CheckOut(packageName)
 
 	buf, err := packages_module.CreateHashedBufferFromReader(ctx.Req.Body)
 	if err != nil {

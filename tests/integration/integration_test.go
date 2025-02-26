@@ -37,6 +37,7 @@ import (
 
 	"github.com/PuerkitoBio/goquery"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"github.com/xeipuuv/gojsonschema"
 )
 
@@ -116,6 +117,11 @@ func TestMain(m *testing.M) {
 	os.Unsetenv("GIT_COMMITTER_NAME")
 	os.Unsetenv("GIT_COMMITTER_EMAIL")
 	os.Unsetenv("GIT_COMMITTER_DATE")
+
+	// Avoid loading the default system config. On MacOS, this config
+	// sets the osxkeychain credential helper, which will cause tests
+	// to freeze with a dialog.
+	os.Setenv("GIT_CONFIG_NOSYSTEM", "true")
 
 	err := unittest.InitFixtures(
 		unittest.FixturesOptions{
@@ -485,10 +491,23 @@ func VerifyJSONSchema(t testing.TB, resp *httptest.ResponseRecorder, schemaFile 
 	assert.True(t, result.Valid())
 }
 
+// GetCSRF returns CSRF token from body
+// If it fails, it means the CSRF token is not found in the response body returned by the url with the given session.
+// In this case, you should find a better url to get it.
 func GetCSRF(t testing.TB, session *TestSession, urlStr string) string {
 	t.Helper()
 	req := NewRequest(t, "GET", urlStr)
 	resp := session.MakeRequest(t, req, http.StatusOK)
 	doc := NewHTMLParser(t, resp.Body)
-	return doc.GetCSRF()
+	csrf := doc.GetCSRF()
+	require.NotEmpty(t, csrf)
+	return csrf
+}
+
+// GetCSRFFrom returns CSRF token from body
+func GetCSRFFromCookie(t testing.TB, session *TestSession, urlStr string) string {
+	t.Helper()
+	req := NewRequest(t, "GET", urlStr)
+	session.MakeRequest(t, req, http.StatusOK)
+	return session.GetCookie("_csrf").Value
 }

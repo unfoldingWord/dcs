@@ -14,16 +14,20 @@ import (
 	"strconv"
 	"strings"
 
+	auth_model "code.gitea.io/gitea/models/auth"
 	packages_model "code.gitea.io/gitea/models/packages"
 	container_model "code.gitea.io/gitea/models/packages/container"
 	user_model "code.gitea.io/gitea/models/user"
+	"code.gitea.io/gitea/modules/httplib"
 	"code.gitea.io/gitea/modules/json"
 	"code.gitea.io/gitea/modules/log"
 	packages_module "code.gitea.io/gitea/modules/packages"
 	container_module "code.gitea.io/gitea/modules/packages/container"
 	"code.gitea.io/gitea/modules/setting"
+	"code.gitea.io/gitea/modules/sync"
 	"code.gitea.io/gitea/modules/util"
 	"code.gitea.io/gitea/routers/api/packages/helper"
+	auth_service "code.gitea.io/gitea/services/auth"
 	"code.gitea.io/gitea/services/context"
 	packages_service "code.gitea.io/gitea/services/packages"
 	container_service "code.gitea.io/gitea/services/packages/container"
@@ -115,7 +119,9 @@ func apiErrorDefined(ctx *context.Context, err *namedError) {
 }
 
 func apiUnauthorizedError(ctx *context.Context) {
-	ctx.Resp.Header().Add("WWW-Authenticate", `Bearer realm="`+setting.AppURL+`v2/token",service="container_registry",scope="*"`)
+	// container registry requires that the "/v2" must be in the root, so the sub-path in AppURL should be removed
+	realmURL := httplib.GuessCurrentHostURL(ctx) + "/v2/token"
+	ctx.Resp.Header().Add("WWW-Authenticate", `Bearer realm="`+realmURL+`",service="container_registry",scope="*"`)
 	apiErrorDefined(ctx, errUnauthorized)
 }
 
@@ -145,6 +151,7 @@ func DetermineSupport(ctx *context.Context) {
 // If the current user is anonymous, the ghost user is used unless RequireSignInView is enabled.
 func Authenticate(ctx *context.Context) {
 	u := ctx.Doer
+	packageScope := auth_service.GetAccessScope(ctx.Data)
 	if u == nil {
 		if setting.Service.RequireSignInView {
 			apiUnauthorizedError(ctx)
@@ -152,9 +159,21 @@ func Authenticate(ctx *context.Context) {
 		}
 
 		u = user_model.NewGhostUser()
+	} else {
+		if has, err := packageScope.HasAnyScope(
+			auth_model.AccessTokenScopeReadPackage,
+			auth_model.AccessTokenScopeWritePackage,
+			auth_model.AccessTokenScopeAll,
+		); !has {
+			if err != nil {
+				log.Error("Error checking access scope: %v", err)
+			}
+			apiUnauthorizedError(ctx)
+			return
+		}
 	}
 
-	token, err := packages_service.CreateAuthorizationToken(u)
+	token, err := packages_service.CreateAuthorizationToken(u, packageScope)
 	if err != nil {
 		apiError(ctx, http.StatusInternalServerError, err)
 		return
@@ -522,7 +541,7 @@ func DeleteBlob(ctx *context.Context) {
 		return
 	}
 
-	if err := deleteBlob(ctx, ctx.Package.Owner.ID, ctx.Params("image"), d); err != nil {
+	if err := deleteBlob(ctx, ctx.Package.Owner, ctx.Params("image"), d); err != nil {
 		apiError(ctx, http.StatusInternalServerError, err)
 		return
 	}
@@ -531,6 +550,9 @@ func DeleteBlob(ctx *context.Context) {
 		Status: http.StatusAccepted,
 	})
 }
+
+// TODO: use clustered lock
+var lockManifest = sync.NewExclusivePool()
 
 // https://github.com/opencontainers/distribution-spec/blob/main/spec.md#pushing-manifests
 func UploadManifest(ctx *context.Context) {
@@ -562,6 +584,10 @@ func UploadManifest(ctx *context.Context) {
 		apiErrorDefined(ctx, errManifestInvalid.WithMessage("Manifest exceeds maximum size").WithStatusCode(http.StatusRequestEntityTooLarge))
 		return
 	}
+
+	imagePath := ctx.Package.Owner.Name + "/" + ctx.Params("image")
+	lockManifest.CheckIn(imagePath)
+	defer lockManifest.CheckOut(imagePath)
 
 	digest, err := processManifest(ctx, mci, buf)
 	if err != nil {
@@ -661,6 +687,10 @@ func DeleteManifest(ctx *context.Context) {
 		return
 	}
 
+	imagePath := ctx.Package.Owner.Name + "/" + ctx.Params("image")
+	lockManifest.CheckIn(imagePath)
+	defer lockManifest.CheckOut(imagePath)
+
 	pvs, err := container_model.GetManifestVersions(ctx, opts)
 	if err != nil {
 		apiError(ctx, http.StatusInternalServerError, err)
@@ -685,7 +715,9 @@ func DeleteManifest(ctx *context.Context) {
 }
 
 func serveBlob(ctx *context.Context, pfd *packages_model.PackageFileDescriptor) {
-	s, u, _, err := packages_service.GetPackageBlobStream(ctx, pfd.File, pfd.Blob)
+	serveDirectReqParams := make(url.Values)
+	serveDirectReqParams.Set("response-content-type", pfd.Properties.GetByName(container_module.PropertyMediaType))
+	s, u, _, err := packages_service.GetPackageBlobStream(ctx, pfd.File, pfd.Blob, serveDirectReqParams)
 	if err != nil {
 		apiError(ctx, http.StatusInternalServerError, err)
 		return

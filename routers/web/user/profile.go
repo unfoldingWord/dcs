@@ -132,6 +132,10 @@ func prepareUserProfileTabData(ctx *context.Context, showPrivate bool, profileDb
 		orderBy = db.SearchOrderByForksReverse
 	case "fewestforks":
 		orderBy = db.SearchOrderByForks
+	case "size":
+		orderBy = db.SearchOrderByGitSize
+	case "reversesize":
+		orderBy = db.SearchOrderByGitSizeReverse
 	default:
 		ctx.Data["SortType"] = "recentupdate"
 		orderBy = db.SearchOrderByRecentUpdated
@@ -376,6 +380,21 @@ func prepareUserProfileTabData(ctx *context.Context, showPrivate bool, profileDb
 		if ctx.Data["Date"] != nil {
 			pager.AddParamString("date", fmt.Sprint(ctx.Data["Date"]))
 		}
+	}
+	if archived.Has() {
+		pager.AddParamString("archived", fmt.Sprint(archived.Value()))
+	}
+	if fork.Has() {
+		pager.AddParamString("fork", fmt.Sprint(fork.Value()))
+	}
+	if mirror.Has() {
+		pager.AddParamString("mirror", fmt.Sprint(mirror.Value()))
+	}
+	if template.Has() {
+		pager.AddParamString("template", fmt.Sprint(template.Value()))
+	}
+	if private.Has() {
+		pager.AddParamString("private", fmt.Sprint(private.Value()))
 	}
 	ctx.Data["Page"] = pager
 }

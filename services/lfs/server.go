@@ -455,7 +455,7 @@ func buildObjectResponse(rc *requestContext, pointer lfs_module.Pointer, downloa
 			var link *lfs_module.Link
 			if setting.LFS.Storage.MinioConfig.ServeDirect {
 				// If we have a signed url (S3, object storage), redirect to this directly.
-				u, err := storage.LFS.URL(pointer.RelativePath(), pointer.Oid)
+				u, err := storage.LFS.URL(pointer.RelativePath(), pointer.Oid, nil)
 				if u != nil && err == nil {
 					// Presigned url does not need the Authorization header
 					// https://github.com/go-gitea/gitea/issues/21525
@@ -477,7 +477,7 @@ func buildObjectResponse(rc *requestContext, pointer lfs_module.Pointer, downloa
 			}
 
 			// This is only needed to workaround https://github.com/git-lfs/git-lfs/issues/3662
-			verifyHeader["Accept"] = lfs_module.MediaType
+			verifyHeader["Accept"] = lfs_module.AcceptHeader
 
 			rep.Actions["verify"] = &lfs_module.Link{Href: rc.VerifyLink(pointer), Header: verifyHeader}
 		}

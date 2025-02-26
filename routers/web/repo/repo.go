@@ -180,7 +180,7 @@ func Create(ctx *context.Context) {
 
 	ctx.Data["CanCreateRepo"] = ctx.Doer.CanCreateRepo()
 	ctx.Data["MaxCreationLimit"] = ctx.Doer.MaxCreationLimit()
-	ctx.Data["SupportedObjectFormats"] = git.SupportedObjectFormats
+	ctx.Data["SupportedObjectFormats"] = git.DefaultFeatures().SupportedObjectFormats
 	ctx.Data["DefaultObjectFormat"] = git.Sha1ObjectFormat
 
 	ctx.HTML(http.StatusOK, tplCreate)
@@ -248,7 +248,7 @@ func CreatePost(ctx *context.Context) {
 		opts := repo_service.GenerateRepoOptions{
 			Name:            form.RepoName,
 			Description:     form.Description,
-			Private:         form.Private,
+			Private:         form.Private || setting.Repository.ForcePrivate,
 			GitContent:      form.GitContent,
 			Topics:          form.Topics,
 			GitHooks:        form.GitHooks,
@@ -418,8 +418,9 @@ func RedirectDownload(ctx *context.Context) {
 	tagNames := []string{vTag}
 	curRepo := ctx.Repo.Repository
 	releases, err := db.Find[repo_model.Release](ctx, repo_model.FindReleasesOptions{
-		RepoID:   curRepo.ID,
-		TagNames: tagNames,
+		IncludeDrafts: ctx.Repo.CanWrite(unit.TypeReleases),
+		RepoID:        curRepo.ID,
+		TagNames:      tagNames,
 	})
 	if err != nil {
 		ctx.ServerError("RedirectDownload", err)
@@ -484,10 +485,16 @@ func Download(ctx *context.Context) {
 func download(ctx *context.Context, archiveName string, archiver *repo_model.RepoArchiver) {
 	downloadName := ctx.Repo.Repository.Name + "-" + archiveName
 
+	// Add nix format link header so tarballs lock correctly:
+	// https://github.com/nixos/nix/blob/56763ff918eb308db23080e560ed2ea3e00c80a7/doc/manual/src/protocols/tarball-fetcher.md
+	ctx.Resp.Header().Add("Link", fmt.Sprintf(`<%s/archive/%s.tar.gz?rev=%s>; rel="immutable"`,
+		ctx.Repo.Repository.APIURL(),
+		archiver.CommitID, archiver.CommitID))
+
 	rPath := archiver.RelativePath()
 	if setting.RepoArchive.Storage.MinioConfig.ServeDirect {
 		// If we have a signed url (S3, object storage), redirect to this directly.
-		u, err := storage.RepoArchives.URL(rPath, downloadName)
+		u, err := storage.RepoArchives.URL(rPath, downloadName, nil)
 		if u != nil && err == nil {
 			ctx.Redirect(u.String())
 			return

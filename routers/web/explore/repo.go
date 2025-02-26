@@ -72,9 +72,9 @@ func RenderRepoSearch(ctx *context.Context, opts *RepoSearchOptions) {
 	case "leastupdate":
 		orderBy = db.SearchOrderByLeastUpdated
 	case "reversealphabetically":
-		orderBy = db.SearchOrderByAlphabeticallyReverse
+		orderBy = "owner_name DESC, name DESC"
 	case "alphabetically":
-		orderBy = db.SearchOrderByAlphabetically
+		orderBy = "owner_name ASC, name ASC"
 	case "reversesize":
 		orderBy = db.SearchOrderBySizeReverse
 	case "size":
@@ -220,6 +220,21 @@ func RenderRepoSearch(ctx *context.Context, opts *RepoSearchOptions) {
 	pager.AddParamString("topic", fmt.Sprint(topicOnly))
 	pager.AddParamString("language", language)
 	pager.AddParamString(relevantReposOnlyParam, fmt.Sprint(opts.OnlyShowRelevant))
+	if archived.Has() {
+		pager.AddParamString("archived", fmt.Sprint(archived.Value()))
+	}
+	if fork.Has() {
+		pager.AddParamString("fork", fmt.Sprint(fork.Value()))
+	}
+	if mirror.Has() {
+		pager.AddParamString("mirror", fmt.Sprint(mirror.Value()))
+	}
+	if template.Has() {
+		pager.AddParamString("template", fmt.Sprint(template.Value()))
+	}
+	if private.Has() {
+		pager.AddParamString("private", fmt.Sprint(private.Value()))
+	}
 	ctx.Data["Page"] = pager
 
 	ctx.HTML(http.StatusOK, opts.TplName)

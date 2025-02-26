@@ -47,10 +47,18 @@ export function initFootLanguageMenu() {
 
 export function initGlobalEnterQuickSubmit() {
   document.addEventListener('keydown', (e) => {
-    const isQuickSubmitEnter = ((e.ctrlKey && !e.altKey) || e.metaKey) && (e.key === 'Enter');
-    if (isQuickSubmitEnter && e.target.matches('textarea')) {
-      e.preventDefault();
-      handleGlobalEnterQuickSubmit(e.target);
+    if (e.key !== 'Enter') return;
+    const hasCtrlOrMeta = ((e.ctrlKey || e.metaKey) && !e.altKey);
+    if (hasCtrlOrMeta && e.target.matches('textarea')) {
+      if (handleGlobalEnterQuickSubmit(e.target)) {
+        e.preventDefault();
+      }
+    } else if (e.target.matches('input') && !e.target.closest('form')) {
+      // input in a normal form could handle Enter key by default, so we only handle the input outside a form
+      // eslint-disable-next-line unicorn/no-lonely-if
+      if (handleGlobalEnterQuickSubmit(e.target)) {
+        e.preventDefault();
+      }
     }
   });
 }
@@ -287,8 +295,8 @@ async function linkAction(e) {
     return;
   }
 
-  const isRisky = el.classList.contains('red') || el.classList.contains('yellow') || el.classList.contains('orange') || el.classList.contains('negative');
-  if (await confirmModal({content: modalConfirmContent, buttonColor: isRisky ? 'orange' : 'primary'})) {
+  const isRisky = el.classList.contains('red') || el.classList.contains('negative');
+  if (await confirmModal(modalConfirmContent, {confirmButtonColor: isRisky ? 'red' : 'primary'})) {
     await doRequest();
   }
 }
@@ -443,5 +451,13 @@ export function checkAppUrl() {
     return;
   }
   showGlobalErrorMessage(`Your ROOT_URL in app.ini is "${appUrl}", it's unlikely matching the site you are visiting.
-Mismatched ROOT_URL config causes wrong URL links for web UI/mail content/webhook notification/OAuth2 sign-in.`);
+Mismatched ROOT_URL config causes wrong URL links for web UI/mail content/webhook notification/OAuth2 sign-in.`, 'warning');
+}
+
+export function checkAppUrlScheme() {
+  const curUrl = window.location.href;
+  // some users visit "http://domain" while appUrl is "https://domain", COOKIE_SECURE makes it impossible to sign in
+  if (curUrl.startsWith('http:') && appUrl.startsWith('https:')) {
+    showGlobalErrorMessage(`This instance is configured to run under HTTPS (by ROOT_URL config), you are accessing by HTTP. Mismatched scheme might cause problems for sign-in/sign-up.`, 'warning');
+  }
 }

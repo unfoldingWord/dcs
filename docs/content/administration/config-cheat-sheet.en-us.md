@@ -214,9 +214,9 @@ The following configuration set `Content-Type: application/vnd.android.package-a
 - `SITEMAP_PAGING_NUM`: **20**: Number of items that are displayed in a single subsitemap.
 - `GRAPH_MAX_COMMIT_NUM`: **100**: Number of maximum commits shown in the commit graph.
 - `CODE_COMMENT_LINES`: **4**: Number of line of codes shown for a code comment.
-- `DEFAULT_THEME`: **gitea-auto**: Set the default theme for the Gitea installation, custom themes could be provided by "{CustomPath}/public/assets/css/theme-*.css".
+- `DEFAULT_THEME`: **gitea-auto**: Set the default theme for the Gitea installation, custom themes could be provided by `{CustomPath}/public/assets/css/theme-*.css`.
 - `SHOW_USER_EMAIL`: **true**: Whether the email of the user should be shown in the Explore Users page.
-- `THEMES`: **_empty_**: All available themes by "{CustomPath}/public/assets/css/theme-*.css". Allow users select personalized themes.
+- `THEMES`: **_empty_**: All available themes by `{CustomPath}/public/assets/css/theme-*.css`. Allow users select personalized themes.
 - `MAX_DISPLAY_FILE_SIZE`: **8388608**: Max size of files to be displayed (default is 8MiB)
 - `AMBIGUOUS_UNICODE_DETECTION`: **true**: Detect ambiguous unicode characters in file contents and show warnings on the UI
 - `REACTIONS`: All available reactions users can choose on issues/prs and comments
@@ -974,11 +974,19 @@ Default templates for project boards:
 - `SCHEDULE`: **@midnight** : Interval as a duration between each synchronization, it will always attempt synchronization when the instance starts.
 - `UPDATE_EXISTING`: **true**: Create new users, update existing user data and disable users that are not in external source anymore (default) or only create new users if UPDATE_EXISTING is set to false.
 
-## Cron - Cleanup Expired Actions Assets (`cron.cleanup_actions`)
+#### Cron - Cleanup Expired Actions Assets (`cron.cleanup_actions`)
 
 - `ENABLED`: **true**: Enable cleanup expired actions assets job.
 - `RUN_AT_START`: **true**: Run job at start time (if ENABLED).
 - `SCHEDULE`: **@midnight** : Cron syntax for the job.
+
+#### Cron - Cleanup Deleted Branches (`cron.deleted_branches_cleanup`)
+
+- `ENABLED`: **true**: Enable deleted branches cleanup.
+- `RUN_AT_START`: **true**: Run job at start time (if ENABLED).
+- `NOTICE_ON_SUCCESS`: **false**: Set to true to log a success message.
+- `SCHEDULE`: **@midnight**: Cron syntax for scheduling deleted branches cleanup.
+- `OLDER_THAN`: **24h**: Branches deleted OLDER_THAN ago will be cleaned up.
 
 ### Extended cron tasks (not enabled by default)
 

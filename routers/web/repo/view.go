@@ -30,6 +30,7 @@ import (
 	"code.gitea.io/gitea/models/db"
 	git_model "code.gitea.io/gitea/models/git"
 	issue_model "code.gitea.io/gitea/models/issues"
+	access_model "code.gitea.io/gitea/models/perm/access"
 	repo_model "code.gitea.io/gitea/models/repo"
 	unit_model "code.gitea.io/gitea/models/unit"
 	user_model "code.gitea.io/gitea/models/user"
@@ -50,6 +51,7 @@ import (
 	"code.gitea.io/gitea/routers/web/feed"
 	"code.gitea.io/gitea/services/context"
 	issue_service "code.gitea.io/gitea/services/issue"
+	repo_service "code.gitea.io/gitea/services/repository"
 	files_service "code.gitea.io/gitea/services/repository/files"
 
 	"github.com/nektos/act/pkg/model"
@@ -307,7 +309,7 @@ func renderReadmeFile(ctx *context.Context, subfolder string, readmeFile *git.Tr
 
 	rd := charset.ToUTF8WithFallbackReader(io.MultiReader(bytes.NewReader(buf), dataRc), charset.ConvertOpts{})
 
-	if markupType := markup.Type(readmeFile.Name()); markupType != "" {
+	if markupType := markup.DetectMarkupTypeByFileName(readmeFile.Name()); markupType != "" {
 		ctx.Data["IsMarkup"] = true
 		ctx.Data["MarkupType"] = markupType
 
@@ -504,7 +506,7 @@ func renderFile(ctx *context.Context, entry *git.TreeEntry) {
 		readmeExist := util.IsReadmeFileName(blob.Name())
 		ctx.Data["ReadmeExist"] = readmeExist
 
-		markupType := markup.Type(blob.Name())
+		markupType := markup.DetectMarkupTypeByFileName(blob.Name())
 		// If the markup is detected by custom markup renderer it should not be reset later on
 		// to not pass it down to the render context.
 		detected := false
@@ -611,9 +613,9 @@ func renderFile(ctx *context.Context, entry *git.TreeEntry) {
 			break
 		}
 
-		// TODO: this logic seems strange, it duplicates with "isRepresentableAsText=true", it is not the same as "LFSFileGet" in "lfs.go"
-		// maybe for this case, the file is a binary file, and shouldn't be rendered?
-		if markupType := markup.Type(blob.Name()); markupType != "" {
+		// TODO: this logic duplicates with "isRepresentableAsText=true", it is not the same as "LFSFileGet" in "lfs.go"
+		// It is used by "external renders", markupRender will execute external programs to get rendered content.
+		if markupType := markup.DetectMarkupTypeByFileName(blob.Name()); markupType != "" {
 			rd := io.MultiReader(bytes.NewReader(buf), dataRc)
 			ctx.Data["IsMarkup"] = true
 			ctx.Data["MarkupType"] = markupType
@@ -1036,16 +1038,26 @@ func renderHomeCode(ctx *context.Context) {
 			return
 		}
 
-		showRecentlyPushedNewBranches := true
-		if ctx.Repo.Repository.IsMirror ||
-			!ctx.Repo.Repository.UnitEnabled(ctx, unit_model.TypePullRequests) {
-			showRecentlyPushedNewBranches = false
+		opts := &git_model.FindRecentlyPushedNewBranchesOptions{
+			Repo:     ctx.Repo.Repository,
+			BaseRepo: ctx.Repo.Repository,
 		}
-		if showRecentlyPushedNewBranches {
-			ctx.Data["RecentlyPushedNewBranches"], err = git_model.FindRecentlyPushedNewBranches(ctx, ctx.Repo.Repository.ID, ctx.Doer.ID, ctx.Repo.Repository.DefaultBranch)
+		if ctx.Repo.Repository.IsFork {
+			opts.BaseRepo = ctx.Repo.Repository.BaseRepo
+		}
+
+		baseRepoPerm, err := access_model.GetUserRepoPermission(ctx, opts.BaseRepo, ctx.Doer)
+		if err != nil {
+			ctx.ServerError("GetUserRepoPermission", err)
+			return
+		}
+
+		if !opts.Repo.IsMirror && !opts.BaseRepo.IsMirror &&
+			opts.BaseRepo.UnitEnabled(ctx, unit_model.TypePullRequests) &&
+			baseRepoPerm.CanRead(unit_model.TypePullRequests) {
+			ctx.Data["RecentlyPushedNewBranches"], err = git_model.FindRecentlyPushedNewBranches(ctx, ctx.Doer, opts)
 			if err != nil {
-				ctx.ServerError("GetRecentlyPushedBranches", err)
-				return
+				log.Error("FindRecentlyPushedNewBranches failed: %v", err)
 			}
 		}
 	}
@@ -1158,25 +1170,24 @@ func Forks(ctx *context.Context) {
 	if page <= 0 {
 		page = 1
 	}
+	pageSize := setting.ItemsPerPage
 
-	pager := context.NewPagination(ctx.Repo.Repository.NumForks, setting.ItemsPerPage, page, 5)
-	ctx.Data["Page"] = pager
-
-	forks, err := repo_model.GetForks(ctx, ctx.Repo.Repository, db.ListOptions{
-		Page:     pager.Paginater.Current(),
-		PageSize: setting.ItemsPerPage,
+	forks, total, err := repo_service.FindForks(ctx, ctx.Repo.Repository, ctx.Doer, db.ListOptions{
+		Page:     page,
+		PageSize: pageSize,
 	})
 	if err != nil {
-		ctx.ServerError("GetForks", err)
+		ctx.ServerError("FindForks", err)
 		return
 	}
 
-	for _, fork := range forks {
-		if err = fork.LoadOwner(ctx); err != nil {
-			ctx.ServerError("LoadOwner", err)
-			return
-		}
+	if err := repo_model.RepositoryList(forks).LoadOwners(ctx); err != nil {
+		ctx.ServerError("LoadAttributes", err)
+		return
 	}
+
+	pager := context.NewPagination(int(total), pageSize, page, 5)
+	ctx.Data["Page"] = pager
 
 	ctx.Data["Forks"] = forks
 

@@ -2,7 +2,6 @@
 import './bootstrap.js';
 
 import {initRepoActivityTopAuthorsChart} from './components/RepoActivityTopAuthors.vue';
-import {initScopedAccessTokenCategories} from './components/ScopedAccessTokenSelector.vue';
 import {initDashboardRepoList} from './components/DashboardRepoList.vue';
 
 import {initGlobalCopyToClipboardListener} from './features/clipboard.js';
@@ -24,7 +23,7 @@ import {initFindFileInRepo} from './features/repo-findfile.js';
 import {initCommentContent, initMarkupContent} from './markup/content.js';
 import {initPdfViewer} from './render/pdf.js';
 
-import {initUserAuthOauth2} from './features/user-auth.js';
+import {initUserAuthOauth2, initUserCheckAppUrl} from './features/user-auth.js';
 import {
   initRepoIssueDue,
   initRepoIssueReferenceRepositorySearch,
@@ -92,6 +91,8 @@ import {initRepoDiffCommitBranchesAndTags} from './features/repo-diff-commit.js'
 import {initDirAuto} from './modules/dirauto.js';
 import {initRepositorySearch} from './features/repo-search.js';
 import {initColorPickers} from './features/colorpicker.js';
+import {initAdminSelfCheck} from './features/admin/selfcheck.js';
+import {initScopedAccessTokenCategories} from './features/scoped-access-token.js';
 
 // Init Gitea's Fomantic settings
 initGiteaFomantic();
@@ -137,6 +138,7 @@ onDomReady(() => {
   initAdminEmails();
   initAdminUserListSearchForm();
   initAdminConfigs();
+  initAdminSelfCheck();
 
   initDashboardRepoList();
 
@@ -193,6 +195,7 @@ onDomReady(() => {
   initCommitStatuses();
   initCaptcha();
 
+  initUserCheckAppUrl();
   initUserAuthOauth2();
   initUserAuthWebAuthn();
   initUserAuthWebAuthnRegister();

@@ -143,6 +143,12 @@ func runServ(c *cli.Context) error {
 		return nil
 	}
 
+	defer func() {
+		if err := recover(); err != nil {
+			_ = fail(ctx, "Internal Server Error", "Panic: %v\n%s", err, log.Stack(2))
+		}
+	}()
+
 	keys := strings.Split(c.Args().First(), "-")
 	if len(keys) != 2 || keys[0] != "key" {
 		return fail(ctx, "Key ID format error", "Invalid key argument: %s", c.Args().First())
@@ -178,7 +184,7 @@ func runServ(c *cli.Context) error {
 	}
 
 	if len(words) < 2 {
-		if git.CheckGitVersionAtLeast("2.29") == nil {
+		if git.DefaultFeatures().SupportProcReceive {
 			// for AGit Flow
 			if cmd == "ssh_info" {
 				fmt.Print(`{"type":"gitea","version":1}`)
@@ -189,10 +195,7 @@ func runServ(c *cli.Context) error {
 	}
 
 	verb := words[0]
-	repoPath := words[1]
-	if repoPath[0] == '/' {
-		repoPath = repoPath[1:]
-	}
+	repoPath := strings.TrimPrefix(words[1], "/")
 
 	var lfsVerb string
 	if verb == lfsAuthenticateVerb {

@@ -248,6 +248,9 @@ func (a *Action) GetActDisplayNameTitle(ctx context.Context) string {
 // GetRepoUserName returns the name of the action repository owner.
 func (a *Action) GetRepoUserName(ctx context.Context) string {
 	a.loadRepo(ctx)
+	if a.Repo == nil {
+		return "(non-existing-repo)"
+	}
 	return a.Repo.OwnerName
 }
 
@@ -260,6 +263,9 @@ func (a *Action) ShortRepoUserName(ctx context.Context) string {
 // GetRepoName returns the name of the action repository.
 func (a *Action) GetRepoName(ctx context.Context) string {
 	a.loadRepo(ctx)
+	if a.Repo == nil {
+		return "(non-existing-repo)"
+	}
 	return a.Repo.Name
 }
 
@@ -450,9 +456,7 @@ func GetFeeds(ctx context.Context, opts GetFeedsOptions) (ActionList, int64, err
 		return nil, 0, err
 	}
 
-	sess := db.GetEngine(ctx).Where(cond).
-		Select("`action`.*"). // this line will avoid select other joined table's columns
-		Join("INNER", "repository", "`repository`.id = `action`.repo_id")
+	sess := db.GetEngine(ctx).Where(cond)
 
 	opts.SetDefaultValues()
 	sess = db.SetSessionPagination(sess, &opts)
@@ -524,7 +528,12 @@ func activityQueryCondition(ctx context.Context, opts GetFeedsOptions) (builder.
 	}
 
 	if opts.RequestedRepo != nil {
-		cond = cond.And(builder.Eq{"repo_id": opts.RequestedRepo.ID})
+		// repo's actions could have duplicate items, see the comment of NotifyWatchers
+		// so here we only filter the "original items", aka: user_id == act_user_id
+		cond = cond.And(
+			builder.Eq{"`action`.repo_id": opts.RequestedRepo.ID},
+			builder.Expr("`action`.user_id = `action`.act_user_id"),
+		)
 	}
 
 	if opts.RequestedTeam != nil {
@@ -577,6 +586,10 @@ func DeleteOldActions(ctx context.Context, olderThan time.Duration) (err error) 
 }
 
 // NotifyWatchers creates batch of actions for every watcher.
+// It could insert duplicate actions for a repository action, like this:
+// * Original action: UserID=1 (the real actor), ActUserID=1
+// * Organization action: UserID=100 (the repo's org), ActUserID=1
+// * Watcher action: UserID=20 (a user who is watching a repo), ActUserID=1
 func NotifyWatchers(ctx context.Context, actions ...*Action) error {
 	var watchers []*repo_model.Watch
 	var repo *repo_model.Repository

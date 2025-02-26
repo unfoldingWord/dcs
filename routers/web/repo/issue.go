@@ -56,7 +56,6 @@ import (
 	"code.gitea.io/gitea/services/forms"
 	issue_service "code.gitea.io/gitea/services/issue"
 	pull_service "code.gitea.io/gitea/services/pull"
-	repo_service "code.gitea.io/gitea/services/repository"
 	user_service "code.gitea.io/gitea/services/user"
 )
 
@@ -461,6 +460,7 @@ func issues(ctx *context.Context, milestoneID, projectID int64, isPullOption opt
 	ctx.Data["AssigneeID"] = assigneeID
 	ctx.Data["PosterID"] = posterID
 	ctx.Data["Keyword"] = keyword
+	ctx.Data["IsShowClosed"] = isShowClosed
 	switch {
 	case isShowClosed.Value():
 		ctx.Data["State"] = "closed"
@@ -692,13 +692,13 @@ func RetrieveRepoReviewers(ctx *context.Context, repo *repo_model.Repository, is
 			posterID = 0
 		}
 
-		reviewers, err = repo_model.GetReviewers(ctx, repo, ctx.Doer.ID, posterID)
+		reviewers, err = pull_service.GetReviewers(ctx, repo, ctx.Doer.ID, posterID)
 		if err != nil {
 			ctx.ServerError("GetReviewers", err)
 			return
 		}
 
-		teamReviewers, err = repo_service.GetReviewerTeams(ctx, repo)
+		teamReviewers, err = pull_service.GetReviewerTeams(ctx, repo)
 		if err != nil {
 			ctx.ServerError("GetReviewerTeams", err)
 			return
@@ -1535,7 +1535,7 @@ func ViewIssue(ctx *context.Context) {
 	if issue.IsPull {
 		canChooseReviewer := false
 		if ctx.Doer != nil && ctx.IsSigned {
-			canChooseReviewer = issue_service.CanDoerChangeReviewRequests(ctx, ctx.Doer, repo, issue)
+			canChooseReviewer = issue_service.CanDoerChangeReviewRequests(ctx, ctx.Doer, repo, issue.PosterID)
 		}
 
 		RetrieveRepoReviewers(ctx, repo, issue, canChooseReviewer)
@@ -1669,7 +1669,7 @@ func ViewIssue(ctx *context.Context) {
 			}
 
 			ghostProject := &project_model.Project{
-				ID:    -1,
+				ID:    project_model.GhostProjectID,
 				Title: ctx.Locale.TrString("repo.issues.deleted_project"),
 			}
 
@@ -1791,6 +1791,7 @@ func ViewIssue(ctx *context.Context) {
 		pull.Issue = issue
 		canDelete := false
 		allowMerge := false
+		canWriteToHeadRepo := false
 
 		if ctx.IsSigned {
 			if err := pull.LoadHeadRepo(ctx); err != nil {
@@ -1811,7 +1812,7 @@ func ViewIssue(ctx *context.Context) {
 							ctx.Data["DeleteBranchLink"] = issue.Link() + "/cleanup"
 						}
 					}
-					ctx.Data["CanWriteToHeadRepo"] = true
+					canWriteToHeadRepo = true
 				}
 			}
 
@@ -1822,6 +1823,9 @@ func ViewIssue(ctx *context.Context) {
 			if err != nil {
 				ctx.ServerError("GetUserRepoPermission", err)
 				return
+			}
+			if !canWriteToHeadRepo { // maintainers maybe allowed to push to head repo even if they can't write to it
+				canWriteToHeadRepo = pull.AllowMaintainerEdit && perm.CanWrite(unit.TypeCode)
 			}
 			allowMerge, err = pull_service.IsUserAllowedToMerge(ctx, pull, perm, ctx.Doer)
 			if err != nil {
@@ -1835,6 +1839,8 @@ func ViewIssue(ctx *context.Context) {
 			}
 		}
 
+		ctx.Data["CanWriteToHeadRepo"] = canWriteToHeadRepo
+		ctx.Data["ShowMergeInstructions"] = canWriteToHeadRepo
 		ctx.Data["AllowMerge"] = allowMerge
 
 		prUnit, err := repo.GetUnit(ctx, unit.TypePullRequests)
@@ -1889,13 +1895,9 @@ func ViewIssue(ctx *context.Context) {
 			ctx.ServerError("LoadProtectedBranch", err)
 			return
 		}
-		ctx.Data["ShowMergeInstructions"] = true
+
 		if pb != nil {
 			pb.Repo = pull.BaseRepo
-			var showMergeInstructions bool
-			if ctx.Doer != nil {
-				showMergeInstructions = pb.CanUserPush(ctx, ctx.Doer)
-			}
 			ctx.Data["ProtectedBranch"] = pb
 			ctx.Data["IsBlockedByApprovals"] = !issues_model.HasEnoughApprovals(ctx, pb, pull)
 			ctx.Data["IsBlockedByRejection"] = issues_model.MergeBlockedByRejectedReview(ctx, pb, pull)
@@ -1906,7 +1908,6 @@ func ViewIssue(ctx *context.Context) {
 			ctx.Data["ChangedProtectedFiles"] = pull.ChangedProtectedFiles
 			ctx.Data["IsBlockedByChangedProtectedFiles"] = len(pull.ChangedProtectedFiles) != 0
 			ctx.Data["ChangedProtectedFilesNum"] = len(pull.ChangedProtectedFiles)
-			ctx.Data["ShowMergeInstructions"] = showMergeInstructions
 		}
 		ctx.Data["WillSign"] = false
 		if ctx.Doer != nil {
@@ -2177,7 +2178,10 @@ func GetIssueInfo(ctx *context.Context) {
 		}
 	}
 
-	ctx.JSON(http.StatusOK, convert.ToIssue(ctx, ctx.Doer, issue))
+	ctx.JSON(http.StatusOK, map[string]any{
+		"convertedIssue": convert.ToIssue(ctx, ctx.Doer, issue),
+		"renderedLabels": templates.RenderLabels(ctx, ctx.Locale, issue.Labels, ctx.Repo.RepoLink, issue),
+	})
 }
 
 // UpdateIssueTitle change issue's title

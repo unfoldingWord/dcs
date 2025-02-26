@@ -226,6 +226,8 @@ func TestNotifyWatchers(t *testing.T) {
 }
 
 func TestGetFeedsCorrupted(t *testing.T) {
+	// Now we will not check for corrupted data in the feeds
+	// users should run doctor to fix their data
 	assert.NoError(t, unittest.PrepareTestDatabase())
 	user := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: 1})
 	unittest.AssertExistsAndLoadBean(t, &activities_model.Action{
@@ -239,8 +241,8 @@ func TestGetFeedsCorrupted(t *testing.T) {
 		IncludePrivate: true,
 	})
 	assert.NoError(t, err)
-	assert.Len(t, actions, 0)
-	assert.Equal(t, int64(0), count)
+	assert.Len(t, actions, 1)
+	assert.Equal(t, int64(1), count)
 }
 
 func TestConsistencyUpdateAction(t *testing.T) {
@@ -317,4 +319,25 @@ func TestDeleteIssueActions(t *testing.T) {
 	unittest.AssertCount(t, &activities_model.Action{}, 2)
 	assert.NoError(t, activities_model.DeleteIssueActions(db.DefaultContext, issue.RepoID, issue.ID, issue.Index))
 	unittest.AssertCount(t, &activities_model.Action{}, 0)
+}
+
+func TestRepoActions(t *testing.T) {
+	assert.NoError(t, unittest.PrepareTestDatabase())
+	repo := unittest.AssertExistsAndLoadBean(t, &repo_model.Repository{ID: 1})
+	_ = db.TruncateBeans(db.DefaultContext, &activities_model.Action{})
+	for i := 0; i < 3; i++ {
+		_ = db.Insert(db.DefaultContext, &activities_model.Action{
+			UserID:    2 + int64(i),
+			ActUserID: 2,
+			RepoID:    repo.ID,
+			OpType:    activities_model.ActionCommentIssue,
+		})
+	}
+	count, _ := db.Count[activities_model.Action](db.DefaultContext, &db.ListOptions{})
+	assert.EqualValues(t, 3, count)
+	actions, _, err := activities_model.GetFeeds(db.DefaultContext, activities_model.GetFeedsOptions{
+		RequestedRepo: repo,
+	})
+	assert.NoError(t, err)
+	assert.Len(t, actions, 1)
 }
