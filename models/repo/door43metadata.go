@@ -73,7 +73,7 @@ type Door43Metadata struct {
 	Relations           []*structs.Relation         `xorm:"JSON"`
 	IsLatestForStage    bool                        `xorm:"INDEX NOT NULL DEFAULT false"`
 	IsRepoMetadata      bool                        `xorm:"INDEX NOT NULL DEFAULT false"`
-	Metadata            map[string]interface{}      `xorm:"JSON MEDIUMTEXT"`
+	Metadata            map[string]any              `xorm:"JSON MEDIUMTEXT"`
 	ValidationError     *jsonschema.ValidationError `xorm:"JSON MEDIUMTEXT"`
 	HealthcheckSeverity SeverityLevel               `xorm:"NULL DEFAULT NULL"`
 	HealthcheckCounts   map[SeverityLevel]int       `xorm:"JSON"`

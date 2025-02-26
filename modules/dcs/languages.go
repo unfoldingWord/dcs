@@ -16,13 +16,13 @@ import (
 )
 
 var (
-	_langnamesJSON      []map[string]interface{}
-	_langnamesJSONKeyed map[string]map[string]interface{}
+	_langnamesJSON      []map[string]any
+	_langnamesJSONKeyed map[string]map[string]any
 )
 
 // GetLangnamesJSON returns an array of maps from https://td.door43.org/exports/langnames.json
 // Will use custom/options/languages/langnames.json instead if exists
-func GetLangnamesJSON() []map[string]interface{} {
+func GetLangnamesJSON() []map[string]any {
 	if _langnamesJSON == nil {
 		if langnames, err := GetLangnamesJSONFromCustom(); err == nil && langnames != nil {
 			_langnamesJSON = langnames
@@ -38,21 +38,21 @@ func GetLangnamesJSON() []map[string]interface{} {
 	return _langnamesJSON
 }
 
-func GetLangnamesJSONFromCustom() ([]map[string]interface{}, error) {
+func GetLangnamesJSONFromCustom() ([]map[string]any, error) {
 	fileBuf, err := options.AssetFS().ReadFile("languages", "langnames.json")
 	if err != nil {
 		return nil, err
 	}
 	reader := bytes.NewReader(fileBuf)
-	langnames := []map[string]interface{}{}
+	langnames := []map[string]any{}
 	if err := json.NewDecoder(reader).Decode(&langnames); err != nil {
 		return nil, fmt.Errorf("unable to decode langnames.json from custom/options/languages/langnames.json: %v", err)
 	}
 	return langnames, nil
 }
 
-func GetLangnamesJSONFromTD() ([]map[string]interface{}, error) {
-	langnames := []map[string]interface{}{}
+func GetLangnamesJSONFromTD() ([]map[string]any, error) {
+	langnames := []map[string]any{}
 	url := "https://td.unfoldingword.org/exports/langnames.json"
 	myClient := &http.Client{Timeout: 10 * time.Second}
 	response, err := myClient.Get(url)
@@ -65,9 +65,9 @@ func GetLangnamesJSONFromTD() ([]map[string]interface{}, error) {
 	return langnames, nil
 }
 
-func GetLangnamesJSONKeyed() map[string]map[string]interface{} {
+func GetLangnamesJSONKeyed() map[string]map[string]any {
 	if _langnamesJSONKeyed == nil {
-		_langnamesJSONKeyed = map[string]map[string]interface{}{}
+		_langnamesJSONKeyed = map[string]map[string]any{}
 		langnames := GetLangnamesJSON()
 		for _, value := range langnames {
 			_langnamesJSONKeyed[value["lc"].(string)] = value

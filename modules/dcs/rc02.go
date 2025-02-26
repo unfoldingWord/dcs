@@ -47,7 +47,7 @@ func GetRC02Schema(reload bool) (*jsonschema.Schema, error) {
 }
 
 // ValidateMapByRC02Schema Validates a map structure by the RC v0.2.0 schema and returns the result
-func ValidateMapByRC02Schema(data map[string]interface{}) (*jsonschema.ValidationError, error) {
+func ValidateMapByRC02Schema(data map[string]any) (*jsonschema.ValidationError, error) {
 	if data == nil {
 		return &jsonschema.ValidationError{Message: "file cannot be empty"}, nil
 	}

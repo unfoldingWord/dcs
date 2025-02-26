@@ -13,7 +13,7 @@ import (
 )
 
 // ToIngredient converts a Door43Metadata project to an api.Ingredient
-func ToIngredient(project map[string]interface{}) *api.Ingredient {
+func ToIngredient(project map[string]any) *api.Ingredient {
 	ingredient := &api.Ingredient{}
 	if val, ok := project["categories"].([]string); ok {
 		ingredient.Categories = val

@@ -262,17 +262,17 @@ func GetBookAlignmentCount(bookPath string, commit *git.Commit) (int, error) {
 }
 
 // GetBooks get the books of the manifest
-func GetBooks(manifest map[string]interface{}) []string {
+func GetBooks(manifest map[string]any) []string {
 	var books []string
-	if len((manifest)["projects"].([]interface{})) > 0 {
-		for _, prod := range (manifest)["projects"].([]interface{}) {
-			books = append(books, prod.(map[string]interface{})["identifier"].(string))
+	if len((manifest)["projects"].([]any)) > 0 {
+		for _, prod := range (manifest)["projects"].([]any) {
+			books = append(books, prod.(map[string]any)["identifier"].(string))
 		}
 	}
 	return books
 }
 
-func GetDoor43MetadataFromRCManifest(dm *repo_model.Door43Metadata, manifest map[string]interface{}, repo *repo_model.Repository, commit *git.Commit) error {
+func GetDoor43MetadataFromRCManifest(dm *repo_model.Door43Metadata, manifest map[string]any, repo *repo_model.Repository, commit *git.Commit) error {
 	var metadataType string
 	var metadataVersion string
 	var subject string
@@ -292,7 +292,7 @@ func GetDoor43MetadataFromRCManifest(dm *repo_model.Door43Metadata, manifest map
 	var relations []*structs.Relation
 
 	re := regexp.MustCompile("^([^0-9]+)(.*)$")
-	matches := re.FindStringSubmatch(manifest["dublin_core"].(map[string]interface{})["conformsto"].(string))
+	matches := re.FindStringSubmatch(manifest["dublin_core"].(map[string]any)["conformsto"].(string))
 	if len(matches) == 3 {
 		metadataType = matches[1]
 		metadataVersion = matches[2]
@@ -301,18 +301,18 @@ func GetDoor43MetadataFromRCManifest(dm *repo_model.Door43Metadata, manifest map
 		metadataType = "rc"
 		metadataVersion = "0.2"
 	}
-	subject = manifest["dublin_core"].(map[string]interface{})["subject"].(string)
-	abbreviation = manifest["dublin_core"].(map[string]interface{})["identifier"].(string)
-	title = manifest["dublin_core"].(map[string]interface{})["title"].(string)
-	publisher = manifest["dublin_core"].(map[string]interface{})["publisher"].(string)
-	language = manifest["dublin_core"].(map[string]interface{})["language"].(map[string]interface{})["identifier"].(string)
-	languageTitle = manifest["dublin_core"].(map[string]interface{})["language"].(map[string]interface{})["title"].(string)
-	format = manifest["dublin_core"].(map[string]interface{})["format"].(string)
+	subject = manifest["dublin_core"].(map[string]any)["subject"].(string)
+	abbreviation = manifest["dublin_core"].(map[string]any)["identifier"].(string)
+	title = manifest["dublin_core"].(map[string]any)["title"].(string)
+	publisher = manifest["dublin_core"].(map[string]any)["publisher"].(string)
+	language = manifest["dublin_core"].(map[string]any)["language"].(map[string]any)["identifier"].(string)
+	languageTitle = manifest["dublin_core"].(map[string]any)["language"].(map[string]any)["title"].(string)
+	format = manifest["dublin_core"].(map[string]any)["format"].(string)
 	languageDirection = dcs.GetLanguageDirection(language)
 	languageIsGL = dcs.LanguageIsGL(language)
 	var bookPath string
-	for _, prod := range manifest["projects"].([]interface{}) {
-		if prodMap, ok := prod.(map[string]interface{}); ok {
+	for _, prod := range manifest["projects"].([]any) {
+		if prodMap, ok := prod.(map[string]any); ok {
 			ingredient := convert.ToIngredient(prodMap)
 			book := ingredient.Identifier
 			ingredient.Sort = dcs.GetBookSort(book)
@@ -330,7 +330,7 @@ func GetDoor43MetadataFromRCManifest(dm *repo_model.Door43Metadata, manifest map
 			ingredients = append(ingredients, ingredient)
 		}
 	}
-	for _, relation := range manifest["dublin_core"].(map[string]interface{})["relation"].([]interface{}) {
+	for _, relation := range manifest["dublin_core"].(map[string]any)["relation"].([]any) {
 		parts := strings.Split(relation.(string), "/")
 		lang := parts[0]
 		if len(parts) > 1 {
@@ -376,9 +376,9 @@ func GetDoor43MetadataFromRCManifest(dm *repo_model.Door43Metadata, manifest map
 		flavor = "x-" + strings.Replace(subject, " ", "", -1)
 	}
 	var ok bool
-	checkingLevel, ok = manifest["checking"].(map[string]interface{})["checking_level"].(int)
+	checkingLevel, ok = manifest["checking"].(map[string]any)["checking_level"].(int)
 	if !ok {
-		cL, ok := manifest["checking"].(map[string]interface{})["checking_level"].(string)
+		cL, ok := manifest["checking"].(map[string]any)["checking_level"].(string)
 		if !ok {
 			checkingLevel = 1
 		} else {
@@ -541,7 +541,7 @@ func GetDoor43MetadataFromSBMetadata(dm *repo_model.Door43Metadata, sbMetadata *
 }
 
 func GetRCDoor43Metadata(dm *repo_model.Door43Metadata, repo *repo_model.Repository, commit *git.Commit) error {
-	var manifest map[string]interface{}
+	var manifest map[string]any
 
 	blob, err := commit.GetBlobByPath("manifest.yaml")
 	if err != nil {
