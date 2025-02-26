@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"net/http"
 
-	"code.gitea.io/gitea/modules/context"
+	"code.gitea.io/gitea/services/context"
 )
 
 // GetHealthcheck returns a simple healthcheck response
