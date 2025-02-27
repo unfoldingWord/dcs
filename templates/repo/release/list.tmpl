@@ -18,10 +18,10 @@
 						<!-- DCS Customizations -->
 						{{$stage := ""}}
 						{{$color := ""}}
-						{{if .IsPrerelease}}
+						{{if .Release.IsPrerelease}}
 							{{$stage = "preprod"}}
 							{{$color = "orange"}}
-						{{else if not .IsDraft}}
+						{{else if not .Release.IsDraft}}
 							{{$stage = "prod"}}
 							{{$color = "green"}}
 						{{end}}
@@ -31,8 +31,8 @@
 									{{ctx.Locale.Tr "repo.metadata.catalog"}} ({{$stage}})
 								</button>
 							</a>
-						{{else if (and (not .IsTag) (not .IsDraft) (.IsCatalogVersion))}}
-							<a class="catalog-badge" href="{{$.RepoLink}}/src/tag/{{.TagName | PathEscapeSegments}}" rel="nofollow" style="opacity: inherit !important">
+						{{else if (and (not .Release.IsTag) (not .Release.IsDraft) (.Release.IsCatalogVersion))}}
+							<a class="catalog-badge" href="{{$.RepoLink}}/src/tag/{{.Release.TagName | PathEscapeSegments}}" rel="nofollow" style="opacity: inherit !important">
 								<button class="ui red label compact icon button tooltip" data-content="{{ctx.Locale.Tr "repo.metadata.invalid_metadata_tooltip" "metadata"}}" aria-label="{{ctx.Locale.Tr "repo.metadata.invalid_metadata_tooltip" "metadata"}}">
 									{{ctx.Locale.Tr "repo.metadata.invalid"}} ({{$stage}})
 								</button>
