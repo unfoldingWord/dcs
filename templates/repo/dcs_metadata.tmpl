@@ -47,11 +47,11 @@
 		<div class="ui attached segment">
 			{{if or .BranchDMs .ReleaseDMs}}
 				<h3 class="ui top attached header toggle show-panel" data-panel="#branches">{{ctx.Locale.Tr "repo.branches"}}</h3>
-				<div class="ui attached segment gt-hidden" id="branches">
+				<div class="ui attached segment tw-hidden" id="branches">
 					{{template "repo/dcs_metadata_list" (dict "ctxData" . "Door43Metadatas" .BranchDMs)}}
 				</div>
 				<h3 class="ui top attached header toggle show-panel" data-panel="#releases">Releases</h3>
-				<div class="ui attached segment gt-hidden" id="releases">
+				<div class="ui attached segment tw-hidden" id="releases">
 					{{template "repo/dcs_metadata_list" (dict "ctxData" . "Door43Metadatas" .ReleaseDMs)}}
 				</div>
 			{{else}}

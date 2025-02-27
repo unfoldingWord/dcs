@@ -2,7 +2,7 @@
 	{{range .Door43Metadatas}}
 		<div class="flex-item">
 			<div class="flex-item-leading">
-				{{template "repo/icon" .Repo}}				
+				{{template "repo/icon" .Repo}}
 			</div>
 			<div class="flex-item-main">
 				<div class="flex-item-header">
@@ -50,25 +50,25 @@
 				</div>
 				<div class="flex-item-trailing">
 					<a class="muted" href="{{$.Link}}?sort={{$.SortType}}&q=lang%3A{{.Language}}" data-tooltip-content="{{ctx.Locale.Tr "repo.metadata.language"}}: {{.LanguageTitle}} ({{.Language}}, {{.LanguageDirection}})">
-						<span class="gt-df gt-ac gt-mr-3"><i class="color-icon gt-mr-3" style="background-color: {{GetColorFromString .Language}}"></i>{{.Language}}</span>
+						<span class="tx-flex tw-items-center tw-mr-2"><i class="color-icon tw-mr-2" style="background-color: {{GetColorFromString .Language}}"></i>{{.Language}}</span>
 					</a>
 					<a class="muted" href="{{$.Link}}?sort={{$.SortType}}&q=subject%3A{{.Subject}}">
-						<span class="gt-df gt-ac gt-mr-3"><i class="color-icon gt-mr-3" style="background-color: {{GetColorFromString .Subject}}"></i>{{.Subject}}</span>
+						<span class="tx-flex tw-items-center tw-mr-2"><i class="color-icon tw-mr-2" style="background-color: {{GetColorFromString .Subject}}"></i>{{.Subject}}</span>
 					</a>
 					<a class="muted" href="?sort={{$.SortType}}&q=metadata_type%3A{{.MetadataType}}" data-tooltip-content="{{ctx.Locale.Tr "repo.metadata.metadata_type"}}: {{.MetadataTypeTitle}} ({{.MetadataType}} {{.MetadataVersion}})">
 						<img src="{{AssetUrlPrefix}}/img/dcs/{{.MetadataTypeIcon}}" style="height:16px;vertical-align:middle" />
 							{{.MetadataType}} {{.MetadataVersion}}
 					</a>
 					{{if not $.DisableStars}}
-					<a class="text grey gt-df gt-ac gt-mr-3" href="{{.Repo.Link}}/stars">{{svg "octicon-star" 16 "gt-mr-3"}}{{.Repo.NumStars}}</a>
+					<a class="text grey tx-flex tw-items-center tw-mr-2" href="{{.Repo.Link}}/stars">{{svg "octicon-star" 16 "tw-mr-2"}}{{.Repo.NumStars}}</a>
 					{{end}}
-					<a class="text grey gt-df gt-ac gt-mr-3" href="{{.Repo.Link}}/forks">{{svg "octicon-git-branch" 16 "gt-mr-3"}}{{.Repo.NumForks}}</a>
-					<a class="text grey gt-df gt-ac gt-mr-3" href="{{.Repo.Link}}/releases" data-tooltip-content="# of releases">{{svg "octicon-tag" 16 "gt-mr-3"}} {{.ReleaseCount}}</a>
+					<a class="text grey tx-flex tw-items-center tw-mr-2" href="{{.Repo.Link}}/forks">{{svg "octicon-git-branch" 16 "tw-mr-2"}}{{.Repo.NumForks}}</a>
+					<a class="text grey tx-flex tw-items-center tw-mr-2" href="{{.Repo.Link}}/releases" data-tooltip-content="# of releases">{{svg "octicon-tag" 16 "tw-mr-2"}} {{.ReleaseCount}}</a>
 				</div>
 			</div>
-			
+
 			<div class="flex-item-body">
-				{{ctx.Locale.Tr "repo.metadata.publisher"}}: 
+				{{ctx.Locale.Tr "repo.metadata.publisher"}}:
 				<a href="?sort={{$.SortType}}&q=owner%3A{{.Repo.OwnerName}}">
 					{{if .Repo.Owner.FullName}}{{.Repo.Owner.FullName}}{{else}}{{.Repo.OwnerName}}{{end}}
 				</a>

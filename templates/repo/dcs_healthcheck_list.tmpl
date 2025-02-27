@@ -3,7 +3,7 @@
 	{{if $healthcheck}}
 	<div class="ui list">
 	{{range $issueCode := $healthcheck.GetOrder}}
-		{{$issues := index $healthcheck.Issues $issueCode}}							
+		{{$issues := index $healthcheck.Issues $issueCode}}
 		<div class="ui item">
 			<div class="toggle show-panel" data-panel="#{{$issueCode}}">
 			{{if not $issues}}
@@ -20,7 +20,7 @@
 			{{$issueCode.IssuePositiveString}}
 			</div>
 			{{if $issues}}
-				<div class="ui list gt-hidden" id="{{$issueCode}}">
+				<div class="ui list tw-hidden" id="{{$issueCode}}">
 					{{range $issue := $issues}}
 						<div class="status-item {{$issue.SeverityLevel}}">
 							<div class="item-text">

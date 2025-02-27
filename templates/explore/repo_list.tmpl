@@ -71,12 +71,12 @@
 						<!-- DCS Customizations -->
 						{{if .RepoDM.Language}}
 							<a class="muted" href="{{$.Link}}?sort={{$.SortType}}&q=lang%3A{{.RepoDM.Language}}" data-tooltip-content="{{.RepoDM.LanguageTitle}} ({{.RepoDM.Language}}, {{.RepoDM.LanguageDirection}})">
-								<span class="gt-df gt-ac gt-mr-3"><i class="color-icon gt-mr-3" style="background-color: {{GetColorFromString .RepoDM.Language}}"></i>{{.RepoDM.Language}}</span>
+								<span class="tx-flex tw-items-center tw-mr-2"><i class="color-icon tw-mr-2" style="background-color: {{GetColorFromString .RepoDM.Language}}"></i>{{.RepoDM.Language}}</span>
 							</a>
 						{{end}}
 						{{if .RepoDM.Subject}}
 							<a class="muted" href="{{$.Link}}?sort={{$.SortType}}&q=subject%3A{{.RepoDM.Subject}}" data-tooltip-content="Abbreviation: {{.RepoDM.Abbreviation}}">
-								<span class="gt-df gt-ac gt-mr-3"><i class="color-icon gt-mr-3" style="background-color: {{GetColorFromString .RepoDM.Subject}}"></i>{{.RepoDM.Subject}}</span>
+								<span class="tx-flex tw-items-center tw-mr-2"><i class="color-icon tw-mr-2" style="background-color: {{GetColorFromString .RepoDM.Subject}}"></i>{{.RepoDM.Subject}}</span>
 							</a>
 						{{end}}
 						{{if and .RepoDM.MetadataType .RepoDM.MetadataVersion}}
