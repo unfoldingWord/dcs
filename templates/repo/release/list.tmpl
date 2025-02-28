@@ -25,15 +25,15 @@
 							{{$stage = "prod"}}
 							{{$color = "green"}}
 						{{end}}
-						{{if and .Door43Metadata (not .Door43Metadata.ValidationError) (lt .Door43Metadata.Stage 3) (gt .Door43Metadata.Stage 0)}}
-							<a class="catalog-badge" href="{{$.RepoLink}}/src/tag/{{.TagName | PathEscapeSegments}}" rel="nofollow" style="opacity: inherit !important">
-								<button class="ui {{$color}} label compact icon button tooltip" data-content="Stage: {{$stage}}" aria-label="Stage: {{$stage}}">
+						{{if and $release.Door43Metadata (not $release.Door43Metadata.ValidationError) (lt $release.Door43Metadata.Stage 3) (gt $release.Door43Metadata.Stage 0)}}
+							<a class="catalog-badge" href="{{$.RepoLink}}/src/tag/{{$release.TagName | PathEscapeSegments}}" rel="nofollow" style="opacity: inherit !important">
+								<button class="ui {{$color}} label compact icon button" data-tooltip-content="Stage: {{$stage}}" aria-label="Stage: {{$stage}}">
 									{{ctx.Locale.Tr "repo.metadata.catalog"}} ({{$stage}})
 								</button>
 							</a>
-						{{else if (and (not .Release.IsTag) (not .Release.IsDraft) (.Release.IsCatalogVersion))}}
-							<a class="catalog-badge" href="{{$.RepoLink}}/src/tag/{{.Release.TagName | PathEscapeSegments}}" rel="nofollow" style="opacity: inherit !important">
-								<button class="ui red label compact icon button tooltip" data-content="{{ctx.Locale.Tr "repo.metadata.invalid_metadata_tooltip" "metadata"}}" aria-label="{{ctx.Locale.Tr "repo.metadata.invalid_metadata_tooltip" "metadata"}}">
+						{{else if (and (not $release.IsTag) (not $release.IsDraft) ($release.IsCatalogVersion))}}
+							<a class="catalog-badge" href="{{$.RepoLink}}/src/tag/{{$release.TagName | PathEscapeSegments}}" rel="nofollow" style="opacity: inherit !important">
+								<button class="ui red label compact icon button" data-tooltip-content="{{ctx.Locale.Tr "repo.metadata.invalid_metadata_tooltip" "metadata"}}" aria-label="{{ctx.Locale.Tr "repo.metadata.invalid_metadata_tooltip" "metadata"}}">
 									{{ctx.Locale.Tr "repo.metadata.invalid"}} ({{$stage}})
 								</button>
 							</a>
@@ -105,12 +105,46 @@
 									<!-- DCS Customization -->
 									{{if .Door43Metadata}}
 									<li>
+<<<<<<< HEAD
 										<a href="{{$.RepoLink}}/preview/tag/{{.TagName | PathEscapeSegments}}"><strong>{{svg "octicon-book" 16 "tw-mr-2"}}{{ctx.Locale.Tr "preview"}} / PDF</strong></a>
+||||||| parent of 03884218e0 (Fixes templates like tooltips)
+										<a href="{{Door43PreviewURL}}/u/{{$release.Repo.OwnerName | PathEscapeSegments}}/{{$release.Repo.Name | PathEscapeSegments}}/{{$release.TagName | PathEscapeSegments}}{{if eq AppUrl "https://qa.door43.org/"}}?server=QA{{end}}{{if eq AppUrl "https://develop.door43.org/"}}?server=DEV{{end}}"
+											target="_blank" rel="nofollow noopener">
+											<strong>
+												{{svg "octicon-book" 16 "download-icon"}}
+												{{ctx.Locale.Tr "preview"}} / PDF
+											</strong>
+										</a>
+=======
+										<a href="{{Door43PreviewURL}}/u/{{$release.Repo.OwnerName | PathEscapeSegments}}/{{$release.Repo.Name | PathEscapeSegments}}/{{$release.TagName | PathEscapeSegments}}{{if eq AppUrl "https://qa.door43.org/"}}?server=QA{{end}}{{if eq AppUrl "https://develop.door43.org/"}}?server=DEV{{end}}"
+											target="_blank" rel="nofollow noopener">
+											<strong>
+												{{svg "octicon-book" 16 "download-icon"}}{{ctx.Locale.Tr "preview"}} / PDF
+											</strong>
+										</a>
+>>>>>>> 03884218e0 (Fixes templates like tooltips)
 									</li>
 										{{if eq .Door43Metadata.Subject "Aligned Bible"}}
 										<li style="display: block">
+<<<<<<< HEAD
 											<a href="#" onclick="window.downloadUnalignedUSFM('{{PathEscapeSegments .Repo.Owner.Name}}', '{{PathEscapeSegments .Repo.Name}}', '{{PathEscapeSegments .TagName}}', document.getElementById('usfm-download-status-{{PathEscapeSegments .TagName}}')); return false;" rel="nofollow"><strong>{{svg "octicon-file-zip" 16 "tw-mr-2"}}Unaligned USFM (ZIP)</strong></a>
 											<span id="usfm-download-status-{{PathEscapeSegments .TagName}}"></span>
+||||||| parent of 03884218e0 (Fixes templates like tooltips)
+											<a href="#" onclick="window.downloadUnalignedUSFM('{{PathEscapeSegments $release.Repo.OwnerName}}', '{{PathEscapeSegments $release.Repo.Name}}', '{{PathEscapeSegments $release.TagName}}', document.getElementById('usfm-download-status-{{PathEscapeSegments $release.TagName}}')); return false;" rel="nofollow">
+												<strong>
+													{{svg "octicon-file-zip" 16 "download-icon"}}
+													Unaligned USFM (ZIP)
+												</strong>
+											</a>
+											<span id="usfm-download-status-{{PathEscapeSegments $release.TagName}}"></span>
+=======
+											<a href="#" onclick="window.downloadUnalignedUSFM('{{PathEscapeSegments $release.Repo.OwnerName}}', '{{PathEscapeSegments $release.Repo.Name}}', '{{PathEscapeSegments $release.TagName}}', document.getElementById('usfm-download-status-{{PathEscapeSegments $release.TagName}}')); return false;" rel="nofollow">
+												<strong>
+													{{svg "octicon-file-zip" 16 "download-icon"}}Unaligned USFM (ZIP)
+												</strong>
+											</a>
+											<span id="usfm-download-status-{{PathEscapeSegments $release.TagName}}"></span>
+>>>>>>> 03884218e0 (Fixes templates like tooltips)
 										</li>
 										{{end}}
 									{{end}}

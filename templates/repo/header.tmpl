@@ -11,10 +11,18 @@
 						<a class="muted tw-font-normal" href="{{.Owner.HomeLink}}">{{.Owner.Name}}</a>/<a class="muted" href="{{$.RepoLink}}">{{.Name}}</a>
 						<!--- DCS Customizations -->
 						{{if .LatestProdDM}}
-							<span class="ui green label" data-tooltip-content="Catalog: Production"><a href="{{.Link}}/releases/tag/{{.LatestProdDM.Ref | PathEscapeSegments}}" rel="nofollow">{{.LatestProdDM.Ref}}</a></span>
+							<a href="{{.Link}}/releases/tag/{{.LatestProdDM.Ref | PathEscapeSegments}}" rel="nofollow">
+								<button class="ui green label compact icon button" data-tooltip-content="Catalog: Production" aria-label="Catalog: Production">
+									{{.LatestProdDM.Ref}}
+								</button>
+							</a>
 						{{end}}
 						{{if .LatestPreprodDM}}
-							<span class="ui orange label" data-tooltip-content="Catalog: Pre-Production"><a href="{{.Link}}/releases/tag/{{.LatestPreprodDM.Ref | PathEscapeSegments}}" rel="nofollow">{{.LatestPreprodDM.Ref}}</a></span>
+							<a href="{{.Link}}/releases/tag/{{.LatestPreprodDM.Ref | PathEscapeSegments}}" rel="nofollow">
+								<button class="ui orange label compact icon button" data-tooltip-content="Catalog: Production" aria-label="Catalog: Pre-Production">
+									{{.LatestPreprodDM.Ref}}
+								</button>
+							</a>
 						{{end}}
 						<!-- END DCS Customizations -->
 					</div>
