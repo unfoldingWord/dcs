@@ -12,7 +12,7 @@
 		{{$color = "green"}}
 		{{$icon = "octicon-shield-check"}}
 	{{end}}
-	<span style="color: {{$color}}">{{svg $icon 16}}</span>
+	<span class="svg" style="color: {{$color}}">{{svg $icon 16}}</span>
 	{{ctx.Locale.Tr "repo.metadata.healthcheck"}}
 </a>
 {{$refToPreview := .Repository.DefaultBranch}}

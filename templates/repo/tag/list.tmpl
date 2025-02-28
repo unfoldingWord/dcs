@@ -42,13 +42,13 @@
 											<a class="archive-link tw-mr-2 muted" href="{{$.RepoLink}}/archive/{{.TagName | PathEscapeSegments}}.tar.gz" rel="nofollow">{{svg "octicon-file-zip" 16 "tw-mr-1"}}TAR.GZ</a>
 											<!-- DCS Customizaitons --->
 											{{if and .Repo.RepoDM (eq .Repo.RepoDM.Subject "Aligned Bible")}}
-											<a class="tw-mr-2 muted" href="#" onclick="window.downloadUnalignedUSFM('{{.Repo.Owner.Name | PathEscapeSegments}}', '{{.Repo.Name | PathEscapeSegments .Repo.Name}}', '{{.TagName | PathEscapeSegments}}'); return false;" rel="nofollow">{{svg "octicon-file-zip" 16 "tw-mr-1"}}USFM (ZIP)</a>
+											<a class="tw-mr-2 muted" href="#" onclick="window.downloadUnalignedUSFM('{{.Repo.OwnerName | PathEscapeSegments}}', '{{.Repo.Name | PathEscapeSegments .Repo.Name}}', '{{.TagName | PathEscapeSegments}}'); return false;" rel="nofollow">{{svg "octicon-file-zip" 16 "tw-mr-1"}}USFM (ZIP)</a>
 											{{end}}
 											<!-- END DCS Customizaitons --->
 										{{end}}
 
 										<!-- DCS Customizations -->
-										<a class="tw-mr-2 muted" href="{{Door43PreviewURL}}/u/{{PathEscapeSegments .Repo.Owner.Name}}/{{PathEscapeSegments .Repo.Name}}/{{PathEscapeSegments .TagName}}{{if eq AppUrl "https://qa.door43.org/"}}?server=QA{{end}}{{if eq AppUrl "https://develop.door43.org/"}}?server=DEV{{end}}" target="_blank" rel="nofollow noopener">{{svg "octicon-book" 16 "tw-mr-2"}}{{ctx.Locale.Tr "preview"}} / PDF</a>
+										<a class="tw-mr-2 muted" href="{{Door43PreviewURL}}/u/{{PathEscapeSegments .Repo.OwnerName}}/{{PathEscapeSegments .Repo.Name}}/{{PathEscapeSegments .TagName}}{{if eq AppUrl "https://qa.door43.org/"}}?server=QA{{end}}{{if eq AppUrl "https://develop.door43.org/"}}?server=DEV{{end}}" target="_blank" rel="nofollow noopener">{{svg "octicon-book" 16 "tw-mr-2"}}{{ctx.Locale.Tr "preview"}} / PDF</a>
 										<!-- END DCS Customizations -->
 
 										{{if (and $canReadReleases $.CanCreateRelease $release.IsTag)}}
