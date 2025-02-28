@@ -27,13 +27,13 @@
 						{{end}}
 						{{if and $release.Door43Metadata (not $release.Door43Metadata.ValidationError) (lt $release.Door43Metadata.Stage 3) (gt $release.Door43Metadata.Stage 0)}}
 							<a class="catalog-badge" href="{{$.RepoLink}}/src/tag/{{$release.TagName | PathEscapeSegments}}" rel="nofollow" style="opacity: inherit !important">
-								<button class="ui {{$color}} label compact icon button tooltip" data-content="Stage: {{$stage}}" aria-label="Stage: {{$stage}}">
+								<button class="ui {{$color}} label compact icon button" data-tooltip-content="Stage: {{$stage}}" aria-label="Stage: {{$stage}}">
 									{{ctx.Locale.Tr "repo.metadata.catalog"}} ({{$stage}})
 								</button>
 							</a>
 						{{else if (and (not $release.IsTag) (not $release.IsDraft) ($release.IsCatalogVersion))}}
 							<a class="catalog-badge" href="{{$.RepoLink}}/src/tag/{{$release.TagName | PathEscapeSegments}}" rel="nofollow" style="opacity: inherit !important">
-								<button class="ui red label compact icon button tooltip" data-content="{{ctx.Locale.Tr "repo.metadata.invalid_metadata_tooltip" "metadata"}}" aria-label="{{ctx.Locale.Tr "repo.metadata.invalid_metadata_tooltip" "metadata"}}">
+								<button class="ui red label compact icon button" data-tooltip-content="{{ctx.Locale.Tr "repo.metadata.invalid_metadata_tooltip" "metadata"}}" aria-label="{{ctx.Locale.Tr "repo.metadata.invalid_metadata_tooltip" "metadata"}}">
 									{{ctx.Locale.Tr "repo.metadata.invalid"}} ({{$stage}})
 								</button>
 							</a>
@@ -108,8 +108,7 @@
 										<a href="{{Door43PreviewURL}}/u/{{$release.Repo.OwnerName | PathEscapeSegments}}/{{$release.Repo.Name | PathEscapeSegments}}/{{$release.TagName | PathEscapeSegments}}{{if eq AppUrl "https://qa.door43.org/"}}?server=QA{{end}}{{if eq AppUrl "https://develop.door43.org/"}}?server=DEV{{end}}"
 											target="_blank" rel="nofollow noopener">
 											<strong>
-												{{svg "octicon-book" 16 "download-icon"}}
-												{{ctx.Locale.Tr "preview"}} / PDF
+												{{svg "octicon-book" 16 "download-icon"}}{{ctx.Locale.Tr "preview"}} / PDF
 											</strong>
 										</a>
 									</li>
@@ -117,8 +116,7 @@
 										<li style="display: block">
 											<a href="#" onclick="window.downloadUnalignedUSFM('{{PathEscapeSegments $release.Repo.OwnerName}}', '{{PathEscapeSegments $release.Repo.Name}}', '{{PathEscapeSegments $release.TagName}}', document.getElementById('usfm-download-status-{{PathEscapeSegments $release.TagName}}')); return false;" rel="nofollow">
 												<strong>
-													{{svg "octicon-file-zip" 16 "download-icon"}}
-													Unaligned USFM (ZIP)
+													{{svg "octicon-file-zip" 16 "download-icon"}}Unaligned USFM (ZIP)
 												</strong>
 											</a>
 											<span id="usfm-download-status-{{PathEscapeSegments $release.TagName}}"></span>

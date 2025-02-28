@@ -41,7 +41,7 @@
 								{{$type = "Pre-Release"}}
 							{{end}}
 							<a href="{{.Release.HTMLURL}}" rel="nofollow" style="opacity: inherit !important; margin: 0">
-								<button class="ui {{$color}} label compact icon button tooltip" data-content="Catalog: {{$type}}" aria-label="Catalog: {{$type}}">
+								<button class="ui {{$color}} label compact icon button" data-tooltip-content="Catalog: {{$type}}" aria-label="Catalog: {{$type}}">
 									{{.Ref}}
 								</button>
 							</a>

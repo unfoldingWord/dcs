@@ -5,7 +5,7 @@
 	{{range $issueCode := $healthcheck.GetOrder}}
 		{{$issues := index $healthcheck.Issues $issueCode}}
 		<div class="ui item">
-			<div class="toggle show-panel" data-panel="#{{$issueCode}}">
+			<div{{if $issues}} class="toggle show-panel" data-panel="#{{$issueCode}}"{{end}}>
 			{{if not $issues}}
 				<span style="color: green;">{{svg "octicon-check-circle-fill" 16}}</span>
 			{{else}}

@@ -169,7 +169,7 @@
 							</div>
 						</button>
 						{{template "repo/clone_script" .}}{{/* the script will update `.js-clone-url` and related elements */}}
-						<button id="api-btn" class="ui basic jump dropdown icon button tooltip" data-content="API" data-position="top right">
+						<button id="api-btn" class="ui basic jump dropdown icon button" data-tooltip-content="API" data-position="top right">
 							{{svg "octicon-code"}}
 							<div class="menu">
 								<a class="item" href="{{.Repository.APIURL}}" target="_blank">{{svg "octicon-repo" 16 "mr-3"}} API: {{ctx.Locale.Tr "repository"}}</a>

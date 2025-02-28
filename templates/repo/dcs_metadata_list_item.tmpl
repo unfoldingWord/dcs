@@ -55,9 +55,9 @@
 			</a>
 			{{end}}
 			<a class="item"
-				href="{{Door43PreviewURL}}/u/{{.ctxData.Repository.OwnerName}}/{{.ctxData.Repository.Name}}/{{PathEscapeSegments $dm.Ref}}"
+				href="{{Door43PreviewURL}}/u/{{.ctxData.Repository.OwnerName}}/{{.ctxData.Repository.Name}}/{{PathEscapeSegments $dm.Ref}}{{if eq AppUrl "https://qa.door43.org/"}}?server=QA{{end}}{{if eq AppUrl "https://develop.door43.org/"}}?server=DEV{{end}}"
 				target="_blank" rel="nofollow noopener">
-				Preview / PDF
+				{{ctx.Locale.Tr "preview"}} / PDF
 			</a>
 			{{if or $.ctxData.Permission.IsAdmin $.ctxData.IsOrganizationOwner $.ctxData.PageIsAdmin $.ctxData.PageIsUserSettings}}
 			<div class="right menu">
