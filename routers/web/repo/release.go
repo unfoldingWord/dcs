@@ -248,6 +248,12 @@ func TagsList(ctx *context.Context) {
 		return
 	}
 
+	/*** DCS Customizations ***/
+	for _, rel := range releases {
+		rel.LoadAttributes(ctx)
+	}
+	/*** END DCS Customizations ***/
+
 	ctx.Data["Releases"] = releases
 
 	numTags := ctx.Data["NumTags"].(int64)
