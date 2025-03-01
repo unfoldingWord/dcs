@@ -164,7 +164,7 @@
 					{{if .Permission.CanRead ctx.Consts.RepoUnitTypeCode}}
 					<a class="{{if .PageIsViewCode}}active {{end}}item" href="{{.RepoLink}}{{if and (ne .BranchName .Repository.DefaultBranch) (not $.PageIsWiki)}}/src/{{.BranchNameSubURL}}{{end}}">
 						<!-- DCS Customizaitons -->{{svg "octicon-file"}} {{ctx.Locale.Tr "repo.files"}}<!-- END DCS Customizaitons -->
-					</a>
+		</a>
 					{{end}}
 
 					{{if .Permission.CanRead ctx.Consts.RepoUnitTypeIssues}}
