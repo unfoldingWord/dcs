@@ -158,18 +158,22 @@ type SearchRepoOptions struct {
 	// False -> include just has no milestone
 	HasMilestones util.OptionalBool
 	// LowerNames represents valid lower names to restrict to
-	LowerNames     []string
-	Owners         []string          // DCS Customizations
-	Repos          []string          // DCS Customizations
-	Subjects       []string          // DCS Customizations
-	Resources      []string          // DCS Customizations
-	ContentFormats []string          // DCS Customization
-	Books          []string          // DCS Customizations
-	Languages      []string          // DCS Customizations
-	LanguageIsGL   util.OptionalBool // DCS Customizations
-	// query metadata type and version
-	MetadataTypes    []string // DCS Customizations
-	MetadataVersions []string // DCS Customizations
+	LowerNames       []string
+	Owners           []string            // DCS Customizations
+	Repos            []string            // DCS Customizations
+	Subjects         []string            // DCS Customizations
+	FlavorTypes      []string            // DCS Customizaitons
+	Flavors          []string            // DCS Customizations
+	Resources        []string            // DCS Customizations
+	Abbreviations    []string            // DCS Cusotmizations
+	ContentFormats   []string            // DCS Customizations
+	Books            []string            // DCS Customizations
+	Languages        []string            // DCS Customizations
+	LanguageIsGL     util.OptionalBool   // DCS Customizations
+	MetadataTypes    []string            // DCS Customizations
+	MetadataVersions []string            // DCS Customizations
+	MetadataQuery    map[string][]string // DCS Customizations
+	PartialMatch     bool                // DCS Customizations
 	// When specified true, apply some filters over the conditions:
 	// - Don't show forks, when opts.Fork is OptionalBoolNone.
 	// - Do not display repositories that don't have a description, an icon and topics.

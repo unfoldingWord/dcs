@@ -182,6 +182,7 @@ type Repository struct {
 	LatestPreprodDM *Door43Metadata `xorm:"-"`
 	DefaultBranchDM *Door43Metadata `xorm:"-"`
 	RepoDM          *Door43Metadata `xorm:"-"`
+	RepoView        *RepoView       `xorm:"-"`
 	/*** DCS Customizations ***/
 }
 
@@ -264,6 +265,11 @@ func (repo *Repository) LoadAttributes(ctx context.Context) error {
 	/*** DCS Customizations ***/
 	if err := repo.LoadLatestDMs(ctx); err != nil {
 		return err
+	}
+	if err := repo.RepoViewsCounter = repo_model.GetRepoViewsCounterByRepoID(repo.ID); err != nil {
+		log.Error("GetRepoViewCounterByRepoID [id: %d]: %v", repo.ID, err)
+	} else if repo.RepoViewsCounter != nil {
+		repo.Views = repo.RepoViewsCounter.Views
 	}
 	/*** END DCS Customizations ***/
 

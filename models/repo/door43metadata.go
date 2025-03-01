@@ -12,6 +12,7 @@ import (
 	"code.gitea.io/gitea/models/db"
 	"code.gitea.io/gitea/models/door43metadata"
 	"code.gitea.io/gitea/models/system"
+	"code.gitea.io/gitea/modules/dcs"
 	"code.gitea.io/gitea/modules/json"
 	"code.gitea.io/gitea/modules/log"
 	"code.gitea.io/gitea/modules/setting"
@@ -54,6 +55,9 @@ type Door43Metadata struct {
 	MetadataVersion   string                  `xorm:"NOT NULL"`
 	Resource          string                  `xorm:"NOT NULL"`
 	Subject           string                  `xorm:"INDEX NOT NULL"`
+	FlavorType        string                  `xorm:"INDEX NOT NULL"`
+	Flavor            string                  `xorm:"INDEX NOT NULL"`
+	Abbreviation      string                  `xorm:"INDEX NOT NULL"`
 	Title             string                  `xorm:"NOT NULL"`
 	Language          string                  `xorm:"INDEX NOT NULL"`
 	LanguageTitle     string                  `xorm:"NOT NULL"`
@@ -278,6 +282,11 @@ func (dm *Door43Metadata) GetMetadataFilename() string {
 		return "manifest.json"
 	}
 	return ""
+}
+
+func (dm *Door43Metadata) ConvertToSBMetadata100() *dcs.SBMetadata100 {
+	sb := &dcs.SBMetadata100{}
+	return sb
 }
 
 // IsDoor43MetadataExist returns true if door43 metadata with given release ID already exists.

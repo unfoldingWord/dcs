@@ -108,6 +108,7 @@ type SBMetadata100 struct {
 	Type           SB100Type                      `json:"type"`
 	LocalizedNames *map[string]SB100LocalizedName `json:"localizedNames"`
 	Metadata       *map[string]interface{}
+	Ingredients    *map[string]SB100Ingredient `xorm:"JSON"`
 }
 
 type SB100Meta struct {
@@ -118,17 +119,14 @@ type SB100Meta struct {
 }
 
 type SB100Identification struct {
-	Name         SB100En `json:"name"`
-	Abbreviation SB100En `json:"abbreviation"`
-}
-
-type SB100En struct {
-	En string `json:"en"`
+	Name         map[string]string `json:"name"`
+	Abbreviation map[string]string `json:"abbreviation"`
 }
 
 type SB100Language struct {
-	Tag  string  `json:"tag"`
-	Name SB100En `json:"name"`
+	Tag             string            `json:"tag"`
+	Name            map[string]string `json:"name"`
+	ScriptDirection string            `json:"scriptDirection"`
 }
 
 type SB100Type struct {
@@ -136,8 +134,9 @@ type SB100Type struct {
 }
 
 type SB100FlavorType struct {
-	Name   string      `json:"name"`
-	Flavor SB100Flavor `json:"flavor"`
+	Name         string              `json:"name"`
+	Flavor       SB100Flavor         `json:"flavor"`
+	CurrentScope map[string][]string `json:"currentScope"`
 }
 
 type SB100Flavor struct {
@@ -148,4 +147,12 @@ type SB100LocalizedName struct {
 	Short SB100En `json:"short"`
 	Abbr  SB100En `json:"abbr"`
 	Long  SB100En `json:"long"`
+}
+
+type SB100Ingredient struct {
+	Checksum *map[string]string        `json:"checksum"`
+	Mimetype string                    `json:"mimetype"`
+	Size     int64                     `json:"size"`
+	Scope    *map[string][]interface{} `json:"scope"`
+	Role     string                    `json:"role"`
 }

@@ -158,6 +158,12 @@ func renderDirectory(ctx *context.Context, treeLink string) {
 	if ctx.Repo.TreePath != "" {
 		ctx.Data["HideRepoInfo"] = true
 		ctx.Data["Title"] = ctx.Tr("repo.file.title", ctx.Repo.Repository.Name+"/"+path.Base(ctx.Repo.TreePath), ctx.Repo.RefName)
+	} else {
+		ctx.Repo.Repository.LoadLatestDMs(ctx)
+		if ctx.Repo.Repository.RepoDM != nil {
+			err := ctx.Repo.Repository.RepoDM.IncrementViewCount(ctx)
+			log.Error("RepoDM.IncrementViewCount failed [repo: %s, dm: %d]): %v", ctx.Repo.Repository.FullName(), ctx.Repo.Repository.RepoDM.ID, err)
+		}
 	}
 
 	subfolder, readmeFile, err := findReadmeFileInEntries(ctx, entries, true)
