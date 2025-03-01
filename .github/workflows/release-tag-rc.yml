@@ -79,7 +79,7 @@ jobs:
       - uses: docker/metadata-action@v5
         id: meta
         with:
-          images: gitea/gitea
+          images: unfoldingword/dcs 
           flavor: |
             latest=false
           # 1.2.3-rc0
@@ -94,7 +94,8 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: .
-          platforms: linux/amd64,linux/arm64
+          # platforms: linux/amd64,linux/arm64
+          platforms: linux/amd64
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
@@ -110,7 +111,7 @@ jobs:
       - uses: docker/metadata-action@v5
         id: meta
         with:
-          images: gitea/gitea
+          images: unfoldingword/dcs 
           # each tag below will have the suffix of -rootless
           flavor: |
             latest=false
@@ -127,7 +128,8 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: .
-          platforms: linux/amd64,linux/arm64
+          # platforms: linux/amd64,linux/arm64
+          platforms: linux/amd64
           push: true
           file: Dockerfile.rootless
           tags: ${{ steps.meta.outputs.tags }}
