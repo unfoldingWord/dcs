@@ -6,6 +6,7 @@ package explore
 import (
 	"fmt"
 	"net/http"
+	"strings"
 
 	"code.gitea.io/gitea/models/db"
 	repo_model "code.gitea.io/gitea/models/repo"

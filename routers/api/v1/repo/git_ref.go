@@ -207,7 +207,7 @@ func UpdateGitRef(ctx *context.APIContext) {
 	//   "404":
 	//     "$ref": "#/responses/notFound"
 
-	refName := fmt.Sprintf("refs/%s", ctx.Params("*"))
+	refName := fmt.Sprintf("refs/%s", ctx.PathParam("*"))
 	opt := web.GetForm(ctx).(*api.UpdateGitRefOption)
 
 	if ctx.Repo.GitRepo.IsReferenceExist(refName) {
@@ -277,7 +277,7 @@ func DeleteGitRef(ctx *context.APIContext) {
 	//   "409":
 	//     "$ref": "#/responses/conflict"
 
-	refName := fmt.Sprintf("refs/%s", ctx.Params("*"))
+	refName := fmt.Sprintf("refs/%s", ctx.PathParam("*"))
 
 	if !ctx.Repo.GitRepo.IsReferenceExist(refName) {
 		ctx.Error(http.StatusNotFound, "git ref does not exist:", fmt.Errorf("reference does not exist: %s", refName))

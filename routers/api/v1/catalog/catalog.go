@@ -226,7 +226,7 @@ func Search(ctx *context.APIContext) {
 func SearchOwner(ctx *context.APIContext) {
 	pathParts := strings.Split(strings.TrimSuffix(ctx.Req.URL.EscapedPath(), "/"), "/")
 	redirectPath := strings.Join(pathParts[:len(pathParts)-1], "/")
-	redirectPath += "?owner=" + url.QueryEscape(ctx.Params("username"))
+	redirectPath += "?owner=" + url.QueryEscape(ctx.PathParam("username"))
 	if ctx.Req.URL.RawQuery != "" {
 		redirectPath += "&" + ctx.Req.URL.RawQuery
 	}
@@ -820,7 +820,7 @@ func GetCatalogEntry(ctx *context.APIContext) {
 	//   "404":
 	//     "$ref": "#/responses/notFound"
 
-	ref := ctx.Params("*")
+	ref := ctx.PathParam("*")
 	var dm *repo.Door43Metadata
 	var err error
 	dm, err = repo.GetDoor43MetadataByRepoIDAndRef(ctx, ctx.Repo.Repository.ID, ref)
@@ -873,9 +873,9 @@ func GetCatalogMetadata(ctx *context.APIContext) {
 	//   "404":
 	//     "$ref": "#/responses/notFound"
 
-	ref := ctx.Params("*")
+	ref := ctx.PathParam("*")
 	if ref == "" {
-		ref = ctx.Params("ref")
+		ref = ctx.PathParam("ref")
 	}
 	dm, err := repo.GetDoor43MetadataByRepoIDAndRef(ctx, ctx.Repo.Repository.ID, ref)
 	if err != nil {
@@ -918,9 +918,9 @@ func GetCatalogValidation(ctx *context.APIContext) {
 	//   "404":
 	//     "$ref": "#/responses/notFound"
 
-	ref := ctx.Params("*")
+	ref := ctx.PathParam("*")
 	if ref == "" {
-		ref = ctx.Params("ref")
+		ref = ctx.PathParam("ref")
 	}
 	dm, err := repo.GetDoor43MetadataByRepoIDAndRef(ctx, ctx.Repo.Repository.ID, ref)
 	if err != nil {
@@ -936,7 +936,7 @@ func GetCatalogValidation(ctx *context.APIContext) {
 
 // GetCatalogMetadataOLD is depricated
 func GetCatalogMetadataOLD(ctx *context.APIContext) {
-	ref := ctx.Params("ref")
+	ref := ctx.PathParam("ref")
 	dm, err := repo.GetDoor43MetadataByRepoIDAndRef(ctx, ctx.Repo.Repository.ID, ref)
 	if err != nil {
 		if !repo.IsErrDoor43MetadataNotExist(err) {

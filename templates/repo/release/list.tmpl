@@ -18,7 +18,6 @@
 						<!-- DCS Customizations -->
 						{{$stage := ""}}
 						{{$color := ""}}
-						{{if .Release.IsPrerelease}}
 						{{if $release.IsPrerelease}}
 							{{$stage = "preprod"}}
 							{{$color = "orange"}}

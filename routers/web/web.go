@@ -1652,7 +1652,7 @@ func registerRoutes(m *web.Router) {
 	m.Get("/tools", dcs.Tools)
 	m.Group("/catalog", func() {
 		m.Get("", dcs.Catalog)
-	}, ignSignIn)
+	}, optSignIn)
 	/*** END DCS Customizations ***/
 
 	m.NotFound(func(w http.ResponseWriter, req *http.Request) {
