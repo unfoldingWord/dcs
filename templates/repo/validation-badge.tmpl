@@ -1,0 +1,24 @@
+{{$errors := ""}}
+{{$showValidationBadge := false}}
+
+{{if and ($.root.Door43Metadata) (eq $.file.Name $.root.Door43Metadata.MetadataFilename)}}
+	{{$showValidationBadge = true}}
+	{{if $.root.Door43Metadata.ValidationError}}
+		{{$errors = $.root.Door43Metadata.ValidationErrorAsTemplateHTML}}
+	{{end}}
+{{end}}
+
+{{if $showValidationBadge}}
+	<div class="ui label {{if not $errors}}green{{else}}red{{end}} validation-message-badge" style="margin-left: 5px">
+		{{if not $errors}}
+			{{ctx.Locale.Tr "repo.metadata.valid"}}
+		{{else}}
+			{{ctx.Locale.Tr "repo.metadata.invalid"}} {{svg "octicon-info"}}
+		{{end}}
+		<div class="validation-message-tooltip" style="display: none">
+			<div class="tw-p-2">
+				{{if $errors}}{{$errors}}{{else}}{{ctx.Locale.Tr "repo.metadata.valid_metadata_tooltip" $.file.Name}}{{end}}
+			</div>
+		</div>
+	</div>
+{{end}}

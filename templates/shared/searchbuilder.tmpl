@@ -1,0 +1,185 @@
+<style>
+    #search-builder {
+        display: flex;
+        flex-wrap: wrap;
+        display: none;
+        margin-top: 10px;
+    }
+
+    #search-builder-toggle {
+        cursor: pointer;
+        font-weight: bold;
+        text-decoration: none;
+        padding-left: 20px;
+        font-style: italic;
+    }
+
+    #search-builder-arrow {
+        margin-left: 2px;
+        font-size: 0.8em;
+    }
+
+    #search-builder .input-group {
+        display: flex;
+        flex-wrap: wrap;
+        max-width: 50%;
+        margin-bottom: 10px;
+        flex: 1 1 45%;
+        /* Grow to fill space, but not more than 45% */
+        min-width: 200px;
+        /* Minimum width for input groups */
+        box-sizing: border-box;
+        padding: 5px;
+    }
+
+    #search-builder .input-group label {
+        width: 120px;
+        /* Fixed width for labels */
+        flex-shrink: 0;
+        font-weight: bold;
+    }
+
+    #search-builder .input-group input {
+        flex-grow: 1;
+        min-width: 0;
+        /* Prevent input from overflowing */
+    }
+
+    @media (max-width: 600px) {
+        .search-builder .input-group {
+            flex: 1 1 100%;
+            /* Full width on small screens */
+        }
+    }
+</style>
+
+<div id="search-builder-toggle">Search Builder
+    <span id="search-builder-arrow">&#9654;</span>
+</div>
+<div id="search-builder">
+</div>
+
+<script>
+    document.getElementById('search-builder-toggle').addEventListener('click', function () {
+        const searchBuilder = document.getElementById('search-builder');
+        const searchBuilderArrow = document.getElementById('search-builder-arrow');
+        const display = searchBuilder.style.display || 'none';
+        console.log(display);
+        if (display === 'none') {
+            searchBuilderArrow.innerHTML = '&#9660;';
+            searchBuilder.style.display = 'flex';
+        } else {
+            searchBuilderArrow.innerHTML = '&#9654;';
+            searchBuilder.style.display = 'none';
+        }
+    });
+
+    const isCatalogSearch = {{if .IsCatalogSearch}}true{{else}}false{{end}};
+    const qInput = document.querySelector('[name="q"]');
+    const advancedSearchContainer = document.getElementById('search-builder');
+    const catalogOnlyFields = ['stage', 'tag'];
+    const repoOnlyFields = ['healthcheck'];
+    const searchFields = [
+        { name: 'query', tooltip: 'queries repo name, owner, description & topics. Allows partial match' },
+        { name: 'lang', tooltip: 'language code, e.g. en, fr' },
+        { name: 'topic', tooltip: 'the topic of a repo, e.g. tc-ready' },
+        { name: 'without_topic', tooltip: 'show entries that do NOT have this topic' },
+        { name: 'subject', tooltip: 'type of resource, e.g. Aligned Bible, Open Bibles Stories', options: ["Aligned Bible", "Aramaic Grammar", "Bible", "Greek Grammar", "Greek Lexicon", "Greek New Testament", "Hebrew Grammar", "Hebrew Old Testament", "Hebrew-Aramaic Lexicon", "OBS Study Notes", "OBS Study Questions", "OBS Translation Notes", "OBS Translation Questions", "Open Bible Stories", "Study Notes", "Study Questions", "Training Library", "Translation Academy", "Translation Notes", "Translation Questions", "Translation Words", "TSV Study Notes", "TSV Study Questions", "TSV Translation Notes", "TSV Translation Questions", "TSV Translation Words Links", "TSV OBS Study Notes", "TSV OBS Study Questions", "TSV OBS Translation Notes", "TSV OBS Translation Questions", "TSV OBS Translation Words Links"] },
+        { name: 'owner', tooltip: 'user or organization, e.g. unfoldingWord' },
+        { name: 'repo', tooltip: 'repository name, e.g. en_ult' },
+        { name: 'abbreviation', tooltip: 'identifier or abbreviation of a resource, e.g. ult', options: ['ult', 'ust', 'glt', 'gst', 'ta', 'tn', 'tq', 'tw', 'twl', 'obs', 'obs-tn', 'obs-tq', 'sn', 'sq'] },
+        { name: 'book', tooltip: 'contains this Bible book, e.g. mat, mrk, luk, jhn', options: ["gen", "exo", "lev", "num", "deu", "jos", "jdg", "rut", "1sa", "2sa", "1ki", "2ki", "1ch", "2ch", "ezr", "neh", "est", "job", "psa", "pro", "ecc", "sng", "isa", "jer", "lam", "ezk", "dan", "hos", "jol", "amo", "oba", "jon", "mic", "nam", "hab", "zep", "hag", "zec", "mal", "mat", "mrk", "luk", "jhn", "act", "rom", "1co", "2co", "gal", "eph", "php", "col", "1th", "2th", "1ti", "2ti", "tit", "phm", "heb", "jas", "1pe", "2pe", "1jn", "2jn", "3jn", "jud", "rev", "obs", "frt", "bak"] },
+        { name: 'flavor_type', tooltip: 'scripture burrito flavor type, e.g. scripture, parascriptural, textStories', options: ['gloss', 'parascriptural', 'peripheral', 'scripture'] },
+        { name: 'flavor', tooltip: 'scripture burrito flavor, e.g. textTranslation, textStories, gloss', options: ['audioTranslation', 'embossedBrailleScripture', 'signLanguageVideoTranslation', 'textTranslation', 'textStories', 'typesetScripture', 'wordAlignment'] },
+        { name: 'metadata_type', tooltip: 'type of repo metadata schema, e.g. rc, sb, tc, ts', options: ['rc', 'sb', 'tc', 'ts'] },
+        { name: 'content_format', tooltip: 'content format, e.g. markdown, tsv7, tsv9, usfm', options: ['markdown', 'tsv7', 'tsv9', 'usfm'] },
+        { name: 'tag', tooltip: 'released with the given tag, e.g. v3' },
+        { name: 'stage', tooltip: 'stage of the release: prod, preprod, latest or other', options: ['prod', 'preprod', 'latest', 'other'] },
+        { name: 'healthcheck', tooltip: 'healthcheck severity level: error, warning, info or success', options: ['error', 'warning', 'info', 'success'] }
+    ];
+
+    qInput.addEventListener('input', updateAdvancedFields);
+
+    document.addEventListener('DOMContentLoaded', function () {
+        searchFields.forEach(fieldObj => {
+            const inputGroup = document.createElement('div');
+            inputGroup.className = 'input-group';
+
+            const label = document.createElement('label');
+            label.className = 'input-label';
+            label.setAttribute('for', fieldObj.name);
+            label.textContent = fieldObj.name.replace('_', ' ') + ':';
+            label.setAttribute('title', fieldObj.tooltip);
+
+            const input = document.createElement('input');
+            input.setAttribute('type', 'text');
+            input.setAttribute('name', fieldObj.name);
+            input.setAttribute('id', fieldObj.name);
+            input.setAttribute('placeholder', fieldObj.tooltip);
+            input.addEventListener('input', updateQueryField)
+
+            if (fieldObj.options) {
+                const datalist = document.createElement('datalist');
+                datalist.id = fieldObj.name + '-options';
+                fieldObj.options.forEach(option => {
+                    const optionElement = document.createElement('option');
+                    optionElement.value = option;
+                    datalist.appendChild(optionElement);
+                });
+                input.setAttribute('list', datalist.id);
+                inputGroup.appendChild(datalist);
+            }
+
+            inputGroup.appendChild(label);
+            inputGroup.appendChild(input);
+            if (!isCatalogSearch && catalogOnlyFields.includes(fieldObj.name)) {
+                inputGroup.style.display = 'none';
+            }
+            if (isCatalogSearch && repoOnlyFields.includes(fieldObj.name)) {
+                inputGroup.style.display = 'none';
+            }
+            advancedSearchContainer.appendChild(inputGroup);
+        });
+
+        // Initialize advanced fields based on initial q value
+        updateAdvancedFields();
+    });
+
+    function updateAdvancedFields() {
+        const tokens = qInput?.value?.split(',') || [];
+        console.log("updating advanced fields", tokens);
+        let currentField = document.getElementById('query');
+        const fields = searchFields.map(fieldObj => fieldObj.name);
+
+        searchFields.forEach(fieldObj => {
+            document.getElementById(fieldObj.name).value = '';
+        });
+
+        tokens.forEach((token, i) => {
+            token = token.trim();
+            value = token
+            console.log(token, value);
+            if (token.includes(':')) {
+                let [f, v] = token.split(':');
+                f = f.trim();
+                v = v.trim();
+                if (fields.includes(f)) {
+                    value = v;
+                    currentField = document.getElementById(f);
+                }
+            }
+            currentField.value += (currentField.value ? ', ' : '') + value;
+        });
+    }
+
+    function updateQueryField() {
+        qInput.value = '';
+
+        searchFields.forEach(fieldObj => {
+            const value = document.getElementById(fieldObj.name).value;
+            if (value) {
+                qInput.value += (qInput.value ? ', ' : '') + (fieldObj.name != "query" ? fieldObj.name + ':' : '') + value;
+            }
+        });
+    }
+</script>
