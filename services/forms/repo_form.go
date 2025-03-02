@@ -888,7 +888,7 @@ type NewDoor43MetadataForm struct {
 
 // Validate validates the fields
 func (f *NewDoor43MetadataForm) Validate(req *http.Request, errs binding.Errors) binding.Errors {
-	ctx := context.GetWebContext(req)
+	ctx := context.GetWebContext(req.Context())
 	return middleware.Validate(errs, ctx.Data, f, ctx.Locale)
 }
 
@@ -899,6 +899,6 @@ type EditDoor43MetadataForm struct {
 
 // Validate validates the fields
 func (f *EditDoor43MetadataForm) Validate(req *http.Request, errs binding.Errors) binding.Errors {
-	ctx := context.GetWebContext(req)
+	ctx := context.GetWebContext(req.Context())
 	return middleware.Validate(errs, ctx.Data, f, ctx.Locale)
 }
