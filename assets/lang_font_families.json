@@ -56,6 +56,9 @@
   "ahk": [
     "Noto Sans Myanmar"
   ],
+  "aho": [
+    "Noto Sans Ahom"
+  ],
   "aij": [
     "Noto Sans Hebrew"
   ],
@@ -520,6 +523,9 @@
   "dry": [
     "Noto Sans Devanagari"
   ],
+  "dsn": [
+    "Noto Sans Deseret"
+  ],
   "dsq": [
     "Noto Naskh Arabic"
   ],
@@ -564,6 +570,10 @@
   ],
   "emk": [
     "Noto Naskh Arabic"
+  ],
+  "ett": [
+    "Noto Sans Linear A",
+    "Noto Sans Linear B"
   ],
   "fa": [
     "Noto Naskh Arabic"
@@ -706,6 +716,10 @@
   "hac": [
     "Noto Naskh Arabic"
   ],
+  "ha": [
+    "Noto Sans",
+    "Noto Sans Adlam"
+  ],
   "haj": [
     "Noto Sans Bengali"
   ],
@@ -780,6 +794,9 @@
   ],
   "ikt": [
     "Noto Sans Canadian Aboriginal"
+  ],
+  "ii": [
+    "Noto Sans Yi"
   ],
   "int": [
     "Noto Sans Myanmar"
@@ -1011,6 +1028,9 @@
   ],
   "kns": [
     "Noto Sans Thai"
+  ],
+  "ko": [
+    "Noto Sans KR"
   ],
   "kqd": [
     "Noto Sans Syriac Eastern"
@@ -1319,6 +1339,9 @@
   "nct": [
     "Noto Sans Bengali"
   ],
+  "new": [
+    "Noto Sans Newa"
+  ],
   "ngt": [
     "Noto Sans Lao"
   ],
@@ -1570,6 +1593,9 @@
   "rmz": [
     "Noto Sans Myanmar"
   ],
+  "ru": [
+    "Noto Sans"
+  ],
   "rup": [
     "Noto Sans Cypriot"
   ],
@@ -1580,6 +1606,8 @@
     "Noto Sans JP"
   ],
   "sa": [
+    "Noto Sans Devanagari",
+    "Noto Sans Grantha",
     "Noto Sans Myanmar",
     "Noto Sans Sinhala"
   ],
@@ -1734,7 +1762,7 @@
     "Noto Sans Syriac Western"
   ],
   "syl": [
-    "Noto Sans Bengali"
+    "Noto Sans Syloti Nagri"
   ],
   "syn": [
     "Noto Sans Syriac Eastern"
@@ -1769,7 +1797,8 @@
     "Noto Sans Bengali"
   ],
   "tdd": [
-    "Noto Sans Tai Le"
+    "Noto Sans Tai Le",
+    "Noto Sans New Tai Lue"
   ],
   "tdg": [
     "Noto Sans Devanagari"
@@ -1888,6 +1917,9 @@
   "twm": [
     "Noto Sans Devanagari"
   ],
+  "txg": [
+    "Noto Sans Tangut"
+  ],
   "txo": [
     "Noto Sans Bengali"
   ],
@@ -1952,7 +1984,8 @@
     "Noto Sans Telugu"
   ],
   "wbr": [
-    "Noto Sans Devanagari"
+    "Noto Sans Devanagari",
+    "Noto Sans Warang Citi"
   ],
   "wlo": [
     "Noto Naskh Arabic"
