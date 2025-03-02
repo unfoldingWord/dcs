@@ -89,6 +89,9 @@ func ToAPIPullRequest(ctx context.Context, pr *issues_model.PullRequest, doer *u
 		Updated:        pr.Issue.UpdatedUnix.AsTimePtr(),
 		PinOrder:       apiIssue.PinOrder,
 
+		Status:          pr.Status.String(), // DCS Customizations
+		ConflictedFiles: pr.ConflictedFiles, // DCS Customizations
+
 		AllowMaintainerEdit: pr.AllowMaintainerEdit,
 
 		Base: &api.PRBranchInfo{

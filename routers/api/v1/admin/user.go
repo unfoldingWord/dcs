@@ -80,7 +80,7 @@ func CreateUser(ctx *context.APIContext) {
 		FullName:           form.FullName,
 		Email:              form.Email,
 		Passwd:             form.Password,
-		MustChangePassword: true,
+		MustChangePassword: false, // DCS Customizations - so that tS user creation works
 		LoginType:          auth.Plain,
 		LoginName:          form.LoginName,
 	}

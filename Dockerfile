@@ -5,7 +5,7 @@ ARG GOPROXY
 ENV GOPROXY=${GOPROXY:-direct}
 
 ARG GITEA_VERSION
-ARG TAGS="sqlite sqlite_unlock_notify"
+ARG TAGS="sqlite sqlite_unlock_notify sqlite_json"
 ENV TAGS="bindata timetzdata $TAGS"
 ARG CGO_EXTRA_CFLAGS
 
@@ -59,6 +59,9 @@ RUN apk --no-cache add \
     su-exec \
     gnupg \
     && rm -rf /var/cache/apk/*
+
+#For DCS local scripts
+RUN apk --no-cache add jq yq
 
 RUN addgroup \
     -S -g 1000 \

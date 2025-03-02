@@ -15,7 +15,7 @@
 		{{end}}
 		{{if and (not ctx.Consts.RepoUnitTypeCode.UnitGlobalDisabled) .IsRepoIndexerEnabled (not .CodePageIsDisabled)}}
 		<a class="{{if .PageIsExploreCode}}active {{end}}item" href="{{AppSubUrl}}/explore/code">
-			{{svg "octicon-code"}} {{ctx.Locale.Tr "explore.code"}}
+			{{svg "octicon-file"}} {{ctx.Locale.Tr "explore.code"}}
 		</a>
 		{{end}}
 	</div>

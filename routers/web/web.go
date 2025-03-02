@@ -26,6 +26,7 @@ import (
 	"code.gitea.io/gitea/routers/common"
 	"code.gitea.io/gitea/routers/web/admin"
 	"code.gitea.io/gitea/routers/web/auth"
+	"code.gitea.io/gitea/routers/web/dcs" // DCS Customizations
 	"code.gitea.io/gitea/routers/web/devtest"
 	"code.gitea.io/gitea/routers/web/events"
 	"code.gitea.io/gitea/routers/web/explore"
@@ -1198,6 +1199,18 @@ func registerRoutes(m *web.Router) {
 				m.Get("", repo.ViewIssue)
 			})
 		})
+		// DCS Customizations
+		m.Group("/healthcheck", func() {
+			m.Get("", repo.GetRepoHealthcheck)
+			m.Get("/update", repo.UpdateDoor43Metadata)
+			m.Post("/update", repo.UpdateDoor43Metadata) // TODO: Make this /{id} for a single DM
+		})
+		m.Group("/metadata", func() {
+			m.Get("", repo.GetAllRepoDoor43Metadata)
+			m.Get("/update", repo.UpdateDoor43Metadata)
+			m.Post("/update", repo.UpdateDoor43Metadata) // TODO: Make this /{id} for a single DM
+		})
+		// END DCS Customizations
 	}, optSignIn, context.RepoAssignment, context.RequireRepoReaderOr(unit.TypeIssues, unit.TypePullRequests, unit.TypeExternalTracker))
 	// end "/{username}/{reponame}": issue/pull list, issue/pull view, external tracker
 
@@ -1570,20 +1583,20 @@ func registerRoutes(m *web.Router) {
 			m.Get("/commit/*", context.RepoRefByType(context.RepoRefCommit), repo.RefCommits)
 			// "/*" route is deprecated, and kept for backward compatibility
 			m.Get("/*", context.RepoRefByType(context.RepoRefUnknown), repo.RefCommits)
-		}, repo.MustBeNotEmpty)
+		}, repo.MustBeNotEmpty, reqSignIn) // DCS Customizations: requiring login for commit-related web routes
 
 		m.Group("/blame", func() {
 			m.Get("/branch/*", context.RepoRefByType(context.RepoRefBranch), repo.RefBlame)
 			m.Get("/tag/*", context.RepoRefByType(context.RepoRefTag), repo.RefBlame)
 			m.Get("/commit/*", context.RepoRefByType(context.RepoRefCommit), repo.RefBlame)
-		}, repo.MustBeNotEmpty)
+		}, repo.MustBeNotEmpty, reqSignIn) // DCS Customizations: requiring login for commit-related web routes
 
 		m.Group("", func() {
 			m.Get("/graph", repo.Graph)
 			m.Get("/commit/{sha:([a-f0-9]{7,64})$}", repo.SetEditorconfigIfExists, repo.SetDiffViewStyle, repo.SetWhitespaceBehavior, repo.Diff)
 			m.Get("/commit/{sha:([a-f0-9]{7,64})$}/load-branches-and-tags", repo.LoadBranchesAndTags)
 			m.Get("/cherry-pick/{sha:([a-f0-9]{7,64})$}", repo.SetEditorconfigIfExists, repo.CherryPick)
-		}, repo.MustBeNotEmpty, context.RepoRef())
+		}, repo.MustBeNotEmpty, context.RepoRef(), reqSignIn) // DCS Customizations: requiring login for commit-related web routes
 
 		m.Get("/rss/branch/*", context.RepoRefByType(context.RepoRefBranch), feedEnabled, feed.RenderBranchFeed)
 		m.Get("/atom/branch/*", context.RepoRefByType(context.RepoRefBranch), feedEnabled, feed.RenderBranchFeed)
@@ -1633,6 +1646,14 @@ func registerRoutes(m *web.Router) {
 			m.Post("/actions-mock/runs/{run}/jobs/{job}", web.Bind(actions.ViewRequest{}), devtest.MockActionsRunsJobs)
 		})
 	}
+
+	/*** DCS Customizations ***/
+	m.Get("/about", dcs.About)
+	m.Get("/tools", dcs.Tools)
+	m.Group("/catalog", func() {
+		m.Get("", dcs.Catalog)
+	}, optSignIn)
+	/*** END DCS Customizations ***/
 
 	m.NotFound(func(w http.ResponseWriter, req *http.Request) {
 		ctx := context.GetWebContext(req)

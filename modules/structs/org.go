@@ -15,6 +15,12 @@ type Organization struct {
 	Location                  string `json:"location"`
 	Visibility                string `json:"visibility"`
 	RepoAdminChangeTeamAccess bool   `json:"repo_admin_change_team_access"`
+	// All languages of the repos the org owns
+	RepoLanguages []string `json:"repo_languages"` // DCS Customizations
+	// All subjects of the repos the org owns
+	RepoSubjects []string `json:"repo_subjects"` // DCS Customizations
+	// All metadata types of the repos the org owns
+	RepoMetadataTypes []string `json:"repo_metadata_types"` // DCS Customizations
 	// deprecated
 	UserName string `json:"username"`
 }
