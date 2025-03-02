@@ -1,5 +1,5 @@
 # The full repository name
-repo: go-gitea/gitea
+repo: unfolding/dcs
 
 # Service type (gitea or github)
 service: github

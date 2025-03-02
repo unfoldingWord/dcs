@@ -64,6 +64,9 @@ type Repository struct {
 	RepoLink     string
 	CloneLink    repo_model.CloneLink
 	CommitsCount int64
+	/*** DCS Customizations ***/
+	Door43Metadata *repo_model.Door43Metadata
+	/*** END DCS Customizations ***/
 
 	PullRequest *PullRequest
 }
@@ -392,6 +395,14 @@ func repoAssignment(ctx *Context, repo *repo_model.Repository) {
 		}
 	}
 
+	/*** DCS Customizations ***/
+	err = repo.LoadLatestDMs(ctx)
+	if err != nil {
+		ctx.ServerError("LoadLatestDMs", err)
+		return
+	}
+	/*** END DCS Customizations ***/
+
 	ctx.Repo.Repository = repo
 	ctx.Data["RepoName"] = ctx.Repo.Repository.Name
 	ctx.Data["IsEmptyRepo"] = ctx.Repo.Repository.IsEmpty
@@ -535,6 +546,9 @@ func RepoAssignment(ctx *Context) context.CancelFunc {
 
 	ctx.Data["Title"] = owner.Name + "/" + repo.Name
 	ctx.Data["Repository"] = repo
+	/*** DCS Customizations ***/
+	ctx.Data["RepoDM"] = repo.RepoDM
+	/*** END DCS Customizations ***/
 	ctx.Data["Owner"] = ctx.Repo.Repository.Owner
 	ctx.Data["IsRepositoryOwner"] = ctx.Repo.IsOwner()
 	ctx.Data["IsRepositoryAdmin"] = ctx.Repo.IsAdmin()
@@ -996,6 +1010,16 @@ func RepoRefByType(detectRefType RepoRefType, opts ...RepoRefByTypeOptions) func
 				return cancel
 			}
 		}
+
+		/*** DCS Customizations ***/
+		if ctx.Repo.IsViewBranch || ctx.Repo.IsViewTag {
+			ctx.Repo.Door43Metadata, err = repo_model.GetDoor43MetadataByRepoIDAndRef(ctx, ctx.Repo.Repository.ID, refName)
+			if err == nil && ctx.Repo.Door43Metadata != nil {
+				ctx.Repo.Door43Metadata.Repo = ctx.Repo.Repository
+			}
+		}
+		ctx.Data["Door43Metadata"] = ctx.Repo.Door43Metadata
+		/*** END DCS Customizations ***/
 
 		ctx.Data["BranchName"] = ctx.Repo.BranchName
 		ctx.Data["RefName"] = ctx.Repo.RefName

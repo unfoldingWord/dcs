@@ -52,6 +52,11 @@ import {initRepoBranchButton} from './features/repo-branch.ts';
 import {initCommonOrganization} from './features/common-organization.ts';
 import {initRepoWikiForm} from './features/repo-wiki.ts';
 import {initRepository, initBranchSelectorTabs} from './features/repo-legacy.ts';
+/** DCS Customizations **/
+import {initDCSInfoIcon} from './features/dcs-info-icon.ts';
+import {initDCSValidationBadge} from './features/dcs-validation-badge.ts';
+import {initDCSLanguageFonts} from './features/dcs-language-fonts.ts';
+/** END DCS Customizations **/
 import {initCopyContent} from './features/copycontent.ts';
 import {initCaptcha} from './features/captcha.ts';
 import {initRepositoryActionView} from './components/RepoActionView.vue';
@@ -163,6 +168,12 @@ onDomReady(() => {
     initAdminSelfCheck,
 
     initDashboardRepoList,
+
+    /** DCS Customizations **/
+    initDCSInfoIcon,
+    initDCSValidationBadge,
+    initDCSLanguageFonts,
+    /** END DCS Customizations **/
 
     initNotificationCount,
     initNotificationsTable,

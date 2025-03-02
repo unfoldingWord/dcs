@@ -9,6 +9,7 @@ import (
 	"image"
 	"io"
 	"path"
+	"path/filepath" // DCS Customizations
 	"slices"
 	"strings"
 
@@ -46,6 +47,11 @@ func prepareToRenderFile(ctx *context.Context, entry *git.TreeEntry) {
 	ctx.Data["FileIsSymlink"] = entry.IsLink()
 	ctx.Data["FileName"] = blob.Name()
 	ctx.Data["RawFileLink"] = ctx.Repo.RepoLink + "/raw/" + ctx.Repo.BranchNameSubURL() + "/" + util.PathEscapeSegments(ctx.Repo.TreePath)
+	/*** DCS Customizations ***/
+	fileExt := filepath.Ext(blob.Name())
+	ctx.Data["FileExt"] = fileExt
+	ctx.Data["IgnoreLanguageDirection"] = fileExt != ".md" || blob.Name() == "README.md" || blob.Name() == "LICENSE.md"
+	/*** END DCS Customizations ***/
 
 	commit, err := ctx.Repo.Commit.GetCommitByPath(ctx.Repo.TreePath)
 	if err != nil {

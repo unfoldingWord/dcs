@@ -29,14 +29,63 @@
 								<span class="ui basic label">{{ctx.Locale.Tr "repo.desc.sha256"}}</span>
 							{{end}}
 						</span>
+							<!-- DCS Customizations -->
+							{{if .RepoDM}}
+								{{$color := ""}}
+								{{$icon := ""}}
+								{{if eq .RepoDM.HealthcheckSeverity.String "error"}}
+									{{$color = "red"}}
+									{{$icon = "octicon-shield-x"}}
+								{{else if eq .RepoDM.HealthcheckSeverity.String "warning"}}
+									{{$color = "orange"}}
+									{{$icon = "octicon-shield"}}
+								{{else if eq .RepoDM.HealthcheckSeverity.String "info"}}
+									{{$color = "blue"}}
+									{{$icon = "octicon-shield-lock"}}
+								{{end}}
+								{{if ne $icon ""}}
+									<span class="ui basic label" data-tooltip-content="Healthcheck: {{.RepoDM.HealthcheckSeverity.String}}">
+										<a class="muted" href="{{.Link}}/healthcheck" style="color: {{$color}}">
+											{{svg $icon 16}}
+										</a>
+									</span>
+								{{end}}
+								{{if .LatestProdDM}}
+									<a href="{{.Link}}/releases/tag/{{.LatestProdDM.Ref | PathEscapeSegments}}" rel="nofollow">
+										<button class="ui green label compact icon button tooltip" data-content="Catalog: Production" aria-label="Catalog: Production">
+											{{.LatestProdDM.Ref}}
+										</button>
+									</a>
+								{{end}}
+								{{if .LatestPreprodDM}}
+									<a href="{{.Link}}/releases/tag/{{.LatestPreprodDM.Ref | PathEscapeSegments}}" rel="nofollow">
+										<button class="ui orange label compact icon button tooltip" data-content="Catalog: Pre-Production" aria-label="Catalog: Production">
+											{{.LatestPreprodDM.Ref}}
+										</button>
+									</a>
+								{{end}}
+							{{end}}
+							<!-- END DCS Customizations -->
 					</div>
-					<div class="flex-item-trailing muted-links">
-						{{if .PrimaryLanguage}}
-							<a class="flex-text-inline" href="?q={{$.Keyword}}&sort={{$.SortType}}&language={{.PrimaryLanguage.Language}}{{if $.TabName}}&tab={{$.TabName}}{{end}}">
-								<i class="color-icon tw-mr-2" style="background-color: {{.PrimaryLanguage.Color}}"></i>
-								{{.PrimaryLanguage.Language}}
+					<div class="flex-item-trailing">
+						<!-- DCS Customizations -->
+						{{if .RepoDM.Language}}
+							<a class="muted" href="{{$.Link}}?sort={{$.SortType}}&q=lang%3A{{.RepoDM.Language}}" data-tooltip-content="{{.RepoDM.LanguageTitle}} ({{.RepoDM.Language}}, {{.RepoDM.LanguageDirection}})">
+								<span class="tx-flex tw-items-center tw-mr-2"><i class="color-icon tw-mr-2" style="background-color: {{GetColorFromString .RepoDM.Language}}"></i>{{.RepoDM.Language}}</span>
 							</a>
 						{{end}}
+						{{if .RepoDM.Subject}}
+							<a class="muted" href="{{$.Link}}?sort={{$.SortType}}&q=subject%3A{{.RepoDM.Subject}}" data-tooltip-content="Abbreviation: {{.RepoDM.Abbreviation}}">
+								<span class="tx-flex tw-items-center tw-mr-2"><i class="color-icon tw-mr-2" style="background-color: {{GetColorFromString .RepoDM.Subject}}"></i>{{.RepoDM.Subject}}</span>
+							</a>
+						{{end}}
+						{{if and .RepoDM.MetadataType .RepoDM.MetadataVersion}}
+						<a class="muted" href="?sort={{$.SortType}}&q=metadata_type%3A{{.RepoDM.MetadataType}}" data-tooltip-content="{{ctx.Locale.Tr "repo.metadata.metadata_type"}}: {{.RepoDM.MetadataTypeTitle}} ({{.RepoDM.MetadataType}} {{.RepoDM.MetadataVersion}})">
+							<img src="{{AssetUrlPrefix}}/img/dcs/{{.RepoDM.MetadataTypeIcon}}" style="height:16px;vertical-align:middle" />
+								{{.RepoDM.MetadataType}} {{.RepoDM.MetadataVersion}}
+						</a>
+						{{end}}
+						<!-- END DCS Customizations -->
 						{{if not $.DisableStars}}
 							<a class="flex-text-inline" href="{{.Link}}/stars">
 								<span aria-label="{{ctx.Locale.Tr "repo.stars"}}">{{svg "octicon-star" 16}}</span>
@@ -56,7 +105,7 @@
 				{{if .Topics}}
 					<div class="label-list">
 					{{range .Topics}}
-						{{if ne . ""}}<a class="ui label" href="{{AppSubUrl}}/explore/repos?q={{.}}&topic=1">{{.}}</a>{{end}}
+						{{if ne . ""}}<a class="ui label" href="{{AppSubUrl}}/explore/repos?q=topic%3A{{.}}">{{.}}</a>{{end}}
 					{{end}}
 					</div>
 				{{end}}
