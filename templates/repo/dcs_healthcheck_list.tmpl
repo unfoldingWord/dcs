@@ -24,11 +24,11 @@
 					{{range $issue := $issues}}
 						<div class="status-item {{$issue.SeverityLevel}}">
 							<div class="item-text">
-								{{RenderMarkdownToHtml $.Context $issue.Details}}
+								{{ctx.RenderUtils.MarkdownToHtml $issue.Details}}
 							</div>
 							{{if eq $.Door43Metadata.RefType "branch"}}
 								<div class="item-text">
-									{{RenderMarkdownToHtml $.Context $issue.Suggestion}}
+									{{ctx.RenderUtils.MarkdownToHtml $issue.Suggestion}}
 								</div>
 							{{end}}
 						</div>
