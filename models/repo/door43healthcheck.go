@@ -363,8 +363,6 @@ func (dm *Door43Metadata) GetHealthcheck(ctx context.Context) *HealthcheckGroupe
 
 	dm.LoadRepo(ctx)
 	dm.Repo.LoadLatestDMs(ctx)
-	log.Error("dm.Repo.LatestProdDM: %v", dm.Repo.LatestProdDM)
-	log.Error("dm.Ref: %s, %s", dm.Ref, dm.Repo.DefaultBranch)
 	if dm.Ref == dm.Repo.DefaultBranch {
 		if healthcheckGroupedIssues.SeverityLevelCount[SeverityLevelError] > 0 {
 			item := &Door43HealthcheckIssue{
