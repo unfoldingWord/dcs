@@ -204,11 +204,15 @@ func ProcessDoor43MetadataForRepo(ctx context.Context, repo *repo_model.Reposito
 		log.Debug(">>>>>> PROCESSING REFS: %s", repo.FullName())
 		if err := processDoor43MetadataForRepoRefs(ctx, repo); err != nil {
 			// log error but keep on going
-			log.Error("processDoor43MetadataForRepoRefs %s Error: %v", repo.FullName(), err)
+			if !git.IsErrNotExist(err) {
+				log.Error("processDoor43MetadataForRepoRefs %s Error: %v", repo.FullName(), err)
+			}
 		}
 	} else if _, err := processDoor43MetadataForRepoRef(ctx, repo, ref); err != nil {
 		// log error but keep on going
-		log.Error("processDoor43MetadataForRepoRefs %s Error: %v", repo.FullName(), err)
+		if !git.IsErrNotExist(err) {
+			log.Error("processDoor43MetadataForRepoRefs %s Error: %v", repo.FullName(), err)
+		}
 	}
 
 	err := processDoor43MetadataForRepoLatestDMs(ctx, repo)
