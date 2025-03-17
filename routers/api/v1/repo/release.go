@@ -169,6 +169,7 @@ func ListReleases(ctx *context.APIContext) {
 		IncludeTags:   false,
 		IsDraft:       ctx.FormOptionalBool("draft"),
 		IsPreRelease:  ctx.FormOptionalBool("pre-release"),
+		RepoID:        ctx.Repo.Repository.ID,
 		/*** DCS Customizations ***/
 		InCatalog: ctx.FormOptionalBool("in-catalog"),
 		/*** END DCS Customizations ***/
