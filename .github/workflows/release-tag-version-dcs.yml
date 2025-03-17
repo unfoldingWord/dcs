@@ -13,7 +13,7 @@ concurrency:
 
 jobs:
   docker-rootful:
-    if: endsWith(github.ref_name, '+dcs')
+    if: endsWith(github.ref_name, '+dcs') || endsWith(github.ref_name, '+dcs1') || endsWith(github.ref_name, '+dcs2') || endsWith(github.ref_name, '+dcs3')
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
