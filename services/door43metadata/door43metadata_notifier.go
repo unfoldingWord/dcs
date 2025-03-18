@@ -10,6 +10,7 @@ import (
 	repo_model "code.gitea.io/gitea/models/repo"
 	user_model "code.gitea.io/gitea/models/user"
 	"code.gitea.io/gitea/modules/git"
+	"code.gitea.io/gitea/modules/graceful"
 	"code.gitea.io/gitea/modules/log"
 	"code.gitea.io/gitea/modules/repository"
 	notify_service "code.gitea.io/gitea/services/notify"
@@ -105,18 +106,35 @@ func (m *metadataNotifier) NewTagRelease(ctx context.Context, rel *repo_model.Re
 func (m *metadataNotifier) PushCommits(ctx context.Context, pusher *user_model.User, repo *repo_model.Repository, opts *repository.PushUpdateOptions, commits *repository.PushCommits) {
 	if opts.RefFullName.IsBranch() {
 		ref := opts.RefFullName.BranchName()
-		if err := ProcessDoor43MetadataForRepo(ctx, repo, ref); err != nil {
-			log.Error("PushCommits: ProcessDoor43MetadataForRepo failed [%s, %s]: %v", repo.FullName(), ref, err)
-		}
+		shutdownContext := graceful.GetManager().ShutdownContext()
+		go func(ctx context.Context, repo *repo_model.Repository, ref string) {
+			select {
+			case <-ctx.Done():
+				log.Warn("PushCommits: Context canceled [%s, %s]", repo.FullName(), ref)
+				return
+			default:
+				if err := ProcessDoor43MetadataForRepo(ctx, repo, ref); err != nil {
+					log.Error("PushCommits: ProcessDoor43MetadataForRepo failed [%s, %s]: %v", repo.FullName(), ref, err)
+				}
+			}
+		}(shutdownContext, repo, ref)
 	}
 }
 
 func (m *metadataNotifier) SyncPushCommits(ctx context.Context, pusher *user_model.User, repo *repo_model.Repository, opts *repository.PushUpdateOptions, commits *repository.PushCommits) {
 	if opts.RefFullName.IsBranch() {
 		ref := opts.RefFullName.BranchName()
-		if err := ProcessDoor43MetadataForRepo(ctx, repo, ref); err != nil {
-			log.Error("SyncPushCommits: ProcessDoor43MetadataForRepo failed [%s, %s]: %v", repo.FullName(), ref, err)
-		}
+		go func(ctx context.Context, repo *repo_model.Repository, ref string) {
+			select {
+			case <-ctx.Done():
+				log.Warn("SyncPushCommits: Context canceled [%s, %s]", repo.FullName(), ref)
+				return
+			default:
+				if err := ProcessDoor43MetadataForRepo(ctx, repo, ref); err != nil {
+					log.Error("SyncPushCommits: ProcessDoor43MetadataForRepo failed [%s, %s]: %v", repo.FullName(), ref, err)
+				}
+			}
+		}(ctx, repo, ref)
 	}
 }
 
@@ -133,29 +151,61 @@ func (m *metadataNotifier) SyncDeleteRepository(ctx context.Context, doer *user_
 }
 
 func (m *metadataNotifier) MigrateRepository(ctx context.Context, doer, u *user_model.User, repo *repo_model.Repository) {
-	if err := ProcessDoor43MetadataForRepo(ctx, repo, ""); err != nil {
-		log.Error("MigrateRepository: ProcessDoor43MetadataForRepo failed [%s]: %v", repo.FullName(), err)
-	}
+	go func(ctx context.Context, repo *repo_model.Repository) {
+		select {
+		case <-ctx.Done():
+			log.Warn("MigrateRepository: Context canceled [%s]", repo.FullName())
+			return
+		default:
+			if err := ProcessDoor43MetadataForRepo(ctx, repo, ""); err != nil {
+				log.Error("MigrateRepository: ProcessDoor43MetadataForRepo failed [%s]: %v", repo.FullName(), err)
+			}
+		}
+	}(ctx, repo)
 }
 
 func (m *metadataNotifier) TransferRepository(ctx context.Context, doer *user_model.User, repo *repo_model.Repository, newOwnerName string) {
 	// Shouldn't really need if the repo is transfered as it keeps the same IDs, releases, etc, but just in case
-	if err := ProcessDoor43MetadataForRepo(ctx, repo, ""); err != nil {
-		log.Error("TransferRepository: ProcessDoor43MetadataForRepo failed [%s]: %v", repo.FullName(), err)
-	}
+	go func(ctx context.Context, repo *repo_model.Repository) {
+		select {
+		case <-ctx.Done():
+			log.Warn("TransferRepository: Context canceled [%s]", repo.FullName())
+			return
+		default:
+			if err := ProcessDoor43MetadataForRepo(ctx, repo, ""); err != nil {
+				log.Error("TransferRepository: ProcessDoor43MetadataForRepo failed [%s]: %v", repo.FullName(), err)
+			}
+		}
+	}(ctx, repo)
 }
 
 func (m *metadataNotifier) ForkRepository(ctx context.Context, doer *user_model.User, oldRepo, repo *repo_model.Repository) {
-	if err := ProcessDoor43MetadataForRepo(ctx, repo, ""); err != nil {
-		log.Error("ForkRepository: ProcessDoor43MetadataForRepo failed [%s]: %v", repo.FullName(), err)
-	}
+	go func(ctx context.Context, repo *repo_model.Repository) {
+		select {
+		case <-ctx.Done():
+			log.Warn("ForkRepository: Context canceled [%s]", repo.FullName())
+			return
+		default:
+			if err := ProcessDoor43MetadataForRepo(ctx, repo, ""); err != nil {
+				log.Error("ForkRepository: ProcessDoor43MetadataForRepo failed [%s]: %v", repo.FullName(), err)
+			}
+		}
+	}(ctx, repo)
 }
 
 func (m *metadataNotifier) RenameRepository(ctx context.Context, doer *user_model.User, repo *repo_model.Repository, oldName string) {
 	// Shouldn't really need if the repo is renamed as it keeps the same IDs, releases, etc, but just in case
-	if err := ProcessDoor43MetadataForRepo(ctx, repo, ""); err != nil {
-		log.Error("RenameRepository: ProcessDoor43MetadataForRepo failed [%s]: %v", repo.FullName(), err)
-	}
+	go func(ctx context.Context, repo *repo_model.Repository) {
+		select {
+		case <-ctx.Done():
+			log.Warn("RenameRepository: Context canceled [%s]", repo.FullName())
+			return
+		default:
+			if err := ProcessDoor43MetadataForRepo(ctx, repo, ""); err != nil {
+				log.Error("RenameRepository: ProcessDoor43MetadataForRepo failed [%s]: %v", repo.FullName(), err)
+			}
+		}
+	}(ctx, repo)
 }
 
 func (m *metadataNotifier) DeleteRef(ctx context.Context, doer *user_model.User, repo *repo_model.Repository, refFullName git.RefName) {
@@ -168,8 +218,15 @@ func (m *metadataNotifier) DeleteRef(ctx context.Context, doer *user_model.User,
 }
 
 func (m *metadataNotifier) ChangeDefaultBranch(ctx context.Context, repo *repo_model.Repository) {
-	if err := ProcessDoor43MetadataForRepo(ctx, repo, repo.DefaultBranch); err != nil {
-		log.Error("ChangeDefaultBranch: ProcessDoor43MetadataForRef failed [%s, %s]: %v", repo.FullName(), repo.DefaultBranch)
-		return
-	}
+	go func(ctx context.Context, repo *repo_model.Repository) {
+		select {
+		case <-ctx.Done():
+			log.Warn("ChangeDefaultBranch: Context canceled [%s]", repo.FullName())
+			return
+		default:
+			if err := ProcessDoor43MetadataForRepo(ctx, repo, repo.DefaultBranch); err != nil {
+				log.Error("ChangeDefaultBranch: ProcessDoor43MetadataForRef failed [%s, %s]: %v", repo.FullName(), repo.DefaultBranch)
+			}
+		}
+	}(ctx, repo)
 }

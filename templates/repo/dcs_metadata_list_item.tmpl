@@ -38,7 +38,7 @@
 			<a class="ui primary sha label toggle button show-panel" data-panel="#info-{{$dm.ID}}">{{$dm.Ref}}</a>
 		</div>
 		<span class="text grey">
-			{{TimeSince $dm.ReleaseDateUnix.AsTime ctx.Locale}}
+			{{DateUtils.TimeSince $dm.ReleaseDateUnix}}
 		</span>
 	</div>
 	<div class="info tw-hidden" id="info-{{$dm.ID}}">
@@ -200,7 +200,7 @@
 					<td style="vertical-align: top"><strong>{{if $dm.Release}}{{ctx.Locale.Tr
 							"repo.metadata.release_date"}}{{else}}{{ctx.Locale.Tr
 							"repo.metadata.last_updated"}}{{end}}:</strong></td>
-					<td style="vertical-align: top">{{DateTime "full" $dm.ReleaseDateUnix.AsTime}}</td>
+					<td style="vertical-align: top">{{DateUtils.AbsoluteLong $dm.ReleaseDateUnix}}</td>
 				</tr>
 				<tr>
 					<td style="vertical-align: top"><strong>{{ctx.Locale.Tr "repo.metadata.healthcheck"}}:</td>
