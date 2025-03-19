@@ -568,11 +568,11 @@ func GetRCDoor43Metadata(dm *repo_model.Door43Metadata, repo *repo_model.Reposit
 	if dm.ValidationError != nil {
 		dm.IsLatestForStage = false
 		dm.Stage = door43metadata.StageOther
-		log.Info("%s: manifest.yaml is not valid. see errors:", repo.FullName())
-		log.Info(dcs.ConvertValidationErrorToString(dm.ValidationError))
+		log.Debug("%s: manifest.yaml is not valid. see errors:", repo.FullName())
+		log.Debug(dcs.ConvertValidationErrorToString(dm.ValidationError))
 		return nil
 	}
-	log.Info("%s: manifest.yaml is valid.", repo.FullName())
+	log.Debug("%s/%s: manifest.yaml is valid", repo.FullName(), dm.Ref)
 	return GetDoor43MetadataFromRCManifest(dm, manifest, repo, commit)
 }
 
@@ -582,7 +582,7 @@ func GetTcOrTsDoor43Metadata(dm *repo_model.Door43Metadata, repo *repo_model.Rep
 		return err
 	}
 
-	log.Info("%s/%s: manifest.json exists so might be a tC or tS repo", repo.FullName(), commit.ID)
+	log.Debug("%s/%s (%s): manifest.json exists so might be a tC or tS repo", repo.FullName(), dm.Ref, commit.ID)
 	var bookPath string
 	var count int
 	var versification string
@@ -663,11 +663,11 @@ func GetSBDoor43Metadata(dm *repo_model.Door43Metadata, repo *repo_model.Reposit
 	if dm.ValidationError != nil {
 		dm.IsLatestForStage = false
 		dm.Stage = door43metadata.StageOther
-		log.Info("%s: metadata.json is not valid. see errors:", repo.FullName())
-		log.Info(dcs.ConvertValidationErrorToString(dm.ValidationError))
+		log.Debug("%s/%s: metadata.json is not valid. see errors:", repo.FullName(), dm.Ref)
+		log.Debug(dcs.ConvertValidationErrorToString(dm.ValidationError))
 		return nil
 	}
-	log.Info("%s: metadata.json is valid.", repo.FullName())
+	log.Debug("%s/%s: metadata.json is valid", repo.FullName(), dm.Ref)
 
 	return GetDoor43MetadataFromSBMetadata(dm, sbMetadata, repo, commit)
 }
