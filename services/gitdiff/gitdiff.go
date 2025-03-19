@@ -1194,6 +1194,8 @@ func GetDiff(ctx context.Context, gitRepo *git.Repository, opts *DiffOptions, fi
 				if language.Has() {
 					diffFile.Language = language.Value()
 				}
+			} else {
+				checker = nil // CheckPath fails, it's not impossible to "check" anymore
 			}
 		}
 
