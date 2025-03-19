@@ -4,11 +4,13 @@
 package repo
 
 import (
+	go_context "context"
 	"net/http"
 
 	"code.gitea.io/gitea/models/db"
 	repo_model "code.gitea.io/gitea/models/repo"
 	"code.gitea.io/gitea/modules/base"
+	"code.gitea.io/gitea/modules/graceful"
 	"code.gitea.io/gitea/modules/log"
 	"code.gitea.io/gitea/services/context"
 	door43metadata_service "code.gitea.io/gitea/services/door43metadata"
@@ -70,16 +72,35 @@ func GetAllRepoDoor43Metadata(ctx *context.Context) {
 
 // UpdateDoor43Metadata updates the repo's metadata
 func UpdateDoor43Metadata(ctx *context.Context) {
-	if err := door43metadata_service.ProcessDoor43MetadataForRepo(ctx, ctx.Repo.Repository, ""); err != nil {
-		ctx.Flash.Error("ProcessDoor43MetadataForRepo: " + err.Error())
+	runBackgroundTask := false
+	if err := door43metadata_service.ProcessDoor43MetadataForRepo(ctx, ctx.Repo.Repository, ctx.Repo.Repository.DefaultBranch); err != nil {
+		log.Error("ProcessDoor43MetadataForRepo: Error processing metadata [%s/%s]: %v", ctx.Repo.Repository.FullName(), ctx.Repo.Repository.DefaultBranch, err)
+		ctx.Flash.Error("Error processing repo's metadata. Please contact the administrator.")
 	} else {
 		if err := ctx.Repo.Repository.LoadLatestDMs(ctx); err != nil {
+			log.Error("LoadLatestDMs [%s] Error: %v", ctx.Repo.Repository.FullName(), err)
 			ctx.Flash.Warning("Error loading metadata. Please try again.")
 		} else if ctx.Repo.Repository.RepoDM.Metadata != nil {
-			ctx.Flash.Success("Successfully scanned this repo's metadata.")
+			ctx.Flash.Success("Scanning of metadata for all branches and releases started. Reload page to see the updates as the metadata is populated.")
+			runBackgroundTask = true
 		} else {
 			ctx.Flash.Warning("No metadata found!")
 		}
 	}
+
+	if runBackgroundTask {
+		go func(ctx go_context.Context, repo *repo_model.Repository) {
+			select {
+			case <-ctx.Done():
+				log.Warn("ProcessDoor43MetadataForRepo: Context canceled [%s]", repo.FullName())
+				return
+			default:
+				if err := door43metadata_service.ProcessDoor43MetadataForRepo(ctx, repo, ""); err != nil {
+					log.Error("ProcessDoor43MetadataForRepo: Error processing metadata [%s]: %v", repo, err)
+				}
+			}
+		}(graceful.GetManager().ShutdownContext(), ctx.Repo.Repository)
+	}
+
 	ctx.Redirect(ctx.Repo.RepoLink + "/metadata")
 }
