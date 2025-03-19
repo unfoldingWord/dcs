@@ -106,7 +106,7 @@ func (m *metadataNotifier) NewTagRelease(ctx context.Context, rel *repo_model.Re
 func (m *metadataNotifier) PushCommits(ctx context.Context, pusher *user_model.User, repo *repo_model.Repository, opts *repository.PushUpdateOptions, commits *repository.PushCommits) {
 	if opts.RefFullName.IsBranch() {
 		ref := opts.RefFullName.BranchName()
-		shutdownContext := graceful.GetManager().ShutdownContext()
+		shutdownCtx := graceful.GetManager().ShutdownContext()
 		go func(ctx context.Context, repo *repo_model.Repository, ref string) {
 			select {
 			case <-ctx.Done():
@@ -117,7 +117,7 @@ func (m *metadataNotifier) PushCommits(ctx context.Context, pusher *user_model.U
 					log.Error("PushCommits: ProcessDoor43MetadataForRepo failed [%s, %s]: %v", repo.FullName(), ref, err)
 				}
 			}
-		}(shutdownContext, repo, ref)
+		}(shutdownCtx, repo, ref)
 	}
 }
 
