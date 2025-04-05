@@ -286,23 +286,23 @@ func Routes() *web.Router {
 	mid = append(mid, repo.GetActiveStopwatch)
 	mid = append(mid, goGet)
 
-	others := web.NewRouter()
-	others.Use(mid...)
-	registerRoutes(others)
-	routes.Mount("", others)
+	webRoutes := web.NewRouter()
+	webRoutes.Use(mid...)
+	webRoutes.Group("", func() { registerWebRoutes(webRoutes) }, common.BlockExpensive())
+	routes.Mount("", webRoutes)
 	return routes
 }
 
 var optSignInIgnoreCsrf = verifyAuthWithOptions(&common.VerifyOptions{DisableCSRF: true})
 
-// registerRoutes register routes
-func registerRoutes(m *web.Router) {
+// registerWebRoutes register routes
+func registerWebRoutes(m *web.Router) {
 	// required to be signed in or signed out
 	reqSignIn := verifyAuthWithOptions(&common.VerifyOptions{SignInRequired: true})
 	reqSignOut := verifyAuthWithOptions(&common.VerifyOptions{SignOutRequired: true})
 	// optional sign in (if signed in, use the user as doer, if not, no doer)
-	optSignIn := verifyAuthWithOptions(&common.VerifyOptions{SignInRequired: setting.Service.RequireSignInView})
-	optExploreSignIn := verifyAuthWithOptions(&common.VerifyOptions{SignInRequired: setting.Service.RequireSignInView || setting.Service.Explore.RequireSigninView})
+	optSignIn := verifyAuthWithOptions(&common.VerifyOptions{SignInRequired: setting.Service.RequireSignInViewStrict})
+	optExploreSignIn := verifyAuthWithOptions(&common.VerifyOptions{SignInRequired: setting.Service.RequireSignInViewStrict || setting.Service.Explore.RequireSigninView})
 
 	validation.AddBindingRules()
 
@@ -1467,20 +1467,23 @@ func registerRoutes(m *web.Router) {
 	m.Group("/{username}/{reponame}/activity", func() {
 		m.Get("", repo.Activity)
 		m.Get("/{period}", repo.Activity)
-		m.Group("/contributors", func() {
-			m.Get("", repo.Contributors)
-			m.Get("/data", repo.ContributorsData)
-		})
-		m.Group("/code-frequency", func() {
-			m.Get("", repo.CodeFrequency)
-			m.Get("/data", repo.CodeFrequencyData)
-		})
-		m.Group("/recent-commits", func() {
-			m.Get("", repo.RecentCommits)
-			m.Get("/data", repo.RecentCommitsData)
-		})
+
+		m.Group("", func() {
+			m.Group("/contributors", func() {
+				m.Get("", repo.Contributors)
+				m.Get("/data", repo.ContributorsData)
+			})
+			m.Group("/code-frequency", func() {
+				m.Get("", repo.CodeFrequency)
+				m.Get("/data", repo.CodeFrequencyData)
+			})
+			m.Group("/recent-commits", func() {
+				m.Get("", repo.RecentCommits)
+				m.Get("/data", repo.CodeFrequencyData) // "recent-commits" also uses the same data as "code-frequency"
+			})
+		}, reqRepoCodeReader)
 	},
-		optSignIn, context.RepoAssignment, context.RequireRepoReaderOr(unit.TypePullRequests, unit.TypeIssues, unit.TypeReleases),
+		optSignIn, context.RepoAssignment, context.RequireRepoReaderOr(unit.TypeCode, unit.TypePullRequests, unit.TypeIssues, unit.TypeReleases),
 		context.RepoRef(), repo.MustBeNotEmpty,
 	)
 	// end "/{username}/{reponame}/activity"
