@@ -39,12 +39,6 @@ func (m *metadataNotifier) CreateRepository(ctx context.Context, doer, u *user_m
 	}
 }
 
-func (m *metadataNotifier) SyncCreateRepository(ctx context.Context, doer, u *user_model.User, repo *repo_model.Repository) {
-	if err := ProcessDoor43MetadataForRepo(ctx, repo, ""); err != nil {
-		log.Error("SyncCreateRepository: ProcessDoor43MetadataForRepo failed [%s]: %v", repo.FullName(), err)
-	}
-}
-
 func (m *metadataNotifier) NewRelease(ctx context.Context, rel *repo_model.Release) {
 	if rel != nil && !rel.IsDraft {
 		if err := ProcessDoor43MetadataForRepo(ctx, rel.Repo, rel.TagName); err != nil {
