@@ -1586,20 +1586,20 @@ func registerWebRoutes(m *web.Router) {
 			m.Get("/commit/*", context.RepoRefByType(context.RepoRefCommit), repo.RefCommits)
 			// "/*" route is deprecated, and kept for backward compatibility
 			m.Get("/*", context.RepoRefByType(context.RepoRefUnknown), repo.RefCommits)
-		}, repo.MustBeNotEmpty, reqSignIn) // DCS Customizations: requiring login for commit-related web routes
+		}, repo.MustBeNotEmpty)
 
 		m.Group("/blame", func() {
 			m.Get("/branch/*", context.RepoRefByType(context.RepoRefBranch), repo.RefBlame)
 			m.Get("/tag/*", context.RepoRefByType(context.RepoRefTag), repo.RefBlame)
 			m.Get("/commit/*", context.RepoRefByType(context.RepoRefCommit), repo.RefBlame)
-		}, repo.MustBeNotEmpty, reqSignIn) // DCS Customizations: requiring login for commit-related web routes
+		}, repo.MustBeNotEmpty)
 
 		m.Group("", func() {
 			m.Get("/graph", repo.Graph)
 			m.Get("/commit/{sha:([a-f0-9]{7,64})$}", repo.SetEditorconfigIfExists, repo.SetDiffViewStyle, repo.SetWhitespaceBehavior, repo.Diff)
 			m.Get("/commit/{sha:([a-f0-9]{7,64})$}/load-branches-and-tags", repo.LoadBranchesAndTags)
 			m.Get("/cherry-pick/{sha:([a-f0-9]{7,64})$}", repo.SetEditorconfigIfExists, repo.CherryPick)
-		}, repo.MustBeNotEmpty, context.RepoRef(), reqSignIn) // DCS Customizations: requiring login for commit-related web routes
+		}, repo.MustBeNotEmpty, context.RepoRef())
 
 		m.Get("/rss/branch/*", context.RepoRefByType(context.RepoRefBranch), feedEnabled, feed.RenderBranchFeed)
 		m.Get("/atom/branch/*", context.RepoRefByType(context.RepoRefBranch), feedEnabled, feed.RenderBranchFeed)
