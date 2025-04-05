@@ -211,7 +211,7 @@ func ProcessDoor43MetadataForRepo(ctx context.Context, repo *repo_model.Reposito
 	} else if _, err := processDoor43MetadataForRepoRef(ctx, repo, ref); err != nil {
 		// log error but keep on going
 		if !git.IsErrNotExist(err) {
-			log.Error("processDoor43MetadataForRepoRefs %s Error: %v", repo.FullName(), err)
+			log.Error("processDoor43MetadataForRepoRef %s Error: %v", repo.FullName(), err)
 		}
 	}
 
