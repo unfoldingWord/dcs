@@ -48,6 +48,7 @@ func isRoutePathExpensive(routePattern string) bool {
 		"/{username}/{reponame}/media/",
 		// "/{username}/{reponame}/raw/", // DCS Customizations
 		// "/{username}/{reponame}/src/", // DCS Customizations
+		"/{username}/{reponame}/src/commit/", // DCS Customizations
 
 		// issue & PR related (no trailing slash)
 		"/{username}/{reponame}/issues",
@@ -67,6 +68,11 @@ func isRoutePathExpensive(routePattern string) bool {
 			return true
 		}
 	}
+	/*** DCS Customizations ***/
+	if strings.HasPrefix(routePattern, "/{username}/{reponame}/src/branch/") && !strings.Contains(routePattern, "/master/") && !strings.Contains(routePattern, "/main/") {
+		return true
+	}
+	/*** END DCS Customizations ***/
 	return false
 }
 
