@@ -51,7 +51,6 @@ func isRoutePathExpensive(routePattern string) bool {
 
 		// issue & PR related (no trailing slash)
 		"/{username}/{reponame}/issues",
-		"/{username}/{reponame}/{type:issues|pulls}", // DCS Customizations
 		"/{username}/{reponame}/{type:issues}",
 		"/{username}/{reponame}/pulls",
 		"/{username}/{reponame}/{type:pulls}",
