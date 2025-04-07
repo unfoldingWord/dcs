@@ -40,7 +40,7 @@ func isRoutePathExpensive(routePattern string) bool {
 
 	expensivePaths := []string{
 		// code related
-		"/{username}/{reponame}/archive/",
+		// "/{username}/{reponame}/archive/", // DCS Customizations
 		"/{username}/{reponame}/blame/",
 		"/{username}/{reponame}/commit/",
 		"/{username}/{reponame}/commits/",
