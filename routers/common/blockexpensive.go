@@ -47,6 +47,7 @@ func isRoutePathExpensive(routePattern string) bool {
 		"/{username}/{reponame}/graph",
 		"/{username}/{reponame}/media/",
 		// "/{username}/{reponame}/raw/", // DCS Customizations
+		"/{username}/{reponame}/raw/commit/", // DCS Customizations
 		// "/{username}/{reponame}/src/", // DCS Customizations
 		"/{username}/{reponame}/src/commit/", // DCS Customizations
 		"/{username}/{reponame}/compare/",    // DCS Customizations
