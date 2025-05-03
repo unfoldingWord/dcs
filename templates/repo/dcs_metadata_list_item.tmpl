@@ -1,0 +1,228 @@
+{{$dm := .Door43Metadata}}
+{{if $dm}}
+<div class="item">
+	<div class="flex-text-block tw-justify-between">
+		<div class="flex-text-inline">
+			{{$color := "grey"}}
+			{{$type := $dm.RefType}}
+			{{$icon := ""}}
+			{{if eq $dm.RefType "branch"}}
+				{{$icon = "octicon-git-branch"}}
+			{{else}}
+				{{$icon = "octicon-tag"}}
+			{{end}}
+			{{$tooltip := "Stage: other"}}
+
+			{{if eq $dm.Stage 1}}
+				{{$color = "green"}}
+				{{$tooltip = "Stage: prod - Production Release"}}
+			{{else if eq $dm.Stage 2}}
+				{{$color = "orange"}}
+				{{$tooltip = "Stage: preprod - Pre-Release"}}
+			{{else if eq $dm.Stage 3}}
+				{{$color = "purple"}}
+				{{$tooltip = "Stage: latest - Default Branch / Metadata"}}
+			{{else if and (eq $dm.Stage 4) (.IsRepoMetadata)}}
+				{{$color = "cyan"}}
+				{{$tooltip = "Stage: other; Default Metadata"}}
+			{{end}}
+
+			{{if $dm.ValidationError}}
+				{{$color = "red"}}
+				{{$tooltip = printf "%s; INVALID" $tooltip}}
+			{{else if and $dm.IsLatestForStage (lt $dm.Stage 3)}}
+				{{$tooltip = printf "%s; Latest" $tooltip}}
+			{{end}}
+			<a data-tooltip-content="{{$type}}" href="{{.ctxData.RepoLink}}/src/{{$dm.RefType}}/{{$dm.Ref}}">{{svg $icon 16 "tw-mr-2"}}</a>
+			<span data-tooltip-content="{{$tooltip}}" class="text {{$color}} tw-mr-2">{{svg "octicon-dot-fill" 22}}</span>
+			<a class="ui primary sha label toggle button show-panel" data-panel="#info-{{$dm.ID}}">{{$dm.Ref}}</a>
+		</div>
+		<span class="text grey">
+			{{DateUtils.TimeSince $dm.ReleaseDateUnix}}
+		</span>
+	</div>
+	<div class="info tw-hidden" id="info-{{$dm.ID}}">
+		<div class="ui top attached tabular menu">
+			<a class="item active" data-tab="db-{{$dm.ID}}">
+				Metadata (DB)
+			</a>
+			<a class="item" data-tab="json-{{$dm.ID}}">
+				Metadata (JSON)
+			</a>
+			{{if $dm.ValidationError}}
+			<a class="item" data-tab="validation-errors-{{$dm.ID}}">
+				Validation Errors (JSON)
+			</a>
+			{{end}}
+			<a class="item"
+				href="{{Door43PreviewURL}}/u/{{.ctxData.Repository.OwnerName}}/{{.ctxData.Repository.Name}}/{{PathEscapeSegments $dm.Ref}}{{if eq AppUrl "https://qa.door43.org/"}}?server=QA{{end}}{{if eq AppUrl "https://develop.door43.org/"}}?server=DEV{{end}}"
+				target="_blank" rel="nofollow noopener">
+				{{ctx.Locale.Tr "preview"}} / PDF
+			</a>
+			{{if or $.ctxData.Permission.IsAdmin $.ctxData.IsOrganizationOwner $.ctxData.PageIsAdmin $.ctxData.PageIsUserSettings}}
+			<div class="right menu">
+				<form class="item" action="{{.ctxData.Link}}/update" method="post">
+					{{.ctxData.CsrfTokenHtml}}
+					<button class="ui tiny button" data-tooltip-content="Update this ref">{{svg
+						"octicon-sync"}}</button>
+				</form>
+			</div>
+			{{end}}
+		</div>
+		<div class="ui bottom attached tab segment active" data-tab="db-{{$dm.ID}}">
+			<table style="margin-bottom: 15px">
+				{{if $dm.ValidationError}}
+				<tr>
+					<td colspan="2">
+						<div style="color:red; padding: 10px;">INVALID <a
+								href="{{.ctxData.RepoLink}}/src/{{$dm.RefType}}/{{$dm.Ref}}/{{$dm.MetadataFilename}}">{{$dm.MetadataFilename}}</a>
+							FILE</div>
+					</td>
+				</tr>
+				{{end}}
+				<tr>
+					<td style="vertical-align: top"><strong>{{ctx.Locale.Tr "repo.metadata.title"}}:</strong></td>
+					<td style="vertical-align: top">{{$dm.Title}}</td>
+				</tr>
+				<tr>
+					<td style="vertical-align: top"><strong>{{ctx.Locale.Tr "repo.metadata.publisher"}}:</strong></td>
+					<td style="vertical-align: top">{{$dm.Publisher}}</td>
+				</tr>
+				<tr>
+					<td style="vertical-align: top"><strong>{{ctx.Locale.Tr "repo.metadata.abbreviation"}}:</strong>
+					</td>
+					<td style="vertical-align: top">{{$dm.Abbreviation}}</td>
+				</tr>
+				<tr>
+					<td style="vertical-align: top"><strong>{{ctx.Locale.Tr "repo.metadata.subject"}}:</strong></td>
+					<td style="vertical-align: top">{{$dm.Subject}}</td>
+				</tr>
+				<tr>
+					<td style="vertical-align: top"><strong>{{ctx.Locale.Tr "repo.metadata.flavor_type"}}:</strong></td>
+					<td style="vertical-align: top">{{$dm.FlavorType}}</td>
+				</tr>
+				<tr>
+					<td style="vertical-align: top"><strong>{{ctx.Locale.Tr "repo.metadata.flavor"}}:</strong></td>
+					<td style="vertical-align: top">{{$dm.Flavor}}</td>
+				</tr>
+				<tr>
+					<td style="vertical-align: top"><strong>{{ctx.Locale.Tr "repo.metadata.metadata_type"}}:</strong>
+					</td>
+					<td style="vertical-align: top"><img src="{{AssetUrlPrefix}}/img/dcs/{{$dm.MetadataTypeIcon}}"
+							style="height:16px;vertical-align:middle" /> {{$dm.MetadataTypeTitle}} ({{$dm.MetadataType}}
+						{{$dm.MetadataVersion}})</td>
+				</tr>
+				<tr>
+					<td style="vertical-align: top"><strong>{{ctx.Locale.Tr "repo.metadata.language"}}:</strong></td>
+					<td style="vertical-align: top">{{$dm.LanguageTitle}} ({{$dm.Language}}, {{$dm.LanguageDirection}})</td>
+				</tr>
+				<tr>
+					<td style="vertical-align: top"><strong>{{ctx.Locale.Tr "repo.metadata.ingredients"}}:</strong></td>
+					<td style="vertical-align: top">
+						<div class="ingredients-toggle">
+							<a href="javascript:void(0);" onclick="toggleShowTable(this, 'ingredients')">Click to see ingredients</a>
+						</div>
+						<table class="ui celled table full-width" style="padding: 10px; display: none;">
+							<thead>
+								<tr>
+									<th>ID</th>
+									<th>Title</th>
+									<th>Path</th>
+									<th>Size</th>
+								</tr>
+							</thead>
+							<tbody>
+								{{range $dm.Ingredients}}
+								<tr>
+									<td>
+										{{.Identifier}}
+									</td>
+									<td>
+										{{.Title}}
+									</td>
+									<td>
+										{{.Path}}
+									</td>
+									<td>
+										{{if not .Exists}}
+										<span style="background-color: red; color: white;">(Missing)</span>
+										{{else if .IsDir}}
+										(Dir)
+										{{else}}
+										{{FileSize .Size}}
+										{{end}}
+									</td>
+								</tr>
+								{{end}}
+							</tbody>
+						</table>
+					</td>
+				</tr>
+				<tr>
+					<td style="vertical-align: top"><strong>Relations:</strong></td>
+					<td style="vertical-align: top">
+						<div class="ingredients-toggle">
+							<a href="javascript:void(0);" onclick="toggleShowTable(this, 'relations')">Click to see relations</a>
+						</div>
+						<table class="ui celled table full-width" style="padding: 10px; display: none;">
+							<thead>
+								<tr>
+									<th>Language</th>
+									<th>Resource</th>
+									<th>Version</th>
+								</tr>
+							</thead>
+							<tbody>
+								{{range $dm.Relations}}
+								<tr>
+									<td>{{.Language}}</td>
+									<td>{{.Identifier}}</td>
+									<td>{{.Version}}</td>
+								</tr>
+								{{end}}
+						</table>
+					</td>
+				</tr>
+				<tr>
+					<td style="vertical-align: top"><strong>{{ctx.Locale.Tr "repo.metadata.content_format"}}:</strong>
+					</td>
+					<td style="vertical-align: top">{{$dm.ContentFormat}}</td>
+				</tr>
+				<tr>
+					<td style="vertical-align: top"><strong>{{ctx.Locale.Tr "repo.metadata.stage"}}:</strong></td>
+					<td style="vertical-align: top">{{$dm.StageStr}}</td>
+				</tr>
+				<tr>
+					<td style="vertical-align: top"><strong>SHA:</strong></td>
+					<td style="vertical-align: top">{{$dm.CommitSHA}}</td>
+				</tr>
+				<tr>
+					<td style="vertical-align: top"><strong>{{if $dm.Release}}{{ctx.Locale.Tr
+							"repo.metadata.release_date"}}{{else}}{{ctx.Locale.Tr
+							"repo.metadata.last_updated"}}{{end}}:</strong></td>
+					<td style="vertical-align: top">{{DateUtils.AbsoluteLong $dm.ReleaseDateUnix}}</td>
+				</tr>
+				<tr>
+					<td style="vertical-align: top"><strong>{{ctx.Locale.Tr "repo.metadata.healthcheck"}}:</td>
+					<td style="vertical-align: top">
+						<div class="ingredients-toggle">
+							<a href="javascript:void(0);" onclick="toggleShowTable(this, 'health check')">Click to see health check</a>
+						</div>
+						<div style="display: none">
+							{{template "repo/dcs_healthcheck_list" (dict "ctxData" .ctxData "Door43Metadata" $dm)}}
+						</div>
+					</td>
+				</tr>
+			</table>
+		</div>
+		<div class="ui bottom attached tab segment" data-tab="json-{{$dm.ID}}">
+			<pre style="white-space: pre-wrap; word-wrap: break-word;">{{$dm.MetadataJSONString}}</pre>
+		</div>
+		{{if $dm.ValidationError}}
+		<div class="ui bottom attached tab segment" data-tab="validation-errors-{{$dm.ID}}">
+			<pre style="white-space: pre-wrap; word-wrap: break-word;">{{$dm.ValidationErrorJSONString}}</pre>
+		</div>
+		{{end}}
+	</div>
+</div>
+{{end}}

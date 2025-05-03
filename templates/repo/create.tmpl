@@ -131,6 +131,7 @@
 
 					<div class="divider"></div>
 
+					<!-- DCS Customizations -->
 					<div class="inline field">
 						<label>.gitignore</label>
 						<div class="ui multiple search selection dropdown">
@@ -144,20 +145,13 @@
 						</div>
 						<span class="help">{{ctx.Locale.Tr "repo.repo_gitignore_helper_desc"}}</span>
 					</div>
+					<!-- DCS Customizations -->
 					<div class="inline field">
 						<label>{{ctx.Locale.Tr "repo.license"}}</label>
-						<div class="ui search selection dropdown">
-							<input type="hidden" name="license" value="{{.license}}">
-							<div class="default text">{{ctx.Locale.Tr "repo.license_helper"}}</div>
-							<div class="menu">
-								<div class="item" data-value="">{{ctx.Locale.Tr "repo.license_helper"}}</div>
-								{{range .Licenses}}
-									<div class="item" data-value="{{.}}">{{.}}</div>
-								{{end}}
-							</div>
-						</div>
-						<span class="help">{{ctx.Locale.Tr "repo.license_helper_desc" "https://choosealicense.com/"}}</span>
+						<span><a href="http://creativecommons.org/licenses/by-sa/4.0/" target="_new">Creative Commons Attribution-ShareAlike 4.0 International License</a></span>
+						<input type="hidden" id="license" name="license" value="CC-BY-SA-4.0.md">
 					</div>
+					<!-- END DCS Customizations -->
 
 					<div class="inline field">
 						<label>{{ctx.Locale.Tr "repo.readme"}}</label>

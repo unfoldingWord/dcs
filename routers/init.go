@@ -40,6 +40,7 @@ import (
 	"code.gitea.io/gitea/services/auth/source/oauth2"
 	"code.gitea.io/gitea/services/automerge"
 	"code.gitea.io/gitea/services/cron"
+	"code.gitea.io/gitea/services/door43metadata" // DCS Customizations
 	feed_service "code.gitea.io/gitea/services/feed"
 	indexer_service "code.gitea.io/gitea/services/indexer"
 	"code.gitea.io/gitea/services/mailer"
@@ -130,6 +131,9 @@ func InitWebInstalled(ctx context.Context) {
 	mustInit(feed_service.Init)
 	mustInit(uinotification.Init)
 	mustInitCtx(ctx, archiver.Init)
+	/*** DCS Customizations ***/
+	mustInitCtx(ctx, door43metadata.Init)
+	/*** END DCS Customizations ***/
 
 	highlight.NewContext()
 	external.RegisterRenderers()

@@ -59,7 +59,8 @@
 		{{template "custom/extra_links" .}}
 
 		{{if not .IsSigned}}
-			<a class="item" target="_blank" rel="noopener noreferrer" href="https://docs.gitea.com">{{ctx.Locale.Tr "help"}}</a>
+			<a class="item" href="{{AppSubUrl}}/about#help">{{ctx.Locale.Tr "help"}}</a>
+			<a class="item" href="/api/swagger" target="_blank" rel="noreferrer">API</a>
 		{{end}}
 	</div>
 
@@ -156,10 +157,20 @@
 						{{svg "octicon-tools"}}
 						{{ctx.Locale.Tr "your_settings"}}
 					</a>
-					<a class="item" target="_blank" rel="noopener noreferrer" href="https://docs.gitea.com">
+					<!-- DCS Customizations: Adds usage stats and links help to bottom of about page -->
+					<a class="item" href="{{AppSubUrl}}/about#stats">
+						{{svg "octicon-graph"}}
+						Usage Stats
+					</a>
+					<a class="item" href="{{AppSubUrl}}/about#help">
 						{{svg "octicon-question"}}
 						{{ctx.Locale.Tr "help"}}
 					</a>
+					<a class="item" href="{{AppSubUrl}}/api/swagger">
+						{{svg "octicon-code"}}
+						API
+					</a>
+					<!-- END DCS Customizations -->
 					{{if .IsAdmin}}
 						<div class="divider"></div>
 						<a class="{{if .PageIsAdmin}}active {{end}}item" href="{{AppSubUrl}}/-/admin">

@@ -235,7 +235,7 @@
 
 .markup ol ol,
 .markup ul ol {
-  list-style-type: lower-roman;
+  list-style-type: upper-alpha; /* DCS Customizations: changed from lower-roman to upper-alpha */
 }
 
 .markup li > p {

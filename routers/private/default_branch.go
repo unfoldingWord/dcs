@@ -11,6 +11,7 @@ import (
 	"code.gitea.io/gitea/modules/gitrepo"
 	"code.gitea.io/gitea/modules/private"
 	gitea_context "code.gitea.io/gitea/services/context"
+	door43metadata_service "code.gitea.io/gitea/services/door43metadata"
 	repo_service "code.gitea.io/gitea/services/repository"
 )
 
@@ -34,6 +35,15 @@ func SetDefaultBranch(ctx *gitea_context.PrivateContext) {
 		})
 		return
 	}
+
+	/*** DCS Customizations ***/
+	if err := door43metadata_service.ProcessDoor43MetadataForRepo(ctx, ctx.Repo.Repository, branch); err != nil {
+		ctx.JSON(http.StatusInternalServerError, map[string]any{
+			"Err": fmt.Sprintf("Unable to process default branch on repository: %s/%s Error: %v", ownerName, repoName, err),
+		})
+		return
+	}
+	/*** END DCS Customizations ***/
 
 	if err := repo_service.AddRepoToLicenseUpdaterQueue(&repo_service.LicenseUpdaterOptions{
 		RepoID: ctx.Repo.Repository.ID,

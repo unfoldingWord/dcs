@@ -15,6 +15,7 @@ import (
 
 	user_model "code.gitea.io/gitea/models/user"
 	"code.gitea.io/gitea/modules/base"
+	"code.gitea.io/gitea/modules/dcs" // DCS Customizations
 	"code.gitea.io/gitea/modules/htmlutil"
 	"code.gitea.io/gitea/modules/markup"
 	"code.gitea.io/gitea/modules/setting"
@@ -146,6 +147,23 @@ func NewFuncMap() template.FuncMap {
 		"MermaidMaxSourceCharacters": func() int {
 			return setting.MermaidMaxSourceCharacters
 		},
+		/*** DCS Customizations ***/
+		"StringHasSuffix":  dcs.StringHasSuffix,
+		"ValidateJSONFile": dcs.ValidateJSONFile,
+		"ValidateYAMLFile": dcs.ValidateYAMLFile,
+		"Door43PreviewURL": func() string {
+			return setting.DCS.Door43PreviewURL
+		},
+		"GetCsvCellDiff":        dcs.GetCsvCellDiff,
+		"GetColorFromString":    dcs.GetColorFromString,
+		"GetRepoCount":          dcs.GetRepoCount,
+		"GetOrgCount":           dcs.GetOrgCount,
+		"GetUserCount":          dcs.GetUserCount,
+		"GetCatalogEntryCount":  dcs.GetCatalogEntryCount,
+		"GetLanguageCount":      dcs.GetLanguageCount,
+		"GetPublisherCount":     dcs.GetPublisherCount,
+		"GetActiveProjectCount": dcs.GetActiveProjectCount,
+		/*** END DCS Customizations ***/
 
 		// -----------------------------------------------------------------
 		// render

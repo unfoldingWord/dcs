@@ -1,0 +1,150 @@
+{{if or (eq AppUrl "https://qa.door43.org/") (eq AppUrl "https://develop.door43.org/")}}
+<style>
+	#static-bar {
+		display: block;
+		height: 5px;
+		cursor: pointer;
+{{if eq AppUrl "https://qa.door43.org/"}}
+		background: #ffa911;
+{{else if eq AppUrl "https://develop.door43.org/"}}
+		background: pink;
+{{end}}
+	}
+
+	.warning-alert {
+		display: block;
+	}
+
+	.warning-alert .alert-flag {
+		position: absolute;
+		clip: rect(1px, 1px, 1px, 1px);
+		padding: 0;
+		border: 0;
+		height: 1px;
+		width: 1px;
+		overflow: hidden;
+	}
+
+	.warning-alert .alert-container {
+		display: block;
+		pointer-events: none;
+		position: relative;
+	}
+
+	.warning-alert .alert-content {
+		border: 1px solid black;
+{{if eq AppUrl "https://qa.door43.org/"}}
+		background: #fff9cc;
+{{else if eq AppUrl "https://develop.door43.org/"}}
+		background: pink;
+{{end}}
+		padding: 1rem;
+		display: flex;
+		align-items: center;
+	}
+
+	.warning-alert .alert-flag:checked~.alert-close,
+	.warning-alert .alert-flag:checked~.alert-content {
+		display: none;
+	}
+
+	.warning-alert .alert-close {
+		pointer-events: all;
+		position: absolute;
+		top: 2rem;
+		right: 1rem;
+		font-size: 28px;
+		cursor: pointer;
+	}
+
+	.warning-alert .alert-close:focus {
+		outline: 1px solid black;
+	}
+
+	.warning-alert h1 {
+		font-size: 16px;
+	}
+
+	.warning-alert .alert-content-wrapper {
+		width: 89%;
+		text-align: center;
+	}
+
+	#stop-icon {
+		font-size: 40px;
+		margin-right: 2rem;
+	}
+</style>
+
+<div id="static-bar"></div>
+<div class="warning-alert">
+	<input type="checkbox" class="alert-flag" id="alert-id-0" aria-label="toggle alert alert">
+	<div class="alert-content">
+		<div role="img" id="stop-icon">🛑</div>
+		<div class="alert-content-wrapper">
+			<h1>This is a testing site! All data will be reset from <a href="https://git.door43.org" target="_blank">production</a> each week. Use at your own risk for development
+				& testing!</h1>
+			<p><a href="https://discord.com/channels/867746700390563850/931543389223145562/1060303024679034920"
+					target="_blank">Click here</a> to learn how you can also run a copy of DCS locally and easily copy repos from
+				prod to it and restore after testing.</p>
+		</div>
+	</div>
+	<label for="alert-id-0" role="button" class="alert-close" aria-label="Close Alert">
+		<svg width="24" height="24" role="button" arial-label="close alert">
+			<line x1="0" x2="24" y1="0" y2="24" stroke="black" stroke-width="5" />
+			<line x1="24" x2="0" y1="0" y2="24" stroke="black" stroke-width="5" />
+		</svg>
+	</label>
+</div>
+
+<script>
+	/* eslint-disable unicorn/no-document-cookie */
+	function createCookie(name, value, days) {
+		let expires = '';
+		if (days) {
+			const date = new Date();
+			date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
+			expires = `; expires=${date.toGMTString()}`;
+		}
+		document.cookie = `${name}=${value}${expires}; path=/`;
+	}
+
+	function readCookie(name) {
+		const nameEQ = `${name}=`;
+		const ca = document.cookie.split(';');
+		for (let i = 0; i < ca.length; i++) {
+			let c = ca[i];
+			while (c.charAt(0) === ' ') c = c.substring(1, c.length);
+			if (c.indexOf(nameEQ) === 0) return c.substring(nameEQ.length, c.length);
+		}
+		return null;
+	}
+
+	const bar = document.getElementById('static-bar');
+	const warning = document.querySelector('.warning-alert');
+	const closeBtn = warning.querySelector('.alert-flag');
+	let cookieSet = false;
+	if (readCookie('hide-warning')) {
+		cookieSet = true;
+		warning.style.display = 'none';
+		bar.style.display = 'block';
+	} else {
+		bar.style.display = 'none';
+	}
+	closeBtn.addEventListener('change', () => {
+		warning.style.display = 'none';
+		bar.style.display = 'block';
+		if (!cookieSet) {
+			createCookie('hide-warning', true, 7 - (new Date().getDay())); // Days until Sunday
+		}
+	});
+	bar.addEventListener('click', () => {
+		warning.style.display = 'block';
+		bar.style.display = 'none';
+	});
+</script>
+{{end}}
+
+{{if and (ne AppUrl "https://git.door43.org/") (ne AppUrl "https://qa.door43.org/") (ne AppUrl "https://develop.door43.org/")}}
+<div style="display: block; background: grey; height: 2px"></div>
+{{end}}

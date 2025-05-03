@@ -26,6 +26,7 @@ import (
 	"code.gitea.io/gitea/routers/common"
 	"code.gitea.io/gitea/routers/web/admin"
 	"code.gitea.io/gitea/routers/web/auth"
+	"code.gitea.io/gitea/routers/web/dcs" // DCS Customizations
 	"code.gitea.io/gitea/routers/web/devtest"
 	"code.gitea.io/gitea/routers/web/events"
 	"code.gitea.io/gitea/routers/web/explore"
@@ -1186,6 +1187,18 @@ func registerWebRoutes(m *web.Router) {
 			Get(repo.SetDiffViewStyle, repo.SetWhitespaceBehavior, repo.CompareDiff).
 			Post(reqSignIn, context.RepoMustNotBeArchived(), reqUnitPullsReader, repo.MustAllowPulls, web.Bind(forms.CreateIssueForm{}), repo.SetWhitespaceBehavior, repo.CompareAndPullRequestPost)
 		m.Get("/pulls/new/*", repo.PullsNewRedirect)
+		// DCS Customizations
+		m.Group("/healthcheck", func() {
+			m.Get("", repo.GetRepoHealthcheck)
+			m.Get("/update", repo.UpdateDoor43Metadata)
+			m.Post("/update", repo.UpdateDoor43Metadata) // TODO: Make this /{id} for a single DM
+		})
+		m.Group("/metadata", func() {
+			m.Get("", repo.GetAllRepoDoor43Metadata)
+			m.Get("/update", repo.UpdateDoor43Metadata)
+			m.Post("/update", repo.UpdateDoor43Metadata) // TODO: Make this /{id} for a single DM
+		})
+		// END DCS Customizations
 	}, optSignIn, context.RepoAssignment, reqUnitCodeReader)
 	// end "/{username}/{reponame}": repo code: find, compare, list
 
@@ -1647,6 +1660,14 @@ func registerWebRoutes(m *web.Router) {
 			m.Post("/actions-mock/runs/{run}/jobs/{job}", web.Bind(actions.ViewRequest{}), devtest.MockActionsRunsJobs)
 		})
 	}
+
+	/*** DCS Customizations ***/
+	m.Get("/about", dcs.About)
+	m.Get("/tools", dcs.Tools)
+	m.Group("/catalog", func() {
+		m.Get("", dcs.Catalog)
+	}, optSignIn)
+	/*** END DCS Customizations ***/
 
 	m.NotFound(func(w http.ResponseWriter, req *http.Request) {
 		ctx := context.GetWebContext(req.Context())
