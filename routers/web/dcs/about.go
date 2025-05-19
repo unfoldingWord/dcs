@@ -6,15 +6,15 @@
 package dcs
 
 import (
-	"code.gitea.io/gitea/modules/base"
+	"code.gitea.io/gitea/modules/templates"
 	"code.gitea.io/gitea/services/context"
 )
 
 const (
 	// tplAbout about page template. This is the same as the home page that
 	// unauthenticated users see.
-	tplAbout base.TplName = "home"
-	tplTools base.TplName = "tools"
+	tplAbout templates.TplName = "home"
+	tplTools templates.TplName = "tools"
 )
 
 // About render about page

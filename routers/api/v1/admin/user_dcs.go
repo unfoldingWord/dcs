@@ -7,8 +7,10 @@ package admin
 import (
 	"net/http"
 
-	"code.gitea.io/gitea/models"
 	"code.gitea.io/gitea/models/db"
+	org_model "code.gitea.io/gitea/models/organization"
+	packages_model "code.gitea.io/gitea/models/packages"
+	repo_model "code.gitea.io/gitea/models/repo"
 	user_model "code.gitea.io/gitea/models/user"
 	"code.gitea.io/gitea/modules/log"
 	api "code.gitea.io/gitea/modules/structs"
@@ -32,7 +34,7 @@ func ListSpamUsers(ctx *context.APIContext) {
 
 	users, err := getSpamUsers(ctx)
 	if err != nil {
-		ctx.Error(http.StatusInternalServerError, "ListSpamUsers", err)
+		ctx.APIError(http.StatusInternalServerError, err)
 		return
 	}
 
@@ -66,18 +68,18 @@ func DeleteSpamUsers(ctx *context.APIContext) {
 
 	users, err := getSpamUsers(ctx)
 	if err != nil {
-		ctx.Error(http.StatusInternalServerError, "DeleteSpamUsers", err)
+		ctx.APIError(http.StatusInternalServerError, err)
 		return
 	}
 
 	for _, user := range users {
 		if err := user_service.DeleteUser(ctx, user, ctx.FormBool("purge")); err != nil {
-			if models.IsErrUserOwnRepos(err) ||
-				models.IsErrUserHasOrgs(err) ||
-				models.IsErrUserOwnPackages(err) {
-				ctx.Error(http.StatusUnprocessableEntity, "", err)
+			if repo_model.IsErrUserOwnRepos(err) ||
+				org_model.IsErrUserHasOrgs(err) ||
+				packages_model.IsErrUserOwnPackages(err) {
+				ctx.APIError(http.StatusUnprocessableEntity, err)
 			} else {
-				ctx.Error(http.StatusInternalServerError, "DeleteUser", err)
+				ctx.APIError(http.StatusInternalServerError, err)
 			}
 			return
 		}

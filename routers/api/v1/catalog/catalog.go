@@ -826,19 +826,19 @@ func GetCatalogEntry(ctx *context.APIContext) {
 	dm, err = repo.GetDoor43MetadataByRepoIDAndRef(ctx, ctx.Repo.Repository.ID, ref)
 	if err != nil {
 		if !repo.IsErrDoor43MetadataNotExist(err) {
-			ctx.Error(http.StatusInternalServerError, "GetDoor43MetadataByRepoIDAndRef", err)
+			ctx.APIError(http.StatusInternalServerError, err)
 		} else {
-			ctx.NotFound()
+			ctx.APIErrorNotFound()
 		}
 		return
 	}
 	if err := dm.LoadAttributes(ctx); err != nil {
-		ctx.Error(http.StatusInternalServerError, "LoadAttributes", err)
+		ctx.APIError(http.StatusInternalServerError, err)
 		return
 	}
 	perm, err := access_model.GetUserRepoPermission(ctx, dm.Repo, ctx.ContextUser)
 	if err != nil {
-		ctx.Error(http.StatusInternalServerError, "GetUserRepoPermission", err)
+		ctx.APIError(http.StatusInternalServerError, err)
 		return
 	}
 	ctx.JSON(http.StatusOK, convert.ToCatalogEntryLoadRepoRelease(ctx, dm, perm))
@@ -880,9 +880,9 @@ func GetCatalogMetadata(ctx *context.APIContext) {
 	dm, err := repo.GetDoor43MetadataByRepoIDAndRef(ctx, ctx.Repo.Repository.ID, ref)
 	if err != nil {
 		if !repo.IsErrDoor43MetadataNotExist(err) {
-			ctx.Error(http.StatusInternalServerError, "GetDoor43MetadataByRepoIDAndRef", err)
+			ctx.APIError(http.StatusInternalServerError, err)
 		} else {
-			ctx.NotFound()
+			ctx.APIErrorNotFound()
 		}
 		return
 	}
@@ -925,9 +925,9 @@ func GetCatalogValidation(ctx *context.APIContext) {
 	dm, err := repo.GetDoor43MetadataByRepoIDAndRef(ctx, ctx.Repo.Repository.ID, ref)
 	if err != nil {
 		if !repo.IsErrDoor43MetadataNotExist(err) {
-			ctx.Error(http.StatusInternalServerError, "GetDoor43MetadataByRepoIDAndRef", err)
+			ctx.APIError(http.StatusInternalServerError, err)
 		} else {
-			ctx.NotFound()
+			ctx.APIErrorNotFound()
 		}
 		return
 	}
@@ -940,9 +940,9 @@ func GetCatalogMetadataOLD(ctx *context.APIContext) {
 	dm, err := repo.GetDoor43MetadataByRepoIDAndRef(ctx, ctx.Repo.Repository.ID, ref)
 	if err != nil {
 		if !repo.IsErrDoor43MetadataNotExist(err) {
-			ctx.Error(http.StatusInternalServerError, "GetDoor43MetadataByRepoIDAndRef", err)
+			ctx.APIError(http.StatusInternalServerError, err)
 		} else {
-			ctx.NotFound()
+			ctx.APIErrorNotFound()
 		}
 		return
 	}
@@ -969,7 +969,7 @@ func searchCatalog(ctx *context.APIContext) {
 		var ok bool
 		stage, ok = door43metadata.StageMap[stageStr]
 		if !ok {
-			ctx.Error(http.StatusUnprocessableEntity, "", fmt.Errorf("invalid stage [%s]", stageStr))
+			ctx.APIError(http.StatusUnprocessableEntity, fmt.Errorf("invalid stage [%s]", stageStr))
 			return
 		}
 	}
@@ -1029,12 +1029,12 @@ func searchCatalog(ctx *context.APIContext) {
 				if orderBy, ok := searchModeMap[strings.ToLower(sortMode)]; ok {
 					opts.OrderBy = append(opts.OrderBy, orderBy)
 				} else {
-					ctx.Error(http.StatusUnprocessableEntity, "", fmt.Errorf("invalid sort mode: \"%s\"", sortMode))
+					ctx.APIError(http.StatusUnprocessableEntity, fmt.Errorf("invalid sort mode: \"%s\"", sortMode))
 					return
 				}
 			}
 		} else {
-			ctx.Error(http.StatusUnprocessableEntity, "", fmt.Errorf("invalid sort order [%s]", sortOrder))
+			ctx.APIError(http.StatusUnprocessableEntity, fmt.Errorf("invalid sort order [%s]", sortOrder))
 			return
 		}
 	} else {
@@ -1043,7 +1043,7 @@ func searchCatalog(ctx *context.APIContext) {
 
 	dms, count, err := models.SearchCatalog(ctx, opts)
 	if err != nil {
-		ctx.Error(http.StatusInternalServerError, "SearchCatalog", err)
+		ctx.APIError(http.StatusInternalServerError, err)
 		return
 	}
 
@@ -1055,13 +1055,13 @@ func searchCatalog(ctx *context.APIContext) {
 		} else {
 			err := dm.LoadAttributes(ctx)
 			if err != nil {
-				ctx.Error(http.StatusInternalServerError, "LoadAttributes", err)
+				ctx.APIError(http.StatusInternalServerError, err)
 				return
 			}
 		}
 		perm, err := access_model.GetUserRepoPermission(ctx, dm.Repo, ctx.ContextUser)
 		if err != nil {
-			ctx.Error(http.StatusInternalServerError, "GetUserRepoPermission", err)
+			ctx.APIError(http.StatusInternalServerError, err)
 			return
 		}
 		dmAPI := convert.ToCatalogEntryLoadRepoRelease(ctx, dm, perm)

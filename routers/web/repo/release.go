@@ -530,13 +530,13 @@ func NewReleasePost(ctx *context.Context) {
 	rel.PublisherID = ctx.Doer.ID
 	rel.IsTag = false
 	/*** DCS Customizations ***/
-	err := rel.LoadAttributes(ctx)
+	err = rel.LoadAttributes(ctx)
 	if err != nil {
 		ctx.ServerError("LoadAttributes", err)
 		return
 	}
 	/*** END DCS Customizations ***/
-	
+
 	if err = release_service.UpdateRelease(ctx, ctx.Doer, ctx.Repo.GitRepo, rel, attachmentUUIDs, nil, nil); err != nil {
 		handleTagReleaseError(err)
 		return

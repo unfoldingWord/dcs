@@ -721,7 +721,6 @@ func processDoor43MetadataForRepoRef(ctx context.Context, repo *repo_model.Repos
 	if err != nil && !repo_model.IsErrReleaseNotExist(err) {
 		return
 	}
-	var branch *git.Branch
 	if dm.Release != nil {
 		if dm.Release.IsDraft {
 			return
@@ -745,13 +744,10 @@ func processDoor43MetadataForRepoRef(ctx context.Context, repo *repo_model.Repos
 		}
 		dm.CommitSHA = commit.ID.String()
 		dm.ReleaseDateUnix = dm.Release.CreatedUnix
-	} else if branch, err = gitRepo.GetBranch(ref); err != nil {
-		if git.IsErrBranchNotExist(err) {
-			err = fmt.Errorf("ref for repo %s [%d] does not exist: %s", repo.FullName(), repo.ID, ref)
-			return
-		}
+	} else if !gitRepo.IsBranchExist(ref) {
+		err = fmt.Errorf("ref for repo %s [%d] does not exist: %s", repo.FullName(), repo.ID, ref)
 		return
-	} else if branch != nil {
+	} else {
 		dm.Stage = door43metadata.StageOther
 		dm.IsLatestForStage = false
 		dm.RefType = "branch"

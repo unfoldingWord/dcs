@@ -9,9 +9,9 @@ import (
 
 	"code.gitea.io/gitea/models/db"
 	repo_model "code.gitea.io/gitea/models/repo"
-	"code.gitea.io/gitea/modules/base"
 	"code.gitea.io/gitea/modules/graceful"
 	"code.gitea.io/gitea/modules/log"
+	"code.gitea.io/gitea/modules/templates"
 	"code.gitea.io/gitea/services/context"
 	door43metadata_service "code.gitea.io/gitea/services/door43metadata"
 
@@ -19,8 +19,8 @@ import (
 )
 
 const (
-	tplDCSHealthcheck base.TplName = "repo/dcs_healthcheck"
-	tplDCSMetadata    base.TplName = "repo/dcs_metadata"
+	tplDCSHealthcheck templates.TplName = "repo/dcs_healthcheck"
+	tplDCSMetadata    templates.TplName = "repo/dcs_metadata"
 )
 
 // GetRepoHealthcheck renders healthcheck for a repo

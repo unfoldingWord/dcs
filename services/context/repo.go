@@ -936,8 +936,8 @@ func RepoRefByType(detectRefType git.RefType) func(*Context) {
 		}
 
 		/*** DCS Customizations ***/
-		if ctx.Repo.IsViewBranch || ctx.Repo.IsViewTag {
-			ctx.Repo.Door43Metadata, err = repo_model.GetDoor43MetadataByRepoIDAndRef(ctx, ctx.Repo.Repository.ID, refName)
+		if ctx.Repo.RefFullName.IsBranch() || ctx.Repo.RefFullName.IsTag() {
+			ctx.Repo.Door43Metadata, err = repo_model.GetDoor43MetadataByRepoIDAndRef(ctx, ctx.Repo.Repository.ID, refShortName)
 			if err == nil && ctx.Repo.Door43Metadata != nil {
 				ctx.Repo.Door43Metadata.Repo = ctx.Repo.Repository
 			}

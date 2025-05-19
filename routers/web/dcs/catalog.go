@@ -12,20 +12,20 @@ import (
 	"code.gitea.io/gitea/models/db"
 	"code.gitea.io/gitea/models/door43metadata"
 	"code.gitea.io/gitea/models/repo"
-	"code.gitea.io/gitea/modules/base"
 	"code.gitea.io/gitea/modules/setting"
+	"code.gitea.io/gitea/modules/templates"
 	"code.gitea.io/gitea/services/context"
 )
 
 const (
 	// tplCatalog catalog page template.
-	tplCatalog base.TplName = "catalog/catalog"
+	tplCatalog templates.TplName = "catalog/catalog"
 )
 
 // CatalogSearchOptions when calling search catalog
 type CatalogSearchOptions struct {
 	PageSize int
-	TplName  base.TplName
+	TplName  templates.TplName
 }
 
 // RenderCatalogSearch render catalog search page
@@ -161,8 +161,7 @@ func RenderCatalogSearch(ctx *context.Context, opts *CatalogSearchOptions) {
 	ctx.Data["IsRepoIndexerEnabled"] = setting.Indexer.RepoIndexerEnabled
 
 	pager := context.NewPagination(int(count), opts.PageSize, page, 5)
-	pager.SetDefaultParams(ctx)
-	pager.AddParamString("topic", "TopicOnly")
+	pager.AddParamFromRequest(ctx.Req)
 	ctx.Data["Page"] = pager
 
 	ctx.HTML(200, opts.TplName)

@@ -78,7 +78,7 @@ func Users(ctx *context.Context) {
 		IsProhibitLogin:    optional.ParseBool(statusFilterMap["is_prohibit_login"]),
 		IncludeReserved:    true, // administrator needs to list all accounts include reserved, bot, remote ones
 		/*** DCS Customizations ***/
-		IsSpamUser:    util.OptionalBoolParse(statusFilterMap["is_spam_user"]),
+		IsSpamUser:    optional.ParseBool(statusFilterMap["is_spam_user"]),
 		RepoLanguages: ctx.FormStrings("lang"),
 		/*** END DCS Customizations ***/
 	}, tplUsers)
