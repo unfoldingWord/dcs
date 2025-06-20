@@ -81,7 +81,7 @@
 				</div>
 			{{end}}
 			<div class="flex-item-body">
-				{{if .Release}}{{ctx.Locale.Tr "explore.released"}}{{else}}{{ctx.Locale.Tr "org.repo_updated"}}{{end}} {{TimeSinceUnix .ReleaseDateUnix ctx.Locale}}</div>
+				{{if .Release}}{{ctx.Locale.Tr "explore.released"}}{{else}}{{ctx.Locale.Tr "org.repo_updated"}}{{end}} {{DateUtils.TimeSince .ReleaseDateUnix}}</div>
 			</div>
 		</div>
 	{{else}}
