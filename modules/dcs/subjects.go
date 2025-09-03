@@ -7,43 +7,40 @@ import (
 	"strings"
 )
 
-// ResourceToSubjectMap are the valid subjects keyed by their resource ID
-var ResourceToSubjectMap = map[string]string{
-	"glt":        "Aligned Bible",
-	"gst":        "Aligned Bible",
-	"obs-sn":     "OBS Study Notes",
-	"obs-sq":     "OBS Study Questions",
-	"obs-tn":     "OBS Translation Notes",
-	"obs-tq":     "OBS Translation Questions",
-	"obs":        "Open Bible Stories",
-	"obs-twl":    "TSV OBS Translation Words Links",
-	"sn":         "Study Notes",
-	"sq":         "Study Questions",
-	"ta":         "Translation Academy",
-	"tl":         "Training Library",
-	"tn":         "TSV Translation Notes",
-	"tq":         "TSV Translation Questions",
-	"tw":         "Translation Words",
-	"twl":        "TSV Translation Words Links",
-	"sn-tsv":     "TSV Study Notes",
-	"sq-tsv":     "TSV Study Questions",
-	"tn-tsv":     "TSV Translation Notes",
-	"tq-tsv":     "TSV Translation Questions",
-	"obs-sn-tsv": "TSV OBS Study Notes",
-	"obs-sq-tsv": "TSV OBS Study Questions",
-	"obs-tn-tsv": "TSV OBS Translation Notes",
-	"obs-tq-tsv": "TSV OBS Translation Questions",
-	"ugnt":       "Greek New Testament",
-	"uhb":        "Hebrew Old Testament",
-	"ult":        "Aligned Bible",
-	"ust":        "Aligned Bible",
+// SubjectToResourceMap maps subjects to their valid resource IDs
+var SubjectToResourceMap = map[string][]string{
+	"Aligned Bible":                   {"glt", "gst", "ult", "ust"},
+	"OBS Study Notes":                 {"obs-sn2"},
+	"OBS Study Questions":             {"obs-sq"},
+	"OBS Translation Notes":           {"obs-tn"},
+	"OBS Translation Questions":       {"obs-tq"},
+	"Open Bible Stories":              {"obs"},
+	"TSV OBS Translation Words Links": {"obs-twl"},
+	"Study Notes":                     {"sn"},
+	"Study Questions":                 {"sq"},
+	"Translation Academy":             {"ta"},
+	"Training Library":                {"tl"},
+	"TSV Translation Notes":           {"tn", "tn-tsv"},
+	"TSV Translation Questions":       {"tq", "tq-tsv"},
+	"Translation Words":               {"tw"},
+	"TSV Translation Words Links":     {"twl"},
+	"TSV Study Notes":                 {"sn-tsv"},
+	"TSV Study Questions":             {"sq-tsv"},
+	"TSV OBS Study Notes":             {"obs-sn"},
+	"TSV OBS Study Questions":         {"obs-sq"},
+	"TSV OBS Translation Notes":       {"obs-tn"},
+	"TSV OBS Translation Questions":   {"obs-tq"},
+	"Greek New Testament":             {"ugnt"},
+	"Hebrew Old Testament":            {"uhb"},
 }
 
-// SubjectToResourceMap is the inverse of ResourceToSubjectMap
-var SubjectToResourceMap = func() map[string][]string {
-	m := make(map[string][]string)
-	for k, v := range ResourceToSubjectMap {
-		m[v] = append(m[v], k)
+// ResourceToSubjectMap is the inverse of SubjectToResourceMap
+var ResourceToSubjectMap = func() map[string]string {
+	m := make(map[string]string)
+	for subject, resources := range SubjectToResourceMap {
+		for _, resource := range resources {
+			m[resource] = subject
+		}
 	}
 	return m
 }()

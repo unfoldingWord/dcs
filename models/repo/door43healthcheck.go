@@ -6,12 +6,16 @@ package repo
 import (
 	"context"
 	"fmt"
+	"io"
+	"net/http"
+	"slices"
 	"strings"
 
 	"code.gitea.io/gitea/models/db"
 	"code.gitea.io/gitea/modules/dcs"
 	"code.gitea.io/gitea/modules/json"
 	"code.gitea.io/gitea/modules/log"
+	"code.gitea.io/gitea/modules/setting"
 )
 
 // SeverityLevel represents the level of severity or concern for a health check
@@ -63,17 +67,23 @@ type IssueCode string
 
 // IssueCode values
 const (
-	IssueCodeNoMetadata        IssueCode = "no_metadata"            // no metadata found for the repository
-	IssueCodeMetadataInvalid   IssueCode = "metadata_invalid"       // metadata is invalid
-	IssueCodeRelation          IssueCode = "relation_lang_invalid"  // relation not valid
-	IssueCodePublisher         IssueCode = "publisher_has_uw"       // publisher empty or is 'unfoldingWord'
-	IssueCodeTitle             IssueCode = "title_has_uw"           // title is empty or still contains 'unfoldingWord'
-	IssueCodeIdentifier        IssueCode = "abbreviation_invalid"   // abbreviation is not valid for given subject
-	IssueCodeLanguage          IssueCode = "language_is_en"         // language is empty or still English
-	IssueCodeIngredientTitle   IssueCode = "ingredient_title_is_en" // ingredient title is empty or still English
-	IssueCodeIngredientMissing IssueCode = "ingredient_missing"     // ingredient's path is missing
-	IssueCodeIngredientEmpty   IssueCode = "ingredient_empty"       // ingredient's file is empty
-	IssueCodeReleaseNeeded     IssueCode = "release_needed"         // a release is needed for the resource
+	IssueCodeNoMetadata             IssueCode = "no_metadata"                  // no metadata found for the repository
+	IssueCodeMetadataInvalid        IssueCode = "metadata_invalid"             // metadata is invalid
+	IssueCodeRelation               IssueCode = "relation_lang_invalid"        // relation not valid
+	IssueCodePublisher              IssueCode = "publisher_has_uw"             // publisher empty or is 'unfoldingWord'
+	IssueCodeTitle                  IssueCode = "title_has_uw"                 // title is empty or still contains 'unfoldingWord'
+	IssueCodeIdentifier             IssueCode = "abbreviation_invalid"         // abbreviation is not valid for given subject
+	IssueCodeLanguage               IssueCode = "language_is_en"               // language is empty or still English
+	IssueCodeIngredientTitle        IssueCode = "ingredient_title_is_en"       // ingredient title is empty or still English
+	IssueCodeIngredientMissing      IssueCode = "ingredient_missing"           // ingredient's path is missing
+	IssueCodeIngredientEmpty        IssueCode = "ingredient_empty"             // ingredient's file is empty
+	IssueCodeReleaseNeeded          IssueCode = "release_needed"               // a release is needed for the resource
+	IssueCodeRelationMissing        IssueCode = "tn_relation_missing"          // TN relation is missing
+	IssueCodeOrigLangVersionMissing IssueCode = "tn_orig_lang_version_missing" // TN orig lang version is missing
+	IssueCodeOBSStoryMissing        IssueCode = "obs_story_missing"            // OBS story is missing
+	IssueCodeOBSStoryTitleMissing   IssueCode = "obs_story_invalid"            // OBS story title is missing
+	IssueCodeOBSWrongFrameCount     IssueCode = "obs_story_wrong_frame_count"  // OBS story has wrong frame count
+	IssueCodeOBSBibleRefenceMissing IssueCode = "obs_bible_reference_missing"  // OBS bible reference is missing from story
 )
 
 var IssueCodeOrder = []IssueCode{
@@ -88,6 +98,12 @@ var IssueCodeOrder = []IssueCode{
 	IssueCodeIngredientMissing,
 	IssueCodeIngredientEmpty,
 	IssueCodeReleaseNeeded,
+	IssueCodeRelationMissing,
+	IssueCodeOrigLangVersionMissing,
+	IssueCodeOBSStoryMissing,
+	IssueCodeOBSStoryTitleMissing,
+	IssueCodeOBSWrongFrameCount,
+	IssueCodeOBSBibleRefenceMissing,
 }
 
 type HealthcheckGroupedIssues struct {
@@ -141,59 +157,83 @@ func (hgi *HealthcheckGroupedIssues) GetOrder() []IssueCode {
 }
 
 var IssueCodeNegatives = map[IssueCode]string{
-	IssueCodeNoMetadata:        "No metadata found for the repository",
-	IssueCodeMetadataInvalid:   "Invalid metadata; file does not match schema",
-	IssueCodeRelation:          "Relation is not the language of the resource",
-	IssueCodePublisher:         "Publisher is still 'unfoldingWord'",
-	IssueCodeTitle:             "Title still contains 'unfoldingWord'",
-	IssueCodeIdentifier:        "Identifier is not valid for the resource's subject",
-	IssueCodeLanguage:          "Language is still English",
-	IssueCodeIngredientTitle:   "Book is still in English",
-	IssueCodeIngredientMissing: "Book file is missing",
-	IssueCodeIngredientEmpty:   "Book file is empty",
-	IssueCodeReleaseNeeded:     "An error-free release needs to be published for the resource",
+	IssueCodeNoMetadata:             "No metadata found for the repository",
+	IssueCodeMetadataInvalid:        "Invalid metadata; file does not match schema",
+	IssueCodeRelation:               "Relation is not the language of the resource",
+	IssueCodePublisher:              "Publisher is still 'unfoldingWord'",
+	IssueCodeTitle:                  "Title still contains 'unfoldingWord'",
+	IssueCodeIdentifier:             "Identifier is not valid for the resource's subject",
+	IssueCodeLanguage:               "Language is still English",
+	IssueCodeIngredientTitle:        "Project title is still in English",
+	IssueCodeIngredientMissing:      "Project file is missing",
+	IssueCodeIngredientEmpty:        "Projct file is empty",
+	IssueCodeReleaseNeeded:          "An error-free release needs to be published for the resource",
+	IssueCodeRelationMissing:        "Required relations are missing",
+	IssueCodeOrigLangVersionMissing: "Relations for original languages are missing version",
+	IssueCodeOBSStoryMissing:        "Not all 50 stories are present",
+	IssueCodeOBSStoryTitleMissing:   "Stories are missing their titles",
+	IssueCodeOBSWrongFrameCount:     "Stories are missing their frames",
+	IssueCodeOBSBibleRefenceMissing: "Stories are missing their Bible references",
 }
 
 var IssueCodePositives = map[IssueCode]string{
-	IssueCodeNoMetadata:        "Metadata found for the repository",
-	IssueCodeMetadataInvalid:   "Valid Metadata",
-	IssueCodeRelation:          "Relations use the language of the resource",
-	IssueCodePublisher:         "Publisher has been properly changed",
-	IssueCodeTitle:             "Title has been properly changed",
-	IssueCodeIdentifier:        "Identifier is valid for the resource's subject",
-	IssueCodeLanguage:          "Language has been set",
-	IssueCodeIngredientTitle:   "Book titles have been translated",
-	IssueCodeIngredientMissing: "Book files exist",
-	IssueCodeIngredientEmpty:   "Book files are not empty",
-	IssueCodeReleaseNeeded:     "An error-free release has been published",
+	IssueCodeNoMetadata:             "Metadata found for the repository",
+	IssueCodeMetadataInvalid:        "Valid Metadata",
+	IssueCodeRelation:               "Relations use the language of the resource",
+	IssueCodePublisher:              "Publisher has been properly changed",
+	IssueCodeTitle:                  "Title has been properly changed",
+	IssueCodeIdentifier:             "Identifier is valid for the resource's subject",
+	IssueCodeLanguage:               "Language has been set",
+	IssueCodeIngredientTitle:        "Project titles have been translated",
+	IssueCodeIngredientMissing:      "Project files exist",
+	IssueCodeIngredientEmpty:        "Project files are not empty",
+	IssueCodeReleaseNeeded:          "An error-free release has been published",
+	IssueCodeRelationMissing:        "Has all required relations",
+	IssueCodeOrigLangVersionMissing: "Relations for original languages has version",
+	IssueCodeOBSStoryMissing:        "All 50 stories are present",
+	IssueCodeOBSStoryTitleMissing:   "All stories have titles",
+	IssueCodeOBSWrongFrameCount:     "All stories have all their frames",
+	IssueCodeOBSBibleRefenceMissing: "All stories have Bible references",
 }
 
 var IssueDetailsFormatStrings = map[IssueCode]string{
-	IssueCodeNoMetadata:        "No metadata found for the repository. Is not a resource repository.",
-	IssueCodeMetadataInvalid:   "Metadata is invalid. The file does not match the schema.",
-	IssueCodeRelation:          "Relation in manifest.yaml **`%s`** does not match resource language **`%s`**.",
-	IssueCodePublisher:         "Publisher in manifest.yaml is still 'unfoldingWord'.",
-	IssueCodeTitle:             "Resouce title in manifest.yaml still contains 'unfoldingWord'.",
-	IssueCodeIdentifier:        "Identifier in manifest.yaml should not be **`%s`** for the subject **`%s`**.",
-	IssueCodeLanguage:          "Language in manifest.yaml is still English **`en`**.",
-	IssueCodeIngredientTitle:   "The title in for the project '%s' is still in English: %s",
-	IssueCodeIngredientMissing: "The file for project **`%s`** is does not exist in the repo: **`%s`**",
-	IssueCodeIngredientEmpty:   "The file for project **`%s`** is empty: **`%s`**",
-	IssueCodeReleaseNeeded:     "An error-free release needs to be published for the resource.",
+	IssueCodeNoMetadata:             "No metadata found for the repository. Is not a resource repository.",
+	IssueCodeMetadataInvalid:        "Metadata is invalid. The file does not match the schema.",
+	IssueCodeRelation:               "Relation in manifest.yaml **`%s`** does not match resource language **`%s`**.",
+	IssueCodePublisher:              "Publisher in manifest.yaml is still 'unfoldingWord'.",
+	IssueCodeTitle:                  "Resouce title in manifest.yaml still contains 'unfoldingWord'.",
+	IssueCodeIdentifier:             "Identifier in manifest.yaml should not be **`%s`** for the subject **`%s`**.",
+	IssueCodeLanguage:               "Language in manifest.yaml is still English **`en`**.",
+	IssueCodeIngredientTitle:        "The title in for the project '**`%s`**' is still in English: **`%s`**",
+	IssueCodeIngredientMissing:      "The file for project **`%s`** is does not exist in the repo: **`%s`**",
+	IssueCodeIngredientEmpty:        "The file for project **`%s`** is empty: **`%s`**",
+	IssueCodeReleaseNeeded:          "An error-free release needs to be published for the resource.",
+	IssueCodeRelationMissing:        "Relations missing in manifest.yaml file: **`%s`**",
+	IssueCodeOrigLangVersionMissing: "The relation **`%s`** is missing a version in the manifest.yaml file",
+	IssueCodeOBSStoryMissing:        "The following stories are missing: **`%s`**",
+	IssueCodeOBSStoryTitleMissing:   "The following stories are missing titles: **`%s`**",
+	IssueCodeOBSWrongFrameCount:     "The following stories have the wrong frame count: **`%s`**",
+	IssueCodeOBSBibleRefenceMissing: "The following stories are missing Bible references: **`%s`**",
 }
 
 var IssueSuggestionsFormatStrings = map[IssueCode]string{
-	IssueCodeNoMetadata:        "Add a manifest.yaml file to the repository to describe the resource.",
-	IssueCodeMetadataInvalid:   "Edit the <a href=\"%s/src/branch/%s/manifest.yaml\" target=\"_blank\">manifest.yaml</a> file and fix these errors:\n\n<pre>%s</pre>",
-	IssueCodeRelation:          "Edit the <a href=\"%s/src/branch/%s/manifest.yaml\" target=\"_blank\">manifest.yaml</a> file and change **`%s`** to **`%s/%s`** in the **`relation`** field.",
-	IssueCodePublisher:         "Edit the <a href=\"%s/src/branch/%s/manifest.yaml\" target=\"_blank\">manifest.yaml</a> file and change `unfoldingWord` to the correct publisher in the **`publisher`** field, such as **`%s`**.",
-	IssueCodeTitle:             "Edit the <a href=\"%s/src/branch/%s/manifest.yaml\" target=\"_blank\">manifest.yaml</a> file and remove 'unfoldingWord ' from the beginning of **`title`**, such as **`%s`** => **`%s`**, or translate into your language.",
-	IssueCodeIdentifier:        "Edit the <a href=\"%s/src/branch/%s/manifest.yaml\" target=\"_blank\">manifest.yaml</a> file and change **`%s`** to the correct **`identifier`** for the subject **`%s`**, which is **`%s`**.",
-	IssueCodeLanguage:          "Edit the <a href=\"%s/src/branch/%s/manifest.yaml\" target=\"_blank\">manifest.yaml</a> file and change **`en`** to the correct **`language code`** for your project's language, the **`title`** of the language, and the **`direction`**.",
-	IssueCodeIngredientTitle:   "Edit the <a href=\"%s/src/branch/%s/manifest.yaml\" target=\"_blank\">manifest.yaml</a> file and translate the **`title`** of the projects. For example, translate **'%s'** to the resource's language.",
-	IssueCodeIngredientMissing: "Either edit the <a href=\"%s/src/branch/%s/manifest.yaml\" target=\"_blank\">manifest.yaml</a> file and remove the project with the identifier of **`%s`** or add the missing file, **`%s`**, to the repository.",
-	IssueCodeIngredientEmpty:   "Either edit the <a href=\"%s/src/branch/%s/manifest.yaml\" target=\"_blank\">manifest.yaml</a> file and remove the project with the identifier of **`%s`** or add content to the file **`%s`**.",
-	IssueCodeReleaseNeeded:     "It looks like %s of the **`%s`** branch's %ss has been fixed. You should create a release for the resource with <a href=\"https://gateway-admin.netlify.app/\" target=\"_blank\">**`gatewayAdmin`**</a>.",
+	IssueCodeNoMetadata:             "Add a manifest.yaml file to the repository to describe the resource.",
+	IssueCodeMetadataInvalid:        "Edit the <a href=\"%s/src/branch/%s/manifest.yaml\" target=\"_blank\">manifest.yaml</a> file and fix these errors:\n\n<pre>%s</pre>",
+	IssueCodeRelation:               "Edit the <a href=\"%s/src/branch/%s/manifest.yaml\" target=\"_blank\">manifest.yaml</a> file and change **`%s`** to **`%s/%s`** in the **`relation`** field.",
+	IssueCodePublisher:              "Edit the <a href=\"%s/src/branch/%s/manifest.yaml\" target=\"_blank\">manifest.yaml</a> file and change `unfoldingWord` to the correct publisher in the **`publisher`** field, such as **`%s`**.",
+	IssueCodeTitle:                  "Edit the <a href=\"%s/src/branch/%s/manifest.yaml\" target=\"_blank\">manifest.yaml</a> file and remove 'unfoldingWord ' from the beginning of **`title`**, such as **`%s`** => **`%s`**, or translate into your language.",
+	IssueCodeIdentifier:             "Edit the <a href=\"%s/src/branch/%s/manifest.yaml\" target=\"_blank\">manifest.yaml</a> file and change **`%s`** to the correct **`identifier`** for the subject **`%s`**, which is **`%s`**.",
+	IssueCodeLanguage:               "Edit the <a href=\"%s/src/branch/%s/manifest.yaml\" target=\"_blank\">manifest.yaml</a> file and change **`en`** to the correct **`language code`** for your project's language, the **`title`** of the language, and the **`direction`**.",
+	IssueCodeIngredientTitle:        "Edit the <a href=\"%s/src/branch/%s/manifest.yaml\" target=\"_blank\">manifest.yaml</a> file and translate the **`title`** of the projects. For example, translate **'%s'** to the resource's language.",
+	IssueCodeIngredientMissing:      "Either edit the <a href=\"%s/src/branch/%s/manifest.yaml\" target=\"_blank\">manifest.yaml</a> file and remove the project with the identifier of **`%s`** or add the missing file, **`%s`**, to the repository.",
+	IssueCodeIngredientEmpty:        "Either edit the <a href=\"%s/src/branch/%s/manifest.yaml\" target=\"_blank\">manifest.yaml</a> file and remove the project with the identifier of **`%s`** or add content to the file **`%s`**.",
+	IssueCodeReleaseNeeded:          "It looks like %s of the **`%s`** branch's %ss has been fixed. You should create a release for the resource with <a href=\"https://gateway-admin.netlify.app/\" target=\"_blank\">**`gatewayAdmin`**</a>.",
+	IssueCodeRelationMissing:        "Edit the manifRelations missing in <a href=\"%s/src/branch/%s/manifest.yaml\" target=\"_blank\">manifest.yaml</a> file and add the following relations: **`%s`**",
+	IssueCodeOrigLangVersionMissing: "Edit the <a href=\"%s/src/branch/%s/manifest.yaml\" target=\"_blank\">manifest.yaml</a> file and add version used for the relation **`%s`**.",
+	IssueCodeOBSStoryMissing:        "Add and translate the following stories: **`%s`**.",
+	IssueCodeOBSStoryTitleMissing:   "Add titles to the following stories: **`%s`**. Translate the titles from the English version.",
+	IssueCodeOBSWrongFrameCount:     "Add the missing frames to the following stories: **`%s`**. Check the English version for the missing frames.",
+	IssueCodeOBSBibleRefenceMissing: "The following stories are missing Bible references: **`%s`**. Find the needed Bible references at the end of the English stories.",
 }
 
 // IssuePositiveString returns the summary format string for the issue in possitive form
@@ -228,6 +268,16 @@ type Door43HealthcheckIssue struct {
 
 func (h *Door43HealthcheckIssue) TableName() string {
 	return "door43_healthcheck_issue"
+}
+
+func removeStringFromSlice(slice []string, s string) []string {
+	result := []string{}
+	for _, item := range slice {
+		if item != s {
+			result = append(result, item)
+		}
+	}
+	return result
 }
 
 // GetHealthcheck on Door43Metadata
@@ -276,14 +326,14 @@ func (dm *Door43Metadata) GetHealthcheck(ctx context.Context) *HealthcheckGroupe
 	}
 
 	if dm.Abbreviation == "" || dm.Subject != "Bible" && dm.Subject != "Aligned Bible" {
-		if subject, ok := dcs.ResourceToSubjectMap[dm.Abbreviation]; !ok || subject != dm.Subject {
+		if identifiers, ok := dcs.SubjectToResourceMap[dm.Subject]; !ok || !slices.Contains(identifiers, dm.Abbreviation) {
 			item := &Door43HealthcheckIssue{
 				IssueCode:     IssueCodeIdentifier,
 				SeverityLevel: SeverityLevelError,
 				PositiveTitle: IssueCodeIdentifier.IssuePositiveString(),
 				NegativeTitle: IssueCodeIdentifier.IssueNegativeString(),
 				Details:       fmt.Sprintf(IssueCodeIdentifier.IssueDetailsFormatString(), dm.Abbreviation, dm.Subject),
-				Suggestion:    fmt.Sprintf(IssueCodeIdentifier.IssueSuggestionFormatString(), dm.Repo.Link(), dm.Ref, dm.Abbreviation, dm.Subject, dcs.SubjectToResourceMap[dm.Subject]),
+				Suggestion:    fmt.Sprintf(IssueCodeIdentifier.IssueSuggestionFormatString(), dm.Repo.Link(), dm.Ref, dm.Abbreviation, dm.Subject, strings.Join(identifiers, ", ")),
 			}
 			issues = append(issues, item)
 		}
@@ -355,6 +405,109 @@ func (dm *Door43Metadata) GetHealthcheck(ctx context.Context) *HealthcheckGroupe
 					Suggestion:    fmt.Sprintf(IssueCodeIngredientEmpty.IssueSuggestionFormatString(), dm.Repo.Link(), dm.Ref, ingredient.Identifier, ingredient.Path),
 				}
 				issues = append(issues, item)
+			}
+		}
+	}
+
+	if dm.Subject == "TSV Translation Notes" {
+		missingRelationIdentifiers := []string{"tw", "ta", "glt", "gst"}
+		for _, relation := range dm.Relations {
+			id := relation.Identifier
+			if id == "ult" {
+				id = "glt"
+			}
+			if id == "ust" {
+				id = "gst"
+			}
+			if slices.Contains(missingRelationIdentifiers, id) {
+				missingRelationIdentifiers = removeStringFromSlice(missingRelationIdentifiers, id)
+				break
+			}
+		}
+		if len(missingRelationIdentifiers) > 0 {
+			item := &Door43HealthcheckIssue{
+				IssueCode:     IssueCodeRelationMissing,
+				SeverityLevel: SeverityLevelError,
+				PositiveTitle: IssueCodeRelationMissing.IssuePositiveString(),
+				NegativeTitle: IssueCodeRelationMissing.IssueNegativeString(),
+				Details:       fmt.Sprintf(IssueCodeRelationMissing.IssueDetailsFormatString(), strings.Join(missingRelationIdentifiers, ", ")),
+				Suggestion:    fmt.Sprintf(IssueCodeRelationMissing.IssueSuggestionFormatString(), dm.Repo.Link(), dm.Ref, strings.Join(missingRelationIdentifiers, ", ")),
+			}
+			issues = append(issues, item)
+		}
+	}
+
+	if dm.Relations != nil {
+		for _, relation := range dm.Relations {
+			// Check if relation catalog exists
+			version := relation.Version
+			if version == "" {
+				version = dm.Repo.DefaultBranch
+			}
+			catalogURL := fmt.Sprintf("%sapi/v1/catalog/%s/%s_%s/%s",
+				setting.AppURL, dm.Repo.Owner.Name, relation.Language, relation.Identifier, version)
+
+			resp, err := http.Get(catalogURL)
+			if err != nil {
+				log.Error("Error fetching catalog for relation %s: %v", relation.FullRelation, err)
+				continue
+			}
+			defer resp.Body.Close()
+
+			if resp.StatusCode != 200 {
+				item := &Door43HealthcheckIssue{
+					IssueCode:     IssueCodeRelationMissing,
+					SeverityLevel: SeverityLevelError,
+					PositiveTitle: IssueCodeRelationMissing.IssuePositiveString(),
+					NegativeTitle: IssueCodeRelationMissing.IssueNegativeString(),
+					Details:       fmt.Sprintf("Relation %s does not exist in catalog", relation.FullRelation),
+					Suggestion:    fmt.Sprintf("Verify that the relation %s exists and is properly configured", relation.FullRelation),
+				}
+				issues = append(issues, item)
+				continue
+			}
+
+			// Parse catalog response to check ingredients
+			body, err := io.ReadAll(resp.Body)
+			if err != nil {
+				log.Error("Error reading catalog response for relation %s: %v", relation.FullRelation, err)
+				continue
+			}
+
+			var catalogData struct {
+				Ingredients []struct {
+					Identifier string `json:"identifier"`
+				} `json:"ingredients"`
+			}
+
+			if err := json.Unmarshal(body, &catalogData); err != nil {
+				log.Error("Error parsing catalog JSON for relation %s: %v", relation.FullRelation, err)
+				continue
+			}
+
+			// Check if each ingredient exists in the relation's catalog
+			if dm.Ingredients != nil {
+				for _, ingredient := range dm.Ingredients {
+					found := false
+					for _, catalogIngredient := range catalogData.Ingredients {
+						if ingredient.Identifier == catalogIngredient.Identifier {
+							found = true
+							break
+						}
+					}
+
+					if !found {
+						item := &Door43HealthcheckIssue{
+							IssueCode:     IssueCodeRelationMissing,
+							SeverityLevel: SeverityLevelWarning,
+							PositiveTitle: IssueCodeRelationMissing.IssuePositiveString(),
+							NegativeTitle: IssueCodeRelationMissing.IssueNegativeString(),
+							Details:       fmt.Sprintf("Relation %s does not contain book %s", relation.FullRelation, ingredient.Identifier),
+							Suggestion:    fmt.Sprintf("Ensure that the relation %s includes the book %s", relation.FullRelation, ingredient.Identifier),
+						}
+						issues = append(issues, item)
+					}
+				}
 			}
 		}
 	}
