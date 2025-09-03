@@ -257,8 +257,9 @@ func prepareDirectoryFileIcons(ctx *context.Context, files []git.CommitInfo) {
 	renderedIconPool := fileicon.NewRenderedIconPool()
 	fileIcons := map[string]template.HTML{}
 	for _, f := range files {
-		fileIcons[f.Entry.Name()] = fileicon.RenderEntryIcon(renderedIconPool, f.Entry)
+		fileIcons[f.Entry.Name()] = fileicon.RenderEntryIconHTML(renderedIconPool, fileicon.EntryInfoFromGitTreeEntry(f.Entry))
 	}
+	fileIcons[".."] = fileicon.RenderEntryIconHTML(renderedIconPool, fileicon.EntryInfoFolder())
 	ctx.Data["FileIcons"] = fileIcons
 	ctx.Data["FileIconPoolHTML"] = renderedIconPool.RenderToHTML()
 }
@@ -298,7 +299,7 @@ func renderDirectoryFiles(ctx *context.Context, timeout time.Duration) git.Entri
 		defer cancel()
 	}
 
-	files, latestCommit, err := allEntries.GetCommitsInfo(commitInfoCtx, ctx.Repo.Commit, ctx.Repo.TreePath)
+	files, latestCommit, err := allEntries.GetCommitsInfo(commitInfoCtx, ctx.Repo.RepoLink, ctx.Repo.Commit, ctx.Repo.TreePath)
 	if err != nil {
 		ctx.ServerError("GetCommitsInfo", err)
 		return nil

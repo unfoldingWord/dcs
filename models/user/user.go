@@ -1158,8 +1158,8 @@ func ValidateCommitsWithEmails(ctx context.Context, oldCommits []*git.Commit) ([
 	}
 
 	for _, c := range oldCommits {
-		user, ok := emailUserMap[c.Author.Email]
-		if !ok {
+		user := emailUserMap.GetByEmail(c.Author.Email) // FIXME: why ValidateCommitsWithEmails uses "Author", but ParseCommitsWithSignature uses "Committer"?
+		if user == nil {
 			user = &User{
 				Name:  c.Author.Name,
 				Email: c.Author.Email,
@@ -1173,19 +1173,29 @@ func ValidateCommitsWithEmails(ctx context.Context, oldCommits []*git.Commit) ([
 	return newCommits, nil
 }
 
-func GetUsersByEmails(ctx context.Context, emails []string) (map[string]*User, error) {
+type EmailUserMap struct {
+	m map[string]*User
+}
+
+func (eum *EmailUserMap) GetByEmail(email string) *User {
+	return eum.m[strings.ToLower(email)]
+}
+
+func GetUsersByEmails(ctx context.Context, emails []string) (*EmailUserMap, error) {
 	if len(emails) == 0 {
 		return nil, nil
 	}
 
 	needCheckEmails := make(container.Set[string])
 	needCheckUserNames := make(container.Set[string])
+	noReplyAddressSuffix := "@" + strings.ToLower(setting.Service.NoReplyAddress)
 	for _, email := range emails {
-		if strings.HasSuffix(email, "@"+setting.Service.NoReplyAddress) {
-			username := strings.TrimSuffix(email, "@"+setting.Service.NoReplyAddress)
-			needCheckUserNames.Add(username)
+		emailLower := strings.ToLower(email)
+		if noReplyUserNameLower, ok := strings.CutSuffix(emailLower, noReplyAddressSuffix); ok {
+			needCheckUserNames.Add(noReplyUserNameLower)
+			needCheckEmails.Add(emailLower)
 		} else {
-			needCheckEmails.Add(strings.ToLower(email))
+			needCheckEmails.Add(emailLower)
 		}
 	}
 
@@ -1210,8 +1220,7 @@ func GetUsersByEmails(ctx context.Context, emails []string) (map[string]*User, e
 		for _, email := range emailAddresses {
 			user := users[email.UID]
 			if user != nil {
-				results[user.Email] = user
-				results[user.GetPlaceholderEmail()] = user
+				results[email.LowerEmail] = user
 			}
 		}
 	}
@@ -1221,10 +1230,9 @@ func GetUsersByEmails(ctx context.Context, emails []string) (map[string]*User, e
 		return nil, err
 	}
 	for _, user := range users {
-		results[user.Email] = user
-		results[user.GetPlaceholderEmail()] = user
+		results[strings.ToLower(user.GetPlaceholderEmail())] = user
 	}
-	return results, nil
+	return &EmailUserMap{results}, nil
 }
 
 // GetUserByEmail returns the user object by given e-mail if exists.
