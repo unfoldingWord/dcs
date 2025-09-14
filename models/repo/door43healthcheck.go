@@ -444,7 +444,7 @@ func (dm *Door43Metadata) GetHealthcheck(ctx context.Context) *HealthcheckGroupe
 			if version == "" {
 				version = dm.Repo.DefaultBranch
 			}
-			catalogURL := fmt.Sprintf("%sapi/v1/catalog/%s/%s_%s/%s",
+			catalogURL := fmt.Sprintf("%sapi/v1/catalog/entry/%s/%s_%s/%s",
 				setting.AppURL, dm.Repo.Owner.Name, relation.Language, relation.Identifier, version)
 
 			resp, err := http.Get(catalogURL)
