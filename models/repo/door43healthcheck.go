@@ -475,6 +475,7 @@ func (dm *Door43Metadata) GetHealthcheck(ctx context.Context) *HealthcheckGroupe
 			}
 
 			var catalogData struct {
+				Subject		 string `json:"subject"`
 				Ingredients []struct {
 					Identifier string `json:"identifier"`
 				} `json:"ingredients"`
@@ -486,7 +487,7 @@ func (dm *Door43Metadata) GetHealthcheck(ctx context.Context) *HealthcheckGroupe
 			}
 
 			// Check if each ingredient exists in the relation's catalog
-			if dm.Ingredients != nil {
+			if dm.Ingredients != nil && (strings.HasPrefix(dm.Subject, "TSV ") || strings.Contains(dm.Subject, "Bible")) && !strings.Contains(dm.Subject, "OBS") && (strings.HasPrefix(catalogData.Subject, "TSV ") || strings.Contains(catalogData.Subject, "Bible")) && !strings.Contains(catalogData.Subject, "OBS") {
 				for _, ingredient := range dm.Ingredients {
 					found := false
 					for _, catalogIngredient := range catalogData.Ingredients {
