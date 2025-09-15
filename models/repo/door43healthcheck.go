@@ -441,8 +441,11 @@ func (dm *Door43Metadata) GetHealthcheck(ctx context.Context) *HealthcheckGroupe
 		for _, relation := range dm.Relations {
 			// Check if relation catalog exists
 			ref := relation.Version
+			isVersion := false
 			if ref == "" {
 				ref = dm.Repo.DefaultBranch
+			} else {
+				isVersion = true
 			}
 			catalogURL := fmt.Sprintf("%sapi/v1/catalog/entry/%s/%s_%s/%s",
 				setting.AppURL, dm.Repo.Owner.Name, relation.Language, relation.Identifier, ref)
@@ -453,14 +456,27 @@ func (dm *Door43Metadata) GetHealthcheck(ctx context.Context) *HealthcheckGroupe
 			}
 			defer resp.Body.Close()
 
+			if resp.StatusCode != 200 && isVersion {
+				// Try again with default branch if a version was specified and not found
+				ref = "v" + ref
+				catalogURL = fmt.Sprintf("%sapi/v1/catalog/entry/%s/%s_%s/%s",
+					setting.AppURL, dm.Repo.Owner.Name, relation.Language, relation.Identifier, ref)
+				resp, err = http.Get(catalogURL)
+				if err != nil {
+					log.Error("Error fetching catalog for relation %s: %v", relation.FullRelation, err)
+					continue
+				}
+				defer resp.Body.Close()
+			}
+
 			if resp.StatusCode != 200 {
 				item := &Door43HealthcheckIssue{
 					IssueCode:     IssueCodeRelationMissing,
 					SeverityLevel: SeverityLevelError,
 					PositiveTitle: IssueCodeRelationMissing.IssuePositiveString(),
 					NegativeTitle: IssueCodeRelationMissing.IssueNegativeString(),
-					Details:       fmt.Sprintf("Relation %s does not exist in catalog", relation.FullRelation),
-					Suggestion:    fmt.Sprintf("Verify that the relation %s exists and is properly configured", relation.FullRelation),
+					Details:       fmt.Sprintf("Relation %s does not exist in the DCS catalog", relation.FullRelation),
+					Suggestion:    fmt.Sprintf("Verify that the relation %s exists and is properly cataloged", relation.FullRelation),
 				}
 				issues = append(issues, item)
 				continue

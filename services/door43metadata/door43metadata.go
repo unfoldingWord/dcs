@@ -343,24 +343,6 @@ func GetDoor43MetadataFromRCManifest(dm *repo_model.Door43Metadata, manifest map
 			var version string
 			if len(identifierParts) > 1 {
 				version = identifierParts[1]
-				version = strings.TrimSpace(version)
-				if version != "" && !strings.HasPrefix(version, "v") {
-					// If version starts with a digit and is not exactly a 4-digit year, prefix with "v"
-					if version[0] >= '0' && version[0] <= '9' {
-						isYear := len(version) == 4
-						if isYear {
-							for i := range 4 {
-								if version[i] < '0' || version[i] > '9' {
-									isYear = false
-									break
-								}
-							}
-						}
-						if !isYear {
-							version = "v" + version
-						}
-					}
-				}
 			}
 			relations = append(relations, &structs.Relation{
 				FullRelation: relation.(string),
