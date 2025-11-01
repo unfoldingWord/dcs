@@ -22,7 +22,7 @@ import (
 	_ "code.gitea.io/gitea/modules/markup/orgmode"
 	_ "code.gitea.io/gitea/modules/markup/tsv" // DCS Customizations
 
-	"github.com/urfave/cli/v2"
+	"github.com/urfave/cli/v3"
 )
 
 // these flags will be set by the build flags

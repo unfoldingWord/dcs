@@ -13,25 +13,27 @@ export type DiffTreeEntry = {
   EntryMode: string,
   IsViewed: boolean,
   Children: DiffTreeEntry[],
-
+  FileIcon: string,
   ParentEntry?: DiffTreeEntry,
-}
+};
 
 type DiffFileTreeData = {
   TreeRoot: DiffTreeEntry,
 };
 
 type DiffFileTree = {
+  folderIcon: string;
+  folderOpenIcon: string;
   diffFileTree: DiffFileTreeData;
   fullNameMap?: Record<string, DiffTreeEntry>
   fileTreeIsVisible: boolean;
   selectedItem: string;
-}
+};
 
 let diffTreeStoreReactive: Reactive<DiffFileTree>;
 export function diffTreeStore() {
   if (!diffTreeStoreReactive) {
-    diffTreeStoreReactive = reactiveDiffTreeStore(pageData.DiffFileTree);
+    diffTreeStoreReactive = reactiveDiffTreeStore(pageData.DiffFileTree, pageData.FolderIcon, pageData.FolderOpenIcon);
   }
   return diffTreeStoreReactive;
 }
@@ -55,9 +57,11 @@ function fillFullNameMap(map: Record<string, DiffTreeEntry>, entry: DiffTreeEntr
   }
 }
 
-export function reactiveDiffTreeStore(data: DiffFileTreeData): Reactive<DiffFileTree> {
+export function reactiveDiffTreeStore(data: DiffFileTreeData, folderIcon: string, folderOpenIcon: string): Reactive<DiffFileTree> {
   const store = reactive({
     diffFileTree: data,
+    folderIcon,
+    folderOpenIcon,
     fileTreeIsVisible: false,
     selectedItem: '',
     fullNameMap: {},

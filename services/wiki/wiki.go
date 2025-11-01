@@ -19,6 +19,7 @@ import (
 	"code.gitea.io/gitea/modules/git"
 	"code.gitea.io/gitea/modules/gitrepo"
 	"code.gitea.io/gitea/modules/globallock"
+	"code.gitea.io/gitea/modules/graceful"
 	"code.gitea.io/gitea/modules/log"
 	repo_module "code.gitea.io/gitea/modules/repository"
 	"code.gitea.io/gitea/modules/util"
@@ -35,15 +36,19 @@ func getWikiWorkingLockKey(repoID int64) string {
 // InitWiki initializes a wiki for repository,
 // it does nothing when repository already has wiki.
 func InitWiki(ctx context.Context, repo *repo_model.Repository) error {
-	if repo.HasWiki() {
+	// don't use HasWiki because the error should not be ignored.
+	if exist, err := gitrepo.IsRepositoryExist(ctx, repo.WikiStorageRepo()); err != nil {
+		return err
+	} else if exist {
 		return nil
 	}
 
-	if err := git.InitRepository(ctx, repo.WikiPath(), true, repo.ObjectFormatName); err != nil {
+	// wiki's object format should be the same as repository's
+	if err := gitrepo.InitRepository(ctx, repo.WikiStorageRepo(), repo.ObjectFormatName); err != nil {
 		return fmt.Errorf("InitRepository: %w", err)
 	} else if err = gitrepo.CreateDelegateHooks(ctx, repo.WikiStorageRepo()); err != nil {
 		return fmt.Errorf("createDelegateHooks: %w", err)
-	} else if _, _, err = git.NewCommand("symbolic-ref", "HEAD").AddDynamicArguments(git.BranchPrefix+repo.DefaultWikiBranch).RunStdString(ctx, &git.RunOpts{Dir: repo.WikiPath()}); err != nil {
+	} else if err = gitrepo.SetDefaultBranch(ctx, repo.WikiStorageRepo(), repo.DefaultWikiBranch); err != nil {
 		return fmt.Errorf("unable to set default wiki branch to %q: %w", repo.DefaultWikiBranch, err)
 	}
 	return nil
@@ -194,7 +199,7 @@ func updateWikiPage(ctx context.Context, doer *user_model.User, repo *repo_model
 
 	sign, signingKey, signer, _ := asymkey_service.SignWikiCommit(ctx, repo, doer)
 	if sign {
-		commitTreeOpts.KeyID = signingKey
+		commitTreeOpts.Key = signingKey
 		if repo.GetTrustModel() == repo_model.CommitterTrustModel || repo.GetTrustModel() == repo_model.CollaboratorCommitterTrustModel {
 			committer = signer
 		}
@@ -316,7 +321,7 @@ func DeleteWikiPage(ctx context.Context, doer *user_model.User, repo *repo_model
 
 	sign, signingKey, signer, _ := asymkey_service.SignWikiCommit(ctx, repo, doer)
 	if sign {
-		commitTreeOpts.KeyID = signingKey
+		commitTreeOpts.Key = signingKey
 		if repo.GetTrustModel() == repo_model.CommitterTrustModel || repo.GetTrustModel() == repo_model.CollaboratorCommitterTrustModel {
 			committer = signer
 		}
@@ -355,7 +360,14 @@ func DeleteWiki(ctx context.Context, repo *repo_model.Repository) error {
 		return err
 	}
 
-	system_model.RemoveAllWithNotice(ctx, "Delete repository wiki", repo.WikiPath())
+	if err := gitrepo.DeleteRepository(ctx, repo.WikiStorageRepo()); err != nil {
+		desc := fmt.Sprintf("Delete wiki repository files [%s]: %v", repo.FullName(), err)
+		// Note we use the db.DefaultContext here rather than passing in a context as the context may be cancelled
+		if err = system_model.CreateNotice(graceful.GetManager().ShutdownContext(), system_model.NoticeRepository, desc); err != nil {
+			log.Error("CreateRepositoryNotice: %v", err)
+		}
+	}
+
 	return nil
 }
 
@@ -365,11 +377,11 @@ func ChangeDefaultWikiBranch(ctx context.Context, repo *repo_model.Repository, n
 	}
 	return db.WithTx(ctx, func(ctx context.Context) error {
 		repo.DefaultWikiBranch = newBranch
-		if err := repo_model.UpdateRepositoryCols(ctx, repo, "default_wiki_branch"); err != nil {
+		if err := repo_model.UpdateRepositoryColsNoAutoTime(ctx, repo, "default_wiki_branch"); err != nil {
 			return fmt.Errorf("unable to update database: %w", err)
 		}
 
-		if !repo.HasWiki() {
+		if !repo_service.HasWiki(ctx, repo) {
 			return nil
 		}
 
