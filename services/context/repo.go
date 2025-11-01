@@ -548,6 +548,7 @@ func RepoAssignment(ctx *Context) {
 	}
 
 	ctx.Data["Title"] = repo.Owner.Name + "/" + repo.Name
+	ctx.Data["PageTitleCommon"] = repo.Name + " - " + setting.AppName
 	ctx.Data["Repository"] = repo
 	/*** DCS Customizations ***/
 	ctx.Data["RepoDM"] = repo.RepoDM

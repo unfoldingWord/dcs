@@ -179,7 +179,7 @@ func prepareFileView(ctx *context.Context, entry *git.TreeEntry) {
 	ctx.Data["IgnoreLanguageDirection"] = fileExt != ".md" || blob.Name() == "README.md" || blob.Name() == "LICENSE.md"
 	/*** END DCS Customizations ***/
 
-	ctx.Data["Title"] = ctx.Tr("repo.file.title", ctx.Repo.Repository.Name+"/"+path.Base(ctx.Repo.TreePath), ctx.Repo.RefFullName.ShortName())
+	ctx.Data["Title"] = ctx.Tr("repo.file.title", ctx.Repo.Repository.Name+"/"+ctx.Repo.TreePath, ctx.Repo.RefFullName.ShortName())
 	ctx.Data["FileIsSymlink"] = entry.IsLink()
 	ctx.Data["FileTreePath"] = ctx.Repo.TreePath
 	ctx.Data["RawFileLink"] = ctx.Repo.RepoLink + "/raw/" + ctx.Repo.RefTypeNameSubURL() + "/" + util.PathEscapeSegments(ctx.Repo.TreePath)
@@ -233,7 +233,7 @@ func prepareFileView(ctx *context.Context, entry *git.TreeEntry) {
 	}
 
 	ctx.Data["IsLFSFile"] = fInfo.isLFSFile()
-	ctx.Data["FileSize"] = fInfo.fileSize
+	ctx.Data["FileSize"] = fInfo.blobOrLfsSize
 	ctx.Data["IsRepresentableAsText"] = fInfo.st.IsRepresentableAsText()
 	ctx.Data["IsExecutable"] = entry.IsExecutable()
 	ctx.Data["CanCopyContent"] = fInfo.st.IsRepresentableAsText() || fInfo.st.IsImage()
@@ -250,7 +250,7 @@ func prepareFileView(ctx *context.Context, entry *git.TreeEntry) {
 
 	utf8Reader := charset.ToUTF8WithFallbackReader(io.MultiReader(bytes.NewReader(buf), dataRc), charset.ConvertOpts{})
 	switch {
-	case fInfo.fileSize >= setting.UI.MaxDisplayFileSize:
+	case fInfo.blobOrLfsSize >= setting.UI.MaxDisplayFileSize:
 		ctx.Data["IsFileTooLarge"] = true
 	case handleFileViewRenderMarkup(ctx, entry.Name(), fInfo.st, buf, utf8Reader):
 		// it also sets ctx.Data["FileContent"] and more
