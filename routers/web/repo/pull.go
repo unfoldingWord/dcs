@@ -875,7 +875,7 @@ func viewPullFiles(ctx *context.Context, beforeCommitID, afterCommitID string) {
 	// For Validation
 	for _, file := range diff.Files {
 		if strings.HasSuffix(file.Name, ".json") || strings.HasSuffix(file.Name, ".yaml") || strings.HasSuffix(file.Name, ".yml") {
-			if entry, _ := commit.GetTreeEntryByPath(file.Name); entry != nil {
+			if entry, _ := afterCommit.GetTreeEntryByPath(file.Name); entry != nil {
 				file.Entry = entry
 			}
 		}

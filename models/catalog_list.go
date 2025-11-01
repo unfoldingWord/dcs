@@ -64,7 +64,7 @@ func SearchCatalogByCondition(ctx context.Context, opts *door43metadata.SearchCa
 		releaseInfoJoinCondition += " AND release_info.latest_unix = `door43_metadata`.release_date_unix AND release_info.latest_stage = `door43_metadata`.stage"
 	}
 
-	sess := db.GetEngine(db.DefaultContext).
+	sess := db.GetEngine(ctx).
 		Join("INNER", "repository", "`repository`.id = `door43_metadata`.repo_id").
 		Join("INNER", "user", "`repository`.owner_id = `user`.id").
 		Join("LEFT", "release", "`release`.id = `door43_metadata`.release_id").
@@ -104,7 +104,7 @@ func SearchDoor43MetadataFieldByCondition(ctx context.Context, opts *door43metad
 		field = "`door43_metadata`." + field
 	}
 
-	sess := db.GetEngine(db.DefaultContext).Table("door43_metadata").
+	sess := db.GetEngine(ctx).Table("door43_metadata").
 		Distinct(field).
 		Join("INNER", "repository", "`repository`.id = `door43_metadata`.repo_id").
 		Join("INNER", "user", "`repository`.owner_id = `user`.id").

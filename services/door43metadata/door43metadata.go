@@ -907,7 +907,7 @@ func UnpackJSONAttachments(ctx context.Context, release *repo_model.Release) {
 				}
 				// No existing attachment was found with the same name, so we insert a new one
 				remoteAttachment.UUID = uuid.New().String()
-				if _, err = db.GetEngine(db.DefaultContext).Insert(remoteAttachment); err != nil {
+				if _, err = db.GetEngine(ctx).Insert(remoteAttachment); err != nil {
 					log.Error("insert attachment [%d]: %v", remoteAttachment.ID, err)
 					continue
 				}
@@ -926,7 +926,7 @@ func GetAttachmentsFromJSON(attachment *repo_model.Attachment) ([]*repo_model.At
 	var url string
 	if setting.Attachment.Storage.MinioConfig.ServeDirect {
 		// If we have a signed url (S3, object storage), redirect to this directly.
-		urlObj, err := storage.Attachments.URL(attachment.RelativePath(), attachment.Name, nil)
+		urlObj, err := storage.Attachments.URL(attachment.RelativePath(), attachment.Name, "", nil)
 
 		if urlObj != nil && err == nil {
 			url = urlObj.String()
