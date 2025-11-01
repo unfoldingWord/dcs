@@ -10,6 +10,7 @@ import (
 
 	git_model "code.gitea.io/gitea/models/git"
 	"code.gitea.io/gitea/modules/git"
+	"code.gitea.io/gitea/modules/gitrepo"
 	gitea_context "code.gitea.io/gitea/services/context"
 )
 
@@ -35,7 +36,7 @@ func UpdateReferenceWithChecks(ctx *gitea_context.APIContext, refName, commitID 
 		return nil, err
 	}
 
-	if err := ctx.Repo.GitRepo.SetReference(refName, commitID); err != nil {
+	if err := gitrepo.UpdateRef(ctx, ctx.Repo.Repository, refName, commitID); err != nil {
 		message := err.Error()
 		prefix := fmt.Sprintf("exit status 128 - fatal: update_ref failed for ref '%s': ", refName)
 		if strings.HasPrefix(message, prefix) {
@@ -54,7 +55,7 @@ func RemoveReferenceWithChecks(ctx *gitea_context.APIContext, refName string) er
 		return err
 	}
 
-	return ctx.Repo.GitRepo.RemoveReference(refName)
+	return gitrepo.RemoveRef(ctx, ctx.Repo.Repository, refName)
 }
 
 func CheckReferenceEditability(ctx context.Context, refName, commitID string, repoID, userID int64) error {

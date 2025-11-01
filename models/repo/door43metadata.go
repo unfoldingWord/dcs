@@ -28,10 +28,10 @@ import (
 /*** INIT DB ***/
 
 // InitDoor43Metadata does some db management
-func InitDoor43Metadata() error {
+func InitDoor43Metadata(ctx context.Context) error {
 	switch setting.Database.Type {
 	case "mysql":
-		_, err := db.GetEngine(db.DefaultContext).Exec("ALTER TABLE `door43_metadata` MODIFY `metadata` JSON")
+		_, err := db.GetEngine(ctx).Exec("ALTER TABLE `door43_metadata` MODIFY `metadata` JSON")
 		if err != nil {
 			return fmt.Errorf("Error changing door43_metadata metadata column type: %v", err)
 		}
@@ -289,9 +289,9 @@ func (dm *Door43Metadata) AlignmentCounts() map[string]int {
 }
 
 // ReleaseCount the count of releases of repository of the Door43Metadata's stage
-func (dm *Door43Metadata) ReleaseCount() (int64, error) {
+func (dm *Door43Metadata) ReleaseCount(ctx context.Context) (int64, error) {
 	stageCond := door43metadata.GetStageCond(dm.Stage)
-	return db.GetEngine(db.DefaultContext).Join("LEFT", "release", "`release`.id = `door43_metadata`.release_id").
+	return db.GetEngine(ctx).Join("LEFT", "release", "`release`.id = `door43_metadata`.release_id").
 		Where(builder.And(builder.Eq{"`door43_metadata`.repo_id": dm.RepoID}, stageCond)).
 		Count(&Door43Metadata{})
 }
@@ -652,7 +652,7 @@ func DeleteDoor43MetadataByRepoIDAndReleaseID(ctx context.Context, repoID, relID
 		}
 		return nil
 	}
-	_, err = db.GetEngine(db.DefaultContext).ID(dm.ID).Delete(dm)
+	_, err = db.GetEngine(ctx).ID(dm.ID).Delete(dm)
 	return err
 }
 
@@ -665,7 +665,7 @@ func DeleteDoor43MetadataByRepoIDAndRef(ctx context.Context, repoID int64, ref s
 		}
 		return nil
 	}
-	_, err = db.GetEngine(db.DefaultContext).ID(dm.ID).Delete(dm)
+	_, err = db.GetEngine(ctx).ID(dm.ID).Delete(dm)
 	return err
 }
 

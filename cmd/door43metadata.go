@@ -4,6 +4,7 @@
 package cmd
 
 import (
+	"context"
 	"fmt"
 
 	repo_model "code.gitea.io/gitea/models/repo"
@@ -12,7 +13,7 @@ import (
 	"code.gitea.io/gitea/modules/storage"
 	door43metadata_service "code.gitea.io/gitea/services/door43metadata"
 
-	"github.com/urfave/cli/v2"
+	"github.com/urfave/cli/v3"
 )
 
 // CmdDoor43Metadata represents the available door43metadata sub-command.
@@ -37,9 +38,9 @@ var CmdDoor43Metadata = &cli.Command{
 	},
 }
 
-func runDoor43Metadata(ctx *cli.Context) error {
-	ownerName := ctx.String("owner")
-	repoName := ctx.String("repo")
+func runDoor43Metadata(ctx context.Context, c *cli.Command) error {
+	ownerName := c.String("owner")
+	repoName := c.String("repo")
 	if ownerName != "" && repoName == "" {
 		return fmt.Errorf("--repo(-r) must be specified if --owner(-o) is used")
 	}
