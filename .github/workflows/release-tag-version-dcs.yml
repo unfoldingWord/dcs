@@ -14,7 +14,7 @@ concurrency:
 jobs:
   docker-rootful:
     if: endsWith(github.ref_name, '+dcs') || endsWith(github.ref_name, '+dcs1') || endsWith(github.ref_name, '+dcs2') || endsWith(github.ref_name, '+dcs3')
-    runs-on: namespace-profile-gitea-release-docker
+    runs-on: ubuntu-latest
     permissions:
       packages: write # to publish to ghcr.io
     steps:
@@ -52,7 +52,7 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
   docker-rootless:
     if: endsWith(github.ref_name, '+dcs')
-    runs-on: namespace-profile-gitea-release-docker
+    runs-on: ubuntu-latest
     permissions:
       packages: write # to publish to ghcr.io
     steps:
