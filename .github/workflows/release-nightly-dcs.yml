@@ -96,6 +96,8 @@ jobs:
           platforms: linux/amd64,linux/arm64,linux/riscv64
           push: true
           tags: unfoldingword/dcs:${{ steps.clean_name.outputs.branch }}
+          build-args: |
+            GOPROXY=https://proxy.golang.org,direct
   # nightly-docker-rootless:
   #   runs-on: namespace-profile-gitea-release-docker
   #   steps:
