@@ -15,8 +15,9 @@ jobs:
   docker-rootful:
     if: endsWith(github.ref_name, '+dcs') || endsWith(github.ref_name, '+dcs1') || endsWith(github.ref_name, '+dcs2') || endsWith(github.ref_name, '+dcs3')
     runs-on: ubuntu-latest
-    permissions:
-      packages: write # to publish to ghcr.io
+    env:
+      GOPROXY: "https://proxy.golang.org,direct"
+      GOSUMDB: "sum.golang.org"
     steps:
       - uses: actions/checkout@v4
       # fetch all commits instead of only the last as some branches are long lived and could have many between versions
@@ -42,6 +43,8 @@ jobs:
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
+      - name: Download Go modules
+        run: go mod download
       - name: build rootful docker image
         uses: docker/build-push-action@v5
         with:
@@ -53,8 +56,9 @@ jobs:
   docker-rootless:
     if: endsWith(github.ref_name, '+dcs')
     runs-on: ubuntu-latest
-    permissions:
-      packages: write # to publish to ghcr.io
+    env:
+      GOPROXY: "https://proxy.golang.org,direct"
+      GOSUMDB: "sum.golang.org"
     steps:
       - uses: actions/checkout@v4
       # fetch all commits instead of only the last as some branches are long lived and could have many between versions
@@ -83,6 +87,8 @@ jobs:
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
+      - name: Download Go modules
+        run: go mod download
       - name: build rootless docker image
         uses: docker/build-push-action@v5
         with:
