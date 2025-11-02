@@ -58,7 +58,7 @@ jobs:
   #       run: |
   #         aws s3 sync dist/release s3://${{ secrets.AWS_S3_BUCKET }}/gitea/${{ steps.clean_name.outputs.branch }} --no-progress
   nightly-docker-rootful:
-    runs-on: namespace-profile-gitea-release-docker
+    runs-on: ubuntu-latest
     permissions:
       packages: write # to publish to ghcr.io
     steps:
