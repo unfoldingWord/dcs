@@ -55,6 +55,8 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+          build-args: |
+            GOPROXY=https://proxy.golang.org,direct          
   docker-rootless:
     if: endsWith(github.ref_name, '+dcs')
     runs-on: ubuntu-latest
@@ -102,3 +104,5 @@ jobs:
           file: Dockerfile.rootless
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+          build-args: |
+            GOPROXY=https://proxy.golang.org,direct
