@@ -395,27 +395,27 @@
     <div class="stats">
       <div class="stat" data-tooltip-content="Total number of repositories">
         <div class="stat-title"><a href="{{AppSubUrl}}/explore/repos">repositories</a></div>
-        <div class="stat-count">{{GetRepoCount}}</div>
+        <div class="stat-count">{{GetRepoCount ctx}}</div>
       </div>
       <div class="stat" data-tooltip-content="Total number of users">
         <div class="stat-title"><a href="{{AppSubUrl}}/explore/users">users</a></div>
-        <div class="stat-count">{{GetUserCount}}</div>
+        <div class="stat-count">{{GetUserCount ctx}}</div>
       </div>
       <div class="stat" data-tooltip-content="Number of projects with activity in the last 30 days">
         <div class="stat-title"><a href="{{AppSubUrl}}/explore/repos">active projects</a></div>
-        <div class="stat-count">{{GetActiveProjectCount}}</div>
+        <div class="stat-count">{{GetActiveProjectCount ctx}}</div>
       </div>
       <div class="stat" data-tooltip-content="Number of entries in the production catalog">
         <div class="stat-title"><a href="{{AppSubUrl}}/catalog">Catalog Entries</a></div>
-        <div class="stat-count">{{GetCatalogEntryCount}}</div>
+        <div class="stat-count">{{GetCatalogEntryCount ctx}}</div>
       </div>
       <div class="stat" data-tooltip-content="Total number of publishers that have entries in the catalog">
         <div class="stat-title"><a href="{{AppSubUrl}}/explore/organizations">Publishers</a></div>
-        <div class="stat-count">{{GetPublisherCount}}</div>
+        <div class="stat-count">{{GetPublisherCount ctx}}</div>
       </div>
       <div class="stat" data-tooltip-content="Total number of languages in the catalog">
         <div class="stat-title"><a href="{{AppSubUrl}}/catalog">Languages</a></div>
-        <div class="stat-count">{{GetLanguageCount}}</div>
+        <div class="stat-count">{{GetLanguageCount ctx}}</div>
       </div>
     </div>
   </div>
