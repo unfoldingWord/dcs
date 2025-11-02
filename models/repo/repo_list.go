@@ -647,11 +647,11 @@ func searchRepositoryByCondition(ctx context.Context, opts SearchRepoOptions, co
 	}
 
 	/*** DCS Customizations - Since we join with more tables we need to prefix the OrderBy with `repository` ***/
-	parts := strings.Split(opts.OrderBy.String(), ", ")
+	parts := strings.Split(orderBy.String(), ", ")
 	for i, part := range parts {
 		parts[i] = "`repository`." + part
 	}
-	opts.OrderBy = db.SearchOrderBy(strings.Join(parts, ", "))
+	orderBy = db.SearchOrderBy(strings.Join(parts, ", "))
 	/*** END DCS Customizaitons ***/
 
 	args := make([]any, 0)
