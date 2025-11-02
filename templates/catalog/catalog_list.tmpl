@@ -63,7 +63,7 @@
 					<a class="text grey tx-flex tw-items-center tw-mr-2" href="{{.Repo.Link}}/stars">{{svg "octicon-star" 16 "tw-mr-2"}}{{.Repo.NumStars}}</a>
 					{{end}}
 					<a class="text grey tx-flex tw-items-center tw-mr-2" href="{{.Repo.Link}}/forks">{{svg "octicon-git-branch" 16 "tw-mr-2"}}{{.Repo.NumForks}}</a>
-					<a class="text grey tx-flex tw-items-center tw-mr-2" href="{{.Repo.Link}}/releases" data-tooltip-content="# of releases">{{svg "octicon-tag" 16 "tw-mr-2"}} {{.ReleaseCount}}</a>
+					<a class="text grey tx-flex tw-items-center tw-mr-2" href="{{.Repo.Link}}/releases" data-tooltip-content="# of releases">{{svg "octicon-tag" 16 "tw-mr-2"}} {{.ReleaseCount ctx}}</a>
 				</div>
 			</div>
 
