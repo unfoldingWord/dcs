@@ -3,15 +3,10 @@
 <!-- DCS Customizations -->
 {{if and .RepoDM .RepoDM.MetadataType}}
 	{{$refToPreview := .Repository.DefaultBranch}}
-		{{$refType := "branch"}}
-		{{if .IsViewTag}}
-			{{$refToPreview = .TagName}}
-			{{$refType = "tag"}}
-		{{else if .IsViewBranch}}
-								{{$refToPreview = .BranchName}}
-							{{end}}
-							<a id="preview-button" role="botton" class="ui compact basic button" href="{{Door43PreviewURL}}/u/{{.Owner.Name}}/{{.Repository.Name}}/{{$refToPreview | PathEscapeSegments}}{{if eq AppUrl "https://qa.door43.org/"}}?server=QA{{end}}{{if eq AppUrl "https://develop.door43.org/"}}?server=DEV{{end}}"
-		data-tooltip-content="{{ctx.Locale.Tr "preview"}} / PDF" target="_blank">
+	{{if or .RefFullName.IsTag .RefFullName.IsBranch}}
+		{{$refToPreview = .RefFullName.ShortName}}
+	{{end}}
+	<a id="preview-button" role="botton" class="ui compact basic button" href="{{Door43PreviewURL}}/u/{{.Owner.Name}}/{{.Repository.Name}}/{{$refToPreview | PathEscapeSegments}}{{if eq AppUrl "https://qa.door43.org/"}}?server=QA{{end}}{{if eq AppUrl "https://develop.door43.org/"}}?server=DEV{{end}}" data-tooltip-content="{{ctx.Locale.Tr "preview"}} / PDF" target="_blank">
 		{{svg "octicon-book"}}
 	</a>
 {{end}}
@@ -53,6 +48,18 @@
 			{{svg "octicon-git-pull-request"}}
 		</a>
 	{{end}}
+
+	<!-- DCS Customizations -->
+  {{if and .RepoDM .RepoDM.MetadataType}}
+	  {{$refToPreview := .Repository.DefaultBranch}}
+		{{if or .RefFullName.IsTag .RefFullName.IsBranch}}
+			{{$refToPreview = .RefFullName.ShortName}}
+		{{end}}
+		<a id="preview-button" role="botton" class="ui compact basic button" href="{{Door43PreviewURL}}/u/{{.Owner.Name}}/{{.Repository.Name}}/{{$refToPreview | PathEscapeSegments}}{{if eq AppUrl "https://qa.door43.org/"}}?server=QA{{end}}{{if eq AppUrl "https://develop.door43.org/"}}?server=DEV{{end}}" data-tooltip-content="{{ctx.Locale.Tr "preview"}} / PDF" target="_blank">
+		 {{svg "octicon-book"}}
+		</a>
+	{{end}}
+	<!-- END DCS Customizations -->
 
 	<!-- Show go to file if on home page -->
 	{{if $isTreePathRoot}}
