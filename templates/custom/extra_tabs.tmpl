@@ -16,15 +16,11 @@
 	{{ctx.Locale.Tr "repo.metadata.healthcheck"}}
 </a>
 {{$refToPreview := .Repository.DefaultBranch}}
-{{$refType := "branch"}}
-{{if .IsViewTag}}
-	{{$refType = "tag"}}
-	{{$refToPreview = .TagName}}
-{{else if .IsViewBranch}}
-	{{$refToPreview = .BranchName}}
+{{if or $.RefFullName.IsTag $.RefFullName.IsBranch}}
+	{{$refToPreview = .RefFullName.ShortName}}
 {{end}}
 {{if $.RepoDM.ID}}
-<a class="item" data-tooltip-content="Preview.Door43.org" href="{{Door43PreviewURL}}/u/{{.Owner.Name}}/{{.Repository.Name}}/{{$refToPreview | PathEscapeSegments}}{{if eq AppUrl "https://qa.door43.org/"}}?server=QA{{end}}{{if eq AppUrl "https://develop.door43.org/"}}?server=DEV{{end}}"  target="_blank" rel="nofollow noopener">
-	{{svg "octicon-book"}} {{ctx.Locale.Tr "preview"}} / PDF
-</a>
+	<a class="item" data-tooltip-content="Preview.Door43.org" href="{{Door43PreviewURL}}/u/{{.Owner.Name}}/{{.Repository.Name}}/{{$refToPreview | PathEscapeSegments}}{{if eq AppUrl "https://qa.door43.org/"}}?server=QA{{end}}{{if eq AppUrl "https://develop.door43.org/"}}?server=DEV{{end}}"  target="_blank" rel="nofollow noopener">
+		{{svg "octicon-book"}} {{ctx.Locale.Tr "preview"}} / PDF
+	</a>
 {{end}}
