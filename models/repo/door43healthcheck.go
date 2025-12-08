@@ -449,7 +449,7 @@ func (dm *Door43Metadata) GetHealthcheck(ctx context.Context) *HealthcheckGroupe
 			}
 			owner := dm.Repo.Owner.Name
 			if (relation.Language == "hbo" && relation.Identifier == "uhb") || (relation.Language == "el-x-koine" && relation.Identifier == "ugnt") {
-				owner = "unfoldingword"
+				owner = "unfoldingWord"
 			}
 			catalogURL := fmt.Sprintf("%sapi/v1/catalog/entry/%s/%s_%s/%s",
 				setting.AppURL, owner, relation.Language, relation.Identifier, ref)
