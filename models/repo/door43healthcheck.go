@@ -447,8 +447,12 @@ func (dm *Door43Metadata) GetHealthcheck(ctx context.Context) *HealthcheckGroupe
 			} else {
 				isVersion = true
 			}
+			owner := dm.Repo.Owner.Name
+			if (relation.Language == "hbo" && relation.Identifier == "uhb") || (relation.Language == "el-x-koine" && relation.Identifier == "ugnt") {
+				owner = "unfoldingword"
+			}
 			catalogURL := fmt.Sprintf("%sapi/v1/catalog/entry/%s/%s_%s/%s",
-				setting.AppURL, dm.Repo.Owner.Name, relation.Language, relation.Identifier, ref)
+				setting.AppURL, owner, relation.Language, relation.Identifier, ref)
 			resp, err := http.Get(catalogURL)
 			if err != nil {
 				log.Error("Error fetching catalog for relation %s: %v", relation.FullRelation, err)
@@ -458,12 +462,11 @@ func (dm *Door43Metadata) GetHealthcheck(ctx context.Context) *HealthcheckGroupe
 
 			if resp.StatusCode != 200 && isVersion {
 				// Try again with default branch if a version was specified and not found
-				ref = "v" + ref
-				catalogURL = fmt.Sprintf("%sapi/v1/catalog/entry/%s/%s_%s/%s",
-					setting.AppURL, dm.Repo.Owner.Name, relation.Language, relation.Identifier, ref)
+				catalogURL = fmt.Sprintf("%sapi/v1/catalog/entry/%s/%s_%s/v%s",
+					setting.AppURL, owner, relation.Language, relation.Identifier, ref)
 				resp, err = http.Get(catalogURL)
 				if err != nil {
-					log.Error("Error fetching catalog for relation %s: %v", relation.FullRelation, err)
+					log.Error("Error fetching catalog for relation %s/%s: %v", owner, relation.FullRelation, err)
 					continue
 				}
 				defer resp.Body.Close()
