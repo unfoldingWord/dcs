@@ -32,6 +32,7 @@ func ToRepoDCS(ctx context.Context, repo *repo_model.Repository, apiRepo *api.Re
 	apiRepo.MetadataType = dm.MetadataType
 	apiRepo.MetadataVersion = dm.MetadataVersion
 	apiRepo.Ingredients = dm.Ingredients
+	apiRepo.Relations = dm.Relations
 	apiRepo.CatalogStages = &api.CatalogStages{
 		Production:    ToCatalogStage(ctx, repo.LatestProdDM),
 		PreProduction: ToCatalogStage(ctx, repo.LatestPreprodDM),

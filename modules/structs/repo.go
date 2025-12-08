@@ -142,6 +142,8 @@ type Repository struct {
 	Title string `json:"title"` // DCS Customiations
 	// ingredients
 	Ingredients []*Ingredient `json:"ingredients"` // DCS Customizaitons
+	// Relation
+	Relations []*Relation `json:"relations"` // DCS Customiations
 	// checking level from the manifest
 	CheckingLevel int `json:"checking_level"` // DCS Customiations
 	// latest catalog entry of each stage

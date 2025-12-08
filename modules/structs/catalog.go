@@ -42,6 +42,7 @@ type CatalogEntry struct {
 	Released               time.Time     `json:"released"`
 	Ingredients            []*Ingredient `json:"ingredients,omitempty"`
 	Books                  []string      `json:"books,omitempty"`
+	Relations              []*Relation   `json:"relations"`
 	IsValid                bool          `json:"is_valid"`
 	ValidationErrorsURL    string        `json:"validation_errors_url"`
 }
