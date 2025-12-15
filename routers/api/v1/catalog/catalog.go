@@ -1129,11 +1129,10 @@ func getCatalogBookPackage(ctx *context.APIContext) {
 		listOptions.Page = 1
 	}
 
-	abbreviations := QueryStrings(ctx, "abbreviation")
-	abbreviations = append(abbreviations, QueryStrings(ctx, "resource")...) // For non-breaking changes, support "resource" argument
-
 	subjects := QueryStrings(ctx, "subjects")
-	if len(subjects) == 0 {
+	flavors := QueryStrings(ctx, "flavors")
+	flavorTypes := QueryStrings(ctx, "flavorTypes")
+	if len(subjects) == 0 && len(flavors) == 0 && len(flavorTypes) == 0 {
 		subjects = []string{
 			"Aligned Bible",
 			"TSV Translation Notes",
@@ -1155,7 +1154,7 @@ func getCatalogBookPackage(ctx *context.APIContext) {
 		Subjects:         QueryStrings(ctx, "subject"),
 		FlavorTypes:      QueryStrings(ctx, "flavorType"),
 		Flavors:          QueryStrings(ctx, "flavor"),
-		Abbreviations:    abbreviations,
+		Abbreviations:    QueryStrings(ctx, "abbreviation"),
 		ContentFormats:   QueryStrings(ctx, "format"),
 		CheckingLevels:   QueryStrings(ctx, "checkingLevel"),
 		Books:            QueryStrings(ctx, "book"),
