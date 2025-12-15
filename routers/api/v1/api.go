@@ -1819,6 +1819,7 @@ func Routes() *web.Router {
 				})
 				m.Get("/metadata/{username}/{reponame}/*", catalog.GetCatalogMetadata)
 				m.Get("/validation/{username}/{reponame}/*", catalog.GetCatalogValidation)
+				m.Get("/bp/{username}/{reponame}/*", catalog.GetCatalogBookPackage)
 			}, repoAssignment())
 		})
 		/*** END DCS Customizations ***/

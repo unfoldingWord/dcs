@@ -382,7 +382,7 @@ func GetBookCond(books []string) builder.Cond {
 	bookCond := builder.NewCond()
 	for _, book := range books {
 		for _, v := range strings.Split(book, ",") {
-			bookCond = bookCond.Or(builder.Expr("JSON_CONTAINS(LOWER(JSON_EXTRACT(`door43_metadata`.ingredients, '$')), JSON_OBJECT('identifier', ?))", strings.ToLower(v)))
+			bookCond = bookCond.Or(builder.Expr("JSON_SEARCH(dm.ingredients, 'one', ? COLLATE utf8mb4_general_ci, NULL, '$[*].identifier') IS NOT NULL", strings.ToLower(v)))
 		}
 	}
 	return bookCond
