@@ -185,7 +185,10 @@ func SplitAtCommaNotInString(s string, requireSpaceAfterComma bool) []string {
 
 // GetStageCond gets the condition for the given stage
 func GetStageCond(stage Stage) builder.Cond {
-	return builder.Lte{"`door43_metadata`.stage": stage}
+	if stage != StageNotSet {
+		return builder.Lte{"`door43_metadata`.stage": stage}
+	}
+	return nil
 }
 
 // GetHistoryCond gets the conditions if IncludeHistory is false

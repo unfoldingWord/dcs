@@ -119,3 +119,17 @@ func SearchDoor43MetadataFieldByCondition(ctx context.Context, opts *door43metad
 
 	return results, nil
 }
+
+// SearchCatalogForBookPackage returns catalog repositories based on search options for a book package,
+// it returns results in given range and number of total results.
+func SearchCatalogForBookPackage(ctx context.Context, ref string, opts *door43metadata.SearchCatalogOptions) (repo.Door43MetadataList, int64, error) {
+	cond := door43metadata.SearchCatalogCondition(opts)
+	return SearchCatalogForBookPackageByCondition(ctx, ref, opts, cond)
+}
+
+// SearchCatalogForBookPackageByCondition search repositories by condition for a book package
+func SearchCatalogForBookPackageByCondition(ctx context.Context, ref string, opts *door43metadata.SearchCatalogOptions, cond builder.Cond) (repo.Door43MetadataList, int64, error) {
+	owner := ctx.Repo.Repository.Owner.LowerName
+	repoName := ctx.Repo.Repository.LowerName
+
+}
