@@ -277,7 +277,7 @@ func ListCatalogSubjects(ctx *context.APIContext) {
 	//                "prod" - return only those of production releases (default);
 	//                "preprod" - return only those of all (production & pre-production) releases;
 	//                "latest" - return only those of all releases and the default branch;
-	//                "branch" - return all those in the catalog for all branches'
+	//                "other" - return all, including other branches and tags [aliases: "branch", "tag"]'
 	//   type: array
 	//   collectionFormat: multi
 	//   items:
@@ -408,7 +408,7 @@ func ListCatalogMetadataTypes(ctx *context.APIContext) {
 	//                "prod" - return only those of production releases (default);
 	//                "preprod" - return only those of all (production & pre-production) releases;
 	//                "latest" - return only those of all releases and the default branch;
-	//                "branch" - return all those in the catalog for all branches'
+	//                "other" - return all, including other branches and tags [aliases: "branch", "tag"]'
 	//   type: array
 	//   collectionFormat: multi
 	//   items:
@@ -539,7 +539,7 @@ func ListCatalogOwners(ctx *context.APIContext) {
 	//                "prod" - return only those of production releases (default);
 	//                "preprod" - return only those of all (production & pre-production) releases;
 	//                "latest" - return only those of all releases and the default branch;
-	//                "branch" - return all those in the catalog for all branches'
+	//                "other" - return all, including other branches and tags [aliases: "branch", "tag"]'
 	//   type: array
 	//   collectionFormat: multi
 	//   items:
@@ -682,7 +682,7 @@ func ListCatalogLanguages(ctx *context.APIContext) {
 	//                "prod" - return only those of production releases (default);
 	//                "preprod" - return only those of all (production & pre-production) releases;
 	//                "latest" - return only those of all releases and the default branch;
-	//                "branch" - return all those in the catalog for all branches'
+	//                "other" - return all, including other branches and tags [aliases: "branch", "tag"]'
 	//   type: array
 	//   collectionFormat: multi
 	//   items:
@@ -1091,6 +1091,155 @@ func searchCatalog(ctx *context.APIContext) {
 	})
 }
 
+func getCatalogBookPackage(ctx *context.APIContext) {
+	owner := ctx.Repo.Owner.LowerName
+	repoName := ctx.Repo.Repository.LowerName
+	ref := ctx.PathParam("*")
+	stageStr := ctx.FormString("stage")
+	stage := door43metadata.StageNotSet
+	if stageStr != "" {
+		var ok bool
+		stage, ok = door43metadata.StageMap[stageStr]
+		if !ok {
+			ctx.APIError(http.StatusUnprocessableEntity, fmt.Errorf("invalid stage [%s]", stageStr))
+			return
+		}
+	}
+
+	if (ref == "") || (ref == "undefined") {
+		ctx.Repo.Repository.LoadLatestDMs(ctx)
+		if stage == door43metadata.StageProd && ctx.Repo.Repository.LatestProdDM != nil {
+			ref = ctx.Repo.Repository.LatestProdDM.Ref
+		} else if stage == door43metadata.StagePreProd && ctx.Repo.Repository.LatestPreprodDM != nil {
+			ref = ctx.Repo.Repository.LatestPreprodDM.Ref
+		} else if stage == door43metadata.StageLatest && ctx.Repo.Repository.DefaultBranchDM != nil {
+			ref = ctx.Repo.Repository.DefaultBranchDM.Ref
+		} else {
+			ctx.APIErrorNotFound()
+			return
+		}
+	}
+
+	metadataTypes := QueryStrings(ctx, "metadataType")
+	metadataVersions := QueryStrings(ctx, "metadataVersion")
+
+	listOptions := db.ListOptions{
+		Page:     ctx.FormInt("page"),
+		PageSize: ctx.FormInt("limit"),
+	}
+	if listOptions.Page < 1 {
+		listOptions.Page = 1
+	}
+
+	subjects := QueryStrings(ctx, "subjects")
+	flavors := QueryStrings(ctx, "flavors")
+	flavorTypes := QueryStrings(ctx, "flavorTypes")
+	if len(subjects) == 0 && len(flavors) == 0 && len(flavorTypes) == 0 {
+		subjects = []string{
+			"Aligned Bible",
+			"TSV Translation Notes",
+			"TSV Translation Questions",
+			"TSV Translation Words Links",
+			"Translation Words",
+			"Translation Academy",
+		}
+	}
+
+	opts := &door43metadata.SearchCatalogOptions{
+		ListOptions:      listOptions,
+		Tags:             QueryStrings(ctx, "tag"),
+		Stage:            stage,
+		Languages:        QueryStrings(ctx, "lang"),
+		LanguageIsGL:     ctx.FormOptionalBool("is_gl"),
+		Subjects:         subjects,
+		FlavorTypes:      flavorTypes,
+		Flavors:          flavors,
+		Abbreviations:    QueryStrings(ctx, "abbreviation"),
+		ContentFormats:   QueryStrings(ctx, "format"),
+		CheckingLevels:   QueryStrings(ctx, "checkingLevel"),
+		Books:            QueryStrings(ctx, "book"),
+		IncludeHistory:   ctx.FormBool("includeHistory"),
+		ShowIngredients:  ctx.FormOptionalBool("showIngredients"),
+		MetadataTypes:    metadataTypes,
+		MetadataVersions: metadataVersions,
+		Topics:           QueryStrings(ctx, "topic"),
+		InvertedTopics:   QueryStrings(ctx, "withoutTopic"),
+		PartialMatch:     ctx.FormBool("partialMatch"),
+	}
+
+	sortModes := QueryStrings(ctx, "sort")
+	if len(sortModes) > 0 {
+		sortOrder := ctx.FormString("order")
+		if sortOrder == "" {
+			sortOrder = "asc"
+		}
+		if searchModeMap, ok := searchOrderByMap[sortOrder]; ok {
+			for _, sortMode := range sortModes {
+				if orderBy, ok := searchModeMap[strings.ToLower(sortMode)]; ok {
+					opts.OrderBy = append(opts.OrderBy, orderBy)
+				} else {
+					ctx.APIError(http.StatusUnprocessableEntity, fmt.Errorf("invalid sort mode: \"%s\"", sortMode))
+					return
+				}
+			}
+		} else {
+			ctx.APIError(http.StatusUnprocessableEntity, fmt.Errorf("invalid sort order [%s]", sortOrder))
+			return
+		}
+	} else {
+		opts.OrderBy = []door43metadata.CatalogOrderBy{door43metadata.CatalogOrderByLangCode, door43metadata.CatalogOrderBySubject, door43metadata.CatalogOrderByReleaseDateReverse}
+	}
+
+	dms, count, err := models.SearchCatalogForBookPackage(ctx, owner, repoName, ref, opts)
+	if err != nil {
+		ctx.APIError(http.StatusInternalServerError, err)
+		return
+	}
+
+	results := make([]*api.CatalogEntry, len(dms))
+	var lastUpdated time.Time
+	for i, dm := range dms {
+		if ctx.Repo != nil && ctx.Repo.Repository != nil {
+			dm.Repo = ctx.Repo.Repository
+		} else {
+			err := dm.LoadAttributes(ctx)
+			if err != nil {
+				ctx.APIError(http.StatusInternalServerError, err)
+				return
+			}
+		}
+		perm, err := access_model.GetUserRepoPermission(ctx, dm.Repo, ctx.ContextUser)
+		if err != nil {
+			ctx.APIError(http.StatusInternalServerError, err)
+			return
+		}
+		dmAPI := convert.ToCatalogEntryLoadRepoRelease(ctx, dm, perm)
+		if opts.ShowIngredients.Has() && !opts.ShowIngredients.Value() {
+			dmAPI.Ingredients = nil
+		}
+		if dmAPI.Released.After(lastUpdated) {
+			lastUpdated = dmAPI.Released
+		}
+		results[i] = dmAPI
+	}
+
+	if lastUpdated.IsZero() {
+		lastUpdated = time.Now()
+	}
+
+	if opts.PageSize > 0 {
+		ctx.SetLinkHeader(int(count), opts.PageSize)
+	} else {
+		ctx.SetLinkHeader(int(count), int(count))
+	}
+	ctx.RespHeader().Set("X-Total-Count", fmt.Sprintf("%d", count))
+	ctx.JSON(http.StatusOK, api.CatalogSearchResults{
+		OK:          true,
+		Data:        results,
+		LastUpdated: lastUpdated,
+	})
+}
+
 func getSingleDMFieldList(ctx *context.APIContext, field string) ([]string, error) {
 	stageStr := ctx.FormString("stage")
 	stage := door43metadata.StageProd
@@ -1162,4 +1311,153 @@ func getSingleDMFieldList(ctx *context.APIContext, field string) ([]string, erro
 	}
 
 	return results, nil
+}
+
+// GetCatalogBookPackage get all catalog entries for a catalog entry's book package
+func GetCatalogBookPackage(ctx *context.APIContext) {
+	// swagger:operation GET /catalog/bp/{owner}/{repo} catalog catalogGetBookPackage
+	// ---
+	// summary: Get all catalog entries for a catalog entry's book package
+	// parameters:
+	// - name: owner
+	//   in: path
+	//   description: search only for entries with the given owner name(s). Will perform an exact match (case insensitive) unlesss partialMatch=true
+	//   type: string
+	//   required: true
+	// - name: repo
+	//   in: path
+	//   description: search only for entries with the given repo name(s). To match multiple, give the parameter multiple times or give a list comma delimited. Will perform an exact match (case insensitive) unlesss partialMatch=true
+	//   type: string
+	//   required: true
+	// - name: ref
+	//   in: path
+	//   description: optional reference (tag/branch). If not provided, uses the most recent entry based on stage
+	//   type: string
+	//   required: false
+	// - name: tag
+	//   in: query
+	//   description: search only for entries with the given release tag(s). To match multiple, give the parameter multiple times or give a list comma delimited. Will perform an exact match (case insensitive)
+	//   type: string
+	// - name: stage
+	//   in: query
+	//   description: 'list only those of the given stage or lower, with low to high being:
+	//                "prod" - return only those of production releases (default);
+	//                "preprod" - return only those of all (production & pre-production) releases;
+	//                "latest" - return only those of all releases and the default branch;
+	//                "other" - return all, including other branches and tags [aliases: "branch", "tag"]'
+	//   type: array
+	//   collectionFormat: multi
+	//   items:
+	//     type: string
+	//     enum: [prod,preprod,latest,other]
+	// - name: subject
+	//   in: query
+	//   description: 'subject(s) desired for the book package.
+	//                Default list: Aligned Bible, TSV Translation Notes, TSV Translation Questions, TSV Translation Words Links, Translation Words, Translation Academy'
+	//   type: array
+	//   collectionFormat: multi
+	//   items:
+	//     type: string
+	// - name: flavorType
+	//   in: query
+	//   description: resource flavorType. Multiple values are ORed. If given, subjects ignored.
+	//   type: array
+	//   collectionFormat: multi
+	//   items:
+	//     type: string
+	// - name: flavor
+	//   in: query
+	//   description: resource flavor. Multiple values are ORed. If given, subjects ignored.
+	//   type: array
+	//   collectionFormat: multi
+	//   items:
+	//     type: string
+	// - name: abbreviation
+	//   in: query
+	//   description: resource abbreviation (identifier). Multiple values are ORed.
+	//   type: array
+	//   collectionFormat: multi
+	//   items:
+	//     type: string
+	// - name: format
+	//   in: query
+	//   description: content format (usfm, text, markdown, etc.). Multiple values are ORed.
+	//   type: array
+	//   collectionFormat: multi
+	//   items:
+	//     type: string
+	// - name: checkingLevel
+	//   in: query
+	//   description: checking level. Returns items with a checking level equal or greater than the number given
+	//   type: array
+	//   collectionFormat: multi
+	//   items:
+	//     type: string
+	//     enum: ["1","2","3"]
+	// - name: book
+	//   in: query
+	//   description: book (ingredient identifier). Multiple values are ORed
+	//   type: array
+	//   collectionFormat: multi
+	//   items:
+	//     type: string
+	// - name: metadataType
+	//   in: query
+	//   description: metadata type. Multiple values are ORed
+	//   type: array
+	//   collectionFormat: multi
+	//   items:
+	//     type: string
+	//     enum: [rc,sb,tc,ts]
+	// - name: metadataVersion
+	//   in: query
+	//   description: metadata version. Does not apply if metadataType is not given. Multiple values are ORed
+	//   type: array
+	//   collectionFormat: multi
+	//   items:
+	//     type: string
+	// - name: topic
+	//   in: query
+	//   description: topic of a repo. Multiple values are ORed
+	//   type: array
+	//   collectionFormat: multi
+	//   items:
+	//     type: string
+	// - name: withoutTopic
+	//   in: query
+	//   description: Entries with a repository without this topic will be returned. Multiple values are ANDed.
+	//   type: array
+	//   collectionFormat: multi
+	//   items:
+	//     type: string
+	// - name: showIngredients
+	//   in: query
+	//   description: if true, the list of ingredients (files/projects) in the resource and their file paths will be listed for each entry, default is true
+	//   type: boolean
+	// - name: sort
+	//   in: query
+	//   description: sort repos alphanumerically by attribute. Supported values are
+	//                "subject", "title", "reponame", "tag", "released", "lang", "releases", "stars", "forks".
+	//                Default is by "subject" and then "abbreviation"
+	//   type: string
+	// - name: order
+	//   in: query
+	//   description: sort order, either "asc" (ascending) or "desc" (descending).
+	//                Default is "asc", ignored if "sort" is not specified.
+	//   type: string
+	// - name: page
+	//   in: query
+	//   description: page number of results to return (1-based)
+	//   type: integer
+	// - name: limit
+	//   in: query
+	//   description: page size of results, defaults to no limit
+	//   type: integer
+	// responses:
+	//   "200":
+	//     "$ref": "#/responses/CatalogSearchResults"
+	//   "422":
+	//     "$ref": "#/responses/validationError"
+
+	getCatalogBookPackage(ctx)
 }

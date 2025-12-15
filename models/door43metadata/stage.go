@@ -10,6 +10,7 @@ type Stage int
 
 // Stage values
 const (
+	StageNotSet  Stage = 0
 	StageProd    Stage = 1
 	StagePreProd Stage = 2
 	StageLatest  Stage = 3

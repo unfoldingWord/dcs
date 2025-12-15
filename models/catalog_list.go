@@ -119,3 +119,112 @@ func SearchDoor43MetadataFieldByCondition(ctx context.Context, opts *door43metad
 
 	return results, nil
 }
+
+// SearchCatalogForBookPackage returns catalog repositories based on search options for a book package,
+// it returns results in given range and number of total results.
+func SearchCatalogForBookPackage(ctx context.Context, owner, repoName, ref string, opts *door43metadata.SearchCatalogOptions) (repo.Door43MetadataList, int64, error) {
+	books := opts.Books
+	opts.Books = nil
+	bookCond := builder.NewCond()
+
+	if len(books) > 0 {
+		innerBookCond := builder.NewCond()
+		for _, book := range books {
+			for _, v := range strings.Split(book, ",") {
+				innerBookCond = innerBookCond.And(builder.Expr("JSON_SEARCH(dm.ingredients, 'one', ? COLLATE utf8mb4_general_ci, NULL, '$[*].identifier') IS NOT NULL", strings.ToLower(v)))
+			}
+		}
+		bookCond = builder.Or(
+			builder.In("`door43_metadata`.subject", []string{"Translation Academy", "Translation Words"}),
+			innerBookCond,
+		)
+	}
+
+	cond := door43metadata.SearchCatalogCondition(opts)
+	cond = cond.And(bookCond)
+	return SearchCatalogForBookPackageByCondition(ctx, owner, repoName, ref, opts, cond)
+}
+
+// SearchCatalogForBookPackageByCondition search repositories by condition for a book package
+func SearchCatalogForBookPackageByCondition(ctx context.Context, owner, repoName, ref string, opts *door43metadata.SearchCatalogOptions, cond builder.Cond) (repo.Door43MetadataList, int64, error) {
+	// Build the WHERE clause from the builder.Cond for use in the filtered CTE
+	// We need to convert the builder conditions to SQL that can be used in the native query
+	condSQL, condArgs, err := builder.ToSQL(cond)
+	if err != nil {
+		return nil, 0, fmt.Errorf("failed to build condition SQL: %v", err)
+	}
+
+	// Replace table aliases in the condition to match the CTE context
+	// In the filtered CTE, we use 'dm' as the alias for door43_metadata table
+	condSQL = strings.ReplaceAll(condSQL, "`door43_metadata`.", "dm.")
+	condSQL = strings.ReplaceAll(condSQL, "`repository`.", "r.")
+	condSQL = strings.ReplaceAll(condSQL, "`user`.", "u.")
+
+	// Build the complete query with CTEs
+	query := `
+WITH anchor AS (
+  SELECT
+    dm.*,
+    r.owner_id
+  FROM door43_metadata dm
+  JOIN repository r ON r.id = dm.repo_id
+  JOIN user u       ON u.id = r.owner_id
+  WHERE
+    u.lower_name = ?
+    AND r.name = ?
+    AND dm.ref = ?
+  LIMIT 1
+),
+filtered AS (
+  SELECT
+    dm.*,
+    ABS(dm.release_date_unix - a.release_date_unix) AS time_diff
+  FROM door43_metadata dm
+  JOIN repository r ON r.id = dm.repo_id
+  JOIN user u       ON u.id = r.owner_id
+  JOIN anchor a
+  WHERE
+    dm.stage <= a.stage
+    AND dm.language = a.language
+    AND r.owner_id = a.owner_id
+    AND (` + condSQL + `)
+),
+ranked AS (
+  SELECT
+    f.*,
+    ROW_NUMBER() OVER (
+      PARTITION BY f.abbreviation
+      ORDER BY f.time_diff ASC, f.release_date_unix ASC
+    ) AS rn
+  FROM filtered f
+)
+SELECT 
+  id, repo_id, release_id, ref, ref_type, commit_sha, stage,
+  metadata_type, metadata_version, subject, flavor_type, flavor,
+  abbreviation, title, publisher, language, language_title,
+  language_direction, language_is_gl, content_format, checking_level,
+  ingredients, relations, is_latest_for_stage, is_repo_metadata,
+  metadata, validation_error, healthcheck_severity, healthcheck_counts,
+  release_date_unix, created_unix, updated_unix
+FROM ranked
+WHERE rn = 1
+ORDER BY abbreviation`
+
+	// Prepare query arguments: owner, repoName, ref, then all condition args
+	queryArgs := []interface{}{owner, repoName, ref}
+	queryArgs = append(queryArgs, condArgs...)
+
+	// Execute the query
+	var dms repo.Door43MetadataList
+	err = db.GetEngine(ctx).SQL(query, queryArgs...).Find(&dms)
+	if err != nil {
+		return nil, 0, fmt.Errorf("query failed: %v", err)
+	}
+
+	// Load attributes for the results
+	if err = dms.LoadAttributes(ctx); err != nil {
+		return nil, 0, fmt.Errorf("LoadAttributes: %v", err)
+	}
+
+	return dms, int64(len(dms)), nil
+}

@@ -1822,6 +1822,10 @@ func Routes() *web.Router {
 				})
 				m.Get("/metadata/{username}/{reponame}/*", catalog.GetCatalogMetadata)
 				m.Get("/validation/{username}/{reponame}/*", catalog.GetCatalogValidation)
+				m.Group("/bp/{username}/{reponame}", func() {
+					m.Get("", catalog.GetCatalogBookPackage)
+					m.Get("/*", catalog.GetCatalogBookPackage)
+				}, reqRepoReader(unit.TypeCode), context.ReferencesGitRepo())
 			}, repoAssignment())
 		})
 		/*** END DCS Customizations ***/
