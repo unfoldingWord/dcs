@@ -1092,6 +1092,8 @@ func searchCatalog(ctx *context.APIContext) {
 }
 
 func getCatalogBookPackage(ctx *context.APIContext) {
+	owner := ctx.Repo.Owner.LowerName
+	repoName := ctx.Repo.Repository.LowerName
 	ref := ctx.PathParam("*")
 	stageStr := ctx.FormString("stage")
 	stage := door43metadata.StageNotSet
@@ -1145,15 +1147,13 @@ func getCatalogBookPackage(ctx *context.APIContext) {
 
 	opts := &door43metadata.SearchCatalogOptions{
 		ListOptions:      listOptions,
-		Owners:           []string{ctx.Repo.Repository.Owner.LowerName},
-		Repos:            []string{ctx.Repo.Repository.LowerName},
 		Tags:             QueryStrings(ctx, "tag"),
 		Stage:            stage,
 		Languages:        QueryStrings(ctx, "lang"),
 		LanguageIsGL:     ctx.FormOptionalBool("is_gl"),
-		Subjects:         QueryStrings(ctx, "subject"),
-		FlavorTypes:      QueryStrings(ctx, "flavorType"),
-		Flavors:          QueryStrings(ctx, "flavor"),
+		Subjects:         subjects,
+		FlavorTypes:      flavorTypes,
+		Flavors:          flavors,
 		Abbreviations:    QueryStrings(ctx, "abbreviation"),
 		ContentFormats:   QueryStrings(ctx, "format"),
 		CheckingLevels:   QueryStrings(ctx, "checkingLevel"),
@@ -1190,7 +1190,7 @@ func getCatalogBookPackage(ctx *context.APIContext) {
 		opts.OrderBy = []door43metadata.CatalogOrderBy{door43metadata.CatalogOrderByLangCode, door43metadata.CatalogOrderBySubject, door43metadata.CatalogOrderByReleaseDateReverse}
 	}
 
-	dms, count, err := models.SearchCatalogForBookPackage(ctx, ref, opts)
+	dms, count, err := models.SearchCatalogForBookPackage(ctx, owner, repoName, ref, opts)
 	if err != nil {
 		ctx.APIError(http.StatusInternalServerError, err)
 		return
