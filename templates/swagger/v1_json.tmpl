@@ -1282,6 +1282,218 @@
         }
       }
     },
+    "/catalog/bp/{owner}/{repo}": {
+      "get": {
+        "tags": [
+          "catalog"
+        ],
+        "summary": "Get all catalog entries for a catalog entry's book package",
+        "operationId": "catalogGetBookPackage",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "search only for entries with the given owner name(s). Will perform an exact match (case insensitive) unlesss partialMatch=true",
+            "name": "owner",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "description": "search only for entries with the given repo name(s). To match multiple, give the parameter multiple times or give a list comma delimited. Will perform an exact match (case insensitive) unlesss partialMatch=true",
+            "name": "repo",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "description": "optional reference (tag/branch). If not provided, uses the most recent entry based on stage",
+            "name": "ref",
+            "in": "path"
+          },
+          {
+            "type": "string",
+            "description": "search only for entries with the given release tag(s). To match multiple, give the parameter multiple times or give a list comma delimited. Will perform an exact match (case insensitive)",
+            "name": "tag",
+            "in": "query"
+          },
+          {
+            "type": "array",
+            "items": {
+              "enum": [
+                "prod",
+                "preprod",
+                "latest",
+                "other"
+              ],
+              "type": "string"
+            },
+            "collectionFormat": "multi",
+            "description": "list only those of the given stage or lower, with low to high being: \"prod\" - return only those of production releases (default); \"preprod\" - return only those of all (production \u0026 pre-production) releases; \"latest\" - return only those of all releases and the default branch; \"other\" - return all, including other branches and tags [aliases: \"branch\", \"tag\"]",
+            "name": "stage",
+            "in": "query"
+          },
+          {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "collectionFormat": "multi",
+            "description": "subject(s) desired for the book package. Default list: Aligned Bible, TSV Translation Notes, TSV Translation Questions, TSV Translation Words Links, Translation Words, Translation Academy",
+            "name": "subject",
+            "in": "query"
+          },
+          {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "collectionFormat": "multi",
+            "description": "resource flavorType. Multiple values are ORed. If given, subjects ignored.",
+            "name": "flavorType",
+            "in": "query"
+          },
+          {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "collectionFormat": "multi",
+            "description": "resource flavor. Multiple values are ORed. If given, subjects ignored.",
+            "name": "flavor",
+            "in": "query"
+          },
+          {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "collectionFormat": "multi",
+            "description": "resource abbreviation (identifier). Multiple values are ORed.",
+            "name": "abbreviation",
+            "in": "query"
+          },
+          {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "collectionFormat": "multi",
+            "description": "content format (usfm, text, markdown, etc.). Multiple values are ORed.",
+            "name": "format",
+            "in": "query"
+          },
+          {
+            "type": "array",
+            "items": {
+              "enum": [
+                "1",
+                "2",
+                "3"
+              ],
+              "type": "string"
+            },
+            "collectionFormat": "multi",
+            "description": "checking level. Returns items with a checking level equal or greater than the number given",
+            "name": "checkingLevel",
+            "in": "query"
+          },
+          {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "collectionFormat": "multi",
+            "description": "book (ingredient identifier). Multiple values are ORed",
+            "name": "book",
+            "in": "query"
+          },
+          {
+            "type": "array",
+            "items": {
+              "enum": [
+                "rc",
+                "sb",
+                "tc",
+                "ts"
+              ],
+              "type": "string"
+            },
+            "collectionFormat": "multi",
+            "description": "metadata type. Multiple values are ORed",
+            "name": "metadataType",
+            "in": "query"
+          },
+          {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "collectionFormat": "multi",
+            "description": "metadata version. Does not apply if metadataType is not given. Multiple values are ORed",
+            "name": "metadataVersion",
+            "in": "query"
+          },
+          {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "collectionFormat": "multi",
+            "description": "topic of a repo. Multiple values are ORed",
+            "name": "topic",
+            "in": "query"
+          },
+          {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "collectionFormat": "multi",
+            "description": "Entries with a repository without this topic will be returned. Multiple values are ANDed.",
+            "name": "withoutTopic",
+            "in": "query"
+          },
+          {
+            "type": "boolean",
+            "description": "if true, the list of ingredients (files/projects) in the resource and their file paths will be listed for each entry, default is true",
+            "name": "showIngredients",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "description": "sort repos alphanumerically by attribute. Supported values are \"subject\", \"title\", \"reponame\", \"tag\", \"released\", \"lang\", \"releases\", \"stars\", \"forks\". Default is by \"subject\" and then \"abbreviation\"",
+            "name": "sort",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "description": "sort order, either \"asc\" (ascending) or \"desc\" (descending). Default is \"asc\", ignored if \"sort\" is not specified.",
+            "name": "order",
+            "in": "query"
+          },
+          {
+            "type": "integer",
+            "description": "page number of results to return (1-based)",
+            "name": "page",
+            "in": "query"
+          },
+          {
+            "type": "integer",
+            "description": "page size of results, defaults to no limit",
+            "name": "limit",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/CatalogSearchResults"
+          },
+          "422": {
+            "$ref": "#/responses/validationError"
+          }
+        }
+      }
+    },
     "/catalog/entry/{owner}/{repo}/{ref}": {
       "get": {
         "produces": [
@@ -1376,7 +1588,7 @@
               "type": "string"
             },
             "collectionFormat": "multi",
-            "description": "list only those of the given stage or lower, with low to high being: \"prod\" - return only those of production releases (default); \"preprod\" - return only those of all (production \u0026 pre-production) releases; \"latest\" - return only those of all releases and the default branch; \"branch\" - return all those in the catalog for all branches",
+            "description": "list only those of the given stage or lower, with low to high being: \"prod\" - return only those of production releases (default); \"preprod\" - return only those of all (production \u0026 pre-production) releases; \"latest\" - return only those of all releases and the default branch; \"other\" - return all, including other branches and tags [aliases: \"branch\", \"tag\"]",
             "name": "stage",
             "in": "query"
           },
@@ -1560,7 +1772,7 @@
               "type": "string"
             },
             "collectionFormat": "multi",
-            "description": "list only those of the given stage or lower, with low to high being: \"prod\" - return only those of production releases (default); \"preprod\" - return only those of all (production \u0026 pre-production) releases; \"latest\" - return only those of all releases and the default branch; \"branch\" - return all those in the catalog for all branches",
+            "description": "list only those of the given stage or lower, with low to high being: \"prod\" - return only those of production releases (default); \"preprod\" - return only those of all (production \u0026 pre-production) releases; \"latest\" - return only those of all releases and the default branch; \"other\" - return all, including other branches and tags [aliases: \"branch\", \"tag\"]",
             "name": "stage",
             "in": "query"
           },
@@ -1738,7 +1950,7 @@
               "type": "string"
             },
             "collectionFormat": "multi",
-            "description": "list only those of the given stage or lower, with low to high being: \"prod\" - return only those of production releases (default); \"preprod\" - return only those of all (production \u0026 pre-production) releases; \"latest\" - return only those of all releases and the default branch; \"branch\" - return all those in the catalog for all branches",
+            "description": "list only those of the given stage or lower, with low to high being: \"prod\" - return only those of production releases (default); \"preprod\" - return only those of all (production \u0026 pre-production) releases; \"latest\" - return only those of all releases and the default branch; \"other\" - return all, including other branches and tags [aliases: \"branch\", \"tag\"]",
             "name": "stage",
             "in": "query"
           },
@@ -1922,7 +2134,7 @@
               "type": "string"
             },
             "collectionFormat": "multi",
-            "description": "list only those of the given stage or lower, with low to high being: \"prod\" - return only those of production releases (default); \"preprod\" - return only those of all (production \u0026 pre-production) releases; \"latest\" - return only those of all releases and the default branch; \"branch\" - return all those in the catalog for all branches",
+            "description": "list only those of the given stage or lower, with low to high being: \"prod\" - return only those of production releases (default); \"preprod\" - return only those of all (production \u0026 pre-production) releases; \"latest\" - return only those of all releases and the default branch; \"other\" - return all, including other branches and tags [aliases: \"branch\", \"tag\"]",
             "name": "stage",
             "in": "query"
           },
@@ -23836,6 +24048,13 @@
           "type": "string",
           "x-go-name": "RefType"
         },
+        "relations": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Relation"
+          },
+          "x-go-name": "Relations"
+        },
         "release": {
           "$ref": "#/definitions/Release"
         },
@@ -29677,6 +29896,29 @@
       },
       "x-go-package": "code.gitea.io/gitea/modules/structs"
     },
+    "Relation": {
+      "description": "Relation is a single relation of a resource",
+      "type": "object",
+      "properties": {
+        "full_relation": {
+          "type": "string",
+          "x-go-name": "FullRelation"
+        },
+        "identifier": {
+          "type": "string",
+          "x-go-name": "Identifier"
+        },
+        "lang": {
+          "type": "string",
+          "x-go-name": "Language"
+        },
+        "version": {
+          "type": "string",
+          "x-go-name": "Version"
+        }
+      },
+      "x-go-package": "code.gitea.io/gitea/modules/structs"
+    },
     "Release": {
       "description": "Release represents a repository release",
       "type": "object",
@@ -30202,6 +30444,14 @@
         "projects_mode": {
           "type": "string",
           "x-go-name": "ProjectsMode"
+        },
+        "relations": {
+          "description": "Relation",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Relation"
+          },
+          "x-go-name": "Relations"
         },
         "release_counter": {
           "type": "integer",
