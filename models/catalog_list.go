@@ -122,7 +122,7 @@ func SearchDoor43MetadataFieldByCondition(ctx context.Context, opts *door43metad
 
 // SearchCatalogForBookPackage returns catalog repositories based on search options for a book package,
 // it returns results in given range and number of total results.
-func SearchCatalogForBookPackage(ctx context.Context, owner, repoName, ref string, opts *door43metadata.SearchCatalogOptions) (repo.Door43MetadataList, int64, error) {
+func SearchCatalogForBookPackage(ctx context.Context, dm *repo.Door43Metadata, opts *door43metadata.SearchCatalogOptions) (repo.Door43MetadataList, int64, error) {
 	books := opts.Books
 	opts.Books = nil
 	bookCond := builder.NewCond()
@@ -142,11 +142,11 @@ func SearchCatalogForBookPackage(ctx context.Context, owner, repoName, ref strin
 
 	cond := door43metadata.SearchCatalogCondition(opts)
 	cond = cond.And(bookCond)
-	return SearchCatalogForBookPackageByCondition(ctx, owner, repoName, ref, opts, cond)
+	return SearchCatalogForBookPackageByCondition(ctx, dm, opts, cond)
 }
 
 // SearchCatalogForBookPackageByCondition search repositories by condition for a book package
-func SearchCatalogForBookPackageByCondition(ctx context.Context, owner, repoName, ref string, opts *door43metadata.SearchCatalogOptions, cond builder.Cond) (repo.Door43MetadataList, int64, error) {
+func SearchCatalogForBookPackageByCondition(ctx context.Context, dm *repo.Door43Metadata, opts *door43metadata.SearchCatalogOptions, cond builder.Cond) (repo.Door43MetadataList, int64, error) {
 	// Build the WHERE clause from the builder.Cond for use in the filtered CTE
 	// We need to convert the builder conditions to SQL that can be used in the native query
 	condSQL, condArgs, err := builder.ToSQL(cond)
@@ -162,31 +162,16 @@ func SearchCatalogForBookPackageByCondition(ctx context.Context, owner, repoName
 
 	// Build the complete query with CTEs
 	query := `
-WITH anchor AS (
+WITH filtered AS (
   SELECT
     dm.*,
-    r.owner_id
+    ABS(dm.release_date_unix - ?) AS time_diff
   FROM door43_metadata dm
   JOIN repository r ON r.id = dm.repo_id
-  JOIN user u       ON u.id = r.owner_id
   WHERE
-    u.lower_name = ?
-    AND r.name = ?
-    AND dm.ref = ?
-  LIMIT 1
-),
-filtered AS (
-  SELECT
-    dm.*,
-    ABS(dm.release_date_unix - a.release_date_unix) AS time_diff
-  FROM door43_metadata dm
-  JOIN repository r ON r.id = dm.repo_id
-  JOIN user u       ON u.id = r.owner_id
-  JOIN anchor a
-  WHERE
-    dm.stage <= a.stage
-    AND dm.language = a.language
-    AND r.owner_id = a.owner_id
+    dm.stage <= ?
+    AND dm.language = ?
+    AND r.owner_id = ?
     AND (` + condSQL + `)
 ),
 ranked AS (
@@ -211,7 +196,7 @@ WHERE rn = 1
 ORDER BY abbreviation`
 
 	// Prepare query arguments: owner, repoName, ref, then all condition args
-	queryArgs := []interface{}{owner, repoName, ref}
+	queryArgs := []interface{}{dm.ReleaseDateUnix, dm.Stage, dm.Language, dm.Repo.OwnerID}
 	queryArgs = append(queryArgs, condArgs...)
 
 	// Execute the query

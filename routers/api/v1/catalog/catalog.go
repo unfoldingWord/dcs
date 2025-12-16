@@ -1104,9 +1104,6 @@ func contains(slice []string, target string) bool {
 }
 
 func getCatalogBookPackage(ctx *context.APIContext) {
-	owner := ctx.Repo.Owner.LowerName
-	repoName := ctx.Repo.Repository.LowerName
-
 	ref := ctx.PathParam("*")
 	stageStr := ctx.FormString("stage")
 	stage := door43metadata.StageNotSet
@@ -1218,7 +1215,7 @@ func getCatalogBookPackage(ctx *context.APIContext) {
 		opts.OrderBy = []door43metadata.CatalogOrderBy{door43metadata.CatalogOrderByLangCode, door43metadata.CatalogOrderBySubject, door43metadata.CatalogOrderByReleaseDateReverse}
 	}
 
-	dms, count, err := models.SearchCatalogForBookPackage(ctx, owner, repoName, ref, opts)
+	dms, count, err := models.SearchCatalogForBookPackage(ctx, dm, opts)
 	if err != nil {
 		ctx.APIError(http.StatusInternalServerError, err)
 		return
@@ -1226,22 +1223,18 @@ func getCatalogBookPackage(ctx *context.APIContext) {
 
 	results := make([]*api.CatalogEntry, len(dms))
 	var lastUpdated time.Time
-	for i, dm := range dms {
-		if ctx.Repo != nil && ctx.Repo.Repository != nil {
-			dm.Repo = ctx.Repo.Repository
-		} else {
-			err := dm.LoadAttributes(ctx)
-			if err != nil {
-				ctx.APIError(http.StatusInternalServerError, err)
-				return
-			}
-		}
-		perm, err := access_model.GetUserRepoPermission(ctx, dm.Repo, ctx.ContextUser)
+	for i, dmModel := range dms {
+		err := dmModel.LoadAttributes(ctx)
 		if err != nil {
 			ctx.APIError(http.StatusInternalServerError, err)
 			return
 		}
-		dmAPI := convert.ToCatalogEntryLoadRepoRelease(ctx, dm, perm)
+		perm, err := access_model.GetUserRepoPermission(ctx, dmModel.Repo, ctx.ContextUser)
+		if err != nil {
+			ctx.APIError(http.StatusInternalServerError, err)
+			return
+		}
+		dmAPI := convert.ToCatalogEntryLoadRepoRelease(ctx, dmModel, perm)
 		if opts.ShowIngredients.Has() && !opts.ShowIngredients.Value() {
 			dmAPI.Ingredients = nil
 		}
