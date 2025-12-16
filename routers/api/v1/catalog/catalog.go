@@ -56,6 +56,9 @@ var searchOrderByMap = map[string]map[string]door43metadata.CatalogOrderBy{
 	},
 }
 
+var bibleBPSubjects = []string{"Aligned Bible", "TSV Trnaslation Notes", "TSV Translation Questions", "TSV Translation Words Links", "Translation Academy", "Translation Words"}
+var obsBPSubjects = []string{"Open Bible Stories", "TSV OBS Translation Notes", "TSV OBS Translation Questions", "TSV OBS Translation Words Links", "Translation Academy", "Translation Words"}
+
 // Search search the catalog via options
 func Search(ctx *context.APIContext) {
 	// swagger:operation GET /catalog/search catalog catalogSearch
@@ -1091,9 +1094,19 @@ func searchCatalog(ctx *context.APIContext) {
 	})
 }
 
+func contains(slice []string, target string) bool {
+	for _, item := range slice {
+		if item == target {
+			return true
+		}
+	}
+	return false
+}
+
 func getCatalogBookPackage(ctx *context.APIContext) {
 	owner := ctx.Repo.Owner.LowerName
 	repoName := ctx.Repo.Repository.LowerName
+
 	ref := ctx.PathParam("*")
 	stageStr := ctx.FormString("stage")
 	stage := door43metadata.StageNotSet
@@ -1120,6 +1133,22 @@ func getCatalogBookPackage(ctx *context.APIContext) {
 		}
 	}
 
+	var dm *repo.Door43Metadata
+	var err error
+	dm, err = repo.GetDoor43MetadataByRepoIDAndRef(ctx, ctx.Repo.Repository.ID, ref)
+	if err != nil {
+		if !repo.IsErrDoor43MetadataNotExist(err) {
+			ctx.APIError(http.StatusInternalServerError, err)
+		} else {
+			ctx.APIErrorNotFound()
+		}
+		return
+	}
+	if err := dm.LoadAttributes(ctx); err != nil {
+		ctx.APIError(http.StatusInternalServerError, err)
+		return
+	}
+
 	metadataTypes := QueryStrings(ctx, "metadataType")
 	metadataVersions := QueryStrings(ctx, "metadataVersion")
 
@@ -1135,13 +1164,12 @@ func getCatalogBookPackage(ctx *context.APIContext) {
 	flavors := QueryStrings(ctx, "flavors")
 	flavorTypes := QueryStrings(ctx, "flavorTypes")
 	if len(subjects) == 0 && len(flavors) == 0 && len(flavorTypes) == 0 {
-		subjects = []string{
-			"Aligned Bible",
-			"TSV Translation Notes",
-			"TSV Translation Questions",
-			"TSV Translation Words Links",
-			"Translation Words",
-			"Translation Academy",
+		if contains(bibleBPSubjects, dm.Subject) {
+			subjects = bibleBPSubjects
+		} else if contains(obsBPSubjects, dm.Subject) {
+			subjects = obsBPSubjects
+		} else {
+			subjects = []string{dm.Subject}
 		}
 	}
 
