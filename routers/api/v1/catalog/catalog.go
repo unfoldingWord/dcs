@@ -1183,7 +1183,7 @@ func getCatalogBookPackage(ctx *context.APIContext) {
 		ContentFormats:   QueryStrings(ctx, "format"),
 		CheckingLevels:   QueryStrings(ctx, "checkingLevel"),
 		Books:            QueryStrings(ctx, "book"),
-		IncludeHistory:   ctx.FormBool("includeHistory"),
+		IncludeHistory:   true,
 		ShowIngredients:  ctx.FormOptionalBool("showIngredients"),
 		MetadataTypes:    metadataTypes,
 		MetadataVersions: metadataVersions,
