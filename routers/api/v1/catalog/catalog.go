@@ -56,7 +56,7 @@ var searchOrderByMap = map[string]map[string]door43metadata.CatalogOrderBy{
 	},
 }
 
-var bibleBPSubjects = []string{"Aligned Bible", "TSV Trnaslation Notes", "TSV Translation Questions", "TSV Translation Words Links", "Translation Academy", "Translation Words"}
+var bibleBPSubjects = []string{"Aligned Bible", "Hebrew Old Testament", "Greek New Testament", "TSV Trnaslation Notes", "TSV Translation Questions", "TSV Translation Words Links", "Translation Academy", "Translation Words"}
 var obsBPSubjects = []string{"Open Bible Stories", "TSV OBS Translation Notes", "TSV OBS Translation Questions", "TSV OBS Translation Words Links", "Translation Academy", "Translation Words"}
 
 // Search search the catalog via options
@@ -1219,6 +1219,16 @@ func getCatalogBookPackage(ctx *context.APIContext) {
 	if err != nil {
 		ctx.APIError(http.StatusInternalServerError, err)
 		return
+	}
+
+	if contains(subjects, "Hebrew Old Testament") || contains(subjects, "Greek New Testament") {
+		origBibleDMs, origBibleCount, err := models.GetOrigLanguageBibles(ctx, dm, opts.Books)
+		if err != nil {
+			ctx.APIError(http.StatusInternalServerError, err)
+			return
+		}
+		dms = append(dms, origBibleDMs...)
+		count += origBibleCount
 	}
 
 	results := make([]*api.CatalogEntry, len(dms))
