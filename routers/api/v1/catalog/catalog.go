@@ -1170,6 +1170,8 @@ func getCatalogBookPackage(ctx *context.APIContext) {
 		}
 	}
 
+	books := QueryStrings(ctx, "book")
+
 	opts := &door43metadata.SearchCatalogOptions{
 		ListOptions:      listOptions,
 		Tags:             QueryStrings(ctx, "tag"),
@@ -1182,7 +1184,7 @@ func getCatalogBookPackage(ctx *context.APIContext) {
 		Abbreviations:    QueryStrings(ctx, "abbreviation"),
 		ContentFormats:   QueryStrings(ctx, "format"),
 		CheckingLevels:   QueryStrings(ctx, "checkingLevel"),
-		Books:            QueryStrings(ctx, "book"),
+		Books:            books,
 		IncludeHistory:   true,
 		ShowIngredients:  ctx.FormOptionalBool("showIngredients"),
 		MetadataTypes:    metadataTypes,
@@ -1222,7 +1224,7 @@ func getCatalogBookPackage(ctx *context.APIContext) {
 	}
 
 	if contains(subjects, "Hebrew Old Testament") || contains(subjects, "Greek New Testament") {
-		origBibleDMs, origBibleCount, err := models.GetOrigLanguageBibles(ctx, dm, opts.Books)
+		origBibleDMs, origBibleCount, err := models.GetOrigLanguageBibles(ctx, dm, books)
 		if err != nil {
 			ctx.APIError(http.StatusInternalServerError, err)
 			return
