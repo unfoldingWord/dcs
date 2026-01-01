@@ -9377,13 +9377,26 @@ const getUsfmForVerseContent = (verseData) => {
 const flattenChapterData = (chapterData) => {
   let usfmStr = '';
 
-  if ("front" in chapterData) {
-    usfmStr += getUsfmForVerseContent(chapterData["front"]);
-  }
-  Object.keys(chapterData).forEach((verseNum) => {
-    if (verseNum === "front") {
-      return;
+  Object.keys(chapterData).sort((a, b) => {
+    if (a === "front") return -1;
+    if (b === "front") return 1;
+    
+    const parseKey = (key) => {
+      const parts = key.split(/[-,]/);
+      return {
+        first: parseInt(parts[0]) || 0,
+        second: parts[1] ? parseInt(parts[1]) || 0 : 0
+      };
+    };
+    
+    const aParsed = parseKey(a);
+    const bParsed = parseKey(b);
+    
+    if (aParsed.first !== bParsed.first) {
+      return aParsed.first - bParsed.first;
     }
+    return aParsed.second - bParsed.second;
+  }).forEach((verseNum) => {
     const verseData = chapterData[verseNum];
     usfmStr += `\\v ${verseNum} ` + getUsfmForVerseContent(verseData);
   });
