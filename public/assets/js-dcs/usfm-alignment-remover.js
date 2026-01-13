@@ -9287,7 +9287,7 @@ const replaceWordsAndMilestones = (verseObject, wordSpacing) => {
   } else {
     wordSpacing = ' ';
 
-    if (verseObject.nextChar) {
+    if (verseObject.nextChar && verseObject.nextChar !== "\\n") {
       wordSpacing = ''; // no need for spacing before next word if this item has it
     } else if (verseObject.text) {
       const lastChar = verseObject.text.substr(-1);
