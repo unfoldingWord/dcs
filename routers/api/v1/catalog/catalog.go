@@ -1124,6 +1124,13 @@ func getCatalogBookPackage(ctx *context.APIContext) {
 			ref = ctx.Repo.Repository.LatestPreprodDM.Ref
 		} else if stage == door43metadata.StageLatest && ctx.Repo.Repository.DefaultBranchDM != nil {
 			ref = ctx.Repo.Repository.DefaultBranchDM.Ref
+		} else if stage == door43metadata.StageNotSet {
+			// When no stage is specified, use the default branch
+			if ctx.Repo.Repository.DefaultBranchDM != nil {
+				ref = ctx.Repo.Repository.DefaultBranchDM.Ref
+			} else {
+				ref = ctx.Repo.Repository.DefaultBranch
+			}
 		} else {
 			ctx.APIErrorNotFound()
 			return
