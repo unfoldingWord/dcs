@@ -5227,7 +5227,7 @@ var checkForEndMarker = function checkForEndMarker(marker) {
       if (content) {
         marker.endMarkerChar = space;
       } else {
-        marker.nextChar = space;
+        content = space;
       }
     }
 
@@ -6478,6 +6478,12 @@ function _unsupportedIterableToArray(o, minLen) { if (!o) return; if (typeof o =
 
 function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len = arr.length; for (var i = 0, arr2 = new Array(len); i < len; i++) { arr2[i] = arr[i]; } return arr2; }
 
+function ownKeys(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); if (enumerableOnly) { symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; }); } keys.push.apply(keys, symbols); } return keys; }
+
+function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i] != null ? arguments[i] : {}; if (i % 2) { ownKeys(Object(source), true).forEach(function (key) { _defineProperty(target, key, source[key]); }); } else if (Object.getOwnPropertyDescriptors) { Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)); } else { ownKeys(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } } return target; }
+
+function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
+
 var params_ = {};
 var wordMap_ = {};
 var wordIgnore_ = [];
@@ -6570,11 +6576,10 @@ var generateWord = function generateWord(wordObject, nextObject) {
 var generatePhrase = function generatePhrase(phraseObject, nextObject) {
   var tag = phraseObject.tag || 'zaln';
   var markerTermination = '';
+  var nextChar = phraseObject.nextChar;
 
   if (typeof phraseObject.endTag === 'string') {
-    markerTermination = phraseObject.endTag; // new format takes precidence
-
-    delete phraseObject.endTag;
+    markerTermination = phraseObject.endTag; // new format takes precedence
   } else {
     markerTermination = tag + '-e\\*'; // fall back to old generation method
   }
@@ -6616,11 +6621,19 @@ var generatePhrase = function generatePhrase(phraseObject, nextObject) {
     }
 
     if (phraseObject.text) {
-      content += ' ' + phraseObject.text;
+      // check if we need padding
+      var firstChar = phraseObject.text.substring(0, 1);
+      var isWhiteSpace = firstChar === ' ' || firstChar === '\n';
+      content += (isWhiteSpace ? '' : ' ') + phraseObject.text;
     }
 
     if (phraseObject.content) {
       content += ' ' + phraseObject.content;
+    }
+
+    if (!content && nextChar) {
+      content = nextChar;
+      nextChar = '';
     }
   }
 
@@ -6631,7 +6644,7 @@ var generatePhrase = function generatePhrase(phraseObject, nextObject) {
   /* eslint-enable no-use-before-define */
 
   if (markerTermination) {
-    line += '\\' + markerTermination + (phraseObject.nextChar || needsNewLine(nextObject));
+    line += '\\' + markerTermination + (nextChar || needsNewLine(nextObject));
   }
 
   return line;
@@ -6821,7 +6834,7 @@ var objectToString = function objectToString(object, output) {
 
     for (var i = 0, len = object.length; i < len; i++) {
       var objectN = _nextObject ? _nextObject : object[i];
-      _nextObject = i + 1 < object.length ? object[i + 1] : null;
+      _nextObject = i + 1 < len ? _objectSpread({}, object[i + 1]) : null;
       output = objectToString(objectN, output, _nextObject);
     }
 
@@ -7057,14 +7070,16 @@ function makeSureParagraphsAtEndHaveLineFeeds(verseObjects, lines) {
 /**
  * @description Takes in chapter json and outputs it as a USFM line array.
  * @param {String} chapterNumber - number to use for the chapter
- * @param {Object} chapterObject - chapter in JSON
+ * @param {Object} _chapterObject - chapter in JSON
  * @return {Array} - chapter in USFM lines/string
  */
 
 
-var generateChapterLines = function generateChapterLines(chapterNumber, chapterObject) {
+var generateChapterLines = function generateChapterLines(chapterNumber, _chapterObject) {
   var lines = [];
   lines.push('\\c ' + chapterNumber + '\n');
+
+  var chapterObject = _objectSpread({}, _chapterObject);
 
   if (chapterObject.front) {
     // handle front matter first
@@ -7141,7 +7156,7 @@ var processParams = function processParams() {
 
   milestoneMap_ = params_.mileStoneMap ? params_.mileStoneMap : {};
   milestoneMap_.strongs = 'strong';
-  milestoneIgnore_ = ['children', 'tag', 'type'];
+  milestoneIgnore_ = ['children', 'tag', 'type', 'endTag'];
 
   if (params_.mileStoneIgnore) {
     milestoneIgnore_ = milestoneIgnore_.concat(params_.mileStoneIgnore);
@@ -9287,7 +9302,7 @@ const replaceWordsAndMilestones = (verseObject, wordSpacing) => {
   } else {
     wordSpacing = ' ';
 
-    if (verseObject.nextChar && verseObject.nextChar !== "\\n") {
+    if (verseObject.nextChar) {
       wordSpacing = ''; // no need for spacing before next word if this item has it
     } else if (verseObject.text) {
       const lastChar = verseObject.text.substr(-1);
@@ -9374,41 +9389,52 @@ const getUsfmForVerseContent = (verseData) => {
   return convertVerseDataToUSFM(verseData);
 };
 
+const sortKeys = (keys) => {
+  return keys.sort((a, b) => {
+    const numA = parseInt(a.split('-')[0], 10);
+    const numB = parseInt(b.split('-')[0], 10);
+
+    if (isNaN(numA) && isNaN(numB)) {
+      // Both are NaN, sort lexicographically
+      return a.localeCompare(b);
+    } else if (isNaN(numA)) {
+      // Only numA is NaN, numA should come after numB
+      return 1;
+    } else if (isNaN(numB)) {
+      // Only numB is NaN, numB should come after numA
+      return -1;
+    } else {
+      // Both are numbers, sort numerically
+      return numA - numB;
+    }
+  })
+};
+
 const flattenChapterData = (chapterData) => {
   let usfmStr = '';
 
-  Object.keys(chapterData).sort((a, b) => {
-    if (a === "front") return -1;
-    if (b === "front") return 1;
-    
-    const parseKey = (key) => {
-      const parts = key.split(/[-,]/);
-      return {
-        first: parseInt(parts[0]) || 0,
-        second: parts[1] ? parseInt(parts[1]) || 0 : 0
-      };
-    };
-    
-    const aParsed = parseKey(a);
-    const bParsed = parseKey(b);
-    
-    if (aParsed.first !== bParsed.first) {
-      return aParsed.first - bParsed.first;
+  if ("front" in chapterData) {
+    usfmStr += getUsfmForVerseContent(chapterData["front"]);
+  }
+  
+  const sortedKeys = sortKeys(Object.keys(chapterData));
+
+  sortedKeys.forEach((verseNum) => {
+    if (verseNum === "front") {
+      return;
     }
-    return aParsed.second - bParsed.second;
-  }).forEach((verseNum) => {
     const verseData = chapterData[verseNum];
-    if (verseNum != "front") {
-      usfmStr += `\\v ${verseNum} `;
+    if (usfmStr && usfmStr[usfmStr.length - 1] !== '\n') {
+      usfmStr += ' ';
     }
-    usfmStr += getUsfmForVerseContent(verseData);
+    usfmStr += `\\v ${verseNum} ` + getUsfmForVerseContent(verseData);
   });
 
   return usfmStr;
 };
 
-const removeAlignments = (usfmContent) => {
-  const usfmJSON = lib.toJSON(usfmContent);
+const removeAlignments = (usfm) => {
+  const usfmJSON = lib.toJSON(usfm);
   let usfmStr = '';
 
   usfmJSON.headers.forEach(header => {
