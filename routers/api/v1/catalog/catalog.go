@@ -358,6 +358,13 @@ func ListCatalogSubjects(ctx *context.APIContext) {
 	//   collectionFormat: multi
 	//   items:
 	//     type: string
+	// - name: withoutTopic
+	//   in: query
+	//   description: Entries with a repository without this topic will be returned. Multiple values are ANDed.
+	//   type: array
+	//   collectionFormat: multi
+	//   items:
+	//     type: string
 	// responses:
 	//   "200":
 	//     description: "SearchResults of a successful catalog owner search"
@@ -492,6 +499,13 @@ func ListCatalogMetadataTypes(ctx *context.APIContext) {
 	// - name: topic
 	//   in: query
 	//   description: topic of a repo. Multiple values are ORed.
+	//   type: array
+	//   collectionFormat: multi
+	//   items:
+	//     type: string
+	// - name: withoutTopic
+	//   in: query
+	//   description: Entries with a repository without this topic will be returned. Multiple values are ANDed.
 	//   type: array
 	//   collectionFormat: multi
 	//   items:
@@ -634,6 +648,13 @@ func ListCatalogOwners(ctx *context.APIContext) {
 	// - name: topic
 	//   in: query
 	//   description: topic of a repo. Multiple values are ORed.
+	//   type: array
+	//   collectionFormat: multi
+	//   items:
+	//     type: string
+	// - name: withoutTopic
+	//   in: query
+	//   description: Entries with a repository without this topic will be returned. Multiple values are ANDed.
 	//   type: array
 	//   collectionFormat: multi
 	//   items:
@@ -784,6 +805,13 @@ func ListCatalogLanguages(ctx *context.APIContext) {
 	// - name: topic
 	//   in: query
 	//   description: topic of a repo. Multiple values are ORed.
+	//   type: array
+	//   collectionFormat: multi
+	//   items:
+	//     type: string
+	// - name: withoutTopic
+	//   in: query
+	//   description: Entries with a repository without this topic will be returned. Multiple values are ANDed.
 	//   type: array
 	//   collectionFormat: multi
 	//   items:
@@ -1047,7 +1075,6 @@ func searchCatalog(ctx *context.APIContext) {
 		Topics:           QueryStrings(ctx, "topic"),
 		InvertedTopics:   QueryStrings(ctx, "withoutTopic"),
 		PartialMatch:     ctx.FormBool("partialMatch"),
-		Topics:           QueryStrings(ctx, "topic"),
 	}
 
 	sortModes := QueryStrings(ctx, "sort")
@@ -1228,7 +1255,6 @@ func getCatalogBookPackage(ctx *context.APIContext) {
 		Topics:           QueryStrings(ctx, "topic"),
 		InvertedTopics:   QueryStrings(ctx, "withoutTopic"),
 		PartialMatch:     ctx.FormBool("partialMatch"),
-		Topics:           QueryStrings(ctx, "topic"),
 	}
 
 	sortModes := QueryStrings(ctx, "sort")
@@ -1343,10 +1369,11 @@ func getSingleDMFieldList(ctx *context.APIContext, field string) ([]string, erro
 		Books:            QueryStrings(ctx, "book"),
 		IncludeHistory:   ctx.FormBool("includeHistory"),
 		ShowIngredients:  ctx.FormOptionalBool("showIngredients"),
+		Topics:           QueryStrings(ctx, "topic"),
+		InvertedTopics:   QueryStrings(ctx, "withoutTopic"),
 		MetadataTypes:    QueryStrings(ctx, "metadataType"),
 		MetadataVersions: QueryStrings(ctx, "metadataVersion"),
 		PartialMatch:     ctx.FormBool("partialMatch"),
-		Topics:           QueryStrings(ctx, "topic"),
 	}
 
 	sortModes := QueryStrings(ctx, "sort")
