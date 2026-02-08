@@ -173,7 +173,7 @@ func Search(ctx *context.APIContext) {
 	//     type: string
 	// - name: topic
 	//   in: query
-	//   description: topic of a repo. Multiple values are ORed
+	//   description: topic of a repo. Multiple values are ORed.
 	//   type: array
 	//   collectionFormat: multi
 	//   items:
@@ -353,7 +353,7 @@ func ListCatalogSubjects(ctx *context.APIContext) {
 	//     type: string
 	// - name: topic
 	//   in: query
-	//   description: topic of a repo. Multiple values are ORed.
+	//   description: topic of a repo. Multiple values are ORed. If a repo of this topic has a catalog entry, its subject will be listed.
 	//   type: array
 	//   collectionFormat: multi
 	//   items:
@@ -498,7 +498,7 @@ func ListCatalogMetadataTypes(ctx *context.APIContext) {
 	//     type: string
 	// - name: topic
 	//   in: query
-	//   description: topic of a repo. Multiple values are ORed.
+	//   description: topic of a repo. Multiple values are ORed. If a repo of this topic has a catalog entry, its metadata type will be listed.
 	//   type: array
 	//   collectionFormat: multi
 	//   items:
@@ -647,7 +647,7 @@ func ListCatalogOwners(ctx *context.APIContext) {
 	//   type: boolean
 	// - name: topic
 	//   in: query
-	//   description: topic of a repo. Multiple values are ORed.
+	//   description: topic of a repo. Multiple values are ORed. If a repo of this topic has a catalog entry, its owner will be listed.
 	//   type: array
 	//   collectionFormat: multi
 	//   items:
@@ -804,7 +804,7 @@ func ListCatalogLanguages(ctx *context.APIContext) {
 	//   type: boolean
 	// - name: topic
 	//   in: query
-	//   description: topic of a repo. Multiple values are ORed.
+	//   description: topic of a repo. Multiple values are ORed. If a repo of this topic has a catalog entry, its language will be listed.
 	//   type: array
 	//   collectionFormat: multi
 	//   items:
