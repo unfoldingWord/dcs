@@ -1698,6 +1698,16 @@
             "description": "If true, many of the above fields will do a partial match, allowing characters to come before or after your given value, default is false",
             "name": "partialMatch",
             "in": "query"
+          },
+          {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "collectionFormat": "multi",
+            "description": "topic of a repo. Multiple values are ORed.",
+            "name": "topic",
+            "in": "query"
           }
         ],
         "responses": {
@@ -1875,6 +1885,16 @@
             "collectionFormat": "multi",
             "description": "metadata version. Does not apply if metadataType is not given. Multiple values are ORed",
             "name": "metadataVersion",
+            "in": "query"
+          },
+          {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "collectionFormat": "multi",
+            "description": "topic of a repo. Multiple values are ORed.",
+            "name": "topic",
             "in": "query"
           }
         ],
@@ -2060,6 +2080,16 @@
             "description": "If true, many of the above fields will do a partial match, allowing characters to come before or after your given value, default is false",
             "name": "partialMatch",
             "in": "query"
+          },
+          {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "collectionFormat": "multi",
+            "description": "topic of a repo. Multiple values are ORed.",
+            "name": "topic",
+            "in": "query"
           }
         ],
         "responses": {
@@ -2237,6 +2267,16 @@
             "collectionFormat": "multi",
             "description": "metadata version. Does not apply if metadataType is not given. Multiple values are ORed",
             "name": "metadataVersion",
+            "in": "query"
+          },
+          {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "collectionFormat": "multi",
+            "description": "topic of a repo. Multiple values are ORed.",
+            "name": "topic",
             "in": "query"
           }
         ],

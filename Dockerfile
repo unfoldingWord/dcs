@@ -61,7 +61,9 @@ RUN apk --no-cache add \
     && rm -rf /var/cache/apk/*
 
 #For DCS local scripts
-RUN apk --no-cache add jq yq
+RUN apk --no-cache add jq yq nodejs npm \
+    && npm install -g usfm2html \
+    && rm -rf /var/cache/apk/*
 
 RUN addgroup \
     -S -g 1000 \
