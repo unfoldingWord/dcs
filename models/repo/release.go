@@ -101,6 +101,12 @@ const LegacyAttachmentMissingRepoIDCutoff timeutil.TimeStamp = 1768521600
 
 func (r *Release) LoadRepo(ctx context.Context) (err error) {
 	if r.Repo != nil {
+		if r.Door43Metadata != nil {
+			r.Door43Metadata.Release = r
+			if r.Door43Metadata.Repo == nil {
+				r.Door43Metadata.Repo = r.Repo
+			}
+		}
 		return nil
 	}
 
@@ -110,15 +116,20 @@ func (r *Release) LoadRepo(ctx context.Context) (err error) {
 		if err != nil && !IsErrDoor43MetadataNotExist(err) {
 			return err
 		}
-		if r.Door43Metadata != nil {
-			r.Door43Metadata.Release = r
-			r.Door43Metadata.Repo = r.Repo
-		}
 	}
 	/*** END DCS Customizations ***/
 
 	r.Repo, err = GetRepositoryByID(ctx, r.RepoID)
-	return err
+	if err != nil {
+		return err
+	}
+
+	if r.Door43Metadata != nil {
+		r.Door43Metadata.Release = r
+		r.Door43Metadata.Repo = r.Repo
+	}
+
+	return nil
 }
 
 // LoadAttributes load repo and publisher attributes for a release

@@ -70,6 +70,13 @@ func ToCatalogEntry(ctx context.Context, dm *repo.Door43Metadata, repo *api.Repo
 	if dm == nil {
 		return nil
 	}
+	if dm.Repo == nil {
+		if err := dm.LoadRepo(ctx); err != nil {
+			log.Error("dm.LoadRepo(): %v", err)
+			return nil
+		}
+	}
+
 	return &api.CatalogEntry{
 		ID:                     dm.ID,
 		Self:                   dm.CatalogEntryURL(),
