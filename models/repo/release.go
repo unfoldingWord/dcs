@@ -100,16 +100,6 @@ func init() {
 const LegacyAttachmentMissingRepoIDCutoff timeutil.TimeStamp = 1768521600
 
 func (r *Release) LoadRepo(ctx context.Context) (err error) {
-	if r.Repo != nil {
-		if r.Door43Metadata != nil {
-			r.Door43Metadata.Release = r
-			if r.Door43Metadata.Repo == nil {
-				r.Door43Metadata.Repo = r.Repo
-			}
-		}
-		return nil
-	}
-
 	/*** DCS Customizations ***/
 	if r.Door43Metadata == nil {
 		r.Door43Metadata, err = GetDoor43MetadataByRepoIDAndRef(ctx, r.RepoID, r.TagName)
@@ -119,14 +109,18 @@ func (r *Release) LoadRepo(ctx context.Context) (err error) {
 	}
 	/*** END DCS Customizations ***/
 
-	r.Repo, err = GetRepositoryByID(ctx, r.RepoID)
-	if err != nil {
-		return err
+	if r.Repo == nil {
+		r.Repo, err = GetRepositoryByID(ctx, r.RepoID)
+		if err != nil {
+			return err
+		}
 	}
 
 	if r.Door43Metadata != nil {
 		r.Door43Metadata.Release = r
-		r.Door43Metadata.Repo = r.Repo
+		if r.Door43Metadata.Repo == nil {
+			r.Door43Metadata.Repo = r.Repo
+		}
 	}
 
 	return nil

@@ -314,9 +314,12 @@ func SingleRelease(ctx *context.Context) {
 	}
 
 	/*** DCS Customizations ***/
-	if err := release.LoadAttributes(ctx); err != nil {
-		ctx.ServerError("LoadAttributes", err)
-		return
+	if !release.IsTag && release.Door43Metadata == nil {
+		release.Door43Metadata, err = repo_model.GetDoor43MetadataByRepoIDAndRef(ctx, release.RepoID, release.TagName)
+		if err != nil && !repo_model.IsErrDoor43MetadataNotExist(err) {
+			ctx.ServerError("GetDoor43Metadata", err)
+			return
+		}
 	}
 	/*** END DCS Customizations ***/
 
