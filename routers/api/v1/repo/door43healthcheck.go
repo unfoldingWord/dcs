@@ -8,6 +8,7 @@ import (
 	"net/http"
 
 	"code.gitea.io/gitea/services/context"
+	"code.gitea.io/gitea/services/door43healthcheck"
 )
 
 // GetHealthcheck returns a simple healthcheck response
@@ -54,9 +55,9 @@ func GetHealthcheck(ctx *context.APIContext) {
 		return
 	}
 
-	healthcheck := ctx.Repo.Repository.RepoDM.GetHealthcheck(ctx)
+	hc := door43healthcheck.RunHealthcheck(ctx, ctx.Repo.Repository.RepoDM)
 
-	if healthcheck == nil {
+	if hc == nil {
 		ctx.JSON(http.StatusUnprocessableEntity, map[string]any{
 			"ok":    false,
 			"error": fmt.Sprintf("unable to perform a healthcheck on this repository [%s]", ctx.Repo.Repository.FullName()),
@@ -66,6 +67,6 @@ func GetHealthcheck(ctx *context.APIContext) {
 
 	ctx.JSON(http.StatusOK, map[string]any{
 		"ok":   true,
-		"data": healthcheck,
+		"data": hc,
 	})
 }
