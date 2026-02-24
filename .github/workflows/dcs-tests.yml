@@ -1,0 +1,36 @@
+name: dcs-tests
+
+on:
+  pull_request:
+  push:
+    branches:
+      - "**"
+  release:
+    types:
+      - published
+      - prereleased
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
+
+jobs:
+  sqlite-dcs:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v6
+        with:
+          go-version-file: go.mod
+          check-latest: true
+      - run: make deps-backend
+      - run: make backend
+        env:
+          TAGS: bindata gogit sqlite sqlite_unlock_notify
+      - name: run DCS integration tests
+        run: make test-dcs-sqlite
+        env:
+          TAGS: bindata gogit sqlite sqlite_unlock_notify
+          TEST_TAGS: gogit sqlite sqlite_unlock_notify sqlite_json
+          USE_REPO_TEST_DIR: 1

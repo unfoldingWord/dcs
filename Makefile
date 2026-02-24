@@ -204,6 +204,7 @@ help: Makefile ## print Makefile help information.
 	@printf "  \033[36m%-46s\033[0m %s\n" "test-e2e[#TestSpecificName]" "test end to end using playwright"
 	@printf "  \033[36m%-46s\033[0m %s\n" "test[#TestSpecificName]" "run unit test"
 	@printf "  \033[36m%-46s\033[0m %s\n" "test-sqlite[#TestSpecificName]" "run integration test for sqlite"
+	@printf "  \033[36m%-46s\033[0m %s\n" "test-dcs-sqlite" "run DCS integration tests (TestDCS*) for sqlite"
 
 .PHONY: go-check
 go-check:
@@ -517,6 +518,10 @@ test-sqlite: integrations.sqlite.test generate-ini-sqlite
 .PHONY: test-sqlite\#%
 test-sqlite\#%: integrations.sqlite.test generate-ini-sqlite
 	GITEA_ROOT="$(CURDIR)" GITEA_CONF=tests/sqlite.ini ./integrations.sqlite.test -test.run $(subst .,/,$*)
+
+.PHONY: test-dcs-sqlite
+test-dcs-sqlite: integrations.sqlite.test generate-ini-sqlite
+	GITEA_ROOT="$(CURDIR)" GITEA_CONF=tests/sqlite.ini ./integrations.sqlite.test -test.run '^TestDCS'
 
 .PHONY: test-sqlite-migration
 test-sqlite-migration:  migrations.sqlite.test migrations.individual.sqlite.test

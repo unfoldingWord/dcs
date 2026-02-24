@@ -43,6 +43,7 @@ func GetHealthcheck(ctx *context.APIContext) {
 			"ok":    false,
 			"error": fmt.Sprintf("no metadata found for repo [%s]", ctx.Repo.Repository.FullName()),
 		})
+		return
 	}
 
 	if ctx.Repo.Repository.RepoDM.MetadataType != "rc" {
@@ -50,6 +51,7 @@ func GetHealthcheck(ctx *context.APIContext) {
 			"ok":    false,
 			"error": "currently only repositories of the 'rc' metadata type are supported",
 		})
+		return
 	}
 
 	healthcheck := ctx.Repo.Repository.RepoDM.GetHealthcheck(ctx)
@@ -59,6 +61,7 @@ func GetHealthcheck(ctx *context.APIContext) {
 			"ok":    false,
 			"error": fmt.Sprintf("unable to perform a healthcheck on this repository [%s]", ctx.Repo.Repository.FullName()),
 		})
+		return
 	}
 
 	ctx.JSON(http.StatusOK, map[string]any{
