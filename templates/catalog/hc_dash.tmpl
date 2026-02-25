@@ -3,25 +3,25 @@
 	<div class="ui container">
 		<h2 class="ui header">{{.Title}}</h2>
 
-		<form class="ui form tw-mb-4" method="get">
+		<form id="hc-dash-form" class="ui form tw-mb-4" method="get">
 			<input type="hidden" name="filters_applied" value="1">
-			<div class="fields">
-				<div class="twelve wide field">
+			<div class="fields stackable">
+				<div class="ten wide field">
 					<label>Search</label>
 					<div class="ui action input tw-w-full">
-						<input type="text" name="q" value="{{.Keyword}}" placeholder="Search by repo or owner name">
+						<input type="text" name="q" value="{{.Keyword}}" placeholder="Search by owner, repo, or subject">
 						<button class="ui button" type="submit">{{ctx.Locale.Tr "search.search"}}</button>
 					</div>
 				</div>
-				<div class="four wide field">
-					<label>&nbsp;</label>
-					<div class="tw-flex tw-flex-col tw-gap-2">
+				<div class="six wide field">
+					<label class="tw-invisible">Filters</label>
+					<div class="tw-flex tw-flex-wrap tw-gap-3 tw-justify-end">
 						<div class="ui checkbox">
-							<input type="checkbox" name="tc_ready" value="1" {{if .TCReadyOnly}}checked{{end}}>
+							<input class="js-hc-dash-autosubmit" type="checkbox" name="tc_ready" value="1" {{if .TCReadyOnly}}checked{{end}}>
 							<label>Filter by tc-ready topic</label>
 						</div>
 						<div class="ui checkbox">
-							<input type="checkbox" name="failed_only" value="1" {{if .FailedOnly}}checked{{end}}>
+							<input class="js-hc-dash-autosubmit" type="checkbox" name="failed_only" value="1" {{if .FailedOnly}}checked{{end}}>
 							<label>Show only failed health checks</label>
 						</div>
 					</div>
