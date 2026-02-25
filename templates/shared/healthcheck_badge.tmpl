@@ -1,0 +1,33 @@
+{{$severity := .Severity.String}}
+{{$severityLabel := $severity}}
+{{$color := "var(--color-text-light-1)"}}
+{{$icon := "octicon-shield-slash"}}
+{{if eq $severity "success"}}
+	{{$color = "green"}}
+	{{$icon = "octicon-check-circle-fill"}}
+{{else if eq $severity "error"}}
+	{{$color = "red"}}
+	{{$icon = "octicon-x-circle-fill"}}
+{{else if eq $severity "warning"}}
+	{{$color = "orange"}}
+	{{$icon = "octicon-stop"}}
+{{else if eq $severity "info"}}
+	{{$color = "#0077cc"}}
+	{{$icon = "octicon-info"}}
+{{end}}
+{{if eq $severityLabel ""}}
+	{{$severityLabel = "unknown"}}
+{{end}}
+
+{{if not .NoLabel}}<span class="ui basic label">{{end}}
+<a class="muted js-healthcheck-badge"
+	href="{{.RepoLink}}/healthcheck"
+	style="color: {{$color}}"
+	data-tooltip-content="Healthcheck: {{$severityLabel}}"
+	{{if .OwnerName}}data-hc-owner="{{.OwnerName}}"{{end}}
+	{{if .RepoName}}data-hc-repo="{{.RepoName}}"{{end}}
+	{{if .Ref}}data-hc-ref="{{.Ref}}"{{end}}
+>
+	{{svg $icon 16}}
+</a>
+{{if not .NoLabel}}</span>{{end}}

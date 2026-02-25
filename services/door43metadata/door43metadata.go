@@ -32,6 +32,7 @@ import (
 	"code.gitea.io/gitea/modules/timeutil"
 	"code.gitea.io/gitea/modules/util"
 	"code.gitea.io/gitea/services/convert"
+	"code.gitea.io/gitea/services/door43healthcheck"
 
 	"github.com/google/uuid"
 	text_cases "golang.org/x/text/cases"
@@ -230,7 +231,7 @@ func ProcessDoor43MetadataForRepo(ctx context.Context, repo *repo_model.Reposito
 
 	repo.LoadLatestDMs(ctx)
 	if repo.DefaultBranchDM != nil {
-		repo.DefaultBranchDM.GetHealthcheck(ctx)
+		door43healthcheck.RunHealthcheck(ctx, repo.DefaultBranchDM)
 	}
 
 	return nil

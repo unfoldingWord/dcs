@@ -1,18 +1,31 @@
-<a class="{{if .PageIsMetadata}}active{{end}} item" href="{{.RepoLink}}/healthcheck">
-  {{$color := "inherit"}}
-	{{$icon := "octicon-shield-slash"}}
-	{{if eq $.RepoDM.HealthcheckSeverity.String "error"}}
-		{{$color = "red"}}
-		{{$icon = "octicon-shield-x"}}
-	{{else if eq $.RepoDM.HealthcheckSeverity.String "warning"}}
-		{{$color = "octicon-shield"}}
-	{{else if eq $.RepoDM.HealthcheckSeverity.String "info"}}
-		{{$color = "octicon-shield-lock"}}
-	{{else if eq $.RepoDM.HealthcheckSeverity.String "success"}}
-		{{$color = "green"}}
-		{{$icon = "octicon-shield-check"}}
-	{{end}}
-	<span class="svg" style="color: {{$color}}">{{svg $icon 16}}</span>
+{{$healthSeverity := $.RepoDM.HealthcheckSeverity.String}}
+{{$healthSeverityLabel := $healthSeverity}}
+{{$healthColor := "var(--color-text-light-1)"}}
+{{$healthIcon := "octicon-shield-slash"}}
+{{if eq $healthSeverity "success"}}
+	{{$healthColor = "green"}}
+	{{$healthIcon = "octicon-check-circle-fill"}}
+{{else if eq $healthSeverity "error"}}
+	{{$healthColor = "red"}}
+	{{$healthIcon = "octicon-x-circle-fill"}}
+{{else if eq $healthSeverity "warning"}}
+	{{$healthColor = "orange"}}
+	{{$healthIcon = "octicon-stop"}}
+{{else if eq $healthSeverity "info"}}
+	{{$healthColor = "#0077cc"}}
+	{{$healthIcon = "octicon-info"}}
+{{end}}
+{{if eq $healthSeverityLabel ""}}
+	{{$healthSeverityLabel = "unknown"}}
+{{end}}
+<a class="{{if .PageIsMetadata}}active{{end}} item js-healthcheck-badge"
+	href="{{.RepoLink}}/healthcheck"
+	data-tooltip-content="Healthcheck: {{$healthSeverityLabel}}"
+	data-hc-owner="{{.Repository.OwnerName}}"
+	data-hc-repo="{{.Repository.Name}}"
+	data-hc-ref="{{$.RepoDM.Ref}}"
+>
+	<span class="svg" style="color: {{$healthColor}}">{{svg $healthIcon 16}}</span>
 	{{ctx.Locale.Tr "repo.metadata.healthcheck"}}
 </a>
 {{$refToPreview := .Repository.DefaultBranch}}

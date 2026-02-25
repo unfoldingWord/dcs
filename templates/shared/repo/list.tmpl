@@ -35,24 +35,14 @@
 						</span>
 							<!-- DCS Customizations -->
 							{{if .RepoDM}}
-								{{$color := ""}}
-								{{$icon := ""}}
-								{{if eq .RepoDM.HealthcheckSeverity.String "error"}}
-									{{$color = "red"}}
-									{{$icon = "octicon-shield-x"}}
-								{{else if eq .RepoDM.HealthcheckSeverity.String "warning"}}
-									{{$color = "orange"}}
-									{{$icon = "octicon-shield"}}
-								{{else if eq .RepoDM.HealthcheckSeverity.String "info"}}
-									{{$color = "blue"}}
-									{{$icon = "octicon-shield-lock"}}
-								{{end}}
-								{{if ne $icon ""}}
-									<span class="ui basic label" data-tooltip-content="Healthcheck: {{.RepoDM.HealthcheckSeverity.String}}">
-										<a class="muted" href="{{.Link}}/healthcheck" style="color: {{$color}}">
-											{{svg $icon 16}}
-										</a>
-									</span>
+								{{if eq .RepoDM.MetadataType "rc"}}
+									{{template "shared/healthcheck_badge" (dict
+										"RepoLink" .Link
+										"Severity" .RepoDM.HealthcheckSeverity
+										"OwnerName" .OwnerName
+										"RepoName" .Name
+										"Ref" .RepoDM.Ref
+									)}}
 								{{end}}
 								{{if .LatestProdDM}}
 									<a href="{{.Link}}/releases/tag/{{.LatestProdDM.Ref | PathEscapeSegments}}" rel="nofollow">

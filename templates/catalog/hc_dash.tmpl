@@ -1,0 +1,78 @@
+{{template "base/head" .}}
+<div role="main" aria-label="{{.Title}}" class="page-content explore catalog repositories">
+	<div class="ui container">
+		<h2 class="ui header">{{.Title}}</h2>
+
+		<form class="ui form tw-mb-4" method="get">
+			<input type="hidden" name="filters_applied" value="1">
+			<div class="fields">
+				<div class="twelve wide field">
+					<label>Search</label>
+					<div class="ui action input tw-w-full">
+						<input type="text" name="q" value="{{.Keyword}}" placeholder="Search by repo or owner name">
+						<button class="ui button" type="submit">{{ctx.Locale.Tr "search.search"}}</button>
+					</div>
+				</div>
+				<div class="four wide field">
+					<label>&nbsp;</label>
+					<div class="tw-flex tw-flex-col tw-gap-2">
+						<div class="ui checkbox">
+							<input type="checkbox" name="tc_ready" value="1" {{if .TCReadyOnly}}checked{{end}}>
+							<label>Filter by tc-ready topic</label>
+						</div>
+						<div class="ui checkbox">
+							<input type="checkbox" name="failed_only" value="1" {{if .FailedOnly}}checked{{end}}>
+							<label>Show only failed health checks</label>
+						</div>
+					</div>
+				</div>
+			</div>
+		</form>
+
+		<div class="tw-text-text-light-2 tw-mb-3">Total: {{.Total}}</div>
+		<div class="divider"></div>
+
+		<div class="flex-list">
+			{{range .Door43Metadatas}}
+				<div class="flex-item">
+					<div class="flex-item-leading">
+						{{$severity := .HealthcheckSeverity.String}}
+						{{$icon := "octicon-shield-x"}}
+						{{$color := "red"}}
+						{{if eq $severity "success"}}
+							{{$icon = "octicon-shield-check"}}
+							{{$color = "green"}}
+						{{end}}
+						<span class="ui basic label">
+							<a class="muted js-healthcheck-badge"
+								href="{{.Repo.Link}}/healthcheck"
+								style="color: {{$color}}"
+								data-tooltip-content="Healthcheck: {{$severity}}"
+								data-hc-owner="{{.Repo.OwnerName}}"
+								data-hc-repo="{{.Repo.Name}}"
+								data-hc-ref="{{.Ref}}"
+							>
+								{{svg $icon 16}}
+							</a>
+						</span>
+					</div>
+					<div class="flex-item-main">
+						<div class="flex-item-header">
+							<div class="flex-item-title">
+								<a class="muted" href="{{.Repo.Owner.HomeLink}}">{{.Repo.OwnerName}}</a>/<a class="muted" href="{{.Repo.Link}}">{{.Repo.Name}}</a>
+								{{if .Ref}}<a class="ui basic label" href="{{.Repo.Link}}/releases/tag/{{.Ref | PathEscapeSegments}}">{{.Ref}}</a>{{end}}
+							</div>
+						</div>
+						<div class="flex-item-body">Subject: {{.Subject}}</div>
+						<div class="flex-item-body">{{ctx.Locale.Tr "explore.released"}} {{DateUtils.TimeSince .ReleaseDateUnix}}</div>
+					</div>
+				</div>
+			{{else}}
+				<div>{{ctx.Locale.Tr "search.no_results"}}</div>
+			{{end}}
+		</div>
+
+		{{template "base/paginate" .}}
+	</div>
+</div>
+{{template "base/footer" .}}
