@@ -16,23 +16,15 @@
 						{{else if .Repo.IsMirror}}
 							<span class="middle">{{svg "octicon-repo-clone" 16}}</span>
 						{{end}}
-  {{$color := ""}}
-	{{$icon := ""}}
-	{{if eq .HealthcheckSeverity.String "error"}}
-		{{$color = "red"}}
-		{{$icon = "octicon-shield-x"}}
-	{{else if eq .HealthcheckSeverity.String "warning"}}
-		{{$color = "octicon-shield"}}
-	{{else if eq .HealthcheckSeverity.String "info"}}
-		{{$color = "octicon-shield-lock"}}
-	{{end}}
-	{{if ne $icon ""}}
-<span class="ui basic label" data-tooltip-content="Healthcheck: {{.HealthcheckSeverity.String}}">
-	<a class="muted" href="{{.Repo.Link}}/healthcheck" style="color: {{$color}}">
-		{{svg $icon 16}}
-	</a>
-</span>
-	{{end}}
+						{{if eq .MetadataType "rc"}}
+							{{template "shared/healthcheck_badge" (dict
+								"RepoLink" .Repo.Link
+								"Severity" .HealthcheckSeverity
+								"OwnerName" .Repo.OwnerName
+								"RepoName" .Repo.Name
+								"Ref" .Ref
+							)}}
+						{{end}}
 						{{if .Release}}
 							{{$color := "green"}}
 							{{$type := "Production"}}

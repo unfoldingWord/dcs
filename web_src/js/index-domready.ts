@@ -70,6 +70,7 @@ import {initRepoViewFileTree} from './features/repo-view-file-tree.ts';
 import {initDCSInfoIcon} from './features/dcs-info-icon.ts';
 import {initDCSValidationBadge} from './features/dcs-validation-badge.ts';
 import {initDCSLanguageFonts} from './features/dcs-language-fonts.ts';
+import {initDCSHealthcheckBadges} from './features/dcs-healthcheck-badge.ts';
 /** END DCS Customizations **/
 
 const initStartTime = performance.now();
@@ -173,6 +174,7 @@ const initPerformanceTracer = callInitFunctions([
   initDCSInfoIcon,
   initDCSValidationBadge,
   initDCSLanguageFonts,
+  initDCSHealthcheckBadges,
   /** END DCS Customizations **/
 ]);
 

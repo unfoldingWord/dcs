@@ -1689,6 +1689,7 @@ func registerWebRoutes(m *web.Router) {
 	/*** DCS Customizations ***/
 	m.Get("/about", dcs.About)
 	m.Get("/tools", dcs.Tools)
+	m.Get("/hc-dash", reqSignIn, dcs.HealthcheckDashboard)
 	m.Group("/catalog", func() {
 		m.Get("", dcs.Catalog)
 	}, optSignIn)
