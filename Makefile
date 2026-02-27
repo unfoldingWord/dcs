@@ -141,6 +141,7 @@ WEBPACK_DEST := public/assets/js/index.js public/assets/css/index.css
 WEBPACK_DEST_ENTRIES := public/assets/js public/assets/css public/assets/fonts
 
 BINDATA_DEST_WILDCARD := modules/migration/bindata.* modules/public/bindata.* modules/options/bindata.* modules/templates/bindata.*
+BINDATA_DEST := modules/migration/bindata.dat modules/public/bindata.dat modules/options/bindata.dat modules/templates/bindata.dat
 
 GENERATED_GO_DEST := modules/charset/invisible_gen.go modules/charset/ambiguous_gen.go
 
@@ -773,7 +774,7 @@ generate-go: $(TAGS_PREREQ)
 security-check:
 	go run $(GOVULNCHECK_PACKAGE) -show color ./...
 
-$(EXECUTABLE): $(GO_SOURCES) $(BINDATA_DEST_WILDCARD) $(TAGS_PREREQ)
+$(EXECUTABLE): $(GO_SOURCES) $(TAGS_PREREQ)
 ifneq ($(and $(STATIC),$(findstring pam,$(TAGS))),)
   $(error pam support set via TAGS doesn't support static builds)
 endif
