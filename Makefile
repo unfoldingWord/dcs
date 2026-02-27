@@ -773,7 +773,7 @@ generate-go: $(TAGS_PREREQ)
 security-check:
 	go run $(GOVULNCHECK_PACKAGE) -show color ./...
 
-$(EXECUTABLE): $(GO_SOURCES) $(TAGS_PREREQ)
+$(EXECUTABLE): $(GO_SOURCES) $(BINDATA_DEST_WILDCARD) $(TAGS_PREREQ)
 ifneq ($(and $(STATIC),$(findstring pam,$(TAGS))),)
   $(error pam support set via TAGS doesn't support static builds)
 endif

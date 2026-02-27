@@ -1572,6 +1572,11 @@ func registerWebRoutes(m *web.Router) {
 			m.Post("/*", repo.InitiateDownload)
 		}, repo.MustBeNotEmpty, dlSourceEnabled)
 
+		m.Group("/sb", func() {
+			m.Get("/*", repo.DownloadSB)
+			m.Post("/*", repo.InitiateDownloadSB)
+		}, repo.MustBeNotEmpty, dlSourceEnabled)
+
 		m.Group("/branches", func() {
 			m.Get("/list", repo.GetBranchesList)
 			m.Get("", context.RepoRefByDefaultBranch() /* for the "commits" tab */, repo.Branches)

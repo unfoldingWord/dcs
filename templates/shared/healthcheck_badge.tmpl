@@ -4,16 +4,16 @@
 {{$icon := "octicon-shield-slash"}}
 {{if eq $severity "success"}}
 	{{$color = "green"}}
-	{{$icon = "octicon-check-circle-fill"}}
+	{{$icon = "octicon-shield-check"}}
 {{else if eq $severity "error"}}
 	{{$color = "red"}}
-	{{$icon = "octicon-x-circle-fill"}}
+	{{$icon = "octicon-shield-x"}}
 {{else if eq $severity "warning"}}
 	{{$color = "orange"}}
-	{{$icon = "octicon-stop"}}
+	{{$icon = "octicon-shield"}}
 {{else if eq $severity "info"}}
 	{{$color = "#0077cc"}}
-	{{$icon = "octicon-info"}}
+	{{$icon = "octicon-shield-lock"}}
 {{end}}
 {{if eq $severityLabel ""}}
 	{{$severityLabel = "unknown"}}

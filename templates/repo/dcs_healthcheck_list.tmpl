@@ -7,14 +7,14 @@
 		<div class="ui item">
 			<div{{if $issues}} class="toggle show-panel" data-panel="#{{$issueCode}}"{{end}}>
 			{{if not $issues}}
-				<span style="color: green;">{{svg "octicon-check-circle-fill" 16}}</span>
+				<span style="color: green;">{{svg "octicon-shield-check" 16}}</span>
 			{{else}}
 				{{if eq ((index $issues 0).SeverityLevel.String) "error"}}
-					<span style="color: red;">{{svg "octicon-x-circle-fill" 16}}</span>
+					<span style="color: red;">{{svg "octicon-shield-x" 16}}</span>
 				{{else if eq ((index $issues 0).SeverityLevel.String) "warning"}}
-					<span style="color: orange;">{{svg "octicon-stop" 16}}</span>
+					<span style="color: orange;">{{svg "octicon-shield" 16}}</span>
 				{{else if eq ((index $issues 0).SeverityLevel.String) "info"}}
-					<span style="color: blue;">{{svg "octicon-info" 16}}</span>
+					<span style="color: blue;">{{svg "octicon-shield-lock" 16}}</span>
 				{{end}}
 			{{end}}
 			{{$issueCode.IssuePositiveString}}

@@ -5,6 +5,7 @@ package dcs
 
 import (
 	"net/http"
+	"strings"
 
 	"code.gitea.io/gitea/models"
 	"code.gitea.io/gitea/models/db"
@@ -57,9 +58,12 @@ func HealthcheckDashboard(ctx *context.Context) {
 	cond := door43metadata.SearchCatalogCondition(opts)
 	keyword := ctx.FormTrim("q")
 	if keyword != "" {
+		keyword = strings.ToLower(keyword)
+		likePattern := "%" + keyword + "%"
 		ownerOrRepoCond := builder.NewCond().
-			Or(builder.Like{"`repository`.lower_name", keyword}).
-			Or(builder.Like{"`user`.lower_name", keyword})
+			Or(builder.Like{"`repository`.lower_name", likePattern}).
+			Or(builder.Like{"`user`.lower_name", likePattern}).
+			Or(builder.Expr("LOWER(`door43_metadata`.subject) LIKE ?", likePattern))
 		cond = cond.And(ownerOrRepoCond)
 	}
 

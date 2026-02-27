@@ -54,6 +54,7 @@ import (
 	release_service "code.gitea.io/gitea/services/release"
 	repo_service "code.gitea.io/gitea/services/repository"
 	"code.gitea.io/gitea/services/repository/archiver"
+	"code.gitea.io/gitea/services/repository/sbarchiver"
 	"code.gitea.io/gitea/services/task"
 	"code.gitea.io/gitea/services/uinotification"
 	"code.gitea.io/gitea/services/webhook"
@@ -132,6 +133,7 @@ func InitWebInstalled(ctx context.Context) {
 	mustInit(feed_service.Init)
 	mustInit(uinotification.Init)
 	mustInitCtx(ctx, archiver.Init)
+	mustInitCtx(ctx, sbarchiver.Init)
 	/*** DCS Customizations ***/
 	mustInitCtx(ctx, door43metadata.Init)
 	/*** END DCS Customizations ***/
