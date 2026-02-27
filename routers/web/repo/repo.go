@@ -34,6 +34,7 @@ import (
 	repo_service "code.gitea.io/gitea/services/repository"
 	archiver_service "code.gitea.io/gitea/services/repository/archiver"
 	commitstatus_service "code.gitea.io/gitea/services/repository/commitstatus"
+	sbarchiver_service "code.gitea.io/gitea/services/repository/sbarchiver"
 )
 
 const (
@@ -378,6 +379,22 @@ func Download(ctx *context.Context) {
 	archiver_service.ServeRepoArchive(ctx.Base, ctx.Repo.Repository, ctx.Repo.GitRepo, aReq)
 }
 
+// DownloadSB downloads an SB-converted archive of a repository.
+func DownloadSB(ctx *context.Context) {
+	aReq, err := sbarchiver_service.NewRequest(ctx.Repo.Repository.ID, ctx.Repo.GitRepo, ctx.PathParam("*"))
+	if err != nil {
+		if errors.Is(err, sbarchiver_service.ErrUnknownArchiveFormat{}) {
+			ctx.HTTPError(http.StatusBadRequest, err.Error())
+		} else if errors.Is(err, sbarchiver_service.RepoRefNotFoundError{}) || errors.Is(err, sbarchiver_service.ErrRepoNotRC{}) {
+			ctx.HTTPError(http.StatusNotFound, err.Error())
+		} else {
+			ctx.ServerError("sbarchiver_service.NewRequest", err)
+		}
+		return
+	}
+	sbarchiver_service.ServeRepoSBArchive(ctx.Base, ctx.Repo.Repository, aReq)
+}
+
 // InitiateDownload will enqueue an archival request, as needed.  It may submit
 // a request that's already in-progress, but the archiver service will just
 // kind of drop it on the floor if this is the case.
@@ -406,6 +423,47 @@ func InitiateDownload(ctx *context.Context) {
 	if archiver == nil || archiver.Status != repo_model.ArchiverReady {
 		if err := archiver_service.StartArchive(aReq); err != nil {
 			ctx.ServerError("archiver_service.StartArchive", err)
+			return
+		}
+	}
+
+	var completed bool
+	if archiver != nil && archiver.Status == repo_model.ArchiverReady {
+		completed = true
+	}
+
+	ctx.JSON(http.StatusOK, map[string]any{
+		"complete": completed,
+	})
+}
+
+// InitiateDownloadSB enqueues an SB archival request if needed.
+func InitiateDownloadSB(ctx *context.Context) {
+	if setting.Repository.StreamArchives {
+		ctx.JSON(http.StatusOK, map[string]any{
+			"complete": true,
+		})
+		return
+	}
+
+	aReq, err := sbarchiver_service.NewRequest(ctx.Repo.Repository.ID, ctx.Repo.GitRepo, ctx.PathParam("*"))
+	if err != nil {
+		ctx.HTTPError(http.StatusBadRequest, "invalid SB archive request")
+		return
+	}
+	if aReq == nil {
+		ctx.HTTPError(http.StatusNotFound)
+		return
+	}
+
+	archiver, err := repo_model.GetRepoArchiver(ctx, aReq.RepoID, aReq.Type, aReq.StorageCommitID())
+	if err != nil {
+		ctx.ServerError("sbarchiver_service.StartArchive", err)
+		return
+	}
+	if archiver == nil || archiver.Status != repo_model.ArchiverReady {
+		if err := sbarchiver_service.StartArchive(aReq); err != nil {
+			ctx.ServerError("sbarchiver_service.StartArchive", err)
 			return
 		}
 	}

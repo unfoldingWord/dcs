@@ -34,7 +34,7 @@ var globalVars = sync.OnceValue(func() *globalVarsStruct {
 	return &globalVarsStruct{
 		gitRawOrAttachPathRe: regexp.MustCompile(`^/[-.\w]+/[-.\w]+/(?:(?:git-(?:(?:upload)|(?:receive))-pack$)|(?:info/refs$)|(?:HEAD$)|(?:objects/)|(?:raw/)|(?:releases/download/)|(?:attachments/))`),
 		lfsPathRe:            regexp.MustCompile(`^/[-.\w]+/[-.\w]+/info/lfs/`),
-		archivePathRe:        regexp.MustCompile(`^/[-.\w]+/[-.\w]+/archive/`),
+		archivePathRe:        regexp.MustCompile(`^/[-.\w]+/[-.\w]+/(archive|sb)/`),
 		feedPathRe:           regexp.MustCompile(`^/[-.\w]+(/[-.\w]+)?\.(rss|atom)$`), // "/owner.rss" or "/owner/repo.atom"
 		feedRefPathRe:        regexp.MustCompile(`^/[-.\w]+/[-.\w]+/(rss|atom)/`),     // "/owner/repo/rss/branch/..."
 	}

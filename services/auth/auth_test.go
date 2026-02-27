@@ -153,3 +153,25 @@ func Test_isFeedRequest(t *testing.T) {
 		})
 	}
 }
+
+func Test_isArchivePath(t *testing.T) {
+	tests := []struct {
+		path string
+		want bool
+	}{
+		{path: "/owner/repo/archive/main.zip", want: true},
+		{path: "/owner/repo/archive/v1.0.0.tar.gz", want: true},
+		{path: "/owner/repo/sb/main.zip", want: true},
+		{path: "/owner/repo/sb/v1.0.0.tar.gz", want: true},
+		{path: "/owner/repo/raw/main/file.txt", want: false},
+		{path: "/owner/repo/src/main", want: false},
+		{path: "/owner/repo/something/main.zip", want: false},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.path, func(t *testing.T) {
+			req, _ := http.NewRequest(http.MethodGet, "http://localhost"+tt.path, nil)
+			assert.Equal(t, tt.want, newAuthPathDetector(req).isArchivePath())
+		})
+	}
+}
