@@ -48,7 +48,12 @@
 					{{template "repo/dcs_healthcheck_list" (dict "ctxData" . "Door43Metadata" .Repo.DefaultBranchDM)}}
 				{{else}}
 					<span>
-						No Health Check could be performed for this Repository. Click&nbsp;<a href="{{.Link}}/update">update</a>&nbsp;to scan the repo.
+						{{if eq .Repo.RepoDM.MetadataType "rc"}}
+							No Health Check could be performed for this Repository.
+							Click&nbsp;<a href="{{.Link}}/update">update</a>&nbsp;to scan the repo.
+						{{else}}
+							Health Check is only available for RC (manfest.yaml) type repositories.
+						{{end}}
 					</span>
 				{{end}}
 			</div>

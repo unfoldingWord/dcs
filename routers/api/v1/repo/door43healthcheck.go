@@ -71,8 +71,8 @@ func GetHealthcheck(ctx *context.APIContext) {
 
 	if dm.MetadataType != "rc" {
 		ctx.JSON(http.StatusUnprocessableEntity, map[string]any{
-			"ok":    false,
-			"error": "currently only repositories of the 'rc' metadata type are supported",
+			"ok":   false,
+			"info": "currently only repositories of the 'rc' metadata type are supported",
 		})
 		return
 	}
