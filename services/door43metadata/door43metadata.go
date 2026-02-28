@@ -547,7 +547,7 @@ func GetDoor43MetadataFromSBMetadata(ctx context.Context, dm *repo_model.Door43M
 	case "parascriptural":
 		if strings.HasPrefix(flavor, "x-bcv") {
 			contentFormat = "tsv7"
-			switch flavor {
+			switch strings.ToLower(flavor) {
 			case "x-bcvnotes":
 				subject = "TSV Translation Notes"
 			case "x-bcvquestions":
@@ -571,8 +571,8 @@ func GetDoor43MetadataFromSBMetadata(ctx context.Context, dm *repo_model.Door43M
 			}
 		}
 	case "peripheral":
-		switch flavor {
-		case "x-peripheralArticles":
+		switch strings.ToLower(flavor) {
+		case "x-peripheralarticles":
 			contentFormat = "markdown"
 			switch strings.ToLower(abbreviation) {
 			case "ta":
