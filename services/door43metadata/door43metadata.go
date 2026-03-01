@@ -572,6 +572,17 @@ func GetDoor43MetadataFromSBMetadata(ctx context.Context, dm *repo_model.Door43M
 		}
 	case "peripheral":
 		switch strings.ToLower(flavor) {
+		case "x-greeklexicon", "x-greeklexicons":
+			subject = "Greek Lexicon"
+		case "x-hebrewlexicon", "x-hebrewlexicons":
+			subject = "Hebrew Lexicon"
+		case "x-lexicon", "x-lexicons":
+			switch strings.ToLower(abbreviation) {
+			case "hl", "thl", "uhl":
+				subject = "Hebrew Lexicon"
+			case "gl", "tlg", "ugl":
+				subject = "Greek Lexicon"
+			}
 		case "x-obsstudyquestions":
 			subject = "TSV OBS Study Questions"
 		case "x-obstranslationquestions":
@@ -582,15 +593,16 @@ func GetDoor43MetadataFromSBMetadata(ctx context.Context, dm *repo_model.Door43M
 				subject = "TSV OBS Translation Questions"
 			case "obssq":
 				subject = "TSV OBS Study Questions"
+			}
 		case "x-obsstudynotes":
 			subject = "TSV OBS Study Notes"
 		case "x-obstranslationnotes":
 			subject = "TSV OBS Translation Notes"
 		case "x-obsnotes":
-			case "obstn":
-				subject = "TSV OBS Translation Notes"
-			case "obssn":
-				subject = "TSV OBS Study Notes"
+		case "obstn":
+			subject = "TSV OBS Translation Notes"
+		case "obssn":
+			subject = "TSV OBS Study Notes"
 		case "x-peripheralarticles", "x-translationacademy", "x-translationwords":
 			contentFormat = "markdown"
 			switch strings.ToLower(abbreviation) {
