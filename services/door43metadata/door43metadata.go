@@ -533,6 +533,7 @@ func GetDoor43MetadataFromSBMetadata(ctx context.Context, dm *repo_model.Door43M
 				AlignmentCount: &count,
 			})
 		}
+		repoNameEnd := strings.ToLower(repo.Name[strings.LastIndex(repo.Name, "_")+1:])
 	case "gloss":
 		switch flavor {
 		case "textStories":
@@ -580,8 +581,15 @@ func GetDoor43MetadataFromSBMetadata(ctx context.Context, dm *repo_model.Door43M
 			switch strings.ToLower(abbreviation) {
 			case "hl", "thl", "uhl":
 				subject = "Hebrew Lexicon"
-			case "gl", "tlg", "ugl":
+			case "gl", "tgl", "ugl":
 				subject = "Greek Lexicon"
+			default:
+				switch repoNameEnd {
+				case "ugl":
+					subject = "Greek Lexicon"
+				case "uhl":
+					subject = "Hebrew Lexicon"
+				}
 			}
 		case "x-obsstudyquestions":
 			subject = "TSV OBS Study Questions"
@@ -593,12 +601,32 @@ func GetDoor43MetadataFromSBMetadata(ctx context.Context, dm *repo_model.Door43M
 				subject = "TSV OBS Translation Questions"
 			case "obssq":
 				subject = "TSV OBS Study Questions"
+			default:
+				switch repoNameEnd {
+				case "obs-tq":
+					subject = "TSV OBS Translation Questions"
+				case "obs-sq":
+					subject = "TSV OBS Study Questions"
+				}
 			}
 		case "x-obsstudynotes":
 			subject = "TSV OBS Study Notes"
 		case "x-obstranslationnotes":
 			subject = "TSV OBS Translation Notes"
 		case "x-obsnotes":
+			switch strings.ToLower(abbreviation) {
+			case "obstn":
+				subject = "TSV OBS Translation Notes"
+			case "obssn":
+				subject = "TSV OBS Study Notes"
+			default:
+				switch repoNameEnd {
+				case "obs-tn":
+					subject = "TSV OBS Translation Notes"
+				case "obs-sn":
+					subject = "TSV OBS Study Notes"
+				}
+			}
 		case "obstn":
 			subject = "TSV OBS Translation Notes"
 		case "obssn":
