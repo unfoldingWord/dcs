@@ -499,149 +499,41 @@ func GetDoor43MetadataFromSBMetadata(ctx context.Context, dm *repo_model.Door43M
 	}
 	languageDirection = dcs.GetLanguageDirection(language)
 	languageIsGL = dcs.LanguageIsGL(language)
+	repoNameSuffix := getSBRepoNameSuffix(repo.Name)
+	subject = getSBSubject(flavorType, flavor, abbreviation, repoNameSuffix)
 
-	switch flavorType {
-	case "scripture":
-		if after, ok := strings.CutPrefix(flavor, "x-"); ok {
-			subject = text_cases.Title(text_language.English).String(after)
-		} else if flavor == "textTranslation" {
-			subject = "Bible"
+	switch subject {
+	case "Bible", "Aligned Bible", "Greek New Testament", "Hebrew Old Testament":
+		var hasAlignment bool
+		ingredients, contentFormat, hasAlignment = getSBScriptureIngredients(sbMetadata, commit)
+		if subject == "Bible" && hasAlignment {
+			subject = "Aligned Bible"
 		}
-		for filePath, ingredient := range sbMetadata.Ingredients {
-			bookID, lowerBookID, ok := getSBIngredientBookID(ingredient)
-			if !ok {
-				continue
-			}
-			normalizedPath := normalizeSBIngredientPath(filePath)
-			count := 0
-			if strings.HasSuffix(strings.ToLower(normalizedPath), ".usfm") {
-				count, _ = getBookAlignmentCountSafe(normalizedPath, commit)
-				if count > 0 && subject == "Bible" {
-					subject = "Aligned Bible"
-				}
-				contentFormat = "usfm"
-			} else if contentFormat == "" {
-				contentFormat = strings.TrimPrefix(strings.ToLower(filepath.Ext(normalizedPath)), ".")
-			}
-			ingredients = append(ingredients, &structs.Ingredient{
-				Categories:     dcs.GetBookCategories(lowerBookID),
-				Identifier:     lowerBookID,
-				Title:          getSBLocalizedBookTitle(sbMetadata.LocalizedNames, bookID, lowerBookID),
-				Path:           normalizedPath,
-				Sort:           dcs.GetBookSort(lowerBookID),
-				Versification:  "ufw",
-				AlignmentCount: &count,
-			})
-		}
-	case "gloss":
-		switch flavor {
-		case "textStories":
-			subject = "Open Bible Stories"
-			contentFormat = "markdown"
-			ingredients = append(ingredients, &structs.Ingredient{
-				Identifier: "obs",
-				Title:      title,
-				Path:       "./ingredients",
-			})
-		}
-	case "parascriptural":
-		if strings.HasPrefix(flavor, "x-bcv") {
-			contentFormat = "tsv7"
-			switch strings.ToLower(flavor) {
-			case "x-bcvnotes":
-				subject = "TSV Translation Notes"
-			case "x-bcvquestions":
-				subject = "TSV Translation Questions"
-			case "x-bcvbcvarticles":
-				subject = "TSV Translation Words Links"
-			}
-
-			for path, ingredient := range sbMetadata.Ingredients {
-				bookID, lowerBookID, ok := getSBIngredientBookID(ingredient)
-				if !ok {
-					continue
-				}
-				ingredients = append(ingredients, &structs.Ingredient{
-					Identifier:    lowerBookID,
-					Title:         getSBLocalizedBookTitle(sbMetadata.LocalizedNames, bookID, lowerBookID),
-					Path:          normalizeSBIngredientPath(path),
-					Sort:          dcs.GetBookSort(lowerBookID),
-					Versification: "ufw",
-				})
-			}
-		}
-	case "peripheral":
-		switch strings.ToLower(flavor) {
-		case "x-greeklexicon", "x-greeklexicons":
-			subject = "Greek Lexicon"
-		case "x-hebrewlexicon", "x-hebrewlexicons":
-			subject = "Hebrew Lexicon"
-		case "x-lexicon", "x-lexicons":
-			switch strings.ToLower(abbreviation) {
-			case "hl", "thl", "uhl":
-				subject = "Hebrew Lexicon"
-			case "gl", "tlg", "ugl":
-				subject = "Greek Lexicon"
-			}
-		case "x-obsstudyquestions":
-			subject = "TSV OBS Study Questions"
-		case "x-obstranslationquestions":
-			subject = "TSV OBS Translation Questions"
-		case "x-obsquestions":
-			switch strings.ToLower(abbreviation) {
-			case "obstq":
-				subject = "TSV OBS Translation Questions"
-			case "obssq":
-				subject = "TSV OBS Study Questions"
-			}
-		case "x-obsstudynotes":
-			subject = "TSV OBS Study Notes"
-		case "x-obstranslationnotes":
-			subject = "TSV OBS Translation Notes"
-		case "x-obsnotes":
-		case "obstn":
-			subject = "TSV OBS Translation Notes"
-		case "obssn":
-			subject = "TSV OBS Study Notes"
-		case "x-peripheralarticles", "x-translationacademy", "x-translationwords":
-			contentFormat = "markdown"
-			switch strings.ToLower(abbreviation) {
-			case "ta":
-				subject = "Translation Academy"
-				contentFormat = "markdown"
-				ingredients = append(ingredients, &structs.Ingredient{
-					Path:       "./ingredients/intro",
-					Identifier: "intro",
-					Title:      "Introduction to Translation Academy",
-					Sort:       0,
-				})
-				ingredients = append(ingredients, &structs.Ingredient{
-					Path:       "./ingredients/process",
-					Identifier: "process",
-					Title:      "Process Manual",
-					Sort:       1,
-				})
-				ingredients = append(ingredients, &structs.Ingredient{
-					Path:       "./ingredients/translate",
-					Identifier: "translate",
-					Title:      "Translation Manual",
-					Sort:       2,
-				})
-				ingredients = append(ingredients, &structs.Ingredient{
-					Path:       "./ingredients/checking",
-					Identifier: "checking",
-					Title:      "Checking Manual",
-					Sort:       3,
-				})
-			case "tw":
-				subject = "Translation Words"
-				ingredients = append(ingredients, &structs.Ingredient{
-					Path:       "./ingredients",
-					Identifier: "bible",
-					Title:      "Translation Words",
-					Sort:       0,
-				})
-			}
+	case "Open Bible Stories":
+		contentFormat = "markdown"
+		ingredients = []*structs.Ingredient{{
+			Identifier: "obs",
+			Title:      title,
+			Path:       "./ingredients",
+		}}
+	case "TSV Translation Notes", "TSV Translation Questions", "TSV Translation Words Links":
+		contentFormat = "tsv7"
+		ingredients = getSBTSVIngredients(sbMetadata)
+	case "Translation Academy":
+		contentFormat = "markdown"
+		ingredients = getSBTranslationAcademyIngredients()
+	case "Translation Words":
+		contentFormat = "markdown"
+		ingredients = []*structs.Ingredient{{
+			Path:       "./ingredients",
+			Identifier: "bible",
+			Title:      "Translation Words",
+			Sort:       0,
+		}}
+	default:
+		// Keep scripture ingredient processing for custom x-* scripture flavors.
+		if strings.EqualFold(flavorType, "scripture") {
+			ingredients, contentFormat, _ = getSBScriptureIngredients(sbMetadata, commit)
 		}
 	}
 
@@ -704,6 +596,191 @@ func getBookAlignmentCountSafe(bookPath string, commit *git.Commit) (int, error)
 		return 0, nil
 	}
 	return GetBookAlignmentCount(bookPath, commit)
+}
+
+func getSBRepoNameSuffix(repoName string) string {
+	if idx := strings.LastIndex(repoName, "_"); idx >= 0 {
+		return strings.ToLower(repoName[idx+1:])
+	}
+	return strings.ToLower(repoName)
+}
+
+func getSBSubject(flavorType, flavor, abbreviation, repoNameSuffix string) string {
+	flavorLower := strings.ToLower(flavor)
+	abbreviationLower := strings.ToLower(abbreviation)
+
+	switch strings.ToLower(flavorType) {
+	case "scripture":
+		if after, ok := strings.CutPrefix(flavor, "x-"); ok {
+			return text_cases.Title(text_language.English).String(after)
+		}
+		if flavor == "textTranslation" {
+			return "Bible"
+		}
+	case "gloss":
+		if flavor == "textStories" {
+			return "Open Bible Stories"
+		}
+	case "parascriptural":
+		switch flavorLower {
+		case "x-bcvnotes":
+			return "TSV Translation Notes"
+		case "x-bcvquestions":
+			return "TSV Translation Questions"
+		case "x-bcvbcvarticles":
+			return "TSV Translation Words Links"
+		}
+	case "peripheral":
+		switch flavorLower {
+		case "x-greeklexicon", "x-greeklexicons":
+			return "Greek Lexicon"
+		case "x-hebrewlexicon", "x-hebrewlexicons":
+			return "Hebrew Lexicon"
+		case "x-lexicon", "x-lexicons":
+			switch abbreviationLower {
+			case "hl", "thl", "uhl":
+				return "Hebrew Lexicon"
+			case "gl", "tgl", "ugl":
+				return "Greek Lexicon"
+			default:
+				switch repoNameSuffix {
+				case "ugl":
+					return "Greek Lexicon"
+				case "uhl":
+					return "Hebrew Lexicon"
+				}
+			}
+		case "x-obsstudyquestions":
+			return "TSV OBS Study Questions"
+		case "x-obstranslationquestions":
+			return "TSV OBS Translation Questions"
+		case "x-obsquestions":
+			switch abbreviationLower {
+			case "obstq":
+				return "TSV OBS Translation Questions"
+			case "obssq":
+				return "TSV OBS Study Questions"
+			default:
+				switch repoNameSuffix {
+				case "obs-tq":
+					return "TSV OBS Translation Questions"
+				case "obs-sq":
+					return "TSV OBS Study Questions"
+				}
+			}
+		case "x-obsstudynotes":
+			return "TSV OBS Study Notes"
+		case "x-obstranslationnotes", "obstn":
+			return "TSV OBS Translation Notes"
+		case "x-obsnotes":
+			switch abbreviationLower {
+			case "obstn":
+				return "TSV OBS Translation Notes"
+			case "obssn":
+				return "TSV OBS Study Notes"
+			default:
+				switch repoNameSuffix {
+				case "obs-tn":
+					return "TSV OBS Translation Notes"
+				case "obs-sn":
+					return "TSV OBS Study Notes"
+				}
+			}
+		case "obssn":
+			return "TSV OBS Study Notes"
+		case "x-peripheralarticles", "x-translationacademy", "x-translationwords":
+			switch abbreviationLower {
+			case "ta":
+				return "Translation Academy"
+			case "tw":
+				return "Translation Words"
+			}
+		}
+	}
+
+	return "Unknown"
+}
+
+func getSBScriptureIngredients(sbMetadata *dcs.SBMetadata100, commit *git.Commit) ([]*structs.Ingredient, string, bool) {
+	var ingredients []*structs.Ingredient
+	contentFormat := ""
+	hasAlignment := false
+
+	for filePath, ingredient := range sbMetadata.Ingredients {
+		bookID, lowerBookID, ok := getSBIngredientBookID(ingredient)
+		if !ok {
+			continue
+		}
+		normalizedPath := normalizeSBIngredientPath(filePath)
+		count := 0
+		if strings.HasSuffix(strings.ToLower(normalizedPath), ".usfm") {
+			count, _ = getBookAlignmentCountSafe(normalizedPath, commit)
+			if count > 0 {
+				hasAlignment = true
+			}
+			contentFormat = "usfm"
+		} else if contentFormat == "" {
+			contentFormat = strings.TrimPrefix(strings.ToLower(filepath.Ext(normalizedPath)), ".")
+		}
+		ingredients = append(ingredients, &structs.Ingredient{
+			Categories:     dcs.GetBookCategories(lowerBookID),
+			Identifier:     lowerBookID,
+			Title:          getSBLocalizedBookTitle(sbMetadata.LocalizedNames, bookID, lowerBookID),
+			Path:           normalizedPath,
+			Sort:           dcs.GetBookSort(lowerBookID),
+			Versification:  "ufw",
+			AlignmentCount: &count,
+		})
+	}
+
+	return ingredients, contentFormat, hasAlignment
+}
+
+func getSBTSVIngredients(sbMetadata *dcs.SBMetadata100) []*structs.Ingredient {
+	ingredients := make([]*structs.Ingredient, 0, len(sbMetadata.Ingredients))
+	for path, ingredient := range sbMetadata.Ingredients {
+		bookID, lowerBookID, ok := getSBIngredientBookID(ingredient)
+		if !ok {
+			continue
+		}
+		ingredients = append(ingredients, &structs.Ingredient{
+			Identifier:    lowerBookID,
+			Title:         getSBLocalizedBookTitle(sbMetadata.LocalizedNames, bookID, lowerBookID),
+			Path:          normalizeSBIngredientPath(path),
+			Sort:          dcs.GetBookSort(lowerBookID),
+			Versification: "ufw",
+		})
+	}
+	return ingredients
+}
+
+func getSBTranslationAcademyIngredients() []*structs.Ingredient {
+	return []*structs.Ingredient{
+		{
+			Path:       "./ingredients/intro",
+			Identifier: "intro",
+			Title:      "Introduction to Translation Academy",
+			Sort:       0,
+		},
+		{
+			Path:       "./ingredients/process",
+			Identifier: "process",
+			Title:      "Process Manual",
+			Sort:       1,
+		},
+		{
+			Path:       "./ingredients/translate",
+			Identifier: "translate",
+			Title:      "Translation Manual",
+			Sort:       2,
+		},
+		{
+			Path:       "./ingredients/checking",
+			Identifier: "checking",
+			Title:      "Checking Manual",
+			Sort:       3,
+		},
+	}
 }
 
 func GetRCDoor43Metadata(ctx context.Context, dm *repo_model.Door43Metadata, repo *repo_model.Repository, commit *git.Commit) error {
