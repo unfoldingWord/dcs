@@ -519,6 +519,9 @@ func GetDoor43MetadataFromSBMetadata(ctx context.Context, dm *repo_model.Door43M
 	case "TSV Translation Notes", "TSV Translation Questions", "TSV Translation Words Links":
 		contentFormat = "tsv7"
 		ingredients = getSBTSVIngredients(sbMetadata)
+	case "TSV OBS Study Questions", "TSV OBS Translation Questions", "TSV OBS Study Notes", "TSV OBS Translation Notes":
+		contentFormat = "tsv7"
+		ingredients = getSBOBSTSVIngredients(sbMetadata)
 	case "Translation Academy":
 		contentFormat = "markdown"
 		ingredients = getSBTranslationAcademyIngredients()
@@ -798,6 +801,22 @@ func getSBTSVIngredients(sbMetadata *dcs.SBMetadata100) []*structs.Ingredient {
 		})
 	}
 	return ingredients
+}
+
+func getSBOBSTSVIngredients(sbMetadata *dcs.SBMetadata100) []*structs.Ingredient {
+	obsIngredient, ok := sbMetadata.Ingredients["ingredients/OBS.tsv"]
+	if !ok || obsIngredient == nil {
+		return nil
+	}
+	return []*structs.Ingredient{
+		{
+			Identifier: "obs",
+			Title:      sbMetadata.Identification.Name.DetermineLocalizedTextToUse(),
+			Path:       "./ingredients/OBS.tsv",
+			Sort:       0,
+			Size:       obsIngredient.Size,
+		},
+	}
 }
 
 func getSBTranslationAcademyIngredients() []*structs.Ingredient {
