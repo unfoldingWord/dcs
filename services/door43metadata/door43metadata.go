@@ -615,7 +615,7 @@ func getSBSubject(flavorType, flavor, abbreviation, repoNameSuffix string) strin
 			return text_cases.Title(text_language.English).String(after)
 		}
 		if flavor == "textTranslation" {
-			return "Bible"
+			return "Bible" // Leave it as Bible now. If we find alignments later, will be Aligned Bible
 		}
 	case "gloss":
 		if flavor == "textStories" {
@@ -694,6 +694,48 @@ func getSBSubject(flavorType, flavor, abbreviation, repoNameSuffix string) strin
 				return "Translation Academy"
 			case "tw":
 				return "Translation Words"
+			default:
+				switch repoNameSuffix {
+				case "ta":
+					return "Translation Academy"
+				case "tw":
+					return "Translation Words"
+				}
+			}
+		default:
+			switch repoNameSuffix {
+			case "ta":
+				return "Translation Academy"
+			case "tw":
+				return "Translation Words"
+			case "tn":
+				return "TSV Translation Notes"
+			case "tq":
+				return "TSV Translation Questions"
+			case "twl":
+				return "TSV Translation Words Links"
+			case "obs":
+				return "Open Bible Stories"
+			case "obs-tn":
+				return "TSV OBS Translation Notes"
+			case "obs-tq":
+				return "TSV OBS Translation Questions"
+			case "obs-sn":
+				return "TSV OBS Study Notes"
+			case "obs-sq":
+				return "TSV OBS Study Questions"
+			case "glt", "gst", "ult", "ust":
+				return "Aligned Bible"
+			case "uhl", "thl", "hl":
+				return "Hebrew Lexicon"
+			case "ugl", "tgl", "gl":
+				return "Greek Lexicon"
+			case "ugg", "tgg", "gg":
+				return "Greek Grammar"
+			case "uhg", "thg", "hg":
+				return "Hebrew Grammar"
+			case "uag", "tag", "ag":
+				return "Aramaic Grammar"
 			}
 		}
 	}
