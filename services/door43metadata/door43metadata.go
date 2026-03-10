@@ -704,6 +704,10 @@ func getSBSubject(flavorType, flavor, abbreviation, repoNameSuffix string) strin
 			}
 		default:
 			switch repoNameSuffix {
+			case "sn":
+				return "TSV Study Notes"
+			case "sq":
+				return "TSV Study Questions"
 			case "ta":
 				return "Translation Academy"
 			case "tw":
