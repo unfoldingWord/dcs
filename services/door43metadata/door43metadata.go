@@ -515,6 +515,8 @@ func GetDoor43MetadataFromSBMetadata(ctx context.Context, dm *repo_model.Door43M
 			Identifier: "obs",
 			Title:      title,
 			Path:       "./ingredients",
+			IsDir:      true,
+			Exists:     true,
 		}}
 	case "TSV Translation Notes", "TSV Translation Questions", "TSV Translation Words Links":
 		contentFormat = "tsv7"
@@ -532,6 +534,8 @@ func GetDoor43MetadataFromSBMetadata(ctx context.Context, dm *repo_model.Door43M
 			Identifier: "bible",
 			Title:      "Translation Words",
 			Sort:       0,
+			IsDir:      true,
+			Exists:     true,
 		}}
 	default:
 		// Keep scripture ingredient processing for custom x-* scripture flavors.
@@ -779,6 +783,7 @@ func getSBScriptureIngredients(sbMetadata *dcs.SBMetadata100, commit *git.Commit
 			Sort:           dcs.GetBookSort(lowerBookID),
 			Versification:  "ufw",
 			AlignmentCount: &count,
+			Exists:         true,
 		})
 	}
 
@@ -798,6 +803,8 @@ func getSBTSVIngredients(sbMetadata *dcs.SBMetadata100) []*structs.Ingredient {
 			Path:          normalizeSBIngredientPath(path),
 			Sort:          dcs.GetBookSort(lowerBookID),
 			Versification: "ufw",
+			Size:          ingredient.Size,
+			Exists:        true,
 		})
 	}
 	return ingredients
@@ -815,6 +822,7 @@ func getSBOBSTSVIngredients(sbMetadata *dcs.SBMetadata100) []*structs.Ingredient
 			Path:       "./ingredients/OBS.tsv",
 			Sort:       0,
 			Size:       obsIngredient.Size,
+			Exists:     true,
 		},
 	}
 }
@@ -826,24 +834,32 @@ func getSBTranslationAcademyIngredients() []*structs.Ingredient {
 			Identifier: "intro",
 			Title:      "Introduction to Translation Academy",
 			Sort:       0,
+			IsDir:      true,
+			Exists:     true,
 		},
 		{
 			Path:       "./ingredients/process",
 			Identifier: "process",
 			Title:      "Process Manual",
 			Sort:       1,
+			IsDir:      true,
+			Exists:     true,
 		},
 		{
 			Path:       "./ingredients/translate",
 			Identifier: "translate",
 			Title:      "Translation Manual",
 			Sort:       2,
+			IsDir:      true,
+			Exists:     true,
 		},
 		{
 			Path:       "./ingredients/checking",
 			Identifier: "checking",
 			Title:      "Checking Manual",
 			Sort:       3,
+			IsDir:      true,
+			Exists:     true,
 		},
 	}
 }
@@ -939,6 +955,7 @@ func GetTcOrTsDoor43Metadata(dm *repo_model.Door43Metadata, repo *repo_model.Rep
 		Sort:           dcs.GetBookSort(t.Project.ID),
 		Versification:  versification,
 		AlignmentCount: &count,
+		Exists:         true,
 	}}
 	dm.Metadata = manifest
 
