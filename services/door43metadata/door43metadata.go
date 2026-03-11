@@ -378,7 +378,7 @@ func GetDoor43MetadataFromRCManifest(ctx context.Context, dm *repo_model.Door43M
 		case "TSV Translation Questions":
 			flavor = "x-bcvquestions"
 		case "TSV Translation Words Links":
-			flavor = "x-bcvbcvarticles"
+			flavor = "x-bcvarticles"
 		default:
 			flavor = "x-" + strings.ToLower(strings.Fields(subject)[len(strings.Fields(subject))-1])
 		}
@@ -634,7 +634,7 @@ func getSBSubject(flavorType, flavor, abbreviation, repoNameSuffix string) strin
 			return "TSV Translation Notes"
 		case "x-bcvquestions":
 			return "TSV Translation Questions"
-		case "x-bcvbcvarticles":
+		case "x-bcvarticles":
 			return "TSV Translation Words Links"
 		}
 	case "peripheral":
