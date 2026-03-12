@@ -25,15 +25,16 @@ type Organization struct {
 	Visibility string `json:"visibility"`
 	// Whether repository administrators can change team access
 	RepoAdminChangeTeamAccess bool `json:"repo_admin_change_team_access"`
-	// username of the organization
-	// All languages of the repos the org owns
-	RepoLanguages []string `json:"repo_languages"` // DCS Customizations
-	// All subjects of the repos the org owns
-	RepoSubjects []string `json:"repo_subjects"` // DCS Customizations
-	// All metadata types of the repos the org owns
-	RepoMetadataTypes []string `json:"repo_metadata_types"` // DCS Customizations
 	// deprecated
 	UserName string `json:"username"`
+	/*** DCS Customizations ***/
+	// All languages of the repos the org owns
+	RepoLanguages []string `json:"repo_languages"`
+	// All subjects of the repos the org owns
+	RepoSubjects []string `json:"repo_subjects"`
+	// All metadata types of the repos the org owns
+	RepoMetadataTypes []string `json:"repo_metadata_types"`
+	/*** END DCS Customizations ***/
 }
 
 // OrganizationPermissions list different users permissions on an organization

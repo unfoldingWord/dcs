@@ -9,21 +9,8 @@
 				<div class="flex-item-main">
 					<div class="flex-item-title tw-text-18">
 						<a class="muted tw-font-normal" href="{{.Owner.HomeLink}}">{{.Owner.Name}}</a>/<a class="muted" href="{{$.RepoLink}}">{{.Name}}</a>
-						<!--- DCS Customizations -->
-						{{if .LatestProdDM}}
-							<a href="{{.Link}}/releases/tag/{{.LatestProdDM.Ref | PathEscapeSegments}}" rel="nofollow">
-								<button class="ui green label compact icon button" data-tooltip-content="Catalog: Production" aria-label="Catalog: Production">
-									{{.LatestProdDM.Ref}}
-								</button>
-							</a>
-						{{end}}
-						{{if .LatestPreprodDM}}
-							<a href="{{.Link}}/releases/tag/{{.LatestPreprodDM.Ref | PathEscapeSegments}}" rel="nofollow">
-								<button class="ui orange label compact icon button" data-tooltip-content="Catalog: Pre-Production" aria-label="Catalog: Pre-Production">
-									{{.LatestPreprodDM.Ref}}
-								</button>
-							</a>
-						{{end}}
+						<!-- DCS Customizations -->
+						{{template "dcs/repo_header_badges" .}}
 						<!-- END DCS Customizations -->
 					</div>
 				</div>
@@ -57,16 +44,7 @@
 			{{if not (or .IsBeingCreated .IsBroken)}}
 				<div class="flex-text-block tw-flex-wrap">
 					<!-- DCS Customizations -->
-					{{if .LatestProdDM}}
-					<div class="ui labeled button" tabindex="0">
-						<a type="submit" class="ui compact basic button" href="{{.Link}}/releases/tag/{{.LatestProdDM.Ref | PathEscapeSegments}}">
-							{{svg "octicon-tag"}} {{ctx.Locale.Tr "repo.metadata.catalog"}}
-						</a>
-						<a class="ui basic label" href="{{.Link}}/releases/tag/{{.LatestProdDM.Ref | PathEscapeSegments}}">
-							{{.LatestProdDM.Ref}}
-						</a>
-					</div>
-					{{end}}
+					{{template "dcs/repo_header_catalog_button" .}}
 					<!-- END DCS Customizations -->
 					{{if $.RepoTransfer}}
 						<form method="post" action="{{$.RepoLink}}/action/accept_transfer?redirect_to={{$.RepoLink}}">

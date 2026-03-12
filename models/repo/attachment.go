@@ -76,7 +76,7 @@ func (a *Attachment) AfterUpdate() {
 	a.AfterLoad()
 }
 
-/*** END DCS Customiations ***/
+/*** END DCS Customizations ***/
 
 // IncreaseDownloadCount is update download count + 1
 func (a *Attachment) IncreaseDownloadCount(ctx context.Context) error {

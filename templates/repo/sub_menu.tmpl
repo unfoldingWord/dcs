@@ -14,20 +14,7 @@
 				</a>
 			{{end}}
 			<!-- DCS Customizations -->
-			{{if .RepoDM}}
-				{{if .RepoDM.Language}}
-					<a class="item muted" href="{{AppSubUrl}}/explore/repos?q=lang:{{.RepoDM.Language}}" data-tooltip-content="{{if .RepoDM.LanguageIsGL}}*Is a Gateway{{else}}Is an Other{{end}} Language; Direction: {{.RepoDM.LanguageDirection}}">
-						{{svg "octicon-globe"}} <span style="font-weight: bold"><span data-language="{{.RepoDM.Language}}" data-language-direction="{{.RepoDM.LanguageDirection}}">{{.RepoDM.LanguageTitle}}</span> ({{.RepoDM.Language}}){{if .RepoDM.LanguageIsGL}}*{{end}}</span>
-					</a>
-				{{end}}
-				{{if .RepoDM.MetadataType}}
-					{{$metadataTypeTitle := (.RepoDM.MetadataTypeTitle)}}
-					{{$metadataTypeIcon := (.RepoDM.MetadataTypeIcon)}}
-					<a class="item muted" href="{{AppSubUrl}}/explore/repos?q=metadata_type:{{.RepoDM.MetadataType}}" data-tooltip-content="Metadata Type: {{$metadataTypeTitle}} v{{.RepoDM.MetadataVersion}}">
-						<img src="{{AssetUrlPrefix}}/img/dcs/{{$metadataTypeIcon}}" style="height:16px;vertical-align:middle"/> <span style="font-weight: bold">{{.RepoDM.MetadataType}}{{.RepoDM.MetadataVersion}}</span>
-					</a>
-				{{end}}
-			{{end}}
+			{{template "dcs/repo_sub_menu" .}}
 			<!-- END DCS Customizations -->
 			<span class="item not-mobile" {{if not (eq .Repository.Size 0)}}data-tooltip-placement="top" data-tooltip-content="{{.Repository.SizeDetailsString}}"{{end}}>
 				{{$fileSizeFormatted := FileSize .Repository.Size}}{{/* the formatted string is always "{val} {unit}" */}}

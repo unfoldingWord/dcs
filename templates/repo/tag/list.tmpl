@@ -1,9 +1,7 @@
 {{template "base/head" .}}
-<!-- DCS Customizaitons --->
-{{if and .RepoDM (eq .RepoDM.Subject "Aligned Bible")}}
-<script src="{{AssetUrlPrefix}}/js-dcs/usfm-alignment-remover.js"></script>
-{{end}}
-<!-- END DCS Customizaitons --->
+<!-- DCS Customizations --->
+{{template "dcs/tag_list_usfm_script" .}}
+<!-- END DCS Customizations --->
 <div role="main" aria-label="{{.Title}}" class="page-content repository tags">
 	{{template "repo/header" .}}
 	<div class="ui container">
@@ -41,15 +39,13 @@
 								{{if not $.DisableDownloadSourceArchives}}
 									<a class="archive-link flex-text-inline" href="{{$.RepoLink}}/archive/{{.TagName | PathEscapeSegments}}.zip" rel="nofollow">{{svg "octicon-file-zip"}}ZIP</a>
 									<a class="archive-link flex-text-inline" href="{{$.RepoLink}}/archive/{{.TagName | PathEscapeSegments}}.tar.gz" rel="nofollow">{{svg "octicon-file-zip"}}TAR.GZ</a>
-									<!-- DCS Customizaitons --->
-									{{if and .Repo.RepoDM (eq .Repo.RepoDM.Subject "Aligned Bible")}}
-									<a class="archive-link flex-text-inline" href="#" onclick="window.downloadUnalignedUSFM('{{.Repo.OwnerName | PathEscapeSegments}}', '{{.Repo.Name | PathEscapeSegments .Repo.Name}}', '{{.TagName | PathEscapeSegments}}'); return false;" rel="nofollow">{{svg "octicon-file-zip" 16 "tw-mr-1"}}USFM (ZIP)</a>
-									{{end}}
-									<!-- END DCS Customizaitons --->
+									<!-- DCS Customizations --->
+									{{template "dcs/tag_list_usfm_download" .}}
+									<!-- END DCS Customizations --->
 								{{end}}
 
 								<!-- DCS Customizations -->
-								<a class="flex-text-inline" href="{{Door43PreviewURL}}/u/{{PathEscapeSegments .Repo.OwnerName}}/{{PathEscapeSegments .Repo.Name}}/{{PathEscapeSegments .TagName}}{{if eq AppUrl "https://qa.door43.org/"}}?server=QA{{end}}{{if eq AppUrl "https://develop.door43.org/"}}?server=DEV{{end}}" target="_blank" rel="nofollow noopener">{{svg "octicon-book" 16 "tw-mr-2"}}{{ctx.Locale.Tr "preview"}} / PDF</a>
+								{{template "dcs/tag_list_preview" .}}
 								<!-- END DCS Customizations -->
 
 								{{if (and $canReadReleases $.CanCreateRelease $release.IsTag)}}

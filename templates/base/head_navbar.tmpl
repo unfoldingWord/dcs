@@ -35,10 +35,9 @@
 
 		{{template "custom/extra_links" .}}
 
-		{{if not .IsSigned}}
-			<a class="item" href="{{AppSubUrl}}/about#help">{{ctx.Locale.Tr "help"}}</a>
-			<a class="item" href="/api/swagger" target="_blank" rel="noreferrer">API</a>
-		{{end}}
+		<!-- DCS Customizations -->
+		{{template "dcs/navbar_links" .}}
+		<!-- END DCS Customizations -->
 	</div>
 
 	<!-- the full dropdown menus -->
@@ -117,19 +116,8 @@
 						{{svg "octicon-tools"}}
 						{{ctx.Locale.Tr "your_settings"}}
 					</a>
-					<!-- DCS Customizations: Adds usage stats and links help to bottom of about page -->
-					<a class="item" href="{{AppSubUrl}}/about#stats">
-						{{svg "octicon-graph"}}
-						Usage Stats
-					</a>
-					<a class="item" href="{{AppSubUrl}}/about#help">
-						{{svg "octicon-question"}}
-						{{ctx.Locale.Tr "help"}}
-					</a>
-					<a class="item" href="{{AppSubUrl}}/api/swagger">
-						{{svg "octicon-code"}}
-						API
-					</a>
+					<!-- DCS Customizations -->
+					{{template "dcs/navbar_user_menu" .}}
 					<!-- END DCS Customizations -->
 					<div class="divider"></div>
 					<a class="item link-action" href data-url="{{AppSubUrl}}/user/logout">

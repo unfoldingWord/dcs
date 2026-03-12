@@ -1,9 +1,7 @@
 {{template "base/head" .}}
-<!-- DCS Customizaitons --->
-{{if and .RepoDM (eq .RepoDM.Subject "Aligned Bible")}}
-<script src="{{AssetUrlPrefix}}/js-dcs/usfm-alignment-remover.js"></script>
-{{end}}
-<!-- END DCS Customizaitons --->
+<!-- DCS Customizations --->
+{{template "dcs/release_list_usfm_script" .}}
+<!-- END DCS Customizations --->
 <div role="main" aria-label="{{.Title}}" class="page-content repository releases">
 	{{template "repo/header" .}}
 	<div class="ui container">
@@ -16,28 +14,7 @@
 					<div class="meta">
 						<a class="muted" href="{{if not (and $release.Sha1 ($.Permission.CanRead ctx.Consts.RepoUnitTypeCode))}}#{{else}}{{$.RepoLink}}/src/tag/{{$release.TagName | PathEscapeSegments}}{{end}}" rel="nofollow">{{svg "octicon-tag" 16 "tw-mr-1"}}{{$release.TagName}}</a>
 						<!-- DCS Customizations -->
-						{{$stage := ""}}
-						{{$color := ""}}
-						{{if $release.IsPrerelease}}
-							{{$stage = "preprod"}}
-							{{$color = "orange"}}
-						{{else if not $release.IsDraft}}
-							{{$stage = "prod"}}
-							{{$color = "green"}}
-						{{end}}
-						{{if and $release.Door43Metadata (not $release.Door43Metadata.ValidationError) (lt $release.Door43Metadata.Stage 3) (gt $release.Door43Metadata.Stage 0)}}
-							<a class="catalog-badge" href="{{$.RepoLink}}/src/tag/{{$release.TagName | PathEscapeSegments}}" rel="nofollow" style="opacity: inherit !important">
-								<button class="ui {{$color}} label compact icon button" data-tooltip-content="Stage: {{$stage}}" aria-label="Stage: {{$stage}}">
-									{{ctx.Locale.Tr "repo.metadata.catalog"}} ({{$stage}})
-								</button>
-							</a>
-						{{else if (and (not $release.IsTag) (not $release.IsDraft) ($release.IsCatalogVersion))}}
-							<a class="catalog-badge" href="{{$.RepoLink}}/src/tag/{{$release.TagName | PathEscapeSegments}}" rel="nofollow" style="opacity: inherit !important">
-								<button class="ui red label compact icon button" data-tooltip-content="{{ctx.Locale.Tr "repo.metadata.invalid_metadata_tooltip" "metadata"}}" aria-label="{{ctx.Locale.Tr "repo.metadata.invalid_metadata_tooltip" "metadata"}}">
-									{{ctx.Locale.Tr "repo.metadata.invalid"}} ({{$stage}})
-								</button>
-							</a>
-						{{end}}
+						{{template "dcs/release_list_catalog_badges" dict "release" $release "root" $}}
 						<!-- END DCS Customizations -->
 						{{if and $release.Sha1 ($.Permission.CanRead ctx.Consts.RepoUnitTypeCode)}}
 							<a class="muted tw-font-mono" href="{{$.RepoLink}}/src/commit/{{$release.Sha1}}" rel="nofollow">{{svg "octicon-git-commit" 16 "tw-mr-1"}}{{ShortSha $release.Sha1}}</a>
@@ -118,27 +95,8 @@
 											<strong class="flex-text-inline">{{svg "octicon-file-zip" 16 "download-icon"}}{{ctx.Locale.Tr "repo.release.source_code"}} (TAR.GZ)</strong>
 										</a>
 									</li>
-									<!-- DCS Customization -->
-									{{if $release.Door43Metadata}}
-									<li class="item">
-										<a href="{{Door43PreviewURL}}/u/{{$release.Repo.OwnerName | PathEscapeSegments}}/{{$release.Repo.Name | PathEscapeSegments}}/{{$release.TagName | PathEscapeSegments}}{{if eq AppUrl "https://qa.door43.org/"}}?server=QA{{end}}{{if eq AppUrl "https://develop.door43.org/"}}?server=DEV{{end}}"
-											target="_blank" rel="nofollow noopener">
-											<strong class="flex-text-inline">
-												{{svg "octicon-book" 16 "download-icon"}}{{ctx.Locale.Tr "preview"}} / PDF
-											</strong>
-										</a>
-									</li>
-										{{if eq $release.Door43Metadata.Subject "Aligned Bible"}}
-										<li style="display: block" class="item">
-											<a href="#" onclick="window.downloadUnalignedUSFM('{{PathEscapeSegments $release.Repo.OwnerName}}', '{{PathEscapeSegments $release.Repo.Name}}', '{{PathEscapeSegments $release.TagName}}', document.getElementById('usfm-download-status-{{PathEscapeSegments $release.TagName}}')); return false;" rel="nofollow">
-												<strong class="flex-text-inline">
-													{{svg "octicon-file-zip" 16 "download-icon"}}Unaligned USFM (ZIP)
-												</strong>
-											</a>
-											<span id="usfm-download-status-{{PathEscapeSegments $release.TagName}}"></span>
-										</li>
-										{{end}}
-									{{end}}
+									<!-- DCS Customizations -->
+									{{template "dcs/release_list_downloads" dict "release" $release "root" $}}
 									<!-- END DCS Customizations -->
 								{{end}}
 								{{range $att := $release.Attachments}}

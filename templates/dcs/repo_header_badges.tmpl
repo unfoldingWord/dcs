@@ -1,0 +1,14 @@
+{{if .LatestProdDM}}
+	<a href="{{.Link}}/releases/tag/{{.LatestProdDM.Ref | PathEscapeSegments}}" rel="nofollow">
+		<button class="ui green label compact icon button" data-tooltip-content="Catalog: Production" aria-label="Catalog: Production">
+			{{.LatestProdDM.Ref}}
+		</button>
+	</a>
+{{end}}
+{{if .LatestPreprodDM}}
+	<a href="{{.Link}}/releases/tag/{{.LatestPreprodDM.Ref | PathEscapeSegments}}" rel="nofollow">
+		<button class="ui orange label compact icon button" data-tooltip-content="Catalog: Pre-Production" aria-label="Catalog: Pre-Production">
+			{{.LatestPreprodDM.Ref}}
+		</button>
+	</a>
+{{end}}

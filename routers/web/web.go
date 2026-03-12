@@ -1195,18 +1195,9 @@ func registerWebRoutes(m *web.Router) {
 			Get(repo.SetDiffViewStyle, repo.SetWhitespaceBehavior, repo.CompareDiff).
 			Post(reqSignIn, context.RepoMustNotBeArchived(), reqUnitPullsReader, repo.MustAllowPulls, web.Bind(forms.CreateIssueForm{}), repo.SetWhitespaceBehavior, repo.CompareAndPullRequestPost)
 		m.Get("/pulls/new/*", repo.PullsNewRedirect)
-		// DCS Customizations
-		m.Group("/healthcheck", func() {
-			m.Get("", repo.GetRepoHealthcheck)
-			m.Get("/update", repo.UpdateDoor43Metadata)
-			m.Post("/update", repo.UpdateDoor43Metadata) // TODO: Make this /{id} for a single DM
-		})
-		m.Group("/metadata", func() {
-			m.Get("", repo.GetAllRepoDoor43Metadata)
-			m.Get("/update", repo.UpdateDoor43Metadata)
-			m.Post("/update", repo.UpdateDoor43Metadata) // TODO: Make this /{id} for a single DM
-		})
-		// END DCS Customizations
+		/*** DCS Customizations ***/
+		dcs.RegisterDCSRepoWebRoutes(m)
+		/*** END DCS Customizations ***/
 	}, optSignIn, context.RepoAssignment, reqUnitCodeReader)
 	// end "/{username}/{reponame}": repo code: find, compare, list
 
@@ -1692,12 +1683,7 @@ func registerWebRoutes(m *web.Router) {
 	}
 
 	/*** DCS Customizations ***/
-	m.Get("/about", dcs.About)
-	m.Get("/tools", dcs.Tools)
-	m.Get("/hc-dash", reqSignIn, dcs.HealthcheckDashboard)
-	m.Group("/catalog", func() {
-		m.Get("", dcs.Catalog)
-	}, optSignIn)
+	dcs.RegisterDCSWebRoutes(m, optSignIn, reqSignIn)
 	/*** END DCS Customizations ***/
 
 	m.NotFound(func(w http.ResponseWriter, req *http.Request) {

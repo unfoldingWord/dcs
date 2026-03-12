@@ -38,15 +38,7 @@
 	{{end}}
 
 	<!-- DCS Customizations -->
-  {{if and .RepoDM .RepoDM.MetadataType}}
-	  {{$refToPreview := .Repository.DefaultBranch}}
-		{{if or .RefFullName.IsTag .RefFullName.IsBranch}}
-			{{$refToPreview = .RefFullName.ShortName}}
-		{{end}}
-		<a id="preview-button" role="botton" class="ui compact basic button" href="{{Door43PreviewURL}}/u/{{.Owner.Name}}/{{.Repository.Name}}/{{$refToPreview | PathEscapeSegments}}{{if eq AppUrl "https://qa.door43.org/"}}?server=QA{{end}}{{if eq AppUrl "https://develop.door43.org/"}}?server=DEV{{end}}" data-tooltip-content="{{ctx.Locale.Tr "preview"}} / PDF" target="_blank">
-		 {{svg "octicon-book"}}
-		</a>
-	{{end}}
+	{{template "dcs/view_content_preview" .}}
 	<!-- END DCS Customizations -->
 
 	<!-- Show go to file if on home page -->
@@ -95,11 +87,7 @@
 			{{- end -}}
 		</span>
 		<!-- DCS Customizations -->
-			{{if or (StringHasSuffix $.Entry.Name ".yaml") (StringHasSuffix $.Entry.Name ".json")}}
-			<div class="fitted item">
-				{{template "repo/validation-badge" dict "file" $.Entry "root" $}}
-			</div>
-			{{end}}
+		{{template "dcs/view_content_validation" .}}
 		<!-- END DCS Customizations -->
 	{{end}}
 	</div>

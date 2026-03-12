@@ -127,5 +127,5 @@ prime/
 /.windsurfrules
 /.github/copilot-instructions.md
 /AGENT.md
-/CLAUDE.md
+# /CLAUDE.md # DCS Customizations: un-ignored to track DCS fork docs
 /llms.txt

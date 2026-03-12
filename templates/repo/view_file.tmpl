@@ -87,7 +87,7 @@
 				<a class="btn-octicon" data-tooltip-content="{{ctx.Locale.Tr "repo.editor.edit_this_file"}}" href="{{.RepoLink}}/_edit/{{PathEscapeSegments .BranchName}}/{{PathEscapeSegments .FileTreePath}}">{{svg "octicon-pencil"}}</a>
 			{{end}}
 			<!-- DCS Customizations -->
-			<span id="expand-view-button" class="btn-octicon" data-tooltip-content="{{ctx.Locale.Tr "repo.expand_view"}}">{{svg "octicon-screen-full" 16 "icon file-view-expand-full"}}{{svg "octicon-screen-normal" 16 "icon file-view-expand-normal tw-hidden"}}</span>
+			{{template "dcs/view_file_expand_button" .}}
 			<!-- END DCS Customizations -->
 		</div>
 	</h4>
@@ -154,33 +154,5 @@
 </div>
 
 <!-- DCS Customizations -->
-<script>
-const expandViewButton = document.querySelector('#expand-view-button');
-const expandTooltip = "{{ctx.Locale.Tr "repo.expand_view"}}";
-const compactTooltip = "{{ctx.Locale.Tr "repo.compact_view"}}";
-if (expandViewButton) {
-	const fullIcon = expandViewButton.querySelector('.file-view-expand-full');
-	const normalIcon = expandViewButton.querySelector('.file-view-expand-normal');
-	const container = expandViewButton.closest('.ui.container');
-	let isExpandedView = false;
-	if (container) {
-		isExpandedView = container.classList.contains('fluid') && container.classList.contains('padded');
-	}
-	expandViewButton.addEventListener('click', () => {
-		if (!container) return;
-		if (isExpandedView) {
-			container.classList.remove('fluid', 'padded');
-			expandViewButton.setAttribute('data-tooltip-content', expandTooltip);
-			if (normalIcon) normalIcon.classList.add('tw-hidden');
-			if (fullIcon) fullIcon.classList.remove('tw-hidden');
-		} else {
-			container.classList.add('fluid', 'padded');
-			expandViewButton.setAttribute('data-tooltip-content', compactTooltip);
-			if (fullIcon) fullIcon.classList.add('tw-hidden');
-			if (normalIcon) normalIcon.classList.remove('tw-hidden');
-		}
-		isExpandedView = !isExpandedView;
-	}, false);
-}
-</script>
+{{template "dcs/view_file_expand_script" .}}
 <!-- END DCS Customizations -->

@@ -210,10 +210,10 @@ type SearchRepoOptions struct {
 	Owners         []string              // DCS Customizations
 	Repos          []string              // DCS Customizations
 	Subjects       []string              // DCS Customizations
-	FlavorTypes    []string              // DCS Customizaitons
+	FlavorTypes    []string              // DCS Customizations
 	Flavors        []string              // DCS Customizations
 	Abbreviations  []string              // DCS Customizations
-	ContentFormats []string              // DCS Customization
+	ContentFormats []string              // DCS Customizations
 	Books          []string              // DCS Customizations
 	Languages      []string              // DCS Customizations
 	LanguageIsGL   optional.Option[bool] // DCS Customizations
@@ -652,7 +652,7 @@ func searchRepositoryByCondition(ctx context.Context, opts SearchRepoOptions, co
 		parts[i] = "`repository`." + part
 	}
 	orderBy = db.SearchOrderBy(strings.Join(parts, ", "))
-	/*** END DCS Customizaitons ***/
+	/*** END DCS Customizations ***/
 
 	args := make([]any, 0)
 	if opts.PriorityOwnerID > 0 {
@@ -671,7 +671,7 @@ func searchRepositoryByCondition(ctx context.Context, opts SearchRepoOptions, co
 	if opts.PageSize > 0 {
 		var err error
 		count, err = sess.
-			Join("INNER", "user", "`user`.id = `repository`.owner_id").                                                                                    // DCS Customizaitons - for owner search
+			Join("INNER", "user", "`user`.id = `repository`.owner_id").                                                                                    // DCS Customizations - for owner search
 			Join("LEFT", "door43_metadata", builder.Expr("`door43_metadata`.repo_id = `repository`.id AND `door43_metadata`.is_repo_metadata = ?", true)). // DCS Customizations
 			Where(cond).
 			Count(new(Repository))
@@ -681,7 +681,7 @@ func searchRepositoryByCondition(ctx context.Context, opts SearchRepoOptions, co
 	}
 
 	sess = sess.Where(cond).OrderBy(orderBy.String(), args...). // DCS Customizations - Adds .
-									Join("INNER", "user", "`user`.id = `repository`.owner_id").                                                                                   // DCS Customizaitons - for owner search
+									Join("INNER", "user", "`user`.id = `repository`.owner_id").                                                                                   // DCS Customizations - for owner search
 									Join("LEFT", "door43_metadata", builder.Expr("`door43_metadata`.repo_id = `repository`.id AND `door43_metadata`.is_repo_metadata = ?", true)) // DCS Customizations
 	if opts.PageSize > 0 {
 		sess = sess.Limit(opts.PageSize, (page-1)*opts.PageSize)
