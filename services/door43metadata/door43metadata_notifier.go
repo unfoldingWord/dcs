@@ -118,6 +118,7 @@ func (m *metadataNotifier) PushCommits(ctx context.Context, pusher *user_model.U
 func (m *metadataNotifier) SyncPushCommits(ctx context.Context, pusher *user_model.User, repo *repo_model.Repository, opts *repository.PushUpdateOptions, commits *repository.PushCommits) {
 	if opts.RefFullName.IsBranch() {
 		ref := opts.RefFullName.BranchName()
+		shutdownCtx := graceful.GetManager().ShutdownContext()
 		go func(ctx context.Context, repo *repo_model.Repository, ref string) {
 			select {
 			case <-ctx.Done():
@@ -128,7 +129,7 @@ func (m *metadataNotifier) SyncPushCommits(ctx context.Context, pusher *user_mod
 					log.Error("SyncPushCommits: ProcessDoor43MetadataForRepo failed [%s, %s]: %v", repo.FullName(), ref, err)
 				}
 			}
-		}(ctx, repo, ref)
+		}(shutdownCtx, repo, ref)
 	}
 }
 
@@ -145,6 +146,7 @@ func (m *metadataNotifier) SyncDeleteRepository(ctx context.Context, doer *user_
 }
 
 func (m *metadataNotifier) MigrateRepository(ctx context.Context, doer, u *user_model.User, repo *repo_model.Repository) {
+	shutdownCtx := graceful.GetManager().ShutdownContext()
 	go func(ctx context.Context, repo *repo_model.Repository) {
 		select {
 		case <-ctx.Done():
@@ -155,11 +157,12 @@ func (m *metadataNotifier) MigrateRepository(ctx context.Context, doer, u *user_
 				log.Error("MigrateRepository: ProcessDoor43MetadataForRepo failed [%s]: %v", repo.FullName(), err)
 			}
 		}
-	}(ctx, repo)
+	}(shutdownCtx, repo)
 }
 
 func (m *metadataNotifier) TransferRepository(ctx context.Context, doer *user_model.User, repo *repo_model.Repository, newOwnerName string) {
 	// Shouldn't really need if the repo is transfered as it keeps the same IDs, releases, etc, but just in case
+	shutdownCtx := graceful.GetManager().ShutdownContext()
 	go func(ctx context.Context, repo *repo_model.Repository) {
 		select {
 		case <-ctx.Done():
@@ -170,10 +173,11 @@ func (m *metadataNotifier) TransferRepository(ctx context.Context, doer *user_mo
 				log.Error("TransferRepository: ProcessDoor43MetadataForRepo failed [%s]: %v", repo.FullName(), err)
 			}
 		}
-	}(ctx, repo)
+	}(shutdownCtx, repo)
 }
 
 func (m *metadataNotifier) ForkRepository(ctx context.Context, doer *user_model.User, oldRepo, repo *repo_model.Repository) {
+	shutdownCtx := graceful.GetManager().ShutdownContext()
 	go func(ctx context.Context, repo *repo_model.Repository) {
 		select {
 		case <-ctx.Done():
@@ -184,11 +188,12 @@ func (m *metadataNotifier) ForkRepository(ctx context.Context, doer *user_model.
 				log.Error("ForkRepository: ProcessDoor43MetadataForRepo failed [%s]: %v", repo.FullName(), err)
 			}
 		}
-	}(ctx, repo)
+	}(shutdownCtx, repo)
 }
 
 func (m *metadataNotifier) RenameRepository(ctx context.Context, doer *user_model.User, repo *repo_model.Repository, oldName string) {
 	// Shouldn't really need if the repo is renamed as it keeps the same IDs, releases, etc, but just in case
+	shutdownCtx := graceful.GetManager().ShutdownContext()
 	go func(ctx context.Context, repo *repo_model.Repository) {
 		select {
 		case <-ctx.Done():
@@ -199,7 +204,7 @@ func (m *metadataNotifier) RenameRepository(ctx context.Context, doer *user_mode
 				log.Error("RenameRepository: ProcessDoor43MetadataForRepo failed [%s]: %v", repo.FullName(), err)
 			}
 		}
-	}(ctx, repo)
+	}(shutdownCtx, repo)
 }
 
 func (m *metadataNotifier) DeleteRef(ctx context.Context, doer *user_model.User, repo *repo_model.Repository, refFullName git.RefName) {
@@ -212,6 +217,7 @@ func (m *metadataNotifier) DeleteRef(ctx context.Context, doer *user_model.User,
 }
 
 func (m *metadataNotifier) ChangeDefaultBranch(ctx context.Context, repo *repo_model.Repository) {
+	shutdownCtx := graceful.GetManager().ShutdownContext()
 	go func(ctx context.Context, repo *repo_model.Repository) {
 		select {
 		case <-ctx.Done():
@@ -219,8 +225,8 @@ func (m *metadataNotifier) ChangeDefaultBranch(ctx context.Context, repo *repo_m
 			return
 		default:
 			if err := ProcessDoor43MetadataForRepo(ctx, repo, repo.DefaultBranch); err != nil {
-				log.Error("ChangeDefaultBranch: ProcessDoor43MetadataForRef failed [%s, %s]: %v", repo.FullName(), repo.DefaultBranch)
+				log.Error("ChangeDefaultBranch: ProcessDoor43MetadataForRef failed [%s, %s]: %v", repo.FullName(), repo.DefaultBranch, err)
 			}
 		}
-	}(ctx, repo)
+	}(shutdownCtx, repo)
 }
