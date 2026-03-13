@@ -1,11 +1,11 @@
 
 {{template "base/head" .}}
 {{$showSidebar := and (not .TreeNames) (not .HideRepoInfo) (not .IsBlame)}}
-<!-- DCS Customizaitons -->
+<!-- DCS Customizations -->
 {{if and .RepoDM (eq .RepoDM.Subject "Aligned Bible")}}
 <script src="{{AssetUrlPrefix}}/js-dcs/usfm-alignment-remover.js"></script>
 {{end}}
-<!-- END DCS Customizaitons -->
+<!-- END DCS Customizations -->
 <div role="main" aria-label="{{.Title}}" class="page-content repository file list {{if .IsBlame}}blame{{end}}">
 	{{template "repo/header" .}}
 	<div class="ui container {{if or .TreeNames .IsBlame}}fluid padded{{end}}">

@@ -62,7 +62,7 @@
 					<div class="field flex-text-block" id="attachment-{{.ID}}">
 						<div class="flex-text-inline tw-flex-1">
 							<!-- DCS Customizations -->
-							<input name="attachment-edit-{{.UUID}}" class="mr-3 attachment_edit" required value="{{.Name}}{{if .BrowserDownloadURL}}|{{.BrowserDownloadURL}}{{end}}"/>
+							{{template "dcs/release_new_extras" .}}
 							<!-- END DCS Customizations -->
 							<input name="attachment-edit-{{.UUID}}"  class="attachment_edit" required value="{{.Name}}">
 							<input name="attachment-del-{{.UUID}}" type="hidden" value="false">

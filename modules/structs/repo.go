@@ -119,37 +119,37 @@ type Repository struct {
 	Topics        []string      `json:"topics"`
 	Licenses      []string      `json:"licenses"`
 	// language from the manifest
-	MetadataType string `json:"metadata_type"` // DCS Customiations
+	MetadataType string `json:"metadata_type"` // DCS Customizations
 	// language from the manifest
-	MetadataVersion string `json:"metadata_version"` // DCS Customiations
+	MetadataVersion string `json:"metadata_version"` // DCS Customizations
 	// language from the manifest
-	Language string `json:"language"` // DCS Customiations
+	Language string `json:"language"` // DCS Customizations
 	// language title from the manifest
-	LanguageTitle string `json:"language_title"` // DCS Customiations
+	LanguageTitle string `json:"language_title"` // DCS Customizations
 	// language direction from the manifest
-	LanguageDir string `json:"language_direction"` // DCS Customiations
+	LanguageDir string `json:"language_direction"` // DCS Customizations
 	// is the language a GL
-	LanguageIsGL bool `json:"language_is_gl"` // DCS Customiations
+	LanguageIsGL bool `json:"language_is_gl"` // DCS Customizations
 	// subject from the manifest
-	Subject string `json:"subject"` // DCS Customiations
+	Subject string `json:"subject"` // DCS Customizations
 	// flavor type from the manifest
-	FlavorType string `json:"flavor_type"` // DCS Customiations
+	FlavorType string `json:"flavor_type"` // DCS Customizations
 	// flavor from the manifest
-	Flavor string `json:"flavor"` // DCS Customiations
+	Flavor string `json:"flavor"` // DCS Customizations
 	// abbreviation from the manifest
 	Abbreviation string `json:"abbreviation"` // DCS Customizations
 	// title from the manifest
-	Title string `json:"title"` // DCS Customiations
+	Title string `json:"title"` // DCS Customizations
 	// ingredients
-	Ingredients []*Ingredient `json:"ingredients"` // DCS Customizaitons
+	Ingredients []*Ingredient `json:"ingredients"` // DCS Customizations
 	// Relation
-	Relations []*Relation `json:"relations"` // DCS Customiations
+	Relations []*Relation `json:"relations"` // DCS Customizations
 	// checking level from the manifest
-	CheckingLevel int `json:"checking_level"` // DCS Customiations
+	CheckingLevel int `json:"checking_level"` // DCS Customizations
 	// latest catalog entry of each stage
-	CatalogStages *CatalogStages `json:"catalog"` // DCS Customiations
+	CatalogStages *CatalogStages `json:"catalog"` // DCS Customizations
 	// content format
-	ContentFormat string `json:"content_format"` // DCS Customizaitons
+	ContentFormat string `json:"content_format"` // DCS Customizations
 	// healthcheck severity
 	HealthcheckSeverity string `json:"healthcheck_severity"` // DCS Customizations
 	// healthcheck URL

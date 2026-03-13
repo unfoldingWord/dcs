@@ -86,7 +86,6 @@ import (
 	"code.gitea.io/gitea/modules/web"
 	"code.gitea.io/gitea/routers/api/v1/activitypub"
 	"code.gitea.io/gitea/routers/api/v1/admin"
-	"code.gitea.io/gitea/routers/api/v1/catalog"
 	"code.gitea.io/gitea/routers/api/v1/dcs"
 	"code.gitea.io/gitea/routers/api/v1/misc"
 	"code.gitea.io/gitea/routers/api/v1/notify"
@@ -1480,7 +1479,7 @@ func Routes() *web.Router {
 					m.Delete("", repo.DeleteAvatar)
 				}, reqAdmin(), reqToken())
 				/*** DCS Customizations ***/
-				m.Get("/healthcheck", repo.GetHealthcheck)
+				dcs.RegisterDCSRepoAPIRoutes(m)
 				/*** END DCS Customizations ***/
 
 				m.Methods("HEAD,GET", "/{ball_type:tarball|zipball|bundle}/*", reqRepoReader(unit.TypeCode), context.ReferencesGitRepo(true), repo.DownloadArchive)
@@ -1735,10 +1734,7 @@ func Routes() *web.Router {
 			m.Group("/users", func() {
 				m.Get("", admin.SearchUsers)
 				/*** DCS Customizations ***/
-				m.Group("/spam", func() {
-					m.Get("", admin.ListSpamUsers)
-					m.Delete("", admin.DeleteSpamUsers)
-				})
+				dcs.RegisterDCSAdminAPIRoutes(m)
 				/*** END DCS Customizations ***/
 				m.Post("", bind(api.CreateUserOption{}), admin.CreateUser)
 				m.Group("/{username}", func() {
@@ -1793,39 +1789,7 @@ func Routes() *web.Router {
 		}, tokenRequiresScopes(auth_model.AccessTokenScopeCategoryRepository))
 
 		/*** DCS Customizations ***/
-		m.Group("/languages", func() {
-			m.Get("/langnames.json", dcs.ServeLangnamesJSON)
-			m.Get("/langnames_keyed.json", dcs.ServeLangnamesJSONKeyed)
-		})
-		m.Group("/catalog", func() {
-			m.Get("", catalog.Search)
-			m.Group("/list", func() {
-				m.Get("/subjects", catalog.ListCatalogSubjects)
-				m.Get("/owners", catalog.ListCatalogOwners)
-				m.Get("/languages", catalog.ListCatalogLanguages)
-				m.Get("/metadata-types", catalog.ListCatalogMetadataTypes)
-			})
-			m.Group("/search", func() {
-				m.Get("", catalog.Search)
-				// The below are depricated
-				m.Group("/{username}", func() {
-					m.Get("", catalog.SearchOwner)
-					m.Group("/{reponame}", func() {
-						m.Get("", catalog.SearchRepo)
-					}, repoAssignment())
-				})
-			})
-			m.Group("", func() {
-				m.Group("/entry/{username}/{reponame}", func() {
-					m.Get("/{ref}/metadata", catalog.GetCatalogMetadataOLD) // DEPRICATED
-					m.Get("/*", catalog.GetCatalogEntry)
-				})
-				m.Get("/metadata/{username}/{reponame}/*", catalog.GetCatalogMetadata)
-				m.Get("/validation/{username}/{reponame}/*", catalog.GetCatalogValidation)
-				m.Get("/bp/{username}/{reponame}", reqRepoReader(unit.TypeCode), context.ReferencesGitRepo(), catalog.GetCatalogBookPackage)
-				m.Get("/bp/{username}/{reponame}/*", reqRepoReader(unit.TypeCode), context.ReferencesGitRepo(), catalog.GetCatalogBookPackage)
-			}, repoAssignment())
-		})
+		dcs.RegisterDCSAPIRoutes(m, repoAssignment, reqRepoReader)
 		/*** END DCS Customizations ***/
 	}, sudo())
 

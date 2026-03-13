@@ -117,9 +117,7 @@
 										<span class="tw-mx-2 tw-font-mono tw-whitespace-nowrap">{{ctx.Locale.Tr ($file.ModeTranslationKey $file.Mode)}}</span>
 									{{end}}
 									<!-- DCS Customizations -->
-									{{if $file.Entry}}
-										{{template "repo/validation-badge" dict "file" $file.Entry "root" $}}
-									{{end}}
+									{{template "dcs/diff_validation" dict "file" $file.Entry "root" $}}
 									<!-- END DCS Customizations -->									
 								</span>
 							</div>

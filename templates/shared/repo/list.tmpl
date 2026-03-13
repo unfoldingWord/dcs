@@ -34,53 +34,12 @@
 							{{end}}
 						</span>
 							<!-- DCS Customizations -->
-							{{if .RepoDM}}
-								{{if eq .RepoDM.MetadataType "rc"}}
-									{{template "shared/healthcheck_badge" (dict
-										"RepoLink" .Link
-										"Severity" .RepoDM.HealthcheckSeverity
-										"OwnerName" .OwnerName
-										"RepoName" .Name
-										"Ref" .RepoDM.Ref
-									)}}
-								{{end}}
-								{{if .LatestProdDM}}
-									<a href="{{.Link}}/releases/tag/{{.LatestProdDM.Ref | PathEscapeSegments}}" rel="nofollow">
-										<button class="ui green label compact icon button" data-tooltip-content="Catalog: Production" aria-label="Catalog: Production">
-											{{.LatestProdDM.Ref}}
-										</button>
-									</a>
-								{{end}}
-								{{if .LatestPreprodDM}}
-									<a href="{{.Link}}/releases/tag/{{.LatestPreprodDM.Ref | PathEscapeSegments}}" rel="nofollow">
-										<button class="ui orange label compact icon button" data-tooltip-content="Catalog: Pre-Production" aria-label="Catalog: Production">
-											{{.LatestPreprodDM.Ref}}
-										</button>
-									</a>
-								{{end}}
-							{{end}}
+							{{template "dcs/repo_list_badges" .}}
 							<!-- END DCS Customizations -->
 					</div>
 					<div class="flex-item-trailing">
 						<!-- DCS Customizations -->
-						{{if .RepoDM}}
-							{{if .RepoDM.Language}}
-							<a class="muted" href="{{$.Link}}?sort={{$.SortType}}&q=lang%3A{{.RepoDM.Language}}" data-tooltip-content="{{.RepoDM.LanguageTitle}} ({{.RepoDM.Language}}, {{.RepoDM.LanguageDirection}})">
-								<span class="tx-flex tw-items-center tw-mr-2"><i class="color-icon tw-mr-2" style="background-color: {{GetColorFromString .RepoDM.Language}}"></i>{{.RepoDM.Language}}</span>
-							</a>
-							{{end}}
-							{{if .RepoDM.Subject}}
-							<a class="muted" href="{{$.Link}}?sort={{$.SortType}}&q=subject%3A{{.RepoDM.Subject}}" data-tooltip-content="Abbreviation: {{.RepoDM.Abbreviation}}">
-								<span class="tx-flex tw-items-center tw-mr-2"><i class="color-icon tw-mr-2" style="background-color: {{GetColorFromString .RepoDM.Subject}}"></i>{{.RepoDM.Subject}}</span>
-							</a>
-							{{end}}
-							{{if and .RepoDM.MetadataType .RepoDM.MetadataVersion}}
-							<a class="muted" href="?sort={{$.SortType}}&q=metadata_type%3A{{.RepoDM.MetadataType}}" data-tooltip-content="{{ctx.Locale.Tr "repo.metadata.metadata_type"}}: {{.RepoDM.MetadataTypeTitle}} ({{.RepoDM.MetadataType}} {{.RepoDM.MetadataVersion}})">
-								<img src="{{AssetUrlPrefix}}/img/dcs/{{.RepoDM.MetadataTypeIcon}}" style="height:16px;vertical-align:middle" />
-									{{.RepoDM.MetadataType}} {{.RepoDM.MetadataVersion}}
-							</a>
-							{{end}}
-						{{end}}
+						{{template "dcs/repo_list_metadata" (dict "Repo" . "Link" $.Link "SortType" $.SortType)}}
 						<!-- END DCS Customizations -->
 						{{if not $.DisableStars}}
 							<a class="flex-text-inline" href="{{.Link}}/stars">

@@ -166,7 +166,7 @@ func prepareHomeSidebarLatestRelease(ctx *context.Context) {
 		return
 	}
 
-	release, err := repo_model.GetLatestReleaseByRepoID(ctx, ctx.Repo.Repository.ID, false, optional.None[bool]()) // DCS Customizaitons: Do not include prereleases
+	release, err := repo_model.GetLatestReleaseByRepoID(ctx, ctx.Repo.Repository.ID, false, optional.None[bool]()) // DCS Customizations: Do not include prereleases
 	if err != nil && !repo_model.IsErrReleaseNotExist(err) {
 		ctx.ServerError("GetLatestReleaseByRepoID", err)
 		return

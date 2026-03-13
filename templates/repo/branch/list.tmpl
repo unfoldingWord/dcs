@@ -1,9 +1,7 @@
 {{template "base/head" .}}
-<!-- DCS Customizaitons --->
-{{if and .RepoDM (eq .RepoDM.Subject "Aligned Bible")}}
-<script src="{{AssetUrlPrefix}}/js-dcs/usfm-alignment-remover.js"></script>
-{{end}}
-<!-- END DCS Customizaitons -->
+<!-- DCS Customizations --->
+{{template "dcs/branch_list_usfm_script" .}}
+<!-- END DCS Customizations -->
 <div role="main" aria-label="{{.Title}}" class="page-content ui repository branches">
 	{{template "repo/header" .}}
 	<div class="ui container">
@@ -72,9 +70,7 @@
 									</button>
 								{{end}}
 								<!-- DCS Customizations -->
-								{{if $.Repository.DefaultBranchDM}}
-									<a role="button" class="btn interact-bg tw-p-2" href="{{Door43PreviewURL}}/u/{{$.Repository.OwnerName}}/{{$.Repository.Name}}/{{PathEscapeSegments $.DefaultBranchBranch.DBBranch.Name}}{{if eq AppUrl "https://qa.door43.org/"}}?server=QA{{end}}{{if eq AppUrl "https://develop.door43.org/"}}?server=DEV{{end}}" target="_blank" rel="nofollow noopener" data-tooltip-content="{{ctx.Locale.Tr "preview"}} / PDF">{{svg "octicon-book"}}</a>
-								{{end}}
+								{{template "dcs/branch_list_default_preview" $}}
 								<!-- END DCS Customizations -->
 							</td>
 						</tr>
@@ -206,9 +202,7 @@
 									</button>
 								{{end}}
 								<!-- DCS Customizations -->
-								{{if $.RepoDM.ID}}
-									<a role="button" class="btn interact-bg tw-p-2" href="{{Door43PreviewURL}}/u/{{$.Repository.OwnerName}}/{{$.Repository.Name}}/{{PathEscapeSegments .DBBranch.Name}}{{if eq AppUrl "https://qa.door43.org/"}}?server=QA{{end}}{{if eq AppUrl "https://develop.door43.org/"}}?server=DEV{{end}}" target="_blank" rel="nofollow noopener" data-tooltip-content="{{ctx.Locale.Tr "preview"}} / PDF">{{svg "octicon-book"}}</a>
-								{{end}}
+								{{template "dcs/branch_list_row_preview" dict "Branch" . "root" $}}
 								<!-- END DCS Customizations -->
 								{{if and $.IsWriter (not $.IsMirror) (not $.Repository.IsArchived) (not .IsProtected)}}
 									{{if .DBBranch.IsDeleted}}
