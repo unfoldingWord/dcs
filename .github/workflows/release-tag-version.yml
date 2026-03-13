@@ -86,7 +86,7 @@ jobs:
       - run: git fetch --unshallow --quiet --tags --force
       - uses: docker/setup-qemu-action@v3
       - uses: docker/setup-buildx-action@v3
-      - uses: docker/metadata-action@v5
+      - uses: docker/metadata-action@v6
         id: meta
         with:
           images: |-
@@ -103,7 +103,7 @@ jobs:
             type=semver,pattern={{major}}.{{minor}}
           annotations: |
             org.opencontainers.image.authors="maintainers@gitea.io"
-      - uses: docker/metadata-action@v5
+      - uses: docker/metadata-action@v6
         id: meta_rootless
         with:
           images: |-
