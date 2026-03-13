@@ -54,7 +54,7 @@ func ToStringKeys(val any) (any, error) {
 	}
 }
 
-// GetColorFromString gets a hexidecimal number for a color based on string
+// GetColorFromString gets a hexadecimal number for a color based on string
 func GetColorFromString(str string) string {
 	hash := 0
 	for i := 0; i < len(str); i++ {

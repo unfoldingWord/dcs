@@ -1131,7 +1131,7 @@ func processDoor43MetadataForRepoRef(ctx context.Context, repo *repo_model.Repos
 	return
 }
 
-// UpdateUserMetadata updates the user table with their repo langauges, subjects and metadata types
+// UpdateUserMetadata updates the user table with their repo languages, subjects and metadata types
 func UpdateUserMetadata(ctx context.Context) error {
 	log.Trace("Doing: UpdateUserMetadata")
 
