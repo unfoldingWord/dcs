@@ -153,6 +153,12 @@ type User struct {
 	DiffViewStyle       string `xorm:"NOT NULL DEFAULT ''"`
 	Theme               string `xorm:"NOT NULL DEFAULT ''"`
 	KeepActivityPrivate bool   `xorm:"NOT NULL DEFAULT false"`
+
+	/*** DCS Customizations ***/
+	RepoLanguages     []string `xorm:"JSON TEXT"`
+	RepoSubjects      []string `xorm:"JSON TEXT"`
+	RepoMetadataTypes []string `xorm:"JSON TEXT"`
+	/*** END DCS Customizations ***/
 }
 
 // Meta defines the meta information of a user, to be stored in the K/V table
@@ -610,6 +616,12 @@ var (
 		"pulls",
 		"milestones",
 		"notifications",
+
+		/*** DCS Customizations ***/
+		"about",
+		"catalog",
+		"tools",
+		/*** END DCS Customizations ***/
 
 		"favicon.ico",
 		"manifest.json", // web app manifests

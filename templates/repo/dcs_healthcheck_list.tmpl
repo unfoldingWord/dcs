@@ -1,0 +1,43 @@
+{{if .Door43Metadata}}
+  {{$healthcheck := .Door43Metadata.GetHealthcheck ctx}}
+	{{if $healthcheck}}
+	<div class="ui list">
+	{{range $issueCode := $healthcheck.GetOrder}}
+		{{$issues := index $healthcheck.Issues $issueCode}}
+		<div class="ui item">
+			<div{{if $issues}} class="toggle show-panel" data-panel="#{{$issueCode}}"{{end}}>
+			{{if not $issues}}
+				<span style="color: green;">{{svg "octicon-shield-check" 16}}</span>
+			{{else}}
+				{{if eq ((index $issues 0).SeverityLevel.String) "error"}}
+					<span style="color: red;">{{svg "octicon-shield-x" 16}}</span>
+				{{else if eq ((index $issues 0).SeverityLevel.String) "warning"}}
+					<span style="color: orange;">{{svg "octicon-shield" 16}}</span>
+				{{else if eq ((index $issues 0).SeverityLevel.String) "info"}}
+					<span style="color: blue;">{{svg "octicon-shield-lock" 16}}</span>
+				{{end}}
+			{{end}}
+			{{$issueCode.IssuePositiveString}}
+			</div>
+			{{if $issues}}
+				<div class="ui list tw-hidden" id="{{$issueCode}}">
+					{{range $issue := $issues}}
+						<div class="status-item {{$issue.SeverityLevel}}">
+							<div class="item-text">
+								{{ctx.RenderUtils.MarkdownToHtml $issue.Details}}
+							</div>
+							{{if eq $.Door43Metadata.RefType "branch"}}
+								<div class="item-text">
+									{{ctx.RenderUtils.MarkdownToHtml $issue.Suggestion}}
+								</div>
+							{{end}}
+						</div>
+					{{end}}
+				</div>
+			{{end}}
+		</div>
+	{{end}}
+  </div>
+	{{end}}
+{{end}}
+

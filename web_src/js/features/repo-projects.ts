@@ -144,8 +144,11 @@ function initRepoProjectColumnEdit(writableProjectBoard: Element): void {
 }
 
 function initRepoProjectToggleFullScreen(): void {
-  const enterFullscreenBtn = document.querySelector('.screen-full');
-  const exitFullscreenBtn = document.querySelector('.screen-normal');
+  const projectView = document.querySelector('.projects-view');
+  if (!projectView) return;
+
+  const enterFullscreenBtn = projectView.querySelector('.screen-full');
+  const exitFullscreenBtn = projectView.querySelector('.screen-normal');
   if (!enterFullscreenBtn || !exitFullscreenBtn) return;
 
   const toggleFullscreenState = (isFullScreen: boolean) => {

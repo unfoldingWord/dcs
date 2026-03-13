@@ -121,6 +121,42 @@ type Repository struct {
 	RepoTransfer  *RepoTransfer `json:"repo_transfer,omitempty"`
 	Topics        []string      `json:"topics"`
 	Licenses      []string      `json:"licenses"`
+	/*** DCS Customizations ***/
+	// language from the manifest
+	MetadataType string `json:"metadata_type"`
+	// language from the manifest
+	MetadataVersion string `json:"metadata_version"`
+	// language title from the manifest
+	LanguageTitle string `json:"language_title"`
+	// language direction from the manifest
+	LanguageDir string `json:"language_direction"`
+	// is the language a GL
+	LanguageIsGL bool `json:"language_is_gl"`
+	// subject from the manifest
+	Subject string `json:"subject"`
+	// flavor type from the manifest
+	FlavorType string `json:"flavor_type"`
+	// flavor from the manifest
+	Flavor string `json:"flavor"`
+	// abbreviation from the manifest
+	Abbreviation string `json:"abbreviation"`
+	// title from the manifest
+	Title string `json:"title"`
+	// ingredients
+	Ingredients []*Ingredient `json:"ingredients"`
+	// Relation
+	Relations []*Relation `json:"relations"`
+	// checking level from the manifest
+	CheckingLevel int `json:"checking_level"`
+	// latest catalog entry of each stage
+	CatalogStages *CatalogStages `json:"catalog"`
+	// content format
+	ContentFormat string `json:"content_format"`
+	// healthcheck severity
+	HealthcheckSeverity string `json:"healthcheck_severity"`
+	// healthcheck URL
+	HealthcheckURL string `json:"healthcheck_url"`
+	/*** END DCS Customizations ***/
 }
 
 // CreateRepoOption options when creating repository
@@ -282,6 +318,29 @@ type CreateBranchRepoOption struct {
 	//
 	// unique: true
 	OldRefName string `json:"old_ref_name" binding:"GitRefName;MaxSize(100)"`
+}
+
+// CreateGitRefOption options when creating a git ref in a repository
+// swagger:model
+type CreateGitRefOption struct {
+	// The name of the reference.
+	//
+	// required: true
+	RefName string `json:"ref" binding:"Required;GitRefName;MaxSize(100)"`
+
+	// The target commitish for this reference.
+	//
+	// required: true
+	Target string `json:"target" binding:"Required"`
+}
+
+// UpdateGitRefOption options when updating a git ref in a repository
+// swagger:model
+type UpdateGitRefOption struct {
+	// The target commitish for the reference to be updated to.
+	//
+	// required: true
+	Target string `json:"target" binding:"Required"`
 }
 
 // RenameBranchRepoOption options when renaming a branch in a repository

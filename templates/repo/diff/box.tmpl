@@ -110,6 +110,9 @@
 								{{if $entryModeText}}
 									<span class="ui label">{{$entryModeText}}</span>
 								{{end}}
+								<!-- DCS Customizations -->
+								{{template "dcs/diff_validation" dict "file" $file.Entry "root" $}}
+								<!-- END DCS Customizations -->
 							</div>
 							<div class="diff-file-header-actions flex-text-block tw-justify-end tw-flex-wrap">
 								{{if $file.IsBin}}

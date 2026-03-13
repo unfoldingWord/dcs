@@ -91,6 +91,9 @@ type PullRequest struct {
 
 	// The pin order for the pull request
 	PinOrder int `json:"pin_order"`
+
+	Status          string   `json:"status"`           // DCS Customizations
+	ConflictedFiles []string `json:"conflicted_files"` // DCS Customizations
 }
 
 // PRBranchInfo information about a branch

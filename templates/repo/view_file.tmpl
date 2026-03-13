@@ -86,6 +86,9 @@
 			{{if and .ReadmeInList .CanEditReadmeFile}}
 				<a class="btn-octicon" data-tooltip-content="{{ctx.Locale.Tr "repo.editor.edit_this_file"}}" href="{{.RepoLink}}/_edit/{{PathEscapeSegments .BranchName}}/{{PathEscapeSegments .FileTreePath}}">{{svg "octicon-pencil"}}</a>
 			{{end}}
+			<!-- DCS Customizations -->
+			{{template "dcs/view_file_expand_button" .}}
+			<!-- END DCS Customizations -->
 		</div>
 	</h4>
 
@@ -93,7 +96,7 @@
 		{{if not .IsMarkup}}
 			{{template "repo/unicode_escape_prompt" dict "EscapeStatus" .EscapeStatus}}
 		{{end}}
-		<div class="file-view {{if .IsMarkup}}markup {{.MarkupType}}{{else if .IsPlainText}}plain-text{{else if .IsDisplayingSource}}code-view{{end}}">
+		<div class="file-view {{if .IsMarkup}}markup {{.MarkupType}}{{else if .IsPlainText}}plain-text{{else if .IsTextSource}}code-view{{end}}{{if .IsTocYaml}}markdown yaml{{end}}" data-language="{{.RepoDM.Language}}" data-language-direction="{{if not .IgnoreLanguageDirection}}{{.RepoDM.LanguageDirection}}{{else}}ltr{{end}}">
 			{{if .IsFileTooLarge}}
 				{{template "shared/filetoolarge" dict "RawFileLink" .RawFileLink}}
 			{{else if not .FileSize}}
@@ -149,3 +152,7 @@
 		</div>
 	</div>
 </div>
+
+<!-- DCS Customizations -->
+{{template "dcs/view_file_expand_script" .}}
+<!-- END DCS Customizations -->

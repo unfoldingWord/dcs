@@ -1,0 +1,1561 @@
+// Copyright 2020 The Gitea Authors. All rights reserved.
+// SPDX-License-Identifier: MIT
+
+package catalog
+
+import (
+	"fmt"
+	"net/http"
+	"net/url"
+	"path"
+	"strings"
+	"time"
+
+	"code.gitea.io/gitea/models"
+	"code.gitea.io/gitea/models/db"
+	"code.gitea.io/gitea/models/door43metadata"
+	access_model "code.gitea.io/gitea/models/perm/access"
+	"code.gitea.io/gitea/models/repo"
+	user_model "code.gitea.io/gitea/models/user"
+	"code.gitea.io/gitea/modules/dcs"
+	"code.gitea.io/gitea/modules/log"
+	"code.gitea.io/gitea/modules/setting"
+	api "code.gitea.io/gitea/modules/structs"
+	"code.gitea.io/gitea/services/context"
+	"code.gitea.io/gitea/services/convert"
+)
+
+var searchOrderByMap = map[string]map[string]door43metadata.CatalogOrderBy{
+	"asc": {
+		"title":        door43metadata.CatalogOrderByTitle,
+		"subject":      door43metadata.CatalogOrderBySubject,
+		"flavortype":   door43metadata.CatalogOrderByFlavorType,
+		"flavor":       door43metadata.CatalogOrderByFlavor,
+		"abbreviation": door43metadata.CatalogOrderByAbbreviation,
+		"reponame":     door43metadata.CatalogOrderByRepoName,
+		"released":     door43metadata.CatalogOrderByOldest,
+		"lang":         door43metadata.CatalogOrderByLangCode,
+		"releases":     door43metadata.CatalogOrderByReleases,
+		"stars":        door43metadata.CatalogOrderByStars,
+		"forks":        door43metadata.CatalogOrderByForks,
+		"tag":          door43metadata.CatalogOrderByTag,
+	},
+	"desc": {
+		"title":        door43metadata.CatalogOrderByTitleReverse,
+		"subject":      door43metadata.CatalogOrderBySubjectReverse,
+		"flavortype":   door43metadata.CatalogOrderByFlavorType,
+		"flavor":       door43metadata.CatalogOrderByFlavor,
+		"abbreviation": door43metadata.CatalogOrderByAbbreviationReverse,
+		"reponame":     door43metadata.CatalogOrderByRepoNameReverse,
+		"released":     door43metadata.CatalogOrderByNewest,
+		"lang":         door43metadata.CatalogOrderByLangCodeReverse,
+		"releases":     door43metadata.CatalogOrderByReleasesReverse,
+		"stars":        door43metadata.CatalogOrderByStarsReverse,
+		"forks":        door43metadata.CatalogOrderByForksReverse,
+		"tag":          door43metadata.CatalogOrderByTagReverse,
+	},
+}
+
+var bibleBPSubjects = []string{"Aligned Bible", "Hebrew Old Testament", "Greek New Testament", "TSV Translation Notes", "TSV Translation Questions", "TSV Translation Words Links", "Translation Academy", "Translation Words"}
+var obsBPSubjects = []string{"Open Bible Stories", "TSV OBS Translation Notes", "TSV OBS Translation Questions", "TSV OBS Translation Words Links", "Translation Academy", "Translation Words"}
+
+// Search search the catalog via options
+func Search(ctx *context.APIContext) {
+	// swagger:operation GET /catalog/search catalog catalogSearch
+	// ---
+	// summary: Search the catalog
+	// produces:
+	// - application/json
+	// parameters:
+	// - name: q
+	//   in: query
+	//   description: keyword(s). Can use multiple `q=<keyword>`s or a comma-delimited string for more than one keyword. Is case insensitive
+	//   type: string
+	// - name: owner
+	//   in: query
+	//   description: search only for entries with the given owner name(s). Will perform an exact match (case insensitive) unlesss partialMatch=true
+	//   type: string
+	// - name: repo
+	//   in: query
+	//   description: search only for entries with the given repo name(s). To match multiple, give the parameter multiple times or give a list comma delimited. Will perform an exact match (case insensitive) unlesss partialMatch=true
+	//   type: string
+	// - name: tag
+	//   in: query
+	//   description: search only for entries with the given release tag(s). To match multiple, give the parameter multiple times or give a list comma delimited. Will perform an exact match (case insensitive)
+	//   type: string
+	// - name: lang
+	//   in: query
+	//   description: search only for entries with the given language(s). To match multiple, give the parameter multiple times or give a list comma delimited. Will perform an exact match (case insensitive) unlesss partialMatch=true
+	//   type: array
+	//   collectionFormat: multi
+	//   items:
+	//     type: string
+	// - name: is_gl
+	//   in: query
+	//   description: list only those that are (true) or are not (false) a gatetway language
+	//   type: boolean
+	// - name: stage
+	//   in: query
+	//   description: 'list only those of the given stage or lower, with low to high being:
+	//                "prod" - return only those of production releases (default);
+	//                "preprod" - return only those of all (production & pre-production) releases;
+	//                "latest" - return only those of all releases and the default branch;
+	//                "branch" - return all those in the catalog for all branches'
+	//   type: array
+	//   collectionFormat: multi
+	//   items:
+	//     type: string
+	//     enum: [prod,preprod,latest,other]
+	// - name: subject
+	//   in: query
+	//   description: resource subject. Multiple values are ORed.
+	//   type: array
+	//   collectionFormat: multi
+	//   items:
+	//     type: string
+	// - name: flavorType
+	//   in: query
+	//   description: resource flavorType. Multiple values are ORed.
+	//   type: array
+	//   collectionFormat: multi
+	//   items:
+	//     type: string
+	// - name: flavor
+	//   in: query
+	//   description: resource flavor. Multiple values are ORed.
+	//   type: array
+	//   collectionFormat: multi
+	//   items:
+	//     type: string
+	// - name: abbreviation
+	//   in: query
+	//   description: resource abbreviation (identifier). Multiple values are ORed.
+	//   type: array
+	//   collectionFormat: multi
+	//   items:
+	//     type: string
+	// - name: format
+	//   in: query
+	//   description: content format (usfm, text, markdown, etc.). Multiple values are ORed.
+	//   type: array
+	//   collectionFormat: multi
+	//   items:
+	//     type: string
+	// - name: checkingLevel
+	//   in: query
+	//   description: checking level. Returns items with a checking level equal or greater than the number given
+	//   type: array
+	//   collectionFormat: multi
+	//   items:
+	//     type: string
+	//     enum: ["1","2","3"]
+	// - name: book
+	//   in: query
+	//   description: book (ingredient identifier). Multiple values are ORed
+	//   type: array
+	//   collectionFormat: multi
+	//   items:
+	//     type: string
+	// - name: metadataType
+	//   in: query
+	//   description: metadata type. Multiple values are ORed
+	//   type: array
+	//   collectionFormat: multi
+	//   items:
+	//     type: string
+	//     enum: [rc,sb,tc,ts]
+	// - name: metadataVersion
+	//   in: query
+	//   description: metadata version. Does not apply if metadataType is not given. Multiple values are ORed
+	//   type: array
+	//   collectionFormat: multi
+	//   items:
+	//     type: string
+	// - name: topic
+	//   in: query
+	//   description: topic of a repo. Multiple values are ORed.
+	//   type: array
+	//   collectionFormat: multi
+	//   items:
+	//     type: string
+	// - name: withoutTopic
+	//   in: query
+	//   description: Entries with a repository without this topic will be returned. Multiple values are ANDed.
+	//   type: array
+	//   collectionFormat: multi
+	//   items:
+	//     type: string
+	// - name: partialMatch
+	//   in: query
+	//   description: if true, subject, owner and repo search fields will use partial match (LIKE) when querying the catalog, default is false
+	//   type: boolean
+	// - name: includeHistory
+	//   in: query
+	//   description: if true, all releases, not just the latest, are included, default is false
+	//   type: boolean
+	// - name: showIngredients
+	//   in: query
+	//   description: if true, the list of ingredients (files/projects) in the resource and their file paths will be listed for each entry, default is true
+	//   type: boolean
+	// - name: sort
+	//   in: query
+	//   description: sort repos alphanumerically by attribute. Supported values are
+	//                "subject", "title", "reponame", "tag", "released", "lang", "releases", "stars", "forks".
+	//                Default is by "language", "subject" and then "tag"
+	//   type: string
+	// - name: order
+	//   in: query
+	//   description: sort order, either "asc" (ascending) or "desc" (descending).
+	//                Default is "asc", ignored if "sort" is not specified.
+	//   type: string
+	// - name: page
+	//   in: query
+	//   description: page number of results to return (1-based)
+	//   type: integer
+	// - name: limit
+	//   in: query
+	//   description: page size of results, defaults to no limit
+	//   type: integer
+	// responses:
+	//   "200":
+	//     "$ref": "#/responses/CatalogSearchResults"
+	//   "422":
+	//     "$ref": "#/responses/validationError"
+
+	searchCatalog(ctx)
+}
+
+// SearchOwner  redirects to /catalog/search with owner as param - DEPRICATED!
+func SearchOwner(ctx *context.APIContext) {
+	pathParts := strings.Split(strings.TrimSuffix(ctx.Req.URL.EscapedPath(), "/"), "/")
+	redirectPath := strings.Join(pathParts[:len(pathParts)-1], "/")
+	redirectPath += "?owner=" + url.QueryEscape(ctx.PathParam("username"))
+	if ctx.Req.URL.RawQuery != "" {
+		redirectPath += "&" + ctx.Req.URL.RawQuery
+	}
+	ctx.Redirect(path.Join(setting.AppSubURL, redirectPath), http.StatusPermanentRedirect)
+}
+
+// SearchRepo redirects to /catalog/search with owner and repo as params - DEPRICATED!
+func SearchRepo(ctx *context.APIContext) {
+	pathParts := strings.Split(strings.TrimSuffix(ctx.Req.URL.EscapedPath(), "/"), "/")
+	redirectPath := strings.Join(pathParts[:len(pathParts)-2], "/")
+	redirectPath += "?owner=" + url.QueryEscape(ctx.Repo.Repository.OwnerName) + "&repo=" + url.QueryEscape(ctx.Repo.Repository.LowerName)
+	if ctx.Req.URL.RawQuery != "" {
+		redirectPath += "&" + ctx.Req.URL.RawQuery
+	}
+	ctx.Redirect(path.Join(setting.AppSubURL, redirectPath), http.StatusPermanentRedirect)
+}
+
+// ListCatalogSubjects list the subjects available in the catalog
+func ListCatalogSubjects(ctx *context.APIContext) {
+	// swagger:operation GET /catalog/list/subjects catalog catalogListSubjects
+	// ---
+	// summary: List of subjects in the catalog based on the given criteria
+	// produces:
+	// - application/json
+	// parameters:
+	// - name: owner
+	//   in: query
+	//   description: list only those for the given owner(s). To match multiple, give the parameter multiple times or give a list comma delimited.
+	//   type: string
+	// - name: repo
+	//   in: query
+	//   description: list only those for the given repo(s). To match multiple, give the parameter multiple times or give a list comma delimited.
+	//   type: string
+	// - name: lang
+	//   in: query
+	//   description: list only those for the given language(s). To match multiple, give the parameter multiple times or give a list comma delimited. Will perform an exact match (case insensitive) unlesss partialMatch=true
+	//   type: array
+	//   collectionFormat: multi
+	//   items:
+	//     type: string
+	// - name: is_gl
+	//   in: query
+	//   description: list only those that are (true) or are not (false) a gatetway language
+	//   type: boolean
+	// - name: stage
+	//   in: query
+	//   description: 'list only those of the given stage or lower, with low to high being:
+	//                "prod" - return only those of production releases (default);
+	//                "preprod" - return only those of all (production & pre-production) releases;
+	//                "latest" - return only those of all releases and the default branch;
+	//                "other" - return all, including other branches and tags [aliases: "branch", "tag"]'
+	//   type: array
+	//   collectionFormat: multi
+	//   items:
+	//     type: string
+	//     enum: [prod,preprod,latest,other]
+	// - name: subject
+	//   in: query
+	//   description: resource subject. Multiple values are ORed.
+	//   type: array
+	//   collectionFormat: multi
+	//   items:
+	//     type: string
+	// - name: flavorType
+	//   in: query
+	//   description: resource flavorType. Multiple values are ORed.
+	//   type: array
+	//   collectionFormat: multi
+	//   items:
+	//     type: string
+	// - name: flavor
+	//   in: query
+	//   description: resource flavor. Multiple values are ORed.
+	//   type: array
+	//   collectionFormat: multi
+	//   items:
+	//     type: string
+	// - name: abbreviation
+	//   in: query
+	//   description: resource abbreviation (identifier). Multiple values are ORed.
+	//   type: array
+	//   collectionFormat: multi
+	//   items:
+	//     type: string
+	// - name: format
+	//   in: query
+	//   description: content format (usfm, text, markdown, etc.). Multiple values are ORed.
+	//   type: array
+	//   collectionFormat: multi
+	//   items:
+	//     type: string
+	// - name: checkingLevel
+	//   in: query
+	//   description: checking level. Returns items with a checking level equal or greater than the number given
+	//   type: array
+	//   collectionFormat: multi
+	//   items:
+	//     type: string
+	//     enum: ["1","2","3"]
+	// - name: book
+	//   in: query
+	//   description: book (ingredient identifier). Multiple values are ORed
+	//   type: array
+	//   collectionFormat: multi
+	//   items:
+	//     type: string
+	// - name: metadataType
+	//   in: query
+	//   description: metadata type. Multiple values are ORed
+	//   type: array
+	//   collectionFormat: multi
+	//   items:
+	//     type: string
+	//     enum: [rc,sb,tc,ts]
+	// - name: metadataVersion
+	//   in: query
+	//   description: metadata version. Does not apply if metadataType is not given. Multiple values are ORed
+	//   type: array
+	//   collectionFormat: multi
+	//   items:
+	//     type: string
+	// - name: topic
+	//   in: query
+	//   description: topic of a repo. Multiple values are ORed. If a repo of this topic has a catalog entry, its subject will be listed.
+	//   type: array
+	//   collectionFormat: multi
+	//   items:
+	//     type: string
+	// - name: withoutTopic
+	//   in: query
+	//   description: Entries with a repository without this topic will be returned. Multiple values are ANDed.
+	//   type: array
+	//   collectionFormat: multi
+	//   items:
+	//     type: string
+	// responses:
+	//   "200":
+	//     description: "SearchResults of a successful catalog owner search"
+	//     schema:
+	//       type: object
+	//       properties:
+	//         ok:
+	//           type: boolean
+	//         data:
+	//           type: array
+	//           items:
+	//             "$ref": "#/responses/StringSlice"
+
+	list, err := getSingleDMFieldList(ctx, "`door43_metadata`.subject")
+	if err != nil {
+		ctx.JSON(http.StatusUnprocessableEntity, map[string]any{
+			"ok":    false,
+			"error": err.Error(),
+		})
+	}
+	ctx.RespHeader().Set("X-Total-Count", fmt.Sprintf("%d", len(list)))
+	ctx.JSON(http.StatusOK, map[string]any{
+		"ok":   true,
+		"data": list,
+	})
+}
+
+// ListCatalogMetadataTypes list the metadata types available in the catalog
+func ListCatalogMetadataTypes(ctx *context.APIContext) {
+	// swagger:operation GET /catalog/list/metadata-types catalog catalogListMetadataTypes
+	// ---
+	// summary: List of metadata types in the catalog based on the given criteria
+	// produces:
+	// - application/json
+	// parameters:
+	// - name: owner
+	//   in: query
+	//   description: list only those in the given owner(s). To match multiple, give the parameter multiple times or give a list comma delimited.
+	//   type: string
+	// - name: repo
+	//   in: query
+	//   description: list only those for the given repo(s). To match multiple, give the parameter multiple times or give a list comma delimited.
+	//   type: string
+	// - name: lang
+	//   in: query
+	//   description: list only those in the given language(s). To match multiple, give the parameter multiple times or give a list comma delimited. Will perform an exact match (case insensitive) unlesss partialMatch=true
+	//   type: array
+	//   collectionFormat: multi
+	//   items:
+	//     type: string
+	// - name: is_gl
+	//   in: query
+	//   description: list only those that are (true) or are not (false) a gatetway language
+	//   type: boolean
+	// - name: stage
+	//   in: query
+	//   description: 'list only those of the given stage or lower, with low to high being:
+	//                "prod" - return only those of production releases (default);
+	//                "preprod" - return only those of all (production & pre-production) releases;
+	//                "latest" - return only those of all releases and the default branch;
+	//                "other" - return all, including other branches and tags [aliases: "branch", "tag"]'
+	//   type: array
+	//   collectionFormat: multi
+	//   items:
+	//     type: string
+	//     enum: [prod,preprod,latest,other]
+	// - name: subject
+	//   in: query
+	//   description: resource subject. Multiple values are ORed.
+	//   type: array
+	//   collectionFormat: multi
+	//   items:
+	//     type: string
+	// - name: flavorType
+	//   in: query
+	//   description: resource flavorType. Multiple values are ORed.
+	//   type: array
+	//   collectionFormat: multi
+	//   items:
+	//     type: string
+	// - name: flavor
+	//   in: query
+	//   description: resource flavor. Multiple values are ORed.
+	//   type: array
+	//   collectionFormat: multi
+	//   items:
+	//     type: string
+	// - name: abbreviation
+	//   in: query
+	//   description: resource abbreviation (identifier). Multiple values are ORed.
+	//   type: array
+	//   collectionFormat: multi
+	//   items:
+	//     type: string
+	// - name: format
+	//   in: query
+	//   description: content format (usfm, text, markdown, etc.). Multiple values are ORed.
+	//   type: array
+	//   collectionFormat: multi
+	//   items:
+	//     type: string
+	// - name: checkingLevel
+	//   in: query
+	//   description: checking level. Returns items with a checking level equal or greater than the number given
+	//   type: array
+	//   collectionFormat: multi
+	//   items:
+	//     type: string
+	//     enum: ["1","2","3"]
+	// - name: book
+	//   in: query
+	//   description: book (ingredient identifier). Multiple values are ORed
+	//   type: array
+	//   collectionFormat: multi
+	//   items:
+	//     type: string
+	// - name: metadataType
+	//   in: query
+	//   description: metadata type. Multiple values are ORed
+	//   type: array
+	//   collectionFormat: multi
+	//   items:
+	//     type: string
+	//     enum: [rc,sb,tc,ts]
+	// - name: metadataVersion
+	//   in: query
+	//   description: metadata version. Does not apply if metadataType is not given. Multiple values are ORed
+	//   type: array
+	//   collectionFormat: multi
+	//   items:
+	//     type: string
+	// - name: topic
+	//   in: query
+	//   description: topic of a repo. Multiple values are ORed. If a repo of this topic has a catalog entry, its metadata type will be listed.
+	//   type: array
+	//   collectionFormat: multi
+	//   items:
+	//     type: string
+	// - name: withoutTopic
+	//   in: query
+	//   description: Entries with a repository without this topic will be returned. Multiple values are ANDed.
+	//   type: array
+	//   collectionFormat: multi
+	//   items:
+	//     type: string
+	// responses:
+	//   "200":
+	//     description: "SearchResults of a successful catalog owner search"
+	//     schema:
+	//       type: object
+	//       properties:
+	//         ok:
+	//           type: boolean
+	//         data:
+	//           type: array
+	//           items:
+	//             "$ref": "#/responses/StringSlice"
+
+	list, err := getSingleDMFieldList(ctx, "`door43_metadata`.metadata_type")
+	if err != nil {
+		ctx.JSON(http.StatusUnprocessableEntity, map[string]any{
+			"ok":    false,
+			"error": err.Error(),
+		})
+	}
+	ctx.RespHeader().Set("X-Total-Count", fmt.Sprintf("%d", len(list)))
+	ctx.JSON(http.StatusOK, map[string]any{
+		"ok":   true,
+		"data": list,
+	})
+}
+
+// ListCatalogOwners list the owners available in the catalog
+func ListCatalogOwners(ctx *context.APIContext) {
+	// swagger:operation GET /catalog/list/owners catalog catalogListOwners
+	// ---
+	// summary: List owners in the catalog based on the given criteria
+	// produces:
+	// - application/json
+	// parameters:
+	// - name: owner
+	//   in: query
+	//   description: list only the given owners(s) if they have entries in the catalog meeting the criteria given (e.g. way to test an owner has a given language or subject)
+	//   type: string
+	// - name: repo
+	//   in: query
+	//   description: list only those with the given repo(s). To match multiple, give the parameter multiple times or give a list comma delimited.
+	//   type: string
+	// - name: lang
+	//   in: query
+	//   description: list only those with entries in the given language(s). To match multiple, give the parameter multiple times or give a list comma delimited. Will perform an exact match (case insensitive) unlesss partialMatch=true
+	//   type: array
+	//   collectionFormat: multi
+	//   items:
+	//     type: string
+	// - name: is_gl
+	//   in: query
+	//   description: list only those that are (true) or are not (false) a gatetway language
+	//   type: boolean
+	// - name: stage
+	//   in: query
+	//   description: 'list only those of the given stage or lower, with low to high being:
+	//                "prod" - return only those of production releases (default);
+	//                "preprod" - return only those of all (production & pre-production) releases;
+	//                "latest" - return only those of all releases and the default branch;
+	//                "other" - return all, including other branches and tags [aliases: "branch", "tag"]'
+	//   type: array
+	//   collectionFormat: multi
+	//   items:
+	//     type: string
+	//     enum: [prod,preprod,latest,other]
+	// - name: subject
+	//   in: query
+	//   description: resource subject. Multiple values are ORed.
+	//   type: array
+	//   collectionFormat: multi
+	//   items:
+	//     type: string
+	// - name: flavorType
+	//   in: query
+	//   description: resource flavorType. Multiple values are ORed.
+	//   type: array
+	//   collectionFormat: multi
+	//   items:
+	//     type: string
+	// - name: flavor
+	//   in: query
+	//   description: resource flavor. Multiple values are ORed.
+	//   type: array
+	//   collectionFormat: multi
+	//   items:
+	//     type: string
+	// - name: abbreviation
+	//   in: query
+	//   description: resource abbreviation (identifier). Multiple values are ORed.
+	//   type: array
+	//   collectionFormat: multi
+	//   items:
+	//     type: string
+	// - name: format
+	//   in: query
+	//   description: content format (usfm, text, markdown, etc.). Multiple values are ORed.
+	//   type: array
+	//   collectionFormat: multi
+	//   items:
+	//     type: string
+	// - name: checkingLevel
+	//   in: query
+	//   description: checking level. Returns items with a checking level equal or greater than the number given
+	//   type: array
+	//   collectionFormat: multi
+	//   items:
+	//     type: string
+	//     enum: ["1","2","3"]
+	// - name: book
+	//   in: query
+	//   description: book (ingredient identifier). Multiple values are ORed
+	//   type: array
+	//   collectionFormat: multi
+	//   items:
+	//     type: string
+	// - name: metadataType
+	//   in: query
+	//   description: metadata type. Multiple values are ORed
+	//   type: array
+	//   collectionFormat: multi
+	//   items:
+	//     type: string
+	//     enum: [rc,sb,tc,ts]
+	// - name: metadataVersion
+	//   in: query
+	//   description: metadata version. Does not apply if metadataType is not given. Multiple values are ORed
+	//   type: array
+	//   collectionFormat: multi
+	//   items:
+	//     type: string
+	// - name: partialMatch
+	//   in: query
+	//   description: If true, many of the above fields will do a partial match, allowing characters to come before or after your given value, default is false
+	//   type: boolean
+	// - name: topic
+	//   in: query
+	//   description: topic of a repo. Multiple values are ORed. If a repo of this topic has a catalog entry, its owner will be listed.
+	//   type: array
+	//   collectionFormat: multi
+	//   items:
+	//     type: string
+	// - name: withoutTopic
+	//   in: query
+	//   description: Entries with a repository without this topic will be returned. Multiple values are ANDed.
+	//   type: array
+	//   collectionFormat: multi
+	//   items:
+	//     type: string
+	// responses:
+	//   "200":
+	//     description: "SearchResults of a successful catalog owner search"
+	//     schema:
+	//       type: object
+	//       properties:
+	//         ok:
+	//           type: boolean
+	//         data:
+	//           type: array
+	//           items:
+	//             "$ref": "#/responses/UserList"
+
+	list, err := getSingleDMFieldList(ctx, "`user`.name")
+	if err != nil {
+		ctx.JSON(http.StatusUnprocessableEntity, map[string]any{
+			"ok":    false,
+			"error": err.Error(),
+		})
+	}
+	var users []*api.User
+	for _, name := range list {
+		user, err := user_model.GetUserByName(ctx, name)
+		if err != nil {
+			log.Error("unable to get user [%s]: %v", name, err)
+		}
+		users = append(users, convert.ToUser(ctx, user, ctx.Doer))
+	}
+	ctx.RespHeader().Set("X-Total-Count", fmt.Sprintf("%d", len(users)))
+	ctx.JSON(http.StatusOK, map[string]any{
+		"ok":   true,
+		"data": users,
+	})
+}
+
+// ListCatalogLanguages list the languages available in the catalog
+func ListCatalogLanguages(ctx *context.APIContext) {
+	// swagger:operation GET /catalog/list/languages catalog catalogListLanguages
+	// ---
+	// summary: List languages in the catalog based on the given criteria
+	// produces:
+	// - application/json
+	// parameters:
+	// - name: owner
+	//   in: query
+	//   description: list only those with the given owners(s). To match multiple, give the parameter multiple times or give a list comma delimited. Will perform an exact match (case insensitive) unlesss partialMatch=true
+	//   type: string
+	// - name: repo
+	//   in: query
+	//   description: list only those for the given repo(s). To match multiple, give the parameter multiple times or give a list comma delimited.
+	//   type: string
+	// - name: lang
+	//   in: query
+	//   description: list only the given languages(s) if they have entries in the catalog meeting the criteria given (e.g. way to test an language has a given owner and/or subject)
+	//   type: array
+	//   collectionFormat: multi
+	//   items:
+	//     type: string
+	// - name: is_gl
+	//   in: query
+	//   description: list only those that are (true) or are not (false) a gatetway language
+	//   type: boolean
+	// - name: stage
+	//   in: query
+	//   description: 'list only those of the given stage or lower, with low to high being:
+	//                "prod" - return only those of production releases (default);
+	//                "preprod" - return only those of all (production & pre-production) releases;
+	//                "latest" - return only those of all releases and the default branch;
+	//                "other" - return all, including other branches and tags [aliases: "branch", "tag"]'
+	//   type: array
+	//   collectionFormat: multi
+	//   items:
+	//     type: string
+	//     enum: [prod,preprod,latest,other]
+	// - name: subject
+	//   in: query
+	//   description: resource subject. Multiple values are ORed.
+	//   type: array
+	//   collectionFormat: multi
+	//   items:
+	//     type: string
+	// - name: flavorType
+	//   in: query
+	//   description: resource flavorType. Multiple values are ORed.
+	//   type: array
+	//   collectionFormat: multi
+	//   items:
+	//     type: string
+	// - name: flavor
+	//   in: query
+	//   description: resource flavor. Multiple values are ORed.
+	//   type: array
+	//   collectionFormat: multi
+	//   items:
+	//     type: string
+	// - name: abbreviation
+	//   in: query
+	//   description: resource abbreviation (identifier). Multiple values are ORed.
+	//   type: array
+	//   collectionFormat: multi
+	//   items:
+	//     type: string
+	// - name: format
+	//   in: query
+	//   description: content format (usfm, text, markdown, etc.). Multiple values are ORed.
+	//   type: array
+	//   collectionFormat: multi
+	//   items:
+	//     type: string
+	// - name: checkingLevel
+	//   in: query
+	//   description: checking level. Returns items with a checking level equal or greater than the number given
+	//   type: array
+	//   collectionFormat: multi
+	//   items:
+	//     type: string
+	//     enum: ["1","2","3"]
+	// - name: book
+	//   in: query
+	//   description: book (ingredient identifier). Multiple values are ORed
+	//   type: array
+	//   collectionFormat: multi
+	//   items:
+	//     type: string
+	// - name: metadataType
+	//   in: query
+	//   description: metadata type. Multiple values are ORed
+	//   type: array
+	//   collectionFormat: multi
+	//   items:
+	//     type: string
+	//     enum: [rc,sb,tc,ts]
+	// - name: metadataVersion
+	//   in: query
+	//   description: metadata version. Does not apply if metadataType is not given. Multiple values are ORed
+	//   type: array
+	//   collectionFormat: multi
+	//   items:
+	//     type: string
+	// - name: partialMatch
+	//   in: query
+	//   description: If true, many of the above fields will do a partial match, allowing characters to come before or after your given value, default is false
+	//   type: boolean
+	// - name: topic
+	//   in: query
+	//   description: topic of a repo. Multiple values are ORed. If a repo of this topic has a catalog entry, its language will be listed.
+	//   type: array
+	//   collectionFormat: multi
+	//   items:
+	//     type: string
+	// - name: withoutTopic
+	//   in: query
+	//   description: Entries with a repository without this topic will be returned. Multiple values are ANDed.
+	//   type: array
+	//   collectionFormat: multi
+	//   items:
+	//     type: string
+	// responses:
+	//   "200":
+	//     description: "SearchResults of a successful catalog owner search"
+	//     schema:
+	//       type: object
+	//       properties:
+	//         ok:
+	//           type: boolean
+	//         data:
+	//           type: array
+	//           items:
+	//             "$ref": "#/responses/Language"
+
+	list, err := getSingleDMFieldList(ctx, "`door43_metadata`.language")
+	if err != nil {
+		ctx.JSON(http.StatusUnprocessableEntity, map[string]any{
+			"ok":    false,
+			"error": err.Error(),
+		})
+	}
+	var languages []map[string]any
+	langnames := dcs.GetLangnamesJSONKeyed()
+	for _, lang := range list {
+		if val, ok := langnames[lang]; ok {
+			languages = append(languages, val)
+		}
+	}
+	ctx.RespHeader().Set("X-Total-Count", fmt.Sprintf("%d", len(list)))
+	ctx.JSON(http.StatusOK, map[string]any{
+		"ok":   true,
+		"data": languages,
+	})
+}
+
+// GetCatalogEntry Get the catalog entry from the given ownername, reponame and ref
+func GetCatalogEntry(ctx *context.APIContext) {
+	// swagger:operation GET /catalog/entry/{owner}/{repo}/{ref} catalog catalogGetEntry
+	// ---
+	// summary: Get a catalog entry
+	// produces:
+	// - application/json
+	// parameters:
+	// - name: owner
+	//   in: path
+	//   description: name of the owner
+	//   type: string
+	//   required: true
+	// - name: repo
+	//   in: path
+	//   description: name of the repo
+	//   type: string
+	//   required: true
+	// - name: ref
+	//   in: path
+	//   description: release tag or default branch
+	//   type: string
+	//   required: true
+	// responses:
+	//   "200":
+	//     "$ref": "#/responses/CatalogEntry"
+	//   "404":
+	//     "$ref": "#/responses/notFound"
+
+	ref := ctx.PathParam("*")
+	var dm *repo.Door43Metadata
+	var err error
+	dm, err = repo.GetDoor43MetadataByRepoIDAndRef(ctx, ctx.Repo.Repository.ID, ref)
+	if err != nil {
+		if !repo.IsErrDoor43MetadataNotExist(err) {
+			ctx.APIError(http.StatusInternalServerError, err)
+		} else {
+			ctx.APIErrorNotFound()
+		}
+		return
+	}
+	if err := dm.LoadAttributes(ctx); err != nil {
+		ctx.APIError(http.StatusInternalServerError, err)
+		return
+	}
+	perm, err := access_model.GetUserRepoPermission(ctx, dm.Repo, ctx.ContextUser)
+	if err != nil {
+		ctx.APIError(http.StatusInternalServerError, err)
+		return
+	}
+	ctx.JSON(http.StatusOK, convert.ToCatalogEntryLoadRepoRelease(ctx, dm, perm))
+}
+
+// GetCatalogMetadata Get the metadata (RC 0.2 manifest) in JSON format for the given ownername, reponame and ref
+func GetCatalogMetadata(ctx *context.APIContext) {
+	// swagger:operation GET /catalog/metadata/{owner}/{repo}/{ref} catalog catalogGetMetadata
+	// ---
+	// summary: Get the metadata of a catalog entry
+	// produces:
+	// - application/json
+	// parameters:
+	// - name: owner
+	//   in: path
+	//   description: name of the owner
+	//   type: string
+	//   required: true
+	// - name: repo
+	//   in: path
+	//   description: name of the repo
+	//   type: string
+	//   required: true
+	// - name: ref
+	//   in: path
+	//   description: release tag or default branch
+	//   type: string
+	//   required: true
+	// responses:
+	//   "200":
+	//     "$ref": "#/responses/CatalogMetadata"
+	//   "404":
+	//     "$ref": "#/responses/notFound"
+
+	ref := ctx.PathParam("*")
+	if ref == "" {
+		ref = ctx.PathParam("ref")
+	}
+	dm, err := repo.GetDoor43MetadataByRepoIDAndRef(ctx, ctx.Repo.Repository.ID, ref)
+	if err != nil {
+		if !repo.IsErrDoor43MetadataNotExist(err) {
+			ctx.APIError(http.StatusInternalServerError, err)
+		} else {
+			ctx.APIErrorNotFound()
+		}
+		return
+	}
+	ctx.JSON(http.StatusOK, dm.Metadata)
+}
+
+// GetCatalogValidation Get the validation errors in JSON format for the given ownername, reponame and ref
+func GetCatalogValidation(ctx *context.APIContext) {
+	// swagger:operation GET /catalog/validation/{owner}/{repo}/{ref} catalog catalogGetValidation
+	// ---
+	// summary: Get the validation errors, if any, of a catalog entry in JSON format
+	// produces:
+	// - application/json
+	// parameters:
+	// - name: owner
+	//   in: path
+	//   description: name of the owner
+	//   type: string
+	//   required: true
+	// - name: repo
+	//   in: path
+	//   description: name of the repo
+	//   type: string
+	//   required: true
+	// - name: ref
+	//   in: path
+	//   description: release tag or default branch
+	//   type: string
+	//   required: true
+	// responses:
+	//   "200":
+	//     "$ref": "#/responses/CatalogValidation"
+	//   "404":
+	//     "$ref": "#/responses/notFound"
+
+	ref := ctx.PathParam("*")
+	if ref == "" {
+		ref = ctx.PathParam("ref")
+	}
+	dm, err := repo.GetDoor43MetadataByRepoIDAndRef(ctx, ctx.Repo.Repository.ID, ref)
+	if err != nil {
+		if !repo.IsErrDoor43MetadataNotExist(err) {
+			ctx.APIError(http.StatusInternalServerError, err)
+		} else {
+			ctx.APIErrorNotFound()
+		}
+		return
+	}
+	ctx.JSON(http.StatusOK, dm.ValidationError)
+}
+
+// GetCatalogMetadataOLD is depricated
+func GetCatalogMetadataOLD(ctx *context.APIContext) {
+	ref := ctx.PathParam("ref")
+	dm, err := repo.GetDoor43MetadataByRepoIDAndRef(ctx, ctx.Repo.Repository.ID, ref)
+	if err != nil {
+		if !repo.IsErrDoor43MetadataNotExist(err) {
+			ctx.APIError(http.StatusInternalServerError, err)
+		} else {
+			ctx.APIErrorNotFound()
+		}
+		return
+	}
+	ctx.JSON(http.StatusOK, dm.Metadata)
+}
+
+// QueryStrings After calling QueryStrings on the context, it also separates strings that have commas into substrings
+func QueryStrings(ctx *context.APIContext, name string) []string {
+	strs := ctx.FormStrings(name)
+	if len(strs) == 0 {
+		return strs
+	}
+	var newStrs []string
+	for _, str := range strs {
+		newStrs = append(newStrs, door43metadata.SplitAtCommaNotInString(str, false)...)
+	}
+	return newStrs
+}
+
+func searchCatalog(ctx *context.APIContext) {
+	stageStr := ctx.FormString("stage")
+	stage := door43metadata.StageProd
+	if stageStr != "" {
+		var ok bool
+		stage, ok = door43metadata.StageMap[stageStr]
+		if !ok {
+			ctx.APIError(http.StatusUnprocessableEntity, fmt.Errorf("invalid stage [%s]", stageStr))
+			return
+		}
+	}
+
+	metadataTypes := QueryStrings(ctx, "metadataType")
+	metadataVersions := QueryStrings(ctx, "metadataVersion")
+
+	keywords := []string{}
+	query := strings.Trim(ctx.FormString("q"), " ")
+	if query != "" {
+		keywords = door43metadata.SplitAtCommaNotInString(query, false)
+	}
+	listOptions := db.ListOptions{
+		Page:     ctx.FormInt("page"),
+		PageSize: ctx.FormInt("limit"),
+	}
+	if listOptions.Page < 1 {
+		listOptions.Page = 1
+	}
+
+	abbreviations := QueryStrings(ctx, "abbreviation")
+	abbreviations = append(abbreviations, QueryStrings(ctx, "resource")...) // For non-breaking changes, support "resource" argument
+
+	opts := &door43metadata.SearchCatalogOptions{
+		ListOptions:      listOptions,
+		Keywords:         keywords,
+		Owners:           QueryStrings(ctx, "owner"),
+		Repos:            QueryStrings(ctx, "repo"),
+		Tags:             QueryStrings(ctx, "tag"),
+		Stage:            stage,
+		Languages:        QueryStrings(ctx, "lang"),
+		LanguageIsGL:     ctx.FormOptionalBool("is_gl"),
+		Subjects:         QueryStrings(ctx, "subject"),
+		FlavorTypes:      QueryStrings(ctx, "flavorType"),
+		Flavors:          QueryStrings(ctx, "flavor"),
+		Abbreviations:    abbreviations,
+		ContentFormats:   QueryStrings(ctx, "format"),
+		CheckingLevels:   QueryStrings(ctx, "checkingLevel"),
+		Books:            QueryStrings(ctx, "book"),
+		IncludeHistory:   ctx.FormBool("includeHistory"),
+		ShowIngredients:  ctx.FormOptionalBool("showIngredients"),
+		MetadataTypes:    metadataTypes,
+		MetadataVersions: metadataVersions,
+		Topics:           QueryStrings(ctx, "topic"),
+		InvertedTopics:   QueryStrings(ctx, "withoutTopic"),
+		PartialMatch:     ctx.FormBool("partialMatch"),
+	}
+
+	sortModes := QueryStrings(ctx, "sort")
+	if len(sortModes) > 0 {
+		sortOrder := ctx.FormString("order")
+		if sortOrder == "" {
+			sortOrder = "asc"
+		}
+		if searchModeMap, ok := searchOrderByMap[sortOrder]; ok {
+			for _, sortMode := range sortModes {
+				if orderBy, ok := searchModeMap[strings.ToLower(sortMode)]; ok {
+					opts.OrderBy = append(opts.OrderBy, orderBy)
+				} else {
+					ctx.APIError(http.StatusUnprocessableEntity, fmt.Errorf("invalid sort mode: \"%s\"", sortMode))
+					return
+				}
+			}
+		} else {
+			ctx.APIError(http.StatusUnprocessableEntity, fmt.Errorf("invalid sort order [%s]", sortOrder))
+			return
+		}
+	} else {
+		opts.OrderBy = []door43metadata.CatalogOrderBy{door43metadata.CatalogOrderByLangCode, door43metadata.CatalogOrderBySubject, door43metadata.CatalogOrderByReleaseDateReverse}
+	}
+
+	dms, count, err := models.SearchCatalog(ctx, opts)
+	if err != nil {
+		ctx.APIError(http.StatusInternalServerError, err)
+		return
+	}
+
+	results := make([]*api.CatalogEntry, len(dms))
+	var lastUpdated time.Time
+	for i, dm := range dms {
+		if ctx.Repo != nil && ctx.Repo.Repository != nil {
+			dm.Repo = ctx.Repo.Repository
+		} else {
+			err := dm.LoadAttributes(ctx)
+			if err != nil {
+				ctx.APIError(http.StatusInternalServerError, err)
+				return
+			}
+		}
+		perm, err := access_model.GetUserRepoPermission(ctx, dm.Repo, ctx.ContextUser)
+		if err != nil {
+			ctx.APIError(http.StatusInternalServerError, err)
+			return
+		}
+		dmAPI := convert.ToCatalogEntryLoadRepoRelease(ctx, dm, perm)
+		if opts.ShowIngredients.Has() && !opts.ShowIngredients.Value() {
+			dmAPI.Ingredients = nil
+		}
+		if dmAPI.Released.After(lastUpdated) {
+			lastUpdated = dmAPI.Released
+		}
+		results[i] = dmAPI
+	}
+
+	if lastUpdated.IsZero() {
+		lastUpdated = time.Now()
+	}
+
+	if opts.PageSize > 0 {
+		ctx.SetLinkHeader(count, opts.PageSize)
+	} else {
+		ctx.SetLinkHeader(count, int(count))
+	}
+	ctx.RespHeader().Set("X-Total-Count", fmt.Sprintf("%d", count))
+	ctx.JSON(http.StatusOK, api.CatalogSearchResults{
+		OK:          true,
+		Data:        results,
+		LastUpdated: lastUpdated,
+	})
+}
+
+func contains(slice []string, target string) bool {
+	for _, item := range slice {
+		if item == target {
+			return true
+		}
+	}
+	return false
+}
+
+func getCatalogBookPackage(ctx *context.APIContext) {
+	ref := ctx.PathParam("*")
+	stageStr := ctx.FormString("stage")
+	stage := door43metadata.StageNotSet
+	if stageStr != "" {
+		var ok bool
+		stage, ok = door43metadata.StageMap[stageStr]
+		if !ok {
+			ctx.APIError(http.StatusUnprocessableEntity, fmt.Errorf("invalid stage [%s]", stageStr))
+			return
+		}
+	}
+
+	if (ref == "") || (ref == "undefined") {
+		ctx.Repo.Repository.LoadLatestDMs(ctx)
+		if stage == door43metadata.StageProd && ctx.Repo.Repository.LatestProdDM != nil {
+			ref = ctx.Repo.Repository.LatestProdDM.Ref
+		} else if stage == door43metadata.StagePreProd && ctx.Repo.Repository.LatestPreprodDM != nil {
+			ref = ctx.Repo.Repository.LatestPreprodDM.Ref
+		} else if stage == door43metadata.StageLatest && ctx.Repo.Repository.DefaultBranchDM != nil {
+			ref = ctx.Repo.Repository.DefaultBranchDM.Ref
+		} else if stage == door43metadata.StageNotSet {
+			// When no stage is specified, use the default branch
+			if ctx.Repo.Repository.DefaultBranchDM != nil {
+				ref = ctx.Repo.Repository.DefaultBranchDM.Ref
+			} else {
+				ref = ctx.Repo.Repository.DefaultBranch
+			}
+		} else {
+			ctx.APIErrorNotFound()
+			return
+		}
+	}
+
+	var dm *repo.Door43Metadata
+	var err error
+	dm, err = repo.GetDoor43MetadataByRepoIDAndRef(ctx, ctx.Repo.Repository.ID, ref)
+	if err != nil {
+		if !repo.IsErrDoor43MetadataNotExist(err) {
+			ctx.APIError(http.StatusInternalServerError, err)
+		} else {
+			ctx.APIErrorNotFound()
+		}
+		return
+	}
+	if err := dm.LoadAttributes(ctx); err != nil {
+		ctx.APIError(http.StatusInternalServerError, err)
+		return
+	}
+
+	metadataTypes := QueryStrings(ctx, "metadataType")
+	metadataVersions := QueryStrings(ctx, "metadataVersion")
+
+	listOptions := db.ListOptions{
+		Page:     ctx.FormInt("page"),
+		PageSize: ctx.FormInt("limit"),
+	}
+	if listOptions.Page < 1 {
+		listOptions.Page = 1
+	}
+
+	subjects := QueryStrings(ctx, "subjects")
+	flavors := QueryStrings(ctx, "flavors")
+	flavorTypes := QueryStrings(ctx, "flavorTypes")
+	if len(subjects) == 0 && len(flavors) == 0 && len(flavorTypes) == 0 {
+		if contains(bibleBPSubjects, dm.Subject) {
+			subjects = bibleBPSubjects
+		} else if contains(obsBPSubjects, dm.Subject) {
+			subjects = obsBPSubjects
+		} else {
+			subjects = []string{dm.Subject}
+		}
+	}
+
+	books := QueryStrings(ctx, "book")
+
+	opts := &door43metadata.SearchCatalogOptions{
+		ListOptions:      listOptions,
+		Tags:             QueryStrings(ctx, "tag"),
+		Stage:            stage,
+		Languages:        QueryStrings(ctx, "lang"),
+		LanguageIsGL:     ctx.FormOptionalBool("is_gl"),
+		Subjects:         subjects,
+		FlavorTypes:      flavorTypes,
+		Flavors:          flavors,
+		Abbreviations:    QueryStrings(ctx, "abbreviation"),
+		ContentFormats:   QueryStrings(ctx, "format"),
+		CheckingLevels:   QueryStrings(ctx, "checkingLevel"),
+		Books:            books,
+		IncludeHistory:   true,
+		ShowIngredients:  ctx.FormOptionalBool("showIngredients"),
+		MetadataTypes:    metadataTypes,
+		MetadataVersions: metadataVersions,
+		Topics:           QueryStrings(ctx, "topic"),
+		InvertedTopics:   QueryStrings(ctx, "withoutTopic"),
+		PartialMatch:     ctx.FormBool("partialMatch"),
+	}
+
+	sortModes := QueryStrings(ctx, "sort")
+	if len(sortModes) > 0 {
+		sortOrder := ctx.FormString("order")
+		if sortOrder == "" {
+			sortOrder = "asc"
+		}
+		if searchModeMap, ok := searchOrderByMap[sortOrder]; ok {
+			for _, sortMode := range sortModes {
+				if orderBy, ok := searchModeMap[strings.ToLower(sortMode)]; ok {
+					opts.OrderBy = append(opts.OrderBy, orderBy)
+				} else {
+					ctx.APIError(http.StatusUnprocessableEntity, fmt.Errorf("invalid sort mode: \"%s\"", sortMode))
+					return
+				}
+			}
+		} else {
+			ctx.APIError(http.StatusUnprocessableEntity, fmt.Errorf("invalid sort order [%s]", sortOrder))
+			return
+		}
+	} else {
+		opts.OrderBy = []door43metadata.CatalogOrderBy{door43metadata.CatalogOrderByLangCode, door43metadata.CatalogOrderBySubject, door43metadata.CatalogOrderByReleaseDateReverse}
+	}
+
+	dms, count, err := models.SearchCatalogForBookPackage(ctx, dm, opts)
+	if err != nil {
+		ctx.APIError(http.StatusInternalServerError, err)
+		return
+	}
+
+	if contains(subjects, "Hebrew Old Testament") || contains(subjects, "Greek New Testament") {
+		origBibleDMs, origBibleCount, err := models.GetOrigLanguageBibles(ctx, dm, books)
+		if err != nil {
+			ctx.APIError(http.StatusInternalServerError, err)
+			return
+		}
+		dms = append(dms, origBibleDMs...)
+		count += origBibleCount
+	}
+
+	results := make([]*api.CatalogEntry, len(dms))
+	var lastUpdated time.Time
+	for i, dmModel := range dms {
+		err := dmModel.LoadAttributes(ctx)
+		if err != nil {
+			ctx.APIError(http.StatusInternalServerError, err)
+			return
+		}
+		perm, err := access_model.GetUserRepoPermission(ctx, dmModel.Repo, ctx.ContextUser)
+		if err != nil {
+			ctx.APIError(http.StatusInternalServerError, err)
+			return
+		}
+		dmAPI := convert.ToCatalogEntryLoadRepoRelease(ctx, dmModel, perm)
+		if opts.ShowIngredients.Has() && !opts.ShowIngredients.Value() {
+			dmAPI.Ingredients = nil
+		}
+		if dmAPI.Released.After(lastUpdated) {
+			lastUpdated = dmAPI.Released
+		}
+		results[i] = dmAPI
+	}
+
+	if lastUpdated.IsZero() {
+		lastUpdated = time.Now()
+	}
+
+	if opts.PageSize > 0 {
+		ctx.SetLinkHeader(count, opts.PageSize)
+	} else {
+		ctx.SetLinkHeader(count, int(count))
+	}
+	ctx.RespHeader().Set("X-Total-Count", fmt.Sprintf("%d", count))
+	ctx.JSON(http.StatusOK, api.CatalogSearchResults{
+		OK:          true,
+		Data:        results,
+		LastUpdated: lastUpdated,
+	})
+}
+
+func getSingleDMFieldList(ctx *context.APIContext, field string) ([]string, error) {
+	stageStr := ctx.FormString("stage")
+	stage := door43metadata.StageProd
+	if stageStr != "" {
+		var ok bool
+		stage, ok = door43metadata.StageMap[stageStr]
+		if !ok {
+			err := fmt.Errorf("invalid stage [%s]", stageStr)
+			return nil, err
+		}
+	}
+
+	listOptions := db.ListOptions{
+		ListAll: true,
+	}
+
+	opts := &door43metadata.SearchCatalogOptions{
+		ListOptions:      listOptions,
+		Owners:           QueryStrings(ctx, "owner"),
+		Repos:            QueryStrings(ctx, "repo"),
+		Tags:             QueryStrings(ctx, "tag"),
+		Stage:            stage,
+		Languages:        QueryStrings(ctx, "lang"),
+		LanguageIsGL:     ctx.FormOptionalBool("is_gl"),
+		Subjects:         QueryStrings(ctx, "subject"),
+		FlavorTypes:      QueryStrings(ctx, "flavorType"),
+		Flavors:          QueryStrings(ctx, "flavor"),
+		Abbreviations:    QueryStrings(ctx, "abbreviation"),
+		ContentFormats:   QueryStrings(ctx, "format"),
+		CheckingLevels:   QueryStrings(ctx, "checkingLevel"),
+		Books:            QueryStrings(ctx, "book"),
+		IncludeHistory:   ctx.FormBool("includeHistory"),
+		ShowIngredients:  ctx.FormOptionalBool("showIngredients"),
+		Topics:           QueryStrings(ctx, "topic"),
+		InvertedTopics:   QueryStrings(ctx, "withoutTopic"),
+		MetadataTypes:    QueryStrings(ctx, "metadataType"),
+		MetadataVersions: QueryStrings(ctx, "metadataVersion"),
+		PartialMatch:     ctx.FormBool("partialMatch"),
+	}
+
+	sortModes := QueryStrings(ctx, "sort")
+	if len(sortModes) > 0 {
+		sortOrder := ctx.FormString("order")
+		if sortOrder == "" {
+			sortOrder = "asc"
+		}
+		if searchModeMap, ok := searchOrderByMap[sortOrder]; ok {
+			for _, sortMode := range sortModes {
+				if orderBy, ok := searchModeMap[strings.ToLower(sortMode)]; ok {
+					opts.OrderBy = append(opts.OrderBy, orderBy)
+				} else {
+					err := fmt.Errorf("invalid sort mode [%s]", sortMode)
+					ctx.JSON(http.StatusUnprocessableEntity, map[string]any{
+						"ok":    false,
+						"error": err.Error(),
+					})
+					return nil, err
+				}
+			}
+		} else {
+			err := fmt.Errorf("invalid sort order [%s]", sortOrder)
+			return nil, err
+		}
+	} else {
+		opts.OrderBy = []door43metadata.CatalogOrderBy{door43metadata.CatalogOrderByLangCode, door43metadata.CatalogOrderBySubject, door43metadata.CatalogOrderByReleaseDateReverse}
+	}
+
+	results, err := models.SearchDoor43MetadataField(ctx, opts, field)
+	if err != nil {
+		return nil, err
+	}
+
+	return results, nil
+}
+
+// GetCatalogBookPackage get all catalog entries for a catalog entry's book package
+func GetCatalogBookPackage(ctx *context.APIContext) {
+	// swagger:operation GET /catalog/bp/{owner}/{repo} catalog catalogGetBookPackage
+	// ---
+	// summary: Get all catalog entries for a catalog entry's book package
+	// parameters:
+	// - name: owner
+	//   in: path
+	//   description: search only for entries with the given owner name(s). Will perform an exact match (case insensitive) unlesss partialMatch=true
+	//   type: string
+	//   required: true
+	// - name: repo
+	//   in: path
+	//   description: search only for entries with the given repo name(s). To match multiple, give the parameter multiple times or give a list comma delimited. Will perform an exact match (case insensitive) unlesss partialMatch=true
+	//   type: string
+	//   required: true
+	// - name: ref
+	//   in: path
+	//   description: optional reference (tag/branch). If not provided, uses the most recent entry based on stage
+	//   type: string
+	//   required: false
+	// - name: tag
+	//   in: query
+	//   description: search only for entries with the given release tag(s). To match multiple, give the parameter multiple times or give a list comma delimited. Will perform an exact match (case insensitive)
+	//   type: string
+	// - name: stage
+	//   in: query
+	//   description: 'list only those of the given stage or lower, with low to high being:
+	//                "prod" - return only those of production releases (default);
+	//                "preprod" - return only those of all (production & pre-production) releases;
+	//                "latest" - return only those of all releases and the default branch;
+	//                "other" - return all, including other branches and tags [aliases: "branch", "tag"]'
+	//   type: array
+	//   collectionFormat: multi
+	//   items:
+	//     type: string
+	//     enum: [prod,preprod,latest,other]
+	// - name: subject
+	//   in: query
+	//   description: 'subject(s) desired for the book package.
+	//                Default list: Aligned Bible, TSV Translation Notes, TSV Translation Questions, TSV Translation Words Links, Translation Words, Translation Academy'
+	//   type: array
+	//   collectionFormat: multi
+	//   items:
+	//     type: string
+	// - name: flavorType
+	//   in: query
+	//   description: resource flavorType. Multiple values are ORed. If given, subjects ignored.
+	//   type: array
+	//   collectionFormat: multi
+	//   items:
+	//     type: string
+	// - name: flavor
+	//   in: query
+	//   description: resource flavor. Multiple values are ORed. If given, subjects ignored.
+	//   type: array
+	//   collectionFormat: multi
+	//   items:
+	//     type: string
+	// - name: abbreviation
+	//   in: query
+	//   description: resource abbreviation (identifier). Multiple values are ORed.
+	//   type: array
+	//   collectionFormat: multi
+	//   items:
+	//     type: string
+	// - name: format
+	//   in: query
+	//   description: content format (usfm, text, markdown, etc.). Multiple values are ORed.
+	//   type: array
+	//   collectionFormat: multi
+	//   items:
+	//     type: string
+	// - name: checkingLevel
+	//   in: query
+	//   description: checking level. Returns items with a checking level equal or greater than the number given
+	//   type: array
+	//   collectionFormat: multi
+	//   items:
+	//     type: string
+	//     enum: ["1","2","3"]
+	// - name: book
+	//   in: query
+	//   description: book (ingredient identifier). Multiple values are ORed
+	//   type: array
+	//   collectionFormat: multi
+	//   items:
+	//     type: string
+	// - name: metadataType
+	//   in: query
+	//   description: metadata type. Multiple values are ORed
+	//   type: array
+	//   collectionFormat: multi
+	//   items:
+	//     type: string
+	//     enum: [rc,sb,tc,ts]
+	// - name: metadataVersion
+	//   in: query
+	//   description: metadata version. Does not apply if metadataType is not given. Multiple values are ORed
+	//   type: array
+	//   collectionFormat: multi
+	//   items:
+	//     type: string
+	// - name: topic
+	//   in: query
+	//   description: topic of a repo. Multiple values are ORed
+	//   type: array
+	//   collectionFormat: multi
+	//   items:
+	//     type: string
+	// - name: withoutTopic
+	//   in: query
+	//   description: Entries with a repository without this topic will be returned. Multiple values are ANDed.
+	//   type: array
+	//   collectionFormat: multi
+	//   items:
+	//     type: string
+	// - name: showIngredients
+	//   in: query
+	//   description: if true, the list of ingredients (files/projects) in the resource and their file paths will be listed for each entry, default is true
+	//   type: boolean
+	// - name: sort
+	//   in: query
+	//   description: sort repos alphanumerically by attribute. Supported values are
+	//                "subject", "title", "reponame", "tag", "released", "lang", "releases", "stars", "forks".
+	//                Default is by "subject" and then "abbreviation"
+	//   type: string
+	// - name: order
+	//   in: query
+	//   description: sort order, either "asc" (ascending) or "desc" (descending).
+	//                Default is "asc", ignored if "sort" is not specified.
+	//   type: string
+	// - name: page
+	//   in: query
+	//   description: page number of results to return (1-based)
+	//   type: integer
+	// - name: limit
+	//   in: query
+	//   description: page size of results, defaults to no limit
+	//   type: integer
+	// responses:
+	//   "200":
+	//     "$ref": "#/responses/CatalogSearchResults"
+	//   "422":
+	//     "$ref": "#/responses/validationError"
+
+	getCatalogBookPackage(ctx)
+}

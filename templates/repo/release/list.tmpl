@@ -1,4 +1,7 @@
 {{template "base/head" .}}
+<!-- DCS Customizations --->
+{{template "dcs/release_list_usfm_script" .}}
+<!-- END DCS Customizations --->
 <div role="main" aria-label="{{.Title}}" class="page-content repository releases">
 	{{template "repo/header" .}}
 	<div class="ui container">
@@ -10,6 +13,9 @@
 				<li class="release-entry">
 					<div class="meta">
 						<a class="muted" href="{{if not (and $release.Sha1 ($.Permission.CanRead ctx.Consts.RepoUnitTypeCode))}}#{{else}}{{$.RepoLink}}/src/tag/{{$release.TagName | PathEscapeSegments}}{{end}}" rel="nofollow">{{svg "octicon-tag" 16 "tw-mr-1"}}{{$release.TagName}}</a>
+						<!-- DCS Customizations -->
+						{{template "dcs/release_list_catalog_badges" dict "release" $release "root" $}}
+						<!-- END DCS Customizations -->
 						{{if and $release.Sha1 ($.Permission.CanRead ctx.Consts.RepoUnitTypeCode)}}
 							<a class="muted tw-font-mono" href="{{$.RepoLink}}/src/commit/{{$release.Sha1}}" rel="nofollow">{{svg "octicon-git-commit" 16 "tw-mr-1"}}{{ShortSha $release.Sha1}}</a>
 							{{$compareTarget := ""}}
@@ -104,6 +110,9 @@
 											<strong class="flex-text-inline">{{svg "octicon-file-zip" 16 "download-icon"}}{{ctx.Locale.Tr "repo.release.source_code"}} (TAR.GZ)</strong>
 										</a>
 									</li>
+									<!-- DCS Customizations -->
+									{{template "dcs/release_list_downloads" dict "release" $release "root" $}}
+									<!-- END DCS Customizations -->
 								{{end}}
 							</ul>
 						</details>

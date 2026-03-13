@@ -98,6 +98,9 @@ type Repository struct {
 	Commit       *git.Commit
 	CommitID     string
 	CommitsCount int64
+	/*** DCS Customizations ***/
+	Door43Metadata *repo_model.Door43Metadata
+	/*** END DCS Customizations ***/
 
 	PullRequestCtx *PullRequestContext
 }
@@ -448,6 +451,14 @@ func repoAssignment(ctx *Context, repo *repo_model.Repository) {
 		}
 	}
 
+	/*** DCS Customizations ***/
+	err = repo.LoadLatestDMs(ctx)
+	if err != nil {
+		ctx.ServerError("LoadLatestDMs", err)
+		return
+	}
+	/*** END DCS Customizations ***/
+
 	ctx.Repo.Repository = repo
 	ctx.Data["RepoName"] = ctx.Repo.Repository.Name
 	ctx.Data["IsEmptyRepo"] = ctx.Repo.Repository.IsEmpty
@@ -585,6 +596,9 @@ func RepoAssignment(ctx *Context) {
 	ctx.Data["Title"] = repo.Owner.Name + "/" + repo.Name
 	ctx.Data["PageTitleCommon"] = repo.Name + " - " + setting.AppName
 	ctx.Data["Repository"] = repo
+	/*** DCS Customizations ***/
+	ctx.Data["RepoDM"] = repo.RepoDM
+	/*** END DCS Customizations ***/
 	ctx.Data["Owner"] = ctx.Repo.Repository.Owner
 	ctx.Data["CanWriteCode"] = ctx.Repo.CanWrite(unit_model.TypeCode)
 	ctx.Data["CanWriteIssues"] = ctx.Repo.CanWrite(unit_model.TypeIssues)
@@ -994,6 +1008,16 @@ func RepoRefByType(detectRefType git.RefType) func(*Context) {
 				return
 			}
 		}
+
+		/*** DCS Customizations ***/
+		if ctx.Repo.RefFullName.IsBranch() || ctx.Repo.RefFullName.IsTag() {
+			ctx.Repo.Door43Metadata, err = repo_model.GetDoor43MetadataByRepoIDAndRef(ctx, ctx.Repo.Repository.ID, refShortName)
+			if err == nil && ctx.Repo.Door43Metadata != nil {
+				ctx.Repo.Door43Metadata.Repo = ctx.Repo.Repository
+			}
+		}
+		ctx.Data["Door43Metadata"] = ctx.Repo.Door43Metadata
+		/*** END DCS Customizations ***/
 
 		ctx.Data["RefFullName"] = ctx.Repo.RefFullName
 		ctx.Data["RefTypeNameSubURL"] = ctx.Repo.RefTypeNameSubURL()

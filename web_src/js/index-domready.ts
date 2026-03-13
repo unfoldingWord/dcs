@@ -64,6 +64,13 @@ import {initGlobalComboMarkdownEditor, initGlobalEnterQuickSubmit, initGlobalFor
 import {callInitFunctions} from './modules/init.ts';
 import {initRepoViewFileTree} from './features/repo-view-file-tree.ts';
 import {initGlobalShortcut} from './modules/shortcut.ts';
+/** DCS Customizations **/
+import {initDCSInfoIcon} from './features/dcs-info-icon.ts';
+import {initDCSValidationBadge} from './features/dcs-validation-badge.ts';
+import {initDCSLanguageFonts} from './features/dcs-language-fonts.ts';
+import {initDCSHealthcheckBadges} from './features/dcs-healthcheck-badge.ts';
+import {initDCSHealthcheckDashboard} from './features/dcs-hc-dash.ts';
+/** END DCS Customizations **/
 
 const initStartTime = performance.now();
 const initPerformanceTracer = callInitFunctions([
@@ -159,6 +166,14 @@ const initPerformanceTracer = callInitFunctions([
   initOAuth2SettingsDisableCheckbox,
 
   initRepoFileView,
+
+  /** DCS Customizations **/
+  initDCSInfoIcon,
+  initDCSValidationBadge,
+  initDCSLanguageFonts,
+  initDCSHealthcheckBadges,
+  initDCSHealthcheckDashboard,
+  /** END DCS Customizations **/
 ]);
 
 // it must be the last one, then the "querySelectorAll" only needs to be executed once for global init functions.

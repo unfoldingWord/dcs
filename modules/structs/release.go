@@ -41,6 +41,8 @@ type Release struct {
 	Publisher *User `json:"author"`
 	// The files attached to the release
 	Attachments []*Attachment `json:"assets"`
+	// The DCS catalog entry for this release
+	Door43Metadata *CatalogEntry `json:"door43_metadata"` // DCS Customizations
 }
 
 // CreateReleaseOption options when creating a release

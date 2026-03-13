@@ -86,6 +86,30 @@ func home(ctx *context.Context, viewRepositories bool) {
 	private := ctx.FormOptionalBool("private")
 	ctx.Data["IsPrivate"] = private
 
+	/*** DCS Customizations ***/
+	searchFields := []string{"keyword", "book", "lang", "subject", "flavor_type", "flavor", "abbreviation", "content_format", "repo", "owner", "tag", "checking_level", "metadata_type", "metadata_version", "topic", "stage"}
+	searchMap := map[string][]string{}
+	for _, field := range searchFields {
+		searchMap[field] = []string{}
+	}
+	currentField := "keyword"
+	if keyword != "" {
+		for _, token := range strings.Split(keyword, ",") {
+			token = strings.TrimSpace(token)
+			value := token
+			for key := range searchMap {
+				if strings.HasPrefix(token, key+":") {
+					currentField = key
+					value = strings.TrimSpace(strings.TrimPrefix(token, key+":"))
+					break
+				}
+			}
+			searchMap[currentField] = append(searchMap[currentField], value)
+		}
+		keyword = strings.Join(searchMap["keyword"], ", ")
+	}
+	/*** END DCS Customizations ***/
+
 	opts := &organization.FindOrgMembersOpts{
 		Doer:         ctx.Doer,
 		OrgID:        org.ID,
@@ -132,11 +156,29 @@ func home(ctx *context.Context, viewRepositories bool) {
 		Mirror:             mirror,
 		Template:           template,
 		IsPrivate:          private,
+		Books:              searchMap["book"],             // DCS Customizations
+		Languages:          searchMap["lang"],             // DCS Customizations
+		Subjects:           searchMap["subject"],          // DCS Customizations
+		FlavorTypes:        searchMap["flavor_type"],      // DCS Customizations
+		Flavors:            searchMap["flavor"],           // DCS Customizations
+		Abbreviations:      searchMap["abbreviation"],     // DCS Customizations
+		ContentFormats:     searchMap["content_format"],   // DCS Customizations
+		Repos:              searchMap["repo"],             // DCS Customizations
+		Owners:             searchMap["owner"],            // DCS Customizations
+		MetadataTypes:      searchMap["metadata_type"],    // DCS Customizations
+		MetadataVersions:   searchMap["metadata_version"], // DCS Customizations
 	})
 	if err != nil {
 		ctx.ServerError("SearchRepository", err)
 		return
 	}
+
+	/*** DCS Customizations ***/
+	err = repos.LoadLatestDMs(ctx)
+	if err != nil {
+		log.Error("LoadLatestDMs: unable to load DMs for repos")
+	}
+	/*** End DCS Customizations ***/
 
 	ctx.Data["Repos"] = repos
 	ctx.Data["Total"] = count

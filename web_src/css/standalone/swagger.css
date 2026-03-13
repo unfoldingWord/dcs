@@ -12,10 +12,11 @@ body {
 .swagger-back-link {
   color: #1f69c0;
   text-decoration: none;
-  position: absolute;
-  top: 1rem;
-  right: 1.5rem;
-  display: flex;
+  /*** DCS Customizations ***/
+  float: right;
+  padding-right: 10px;
+  clear: both;
+  /*** END DCS Customizations ***/
   align-items: center;
 }
 

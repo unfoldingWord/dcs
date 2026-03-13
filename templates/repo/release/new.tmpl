@@ -80,6 +80,9 @@
 			{{range .attachments}}
 				<div class="field flex-text-block" id="attachment-{{.ID}}">
 					<div class="flex-text-block tw-flex-1">
+						<!-- DCS Customizations -->
+						{{template "dcs/release_new_extras" .}}
+						<!-- END DCS Customizations -->
 						<input name="attachment-edit-{{.UUID}}" class="tw-max-w-[48em]" required value="{{.Name}}">
 						<input name="attachment-del-{{.UUID}}" type="hidden" value="false">
 						<span class="tw-text-text-light tw-flex-shrink-0">{{.Size | FileSize}}</span>
