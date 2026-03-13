@@ -16,11 +16,13 @@ DCS is a fork of [Gitea](https://github.com/go-gitea/gitea) that adds Digital Co
 
 ### Build
 ```bash
-make build                    # Build the binary
+TAGS="bindata sqlite sqlite_unlock_notify sqlite_json" make build  # Build the binary with all required tags
 make test                     # Run all tests
-TAGS="bindata sqlite sqlite_unlock_notify sqlite_json" make test  # With all tags
+TAGS="bindata sqlite sqlite_unlock_notify sqlite_json" make test   # With all tags
 make test-dcs-sqlite          # DCS-specific integration tests
 ```
+
+**Important:** After merging upstream changes or switching branches, run `make vendor` (or `go mod tidy && go mod vendor`) to sync the vendor directory with `go.mod` before building. The build will fail if the vendor directory is out of sync.
 ### Instructions for agents (from AGENTS.md)
 
 - Use `make help` to find available development targets

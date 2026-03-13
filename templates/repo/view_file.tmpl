@@ -86,9 +86,6 @@
 			{{if and .ReadmeInList .CanEditReadmeFile}}
 				<a class="btn-octicon" data-tooltip-content="{{ctx.Locale.Tr "repo.editor.edit_this_file"}}" href="{{.RepoLink}}/_edit/{{PathEscapeSegments .BranchName}}/{{PathEscapeSegments .FileTreePath}}">{{svg "octicon-pencil"}}</a>
 			{{end}}
-			<!-- DCS Customizations -->
-			{{template "dcs/view_file_expand_button" .}}
-			<!-- END DCS Customizations -->
 		</div>
 	</h4>
 
@@ -152,7 +149,3 @@
 		</div>
 	</div>
 </div>
-
-<!-- DCS Customizations -->
-{{template "dcs/view_file_expand_script" .}}
-<!-- END DCS Customizations -->
