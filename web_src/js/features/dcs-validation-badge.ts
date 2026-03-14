@@ -1,12 +1,12 @@
 import {createTippy} from '../modules/tippy.ts';
 
 export function initDCSValidationBadge() {
-  const badges = document.getElementsByClassName('validation-message-badge');
+  const badges = document.querySelectorAll('.validation-message-badge');
   if (!badges) {
     return;
   }
-  [].forEach.call(badges, (badge) => {
-    const tooltips = badge.getElementsByClassName('validation-message-tooltip');
+  for (const badge of badges) {
+    const tooltips = badge.querySelectorAll('.validation-message-tooltip');
     if (tooltips) {
       createTippy(badge, {
         trigger: 'mouseenter',
@@ -22,5 +22,5 @@ export function initDCSValidationBadge() {
         hideOnClick: true,
       });
     }
-  });
+  }
 }

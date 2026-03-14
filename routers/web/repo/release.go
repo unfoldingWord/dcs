@@ -240,7 +240,7 @@ func TagsList(ctx *context.Context) {
 
 	/*** DCS Customizations ***/
 	for _, rel := range releases {
-		rel.LoadAttributes(ctx)
+		_ = rel.LoadAttributes(ctx)
 	}
 	/*** END DCS Customizations ***/
 

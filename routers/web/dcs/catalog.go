@@ -105,7 +105,7 @@ func RenderCatalogSearch(ctx *context.Context, opts *CatalogSearchOptions) {
 	}
 	currentField := "keyword"
 	if query != "" {
-		for _, token := range strings.Split(query, ",") {
+		for token := range strings.SplitSeq(query, ",") {
 			token = strings.TrimSpace(token)
 			value := token
 			for key := range searchMap {

@@ -5,7 +5,7 @@ package dcs
 
 import "strconv"
 
-var BookNames = map[string]string{ //nolint
+var BookNames = map[string]string{ //nolint:gochecknoglobals,dupl // book lookup tables share the same keys by design
 	"frt": "Front Matter",
 	"bak": "Back Matter",
 	"gen": "Genesis",
@@ -77,7 +77,7 @@ var BookNames = map[string]string{ //nolint
 	"obs": "Open Bible Stories",
 }
 
-var BookNumbers = map[string]string{ //nolint
+var BookNumbers = map[string]string{ //nolint:gochecknoglobals,dupl // book lookup tables share the same keys by design
 	"frt": "A0",
 	"bak": "B0",
 	"gen": "01",

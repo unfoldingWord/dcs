@@ -5,6 +5,7 @@ package convertrc2sb
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -80,11 +81,11 @@ func repoHasQualifyingTopic(repo *repo_model.Repository) bool {
 	return false
 }
 
-// ConvertRC2SBForRelease converts an RC repo at the given release tag to SB format
+// ForRelease converts an RC repo at the given release tag to SB format
 // and pushes the result to the "main" branch.
-func ConvertRC2SBForRelease(ctx context.Context, repo *repo_model.Repository, release *repo_model.Release) error {
+func ForRelease(ctx context.Context, repo *repo_model.Repository, release *repo_model.Release) error {
 	if repo == nil || release == nil {
-		return fmt.Errorf("repo and release must not be nil")
+		return errors.New("repo and release must not be nil")
 	}
 
 	log.Info("ConvertRC2SB: starting conversion for %s tag %s", repo.FullName(), release.TagName)
@@ -161,7 +162,7 @@ func ConvertRC2SBForRelease(ctx context.Context, repo *repo_model.Repository, re
 	}
 
 	// Step 9: Commit
-	commitMsg := fmt.Sprintf("Convert RC to SB from tag %s", release.TagName)
+	commitMsg := "Convert RC to SB from tag " + release.TagName
 	doer := repo.Owner
 	sig := doer.NewGitSig()
 
@@ -189,9 +190,9 @@ func ConvertRC2SBForRelease(ctx context.Context, repo *repo_model.Repository, re
 	return nil
 }
 
-// ConvertRC2SBAllRepos finds all qualifying repos and converts their latest published release.
-func ConvertRC2SBAllRepos(ctx context.Context) error {
-	log.Trace("Doing: ConvertRC2SBAllRepos")
+// AllRepos finds all qualifying repos and converts their latest published release.
+func AllRepos(ctx context.Context) error {
+	log.Trace("Doing: AllRepos")
 
 	repos, err := repo_model.GetReposForMetadata(ctx)
 	if err != nil {
@@ -207,7 +208,7 @@ func ConvertRC2SBAllRepos(ctx context.Context) error {
 
 		qualifies, err := RepoQualifiesForConversion(ctx, repo)
 		if err != nil {
-			log.Warn("ConvertRC2SBAllRepos: error checking qualification for %s: %v", repo.FullName(), err)
+			log.Warn("AllRepos: error checking qualification for %s: %v", repo.FullName(), err)
 			continue
 		}
 		if !qualifies {
@@ -217,16 +218,16 @@ func ConvertRC2SBAllRepos(ctx context.Context) error {
 		// Find latest published (non-draft, non-prerelease) release
 		release, err := getLatestPublishedRelease(ctx, repo)
 		if err != nil {
-			log.Warn("ConvertRC2SBAllRepos: error getting latest release for %s: %v", repo.FullName(), err)
+			log.Warn("AllRepos: error getting latest release for %s: %v", repo.FullName(), err)
 			continue
 		}
 		if release == nil {
-			log.Debug("ConvertRC2SBAllRepos: no published release for %s, skipping", repo.FullName())
+			log.Debug("AllRepos: no published release for %s, skipping", repo.FullName())
 			continue
 		}
 
-		if err := ConvertRC2SBForRelease(ctx, repo, release); err != nil {
-			log.Error("ConvertRC2SBAllRepos: conversion failed for %s tag %s: %v", repo.FullName(), release.TagName, err)
+		if err := ForRelease(ctx, repo, release); err != nil {
+			log.Error("AllRepos: conversion failed for %s tag %s: %v", repo.FullName(), release.TagName, err)
 			if noticeErr := system_model.CreateRepositoryNotice(
 				"ConvertRC2SB failed for repository (%s) tag (%s): %v", repo.FullName(), release.TagName, err,
 			); noticeErr != nil {
@@ -236,7 +237,7 @@ func ConvertRC2SBAllRepos(ctx context.Context) error {
 		}
 	}
 
-	log.Trace("Finished: ConvertRC2SBAllRepos")
+	log.Trace("Finished: AllRepos")
 	return nil
 }
 
@@ -245,7 +246,7 @@ func getLatestPublishedRelease(ctx context.Context, repo *repo_model.Repository)
 	rel, err := repo_model.GetLatestReleaseByRepoID(ctx, repo.ID, false, optional.None[bool]())
 	if err != nil {
 		if repo_model.IsErrReleaseNotExist(err) {
-			return nil, nil
+			return nil, nil //nolint:nilnil // nil release means no published release exists
 		}
 		return nil, err
 	}

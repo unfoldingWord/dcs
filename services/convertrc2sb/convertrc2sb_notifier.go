@@ -82,7 +82,7 @@ func (n *rc2sbNotifier) maybeConvert(ctx context.Context, rel *repo_model.Releas
 			log.Warn("ConvertRC2SB: context canceled for %s tag %s", repo.FullName(), release.TagName)
 			return
 		default:
-			if err := ConvertRC2SBForRelease(ctx, repo, release); err != nil {
+			if err := ForRelease(ctx, repo, release); err != nil {
 				log.Error("ConvertRC2SB: conversion failed for %s tag %s: %v", repo.FullName(), release.TagName, err)
 			}
 		}

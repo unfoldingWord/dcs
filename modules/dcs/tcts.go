@@ -49,16 +49,15 @@ func GetTcTsManifestFromBlob(blob *git.Blob) (*structs.TcTsManifest, error) {
 			t.Subject = "Bible"
 			t.FlavorType = "scripture"
 			t.Flavor = "textTranslation"
-
 		}
 	} else {
-		return nil, nil
+		return nil, nil //nolint:nilnil // nil manifest means this is not a TC/TS repo
 	}
 
 	if t.Resource.Name != "" {
 		t.Title = t.Resource.Name
 	}
-	if strings.ToLower(t.Resource.ID) != "obs" && t.Project.Name != "" && !strings.Contains(strings.ToLower(t.Title), strings.ToLower(t.Project.Name)) {
+	if !strings.EqualFold(t.Resource.ID, "obs") && t.Project.Name != "" && !strings.Contains(strings.ToLower(t.Title), strings.ToLower(t.Project.Name)) {
 		if t.Title != "" {
 			t.Title += " - "
 		}

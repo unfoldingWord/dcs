@@ -47,6 +47,6 @@ func registerConvertRC2SBTask() {
 		RunAtStart: false,
 		Schedule:   "@every 72h",
 	}, func(ctx context.Context, _ *user_model.User, _ Config) error {
-		return convertrc2sb_service.ConvertRC2SBAllRepos(ctx)
+		return convertrc2sb_service.AllRepos(ctx)
 	})
 }

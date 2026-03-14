@@ -14,7 +14,7 @@ This document catalogs every DCS modification to existing Gitea files. New DCS-o
 ### STRUCT_FIELD - Fields added to existing structs
 
 | File | Description | Risk | Depends On |
-|------|-------------|------|------------|
+| ------ | ------------- | ------ | ------------ |
 | `models/repo/repo.go` | LatestProdDM, LatestPreprodDM, DefaultBranchDM, RepoDM on Repository | HIGH | models/repo/door43metadata.go |
 | `models/user/user.go` | RepoLanguages, RepoSubjects, RepoMetadataTypes on User (JSON TEXT columns) | MEDIUM | - |
 | `modules/structs/repo.go` | 18 DCS fields (MetadataType through HealthcheckURL) on Repository API struct | MEDIUM | modules/structs/catalog.go |
@@ -28,14 +28,14 @@ This document catalogs every DCS modification to existing Gitea files. New DCS-o
 ### ROUTE_BLOCK - Route registrations
 
 | File | Description | Risk | Depends On |
-|------|-------------|------|------------|
+| ------ | ------------- | ------ | ------------ |
 | `routers/api/v1/api.go` | 4 blocks: reqExploreSignIn disabled, healthcheck endpoint, spam admin, catalog/languages routes | HIGH | routers/api/v1/dcs/, routers/api/v1/catalog/ |
 | `routers/web/web.go` | 2 blocks: repo healthcheck/metadata routes, top-level about/tools/catalog | HIGH | routers/web/dcs/, routers/web/repo/door43metadata.go |
 
 ### FUNC_CALL - Single function calls added to existing functions
 
 | File | Description | Risk | Depends On |
-|------|-------------|------|------------|
+| ------ | ------------- | ------ | ------------ |
 | `models/repo/repo.go` | LoadLatestDMs() call in LoadAttributes() | HIGH | models/repo/repo_dcs.go |
 | `modules/setting/setting.go` | loadDCSFrom(cfg) call | LOW | modules/setting/dcs.go |
 | `modules/templates/helper.go` | 13 DCS template functions registered | MEDIUM | modules/dcs/ |
@@ -57,7 +57,7 @@ This document catalogs every DCS modification to existing Gitea files. New DCS-o
 ### LOGIC_MOD - Logic changes in existing functions (highest conflict risk)
 
 | File | Description | Risk | Depends On |
-|------|-------------|------|------------|
+| ------ | ------------- | ------ | ------------ |
 | `models/repo/repo_list.go` | 33 DCS mods: search options, door43_metadata JOINs, column prefixing | HIGH | models/door43metadata/ |
 | `models/user/search.go` | DCS search fields, door43_metadata subquery JOINs (~65 lines) | HIGH | models/door43metadata/ |
 | `models/repo/release.go` | Door43Metadata field, InCatalog filter, GetLatestReleaseByRepoID signature change | HIGH | models/repo/door43metadata.go |
@@ -87,7 +87,7 @@ This document catalogs every DCS modification to existing Gitea files. New DCS-o
 ### VALUE_CHANGE - Single-line value changes
 
 | File | Description | Risk | Depends On |
-|------|-------------|------|------------|
+| ------ | ------------- | ------ | ------------ |
 | `routers/api/v1/admin/user.go` | MustChangePassword: false (was true) | LOW | - |
 | `modules/markup/csv/csv.go` | Removes .tsv from csv renderer extensions | LOW | modules/markup/tsv/ |
 | `services/repository/create.go` | LICENSE → LICENSE.md | LOW | - |
@@ -95,7 +95,7 @@ This document catalogs every DCS modification to existing Gitea files. New DCS-o
 ### COMMENT_OUT - Upstream code commented out
 
 | File | Description | Risk | Depends On |
-|------|-------------|------|------------|
+| ------ | ------------- | ------ | ------------ |
 | `routers/api/v1/api.go` | reqExploreSignIn body commented out | LOW | - |
 | `routers/common/blockexpensive.go` | Several paths removed/changed | LOW | - |
 | `routers/web/user/setting/applications.go` | Token name uniqueness check disabled | LOW | - |
@@ -103,7 +103,7 @@ This document catalogs every DCS modification to existing Gitea files. New DCS-o
 ### IMPORT - Additional imports
 
 | File | Description | Risk | Depends On |
-|------|-------------|------|------------|
+| ------ | ------------- | ------ | ------------ |
 | `main.go` | `_ "code.gitea.io/gitea/modules/markup/tsv"` | LOW | modules/markup/tsv/ |
 | `cmd/main.go` | CmdDoor43Metadata command registration | LOW | cmd/door43metadata.go |
 | `routers/init.go` | door43metadata service import | LOW | services/door43metadata/ |
@@ -113,7 +113,7 @@ This document catalogs every DCS modification to existing Gitea files. New DCS-o
 ### INTERFACE_EXT - Interface extensions
 
 | File | Description | Risk | Depends On |
-|------|-------------|------|------------|
+| ------ | ------------- | ------ | ------------ |
 | `services/notify/notifier.go` | NewTagRelease() added to Notifier interface | MEDIUM | All Notifier implementors |
 | `services/notify/null.go` | NewTagRelease() stub on NullNotifier | MEDIUM | services/notify/notifier.go |
 
@@ -124,7 +124,7 @@ This document catalogs every DCS modification to existing Gitea files. New DCS-o
 ### INJECT - DCS blocks injected into existing templates
 
 | File | Description | Risk |
-|------|-------------|------|
+| ------ | ------------- | ------ |
 | `templates/base/head.tmpl` | dcs_testing_banner partial include | LOW |
 | `templates/base/footer_content.tmpl` | CC BY-SA 4.0 license notice | LOW |
 | `templates/base/head_navbar.tmpl` | Help/API links replaced, usage stats link | MEDIUM |
@@ -153,13 +153,13 @@ This document catalogs every DCS modification to existing Gitea files. New DCS-o
 ### FULL_REPLACE - Completely replaced templates
 
 | File | Description | Risk |
-|------|-------------|------|
+| ------ | ------------- | ------ |
 | `templates/home.tmpl` | Entire DCS landing page (replaces Gitea default) | LOW (no upstream content to preserve) |
 
 ### TRIVIAL - Minor icon/text changes
 
 | File | Description | Risk |
-|------|-------------|------|
+| ------ | ------------- | ------ |
 | `templates/explore/navbar.tmpl` | octicon-code → octicon-file | LOW |
 | `templates/repo/editor/edit.tmpl` | octicon-code → octicon-file | LOW |
 | `templates/swagger/ui.tmpl` | "Gitea API" → "DCS (Gitea) API" | LOW |
@@ -167,7 +167,7 @@ This document catalogs every DCS modification to existing Gitea files. New DCS-o
 ### BRANDING/AUTO-GENERATED
 
 | File | Description | Risk |
-|------|-------------|------|
+| ------ | ------------- | ------ |
 | `templates/swagger/v1_json.tmpl` | ~2700 lines of DCS API definitions added | LOW (auto-generated) |
 
 ---
@@ -175,7 +175,7 @@ This document catalogs every DCS modification to existing Gitea files. New DCS-o
 ## Modified Config/Build Files
 
 | File | Description | Risk |
-|------|-------------|------|
+| ------ | ------------- | ------ |
 | `.changelog.yml` | Repo name: unfoldingWord/dcs | LOW |
 | `.github/workflows/release-tag-version.yml` | CI runner change | LOW |
 | `.gitignore` | DCS-specific entries | LOW |
@@ -192,7 +192,7 @@ This document catalogs every DCS modification to existing Gitea files. New DCS-o
 ## Modified Frontend Files
 
 | File | Description | Risk |
-|------|-------------|------|
+| ------ | ------------- | ------ |
 | `web_src/css/index.css` | DCS CSS import | LOW |
 | `web_src/css/markup/content.css` | Markup style tweaks | LOW |
 | `web_src/css/standalone/swagger.css` | Swagger style tweaks | LOW |
@@ -205,7 +205,7 @@ This document catalogs every DCS modification to existing Gitea files. New DCS-o
 ## Modified Test Files
 
 | File | Description | Risk |
-|------|-------------|------|
+| ------ | ------------- | ------ |
 | `services/auth/auth_test.go` | Test for /sb/ archive path | LOW |
 | `services/release/release_test.go` | Changed test targets for DCS compatibility | LOW |
 | `tests/integration/links_test.go` | Updated for DCS links | LOW |
@@ -216,6 +216,7 @@ This document catalogs every DCS modification to existing Gitea files. New DCS-o
 ## New DCS-Only Files (zero conflict risk)
 
 ### Go packages
+
 - `cmd/door43metadata.go`
 - `models/catalog_list.go`
 - `models/door43metadata/search.go`, `stage.go`
@@ -242,6 +243,7 @@ This document catalogs every DCS modification to existing Gitea files. New DCS-o
 - `services/gitref/gitref.go`, `gitref_test.go`
 
 ### Templates
+
 - `templates/catalog/catalog.tmpl`, `catalog_list.tmpl`, `catalog_search.tmpl`, `catalog_publisher_list.tmpl`, `hc_dash.tmpl`, `info_icon.tmpl`
 - `templates/dcs_testing_banner.tmpl`
 - `templates/repo/dcs_metadata.tmpl`, `dcs_metadata_list.tmpl`, `dcs_metadata_list_item.tmpl`, `dcs_healthcheck.tmpl`, `dcs_healthcheck_list.tmpl`
@@ -249,10 +251,12 @@ This document catalogs every DCS modification to existing Gitea files. New DCS-o
 - `templates/tools.tmpl`
 
 ### CI/CD
+
 - `.github/workflows/dcs-tests.yml`, `release-nightly-dcs.yml`, `release-tag-version-dcs.yml`
 - `.eslintignore`
 
 ### Assets
+
 - `assets/lang_font_families.json`, `lang_font_links.json`
 - `options/label/BibleBooks`, `options/license/CC-BY-SA-4.0.md`
 - `options/schema/rc02/`, `options/schema/sb100/` (many schema files)
@@ -260,5 +264,6 @@ This document catalogs every DCS modification to existing Gitea files. New DCS-o
 - `public/assets/js-dcs/usfm-alignment-remover.js`
 
 ### Frontend
+
 - `web_src/css/dcs.css`
 - `web_src/js/features/dcs-info-icons.ts`, `dcs-language-fonts.ts`, `dcs-search-builder.ts`, `dcs-validation-badge.ts`

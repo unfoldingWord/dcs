@@ -141,6 +141,7 @@ Every modification to an existing Gitea file follows one of these patterns. When
 **Merge rule:** Carefully understand both upstream and DCS changes. These require manual integration.
 
 Key files with LOGIC_MOD changes (review carefully during merges):
+
 - `models/repo/repo_list.go` - Search conditions with door43_metadata JOINs
 - `models/user/search.go` - User search with door43_metadata filtering
 - `routers/web/explore/repo.go` - DCS keyword parsing in search

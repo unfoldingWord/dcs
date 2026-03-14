@@ -472,7 +472,7 @@ func doArchive(ctx context.Context, r *ArchiveRequest) (*repo_model.RepoArchiver
 	createdNew := false
 	if archiver != nil {
 		if archiver.Status == repo_model.ArchiverGenerating {
-			return nil, nil
+			return nil, nil //nolint:nilnil // nil archiver means it's currently being generated
 		}
 	} else {
 		archiver = &repo_model.RepoArchiver{

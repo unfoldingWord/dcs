@@ -50,13 +50,11 @@ func ReadYAMLFromBlob(blob *git.Blob) (map[string]any, error) {
 		log.Error("yaml.Unmarshal: %v", err)
 		return nil, err
 	}
-	if result != nil {
-		for k, v := range result {
-			if val, err := ToStringKeys(v); err != nil {
-				log.Error("ToStringKeys: %v", err)
-			} else {
-				(result)[k] = val
-			}
+	for k, v := range result {
+		if val, err := ToStringKeys(v); err != nil {
+			log.Error("ToStringKeys: %v", err)
+		} else {
+			result[k] = val
 		}
 	}
 	return result, nil

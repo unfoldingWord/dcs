@@ -1,6 +1,7 @@
 import $ from 'jquery';
 import lang_font_families from '../../../assets/lang_font_families.json';
 import lang_font_links from '../../../assets/lang_font_links.json';
+import {html} from '../utils/html.ts';
 
 const set_dcs_fonts = [];
 const set_dcs_selectors = [];
@@ -24,7 +25,7 @@ function setDCSFontsHTML(fonts, selector) {
   }
   for (const font of fonts) {
     if (!set_dcs_fonts.includes(font) && lang_font_links[font]) {
-      $head.append(`<link href="${lang_font_links[font]}" rel="stylesheet">`);
+      $head.append(html`<link href="${lang_font_links[font]}" rel="stylesheet">`);
       set_dcs_fonts.push(font);
     }
   }
