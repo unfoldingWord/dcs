@@ -998,11 +998,10 @@ func processDoor43MetadataForRepoRef(ctx context.Context, repo *repo_model.Repos
 	}
 
 	if repo.IsArchived || repo.IsEmpty || repo.IsMirror || repo.IsPrivate {
-		return errors.New("repo must not be empty, an arhcive, a mirror or private")
+		return errors.New("repo must not be empty, an archive, a mirror or private")
 	}
 
-	err := repo.LoadLatestDMs(ctx)
-	if err != nil {
+	if err := repo.LoadLatestDMs(ctx); err != nil {
 		return err
 	}
 
@@ -1105,8 +1104,7 @@ func processDoor43MetadataForRepoRef(ctx context.Context, repo *repo_model.Repos
 	}
 
 	if dm.ID > 0 {
-		err = repo_model.UpdateDoor43Metadata(ctx, dm)
-		if err != nil {
+		if err = repo_model.UpdateDoor43Metadata(ctx, dm); err != nil {
 			return err
 		}
 	} else {
@@ -1114,8 +1112,7 @@ func processDoor43MetadataForRepoRef(ctx context.Context, repo *repo_model.Repos
 			// We didn't get any properties from the metadata file since it was invalid
 			dm.CopyEmptyPropertiesFromRepoDM(ctx)
 		}
-		err = repo_model.InsertDoor43Metadata(ctx, dm)
-		if err != nil {
+		if err = repo_model.InsertDoor43Metadata(ctx, dm); err != nil {
 			return err
 		}
 	}

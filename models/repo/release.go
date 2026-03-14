@@ -366,7 +366,6 @@ func GetLatestReleaseByRepoID(ctx context.Context, repoID int64, includePreRelea
 
 	rel := new(Release)
 	has, err := e.
-		Desc("created_unix", "id").
 		Where(cond).
 		Desc("`release`.created_unix", "`release`.id").
 		Get(rel)

@@ -91,8 +91,7 @@ func runConvertRC2SB(ctx context.Context, c *cli.Command) error {
 		return err
 	}
 
-	err := convertrc2sb_service.AllRepos(stdCtx)
-	if err != nil {
+	if err := convertrc2sb_service.AllRepos(stdCtx); err != nil {
 		return err
 	}
 

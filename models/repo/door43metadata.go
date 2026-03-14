@@ -747,9 +747,8 @@ func IsErrDoor43MetadataNotExist(err error) bool {
 func (err ErrDoor43MetadataNotExist) Error() string {
 	if err.Ref != "" {
 		return fmt.Sprintf("door43 metadata does not exist [id: %d, repo_id: %d, ref: %s]", err.ID, err.RepoID, err.Ref)
-	} else {
-		return fmt.Sprintf("door43 metadata does not exist [id: %d, repo_id: %d, release_id: %d]", err.ID, err.RepoID, err.RelID)
 	}
+	return fmt.Sprintf("door43 metadata does not exist [id: %d, repo_id: %d, release_id: %d]", err.ID, err.RepoID, err.RelID)
 }
 
 // ErrInvalidRelease represents a "InvalidRelease" kind of error.

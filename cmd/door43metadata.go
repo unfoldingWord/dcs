@@ -71,11 +71,10 @@ func runDoor43Metadata(ctx context.Context, c *cli.Command) error {
 		return err
 	}
 
-	err := door43metadata_service.UpdateDoor43Metadata(stdCtx)
-	if err != nil {
+	if err := door43metadata_service.UpdateDoor43Metadata(stdCtx); err != nil {
 		return err
 	}
 
 	log.Info("Finished gathering the door43metadata for all repos")
-	return system.CreateRepositoryNotice("FINSIEHD FULL Door43 Metadata Update - PROCESSED ALL REPOS AND REFS")
+	return system.CreateRepositoryNotice("FINISHED FULL Door43 Metadata Update - PROCESSED ALL REPOS AND REFS")
 }

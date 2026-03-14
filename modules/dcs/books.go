@@ -159,9 +159,8 @@ func GetBookName(book string) string {
 	value, ok := BookNames[book]
 	if ok {
 		return value
-	} else {
-		return book
 	}
+	return book
 }
 
 func BookIsOT(book string) bool {

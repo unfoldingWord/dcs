@@ -194,7 +194,9 @@ func TestRequireSignInView(t *testing.T) {
 		req := NewRequest(t, "GET", "/user2/repo1")
 		MakeRequest(t, req, http.StatusOK)
 
-		req = NewRequest(t, "GET", "/user2/repo1/src/branch/master")
+		/*** DCS Customizations - DCS makes broad src/ non-expensive, but src/commit/ is still expensive ***/
+		req = NewRequest(t, "GET", "/user2/repo1/src/commit/master")
+		/*** END DCS Customizations ***/
 		resp := MakeRequest(t, req, http.StatusSeeOther)
 		assert.Equal(t, "/user/login?redirect_to=%2Fuser2%2Frepo1%2Fsrc%2Fbranch%2Fmaster", resp.Header().Get("Location"))
 	})
