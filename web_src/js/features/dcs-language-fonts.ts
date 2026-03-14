@@ -2,8 +2,8 @@ import $ from 'jquery';
 import lang_font_familiesJson from '../../../assets/lang_font_families.json';
 import lang_font_linksJson from '../../../assets/lang_font_links.json';
 
-const lang_font_families: { [key: string]: string[] } = lang_font_familiesJson as { [key: string]: string[] };
-const lang_font_links: { [key: string]: string } = lang_font_linksJson as { [key: string]: string };
+const lang_font_families: {[key: string]: string[]} = lang_font_familiesJson as {[key: string]: string[]};
+const lang_font_links: {[key: string]: string} = lang_font_linksJson as {[key: string]: string};
 
 const set_dcs_fonts: any[] = [];
 const set_dcs_selectors: any[] = [];
@@ -27,7 +27,10 @@ function setDCSFontsHTML(fonts: any[], selector: string) {
   }
   for (const font of fonts) {
     if (!set_dcs_fonts.includes(font) && lang_font_links[font]) {
-      $head.append(`<link href="${lang_font_links[font]}" rel="stylesheet">`);
+      const link = document.createElement('link');
+      link.href = lang_font_links[font];
+      link.rel = 'stylesheet';
+      $head.append(link);
       set_dcs_fonts.push(font);
     }
   }

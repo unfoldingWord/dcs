@@ -1,11 +1,11 @@
 import {createTippy} from '../modules/tippy.ts';
 
 export function initDCSInfoIcon() {
-  const icon = document.getElementById('dcs-info-icon');
+  const icon = document.querySelector('#dcs-info-icon');
   if (!icon) {
     return;
   }
-  const tooltip = document.getElementById('dcs-info-icon-tooltip');
+  const tooltip = document.querySelector('#dcs-info-icon-tooltip');
   if (!tooltip) {
     return;
   }
