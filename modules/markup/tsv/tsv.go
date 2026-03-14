@@ -129,7 +129,7 @@ func (Renderer) Render(ctx *markup.RenderContext, input io.Reader, output io.Wri
 		if fieldErr == io.EOF {
 			break
 		}
-		if err != nil {
+		if fieldErr != nil {
 			colspan := 1
 			if numFields > 0 {
 				colspan = numFields
