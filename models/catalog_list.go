@@ -130,7 +130,7 @@ func SearchCatalogForBookPackage(ctx context.Context, dm *repo.Door43Metadata, o
 	if len(books) > 0 {
 		innerBookCond := builder.NewCond()
 		for _, book := range books {
-			for _, v := range strings.Split(book, ",") {
+			for v := range strings.SplitSeq(book, ",") {
 				innerBookCond = innerBookCond.And(builder.Expr("JSON_SEARCH(dm.ingredients, 'one', ? COLLATE utf8mb4_general_ci, NULL, '$[*].identifier') IS NOT NULL", strings.ToLower(v)))
 				// innerBookCond = innerBookCond.And(builder.Expr("JSON_CONTAINS(LOWER(JSON_EXTRACT(dm.ingredients, '$')), JSON_OBJECT('identifier', ?))", strings.ToLower(v)))
 			}

@@ -61,7 +61,7 @@ func GetColorFromString(str string) string {
 		hash = int(str[i]) + ((hash << 5) - hash)
 	}
 	color := "#"
-	for i := 0; i < 3; i++ {
+	for i := range 3 {
 		value := (hash >> (i * 8)) & 0xFF
 		color += fmt.Sprintf("%02x", value)
 	}

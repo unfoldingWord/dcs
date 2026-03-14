@@ -205,7 +205,7 @@ func GetHistoryCond(includeHistory bool) builder.Cond {
 func GetSubjectCond(subjects []string, partialMatch bool) builder.Cond {
 	subjectCond := builder.NewCond()
 	for _, subject := range subjects {
-		for _, v := range strings.Split(subject, ",") {
+		for v := range strings.SplitSeq(subject, ",") {
 			if partialMatch {
 				subjectCond = subjectCond.Or(builder.Like{"`door43_metadata`.subject", strings.TrimSpace(v)})
 			} else {
@@ -220,7 +220,7 @@ func GetSubjectCond(subjects []string, partialMatch bool) builder.Cond {
 func GetFlavorTypeCond(flavorTypes []string, partialMatch bool) builder.Cond {
 	flavorTypeCond := builder.NewCond()
 	for _, flavorType := range flavorTypes {
-		for _, v := range strings.Split(flavorType, ",") {
+		for v := range strings.SplitSeq(flavorType, ",") {
 			if partialMatch {
 				flavorTypeCond = flavorTypeCond.Or(builder.Like{"`door43_metadata`.flavor_type", strings.TrimSpace(v)})
 			} else {
@@ -235,7 +235,7 @@ func GetFlavorTypeCond(flavorTypes []string, partialMatch bool) builder.Cond {
 func GetFlavorCond(flavors []string, partialMatch bool) builder.Cond {
 	flavorCond := builder.NewCond()
 	for _, flavor := range flavors {
-		for _, v := range strings.Split(flavor, ",") {
+		for v := range strings.SplitSeq(flavor, ",") {
 			if partialMatch {
 				flavorCond = flavorCond.Or(builder.Like{"`door43_metadata`.flavor", strings.TrimSpace(v)})
 			} else {
@@ -250,7 +250,7 @@ func GetFlavorCond(flavors []string, partialMatch bool) builder.Cond {
 func GetAbbreviationCond(abberviations []string) builder.Cond {
 	abbreviationCond := builder.NewCond()
 	for _, abbreviation := range abberviations {
-		for _, v := range strings.Split(abbreviation, ",") {
+		for v := range strings.SplitSeq(abbreviation, ",") {
 			abbreviationCond = abbreviationCond.Or(builder.Eq{"`door43_metadata`.abbreviation": strings.TrimSpace(v)})
 		}
 	}
@@ -261,7 +261,7 @@ func GetAbbreviationCond(abberviations []string) builder.Cond {
 func GetContentFormatCond(formats []string, partialMatch bool) builder.Cond {
 	formatCond := builder.NewCond()
 	for _, format := range formats {
-		for _, v := range strings.Split(format, ",") {
+		for v := range strings.SplitSeq(format, ",") {
 			if partialMatch {
 				formatCond = formatCond.Or(builder.Like{"`door43_metadata`.content_format", strings.TrimSpace(v)})
 			} else {
@@ -276,7 +276,7 @@ func GetContentFormatCond(formats []string, partialMatch bool) builder.Cond {
 func GetMetadataTypeCond(types []string, partialMatch bool) builder.Cond {
 	metadataTypeCond := builder.NewCond()
 	for _, metadataType := range types {
-		for _, v := range strings.Split(metadataType, ",") {
+		for v := range strings.SplitSeq(metadataType, ",") {
 			metadataTypeCond = metadataTypeCond.Or(builder.Eq{"`door43_metadata`.metadata_type": strings.ToLower(v)})
 		}
 	}
@@ -287,7 +287,7 @@ func GetMetadataTypeCond(types []string, partialMatch bool) builder.Cond {
 func GetTopicCond(topics []string, partialMatch bool) builder.Cond {
 	topicCond := builder.NewCond()
 	for _, topic := range topics {
-		for _, v := range strings.Split(topic, ",") {
+		for v := range strings.SplitSeq(topic, ",") {
 			if partialMatch {
 				topicCond = topicCond.Or(builder.In("`repository`.id", builder.Select("repo_id").From("repo_topic").InnerJoin("topic", "`repo_topic`.topic_id = `topic`.id").Where(builder.Like{"`topic`.name", strings.TrimSpace(v)})))
 			} else {
@@ -302,7 +302,7 @@ func GetTopicCond(topics []string, partialMatch bool) builder.Cond {
 func GetInvertedTopicCond(topics []string, partialMatch bool) builder.Cond {
 	topicCond := builder.NewCond()
 	for _, topic := range topics {
-		for _, v := range strings.Split(topic, ",") {
+		for v := range strings.SplitSeq(topic, ",") {
 			if partialMatch {
 				topicCond = topicCond.And(builder.NotIn("`repository`.id", builder.Select("repo_id").From("repo_topic").InnerJoin("topic", "`repo_topic`.topic_id = `topic`.id").Where(builder.Like{"`topic`.name", strings.TrimSpace(v)})))
 			} else {
@@ -335,7 +335,7 @@ var SeverityLevelMap = map[string]SeverityLevel{
 func GetHealthcheckCond(healthchecks []string) builder.Cond {
 	healthcheckCond := builder.NewCond()
 	for _, healthcheck := range healthchecks {
-		for _, v := range strings.Split(healthcheck, ",") {
+		for v := range strings.SplitSeq(healthcheck, ",") {
 			v = strings.ToLower(strings.TrimSpace(v))
 			if _, ok := SeverityLevelMap[v]; ok {
 				healthcheckCond = healthcheckCond.Or(builder.Eq{"`door43_metadata`.healthcheck_severity": SeverityLevelMap[v]})
@@ -349,7 +349,7 @@ func GetHealthcheckCond(healthchecks []string) builder.Cond {
 func GetMetadataVersionCond(versions []string, partialMatch bool) builder.Cond {
 	versionCond := builder.NewCond()
 	for _, version := range versions {
-		for _, v := range strings.Split(version, ",") {
+		for v := range strings.SplitSeq(version, ",") {
 			if partialMatch {
 				versionCond = versionCond.Or(builder.Like{"`door43_metadata`.metadata_version", strings.TrimSpace(v)})
 			} else {
@@ -364,7 +364,7 @@ func GetMetadataVersionCond(versions []string, partialMatch bool) builder.Cond {
 func GetLanguageCond(languages []string, partialMatch bool) builder.Cond {
 	langCond := builder.NewCond()
 	for _, lang := range languages {
-		for _, v := range strings.Split(lang, ",") {
+		for v := range strings.SplitSeq(lang, ",") {
 			if partialMatch {
 				langCond = langCond.
 					Or(builder.Like{"`door43_metadata`.language", strings.TrimSpace(v)}).
@@ -383,7 +383,7 @@ func GetLanguageCond(languages []string, partialMatch bool) builder.Cond {
 func GetBookCond(books []string) builder.Cond {
 	bookCond := builder.NewCond()
 	for _, book := range books {
-		for _, v := range strings.Split(book, ",") {
+		for v := range strings.SplitSeq(book, ",") {
 			bookCond = bookCond.Or(builder.Expr("JSON_SEARCH(dm.ingredients, 'one', ? COLLATE utf8mb4_general_ci, NULL, '$[*].identifier') IS NOT NULL", strings.ToLower(v)))
 			// bookCond = bookCond.Or(builder.Expr("JSON_CONTAINS(LOWER(JSON_EXTRACT(dm.ingredients, '$')), JSON_OBJECT('identifier', ?))", strings.ToLower(v)))
 		}
@@ -395,7 +395,7 @@ func GetBookCond(books []string) builder.Cond {
 func GetCheckingLevelCond(checkingLevels []string) builder.Cond {
 	checkingCond := builder.NewCond()
 	for _, checking := range checkingLevels {
-		for _, v := range strings.Split(checking, ",") {
+		for v := range strings.SplitSeq(checking, ",") {
 			checkingCond = checkingCond.Or(builder.Gte{"`door43_metadata`.checking_level": v})
 		}
 	}
@@ -406,7 +406,7 @@ func GetCheckingLevelCond(checkingLevels []string) builder.Cond {
 func GetTagCond(tags []string) builder.Cond {
 	tagCond := builder.NewCond()
 	for _, tag := range tags {
-		for _, v := range strings.Split(tag, ",") {
+		for v := range strings.SplitSeq(tag, ",") {
 			tagCond = tagCond.Or(builder.Eq{"`release`.tag_name": v})
 		}
 	}
@@ -417,7 +417,7 @@ func GetTagCond(tags []string) builder.Cond {
 func GetRepoCond(repos []string, partialMatch bool) builder.Cond {
 	repoCond := builder.NewCond()
 	for _, repo := range repos {
-		for _, v := range strings.Split(repo, ",") {
+		for v := range strings.SplitSeq(repo, ",") {
 			if partialMatch {
 				repoCond = repoCond.Or(builder.Like{"`repository`.lower_name", strings.ToLower(v)})
 			} else {
@@ -432,7 +432,7 @@ func GetRepoCond(repos []string, partialMatch bool) builder.Cond {
 func GetOwnerCond(owners []string, partialMatch bool) builder.Cond {
 	ownerCond := builder.NewCond()
 	for _, owner := range owners {
-		for _, v := range strings.Split(owner, ",") {
+		for v := range strings.SplitSeq(owner, ",") {
 			if partialMatch {
 				ownerCond = ownerCond.Or(builder.Like{"`user`.lower_name", strings.ToLower(v)})
 			} else {

@@ -178,7 +178,7 @@ func SearchUsers(ctx context.Context, opts SearchUserOptions) (users []*User, _ 
 		hasMetadataCond = true
 		repoLangsCond := builder.NewCond()
 		for _, values := range opts.RepoLanguages {
-			for _, value := range strings.Split(values, ",") {
+			for value := range strings.SplitSeq(values, ",") {
 				repoLangsCond = repoLangsCond.Or(builder.Eq{"`door43_metadata`.language": strings.TrimSpace(value)})
 			}
 		}
@@ -188,7 +188,7 @@ func SearchUsers(ctx context.Context, opts SearchUserOptions) (users []*User, _ 
 		hasMetadataCond = true
 		repoSubsCond := builder.NewCond()
 		for _, values := range opts.RepoSubjects {
-			for _, value := range strings.Split(values, ",") {
+			for value := range strings.SplitSeq(values, ",") {
 				repoSubsCond = repoSubsCond.Or(builder.Eq{"`door43_metadata`.subject": strings.TrimSpace(value)})
 			}
 		}
@@ -198,7 +198,7 @@ func SearchUsers(ctx context.Context, opts SearchUserOptions) (users []*User, _ 
 		hasMetadataCond = true
 		repoFlavorTypesCond := builder.NewCond()
 		for _, values := range opts.RepoFlavorTypes {
-			for _, value := range strings.Split(values, ",") {
+			for value := range strings.SplitSeq(values, ",") {
 				repoFlavorTypesCond = repoFlavorTypesCond.Or(builder.Eq{"`door43_metadata`.flavor_type": strings.TrimSpace(value)})
 			}
 		}
@@ -208,7 +208,7 @@ func SearchUsers(ctx context.Context, opts SearchUserOptions) (users []*User, _ 
 		hasMetadataCond = true
 		repoFlavorCond := builder.NewCond()
 		for _, values := range opts.RepoFlavorTypes {
-			for _, value := range strings.Split(values, ",") {
+			for value := range strings.SplitSeq(values, ",") {
 				repoFlavorCond = repoFlavorCond.Or(builder.Eq{"`door43_metadata`.flavor": strings.TrimSpace(value)})
 			}
 		}
@@ -218,7 +218,7 @@ func SearchUsers(ctx context.Context, opts SearchUserOptions) (users []*User, _ 
 		hasMetadataCond = true
 		repoMetadataTypesCond := builder.NewCond()
 		for _, values := range opts.RepoMetadataTypes {
-			for _, value := range strings.Split(values, ",") {
+			for value := range strings.SplitSeq(values, ",") {
 				repoMetadataTypesCond = repoMetadataTypesCond.Or(builder.Eq{"`door43_metadata`.metadata_type": strings.TrimSpace(value)})
 			}
 		}
