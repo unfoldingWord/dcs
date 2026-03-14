@@ -33,6 +33,31 @@ func NewNotifier() notify_service.Notifier {
 	return &metadataNotifier{}
 }
 
+// processInBackground loads a fresh copy of the repo by ID and processes
+// Door43Metadata in a background goroutine. This avoids data races with
+// other notifiers that may be reading the same repo pointer concurrently.
+func processInBackground(caller string, repo *repo_model.Repository, ref string) {
+	repoID := repo.ID
+	repoName := repo.FullName()
+	shutdownCtx := graceful.GetManager().ShutdownContext()
+	go func() {
+		select {
+		case <-shutdownCtx.Done():
+			log.Warn("%s: Context canceled [%s, %s]", caller, repoName, ref)
+			return
+		default:
+			freshRepo, err := repo_model.GetRepositoryByID(shutdownCtx, repoID)
+			if err != nil {
+				log.Error("%s: GetRepositoryByID(%d) failed: %v", caller, repoID, err)
+				return
+			}
+			if err := ProcessDoor43MetadataForRepo(shutdownCtx, freshRepo, ref); err != nil {
+				log.Error("%s: ProcessDoor43MetadataForRepo failed [%s, %s]: %v", caller, repoName, ref, err)
+			}
+		}
+	}()
+}
+
 func (m *metadataNotifier) CreateRepository(ctx context.Context, doer, u *user_model.User, repo *repo_model.Repository) {
 	if err := ProcessDoor43MetadataForRepo(ctx, repo, ""); err != nil {
 		log.Error("CreateRepository: ProcessDoor43MetadataForRepo failed [%s]: %v", repo.FullName(), err)
@@ -99,37 +124,13 @@ func (m *metadataNotifier) NewTagRelease(ctx context.Context, rel *repo_model.Re
 
 func (m *metadataNotifier) PushCommits(ctx context.Context, pusher *user_model.User, repo *repo_model.Repository, opts *repository.PushUpdateOptions, commits *repository.PushCommits) {
 	if opts.RefFullName.IsBranch() {
-		ref := opts.RefFullName.BranchName()
-		shutdownCtx := graceful.GetManager().ShutdownContext()
-		go func(ctx context.Context, repo *repo_model.Repository, ref string) {
-			select {
-			case <-ctx.Done():
-				log.Warn("PushCommits: Context canceled [%s, %s]", repo.FullName(), ref)
-				return
-			default:
-				if err := ProcessDoor43MetadataForRepo(ctx, repo, ref); err != nil {
-					log.Error("PushCommits: ProcessDoor43MetadataForRepo failed [%s, %s]: %v", repo.FullName(), ref, err)
-				}
-			}
-		}(shutdownCtx, repo, ref)
+		processInBackground("PushCommits", repo, opts.RefFullName.BranchName())
 	}
 }
 
 func (m *metadataNotifier) SyncPushCommits(ctx context.Context, pusher *user_model.User, repo *repo_model.Repository, opts *repository.PushUpdateOptions, commits *repository.PushCommits) {
 	if opts.RefFullName.IsBranch() {
-		ref := opts.RefFullName.BranchName()
-		shutdownCtx := graceful.GetManager().ShutdownContext()
-		go func(ctx context.Context, repo *repo_model.Repository, ref string) {
-			select {
-			case <-ctx.Done():
-				log.Warn("SyncPushCommits: Context canceled [%s, %s]", repo.FullName(), ref)
-				return
-			default:
-				if err := ProcessDoor43MetadataForRepo(ctx, repo, ref); err != nil {
-					log.Error("SyncPushCommits: ProcessDoor43MetadataForRepo failed [%s, %s]: %v", repo.FullName(), ref, err)
-				}
-			}
-		}(shutdownCtx, repo, ref)
+		processInBackground("SyncPushCommits", repo, opts.RefFullName.BranchName())
 	}
 }
 
@@ -146,65 +147,19 @@ func (m *metadataNotifier) SyncDeleteRepository(ctx context.Context, doer *user_
 }
 
 func (m *metadataNotifier) MigrateRepository(ctx context.Context, doer, u *user_model.User, repo *repo_model.Repository) {
-	shutdownCtx := graceful.GetManager().ShutdownContext()
-	go func(ctx context.Context, repo *repo_model.Repository) {
-		select {
-		case <-ctx.Done():
-			log.Warn("MigrateRepository: Context canceled [%s]", repo.FullName())
-			return
-		default:
-			if err := ProcessDoor43MetadataForRepo(ctx, repo, ""); err != nil {
-				log.Error("MigrateRepository: ProcessDoor43MetadataForRepo failed [%s]: %v", repo.FullName(), err)
-			}
-		}
-	}(shutdownCtx, repo)
+	processInBackground("MigrateRepository", repo, "")
 }
 
 func (m *metadataNotifier) TransferRepository(ctx context.Context, doer *user_model.User, repo *repo_model.Repository, newOwnerName string) {
-	// Shouldn't really need if the repo is transferred as it keeps the same IDs, releases, etc, but just in case
-	shutdownCtx := graceful.GetManager().ShutdownContext()
-	go func(ctx context.Context, repo *repo_model.Repository) {
-		select {
-		case <-ctx.Done():
-			log.Warn("TransferRepository: Context canceled [%s]", repo.FullName())
-			return
-		default:
-			if err := ProcessDoor43MetadataForRepo(ctx, repo, ""); err != nil {
-				log.Error("TransferRepository: ProcessDoor43MetadataForRepo failed [%s]: %v", repo.FullName(), err)
-			}
-		}
-	}(shutdownCtx, repo)
+	processInBackground("TransferRepository", repo, "")
 }
 
 func (m *metadataNotifier) ForkRepository(ctx context.Context, doer *user_model.User, oldRepo, repo *repo_model.Repository) {
-	shutdownCtx := graceful.GetManager().ShutdownContext()
-	go func(ctx context.Context, repo *repo_model.Repository) {
-		select {
-		case <-ctx.Done():
-			log.Warn("ForkRepository: Context canceled [%s]", repo.FullName())
-			return
-		default:
-			if err := ProcessDoor43MetadataForRepo(ctx, repo, ""); err != nil {
-				log.Error("ForkRepository: ProcessDoor43MetadataForRepo failed [%s]: %v", repo.FullName(), err)
-			}
-		}
-	}(shutdownCtx, repo)
+	processInBackground("ForkRepository", repo, "")
 }
 
 func (m *metadataNotifier) RenameRepository(ctx context.Context, doer *user_model.User, repo *repo_model.Repository, oldName string) {
-	// Shouldn't really need if the repo is renamed as it keeps the same IDs, releases, etc, but just in case
-	shutdownCtx := graceful.GetManager().ShutdownContext()
-	go func(ctx context.Context, repo *repo_model.Repository) {
-		select {
-		case <-ctx.Done():
-			log.Warn("RenameRepository: Context canceled [%s]", repo.FullName())
-			return
-		default:
-			if err := ProcessDoor43MetadataForRepo(ctx, repo, ""); err != nil {
-				log.Error("RenameRepository: ProcessDoor43MetadataForRepo failed [%s]: %v", repo.FullName(), err)
-			}
-		}
-	}(shutdownCtx, repo)
+	processInBackground("RenameRepository", repo, "")
 }
 
 func (m *metadataNotifier) DeleteRef(ctx context.Context, doer *user_model.User, repo *repo_model.Repository, refFullName git.RefName) {
@@ -217,16 +172,5 @@ func (m *metadataNotifier) DeleteRef(ctx context.Context, doer *user_model.User,
 }
 
 func (m *metadataNotifier) ChangeDefaultBranch(ctx context.Context, repo *repo_model.Repository) {
-	shutdownCtx := graceful.GetManager().ShutdownContext()
-	go func(ctx context.Context, repo *repo_model.Repository) {
-		select {
-		case <-ctx.Done():
-			log.Warn("ChangeDefaultBranch: Context canceled [%s]", repo.FullName())
-			return
-		default:
-			if err := ProcessDoor43MetadataForRepo(ctx, repo, repo.DefaultBranch); err != nil {
-				log.Error("ChangeDefaultBranch: ProcessDoor43MetadataForRef failed [%s, %s]: %v", repo.FullName(), repo.DefaultBranch, err)
-			}
-		}
-	}(shutdownCtx, repo)
+	processInBackground("ChangeDefaultBranch", repo, repo.DefaultBranch)
 }
