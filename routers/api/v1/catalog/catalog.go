@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"net/url"
 	"path"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -1153,15 +1154,6 @@ func searchCatalog(ctx *context.APIContext) {
 	})
 }
 
-func contains(slice []string, target string) bool {
-	for _, item := range slice {
-		if item == target {
-			return true
-		}
-	}
-	return false
-}
-
 func getCatalogBookPackage(ctx *context.APIContext) {
 	ref := ctx.PathParam("*")
 	stageStr := ctx.FormString("stage")
@@ -1227,9 +1219,9 @@ func getCatalogBookPackage(ctx *context.APIContext) {
 	flavors := QueryStrings(ctx, "flavors")
 	flavorTypes := QueryStrings(ctx, "flavorTypes")
 	if len(subjects) == 0 && len(flavors) == 0 && len(flavorTypes) == 0 {
-		if contains(bibleBPSubjects, dm.Subject) {
+		if slices.Contains(bibleBPSubjects, dm.Subject) {
 			subjects = bibleBPSubjects
-		} else if contains(obsBPSubjects, dm.Subject) {
+		} else if slices.Contains(obsBPSubjects, dm.Subject) {
 			subjects = obsBPSubjects
 		} else {
 			subjects = []string{dm.Subject}
@@ -1289,7 +1281,7 @@ func getCatalogBookPackage(ctx *context.APIContext) {
 		return
 	}
 
-	if contains(subjects, "Hebrew Old Testament") || contains(subjects, "Greek New Testament") {
+	if slices.Contains(subjects, "Hebrew Old Testament") || slices.Contains(subjects, "Greek New Testament") {
 		origBibleDMs, origBibleCount, err := models.GetOrigLanguageBibles(ctx, dm, books)
 		if err != nil {
 			ctx.APIError(http.StatusInternalServerError, err)
