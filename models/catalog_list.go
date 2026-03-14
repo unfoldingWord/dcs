@@ -198,7 +198,7 @@ WHERE rn = 1
 ORDER BY IF(repo_id = ?, 1, 0) DESC, subject ASC`
 
 	// Prepare query arguments: owner, repoName, ref, then all condition args
-	queryArgs := []interface{}{dm.ReleaseDateUnix, dm.Stage, dm.Language, dm.Repo.OwnerID}
+	queryArgs := []any{dm.ReleaseDateUnix, dm.Stage, dm.Language, dm.Repo.OwnerID}
 	queryArgs = append(queryArgs, condArgs...)
 	queryArgs = append(queryArgs, dm.Repo.ID)
 
@@ -268,7 +268,7 @@ SELECT
 FROM ranked
 WHERE rn = 1`
 
-	queryArgs := []interface{}{dm.ReleaseDateUnix}
+	queryArgs := []any{dm.ReleaseDateUnix}
 	queryArgs = append(queryArgs, condArgs...)
 
 	// Execute the query

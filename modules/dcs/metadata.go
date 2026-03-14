@@ -13,14 +13,14 @@ import (
 )
 
 // GetCsvCellDiff returns the diff of two strings
-func GetCsvCellDiff(old, new string) template.HTML {
+func GetCsvCellDiff(old, cur string) template.HTML {
 	dmp := diffmatchpatch.New()
 
-	diffs := dmp.DiffMain(old, new, false)
+	diffs := dmp.DiffMain(old, cur, false)
 	diffs = dmp.DiffCleanupSemantic(diffs)
 
 	if len(diffs) == 0 {
-		return template.HTML(fmt.Sprintf("<span class=\"removed-code\">%s</span><span class=\"added-code\">%s</span>", old, new))
+		return template.HTML(fmt.Sprintf("<span class=\"removed-code\">%s</span><span class=\"added-code\">%s</span>", old, cur))
 	}
 
 	return template.HTML(writeDiffHTML(diffs))

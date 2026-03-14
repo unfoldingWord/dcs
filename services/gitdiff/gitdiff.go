@@ -343,7 +343,7 @@ type DiffFile struct {
 	IsViewed                  bool // User specific
 	HasChangedSinceLastReview bool // User specific
 
-	Entry                     *git.TreeEntry // DCS Customizations
+	Entry *git.TreeEntry // DCS Customizations
 
 	// for render purpose only, will be filled by the extra loop in GitDiffForRender
 	highlightedLeftLines  map[int]template.HTML

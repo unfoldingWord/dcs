@@ -5,6 +5,7 @@ package cmd
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	repo_model "code.gitea.io/gitea/models/repo"
@@ -43,10 +44,10 @@ func runConvertRC2SB(ctx context.Context, c *cli.Command) error {
 	ownerName := c.String("owner")
 	repoName := c.String("repo")
 	if ownerName != "" && repoName == "" {
-		return fmt.Errorf("--repo(-r) must be specified if --owner(-o) is used")
+		return errors.New("--repo(-r) must be specified if --owner(-o) is used")
 	}
 	if ownerName == "" && repoName != "" {
-		return fmt.Errorf("--owner(-o) must be supplied if --repo(-r) is used")
+		return errors.New("--owner(-o) must be supplied if --repo(-r) is used")
 	}
 
 	stdCtx, cancel := installSignals()
@@ -83,22 +84,17 @@ func runConvertRC2SB(ctx context.Context, c *cli.Command) error {
 			return fmt.Errorf("GetLatestReleaseByRepoID: %w", err)
 		}
 
-		return convertrc2sb_service.ConvertRC2SBForRelease(stdCtx, repo, release)
+		return convertrc2sb_service.ForRelease(stdCtx, repo, release)
 	}
 
 	if err := system.CreateRepositoryNotice("Starting FULL RC-to-SB Conversion - PROCESSING ALL QUALIFYING REPOS"); err != nil {
 		return err
 	}
 
-	err := convertrc2sb_service.ConvertRC2SBAllRepos(stdCtx)
-	if err != nil {
+	if err := convertrc2sb_service.ConvertRC2SBAllRepos(stdCtx); err != nil {
 		return err
 	}
 
 	log.Info("Finished RC-to-SB conversion for all qualifying repos")
-	if err := system.CreateRepositoryNotice("FINISHED FULL RC-to-SB Conversion - PROCESSED ALL QUALIFYING REPOS"); err != nil {
-		return err
-	}
-
-	return nil
+	return system.CreateRepositoryNotice("FINISHED FULL RC-to-SB Conversion - PROCESSED ALL QUALIFYING REPOS")
 }

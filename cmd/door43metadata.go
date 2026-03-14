@@ -5,7 +5,7 @@ package cmd
 
 import (
 	"context"
-	"fmt"
+	"errors"
 
 	repo_model "code.gitea.io/gitea/models/repo"
 	"code.gitea.io/gitea/models/system"
@@ -42,10 +42,10 @@ func runDoor43Metadata(ctx context.Context, c *cli.Command) error {
 	ownerName := c.String("owner")
 	repoName := c.String("repo")
 	if ownerName != "" && repoName == "" {
-		return fmt.Errorf("--repo(-r) must be specified if --owner(-o) is used")
+		return errors.New("--repo(-r) must be specified if --owner(-o) is used")
 	}
 	if ownerName == "" && repoName != "" {
-		return fmt.Errorf("--owner(-o) must be supplied if --repo(-r) is used")
+		return errors.New("--owner(-o) must be supplied if --repo(-r) is used")
 	}
 
 	stdCtx, cancel := installSignals()
@@ -71,15 +71,10 @@ func runDoor43Metadata(ctx context.Context, c *cli.Command) error {
 		return err
 	}
 
-	err := door43metadata_service.UpdateDoor43Metadata(stdCtx)
-	if err != nil {
+	if err := door43metadata_service.UpdateDoor43Metadata(stdCtx); err != nil {
 		return err
 	}
 
 	log.Info("Finished gathering the door43metadata for all repos")
-	if err := system.CreateRepositoryNotice("FINSIEHD FULL Door43 Metadata Update - PROCESSED ALL REPOS AND REFS"); err != nil {
-		return err
-	}
-
-	return nil
+	return system.CreateRepositoryNotice("FINISHED FULL Door43 Metadata Update - PROCESSED ALL REPOS AND REFS")
 }

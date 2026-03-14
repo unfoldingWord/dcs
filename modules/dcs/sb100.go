@@ -54,7 +54,7 @@ func GetSB100Schema(reload bool) (*jsonschema.Schema, error) {
 			uriPath := strings.TrimPrefix(url, burritoBiblePrefix)
 			githubURL := githubPrefix + uriPath
 			res, err := http.Get(githubURL)
-			if err == nil && res != nil && res.StatusCode == 200 {
+			if err == nil && res != nil && res.StatusCode == http.StatusOK {
 				return res.Body, nil
 			}
 			log.Error("GetSB100Schema: not able to get the schema file remotely [%q]: %v", url, err)

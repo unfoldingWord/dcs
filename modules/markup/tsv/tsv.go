@@ -134,7 +134,7 @@ func (Renderer) Render(ctx *markup.RenderContext, input io.Reader, output io.Wri
 			if numFields > 0 {
 				colspan = numFields
 			}
-			if _, err := tmpBlock.WriteString(fmt.Sprintf(`<tr><td colspan="%d">%v</td></tr>`, colspan, err)); err != nil {
+			if _, err := fmt.Fprintf(tmpBlock, `<tr><td colspan="%d">%v</td></tr>`, colspan, err); err != nil {
 				return err
 			}
 			continue

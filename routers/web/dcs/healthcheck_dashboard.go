@@ -18,7 +18,7 @@ import (
 
 const (
 	tplHCDash      templates.TplName = "catalog/hc_dash"
-	hcDashPageSize                   = 100
+	hcDashPageSize int               = 100
 )
 
 // HealthcheckDashboard renders the healthcheck dashboard page.

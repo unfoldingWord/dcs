@@ -5,6 +5,7 @@ package gitref
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strings"
 
@@ -40,7 +41,7 @@ func UpdateReferenceWithChecks(ctx *gitea_context.APIContext, refName, commitID 
 		message := err.Error()
 		prefix := fmt.Sprintf("exit status 128 - fatal: update_ref failed for ref '%s': ", refName)
 		if strings.HasPrefix(message, prefix) {
-			return nil, fmt.Errorf(strings.TrimRight(strings.TrimPrefix(message, prefix), "\n"))
+			return nil, errors.New(strings.TrimRight(strings.TrimPrefix(message, prefix), "\n"))
 		}
 		return nil, err
 	}

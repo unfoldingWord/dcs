@@ -603,7 +603,12 @@ func SearchRepository(ctx context.Context, opts SearchRepoOptions) (RepositoryLi
 
 // CountRepository counts repositories based on search options,
 func CountRepository(ctx context.Context, opts SearchRepoOptions) (int64, error) {
-	return db.GetEngine(ctx).Where(SearchRepositoryCondition(opts)).Count(new(Repository))
+	/*** DCS Customizations - add JOINs needed by DCS search conditions ***/
+	return db.GetEngine(ctx).
+		Join("INNER", "user", "`user`.id = `repository`.owner_id").
+		Join("LEFT", "door43_metadata", builder.Expr("`door43_metadata`.repo_id = `repository`.id AND `door43_metadata`.is_repo_metadata = ?", true)).
+		Where(SearchRepositoryCondition(opts)).Count(new(Repository))
+	/*** END DCS Customizations ***/
 }
 
 // SearchRepositoryByCondition search repositories by condition

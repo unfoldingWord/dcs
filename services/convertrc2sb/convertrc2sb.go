@@ -5,6 +5,7 @@ package convertrc2sb
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -80,11 +81,11 @@ func repoHasQualifyingTopic(repo *repo_model.Repository) bool {
 	return false
 }
 
-// ConvertRC2SBForRelease converts an RC repo at the given release tag to SB format
+// ForRelease converts an RC repo at the given release tag to SB format
 // and pushes the result to the "main" branch.
-func ConvertRC2SBForRelease(ctx context.Context, repo *repo_model.Repository, release *repo_model.Release) error {
+func ForRelease(ctx context.Context, repo *repo_model.Repository, release *repo_model.Release) error {
 	if repo == nil || release == nil {
-		return fmt.Errorf("repo and release must not be nil")
+		return errors.New("repo and release must not be nil")
 	}
 
 	log.Info("ConvertRC2SB: starting conversion for %s tag %s", repo.FullName(), release.TagName)
@@ -161,7 +162,7 @@ func ConvertRC2SBForRelease(ctx context.Context, repo *repo_model.Repository, re
 	}
 
 	// Step 9: Commit
-	commitMsg := fmt.Sprintf("Convert RC to SB from tag %s", release.TagName)
+	commitMsg := "Convert RC to SB from tag " + release.TagName
 	doer := repo.Owner
 	sig := doer.NewGitSig()
 
@@ -190,7 +191,7 @@ func ConvertRC2SBForRelease(ctx context.Context, repo *repo_model.Repository, re
 }
 
 // ConvertRC2SBAllRepos finds all qualifying repos and converts their latest published release.
-func ConvertRC2SBAllRepos(ctx context.Context) error {
+func ConvertRC2SBAllRepos(ctx context.Context) error { //nolint:revive // name is used by cron task reference
 	log.Trace("Doing: ConvertRC2SBAllRepos")
 
 	repos, err := repo_model.GetReposForMetadata(ctx)
@@ -225,7 +226,7 @@ func ConvertRC2SBAllRepos(ctx context.Context) error {
 			continue
 		}
 
-		if err := ConvertRC2SBForRelease(ctx, repo, release); err != nil {
+		if err := ForRelease(ctx, repo, release); err != nil {
 			log.Error("ConvertRC2SBAllRepos: conversion failed for %s tag %s: %v", repo.FullName(), release.TagName, err)
 			if noticeErr := system_model.CreateRepositoryNotice(
 				"ConvertRC2SB failed for repository (%s) tag (%s): %v", repo.FullName(), release.TagName, err,

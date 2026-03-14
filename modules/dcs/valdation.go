@@ -56,7 +56,7 @@ func convertValidationErrorToString(valErr, parentErr *jsonschema.ValidationErro
 		if valErr.InstanceLocation != "" {
 			loc = strings.ReplaceAll(strings.TrimPrefix(strings.TrimPrefix(valErr.InstanceLocation, parentErr.InstanceLocation), "/"), "/", ".")
 			if loc != "" {
-				loc = fmt.Sprintf("%s: ", strings.TrimPrefix(loc, "/"))
+				loc = strings.TrimPrefix(loc, "/") + ": "
 			}
 		}
 		str += fmt.Sprintf("* %s%s\n", loc, valErr.Message)

@@ -161,7 +161,7 @@ func (m *metadataNotifier) MigrateRepository(ctx context.Context, doer, u *user_
 }
 
 func (m *metadataNotifier) TransferRepository(ctx context.Context, doer *user_model.User, repo *repo_model.Repository, newOwnerName string) {
-	// Shouldn't really need if the repo is transfered as it keeps the same IDs, releases, etc, but just in case
+	// Shouldn't really need if the repo is transferred as it keeps the same IDs, releases, etc, but just in case
 	shutdownCtx := graceful.GetManager().ShutdownContext()
 	go func(ctx context.Context, repo *repo_model.Repository) {
 		select {

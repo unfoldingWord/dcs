@@ -117,7 +117,7 @@ func SearchCatalogCondition(opts *SearchCatalogOptions) builder.Cond {
 
 	isRepoMetadataCond := builder.NewCond()
 	if opts.IsRepoMetadata {
-		isRepoMetadataCond = builder.Eq(builder.Eq{"`door43_metadata`.is_repo_metadata": true})
+		isRepoMetadataCond = builder.Eq{"`door43_metadata`.is_repo_metadata": true}
 	}
 
 	cond := builder.NewCond().And(

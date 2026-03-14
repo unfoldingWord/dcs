@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"net/url"
 	"path"
+	"strconv"
 	"strings"
 	"time"
 
@@ -56,8 +57,10 @@ var searchOrderByMap = map[string]map[string]door43metadata.CatalogOrderBy{
 	},
 }
 
-var bibleBPSubjects = []string{"Aligned Bible", "Hebrew Old Testament", "Greek New Testament", "TSV Translation Notes", "TSV Translation Questions", "TSV Translation Words Links", "Translation Academy", "Translation Words"}
-var obsBPSubjects = []string{"Open Bible Stories", "TSV OBS Translation Notes", "TSV OBS Translation Questions", "TSV OBS Translation Words Links", "Translation Academy", "Translation Words"}
+var (
+	bibleBPSubjects = []string{"Aligned Bible", "Hebrew Old Testament", "Greek New Testament", "TSV Translation Notes", "TSV Translation Questions", "TSV Translation Words Links", "Translation Academy", "Translation Words"}
+	obsBPSubjects   = []string{"Open Bible Stories", "TSV OBS Translation Notes", "TSV OBS Translation Questions", "TSV OBS Translation Words Links", "Translation Academy", "Translation Words"}
+)
 
 // Search search the catalog via options
 func Search(ctx *context.APIContext) {
@@ -385,7 +388,7 @@ func ListCatalogSubjects(ctx *context.APIContext) {
 			"error": err.Error(),
 		})
 	}
-	ctx.RespHeader().Set("X-Total-Count", fmt.Sprintf("%d", len(list)))
+	ctx.RespHeader().Set("X-Total-Count", strconv.Itoa(len(list)))
 	ctx.JSON(http.StatusOK, map[string]any{
 		"ok":   true,
 		"data": list,
@@ -530,7 +533,7 @@ func ListCatalogMetadataTypes(ctx *context.APIContext) {
 			"error": err.Error(),
 		})
 	}
-	ctx.RespHeader().Set("X-Total-Count", fmt.Sprintf("%d", len(list)))
+	ctx.RespHeader().Set("X-Total-Count", strconv.Itoa(len(list)))
 	ctx.JSON(http.StatusOK, map[string]any{
 		"ok":   true,
 		"data": list,
@@ -687,7 +690,7 @@ func ListCatalogOwners(ctx *context.APIContext) {
 		}
 		users = append(users, convert.ToUser(ctx, user, ctx.Doer))
 	}
-	ctx.RespHeader().Set("X-Total-Count", fmt.Sprintf("%d", len(users)))
+	ctx.RespHeader().Set("X-Total-Count", strconv.Itoa(len(users)))
 	ctx.JSON(http.StatusOK, map[string]any{
 		"ok":   true,
 		"data": users,
@@ -843,7 +846,7 @@ func ListCatalogLanguages(ctx *context.APIContext) {
 			languages = append(languages, val)
 		}
 	}
-	ctx.RespHeader().Set("X-Total-Count", fmt.Sprintf("%d", len(list)))
+	ctx.RespHeader().Set("X-Total-Count", strconv.Itoa(len(list)))
 	ctx.JSON(http.StatusOK, map[string]any{
 		"ok":   true,
 		"data": languages,
@@ -1142,7 +1145,7 @@ func searchCatalog(ctx *context.APIContext) {
 	} else {
 		ctx.SetLinkHeader(int(count), int(count))
 	}
-	ctx.RespHeader().Set("X-Total-Count", fmt.Sprintf("%d", count))
+	ctx.RespHeader().Set("X-Total-Count", strconv.FormatInt(count, 10))
 	ctx.JSON(http.StatusOK, api.CatalogSearchResults{
 		OK:          true,
 		Data:        results,
@@ -1173,7 +1176,7 @@ func getCatalogBookPackage(ctx *context.APIContext) {
 	}
 
 	if (ref == "") || (ref == "undefined") {
-		ctx.Repo.Repository.LoadLatestDMs(ctx)
+		_ = ctx.Repo.Repository.LoadLatestDMs(ctx)
 		if stage == door43metadata.StageProd && ctx.Repo.Repository.LatestProdDM != nil {
 			ref = ctx.Repo.Repository.LatestProdDM.Ref
 		} else if stage == door43metadata.StagePreProd && ctx.Repo.Repository.LatestPreprodDM != nil {
@@ -1328,7 +1331,7 @@ func getCatalogBookPackage(ctx *context.APIContext) {
 	} else {
 		ctx.SetLinkHeader(int(count), int(count))
 	}
-	ctx.RespHeader().Set("X-Total-Count", fmt.Sprintf("%d", count))
+	ctx.RespHeader().Set("X-Total-Count", strconv.FormatInt(count, 10))
 	ctx.JSON(http.StatusOK, api.CatalogSearchResults{
 		OK:          true,
 		Data:        results,
@@ -1428,10 +1431,9 @@ func GetCatalogBookPackage(ctx *context.APIContext) {
 	//   type: string
 	//   required: true
 	// - name: ref
-	//   in: path
+	//   in: query
 	//   description: optional reference (tag/branch). If not provided, uses the most recent entry based on stage
 	//   type: string
-	//   required: false
 	// - name: tag
 	//   in: query
 	//   description: search only for entries with the given release tag(s). To match multiple, give the parameter multiple times or give a list comma delimited. Will perform an exact match (case insensitive)
