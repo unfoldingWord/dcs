@@ -37,7 +37,7 @@
 	{{template "base/alert" .}}
 	<div class="ui container">
 		<h2 class="ui header metadata-header">
-			{{ctx.Locale.Tr "repo.metadata.healthcheck"}} {{svg "octicon-shield-check"}}
+			{{ctx.Locale.Tr "dcs.repo.metadata.healthcheck"}} {{svg "octicon-shield-check"}}
 		</h2>
 		<div class="repo-metadata-content">
 			<h4 class="ui top attached header">
@@ -59,7 +59,7 @@
 			</div>
 
 			<h4 class="ui top attached header">
-				{{ctx.Locale.Tr "repo.metadata.branch_and_releases_metadata_and_healthcheck"}}
+				{{ctx.Locale.Tr "dcs.repo.metadata.branch_and_releases_metadata_and_healthcheck"}}
 				<div class="ui right">
 					<a class="ui teal tiny button" href="{{.RepoLink}}/metadata">See for all Branches/Releases</a>
 					{{if .Permission.IsAdmin}}

@@ -169,7 +169,7 @@ func RenderCatalogSearch(ctx *context.Context, opts *CatalogSearchOptions) {
 
 // Catalog render catalog page
 func Catalog(ctx *context.Context) {
-	ctx.Data["Title"] = ctx.Tr("catalog")
+	ctx.Data["Title"] = ctx.Tr("dcs.catalog")
 	ctx.Data["PageIsCatalog"] = true
 	ctx.Data["IsRepoIndexerEnabled"] = setting.Indexer.RepoIndexerEnabled
 
