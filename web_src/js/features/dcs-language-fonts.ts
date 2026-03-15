@@ -3,8 +3,8 @@ import lang_font_families from '../../../assets/lang_font_families.json';
 import lang_font_links from '../../../assets/lang_font_links.json';
 import {html} from '../utils/html.ts';
 
-const set_dcs_fonts = [];
-const set_dcs_selectors = [];
+const set_dcs_fonts: any[] = [];
+const set_dcs_selectors: any[] = [];
 
 export function initDCSLanguageFonts() {
   $('[data-language]').each((_, tag) => {
@@ -15,7 +15,7 @@ export function initDCSLanguageFonts() {
   });
 }
 
-function setDCSFontsHTML(fonts, selector) {
+function setDCSFontsHTML(fonts: any[], selector: string) {
   if (set_dcs_selectors.includes(selector)) {
     return;
   }

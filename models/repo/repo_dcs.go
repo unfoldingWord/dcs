@@ -53,7 +53,7 @@ func (repo *Repository) LoadLatestDMs(ctx context.Context) error {
 		if err != nil {
 			return err
 		}
-		if has {
+		if has && dm.ID != 0 {
 			dm.Repo = repo
 			repo.LatestPreprodDM = dm
 		}
@@ -71,7 +71,7 @@ func (repo *Repository) LoadLatestDMs(ctx context.Context) error {
 		if err != nil {
 			return err
 		}
-		if has {
+		if has && dm.ID != 0 {
 			dm.Repo = repo
 			repo.DefaultBranchDM = dm
 		}
@@ -87,7 +87,7 @@ func (repo *Repository) LoadLatestDMs(ctx context.Context) error {
 		if err != nil {
 			return err
 		}
-		if has {
+		if has && dm.ID != 0 {
 			repo.RepoDM = dm
 		} else {
 			title := repo.Name
