@@ -3,19 +3,22 @@ import lang_font_families from '../../../assets/lang_font_families.json';
 import lang_font_links from '../../../assets/lang_font_links.json';
 import {html} from '../utils/html.ts';
 
-const set_dcs_fonts: any[] = [];
-const set_dcs_selectors: any[] = [];
+const fontFamilies: Record<string, string[]> = lang_font_families as Record<string, string[]>;
+const fontLinks: Record<string, string> = lang_font_links as Record<string, string>;
+
+const set_dcs_fonts: string[] = [];
+const set_dcs_selectors: string[] = [];
 
 export function initDCSLanguageFonts() {
   $('[data-language]').each((_, tag) => {
     const lang = $(tag).attr('data-language');
-    if (lang_font_families[lang]) {
-      setDCSFontsHTML(lang_font_families[lang], `[data-language=${lang}], [data-language=${lang}] *`);
+    if (lang && fontFamilies[lang]) {
+      setDCSFontsHTML(fontFamilies[lang], `[data-language=${lang}], [data-language=${lang}] *`);
     }
   });
 }
 
-function setDCSFontsHTML(fonts: any[], selector: string) {
+function setDCSFontsHTML(fonts: string[], selector: string) {
   if (set_dcs_selectors.includes(selector)) {
     return;
   }
@@ -24,8 +27,8 @@ function setDCSFontsHTML(fonts: any[], selector: string) {
     fonts.push('Noto Sans');
   }
   for (const font of fonts) {
-    if (!set_dcs_fonts.includes(font) && lang_font_links[font]) {
-      $head.append(html`<link href="${lang_font_links[font]}" rel="stylesheet">`);
+    if (!set_dcs_fonts.includes(font) && fontLinks[font]) {
+      $head.append(html`<link href="${fontLinks[font]}" rel="stylesheet">`);
       set_dcs_fonts.push(font);
     }
   }
