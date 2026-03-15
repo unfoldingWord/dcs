@@ -130,7 +130,7 @@ func SearchCatalogForBookPackage(ctx context.Context, dm *repo.Door43Metadata, o
 	if len(books) > 0 {
 		innerBookCond := builder.NewCond()
 		for _, book := range books {
-			for _, v := range strings.Split(book, ",") {
+			for v := range strings.SplitSeq(book, ",") {
 				innerBookCond = innerBookCond.And(builder.Expr("JSON_SEARCH(dm.ingredients, 'one', ? COLLATE utf8mb4_general_ci, NULL, '$[*].identifier') IS NOT NULL", strings.ToLower(v)))
 				// innerBookCond = innerBookCond.And(builder.Expr("JSON_CONTAINS(LOWER(JSON_EXTRACT(dm.ingredients, '$')), JSON_OBJECT('identifier', ?))", strings.ToLower(v)))
 			}
@@ -198,7 +198,7 @@ WHERE rn = 1
 ORDER BY IF(repo_id = ?, 1, 0) DESC, subject ASC`
 
 	// Prepare query arguments: owner, repoName, ref, then all condition args
-	queryArgs := []interface{}{dm.ReleaseDateUnix, dm.Stage, dm.Language, dm.Repo.OwnerID}
+	queryArgs := []any{dm.ReleaseDateUnix, dm.Stage, dm.Language, dm.Repo.OwnerID}
 	queryArgs = append(queryArgs, condArgs...)
 	queryArgs = append(queryArgs, dm.Repo.ID)
 
@@ -268,7 +268,7 @@ SELECT
 FROM ranked
 WHERE rn = 1`
 
-	queryArgs := []interface{}{dm.ReleaseDateUnix}
+	queryArgs := []any{dm.ReleaseDateUnix}
 	queryArgs = append(queryArgs, condArgs...)
 
 	// Execute the query

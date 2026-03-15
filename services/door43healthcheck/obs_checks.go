@@ -30,7 +30,7 @@ func CheckOBSStories(ctx context.Context, dm *repo_model.Door43Metadata) []*repo
 		return nil
 	}
 
-	dm.LoadRepo(ctx)
+	_ = dm.LoadRepo(ctx)
 
 	// Find the content path from the OBS ingredient
 	contentPath := findOBSContentPath(dm)
@@ -185,5 +185,5 @@ func analyzeOBSStory(r io.Reader) (hasTitle, hasFrame, hasBibleRef bool) {
 			hasBibleRef = true
 		}
 	}
-	return
+	return hasTitle, hasFrame, hasBibleRef
 }

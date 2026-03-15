@@ -128,6 +128,7 @@ func NewMainApp(appVer AppVersion) *cli.Command {
 		CmdDumpRepository,
 		CmdRestoreRepository,
 		CmdDoor43Metadata,
+		CmdConvertRC2SB,
 		CmdActions,
 	}
 

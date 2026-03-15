@@ -104,10 +104,7 @@ func searchLangnamesJSON(ctx *context.APIContext) []map[string]any {
 	if sortField != "ang" && sortField != "hc" && sortField != "lc" && sortField != "ld" && sortField != "ln" && sortField != "lr" {
 		sortField = "lc"
 	}
-	orderAsc := true
-	if strings.ToLower(ctx.FormString("order")) == "desc" {
-		orderAsc = false
-	}
+	orderAsc := strings.ToLower(ctx.FormString("order")) != "desc"
 
 	if len(lcArr) > 0 || gw.Has() || ld != "" {
 		filteredLangnames := []map[string]any{}

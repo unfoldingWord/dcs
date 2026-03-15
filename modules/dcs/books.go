@@ -5,7 +5,7 @@ package dcs
 
 import "strconv"
 
-var BookNames = map[string]string{ //nolint
+var BookNames = map[string]string{ //nolint:gochecknoglobals,dupl // parallel map structure with BookNumbers is intentional
 	"frt": "Front Matter",
 	"bak": "Back Matter",
 	"gen": "Genesis",
@@ -77,7 +77,7 @@ var BookNames = map[string]string{ //nolint
 	"obs": "Open Bible Stories",
 }
 
-var BookNumbers = map[string]string{ //nolint
+var BookNumbers = map[string]string{ //nolint:gochecknoglobals,dupl // parallel map structure with BookNames is intentional
 	"frt": "A0",
 	"bak": "B0",
 	"gen": "01",
@@ -159,9 +159,8 @@ func GetBookName(book string) string {
 	value, ok := BookNames[book]
 	if ok {
 		return value
-	} else {
-		return book
 	}
+	return book
 }
 
 func BookIsOT(book string) bool {

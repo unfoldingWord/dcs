@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	repo_model "code.gitea.io/gitea/models/repo"
+	user_model "code.gitea.io/gitea/models/user"
 	"code.gitea.io/gitea/modules/dcs"
 
 	"github.com/stretchr/testify/assert"
@@ -19,9 +20,20 @@ func sbScope(bookID string) *dcs.ScopeMap {
 	return &scope
 }
 
-func TestGetDoor43MetadataFromSBMetadata_ParascripturalMissingLocalizedName(ctx context.Context, t *testing.T) {
+func testRepo(id int64) *repo_model.Repository {
+	return &repo_model.Repository{
+		ID: id,
+		Owner: &user_model.User{
+			Name:     "testowner",
+			FullName: "Test Owner",
+		},
+	}
+}
+
+func TestGetDoor43MetadataFromSBMetadata_ParascripturalMissingLocalizedName(t *testing.T) {
+	ctx := context.Background()
 	dm := &repo_model.Door43Metadata{}
-	repo := &repo_model.Repository{ID: 123}
+	repo := testRepo(123)
 	sb := &dcs.SBMetadata100{
 		Meta: &dcs.SB100Meta{Version: "1.0.0"},
 		Identification: &dcs.SB100Identification{
@@ -55,9 +67,10 @@ func TestGetDoor43MetadataFromSBMetadata_ParascripturalMissingLocalizedName(ctx 
 	assert.Equal(t, "Genesis", dm.Ingredients[0].Title)
 }
 
-func TestGetDoor43MetadataFromSBMetadata_ScriptureSkipsInvalidIngredients(ctx context.Context, t *testing.T) {
+func TestGetDoor43MetadataFromSBMetadata_ScriptureSkipsInvalidIngredients(t *testing.T) {
+	ctx := context.Background()
 	dm := &repo_model.Door43Metadata{}
-	repo := &repo_model.Repository{ID: 456}
+	repo := testRepo(456)
 	sb := &dcs.SBMetadata100{
 		Meta: &dcs.SB100Meta{Version: "1.0.0"},
 		Identification: &dcs.SB100Identification{
@@ -90,9 +103,10 @@ func TestGetDoor43MetadataFromSBMetadata_ScriptureSkipsInvalidIngredients(ctx co
 	assert.Equal(t, "./ingredients/gen.md", dm.Ingredients[0].Path)
 }
 
-func TestGetDoor43MetadataFromSBMetadata_AllowsSparseMetadata(ctx context.Context, t *testing.T) {
+func TestGetDoor43MetadataFromSBMetadata_AllowsSparseMetadata(t *testing.T) {
+	ctx := context.Background()
 	dm := &repo_model.Door43Metadata{}
-	repo := &repo_model.Repository{ID: 789}
+	repo := testRepo(789)
 	sb := &dcs.SBMetadata100{}
 
 	require.NoError(t, GetDoor43MetadataFromSBMetadata(ctx, dm, sb, repo, nil))

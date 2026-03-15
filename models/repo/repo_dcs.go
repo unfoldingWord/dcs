@@ -36,7 +36,7 @@ func (repo *Repository) LoadLatestDMs(ctx context.Context) error {
 		}
 		if has {
 			dm.Repo = repo
-			dm.LoadAttributes(ctx)
+			_ = dm.LoadAttributes(ctx)
 			repo.LatestProdDM = dm
 		}
 	}
@@ -53,7 +53,7 @@ func (repo *Repository) LoadLatestDMs(ctx context.Context) error {
 		if err != nil {
 			return err
 		}
-		if has && dm != nil {
+		if has && dm.ID != 0 {
 			dm.Repo = repo
 			repo.LatestPreprodDM = dm
 		}
@@ -71,7 +71,7 @@ func (repo *Repository) LoadLatestDMs(ctx context.Context) error {
 		if err != nil {
 			return err
 		}
-		if has && dm != nil {
+		if has && dm.ID != 0 {
 			dm.Repo = repo
 			repo.DefaultBranchDM = dm
 		}
@@ -87,7 +87,7 @@ func (repo *Repository) LoadLatestDMs(ctx context.Context) error {
 		if err != nil {
 			return err
 		}
-		if has && dm != nil {
+		if has && dm.ID != 0 {
 			repo.RepoDM = dm
 		} else {
 			title := repo.Name
@@ -117,12 +117,12 @@ func (repo *Repository) LoadLatestDMs(ctx context.Context) error {
 }
 
 // LoadLatestDMs loads the latest Door43Metadatas for the given RepositoryList
-func (rl RepositoryList) LoadLatestDMs(ctx context.Context) error {
-	if rl.Len() == 0 {
+func (repos RepositoryList) LoadLatestDMs(ctx context.Context) error {
+	if repos.Len() == 0 {
 		return nil
 	}
 	var lastErr error
-	for _, repo := range rl {
+	for _, repo := range repos {
 		if err := repo.LoadLatestDMs(ctx); err != nil && lastErr == nil {
 			lastErr = err
 		}

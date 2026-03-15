@@ -25,7 +25,7 @@ const (
 
 // GetRepoHealthcheck renders healthcheck for a repo
 func GetRepoHealthcheck(ctx *context.Context) {
-	ctx.Repo.Repository.LoadLatestDMs(ctx)
+	_ = ctx.Repo.Repository.LoadLatestDMs(ctx)
 	door43Metadatas := []*repo_model.Door43Metadata{}
 	if ctx.Repo.Repository.RepoDM != nil && ctx.Repo.Repository.RepoDM.ID > 0 {
 		door43Metadatas = append(door43Metadatas, ctx.Repo.Repository.RepoDM)
