@@ -36,7 +36,7 @@ func GetGitAllRefs(ctx *context.APIContext) {
 	//   required: true
 	// responses:
 	//   "200":
-	// #   "$ref": "#/responses/Reference" TODO: swagger doesnt support different output formats by ref
+	// #   "$ref": "#/responses/Reference" TODO: swagger doesn't support different output formats by ref
 	//     "$ref": "#/responses/ReferenceList"
 	//   "404":
 	//     "$ref": "#/responses/notFound"
@@ -69,7 +69,7 @@ func GetGitRefs(ctx *context.APIContext) {
 	//   required: true
 	// responses:
 	//   "200":
-	// #   "$ref": "#/responses/Reference" TODO: swagger doesnt support different output formats by ref
+	// #   "$ref": "#/responses/Reference" TODO: swagger doesn't support different output formats by ref
 	//     "$ref": "#/responses/ReferenceList"
 	//   "404":
 	//     "$ref": "#/responses/notFound"
