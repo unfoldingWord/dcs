@@ -27,7 +27,7 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           context: .
-          platforms: linux/amd64,linux/arm64,linux/riscv64
+          platforms: linux/amd64 # DCS Customizations (was: linux/amd64,linux/arm64,linux/riscv64)
           push: false
           cache-from: type=registry,ref=ghcr.io/go-gitea/gitea:buildcache-rootful
       - name: Build rootless container image
@@ -35,6 +35,6 @@ jobs:
         with:
           context: .
           push: false
-          platforms: linux/amd64,linux/arm64,linux/riscv64
+          platforms: linux/amd64 # DCS Customizations (was: linux/amd64,linux/arm64,linux/riscv64)
           file: Dockerfile.rootless
           cache-from: type=registry,ref=ghcr.io/go-gitea/gitea:buildcache-rootless
