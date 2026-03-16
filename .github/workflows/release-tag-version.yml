@@ -13,6 +13,7 @@ concurrency:
 
 jobs:
   binary:
+    if: github.repository == 'go-gitea/gitea' # DCS Customizations
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -75,6 +76,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN }}
 
   container:
+    if: github.repository == 'go-gitea/gitea' # DCS Customizations
     runs-on: namespace-profile-gitea-release-docker
     permissions:
       contents: read

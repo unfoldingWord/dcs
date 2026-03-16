@@ -10,6 +10,7 @@ concurrency:
 
 jobs:
   nightly-binary:
+    if: github.repository == 'go-gitea/gitea' # DCS Customizations
     runs-on: namespace-profile-gitea-release-binary
     permissions:
       contents: read
@@ -62,6 +63,7 @@ jobs:
           aws s3 sync dist/release s3://${{ secrets.AWS_S3_BUCKET }}/gitea/${{ steps.clean_name.outputs.branch }} --no-progress
 
   nightly-container:
+    if: github.repository == 'go-gitea/gitea' # DCS Customizations
     runs-on: namespace-profile-gitea-release-docker
     permissions:
       contents: read
