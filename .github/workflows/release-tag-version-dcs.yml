@@ -15,14 +15,22 @@ jobs:
   docker-rootful:
     if: endsWith(github.ref_name, '+dcs') || endsWith(github.ref_name, '+dcs1') || endsWith(github.ref_name, '+dcs2') || endsWith(github.ref_name, '+dcs3')
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     env:
       GOPROXY: "https://proxy.golang.org,direct"
       GOSUMDB: "sum.golang.org"
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       # fetch all commits instead of only the last as some branches are long lived and could have many between versions
-      # fetch all tags to ensure that "git describe" reports expected Gitea version, eg. v1.21.0-dev-1-g1234567
+      # fetch all tags to ensure that "git describe" reports expected DCS version, eg. v1.21.0+dcs-1-g1234567
       - run: git fetch --unshallow --quiet --tags --force
+      - uses: actions/setup-go@v6
+        with:
+          go-version-file: go.mod
+          check-latest: true
+          cache: true
+          cache-dependency-path: go.sum
       - uses: docker/setup-qemu-action@v3
       - uses: docker/setup-buildx-action@v3
       - uses: docker/metadata-action@v5
@@ -48,26 +56,35 @@ jobs:
       - name: fetch go modules
         run: make vendor
       - name: build rootful docker image
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v6
         with:
           context: .
-          platforms: linux/amd64 # ,linux/arm64
+          platforms: linux/amd64
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           build-args: |
             GOPROXY=https://proxy.golang.org,direct
+
   docker-rootless:
-    if: endsWith(github.ref_name, '+dcs')
+    if: endsWith(github.ref_name, '+dcs') || endsWith(github.ref_name, '+dcs1') || endsWith(github.ref_name, '+dcs2') || endsWith(github.ref_name, '+dcs3')
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     env:
       GOPROXY: "https://proxy.golang.org,direct"
       GOSUMDB: "sum.golang.org"
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       # fetch all commits instead of only the last as some branches are long lived and could have many between versions
-      # fetch all tags to ensure that "git describe" reports expected Gitea version, eg. v1.21.0-dev-1-g1234567
+      # fetch all tags to ensure that "git describe" reports expected DCS version, eg. v1.21.0+dcs-1-g1234567
       - run: git fetch --unshallow --quiet --tags --force
+      - uses: actions/setup-go@v6
+        with:
+          go-version-file: go.mod
+          check-latest: true
+          cache: true
+          cache-dependency-path: go.sum
       - uses: docker/setup-qemu-action@v3
       - uses: docker/setup-buildx-action@v3
       - uses: docker/metadata-action@v5
@@ -96,10 +113,10 @@ jobs:
       - name: fetch go modules
         run: make vendor
       - name: build rootless docker image
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v6
         with:
           context: .
-          platforms: linux/amd64 # ,linux/arm64
+          platforms: linux/amd64
           push: true
           file: Dockerfile.rootless
           tags: ${{ steps.meta.outputs.tags }}
