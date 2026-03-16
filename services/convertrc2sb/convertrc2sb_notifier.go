@@ -10,6 +10,7 @@ import (
 	user_model "code.gitea.io/gitea/models/user"
 	"code.gitea.io/gitea/modules/graceful"
 	"code.gitea.io/gitea/modules/log"
+	repo_module "code.gitea.io/gitea/modules/repository"
 	notify_service "code.gitea.io/gitea/services/notify"
 )
 
@@ -29,40 +30,16 @@ func newNotifier() notify_service.Notifier {
 	return &rc2sbNotifier{}
 }
 
-func (n *rc2sbNotifier) NewRelease(ctx context.Context, rel *repo_model.Release) {
-	if rel == nil || rel.IsDraft {
+// PushCommits triggers RC-to-SB conversion when a push is made to the master branch of a qualifying repo.
+func (n *rc2sbNotifier) PushCommits(ctx context.Context, pusher *user_model.User, repo *repo_model.Repository, opts *repo_module.PushUpdateOptions, commits *repo_module.PushCommits) {
+	if repo == nil || opts == nil {
 		return
 	}
-	n.maybeConvert(ctx, rel)
-}
-
-func (n *rc2sbNotifier) UpdateRelease(ctx context.Context, doer *user_model.User, rel *repo_model.Release) {
-	if rel == nil || rel.IsDraft {
-		return
-	}
-	n.maybeConvert(ctx, rel)
-}
-
-func (n *rc2sbNotifier) NewTagRelease(ctx context.Context, rel *repo_model.Release) {
-	n.NewRelease(ctx, rel)
-}
-
-// maybeConvert checks if the repo qualifies and spawns the conversion in a goroutine.
-func (n *rc2sbNotifier) maybeConvert(ctx context.Context, rel *repo_model.Release) {
-	// Ensure the release has its repo loaded
-	if rel.Repo == nil {
-		if err := rel.LoadAttributes(ctx); err != nil {
-			log.Error("ConvertRC2SB notifier: LoadAttributes failed for release ID %d: %v", rel.ID, err)
-			return
-		}
-	}
-	repo := rel.Repo
-	if repo == nil {
-		log.Warn("ConvertRC2SB notifier: repo is nil for release ID %d", rel.ID)
+	if !opts.RefFullName.IsBranch() || opts.RefFullName.BranchName() != "master" {
 		return
 	}
 
-	log.Info("ConvertRC2SB notifier: checking qualification for %s tag %s", repo.FullName(), rel.TagName)
+	log.Info("ConvertRC2SB notifier: push to master detected for %s, checking qualification", repo.FullName())
 
 	qualifies, err := RepoQualifiesForConversion(ctx, repo)
 	if err != nil {
@@ -74,17 +51,17 @@ func (n *rc2sbNotifier) maybeConvert(ctx context.Context, rel *repo_model.Releas
 		return
 	}
 
-	log.Info("ConvertRC2SB notifier: spawning async conversion for %s tag %s", repo.FullName(), rel.TagName)
+	log.Info("ConvertRC2SB notifier: spawning async conversion for %s branch master", repo.FullName())
 	shutdownCtx := graceful.GetManager().ShutdownContext()
-	go func(ctx context.Context, repo *repo_model.Repository, release *repo_model.Release) {
+	go func(ctx context.Context, repo *repo_model.Repository) {
 		select {
 		case <-ctx.Done():
-			log.Warn("ConvertRC2SB: context canceled for %s tag %s", repo.FullName(), release.TagName)
+			log.Warn("ConvertRC2SB: context canceled for %s branch master", repo.FullName())
 			return
 		default:
-			if err := ForRelease(ctx, repo, release); err != nil {
-				log.Error("ConvertRC2SB: conversion failed for %s tag %s: %v", repo.FullName(), release.TagName, err)
+			if err := ForBranch(ctx, repo, "master"); err != nil {
+				log.Error("ConvertRC2SB: conversion failed for %s branch master: %v", repo.FullName(), err)
 			}
 		}
-	}(shutdownCtx, repo, rel)
+	}(shutdownCtx, repo)
 }
