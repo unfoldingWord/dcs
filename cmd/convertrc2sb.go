@@ -11,7 +11,6 @@ import (
 	repo_model "code.gitea.io/gitea/models/repo"
 	"code.gitea.io/gitea/models/system"
 	"code.gitea.io/gitea/modules/log"
-	"code.gitea.io/gitea/modules/optional"
 	"code.gitea.io/gitea/modules/storage"
 	convertrc2sb_service "code.gitea.io/gitea/services/convertrc2sb"
 
@@ -75,16 +74,7 @@ func runConvertRC2SB(ctx context.Context, c *cli.Command) error {
 			return fmt.Errorf("repository %s/%s does not qualify for RC-to-SB conversion (requires MetadataType=rc, DefaultBranch=master, and a qualifying topic)", ownerName, repoName)
 		}
 
-		// Find latest published release
-		release, err := repo_model.GetLatestReleaseByRepoID(stdCtx, repo.ID, false, optional.None[bool]())
-		if err != nil {
-			if repo_model.IsErrReleaseNotExist(err) {
-				return fmt.Errorf("no published releases found for %s/%s", ownerName, repoName)
-			}
-			return fmt.Errorf("GetLatestReleaseByRepoID: %w", err)
-		}
-
-		return convertrc2sb_service.ForRelease(stdCtx, repo, release)
+		return convertrc2sb_service.ForBranch(stdCtx, repo, repo.DefaultBranch)
 	}
 
 	if err := system.CreateRepositoryNotice("Starting FULL RC-to-SB Conversion - PROCESSING ALL QUALIFYING REPOS"); err != nil {

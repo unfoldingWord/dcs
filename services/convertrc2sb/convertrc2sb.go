@@ -18,7 +18,6 @@ import (
 	"code.gitea.io/gitea/modules/git/gitcmd"
 	"code.gitea.io/gitea/modules/gitrepo"
 	"code.gitea.io/gitea/modules/log"
-	"code.gitea.io/gitea/modules/optional"
 	repo_module "code.gitea.io/gitea/modules/repository"
 	"code.gitea.io/gitea/modules/setting"
 	"code.gitea.io/gitea/modules/util"
@@ -81,14 +80,14 @@ func repoHasQualifyingTopic(repo *repo_model.Repository) bool {
 	return false
 }
 
-// ForRelease converts an RC repo at the given release tag to SB format
+// ForBranch converts an RC repo at the HEAD of the given branch to SB format
 // and pushes the result to the "main" branch.
-func ForRelease(ctx context.Context, repo *repo_model.Repository, release *repo_model.Release) error {
-	if repo == nil || release == nil {
-		return errors.New("repo and release must not be nil")
+func ForBranch(ctx context.Context, repo *repo_model.Repository, branchName string) error {
+	if repo == nil {
+		return errors.New("repo must not be nil")
 	}
 
-	log.Info("ConvertRC2SB: starting conversion for %s tag %s", repo.FullName(), release.TagName)
+	log.Info("ConvertRC2SB: starting conversion for %s branch %s", repo.FullName(), branchName)
 
 	// Load owner for commit identity
 	if err := repo.LoadOwner(ctx); err != nil {
@@ -102,10 +101,10 @@ func ForRelease(ctx context.Context, repo *repo_model.Repository, release *repo_
 	}
 	defer cleanup()
 
-	// Step 1: Shallow clone at the release tag
+	// Step 1: Shallow clone at the branch HEAD
 	rcDir := filepath.Join(tmpDir, "rc")
-	if err := cloneAtTag(ctx, repo.RepoPath(), release.TagName, rcDir); err != nil {
-		return fmt.Errorf("clone at tag %s: %w", release.TagName, err)
+	if err := cloneAtRef(ctx, repo.RepoPath(), branchName, rcDir); err != nil {
+		return fmt.Errorf("clone at branch %s: %w", branchName, err)
 	}
 
 	// Step 2: Prepare payload path for TWL repos (same logic as sbarchiver)
@@ -132,7 +131,7 @@ func ForRelease(ctx context.Context, repo *repo_model.Repository, release *repo_
 	}
 
 	// Step 5: Create or checkout the "main" branch
-	if err := prepareMainBranch(ctx, workDir, release.TagName); err != nil {
+	if err := prepareMainBranch(ctx, workDir, branchName); err != nil {
 		return fmt.Errorf("prepareMainBranch: %w", err)
 	}
 
@@ -157,12 +156,12 @@ func ForRelease(ctx context.Context, repo *repo_model.Repository, release *repo_
 		return fmt.Errorf("git status: %w", err)
 	}
 	if strings.TrimSpace(stdout) == "" {
-		log.Info("ConvertRC2SB: no changes to commit for %s tag %s", repo.FullName(), release.TagName)
+		log.Info("ConvertRC2SB: no changes to commit for %s branch %s", repo.FullName(), branchName)
 		return nil
 	}
 
 	// Step 9: Commit
-	commitMsg := "Convert RC to SB from tag " + release.TagName
+	commitMsg := "Convert RC to SB from branch " + branchName
 	doer := repo.Owner
 	sig := doer.NewGitSig()
 
@@ -190,7 +189,7 @@ func ForRelease(ctx context.Context, repo *repo_model.Repository, release *repo_
 	return nil
 }
 
-// ConvertRC2SBAllRepos finds all qualifying repos and converts their latest published release.
+// ConvertRC2SBAllRepos finds all qualifying repos and converts their default (master) branch.
 func ConvertRC2SBAllRepos(ctx context.Context) error { //nolint:revive // name is used by cron task reference
 	log.Trace("Doing: ConvertRC2SBAllRepos")
 
@@ -215,21 +214,10 @@ func ConvertRC2SBAllRepos(ctx context.Context) error { //nolint:revive // name i
 			continue
 		}
 
-		// Find latest published (non-draft, non-prerelease) release
-		release, err := getLatestPublishedRelease(ctx, repo)
-		if err != nil {
-			log.Warn("ConvertRC2SBAllRepos: error getting latest release for %s: %v", repo.FullName(), err)
-			continue
-		}
-		if release == nil {
-			log.Debug("ConvertRC2SBAllRepos: no published release for %s, skipping", repo.FullName())
-			continue
-		}
-
-		if err := ForRelease(ctx, repo, release); err != nil {
-			log.Error("ConvertRC2SBAllRepos: conversion failed for %s tag %s: %v", repo.FullName(), release.TagName, err)
+		if err := ForBranch(ctx, repo, repo.DefaultBranch); err != nil {
+			log.Error("ConvertRC2SBAllRepos: conversion failed for %s branch %s: %v", repo.FullName(), repo.DefaultBranch, err)
 			if noticeErr := system_model.CreateRepositoryNotice(
-				"ConvertRC2SB failed for repository (%s) tag (%s): %v", repo.FullName(), release.TagName, err,
+				"ConvertRC2SB failed for repository (%s) branch (%s): %v", repo.FullName(), repo.DefaultBranch, err,
 			); noticeErr != nil {
 				log.Error("CreateRepositoryNotice: %v", noticeErr)
 			}
@@ -241,38 +229,26 @@ func ConvertRC2SBAllRepos(ctx context.Context) error { //nolint:revive // name i
 	return nil
 }
 
-// getLatestPublishedRelease returns the most recent non-draft, non-prerelease release for a repo.
-func getLatestPublishedRelease(ctx context.Context, repo *repo_model.Repository) (*repo_model.Release, error) {
-	rel, err := repo_model.GetLatestReleaseByRepoID(ctx, repo.ID, false, optional.None[bool]())
-	if err != nil {
-		if repo_model.IsErrReleaseNotExist(err) {
-			return nil, nil
-		}
-		return nil, err
-	}
-	return rel, nil
-}
-
-// cloneAtTag does a shallow clone of the repo at the specified tag.
-func cloneAtTag(ctx context.Context, repoPath, tagName, destination string) error {
+// cloneAtRef does a shallow clone of the repo at the specified branch or tag ref.
+func cloneAtRef(ctx context.Context, repoPath, ref, destination string) error {
 	err := git.Clone(ctx, repoPath, destination, git.CloneRepoOptions{
 		Quiet:  true,
 		Depth:  1,
-		Branch: tagName,
+		Branch: ref,
 	})
 	if err != nil {
 		// Fallback to full clone if shallow clone fails
 		if removeErr := util.RemoveAll(destination); removeErr != nil {
-			log.Warn("cloneAtTag: failed to clean shallow clone destination: %v", removeErr)
+			log.Warn("cloneAtRef: failed to clean shallow clone destination: %v", removeErr)
 		}
 		if err := git.Clone(ctx, repoPath, destination, git.CloneRepoOptions{Quiet: true}); err != nil {
 			return err
 		}
-		// Checkout the tag
-		_, _, checkoutErr := gitcmd.NewCommand("checkout").AddDynamicArguments(tagName).
+		// Checkout the ref
+		_, _, checkoutErr := gitcmd.NewCommand("checkout").AddDynamicArguments(ref).
 			RunStdString(ctx, &gitcmd.RunOpts{Dir: destination})
 		if checkoutErr != nil {
-			return fmt.Errorf("checkout tag %s: %w", tagName, checkoutErr)
+			return fmt.Errorf("checkout ref %s: %w", ref, checkoutErr)
 		}
 	}
 	return nil
@@ -402,7 +378,7 @@ func preparePayloadPath(ctx context.Context, tmpDir string, repo *repo_model.Rep
 	}
 
 	payloadDir := filepath.Join(tmpDir, "payload")
-	if err := cloneAtTag(ctx, twRepo.RepoPath(), twRepo.DefaultBranch, payloadDir); err != nil {
+	if err := cloneAtRef(ctx, twRepo.RepoPath(), twRepo.DefaultBranch, payloadDir); err != nil {
 		_ = util.RemoveAll(payloadDir)
 		// Full clone fallback
 		if err := git.Clone(ctx, twRepo.RepoPath(), payloadDir, git.CloneRepoOptions{Quiet: true}); err != nil {
