@@ -25,15 +25,18 @@ import (
 	rc2sb "github.com/unfoldingWord/go-rc2sb"
 )
 
-// qualifyingTopics are the repo topics that mark a repo for RC-to-SB conversion.
-var qualifyingTopics = []string{"tc-create", "tc-ready", "pushing2sb", "rc2sb"}
-
 // RepoQualifiesForConversion checks if a repo meets all criteria for RC-to-SB conversion:
-// 1. DefaultBranch DM MetadataType is "rc"
+// 1. CONVERT_RC2SB_TOPICS is configured in app.ini (non-empty)
 // 2. DefaultBranch is "master"
-// 3. Repo has at least one qualifying topic
+// 3. Repo has at least one of the configured topics
+// 4. DefaultBranch DM MetadataType is "rc"
 func RepoQualifiesForConversion(ctx context.Context, repo *repo_model.Repository) (bool, error) {
 	if repo == nil {
+		return false, nil
+	}
+
+	if len(setting.DCS.ConvertRC2SBTopics) == 0 {
+		log.Debug("ConvertRC2SB: CONVERT_RC2SB_TOPICS not configured, skipping all conversions")
 		return false, nil
 	}
 
@@ -71,7 +74,7 @@ func RepoQualifiesForConversion(ctx context.Context, repo *repo_model.Repository
 // repoHasQualifyingTopic checks if repo.Topics contains at least one qualifying topic.
 func repoHasQualifyingTopic(repo *repo_model.Repository) bool {
 	for _, topic := range repo.Topics {
-		for _, qt := range qualifyingTopics {
+		for _, qt := range setting.DCS.ConvertRC2SBTopics {
 			if strings.EqualFold(topic, qt) {
 				return true
 			}
