@@ -65,3 +65,37 @@ func (n *rc2sbNotifier) PushCommits(ctx context.Context, pusher *user_model.User
 		}
 	}(shutdownCtx, repo)
 }
+
+// RepoTopicsChanged triggers RC-to-SB conversion when a qualifying topic is added to a repo.
+// repo.Topics must already reflect the updated topic list.
+func (n *rc2sbNotifier) RepoTopicsChanged(ctx context.Context, doer *user_model.User, repo *repo_model.Repository) {
+	if repo == nil {
+		return
+	}
+
+	log.Info("ConvertRC2SB notifier: topics changed for %s, checking qualification", repo.FullName())
+
+	qualifies, err := RepoQualifiesForConversion(ctx, repo)
+	if err != nil {
+		log.Warn("ConvertRC2SB notifier: error checking qualification for %s: %v", repo.FullName(), err)
+		return
+	}
+	if !qualifies {
+		log.Info("ConvertRC2SB notifier: %s does not qualify after topic change, skipping", repo.FullName())
+		return
+	}
+
+	log.Info("ConvertRC2SB notifier: spawning async conversion for %s branch master (topic added)", repo.FullName())
+	shutdownCtx := graceful.GetManager().ShutdownContext()
+	go func(ctx context.Context, repo *repo_model.Repository) {
+		select {
+		case <-ctx.Done():
+			log.Warn("ConvertRC2SB: context canceled for %s branch master", repo.FullName())
+			return
+		default:
+			if err := ForBranch(ctx, repo, "master"); err != nil {
+				log.Error("ConvertRC2SB: conversion failed for %s branch master: %v", repo.FullName(), err)
+			}
+		}
+	}(shutdownCtx, repo)
+}
