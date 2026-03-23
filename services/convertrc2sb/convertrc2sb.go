@@ -50,20 +50,13 @@ func RepoQualifiesForConversion(ctx context.Context, repo *repo_model.Repository
 		return false, nil
 	}
 
-	if err := repo.LoadLatestDMs(ctx); err != nil {
-		return false, fmt.Errorf("LoadLatestDMs: %w", err)
+	// Check for a default-branch DM with metadata_type = "rc", regardless of validation errors
+	hasRCMetadata, err := repo_model.RepoHasDefaultBranchRCMetadata(ctx, repo.ID)
+	if err != nil {
+		return false, fmt.Errorf("RepoHasDefaultBranchRCMetadata: %w", err)
 	}
-
-	dm := repo.DefaultBranchDM
-	if dm == nil {
-		dm = repo.RepoDM
-	}
-	if dm == nil {
-		log.Debug("ConvertRC2SB: %s does not qualify — no Door43Metadata found", repo.FullName())
-		return false, nil
-	}
-	if dm.MetadataType != "rc" {
-		log.Debug("ConvertRC2SB: %s does not qualify — MetadataType is %q (need \"rc\")", repo.FullName(), dm.MetadataType)
+	if !hasRCMetadata {
+		log.Debug("ConvertRC2SB: %s does not qualify — no default-branch DM with metadata_type=rc", repo.FullName())
 		return false, nil
 	}
 
@@ -196,25 +189,23 @@ func ForBranch(ctx context.Context, repo *repo_model.Repository, branchName stri
 func ConvertRC2SBAllRepos(ctx context.Context) error { //nolint:revive // name is used by cron task reference
 	log.Trace("Doing: ConvertRC2SBAllRepos")
 
-	repos, err := repo_model.GetReposForMetadata(ctx)
-	if err != nil {
-		return fmt.Errorf("GetReposForMetadata: %w", err)
+	if len(setting.DCS.ConvertRC2SBTopics) == 0 {
+		log.Debug("ConvertRC2SBAllRepos: CONVERT_RC2SB_TOPICS not configured, skipping")
+		return nil
 	}
+
+	repos, err := repo_model.GetReposQualifiedForRC2SBConversion(ctx, setting.DCS.ConvertRC2SBTopics)
+	if err != nil {
+		return fmt.Errorf("GetReposQualifiedForRC2SBConversion: %w", err)
+	}
+
+	log.Info("ConvertRC2SBAllRepos: found %d qualifying repos", len(repos))
 
 	for _, repo := range repos {
 		select {
 		case <-ctx.Done():
 			return ctx.Err()
 		default:
-		}
-
-		qualifies, err := RepoQualifiesForConversion(ctx, repo)
-		if err != nil {
-			log.Warn("ConvertRC2SBAllRepos: error checking qualification for %s: %v", repo.FullName(), err)
-			continue
-		}
-		if !qualifies {
-			continue
 		}
 
 		if err := ForBranch(ctx, repo, repo.DefaultBranch); err != nil {

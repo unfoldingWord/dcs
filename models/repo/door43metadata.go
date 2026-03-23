@@ -677,6 +677,61 @@ func DeleteAllDoor43MetadatasByRepoID(ctx context.Context, repoID int64) (int64,
 	return db.GetEngine(ctx).Delete(Door43Metadata{RepoID: repoID})
 }
 
+// RepoHasDefaultBranchRCMetadata returns true if the repo has a door43_metadata row
+// for its default branch with metadata_type = "rc", regardless of validation errors.
+func RepoHasDefaultBranchRCMetadata(ctx context.Context, repoID int64) (bool, error) {
+	return db.GetEngine(ctx).
+		Table("door43_metadata").
+		Where(builder.Eq{"repo_id": repoID}.
+			And(builder.Eq{"stage": int(door43metadata.StageLatest)}).
+			And(builder.Eq{"is_latest_for_stage": true}).
+			And(builder.Eq{"metadata_type": "rc"})).
+		Exist()
+}
+
+// GetReposQualifiedForRC2SBConversion returns all repos that qualify for RC-to-SB conversion:
+// non-archived, non-private, default_branch = "master", have a door43_metadata row for their
+// default branch with metadata_type = "rc", and have at least one topic from the given list.
+// Returns nil, nil if topics is empty.
+func GetReposQualifiedForRC2SBConversion(ctx context.Context, topics []string) ([]*Repository, error) {
+	if len(topics) == 0 {
+		return nil, nil
+	}
+
+	// Topics are always stored lowercase; lowercase inputs for safe matching
+	lowerTopics := make([]any, len(topics))
+	for i, t := range topics {
+		lowerTopics[i] = strings.ToLower(t)
+	}
+
+	// Subquery: repo IDs that have at least one qualifying topic
+	topicSubQ := builder.Select("repo_topic.repo_id").
+		From("repo_topic").
+		Join("INNER", "topic", "topic.id = repo_topic.topic_id").
+		Where(builder.In("topic.name", lowerTopics...)).
+		GroupBy("repo_topic.repo_id")
+
+	// Subquery: repo IDs with a default-branch DM whose metadata_type is "rc"
+	dmSubQ := builder.Select("repo_id").
+		From("door43_metadata").
+		Where(builder.Eq{"stage": int(door43metadata.StageLatest)}.
+			And(builder.Eq{"is_latest_for_stage": true}).
+			And(builder.Eq{"metadata_type": "rc"}))
+
+	cond := builder.Eq{"`repository`.default_branch": "master"}.
+		And(builder.Eq{"`repository`.is_archived": 0}).
+		And(builder.Eq{"`repository`.is_private": 0}).
+		And(builder.In("`repository`.id", topicSubQ)).
+		And(builder.In("`repository`.id", dmSubQ))
+
+	var repos []*Repository
+	err := db.GetEngine(ctx).
+		Where(cond).
+		OrderBy("`repository`.lower_name").
+		Find(&repos)
+	return repos, err
+}
+
 // GetReposForMetadata gets all the repos to process for metadata
 func GetReposForMetadata(ctx context.Context) ([]*Repository, error) {
 	var repos []*Repository
