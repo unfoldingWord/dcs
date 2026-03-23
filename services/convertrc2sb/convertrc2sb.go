@@ -337,7 +337,9 @@ func copyFile(src, dst string) error {
 	return err
 }
 
-// preparePayloadPath prepares a TW payload directory for TWL repos (same logic as sbarchiver).
+// preparePayloadPath prepares a payload directory for TWL and TW repos (same logic as sbarchiver).
+// - TWL repos (Subject "TSV Translation Words Links") need the corresponding TW repo as payload.
+// - TW repos (Subject "Translation Words") need the corresponding TWL repo as payload.
 func preparePayloadPath(ctx context.Context, tmpDir string, repo *repo_model.Repository) (string, error) {
 	if err := repo.LoadLatestDMs(ctx); err != nil {
 		return "", nil
@@ -347,41 +349,50 @@ func preparePayloadPath(ctx context.Context, tmpDir string, repo *repo_model.Rep
 	if dm == nil {
 		dm = repo.RepoDM
 	}
-	if dm == nil || dm.Subject != "TSV Translation Words Links" || dm.Language == "" {
+	if dm == nil || dm.Language == "" {
 		return "", nil
 	}
 
-	twRepoName := dm.Language + "_tw"
-	twRepo, err := repo_model.GetRepositoryByOwnerAndName(ctx, repo.OwnerName, twRepoName)
+	var payloadRepoName string
+	switch dm.Subject {
+	case "TSV Translation Words Links":
+		payloadRepoName = dm.Language + "_tw"
+	case "Translation Words":
+		payloadRepoName = dm.Language + "_twl"
+	default:
+		return "", nil
+	}
+
+	payloadRepo, err := repo_model.GetRepositoryByOwnerAndName(ctx, repo.OwnerName, payloadRepoName)
 	if err != nil {
 		if repo_model.IsErrRepoNotExist(err) {
 			return "", nil
 		}
-		return "", fmt.Errorf("GetRepositoryByOwnerAndName(%s): %w", twRepoName, err)
+		return "", fmt.Errorf("GetRepositoryByOwnerAndName(%s): %w", payloadRepoName, err)
 	}
 
-	twGitRepo, err := gitrepo.OpenRepository(ctx, twRepo)
+	payloadGitRepo, err := gitrepo.OpenRepository(ctx, payloadRepo)
 	if err != nil {
-		return "", fmt.Errorf("OpenRepository(%s): %w", twRepo.FullName(), err)
+		return "", fmt.Errorf("OpenRepository(%s): %w", payloadRepo.FullName(), err)
 	}
-	defer twGitRepo.Close()
+	defer payloadGitRepo.Close()
 
-	commitID, err := twGitRepo.ConvertToGitID(twRepo.DefaultBranch)
+	commitID, err := payloadGitRepo.ConvertToGitID(payloadRepo.DefaultBranch)
 	if err != nil {
-		return "", fmt.Errorf("resolve TW default branch: %w", err)
+		return "", fmt.Errorf("resolve %s default branch: %w", payloadRepo.FullName(), err)
 	}
 
 	payloadDir := filepath.Join(tmpDir, "payload")
-	if err := cloneAtRef(ctx, twRepo.RepoPath(), twRepo.DefaultBranch, payloadDir); err != nil {
+	if err := cloneAtRef(ctx, payloadRepo.RepoPath(), payloadRepo.DefaultBranch, payloadDir); err != nil {
 		_ = util.RemoveAll(payloadDir)
 		// Full clone fallback
-		if err := git.Clone(ctx, twRepo.RepoPath(), payloadDir, git.CloneRepoOptions{Quiet: true}); err != nil {
-			return "", fmt.Errorf("clone TW payload: %w", err)
+		if err := git.Clone(ctx, payloadRepo.RepoPath(), payloadDir, git.CloneRepoOptions{Quiet: true}); err != nil {
+			return "", fmt.Errorf("clone payload repo %s: %w", payloadRepo.FullName(), err)
 		}
 		_, _, checkoutErr := gitcmd.NewCommand("checkout", "--detach").AddDynamicArguments(commitID.String()).
 			RunStdString(ctx, &gitcmd.RunOpts{Dir: payloadDir})
 		if checkoutErr != nil {
-			return "", fmt.Errorf("checkout TW commit: %w", checkoutErr)
+			return "", fmt.Errorf("checkout %s commit: %w", payloadRepo.FullName(), checkoutErr)
 		}
 	}
 
