@@ -654,7 +654,7 @@ func ServeRepoSBArchive(ctx *gitea_context.Base, repo *repo_model.Repository, ar
 
 	rPath := archiver.RelativePath()
 	if setting.RepoArchive.Storage.ServeDirect() {
-		u, err := storage.RepoArchives.URL(rPath, downloadName, ctx.Req.Method, nil)
+		u, err := storage.RepoArchives.ServeDirectURL(rPath, downloadName, ctx.Req.Method, nil)
 		if u != nil && err == nil {
 			ctx.Redirect(u.String())
 			return
