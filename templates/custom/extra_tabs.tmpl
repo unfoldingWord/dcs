@@ -1,3 +1,12 @@
+{{if and $.RepoDM (gt $.RepoDM.ID 0)}}
+<a class="{{if .PageIsMetadata}}active {{end}}item"
+	href="{{.RepoLink}}/metadata"
+	data-tooltip-content="{{ctx.Locale.Tr "dcs.repo.metadata.metadata"}}">
+	{{svg "octicon-file-badge" 16}}
+	{{ctx.Locale.Tr "dcs.repo.metadata.metadata"}}
+</a>
+{{end}}
+{{if and $.RepoDM (eq $.RepoDM.MetadataType "rc")}}
 {{$healthSeverity := $.RepoDM.HealthcheckSeverity.String}}
 {{$healthSeverityLabel := $healthSeverity}}
 {{$healthColor := "var(--color-text-light-1)"}}
@@ -18,22 +27,22 @@
 {{if eq $healthSeverityLabel ""}}
 	{{$healthSeverityLabel = "unknown"}}
 {{end}}
-<a class="{{if .PageIsMetadata}}active{{end}} item js-healthcheck-badge"
+<a class="{{if .PageIsHealthcheck}}active {{end}}item js-healthcheck-badge"
 	href="{{.RepoLink}}/healthcheck"
 	data-tooltip-content="Healthcheck: {{$healthSeverityLabel}}"
 	data-hc-owner="{{.Repository.OwnerName}}"
 	data-hc-repo="{{.Repository.Name}}"
-	data-hc-ref="{{$.RepoDM.Ref}}"
->
+	data-hc-ref="{{$.RepoDM.Ref}}">
 	<span class="svg" style="color: {{$healthColor}}">{{svg $healthIcon 16}}</span>
 	{{ctx.Locale.Tr "dcs.repo.metadata.healthcheck"}}
 </a>
+{{end}}
 {{$refToPreview := .Repository.DefaultBranch}}
 {{if or $.RefFullName.IsTag $.RefFullName.IsBranch}}
 	{{$refToPreview = .RefFullName.ShortName}}
 {{end}}
-{{if $.RepoDM.ID}}
-	<a class="item" data-tooltip-content="Preview.Door43.org" href="{{Door43PreviewURL}}/u/{{.Owner.Name}}/{{.Repository.Name}}/{{$refToPreview | PathEscapeSegments}}{{if eq AppUrl "https://qa.door43.org/"}}?server=QA{{end}}{{if eq AppUrl "https://develop.door43.org/"}}?server=DEV{{end}}"  target="_blank" rel="nofollow noopener">
+{{if and $.RepoDM (gt $.RepoDM.ID 0)}}
+	<a class="item" data-tooltip-content="Preview.Door43.org" href="{{Door43PreviewURL}}/u/{{.Owner.Name}}/{{.Repository.Name}}/{{$refToPreview | PathEscapeSegments}}{{if eq AppUrl "https://qa.door43.org/"}}?server=QA{{end}}{{if eq AppUrl "https://develop.door43.org/"}}?server=DEV{{end}}" target="_blank" rel="nofollow noopener">
 		{{svg "octicon-book"}} {{ctx.Locale.Tr "preview"}} / PDF
 	</a>
 {{end}}

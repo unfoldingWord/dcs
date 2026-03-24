@@ -5,6 +5,7 @@ package convertrc2sb
 
 import (
 	"context"
+	"strings"
 
 	repo_model "code.gitea.io/gitea/models/repo"
 	user_model "code.gitea.io/gitea/models/user"
@@ -13,6 +14,11 @@ import (
 	repo_module "code.gitea.io/gitea/modules/repository"
 	notify_service "code.gitea.io/gitea/services/notify"
 )
+
+// sbFirstTopic is a hardcoded topic that, when added to a repo, triggers a one-time RC-to-SB
+// conversion. It bypasses the CONVERT_RC2SB_TOPICS setting but still requires the repo to be
+// an RC repo on master. It is intentionally not used by the bulk cron task.
+const sbFirstTopic = "sbfirst"
 
 type rc2sbNotifier struct {
 	notify_service.NullNotifier
@@ -52,6 +58,69 @@ func (n *rc2sbNotifier) PushCommits(ctx context.Context, pusher *user_model.User
 	}
 
 	log.Info("ConvertRC2SB notifier: spawning async conversion for %s branch master", repo.FullName())
+	spawnConversion(repo)
+}
+
+// RepoTopicsChanged triggers RC-to-SB conversion when a qualifying topic is added to a repo.
+// Two cases trigger conversion:
+//  1. The repo now has the hardcoded "sbfirst" topic — triggers if the repo is RC on master,
+//     regardless of the CONVERT_RC2SB_TOPICS setting. This is a one-time manual trigger.
+//  2. The repo now has a topic from CONVERT_RC2SB_TOPICS — triggers via full qualification check.
+func (n *rc2sbNotifier) RepoTopicsChanged(ctx context.Context, doer *user_model.User, repo *repo_model.Repository) {
+	if repo == nil {
+		return
+	}
+
+	// Reload the repo so repo.Topics reflects the just-saved topic list (the in-memory
+	// object passed by the router was loaded before the topic update).
+	freshRepo, err := repo_model.GetRepositoryByID(ctx, repo.ID)
+	if err != nil {
+		log.Error("ConvertRC2SB notifier: GetRepositoryByID failed for repo ID %d: %v", repo.ID, err)
+		return
+	}
+
+	log.Info("ConvertRC2SB notifier: topics changed for %s, checking qualification", freshRepo.FullName())
+
+	// Case 1: "sbfirst" topic — bypass CONVERT_RC2SB_TOPICS, but still require RC on master.
+	for _, t := range freshRepo.Topics {
+		if strings.EqualFold(t, sbFirstTopic) {
+			if freshRepo.DefaultBranch != "master" {
+				log.Info("ConvertRC2SB notifier: %s has %q topic but default branch is %q, skipping",
+					freshRepo.FullName(), sbFirstTopic, freshRepo.DefaultBranch)
+				return
+			}
+			hasRC, err := repo_model.RepoHasDefaultBranchRCMetadata(ctx, freshRepo.ID)
+			if err != nil {
+				log.Warn("ConvertRC2SB notifier: RepoHasDefaultBranchRCMetadata failed for %s: %v", freshRepo.FullName(), err)
+				return
+			}
+			if !hasRC {
+				log.Info("ConvertRC2SB notifier: %s has %q topic but is not an RC repo, skipping",
+					freshRepo.FullName(), sbFirstTopic)
+				return
+			}
+			log.Info("ConvertRC2SB notifier: spawning async conversion for %s (sbfirst topic)", freshRepo.FullName())
+			spawnConversion(freshRepo)
+			return
+		}
+	}
+
+	// Case 2: a CONVERT_RC2SB_TOPICS topic — full qualification check.
+	qualifies, err := RepoQualifiesForConversion(ctx, freshRepo)
+	if err != nil {
+		log.Warn("ConvertRC2SB notifier: error checking qualification for %s: %v", freshRepo.FullName(), err)
+		return
+	}
+	if !qualifies {
+		log.Info("ConvertRC2SB notifier: %s does not qualify after topic change, skipping", freshRepo.FullName())
+		return
+	}
+
+	log.Info("ConvertRC2SB notifier: spawning async conversion for %s (qualifying topic added)", freshRepo.FullName())
+	spawnConversion(freshRepo)
+}
+
+func spawnConversion(repo *repo_model.Repository) {
 	shutdownCtx := graceful.GetManager().ShutdownContext()
 	go func(ctx context.Context, repo *repo_model.Repository) {
 		select {

@@ -50,20 +50,13 @@ func RepoQualifiesForConversion(ctx context.Context, repo *repo_model.Repository
 		return false, nil
 	}
 
-	if err := repo.LoadLatestDMs(ctx); err != nil {
-		return false, fmt.Errorf("LoadLatestDMs: %w", err)
+	// Check for a default-branch DM with metadata_type = "rc", regardless of validation errors
+	hasRCMetadata, err := repo_model.RepoHasDefaultBranchRCMetadata(ctx, repo.ID)
+	if err != nil {
+		return false, fmt.Errorf("RepoHasDefaultBranchRCMetadata: %w", err)
 	}
-
-	dm := repo.DefaultBranchDM
-	if dm == nil {
-		dm = repo.RepoDM
-	}
-	if dm == nil {
-		log.Debug("ConvertRC2SB: %s does not qualify — no Door43Metadata found", repo.FullName())
-		return false, nil
-	}
-	if dm.MetadataType != "rc" {
-		log.Debug("ConvertRC2SB: %s does not qualify — MetadataType is %q (need \"rc\")", repo.FullName(), dm.MetadataType)
+	if !hasRCMetadata {
+		log.Debug("ConvertRC2SB: %s does not qualify — no default-branch DM with metadata_type=rc", repo.FullName())
 		return false, nil
 	}
 
@@ -110,8 +103,11 @@ func ForBranch(ctx context.Context, repo *repo_model.Repository, branchName stri
 		return fmt.Errorf("clone at branch %s: %w", branchName, err)
 	}
 
-	// Step 2: Prepare payload path for TWL repos (same logic as sbarchiver)
-	payloadPath, err := preparePayloadPath(ctx, tmpDir, repo)
+	// Step 2: Prepare payload for TWL and TW repos.
+	// For TWL repos: returns a path to the TW clone; passed to rc2sb as PayloadPath.
+	// For TW repos:  copies the TWL clone directly into rcDir/<lang>_twl/ so the
+	//                library can auto-detect it from inDir; returns "".
+	payloadPath, err := preparePayloadPath(ctx, tmpDir, rcDir, repo)
 	if err != nil {
 		return fmt.Errorf("preparePayloadPath: %w", err)
 	}
@@ -196,10 +192,17 @@ func ForBranch(ctx context.Context, repo *repo_model.Repository, branchName stri
 func AllRepos(ctx context.Context) error {
 	log.Trace("Doing: AllRepos")
 
-	repos, err := repo_model.GetReposForMetadata(ctx)
-	if err != nil {
-		return fmt.Errorf("GetReposForMetadata: %w", err)
+	if len(setting.DCS.ConvertRC2SBTopics) == 0 {
+		log.Debug("ConvertRC2SBAllRepos: CONVERT_RC2SB_TOPICS not configured, skipping")
+		return nil
 	}
+
+	repos, err := repo_model.GetReposQualifiedForRC2SBConversion(ctx, setting.DCS.ConvertRC2SBTopics)
+	if err != nil {
+		return fmt.Errorf("GetReposQualifiedForRC2SBConversion: %w", err)
+	}
+
+	log.Info("ConvertRC2SBAllRepos: found %d qualifying repos", len(repos))
 
 	for _, repo := range repos {
 		select {
@@ -346,8 +349,18 @@ func copyFile(src, dst string) error {
 	return err
 }
 
-// preparePayloadPath prepares a TW payload directory for TWL repos (same logic as sbarchiver).
-func preparePayloadPath(ctx context.Context, tmpDir string, repo *repo_model.Repository) (string, error) {
+// preparePayloadPath prepares the payload for TWL and TW repos.
+//
+// For TWL repos (Subject "TSV Translation Words Links"): clones the corresponding TW repo
+// into tmpDir/payload and returns that path. The rc2sb library receives it via PayloadPath
+// and copies bible/ into ingredients/payload/.
+//
+// For TW repos (Subject "Translation Words"): clones the corresponding TWL repo and copies
+// it directly into rcDir/<lang>_twl/ so the rc2sb library can auto-detect it from inDir
+// (the same pattern the TWL handler uses to auto-detect <lang>_tw/). Returns "".
+//
+// Returns ("", nil) when no payload is needed.
+func preparePayloadPath(ctx context.Context, tmpDir, rcDir string, repo *repo_model.Repository) (string, error) {
 	if err := repo.LoadLatestDMs(ctx); err != nil {
 		return "", nil
 	}
@@ -356,42 +369,61 @@ func preparePayloadPath(ctx context.Context, tmpDir string, repo *repo_model.Rep
 	if dm == nil {
 		dm = repo.RepoDM
 	}
-	if dm == nil || dm.Subject != "TSV Translation Words Links" || dm.Language == "" {
+	if dm == nil || dm.Language == "" {
 		return "", nil
 	}
 
-	twRepoName := dm.Language + "_tw"
-	twRepo, err := repo_model.GetRepositoryByOwnerAndName(ctx, repo.OwnerName, twRepoName)
+	var payloadRepoName string
+	isTWRepo := false
+	switch dm.Subject {
+	case "TSV Translation Words Links":
+		payloadRepoName = dm.Language + "_tw"
+	case "Translation Words":
+		payloadRepoName = dm.Language + "_twl"
+		isTWRepo = true
+	default:
+		return "", nil
+	}
+
+	payloadRepo, err := repo_model.GetRepositoryByOwnerAndName(ctx, repo.OwnerName, payloadRepoName)
 	if err != nil {
 		if repo_model.IsErrRepoNotExist(err) {
 			return "", nil
 		}
-		return "", fmt.Errorf("GetRepositoryByOwnerAndName(%s): %w", twRepoName, err)
+		return "", fmt.Errorf("GetRepositoryByOwnerAndName(%s): %w", payloadRepoName, err)
 	}
 
-	twGitRepo, err := gitrepo.OpenRepository(ctx, twRepo)
+	payloadGitRepo, err := gitrepo.OpenRepository(ctx, payloadRepo)
 	if err != nil {
-		return "", fmt.Errorf("OpenRepository(%s): %w", twRepo.FullName(), err)
+		return "", fmt.Errorf("OpenRepository(%s): %w", payloadRepo.FullName(), err)
 	}
-	defer twGitRepo.Close()
+	defer payloadGitRepo.Close()
 
-	commitID, err := twGitRepo.ConvertToGitID(twRepo.DefaultBranch)
+	commitID, err := payloadGitRepo.ConvertToGitID(payloadRepo.DefaultBranch)
 	if err != nil {
-		return "", fmt.Errorf("resolve TW default branch: %w", err)
+		return "", fmt.Errorf("resolve %s default branch: %w", payloadRepo.FullName(), err)
 	}
 
 	payloadDir := filepath.Join(tmpDir, "payload")
-	if err := cloneAtRef(ctx, twRepo.RepoPath(), twRepo.DefaultBranch, payloadDir); err != nil {
+	if err := cloneAtRef(ctx, payloadRepo.RepoPath(), payloadRepo.DefaultBranch, payloadDir); err != nil {
 		_ = util.RemoveAll(payloadDir)
-		// Full clone fallback
-		if err := git.Clone(ctx, twRepo.RepoPath(), payloadDir, git.CloneRepoOptions{Quiet: true}); err != nil {
-			return "", fmt.Errorf("clone TW payload: %w", err)
+		if err := git.Clone(ctx, payloadRepo.RepoPath(), payloadDir, git.CloneRepoOptions{Quiet: true}); err != nil {
+			return "", fmt.Errorf("clone payload repo %s: %w", payloadRepo.FullName(), err)
 		}
 		_, _, checkoutErr := gitcmd.NewCommand("checkout", "--detach").AddDynamicArguments(commitID.String()).
 			WithDir(payloadDir).RunStdString(ctx)
 		if checkoutErr != nil {
-			return "", fmt.Errorf("checkout TW commit: %w", checkoutErr)
+			return "", fmt.Errorf("checkout %s commit: %w", payloadRepo.FullName(), checkoutErr)
 		}
+	}
+
+	if isTWRepo {
+		// Copy the TWL clone into rcDir/<lang>_twl/ so the library auto-detects it in inDir.
+		destDir := filepath.Join(rcDir, payloadRepoName)
+		if err := copyDir(payloadDir, destDir); err != nil {
+			return "", fmt.Errorf("copy TWL payload into rcDir: %w", err)
+		}
+		return "", nil
 	}
 
 	return payloadDir, nil
