@@ -42,9 +42,7 @@
 			<h4 class="ui top attached header">
 				{{ctx.Locale.Tr "repo.metadata.overall_healthcheck"}}
 				<div class="ui right">
-					{{if .Permission.IsAdmin}}
-						<a class="ui teal tiny button" href="{{.RepoLink}}/metadata/update">{{ctx.Locale.Tr "repo.metadata.update_metadata"}}</a>
-					{{end}}
+						<a class="ui teal tiny button" href="{{.RepoLink}}/metadata">{{ctx.Locale.Tr "repo.metadata.see_all_branches_releases"}} &gt;</a>
 				</div>
 			</h4>
 			<div class="ui attached segment">
