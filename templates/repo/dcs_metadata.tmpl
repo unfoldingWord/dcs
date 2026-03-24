@@ -42,7 +42,7 @@
 			<h4 class="ui top attached header">
 				{{ctx.Locale.Tr "dcs.repo.metadata.default_branch_and_latest_release"}}
 				<div class="ui right">
-					<a class="ui teal tiny button" href="{{.RepoLink}}/metadata/all">{{ctx.Locale.Tr "dcs.repo.metadata.see_all_branches_releases"}}</a>
+					<a class="ui teal tiny button" href="{{.RepoLink}}/metadata/all">{{ctx.Locale.Tr "dcs.repo.metadata.see_all_branches_releases"}} &gt;</a>
 					{{if .Permission.IsAdmin}}
 						<a class="ui teal tiny button" href="{{.RepoLink}}/metadata/update">{{ctx.Locale.Tr "dcs.repo.metadata.update_metadata"}}</a>
 					{{end}}
