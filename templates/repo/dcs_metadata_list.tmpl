@@ -16,6 +16,6 @@
 </script>
 {{range $i, $dm := .Door43Metadatas}}
 <div class="ui list">
-	{{template "repo/dcs_metadata_list_item" (dict "ctxData" $.ctxData "Door43Metadata" $dm "ShowHealthcheck" $.ShowHealthcheck)}}
+	{{template "repo/dcs_metadata_list_item" (dict "ctxData" $.ctxData "Door43Metadata" $dm "IsRC" $.IsRC)}}
 </div>
 {{end}}

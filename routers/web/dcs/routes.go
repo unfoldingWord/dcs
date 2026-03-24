@@ -19,16 +19,13 @@ func RegisterDCSWebRoutes(m *web.Router, optSignIn, reqSignIn func(ctx *context.
 	}, optSignIn)
 }
 
-// RegisterDCSRepoWebRoutes registers DCS repo-scoped web routes (healthcheck, metadata)
+// RegisterDCSRepoWebRoutes registers DCS repo-scoped web routes (metadata, healthcheck)
 func RegisterDCSRepoWebRoutes(m *web.Router) {
-	m.Group("/healthcheck", func() {
-		m.Get("", repo.GetRepoHealthcheck)
-		m.Get("/update", repo.UpdateDoor43Metadata)
-		m.Post("/update", repo.UpdateDoor43Metadata)
-	})
 	m.Group("/metadata", func() {
-		m.Get("", repo.GetAllRepoDoor43Metadata)
+		m.Get("", repo.GetRepoMetadata)
+		m.Get("/all", repo.GetAllRepoDoor43Metadata)
 		m.Get("/update", repo.UpdateDoor43Metadata)
 		m.Post("/update", repo.UpdateDoor43Metadata)
 	})
+	m.Get("/healthcheck", repo.GetRepoHealthcheck)
 }
