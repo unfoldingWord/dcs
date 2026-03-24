@@ -203,6 +203,7 @@
 							"repo.metadata.last_updated"}}{{end}}:</strong></td>
 					<td style="vertical-align: top">{{DateUtils.AbsoluteLong $dm.ReleaseDateUnix}}</td>
 				</tr>
+				{{if $.IsRC}}
 				<tr>
 					<td style="vertical-align: top"><strong>{{ctx.Locale.Tr "repo.metadata.healthcheck"}}:</strong></td>
 					<td style="vertical-align: top">
@@ -214,6 +215,7 @@
 						</div>
 					</td>
 				</tr>
+				{{end}}
 			</table>
 		</div>
 		<div class="ui bottom attached tab segment" data-tab="json-{{$dm.ID}}">
