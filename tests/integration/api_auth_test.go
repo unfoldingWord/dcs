@@ -26,7 +26,14 @@ func TestAPIAuth(t *testing.T) {
 	resp = MakeRequest(t, req, http.StatusUnauthorized)
 	assert.Contains(t, resp.Body.String(), `{"message":"invalid username, password or token"`)
 
+	// Invalid Bearer token on a public endpoint should succeed as unauthenticated.
+	// The server treats an invalid/expired token as "no auth" so public endpoints
+	// still work — this prevents cascading failures in clients with stale tokens.
 	req = NewRequestf(t, "GET", "/api/v1/users/user2/repos").AddTokenAuth("Bearer wrong_token")
-	resp = MakeRequest(t, req, http.StatusUnauthorized)
-	assert.Contains(t, resp.Body.String(), `{"message":"invalid username, password or token"`)
+	MakeRequest(t, req, http.StatusOK)
+
+	// Invalid Bearer token on a protected endpoint (/api/v1/user requires auth)
+	// should still return 401 — reqToken() middleware enforces authentication.
+	req = NewRequestf(t, "GET", "/api/v1/user").AddTokenAuth("Bearer wrong_token")
+	MakeRequest(t, req, http.StatusUnauthorized)
 }

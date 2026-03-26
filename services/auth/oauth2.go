@@ -176,7 +176,11 @@ func (o *OAuth2) Verify(req *http.Request, w http.ResponseWriter, store DataStor
 	id := o.userIDFromToken(req.Context(), token, store)
 
 	if id <= 0 && id != -2 { // -2 means actions, so we need to allow it.
-		return nil, user_model.ErrUserNotExist{}
+		// Token is invalid or expired — treat as unauthenticated rather than
+		// returning an error. This allows public endpoints (e.g. /api/v1/version)
+		// to succeed even when the request carries a stale token.
+		// Protected endpoints enforce auth via reqToken() middleware.
+		return nil, nil
 	}
 	log.Trace("OAuth2 Authorization: Found token for user[%d]", id)
 
@@ -184,8 +188,10 @@ func (o *OAuth2) Verify(req *http.Request, w http.ResponseWriter, store DataStor
 	if err != nil {
 		if !user_model.IsErrUserNotExist(err) {
 			log.Error("GetUserByName: %v", err)
+			return nil, err
 		}
-		return nil, err
+		// User was deleted but token still exists — treat as unauthenticated
+		return nil, nil
 	}
 
 	log.Trace("OAuth2 Authorization: Logged in user %-v", user)
