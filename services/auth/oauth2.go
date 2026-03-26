@@ -132,6 +132,7 @@ func (o *OAuth2) userIDFromToken(ctx context.Context, tokenSHA string, store Dat
 	t, err := auth_model.GetAccessTokenBySHA(ctx, tokenSHA)
 	if err != nil {
 		if auth_model.IsErrAccessTokenNotExist(err) {
+			log.Warn("OAuth2 Debug: GetAccessTokenBySHA token NOT FOUND in DB: token=%s err=%v", tokenSHA, err)
 			// check task token
 			task, err := actions_model.GetRunningTaskByToken(ctx, tokenSHA)
 			if err == nil && task != nil {
@@ -143,10 +144,13 @@ func (o *OAuth2) userIDFromToken(ctx context.Context, tokenSHA string, store Dat
 				return user_model.ActionsUserID
 			}
 		} else if !auth_model.IsErrAccessTokenNotExist(err) && !auth_model.IsErrAccessTokenEmpty(err) {
-			log.Error("GetAccessTokenBySHA: %v", err)
+			log.Error("OAuth2 Debug: GetAccessTokenBySHA DB ERROR: token=%s err=%v", tokenSHA, err)
+		} else {
+			log.Warn("OAuth2 Debug: GetAccessTokenBySHA empty/other: token=%s err=%v", tokenSHA, err)
 		}
 		return 0
 	}
+	log.Warn("OAuth2 Debug: GetAccessTokenBySHA SUCCESS: token=%s uid=%d tokenID=%d name=%s", tokenSHA, t.UID, t.ID, t.Name)
 	t.UpdatedUnix = timeutil.TimeStampNow()
 	if err = auth_model.UpdateAccessToken(ctx, t); err != nil {
 		log.Error("UpdateAccessToken: %v", err)
@@ -154,6 +158,12 @@ func (o *OAuth2) userIDFromToken(ctx context.Context, tokenSHA string, store Dat
 	store.GetData()["IsApiToken"] = true
 	store.GetData()["ApiTokenScope"] = t.Scope
 	return t.UID
+}
+
+// isDebugAuthPath returns true for API paths we want verbose auth logging on.
+func isDebugAuthPath(req *http.Request) bool {
+	p := req.URL.Path
+	return p == "/api/v1/user" || p == "/api/v1/version"
 }
 
 // Verify extracts the user ID from the OAuth token in the query parameters
@@ -168,14 +178,29 @@ func (o *OAuth2) Verify(req *http.Request, w http.ResponseWriter, store DataStor
 		return nil, nil
 	}
 
+	debugPath := isDebugAuthPath(req)
+
 	token, ok := parseToken(req)
 	if !ok {
+		if debugPath {
+			log.Warn("OAuth2 Debug: %s %s — NO TOKEN in request. Authorization header: [%s]",
+				req.Method, req.URL.RequestURI(), req.Header.Get("Authorization"))
+		}
 		return nil, nil
+	}
+
+	if debugPath {
+		log.Warn("OAuth2 Debug: %s %s — token from request: [%s] (len=%d) Authorization header: [%s]",
+			req.Method, req.URL.RequestURI(), token, len(token), req.Header.Get("Authorization"))
 	}
 
 	id := o.userIDFromToken(req.Context(), token, store)
 
 	if id <= 0 && id != -2 { // -2 means actions, so we need to allow it.
+		if debugPath {
+			log.Warn("OAuth2 Debug: %s %s — token lookup FAILED, userID=%d, token=[%s]",
+				req.Method, req.URL.RequestURI(), id, token)
+		}
 		// Token is invalid or expired — treat as unauthenticated rather than
 		// returning an error. This allows public endpoints (e.g. /api/v1/version)
 		// to succeed even when the request carries a stale token.
@@ -190,10 +215,18 @@ func (o *OAuth2) Verify(req *http.Request, w http.ResponseWriter, store DataStor
 			log.Error("GetUserByName: %v", err)
 			return nil, err
 		}
+		if debugPath {
+			log.Warn("OAuth2 Debug: %s %s — user NOT FOUND for id=%d, token=[%s]",
+				req.Method, req.URL.RequestURI(), id, token)
+		}
 		// User was deleted but token still exists — treat as unauthenticated
 		return nil, nil
 	}
 
+	if debugPath {
+		log.Warn("OAuth2 Debug: %s %s — SUCCESS user=%s (id=%d) token=[%s]",
+			req.Method, req.URL.RequestURI(), user.Name, user.ID, token)
+	}
 	log.Trace("OAuth2 Authorization: Logged in user %-v", user)
 	return user, nil
 }
