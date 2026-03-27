@@ -138,6 +138,8 @@ func CreateAccessToken(ctx *context.APIContext) {
 		ctx.APIErrorInternal(err)
 		return
 	}
+	log.Warn("Token CREATED: user=%s (uid=%d) tokenName=%q tokenID=%d tokenSHA=%s lastEight=%s remoteAddr=%s",
+		ctx.ContextUser.Name, ctx.ContextUser.ID, t.Name, t.ID, t.Token, t.TokenLastEight, ctx.Req.RemoteAddr)
 	ctx.JSON(http.StatusCreated, &api.AccessToken{
 		Name:           t.Name,
 		Token:          t.Token,
@@ -194,10 +196,17 @@ func DeleteAccessToken(ctx *context.APIContext) {
 			return
 		case 1:
 			tokenID = tokens[0].ID
+			log.Warn("Token DELETE (by name): user=%s (uid=%d) tokenName=%q tokenID=%d lastEight=%s remoteAddr=%s",
+				ctx.ContextUser.Name, ctx.ContextUser.ID, tokens[0].Name, tokens[0].ID, tokens[0].TokenLastEight, ctx.Req.RemoteAddr)
 		default:
+			log.Warn("Token DELETE REJECTED (multiple matches): user=%s (uid=%d) tokenName=%q matchCount=%d remoteAddr=%s",
+				ctx.ContextUser.Name, ctx.ContextUser.ID, token, len(tokens), ctx.Req.RemoteAddr)
 			ctx.APIError(http.StatusUnprocessableEntity, fmt.Errorf("multiple matches for token name '%s'", token))
 			return
 		}
+	} else {
+		log.Warn("Token DELETE (by ID): user=%s (uid=%d) tokenID=%d remoteAddr=%s",
+			ctx.ContextUser.Name, ctx.ContextUser.ID, tokenID, ctx.Req.RemoteAddr)
 	}
 	if tokenID == 0 {
 		ctx.APIErrorInternal(nil)
@@ -206,6 +215,8 @@ func DeleteAccessToken(ctx *context.APIContext) {
 
 	if err := auth_model.DeleteAccessTokenByID(ctx, tokenID, ctx.ContextUser.ID); err != nil {
 		if auth_model.IsErrAccessTokenNotExist(err) {
+			log.Warn("Token DELETE FAILED (not found): user=%s (uid=%d) tokenID=%d remoteAddr=%s",
+				ctx.ContextUser.Name, ctx.ContextUser.ID, tokenID, ctx.Req.RemoteAddr)
 			ctx.APIErrorNotFound()
 		} else {
 			ctx.APIErrorInternal(err)
@@ -213,6 +224,8 @@ func DeleteAccessToken(ctx *context.APIContext) {
 		return
 	}
 
+	log.Warn("Token DELETE SUCCESS: user=%s (uid=%d) tokenID=%d remoteAddr=%s",
+		ctx.ContextUser.Name, ctx.ContextUser.ID, tokenID, ctx.Req.RemoteAddr)
 	ctx.Status(http.StatusNoContent)
 }
 

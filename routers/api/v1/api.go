@@ -796,11 +796,9 @@ func apiAuth(authMethod auth.Method) func(*context.APIContext) {
 		ar, err := common.AuthShared(ctx.Base, nil, authMethod)
 		if err != nil {
 			p := ctx.Req.URL.Path
-			if p == "/api/v1/user" || p == "/api/v1/version" {
-				log.Warn("apiAuth Debug: %s %s — auth FAILED with error: %v, Authorization header: [%s], RemoteAddr: %s",
-					ctx.Req.Method, ctx.Req.URL.RequestURI(), err,
-					ctx.Req.Header.Get("Authorization"), ctx.RemoteAddr())
-			}
+			log.Warn("apiAuth Debug: %s %s — auth FAILED with error: %v, Authorization header: [%s], RemoteAddr: %s, Path: %s",
+				ctx.Req.Method, ctx.Req.URL.RequestURI(), err,
+				ctx.Req.Header.Get("Authorization"), ctx.RemoteAddr(), p)
 			msg, ok := auth.ErrAsUserAuthMessage(err)
 			msg = util.Iif(ok, msg, "invalid username, password or token")
 			ctx.APIError(http.StatusUnauthorized, msg)
@@ -811,11 +809,9 @@ func apiAuth(authMethod auth.Method) func(*context.APIContext) {
 		ctx.IsBasicAuth = ar.IsBasicAuth
 		if !ctx.IsSigned {
 			p := ctx.Req.URL.Path
-			if p == "/api/v1/user" || p == "/api/v1/version" {
-				log.Warn("apiAuth Debug: %s %s — auth returned NO ERROR but NO USER (IsSigned=false), Authorization header: [%s], RemoteAddr: %s",
-					ctx.Req.Method, ctx.Req.URL.RequestURI(),
-					ctx.Req.Header.Get("Authorization"), ctx.RemoteAddr())
-			}
+			log.Warn("apiAuth Debug: %s %s — auth returned NO ERROR but NO USER (IsSigned=false), Authorization header: [%s], RemoteAddr: %s, Path: %s",
+				ctx.Req.Method, ctx.Req.URL.RequestURI(),
+				ctx.Req.Header.Get("Authorization"), ctx.RemoteAddr(), p)
 		}
 	}
 }
