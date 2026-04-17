@@ -42,6 +42,9 @@
 				<a class="item muted archive-link" href="{{$.RepoLink}}/archive/{{PathEscapeSegments $.RefFullName.ShortName}}.zip" rel="nofollow">{{svg "octicon-file-zip"}} {{ctx.Locale.Tr "repo.download_zip"}}</a>
 				<a class="item muted archive-link" href="{{$.RepoLink}}/archive/{{PathEscapeSegments $.RefFullName.ShortName}}.tar.gz" rel="nofollow">{{svg "octicon-file-zip"}} {{ctx.Locale.Tr "repo.download_tar"}}</a>
 				<a class="item muted archive-link" href="{{$.RepoLink}}/archive/{{PathEscapeSegments $.RefFullName.ShortName}}.bundle" rel="nofollow">{{svg "octicon-package"}} {{ctx.Locale.Tr "repo.download_bundle"}}</a>
+				<!-- DCS Customizations -->
+				{{template "dcs/clone_extras" $}}
+				<!-- END DCS Customizations -->
 		</div>
 		{{end}}
 	{{end}}

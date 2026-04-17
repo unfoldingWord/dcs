@@ -182,6 +182,15 @@ func Releases(ctx *context.Context) {
 		if rel.Release.IsTag && rel.Release.Title == "" {
 			rel.Release.Title = rel.Release.TagName
 		}
+		/*** DCS Customizations ***/
+		if !rel.Release.IsTag && rel.Release.Door43Metadata == nil {
+			rel.Release.Door43Metadata, err = repo_model.GetDoor43MetadataByRepoIDAndRef(ctx, rel.Release.RepoID, rel.Release.TagName)
+			if err != nil && !repo_model.IsErrDoor43MetadataNotExist(err) {
+				ctx.ServerError("GetDoor43Metadata", err)
+				return
+			}
+		}
+		/*** END DCS Customizations ***/
 	}
 
 	ctx.Data["Releases"] = releases
@@ -228,6 +237,12 @@ func TagsList(ctx *context.Context) {
 		ctx.ServerError("GetReleasesByRepoID", err)
 		return
 	}
+
+	/*** DCS Customizations ***/
+	for _, rel := range releases {
+		_ = rel.LoadAttributes(ctx)
+	}
+	/*** END DCS Customizations ***/
 
 	count, err := db.Count[repo_model.Release](ctx, opts)
 	if err != nil {
@@ -299,6 +314,13 @@ func SingleRelease(ctx *context.Context) {
 		release.Title = release.TagName
 	}
 
+	/*** DCS Customizations ***/
+	if err := release.LoadAttributes(ctx); err != nil {
+		ctx.ServerError("LoadAttributes", err)
+		return
+	}
+	/*** END DCS Customizations ***/
+
 	ctx.Data["PageIsSingleTag"] = release.IsTag
 	ctx.Data["SingleReleaseTagName"] = release.TagName
 	if release.IsTag {
@@ -313,7 +335,7 @@ func SingleRelease(ctx *context.Context) {
 
 // LatestRelease redirects to the latest release
 func LatestRelease(ctx *context.Context) {
-	release, err := repo_model.GetLatestReleaseByRepoID(ctx, ctx.Repo.Repository.ID)
+	release, err := repo_model.GetLatestReleaseByRepoID(ctx, ctx.Repo.Repository.ID, false, optional.None[bool]())
 	if err != nil {
 		if repo_model.IsErrReleaseNotExist(err) {
 			ctx.NotFound(err)
@@ -538,6 +560,14 @@ func NewReleasePost(ctx *context.Context) {
 	rel.IsPrerelease = form.Prerelease
 	rel.PublisherID = ctx.Doer.ID
 	rel.IsTag = false
+	/*** DCS Customizations ***/
+	err = rel.LoadAttributes(ctx)
+	if err != nil {
+		ctx.ServerError("LoadAttributes", err)
+		return
+	}
+	/*** END DCS Customizations ***/
+
 	if err = release_service.UpdateRelease(ctx, ctx.Doer, ctx.Repo.GitRepo, rel, attachmentUUIDs, nil, nil); err != nil {
 		handleTagReleaseError(err)
 		return

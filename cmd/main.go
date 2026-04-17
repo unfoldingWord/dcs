@@ -129,6 +129,10 @@ func NewMainApp(appVer AppVersion) *cli.Command {
 		newDumpRepositoryCommand(),
 		newRestoreRepositoryCommand(),
 		newActionsCommand(),
+		/*** DCS Customizations ***/
+		CmdDoor43Metadata,
+		CmdConvertRC2SB,
+		/*** END DCS Customizations ***/
 	}
 
 	// these sub-commands do not need the config file, and they do not depend on any path or environment variable.

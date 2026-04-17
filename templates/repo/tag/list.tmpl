@@ -1,4 +1,7 @@
 {{template "base/head" .}}
+<!-- DCS Customizations --->
+{{template "dcs/tag_list_usfm_script" .}}
+<!-- END DCS Customizations --->
 <div role="main" aria-label="{{.Title}}" class="page-content repository tags">
 	{{template "repo/header" .}}
 	<div class="ui container">
@@ -36,7 +39,14 @@
 								{{if not $.DisableDownloadSourceArchives}}
 									<a class="archive-link flex-text-inline" href="{{$.RepoLink}}/archive/{{.TagName | PathEscapeSegments}}.zip" rel="nofollow">{{svg "octicon-file-zip"}}ZIP</a>
 									<a class="archive-link flex-text-inline" href="{{$.RepoLink}}/archive/{{.TagName | PathEscapeSegments}}.tar.gz" rel="nofollow">{{svg "octicon-file-zip"}}TAR.GZ</a>
+									<!-- DCS Customizations --->
+									{{template "dcs/tag_list_usfm_download" .}}
+									<!-- END DCS Customizations --->
 								{{end}}
+
+								<!-- DCS Customizations -->
+								{{template "dcs/tag_list_preview" .}}
+								<!-- END DCS Customizations -->
 
 								{{if (and $canReadReleases $.CanCreateRelease $release.IsTag)}}
 									<a class="flex-text-inline" href="{{$.RepoLink}}/releases/new?tag={{.TagName}}">{{svg "octicon-tag"}}{{ctx.Locale.Tr "repo.release.new_release"}}</a>

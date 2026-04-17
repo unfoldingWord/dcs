@@ -23,7 +23,7 @@ XGO_PACKAGE ?= src.techknowlogick.com/xgo@latest
 GOVULNCHECK_PACKAGE ?= golang.org/x/vuln/cmd/govulncheck@v1
 ACTIONLINT_PACKAGE ?= github.com/rhysd/actionlint/cmd/actionlint@v1.7.11
 
-DOCKER_IMAGE ?= gitea/gitea
+DOCKER_IMAGE ?= unfoldingword/dcs
 DOCKER_TAG ?= latest
 DOCKER_REF := $(DOCKER_IMAGE):$(DOCKER_TAG)
 
@@ -86,7 +86,7 @@ ifneq ($(GITHUB_REF_TYPE),branch)
 	GITEA_VERSION ?= $(VERSION)
 else
 	ifneq ($(GITHUB_REF_NAME),)
-		VERSION ?= $(subst release/v,,$(GITHUB_REF_NAME))-nightly
+		VERSION ?= $(subst release/dcs/v,,$(GITHUB_REF_NAME))-nightly
 	else
 		VERSION ?= main
 	endif
@@ -118,6 +118,7 @@ FRONTEND_DEST_ENTRIES := public/assets/js public/assets/css public/assets/fonts 
 FRONTEND_DEV_LOG_LEVEL ?= warn
 
 BINDATA_DEST_WILDCARD := modules/migration/bindata.* modules/public/bindata.* modules/options/bindata.* modules/templates/bindata.*
+BINDATA_DEST := modules/migration/bindata.dat modules/public/bindata.dat modules/options/bindata.dat modules/templates/bindata.dat
 
 GENERATED_GO_DEST := modules/charset/invisible_gen.go modules/charset/ambiguous_gen.go
 
@@ -131,7 +132,7 @@ TAGS ?=
 TAGS_SPLIT := $(subst $(COMMA), ,$(TAGS))
 TAGS_EVIDENCE := $(MAKE_EVIDENCE_DIR)/tags
 
-TEST_TAGS ?= $(TAGS_SPLIT) sqlite sqlite_unlock_notify
+TEST_TAGS ?= $(TAGS_SPLIT) sqlite sqlite_unlock_notify sqlite_json
 
 TAR_EXCLUDES := .git data indexers queues log node_modules $(EXECUTABLE) $(DIST) $(MAKE_EVIDENCE_DIR) $(AIR_TMP_DIR)
 
@@ -181,6 +182,7 @@ help: Makefile ## print Makefile help information.
 	@printf "  \033[36m%-46s\033[0m %s\n" "test-e2e" "test end to end using playwright"
 	@printf "  \033[36m%-46s\033[0m %s\n" "test[#TestSpecificName]" "run unit test"
 	@printf "  \033[36m%-46s\033[0m %s\n" "test-sqlite[#TestSpecificName]" "run integration test for sqlite"
+	@printf "  \033[36m%-46s\033[0m %s\n" "test-dcs-sqlite" "run DCS integration tests (TestDCS*) for sqlite"
 
 .PHONY: git-check
 git-check:
@@ -456,6 +458,10 @@ test-sqlite: integrations.sqlite.test generate-ini-sqlite
 .PHONY: test-sqlite\#%
 test-sqlite\#%: integrations.sqlite.test generate-ini-sqlite
 	GITEA_TEST_CONF=tests/sqlite.ini ./integrations.sqlite.test -test.run $(subst .,/,$*)
+
+.PHONY: test-dcs-sqlite
+test-dcs-sqlite: integrations.sqlite.test generate-ini-sqlite
+	GITEA_ROOT="$(CURDIR)" GITEA_CONF=tests/sqlite.ini ./integrations.sqlite.test -test.run '^TestDCS'
 
 .PHONY: test-sqlite-migration
 test-sqlite-migration:  migrations.sqlite.test migrations.individual.sqlite.test
@@ -827,7 +833,7 @@ generate-manpage: ## generate manpage
 .PHONY: docker
 docker:
 	docker build --disable-content-trust=false -t $(DOCKER_REF) .
-# support also build args docker build --build-arg GITEA_VERSION=v1.2.3 --build-arg TAGS="bindata sqlite sqlite_unlock_notify"  .
+# support also build args docker build --build-arg GITEA_VERSION=v1.2.3 --build-arg TAGS="bindata sqlite sqlite_unlock_notify sqlite_json"  .
 
 # Disable parallel execution because it would break some targets that don't
 # specify exact dependencies like 'backend' which does currently not depend

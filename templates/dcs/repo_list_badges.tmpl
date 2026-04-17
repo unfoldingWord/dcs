@@ -1,0 +1,25 @@
+{{if .RepoDM}}
+	{{if eq .RepoDM.MetadataType "rc"}}
+		{{template "shared/healthcheck_badge" (dict
+			"RepoLink" .Link
+			"Severity" .RepoDM.HealthcheckSeverity
+			"OwnerName" .OwnerName
+			"RepoName" .Name
+			"Ref" .RepoDM.Ref
+		)}}
+	{{end}}
+	{{if .LatestProdDM}}
+		<a href="{{.Link}}/releases/tag/{{.LatestProdDM.Ref | PathEscapeSegments}}" rel="nofollow">
+			<button class="ui green label compact icon button" data-tooltip-content="Catalog: Production" aria-label="Catalog: Production">
+				{{.LatestProdDM.Ref}}
+			</button>
+		</a>
+	{{end}}
+	{{if .LatestPreprodDM}}
+		<a href="{{.Link}}/releases/tag/{{.LatestPreprodDM.Ref | PathEscapeSegments}}" rel="nofollow">
+			<button class="ui orange label compact icon button" data-tooltip-content="Catalog: Pre-Production" aria-label="Catalog: Production">
+				{{.LatestPreprodDM.Ref}}
+			</button>
+		</a>
+	{{end}}
+{{end}}

@@ -49,7 +49,7 @@ export function initRepoTopicBar() {
             // !!!! it SHOULD and MUST match the code in "home_sidebar_top.tmpl" !!!!
             const link = document.createElement('a');
             link.classList.add('repo-topic', 'ui', 'large', 'label', 'gt-ellipsis');
-            link.href = `${appSubUrl}/explore/repos?q=${encodeURIComponent(topic)}&topic=1`;
+            link.href = `${appSubUrl}/explore/repos?q=topic%3A${encodeURIComponent(topic)}`; // DCS Customizations - Topic is now a field of q
             link.textContent = topic;
             viewDiv.append(link);
           }

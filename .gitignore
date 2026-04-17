@@ -64,10 +64,13 @@ cpu.out
 /dist
 /custom/*
 !/custom/conf/app.example.ini
+!/custom/bin
 /data
+/data-*
 /indexers
 /log
 /public/assets/img/avatar
+/public/assets/img/webpack
 /tests/e2e-output
 /tests/integration/gitea-integration-*
 /tests/integration/indexers-*
@@ -109,6 +112,12 @@ prime/
 # Manpage
 /man
 
+# DCS Customizations
+/mysql
+/data-main
+/data-release
+.history
+
 # Ignore AI/LLM instruction files
 /.claude/
 /.cursorrules
@@ -116,6 +125,8 @@ prime/
 /.goosehints
 /.windsurfrules
 /.github/copilot-instructions.md
+/AGENT.md
+# /CLAUDE.md # DCS Customizations: un-ignored to track DCS fork docs
 /llms.txt
 
 # Ignore worktrees when working on multiple branches

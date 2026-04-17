@@ -103,6 +103,9 @@ func ToAPIPullRequest(ctx context.Context, pr *issues_model.PullRequest, doer *u
 		RequestedReviewers:      []*api.User{},
 		RequestedReviewersTeams: []*api.Team{},
 
+		Status:          pr.Status.String(), // DCS Customizations
+		ConflictedFiles: pr.ConflictedFiles, // DCS Customizations
+
 		AllowMaintainerEdit: pr.AllowMaintainerEdit,
 
 		Base: &api.PRBranchInfo{

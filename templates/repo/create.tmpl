@@ -130,33 +130,9 @@
 
 					<div class="divider"></div>
 
-					<div class="inline field">
-						<label>.gitignore</label>
-						<div class="ui multiple search selection dropdown">
-							<input type="hidden" name="gitignores" value="{{.gitignores}}">
-							<div class="default text">{{ctx.Locale.Tr "repo.repo_gitignore_helper"}}</div>
-							<div class="menu">
-								{{range .Gitignores}}
-									<div class="item" data-value="{{.}}">{{.}}</div>
-								{{end}}
-							</div>
-						</div>
-						<span class="help">{{ctx.Locale.Tr "repo.repo_gitignore_helper_desc"}}</span>
-					</div>
-					<div class="inline field">
-						<label>{{ctx.Locale.Tr "repo.license"}}</label>
-						<div class="ui search selection dropdown">
-							<input type="hidden" name="license" value="{{.license}}">
-							<div class="default text">{{ctx.Locale.Tr "repo.license_helper"}}</div>
-							<div class="menu">
-								<div class="item" data-value="">{{ctx.Locale.Tr "repo.license_helper"}}</div>
-								{{range .Licenses}}
-									<div class="item" data-value="{{.}}">{{.}}</div>
-								{{end}}
-							</div>
-						</div>
-						<span class="help">{{ctx.Locale.Tr "repo.license_helper_desc" "https://choosealicense.com/"}}</span>
-					</div>
+					<!-- DCS Customizations -->
+					{{template "dcs/create_repo_extras" .}}
+					<!-- END DCS Customizations -->
 
 					<div class="inline field">
 						<label>{{ctx.Locale.Tr "repo.readme"}}</label>
@@ -183,7 +159,7 @@
 						<input id="default_branch" name="default_branch" value="{{.default_branch}}" placeholder="{{.default_branch}}">
 						<span class="help">{{ctx.Locale.Tr "repo.default_branch_helper"}}</span>
 					</div>
-					<div class="inline field">
+					<div class="inline field hidden">
 						<label>{{ctx.Locale.Tr "repo.object_format"}}</label>
 						<div class="ui selection owner dropdown">
 							<input type="hidden" id="object_format_name" name="object_format_name" value="{{or .object_format_name .DefaultObjectFormat.Name}}" required>
@@ -196,7 +172,7 @@
 						</div>
 						<span class="help">{{ctx.Locale.Tr "repo.object_format_helper"}}</span>
 					</div>
-					<div class="inline field">
+					<div class="inline field tw-hidden">
 						<label>{{ctx.Locale.Tr "repo.template"}}</label>
 						<div class="ui checkbox">
 							<input name="template" type="checkbox">

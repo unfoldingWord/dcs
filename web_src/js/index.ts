@@ -68,6 +68,13 @@ import {initRepoViewFileTree} from './features/repo-view-file-tree.ts';
 import {initActionsPermissionsForm} from './features/common-actions-permissions.ts';
 import {initGlobalShortcut} from './modules/shortcut.ts';
 import {initDevtest} from './modules/devtest.ts';
+/** DCS Customizations **/
+import {initDCSInfoIcon} from './features/dcs-info-icon.ts';
+import {initDCSValidationBadge} from './features/dcs-validation-badge.ts';
+import {initDCSLanguageFonts} from './features/dcs-language-fonts.ts';
+import {initDCSHealthcheckBadges} from './features/dcs-healthcheck-badge.ts';
+import {initDCSHealthcheckDashboard} from './features/dcs-hc-dash.ts';
+/** END DCS Customizations **/
 
 const initStartTime = performance.now();
 const initPerformanceTracer = callInitFunctions([
@@ -163,6 +170,14 @@ const initPerformanceTracer = callInitFunctions([
   initActionsPermissionsForm,
 
   initDevtest,
+
+  /** DCS Customizations **/
+  initDCSInfoIcon,
+  initDCSValidationBadge,
+  initDCSLanguageFonts,
+  initDCSHealthcheckBadges,
+  initDCSHealthcheckDashboard,
+  /** END DCS Customizations **/
 ]);
 
 // it must be the last one, then the "querySelectorAll" only needs to be executed once for global init functions.
