@@ -10,9 +10,7 @@ import (
 	repo_model "code.gitea.io/gitea/models/repo"
 	"code.gitea.io/gitea/modules/log"
 	"code.gitea.io/gitea/services/context"
-	/*** DCS Customizations ***/
-	notify_service "code.gitea.io/gitea/services/notify"
-	/*** END DCS Customizations ***/
+	notify_service "code.gitea.io/gitea/services/notify" // DCS Customizations
 )
 
 // TopicsPost response for creating repository
