@@ -15,9 +15,7 @@ import (
 	"code.gitea.io/gitea/routers/api/v1/utils"
 	"code.gitea.io/gitea/services/context"
 	"code.gitea.io/gitea/services/convert"
-	/*** DCS Customizations ***/
-	notify_service "code.gitea.io/gitea/services/notify"
-	/*** END DCS Customizations ***/
+	notify_service "code.gitea.io/gitea/services/notify" // DCS Customizations
 )
 
 // ListTopics returns list of current topics for repo
