@@ -3856,6 +3856,7 @@
   "dcs.repo.metadata.overall_healthcheck": "Overall Health Check",
   "dcs.repo.metadata.releases": "Releases",
   "admin.dashboard.update_metadata": "Update Door43 Metadata",
-  "admin.dashboard.user_metadata_update": "Update User Metadata",
-  "admin.dashboard.load_door43_schema": "Load Door43 Validation Schema"
+  "admin.dashboard.update_user_metadata": "Update User Metadata",
+  "admin.dashboard.load_schemas": "Load Metadata Schemas",
+  "admin.dashboard.convert_rc2sb": "Convert RC to Scripture Burrito"
 }
