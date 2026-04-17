@@ -1,0 +1,430 @@
+// Copyright 2026 The Gitea Authors. All rights reserved.
+// SPDX-License-Identifier: MIT
+
+package convertrc2sb
+
+import (
+	"context"
+	"errors"
+	"fmt"
+	"io"
+	"os"
+	"path/filepath"
+	"strings"
+
+	repo_model "code.gitea.io/gitea/models/repo"
+	system_model "code.gitea.io/gitea/models/system"
+	"code.gitea.io/gitea/modules/git"
+	"code.gitea.io/gitea/modules/git/gitcmd"
+	"code.gitea.io/gitea/modules/gitrepo"
+	"code.gitea.io/gitea/modules/log"
+	repo_module "code.gitea.io/gitea/modules/repository"
+	"code.gitea.io/gitea/modules/setting"
+	"code.gitea.io/gitea/modules/util"
+
+	rc2sb "github.com/unfoldingWord/go-rc2sb"
+)
+
+// RepoQualifiesForConversion checks if a repo meets all criteria for RC-to-SB conversion:
+// 1. CONVERT_RC2SB_TOPICS is configured in app.ini (non-empty)
+// 2. DefaultBranch is "master"
+// 3. Repo has at least one of the configured topics
+// 4. DefaultBranch DM MetadataType is "rc"
+func RepoQualifiesForConversion(ctx context.Context, repo *repo_model.Repository) (bool, error) {
+	if repo == nil {
+		return false, nil
+	}
+
+	if len(setting.DCS.ConvertRC2SBTopics) == 0 {
+		log.Debug("ConvertRC2SB: CONVERT_RC2SB_TOPICS not configured, skipping all conversions")
+		return false, nil
+	}
+
+	if repo.DefaultBranch != "master" {
+		log.Debug("ConvertRC2SB: %s does not qualify — DefaultBranch is %q (need \"master\")", repo.FullName(), repo.DefaultBranch)
+		return false, nil
+	}
+
+	if !repoHasQualifyingTopic(repo) {
+		log.Debug("ConvertRC2SB: %s does not qualify — no qualifying topic (has: %v)", repo.FullName(), repo.Topics)
+		return false, nil
+	}
+
+	// Check for a default-branch DM with metadata_type = "rc", regardless of validation errors
+	hasRCMetadata, err := repo_model.RepoHasDefaultBranchRCMetadata(ctx, repo.ID)
+	if err != nil {
+		return false, fmt.Errorf("RepoHasDefaultBranchRCMetadata: %w", err)
+	}
+	if !hasRCMetadata {
+		log.Debug("ConvertRC2SB: %s does not qualify — no default-branch DM with metadata_type=rc", repo.FullName())
+		return false, nil
+	}
+
+	log.Info("ConvertRC2SB: %s qualifies for conversion", repo.FullName())
+	return true, nil
+}
+
+// repoHasQualifyingTopic checks if repo.Topics contains at least one qualifying topic.
+func repoHasQualifyingTopic(repo *repo_model.Repository) bool {
+	for _, topic := range repo.Topics {
+		for _, qt := range setting.DCS.ConvertRC2SBTopics {
+			if strings.EqualFold(topic, qt) {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+// ForBranch converts an RC repo at the HEAD of the given branch to SB format
+// and pushes the result to the "main" branch.
+func ForBranch(ctx context.Context, repo *repo_model.Repository, branchName string) error {
+	if repo == nil {
+		return errors.New("repo must not be nil")
+	}
+
+	log.Info("ConvertRC2SB: starting conversion for %s branch %s", repo.FullName(), branchName)
+
+	// Load owner for commit identity
+	if err := repo.LoadOwner(ctx); err != nil {
+		return fmt.Errorf("LoadOwner: %w", err)
+	}
+
+	// Create temp directory for conversion work
+	tmpDir, cleanup, err := setting.AppDataTempDir("repo-rc2sb-convert").MkdirTempRandom(fmt.Sprintf("%d-", repo.ID))
+	if err != nil {
+		return fmt.Errorf("create temp dir: %w", err)
+	}
+	defer cleanup()
+
+	// Step 1: Shallow clone at the branch HEAD
+	rcDir := filepath.Join(tmpDir, "rc")
+	if err := cloneAtRef(ctx, repo.RepoPath(), branchName, rcDir); err != nil {
+		return fmt.Errorf("clone at branch %s: %w", branchName, err)
+	}
+
+	// Step 2: Prepare payload for TWL and TW repos.
+	// For TWL repos: returns a path to the TW clone; passed to rc2sb as PayloadPath.
+	// For TW repos:  copies the TWL clone directly into rcDir/<lang>_twl/ so the
+	//                library can auto-detect it from inDir; returns "".
+	payloadPath, err := preparePayloadPath(ctx, tmpDir, rcDir, repo)
+	if err != nil {
+		return fmt.Errorf("preparePayloadPath: %w", err)
+	}
+
+	// Step 3: Run rc2sb conversion
+	sbDir := filepath.Join(tmpDir, "sb")
+	result, err := rc2sb.Convert(ctx, rcDir, sbDir, rc2sb.Options{
+		PayloadPath: payloadPath,
+	})
+	if err != nil {
+		return fmt.Errorf("rc2sb.Convert: %w", err)
+	}
+	log.Info("ConvertRC2SB: conversion successful for %s — subject=%s, ingredients=%d",
+		repo.FullName(), result.Subject, result.Ingredients)
+
+	// Step 4: Clone the full repo to a working directory for pushing
+	workDir := filepath.Join(tmpDir, "work")
+	if err := git.Clone(ctx, repo.RepoPath(), workDir, git.CloneRepoOptions{Quiet: true}); err != nil {
+		return fmt.Errorf("clone work dir: %w", err)
+	}
+
+	// Step 5: Create or checkout the "main" branch
+	if err := prepareMainBranch(ctx, workDir, branchName); err != nil {
+		return fmt.Errorf("prepareMainBranch: %w", err)
+	}
+
+	// Step 6: Remove all files in working tree (except .git)
+	if err := clearWorkingTree(workDir); err != nil {
+		return fmt.Errorf("clearWorkingTree: %w", err)
+	}
+
+	// Step 7: Copy converted SB files into working tree
+	if err := copyDir(sbDir, workDir); err != nil {
+		return fmt.Errorf("copy SB files: %w", err)
+	}
+
+	// Step 8: Stage all changes
+	if _, _, err := gitcmd.NewCommand("add", "-A").WithDir(workDir).RunStdString(ctx); err != nil {
+		return fmt.Errorf("git add: %w", err)
+	}
+
+	// Check if there are any changes to commit
+	stdout, _, err := gitcmd.NewCommand("status", "--porcelain").WithDir(workDir).RunStdString(ctx)
+	if err != nil {
+		return fmt.Errorf("git status: %w", err)
+	}
+	if strings.TrimSpace(stdout) == "" {
+		log.Info("ConvertRC2SB: no changes to commit for %s branch %s", repo.FullName(), branchName)
+		return nil
+	}
+
+	// Step 9: Commit
+	commitMsg := "Convert RC to SB from branch " + branchName
+	doer := repo.Owner
+	sig := doer.NewGitSig()
+
+	_, _, err = gitcmd.NewCommand("commit",
+		"-m").AddDynamicArguments(commitMsg).
+		AddArguments("--author").AddDynamicArguments(fmt.Sprintf("%s <%s>", sig.Name, sig.Email)).
+		WithDir(workDir).RunStdString(ctx)
+	if err != nil {
+		return fmt.Errorf("git commit: %w", err)
+	}
+
+	// Step 10: Push to the bare repo
+	// Use PushingEnvironment (not InternalPushingEnvironment) so hooks fire
+	// and Door43Metadata is processed for the new main branch
+	env := repo_module.PushingEnvironment(doer, repo)
+	if err := git.Push(ctx, workDir, git.PushOptions{
+		Remote: repo.RepoPath(),
+		Branch: "main",
+		Env:    env,
+	}); err != nil {
+		return fmt.Errorf("git push: %w", err)
+	}
+
+	log.Info("ConvertRC2SB: successfully pushed SB content to main branch for %s", repo.FullName())
+	return nil
+}
+
+// AllRepos finds all qualifying repos and converts their default (master) branch.
+func AllRepos(ctx context.Context) error {
+	log.Trace("Doing: AllRepos")
+
+	if len(setting.DCS.ConvertRC2SBTopics) == 0 {
+		log.Debug("ConvertRC2SBAllRepos: CONVERT_RC2SB_TOPICS not configured, skipping")
+		return nil
+	}
+
+	repos, err := repo_model.GetReposQualifiedForRC2SBConversion(ctx, setting.DCS.ConvertRC2SBTopics)
+	if err != nil {
+		return fmt.Errorf("GetReposQualifiedForRC2SBConversion: %w", err)
+	}
+
+	log.Info("ConvertRC2SBAllRepos: found %d qualifying repos", len(repos))
+
+	for _, repo := range repos {
+		select {
+		case <-ctx.Done():
+			return ctx.Err()
+		default:
+		}
+
+		qualifies, err := RepoQualifiesForConversion(ctx, repo)
+		if err != nil {
+			log.Warn("AllRepos: error checking qualification for %s: %v", repo.FullName(), err)
+			continue
+		}
+		if !qualifies {
+			continue
+		}
+
+		if err := ForBranch(ctx, repo, repo.DefaultBranch); err != nil {
+			log.Error("AllRepos: conversion failed for %s branch %s: %v", repo.FullName(), repo.DefaultBranch, err)
+			if noticeErr := system_model.CreateRepositoryNotice(
+				"ConvertRC2SB failed for repository (%s) branch (%s): %v", repo.FullName(), repo.DefaultBranch, err,
+			); noticeErr != nil {
+				log.Error("CreateRepositoryNotice: %v", noticeErr)
+			}
+			continue
+		}
+	}
+
+	log.Trace("Finished: AllRepos")
+	return nil
+}
+
+// cloneAtRef does a shallow clone of the repo at the specified branch or tag ref.
+func cloneAtRef(ctx context.Context, repoPath, ref, destination string) error {
+	err := git.Clone(ctx, repoPath, destination, git.CloneRepoOptions{
+		Quiet:  true,
+		Depth:  1,
+		Branch: ref,
+	})
+	if err != nil {
+		// Fallback to full clone if shallow clone fails
+		if removeErr := util.RemoveAll(destination); removeErr != nil {
+			log.Warn("cloneAtRef: failed to clean shallow clone destination: %v", removeErr)
+		}
+		if err := git.Clone(ctx, repoPath, destination, git.CloneRepoOptions{Quiet: true}); err != nil {
+			return err
+		}
+		// Checkout the ref
+		_, _, checkoutErr := gitcmd.NewCommand("checkout").AddDynamicArguments(ref).
+			WithDir(destination).RunStdString(ctx)
+		if checkoutErr != nil {
+			return fmt.Errorf("checkout ref %s: %w", ref, checkoutErr)
+		}
+	}
+	return nil
+}
+
+// prepareMainBranch creates or checks out the "main" branch in the working directory.
+func prepareMainBranch(ctx context.Context, workDir, tagName string) error {
+	// Check if main branch exists
+	_, _, err := gitcmd.NewCommand("rev-parse", "--verify", "refs/heads/main").
+		WithDir(workDir).RunStdString(ctx)
+	if err != nil {
+		// main doesn't exist — create it from the tag
+		_, _, err = gitcmd.NewCommand("checkout", "-b", "main").AddDynamicArguments(tagName).
+			WithDir(workDir).RunStdString(ctx)
+		if err != nil {
+			return fmt.Errorf("create main branch from tag %s: %w", tagName, err)
+		}
+		return nil
+	}
+
+	// main exists — check it out
+	_, _, err = gitcmd.NewCommand("checkout", "main").
+		WithDir(workDir).RunStdString(ctx)
+	if err != nil {
+		return fmt.Errorf("checkout main: %w", err)
+	}
+	return nil
+}
+
+// clearWorkingTree removes all files and directories in the working tree except .git.
+func clearWorkingTree(dir string) error {
+	entries, err := os.ReadDir(dir)
+	if err != nil {
+		return err
+	}
+	for _, entry := range entries {
+		if entry.Name() == ".git" {
+			continue
+		}
+		if err := os.RemoveAll(filepath.Join(dir, entry.Name())); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// copyDir recursively copies src directory contents into dst directory.
+func copyDir(src, dst string) error {
+	return filepath.Walk(src, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+
+		relPath, err := filepath.Rel(src, path)
+		if err != nil {
+			return err
+		}
+		if relPath == "." {
+			return nil
+		}
+
+		dstPath := filepath.Join(dst, relPath)
+
+		if info.IsDir() {
+			return os.MkdirAll(dstPath, info.Mode())
+		}
+
+		return copyFile(path, dstPath)
+	})
+}
+
+// copyFile copies a single file from src to dst.
+func copyFile(src, dst string) error {
+	srcFile, err := os.Open(src)
+	if err != nil {
+		return err
+	}
+	defer srcFile.Close()
+
+	srcInfo, err := srcFile.Stat()
+	if err != nil {
+		return err
+	}
+
+	dstFile, err := os.OpenFile(dst, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, srcInfo.Mode())
+	if err != nil {
+		return err
+	}
+	defer dstFile.Close()
+
+	_, err = io.Copy(dstFile, srcFile)
+	return err
+}
+
+// preparePayloadPath prepares the payload for TWL and TW repos.
+//
+// For TWL repos (Subject "TSV Translation Words Links"): clones the corresponding TW repo
+// into tmpDir/payload and returns that path. The rc2sb library receives it via PayloadPath
+// and copies bible/ into ingredients/payload/.
+//
+// For TW repos (Subject "Translation Words"): clones the corresponding TWL repo and copies
+// it directly into rcDir/<lang>_twl/ so the rc2sb library can auto-detect it from inDir
+// (the same pattern the TWL handler uses to auto-detect <lang>_tw/). Returns "".
+//
+// Returns ("", nil) when no payload is needed.
+func preparePayloadPath(ctx context.Context, tmpDir, rcDir string, repo *repo_model.Repository) (string, error) {
+	if err := repo.LoadLatestDMs(ctx); err != nil {
+		return "", nil
+	}
+
+	dm := repo.DefaultBranchDM
+	if dm == nil {
+		dm = repo.RepoDM
+	}
+	if dm == nil || dm.Language == "" {
+		return "", nil
+	}
+
+	var payloadRepoName string
+	isTWRepo := false
+	switch dm.Subject {
+	case "TSV Translation Words Links":
+		payloadRepoName = dm.Language + "_tw"
+	case "Translation Words":
+		payloadRepoName = dm.Language + "_twl"
+		isTWRepo = true
+	default:
+		return "", nil
+	}
+
+	payloadRepo, err := repo_model.GetRepositoryByOwnerAndName(ctx, repo.OwnerName, payloadRepoName)
+	if err != nil {
+		if repo_model.IsErrRepoNotExist(err) {
+			return "", nil
+		}
+		return "", fmt.Errorf("GetRepositoryByOwnerAndName(%s): %w", payloadRepoName, err)
+	}
+
+	payloadGitRepo, err := gitrepo.OpenRepository(ctx, payloadRepo)
+	if err != nil {
+		return "", fmt.Errorf("OpenRepository(%s): %w", payloadRepo.FullName(), err)
+	}
+	defer payloadGitRepo.Close()
+
+	commitID, err := payloadGitRepo.ConvertToGitID(payloadRepo.DefaultBranch)
+	if err != nil {
+		return "", fmt.Errorf("resolve %s default branch: %w", payloadRepo.FullName(), err)
+	}
+
+	payloadDir := filepath.Join(tmpDir, "payload")
+	if err := cloneAtRef(ctx, payloadRepo.RepoPath(), payloadRepo.DefaultBranch, payloadDir); err != nil {
+		_ = util.RemoveAll(payloadDir)
+		if err := git.Clone(ctx, payloadRepo.RepoPath(), payloadDir, git.CloneRepoOptions{Quiet: true}); err != nil {
+			return "", fmt.Errorf("clone payload repo %s: %w", payloadRepo.FullName(), err)
+		}
+		_, _, checkoutErr := gitcmd.NewCommand("checkout", "--detach").AddDynamicArguments(commitID.String()).
+			WithDir(payloadDir).RunStdString(ctx)
+		if checkoutErr != nil {
+			return "", fmt.Errorf("checkout %s commit: %w", payloadRepo.FullName(), checkoutErr)
+		}
+	}
+
+	if isTWRepo {
+		// Copy the TWL clone into rcDir/<lang>_twl/ so the library auto-detects it in inDir.
+		destDir := filepath.Join(rcDir, payloadRepoName)
+		if err := copyDir(payloadDir, destDir); err != nil {
+			return "", fmt.Errorf("copy TWL payload into rcDir: %w", err)
+		}
+		return "", nil
+	}
+
+	return payloadDir, nil
+}

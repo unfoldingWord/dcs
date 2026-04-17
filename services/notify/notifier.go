@@ -67,7 +67,8 @@ type Notifier interface {
 
 	/*** DCS Customizations ***/
 	NewTagRelease(ctx context.Context, rel *repo_model.Release)
-	/*** DCS Customizations ***/
+	RepoTopicsChanged(ctx context.Context, doer *user_model.User, repo *repo_model.Repository)
+	/*** END DCS Customizations ***/
 
 	PushCommits(ctx context.Context, pusher *user_model.User, repo *repo_model.Repository, opts *repository.PushUpdateOptions, commits *repository.PushCommits)
 	CreateRef(ctx context.Context, doer *user_model.User, repo *repo_model.Repository, refFullName git.RefName, refID string)

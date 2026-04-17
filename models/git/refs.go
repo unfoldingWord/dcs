@@ -38,8 +38,9 @@ func CheckReferenceEditability(ctx context.Context, refName, commitID string, re
 		}
 	}
 
-	if refParts[1] == "tags" {
-		// If the 2nd part is "tags" then we need ot make sure the user is allowed to
+	switch refParts[1] {
+	case "tags":
+		// If the 2nd part is "tags" then we need to make sure the user is allowed to
 		//   modify this tag (not protected or is admin)
 		if protectedTags, err := GetProtectedTags(ctx, repoID); err == nil {
 			isAllowed, err := IsUserAllowedToControlTag(ctx, protectedTags, refName, userID)
@@ -53,8 +54,8 @@ func CheckReferenceEditability(ctx context.Context, refName, commitID string, re
 				}
 			}
 		}
-	} else if refParts[1] == "heads" {
-		// If the 2nd part is "heas" then we need to make sure the user is allowed to
+	case "heads":
+		// If the 2nd part is "heads" then we need to make sure the user is allowed to
 		//   modify this branch (not protected or is admin)
 		isProtected, err := IsBranchProtected(ctx, repoID, refName)
 		if err != nil {

@@ -182,7 +182,7 @@ func (aReq *ArchiveRequest) Stream(ctx context.Context, repo *repo_model.Reposit
 		return fmt.Errorf("clone requested repo ref: %w", err)
 	}
 
-	payloadPath, err := preparePayloadPath(ctx, tmpDir, repo, repoDM)
+	payloadPath, err := preparePayloadPath(ctx, tmpDir, rcDir, repo, repoDM)
 	if err != nil {
 		return err
 	}
@@ -221,34 +221,55 @@ func getRepoDMForConversion(ctx context.Context, repo *repo_model.Repository) (*
 	return dm, nil
 }
 
-func preparePayloadPath(ctx context.Context, tmpDir string, repo *repo_model.Repository, dm *repo_model.Door43Metadata) (string, error) {
-	if dm.Subject != "TSV Translation Words Links" || dm.Language == "" {
+func preparePayloadPath(ctx context.Context, tmpDir, rcDir string, repo *repo_model.Repository, dm *repo_model.Door43Metadata) (string, error) {
+	if dm.Language == "" {
 		return "", nil
 	}
 
-	twRepoName := dm.Language + "_tw"
-	twRepo, err := repo_model.GetRepositoryByOwnerAndName(ctx, repo.OwnerName, twRepoName)
+	var payloadRepoName string
+	isTWRepo := false
+	switch dm.Subject {
+	case "TSV Translation Words Links":
+		payloadRepoName = dm.Language + "_tw"
+	case "Translation Words":
+		payloadRepoName = dm.Language + "_twl"
+		isTWRepo = true
+	default:
+		return "", nil
+	}
+
+	payloadRepo, err := repo_model.GetRepositoryByOwnerAndName(ctx, repo.OwnerName, payloadRepoName)
 	if err != nil {
 		if repo_model.IsErrRepoNotExist(err) {
 			return "", nil
 		}
-		return "", fmt.Errorf("repo_model.GetRepositoryByOwnerAndName(%s): %w", twRepoName, err)
+		return "", fmt.Errorf("repo_model.GetRepositoryByOwnerAndName(%s): %w", payloadRepoName, err)
 	}
 
-	twGitRepo, err := gitrepo.OpenRepository(ctx, twRepo)
+	payloadGitRepo, err := gitrepo.OpenRepository(ctx, payloadRepo)
 	if err != nil {
-		return "", fmt.Errorf("gitrepo.OpenRepository(%s): %w", twRepo.FullName(), err)
+		return "", fmt.Errorf("gitrepo.OpenRepository(%s): %w", payloadRepo.FullName(), err)
 	}
-	defer twGitRepo.Close()
+	defer payloadGitRepo.Close()
 
-	commitID, err := twGitRepo.ConvertToGitID(twRepo.DefaultBranch)
+	commitID, err := payloadGitRepo.ConvertToGitID(payloadRepo.DefaultBranch)
 	if err != nil {
-		return "", fmt.Errorf("resolve TW default branch %s: %w", twRepo.DefaultBranch, err)
+		return "", fmt.Errorf("resolve %s default branch: %w", payloadRepo.FullName(), err)
+	}
+
+	if isTWRepo {
+		// Clone the TWL repo directly into rcDir/<lang>_twl/ so the library auto-detects
+		// it from inDir (the same pattern the TWL handler uses to auto-detect <lang>_tw/).
+		destDir := filepath.Join(rcDir, payloadRepoName)
+		if err := cloneRepositoryAtCommit(ctx, payloadRepo.RepoPath(), payloadRepo.DefaultBranch, commitID.String(), destDir); err != nil {
+			return "", fmt.Errorf("clone TWL payload into rcDir: %w", err)
+		}
+		return "", nil
 	}
 
 	payloadDir := filepath.Join(tmpDir, "payload")
-	if err := cloneRepositoryAtCommit(ctx, twRepo.RepoPath(), twRepo.DefaultBranch, commitID.String(), payloadDir); err != nil {
-		return "", fmt.Errorf("clone TW payload repository: %w", err)
+	if err := cloneRepositoryAtCommit(ctx, payloadRepo.RepoPath(), payloadRepo.DefaultBranch, commitID.String(), payloadDir); err != nil {
+		return "", fmt.Errorf("clone payload repository %s: %w", payloadRepo.FullName(), err)
 	}
 
 	return payloadDir, nil
@@ -472,7 +493,7 @@ func doArchive(ctx context.Context, r *ArchiveRequest) (*repo_model.RepoArchiver
 	createdNew := false
 	if archiver != nil {
 		if archiver.Status == repo_model.ArchiverGenerating {
-			return nil, nil
+			return nil, nil //nolint:nilnil // nil archiver means it's currently being generated
 		}
 	} else {
 		archiver = &repo_model.RepoArchiver{
@@ -633,7 +654,7 @@ func ServeRepoSBArchive(ctx *gitea_context.Base, repo *repo_model.Repository, ar
 
 	rPath := archiver.RelativePath()
 	if setting.RepoArchive.Storage.ServeDirect() {
-		u, err := storage.RepoArchives.URL(rPath, downloadName, ctx.Req.Method, nil)
+		u, err := storage.RepoArchives.ServeDirectURL(rPath, downloadName, ctx.Req.Method, nil)
 		if u != nil && err == nil {
 			ctx.Redirect(u.String())
 			return

@@ -29,7 +29,7 @@ func RunHealthcheck(ctx context.Context, dm *repo_model.Door43Metadata) *repo_mo
 	if dm.MetadataType != "rc" {
 		return nil
 	}
-	dm.LoadRepo(ctx)
+	_ = dm.LoadRepo(ctx)
 	issues := []*repo_model.Door43HealthcheckIssue{}
 
 	issues = append(issues, checkMetadataValid(dm)...)
@@ -99,7 +99,7 @@ func checkTitle(dm *repo_model.Door43Metadata) []*repo_model.Door43HealthcheckIs
 		return nil
 	}
 	fields := strings.Fields(dm.Title)
-	suggestion := dm.Title
+	var suggestion string
 	if len(fields) > 1 {
 		suggestion = fmt.Sprintf(repo_model.IssueCodeTitle.IssueSuggestionFormatString(), dm.Repo.Link(), dm.Ref, dm.Title, strings.Join(fields[1:], " "))
 	} else {
@@ -265,7 +265,7 @@ func checkRelationCatalog(dm *repo_model.Door43Metadata) []*repo_model.Door43Hea
 		body, err := io.ReadAll(resp.Body)
 		resp.Body.Close()
 
-		if resp.StatusCode != 200 && isVersion {
+		if resp.StatusCode != http.StatusOK && isVersion {
 			catalogURL = fmt.Sprintf("%sapi/v1/catalog/entry/%s/%s_%s/v%s",
 				setting.AppURL, owner, relation.Language, relation.Identifier, ref)
 			resp, err = http.Get(catalogURL)
@@ -277,7 +277,7 @@ func checkRelationCatalog(dm *repo_model.Door43Metadata) []*repo_model.Door43Hea
 			resp.Body.Close()
 		}
 
-		if resp.StatusCode != 200 {
+		if resp.StatusCode != http.StatusOK {
 			issues = append(issues, &repo_model.Door43HealthcheckIssue{
 				IssueCode:     repo_model.IssueCodeRelationMissing,
 				SeverityLevel: repo_model.SeverityLevelError,
@@ -339,8 +339,8 @@ func checkRelationCatalog(dm *repo_model.Door43Metadata) []*repo_model.Door43Hea
 }
 
 func checkReleaseNeeded(ctx context.Context, dm *repo_model.Door43Metadata, hgi *repo_model.HealthcheckGroupedIssues) []*repo_model.Door43HealthcheckIssue {
-	dm.LoadRepo(ctx)
-	dm.Repo.LoadLatestDMs(ctx)
+	_ = dm.LoadRepo(ctx)
+	_ = dm.Repo.LoadLatestDMs(ctx)
 	if dm.Ref != dm.Repo.DefaultBranch {
 		return nil
 	}

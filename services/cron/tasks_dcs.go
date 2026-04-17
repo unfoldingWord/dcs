@@ -7,6 +7,7 @@ import (
 	"context"
 
 	user_model "code.gitea.io/gitea/models/user"
+	convertrc2sb_service "code.gitea.io/gitea/services/convertrc2sb"
 	metadata_service "code.gitea.io/gitea/services/door43metadata"
 )
 
@@ -37,5 +38,15 @@ func registerLoadMetadataSchemasTask() {
 		Schedule:   "@every 72h",
 	}, func(ctx context.Context, _ *user_model.User, _ Config) error {
 		return metadata_service.LoadMetadataSchemas(ctx)
+	})
+}
+
+func registerConvertRC2SBTask() {
+	RegisterTaskFatal("convert_rc2sb", &BaseConfig{
+		Enabled:    true,
+		RunAtStart: false,
+		Schedule:   "@every 72h",
+	}, func(ctx context.Context, _ *user_model.User, _ Config) error {
+		return convertrc2sb_service.AllRepos(ctx)
 	})
 }

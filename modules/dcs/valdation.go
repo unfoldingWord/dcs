@@ -45,27 +45,28 @@ func convertValidationErrorToString(valErr, parentErr *jsonschema.ValidationErro
 	if valErr == nil {
 		return ""
 	}
-	str := padding
+	var sb strings.Builder
+	sb.WriteString(padding)
 	if parentErr == nil {
-		str += fmt.Sprintf("Invalid: %s\n", strings.TrimSuffix(valErr.Message, "#"))
+		fmt.Fprintf(&sb, "Invalid: %s\n", strings.TrimSuffix(valErr.Message, "#"))
 		if len(valErr.Causes) > 0 {
-			str += "* <root>:\n"
+			sb.WriteString("* <root>:\n")
 		}
 	} else {
 		loc := ""
 		if valErr.InstanceLocation != "" {
 			loc = strings.ReplaceAll(strings.TrimPrefix(strings.TrimPrefix(valErr.InstanceLocation, parentErr.InstanceLocation), "/"), "/", ".")
 			if loc != "" {
-				loc = fmt.Sprintf("%s: ", strings.TrimPrefix(loc, "/"))
+				loc = strings.TrimPrefix(loc, "/") + ": "
 			}
 		}
-		str += fmt.Sprintf("* %s%s\n", loc, valErr.Message)
+		fmt.Fprintf(&sb, "* %s%s\n", loc, valErr.Message)
 	}
 	sort.Slice(valErr.Causes, func(i, j int) bool { return valErr.Causes[i].InstanceLocation < valErr.Causes[j].InstanceLocation })
 	for _, cause := range valErr.Causes {
-		str += convertValidationErrorToString(cause, valErr, padding+"  ")
+		sb.WriteString(convertValidationErrorToString(cause, valErr, padding+"  "))
 	}
-	return str
+	return sb.String()
 }
 
 // ValidateJSONFromBlob reads a json file from a blob and unmarshals it returning any errors

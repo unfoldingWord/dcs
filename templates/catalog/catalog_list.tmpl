@@ -7,7 +7,7 @@
 			<div class="flex-item-main">
 				<div class="flex-item-header">
 					<div class="flex-item-title">
-					<a class="name" href="{{.Repo.Link}}/{{if .Release}}releases/tag{{else}}src/branch{{end}}/{{.Ref | PathEscapeSegments}}" data-tooltip-content="{{ctx.Locale.Tr "repo.metadata.abbreviation"}}: {{.Abbreviation}}">
+					<a class="name" href="{{.Repo.Link}}/{{if .Release}}releases/tag{{else}}src/branch{{end}}/{{.Ref | PathEscapeSegments}}" data-tooltip-content="{{ctx.Locale.Tr "dcs.repo.metadata.abbreviation"}}: {{.Abbreviation}}">
 							{{.Title}}
 					</a>
 					<span class="label-list">
@@ -41,13 +41,13 @@
 					</span>
 				</div>
 				<div class="flex-item-trailing">
-					<a class="muted" href="{{$.Link}}?sort={{$.SortType}}&q=lang%3A{{.Language}}" data-tooltip-content="{{ctx.Locale.Tr "repo.metadata.language"}}: {{.LanguageTitle}} ({{.Language}}, {{.LanguageDirection}})">
+					<a class="muted" href="{{$.Link}}?sort={{$.SortType}}&q=lang%3A{{.Language}}" data-tooltip-content="{{ctx.Locale.Tr "dcs.repo.metadata.language"}}: {{.LanguageTitle}} ({{.Language}}, {{.LanguageDirection}})">
 						<span class="tx-flex tw-items-center tw-mr-2"><i class="color-icon tw-mr-2" style="background-color: {{GetColorFromString .Language}}"></i>{{.Language}}</span>
 					</a>
 					<a class="muted" href="{{$.Link}}?sort={{$.SortType}}&q=subject%3A{{.Subject}}">
 						<span class="tx-flex tw-items-center tw-mr-2"><i class="color-icon tw-mr-2" style="background-color: {{GetColorFromString .Subject}}"></i>{{.Subject}}</span>
 					</a>
-					<a class="muted" href="?sort={{$.SortType}}&q=metadata_type%3A{{.MetadataType}}" data-tooltip-content="{{ctx.Locale.Tr "repo.metadata.metadata_type"}}: {{.MetadataTypeTitle}} ({{.MetadataType}} {{.MetadataVersion}})">
+					<a class="muted" href="?sort={{$.SortType}}&q=metadata_type%3A{{.MetadataType}}" data-tooltip-content="{{ctx.Locale.Tr "dcs.repo.metadata.metadata_type"}}: {{.MetadataTypeTitle}} ({{.MetadataType}} {{.MetadataVersion}})">
 						<img src="{{AssetUrlPrefix}}/img/dcs/{{.MetadataTypeIcon}}" style="height:16px;vertical-align:middle" />
 							{{.MetadataType}} {{.MetadataVersion}}
 					</a>
@@ -60,7 +60,7 @@
 			</div>
 
 			<div class="flex-item-body">
-				{{ctx.Locale.Tr "repo.metadata.publisher"}}:
+				{{ctx.Locale.Tr "dcs.repo.metadata.publisher"}}:
 				<a href="?sort={{$.SortType}}&q=owner%3A{{.Repo.OwnerName}}">
 					{{if $.Publisher}}{{$.Publisher}}{{else if .Repo.Owner.FullName}}{{.Repo.Owner.FullName}}{{else}}{{.Repo.OwnerName}}{{end}}
 				</a>
@@ -73,7 +73,7 @@
 				</div>
 			{{end}}
 			<div class="flex-item-body">
-				{{if .Release}}{{ctx.Locale.Tr "explore.released"}}{{else}}{{ctx.Locale.Tr "org.repo_updated"}}{{end}} {{DateUtils.TimeSince .ReleaseDateUnix}}</div>
+				{{if .Release}}{{ctx.Locale.Tr "dcs.explore.released"}}{{else}}{{ctx.Locale.Tr "org.repo_updated"}}{{end}} {{DateUtils.TimeSince .ReleaseDateUnix}}</div>
 			</div>
 		</div>
 	{{else}}

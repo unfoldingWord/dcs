@@ -94,7 +94,7 @@ func home(ctx *context.Context, viewRepositories bool) {
 	}
 	currentField := "keyword"
 	if keyword != "" {
-		for _, token := range strings.Split(keyword, ",") {
+		for token := range strings.SplitSeq(keyword, ",") {
 			token = strings.TrimSpace(token)
 			value := token
 			for key := range searchMap {

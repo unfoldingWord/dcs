@@ -5,6 +5,7 @@ package repo
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"html/template"
 	"net/url"
@@ -298,14 +299,16 @@ func (dm *Door43Metadata) ReleaseCount(ctx context.Context) (int64, error) {
 
 // MetadataFilename the file name of the manifest or metadata file
 func (dm *Door43Metadata) MetadataFilename() string {
-	if dm.MetadataType == "rc" {
+	switch dm.MetadataType {
+	case "rc":
 		return "manifest.yaml"
-	} else if dm.MetadataType == "sb" {
+	case "sb":
 		return "metadata.json"
-	} else if dm.MetadataType == "tc" || dm.MetadataType == "ts" {
+	case "tc", "ts":
 		return "manifest.json"
+	default:
+		return ""
 	}
-	return ""
 }
 
 // ValidationErrorAsTemplateHTML the validation error object as a template.HTML
@@ -361,7 +364,7 @@ func (dm *Door43Metadata) CopyEmptyPropertiesFromRepoDM(ctx context.Context) {
 	if dm.Repo == nil {
 		return
 	}
-	dm.Repo.LoadLatestDMs(ctx)
+	_ = dm.Repo.LoadLatestDMs(ctx)
 	if dm.Repo.RepoDM == nil {
 		return
 	}
@@ -513,7 +516,7 @@ func GetMostRecentDoor43MetadataByStage(ctx context.Context, repoID int64, stage
 // GetDoor43MetadataByRepoIDAndReleaseID returns the metadata of a given release ID.
 func GetDoor43MetadataByRepoIDAndReleaseID(ctx context.Context, repoID, relID int64) (*Door43Metadata, error) {
 	if repoID == 0 || relID == 0 {
-		return nil, fmt.Errorf("must provide a repo ID and a release ID")
+		return nil, errors.New("must provide a repo ID and a release ID")
 	}
 	dm := &Door43Metadata{}
 	has, err := db.GetEngine(ctx).
@@ -643,7 +646,7 @@ func DeleteDoor43Metadata(ctx context.Context, dm *Door43Metadata) error {
 // DeleteDoor43MetadataByRepoIDAndReleaseID deletes a metadata from database by given repo ID and release ID.
 func DeleteDoor43MetadataByRepoIDAndReleaseID(ctx context.Context, repoID, relID int64) error {
 	if repoID == 0 || relID == 0 {
-		return fmt.Errorf("cannot delete door43_metadata with repo ID or release ID as 0")
+		return errors.New("cannot delete door43_metadata with repo ID or release ID as 0")
 	}
 	dm, err := GetDoor43MetadataByRepoIDAndReleaseID(ctx, repoID, relID)
 	if err != nil {
@@ -672,6 +675,61 @@ func DeleteDoor43MetadataByRepoIDAndRef(ctx context.Context, repoID int64, ref s
 // DeleteAllDoor43MetadatasByRepoID deletes all metadatas from database for a repo by given repo ID.
 func DeleteAllDoor43MetadatasByRepoID(ctx context.Context, repoID int64) (int64, error) {
 	return db.GetEngine(ctx).Delete(Door43Metadata{RepoID: repoID})
+}
+
+// RepoHasDefaultBranchRCMetadata returns true if the repo has a door43_metadata row
+// for its default branch with metadata_type = "rc", regardless of validation errors.
+func RepoHasDefaultBranchRCMetadata(ctx context.Context, repoID int64) (bool, error) {
+	return db.GetEngine(ctx).
+		Table("door43_metadata").
+		Where(builder.Eq{"repo_id": repoID}.
+			And(builder.Eq{"stage": int(door43metadata.StageLatest)}).
+			And(builder.Eq{"is_latest_for_stage": true}).
+			And(builder.Eq{"metadata_type": "rc"})).
+		Exist()
+}
+
+// GetReposQualifiedForRC2SBConversion returns all repos that qualify for RC-to-SB conversion:
+// non-archived, non-private, default_branch = "master", have a door43_metadata row for their
+// default branch with metadata_type = "rc", and have at least one topic from the given list.
+// Returns nil, nil if topics is empty.
+func GetReposQualifiedForRC2SBConversion(ctx context.Context, topics []string) ([]*Repository, error) {
+	if len(topics) == 0 {
+		return nil, nil
+	}
+
+	// Topics are always stored lowercase; lowercase inputs for safe matching
+	lowerTopics := make([]any, len(topics))
+	for i, t := range topics {
+		lowerTopics[i] = strings.ToLower(t)
+	}
+
+	// Subquery: repo IDs that have at least one qualifying topic
+	topicSubQ := builder.Select("repo_topic.repo_id").
+		From("repo_topic").
+		Join("INNER", "topic", "topic.id = repo_topic.topic_id").
+		Where(builder.In("topic.name", lowerTopics...)).
+		GroupBy("repo_topic.repo_id")
+
+	// Subquery: repo IDs with a default-branch DM whose metadata_type is "rc"
+	dmSubQ := builder.Select("repo_id").
+		From("door43_metadata").
+		Where(builder.Eq{"stage": int(door43metadata.StageLatest)}.
+			And(builder.Eq{"is_latest_for_stage": true}).
+			And(builder.Eq{"metadata_type": "rc"}))
+
+	cond := builder.Eq{"`repository`.default_branch": "master"}.
+		And(builder.Eq{"`repository`.is_archived": 0}).
+		And(builder.Eq{"`repository`.is_private": 0}).
+		And(builder.In("`repository`.id", topicSubQ)).
+		And(builder.In("`repository`.id", dmSubQ))
+
+	var repos []*Repository
+	err := db.GetEngine(ctx).
+		Where(cond).
+		OrderBy("`repository`.lower_name").
+		Find(&repos)
+	return repos, err
 }
 
 // GetReposForMetadata gets all the repos to process for metadata
@@ -744,9 +802,8 @@ func IsErrDoor43MetadataNotExist(err error) bool {
 func (err ErrDoor43MetadataNotExist) Error() string {
 	if err.Ref != "" {
 		return fmt.Sprintf("door43 metadata does not exist [id: %d, repo_id: %d, ref: %s]", err.ID, err.RepoID, err.Ref)
-	} else {
-		return fmt.Sprintf("door43 metadata does not exist [id: %d, repo_id: %d, release_id: %d]", err.ID, err.RepoID, err.RelID)
 	}
+	return fmt.Sprintf("door43 metadata does not exist [id: %d, repo_id: %d, release_id: %d]", err.ID, err.RepoID, err.RelID)
 }
 
 // ErrInvalidRelease represents a "InvalidRelease" kind of error.

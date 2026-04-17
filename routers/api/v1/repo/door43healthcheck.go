@@ -57,7 +57,7 @@ func GetHealthcheck(ctx *context.APIContext) {
 			return
 		}
 	} else {
-		ctx.Repo.Repository.LoadLatestDMs(ctx)
+		_ = ctx.Repo.Repository.LoadLatestDMs(ctx)
 		dm = ctx.Repo.Repository.RepoDM
 	}
 

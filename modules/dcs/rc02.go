@@ -25,7 +25,7 @@ func GetRC02Schema(reload bool) (*jsonschema.Schema, error) {
 	if rc02Schema == nil || reload {
 		jsonschema.Loaders["https"] = func(url string) (io.ReadCloser, error) {
 			res, err := http.Get(url)
-			if err == nil && res != nil && res.StatusCode == 200 {
+			if err == nil && res != nil && res.StatusCode == http.StatusOK {
 				return res.Body, nil
 			}
 			log.Warn("GetRC02Schema: not able to get the schema file remotely [%q]: %v", url, err)
@@ -63,5 +63,5 @@ func ValidateMapByRC02Schema(data map[string]any) (*jsonschema.ValidationError, 
 			return nil, e
 		}
 	}
-	return nil, nil
+	return nil, nil //nolint:nilnil // nil validation error means validation passed
 }

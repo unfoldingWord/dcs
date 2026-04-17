@@ -116,6 +116,10 @@ func (*NullNotifier) DeleteRelease(ctx context.Context, doer *user_model.User, r
 func (*NullNotifier) NewTagRelease(ctx context.Context, rel *repo_model.Release) {
 }
 
+// RepoTopicsChanged places a place holder function
+func (*NullNotifier) RepoTopicsChanged(ctx context.Context, doer *user_model.User, repo *repo_model.Repository) {
+}
+
 /*** END DCS Customizations ***/
 
 // IssueChangeMilestone places a place holder function

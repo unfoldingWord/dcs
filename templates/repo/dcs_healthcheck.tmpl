@@ -1,35 +1,34 @@
 {{template "base/head" .}}
 <style>
 	.status-item {
-			padding: 10px;
-			margin-bottom: 10px;
-			border-radius: 5px;
-			border: 2px solid;
-			color: var(--color-black);
+		padding: 10px;
+		margin-bottom: 10px;
+		border-radius: 5px;
+		border: 2px solid;
+		color: var(--color-black);
 	}
 	.show-panel {
-			cursor: pointer;
+		cursor: pointer;
 	}
 	.status-item.error {
-			background-color: #ffcccc; /* Light red background */
-			border-color: #cc0000; /* Dark red border */
+		background-color: #ffcccc;
+		border-color: #cc0000;
 	}
 	.status-item.warning {
-			background-color: #ffebcc; /* Light orange background */
-			border-color: #cc7a00; /* Dark orange border */
+		background-color: #ffebcc;
+		border-color: #cc7a00;
 	}
 	.status-item.info {
-			background-color: #cce5ff; /* Light blue background */
-			border-color: #004085; /* Dark blue border */
+		background-color: #cce5ff;
+		border-color: #004085;
 	}
 	.status-item.success {
-			background-color: #d4edda; /* Light green background */
-			border-color: #155724; /* Dark green border */
+		background-color: #d4edda;
+		border-color: #155724;
 	}
-
 	.item-text {
-			padding-left: 20px;
-			margin-top: 10px;
+		padding-left: 20px;
+		margin-top: 10px;
 	}
 </style>
 <div role="main" aria-label="{{.Title}}" class="page-content repository settings">
@@ -37,44 +36,34 @@
 	{{template "base/alert" .}}
 	<div class="ui container">
 		<h2 class="ui header metadata-header">
-			{{ctx.Locale.Tr "repo.metadata.healthcheck"}} {{svg "octicon-shield-check"}}
+			{{ctx.Locale.Tr "dcs.repo.metadata.healthcheck"}} {{svg "octicon-shield-check"}}
 		</h2>
 		<div class="repo-metadata-content">
 			<h4 class="ui top attached header">
-				Overall {{.Title}}
-			</h4>
-			<div class="ui attached segment">
-				{{if and (eq .Repo.RepoDM.MetadataType "rc") (.Repo.DefaultBranchDM)}}
-					{{template "repo/dcs_healthcheck_list" (dict "ctxData" . "Door43Metadata" .Repo.DefaultBranchDM)}}
-				{{else}}
-					<span>
-						{{if eq .Repo.RepoDM.MetadataType "rc"}}
-							No Health Check could be performed for this Repository.
-							Click&nbsp;<a href="{{.Link}}/update">update</a>&nbsp;to scan the repo.
-						{{else}}
-							Health Check is only available for RC (manfest.yaml) type repositories.
-						{{end}}
-					</span>
-				{{end}}
-			</div>
-
-			<h4 class="ui top attached header">
-				{{ctx.Locale.Tr "repo.metadata.branch_and_releases_metadata_and_healthcheck"}}
+				{{ctx.Locale.Tr "dcs.repo.metadata.overall_healthcheck"}}
 				<div class="ui right">
-					<a class="ui teal tiny button" href="{{.RepoLink}}/metadata">See for all Branches/Releases</a>
+<<<<<<< HEAD
 					{{if .Permission.IsAdmin}}
-						<a class="ui teal tiny button" href="{{.RepoLink}}/metadata/update">Update Metadata</a>
+						<a class="ui teal tiny button" href="{{.RepoLink}}/metadata/update">{{ctx.Locale.Tr "dcs.repo.metadata.update_metadata"}}</a>
 					{{end}}
+||||||| 0ca8053d75
+					{{if .Permission.IsAdmin}}
+						<a class="ui teal tiny button" href="{{.RepoLink}}/metadata/update">{{ctx.Locale.Tr "repo.metadata.update_metadata"}}</a>
+					{{end}}
+=======
+						<a class="ui teal tiny button" href="{{.RepoLink}}/metadata">{{ctx.Locale.Tr "repo.metadata.see_all_branches_releases"}} &gt;</a>
+>>>>>>> dcs-base-v1.25
 				</div>
 			</h4>
 			<div class="ui attached segment">
-					{{if .Door43Metadatas}}
-						{{template "repo/dcs_metadata_list" (dict "ctxData" . "Door43Metadatas" .Door43Metadatas "ShowHealthcheck" true)}}
-					{{else}}
-						<span>
-							No Metadata for this Repository. Click&nbsp;<a href="{{.Link}}/update">update</a>&nbsp;to scan the repo.
-						</span>
-					{{end}}
+				{{if .Repo.DefaultBranchDM}}
+					{{template "repo/dcs_healthcheck_list" (dict "ctxData" . "Door43Metadata" .Repo.DefaultBranchDM)}}
+				{{else}}
+					<span>
+						No Health Check could be performed for this Repository.
+						Click&nbsp;<a href="{{.RepoLink}}/metadata/update">update</a>&nbsp;to scan the repo.
+					</span>
+				{{end}}
 			</div>
 		</div>
 	</div>

@@ -19,13 +19,16 @@ import (
 )
 
 const (
-	tplDCSHealthcheck templates.TplName = "repo/dcs_healthcheck"
 	tplDCSMetadata    templates.TplName = "repo/dcs_metadata"
+	tplDCSMetadataAll templates.TplName = "repo/dcs_metadata_all"
+	tplDCSHealthcheck templates.TplName = "repo/dcs_healthcheck"
+
+	releaseDMsPerPage = 20
 )
 
-// GetRepoHealthcheck renders healthcheck for a repo
-func GetRepoHealthcheck(ctx *context.Context) {
-	ctx.Repo.Repository.LoadLatestDMs(ctx)
+// GetRepoMetadata renders the metadata summary page (default branch + latest release)
+func GetRepoMetadata(ctx *context.Context) {
+	_ = ctx.Repo.Repository.LoadLatestDMs(ctx)
 	door43Metadatas := []*repo_model.Door43Metadata{}
 	if ctx.Repo.Repository.RepoDM != nil && ctx.Repo.Repository.RepoDM.ID > 0 {
 		door43Metadatas = append(door43Metadatas, ctx.Repo.Repository.RepoDM)
@@ -34,15 +37,36 @@ func GetRepoHealthcheck(ctx *context.Context) {
 		door43Metadatas = append(door43Metadatas, ctx.Repo.Repository.LatestProdDM)
 	}
 
-	ctx.Data["Title"] = "Health Check"
+	ctx.Data["Title"] = "Metadata"
 	ctx.Data["PageIsMetadata"] = true
 	ctx.Data["Repo"] = ctx.Repo.Repository
 	ctx.Data["Door43Metadatas"] = door43Metadatas
+	ctx.Data["IsRC"] = ctx.Repo.Repository.RepoDM != nil && ctx.Repo.Repository.RepoDM.MetadataType == "rc"
+	ctx.HTML(http.StatusOK, tplDCSMetadata)
+}
+
+// GetRepoHealthcheck renders the health check page (RC repos only)
+func GetRepoHealthcheck(ctx *context.Context) {
+	_ = ctx.Repo.Repository.LoadLatestDMs(ctx)
+
+	// Redirect non-RC repos to metadata page
+	if ctx.Repo.Repository.RepoDM == nil || ctx.Repo.Repository.RepoDM.MetadataType != "rc" {
+		ctx.Redirect(ctx.Repo.RepoLink + "/metadata")
+		return
+	}
+
+	ctx.Data["Title"] = "Health Check"
+	ctx.Data["PageIsHealthcheck"] = true
+	ctx.Data["Repo"] = ctx.Repo.Repository
+	ctx.Data["IsRC"] = true
 	ctx.HTML(http.StatusOK, tplDCSHealthcheck)
 }
 
-// GetAllRepoDoor43Metadata renders all the door43metadatas for a repo
+// GetAllRepoDoor43Metadata renders all door43metadatas for a repo with paginated releases
 func GetAllRepoDoor43Metadata(ctx *context.Context) {
+	_ = ctx.Repo.Repository.LoadLatestDMs(ctx)
+
+	// Branches: load all (typically < 20)
 	branchDms := make([]*repo_model.Door43Metadata, 0, 50)
 	err := db.GetEngine(ctx).
 		Where(builder.Eq{"repo_id": ctx.Repo.Repository.ID}).
@@ -53,11 +77,26 @@ func GetAllRepoDoor43Metadata(ctx *context.Context) {
 		log.Error("Find(dms) for branches: %v", err)
 	}
 
-	releaseDms := make([]*repo_model.Door43Metadata, 0, 50)
+	// Releases: paginated
+	page := ctx.FormInt("page")
+	if page <= 0 {
+		page = 1
+	}
+
+	releaseCount, err := db.GetEngine(ctx).
+		Where(builder.Eq{"repo_id": ctx.Repo.Repository.ID}).
+		And(builder.Eq{"ref_type": "tag"}).
+		Count(&repo_model.Door43Metadata{})
+	if err != nil {
+		log.Error("Count(dms) for releases: %v", err)
+	}
+
+	releaseDms := make([]*repo_model.Door43Metadata, 0, releaseDMsPerPage)
 	err = db.GetEngine(ctx).
 		Where(builder.Eq{"repo_id": ctx.Repo.Repository.ID}).
 		And(builder.Eq{"ref_type": "tag"}).
 		OrderBy("release_date_unix DESC").
+		Limit(releaseDMsPerPage, (page-1)*releaseDMsPerPage).
 		Find(&releaseDms)
 	if err != nil {
 		log.Error("Find(dms) for releases: %v", err)
@@ -67,7 +106,14 @@ func GetAllRepoDoor43Metadata(ctx *context.Context) {
 	ctx.Data["PageIsMetadata"] = true
 	ctx.Data["BranchDMs"] = branchDms
 	ctx.Data["ReleaseDMs"] = releaseDms
-	ctx.HTML(http.StatusOK, tplDCSMetadata)
+	ctx.Data["ReleaseCount"] = releaseCount
+	ctx.Data["IsRC"] = ctx.Repo.Repository.RepoDM != nil && ctx.Repo.Repository.RepoDM.MetadataType == "rc"
+
+	pager := context.NewPagination(releaseCount, releaseDMsPerPage, page, 5)
+	pager.AddParamFromRequest(ctx.Req)
+	ctx.Data["Page"] = pager
+
+	ctx.HTML(http.StatusOK, tplDCSMetadataAll)
 }
 
 // UpdateDoor43Metadata updates the repo's metadata

@@ -564,9 +564,9 @@ func SearchRepositoryCondition(opts SearchRepoOptions) builder.Cond {
 	}
 
 	if opts.LanguageIsGL.Has() {
-		cond = cond.And(builder.Eq{"`door43_metadata`.language_is_gl`": opts.LanguageIsGL.Value()})
+		cond = cond.And(builder.Eq{"`door43_metadata`.language_is_gl": opts.LanguageIsGL.Value()})
 	}
-	/*** EMD DCS Customizations ***/
+	/*** END DCS Customizations ***/
 
 	if opts.OnlyShowRelevant {
 		// Only show a repo that has at least a topic, an icon, or a description
@@ -603,7 +603,12 @@ func SearchRepository(ctx context.Context, opts SearchRepoOptions) (RepositoryLi
 
 // CountRepository counts repositories based on search options,
 func CountRepository(ctx context.Context, opts SearchRepoOptions) (int64, error) {
-	return db.GetEngine(ctx).Where(SearchRepositoryCondition(opts)).Count(new(Repository))
+	/*** DCS Customizations ***/
+	return db.GetEngine(ctx).
+		Join("INNER", "user", "`user`.id = `repository`.owner_id").
+		Join("LEFT", "door43_metadata", builder.Expr("`door43_metadata`.repo_id = `repository`.id AND `door43_metadata`.is_repo_metadata = ?", true)).
+		Where(SearchRepositoryCondition(opts)).Count(new(Repository))
+	/*** END DCS Customizations ***/
 }
 
 // SearchRepositoryByCondition search repositories by condition
@@ -834,4 +839,12 @@ func GetUserRepositories(ctx context.Context, opts SearchRepoOptions) (Repositor
 	sess = sess.Where(cond).OrderBy(opts.OrderBy.String())
 	repos := make(RepositoryList, 0, opts.PageSize)
 	return repos, count, db.SetSessionPagination(sess, &opts).Find(&repos)
+}
+
+func GetOwnerRepositoriesByIDs(ctx context.Context, ownerID int64, repoIDs []int64) (RepositoryList, error) {
+	if len(repoIDs) == 0 {
+		return RepositoryList{}, nil
+	}
+	repos := make(RepositoryList, 0, len(repoIDs))
+	return repos, db.GetEngine(ctx).Where(builder.Eq{"owner_id": ownerID}).In("id", repoIDs).Find(&repos)
 }

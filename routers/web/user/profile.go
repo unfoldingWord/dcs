@@ -283,7 +283,7 @@ func prepareUserProfileTabData(ctx *context.Context, profileDbRepo *repo_model.R
 		}
 		currentField := "keyword"
 		if keyword != "" {
-			for _, token := range strings.Split(keyword, ",") {
+			for token := range strings.SplitSeq(keyword, ",") {
 				token = strings.TrimSpace(token)
 				value := token
 				for key := range searchMap {

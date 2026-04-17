@@ -4,7 +4,6 @@
 package gitref
 
 import (
-	"path/filepath"
 	"testing"
 
 	repo_model "code.gitea.io/gitea/models/repo"
@@ -16,9 +15,7 @@ import (
 )
 
 func TestMain(m *testing.M) {
-	unittest.MainTest(m, &unittest.TestOptions{
-		GiteaRootPath: filepath.Join("..", ".."),
-	})
+	unittest.MainTest(m)
 }
 
 func TestGitRef_Get(t *testing.T) {
@@ -28,7 +25,7 @@ func TestGitRef_Get(t *testing.T) {
 	repo := unittest.AssertExistsAndLoadBean(t, &repo_model.Repository{ID: 1})
 	repoPath := repo_model.RepoPath(user.Name, repo.Name)
 
-	gitRepo, err := git.OpenRepository(git.DefaultContext, repoPath)
+	gitRepo, err := git.OpenRepository(t.Context(), repoPath)
 	assert.NoError(t, err)
 	defer gitRepo.Close()
 

@@ -54,16 +54,17 @@ func ToStringKeys(val any) (any, error) {
 	}
 }
 
-// GetColorFromString gets a hexidecimal number for a color based on string
+// GetColorFromString gets a hexadecimal number for a color based on string
 func GetColorFromString(str string) string {
 	hash := 0
-	for i := 0; i < len(str); i++ {
+	for i := range len(str) {
 		hash = int(str[i]) + ((hash << 5) - hash)
 	}
-	color := "#"
-	for i := 0; i < 3; i++ {
+	var sb strings.Builder
+	sb.WriteString("#")
+	for i := range 3 {
 		value := (hash >> (i * 8)) & 0xFF
-		color += fmt.Sprintf("%02x", value)
+		fmt.Fprintf(&sb, "%02x", value)
 	}
-	return color
+	return sb.String()
 }

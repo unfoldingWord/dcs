@@ -86,7 +86,7 @@ func RenderRepoSearch(ctx *context.Context, opts *RepoSearchOptions) {
 	}
 	currentField := "keyword"
 	if keyword != "" {
-		for _, token := range strings.Split(keyword, ",") {
+		for token := range strings.SplitSeq(keyword, ",") {
 			token = strings.TrimSpace(token)
 			value := token
 			for key := range searchMap {

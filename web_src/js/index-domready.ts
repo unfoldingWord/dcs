@@ -63,6 +63,7 @@ import {initGlobalButtonClickOnEnter, initGlobalButtons, initGlobalDeleteButton}
 import {initGlobalComboMarkdownEditor, initGlobalEnterQuickSubmit, initGlobalFormDirtyLeaveConfirm} from './features/common-form.ts';
 import {callInitFunctions} from './modules/init.ts';
 import {initRepoViewFileTree} from './features/repo-view-file-tree.ts';
+import {initActionsPermissionsForm} from './features/common-actions-permissions.ts';
 import {initGlobalShortcut} from './modules/shortcut.ts';
 /** DCS Customizations **/
 import {initDCSInfoIcon} from './features/dcs-info-icon.ts';
@@ -166,6 +167,7 @@ const initPerformanceTracer = callInitFunctions([
   initOAuth2SettingsDisableCheckbox,
 
   initRepoFileView,
+  initActionsPermissionsForm,
 
   /** DCS Customizations **/
   initDCSInfoIcon,

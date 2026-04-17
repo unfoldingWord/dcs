@@ -470,7 +470,7 @@ test-sqlite\#%: integrations.sqlite.test generate-ini-sqlite
 
 .PHONY: test-dcs-sqlite
 test-dcs-sqlite: integrations.sqlite.test generate-ini-sqlite
-	GITEA_ROOT="$(CURDIR)" GITEA_CONF=tests/sqlite.ini ./integrations.sqlite.test -test.run '^TestDCS'
+	GITEA_TEST_ROOT="$(CURDIR)" GITEA_TEST_CONF=tests/sqlite.ini ./integrations.sqlite.test -test.run '^TestDCS'
 
 .PHONY: test-sqlite-migration
 test-sqlite-migration:  migrations.sqlite.test migrations.individual.sqlite.test
