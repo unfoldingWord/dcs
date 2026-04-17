@@ -7,7 +7,7 @@ import "strings"
 
 // DCS settings
 var DCS struct {
-	Door43PreviewURL    string
+	Door43PreviewURL   string
 	ConvertRC2SBTopics []string
 }
 
