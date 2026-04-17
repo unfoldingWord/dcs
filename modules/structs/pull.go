@@ -94,10 +94,8 @@ type PullRequest struct {
 	// The version of the pull request content for optimistic locking
 	ContentVersion int `json:"content_version"`
 
-	/*** DCS Customizations ***/
-	Status          string   `json:"status"`
-	ConflictedFiles []string `json:"conflicted_files"`
-	/*** END DCS Customizations ***/
+	Status          string   `json:"status"`           // DCS Customizations
+	ConflictedFiles []string `json:"conflicted_files"` // DCS Customizations
 }
 
 // PRBranchInfo information about a branch

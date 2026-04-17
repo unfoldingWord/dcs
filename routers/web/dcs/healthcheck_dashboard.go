@@ -80,7 +80,7 @@ func HealthcheckDashboard(ctx *context.Context) {
 	ctx.Data["Door43Metadatas"] = dms
 	ctx.Data["Total"] = count
 
-	pager := context.NewPagination(int(count), hcDashPageSize, page, 5)
+	pager := context.NewPagination(count, hcDashPageSize, page, 5)
 	pager.AddParamFromRequest(ctx.Req)
 	ctx.Data["Page"] = pager
 

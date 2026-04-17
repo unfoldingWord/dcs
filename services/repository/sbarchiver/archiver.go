@@ -41,7 +41,7 @@ const storageCommitPrefix = "sb-"
 // ArchiveRequest defines the parameters of an SB archive request.
 type ArchiveRequest struct {
 	RepoID   int64
-	Type     git.ArchiveType
+	Type     repo_model.ArchiveType
 	CommitID string
 
 	archiveRefShortName string // "master", "v1.0.0", commit id, etc.
@@ -91,11 +91,11 @@ func (e ErrRepoNotRC) Is(err error) bool {
 
 // NewRequest creates an SB archival request from URI suffix like "master.zip".
 func NewRequest(repoID int64, repo *git.Repository, archiveRefExt string) (*ArchiveRequest, error) {
-	archiveRefShortName, archiveType := git.SplitArchiveNameType(archiveRefExt)
-	if archiveType == git.ArchiveUnknown {
+	archiveRefShortName, archiveType := repo_model.SplitArchiveNameType(archiveRefExt)
+	if archiveType == repo_model.ArchiveUnknown {
 		return nil, ErrUnknownArchiveFormat{archiveRefExt}
 	}
-	if archiveType == git.ArchiveBundle {
+	if archiveType == repo_model.ArchiveBundle {
 		return nil, ErrUnknownArchiveFormat{archiveRefExt}
 	}
 
@@ -304,23 +304,15 @@ func cloneRepositoryAtCommit(ctx context.Context, sourceRepoPath, refShortName, 
 }
 
 func checkoutCommit(ctx context.Context, repoPath, commitID string) error {
-	var stderr strings.Builder
-	err := gitcmd.NewCommand("checkout", "--detach").AddDynamicArguments(commitID).Run(ctx, &gitcmd.RunOpts{
-		Dir:    repoPath,
-		Stdout: io.Discard,
-		Stderr: &stderr,
-	})
-	if err != nil {
-		return gitcmd.ConcatenateError(err, stderr.String())
-	}
-	return nil
+	return gitcmd.NewCommand("checkout", "--detach").AddDynamicArguments(commitID).
+		WithDir(repoPath).RunWithStderr(ctx)
 }
 
-func writeDirectoryArchive(ctx context.Context, sourceDir, prefixDir string, archiveType git.ArchiveType, w io.Writer) error {
+func writeDirectoryArchive(ctx context.Context, sourceDir, prefixDir string, archiveType repo_model.ArchiveType, w io.Writer) error {
 	switch archiveType {
-	case git.ArchiveZip:
+	case repo_model.ArchiveZip:
 		return writeZipArchive(ctx, sourceDir, prefixDir, w)
-	case git.ArchiveTarGz:
+	case repo_model.ArchiveTarGz:
 		return writeTarGzArchive(ctx, sourceDir, prefixDir, w)
 	default:
 		return ErrUnknownArchiveFormat{RequestNameType: archiveType.String()}
@@ -632,7 +624,7 @@ func ServeRepoSBArchive(ctx *gitea_context.Base, repo *repo_model.Repository, ar
 	downloadName := repo.Name + "-" + archiveReq.GetArchiveName()
 
 	if setting.Repository.StreamArchives {
-		httplib.ServeSetHeaders(ctx.Resp, &httplib.ServeHeaderOptions{Filename: downloadName})
+		httplib.ServeSetHeaders(ctx.Resp, httplib.ServeHeaderOptions{Filename: downloadName})
 		if err := archiveReq.Stream(ctx, repo, ctx.Resp); err != nil && !ctx.Written() {
 			if errors.Is(err, ErrRepoNotRC{}) {
 				ctx.HTTPError(http.StatusNotFound)
@@ -657,7 +649,7 @@ func ServeRepoSBArchive(ctx *gitea_context.Base, repo *repo_model.Repository, ar
 
 	rPath := archiver.RelativePath()
 	if setting.RepoArchive.Storage.ServeDirect() {
-		u, err := storage.RepoArchives.URL(rPath, downloadName, ctx.Req.Method, nil)
+		u, err := storage.RepoArchives.ServeDirectURL(rPath, downloadName, ctx.Req.Method, nil)
 		if u != nil && err == nil {
 			ctx.Redirect(u.String())
 			return
@@ -672,7 +664,7 @@ func ServeRepoSBArchive(ctx *gitea_context.Base, repo *repo_model.Repository, ar
 	}
 	defer fr.Close()
 
-	ctx.ServeContent(fr, &gitea_context.ServeHeaderOptions{
+	ctx.ServeContent(fr, gitea_context.ServeHeaderOptions{
 		Filename:     downloadName,
 		LastModified: archiver.CreatedUnix.AsLocalTime(),
 	})

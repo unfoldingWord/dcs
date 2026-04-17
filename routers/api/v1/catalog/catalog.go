@@ -899,7 +899,7 @@ func GetCatalogEntry(ctx *context.APIContext) {
 		ctx.APIError(http.StatusInternalServerError, err)
 		return
 	}
-	perm, err := access_model.GetUserRepoPermission(ctx, dm.Repo, ctx.ContextUser)
+	perm, err := access_model.GetDoerRepoPermission(ctx, dm.Repo, ctx.ContextUser)
 	if err != nil {
 		ctx.APIError(http.StatusInternalServerError, err)
 		return
@@ -1122,7 +1122,7 @@ func searchCatalog(ctx *context.APIContext) {
 				return
 			}
 		}
-		perm, err := access_model.GetUserRepoPermission(ctx, dm.Repo, ctx.ContextUser)
+		perm, err := access_model.GetDoerRepoPermission(ctx, dm.Repo, ctx.ContextUser)
 		if err != nil {
 			ctx.APIError(http.StatusInternalServerError, err)
 			return
@@ -1142,9 +1142,9 @@ func searchCatalog(ctx *context.APIContext) {
 	}
 
 	if opts.PageSize > 0 {
-		ctx.SetLinkHeader(int(count), opts.PageSize)
+		ctx.SetLinkHeader(count, opts.PageSize)
 	} else {
-		ctx.SetLinkHeader(int(count), int(count))
+		ctx.SetLinkHeader(count, int(count))
 	}
 	ctx.RespHeader().Set("X-Total-Count", strconv.FormatInt(count, 10))
 	ctx.JSON(http.StatusOK, api.CatalogSearchResults{
@@ -1299,7 +1299,7 @@ func getCatalogBookPackage(ctx *context.APIContext) {
 			ctx.APIError(http.StatusInternalServerError, err)
 			return
 		}
-		perm, err := access_model.GetUserRepoPermission(ctx, dmModel.Repo, ctx.ContextUser)
+		perm, err := access_model.GetDoerRepoPermission(ctx, dmModel.Repo, ctx.ContextUser)
 		if err != nil {
 			ctx.APIError(http.StatusInternalServerError, err)
 			return
@@ -1319,9 +1319,9 @@ func getCatalogBookPackage(ctx *context.APIContext) {
 	}
 
 	if opts.PageSize > 0 {
-		ctx.SetLinkHeader(int(count), opts.PageSize)
+		ctx.SetLinkHeader(count, opts.PageSize)
 	} else {
-		ctx.SetLinkHeader(int(count), int(count))
+		ctx.SetLinkHeader(count, int(count))
 	}
 	ctx.RespHeader().Set("X-Total-Count", strconv.FormatInt(count, 10))
 	ctx.JSON(http.StatusOK, api.CatalogSearchResults{

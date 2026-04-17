@@ -145,12 +145,12 @@ func ForBranch(ctx context.Context, repo *repo_model.Repository, branchName stri
 	}
 
 	// Step 8: Stage all changes
-	if _, _, err := gitcmd.NewCommand("add", "-A").RunStdString(ctx, &gitcmd.RunOpts{Dir: workDir}); err != nil {
+	if _, _, err := gitcmd.NewCommand("add", "-A").WithDir(workDir).RunStdString(ctx); err != nil {
 		return fmt.Errorf("git add: %w", err)
 	}
 
 	// Check if there are any changes to commit
-	stdout, _, err := gitcmd.NewCommand("status", "--porcelain").RunStdString(ctx, &gitcmd.RunOpts{Dir: workDir})
+	stdout, _, err := gitcmd.NewCommand("status", "--porcelain").WithDir(workDir).RunStdString(ctx)
 	if err != nil {
 		return fmt.Errorf("git status: %w", err)
 	}
@@ -167,7 +167,7 @@ func ForBranch(ctx context.Context, repo *repo_model.Repository, branchName stri
 	_, _, err = gitcmd.NewCommand("commit",
 		"-m").AddDynamicArguments(commitMsg).
 		AddArguments("--author").AddDynamicArguments(fmt.Sprintf("%s <%s>", sig.Name, sig.Email)).
-		RunStdString(ctx, &gitcmd.RunOpts{Dir: workDir})
+		WithDir(workDir).RunStdString(ctx)
 	if err != nil {
 		return fmt.Errorf("git commit: %w", err)
 	}
@@ -243,7 +243,7 @@ func cloneAtRef(ctx context.Context, repoPath, ref, destination string) error {
 		}
 		// Checkout the ref
 		_, _, checkoutErr := gitcmd.NewCommand("checkout").AddDynamicArguments(ref).
-			RunStdString(ctx, &gitcmd.RunOpts{Dir: destination})
+			WithDir(destination).RunStdString(ctx)
 		if checkoutErr != nil {
 			return fmt.Errorf("checkout ref %s: %w", ref, checkoutErr)
 		}
@@ -255,11 +255,11 @@ func cloneAtRef(ctx context.Context, repoPath, ref, destination string) error {
 func prepareMainBranch(ctx context.Context, workDir, tagName string) error {
 	// Check if main branch exists
 	_, _, err := gitcmd.NewCommand("rev-parse", "--verify", "refs/heads/main").
-		RunStdString(ctx, &gitcmd.RunOpts{Dir: workDir})
+		WithDir(workDir).RunStdString(ctx)
 	if err != nil {
 		// main doesn't exist — create it from the tag
 		_, _, err = gitcmd.NewCommand("checkout", "-b", "main").AddDynamicArguments(tagName).
-			RunStdString(ctx, &gitcmd.RunOpts{Dir: workDir})
+			WithDir(workDir).RunStdString(ctx)
 		if err != nil {
 			return fmt.Errorf("create main branch from tag %s: %w", tagName, err)
 		}
@@ -268,7 +268,7 @@ func prepareMainBranch(ctx context.Context, workDir, tagName string) error {
 
 	// main exists — check it out
 	_, _, err = gitcmd.NewCommand("checkout", "main").
-		RunStdString(ctx, &gitcmd.RunOpts{Dir: workDir})
+		WithDir(workDir).RunStdString(ctx)
 	if err != nil {
 		return fmt.Errorf("checkout main: %w", err)
 	}
@@ -402,7 +402,7 @@ func preparePayloadPath(ctx context.Context, tmpDir, rcDir string, repo *repo_mo
 			return "", fmt.Errorf("clone payload repo %s: %w", payloadRepo.FullName(), err)
 		}
 		_, _, checkoutErr := gitcmd.NewCommand("checkout", "--detach").AddDynamicArguments(commitID.String()).
-			RunStdString(ctx, &gitcmd.RunOpts{Dir: payloadDir})
+			WithDir(payloadDir).RunStdString(ctx)
 		if checkoutErr != nil {
 			return "", fmt.Errorf("checkout %s commit: %w", payloadRepo.FullName(), checkoutErr)
 		}

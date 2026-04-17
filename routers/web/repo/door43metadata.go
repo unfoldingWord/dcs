@@ -109,7 +109,7 @@ func GetAllRepoDoor43Metadata(ctx *context.Context) {
 	ctx.Data["ReleaseCount"] = releaseCount
 	ctx.Data["IsRC"] = ctx.Repo.Repository.RepoDM != nil && ctx.Repo.Repository.RepoDM.MetadataType == "rc"
 
-	pager := context.NewPagination(int(releaseCount), releaseDMsPerPage, page, 5)
+	pager := context.NewPagination(releaseCount, releaseDMsPerPage, page, 5)
 	pager.AddParamFromRequest(ctx.Req)
 	ctx.Data["Page"] = pager
 

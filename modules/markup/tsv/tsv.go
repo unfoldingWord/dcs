@@ -31,9 +31,9 @@ func (Renderer) Name() string {
 	return "tsv"
 }
 
-// Extensions implements markup.Parser
-func (Renderer) Extensions() []string {
-	return []string{".tsv"}
+// FileNamePatterns implements markup.Renderer
+func (Renderer) FileNamePatterns() []string {
+	return []string{"*.tsv"}
 }
 
 // NeedPostProcess implements markup.Renderer
