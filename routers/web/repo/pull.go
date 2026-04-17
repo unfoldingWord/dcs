@@ -276,7 +276,8 @@ func prepareMergedViewPullInfo(ctx *context.Context, issue *issues_model.Issue) 
 	compareInfo, err := pull_service.GetCompareInfo(ctx, ctx.Repo.Repository, ctx.Repo.Repository, ctx.Repo.GitRepo,
 		baseCommit, pull.GetGitHeadRefName(), false, false)
 	if err != nil {
-		if strings.Contains(err.Error(), "fatal: Not a valid object name") || strings.Contains(err.Error(), "unknown revision or path not in the working tree") {
+		if strings.Contains(err.Error(), "fatal: Not a valid object name") || strings.Contains(err.Error(), "unknown revision or path not in the working tree") ||
+			strings.Contains(err.Error(), "fatal: bad revision") { // DCS Customizations
 			ctx.Data["IsPullRequestBroken"] = true
 			ctx.Data["BaseTarget"] = pull.BaseBranch
 			ctx.Data["NumCommits"] = 0
@@ -376,7 +377,8 @@ func prepareViewPullInfo(ctx *context.Context, issue *issues_model.Issue) *pull_
 		compareInfo, err := pull_service.GetCompareInfo(ctx, pull.BaseRepo, pull.BaseRepo, baseGitRepo,
 			pull.MergeBase, pull.GetGitHeadRefName(), false, false)
 		if err != nil {
-			if strings.Contains(err.Error(), "fatal: Not a valid object name") {
+			if strings.Contains(err.Error(), "fatal: Not a valid object name") || strings.Contains(err.Error(), "unknown revision or path not in the working tree") ||
+				strings.Contains(err.Error(), "fatal: bad revision") { // DCS Customizations
 				ctx.Data["IsPullRequestBroken"] = true
 				ctx.Data["BaseTarget"] = pull.BaseBranch
 				ctx.Data["NumCommits"] = 0
@@ -524,7 +526,8 @@ func prepareViewPullInfo(ctx *context.Context, issue *issues_model.Issue) *pull_
 	compareInfo, err := pull_service.GetCompareInfo(ctx, pull.BaseRepo, pull.BaseRepo, baseGitRepo,
 		git.BranchPrefix+pull.BaseBranch, pull.GetGitHeadRefName(), false, false)
 	if err != nil {
-		if strings.Contains(err.Error(), "fatal: Not a valid object name") {
+		if strings.Contains(err.Error(), "fatal: Not a valid object name") || strings.Contains(err.Error(), "unknown revision or path not in the working tree") ||
+			strings.Contains(err.Error(), "fatal: bad revision") { // DCS Customizations
 			ctx.Data["IsPullRequestBroken"] = true
 			ctx.Data["BaseTarget"] = pull.BaseBranch
 			ctx.Data["NumCommits"] = 0
