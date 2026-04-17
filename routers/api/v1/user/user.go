@@ -33,6 +33,46 @@ func Search(ctx *context.APIContext) {
 	//   description: ID of the user to search for
 	//   type: integer
 	//   format: int64
+	// - name: lang
+	//   in: query
+	//   description: has repos of the given language. Multiple values are ORed.
+	//   type: array
+	//   collectionFormat: multi
+	//   items:
+	//     type: string
+	// - name: is_gl
+	//   in: query
+	//   description: has repos with a repo that is or is not a gateway language.
+	//   type: boolean
+	// - name: subject
+	//   in: query
+	//   description: has repos with the given subject. Multiple values are ORed.
+	//   type: array
+	//   collectionFormat: multi
+	//   items:
+	//     type: string
+	// - name: flavorType
+	//   in: query
+	//   description: org has repos of given flavorType. Multiple values are ORed.
+	//   type: array
+	//   collectionFormat: multi
+	//   items:
+	//     type: string
+	// - name: flavor
+	//   in: query
+	//   description: has repos of given flavor. Multiple values are ORed.
+	//   type: array
+	//   collectionFormat: multi
+	//   items:
+	//     type: string
+	// - name: metadataType
+	//   in: query
+	//   description: has repos of given metadataType. Multiple values are ORed.
+	//   type: array
+	//   collectionFormat: multi
+	//   items:
+	//     type: string
+	//     enum: [rc,sb,tc,ts]
 	// - name: page
 	//   in: query
 	//   description: page number of results to return (1-based)
@@ -81,6 +121,14 @@ func Search(ctx *context.APIContext) {
 			SearchByEmail: true,
 			Visible:       visible,
 			ListOptions:   listOptions,
+			// DCS Customizations
+			RepoLanguages:     ctx.FormStrings("lang"),
+			RepoSubjects:      ctx.FormStrings("subject"),
+			RepoMetadataTypes: ctx.FormStrings("metadataType"),
+			RepoFlavorTypes:   ctx.FormStrings("flavorType"),
+			RepoFlavors:       ctx.FormStrings("flavor"),
+			RepoLanguageIsGL:  ctx.FormOptionalBool("is_gl"),
+			// END DCS Customizations
 		})
 		if err != nil {
 			ctx.JSON(http.StatusInternalServerError, map[string]any{

@@ -370,6 +370,13 @@ func NotificationWatching(ctx *context.Context) {
 		ctx.ServerError("SearchRepository", err)
 		return
 	}
+	/*** DCS Customizations ***/
+	err = repos.LoadLatestDMs(ctx)
+	if err != nil {
+		log.Error("LoadLatestDMs: unable to load DMs for repos")
+	}
+	/*** END DCS Customizations ***/
+
 	ctx.Data["Total"] = count
 	ctx.Data["Repos"] = repos
 

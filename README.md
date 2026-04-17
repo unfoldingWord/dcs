@@ -1,11 +1,11 @@
-# Gitea
+# DCS (Gitea fork)
 
-[![](https://github.com/go-gitea/gitea/actions/workflows/release-nightly.yml/badge.svg?branch=main)](https://github.com/go-gitea/gitea/actions/workflows/release-nightly.yml?query=branch%3Amain "Release Nightly")
+[![](https://github.com/unfoldingword/dcs/actions/workflows/release-nightly.yml/badge.svg?branch=main)](https://github.com/unfoldingword/dcs/actions/workflows/release-nightly.yml?query=branch%3Amain "Release Nightly")
 [![](https://img.shields.io/discord/322538954119184384.svg?logo=discord&logoColor=white&label=Discord&color=5865F2)](https://discord.gg/Gitea "Join the Discord chat at https://discord.gg/Gitea")
 [![](https://goreportcard.com/badge/code.gitea.io/gitea)](https://goreportcard.com/report/code.gitea.io/gitea "Go Report Card")
 [![](https://pkg.go.dev/badge/code.gitea.io/gitea?status.svg)](https://pkg.go.dev/code.gitea.io/gitea "GoDoc")
-[![](https://img.shields.io/github/release/go-gitea/gitea.svg)](https://github.com/go-gitea/gitea/releases/latest "GitHub release")
-[![](https://www.codetriage.com/go-gitea/gitea/badges/users.svg)](https://www.codetriage.com/go-gitea/gitea "Help Contribute to Open Source")
+[![](https://img.shields.io/github/release/unfoldingword/dcs.svg)](https://github.com/unfoldingword/dcs/releases/latest "GitHub release")
+[![](https://www.codetriage.com/unfoldingword/dcs/badges/users.svg)](https://www.codetriage.com/unfoldingword/dcs "Help Contribute to Open Source")
 [![](https://opencollective.com/gitea/tiers/backers/badge.svg?label=backers&color=brightgreen)](https://opencollective.com/gitea "Become a backer/sponsor of gitea")
 [![](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT "License: MIT")
 [![](https://badges.crowdin.net/gitea/localized.svg)](https://translate.gitea.com "Crowdin")
@@ -100,7 +100,7 @@ If you have questions that are not covered by the [documentation](https://docs.g
 ## Authors
 
 - [Maintainers](https://github.com/orgs/go-gitea/people)
-- [Contributors](https://github.com/go-gitea/gitea/graphs/contributors)
+- [Contributors](https://github.com/unfoldingword/dcs/graphs/contributors)
 - [Translators](options/locale/TRANSLATORS)
 
 ## Backers
@@ -141,7 +141,7 @@ In the [release log](https://github.com/go-gitea/gitea/releases) or the [change 
 ## License
 
 This project is licensed under the MIT License.
-See the [LICENSE](https://github.com/go-gitea/gitea/blob/main/LICENSE) file
+See the [LICENSE](https://github.com/unfoldingword/dcs/blob/main/LICENSE) file
 for the full license text.
 
 ## Further information

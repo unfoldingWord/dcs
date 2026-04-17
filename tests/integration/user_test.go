@@ -172,6 +172,12 @@ func TestRenameReservedUsername(t *testing.T) {
 	reservedUsernames := []string{
 		// ".", "..", ".well-known", // The names are not only reserved but also invalid
 		"api",
+		/*** DCS Customizations ***/
+		"about",
+		"catalog",
+		"tools",
+		/*** END DCS Customizations ***/
+
 		"name.keys",
 	}
 

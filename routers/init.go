@@ -38,7 +38,9 @@ import (
 	"code.gitea.io/gitea/services/auth"
 	"code.gitea.io/gitea/services/auth/source/oauth2"
 	"code.gitea.io/gitea/services/automerge"
+	"code.gitea.io/gitea/services/convertrc2sb" // DCS Customizations
 	"code.gitea.io/gitea/services/cron"
+	"code.gitea.io/gitea/services/door43metadata" // DCS Customizations
 	feed_service "code.gitea.io/gitea/services/feed"
 	indexer_service "code.gitea.io/gitea/services/indexer"
 	"code.gitea.io/gitea/services/mailer"
@@ -52,6 +54,7 @@ import (
 	release_service "code.gitea.io/gitea/services/release"
 	repo_service "code.gitea.io/gitea/services/repository"
 	"code.gitea.io/gitea/services/repository/archiver"
+	"code.gitea.io/gitea/services/repository/sbarchiver"
 	"code.gitea.io/gitea/services/task"
 	"code.gitea.io/gitea/services/uinotification"
 	"code.gitea.io/gitea/services/webhook"
@@ -130,6 +133,11 @@ func InitWebInstalled(ctx context.Context) {
 	mustInit(feed_service.Init)
 	mustInit(uinotification.Init)
 	mustInitCtx(ctx, archiver.Init)
+	mustInitCtx(ctx, sbarchiver.Init)
+	/*** DCS Customizations ***/
+	mustInitCtx(ctx, door43metadata.Init)
+	mustInitCtx(ctx, convertrc2sb.Init)
+	/*** END DCS Customizations ***/
 
 	external.RegisterRenderers()
 	markup.Init(markup_service.FormalRenderHelperFuncs())

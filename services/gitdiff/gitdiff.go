@@ -460,6 +460,8 @@ type DiffFile struct {
 	IsViewed                  bool // User specific
 	HasChangedSinceLastReview bool // User specific
 
+	Entry *git.TreeEntry // DCS Customizations
+
 	// for render purpose only, will be filled by the extra loop in GitDiffForRender, the maps of lines are 0-based
 	language              diffVarMutable[string]
 	highlightRender       diffVarMutable[chroma.Lexer] // cache render (atm: lexer) for current file, only detect once for line-by-line mode

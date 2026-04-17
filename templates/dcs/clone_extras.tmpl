@@ -1,0 +1,4 @@
+{{if and .RepoDM (eq .RepoDM.MetadataType "rc")}}
+	<a class="item muted archive-link" href="{{.RepoLink}}/sb/{{PathEscapeSegments .RefFullName.ShortName}}.zip" rel="nofollow">{{svg "octicon-file-zip"}} {{ctx.Locale.Tr "repo.convert_to_sb_zip"}}</a>
+	<a class="item muted archive-link" href="{{.RepoLink}}/sb/{{PathEscapeSegments .RefFullName.ShortName}}.tar.gz" rel="nofollow">{{svg "octicon-file-zip"}} {{ctx.Locale.Tr "repo.convert_to_sb_tar"}}</a>
+{{end}}

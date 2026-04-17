@@ -1,0 +1,61 @@
+{{template "base/head" .}}
+<style>
+	.status-item {
+		padding: 10px;
+		margin-bottom: 10px;
+		border-radius: 5px;
+		border: 2px solid;
+		color: var(--color-black);
+	}
+	.show-panel {
+		cursor: pointer;
+	}
+	.status-item.error {
+		background-color: #ffcccc;
+		border-color: #cc0000;
+	}
+	.status-item.warning {
+		background-color: #ffebcc;
+		border-color: #cc7a00;
+	}
+	.status-item.info {
+		background-color: #cce5ff;
+		border-color: #004085;
+	}
+	.status-item.success {
+		background-color: #d4edda;
+		border-color: #155724;
+	}
+	.item-text {
+		padding-left: 20px;
+		margin-top: 10px;
+	}
+</style>
+<div role="main" aria-label="{{.Title}}" class="page-content repository settings">
+	{{template "repo/header" .}}
+	{{template "base/alert" .}}
+	<div class="ui container">
+		<h2 class="ui header metadata-header">
+			{{ctx.Locale.Tr "repo.metadata.healthcheck"}} {{svg "octicon-shield-check"}}
+		</h2>
+		<div class="repo-metadata-content">
+			<h4 class="ui top attached header">
+				{{ctx.Locale.Tr "repo.metadata.overall_healthcheck"}}
+				<div class="ui right">
+						<a class="ui teal tiny button" href="{{.RepoLink}}/metadata">{{ctx.Locale.Tr "repo.metadata.see_all_branches_releases"}} &gt;</a>
+				</div>
+			</h4>
+			<div class="ui attached segment">
+				{{if .Repo.DefaultBranchDM}}
+					{{template "repo/dcs_healthcheck_list" (dict "ctxData" . "Door43Metadata" .Repo.DefaultBranchDM)}}
+				{{else}}
+					<span>
+						No Health Check could be performed for this Repository.
+						Click&nbsp;<a href="{{.RepoLink}}/metadata/update">update</a>&nbsp;to scan the repo.
+					</span>
+				{{end}}
+			</div>
+		</div>
+	</div>
+</div>
+{{template "base/footer" .}}

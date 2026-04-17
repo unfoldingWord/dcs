@@ -10,6 +10,7 @@ import (
 	repo_model "code.gitea.io/gitea/models/repo"
 	"code.gitea.io/gitea/modules/log"
 	"code.gitea.io/gitea/services/context"
+	notify_service "code.gitea.io/gitea/services/notify" // DCS Customizations
 )
 
 // TopicsPost response for creating repository
@@ -53,6 +54,11 @@ func TopicsPost(ctx *context.Context) {
 		})
 		return
 	}
+
+	/*** DCS Customizations ***/
+	ctx.Repo.Repository.Topics = validTopics
+	notify_service.RepoTopicsChanged(ctx, ctx.Doer, ctx.Repo.Repository)
+	/*** END DCS Customizations ***/
 
 	ctx.JSON(http.StatusOK, map[string]any{
 		"status": "ok",

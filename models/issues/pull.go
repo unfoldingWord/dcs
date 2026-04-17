@@ -9,6 +9,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"strconv" // DCS Customizations
 	"strings"
 
 	"code.gitea.io/gitea/models/db"
@@ -104,6 +105,30 @@ const (
 	PullRequestStatusEmpty
 	PullRequestStatusAncestor
 )
+
+/*** DCS Customizations ***/
+func (status PullRequestStatus) String() string {
+	switch status {
+	case PullRequestStatusConflict:
+		return "CONFLICT"
+	case PullRequestStatusChecking:
+		return "CHECKING"
+	case PullRequestStatusMergeable:
+		return "MERGEABLE"
+	case PullRequestStatusManuallyMerged:
+		return "MANUALLY_MERGED"
+	case PullRequestStatusError:
+		return "ERROR"
+	case PullRequestStatusEmpty:
+		return "EMPTY"
+	case PullRequestStatusAncestor:
+		return "ANCESTOR"
+	default:
+		return strconv.Itoa(int(status))
+	}
+}
+
+/*** END DCS Customizations ***/
 
 // PullRequestFlow the flow of pull request
 type PullRequestFlow int

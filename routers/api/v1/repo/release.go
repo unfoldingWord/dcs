@@ -107,12 +107,20 @@ func GetLatestRelease(ctx *context.APIContext) {
 	//   description: name of the repo
 	//   type: string
 	//   required: true
+	// - name: pre-release
+	//   in: query
+	//   description: include pre-release as latest if one is newer than prod release. Default is false
+	//   type: boolean
+	// - name: in-catalog
+	//   in: query
+	//   description: show only the latest release that is a valid catalog entry. Default is false
+	//   type: boolean
 	// responses:
 	//   "200":
 	//     "$ref": "#/responses/Release"
 	//   "404":
 	//     "$ref": "#/responses/notFound"
-	release, err := repo_model.GetLatestReleaseByRepoID(ctx, ctx.Repo.Repository.ID)
+	release, err := repo_model.GetLatestReleaseByRepoID(ctx, ctx.Repo.Repository.ID, ctx.FormBool("pre-release"), ctx.FormOptionalBool("in-catalog"))
 	if err != nil && !repo_model.IsErrReleaseNotExist(err) {
 		ctx.APIErrorInternal(err)
 		return
@@ -156,6 +164,10 @@ func ListReleases(ctx *context.APIContext) {
 	//   in: query
 	//   description: filter (exclude / include) pre-releases
 	//   type: boolean
+	// - name: in-catalog
+	//   in: query
+	//   description: show only releases that are valid catalog entries. Default is false
+	//   type: boolean
 	// - name: page
 	//   in: query
 	//   description: page number of results to return (1-based)
@@ -180,6 +192,9 @@ func ListReleases(ctx *context.APIContext) {
 		IsDraft:       ctx.FormOptionalBool("draft"),
 		IsPreRelease:  ctx.FormOptionalBool("pre-release"),
 		RepoID:        ctx.Repo.Repository.ID,
+		/*** DCS Customizations ***/
+		InCatalog: ctx.FormOptionalBool("in-catalog"),
+		/*** END DCS Customizations ***/
 	}
 
 	releases, err := db.Find[repo_model.Release](ctx, opts)
