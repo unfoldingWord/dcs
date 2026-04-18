@@ -47,7 +47,7 @@ func InitDoor43Metadata(ctx context.Context) error {
 // Door43Metadata represents the metadata of repository's release or default branch (ReleaseID = 0).
 type Door43Metadata struct {
 	ID                  int64                       `xorm:"pk autoincr"`
-	RepoID              int64                       `xorm:"INDEX UNIQUE(repo_ref) NOT NULL"`
+	RepoID              int64                       `xorm:"INDEX UNIQUE(repo_ref) index(repo_stage_latest_date) NOT NULL"`
 	Repo                *Repository                 `xorm:"-"`
 	ReleaseID           int64                       `xorm:"NOT NULL"`
 	Release             *Release                    `xorm:"-"`
@@ -55,7 +55,7 @@ type Door43Metadata struct {
 	RefType             string                      `xorm:"NOT NULL"`
 	CommitSHA           string                      `xorm:"NOT NULL VARCHAR(40)"`
 	Commit              *git.Commit                 `xorm:"-"`
-	Stage               door43metadata.Stage        `xorm:"INDEX NOT NULL"`
+	Stage               door43metadata.Stage        `xorm:"INDEX index(latest_stage) index(repo_stage_latest_date) NOT NULL"`
 	MetadataType        string                      `xorm:"INDEX NOT NULL"`
 	MetadataVersion     string                      `xorm:"NOT NULL"`
 	Subject             string                      `xorm:"INDEX NOT NULL"`
@@ -72,13 +72,13 @@ type Door43Metadata struct {
 	CheckingLevel       int                         `xorm:"NOT NULL"`
 	Ingredients         []*structs.Ingredient       `xorm:"JSON"`
 	Relations           []*structs.Relation         `xorm:"JSON"`
-	IsLatestForStage    bool                        `xorm:"INDEX NOT NULL DEFAULT false"`
+	IsLatestForStage    bool                        `xorm:"INDEX index(latest_stage) index(repo_stage_latest_date) NOT NULL DEFAULT false"`
 	IsRepoMetadata      bool                        `xorm:"INDEX NOT NULL DEFAULT false"`
 	Metadata            map[string]any              `xorm:"JSON MEDIUMTEXT"`
 	ValidationError     *jsonschema.ValidationError `xorm:"JSON MEDIUMTEXT"`
 	HealthcheckSeverity SeverityLevel               `xorm:"NULL DEFAULT NULL"`
 	HealthcheckCounts   map[SeverityLevel]int       `xorm:"JSON"`
-	ReleaseDateUnix     timeutil.TimeStamp          `xorm:"NOT NULL"`
+	ReleaseDateUnix     timeutil.TimeStamp          `xorm:"INDEX index(repo_stage_latest_date) NOT NULL"`
 	CreatedUnix         timeutil.TimeStamp          `xorm:"INDEX created NOT NULL"`
 	UpdatedUnix         timeutil.TimeStamp          `xorm:"INDEX updated"`
 }
