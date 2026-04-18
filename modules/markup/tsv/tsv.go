@@ -33,7 +33,7 @@ func (Renderer) Name() string {
 
 // FileNamePatterns implements markup.Renderer
 func (Renderer) FileNamePatterns() []string {
-	return []string{".tsv"}
+	return []string{"*.tsv"}
 }
 
 // NeedPostProcess implements markup.Renderer

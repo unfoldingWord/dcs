@@ -347,9 +347,9 @@ func RetrieveTemplateRepo(ctx *Context, repo *repo_model.Repository) {
 		return
 	}
 
-	perm, err := access_model.GetUserRepoPermission(ctx, templateRepo, ctx.Doer)
+	perm, err := access_model.GetDoerRepoPermission(ctx, templateRepo, ctx.Doer)
 	if err != nil {
-		ctx.ServerError("GetUserRepoPermission", err)
+		ctx.ServerError("GetDoerRepoPermission", err)
 		return
 	}
 
@@ -424,9 +424,9 @@ func repoAssignment(ctx *Context, repo *repo_model.Repository) {
 	if ctx.DoerNeedTwoFactorAuth() {
 		ctx.Repo.Permission = access_model.PermissionNoAccess()
 	} else {
-		ctx.Repo.Permission, err = access_model.GetUserRepoPermission(ctx, repo, ctx.Doer)
+		ctx.Repo.Permission, err = access_model.GetDoerRepoPermission(ctx, repo, ctx.Doer)
 		if err != nil {
-			ctx.ServerError("GetUserRepoPermission", err)
+			ctx.ServerError("GetDoerRepoPermission", err)
 			return
 		}
 	}

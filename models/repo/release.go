@@ -105,12 +105,7 @@ func (r *Release) LoadRepo(ctx context.Context) (err error) {
 	}
 
 	r.Repo, err = GetRepositoryByID(ctx, r.RepoID)
-	return err
-}
-
-// LoadAttributes load repo and publisher attributes for a release
-func (r *Release) LoadAttributes(ctx context.Context) (err error) {
-	if err := r.LoadRepo(ctx); err != nil {
+	if err != nil {
 		return err
 	}
 
@@ -126,6 +121,15 @@ func (r *Release) LoadAttributes(ctx context.Context) (err error) {
 		}
 	}
 	/*** END DCS Customizations ***/
+	return nil
+}
+
+// LoadAttributes load repo and publisher attributes for a release
+func (r *Release) LoadAttributes(ctx context.Context) (err error) {
+	if err := r.LoadRepo(ctx); err != nil {
+		return err
+	}
+
 	if r.Publisher == nil {
 		r.Publisher, err = user_model.GetUserByID(ctx, r.PublisherID)
 		if err != nil {

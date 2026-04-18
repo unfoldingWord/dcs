@@ -899,7 +899,7 @@ func GetCatalogEntry(ctx *context.APIContext) {
 		ctx.APIError(http.StatusInternalServerError, err)
 		return
 	}
-	perm, err := access_model.GetUserRepoPermission(ctx, dm.Repo, ctx.ContextUser)
+	perm, err := access_model.GetDoerRepoPermission(ctx, dm.Repo, ctx.ContextUser)
 	if err != nil {
 		ctx.APIError(http.StatusInternalServerError, err)
 		return
@@ -1122,7 +1122,7 @@ func searchCatalog(ctx *context.APIContext) {
 				return
 			}
 		}
-		perm, err := access_model.GetUserRepoPermission(ctx, dm.Repo, ctx.ContextUser)
+		perm, err := access_model.GetDoerRepoPermission(ctx, dm.Repo, ctx.ContextUser)
 		if err != nil {
 			ctx.APIError(http.StatusInternalServerError, err)
 			return
@@ -1299,7 +1299,7 @@ func getCatalogBookPackage(ctx *context.APIContext) {
 			ctx.APIError(http.StatusInternalServerError, err)
 			return
 		}
-		perm, err := access_model.GetUserRepoPermission(ctx, dmModel.Repo, ctx.ContextUser)
+		perm, err := access_model.GetDoerRepoPermission(ctx, dmModel.Repo, ctx.ContextUser)
 		if err != nil {
 			ctx.APIError(http.StatusInternalServerError, err)
 			return

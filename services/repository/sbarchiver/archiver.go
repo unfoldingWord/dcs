@@ -304,13 +304,8 @@ func cloneRepositoryAtCommit(ctx context.Context, sourceRepoPath, refShortName, 
 }
 
 func checkoutCommit(ctx context.Context, repoPath, commitID string) error {
-	err := gitcmd.NewCommand("checkout", "--detach").AddDynamicArguments(commitID).
-		WithDir(repoPath).
-		Run(ctx)
-	if err != nil {
-		return fmt.Errorf("git checkout --detach %s in %s: %w", commitID, repoPath, err)
-	}
-	return nil
+	return gitcmd.NewCommand("checkout", "--detach").AddDynamicArguments(commitID).
+		WithDir(repoPath).RunWithStderr(ctx)
 }
 
 func writeDirectoryArchive(ctx context.Context, sourceDir, prefixDir string, archiveType repo_model.ArchiveType, w io.Writer) error {
@@ -629,7 +624,7 @@ func ServeRepoSBArchive(ctx *gitea_context.Base, repo *repo_model.Repository, ar
 	downloadName := repo.Name + "-" + archiveReq.GetArchiveName()
 
 	if setting.Repository.StreamArchives {
-		httplib.ServeSetHeaders(ctx.Resp, &httplib.ServeHeaderOptions{Filename: downloadName})
+		httplib.ServeSetHeaders(ctx.Resp, httplib.ServeHeaderOptions{Filename: downloadName})
 		if err := archiveReq.Stream(ctx, repo, ctx.Resp); err != nil && !ctx.Written() {
 			if errors.Is(err, ErrRepoNotRC{}) {
 				ctx.HTTPError(http.StatusNotFound)
@@ -669,7 +664,7 @@ func ServeRepoSBArchive(ctx *gitea_context.Base, repo *repo_model.Repository, ar
 	}
 	defer fr.Close()
 
-	ctx.ServeContent(fr, &gitea_context.ServeHeaderOptions{
+	ctx.ServeContent(fr, gitea_context.ServeHeaderOptions{
 		Filename:     downloadName,
 		LastModified: archiver.CreatedUnix.AsLocalTime(),
 	})
