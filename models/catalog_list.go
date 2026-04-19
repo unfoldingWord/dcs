@@ -64,17 +64,16 @@ func SearchCatalogByCondition(ctx context.Context, opts *door43metadata.SearchCa
 	}
 
 	// CTE filters first (using indexes), then ranks — avoids full-table derived table materialization
-	cteSQL := `WITH catalog_filtered AS (
-  SELECT dm.*,
-         r.lower_name AS lower_name, r.num_stars, r.num_forks,
-         COUNT(*) OVER (PARTITION BY dm.repo_id) AS release_count` + rnSelect + `
-  FROM `door43_metadata` dm
-  INNER JOIN `repository` r ON r.id = dm.repo_id
-  INNER JOIN `user` u ON r.owner_id = u.id
-  LEFT JOIN `release` rel ON rel.id = dm.release_id
-  WHERE ` + condSQL + `
-)
-`
+	// Note: "release" is a MySQL reserved word and must be backtick-quoted in raw SQL.
+	cteSQL := "WITH catalog_filtered AS (\n" +
+		"  SELECT dm.*,\n" +
+		"         r.lower_name AS lower_name, r.num_stars, r.num_forks,\n" +
+		"         COUNT(*) OVER (PARTITION BY dm.repo_id) AS release_count" + rnSelect + "\n" +
+		"  FROM door43_metadata dm\n" +
+		"  INNER JOIN repository r ON r.id = dm.repo_id\n" +
+		"  INNER JOIN user u ON r.owner_id = u.id\n" +
+		"  LEFT JOIN `release` rel ON rel.id = dm.release_id\n" +
+		"  WHERE " + condSQL + "\n)\n"
 	var count int64
 	if _, err = db.GetEngine(ctx).SQL(cteSQL+`SELECT COUNT(*) FROM catalog_filtered `+rnFilter, condArgs...).Get(&count); err != nil {
 		return nil, 0, fmt.Errorf("count: %v", err)
