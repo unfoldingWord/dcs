@@ -68,10 +68,10 @@ func SearchCatalogByCondition(ctx context.Context, opts *door43metadata.SearchCa
   SELECT dm.*,
          r.lower_name AS lower_name, r.num_stars, r.num_forks,
          COUNT(*) OVER (PARTITION BY dm.repo_id) AS release_count` + rnSelect + `
-  FROM door43_metadata dm
-  INNER JOIN repository r ON r.id = dm.repo_id
-  INNER JOIN user u ON r.owner_id = u.id
-  LEFT JOIN release rel ON rel.id = dm.release_id
+  FROM `door43_metadata` dm
+  INNER JOIN `repository` r ON r.id = dm.repo_id
+  INNER JOIN `user` u ON r.owner_id = u.id
+  LEFT JOIN `release` rel ON rel.id = dm.release_id
   WHERE ` + condSQL + `
 )
 `
