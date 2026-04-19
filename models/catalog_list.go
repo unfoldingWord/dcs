@@ -30,61 +30,85 @@ func SearchCatalogByCondition(ctx context.Context, opts *door43metadata.SearchCa
 	if opts.PageSize < 0 {
 		opts.PageSize = 0
 	}
-
 	if len(opts.OrderBy) == 0 {
 		opts.OrderBy = []door43metadata.CatalogOrderBy{door43metadata.CatalogOrderByNewest}
 	}
 
-	var dms repo.Door43MetadataList
-	if opts.PageSize > 0 {
-		dms = make(repo.Door43MetadataList, 0, opts.PageSize)
-	}
-
-	releaseInfoInner, err := builder.Select("`door43_metadata`.repo_id", "COUNT(*) AS release_count", "MAX(`door43_metadata`.release_date_unix) AS latest_unix").
-		From("door43_metadata").
-		GroupBy("`door43_metadata`.repo_id").
-		Where(builder.Gt{"`door43_metadata`.release_date_unix": 0}).
-		Where(door43metadata.GetStageCond(opts.Stage)).
-		ToBoundSQL()
+	// Convert builder condition to parameterized SQL
+	condSQL, condArgs, err := builder.ToSQL(cond)
 	if err != nil {
 		return nil, 0, err
 	}
 
-	releaseInfoOuter, err := builder.Select("`door43_metadata`.repo_id", "MAX(release_count) AS release_count", "MAX(latest_unix) AS latest_unix", "MIN(stage) AS latest_stage").
-		From("door43_metadata").
-		Join("INNER", "("+releaseInfoInner+") release_info_inner", "`release_info_inner`.repo_id = `door43_metadata`.repo_id AND `door43_metadata`.release_date_unix = `release_info_inner`.latest_unix").
-		GroupBy("`door43_metadata`.repo_id").
-		ToBoundSQL()
-	if err != nil {
-		return nil, 0, err
-	}
+	// Translate table references to match CTE aliases (dm, r, u, rel)
+	condSQL = strings.ReplaceAll(condSQL, "`door43_metadata`.", "dm.")
+	condSQL = strings.ReplaceAll(condSQL, "`repository`.", "r.")
+	condSQL = strings.ReplaceAll(condSQL, "`user`.", "u.")
+	condSQL = strings.ReplaceAll(condSQL, "`release`.", "rel.")
 
-	releaseInfoJoinCondition := "release_info.repo_id = `door43_metadata`.repo_id"
+	// Translate ORDER BY column references for the outer query (no table prefix needed)
+	orderParts := make([]string, 0, len(opts.OrderBy))
+	for _, ob := range opts.OrderBy {
+		s := strings.ReplaceAll(ob.String(), "`door43_metadata`.", "")
+		s = strings.ReplaceAll(s, "`repository`.", "")
+		orderParts = append(orderParts, s)
+	}
+	orderSQL := strings.Join(orderParts, ", ")
+
+	// When not including history, use ROW_NUMBER to pick the best (latest, lowest stage) row per repo
+	rnSelect := ""
+	rnFilter := ""
 	if !opts.IncludeHistory {
-		releaseInfoJoinCondition += " AND release_info.latest_unix = `door43_metadata`.release_date_unix AND release_info.latest_stage = `door43_metadata`.stage"
+		rnSelect = ",\n         ROW_NUMBER() OVER (PARTITION BY dm.repo_id ORDER BY dm.release_date_unix DESC, dm.stage ASC) AS _rn"
+		rnFilter = "WHERE _rn = 1\n"
 	}
 
-	sess := db.GetEngine(ctx).
-		Join("INNER", "repository", "`repository`.id = `door43_metadata`.repo_id").
-		Join("INNER", "user", "`repository`.owner_id = `user`.id").
-		Join("LEFT", "release", "`release`.id = `door43_metadata`.release_id").
-		Join("INNER", "("+releaseInfoOuter+") release_info", releaseInfoJoinCondition).
-		Where(cond)
-
-	for _, orderBy := range opts.OrderBy {
-		sess.OrderBy(orderBy.String())
+	// CTE filters first (using indexes), then ranks — avoids full-table derived table materialization
+	cteSQL := `WITH catalog_filtered AS (
+  SELECT dm.*,
+         r.lower_name AS lower_name, r.num_stars, r.num_forks,
+         COUNT(*) OVER (PARTITION BY dm.repo_id) AS release_count` + rnSelect + `
+  FROM door43_metadata dm
+  INNER JOIN repository r ON r.id = dm.repo_id
+  INNER JOIN user u ON r.owner_id = u.id
+  LEFT JOIN release rel ON rel.id = dm.release_id
+  WHERE ` + condSQL + `
+)
+`
+	var count int64
+	if _, err = db.GetEngine(ctx).SQL(cteSQL+`SELECT COUNT(*) FROM catalog_filtered `+rnFilter, condArgs...).Get(&count); err != nil {
+		return nil, 0, fmt.Errorf("count: %v", err)
 	}
 
-	if opts.PageSize > 0 || opts.Page > 1 {
-		sess.Limit(opts.PageSize, (opts.Page-1)*opts.PageSize)
-	}
-	count, err := sess.FindAndCount(&dms)
-	if err != nil {
-		return nil, 0, fmt.Errorf("FindAndCount: %v", err)
-	}
+	var dms repo.Door43MetadataList
+	if count > 0 {
+		if opts.PageSize > 0 {
+			dms = make(repo.Door43MetadataList, 0, opts.PageSize)
+		}
 
-	if err = dms.LoadAttributes(ctx); err != nil {
-		return nil, 0, fmt.Errorf("LoadAttributes: %v", err)
+		limitSQL := ""
+		if opts.PageSize > 0 || opts.Page > 1 {
+			limitSQL = fmt.Sprintf("\nLIMIT %d OFFSET %d", opts.PageSize, (opts.Page-1)*opts.PageSize)
+		}
+
+		dataSQL := cteSQL + `SELECT id, repo_id, release_id, ref, ref_type, commit_sha, stage,
+  metadata_type, metadata_version, subject, flavor_type, flavor,
+  abbreviation, title, publisher, language, language_title,
+  language_direction, language_is_gl, content_format, checking_level,
+  ingredients, relations, is_latest_for_stage, is_repo_metadata,
+  metadata, validation_error, healthcheck_severity, healthcheck_counts,
+  release_date_unix, created_unix, updated_unix,
+  lower_name, num_stars, num_forks, release_count
+FROM catalog_filtered
+` + rnFilter + `ORDER BY ` + orderSQL + limitSQL
+
+		if err = db.GetEngine(ctx).SQL(dataSQL, condArgs...).Find(&dms); err != nil {
+			return nil, 0, fmt.Errorf("find: %v", err)
+		}
+
+		if err = dms.LoadAttributes(ctx); err != nil {
+			return nil, 0, fmt.Errorf("LoadAttributes: %v", err)
+		}
 	}
 
 	return dms, count, nil
