@@ -365,14 +365,15 @@ func GetLanguageCond(languages []string, partialMatch bool) builder.Cond {
 	langCond := builder.NewCond()
 	for _, lang := range languages {
 		for v := range strings.SplitSeq(lang, ",") {
+			lv := strings.TrimSpace(v)
 			if partialMatch {
 				langCond = langCond.
-					Or(builder.Like{"`door43_metadata`.language", strings.TrimSpace(v)}).
-					Or(builder.Like{"CONCAT(SUBSTRING_INDEX(`repository`.lower_name, '_', 1), '_')", strings.TrimSpace(v) + "\\_"})
+					Or(builder.Like{"`door43_metadata`.language", lv}).
+					Or(builder.Expr("`repository`.lower_name LIKE ?", "%"+lv+"\\_%")) // %lang\_% — contains "lang_"
 			} else {
 				langCond = langCond.
-					Or(builder.Eq{"`door43_metadata`.language": strings.TrimSpace(v)}).
-					Or(builder.Eq{"CONCAT(SUBSTRING_INDEX(`repository`.lower_name, '_', 1), '_')": strings.TrimSpace(v) + "_"})
+					Or(builder.Eq{"`door43_metadata`.language": lv}).
+					Or(builder.Expr("`repository`.lower_name LIKE ?", lv+"\\_%")) // lang\_% — starts with "lang_"
 			}
 		}
 	}
