@@ -127,11 +127,17 @@ func SearchDoor43MetadataFieldByCondition(ctx context.Context, opts *door43metad
 		field = "`door43_metadata`." + field
 	}
 
+	// Only join user when the selected field or conditions actually reference it — avoids unnecessary join overhead
+	condSQL, _, _ := builder.ToSQL(cond)
+	needsUserJoin := strings.Contains(field, "`user`.") || strings.Contains(condSQL, "`user`.")
+
 	sess := db.GetEngine(ctx).Table("door43_metadata").
 		Distinct(field).
-		Join("INNER", "repository", "`repository`.id = `door43_metadata`.repo_id").
-		Join("INNER", "user", "`repository`.owner_id = `user`.id").
-		Where(cond).
+		Join("INNER", "repository", "`repository`.id = `door43_metadata`.repo_id")
+	if needsUserJoin {
+		sess.Join("INNER", "user", "`repository`.owner_id = `user`.id")
+	}
+	sess.Where(cond).
 		And(builder.Neq{field: ""}).
 		OrderBy(field)
 
