@@ -260,7 +260,7 @@ func ToActionWorkflowRun(ctx context.Context, repo *repo_model.Repository, run *
 		RunNumber:    run.Index,
 		StartedAt:    run.Started.AsLocalTime(),
 		CompletedAt:  run.Stopped.AsLocalTime(),
-		Event:        string(run.Event),
+		Event:        run.TriggerEvent,
 		DisplayTitle: run.Title,
 		HeadBranch:   git.RefName(run.Ref).BranchName(),
 		HeadSha:      run.CommitSHA,
@@ -802,7 +802,7 @@ func ToOAuth2Application(app *auth.OAuth2Application) *api.OAuth2Application {
 
 // ToLFSLock convert a LFSLock to api.LFSLock
 func ToLFSLock(ctx context.Context, l *git_model.LFSLock) *api.LFSLock {
-	u, err := user_model.GetPossibleUserByID(ctx, l.OwnerID)
+	_, u, err := user_model.GetPossibleUserByID(ctx, l.OwnerID)
 	if err != nil {
 		return nil
 	}
