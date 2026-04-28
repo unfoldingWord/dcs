@@ -760,6 +760,8 @@ github.com/unfoldingWord/go-rc2sb v0.1.0 h1:GKfZwfyi+DN4bTorPVFkWI95A7ldnCGgSBoV
 github.com/unfoldingWord/go-rc2sb v0.1.0/go.mod h1:ojNDTbFpJ4sVpmrDbxJesVQg6pWgH/NnecdidHYJSyE=
 github.com/unfoldingWord/go-rc2sb v0.2.0 h1:sTMC0IxCQkM8Sy8h2pGRAEtHJ6XRvBEuZYgb8joxC5w=
 github.com/unfoldingWord/go-rc2sb v0.2.0/go.mod h1:ojNDTbFpJ4sVpmrDbxJesVQg6pWgH/NnecdidHYJSyE=
+github.com/unfoldingWord/go-rc2sb v0.2.1 h1:259dbBOX0e2D7UumWPOUFX9z83NpY+GYwG/QJb0PIhw=
+github.com/unfoldingWord/go-rc2sb v0.2.1/go.mod h1:ojNDTbFpJ4sVpmrDbxJesVQg6pWgH/NnecdidHYJSyE=
 github.com/unknwon/com v1.0.1 h1:3d1LTxD+Lnf3soQiD4Cp/0BRB+Rsa/+RTvz8GMMzIXs=
 github.com/unknwon/com v1.0.1/go.mod h1:tOOxU81rwgoCLoOVVPHb6T/wt8HZygqH5id+GNnlCXM=
 github.com/urfave/cli-docs/v3 v3.0.0-alpha6 h1:w/l/N0xw1rO/aHRIGXJ0lDwwYFOzilup1qGvIytP3BI=
