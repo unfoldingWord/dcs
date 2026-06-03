@@ -82,6 +82,16 @@ func newFuncMapWebPage() template.FuncMap {
 		"AppSubUrl": func() string {
 			return setting.AppSubURL
 		},
+		/*** DCS Customizations ***/
+		// Upstream removed AppUrl from the page template helpers in #37090 (it now
+		// only exists in mail.go). DCS templates still need the configured ROOT_URL
+		// to detect the deployment environment (prod/QA/dev) by comparing against
+		// literal URLs, so we re-add it here. ctx.AppFullLink is not a substitute:
+		// it guesses the per-request host and trims the trailing slash.
+		"AppUrl": func() string {
+			return setting.AppURL
+		},
+		/*** END DCS Customizations ***/
 		"AssetUrlPrefix": func() string {
 			return setting.StaticURLPrefix + "/assets"
 		},
