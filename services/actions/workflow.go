@@ -5,7 +5,6 @@ package actions
 
 import (
 	"fmt"
-	"strings"
 
 	actions_model "code.gitea.io/gitea/models/actions"
 	"code.gitea.io/gitea/models/perm"
@@ -98,7 +97,7 @@ func DispatchActionWorkflow(ctx reqctx.RequestContext, doer *user_model.User, re
 	var entry *git.TreeEntry
 
 	run := &actions_model.ActionRun{
-		Title:             strings.SplitN(runTargetCommit.CommitMessage, "\n", 2)[0],
+		Title:             runTargetCommit.Summary(),
 		RepoID:            repo.ID,
 		Repo:              repo,
 		OwnerID:           repo.OwnerID,
@@ -141,11 +140,17 @@ func DispatchActionWorkflow(ctx reqctx.RequestContext, doer *user_model.User, re
 	workflow := &model.Workflow{
 		RawOn: singleWorkflow.RawOn,
 	}
+	workflowDispatch := workflow.WorkflowDispatchConfig()
+	if workflowDispatch == nil {
+		return 0, util.ErrorWrapTranslatable(
+			util.NewInvalidArgumentErrorf("workflow %q has no workflow_dispatch event trigger", workflowID),
+			"actions.workflow.has_no_workflow_dispatch", workflowID,
+		)
+	}
+
 	inputsWithDefaults := make(map[string]any)
-	if workflowDispatch := workflow.WorkflowDispatchConfig(); workflowDispatch != nil {
-		if err = processInputs(workflowDispatch, inputsWithDefaults); err != nil {
-			return 0, err
-		}
+	if err = processInputs(workflowDispatch, inputsWithDefaults); err != nil {
+		return 0, err
 	}
 
 	// ctx.Req.PostForm -> WorkflowDispatchPayload.Inputs -> ActionRun.EventPayload -> runner: ghc.Event

@@ -69,6 +69,12 @@ type SearchUserOptions struct {
 	/*** END DCS CUSTOMIZATIONS ***/
 }
 
+func (opts *SearchUserOptions) ApplyPublicOnly(publicOnly bool) {
+	if publicOnly {
+		opts.Visible = []structs.VisibleType{structs.VisibleTypePublic}
+	}
+}
+
 func (opts *SearchUserOptions) toSearchQueryBase(ctx context.Context) *xorm.Session {
 	var cond builder.Cond
 	cond = builder.In("type", opts.Types)

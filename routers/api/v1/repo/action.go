@@ -6,7 +6,6 @@ package repo
 import (
 	go_context "context"
 	"crypto/hmac"
-	"crypto/sha256"
 	"encoding/base64"
 	"errors"
 	"fmt"
@@ -23,7 +22,6 @@ import (
 	secret_model "code.gitea.io/gitea/models/secret"
 	"code.gitea.io/gitea/modules/actions"
 	"code.gitea.io/gitea/modules/httplib"
-	"code.gitea.io/gitea/modules/setting"
 	api "code.gitea.io/gitea/modules/structs"
 	"code.gitea.io/gitea/modules/util"
 	"code.gitea.io/gitea/modules/web"
@@ -1076,6 +1074,8 @@ func ActionsDispatchWorkflow(ctx *context.APIContext) {
 			ctx.APIError(http.StatusNotFound, err)
 		} else if errors.Is(err, util.ErrPermissionDenied) {
 			ctx.APIError(http.StatusForbidden, err)
+		} else if errors.Is(err, util.ErrInvalidArgument) {
+			ctx.APIError(http.StatusUnprocessableEntity, err)
 		} else {
 			ctx.APIErrorInternal(err)
 		}
@@ -1770,11 +1770,7 @@ func DeleteArtifact(ctx *context.APIContext) {
 }
 
 func buildSignature(endp string, expires, artifactID int64) []byte {
-	mac := hmac.New(sha256.New, setting.GetGeneralTokenSigningSecret())
-	mac.Write([]byte(endp))
-	fmt.Fprint(mac, expires)
-	fmt.Fprint(mac, artifactID)
-	return mac.Sum(nil)
+	return actions.BuildSignature("api", endp, strconv.FormatInt(expires, 10), strconv.FormatInt(artifactID, 10))
 }
 
 func buildDownloadRawEndpoint(repo *repo_model.Repository, artifactID int64) string {

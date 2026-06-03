@@ -199,6 +199,18 @@ func checkJobsOfRun(ctx context.Context, run *actions_model.ActionRun) (jobs, up
 	if err != nil {
 		return nil, nil, err
 	}
+	// The resolver below only considers needs and job-level concurrency, so a run blocked
+	// solely by run-level concurrency would have its jobs unblocked here. checkRunConcurrency
+	// re-evaluates when the holding run finishes.
+	if run.Status.IsBlocked() {
+		shouldBlock, err := shouldBlockRunByConcurrency(ctx, run)
+		if err != nil {
+			return nil, nil, fmt.Errorf("shouldBlockRunByConcurrency: %w", err)
+		}
+		if shouldBlock {
+			return jobs, nil, nil
+		}
+	}
 	vars, err := actions_model.GetVariablesOfRun(ctx, run)
 	if err != nil {
 		return nil, nil, err
@@ -236,6 +248,9 @@ func NotifyWorkflowRunStatusUpdateWithReload(ctx context.Context, job *actions_m
 		return
 	}
 	notify_service.WorkflowRunStatusUpdate(ctx, job.Run.Repo, job.Run.TriggerUser, job.Run)
+
+	// Recomputes the repository's num_action_runs / num_closed_action_runs counters since the run's status changed
+	actions_model.UpdateRepoRunsNumbers(ctx, job.RepoID)
 }
 
 type jobStatusResolver struct {

@@ -33,6 +33,7 @@ func listUserOrgs(ctx *context.APIContext, u *user_model.User) {
 		UserID:            u.ID,
 		IncludeVisibility: organization.DoerViewOtherVisibility(ctx.Doer, u),
 	}
+	opts.ApplyPublicOnly(ctx.PublicOnly)
 	orgs, maxResults, err := db.FindAndCount[organization.Organization](ctx, opts)
 	if err != nil {
 		ctx.APIErrorInternal(err)
@@ -232,7 +233,7 @@ func GetAll(ctx *context.APIContext) {
 	//     "$ref": "#/responses/OrganizationList"
 
 	vMode := []api.VisibleType{api.VisibleTypePublic}
-	if ctx.IsSigned && !ctx.PublicOnly {
+	if ctx.IsSigned {
 		vMode = append(vMode, api.VisibleTypeLimited)
 		if ctx.Doer.IsAdmin {
 			vMode = append(vMode, api.VisibleTypePrivate)
@@ -241,7 +242,7 @@ func GetAll(ctx *context.APIContext) {
 
 	listOptions := utils.GetListOptions(ctx)
 
-	publicOrgs, maxResults, err := user_model.SearchUsers(ctx, user_model.SearchUserOptions{
+	searchOpts := user_model.SearchUserOptions{
 		Actor:       ctx.Doer,
 		ListOptions: listOptions,
 		Types:       []user_model.UserType{user_model.UserTypeOrganization},
@@ -254,7 +255,10 @@ func GetAll(ctx *context.APIContext) {
 		RepoFlavors:       ctx.FormStrings("flavor"),
 		RepoMetadataTypes: ctx.FormStrings("metadataType"),
 		/*** END DCS Customizations ***/
-	})
+	}
+	searchOpts.ApplyPublicOnly(ctx.PublicOnly)
+
+	publicOrgs, maxResults, err := user_model.SearchUsers(ctx, searchOpts)
 	if err != nil {
 		ctx.APIErrorInternal(err)
 		return
@@ -534,6 +538,7 @@ func ListOrgActivityFeeds(ctx *context.APIContext) {
 		Date:           ctx.FormString("date"),
 		ListOptions:    listOptions,
 	}
+	opts.ApplyPublicOnly(ctx.PublicOnly)
 
 	feeds, count, err := feed_service.GetFeeds(ctx, opts)
 	if err != nil {
