@@ -39,6 +39,11 @@ type LanguageStatList []*LanguageStat
 func (stats LanguageStatList) LoadAttributes() {
 	for i := range stats {
 		stats[i].Color = enry.GetColor(stats[i].Language)
+		/*** DCS Customizations ***/
+		if color := DCSLanguageColor(stats[i].Language); color != "" {
+			stats[i].Color = color
+		}
+		/*** END DCS Customizations ***/
 	}
 }
 
