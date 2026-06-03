@@ -37,13 +37,13 @@
 	<div class="ui container">
 		<a href="{{.RepoLink}}/metadata" class="ui back link">
 			{{svg "octicon-arrow-left" 16}}
-			{{ctx.Locale.Tr "repo.metadata.back_to_metadata"}}
+			{{ctx.Locale.Tr "dcs.repo.metadata.back_to_metadata"}}
 		</a>
 		<h2 class="ui top attached header">
-			{{ctx.Locale.Tr "repo.metadata.all_branches_releases_metadata"}}
+			{{ctx.Locale.Tr "dcs.repo.metadata.all_branches_releases_metadata"}}
 			{{if .Permission.IsAdmin}}
 			<div class="ui right">
-				<a class="ui teal tiny button" href="{{.RepoLink}}/metadata/update">{{ctx.Locale.Tr "repo.metadata.update_metadata"}}</a>
+				<a class="ui teal tiny button" href="{{.RepoLink}}/metadata/update">{{ctx.Locale.Tr "dcs.repo.metadata.update_metadata"}}</a>
 			</div>
 			{{end}}
 		</h2>
@@ -57,7 +57,7 @@
 						<span>No branch metadata found.</span>
 					{{end}}
 				</div>
-				<h3 class="ui top attached header">{{ctx.Locale.Tr "repo.metadata.releases"}} ({{.ReleaseCount}})</h3>
+				<h3 class="ui top attached header">{{ctx.Locale.Tr "dcs.repo.metadata.releases"}} ({{.ReleaseCount}})</h3>
 				<div class="ui attached segment" id="releases">
 					{{if .ReleaseDMs}}
 						{{template "repo/dcs_metadata_list" (dict "ctxData" . "Door43Metadatas" .ReleaseDMs "IsRC" .IsRC)}}

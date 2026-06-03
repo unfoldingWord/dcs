@@ -10,7 +10,7 @@
 	</a>
 	{{end}}
 	{{if and .Repo.RepoDM.MetadataType .Repo.RepoDM.MetadataVersion}}
-	<a class="muted" href="?sort={{$.SortType}}&q=metadata_type%3A{{.Repo.RepoDM.MetadataType}}" data-tooltip-content="{{ctx.Locale.Tr "repo.metadata.metadata_type"}}: {{.Repo.RepoDM.MetadataTypeTitle}} ({{.Repo.RepoDM.MetadataType}} {{.Repo.RepoDM.MetadataVersion}})">
+	<a class="muted" href="?sort={{$.SortType}}&q=metadata_type%3A{{.Repo.RepoDM.MetadataType}}" data-tooltip-content="{{ctx.Locale.Tr "dcs.repo.metadata.metadata_type"}}: {{.Repo.RepoDM.MetadataTypeTitle}} ({{.Repo.RepoDM.MetadataType}} {{.Repo.RepoDM.MetadataVersion}})">
 		<img src="{{AssetUrlPrefix}}/img/dcs/{{.Repo.RepoDM.MetadataTypeIcon}}" style="height:16px;vertical-align:middle" />
 			{{.Repo.RepoDM.MetadataType}} {{.Repo.RepoDM.MetadataVersion}}
 	</a>

@@ -108,8 +108,19 @@ func (r *Release) LoadRepo(ctx context.Context) (err error) {
 	if err != nil {
 		return err
 	}
+	return nil
+}
+
+// LoadAttributes load repo and publisher attributes for a release
+func (r *Release) LoadAttributes(ctx context.Context) (err error) {
+	if err := r.LoadRepo(ctx); err != nil {
+		return err
+	}
 
 	/*** DCS Customizations ***/
+	// Load the Door43Metadata here (not in LoadRepo) so it is always populated:
+	// LoadRepo returns early when r.Repo is already set (e.g. preloaded by
+	// getReleaseInfos in the single-release view), which would otherwise skip this.
 	if r.Door43Metadata == nil {
 		r.Door43Metadata, err = GetDoor43MetadataByRepoIDAndRef(ctx, r.RepoID, r.TagName)
 		if err != nil && !IsErrDoor43MetadataNotExist(err) {
@@ -121,14 +132,6 @@ func (r *Release) LoadRepo(ctx context.Context) (err error) {
 		}
 	}
 	/*** END DCS Customizations ***/
-	return nil
-}
-
-// LoadAttributes load repo and publisher attributes for a release
-func (r *Release) LoadAttributes(ctx context.Context) (err error) {
-	if err := r.LoadRepo(ctx); err != nil {
-		return err
-	}
 
 	if r.Publisher == nil {
 		r.Publisher, err = user_model.GetUserByID(ctx, r.PublisherID)
