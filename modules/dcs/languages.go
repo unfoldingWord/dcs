@@ -70,7 +70,7 @@ func GetLangnamesJSONKeyed() map[string]map[string]any {
 		_langnamesJSONKeyed = map[string]map[string]any{}
 		langnames := GetLangnamesJSON()
 		for _, value := range langnames {
-			_langnamesJSONKeyed[value["lc"].(string)] = value
+			_langnamesJSONKeyed[strings.ToLower(value["lc"].(string))] = value
 		}
 	}
 	return _langnamesJSONKeyed
@@ -92,14 +92,14 @@ func GetLanguageFromRepoName(repoName string) string {
 // IsValidLanguage returns true if string is a valid language code
 func IsValidLanguage(lang string) bool {
 	langnames := GetLangnamesJSONKeyed()
-	_, ok := langnames[lang]
+	_, ok := langnames[strings.ToLower(lang)]
 	return ok
 }
 
 // GetLanguageDirection returns the language direction
 func GetLanguageDirection(lang string) string {
 	langnames := GetLangnamesJSONKeyed()
-	if data, ok := langnames[lang]; ok {
+	if data, ok := langnames[strings.ToLower(lang)]; ok {
 		if val, ok := data["ld"].(string); ok {
 			return val
 		}
@@ -110,7 +110,7 @@ func GetLanguageDirection(lang string) string {
 // GetLanguageTitle returns the language title
 func GetLanguageTitle(lang string) string {
 	langnames := GetLangnamesJSONKeyed()
-	if data, ok := langnames[lang]; ok {
+	if data, ok := langnames[strings.ToLower(lang)]; ok {
 		if val, ok := data["ln"].(string); ok {
 			return val
 		}
@@ -121,7 +121,7 @@ func GetLanguageTitle(lang string) string {
 // LanguageIsGL returns true if string is a valid language and is a GL
 func LanguageIsGL(lang string) bool {
 	langnames := GetLangnamesJSONKeyed()
-	if data, ok := langnames[lang]; ok {
+	if data, ok := langnames[strings.ToLower(lang)]; ok {
 		if val, ok := data["gw"].(bool); ok {
 			return val
 		}
