@@ -70,12 +70,11 @@ func GetLanguageStats(repo *git.Repository, commitID string) (map[string]int64, 
 
 	// sizes contains the current calculated size of all files by language
 	sizes := make(map[string]int64)
-	// by default we will only count the sizes of programming languages or markup languages
-	// unless they are explicitly set using linguist-language
-	includedLanguage := map[string]bool{}
-	// or if there's only one language in the repository
-	firstExcludedLanguage := ""
-	firstExcludedLanguageSize := int64(0)
+	/*** DCS Customizations ***/
+	// Upstream tracks includedLanguage / firstExcludedLanguage to count only
+	// Programming and Markup languages. DCS counts every file type, so those
+	// are not needed.
+	/*** END DCS Customizations ***/
 
 	for _, f := range entries {
 		select {
@@ -175,6 +174,11 @@ func GetLanguageStats(repo *git.Repository, commitID string) (map[string]int64, 
 		// FIXME: Why can't we split this and the IsGenerated tests to avoid reading the blob unless absolutely necessary?
 		// - eg. do the all the detection tests using filename first before reading content.
 		language := analyze.GetCodeLanguage(f.Name(), content)
+		/*** DCS Customizations ***/
+		// Represent every file type: fall back to an extension-based label for
+		// files go-enry cannot classify (PDF, DOCX, MP3, MP4, MOV, ...).
+		language = DCSResolveLanguage(f.Name(), language)
+		/*** END DCS Customizations ***/
 		if language == "" {
 			continue
 		}
@@ -185,27 +189,12 @@ func GetLanguageStats(repo *git.Repository, commitID string) (map[string]int64, 
 			language = group
 		}
 
-		included, checked := includedLanguage[language]
-		if !checked {
-			langType := enry.GetLanguageType(language)
-			included = langType == enry.Programming || langType == enry.Markup
-			/*** DCS Customizations ***/
-			// Also count Bible-translation content formats (USFM, TSV, CSV, etc.)
-			included = included || DCSIsIncludedFileType(language)
-			/*** END DCS Customizations ***/
-			includedLanguage[language] = included
-		}
-		if included || isDetectable.ValueOrDefault(false) {
-			sizes[language] += f.Size()
-		} else if len(sizes) == 0 && (firstExcludedLanguage == "" || firstExcludedLanguage == language) {
-			firstExcludedLanguage = language
-			firstExcludedLanguageSize += f.Size()
-		}
-	}
-
-	// If there are no included languages add the first excluded language
-	if len(sizes) == 0 && firstExcludedLanguage != "" {
-		sizes[firstExcludedLanguage] = firstExcludedLanguageSize
+		/*** DCS Customizations ***/
+		// DCS counts every file type, not only Programming/Markup languages, so
+		// every detected file is added to the stats. The linguist-detectable
+		// attribute is still honored earlier in the loop.
+		sizes[language] += f.Size()
+		/*** END DCS Customizations ***/
 	}
 
 	return mergeLanguageStats(sizes), nil
