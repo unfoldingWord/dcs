@@ -19,7 +19,7 @@ var dcsLanguageColors = map[string]string{
 	"CSV":              "#6AA84F", // comfortable green
 
 	// Documents
-	"PDF":  "#D9544D",
+	"PDF":  "#B23A48", // crimson, kept distinct from go-enry's HTML orange-red (#e34c26)
 	"DOC":  "#2B7BB9",
 	"DOCX": "#2B7BB9",
 	"ODT":  "#3D85C6",
