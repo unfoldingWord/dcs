@@ -136,6 +136,10 @@ func GetLanguageStats(repo *git_module.Repository, commitID string) (map[string]
 		if !checked {
 			langtype := enry.GetLanguageType(language)
 			included = langtype == enry.Programming || langtype == enry.Markup
+			/*** DCS Customizations ***/
+			// Also count Bible-translation content formats (USFM, TSV, CSV, etc.)
+			included = included || DCSIsIncludedFileType(language)
+			/*** END DCS Customizations ***/
 			includedLanguage[language] = included
 		}
 		if included || isDetectable.ValueOrDefault(false) {
