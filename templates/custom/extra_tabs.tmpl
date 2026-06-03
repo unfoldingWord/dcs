@@ -1,9 +1,9 @@
 {{if and $.RepoDM (gt $.RepoDM.ID 0)}}
 <a class="{{if .PageIsMetadata}}active {{end}}item"
 	href="{{.RepoLink}}/metadata"
-	data-tooltip-content="{{ctx.Locale.Tr "repo.metadata.metadata"}}">
+	data-tooltip-content="{{ctx.Locale.Tr "dcs.repo.metadata.metadata"}}">
 	{{svg "octicon-file-badge" 16}}
-	{{ctx.Locale.Tr "repo.metadata.metadata"}}
+	{{ctx.Locale.Tr "dcs.repo.metadata.metadata"}}
 </a>
 {{end}}
 {{if and $.RepoDM (eq $.RepoDM.MetadataType "rc")}}
@@ -34,7 +34,7 @@
 	data-hc-repo="{{.Repository.Name}}"
 	data-hc-ref="{{$.RepoDM.Ref}}">
 	<span class="svg" style="color: {{$healthColor}}">{{svg $healthIcon 16}}</span>
-	{{ctx.Locale.Tr "repo.metadata.healthcheck"}}
+	{{ctx.Locale.Tr "dcs.repo.metadata.healthcheck"}}
 </a>
 {{end}}
 {{$refToPreview := .Repository.DefaultBranch}}

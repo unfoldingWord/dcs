@@ -36,13 +36,13 @@
 	{{template "base/alert" .}}
 	<div class="ui container">
 		<h2 class="ui header metadata-header">
-			{{ctx.Locale.Tr "repo.metadata.healthcheck"}} {{svg "octicon-shield-check"}}
+			{{ctx.Locale.Tr "dcs.repo.metadata.healthcheck"}} {{svg "octicon-shield-check"}}
 		</h2>
 		<div class="repo-metadata-content">
 			<h4 class="ui top attached header">
-				{{ctx.Locale.Tr "repo.metadata.overall_healthcheck"}}
+				{{ctx.Locale.Tr "dcs.repo.metadata.overall_healthcheck"}}
 				<div class="ui right">
-						<a class="ui teal tiny button" href="{{.RepoLink}}/metadata">{{ctx.Locale.Tr "repo.metadata.see_all_branches_releases"}} &gt;</a>
+						<a class="ui teal tiny button" href="{{.RepoLink}}/metadata">{{ctx.Locale.Tr "dcs.repo.metadata.see_all_branches_releases"}} &gt;</a>
 				</div>
 			</h4>
 			<div class="ui attached segment">

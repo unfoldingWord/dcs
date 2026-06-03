@@ -81,43 +81,43 @@
 				</tr>
 				{{end}}
 				<tr>
-					<td style="vertical-align: top"><strong>{{ctx.Locale.Tr "repo.metadata.title"}}:</strong></td>
+					<td style="vertical-align: top"><strong>{{ctx.Locale.Tr "dcs.repo.metadata.title"}}:</strong></td>
 					<td style="vertical-align: top">{{$dm.Title}}</td>
 				</tr>
 				<tr>
-					<td style="vertical-align: top"><strong>{{ctx.Locale.Tr "repo.metadata.publisher"}}:</strong></td>
+					<td style="vertical-align: top"><strong>{{ctx.Locale.Tr "dcs.repo.metadata.publisher"}}:</strong></td>
 					<td style="vertical-align: top">{{$dm.Publisher}}</td>
 				</tr>
 				<tr>
-					<td style="vertical-align: top"><strong>{{ctx.Locale.Tr "repo.metadata.abbreviation"}}:</strong>
+					<td style="vertical-align: top"><strong>{{ctx.Locale.Tr "dcs.repo.metadata.abbreviation"}}:</strong>
 					</td>
 					<td style="vertical-align: top">{{$dm.Abbreviation}}</td>
 				</tr>
 				<tr>
-					<td style="vertical-align: top"><strong>{{ctx.Locale.Tr "repo.metadata.subject"}}:</strong></td>
+					<td style="vertical-align: top"><strong>{{ctx.Locale.Tr "dcs.repo.metadata.subject"}}:</strong></td>
 					<td style="vertical-align: top">{{$dm.Subject}}</td>
 				</tr>
 				<tr>
-					<td style="vertical-align: top"><strong>{{ctx.Locale.Tr "repo.metadata.flavor_type"}}:</strong></td>
+					<td style="vertical-align: top"><strong>{{ctx.Locale.Tr "dcs.repo.metadata.flavor_type"}}:</strong></td>
 					<td style="vertical-align: top">{{$dm.FlavorType}}</td>
 				</tr>
 				<tr>
-					<td style="vertical-align: top"><strong>{{ctx.Locale.Tr "repo.metadata.flavor"}}:</strong></td>
+					<td style="vertical-align: top"><strong>{{ctx.Locale.Tr "dcs.repo.metadata.flavor"}}:</strong></td>
 					<td style="vertical-align: top">{{$dm.Flavor}}</td>
 				</tr>
 				<tr>
-					<td style="vertical-align: top"><strong>{{ctx.Locale.Tr "repo.metadata.metadata_type"}}:</strong>
+					<td style="vertical-align: top"><strong>{{ctx.Locale.Tr "dcs.repo.metadata.metadata_type"}}:</strong>
 					</td>
 					<td style="vertical-align: top"><img src="{{AssetUrlPrefix}}/img/dcs/{{$dm.MetadataTypeIcon}}"
 							style="height:16px;vertical-align:middle" /> {{$dm.MetadataTypeTitle}} ({{$dm.MetadataType}}
 						{{$dm.MetadataVersion}})</td>
 				</tr>
 				<tr>
-					<td style="vertical-align: top"><strong>{{ctx.Locale.Tr "repo.metadata.language"}}:</strong></td>
+					<td style="vertical-align: top"><strong>{{ctx.Locale.Tr "dcs.repo.metadata.language"}}:</strong></td>
 					<td style="vertical-align: top">{{$dm.LanguageTitle}} ({{$dm.Language}}, {{$dm.LanguageDirection}})</td>
 				</tr>
 				<tr>
-					<td style="vertical-align: top"><strong>{{ctx.Locale.Tr "repo.metadata.ingredients"}}:</strong></td>
+					<td style="vertical-align: top"><strong>{{ctx.Locale.Tr "dcs.repo.metadata.ingredients"}}:</strong></td>
 					<td style="vertical-align: top">
 						<div class="ingredients-toggle">
 							<a href="#" onclick="event.preventDefault(); toggleShowTable(this, 'ingredients')">Click to see ingredients</a>
@@ -185,12 +185,12 @@
 					</td>
 				</tr>
 				<tr>
-					<td style="vertical-align: top"><strong>{{ctx.Locale.Tr "repo.metadata.content_format"}}:</strong>
+					<td style="vertical-align: top"><strong>{{ctx.Locale.Tr "dcs.repo.metadata.content_format"}}:</strong>
 					</td>
 					<td style="vertical-align: top">{{$dm.ContentFormat}}</td>
 				</tr>
 				<tr>
-					<td style="vertical-align: top"><strong>{{ctx.Locale.Tr "repo.metadata.stage"}}:</strong></td>
+					<td style="vertical-align: top"><strong>{{ctx.Locale.Tr "dcs.repo.metadata.stage"}}:</strong></td>
 					<td style="vertical-align: top">{{$dm.StageStr}}</td>
 				</tr>
 				<tr>
@@ -205,7 +205,7 @@
 				</tr>
 				{{if $.IsRC}}
 				<tr>
-					<td style="vertical-align: top"><strong>{{ctx.Locale.Tr "repo.metadata.healthcheck"}}:</strong></td>
+					<td style="vertical-align: top"><strong>{{ctx.Locale.Tr "dcs.repo.metadata.healthcheck"}}:</strong></td>
 					<td style="vertical-align: top">
 						<div class="ingredients-toggle">
 							<a href="#" onclick="event.preventDefault(); toggleShowTable(this, 'health check')">Click to see health check</a>
