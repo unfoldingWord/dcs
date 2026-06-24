@@ -252,25 +252,31 @@ func cloneAtRef(ctx context.Context, repoPath, ref, destination string) error {
 }
 
 // prepareMainBranch creates or checks out the "main" branch in the working directory.
-func prepareMainBranch(ctx context.Context, workDir, tagName string) error {
-	// Check if main branch exists
-	_, _, err := gitcmd.NewCommand("rev-parse", "--verify", "refs/heads/main").
+//
+// The repo is cloned fresh for each conversion, so an existing "main" branch is present
+// only as the remote-tracking ref refs/remotes/origin/main, never as a local
+// refs/heads/main. When it exists we branch from origin/main so the new SB commit
+// fast-forwards onto main's accumulated conversion history; otherwise we create main
+// from the source (RC) branch for the first-ever conversion.
+func prepareMainBranch(ctx context.Context, workDir, branchName string) error {
+	// Does the remote already have a main branch?
+	_, _, err := gitcmd.NewCommand("rev-parse", "--verify", "refs/remotes/origin/main").
 		WithDir(workDir).RunStdString(ctx)
 	if err != nil {
-		// main doesn't exist — create it from the tag
-		_, _, err = gitcmd.NewCommand("checkout", "-b", "main").AddDynamicArguments(tagName).
+		// No existing main — create it from the source branch (first conversion).
+		_, _, err = gitcmd.NewCommand("checkout", "-b", "main").AddDynamicArguments(branchName).
 			WithDir(workDir).RunStdString(ctx)
 		if err != nil {
-			return fmt.Errorf("create main branch from tag %s: %w", tagName, err)
+			return fmt.Errorf("create main branch from %s: %w", branchName, err)
 		}
 		return nil
 	}
 
-	// main exists — check it out
-	_, _, err = gitcmd.NewCommand("checkout", "main").
+	// main exists on the remote — branch from origin/main so commits fast-forward onto it.
+	_, _, err = gitcmd.NewCommand("checkout", "-b", "main", "origin/main").
 		WithDir(workDir).RunStdString(ctx)
 	if err != nil {
-		return fmt.Errorf("checkout main: %w", err)
+		return fmt.Errorf("checkout main from origin/main: %w", err)
 	}
 	return nil
 }
