@@ -346,11 +346,13 @@ func copyFile(src, dst string) error {
 	return err
 }
 
-// preparePayloadPath prepares the payload for TWL and TW repos.
+// preparePayloadPath prepares the payload for TWL, OBS TWL, and TW repos.
 //
-// For TWL repos (Subject "TSV Translation Words Links"): clones the corresponding TW repo
-// into tmpDir/payload and returns that path. The rc2sb library receives it via PayloadPath
-// and copies bible/ into ingredients/payload/.
+// For TWL repos (Subject "TSV Translation Words Links") and OBS TWL repos
+// (Subject "TSV OBS Translation Words Links"): clones the corresponding TW repo
+// (<lang>_tw) into tmpDir/payload and returns that path. The rc2sb library receives it
+// via PayloadPath and copies bible/ into ingredients/payload/, rewriting the rc:// links
+// in the twl_*.tsv / twl_OBS.tsv file to ./payload/ paths.
 //
 // For TW repos (Subject "Translation Words"): clones the corresponding TWL repo and copies
 // it directly into rcDir/<lang>_twl/ so the rc2sb library can auto-detect it from inDir
@@ -373,7 +375,7 @@ func preparePayloadPath(ctx context.Context, tmpDir, rcDir string, repo *repo_mo
 	var payloadRepoName string
 	isTWRepo := false
 	switch dm.Subject {
-	case "TSV Translation Words Links":
+	case "TSV Translation Words Links", "TSV OBS Translation Words Links":
 		payloadRepoName = dm.Language + "_tw"
 	case "Translation Words":
 		payloadRepoName = dm.Language + "_twl"
