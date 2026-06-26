@@ -4,6 +4,7 @@
 package repo_test
 
 import (
+	"encoding/json"
 	"testing"
 
 	repo_model "code.gitea.io/gitea/models/repo"

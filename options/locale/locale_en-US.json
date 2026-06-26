@@ -3896,6 +3896,7 @@
   "dcs.repo.metadata.valid": "Valid",
   "dcs.repo.metadata.valid_metadata_tooltip": "Valid %s file",
   "repo.metadata.last_updated": "Last Updated",
+  "repo.metadata.release_date": "Release Date",
   "dcs.search.catalog_kind": "Search catalog…",
   "dcs.signup.agreement": "By creating an account on this website, you affirm that you have read and understood the <a href=\"https://door43.org/en/legal/\" target=\"_blank\">Terms & Conditions</a> and agree to:<ul><li>Only add content to this website that does not infringe on someone else's copyright.</li><li>Only add content to this website that does not conflict with the <a href=\"https://door43.org/en/statement-of-faith/\" target=\"_blank\">Statement of Faith</a>.</li><li>Release your contributions to the content on this website under a <a href=\"https://door43.org/en/copyright-and-licensing/\" target=\"_blank\">Creative Commons Attribution-ShareAlike 4.0 International License.</a></li>",
   "dcs.signup.email_helper": "This is visible to other users and may be seen in the revision history of files you edit",
