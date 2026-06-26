@@ -6,6 +6,7 @@ package repo
 import (
 	"errors"
 	"net/http"
+	"regexp"
 	"strings"
 
 	repo_model "code.gitea.io/gitea/models/repo"
@@ -18,7 +19,42 @@ import (
 	"code.gitea.io/gitea/services/context"
 	"code.gitea.io/gitea/services/context/upload"
 	"code.gitea.io/gitea/services/convert"
+	notify_service "code.gitea.io/gitea/services/notify"
 )
+
+/*** DCS Customizations ***/
+
+// jsonAttachmentNameRE matches the files.json / links.json manifests that the
+// door43 metadata service expands into external-link release assets.
+var jsonAttachmentNameRE = regexp.MustCompile(`(?i)(file|link)s*\.json$`)
+
+// notifyReleaseJSONAttachmentChanged re-fires the release update notification
+// when a files.json / links.json manifest is added or edited via the API, so
+// the door43 metadata notifier expands it into external-link assets. Upstream
+// Gitea has no post-attachment processing, so the attachment endpoints never
+// dispatched a release notification; only release create/edit did. (Other asset
+// changes don't need this — the catalog reads release assets live.)
+func notifyReleaseJSONAttachmentChanged(ctx *context.APIContext, releaseID int64, name string) {
+	if !jsonAttachmentNameRE.MatchString(name) {
+		return
+	}
+	rel, err := repo_model.GetReleaseByID(ctx, releaseID)
+	if err != nil {
+		log.Error("notifyReleaseJSONAttachmentChanged: GetReleaseByID [%d]: %v", releaseID, err)
+		return
+	}
+	if rel.IsDraft {
+		return
+	}
+	rel.Repo = ctx.Repo.Repository
+	if err := rel.LoadAttributes(ctx); err != nil {
+		log.Error("notifyReleaseJSONAttachmentChanged: LoadAttributes [%d]: %v", releaseID, err)
+		return
+	}
+	notify_service.UpdateRelease(ctx, ctx.Doer, rel)
+}
+
+/*** END DCS Customizations ***/
 
 func checkReleaseMatchRepo(ctx *context.APIContext, releaseID int64) bool {
 	release, err := repo_model.GetReleaseByID(ctx, releaseID)
@@ -263,6 +299,9 @@ func CreateReleaseAttachment(ctx *context.APIContext) {
 		return
 	}
 
+	// DCS: expand a freshly uploaded files.json / links.json into link assets.
+	notifyReleaseJSONAttachmentChanged(ctx, releaseID, attach.Name)
+
 	ctx.JSON(http.StatusCreated, convert.ToAPIAttachment(ctx.Repo.Repository, attach))
 }
 
@@ -346,6 +385,11 @@ func EditReleaseAttachment(ctx *context.APIContext) {
 		ctx.APIErrorInternal(err)
 		return
 	}
+
+	// DCS: expand a files.json / links.json into link assets when one is
+	// created via rename/edit of an attachment.
+	notifyReleaseJSONAttachmentChanged(ctx, releaseID, attach.Name)
+
 	ctx.JSON(http.StatusCreated, convert.ToAPIAttachment(ctx.Repo.Repository, attach))
 }
 
