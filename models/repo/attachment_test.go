@@ -4,11 +4,11 @@
 package repo_test
 
 import (
-	"encoding/json"
 	"testing"
 
 	repo_model "code.gitea.io/gitea/models/repo"
 	"code.gitea.io/gitea/models/unittest"
+	"code.gitea.io/gitea/modules/json"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -102,6 +102,79 @@ func TestGetAttachmentsByUUIDs(t *testing.T) {
 	assert.Equal(t, int64(1), attachList[0].IssueID)
 	assert.Equal(t, int64(5), attachList[1].IssueID)
 }
+
+/*** DCS Customizations ***/
+
+// DCS stores "remote" release attachments (links to YouTube, cloud storage,
+// etc. that are not uploaded blobs) by encoding the external URL into the Name
+// column as "name|url". BeforeInsert/BeforeUpdate write that encoding and
+// AfterLoad/AfterInsert/AfterUpdate split it back into Name + BrowserDownloadURL.
+// These are the building blocks of the files.json / links.json manifest feature
+// expanded by services/door43metadata.UnpackJSONAttachments.
+
+// TestAttachment_ExternalURLEncoding verifies the happy path used by a
+// files.json entry that supplies both a name and a browser_download_url
+// (e.g. {"name": "YouTube - OBS - Awadhi", "browser_download_url": "https://..."}).
+// The name must survive the insert encoding and the subsequent load.
+func TestAttachment_ExternalURLEncoding(t *testing.T) {
+	const name = "YouTube - OBS - Awadhi"
+	const link = "https://www.youtube.com/playlist?list=PLcaGjtXr4D9kq36LRMtXLoFZ3eB9m4Drd"
+
+	attach := &repo_model.Attachment{Name: name, BrowserDownloadURL: link}
+
+	// BeforeInsert encodes the URL into the Name column as "name|url".
+	attach.BeforeInsert()
+	assert.Equal(t, name+"|"+link, attach.Name)
+
+	// AfterLoad (run on read, and via AfterInsert) splits it back out.
+	attach.AfterLoad()
+	assert.Equal(t, name, attach.Name)
+	assert.Equal(t, link, attach.BrowserDownloadURL)
+
+	// DownloadURL points at the external link rather than a stored blob.
+	assert.Equal(t, link, attach.DownloadURL())
+}
+
+// TestAttachment_ExternalURLFallbackName documents why a manifest entry that
+// omits "name" ends up displayed as "playlist": BeforeInsert falls back to
+// path.Base of the URL path, and a YouTube playlist URL has the path
+// "/playlist" (the real identifier lives in the ?list= query string). This is
+// the root cause of the qa.door43.org awa_obs release showing "playlist".
+func TestAttachment_ExternalURLFallbackName(t *testing.T) {
+	const link = "https://www.youtube.com/playlist?list=PLcaGjtXr4D9kq36LRMtXLoFZ3eB9m4Drd"
+
+	attach := &repo_model.Attachment{BrowserDownloadURL: link} // no Name supplied
+	attach.BeforeInsert()
+	attach.AfterLoad()
+	assert.Equal(t, "playlist", attach.Name, "an entry without a name falls back to path.Base of the URL path")
+	assert.Equal(t, link, attach.BrowserDownloadURL)
+}
+
+// TestAttachment_ManifestUnmarshal verifies that the files.json / links.json
+// manifest shape parses into the fields the unpack logic relies on, using the
+// real modules/json unmarshaler. Under GOEXPERIMENT=jsonv2 that matcher is
+// case-sensitive, so this guards the explicit json:"name"/json:"size" tags on
+// the Attachment struct: drop them and Name/Size stop binding (the root cause
+// of the "playlist" name on the awa_obs release). This is the exact shape that
+// was uploaded for that release.
+func TestAttachment_ManifestUnmarshal(t *testing.T) {
+	const manifest = `[
+  {
+    "name": "YouTube - OBS - Awadhi",
+    "size": 0,
+    "browser_download_url": "https://www.youtube.com/playlist?list=PLcaGjtXr4D9kq36LRMtXLoFZ3eB9m4Drd"
+  }
+]`
+
+	attachments := []*repo_model.Attachment{}
+	assert.NoError(t, json.Unmarshal([]byte(manifest), &attachments))
+	assert.Len(t, attachments, 1)
+	assert.Equal(t, "YouTube - OBS - Awadhi", attachments[0].Name)
+	assert.Equal(t, "https://www.youtube.com/playlist?list=PLcaGjtXr4D9kq36LRMtXLoFZ3eB9m4Drd", attachments[0].BrowserDownloadURL)
+	assert.Equal(t, int64(0), attachments[0].Size)
+}
+
+/*** END DCS Customizations ***/
 
 func TestGetUnlinkedAttachmentsByUserID(t *testing.T) {
 	assert.NoError(t, unittest.PrepareTestDatabase())

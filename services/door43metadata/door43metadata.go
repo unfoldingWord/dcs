@@ -1178,6 +1178,13 @@ func DeleteDoor43MetadataByRepoAndRef(ctx context.Context, repo *repo_model.Repo
 	return processDoor43MetadataForRepoLatestDMs(ctx, repo)
 }
 
+// UnpackJSONAttachments expands a release's files.json / links.json manifest
+// attachments into one release attachment per entry, each pointing at a remote
+// URL (e.g. a YouTube playlist or a file in cloud storage) rather than an
+// uploaded blob. The manifest attachment is deleted after a successful
+// expansion. Each entry should supply both a "name" and a "browser_download_url";
+// an entry without a name falls back to path.Base of the URL path.
+// See docs/dcs/remote-release-attachments.md.
 func UnpackJSONAttachments(ctx context.Context, release *repo_model.Release) {
 	if release == nil || len(release.Attachments) == 0 {
 		return
@@ -1231,7 +1238,9 @@ func UnpackJSONAttachments(ctx context.Context, release *repo_model.Release) {
 	}
 }
 
-// GetAttachmentsFromJSON gets the attachments from uploaded
+// GetAttachmentsFromJSON fetches a files.json / links.json manifest attachment
+// over HTTP and unmarshals it into attachments. It accepts either a JSON array
+// of attachment objects or a single attachment object.
 func GetAttachmentsFromJSON(attachment *repo_model.Attachment) ([]*repo_model.Attachment, error) {
 	var url string
 	if setting.Attachment.Storage.MinioConfig.ServeDirect {
