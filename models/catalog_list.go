@@ -11,6 +11,7 @@ import (
 	"code.gitea.io/gitea/models/db"
 	"code.gitea.io/gitea/models/door43metadata"
 	"code.gitea.io/gitea/models/repo"
+	"code.gitea.io/gitea/modules/structs"
 
 	"xorm.io/builder"
 )
@@ -94,7 +95,8 @@ func SearchCatalogByCondition(ctx context.Context, opts *door43metadata.SearchCa
   metadata_type, metadata_version, subject, flavor_type, flavor,
   abbreviation, title, publisher, language, language_title,
   language_direction, language_is_gl, content_format, checking_level,
-  ingredients, relations, is_latest_for_stage, is_repo_metadata,
+  ingredients, relations, has_audio, has_video, has_pdf, has_stream, has_other,
+  is_latest_for_stage, is_repo_metadata,
   metadata, validation_error, healthcheck_severity, healthcheck_counts,
   release_date_unix, created_unix, updated_unix,
   lower_name, num_stars, num_forks, release_count
@@ -147,6 +149,128 @@ func SearchDoor43MetadataFieldByCondition(ctx context.Context, opts *door43metad
 	}
 
 	return results, nil
+}
+
+// catalogStatsRow is the scan target of the aggregate stats query: the base
+// CatalogStats columns plus the healthcheck counts, which only stats-ext exposes.
+type catalogStatsRow struct {
+	structs.CatalogStats    `xorm:"extends"`
+	HealthcheckSuccessCount int64
+	HealthcheckInfoCount    int64
+	HealthcheckWarningCount int64
+	HealthcheckErrorCount   int64
+	NoHealthcheckCount      int64
+}
+
+// getCatalogStatsRow returns aggregate counts of the door43_metadata entries matching
+// opts in a single query. The unique-value counts (lang, subject, flavor, owner, repo)
+// are DISTINCT counts; the metadata-type, has_* and healthcheck counts are entry counts.
+func getCatalogStatsRow(ctx context.Context, opts *door43metadata.SearchCatalogOptions) (*catalogStatsRow, error) {
+	cond := door43metadata.SearchCatalogCondition(opts)
+	condSQL, condArgs, err := builder.ToSQL(cond)
+	if err != nil {
+		return nil, err
+	}
+
+	// Translate table references to the aliases used in the raw query below
+	condSQL = strings.ReplaceAll(condSQL, "`door43_metadata`.", "dm.")
+	condSQL = strings.ReplaceAll(condSQL, "`repository`.", "r.")
+	condSQL = strings.ReplaceAll(condSQL, "`user`.", "u.")
+	condSQL = strings.ReplaceAll(condSQL, "`release`.", "rel.")
+
+	// COUNT(DISTINCT CASE ...) ignores the NULLs of non-matching rows; COALESCE
+	// guards the SUMs, which are NULL when no rows match.
+	// Note: "release" is a MySQL reserved word and must be backtick-quoted in raw SQL.
+	query := fmt.Sprintf(`SELECT
+  COUNT(*) AS entry_count,
+  COUNT(DISTINCT dm.language) AS lang_count,
+  COUNT(DISTINCT CASE WHEN dm.language_direction = 'ltr' THEN dm.language END) AS lang_ltr_count,
+  COUNT(DISTINCT CASE WHEN dm.language_direction = 'rtl' THEN dm.language END) AS lang_rtl_count,
+  COUNT(DISTINCT dm.subject) AS subject_count,
+  COUNT(DISTINCT CASE WHEN dm.flavor_type <> '' THEN dm.flavor_type END) AS flavor_type_count,
+  COUNT(DISTINCT CASE WHEN dm.flavor <> '' THEN dm.flavor END) AS flavor_count,
+  COUNT(DISTINCT r.owner_id) AS owner_count,
+  COUNT(DISTINCT dm.repo_id) AS repo_count,
+  COALESCE(SUM(CASE WHEN dm.metadata_type = 'ts' THEN 1 ELSE 0 END), 0) AS ts_count,
+  COALESCE(SUM(CASE WHEN dm.metadata_type = 'tc' THEN 1 ELSE 0 END), 0) AS tc_count,
+  COALESCE(SUM(CASE WHEN dm.metadata_type = 'rc' THEN 1 ELSE 0 END), 0) AS rc_count,
+  COALESCE(SUM(CASE WHEN dm.metadata_type = 'sb' THEN 1 ELSE 0 END), 0) AS sb_count,
+  COALESCE(SUM(CASE WHEN dm.has_pdf THEN 1 ELSE 0 END), 0) AS has_pdf,
+  COALESCE(SUM(CASE WHEN dm.has_audio THEN 1 ELSE 0 END), 0) AS has_audio,
+  COALESCE(SUM(CASE WHEN dm.has_video THEN 1 ELSE 0 END), 0) AS has_video,
+  COALESCE(SUM(CASE WHEN dm.has_stream THEN 1 ELSE 0 END), 0) AS has_stream,
+  COALESCE(SUM(CASE WHEN dm.has_other THEN 1 ELSE 0 END), 0) AS has_other,
+  COALESCE(SUM(CASE WHEN dm.healthcheck_severity = %d THEN 1 ELSE 0 END), 0) AS healthcheck_success_count,
+  COALESCE(SUM(CASE WHEN dm.healthcheck_severity = %d THEN 1 ELSE 0 END), 0) AS healthcheck_info_count,
+  COALESCE(SUM(CASE WHEN dm.healthcheck_severity = %d THEN 1 ELSE 0 END), 0) AS healthcheck_warning_count,
+  COALESCE(SUM(CASE WHEN dm.healthcheck_severity = %d THEN 1 ELSE 0 END), 0) AS healthcheck_error_count,
+  COALESCE(SUM(CASE WHEN dm.healthcheck_severity IS NULL OR dm.healthcheck_severity = 0 THEN 1 ELSE 0 END), 0) AS no_healthcheck_count
+FROM door43_metadata dm
+INNER JOIN repository r ON r.id = dm.repo_id
+INNER JOIN user u ON r.owner_id = u.id
+LEFT JOIN `+"`release`"+` rel ON rel.id = dm.release_id
+WHERE `+condSQL,
+		door43metadata.SeverityLevelSuccess,
+		door43metadata.SeverityLevelInfo,
+		door43metadata.SeverityLevelWarning,
+		door43metadata.SeverityLevelError)
+
+	row := &catalogStatsRow{}
+	if _, err := db.GetEngine(ctx).SQL(query, condArgs...).Get(row); err != nil {
+		return nil, fmt.Errorf("stats query: %v", err)
+	}
+	row.HasAttachment = row.HasPDF + row.HasAudio + row.HasVideo + row.HasStream + row.HasOther
+	return row, nil
+}
+
+// GetCatalogStats returns the aggregate counts of the door43_metadata entries matching opts
+func GetCatalogStats(ctx context.Context, opts *door43metadata.SearchCatalogOptions) (*structs.CatalogStats, error) {
+	row, err := getCatalogStatsRow(ctx, opts)
+	if err != nil {
+		return nil, err
+	}
+	return &row.CatalogStats, nil
+}
+
+// GetCatalogStatsExt returns GetCatalogStats plus the healthcheck counts and the sorted
+// unique values of the subject, flavor type, flavor, owner, language and metadata type fields.
+func GetCatalogStatsExt(ctx context.Context, opts *door43metadata.SearchCatalogOptions) (*structs.CatalogStatsExt, error) {
+	row, err := getCatalogStatsRow(ctx, opts)
+	if err != nil {
+		return nil, err
+	}
+	ext := &structs.CatalogStatsExt{
+		CatalogStats:            row.CatalogStats,
+		HealthcheckSuccessCount: row.HealthcheckSuccessCount,
+		HealthcheckInfoCount:    row.HealthcheckInfoCount,
+		HealthcheckWarningCount: row.HealthcheckWarningCount,
+		HealthcheckErrorCount:   row.HealthcheckErrorCount,
+		NoHealthcheckCount:      row.NoHealthcheckCount,
+	}
+
+	cond := door43metadata.SearchCatalogCondition(opts)
+	fieldLists := []struct {
+		field string
+		dest  *[]string
+	}{
+		{"`door43_metadata`.subject", &ext.Subjects},
+		{"`door43_metadata`.flavor_type", &ext.FlavorTypes},
+		{"`door43_metadata`.flavor", &ext.Flavors},
+		{"`user`.lower_name", &ext.Owners},
+		{"`door43_metadata`.language", &ext.Languages},
+		{"`door43_metadata`.metadata_type", &ext.MetadataTypes},
+	}
+	for _, fl := range fieldLists {
+		list, err := SearchDoor43MetadataFieldByCondition(ctx, opts, cond, fl.field)
+		if err != nil {
+			return nil, err
+		}
+		if list == nil {
+			list = []string{} // an empty JSON array reads better than null
+		}
+		*fl.dest = list
+	}
+	return ext, nil
 }
 
 // SearchCatalogForBookPackage returns catalog repositories based on search options for a book package,
@@ -219,7 +343,8 @@ SELECT
   metadata_type, metadata_version, subject, flavor_type, flavor,
   abbreviation, title, publisher, language, language_title,
   language_direction, language_is_gl, content_format, checking_level,
-  ingredients, relations, is_latest_for_stage, is_repo_metadata,
+  ingredients, relations, has_audio, has_video, has_pdf, has_stream, has_other,
+  is_latest_for_stage, is_repo_metadata,
   metadata, validation_error, healthcheck_severity, healthcheck_counts,
   release_date_unix, created_unix, updated_unix
 FROM ranked
@@ -291,7 +416,8 @@ SELECT
   metadata_type, metadata_version, subject, flavor_type, flavor,
   abbreviation, title, publisher, language, language_title,
   language_direction, language_is_gl, content_format, checking_level,
-  ingredients, relations, is_latest_for_stage, is_repo_metadata,
+  ingredients, relations, has_audio, has_video, has_pdf, has_stream, has_other,
+  is_latest_for_stage, is_repo_metadata,
   metadata, validation_error, healthcheck_severity, healthcheck_counts,
   release_date_unix, created_unix, updated_unix
 FROM ranked

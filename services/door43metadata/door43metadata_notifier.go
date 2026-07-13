@@ -66,23 +66,25 @@ func (m *metadataNotifier) CreateRepository(ctx context.Context, doer, u *user_m
 
 func (m *metadataNotifier) NewRelease(ctx context.Context, rel *repo_model.Release) {
 	if rel != nil && !rel.IsDraft {
+		// Expand files.json / links.json manifest attachments first (can be singular file.json and link.json too)
+		// so the metadata processing below sees the final attachments when determining the has_* content flags.
+		UnpackJSONAttachments(ctx, rel)
+
 		if err := ProcessDoor43MetadataForRepo(ctx, rel.Repo, rel.TagName); err != nil {
 			log.Error("NewRelease: ProcessDoor43MetadataForRepo failed [%s, %s]: %v", rel.Repo.FullName(), rel.TagName, err)
 		}
-
-		// A separate job that handles files.json or links.json files (can be singular file.json and link.json too) as attachments
-		UnpackJSONAttachments(ctx, rel)
 	}
 }
 
 func (m *metadataNotifier) UpdateRelease(ctx context.Context, doer *user_model.User, rel *repo_model.Release) {
 	if rel != nil && !rel.IsDraft {
+		// Expand files.json / links.json manifest attachments first (can be singular file.json and link.json too)
+		// so the metadata processing below sees the final attachments when determining the has_* content flags.
+		UnpackJSONAttachments(ctx, rel)
+
 		if err := ProcessDoor43MetadataForRepo(ctx, rel.Repo, rel.TagName); err != nil {
 			log.Error("UpdateRelease: ProcessDoor43MetadataForRepo failed [%s, %s]: %v", rel.Repo.FullName(), rel.TagName, err)
 		}
-
-		// A separate job that handles files.json or links.json files (can be singular file.json and link.json too) as attachments
-		UnpackJSONAttachments(ctx, rel)
 	}
 }
 

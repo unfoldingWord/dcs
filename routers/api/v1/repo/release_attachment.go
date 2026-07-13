@@ -6,10 +6,10 @@ package repo
 import (
 	"errors"
 	"net/http"
-	"regexp"
 	"strings"
 
 	repo_model "code.gitea.io/gitea/models/repo"
+	"code.gitea.io/gitea/modules/dcs" // DCS Customizations
 	"code.gitea.io/gitea/modules/log"
 	"code.gitea.io/gitea/modules/setting"
 	api "code.gitea.io/gitea/modules/structs"
@@ -19,39 +19,43 @@ import (
 	"code.gitea.io/gitea/services/context"
 	"code.gitea.io/gitea/services/context/upload"
 	"code.gitea.io/gitea/services/convert"
+	door43metadata_service "code.gitea.io/gitea/services/door43metadata" // DCS Customizations
 	notify_service "code.gitea.io/gitea/services/notify"
 )
 
 /*** DCS Customizations ***/
 
-// jsonAttachmentNameRE matches the files.json / links.json manifests that the
-// door43 metadata service expands into external-link release assets.
-var jsonAttachmentNameRE = regexp.MustCompile(`(?i)(file|link)s*\.json$`)
-
-// notifyReleaseJSONAttachmentChanged re-fires the release update notification
-// when a files.json / links.json manifest is added or edited via the API, so
-// the door43 metadata notifier expands it into external-link assets. Upstream
-// Gitea has no post-attachment processing, so the attachment endpoints never
-// dispatched a release notification; only release create/edit did. (Other asset
-// changes don't need this — the catalog reads release assets live.)
-func notifyReleaseJSONAttachmentChanged(ctx *context.APIContext, releaseID int64, name string) {
-	if !jsonAttachmentNameRE.MatchString(name) {
-		return
-	}
+// notifyReleaseAttachmentChanged reacts to a release attachment being added,
+// edited or deleted via the API. Upstream Gitea has no post-attachment
+// processing, so the attachment endpoints never dispatched a release
+// notification; only release create/edit did.
+//
+// For a files.json / links.json manifest it re-fires the release update
+// notification so the door43 metadata notifier expands it into external-link
+// assets and reprocesses the release's Door43Metadata. For any other asset it
+// just recomputes the has_audio / has_video / has_pdf / has_stream / has_other
+// content flags on the release's Door43Metadata.
+func notifyReleaseAttachmentChanged(ctx *context.APIContext, releaseID int64, name string) {
 	rel, err := repo_model.GetReleaseByID(ctx, releaseID)
 	if err != nil {
-		log.Error("notifyReleaseJSONAttachmentChanged: GetReleaseByID [%d]: %v", releaseID, err)
+		log.Error("notifyReleaseAttachmentChanged: GetReleaseByID [%d]: %v", releaseID, err)
 		return
 	}
 	if rel.IsDraft {
 		return
 	}
-	rel.Repo = ctx.Repo.Repository
-	if err := rel.LoadAttributes(ctx); err != nil {
-		log.Error("notifyReleaseJSONAttachmentChanged: LoadAttributes [%d]: %v", releaseID, err)
+	if dcs.IsJSONManifestAttachmentName(name) {
+		rel.Repo = ctx.Repo.Repository
+		if err := rel.LoadAttributes(ctx); err != nil {
+			log.Error("notifyReleaseAttachmentChanged: LoadAttributes [%d]: %v", releaseID, err)
+			return
+		}
+		notify_service.UpdateRelease(ctx, ctx.Doer, rel)
 		return
 	}
-	notify_service.UpdateRelease(ctx, ctx.Doer, rel)
+	if err := door43metadata_service.UpdateDoor43MetadataAttachmentFlags(ctx, rel.RepoID, rel.ID); err != nil {
+		log.Error("notifyReleaseAttachmentChanged: UpdateDoor43MetadataAttachmentFlags [%d]: %v", releaseID, err)
+	}
 }
 
 /*** END DCS Customizations ***/
@@ -299,8 +303,9 @@ func CreateReleaseAttachment(ctx *context.APIContext) {
 		return
 	}
 
-	// DCS: expand a freshly uploaded files.json / links.json into link assets.
-	notifyReleaseJSONAttachmentChanged(ctx, releaseID, attach.Name)
+	// DCS: expand a freshly uploaded files.json / links.json into link assets,
+	// or update the Door43Metadata content flags for any other asset.
+	notifyReleaseAttachmentChanged(ctx, releaseID, attach.Name)
 
 	ctx.JSON(http.StatusCreated, convert.ToAPIAttachment(ctx.Repo.Repository, attach))
 }
@@ -387,8 +392,9 @@ func EditReleaseAttachment(ctx *context.APIContext) {
 	}
 
 	// DCS: expand a files.json / links.json into link assets when one is
-	// created via rename/edit of an attachment.
-	notifyReleaseJSONAttachmentChanged(ctx, releaseID, attach.Name)
+	// created via rename/edit of an attachment, or update the Door43Metadata
+	// content flags for any other asset.
+	notifyReleaseAttachmentChanged(ctx, releaseID, attach.Name)
 
 	ctx.JSON(http.StatusCreated, convert.ToAPIAttachment(ctx.Repo.Repository, attach))
 }
@@ -455,5 +461,9 @@ func DeleteReleaseAttachment(ctx *context.APIContext) {
 		ctx.APIErrorInternal(err)
 		return
 	}
+
+	// DCS: update the Door43Metadata content flags now that an asset is gone.
+	notifyReleaseAttachmentChanged(ctx, releaseID, attach.Name)
+
 	ctx.Status(http.StatusNoContent)
 }

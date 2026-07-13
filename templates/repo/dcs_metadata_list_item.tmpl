@@ -199,8 +199,8 @@
 				</tr>
 				<tr>
 					<td style="vertical-align: top"><strong>{{if $dm.Release}}{{ctx.Locale.Tr
-							"repo.metadata.release_date"}}{{else}}{{ctx.Locale.Tr
-							"repo.metadata.last_updated"}}{{end}}:</strong></td>
+							"dcs.repo.metadata.release_date"}}{{else}}{{ctx.Locale.Tr
+							"dcs.repo.metadata.last_updated"}}{{end}}:</strong></td>
 					<td style="vertical-align: top">{{DateUtils.AbsoluteLong $dm.ReleaseDateUnix}}</td>
 				</tr>
 				{{if $.IsRC}}

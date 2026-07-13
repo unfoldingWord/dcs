@@ -29,6 +29,8 @@ func RegisterDCSAPIRoutes(m *web.Router,
 			m.Get("/languages", catalog.ListCatalogLanguages)
 			m.Get("/metadata-types", catalog.ListCatalogMetadataTypes)
 		})
+		m.Get("/stats", catalog.GetCatalogStats)
+		m.Get("/stats-ext", catalog.GetCatalogStatsExt)
 		m.Group("/search", func() {
 			m.Get("", catalog.Search)
 			// The below are deprecated

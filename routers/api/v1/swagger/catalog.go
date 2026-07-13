@@ -21,6 +21,20 @@ type swaggerResponseCatalogEntry struct {
 	Body api.CatalogEntry `json:"body"`
 }
 
+// CatalogStats
+// swagger:response CatalogStats
+type swaggerResponseCatalogStats struct {
+	// in:body
+	Body api.CatalogStats `json:"body"`
+}
+
+// CatalogStatsExt
+// swagger:response CatalogStatsExt
+type swaggerResponseCatalogStatsExt struct {
+	// in:body
+	Body api.CatalogStatsExt `json:"body"`
+}
+
 // CatalogMetadata
 // swagger:response CatalogMetadata
 type swaggerResponseCatalogMetadata struct {

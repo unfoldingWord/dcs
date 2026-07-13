@@ -70,6 +70,17 @@ func ToCatalogEntry(ctx context.Context, dm *repo.Door43Metadata, repo *api.Repo
 	if dm == nil {
 		return nil
 	}
+	// Only release entries have attachment content types; branch entries get null
+	var attachmentTypes *api.CatalogAttachmentTypes
+	if dm.ReleaseID > 0 {
+		attachmentTypes = &api.CatalogAttachmentTypes{
+			PDF:    dm.HasPDF,
+			Audio:  dm.HasAudio,
+			Video:  dm.HasVideo,
+			Stream: dm.HasStream,
+			Other:  dm.HasOther,
+		}
+	}
 	return &api.CatalogEntry{
 		ID:                     dm.ID,
 		Self:                   dm.CatalogEntryURL(),
@@ -104,6 +115,7 @@ func ToCatalogEntry(ctx context.Context, dm *repo.Door43Metadata, repo *api.Repo
 		Ingredients:            dm.Ingredients,
 		Books:                  dm.IngredientsIdentifierList(),
 		Relations:              dm.Relations,
+		AttachmentTypes:        attachmentTypes,
 		ContentFormat:          dm.ContentFormat,
 		IsValid:                dm.ValidationError == nil,
 		ValidationErrorsURL:    dm.CatalogValidationErrorsURL(),
