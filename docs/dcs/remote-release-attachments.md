@@ -59,11 +59,16 @@ The expansion itself lives in
 - `GetAttachmentsFromJSON(attachment)` — fetches the manifest over HTTP and
   unmarshals it (array first, then single-object fallback).
 
-It is triggered from the metadata notifier on release create/update. Because
-upstream attachment endpoints don't dispatch a release notification,
+It is triggered from the metadata notifier on release create/update, and runs
+**before** the release's Door43Metadata is (re)processed so the metadata sees
+the final attachments (see
+[release-attachment-content-flags.md](release-attachment-content-flags.md)).
+Because upstream attachment endpoints don't dispatch a release notification,
 `routers/api/v1/repo/release_attachment.go` re-fires the release update
 notification when a manifest attachment is added or edited via the API
-(`notifyReleaseJSONAttachmentChanged`).
+(`notifyReleaseAttachmentChanged`); the same helper updates the
+Door43Metadata `has_*` content flags when any other asset is added, edited or
+deleted.
 
 ## jsonv2 — struct fields must be tagged
 

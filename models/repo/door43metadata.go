@@ -15,6 +15,7 @@ import (
 	"code.gitea.io/gitea/models/db"
 	"code.gitea.io/gitea/models/door43metadata"
 	"code.gitea.io/gitea/models/system"
+	"code.gitea.io/gitea/modules/dcs"
 	"code.gitea.io/gitea/modules/git"
 	"code.gitea.io/gitea/modules/json"
 	"code.gitea.io/gitea/modules/log"
@@ -72,6 +73,11 @@ type Door43Metadata struct {
 	CheckingLevel       int                         `xorm:"NOT NULL"`
 	Ingredients         []*structs.Ingredient       `xorm:"JSON"`
 	Relations           []*structs.Relation         `xorm:"JSON"`
+	HasAudio            bool                        `xorm:"INDEX NOT NULL DEFAULT false"`
+	HasVideo            bool                        `xorm:"INDEX NOT NULL DEFAULT false"`
+	HasPDF              bool                        `xorm:"INDEX NOT NULL DEFAULT false"`
+	HasStream           bool                        `xorm:"INDEX NOT NULL DEFAULT false"`
+	HasOther            bool                        `xorm:"INDEX NOT NULL DEFAULT false"`
 	IsLatestForStage    bool                        `xorm:"INDEX index(latest_stage) index(repo_stage_latest_date) NOT NULL DEFAULT false"`
 	IsRepoMetadata      bool                        `xorm:"INDEX NOT NULL DEFAULT false"`
 	Metadata            map[string]any              `xorm:"JSON MEDIUMTEXT"`
@@ -410,6 +416,54 @@ func (dm *Door43Metadata) CopyEmptyPropertiesFromRepoDM(ctx context.Context) {
 	if dm.ContentFormat == "" {
 		dm.ContentFormat = dm.Repo.RepoDM.ContentFormat
 	}
+}
+
+// Door43MetadataAttachmentFlagCols are the columns set by DetermineAttachmentFlags,
+// for use with UpdateDoor43MetadataCols.
+var Door43MetadataAttachmentFlagCols = []string{"has_audio", "has_video", "has_pdf", "has_stream", "has_other"}
+
+// DetermineAttachmentFlags sets the Has* content flags (HasAudio, HasVideo,
+// HasPDF, HasStream, HasOther) based on the names of the attachments of the
+// DM's release. All flags are false when there is no release (branch refs).
+// files.json / links.json manifests are skipped since they are expanded into
+// remote attachments and deleted by the door43 metadata service.
+func (dm *Door43Metadata) DetermineAttachmentFlags(ctx context.Context) error {
+	dm.HasAudio = false
+	dm.HasVideo = false
+	dm.HasPDF = false
+	dm.HasStream = false
+	dm.HasOther = false
+	if dm.ReleaseID == 0 {
+		return nil
+	}
+	var attachments []*Attachment
+	if err := db.GetEngine(ctx).Where("release_id = ?", dm.ReleaseID).Find(&attachments); err != nil {
+		return err
+	}
+	for _, attachment := range attachments {
+		if dcs.IsJSONManifestAttachmentName(attachment.Name) {
+			continue
+		}
+		// Rebuild the raw "name|url" value for remote attachments (AfterLoad
+		// splits it) so streaming URLs are part of what gets classified.
+		name := attachment.Name
+		if attachment.BrowserDownloadURL != "" {
+			name += "|" + attachment.BrowserDownloadURL
+		}
+		switch dcs.GetAttachmentContentType(name) {
+		case dcs.AttachmentContentTypeAudio:
+			dm.HasAudio = true
+		case dcs.AttachmentContentTypeVideo:
+			dm.HasVideo = true
+		case dcs.AttachmentContentTypePDF:
+			dm.HasPDF = true
+		case dcs.AttachmentContentTypeStream:
+			dm.HasStream = true
+		default:
+			dm.HasOther = true
+		}
+	}
+	return nil
 }
 
 // IsDoor43MetadataExist returns true if door43 metadata with given release ID already exists.

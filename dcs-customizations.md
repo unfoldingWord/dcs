@@ -41,6 +41,7 @@ This document catalogs every DCS modification to existing Gitea files. New DCS-o
 | `modules/templates/helper.go` | 13 DCS template functions registered | MEDIUM | modules/dcs/ |
 | `routers/init.go` | mustInitCtx(ctx, door43metadata.Init) | MEDIUM | services/door43metadata/ |
 | `routers/private/default_branch.go` | ProcessDoor43MetadataForRepo() call | MEDIUM | services/door43metadata/ |
+| `routers/api/v1/repo/release_attachment.go` | notifyReleaseAttachmentChanged() helper + calls in create/edit/delete handlers (manifest expansion, has_* flag updates) | MEDIUM | services/door43metadata/, modules/dcs/attachments.go |
 | `routers/web/repo/view_file.go` | FileExt, IgnoreLanguageDirection ctx.Data | LOW | - |
 | `routers/web/repo/view_home.go` | IgnoreLanguageDirection, Entry ctx.Data | LOW | - |
 | `routers/web/repo/editor.go` | Entry ctx.Data set | LOW | - |
@@ -218,13 +219,13 @@ This document catalogs every DCS modification to existing Gitea files. New DCS-o
 ### Go packages
 
 - `cmd/door43metadata.go`
-- `models/catalog_list.go`
+- `models/catalog_list.go`, `catalog_list_test.go`
 - `models/door43metadata/search.go`, `stage.go`
 - `models/git/refs.go`
-- `models/repo/catalog.go`, `door43healthcheck.go`, `door43metadata.go`, `release_dcs.go`, `repo_dcs.go`
+- `models/repo/catalog.go`, `door43healthcheck.go`, `door43metadata.go`, `door43metadata_test.go`, `release_dcs.go`, `repo_dcs.go`
 - `models/user_dcs.go`
 - `models/fixtures/door43_metadata.yml`
-- `modules/dcs/books.go`, `files.go`, `languages.go`, `metadata.go`, `rc02.go`, `sb100.go`, `stats.go`, `strings.go`, `subjects.go`, `tcts.go`, `valdation.go`
+- `modules/dcs/attachments.go`, `books.go`, `datetime.go`, `files.go`, `languages.go`, `metadata.go`, `rc02.go`, `sb100.go`, `stats.go`, `strings.go`, `subjects.go`, `tcts.go`, `valdation.go`
 - `modules/markup/tsv/tsv.go`
 - `modules/options/dcs.go`
 - `modules/setting/dcs.go`
@@ -236,7 +237,7 @@ This document catalogs every DCS modification to existing Gitea files. New DCS-o
 - `routers/api/v1/swagger/catalog.go`, `dcs.go`
 - `routers/web/dcs/about.go`, `catalog.go`, `healthcheck_dashboard.go`
 - `routers/web/repo/door43metadata.go`
-- `services/convert/catalog.go`, `git_ref.go`, `repository_dcs.go`
+- `services/convert/catalog.go`, `catalog_test.go`, `git_ref.go`, `repository_dcs.go`
 - `services/cron/tasks_dcs.go`
 - `services/door43healthcheck/healthcheck.go`, `obs_checks.go`
 - `services/door43metadata/door43metadata.go`, `door43metadata_notifier.go`, `door43metadata_test.go`

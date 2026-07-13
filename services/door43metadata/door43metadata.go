@@ -1103,6 +1103,10 @@ func processDoor43MetadataForRepoRef(ctx context.Context, repo *repo_model.Repos
 		}
 	}
 
+	if err := dm.DetermineAttachmentFlags(ctx); err != nil {
+		log.Error("DetermineAttachmentFlags [%s/%s]: %v", repo.FullName(), ref, err)
+	}
+
 	if dm.ID > 0 {
 		if err = repo_model.UpdateDoor43Metadata(ctx, dm); err != nil {
 			return err
@@ -1178,6 +1182,24 @@ func DeleteDoor43MetadataByRepoAndRef(ctx context.Context, repo *repo_model.Repo
 	return processDoor43MetadataForRepoLatestDMs(ctx, repo)
 }
 
+// UpdateDoor43MetadataAttachmentFlags recomputes and saves the has_audio /
+// has_video / has_pdf / has_stream / has_other flags on the Door43Metadata of
+// the given release after its attachments change. It is a no-op when the
+// release has no Door43Metadata entry.
+func UpdateDoor43MetadataAttachmentFlags(ctx context.Context, repoID, releaseID int64) error {
+	dm, err := repo_model.GetDoor43MetadataByRepoIDAndReleaseID(ctx, repoID, releaseID)
+	if err != nil {
+		if repo_model.IsErrDoor43MetadataNotExist(err) {
+			return nil
+		}
+		return err
+	}
+	if err := dm.DetermineAttachmentFlags(ctx); err != nil {
+		return err
+	}
+	return repo_model.UpdateDoor43MetadataCols(ctx, dm, repo_model.Door43MetadataAttachmentFlagCols...)
+}
+
 // UnpackJSONAttachments expands a release's files.json / links.json manifest
 // attachments into one release attachment per entry, each pointing at a remote
 // URL (e.g. a YouTube playlist or a file in cloud storage) rather than an
@@ -1189,9 +1211,8 @@ func UnpackJSONAttachments(ctx context.Context, release *repo_model.Release) {
 	if release == nil || len(release.Attachments) == 0 {
 		return
 	}
-	jsonFileNameSuffix := regexp.MustCompile(`(file|link)s*\.json$`)
 	for _, attachment := range release.Attachments {
-		if jsonFileNameSuffix.MatchString(attachment.Name) {
+		if dcs.IsJSONManifestAttachmentName(attachment.Name) {
 			remoteAttachments, err := GetAttachmentsFromJSON(attachment)
 			if err != nil {
 				log.Error("GetAttachmentsFromJSON Error: %v", err)

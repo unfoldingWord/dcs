@@ -75,6 +75,14 @@ type SearchCatalogOptions struct {
 	ShowIngredients  optional.Option[bool]
 	Languages        []string
 	LanguageIsGL     optional.Option[bool]
+	HasAudio         optional.Option[bool]
+	HasVideo         optional.Option[bool]
+	HasPDF           optional.Option[bool]
+	HasStream        optional.Option[bool]
+	HasOther         optional.Option[bool]
+	HasAttachment    optional.Option[bool]
+	StartDateUnix    int64 // release_date_unix must be >= this when > 0
+	EndDateUnix      int64 // release_date_unix must be <= this when > 0
 	OrderBy          []CatalogOrderBy
 	PartialMatch     bool
 }
@@ -133,6 +141,8 @@ func SearchCatalogCondition(opts *SearchCatalogOptions) builder.Cond {
 		GetTopicCond(opts.Topics, opts.PartialMatch),
 		GetInvertedTopicCond(opts.InvertedTopics, opts.PartialMatch),
 		GetHealthcheckCond(opts.Healthchecks),
+		GetContentFlagsCond(opts),
+		GetReleaseDateCond(opts.StartDateUnix, opts.EndDateUnix),
 		GetTagCond(opts.Tags),
 		repoCond,
 		ownerCond,
@@ -343,6 +353,54 @@ func GetHealthcheckCond(healthchecks []string) builder.Cond {
 		}
 	}
 	return healthcheckCond
+}
+
+// contentFlagColumns are the has_* release-attachment content flag columns, in a fixed
+// order so generated SQL is deterministic.
+var contentFlagColumns = []string{
+	"`door43_metadata`.has_audio",
+	"`door43_metadata`.has_video",
+	"`door43_metadata`.has_pdf",
+	"`door43_metadata`.has_stream",
+	"`door43_metadata`.has_other",
+}
+
+// GetContentFlagsCond gets the condition for the has_* release-attachment content
+// flags (HasAudio, HasVideo, HasPDF, HasStream, HasOther). HasAttachment matches
+// entries where any (true) or none (false) of the five flags are set.
+func GetContentFlagsCond(opts *SearchCatalogOptions) builder.Cond {
+	cond := builder.NewCond()
+	flagOpts := []optional.Option[bool]{opts.HasAudio, opts.HasVideo, opts.HasPDF, opts.HasStream, opts.HasOther}
+	for i, opt := range flagOpts {
+		if opt.Has() {
+			cond = cond.And(builder.Eq{contentFlagColumns[i]: opt.Value()})
+		}
+	}
+	if opts.HasAttachment.Has() {
+		anyFlagCond := builder.NewCond()
+		for _, col := range contentFlagColumns {
+			anyFlagCond = anyFlagCond.Or(builder.Eq{col: true})
+		}
+		if opts.HasAttachment.Value() {
+			cond = cond.And(anyFlagCond)
+		} else {
+			cond = cond.And(builder.Not{anyFlagCond})
+		}
+	}
+	return cond
+}
+
+// GetReleaseDateCond bounds release_date_unix inclusively on both ends; a zero
+// value disables that bound
+func GetReleaseDateCond(startUnix, endUnix int64) builder.Cond {
+	cond := builder.NewCond()
+	if startUnix > 0 {
+		cond = cond.And(builder.Gte{"`door43_metadata`.release_date_unix": startUnix})
+	}
+	if endUnix > 0 {
+		cond = cond.And(builder.Lte{"`door43_metadata`.release_date_unix": endUnix})
+	}
+	return cond
 }
 
 // GetMetadataVersionCond gets the metdata version condition

@@ -189,6 +189,30 @@ func Search(ctx *context.APIContext) {
 	//   collectionFormat: multi
 	//   items:
 	//     type: string
+	// - name: hasAudio
+	//   in: query
+	//   description: list only entries with (true) or without (false) audio content in their release attachments
+	//   type: boolean
+	// - name: hasVideo
+	//   in: query
+	//   description: list only entries with (true) or without (false) video content in their release attachments
+	//   type: boolean
+	// - name: hasPdf
+	//   in: query
+	//   description: list only entries with (true) or without (false) PDF content in their release attachments
+	//   type: boolean
+	// - name: hasStream
+	//   in: query
+	//   description: list only entries with (true) or without (false) a streaming platform link (e.g. YouTube, Vimeo) in their release attachments
+	//   type: boolean
+	// - name: hasOther
+	//   in: query
+	//   description: list only entries with (true) or without (false) other content (not audio, video, pdf nor stream) in their release attachments
+	//   type: boolean
+	// - name: hasAttachment
+	//   in: query
+	//   description: list only entries with (true) or without (false) any release attachment content (audio, video, pdf, stream or other)
+	//   type: boolean
 	// - name: partialMatch
 	//   in: query
 	//   description: if true, subject, owner and repo search fields will use partial match (LIKE) when querying the catalog, default is false
@@ -369,6 +393,34 @@ func ListCatalogSubjects(ctx *context.APIContext) {
 	//   collectionFormat: multi
 	//   items:
 	//     type: string
+	// - name: hasAudio
+	//   in: query
+	//   description: list only those with (true) or without (false) audio content in their release attachments
+	//   type: boolean
+	// - name: hasVideo
+	//   in: query
+	//   description: list only those with (true) or without (false) video content in their release attachments
+	//   type: boolean
+	// - name: hasPdf
+	//   in: query
+	//   description: list only those with (true) or without (false) PDF content in their release attachments
+	//   type: boolean
+	// - name: hasStream
+	//   in: query
+	//   description: list only those with (true) or without (false) a streaming platform link (e.g. YouTube, Vimeo) in their release attachments
+	//   type: boolean
+	// - name: hasOther
+	//   in: query
+	//   description: list only those with (true) or without (false) other content (not audio, video, pdf nor stream) in their release attachments
+	//   type: boolean
+	// - name: hasAttachment
+	//   in: query
+	//   description: list only those with (true) or without (false) any release attachment content (audio, video, pdf, stream or other)
+	//   type: boolean
+	// - name: includeHistory
+	//   in: query
+	//   description: if true, all entries of the given stage or lower are considered, not just the latest entry per repo, default is false
+	//   type: boolean
 	// responses:
 	//   "200":
 	//     description: "SearchResults of a successful catalog owner search"
@@ -514,6 +566,34 @@ func ListCatalogMetadataTypes(ctx *context.APIContext) {
 	//   collectionFormat: multi
 	//   items:
 	//     type: string
+	// - name: hasAudio
+	//   in: query
+	//   description: list only those with (true) or without (false) audio content in their release attachments
+	//   type: boolean
+	// - name: hasVideo
+	//   in: query
+	//   description: list only those with (true) or without (false) video content in their release attachments
+	//   type: boolean
+	// - name: hasPdf
+	//   in: query
+	//   description: list only those with (true) or without (false) PDF content in their release attachments
+	//   type: boolean
+	// - name: hasStream
+	//   in: query
+	//   description: list only those with (true) or without (false) a streaming platform link (e.g. YouTube, Vimeo) in their release attachments
+	//   type: boolean
+	// - name: hasOther
+	//   in: query
+	//   description: list only those with (true) or without (false) other content (not audio, video, pdf nor stream) in their release attachments
+	//   type: boolean
+	// - name: hasAttachment
+	//   in: query
+	//   description: list only those with (true) or without (false) any release attachment content (audio, video, pdf, stream or other)
+	//   type: boolean
+	// - name: includeHistory
+	//   in: query
+	//   description: if true, all entries of the given stage or lower are considered, not just the latest entry per repo, default is false
+	//   type: boolean
 	// responses:
 	//   "200":
 	//     description: "SearchResults of a successful catalog owner search"
@@ -663,6 +743,34 @@ func ListCatalogOwners(ctx *context.APIContext) {
 	//   collectionFormat: multi
 	//   items:
 	//     type: string
+	// - name: hasAudio
+	//   in: query
+	//   description: list only those with (true) or without (false) audio content in their release attachments
+	//   type: boolean
+	// - name: hasVideo
+	//   in: query
+	//   description: list only those with (true) or without (false) video content in their release attachments
+	//   type: boolean
+	// - name: hasPdf
+	//   in: query
+	//   description: list only those with (true) or without (false) PDF content in their release attachments
+	//   type: boolean
+	// - name: hasStream
+	//   in: query
+	//   description: list only those with (true) or without (false) a streaming platform link (e.g. YouTube, Vimeo) in their release attachments
+	//   type: boolean
+	// - name: hasOther
+	//   in: query
+	//   description: list only those with (true) or without (false) other content (not audio, video, pdf nor stream) in their release attachments
+	//   type: boolean
+	// - name: hasAttachment
+	//   in: query
+	//   description: list only those with (true) or without (false) any release attachment content (audio, video, pdf, stream or other)
+	//   type: boolean
+	// - name: includeHistory
+	//   in: query
+	//   description: if true, all entries of the given stage or lower are considered, not just the latest entry per repo, default is false
+	//   type: boolean
 	// responses:
 	//   "200":
 	//     description: "SearchResults of a successful catalog owner search"
@@ -820,6 +928,34 @@ func ListCatalogLanguages(ctx *context.APIContext) {
 	//   collectionFormat: multi
 	//   items:
 	//     type: string
+	// - name: hasAudio
+	//   in: query
+	//   description: list only those with (true) or without (false) audio content in their release attachments
+	//   type: boolean
+	// - name: hasVideo
+	//   in: query
+	//   description: list only those with (true) or without (false) video content in their release attachments
+	//   type: boolean
+	// - name: hasPdf
+	//   in: query
+	//   description: list only those with (true) or without (false) PDF content in their release attachments
+	//   type: boolean
+	// - name: hasStream
+	//   in: query
+	//   description: list only those with (true) or without (false) a streaming platform link (e.g. YouTube, Vimeo) in their release attachments
+	//   type: boolean
+	// - name: hasOther
+	//   in: query
+	//   description: list only those with (true) or without (false) other content (not audio, video, pdf nor stream) in their release attachments
+	//   type: boolean
+	// - name: hasAttachment
+	//   in: query
+	//   description: list only those with (true) or without (false) any release attachment content (audio, video, pdf, stream or other)
+	//   type: boolean
+	// - name: includeHistory
+	//   in: query
+	//   description: if true, all entries of the given stage or lower are considered, not just the latest entry per repo, default is false
+	//   type: boolean
 	// responses:
 	//   "200":
 	//     description: "SearchResults of a successful catalog owner search"
@@ -852,6 +988,449 @@ func ListCatalogLanguages(ctx *context.APIContext) {
 		"ok":   true,
 		"data": languages,
 	})
+}
+
+// getCatalogStatsOpts parses the shared catalog search parameters plus
+// startDate/endDate for the stats endpoints. On error it writes the API error
+// response and returns nil.
+func getCatalogStatsOpts(ctx *context.APIContext) *door43metadata.SearchCatalogOptions {
+	stageStr := ctx.FormString("stage")
+	stage := door43metadata.StageProd
+	if stageStr != "" {
+		var ok bool
+		stage, ok = door43metadata.StageMap[stageStr]
+		if !ok {
+			ctx.APIError(http.StatusUnprocessableEntity, fmt.Errorf("invalid stage [%s]", stageStr))
+			return nil
+		}
+	}
+
+	keywords := []string{}
+	query := strings.Trim(ctx.FormString("q"), " ")
+	if query != "" {
+		keywords = door43metadata.SplitAtCommaNotInString(query, false)
+	}
+
+	opts := &door43metadata.SearchCatalogOptions{
+		ListOptions:      db.ListOptions{ListAll: true},
+		Keywords:         keywords,
+		Owners:           QueryStrings(ctx, "owner"),
+		Repos:            QueryStrings(ctx, "repo"),
+		Tags:             QueryStrings(ctx, "tag"),
+		Stage:            stage,
+		Languages:        QueryStrings(ctx, "lang"),
+		LanguageIsGL:     ctx.FormOptionalBool("is_gl"),
+		Subjects:         QueryStrings(ctx, "subject"),
+		FlavorTypes:      QueryStrings(ctx, "flavorType"),
+		Flavors:          QueryStrings(ctx, "flavor"),
+		Abbreviations:    QueryStrings(ctx, "abbreviation"),
+		ContentFormats:   QueryStrings(ctx, "format"),
+		CheckingLevels:   QueryStrings(ctx, "checkingLevel"),
+		Books:            QueryStrings(ctx, "book"),
+		IncludeHistory:   ctx.FormBool("includeHistory"),
+		MetadataTypes:    QueryStrings(ctx, "metadataType"),
+		MetadataVersions: QueryStrings(ctx, "metadataVersion"),
+		Topics:           QueryStrings(ctx, "topic"),
+		InvertedTopics:   QueryStrings(ctx, "withoutTopic"),
+		HasAudio:         ctx.FormOptionalBool("hasAudio"),
+		HasVideo:         ctx.FormOptionalBool("hasVideo"),
+		HasPDF:           ctx.FormOptionalBool("hasPdf"),
+		HasStream:        ctx.FormOptionalBool("hasStream"),
+		HasOther:         ctx.FormOptionalBool("hasOther"),
+		HasAttachment:    ctx.FormOptionalBool("hasAttachment"),
+		PartialMatch:     ctx.FormBool("partialMatch"),
+	}
+
+	if startDateStr := ctx.FormString("startDate"); startDateStr != "" {
+		t, _, err := dcs.ParseHumanDate(startDateStr)
+		if err != nil {
+			ctx.APIError(http.StatusUnprocessableEntity, fmt.Errorf("invalid startDate: %v", err))
+			return nil
+		}
+		opts.StartDateUnix = t.Unix()
+	}
+	if endDateStr := ctx.FormString("endDate"); endDateStr != "" {
+		t, dateOnly, err := dcs.ParseHumanDate(endDateStr)
+		if err != nil {
+			ctx.APIError(http.StatusUnprocessableEntity, fmt.Errorf("invalid endDate: %v", err))
+			return nil
+		}
+		if dateOnly {
+			// A date-only end date is inclusive of that whole day (UTC)
+			t = t.Add(24*time.Hour - time.Second)
+		}
+		opts.EndDateUnix = t.Unix()
+	}
+
+	return opts
+}
+
+// GetCatalogStats get aggregate counts of the catalog entries matching the given criteria
+func GetCatalogStats(ctx *context.APIContext) {
+	// swagger:operation GET /catalog/stats catalog catalogGetStats
+	// ---
+	// summary: Aggregate counts of the catalog entries matching the given criteria
+	// produces:
+	// - application/json
+	// parameters:
+	// - name: q
+	//   in: query
+	//   description: keyword(s). Can use multiple `q=<keyword>`s or a comma-delimited string for more than one keyword. Is case insensitive
+	//   type: string
+	// - name: owner
+	//   in: query
+	//   description: count only entries with the given owner name(s). Will perform an exact match (case insensitive) unlesss partialMatch=true
+	//   type: string
+	// - name: repo
+	//   in: query
+	//   description: count only entries with the given repo name(s). To match multiple, give the parameter multiple times or give a list comma delimited. Will perform an exact match (case insensitive) unlesss partialMatch=true
+	//   type: string
+	// - name: tag
+	//   in: query
+	//   description: count only entries with the given release tag(s). To match multiple, give the parameter multiple times or give a list comma delimited. Will perform an exact match (case insensitive)
+	//   type: string
+	// - name: lang
+	//   in: query
+	//   description: count only entries with the given language(s). To match multiple, give the parameter multiple times or give a list comma delimited. Will perform an exact match (case insensitive) unlesss partialMatch=true
+	//   type: array
+	//   collectionFormat: multi
+	//   items:
+	//     type: string
+	// - name: is_gl
+	//   in: query
+	//   description: count only entries that are (true) or are not (false) a gatetway language
+	//   type: boolean
+	// - name: stage
+	//   in: query
+	//   description: 'count only entries of the given stage or lower, with low to high being:
+	//                "prod" - return only those of production releases (default);
+	//                "preprod" - return only those of all (production & pre-production) releases;
+	//                "latest" - return only those of all releases and the default branch;
+	//                "other" - return all, including other branches and tags [aliases: "branch", "tag"]'
+	//   type: array
+	//   collectionFormat: multi
+	//   items:
+	//     type: string
+	//     enum: [prod,preprod,latest,other]
+	// - name: subject
+	//   in: query
+	//   description: resource subject. Multiple values are ORed.
+	//   type: array
+	//   collectionFormat: multi
+	//   items:
+	//     type: string
+	// - name: flavorType
+	//   in: query
+	//   description: resource flavorType. Multiple values are ORed.
+	//   type: array
+	//   collectionFormat: multi
+	//   items:
+	//     type: string
+	// - name: flavor
+	//   in: query
+	//   description: resource flavor. Multiple values are ORed.
+	//   type: array
+	//   collectionFormat: multi
+	//   items:
+	//     type: string
+	// - name: abbreviation
+	//   in: query
+	//   description: resource abbreviation (identifier). Multiple values are ORed.
+	//   type: array
+	//   collectionFormat: multi
+	//   items:
+	//     type: string
+	// - name: format
+	//   in: query
+	//   description: content format (usfm, text, markdown, etc.). Multiple values are ORed.
+	//   type: array
+	//   collectionFormat: multi
+	//   items:
+	//     type: string
+	// - name: checkingLevel
+	//   in: query
+	//   description: checking level. Counts entries with a checking level equal or greater than the number given
+	//   type: array
+	//   collectionFormat: multi
+	//   items:
+	//     type: string
+	//     enum: ["1","2","3"]
+	// - name: book
+	//   in: query
+	//   description: book (ingredient identifier). Multiple values are ORed
+	//   type: array
+	//   collectionFormat: multi
+	//   items:
+	//     type: string
+	// - name: metadataType
+	//   in: query
+	//   description: metadata type. Multiple values are ORed
+	//   type: array
+	//   collectionFormat: multi
+	//   items:
+	//     type: string
+	//     enum: [rc,sb,tc,ts]
+	// - name: metadataVersion
+	//   in: query
+	//   description: metadata version. Does not apply if metadataType is not given. Multiple values are ORed
+	//   type: array
+	//   collectionFormat: multi
+	//   items:
+	//     type: string
+	// - name: topic
+	//   in: query
+	//   description: topic of a repo. Multiple values are ORed.
+	//   type: array
+	//   collectionFormat: multi
+	//   items:
+	//     type: string
+	// - name: withoutTopic
+	//   in: query
+	//   description: Entries with a repository without this topic will be counted. Multiple values are ANDed.
+	//   type: array
+	//   collectionFormat: multi
+	//   items:
+	//     type: string
+	// - name: hasAudio
+	//   in: query
+	//   description: count only entries with (true) or without (false) audio content in their release attachments
+	//   type: boolean
+	// - name: hasVideo
+	//   in: query
+	//   description: count only entries with (true) or without (false) video content in their release attachments
+	//   type: boolean
+	// - name: hasPdf
+	//   in: query
+	//   description: count only entries with (true) or without (false) PDF content in their release attachments
+	//   type: boolean
+	// - name: hasStream
+	//   in: query
+	//   description: count only entries with (true) or without (false) a streaming platform link (e.g. YouTube, Vimeo) in their release attachments
+	//   type: boolean
+	// - name: hasOther
+	//   in: query
+	//   description: count only entries with (true) or without (false) other content (not audio, video, pdf nor stream) in their release attachments
+	//   type: boolean
+	// - name: hasAttachment
+	//   in: query
+	//   description: count only entries with (true) or without (false) any release attachment content (audio, video, pdf, stream or other)
+	//   type: boolean
+	// - name: includeHistory
+	//   in: query
+	//   description: if true, all entries of the given stage or lower are counted, not just the latest entry per repo, default is false
+	//   type: boolean
+	// - name: partialMatch
+	//   in: query
+	//   description: if true, subject, owner and repo search fields will use partial match (LIKE) when querying the catalog, default is false
+	//   type: boolean
+	// - name: startDate
+	//   in: query
+	//   description: 'count only entries released on or after this date (UTC). Accepts a Unix timestamp or a human date such as "2026-07-13", "2026-07-13 15:04:05" or "Jul 13, 2026"'
+	//   type: string
+	// - name: endDate
+	//   in: query
+	//   description: 'count only entries released on or before this date (UTC). A date without a time is inclusive of that whole day. Accepts the same formats as startDate'
+	//   type: string
+	// responses:
+	//   "200":
+	//     "$ref": "#/responses/CatalogStats"
+	//   "422":
+	//     "$ref": "#/responses/validationError"
+
+	opts := getCatalogStatsOpts(ctx)
+	if opts == nil {
+		return // getCatalogStatsOpts already wrote the error response
+	}
+	stats, err := models.GetCatalogStats(ctx, opts)
+	if err != nil {
+		ctx.APIError(http.StatusInternalServerError, err)
+		return
+	}
+	ctx.JSON(http.StatusOK, stats)
+}
+
+// GetCatalogStatsExt get aggregate counts plus unique field values of the catalog entries matching the given criteria
+func GetCatalogStatsExt(ctx *context.APIContext) {
+	// swagger:operation GET /catalog/stats-ext catalog catalogGetStatsExt
+	// ---
+	// summary: Aggregate counts plus sorted unique subjects, flavor types, flavors, owners, languages and metadata types of the catalog entries matching the given criteria. Same parameters as /catalog/stats
+	// produces:
+	// - application/json
+	// parameters:
+	// - name: q
+	//   in: query
+	//   description: keyword(s). Can use multiple `q=<keyword>`s or a comma-delimited string for more than one keyword. Is case insensitive
+	//   type: string
+	// - name: owner
+	//   in: query
+	//   description: count only entries with the given owner name(s). Will perform an exact match (case insensitive) unlesss partialMatch=true
+	//   type: string
+	// - name: repo
+	//   in: query
+	//   description: count only entries with the given repo name(s). To match multiple, give the parameter multiple times or give a list comma delimited. Will perform an exact match (case insensitive) unlesss partialMatch=true
+	//   type: string
+	// - name: tag
+	//   in: query
+	//   description: count only entries with the given release tag(s). To match multiple, give the parameter multiple times or give a list comma delimited. Will perform an exact match (case insensitive)
+	//   type: string
+	// - name: lang
+	//   in: query
+	//   description: count only entries with the given language(s). To match multiple, give the parameter multiple times or give a list comma delimited. Will perform an exact match (case insensitive) unlesss partialMatch=true
+	//   type: array
+	//   collectionFormat: multi
+	//   items:
+	//     type: string
+	// - name: is_gl
+	//   in: query
+	//   description: count only entries that are (true) or are not (false) a gatetway language
+	//   type: boolean
+	// - name: stage
+	//   in: query
+	//   description: 'count only entries of the given stage or lower, with low to high being:
+	//                "prod" - return only those of production releases (default);
+	//                "preprod" - return only those of all (production & pre-production) releases;
+	//                "latest" - return only those of all releases and the default branch;
+	//                "other" - return all, including other branches and tags [aliases: "branch", "tag"]'
+	//   type: array
+	//   collectionFormat: multi
+	//   items:
+	//     type: string
+	//     enum: [prod,preprod,latest,other]
+	// - name: subject
+	//   in: query
+	//   description: resource subject. Multiple values are ORed.
+	//   type: array
+	//   collectionFormat: multi
+	//   items:
+	//     type: string
+	// - name: flavorType
+	//   in: query
+	//   description: resource flavorType. Multiple values are ORed.
+	//   type: array
+	//   collectionFormat: multi
+	//   items:
+	//     type: string
+	// - name: flavor
+	//   in: query
+	//   description: resource flavor. Multiple values are ORed.
+	//   type: array
+	//   collectionFormat: multi
+	//   items:
+	//     type: string
+	// - name: abbreviation
+	//   in: query
+	//   description: resource abbreviation (identifier). Multiple values are ORed.
+	//   type: array
+	//   collectionFormat: multi
+	//   items:
+	//     type: string
+	// - name: format
+	//   in: query
+	//   description: content format (usfm, text, markdown, etc.). Multiple values are ORed.
+	//   type: array
+	//   collectionFormat: multi
+	//   items:
+	//     type: string
+	// - name: checkingLevel
+	//   in: query
+	//   description: checking level. Counts entries with a checking level equal or greater than the number given
+	//   type: array
+	//   collectionFormat: multi
+	//   items:
+	//     type: string
+	//     enum: ["1","2","3"]
+	// - name: book
+	//   in: query
+	//   description: book (ingredient identifier). Multiple values are ORed
+	//   type: array
+	//   collectionFormat: multi
+	//   items:
+	//     type: string
+	// - name: metadataType
+	//   in: query
+	//   description: metadata type. Multiple values are ORed
+	//   type: array
+	//   collectionFormat: multi
+	//   items:
+	//     type: string
+	//     enum: [rc,sb,tc,ts]
+	// - name: metadataVersion
+	//   in: query
+	//   description: metadata version. Does not apply if metadataType is not given. Multiple values are ORed
+	//   type: array
+	//   collectionFormat: multi
+	//   items:
+	//     type: string
+	// - name: topic
+	//   in: query
+	//   description: topic of a repo. Multiple values are ORed.
+	//   type: array
+	//   collectionFormat: multi
+	//   items:
+	//     type: string
+	// - name: withoutTopic
+	//   in: query
+	//   description: Entries with a repository without this topic will be counted. Multiple values are ANDed.
+	//   type: array
+	//   collectionFormat: multi
+	//   items:
+	//     type: string
+	// - name: hasAudio
+	//   in: query
+	//   description: count only entries with (true) or without (false) audio content in their release attachments
+	//   type: boolean
+	// - name: hasVideo
+	//   in: query
+	//   description: count only entries with (true) or without (false) video content in their release attachments
+	//   type: boolean
+	// - name: hasPdf
+	//   in: query
+	//   description: count only entries with (true) or without (false) PDF content in their release attachments
+	//   type: boolean
+	// - name: hasStream
+	//   in: query
+	//   description: count only entries with (true) or without (false) a streaming platform link (e.g. YouTube, Vimeo) in their release attachments
+	//   type: boolean
+	// - name: hasOther
+	//   in: query
+	//   description: count only entries with (true) or without (false) other content (not audio, video, pdf nor stream) in their release attachments
+	//   type: boolean
+	// - name: hasAttachment
+	//   in: query
+	//   description: count only entries with (true) or without (false) any release attachment content (audio, video, pdf, stream or other)
+	//   type: boolean
+	// - name: includeHistory
+	//   in: query
+	//   description: if true, all entries of the given stage or lower are counted, not just the latest entry per repo, default is false
+	//   type: boolean
+	// - name: partialMatch
+	//   in: query
+	//   description: if true, subject, owner and repo search fields will use partial match (LIKE) when querying the catalog, default is false
+	//   type: boolean
+	// - name: startDate
+	//   in: query
+	//   description: 'count only entries released on or after this date (UTC). Accepts a Unix timestamp or a human date such as "2026-07-13", "2026-07-13 15:04:05" or "Jul 13, 2026"'
+	//   type: string
+	// - name: endDate
+	//   in: query
+	//   description: 'count only entries released on or before this date (UTC). A date without a time is inclusive of that whole day. Accepts the same formats as startDate'
+	//   type: string
+	// responses:
+	//   "200":
+	//     "$ref": "#/responses/CatalogStatsExt"
+	//   "422":
+	//     "$ref": "#/responses/validationError"
+
+	opts := getCatalogStatsOpts(ctx)
+	if opts == nil {
+		return // getCatalogStatsOpts already wrote the error response
+	}
+	stats, err := models.GetCatalogStatsExt(ctx, opts)
+	if err != nil {
+		ctx.APIError(http.StatusInternalServerError, err)
+		return
+	}
+	ctx.JSON(http.StatusOK, stats)
 }
 
 // GetCatalogEntry Get the catalog entry from the given ownername, reponame and ref
@@ -1078,6 +1657,12 @@ func searchCatalog(ctx *context.APIContext) {
 		MetadataVersions: metadataVersions,
 		Topics:           QueryStrings(ctx, "topic"),
 		InvertedTopics:   QueryStrings(ctx, "withoutTopic"),
+		HasAudio:         ctx.FormOptionalBool("hasAudio"),
+		HasVideo:         ctx.FormOptionalBool("hasVideo"),
+		HasPDF:           ctx.FormOptionalBool("hasPdf"),
+		HasStream:        ctx.FormOptionalBool("hasStream"),
+		HasOther:         ctx.FormOptionalBool("hasOther"),
+		HasAttachment:    ctx.FormOptionalBool("hasAttachment"),
 		PartialMatch:     ctx.FormBool("partialMatch"),
 	}
 
@@ -1368,6 +1953,12 @@ func getSingleDMFieldList(ctx *context.APIContext, field string) ([]string, erro
 		InvertedTopics:   QueryStrings(ctx, "withoutTopic"),
 		MetadataTypes:    QueryStrings(ctx, "metadataType"),
 		MetadataVersions: QueryStrings(ctx, "metadataVersion"),
+		HasAudio:         ctx.FormOptionalBool("hasAudio"),
+		HasVideo:         ctx.FormOptionalBool("hasVideo"),
+		HasPDF:           ctx.FormOptionalBool("hasPdf"),
+		HasStream:        ctx.FormOptionalBool("hasStream"),
+		HasOther:         ctx.FormOptionalBool("hasOther"),
+		HasAttachment:    ctx.FormOptionalBool("hasAttachment"),
 		PartialMatch:     ctx.FormBool("partialMatch"),
 	}
 
