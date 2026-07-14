@@ -242,7 +242,7 @@ func Search(ctx *context.APIContext) {
 	//   type: integer
 	// - name: limit
 	//   in: query
-	//   description: page size of results, defaults to no limit
+	//   description: page size of results. If not given, all results are returned in one response (paging is recommended); when given it is capped at the API MAX_RESPONSE_ITEMS setting. Use the Link header or X-Total-Count to detect the last page
 	//   type: integer
 	// responses:
 	//   "200":
@@ -1624,12 +1624,14 @@ func searchCatalog(ctx *context.APIContext) {
 	if query != "" {
 		keywords = door43metadata.SplitAtCommaNotInString(query, false)
 	}
-	listOptions := db.ListOptions{
-		Page:     ctx.FormInt("page"),
-		PageSize: ctx.FormInt("limit"),
-	}
-	if listOptions.Page < 1 {
-		listOptions.Page = 1
+	// Paging: an explicit limit is capped at setting.API.MaxResponseItems like
+	// /repos/search; omitting limit keeps this endpoint's long-standing
+	// "return everything" behavior so existing consumers that don't page are
+	// not broken. The response always sends X-Total-Count, and paged responses
+	// send Link headers (no rel="next" on the last page).
+	listOptions := db.ListOptions{Page: max(ctx.FormInt("page"), 1)}
+	if limit := ctx.FormInt("limit"); limit > 0 {
+		listOptions.PageSize = convert.ToCorrectPageSize(limit)
 	}
 
 	abbreviations := QueryStrings(ctx, "abbreviation")
@@ -1695,6 +1697,28 @@ func searchCatalog(ctx *context.APIContext) {
 		return
 	}
 
+	// Batch-load the units of all result repos in one query; the per-entry
+	// permission checks and repo conversions below use them and would
+	// otherwise each run their own units query.
+	seenRepos := make(map[int64]bool, len(dms))
+	repos := make(repo.RepositoryList, 0, len(dms))
+	for _, dm := range dms {
+		if dm.Repo != nil && !seenRepos[dm.Repo.ID] {
+			seenRepos[dm.Repo.ID] = true
+			repos = append(repos, dm.Repo)
+		}
+	}
+	if err := repos.LoadUnits(ctx); err != nil {
+		ctx.APIErrorInternal(err)
+		return
+	}
+	// Batch-load each repo's latest/stage DMs; ToRepoDCS otherwise runs four
+	// queries per entry for them (plus their releases and attachments)
+	if err := repos.LoadLatestDMs(ctx); err != nil {
+		ctx.APIErrorInternal(err)
+		return
+	}
+
 	results := make([]*api.CatalogEntry, len(dms))
 	var lastUpdated time.Time
 	for i, dm := range dms {
@@ -1728,10 +1752,8 @@ func searchCatalog(ctx *context.APIContext) {
 
 	if opts.PageSize > 0 {
 		ctx.SetLinkHeader(count, opts.PageSize)
-	} else {
-		ctx.SetLinkHeader(count, int(count))
 	}
-	ctx.RespHeader().Set("X-Total-Count", strconv.FormatInt(count, 10))
+	ctx.SetTotalCountHeader(count)
 	ctx.JSON(http.StatusOK, api.CatalogSearchResults{
 		OK:          true,
 		Data:        results,

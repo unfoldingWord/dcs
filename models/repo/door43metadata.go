@@ -15,6 +15,7 @@ import (
 	"gitea.dev/models/db"
 	"gitea.dev/models/door43metadata"
 	"gitea.dev/models/system"
+	user_model "gitea.dev/models/user"
 	"gitea.dev/modules/dcs"
 	"gitea.dev/modules/git"
 	"gitea.dev/modules/json"
@@ -640,13 +641,115 @@ func (dms Door43MetadataList) LoadAttributes(ctx context.Context) error {
 	if len(dms) == 0 {
 		return nil
 	}
-	var lastErr error
+
+	// Batch-load the repos, releases, users (owners + release publishers) and
+	// release attachments in a fixed number of queries. The per-entry
+	// dm.LoadAttributes path costs ~5 queries per entry, which made unpaginated
+	// catalog searches time out on large catalogs.
+	repoIDSet := make(map[int64]struct{}, len(dms))
+	releaseIDSet := make(map[int64]struct{}, len(dms))
 	for _, dm := range dms {
-		if err := dm.LoadAttributes(ctx); err != nil && lastErr == nil {
-			lastErr = err
+		if dm.Repo == nil {
+			repoIDSet[dm.RepoID] = struct{}{}
+		}
+		if dm.ReleaseID > 0 && dm.Release == nil {
+			releaseIDSet[dm.ReleaseID] = struct{}{}
 		}
 	}
-	return lastErr
+
+	repoMap := make(map[int64]*Repository, len(repoIDSet))
+	if len(repoIDSet) > 0 {
+		ids := make([]int64, 0, len(repoIDSet))
+		for id := range repoIDSet {
+			ids = append(ids, id)
+		}
+		var repos []*Repository
+		if err := db.GetEngine(ctx).In("id", ids).Find(&repos); err != nil {
+			return fmt.Errorf("find repos: %v", err)
+		}
+		for _, r := range repos {
+			repoMap[r.ID] = r
+		}
+	}
+
+	relMap := make(map[int64]*Release, len(releaseIDSet))
+	if len(releaseIDSet) > 0 {
+		ids := make([]int64, 0, len(releaseIDSet))
+		for id := range releaseIDSet {
+			ids = append(ids, id)
+		}
+		var rels []*Release
+		if err := db.GetEngine(ctx).In("id", ids).Find(&rels); err != nil {
+			return fmt.Errorf("find releases: %v", err)
+		}
+		for _, rel := range rels {
+			relMap[rel.ID] = rel
+		}
+	}
+
+	for _, dm := range dms {
+		if dm.Repo == nil {
+			dm.Repo = repoMap[dm.RepoID]
+		}
+		if dm.ReleaseID > 0 && dm.Release == nil {
+			dm.Release = relMap[dm.ReleaseID]
+		}
+		if dm.Release != nil {
+			dm.Release.Repo = dm.Repo
+			dm.Release.Door43Metadata = dm
+		}
+	}
+
+	// Owners and release publishers in one user query
+	userIDSet := make(map[int64]struct{}, len(dms))
+	for _, dm := range dms {
+		if dm.Repo != nil && dm.Repo.Owner == nil {
+			userIDSet[dm.Repo.OwnerID] = struct{}{}
+		}
+		if dm.Release != nil && dm.Release.Publisher == nil && dm.Release.PublisherID > 0 {
+			userIDSet[dm.Release.PublisherID] = struct{}{}
+		}
+	}
+	userMap := make(map[int64]*user_model.User, len(userIDSet))
+	if len(userIDSet) > 0 {
+		ids := make([]int64, 0, len(userIDSet))
+		for id := range userIDSet {
+			ids = append(ids, id)
+		}
+		var users []*user_model.User
+		if err := db.GetEngine(ctx).In("id", ids).Find(&users); err != nil {
+			return fmt.Errorf("find users: %v", err)
+		}
+		for _, u := range users {
+			userMap[u.ID] = u
+		}
+	}
+	rels := make([]*Release, 0, len(relMap))
+	for _, dm := range dms {
+		if dm.Repo != nil && dm.Repo.Owner == nil {
+			dm.Repo.Owner = userMap[dm.Repo.OwnerID]
+		}
+		if dm.Release != nil {
+			if dm.Release.Publisher == nil {
+				if u := userMap[dm.Release.PublisherID]; u != nil {
+					dm.Release.Publisher = u
+				} else {
+					dm.Release.Publisher = user_model.NewGhostUser()
+				}
+			}
+			if dm.Release.Attachments == nil {
+				rels = append(rels, dm.Release)
+			}
+		}
+	}
+
+	if len(rels) > 0 {
+		if err := GetReleaseAttachments(ctx, rels...); err != nil {
+			return fmt.Errorf("GetReleaseAttachments: %v", err)
+		}
+	}
+
+	return nil
 }
 
 /*** END Door43MEtadataList ***/

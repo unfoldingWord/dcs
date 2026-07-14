@@ -64,10 +64,27 @@ func SearchCatalogByCondition(ctx context.Context, opts *door43metadata.SearchCa
 		rnFilter = "WHERE _rn = 1\n"
 	}
 
+	// The fat JSON columns (metadata, validation_error) are deliberately NOT
+	// selected: the search condition already restricts results to rows whose
+	// validation_error is NULL, and neither the catalog API nor the catalog
+	// web page renders the raw metadata of search results. Materializing the
+	// metadata MEDIUMTEXT for every row dominated the query cost.
+	dmCols := []string{
+		"id", "repo_id", "release_id", "ref", "ref_type", "commit_sha", "stage",
+		"metadata_type", "metadata_version", "subject", "flavor_type", "flavor",
+		"abbreviation", "title", "publisher", "language", "language_title",
+		"language_direction", "language_is_gl", "content_format", "checking_level",
+		"ingredients", "relations", "has_audio", "has_video", "has_pdf", "has_stream", "has_other",
+		"is_latest_for_stage", "is_repo_metadata", "healthcheck_severity", "healthcheck_counts",
+		"release_date_unix", "created_unix", "updated_unix",
+	}
+	searchCols := strings.Join(dmCols, ", ")
+	innerCols := "dm." + strings.Join(dmCols, ", dm.")
+
 	// CTE filters first (using indexes), then ranks — avoids full-table derived table materialization
 	// Note: "release" is a MySQL reserved word and must be backtick-quoted in raw SQL.
 	cteSQL := "WITH catalog_filtered AS (\n" +
-		"  SELECT dm.*,\n" +
+		"  SELECT " + innerCols + ",\n" +
 		"         r.lower_name AS lower_name, r.num_stars, r.num_forks,\n" +
 		"         COUNT(*) OVER (PARTITION BY dm.repo_id) AS release_count" + rnSelect + "\n" +
 		"  FROM door43_metadata dm\n" +
@@ -75,13 +92,19 @@ func SearchCatalogByCondition(ctx context.Context, opts *door43metadata.SearchCa
 		"  INNER JOIN user u ON r.owner_id = u.id\n" +
 		"  LEFT JOIN `release` rel ON rel.id = dm.release_id\n" +
 		"  WHERE " + condSQL + "\n)\n"
+
+	// An unpaginated request returns every row, so the total is just the
+	// result length — skip the separate COUNT pass over the same CTE.
+	needsCount := opts.PageSize > 0 || opts.Page > 1
 	var count int64
-	if _, err = db.GetEngine(ctx).SQL(cteSQL+`SELECT COUNT(*) FROM catalog_filtered `+rnFilter, condArgs...).Get(&count); err != nil {
-		return nil, 0, fmt.Errorf("count: %v", err)
+	if needsCount {
+		if _, err = db.GetEngine(ctx).SQL(cteSQL+`SELECT COUNT(*) FROM catalog_filtered `+rnFilter, condArgs...).Get(&count); err != nil {
+			return nil, 0, fmt.Errorf("count: %v", err)
+		}
 	}
 
 	var dms repo.Door43MetadataList
-	if count > 0 {
+	if !needsCount || count > 0 {
 		if opts.PageSize > 0 {
 			dms = make(repo.Door43MetadataList, 0, opts.PageSize)
 		}
@@ -91,14 +114,7 @@ func SearchCatalogByCondition(ctx context.Context, opts *door43metadata.SearchCa
 			limitSQL = fmt.Sprintf("\nLIMIT %d OFFSET %d", opts.PageSize, (opts.Page-1)*opts.PageSize)
 		}
 
-		dataSQL := cteSQL + `SELECT id, repo_id, release_id, ref, ref_type, commit_sha, stage,
-  metadata_type, metadata_version, subject, flavor_type, flavor,
-  abbreviation, title, publisher, language, language_title,
-  language_direction, language_is_gl, content_format, checking_level,
-  ingredients, relations, has_audio, has_video, has_pdf, has_stream, has_other,
-  is_latest_for_stage, is_repo_metadata,
-  metadata, validation_error, healthcheck_severity, healthcheck_counts,
-  release_date_unix, created_unix, updated_unix,
+		dataSQL := cteSQL + "SELECT " + searchCols + `,
   lower_name, num_stars, num_forks, release_count
 FROM catalog_filtered
 ` + rnFilter + `ORDER BY ` + orderSQL + limitSQL
@@ -110,6 +126,9 @@ FROM catalog_filtered
 		if err = dms.LoadAttributes(ctx); err != nil {
 			return nil, 0, fmt.Errorf("LoadAttributes: %v", err)
 		}
+	}
+	if !needsCount {
+		count = int64(len(dms))
 	}
 
 	return dms, count, nil
