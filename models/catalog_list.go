@@ -200,6 +200,7 @@ func getCatalogStatsRow(ctx context.Context, opts *door43metadata.SearchCatalogO
   COALESCE(SUM(CASE WHEN dm.has_video THEN 1 ELSE 0 END), 0) AS has_video,
   COALESCE(SUM(CASE WHEN dm.has_stream THEN 1 ELSE 0 END), 0) AS has_stream,
   COALESCE(SUM(CASE WHEN dm.has_other THEN 1 ELSE 0 END), 0) AS has_other,
+  COALESCE(SUM(CASE WHEN dm.has_pdf OR dm.has_audio OR dm.has_video OR dm.has_stream OR dm.has_other THEN 1 ELSE 0 END), 0) AS has_attachment,
   COALESCE(SUM(CASE WHEN dm.healthcheck_severity = %d THEN 1 ELSE 0 END), 0) AS healthcheck_success_count,
   COALESCE(SUM(CASE WHEN dm.healthcheck_severity = %d THEN 1 ELSE 0 END), 0) AS healthcheck_info_count,
   COALESCE(SUM(CASE WHEN dm.healthcheck_severity = %d THEN 1 ELSE 0 END), 0) AS healthcheck_warning_count,
@@ -219,7 +220,6 @@ WHERE `+condSQL,
 	if _, err := db.GetEngine(ctx).SQL(query, condArgs...).Get(row); err != nil {
 		return nil, fmt.Errorf("stats query: %v", err)
 	}
-	row.HasAttachment = row.HasPDF + row.HasAudio + row.HasVideo + row.HasStream + row.HasOther
 	return row, nil
 }
 

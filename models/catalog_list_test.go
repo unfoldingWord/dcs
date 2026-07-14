@@ -174,7 +174,8 @@ func TestGetCatalogStats(t *testing.T) {
 	assert.EqualValues(t, 2, stats.RcCount)
 	assert.EqualValues(t, 1, stats.HasAudio)
 	assert.EqualValues(t, 1, stats.HasStream)
-	assert.EqualValues(t, 3, stats.HasAttachment)
+	// v0 has two content types (audio + stream) but counts once; v1 has a PDF
+	assert.EqualValues(t, 2, stats.HasAttachment)
 
 	// Topic filters work like the other catalog searches: repo1 has the
 	// "golang" topic in the fixtures, repo4 has no topics
