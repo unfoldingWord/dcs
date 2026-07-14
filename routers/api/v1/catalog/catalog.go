@@ -23,7 +23,6 @@ import (
 	"code.gitea.io/gitea/modules/log"
 	"code.gitea.io/gitea/modules/setting"
 	api "code.gitea.io/gitea/modules/structs"
-	"code.gitea.io/gitea/routers/api/v1/utils"
 	"code.gitea.io/gitea/services/context"
 	"code.gitea.io/gitea/services/convert"
 )
@@ -243,7 +242,7 @@ func Search(ctx *context.APIContext) {
 	//   type: integer
 	// - name: limit
 	//   in: query
-	//   description: page size of results, defaults to the API DEFAULT_PAGING_NUM setting and is capped at MAX_RESPONSE_ITEMS
+	//   description: page size of results. If not given, all results are returned in one response (paging is recommended); when given it is capped at the API MAX_RESPONSE_ITEMS setting. Use the Link header or X-Total-Count to detect the last page
 	//   type: integer
 	// responses:
 	//   "200":
@@ -1625,10 +1624,15 @@ func searchCatalog(ctx *context.APIContext) {
 	if query != "" {
 		keywords = door43metadata.SplitAtCommaNotInString(query, false)
 	}
-	// Same paging behavior as /repos/search: limit defaults to
-	// setting.API.DefaultPagingNum and is capped at setting.API.MaxResponseItems,
-	// so an unbounded request can no longer return the entire catalog.
-	listOptions := utils.GetListOptions(ctx)
+	// Paging: an explicit limit is capped at setting.API.MaxResponseItems like
+	// /repos/search; omitting limit keeps this endpoint's long-standing
+	// "return everything" behavior so existing consumers that don't page are
+	// not broken. The response always sends X-Total-Count, and paged responses
+	// send Link headers (no rel="next" on the last page).
+	listOptions := db.ListOptions{Page: max(ctx.FormInt("page"), 1)}
+	if limit := ctx.FormInt("limit"); limit > 0 {
+		listOptions.PageSize = convert.ToCorrectPageSize(limit)
+	}
 
 	abbreviations := QueryStrings(ctx, "abbreviation")
 	abbreviations = append(abbreviations, QueryStrings(ctx, "resource")...) // For non-breaking changes, support "resource" argument
@@ -1746,7 +1750,9 @@ func searchCatalog(ctx *context.APIContext) {
 		lastUpdated = time.Now()
 	}
 
-	ctx.SetLinkHeader(count, opts.PageSize)
+	if opts.PageSize > 0 {
+		ctx.SetLinkHeader(count, opts.PageSize)
+	}
 	ctx.SetTotalCountHeader(count)
 	ctx.JSON(http.StatusOK, api.CatalogSearchResults{
 		OK:          true,
