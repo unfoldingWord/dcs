@@ -10,6 +10,7 @@ import (
 
 	auth_model "gitea.dev/models/auth"
 	"gitea.dev/models/db"
+	"gitea.dev/modules/log" // DCS Customizations
 	"gitea.dev/modules/setting"
 	"gitea.dev/modules/templates"
 	"gitea.dev/modules/util"
@@ -74,9 +75,12 @@ func ApplicationsPost(ctx *context.Context) {
 		return
 	}
 	if exist {
-		ctx.Flash.Error(ctx.Tr("settings.generate_token_name_duplicate", t.Name))
-		ctx.Redirect(setting.AppSubURL + "/user/settings/applications")
-		return
+		/*** DCS Customizations - Commented out so tokens can have the same name for translationCore ***/
+		//ctx.Flash.Error(ctx.Tr("settings.generate_token_name_duplicate", t.Name))
+		//ctx.Redirect(setting.AppSubURL + "/user/settings/applications")
+		//return
+		log.Info("Ignoring existing Access Token for DCS/translationCore, UID: %v, Token Name: %v", ctx.ContextUser.ID, form.Name)
+		/*** END DCS Customizations ***/
 	}
 
 	// a token-authenticated request must not mint a token with a broader scope than its own, nor

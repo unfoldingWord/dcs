@@ -24,6 +24,12 @@ SHELLCHECK_IMAGE ?= docker.io/koalaman/shellcheck:v0.11.0@sha256:61862eba1fcf09a
 
 CONTAINER_RUNTIME ?= $(shell hash docker >/dev/null 2>&1 && echo docker || echo podman)
 
+# DCS Customizations
+DOCKER_IMAGE ?= unfoldingword/dcs
+DOCKER_TAG ?= latest
+DOCKER_REF := $(DOCKER_IMAGE):$(DOCKER_TAG)
+# END DCS Customizations
+
 HAS_GO := $(shell hash $(GO) > /dev/null 2>&1 && echo yes)
 ifeq ($(HAS_GO), yes)
 	CGO_EXTRA_CFLAGS := -DSQLITE_MAX_VARIABLE_NUMBER=32766
@@ -91,7 +97,7 @@ ifneq ($(GITHUB_REF_TYPE),branch)
 	GITEA_VERSION ?= $(VERSION)
 else
 	ifneq ($(GITHUB_REF_NAME),)
-		VERSION ?= $(subst release/v,,$(GITHUB_REF_NAME))-nightly
+		VERSION ?= $(subst release/dcs/v,,$(GITHUB_REF_NAME))-nightly
 	else
 		VERSION ?= main
 	endif
@@ -123,6 +129,7 @@ FRONTEND_DEST_ENTRIES := public/assets/js public/assets/css public/assets/fonts 
 FRONTEND_DEV_LOG_LEVEL ?= warn
 
 BINDATA_DEST_WILDCARD := modules/migration/bindata.* modules/public/bindata.* modules/options/bindata.* modules/templates/bindata.*
+BINDATA_DEST := modules/migration/bindata.dat modules/public/bindata.dat modules/options/bindata.dat modules/templates/bindata.dat
 
 GENERATED_GO_DEST := modules/charset/invisible_gen.go modules/charset/ambiguous_gen.go
 
@@ -188,6 +195,7 @@ help: Makefile ## print Makefile help information.
 	@printf "  \033[36m%-46s\033[0m %s\n" "test-e2e" "test end to end using playwright"
 	@printf "  \033[36m%-46s\033[0m %s\n" "test-backend[#TestSpecificName]" "run unit test (sqlite only)"
 	@printf "  \033[36m%-46s\033[0m %s\n" "test-integration[#TestSpecificName]" "run integration test for GITEA_TEST_DATABASE (sqlite, mysql, pgsql, mssql)"
+	@printf "  \033[36m%-46s\033[0m %s\n" "test-dcs-sqlite" "run DCS integration tests (TestDCS*) for sqlite"
 
 .PHONY: clean-all
 clean-all: clean ## delete backend, frontend and integration files
@@ -459,6 +467,12 @@ test-integration-compile:
 test-integration\#%:
 	$(GO) test $(GOTEST_FLAGS) -tags '$(TAGS)' -run $(subst .,/,$*) gitea.dev/tests/integration
 
+# DCS Customizations
+.PHONY: test-dcs-sqlite
+test-dcs-sqlite:
+	GITEA_TEST_DATABASE=sqlite $(GO) test $(GOTEST_FLAGS) -tags '$(TAGS)' -run '^TestDCS' gitea.dev/tests/integration
+# END DCS Customizations
+
 .PHONY: test-migration
 test-migration: migrations.integration.test migrations.individual.test
 
@@ -672,6 +686,13 @@ generate-manpage: ## generate manpage
 	@./gitea docs --man > man/man1/gitea.1
 	@gzip -9 man/man1/gitea.1 && echo man/man1/gitea.1.gz created
 	@#TODO A small script that formats config-cheat-sheet.en-us.md nicely for use as a config man page
+
+# DCS Customizations
+.PHONY: docker
+docker:
+	docker build --disable-content-trust=false -t $(DOCKER_REF) .
+# support also build args docker build --build-arg GITEA_VERSION=v1.2.3 --build-arg TAGS="bindata"  .
+# END DCS Customizations
 
 # Disable parallel execution because it would break some targets that don't
 # specify exact dependencies like 'backend' which does currently not depend

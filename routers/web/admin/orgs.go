@@ -32,6 +32,9 @@ func Organizations(ctx *context.Context) {
 			PageSize: setting.UI.Admin.OrgPagingNum,
 		},
 		Visible: []structs.VisibleType{structs.VisibleTypePublic, structs.VisibleTypeLimited, structs.VisibleTypePrivate},
+		/*** DCS Customizations ***/
+		RepoLanguages: ctx.FormStrings("lang"),
+		/*** END DCS Customizations ***/
 		OrderBy: db.SearchOrderBy(sortOrder),
 	}, tplOrgs)
 }

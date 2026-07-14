@@ -195,6 +195,12 @@ func testRenameReservedUsername(t *testing.T) {
 	// ".", "..", ".well-known" are also reserved but invalid as form input.
 	reservedNames := []string{
 		"api",
+		/*** DCS Customizations ***/
+		"about",
+		"catalog",
+		"tools",
+		/*** END DCS Customizations ***/
+
 		"openapi3.v1.json",
 		"swagger.v1.json",
 	}

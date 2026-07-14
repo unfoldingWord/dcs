@@ -10,6 +10,7 @@ import (
 	"net/url"
 	"os"
 	"path"
+	"strings" // DCS Customizations
 
 	"gitea.dev/models/db"
 	"gitea.dev/modules/log"
@@ -23,23 +24,61 @@ import (
 
 // Attachment represent a attachment of issue/comment/release.
 type Attachment struct {
-	ID                int64  `xorm:"pk autoincr"`
-	UUID              string `xorm:"uuid UNIQUE"`
-	RepoID            int64  `xorm:"INDEX"`           // this should not be zero
-	IssueID           int64  `xorm:"INDEX"`           // maybe zero when creating
-	ReleaseID         int64  `xorm:"INDEX"`           // maybe zero when creating
-	UploaderID        int64  `xorm:"INDEX DEFAULT 0"` // Notice: will be zero before this column added
-	CommentID         int64  `xorm:"INDEX"`
-	Name              string
+	ID                int64              `xorm:"pk autoincr"`
+	UUID              string             `xorm:"uuid UNIQUE"`
+	RepoID            int64              `xorm:"INDEX"`           // this should not be zero
+	IssueID           int64              `xorm:"INDEX"`           // maybe zero when creating
+	ReleaseID         int64              `xorm:"INDEX"`           // maybe zero when creating
+	UploaderID        int64              `xorm:"INDEX DEFAULT 0"` // Notice: will be zero before this column added
+	CommentID         int64              `xorm:"INDEX"`
+	Name              string             `json:"name"` // DCS: explicit tag required — files.json unmarshals via GOEXPERIMENT=jsonv2 (encoding/json/v2), which matches names case-sensitively
 	DownloadCount     int64              `xorm:"DEFAULT 0"`
-	Size              int64              `xorm:"DEFAULT 0"`
+	Size              int64              `xorm:"DEFAULT 0" json:"size"`
 	CreatedUnix       timeutil.TimeStamp `xorm:"created"`
 	CustomDownloadURL string             `xorm:"-"`
+	/*** DCS Customizations ***/
+	BrowserDownloadURL string `xorm:"-" json:"browser_download_url"`
+	/*** END DCS Customizations ***/
 }
 
 func init() {
 	db.RegisterModel(new(Attachment))
 }
+
+/*** DCS Customizations ***/
+
+func (a *Attachment) AfterLoad() {
+	if strings.Contains(a.Name, "|http") || strings.Contains(a.Name, "|ftp") {
+		if name, url, ok := strings.Cut(a.Name, "|"); ok {
+			a.Name = name
+			a.BrowserDownloadURL = url
+		}
+	}
+}
+
+func (a *Attachment) BeforeInsert() {
+	if a.Name == "" && a.BrowserDownloadURL != "" {
+		u, _ := url.Parse(a.BrowserDownloadURL)
+		a.Name = path.Base(u.Path)
+	}
+	if a.BrowserDownloadURL != "" {
+		a.Name = fmt.Sprintf("%s|%s", a.Name, a.BrowserDownloadURL)
+	}
+}
+
+func (a *Attachment) BeforeUpdate() {
+	a.BeforeInsert()
+}
+
+func (a *Attachment) AfterInsert() {
+	a.AfterLoad()
+}
+
+func (a *Attachment) AfterUpdate() {
+	a.AfterLoad()
+}
+
+/*** END DCS Customizations ***/
 
 // IncreaseDownloadCount is update download count + 1
 func (a *Attachment) IncreaseDownloadCount(ctx context.Context) error {
@@ -63,6 +102,12 @@ func (a *Attachment) RelativePath() string {
 
 // DownloadURL returns the download url of the attached file
 func (a *Attachment) DownloadURL() string {
+	/*** DCS Customizations ***/
+	if a.BrowserDownloadURL != "" {
+		return a.BrowserDownloadURL
+	}
+	/*** END DCS Customizations ***/
+
 	if a.CustomDownloadURL != "" {
 		return a.CustomDownloadURL
 	}

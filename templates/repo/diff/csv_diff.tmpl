@@ -34,7 +34,7 @@
 								{{if not $cell}}
 									<td></td>
 								{{else if eq $cell.Type 2}}
-									<td class="modified"><span class="removed-code">{{.LeftCell}}</span> <span class="added-code">{{.RightCell}}</span></td>
+									<td class="modified"><span class="csv-cell-diff">{{GetCsvCellDiff .LeftCell .RightCell}}</span></td>
 								{{else if eq $cell.Type 3}}
 									<td class="added"><span class="added-code">{{.RightCell}}</span></td>
 								{{else if eq $cell.Type 4}}

@@ -47,7 +47,7 @@ func Users(ctx *context.Context) {
 	ctx.Data["Title"] = ctx.Tr("admin.users")
 	ctx.Data["PageIsAdminUsers"] = true
 
-	statusFilterKeys := []string{"is_active", "is_admin", "is_restricted", "is_2fa_enabled", "is_prohibit_login"}
+	statusFilterKeys := []string{"is_active", "is_admin", "is_restricted", "is_2fa_enabled", "is_prohibit_login", "is_spam_user"} // DCS Customizations - adds "is_spam_user"
 	statusFilterMap := map[string]string{}
 	for _, filterKey := range statusFilterKeys {
 		paramKey := "status_filter[" + filterKey + "]"
@@ -74,7 +74,11 @@ func Users(ctx *context.Context) {
 		IsTwoFactorEnabled: optional.ParseBool(statusFilterMap["is_2fa_enabled"]),
 		IsProhibitLogin:    optional.ParseBool(statusFilterMap["is_prohibit_login"]),
 		IncludeReserved:    true, // administrator needs to list all accounts include reserved, bot, remote ones
-		OrderBy:            db.SearchOrderBy(sortType),
+		/*** DCS Customizations ***/
+		IsSpamUser:    optional.ParseBool(statusFilterMap["is_spam_user"]),
+		RepoLanguages: ctx.FormStrings("lang"),
+		/*** END DCS Customizations ***/
+		OrderBy: db.SearchOrderBy(sortType),
 	}, tplUsers)
 }
 
@@ -277,6 +281,13 @@ func ViewUser(ctx *context.Context) {
 		ctx.ServerError("SearchRepository", err)
 		return
 	}
+
+	/*** DCS Customizations ***/
+	err = repos.LoadLatestDMs(ctx)
+	if err != nil {
+		log.Error("LoadLatestDMs: unable to load DMs for repos")
+	}
+	/*** End DCS Customizations ***/
 
 	ctx.Data["Repos"] = repos
 	ctx.Data["ReposTotal"] = int(count)

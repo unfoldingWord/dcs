@@ -1,0 +1,38 @@
+name: dcs-tests
+
+on:
+  pull_request:
+  push:
+    branches:
+      - "release/dcs/**"
+  release:
+    types:
+      - published
+      - prereleased
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
+
+jobs:
+  sqlite-dcs:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v6
+        with:
+          go-version-file: go.mod
+          check-latest: true
+      - run: make deps-backend
+      - run: make backend
+        env:
+          TAGS: bindata gogit
+      - name: run DCS integration tests
+        run: make test-dcs-sqlite
+        timeout-minutes: 25
+        env:
+          # sqlite is built-in since v1.27 (modernc driver); the old sqlite tags are obsolete
+          GOTEST_FLAGS: -timeout=20m
+          TAGS: bindata gogit
+          USE_REPO_TEST_DIR: 1

@@ -33,14 +33,14 @@
 								<span class="ui basic label">{{ctx.Locale.Tr "repo.desc.sha256"}}</span>
 							{{end}}
 						</span>
+							<!-- DCS Customizations -->
+							{{template "dcs/repo_list_badges" .}}
+							<!-- END DCS Customizations -->
 					</div>
-					<div class="item-trailing muted-links">
-						{{if .PrimaryLanguage}}
-							<a class="flex-text-block" href="?q={{$.Keyword}}&sort={{$.SortType}}&language={{.PrimaryLanguage.Language}}{{if $.TabName}}&tab={{$.TabName}}{{end}}">
-								<i class="color-icon" style="background-color: {{.PrimaryLanguage.Color}}"></i>
-								{{.PrimaryLanguage.Language}}
-							</a>
-						{{end}}
+					<div class="item-trailing">
+						<!-- DCS Customizations -->
+						{{template "dcs/repo_list_metadata" (dict "Repo" . "Link" $.Link "SortType" $.SortType)}}
+						<!-- END DCS Customizations -->
 						{{if not $.DisableStars}}
 							<a class="flex-text-inline" href="{{.Link}}/stars">
 								<span class="tw-contents" aria-label="{{ctx.Locale.Tr "repo.stars"}}">{{svg "octicon-star" 16}}</span>
@@ -64,7 +64,7 @@
 				{{if .Topics}}
 					<div class="label-list">
 					{{range .Topics}}
-						{{if ne . ""}}<a class="ui label" href="{{AppSubUrl}}/explore/repos?q={{.}}&topic=1">{{.}}</a>{{end}}
+						{{if ne . ""}}<a class="ui label" href="{{AppSubUrl}}/explore/repos?q=topic%3A{{.}}">{{.}}</a>{{end}}
 					{{end}}
 					</div>
 				{{end}}

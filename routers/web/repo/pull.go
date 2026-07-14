@@ -381,7 +381,8 @@ func (prInfo *pullRequestViewInfo) prepareViewFillCompareInfo(ctx *context.Conte
 	pull := prInfo.issue.PullRequest
 	prInfo.CompareInfo, err = git_service.GetCompareInfo(ctx, ctx.Repo.Repository, ctx.Repo.Repository, ctx.Repo.GitRepo, baseRef, git.RefName(pull.GetGitHeadRefName()), false, false)
 	if err != nil {
-		isKnownErrorForBroken := errors.Is(err, util.ErrNotExist) || gitcmd.IsStderr(err, gitcmd.StderrNotValidObjectName) || gitcmd.IsStderr(err, gitcmd.StderrUnknownRevisionOrPath)
+		isKnownErrorForBroken := errors.Is(err, util.ErrNotExist) || gitcmd.IsStderr(err, gitcmd.StderrNotValidObjectName) || gitcmd.IsStderr(err, gitcmd.StderrUnknownRevisionOrPath) ||
+			strings.Contains(err.Error(), "fatal: bad revision") // DCS Customizations
 		if !isKnownErrorForBroken {
 			log.Error("GetCompareInfo: %v", err)
 		}
@@ -871,6 +872,17 @@ func viewPullFiles(ctx *context.Context, beforeCommitID, afterCommitID string) {
 		ctx.Data["FileIconPoolHTML"] = renderedIconPool.RenderToHTML()
 	}
 
+	/*** DCS Customizations ***/
+	// For Validation
+	for _, file := range diff.Files {
+		if strings.HasSuffix(file.Name, ".json") || strings.HasSuffix(file.Name, ".yaml") || strings.HasSuffix(file.Name, ".yml") {
+			if entry, _ := afterCommit.GetTreeEntryByPath(file.Name); entry != nil {
+				file.Entry = entry
+			}
+		}
+	}
+	/*** END DCS Customizations ***/
+
 	ctx.Data["Diff"] = diff
 	ctx.Data["DiffBlobExcerptData"] = &gitdiff.DiffBlobExcerptData{
 		BaseLink:       ctx.Repo.RepoLink + "/blob_excerpt",
@@ -916,6 +928,17 @@ func viewPullFiles(ctx *context.Context, beforeCommitID, afterCommitID string) {
 
 	ctx.Data["IsIssuePoster"] = ctx.Doer != nil && issue.IsPoster(ctx.Doer.ID)
 	ctx.Data["HasIssuesOrPullsWritePermission"] = ctx.Repo.Permission.CanWriteIssuesOrPulls(issue.IsPull)
+
+	/*** DCS Customizations ***/
+	// For Validation
+	for _, file := range diff.Files {
+		if strings.HasSuffix(file.Name, ".json") || strings.HasSuffix(file.Name, ".yaml") || strings.HasSuffix(file.Name, ".yml") {
+			if entry, _ := afterCommit.GetTreeEntryByPath(file.Name); entry != nil {
+				file.Entry = entry
+			}
+		}
+	}
+	/*** END DCS Customizations ***/
 
 	ctx.Data["IsAttachmentEnabled"] = setting.Attachment.Enabled
 	// For files changed page

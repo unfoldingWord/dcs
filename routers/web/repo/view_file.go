@@ -9,6 +9,7 @@ import (
 	"image"
 	"io"
 	"path"
+	"path/filepath" // DCS Customizations
 	"strings"
 
 	git_model "gitea.dev/models/git"
@@ -162,6 +163,12 @@ func prepareFileView(ctx *context.Context, entry *git.TreeEntry) {
 	}
 
 	blob := entry.Blob()
+
+	/*** DCS Customizations ***/
+	fileExt := filepath.Ext(blob.Name())
+	ctx.Data["FileExt"] = fileExt
+	ctx.Data["IgnoreLanguageDirection"] = fileExt != ".md" || blob.Name() == "README.md" || blob.Name() == "LICENSE.md"
+	/*** END DCS Customizations ***/
 
 	ctx.Data["Title"] = ctx.Tr("repo.file.title", ctx.Repo.Repository.Name+"/"+ctx.Repo.TreePath, ctx.Repo.RefFullName.ShortName())
 	ctx.Data["FileIsSymlink"] = entry.IsLink()

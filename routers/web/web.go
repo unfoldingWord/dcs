@@ -27,6 +27,7 @@ import (
 	"gitea.dev/routers/common"
 	"gitea.dev/routers/web/admin"
 	"gitea.dev/routers/web/auth"
+	"gitea.dev/routers/web/dcs" // DCS Customizations
 	"gitea.dev/routers/web/devtest"
 	"gitea.dev/routers/web/events"
 	"gitea.dev/routers/web/explore"
@@ -1288,6 +1289,9 @@ func registerWebRoutes(m *web.Router, webAuth *AuthMiddleware) {
 			g.MatchPath("POST", "/<*:*>", repo.MustBeNotEmpty, repo.SetEditorconfigIfExists, reqSignIn, context.RepoMustNotBeArchived(), reqUnitPullsReader, repo.MustAllowPulls, web.Bind(forms.CreateIssueForm{}), repo.SetWhitespaceBehavior, repo.CompareAndPullRequestPost)
 		})
 		m.Get("/pulls/new/*", repo.PullsNewRedirect)
+		/*** DCS Customizations ***/
+		dcs.RegisterDCSRepoWebRoutes(m)
+		/*** END DCS Customizations ***/
 	}, optSignIn, context.RepoAssignment, reqUnitCodeReader)
 	// end "/{username}/{reponame}": repo code: find, compare, list
 
@@ -1665,6 +1669,11 @@ func registerWebRoutes(m *web.Router, webAuth *AuthMiddleware) {
 			m.Post("/*", repo.InitiateDownload)
 		}, webAuth.AllowBasic, webAuth.AllowOAuth2, repo.MustBeNotEmpty, dlSourceEnabled)
 
+		m.Group("/sb", func() {
+			m.Get("/*", repo.DownloadSB)
+			m.Post("/*", repo.InitiateDownloadSB)
+		}, repo.MustBeNotEmpty, dlSourceEnabled)
+
 		m.Group("/branches", func() {
 			m.Get("/list", repo.GetBranchesList)
 			m.Get("", context.RepoRefByDefaultBranch() /* for the "commits" tab */, repo.Branches)
@@ -1783,6 +1792,10 @@ func registerWebRoutes(m *web.Router, webAuth *AuthMiddleware) {
 			m.Post("/repo-action-view/runs/{run}/jobs/{job}", web.Bind(actions.ViewRequest{}), devtest.MockActionsRunsJobs)
 		})
 	}
+
+	/*** DCS Customizations ***/
+	dcs.RegisterDCSWebRoutes(m, optSignIn, reqSignIn)
+	/*** END DCS Customizations ***/
 
 	m.NotFound(func(w http.ResponseWriter, req *http.Request) {
 		ctx := context.GetWebContext(req.Context())

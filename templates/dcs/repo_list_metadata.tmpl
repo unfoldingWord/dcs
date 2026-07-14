@@ -1,0 +1,18 @@
+{{if .Repo.RepoDM}}
+	{{if .Repo.RepoDM.Language}}
+	<a class="muted" href="{{$.Link}}?sort={{$.SortType}}&q=lang%3A{{.Repo.RepoDM.Language}}" data-tooltip-content="{{.Repo.RepoDM.LanguageTitle}} ({{.Repo.RepoDM.Language}}, {{.Repo.RepoDM.LanguageDirection}})">
+		<span class="tx-flex tw-items-center tw-mr-2"><i class="color-icon tw-mr-2" style="background-color: {{GetColorFromString .Repo.RepoDM.Language}}"></i>{{.Repo.RepoDM.Language}}</span>
+	</a>
+	{{end}}
+	{{if .Repo.RepoDM.Subject}}
+	<a class="muted" href="{{$.Link}}?sort={{$.SortType}}&q=subject%3A{{.Repo.RepoDM.Subject}}" data-tooltip-content="Abbreviation: {{.Repo.RepoDM.Abbreviation}}">
+		<span class="tx-flex tw-items-center tw-mr-2"><i class="color-icon tw-mr-2" style="background-color: {{GetColorFromString .Repo.RepoDM.Subject}}"></i>{{.Repo.RepoDM.Subject}}</span>
+	</a>
+	{{end}}
+	{{if and .Repo.RepoDM.MetadataType .Repo.RepoDM.MetadataVersion}}
+	<a class="muted" href="?sort={{$.SortType}}&q=metadata_type%3A{{.Repo.RepoDM.MetadataType}}" data-tooltip-content="{{ctx.Locale.Tr "dcs.repo.metadata.metadata_type"}}: {{.Repo.RepoDM.MetadataTypeTitle}} ({{.Repo.RepoDM.MetadataType}} {{.Repo.RepoDM.MetadataVersion}})">
+		<img src="{{AssetUrlPrefix}}/img/dcs/{{.Repo.RepoDM.MetadataTypeIcon}}" style="height:16px;vertical-align:middle" />
+			{{.Repo.RepoDM.MetadataType}} {{.Repo.RepoDM.MetadataVersion}}
+	</a>
+	{{end}}
+{{end}}

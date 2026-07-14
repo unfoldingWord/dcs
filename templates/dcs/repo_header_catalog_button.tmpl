@@ -1,0 +1,10 @@
+{{if .LatestProdDM}}
+<div class="ui labeled button" tabindex="0">
+	<a type="submit" class="ui compact basic button" href="{{.Link}}/releases/tag/{{.LatestProdDM.Ref | PathEscapeSegments}}">
+		{{svg "octicon-tag"}} {{ctx.Locale.Tr "dcs.repo.metadata.catalog"}}
+	</a>
+	<a class="ui basic label" href="{{.Link}}/releases/tag/{{.LatestProdDM.Ref | PathEscapeSegments}}">
+		{{.LatestProdDM.Ref}}
+	</a>
+</div>
+{{end}}

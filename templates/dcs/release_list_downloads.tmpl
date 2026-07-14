@@ -1,0 +1,33 @@
+{{$release := .release}}
+{{if $release.Door43Metadata}}
+  {{if eq $release.Door43Metadata.MetadataType "rc"}}
+		<li class="item">
+		  <a class="archive-link" download href="{{$.RepoLink}}/sb/{{$release.TagName | PathEscapeSegments}}.zip" rel="nofollow">
+			  <strong class="flex-text-inline">{{svg "octicon-file-zip" 16 "download-icon"}}{{ctx.Locale.Tr "dcs.repo.release.source_files_sb"}} (ZIP)</strong>
+			</a>
+		</li>
+		<li class="item">
+			<a class="archive-link" download href="{{$.RepoLink}}/sb/{{$release.TagName | PathEscapeSegments}}.tar.gz" rel="nofollow">
+				<strong class="flex-text-inline">{{svg "octicon-file-zip" 16 "download-icon"}}{{ctx.Locale.Tr "dcs.repo.release.source_files_sb"}} (TAR.GZ)</strong>
+			</a>
+		</li>
+  {{end}}
+<li class="item">
+	<a href="{{Door43PreviewURL}}/u/{{$release.Repo.OwnerName | PathEscapeSegments}}/{{$release.Repo.Name | PathEscapeSegments}}/{{$release.TagName | PathEscapeSegments}}{{if eq AppUrl "https://qa.door43.org/"}}?server=QA{{end}}{{if eq AppUrl "https://develop.door43.org/"}}?server=DEV{{end}}"
+		target="_blank" rel="nofollow noopener">
+		<strong class="flex-text-inline">
+			{{svg "octicon-book" 16 "download-icon"}}{{ctx.Locale.Tr "preview"}} / PDF
+		</strong>
+	</a>
+</li>
+	{{if eq $release.Door43Metadata.Subject "Aligned Bible"}}
+	<li style="display: block" class="item">
+		<a href="#" onclick="window.downloadUnalignedUSFM('{{PathEscapeSegments $release.Repo.OwnerName}}', '{{PathEscapeSegments $release.Repo.Name}}', '{{PathEscapeSegments $release.TagName}}', document.getElementById('usfm-download-status-{{PathEscapeSegments $release.TagName}}')); return false;" rel="nofollow">
+			<strong class="flex-text-inline">
+				{{svg "octicon-file-zip" 16 "download-icon"}}Unaligned USFM (ZIP)
+			</strong>
+		</a>
+		<span id="usfm-download-status-{{PathEscapeSegments $release.TagName}}"></span>
+	</li>
+	{{end}}
+{{end}}

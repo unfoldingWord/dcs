@@ -1,0 +1,4 @@
+{{if and .RepoDM (eq .RepoDM.MetadataType "rc") (ne .RefFullName.ShortName "main")}}
+	<a class="item muted archive-link" href="{{.RepoLink}}/sb/{{PathEscapeSegments .RefFullName.ShortName}}.zip" rel="nofollow">{{svg "octicon-file-zip"}} {{ctx.Locale.Tr "dcs.repo.download_zip_sb"}}</a>
+	<a class="item muted archive-link" href="{{.RepoLink}}/sb/{{PathEscapeSegments .RefFullName.ShortName}}.tar.gz" rel="nofollow">{{svg "octicon-file-zip"}} {{ctx.Locale.Tr "dcs.repo.download_tar_sb"}}</a>
+{{end}}
