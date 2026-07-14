@@ -3940,6 +3940,7 @@
   "admin.dashboard.load_schemas": "Load Metadata Schemas",
   "admin.dashboard.convert_rc2sb": "Convert RC to Scripture Burrito",
   "dcs.admin.users.list_status_filter.is_spam_user": "Spam User",
+  "dcs.catalog": "Catalog",
   "dcs.explore.released": "Released",
   "dcs.repo.download_tar_sb": "Download TAR.GZ (Source as SB)",
   "dcs.repo.download_zip_sb": "Download ZIP (Source as SB)",

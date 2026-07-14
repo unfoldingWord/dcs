@@ -2,7 +2,8 @@
 <!-- GA4 -->
 <!-- Google tag (gtag.js) -->
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-TZPK61E3EQ"></script>
-<script>
+{{- /* v1.27 CSP requires a nonce on inline scripts */ -}}
+<script nonce="{{ctx.CspScriptNonce}}">
 	window.dataLayer = window.dataLayer || [];
 	function gtag(){dataLayer.push(arguments);}
 	gtag('js', new Date());
