@@ -224,7 +224,8 @@ type Repository struct {
 	LatestPreprodDM *Door43Metadata `xorm:"-"`
 	DefaultBranchDM *Door43Metadata `xorm:"-"`
 	RepoDM          *Door43Metadata `xorm:"-"`
-	/*** DCS Customizations ***/
+	LatestDMsLoaded bool            `xorm:"-"` // memoizes LoadLatestDMs, incl. stages that have no DM
+	/*** END DCS Customizations ***/
 }
 
 func init() {
