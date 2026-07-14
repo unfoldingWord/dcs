@@ -9,17 +9,17 @@ import (
 	"fmt"
 	"strings"
 
-	"code.gitea.io/gitea/models/db"
-	"code.gitea.io/gitea/models/organization"
-	access_model "code.gitea.io/gitea/models/perm/access"
-	repo_model "code.gitea.io/gitea/models/repo"
-	"code.gitea.io/gitea/models/unit"
-	user_model "code.gitea.io/gitea/models/user"
-	"code.gitea.io/gitea/modules/git"
-	"code.gitea.io/gitea/modules/references"
-	api "code.gitea.io/gitea/modules/structs"
-	"code.gitea.io/gitea/modules/timeutil"
-	"code.gitea.io/gitea/modules/util"
+	"gitea.dev/models/db"
+	"gitea.dev/models/organization"
+	access_model "gitea.dev/models/perm/access"
+	repo_model "gitea.dev/models/repo"
+	"gitea.dev/models/unit"
+	user_model "gitea.dev/models/user"
+	"gitea.dev/modules/git"
+	"gitea.dev/modules/references"
+	api "gitea.dev/modules/structs"
+	"gitea.dev/modules/timeutil"
+	"gitea.dev/modules/util"
 
 	"xorm.io/builder"
 )
@@ -91,12 +91,6 @@ type ErrIssueIsOpen struct {
 	RepoID int64
 	IsPull bool
 	Index  int64
-}
-
-// IsErrIssueIsOpen checks if an error is a ErrIssueIsOpen.
-func IsErrIssueIsOpen(err error) bool {
-	_, ok := err.(ErrIssueIsOpen)
-	return ok
 }
 
 func (err ErrIssueIsOpen) Error() string {
@@ -441,7 +435,7 @@ func NewIssue(ctx context.Context, repo *repo_model.Repository, issue *Issue, la
 			LabelIDs:    labelIDs,
 			Attachments: uuids,
 		}); err != nil {
-			if repo_model.IsErrUserDoesNotHaveAccessToRepo(err) || IsErrNewIssueInsert(err) {
+			if repo_model.IsErrUserDoesNotHaveAccessToRepo(err) {
 				return err
 			}
 			return fmt.Errorf("newIssue: %w", err)
@@ -605,7 +599,7 @@ func ResolveIssueMentionsByVisibility(ctx context.Context, issue *Issue, doer *u
 					resolved[issue.Repo.Owner.LowerName+"/"+team.LowerName] = true
 					continue
 				}
-				has, err := db.GetEngine(ctx).Get(&organization.TeamUnit{OrgID: issue.Repo.Owner.ID, TeamID: team.ID, Type: unittype})
+				has, err := db.Exist[organization.TeamUnit](ctx, builder.Eq{"org_id": issue.Repo.Owner.ID, "team_id": team.ID, "`type`": unittype})
 				if err != nil {
 					return nil, fmt.Errorf("get team units (%d): %w", team.ID, err)
 				}

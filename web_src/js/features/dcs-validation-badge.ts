@@ -2,12 +2,12 @@ import {createTippy} from '../modules/tippy.ts';
 
 export function initDCSValidationBadge() {
   const badges = document.querySelectorAll('.validation-message-badge');
-  if (!badges) {
+  if (!badges.length) {
     return;
   }
   for (const badge of badges) {
     const tooltips = badge.querySelectorAll('.validation-message-tooltip');
-    if (tooltips) {
+    if (tooltips.length) {
       createTippy(badge, {
         trigger: 'mouseenter',
         allowHTML: true,

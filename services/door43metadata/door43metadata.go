@@ -16,24 +16,24 @@ import (
 	"strings"
 	"time"
 
-	"code.gitea.io/gitea/models"
-	"code.gitea.io/gitea/models/db"
-	"code.gitea.io/gitea/models/door43metadata"
-	repo_model "code.gitea.io/gitea/models/repo"
-	"code.gitea.io/gitea/models/system"
-	user_model "code.gitea.io/gitea/models/user"
-	"code.gitea.io/gitea/modules/charset"
-	"code.gitea.io/gitea/modules/dcs"
-	"code.gitea.io/gitea/modules/git"
-	"code.gitea.io/gitea/modules/json"
-	"code.gitea.io/gitea/modules/log"
-	"code.gitea.io/gitea/modules/setting"
-	"code.gitea.io/gitea/modules/storage"
-	"code.gitea.io/gitea/modules/structs"
-	"code.gitea.io/gitea/modules/timeutil"
-	"code.gitea.io/gitea/modules/util"
-	"code.gitea.io/gitea/services/convert"
-	"code.gitea.io/gitea/services/door43healthcheck"
+	"gitea.dev/models"
+	"gitea.dev/models/db"
+	"gitea.dev/models/door43metadata"
+	repo_model "gitea.dev/models/repo"
+	"gitea.dev/models/system"
+	user_model "gitea.dev/models/user"
+	"gitea.dev/modules/charset"
+	"gitea.dev/modules/dcs"
+	"gitea.dev/modules/git"
+	"gitea.dev/modules/json"
+	"gitea.dev/modules/log"
+	"gitea.dev/modules/setting"
+	"gitea.dev/modules/storage"
+	"gitea.dev/modules/structs"
+	"gitea.dev/modules/timeutil"
+	"gitea.dev/modules/util"
+	"gitea.dev/services/convert"
+	"gitea.dev/services/door43healthcheck"
 
 	"github.com/google/uuid"
 	text_cases "golang.org/x/text/cases"
@@ -1103,6 +1103,10 @@ func processDoor43MetadataForRepoRef(ctx context.Context, repo *repo_model.Repos
 		}
 	}
 
+	if err := dm.DetermineAttachmentFlags(ctx); err != nil {
+		log.Error("DetermineAttachmentFlags [%s/%s]: %v", repo.FullName(), ref, err)
+	}
+
 	if dm.ID > 0 {
 		if err = repo_model.UpdateDoor43Metadata(ctx, dm); err != nil {
 			return err
@@ -1178,13 +1182,37 @@ func DeleteDoor43MetadataByRepoAndRef(ctx context.Context, repo *repo_model.Repo
 	return processDoor43MetadataForRepoLatestDMs(ctx, repo)
 }
 
+// UpdateDoor43MetadataAttachmentFlags recomputes and saves the has_audio /
+// has_video / has_pdf / has_stream / has_other flags on the Door43Metadata of
+// the given release after its attachments change. It is a no-op when the
+// release has no Door43Metadata entry.
+func UpdateDoor43MetadataAttachmentFlags(ctx context.Context, repoID, releaseID int64) error {
+	dm, err := repo_model.GetDoor43MetadataByRepoIDAndReleaseID(ctx, repoID, releaseID)
+	if err != nil {
+		if repo_model.IsErrDoor43MetadataNotExist(err) {
+			return nil
+		}
+		return err
+	}
+	if err := dm.DetermineAttachmentFlags(ctx); err != nil {
+		return err
+	}
+	return repo_model.UpdateDoor43MetadataCols(ctx, dm, repo_model.Door43MetadataAttachmentFlagCols...)
+}
+
+// UnpackJSONAttachments expands a release's files.json / links.json manifest
+// attachments into one release attachment per entry, each pointing at a remote
+// URL (e.g. a YouTube playlist or a file in cloud storage) rather than an
+// uploaded blob. The manifest attachment is deleted after a successful
+// expansion. Each entry should supply both a "name" and a "browser_download_url";
+// an entry without a name falls back to path.Base of the URL path.
+// See docs/dcs/remote-release-attachments.md.
 func UnpackJSONAttachments(ctx context.Context, release *repo_model.Release) {
 	if release == nil || len(release.Attachments) == 0 {
 		return
 	}
-	jsonFileNameSuffix := regexp.MustCompile(`(file|link)s*\.json$`)
 	for _, attachment := range release.Attachments {
-		if jsonFileNameSuffix.MatchString(attachment.Name) {
+		if dcs.IsJSONManifestAttachmentName(attachment.Name) {
 			remoteAttachments, err := GetAttachmentsFromJSON(attachment)
 			if err != nil {
 				log.Error("GetAttachmentsFromJSON Error: %v", err)
@@ -1231,7 +1259,9 @@ func UnpackJSONAttachments(ctx context.Context, release *repo_model.Release) {
 	}
 }
 
-// GetAttachmentsFromJSON gets the attachments from uploaded
+// GetAttachmentsFromJSON fetches a files.json / links.json manifest attachment
+// over HTTP and unmarshals it into attachments. It accepts either a JSON array
+// of attachment objects or a single attachment object.
 func GetAttachmentsFromJSON(attachment *repo_model.Attachment) ([]*repo_model.Attachment, error) {
 	var url string
 	if setting.Attachment.Storage.MinioConfig.ServeDirect {

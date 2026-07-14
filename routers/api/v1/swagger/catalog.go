@@ -4,7 +4,7 @@
 package swagger
 
 import (
-	api "code.gitea.io/gitea/modules/structs"
+	api "gitea.dev/modules/structs"
 )
 
 // CatalogSearchResults
@@ -19,6 +19,20 @@ type swaggerResponseCatalogSearchResults struct {
 type swaggerResponseCatalogEntry struct {
 	// in:body
 	Body api.CatalogEntry `json:"body"`
+}
+
+// CatalogStats
+// swagger:response CatalogStats
+type swaggerResponseCatalogStats struct {
+	// in:body
+	Body api.CatalogStats `json:"body"`
+}
+
+// CatalogStatsExt
+// swagger:response CatalogStatsExt
+type swaggerResponseCatalogStatsExt struct {
+	// in:body
+	Body api.CatalogStatsExt `json:"body"`
 }
 
 // CatalogMetadata

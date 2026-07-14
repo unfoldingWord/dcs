@@ -8,8 +8,8 @@ import (
 	"sort"
 	"strings"
 
-	"code.gitea.io/gitea/modules/dcs"
-	"code.gitea.io/gitea/services/context"
+	"gitea.dev/modules/dcs"
+	"gitea.dev/services/context"
 )
 
 // ServeLangnamesJSON serves the langname.json file from td.unfoldingword.org
@@ -116,7 +116,7 @@ func searchLangnamesJSON(ctx *context.APIContext) []map[string]any {
 			if len(lcArr) > 0 {
 				lcMatches = false
 				for _, lc := range lcArr {
-					if data["lc"] == lc {
+					if strings.EqualFold(data["lc"].(string), lc) {
 						lcMatches = true
 						break
 					}

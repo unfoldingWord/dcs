@@ -7,9 +7,9 @@ import (
 	"strconv"
 	"strings"
 
-	"code.gitea.io/gitea/modules/git"
-	"code.gitea.io/gitea/modules/json"
-	"code.gitea.io/gitea/modules/structs"
+	"gitea.dev/modules/git"
+	"gitea.dev/modules/json"
+	"gitea.dev/modules/structs"
 )
 
 func GetTcTsManifestFromBlob(blob *git.Blob) (*structs.TcTsManifest, error) {

@@ -13,14 +13,14 @@ import (
 	"strconv"
 	"strings"
 
-	"code.gitea.io/gitea/models/db"
-	"code.gitea.io/gitea/models/door43metadata"
-	user_model "code.gitea.io/gitea/models/user"
-	"code.gitea.io/gitea/modules/container"
-	"code.gitea.io/gitea/modules/optional"
-	"code.gitea.io/gitea/modules/structs"
-	"code.gitea.io/gitea/modules/timeutil"
-	"code.gitea.io/gitea/modules/util"
+	"gitea.dev/models/db"
+	"gitea.dev/models/door43metadata"
+	user_model "gitea.dev/models/user"
+	"gitea.dev/modules/container"
+	"gitea.dev/modules/optional"
+	"gitea.dev/modules/structs"
+	"gitea.dev/modules/timeutil"
+	"gitea.dev/modules/util"
 
 	"xorm.io/builder"
 )
@@ -108,8 +108,19 @@ func (r *Release) LoadRepo(ctx context.Context) (err error) {
 	if err != nil {
 		return err
 	}
+	return nil
+}
+
+// LoadAttributes load repo and publisher attributes for a release
+func (r *Release) LoadAttributes(ctx context.Context) (err error) {
+	if err := r.LoadRepo(ctx); err != nil {
+		return err
+	}
 
 	/*** DCS Customizations ***/
+	// Load the Door43Metadata here (not in LoadRepo) so it is always populated:
+	// LoadRepo returns early when r.Repo is already set (e.g. preloaded by
+	// getReleaseInfos in the single-release view), which would otherwise skip this.
 	if r.Door43Metadata == nil {
 		r.Door43Metadata, err = GetDoor43MetadataByRepoIDAndRef(ctx, r.RepoID, r.TagName)
 		if err != nil && !IsErrDoor43MetadataNotExist(err) {
@@ -121,14 +132,6 @@ func (r *Release) LoadRepo(ctx context.Context) (err error) {
 		}
 	}
 	/*** END DCS Customizations ***/
-	return nil
-}
-
-// LoadAttributes load repo and publisher attributes for a release
-func (r *Release) LoadAttributes(ctx context.Context) (err error) {
-	if err := r.LoadRepo(ctx); err != nil {
-		return err
-	}
 
 	if r.Publisher == nil {
 		r.Publisher, err = user_model.GetUserByID(ctx, r.PublisherID)
@@ -234,8 +237,7 @@ func AddReleaseAttachments(ctx context.Context, releaseID int64, attachmentUUIDs
 
 // GetRelease returns release by given ID.
 func GetRelease(ctx context.Context, repoID int64, tagName string) (*Release, error) {
-	rel := &Release{RepoID: repoID, LowerTagName: strings.ToLower(tagName)}
-	has, err := db.GetEngine(ctx).Get(rel)
+	rel, has, err := db.Get[Release](ctx, builder.Eq{"repo_id": repoID, "lower_tag_name": strings.ToLower(tagName)})
 	if err != nil {
 		return nil, err
 	} else if !has {

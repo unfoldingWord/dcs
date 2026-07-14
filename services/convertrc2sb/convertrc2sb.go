@@ -12,15 +12,15 @@ import (
 	"path/filepath"
 	"strings"
 
-	repo_model "code.gitea.io/gitea/models/repo"
-	system_model "code.gitea.io/gitea/models/system"
-	"code.gitea.io/gitea/modules/git"
-	"code.gitea.io/gitea/modules/git/gitcmd"
-	"code.gitea.io/gitea/modules/gitrepo"
-	"code.gitea.io/gitea/modules/log"
-	repo_module "code.gitea.io/gitea/modules/repository"
-	"code.gitea.io/gitea/modules/setting"
-	"code.gitea.io/gitea/modules/util"
+	repo_model "gitea.dev/models/repo"
+	system_model "gitea.dev/models/system"
+	"gitea.dev/modules/git"
+	"gitea.dev/modules/git/gitcmd"
+	"gitea.dev/modules/gitrepo"
+	"gitea.dev/modules/log"
+	repo_module "gitea.dev/modules/repository"
+	"gitea.dev/modules/setting"
+	"gitea.dev/modules/util"
 
 	rc2sb "github.com/unfoldingWord/go-rc2sb"
 )
@@ -261,25 +261,31 @@ func cloneAtRef(ctx context.Context, repoPath, ref, destination string) error {
 }
 
 // prepareMainBranch creates or checks out the "main" branch in the working directory.
-func prepareMainBranch(ctx context.Context, workDir, tagName string) error {
-	// Check if main branch exists
-	_, _, err := gitcmd.NewCommand("rev-parse", "--verify", "refs/heads/main").
+//
+// The repo is cloned fresh for each conversion, so an existing "main" branch is present
+// only as the remote-tracking ref refs/remotes/origin/main, never as a local
+// refs/heads/main. When it exists we branch from origin/main so the new SB commit
+// fast-forwards onto main's accumulated conversion history; otherwise we create main
+// from the source (RC) branch for the first-ever conversion.
+func prepareMainBranch(ctx context.Context, workDir, branchName string) error {
+	// Does the remote already have a main branch?
+	_, _, err := gitcmd.NewCommand("rev-parse", "--verify", "refs/remotes/origin/main").
 		WithDir(workDir).RunStdString(ctx)
 	if err != nil {
-		// main doesn't exist — create it from the tag
-		_, _, err = gitcmd.NewCommand("checkout", "-b", "main").AddDynamicArguments(tagName).
+		// No existing main — create it from the source branch (first conversion).
+		_, _, err = gitcmd.NewCommand("checkout", "-b", "main").AddDynamicArguments(branchName).
 			WithDir(workDir).RunStdString(ctx)
 		if err != nil {
-			return fmt.Errorf("create main branch from tag %s: %w", tagName, err)
+			return fmt.Errorf("create main branch from %s: %w", branchName, err)
 		}
 		return nil
 	}
 
-	// main exists — check it out
-	_, _, err = gitcmd.NewCommand("checkout", "main").
+	// main exists on the remote — branch from origin/main so commits fast-forward onto it.
+	_, _, err = gitcmd.NewCommand("checkout", "-b", "main", "origin/main").
 		WithDir(workDir).RunStdString(ctx)
 	if err != nil {
-		return fmt.Errorf("checkout main: %w", err)
+		return fmt.Errorf("checkout main from origin/main: %w", err)
 	}
 	return nil
 }
@@ -349,11 +355,13 @@ func copyFile(src, dst string) error {
 	return err
 }
 
-// preparePayloadPath prepares the payload for TWL and TW repos.
+// preparePayloadPath prepares the payload for TWL, OBS TWL, and TW repos.
 //
-// For TWL repos (Subject "TSV Translation Words Links"): clones the corresponding TW repo
-// into tmpDir/payload and returns that path. The rc2sb library receives it via PayloadPath
-// and copies bible/ into ingredients/payload/.
+// For TWL repos (Subject "TSV Translation Words Links") and OBS TWL repos
+// (Subject "TSV OBS Translation Words Links"): clones the corresponding TW repo
+// (<lang>_tw) into tmpDir/payload and returns that path. The rc2sb library receives it
+// via PayloadPath and copies bible/ into ingredients/payload/, rewriting the rc:// links
+// in the twl_*.tsv / twl_OBS.tsv file to ./payload/ paths.
 //
 // For TW repos (Subject "Translation Words"): clones the corresponding TWL repo and copies
 // it directly into rcDir/<lang>_twl/ so the rc2sb library can auto-detect it from inDir
@@ -376,7 +384,7 @@ func preparePayloadPath(ctx context.Context, tmpDir, rcDir string, repo *repo_mo
 	var payloadRepoName string
 	isTWRepo := false
 	switch dm.Subject {
-	case "TSV Translation Words Links":
+	case "TSV Translation Words Links", "TSV OBS Translation Words Links":
 		payloadRepoName = dm.Language + "_tw"
 	case "Translation Words":
 		payloadRepoName = dm.Language + "_twl"

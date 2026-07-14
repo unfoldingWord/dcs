@@ -12,9 +12,9 @@ DCS is a fork of [Gitea](https://github.com/go-gitea/gitea) that adds Digital Co
 ### Build
 
 ```bash
-TAGS="bindata sqlite sqlite_unlock_notify sqlite_json" make build  # Build the binary with all required tags
+TAGS="bindata" make build            # Build the binary (sqlite is built-in since v1.27)
 make test                     # Run all tests
-TAGS="bindata sqlite sqlite_unlock_notify sqlite_json" make test   # With all tags
+TAGS="bindata" make test             # With bindata
 make test-dcs-sqlite          # DCS-specific integration tests
 ```
 
@@ -37,7 +37,7 @@ See @AGENTS.md for more details which comes from upstream Gitea
 
 Before creating a PR, run these checks to ensure CI will pass:
 
-- `TAGS="bindata sqlite sqlite_unlock_notify sqlite_json" make build` - must compile
+- `TAGS="bindata" make build` - must compile (sqlite is built-in since v1.27)
 - `make lint-spell` - fix any misspellings
 - `make lint-go` - fix any Go lint errors
 - `make lint-templates` - fix template lint errors

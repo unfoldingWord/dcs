@@ -6,8 +6,8 @@ package convert
 import (
 	"context"
 
-	repo_model "code.gitea.io/gitea/models/repo"
-	api "code.gitea.io/gitea/modules/structs"
+	repo_model "gitea.dev/models/repo"
+	api "gitea.dev/modules/structs"
 )
 
 // ToRepoDCS adds Door43 metadata properties to the API Repo object

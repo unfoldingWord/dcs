@@ -7,11 +7,11 @@ import (
 	"net/http"
 	"strings"
 
-	"code.gitea.io/gitea/models"
-	"code.gitea.io/gitea/models/db"
-	"code.gitea.io/gitea/models/door43metadata"
-	"code.gitea.io/gitea/modules/templates"
-	"code.gitea.io/gitea/services/context"
+	"gitea.dev/models"
+	"gitea.dev/models/db"
+	"gitea.dev/models/door43metadata"
+	"gitea.dev/modules/templates"
+	"gitea.dev/services/context"
 
 	"xorm.io/builder"
 )

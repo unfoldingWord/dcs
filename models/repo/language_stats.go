@@ -9,8 +9,8 @@ import (
 	"sort"
 	"strings"
 
-	"code.gitea.io/gitea/models/db"
-	"code.gitea.io/gitea/modules/timeutil"
+	"gitea.dev/models/db"
+	"gitea.dev/modules/timeutil"
 
 	"github.com/go-enry/go-enry/v2"
 )
@@ -39,6 +39,9 @@ type LanguageStatList []*LanguageStat
 func (stats LanguageStatList) LoadAttributes() {
 	for i := range stats {
 		stats[i].Color = enry.GetColor(stats[i].Language)
+		/*** DCS Customizations ***/
+		stats[i].Color = DCSLanguageColor(stats[i].Language, stats[i].Color)
+		/*** END DCS Customizations ***/
 	}
 }
 

@@ -6,7 +6,7 @@ package repo
 import (
 	"net/url"
 
-	"code.gitea.io/gitea/modules/setting"
+	"gitea.dev/modules/setting"
 )
 
 // CatalogSearchURL returns the repository catalog search API URL

@@ -7,16 +7,16 @@ package admin
 import (
 	"net/http"
 
-	"code.gitea.io/gitea/models/db"
-	org_model "code.gitea.io/gitea/models/organization"
-	packages_model "code.gitea.io/gitea/models/packages"
-	repo_model "code.gitea.io/gitea/models/repo"
-	user_model "code.gitea.io/gitea/models/user"
-	"code.gitea.io/gitea/modules/log"
-	api "code.gitea.io/gitea/modules/structs"
-	"code.gitea.io/gitea/services/context"
-	"code.gitea.io/gitea/services/convert"
-	user_service "code.gitea.io/gitea/services/user"
+	"gitea.dev/models/db"
+	org_model "gitea.dev/models/organization"
+	packages_model "gitea.dev/models/packages"
+	repo_model "gitea.dev/models/repo"
+	user_model "gitea.dev/models/user"
+	"gitea.dev/modules/log"
+	api "gitea.dev/modules/structs"
+	"gitea.dev/services/context"
+	"gitea.dev/services/convert"
+	user_service "gitea.dev/services/user"
 )
 
 // ListSpamUsers API for getting all users considered to be spam
@@ -34,7 +34,7 @@ func ListSpamUsers(ctx *context.APIContext) {
 
 	users, err := getSpamUsers(ctx)
 	if err != nil {
-		ctx.APIError(http.StatusInternalServerError, err)
+		ctx.APIErrorInternal(err)
 		return
 	}
 
@@ -68,7 +68,7 @@ func DeleteSpamUsers(ctx *context.APIContext) {
 
 	users, err := getSpamUsers(ctx)
 	if err != nil {
-		ctx.APIError(http.StatusInternalServerError, err)
+		ctx.APIErrorInternal(err)
 		return
 	}
 
@@ -77,9 +77,9 @@ func DeleteSpamUsers(ctx *context.APIContext) {
 			if repo_model.IsErrUserOwnRepos(err) ||
 				org_model.IsErrUserHasOrgs(err) ||
 				packages_model.IsErrUserOwnPackages(err) {
-				ctx.APIError(http.StatusUnprocessableEntity, err)
+				ctx.APIError(http.StatusUnprocessableEntity, err.Error())
 			} else {
-				ctx.APIError(http.StatusInternalServerError, err)
+				ctx.APIErrorInternal(err)
 			}
 			return
 		}

@@ -6,11 +6,11 @@ package dcs
 import (
 	"context"
 
-	"code.gitea.io/gitea/models/db"
-	"code.gitea.io/gitea/models/door43metadata"
-	user_model "code.gitea.io/gitea/models/user"
-	"code.gitea.io/gitea/modules/log"
-	"code.gitea.io/gitea/modules/structs"
+	"gitea.dev/models/db"
+	"gitea.dev/models/door43metadata"
+	user_model "gitea.dev/models/user"
+	"gitea.dev/modules/log"
+	"gitea.dev/modules/structs"
 
 	"xorm.io/builder"
 )

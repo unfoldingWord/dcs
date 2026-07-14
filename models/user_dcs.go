@@ -6,8 +6,8 @@ package models
 import (
 	"context"
 
-	"code.gitea.io/gitea/models/door43metadata"
-	user_model "code.gitea.io/gitea/models/user"
+	"gitea.dev/models/door43metadata"
+	user_model "gitea.dev/models/user"
 )
 
 // GetRepoLanguages gets the languages of the user's repos and returns alphabetized list

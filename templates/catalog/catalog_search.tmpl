@@ -5,7 +5,7 @@
 		{{if .TabName}}<input type="hidden" name="tab" value="{{.TabName}}">{{end}}
 		{{if .TopicOnly}}<input type="hidden" name="topic" value="{{.TopicOnly}}">{{end}}
 		<div class="ui small fluid action input tw-flex-1">
-			{{template "shared/search/input" dict "Value" .Keyword "Placeholder" (ctx.Locale.Tr "search.catalog_kind")}}
+			{{template "shared/search/input" dict "Value" .Keyword "Placeholder" (ctx.Locale.Tr "dcs.search.catalog_kind")}}
 			{{template "shared/search/button"}}
 		</div>
 		<!-- Sort -->
@@ -52,5 +52,5 @@
 		</span>
 	</div>
 {{end}}
-{{template "shared/searchbuilder" dict "IsCatalogSearch" false}}
+{{template "shared/searchbuilder" dict "IsCatalogSearch" true}}
 <div class="divider"></div>

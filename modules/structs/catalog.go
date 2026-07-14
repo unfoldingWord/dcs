@@ -43,8 +43,19 @@ type CatalogEntry struct {
 	Ingredients            []*Ingredient `json:"ingredients,omitempty"`
 	Books                  []string      `json:"books,omitempty"`
 	Relations              []*Relation   `json:"relations"`
-	IsValid                bool          `json:"is_valid"`
-	ValidationErrorsURL    string        `json:"validation_errors_url"`
+	// AttachmentTypes the kinds of content available in the entry's release attachments; null if the entry is not a release
+	AttachmentTypes     *CatalogAttachmentTypes `json:"attachment_types"`
+	IsValid             bool                    `json:"is_valid"`
+	ValidationErrorsURL string                  `json:"validation_errors_url"`
+}
+
+// CatalogAttachmentTypes the kinds of content found in the release attachments of a catalog entry
+type CatalogAttachmentTypes struct {
+	PDF    bool `json:"pdf"`
+	Audio  bool `json:"audio"`
+	Video  bool `json:"video"`
+	Stream bool `json:"stream"`
+	Other  bool `json:"other"`
 }
 
 // Ingredient is a single project of a resource
@@ -74,6 +85,46 @@ type CatalogSearchResults struct {
 	OK          bool            `json:"ok"`
 	Data        []*CatalogEntry `json:"data"`
 	LastUpdated time.Time       `json:"last_updated"`
+}
+
+// CatalogStats aggregate counts of the catalog entries matching a catalog search
+type CatalogStats struct {
+	EntryCount      int64 `json:"entry_count"`
+	LangCount       int64 `json:"lang_count"`
+	LangLtrCount    int64 `json:"lang_ltr_count"`
+	LangRtlCount    int64 `json:"lang_rtl_count"`
+	SubjectCount    int64 `json:"subject_count"`
+	FlavorTypeCount int64 `json:"flavor_type_count"`
+	FlavorCount     int64 `json:"flavor_count"`
+	OwnerCount      int64 `json:"owner_count"`
+	RepoCount       int64 `json:"repo_count"`
+	TsCount         int64 `json:"ts_count"`
+	TcCount         int64 `json:"tc_count"`
+	RcCount         int64 `json:"rc_count"`
+	SbCount         int64 `json:"sb_count"`
+	HasPDF          int64 `json:"has_pdf"`
+	HasAudio        int64 `json:"has_audio"`
+	HasVideo        int64 `json:"has_video"`
+	HasStream       int64 `json:"has_stream"`
+	HasOther        int64 `json:"has_other"`
+	HasAttachment   int64 `json:"has_attachment"`
+}
+
+// CatalogStatsExt CatalogStats plus the healthcheck counts and the sorted unique
+// values of several catalog entry fields
+type CatalogStatsExt struct {
+	CatalogStats
+	HealthcheckSuccessCount int64    `json:"healthcheck_success_count"`
+	HealthcheckInfoCount    int64    `json:"healthcheck_info_count"`
+	HealthcheckWarningCount int64    `json:"healthcheck_warning_count"`
+	HealthcheckErrorCount   int64    `json:"healthcheck_error_count"`
+	NoHealthcheckCount      int64    `json:"no_healthcheck_count"`
+	Subjects                []string `json:"subjects"`
+	FlavorTypes             []string `json:"flavor_types"`
+	Flavors                 []string `json:"flavors"`
+	Owners                  []string `json:"owners"`
+	Languages               []string `json:"languages"`
+	MetadataTypes           []string `json:"metadata_types"`
 }
 
 // CatalogVersionEndpoints Info on the versions of the catalog

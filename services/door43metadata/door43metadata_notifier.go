@@ -6,14 +6,14 @@ package door43metadata
 import (
 	"context"
 
-	"code.gitea.io/gitea/models/door43metadata"
-	repo_model "code.gitea.io/gitea/models/repo"
-	user_model "code.gitea.io/gitea/models/user"
-	"code.gitea.io/gitea/modules/git"
-	"code.gitea.io/gitea/modules/graceful"
-	"code.gitea.io/gitea/modules/log"
-	"code.gitea.io/gitea/modules/repository"
-	notify_service "code.gitea.io/gitea/services/notify"
+	"gitea.dev/models/door43metadata"
+	repo_model "gitea.dev/models/repo"
+	user_model "gitea.dev/models/user"
+	"gitea.dev/modules/git"
+	"gitea.dev/modules/graceful"
+	"gitea.dev/modules/log"
+	"gitea.dev/modules/repository"
+	notify_service "gitea.dev/services/notify"
 )
 
 type metadataNotifier struct {
@@ -66,23 +66,25 @@ func (m *metadataNotifier) CreateRepository(ctx context.Context, doer, u *user_m
 
 func (m *metadataNotifier) NewRelease(ctx context.Context, rel *repo_model.Release) {
 	if rel != nil && !rel.IsDraft {
+		// Expand files.json / links.json manifest attachments first (can be singular file.json and link.json too)
+		// so the metadata processing below sees the final attachments when determining the has_* content flags.
+		UnpackJSONAttachments(ctx, rel)
+
 		if err := ProcessDoor43MetadataForRepo(ctx, rel.Repo, rel.TagName); err != nil {
 			log.Error("NewRelease: ProcessDoor43MetadataForRepo failed [%s, %s]: %v", rel.Repo.FullName(), rel.TagName, err)
 		}
-
-		// A separate job that handles files.json or links.json files (can be singular file.json and link.json too) as attachments
-		UnpackJSONAttachments(ctx, rel)
 	}
 }
 
 func (m *metadataNotifier) UpdateRelease(ctx context.Context, doer *user_model.User, rel *repo_model.Release) {
 	if rel != nil && !rel.IsDraft {
+		// Expand files.json / links.json manifest attachments first (can be singular file.json and link.json too)
+		// so the metadata processing below sees the final attachments when determining the has_* content flags.
+		UnpackJSONAttachments(ctx, rel)
+
 		if err := ProcessDoor43MetadataForRepo(ctx, rel.Repo, rel.TagName); err != nil {
 			log.Error("UpdateRelease: ProcessDoor43MetadataForRepo failed [%s, %s]: %v", rel.Repo.FullName(), rel.TagName, err)
 		}
-
-		// A separate job that handles files.json or links.json files (can be singular file.json and link.json too) as attachments
-		UnpackJSONAttachments(ctx, rel)
 	}
 }
 

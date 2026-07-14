@@ -8,13 +8,14 @@ package dcs
 import (
 	"strings"
 
-	"code.gitea.io/gitea/models"
-	"code.gitea.io/gitea/models/db"
-	"code.gitea.io/gitea/models/door43metadata"
-	"code.gitea.io/gitea/models/repo"
-	"code.gitea.io/gitea/modules/setting"
-	"code.gitea.io/gitea/modules/templates"
-	"code.gitea.io/gitea/services/context"
+	"gitea.dev/models"
+	"gitea.dev/models/db"
+	"gitea.dev/models/door43metadata"
+	"gitea.dev/models/repo"
+	"gitea.dev/modules/optional"
+	"gitea.dev/modules/setting"
+	"gitea.dev/modules/templates"
+	"gitea.dev/services/context"
 )
 
 const (
@@ -98,7 +99,7 @@ func RenderCatalogSearch(ctx *context.Context, opts *CatalogSearchOptions) {
 	}
 
 	query := ctx.FormTrim("q")
-	searchFields := []string{"keyword", "book", "lang", "subject", "flavor_type", "flavor", "abbreviation", "content_format", "repo", "owner", "tag", "checking_level", "metadata_type", "metadata_version", "topic", "without_topic", "stage"}
+	searchFields := []string{"keyword", "book", "lang", "subject", "flavor_type", "flavor", "abbreviation", "content_format", "repo", "owner", "tag", "checking_level", "metadata_type", "metadata_version", "topic", "without_topic", "stage", "has", "include_history"}
 	searchMap := map[string][]string{}
 	for _, field := range searchFields {
 		searchMap[field] = []string{}
@@ -124,8 +125,15 @@ func RenderCatalogSearch(ctx *context.Context, opts *CatalogSearchOptions) {
 			stage = val
 		}
 	}
+	includeHistory := false
+	if len(searchMap["include_history"]) > 0 {
+		switch strings.ToLower(searchMap["include_history"][0]) {
+		case "1", "true", "yes":
+			includeHistory = true
+		}
+	}
 
-	dms, count, err = models.SearchCatalog(ctx, &door43metadata.SearchCatalogOptions{
+	searchOpts := &door43metadata.SearchCatalogOptions{
 		ListOptions: db.ListOptions{
 			Page:     page,
 			PageSize: opts.PageSize,
@@ -133,7 +141,7 @@ func RenderCatalogSearch(ctx *context.Context, opts *CatalogSearchOptions) {
 		OrderBy:          []door43metadata.CatalogOrderBy{orderBy},
 		Keywords:         searchMap["keyword"],
 		Stage:            stage,
-		IncludeHistory:   false,
+		IncludeHistory:   includeHistory,
 		Books:            searchMap["book"],
 		Subjects:         searchMap["subject"],
 		FlavorTypes:      searchMap["flavor_type"],
@@ -150,7 +158,27 @@ func RenderCatalogSearch(ctx *context.Context, opts *CatalogSearchOptions) {
 		Tags:             searchMap["tag"],
 		CheckingLevels:   searchMap["checking_level"],
 		PartialMatch:     true,
-	})
+	}
+	// The "has" field is a single dropdown in the Search Builder; multiple
+	// values are ANDed, e.g. "has:audio, video" requires both.
+	for _, v := range searchMap["has"] {
+		switch strings.ToLower(v) {
+		case "audio":
+			searchOpts.HasAudio = optional.Some(true)
+		case "video":
+			searchOpts.HasVideo = optional.Some(true)
+		case "pdf":
+			searchOpts.HasPDF = optional.Some(true)
+		case "stream":
+			searchOpts.HasStream = optional.Some(true)
+		case "other":
+			searchOpts.HasOther = optional.Some(true)
+		case "attachment", "attachments", "any":
+			searchOpts.HasAttachment = optional.Some(true)
+		}
+	}
+
+	dms, count, err = models.SearchCatalog(ctx, searchOpts)
 	if err != nil {
 		ctx.ServerError("SearchCatalog", err)
 		return

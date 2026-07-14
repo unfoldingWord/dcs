@@ -59,7 +59,8 @@
 <div id="search-builder">
 </div>
 
-<script>
+{{- /* v1.27 CSP requires a nonce on inline scripts */ -}}
+<script nonce="{{ctx.CspScriptNonce}}">
 		document.getElementById('search-builder-toggle').addEventListener('click', function () {
 				const searchBuilder = document.getElementById('search-builder');
 				const searchBuilderArrow = document.getElementById('search-builder-arrow');
@@ -77,7 +78,7 @@
 		const isCatalogSearch = {{if .IsCatalogSearch}}true{{else}}false{{end}};
 		const qInput = document.querySelector('[name="q"]');
 		const advancedSearchContainer = document.getElementById('search-builder');
-		const catalogOnlyFields = ['stage', 'tag'];
+		const catalogOnlyFields = ['stage', 'tag', 'has', 'include_history'];
 		const repoOnlyFields = ['healthcheck'];
 		const searchFields = [
 				{ name: 'query', tooltip: 'queries repo name, owner, description & topics. Allows partial match' },
@@ -95,6 +96,8 @@
 				{ name: 'content_format', tooltip: 'content format, e.g. markdown, tsv7, tsv9, usfm', options: ['markdown', 'tsv7', 'tsv9', 'usfm'] },
 				{ name: 'tag', tooltip: 'released with the given tag, e.g. v3' },
 				{ name: 'stage', tooltip: 'stage of the release: prod, preprod, latest or other', options: ['prod', 'preprod', 'latest', 'other'] },
+				{ name: 'has', tooltip: 'has release attachment content of the given type; "attachment" matches any type', options: ['attachment', 'audio', 'video', 'pdf', 'stream', 'other'] },
+				{ name: 'include_history', tooltip: 'if true, all past releases are searched, not just the latest', options: ['true'] },
 				{ name: 'healthcheck', tooltip: 'healthcheck severity level: error, warning, info or success', options: ['error', 'warning', 'info', 'success'] }
 		];
 

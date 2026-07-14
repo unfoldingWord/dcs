@@ -9,10 +9,10 @@ import (
 	"fmt"
 	"strings"
 
-	git_model "code.gitea.io/gitea/models/git"
-	"code.gitea.io/gitea/modules/git"
-	"code.gitea.io/gitea/modules/gitrepo"
-	gitea_context "code.gitea.io/gitea/services/context"
+	git_model "gitea.dev/models/git"
+	"gitea.dev/modules/git"
+	"gitea.dev/modules/gitrepo"
+	gitea_context "gitea.dev/services/context"
 )
 
 // GetReference gets the Reference object that a refName refers to

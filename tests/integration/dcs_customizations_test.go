@@ -7,11 +7,11 @@ import (
 	"net/http"
 	"testing"
 
-	door43metadata_model "code.gitea.io/gitea/models/door43metadata"
-	repo_model "code.gitea.io/gitea/models/repo"
-	api "code.gitea.io/gitea/modules/structs"
-	"code.gitea.io/gitea/modules/timeutil"
-	"code.gitea.io/gitea/tests"
+	door43metadata_model "gitea.dev/models/door43metadata"
+	repo_model "gitea.dev/models/repo"
+	api "gitea.dev/modules/structs"
+	"gitea.dev/modules/timeutil"
+	"gitea.dev/tests"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"

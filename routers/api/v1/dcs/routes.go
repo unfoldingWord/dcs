@@ -4,12 +4,12 @@
 package dcs
 
 import (
-	"code.gitea.io/gitea/models/unit"
-	"code.gitea.io/gitea/modules/web"
-	"code.gitea.io/gitea/routers/api/v1/admin"
-	"code.gitea.io/gitea/routers/api/v1/catalog"
-	"code.gitea.io/gitea/routers/api/v1/repo"
-	"code.gitea.io/gitea/services/context"
+	"gitea.dev/models/unit"
+	"gitea.dev/modules/web"
+	"gitea.dev/routers/api/v1/admin"
+	"gitea.dev/routers/api/v1/catalog"
+	"gitea.dev/routers/api/v1/repo"
+	"gitea.dev/services/context"
 )
 
 // RegisterDCSAPIRoutes registers top-level DCS API routes (languages, catalog)
@@ -29,6 +29,8 @@ func RegisterDCSAPIRoutes(m *web.Router,
 			m.Get("/languages", catalog.ListCatalogLanguages)
 			m.Get("/metadata-types", catalog.ListCatalogMetadataTypes)
 		})
+		m.Get("/stats", catalog.GetCatalogStats)
+		m.Get("/stats-ext", catalog.GetCatalogStatsExt)
 		m.Group("/search", func() {
 			m.Get("", catalog.Search)
 			// The below are deprecated

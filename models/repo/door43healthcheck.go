@@ -7,7 +7,7 @@ import (
 	"context"
 	"strings"
 
-	"code.gitea.io/gitea/modules/json"
+	"gitea.dev/modules/json"
 )
 
 // SeverityLevel represents the level of severity or concern for a health check

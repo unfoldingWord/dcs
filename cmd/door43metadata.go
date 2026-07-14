@@ -7,11 +7,11 @@ import (
 	"context"
 	"errors"
 
-	repo_model "code.gitea.io/gitea/models/repo"
-	"code.gitea.io/gitea/models/system"
-	"code.gitea.io/gitea/modules/log"
-	"code.gitea.io/gitea/modules/storage"
-	door43metadata_service "code.gitea.io/gitea/services/door43metadata"
+	repo_model "gitea.dev/models/repo"
+	"gitea.dev/models/system"
+	"gitea.dev/modules/log"
+	"gitea.dev/modules/storage"
+	door43metadata_service "gitea.dev/services/door43metadata"
 
 	"github.com/urfave/cli/v3"
 )

@@ -7,13 +7,13 @@ import (
 	go_context "context"
 	"net/http"
 
-	"code.gitea.io/gitea/models/db"
-	repo_model "code.gitea.io/gitea/models/repo"
-	"code.gitea.io/gitea/modules/graceful"
-	"code.gitea.io/gitea/modules/log"
-	"code.gitea.io/gitea/modules/templates"
-	"code.gitea.io/gitea/services/context"
-	door43metadata_service "code.gitea.io/gitea/services/door43metadata"
+	"gitea.dev/models/db"
+	repo_model "gitea.dev/models/repo"
+	"gitea.dev/modules/graceful"
+	"gitea.dev/modules/log"
+	"gitea.dev/modules/templates"
+	"gitea.dev/services/context"
+	door43metadata_service "gitea.dev/services/door43metadata"
 
 	"xorm.io/builder"
 )

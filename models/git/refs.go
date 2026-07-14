@@ -7,7 +7,7 @@ import (
 	"context"
 	"strings"
 
-	"code.gitea.io/gitea/modules/git"
+	"gitea.dev/modules/git"
 )
 
 // CheckReferenceEditability checks if the reference can be modified by the user or any user

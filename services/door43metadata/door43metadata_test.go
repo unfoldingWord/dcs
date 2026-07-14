@@ -7,9 +7,9 @@ import (
 	"context"
 	"testing"
 
-	repo_model "code.gitea.io/gitea/models/repo"
-	user_model "code.gitea.io/gitea/models/user"
-	"code.gitea.io/gitea/modules/dcs"
+	repo_model "gitea.dev/models/repo"
+	user_model "gitea.dev/models/user"
+	"gitea.dev/modules/dcs"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"

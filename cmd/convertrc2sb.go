@@ -8,11 +8,11 @@ import (
 	"errors"
 	"fmt"
 
-	repo_model "code.gitea.io/gitea/models/repo"
-	"code.gitea.io/gitea/models/system"
-	"code.gitea.io/gitea/modules/log"
-	"code.gitea.io/gitea/modules/storage"
-	convertrc2sb_service "code.gitea.io/gitea/services/convertrc2sb"
+	repo_model "gitea.dev/models/repo"
+	"gitea.dev/models/system"
+	"gitea.dev/modules/log"
+	"gitea.dev/modules/storage"
+	convertrc2sb_service "gitea.dev/services/convertrc2sb"
 
 	"github.com/urfave/cli/v3"
 )

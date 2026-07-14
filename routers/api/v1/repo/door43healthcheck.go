@@ -7,9 +7,9 @@ import (
 	"fmt"
 	"net/http"
 
-	repo_model "code.gitea.io/gitea/models/repo"
-	"code.gitea.io/gitea/services/context"
-	"code.gitea.io/gitea/services/door43healthcheck"
+	repo_model "gitea.dev/models/repo"
+	"gitea.dev/services/context"
+	"gitea.dev/services/door43healthcheck"
 )
 
 // GetHealthcheck returns a simple healthcheck response

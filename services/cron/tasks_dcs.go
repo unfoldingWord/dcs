@@ -6,9 +6,9 @@ package cron
 import (
 	"context"
 
-	user_model "code.gitea.io/gitea/models/user"
-	convertrc2sb_service "code.gitea.io/gitea/services/convertrc2sb"
-	metadata_service "code.gitea.io/gitea/services/door43metadata"
+	user_model "gitea.dev/models/user"
+	convertrc2sb_service "gitea.dev/services/convertrc2sb"
+	metadata_service "gitea.dev/services/door43metadata"
 )
 
 func registerUpdateDoor43MetadataTask() {

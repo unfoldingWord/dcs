@@ -1,38 +1,38 @@
-import $ from 'jquery';
-import lang_font_families from '../../../assets/lang_font_families.json';
-import lang_font_links from '../../../assets/lang_font_links.json';
-import {html} from '../utils/html.ts';
+import lang_font_familiesJson from '../../../assets/lang_font_families.json';
+import lang_font_linksJson from '../../../assets/lang_font_links.json';
 
-const fontFamilies: Record<string, string[]> = lang_font_families as Record<string, string[]>;
-const fontLinks: Record<string, string> = lang_font_links as Record<string, string>;
+const lang_font_families: {[key: string]: string[]} = lang_font_familiesJson;
+const lang_font_links: {[key: string]: string} = lang_font_linksJson;
 
 const set_dcs_fonts: string[] = [];
 const set_dcs_selectors: string[] = [];
 
 export function initDCSLanguageFonts() {
-  $('[data-language]').each((_, tag) => {
-    const lang = $(tag).attr('data-language');
-    if (lang && fontFamilies[lang]) {
-      setDCSFontsHTML(fontFamilies[lang], `[data-language=${lang}], [data-language=${lang}] *`);
+  for (const tag of document.querySelectorAll('[data-language]')) {
+    const lang = tag.getAttribute('data-language')!;
+    if (lang_font_families[lang]) {
+      setDCSFontsHTML(lang_font_families[lang], `[data-language=${lang}], [data-language=${lang}] *`);
     }
-  });
+  }
 }
 
 function setDCSFontsHTML(fonts: string[], selector: string) {
   if (set_dcs_selectors.includes(selector)) {
     return;
   }
-  const $head = $('head');
   if (!fonts.includes('Noto Sans')) {
     fonts.push('Noto Sans');
   }
   for (const font of fonts) {
-    if (!set_dcs_fonts.includes(font) && fontLinks[font]) {
-      $head.append(html`<link href="${fontLinks[font]}" rel="stylesheet">`);
+    if (!set_dcs_fonts.includes(font) && lang_font_links[font]) {
+      const link = document.createElement('link');
+      link.href = lang_font_links[font];
+      link.rel = 'stylesheet';
+      document.head.append(link);
       set_dcs_fonts.push(font);
     }
   }
-  $head.append(`
+  document.head.insertAdjacentHTML('beforeend', `
 <style type="text/css">
     ${selector} {
     font-family: "${fonts.join(', ')}, sans-serif" !important;

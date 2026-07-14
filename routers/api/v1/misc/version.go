@@ -7,9 +7,9 @@ import (
 	"net/http"
 	"strings" // DCS Customizations
 
-	"code.gitea.io/gitea/modules/setting"
-	"code.gitea.io/gitea/modules/structs"
-	"code.gitea.io/gitea/services/context"
+	"gitea.dev/modules/setting"
+	"gitea.dev/modules/structs"
+	"gitea.dev/services/context"
 )
 
 /*** DCS Customizations ***/

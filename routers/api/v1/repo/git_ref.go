@@ -7,13 +7,13 @@ import (
 	"fmt"
 	"net/http"
 
-	"code.gitea.io/gitea/modules/git"
-	api "code.gitea.io/gitea/modules/structs"
-	"code.gitea.io/gitea/modules/web"
-	"code.gitea.io/gitea/routers/api/v1/utils"
-	"code.gitea.io/gitea/services/context"
-	"code.gitea.io/gitea/services/convert"
-	"code.gitea.io/gitea/services/gitref"
+	"gitea.dev/modules/git"
+	api "gitea.dev/modules/structs"
+	"gitea.dev/modules/web"
+	"gitea.dev/routers/api/v1/utils"
+	"gitea.dev/services/context"
+	"gitea.dev/services/convert"
+	"gitea.dev/services/gitref"
 )
 
 // GetGitAllRefs get ref or an list all the refs of a repository
@@ -140,28 +140,28 @@ func CreateGitRef(ctx *context.APIContext) {
 	opt := web.GetForm(ctx).(*api.CreateGitRefOption)
 
 	if ctx.Repo.GitRepo.IsReferenceExist(opt.RefName) {
-		ctx.APIError(http.StatusConflict, fmt.Errorf("reference already exists: %s", opt.RefName))
+		ctx.APIError(http.StatusConflict, fmt.Sprintf("reference already exists: %s", opt.RefName))
 		return
 	}
 
 	commitID, err := ctx.Repo.GitRepo.GetRefCommitID(opt.Target)
 	if err != nil {
 		if git.IsErrNotExist(err) {
-			ctx.APIError(http.StatusNotFound, fmt.Errorf("target does not exist: %s", opt.Target))
+			ctx.APIError(http.StatusNotFound, fmt.Sprintf("target does not exist: %s", opt.Target))
 			return
 		}
-		ctx.APIError(http.StatusInternalServerError, err)
+		ctx.APIErrorInternal(err)
 		return
 	}
 
 	ref, err := gitref.UpdateReferenceWithChecks(ctx, opt.RefName, commitID)
 	if err != nil {
 		if git.IsErrInvalidRefName(err) {
-			ctx.APIError(http.StatusUnprocessableEntity, err)
+			ctx.APIError(http.StatusUnprocessableEntity, err.Error())
 		} else if git.IsErrProtectedRefName(err) {
-			ctx.APIError(http.StatusMethodNotAllowed, err)
+			ctx.APIError(http.StatusMethodNotAllowed, err.Error())
 		} else if git.IsErrRefNotFound(err) {
-			ctx.APIError(http.StatusUnprocessableEntity, fmt.Errorf("unable to load reference [ref_name: %s]", opt.RefName))
+			ctx.APIError(http.StatusUnprocessableEntity, fmt.Sprintf("unable to load reference [ref_name: %s]", opt.RefName))
 		} else {
 			ctx.APIErrorInternal(err)
 		}
@@ -211,28 +211,28 @@ func UpdateGitRef(ctx *context.APIContext) {
 	opt := web.GetForm(ctx).(*api.UpdateGitRefOption)
 
 	if ctx.Repo.GitRepo.IsReferenceExist(refName) {
-		ctx.APIError(http.StatusConflict, fmt.Errorf("reference already exists: %s", refName))
+		ctx.APIError(http.StatusConflict, fmt.Sprintf("reference already exists: %s", refName))
 		return
 	}
 
 	commitID, err := ctx.Repo.GitRepo.GetRefCommitID(opt.Target)
 	if err != nil {
 		if git.IsErrNotExist(err) {
-			ctx.APIError(http.StatusNotFound, fmt.Errorf("target does not exist: %s", opt.Target))
+			ctx.APIError(http.StatusNotFound, fmt.Sprintf("target does not exist: %s", opt.Target))
 			return
 		}
-		ctx.APIError(http.StatusInternalServerError, err)
+		ctx.APIErrorInternal(err)
 		return
 	}
 
 	ref, err := gitref.UpdateReferenceWithChecks(ctx, refName, commitID)
 	if err != nil {
 		if git.IsErrInvalidRefName(err) {
-			ctx.APIError(http.StatusUnprocessableEntity, err)
+			ctx.APIError(http.StatusUnprocessableEntity, err.Error())
 		} else if git.IsErrProtectedRefName(err) {
-			ctx.APIError(http.StatusMethodNotAllowed, err)
+			ctx.APIError(http.StatusMethodNotAllowed, err.Error())
 		} else if git.IsErrRefNotFound(err) {
-			ctx.APIError(http.StatusUnprocessableEntity, fmt.Errorf("unable to load reference [ref_name: %s]", refName))
+			ctx.APIError(http.StatusUnprocessableEntity, fmt.Sprintf("unable to load reference [ref_name: %s]", refName))
 		} else {
 			ctx.APIErrorInternal(err)
 		}
@@ -280,16 +280,16 @@ func DeleteGitRef(ctx *context.APIContext) {
 	refName := "refs/" + ctx.PathParam("*")
 
 	if !ctx.Repo.GitRepo.IsReferenceExist(refName) {
-		ctx.APIError(http.StatusNotFound, fmt.Errorf("reference does not exist: %s", refName))
+		ctx.APIError(http.StatusNotFound, fmt.Sprintf("reference does not exist: %s", refName))
 		return
 	}
 
 	err := gitref.RemoveReferenceWithChecks(ctx, refName)
 	if err != nil {
 		if git.IsErrInvalidRefName(err) {
-			ctx.APIError(http.StatusUnprocessableEntity, err)
+			ctx.APIError(http.StatusUnprocessableEntity, err.Error())
 		} else if git.IsErrProtectedRefName(err) {
-			ctx.APIError(http.StatusMethodNotAllowed, err)
+			ctx.APIError(http.StatusMethodNotAllowed, err.Error())
 		} else {
 			ctx.APIErrorInternal(err)
 		}

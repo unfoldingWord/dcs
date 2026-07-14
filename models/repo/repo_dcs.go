@@ -7,10 +7,10 @@ import (
 	"context"
 	"net/url"
 
-	"code.gitea.io/gitea/models/db"
-	"code.gitea.io/gitea/models/door43metadata"
-	"code.gitea.io/gitea/modules/dcs"
-	"code.gitea.io/gitea/modules/setting"
+	"gitea.dev/models/db"
+	"gitea.dev/models/door43metadata"
+	"gitea.dev/modules/dcs"
+	"gitea.dev/modules/setting"
 
 	"xorm.io/builder"
 )

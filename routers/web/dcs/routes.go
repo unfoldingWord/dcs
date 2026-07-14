@@ -4,9 +4,9 @@
 package dcs
 
 import (
-	"code.gitea.io/gitea/modules/web"
-	"code.gitea.io/gitea/routers/web/repo"
-	"code.gitea.io/gitea/services/context"
+	"gitea.dev/modules/web"
+	"gitea.dev/routers/web/repo"
+	"gitea.dev/services/context"
 )
 
 // RegisterDCSWebRoutes registers top-level DCS web routes (about, tools, catalog, healthcheck dashboard)

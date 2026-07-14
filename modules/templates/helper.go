@@ -12,16 +12,16 @@ import (
 	"strings"
 	"time"
 
-	"code.gitea.io/gitea/modules/base"
-	"code.gitea.io/gitea/modules/dcs" // DCS Customizations
-	"code.gitea.io/gitea/modules/htmlutil"
-	"code.gitea.io/gitea/modules/markup"
-	"code.gitea.io/gitea/modules/public"
-	"code.gitea.io/gitea/modules/setting"
-	"code.gitea.io/gitea/modules/svg"
-	"code.gitea.io/gitea/modules/templates/eval"
-	"code.gitea.io/gitea/modules/util"
-	"code.gitea.io/gitea/services/gitdiff"
+	"gitea.dev/modules/base"
+	"gitea.dev/modules/dcs" // DCS Customizations
+	"gitea.dev/modules/htmlutil"
+	"gitea.dev/modules/markup"
+	"gitea.dev/modules/public"
+	"gitea.dev/modules/setting"
+	"gitea.dev/modules/svg"
+	"gitea.dev/modules/templates/eval"
+	"gitea.dev/modules/util"
+	"gitea.dev/services/gitdiff"
 )
 
 func newFuncMapWebPage() template.FuncMap {
@@ -68,7 +68,8 @@ func newFuncMapWebPage() template.FuncMap {
 			return strconv.FormatInt(time.Since(startTime).Nanoseconds()/1e6, 10) + "ms"
 		},
 
-		"AssetURI": public.AssetURI,
+		"AssetURI":      public.AssetURI,
+		"AssetCSSLinks": public.AssetCSSLinks,
 
 		// -----------------------------------------------------------------
 		// setting
@@ -78,6 +79,16 @@ func newFuncMapWebPage() template.FuncMap {
 		"AppSubUrl": func() string {
 			return setting.AppSubURL
 		},
+		/*** DCS Customizations ***/
+		// Upstream removed AppUrl from the page template helpers in #37090 (it now
+		// only exists in mail.go). DCS templates still need the configured ROOT_URL
+		// to detect the deployment environment (prod/QA/dev) by comparing against
+		// literal URLs, so we re-add it here. ctx.AppFullLink is not a substitute:
+		// it guesses the per-request host and trims the trailing slash.
+		"AppUrl": func() string {
+			return setting.AppURL
+		},
+		/*** END DCS Customizations ***/
 		"AssetUrlPrefix": func() string {
 			return setting.StaticURLPrefix + "/assets"
 		},
@@ -150,10 +161,9 @@ func newFuncMapWebPage() template.FuncMap {
 
 		// -----------------------------------------------------------------
 		// misc (TODO: move them to MiscUtils to avoid bloating the main func map)
-		"ActionContent2Commits":    ActionContent2Commits,
-		"IsMultilineCommitMessage": isMultilineCommitMessage,
-		"CommentMustAsDiff":        gitdiff.CommentMustAsDiff,
-		"MirrorRemoteAddress":      mirrorRemoteAddress,
+		"ActionContent2Commits": ActionContent2Commits,
+		"CommentMustAsDiff":     gitdiff.CommentMustAsDiff,
+		"MirrorRemoteAddress":   mirrorRemoteAddress,
 
 		"FilenameIsImage": filenameIsImage,
 		"TabSizeClass":    tabSizeClass,

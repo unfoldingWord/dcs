@@ -12,26 +12,28 @@ import (
 	"path"
 	"strings" // DCS Customizations
 
-	"code.gitea.io/gitea/models/db"
-	"code.gitea.io/gitea/modules/log"
-	"code.gitea.io/gitea/modules/setting"
-	"code.gitea.io/gitea/modules/storage"
-	"code.gitea.io/gitea/modules/timeutil"
-	"code.gitea.io/gitea/modules/util"
+	"gitea.dev/models/db"
+	"gitea.dev/modules/log"
+	"gitea.dev/modules/setting"
+	"gitea.dev/modules/storage"
+	"gitea.dev/modules/timeutil"
+	"gitea.dev/modules/util"
+
+	"xorm.io/builder"
 )
 
 // Attachment represent a attachment of issue/comment/release.
 type Attachment struct {
-	ID                int64  `xorm:"pk autoincr"`
-	UUID              string `xorm:"uuid UNIQUE"`
-	RepoID            int64  `xorm:"INDEX"`           // this should not be zero
-	IssueID           int64  `xorm:"INDEX"`           // maybe zero when creating
-	ReleaseID         int64  `xorm:"INDEX"`           // maybe zero when creating
-	UploaderID        int64  `xorm:"INDEX DEFAULT 0"` // Notice: will be zero before this column added
-	CommentID         int64  `xorm:"INDEX"`
-	Name              string
+	ID                int64              `xorm:"pk autoincr"`
+	UUID              string             `xorm:"uuid UNIQUE"`
+	RepoID            int64              `xorm:"INDEX"`           // this should not be zero
+	IssueID           int64              `xorm:"INDEX"`           // maybe zero when creating
+	ReleaseID         int64              `xorm:"INDEX"`           // maybe zero when creating
+	UploaderID        int64              `xorm:"INDEX DEFAULT 0"` // Notice: will be zero before this column added
+	CommentID         int64              `xorm:"INDEX"`
+	Name              string             `json:"name"` // DCS: explicit tag required — files.json unmarshals via GOEXPERIMENT=jsonv2 (encoding/json/v2), which matches names case-sensitively
 	DownloadCount     int64              `xorm:"DEFAULT 0"`
-	Size              int64              `xorm:"DEFAULT 0"`
+	Size              int64              `xorm:"DEFAULT 0" json:"size"`
 	CreatedUnix       timeutil.TimeStamp `xorm:"created"`
 	CustomDownloadURL string             `xorm:"-"`
 	/*** DCS Customizations ***/
@@ -201,8 +203,7 @@ func GetAttachmentsByCommentID(ctx context.Context, commentID int64) ([]*Attachm
 
 // GetAttachmentByReleaseIDFileName returns attachment by given releaseId and fileName.
 func GetAttachmentByReleaseIDFileName(ctx context.Context, releaseID int64, fileName string) (*Attachment, error) {
-	attach := &Attachment{ReleaseID: releaseID, Name: fileName}
-	has, err := db.GetEngine(ctx).Get(attach)
+	attach, has, err := db.Get[Attachment](ctx, builder.Eq{"release_id": releaseID, "`name`": fileName})
 	if err != nil {
 		return nil, err
 	} else if !has {
