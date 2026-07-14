@@ -22,6 +22,9 @@ func (repo *Repository) RepoHealthcheckURL() string {
 
 // LoadLatestDMs loads the latest DMs
 func (repo *Repository) LoadLatestDMs(ctx context.Context) error {
+	if repo.LatestDMsLoaded {
+		return nil
+	}
 	if repo.LatestProdDM == nil {
 		dm := &Door43Metadata{}
 		has, err := db.GetEngine(ctx).
@@ -113,19 +116,106 @@ func (repo *Repository) LoadLatestDMs(ctx context.Context) error {
 		}
 	}
 
+	repo.LatestDMsLoaded = true
 	return nil
 }
 
+// synthesizeRepoDM builds the fallback RepoDM for a repo that has no
+// is_repo_metadata Door43Metadata row, deriving fields from the repo name.
+func synthesizeRepoDM(repo *Repository) *Door43Metadata {
+	metadataType := dcs.GetMetadataTypeFromRepoName(repo.Name)
+	lang := dcs.GetLanguageFromRepoName(repo.Name)
+	return &Door43Metadata{
+		RepoID:            repo.ID,
+		Repo:              repo,
+		MetadataType:      metadataType,
+		MetadataVersion:   dcs.GetDefaultMetadataVersionForType(metadataType),
+		Title:             repo.Name,
+		Subject:           dcs.GetSubjectFromRepoName(repo.Name),
+		Language:          lang,
+		LanguageDirection: dcs.GetLanguageDirection(lang),
+		LanguageTitle:     dcs.GetLanguageTitle(lang),
+		LanguageIsGL:      dcs.LanguageIsGL(lang),
+	}
+}
+
 // LoadLatestDMs loads the latest Door43Metadatas for the given RepositoryList
+// in two queries plus one batched attribute load, instead of 4+ queries per repo.
 func (repos RepositoryList) LoadLatestDMs(ctx context.Context) error {
 	if repos.Len() == 0 {
 		return nil
 	}
-	var lastErr error
+
+	repoMap := make(map[int64]*Repository, len(repos))
+	ids := make([]int64, 0, len(repos))
 	for _, repo := range repos {
-		if err := repo.LoadLatestDMs(ctx); err != nil && lastErr == nil {
-			lastErr = err
+		if !repo.LatestDMsLoaded {
+			repoMap[repo.ID] = repo
+			ids = append(ids, repo.ID)
 		}
 	}
-	return lastErr
+	if len(ids) == 0 {
+		return nil
+	}
+
+	var dms []*Door43Metadata
+	err := db.GetEngine(ctx).
+		In("repo_id", ids).
+		And(builder.Or(
+			builder.And(builder.Eq{"is_latest_for_stage": true}, builder.IsNull{"validation_error"}),
+			builder.Eq{"is_repo_metadata": true},
+		)).
+		Desc("release_date_unix").
+		Find(&dms)
+	if err != nil {
+		return err
+	}
+
+	loaded := make(Door43MetadataList, 0, len(dms))
+	for _, dm := range dms {
+		repo := repoMap[dm.RepoID]
+		if repo == nil {
+			continue
+		}
+		dm.Repo = repo
+		used := false
+		if dm.IsLatestForStage && dm.ValidationError == nil {
+			// rows are ordered newest first, so only the first per stage sticks
+			switch dm.Stage {
+			case door43metadata.StageProd:
+				if repo.LatestProdDM == nil {
+					repo.LatestProdDM = dm
+					used = true
+				}
+			case door43metadata.StagePreProd:
+				if repo.LatestPreprodDM == nil {
+					repo.LatestPreprodDM = dm
+					used = true
+				}
+			case door43metadata.StageLatest:
+				if repo.DefaultBranchDM == nil {
+					repo.DefaultBranchDM = dm
+					used = true
+				}
+			}
+		}
+		if dm.IsRepoMetadata && repo.RepoDM == nil {
+			repo.RepoDM = dm
+			used = true
+		}
+		if used {
+			loaded = append(loaded, dm)
+		}
+	}
+
+	for _, repo := range repoMap {
+		if repo.RepoDM == nil {
+			repo.RepoDM = synthesizeRepoDM(repo)
+		}
+		repo.LatestDMsLoaded = true
+	}
+
+	// Batch-load releases/attachments/publishers of the stage DMs so the
+	// per-DM conversions (e.g. ToCatalogStage) don't query per entry
+	return loaded.LoadAttributes(ctx)
 }
