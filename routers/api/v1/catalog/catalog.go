@@ -1695,6 +1695,28 @@ func searchCatalog(ctx *context.APIContext) {
 		return
 	}
 
+	// Batch-load the units of all result repos in one query; the per-entry
+	// permission checks and repo conversions below use them and would
+	// otherwise each run their own units query.
+	seenRepos := make(map[int64]bool, len(dms))
+	repos := make(repo.RepositoryList, 0, len(dms))
+	for _, dm := range dms {
+		if dm.Repo != nil && !seenRepos[dm.Repo.ID] {
+			seenRepos[dm.Repo.ID] = true
+			repos = append(repos, dm.Repo)
+		}
+	}
+	if err := repos.LoadUnits(ctx); err != nil {
+		ctx.APIError(http.StatusInternalServerError, err)
+		return
+	}
+	// Batch-load each repo's latest/stage DMs; ToRepoDCS otherwise runs four
+	// queries per entry for them (plus their releases and attachments)
+	if err := repos.LoadLatestDMs(ctx); err != nil {
+		ctx.APIError(http.StatusInternalServerError, err)
+		return
+	}
+
 	results := make([]*api.CatalogEntry, len(dms))
 	var lastUpdated time.Time
 	for i, dm := range dms {
