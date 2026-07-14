@@ -179,6 +179,68 @@
         },
         "description": "BranchProtectionList"
       },
+      "CatalogEntry": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/CatalogEntry"
+            }
+          }
+        },
+        "description": "CatalogEntry"
+      },
+      "CatalogMetadata": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "additionalProperties": {},
+              "type": "object"
+            }
+          }
+        },
+        "description": "CatalogMetadata"
+      },
+      "CatalogSearchResults": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/CatalogSearchResults"
+            }
+          }
+        },
+        "description": "CatalogSearchResults"
+      },
+      "CatalogStats": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/CatalogStats"
+            }
+          }
+        },
+        "description": "CatalogStats"
+      },
+      "CatalogStatsExt": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/CatalogStatsExt"
+            }
+          }
+        },
+        "description": "CatalogStatsExt"
+      },
+      "CatalogValidation": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "additionalProperties": {},
+              "type": "object"
+            }
+          }
+        },
+        "description": "CatalogValidation"
+      },
       "ChangedFileList": {
         "content": {
           "application/json": {
@@ -431,6 +493,17 @@
           }
         },
         "description": "DeployKeyList"
+      },
+      "Door43Healthcheck": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "additionalProperties": {},
+              "type": "object"
+            }
+          }
+        },
+        "description": "Door43Healthcheck"
       },
       "EmailList": {
         "content": {
@@ -731,6 +804,28 @@
           }
         },
         "description": "LabelTemplateList"
+      },
+      "LangnamesJSON": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "additionalProperties": {},
+              "type": "object"
+            }
+          }
+        },
+        "description": "LanguLangnamesJSON"
+      },
+      "Language": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "additionalProperties": {},
+              "type": "object"
+            }
+          }
+        },
+        "description": "Language"
       },
       "LanguageStatistics": {
         "content": {
@@ -3020,6 +3115,560 @@
         "type": "object",
         "x-go-package": "gitea.dev/modules/structs"
       },
+      "CatalogAttachmentTypes": {
+        "description": "CatalogAttachmentTypes the kinds of content found in the release attachments of a catalog entry",
+        "properties": {
+          "audio": {
+            "type": "boolean",
+            "x-go-name": "Audio"
+          },
+          "other": {
+            "type": "boolean",
+            "x-go-name": "Other"
+          },
+          "pdf": {
+            "type": "boolean",
+            "x-go-name": "PDF"
+          },
+          "stream": {
+            "type": "boolean",
+            "x-go-name": "Stream"
+          },
+          "video": {
+            "type": "boolean",
+            "x-go-name": "Video"
+          }
+        },
+        "type": "object",
+        "x-go-package": "gitea.dev/modules/structs"
+      },
+      "CatalogEntry": {
+        "description": "CatalogEntry represents a repository's metadata of a tag or default branch as an entry of the catalog",
+        "properties": {
+          "abbreviation": {
+            "type": "string",
+            "x-go-name": "Abbreviation"
+          },
+          "attachment_types": {
+            "$ref": "#/components/schemas/CatalogAttachmentTypes"
+          },
+          "books": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "x-go-name": "Books"
+          },
+          "branch_or_tag_name": {
+            "type": "string",
+            "x-go-name": "Ref"
+          },
+          "commit_sha": {
+            "type": "string",
+            "x-go-name": "CommitSHA"
+          },
+          "content_format": {
+            "type": "string",
+            "x-go-name": "ContentFormat"
+          },
+          "contents_url": {
+            "format": "uri",
+            "type": "string",
+            "x-go-name": "ContentsURL"
+          },
+          "flavor": {
+            "type": "string",
+            "x-go-name": "Flavor"
+          },
+          "flavor_type": {
+            "type": "string",
+            "x-go-name": "FlavorType"
+          },
+          "full_name": {
+            "type": "string",
+            "x-go-name": "FullName"
+          },
+          "git_trees_url": {
+            "format": "uri",
+            "type": "string",
+            "x-go-name": "GitTreesURL"
+          },
+          "id": {
+            "format": "int64",
+            "type": "integer",
+            "x-go-name": "ID"
+          },
+          "ingredients": {
+            "items": {
+              "$ref": "#/components/schemas/Ingredient"
+            },
+            "type": "array",
+            "x-go-name": "Ingredients"
+          },
+          "is_valid": {
+            "type": "boolean",
+            "x-go-name": "IsValid"
+          },
+          "language": {
+            "type": "string",
+            "x-go-name": "Language"
+          },
+          "language_direction": {
+            "type": "string",
+            "x-go-name": "LanguageDir"
+          },
+          "language_is_gl": {
+            "type": "boolean",
+            "x-go-name": "LanguageIsGL"
+          },
+          "language_title": {
+            "type": "string",
+            "x-go-name": "LanguageTitle"
+          },
+          "metadata_api_contents_url": {
+            "format": "uri",
+            "type": "string",
+            "x-go-name": "MetadataAPIContentsURL"
+          },
+          "metadata_json_url": {
+            "format": "uri",
+            "type": "string",
+            "x-go-name": "MetadataJSONURL"
+          },
+          "metadata_type": {
+            "type": "string",
+            "x-go-name": "MetadataType"
+          },
+          "metadata_url": {
+            "format": "uri",
+            "type": "string",
+            "x-go-name": "MetadataURL"
+          },
+          "metadata_version": {
+            "type": "string",
+            "x-go-name": "MetadataVersion"
+          },
+          "name": {
+            "type": "string",
+            "x-go-name": "Name"
+          },
+          "owner": {
+            "type": "string",
+            "x-go-name": "Owner"
+          },
+          "ref_type": {
+            "type": "string",
+            "x-go-name": "RefType"
+          },
+          "relations": {
+            "items": {
+              "$ref": "#/components/schemas/Relation"
+            },
+            "type": "array",
+            "x-go-name": "Relations"
+          },
+          "release": {
+            "$ref": "#/components/schemas/Release"
+          },
+          "released": {
+            "format": "date-time",
+            "type": "string",
+            "x-go-name": "Released"
+          },
+          "repo": {
+            "$ref": "#/components/schemas/Repository"
+          },
+          "stage": {
+            "type": "string",
+            "x-go-name": "Stage"
+          },
+          "subject": {
+            "type": "string",
+            "x-go-name": "Subject"
+          },
+          "tarbar_url": {
+            "format": "uri",
+            "type": "string",
+            "x-go-name": "TarballURL"
+          },
+          "title": {
+            "type": "string",
+            "x-go-name": "Title"
+          },
+          "url": {
+            "format": "uri",
+            "type": "string",
+            "x-go-name": "Self"
+          },
+          "validation_errors_url": {
+            "format": "uri",
+            "type": "string",
+            "x-go-name": "ValidationErrorsURL"
+          },
+          "zipball_url": {
+            "format": "uri",
+            "type": "string",
+            "x-go-name": "ZipballURL"
+          }
+        },
+        "type": "object",
+        "x-go-package": "gitea.dev/modules/structs"
+      },
+      "CatalogSearchResults": {
+        "description": "CatalogSearchResults results of a successful catalog search",
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/CatalogEntry"
+            },
+            "type": "array",
+            "x-go-name": "Data"
+          },
+          "last_updated": {
+            "format": "date-time",
+            "type": "string",
+            "x-go-name": "LastUpdated"
+          },
+          "ok": {
+            "type": "boolean",
+            "x-go-name": "OK"
+          }
+        },
+        "type": "object",
+        "x-go-package": "gitea.dev/modules/structs"
+      },
+      "CatalogStage": {
+        "description": "CatalogStage a repo's catalog stage metadata",
+        "properties": {
+          "branch_or_tag_name": {
+            "type": "string",
+            "x-go-name": "Ref"
+          },
+          "commit_sha": {
+            "type": "string",
+            "x-go-name": "CommitSHA"
+          },
+          "contents_url": {
+            "format": "uri",
+            "type": "string",
+            "x-go-name": "ContentsURL"
+          },
+          "git_trees_url": {
+            "format": "uri",
+            "type": "string",
+            "x-go-name": "GitTreesURL"
+          },
+          "release_url": {
+            "format": "uri",
+            "type": "string",
+            "x-go-name": "ReleaseURL"
+          },
+          "released": {
+            "format": "date-time",
+            "type": "string",
+            "x-go-name": "Released"
+          },
+          "tarball_url": {
+            "format": "uri",
+            "type": "string",
+            "x-go-name": "TarballURL"
+          },
+          "zipball_url": {
+            "format": "uri",
+            "type": "string",
+            "x-go-name": "ZipballURL"
+          }
+        },
+        "type": "object",
+        "x-go-package": "gitea.dev/modules/structs"
+      },
+      "CatalogStages": {
+        "description": "CatalogStages a repo's catalog stages",
+        "properties": {
+          "latest": {
+            "$ref": "#/components/schemas/CatalogStage"
+          },
+          "preprod": {
+            "$ref": "#/components/schemas/CatalogStage"
+          },
+          "prod": {
+            "$ref": "#/components/schemas/CatalogStage"
+          }
+        },
+        "type": "object",
+        "x-go-package": "gitea.dev/modules/structs"
+      },
+      "CatalogStats": {
+        "description": "CatalogStats aggregate counts of the catalog entries matching a catalog search",
+        "properties": {
+          "entry_count": {
+            "format": "int64",
+            "type": "integer",
+            "x-go-name": "EntryCount"
+          },
+          "flavor_count": {
+            "format": "int64",
+            "type": "integer",
+            "x-go-name": "FlavorCount"
+          },
+          "flavor_type_count": {
+            "format": "int64",
+            "type": "integer",
+            "x-go-name": "FlavorTypeCount"
+          },
+          "has_attachment": {
+            "format": "int64",
+            "type": "integer",
+            "x-go-name": "HasAttachment"
+          },
+          "has_audio": {
+            "format": "int64",
+            "type": "integer",
+            "x-go-name": "HasAudio"
+          },
+          "has_other": {
+            "format": "int64",
+            "type": "integer",
+            "x-go-name": "HasOther"
+          },
+          "has_pdf": {
+            "format": "int64",
+            "type": "integer",
+            "x-go-name": "HasPDF"
+          },
+          "has_stream": {
+            "format": "int64",
+            "type": "integer",
+            "x-go-name": "HasStream"
+          },
+          "has_video": {
+            "format": "int64",
+            "type": "integer",
+            "x-go-name": "HasVideo"
+          },
+          "lang_count": {
+            "format": "int64",
+            "type": "integer",
+            "x-go-name": "LangCount"
+          },
+          "lang_ltr_count": {
+            "format": "int64",
+            "type": "integer",
+            "x-go-name": "LangLtrCount"
+          },
+          "lang_rtl_count": {
+            "format": "int64",
+            "type": "integer",
+            "x-go-name": "LangRtlCount"
+          },
+          "owner_count": {
+            "format": "int64",
+            "type": "integer",
+            "x-go-name": "OwnerCount"
+          },
+          "rc_count": {
+            "format": "int64",
+            "type": "integer",
+            "x-go-name": "RcCount"
+          },
+          "repo_count": {
+            "format": "int64",
+            "type": "integer",
+            "x-go-name": "RepoCount"
+          },
+          "sb_count": {
+            "format": "int64",
+            "type": "integer",
+            "x-go-name": "SbCount"
+          },
+          "subject_count": {
+            "format": "int64",
+            "type": "integer",
+            "x-go-name": "SubjectCount"
+          },
+          "tc_count": {
+            "format": "int64",
+            "type": "integer",
+            "x-go-name": "TcCount"
+          },
+          "ts_count": {
+            "format": "int64",
+            "type": "integer",
+            "x-go-name": "TsCount"
+          }
+        },
+        "type": "object",
+        "x-go-package": "gitea.dev/modules/structs"
+      },
+      "CatalogStatsExt": {
+        "description": "CatalogStatsExt CatalogStats plus the healthcheck counts and the sorted unique\nvalues of several catalog entry fields",
+        "properties": {
+          "entry_count": {
+            "format": "int64",
+            "type": "integer",
+            "x-go-name": "EntryCount"
+          },
+          "flavor_count": {
+            "format": "int64",
+            "type": "integer",
+            "x-go-name": "FlavorCount"
+          },
+          "flavor_type_count": {
+            "format": "int64",
+            "type": "integer",
+            "x-go-name": "FlavorTypeCount"
+          },
+          "flavor_types": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "x-go-name": "FlavorTypes"
+          },
+          "flavors": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "x-go-name": "Flavors"
+          },
+          "has_attachment": {
+            "format": "int64",
+            "type": "integer",
+            "x-go-name": "HasAttachment"
+          },
+          "has_audio": {
+            "format": "int64",
+            "type": "integer",
+            "x-go-name": "HasAudio"
+          },
+          "has_other": {
+            "format": "int64",
+            "type": "integer",
+            "x-go-name": "HasOther"
+          },
+          "has_pdf": {
+            "format": "int64",
+            "type": "integer",
+            "x-go-name": "HasPDF"
+          },
+          "has_stream": {
+            "format": "int64",
+            "type": "integer",
+            "x-go-name": "HasStream"
+          },
+          "has_video": {
+            "format": "int64",
+            "type": "integer",
+            "x-go-name": "HasVideo"
+          },
+          "healthcheck_error_count": {
+            "format": "int64",
+            "type": "integer",
+            "x-go-name": "HealthcheckErrorCount"
+          },
+          "healthcheck_info_count": {
+            "format": "int64",
+            "type": "integer",
+            "x-go-name": "HealthcheckInfoCount"
+          },
+          "healthcheck_success_count": {
+            "format": "int64",
+            "type": "integer",
+            "x-go-name": "HealthcheckSuccessCount"
+          },
+          "healthcheck_warning_count": {
+            "format": "int64",
+            "type": "integer",
+            "x-go-name": "HealthcheckWarningCount"
+          },
+          "lang_count": {
+            "format": "int64",
+            "type": "integer",
+            "x-go-name": "LangCount"
+          },
+          "lang_ltr_count": {
+            "format": "int64",
+            "type": "integer",
+            "x-go-name": "LangLtrCount"
+          },
+          "lang_rtl_count": {
+            "format": "int64",
+            "type": "integer",
+            "x-go-name": "LangRtlCount"
+          },
+          "languages": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "x-go-name": "Languages"
+          },
+          "metadata_types": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "x-go-name": "MetadataTypes"
+          },
+          "no_healthcheck_count": {
+            "format": "int64",
+            "type": "integer",
+            "x-go-name": "NoHealthcheckCount"
+          },
+          "owner_count": {
+            "format": "int64",
+            "type": "integer",
+            "x-go-name": "OwnerCount"
+          },
+          "owners": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "x-go-name": "Owners"
+          },
+          "rc_count": {
+            "format": "int64",
+            "type": "integer",
+            "x-go-name": "RcCount"
+          },
+          "repo_count": {
+            "format": "int64",
+            "type": "integer",
+            "x-go-name": "RepoCount"
+          },
+          "sb_count": {
+            "format": "int64",
+            "type": "integer",
+            "x-go-name": "SbCount"
+          },
+          "subject_count": {
+            "format": "int64",
+            "type": "integer",
+            "x-go-name": "SubjectCount"
+          },
+          "subjects": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "x-go-name": "Subjects"
+          },
+          "tc_count": {
+            "format": "int64",
+            "type": "integer",
+            "x-go-name": "TcCount"
+          },
+          "ts_count": {
+            "format": "int64",
+            "type": "integer",
+            "x-go-name": "TsCount"
+          }
+        },
+        "type": "object",
+        "x-go-package": "gitea.dev/modules/structs"
+      },
       "ChangeFileOperation": {
         "description": "ChangeFileOperation for creating, updating or deleting a file",
         "properties": {
@@ -4027,6 +4676,27 @@
         },
         "required": [
           "armored_public_key"
+        ],
+        "type": "object",
+        "x-go-package": "gitea.dev/modules/structs"
+      },
+      "CreateGitRefOption": {
+        "description": "CreateGitRefOption options when creating a git ref in a repository",
+        "properties": {
+          "ref": {
+            "description": "The name of the reference.",
+            "type": "string",
+            "x-go-name": "RefName"
+          },
+          "target": {
+            "description": "The target commitish for this reference.",
+            "type": "string",
+            "x-go-name": "Target"
+          }
+        },
+        "required": [
+          "ref",
+          "target"
         ],
         "type": "object",
         "x-go-package": "gitea.dev/modules/structs"
@@ -6905,6 +7575,59 @@
         "type": "object",
         "x-go-package": "gitea.dev/modules/structs"
       },
+      "Ingredient": {
+        "description": "Ingredient is a single project of a resource",
+        "properties": {
+          "alignment_count": {
+            "format": "int64",
+            "type": "integer",
+            "x-go-name": "AlignmentCount"
+          },
+          "categories": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "x-go-name": "Categories"
+          },
+          "exists": {
+            "type": "boolean",
+            "x-go-name": "Exists"
+          },
+          "identifier": {
+            "type": "string",
+            "x-go-name": "Identifier"
+          },
+          "is_dir": {
+            "type": "boolean",
+            "x-go-name": "IsDir"
+          },
+          "path": {
+            "type": "string",
+            "x-go-name": "Path"
+          },
+          "size": {
+            "format": "int64",
+            "type": "integer",
+            "x-go-name": "Size"
+          },
+          "sort": {
+            "format": "int64",
+            "type": "integer",
+            "x-go-name": "Sort"
+          },
+          "title": {
+            "type": "string",
+            "x-go-name": "Title"
+          },
+          "versification": {
+            "type": "string",
+            "x-go-name": "Versification"
+          }
+        },
+        "type": "object",
+        "x-go-package": "gitea.dev/modules/structs"
+      },
       "InternalTracker": {
         "description": "InternalTracker represents settings for internal tracker",
         "properties": {
@@ -8097,9 +8820,33 @@
             "type": "boolean",
             "x-go-name": "RepoAdminChangeTeamAccess"
           },
+          "repo_languages": {
+            "description": "DCS Customizations ***/\nAll languages of the repos the org owns",
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "x-go-name": "RepoLanguages"
+          },
+          "repo_metadata_types": {
+            "description": "All metadata types of the repos the org owns",
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "x-go-name": "RepoMetadataTypes"
+          },
+          "repo_subjects": {
+            "description": "All subjects of the repos the org owns",
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "x-go-name": "RepoSubjects"
+          },
           "username": {
             "deprecated": true,
-            "description": "username of the organization\ndeprecated",
+            "description": "deprecated",
             "type": "string",
             "x-go-name": "UserName"
           },
@@ -8576,6 +9323,13 @@
             "type": "integer",
             "x-go-name": "Comments"
           },
+          "conflicted_files": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "x-go-name": "ConflictedFiles"
+          },
           "content_version": {
             "description": "The version of the pull request content for optimistic locking",
             "format": "int64",
@@ -8715,6 +9469,10 @@
               }
             ],
             "description": "The current state of the pull request\nopen StateOpen pr is opened\nclosed StateClosed pr is closed"
+          },
+          "status": {
+            "type": "string",
+            "x-go-name": "Status"
           },
           "title": {
             "description": "The title of the pull request",
@@ -9081,6 +9839,29 @@
         "type": "object",
         "x-go-package": "gitea.dev/modules/structs"
       },
+      "Relation": {
+        "description": "Relation is a single relation of a resource",
+        "properties": {
+          "full_relation": {
+            "type": "string",
+            "x-go-name": "FullRelation"
+          },
+          "identifier": {
+            "type": "string",
+            "x-go-name": "Identifier"
+          },
+          "lang": {
+            "type": "string",
+            "x-go-name": "Language"
+          },
+          "version": {
+            "type": "string",
+            "x-go-name": "Version"
+          }
+        },
+        "type": "object",
+        "x-go-package": "gitea.dev/modules/structs"
+      },
       "Release": {
         "description": "Release represents a repository release",
         "properties": {
@@ -9104,6 +9885,9 @@
             "format": "date-time",
             "type": "string",
             "x-go-name": "CreatedAt"
+          },
+          "door43_metadata": {
+            "$ref": "#/components/schemas/CatalogEntry"
           },
           "draft": {
             "description": "Whether the release is a draft",
@@ -9322,6 +10106,11 @@
       "Repository": {
         "description": "Repository represents a repository",
         "properties": {
+          "abbreviation": {
+            "description": "abbreviation from the manifest",
+            "type": "string",
+            "x-go-name": "Abbreviation"
+          },
           "allow_fast_forward_only_merge": {
             "type": "boolean",
             "x-go-name": "AllowFastForwardOnly"
@@ -9377,10 +10166,24 @@
             "type": "integer",
             "x-go-name": "BranchCount"
           },
+          "catalog": {
+            "$ref": "#/components/schemas/CatalogStages"
+          },
+          "checking_level": {
+            "description": "checking level from the manifest",
+            "format": "int64",
+            "type": "integer",
+            "x-go-name": "CheckingLevel"
+          },
           "clone_url": {
             "format": "uri",
             "type": "string",
             "x-go-name": "CloneURL"
+          },
+          "content_format": {
+            "description": "content format",
+            "type": "string",
+            "x-go-name": "ContentFormat"
           },
           "created_at": {
             "format": "date-time",
@@ -9424,6 +10227,16 @@
           },
           "external_wiki": {
             "$ref": "#/components/schemas/ExternalWiki"
+          },
+          "flavor": {
+            "description": "flavor from the manifest",
+            "type": "string",
+            "x-go-name": "Flavor"
+          },
+          "flavor_type": {
+            "description": "flavor type from the manifest",
+            "type": "string",
+            "x-go-name": "FlavorType"
           },
           "fork": {
             "type": "boolean",
@@ -9470,6 +10283,17 @@
             "type": "boolean",
             "x-go-name": "HasWiki"
           },
+          "healthcheck_severity": {
+            "description": "healthcheck severity",
+            "type": "string",
+            "x-go-name": "HealthcheckSeverity"
+          },
+          "healthcheck_url": {
+            "description": "healthcheck URL",
+            "format": "uri",
+            "type": "string",
+            "x-go-name": "HealthcheckURL"
+          },
           "html_url": {
             "format": "uri",
             "type": "string",
@@ -9484,6 +10308,14 @@
             "type": "boolean",
             "x-go-name": "IgnoreWhitespaceConflicts"
           },
+          "ingredients": {
+            "description": "ingredients",
+            "items": {
+              "$ref": "#/components/schemas/Ingredient"
+            },
+            "type": "array",
+            "x-go-name": "Ingredients"
+          },
           "internal": {
             "type": "boolean",
             "x-go-name": "Internal"
@@ -9492,8 +10324,24 @@
             "$ref": "#/components/schemas/InternalTracker"
           },
           "language": {
+            "description": "language from the manifest",
             "type": "string",
             "x-go-name": "Language"
+          },
+          "language_direction": {
+            "description": "language direction from the manifest",
+            "type": "string",
+            "x-go-name": "LanguageDir"
+          },
+          "language_is_gl": {
+            "description": "is the language a GL",
+            "type": "boolean",
+            "x-go-name": "LanguageIsGL"
+          },
+          "language_title": {
+            "description": "language title from the manifest",
+            "type": "string",
+            "x-go-name": "LanguageTitle"
           },
           "languages_url": {
             "format": "uri",
@@ -9510,6 +10358,16 @@
           "link": {
             "type": "string",
             "x-go-name": "Link"
+          },
+          "metadata_type": {
+            "description": "language from the manifest",
+            "type": "string",
+            "x-go-name": "MetadataType"
+          },
+          "metadata_version": {
+            "description": "language from the manifest",
+            "type": "string",
+            "x-go-name": "MetadataVersion"
           },
           "mirror": {
             "type": "boolean",
@@ -9573,6 +10431,14 @@
             "type": "string",
             "x-go-name": "ProjectsMode"
           },
+          "relations": {
+            "description": "Relation",
+            "items": {
+              "$ref": "#/components/schemas/Relation"
+            },
+            "type": "array",
+            "x-go-name": "Relations"
+          },
           "release_counter": {
             "format": "int64",
             "type": "integer",
@@ -9596,9 +10462,19 @@
             "type": "integer",
             "x-go-name": "Stars"
           },
+          "subject": {
+            "description": "subject from the manifest",
+            "type": "string",
+            "x-go-name": "Subject"
+          },
           "template": {
             "type": "boolean",
             "x-go-name": "Template"
+          },
+          "title": {
+            "description": "title from the manifest",
+            "type": "string",
+            "x-go-name": "Title"
           },
           "topics": {
             "items": {
@@ -10329,6 +11205,21 @@
         "type": "object",
         "x-go-package": "gitea.dev/modules/structs"
       },
+      "UpdateGitRefOption": {
+        "description": "UpdateGitRefOption options when updating a git ref in a repository",
+        "properties": {
+          "target": {
+            "description": "The target commitish for the reference to be updated to.",
+            "type": "string",
+            "x-go-name": "Target"
+          }
+        },
+        "required": [
+          "target"
+        ],
+        "type": "object",
+        "x-go-package": "gitea.dev/modules/structs"
+      },
       "UpdateRepoAvatarOption": {
         "description": "UpdateRepoAvatarUserOption options when updating the repo avatar",
         "properties": {
@@ -10470,6 +11361,30 @@
             "description": "Is user login prohibited",
             "type": "boolean",
             "x-go-name": "ProhibitLogin"
+          },
+          "repo_languages": {
+            "description": "DCS Customizations ***/\nRepo languages",
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "x-go-name": "RepoLanguages"
+          },
+          "repo_metadata_types": {
+            "description": "Repo metadata types",
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "x-go-name": "RepoMetadataTypes"
+          },
+          "repo_subjects": {
+            "description": "Repo subjects",
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "x-go-name": "RepoSubjects"
           },
           "restricted": {
             "description": "Is user restricted",
@@ -10854,12 +11769,12 @@
     }
   },
   "info": {
-    "description": "This documentation describes the Gitea API.",
+    "description": "This documentation describes the DCS (Gitea) API.",
     "license": {
       "name": "MIT",
       "url": "http://opensource.org/licenses/MIT"
     },
-    "title": "Gitea API",
+    "title": "DCS (Gitea) API",
     "version": "{{.SwaggerAppVer}}"
   },
   "openapi": "3.0.3",
@@ -11758,6 +12673,51 @@
         ]
       }
     },
+    "/admin/users/spam": {
+      "delete": {
+        "operationId": "adminDeleteSpamUsers",
+        "parameters": [
+          {
+            "description": "purge the users from the system completely",
+            "in": "query",
+            "name": "purge",
+            "schema": {
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "$ref": "#/components/responses/empty"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbidden"
+          },
+          "422": {
+            "$ref": "#/components/responses/validationError"
+          }
+        },
+        "summary": "Delete spam users - deletes those listed in the spam users list, but WILL NOT delete those that logged in more than 2 days from signing up, have repos, or was created in the last week.",
+        "tags": [
+          "admin"
+        ]
+      },
+      "get": {
+        "operationId": "adminListSpamUsers",
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/UserList"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbidden"
+          }
+        },
+        "summary": "List all users considered to be spam. (have a description \u0026 website, last logged in on the day they signed up, and is older than a week)",
+        "tags": [
+          "admin"
+        ]
+      }
+    },
     "/admin/users/{username}": {
       "delete": {
         "operationId": "adminDeleteUser",
@@ -12162,6 +13122,2419 @@
         ]
       }
     },
+    "/catalog/bp/{owner}/{repo}": {
+      "get": {
+        "operationId": "catalogGetBookPackage",
+        "parameters": [
+          {
+            "description": "search only for entries with the given owner name(s). Will perform an exact match (case insensitive) unlesss partialMatch=true",
+            "in": "path",
+            "name": "owner",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "search only for entries with the given repo name(s). To match multiple, give the parameter multiple times or give a list comma delimited. Will perform an exact match (case insensitive) unlesss partialMatch=true",
+            "in": "path",
+            "name": "repo",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "optional reference (tag/branch). If not provided, uses the most recent entry based on stage",
+            "in": "query",
+            "name": "ref",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "search only for entries with the given release tag(s). To match multiple, give the parameter multiple times or give a list comma delimited. Will perform an exact match (case insensitive)",
+            "in": "query",
+            "name": "tag",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "list only those of the given stage or lower, with low to high being: \"prod\" - return only those of production releases (default); \"preprod\" - return only those of all (production \u0026 pre-production) releases; \"latest\" - return only those of all releases and the default branch; \"other\" - return all, including other branches and tags [aliases: \"branch\", \"tag\"]",
+            "in": "query",
+            "name": "stage",
+            "schema": {
+              "items": {
+                "enum": [
+                  "prod",
+                  "preprod",
+                  "latest",
+                  "other"
+                ],
+                "type": "string"
+              },
+              "type": "array"
+            }
+          },
+          {
+            "description": "subject(s) desired for the book package. Default list: Aligned Bible, TSV Translation Notes, TSV Translation Questions, TSV Translation Words Links, Translation Words, Translation Academy",
+            "in": "query",
+            "name": "subject",
+            "schema": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            }
+          },
+          {
+            "description": "resource flavorType. Multiple values are ORed. If given, subjects ignored.",
+            "in": "query",
+            "name": "flavorType",
+            "schema": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            }
+          },
+          {
+            "description": "resource flavor. Multiple values are ORed. If given, subjects ignored.",
+            "in": "query",
+            "name": "flavor",
+            "schema": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            }
+          },
+          {
+            "description": "resource abbreviation (identifier). Multiple values are ORed.",
+            "in": "query",
+            "name": "abbreviation",
+            "schema": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            }
+          },
+          {
+            "description": "content format (usfm, text, markdown, etc.). Multiple values are ORed.",
+            "in": "query",
+            "name": "format",
+            "schema": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            }
+          },
+          {
+            "description": "checking level. Returns items with a checking level equal or greater than the number given",
+            "in": "query",
+            "name": "checkingLevel",
+            "schema": {
+              "items": {
+                "enum": [
+                  "1",
+                  "2",
+                  "3"
+                ],
+                "type": "string"
+              },
+              "type": "array"
+            }
+          },
+          {
+            "description": "book (ingredient identifier). Multiple values are ORed",
+            "in": "query",
+            "name": "book",
+            "schema": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            }
+          },
+          {
+            "description": "metadata type. Multiple values are ORed",
+            "in": "query",
+            "name": "metadataType",
+            "schema": {
+              "items": {
+                "enum": [
+                  "rc",
+                  "sb",
+                  "tc",
+                  "ts"
+                ],
+                "type": "string"
+              },
+              "type": "array"
+            }
+          },
+          {
+            "description": "metadata version. Does not apply if metadataType is not given. Multiple values are ORed",
+            "in": "query",
+            "name": "metadataVersion",
+            "schema": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            }
+          },
+          {
+            "description": "topic of a repo. Multiple values are ORed",
+            "in": "query",
+            "name": "topic",
+            "schema": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            }
+          },
+          {
+            "description": "Entries with a repository without this topic will be returned. Multiple values are ANDed.",
+            "in": "query",
+            "name": "withoutTopic",
+            "schema": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            }
+          },
+          {
+            "description": "if true, the list of ingredients (files/projects) in the resource and their file paths will be listed for each entry, default is true",
+            "in": "query",
+            "name": "showIngredients",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "description": "sort repos alphanumerically by attribute. Supported values are \"subject\", \"title\", \"reponame\", \"tag\", \"released\", \"lang\", \"releases\", \"stars\", \"forks\". Default is by \"subject\" and then \"abbreviation\"",
+            "in": "query",
+            "name": "sort",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "sort order, either \"asc\" (ascending) or \"desc\" (descending). Default is \"asc\", ignored if \"sort\" is not specified.",
+            "in": "query",
+            "name": "order",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "page number of results to return (1-based)",
+            "in": "query",
+            "name": "page",
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "description": "page size of results, defaults to no limit",
+            "in": "query",
+            "name": "limit",
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/CatalogSearchResults"
+          },
+          "422": {
+            "$ref": "#/components/responses/validationError"
+          }
+        },
+        "summary": "Get all catalog entries for a catalog entry's book package",
+        "tags": [
+          "catalog"
+        ]
+      }
+    },
+    "/catalog/entry/{owner}/{repo}/{ref}": {
+      "get": {
+        "operationId": "catalogGetEntry",
+        "parameters": [
+          {
+            "description": "name of the owner",
+            "in": "path",
+            "name": "owner",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "name of the repo",
+            "in": "path",
+            "name": "repo",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "release tag or default branch",
+            "in": "path",
+            "name": "ref",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/CatalogEntry"
+          },
+          "404": {
+            "$ref": "#/components/responses/notFound"
+          }
+        },
+        "summary": "Get a catalog entry",
+        "tags": [
+          "catalog"
+        ]
+      }
+    },
+    "/catalog/list/languages": {
+      "get": {
+        "operationId": "catalogListLanguages",
+        "parameters": [
+          {
+            "description": "list only those with the given owners(s). To match multiple, give the parameter multiple times or give a list comma delimited. Will perform an exact match (case insensitive) unlesss partialMatch=true",
+            "in": "query",
+            "name": "owner",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "list only those for the given repo(s). To match multiple, give the parameter multiple times or give a list comma delimited.",
+            "in": "query",
+            "name": "repo",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "list only the given languages(s) if they have entries in the catalog meeting the criteria given (e.g. way to test an language has a given owner and/or subject)",
+            "in": "query",
+            "name": "lang",
+            "schema": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            }
+          },
+          {
+            "description": "list only those that are (true) or are not (false) a gatetway language",
+            "in": "query",
+            "name": "is_gl",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "description": "list only those of the given stage or lower, with low to high being: \"prod\" - return only those of production releases (default); \"preprod\" - return only those of all (production \u0026 pre-production) releases; \"latest\" - return only those of all releases and the default branch; \"other\" - return all, including other branches and tags [aliases: \"branch\", \"tag\"]",
+            "in": "query",
+            "name": "stage",
+            "schema": {
+              "items": {
+                "enum": [
+                  "prod",
+                  "preprod",
+                  "latest",
+                  "other"
+                ],
+                "type": "string"
+              },
+              "type": "array"
+            }
+          },
+          {
+            "description": "resource subject. Multiple values are ORed.",
+            "in": "query",
+            "name": "subject",
+            "schema": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            }
+          },
+          {
+            "description": "resource flavorType. Multiple values are ORed.",
+            "in": "query",
+            "name": "flavorType",
+            "schema": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            }
+          },
+          {
+            "description": "resource flavor. Multiple values are ORed.",
+            "in": "query",
+            "name": "flavor",
+            "schema": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            }
+          },
+          {
+            "description": "resource abbreviation (identifier). Multiple values are ORed.",
+            "in": "query",
+            "name": "abbreviation",
+            "schema": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            }
+          },
+          {
+            "description": "content format (usfm, text, markdown, etc.). Multiple values are ORed.",
+            "in": "query",
+            "name": "format",
+            "schema": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            }
+          },
+          {
+            "description": "checking level. Returns items with a checking level equal or greater than the number given",
+            "in": "query",
+            "name": "checkingLevel",
+            "schema": {
+              "items": {
+                "enum": [
+                  "1",
+                  "2",
+                  "3"
+                ],
+                "type": "string"
+              },
+              "type": "array"
+            }
+          },
+          {
+            "description": "book (ingredient identifier). Multiple values are ORed",
+            "in": "query",
+            "name": "book",
+            "schema": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            }
+          },
+          {
+            "description": "metadata type. Multiple values are ORed",
+            "in": "query",
+            "name": "metadataType",
+            "schema": {
+              "items": {
+                "enum": [
+                  "rc",
+                  "sb",
+                  "tc",
+                  "ts"
+                ],
+                "type": "string"
+              },
+              "type": "array"
+            }
+          },
+          {
+            "description": "metadata version. Does not apply if metadataType is not given. Multiple values are ORed",
+            "in": "query",
+            "name": "metadataVersion",
+            "schema": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            }
+          },
+          {
+            "description": "If true, many of the above fields will do a partial match, allowing characters to come before or after your given value, default is false",
+            "in": "query",
+            "name": "partialMatch",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "description": "topic of a repo. Multiple values are ORed. If a repo of this topic has a catalog entry, its language will be listed.",
+            "in": "query",
+            "name": "topic",
+            "schema": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            }
+          },
+          {
+            "description": "Entries with a repository without this topic will be returned. Multiple values are ANDed.",
+            "in": "query",
+            "name": "withoutTopic",
+            "schema": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            }
+          },
+          {
+            "description": "list only those with (true) or without (false) audio content in their release attachments",
+            "in": "query",
+            "name": "hasAudio",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "description": "list only those with (true) or without (false) video content in their release attachments",
+            "in": "query",
+            "name": "hasVideo",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "description": "list only those with (true) or without (false) PDF content in their release attachments",
+            "in": "query",
+            "name": "hasPdf",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "description": "list only those with (true) or without (false) a streaming platform link (e.g. YouTube, Vimeo) in their release attachments",
+            "in": "query",
+            "name": "hasStream",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "description": "list only those with (true) or without (false) other content (not audio, video, pdf nor stream) in their release attachments",
+            "in": "query",
+            "name": "hasOther",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "description": "list only those with (true) or without (false) any release attachment content (audio, video, pdf, stream or other)",
+            "in": "query",
+            "name": "hasAttachment",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "description": "if true, all entries of the given stage or lower are considered, not just the latest entry per repo, default is false",
+            "in": "query",
+            "name": "includeHistory",
+            "schema": {
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "items": {
+                        "type": "object"
+                      },
+                      "type": "array"
+                    },
+                    "ok": {
+                      "type": "boolean"
+                    }
+                  },
+                  "type": "object"
+                }
+              }
+            },
+            "description": "SearchResults of a successful catalog owner search"
+          }
+        },
+        "summary": "List languages in the catalog based on the given criteria",
+        "tags": [
+          "catalog"
+        ]
+      }
+    },
+    "/catalog/list/metadata-types": {
+      "get": {
+        "operationId": "catalogListMetadataTypes",
+        "parameters": [
+          {
+            "description": "list only those in the given owner(s). To match multiple, give the parameter multiple times or give a list comma delimited.",
+            "in": "query",
+            "name": "owner",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "list only those for the given repo(s). To match multiple, give the parameter multiple times or give a list comma delimited.",
+            "in": "query",
+            "name": "repo",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "list only those in the given language(s). To match multiple, give the parameter multiple times or give a list comma delimited. Will perform an exact match (case insensitive) unlesss partialMatch=true",
+            "in": "query",
+            "name": "lang",
+            "schema": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            }
+          },
+          {
+            "description": "list only those that are (true) or are not (false) a gatetway language",
+            "in": "query",
+            "name": "is_gl",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "description": "list only those of the given stage or lower, with low to high being: \"prod\" - return only those of production releases (default); \"preprod\" - return only those of all (production \u0026 pre-production) releases; \"latest\" - return only those of all releases and the default branch; \"other\" - return all, including other branches and tags [aliases: \"branch\", \"tag\"]",
+            "in": "query",
+            "name": "stage",
+            "schema": {
+              "items": {
+                "enum": [
+                  "prod",
+                  "preprod",
+                  "latest",
+                  "other"
+                ],
+                "type": "string"
+              },
+              "type": "array"
+            }
+          },
+          {
+            "description": "resource subject. Multiple values are ORed.",
+            "in": "query",
+            "name": "subject",
+            "schema": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            }
+          },
+          {
+            "description": "resource flavorType. Multiple values are ORed.",
+            "in": "query",
+            "name": "flavorType",
+            "schema": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            }
+          },
+          {
+            "description": "resource flavor. Multiple values are ORed.",
+            "in": "query",
+            "name": "flavor",
+            "schema": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            }
+          },
+          {
+            "description": "resource abbreviation (identifier). Multiple values are ORed.",
+            "in": "query",
+            "name": "abbreviation",
+            "schema": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            }
+          },
+          {
+            "description": "content format (usfm, text, markdown, etc.). Multiple values are ORed.",
+            "in": "query",
+            "name": "format",
+            "schema": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            }
+          },
+          {
+            "description": "checking level. Returns items with a checking level equal or greater than the number given",
+            "in": "query",
+            "name": "checkingLevel",
+            "schema": {
+              "items": {
+                "enum": [
+                  "1",
+                  "2",
+                  "3"
+                ],
+                "type": "string"
+              },
+              "type": "array"
+            }
+          },
+          {
+            "description": "book (ingredient identifier). Multiple values are ORed",
+            "in": "query",
+            "name": "book",
+            "schema": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            }
+          },
+          {
+            "description": "metadata type. Multiple values are ORed",
+            "in": "query",
+            "name": "metadataType",
+            "schema": {
+              "items": {
+                "enum": [
+                  "rc",
+                  "sb",
+                  "tc",
+                  "ts"
+                ],
+                "type": "string"
+              },
+              "type": "array"
+            }
+          },
+          {
+            "description": "metadata version. Does not apply if metadataType is not given. Multiple values are ORed",
+            "in": "query",
+            "name": "metadataVersion",
+            "schema": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            }
+          },
+          {
+            "description": "topic of a repo. Multiple values are ORed. If a repo of this topic has a catalog entry, its metadata type will be listed.",
+            "in": "query",
+            "name": "topic",
+            "schema": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            }
+          },
+          {
+            "description": "Entries with a repository without this topic will be returned. Multiple values are ANDed.",
+            "in": "query",
+            "name": "withoutTopic",
+            "schema": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            }
+          },
+          {
+            "description": "list only those with (true) or without (false) audio content in their release attachments",
+            "in": "query",
+            "name": "hasAudio",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "description": "list only those with (true) or without (false) video content in their release attachments",
+            "in": "query",
+            "name": "hasVideo",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "description": "list only those with (true) or without (false) PDF content in their release attachments",
+            "in": "query",
+            "name": "hasPdf",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "description": "list only those with (true) or without (false) a streaming platform link (e.g. YouTube, Vimeo) in their release attachments",
+            "in": "query",
+            "name": "hasStream",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "description": "list only those with (true) or without (false) other content (not audio, video, pdf nor stream) in their release attachments",
+            "in": "query",
+            "name": "hasOther",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "description": "list only those with (true) or without (false) any release attachment content (audio, video, pdf, stream or other)",
+            "in": "query",
+            "name": "hasAttachment",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "description": "if true, all entries of the given stage or lower are considered, not just the latest entry per repo, default is false",
+            "in": "query",
+            "name": "includeHistory",
+            "schema": {
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "items": {
+                        "type": "string"
+                      },
+                      "type": "array"
+                    },
+                    "ok": {
+                      "type": "boolean"
+                    }
+                  },
+                  "type": "object"
+                }
+              }
+            },
+            "description": "SearchResults of a successful catalog owner search"
+          }
+        },
+        "summary": "List of metadata types in the catalog based on the given criteria",
+        "tags": [
+          "catalog"
+        ]
+      }
+    },
+    "/catalog/list/owners": {
+      "get": {
+        "operationId": "catalogListOwners",
+        "parameters": [
+          {
+            "description": "list only the given owners(s) if they have entries in the catalog meeting the criteria given (e.g. way to test an owner has a given language or subject)",
+            "in": "query",
+            "name": "owner",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "list only those with the given repo(s). To match multiple, give the parameter multiple times or give a list comma delimited.",
+            "in": "query",
+            "name": "repo",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "list only those with entries in the given language(s). To match multiple, give the parameter multiple times or give a list comma delimited. Will perform an exact match (case insensitive) unlesss partialMatch=true",
+            "in": "query",
+            "name": "lang",
+            "schema": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            }
+          },
+          {
+            "description": "list only those that are (true) or are not (false) a gatetway language",
+            "in": "query",
+            "name": "is_gl",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "description": "list only those of the given stage or lower, with low to high being: \"prod\" - return only those of production releases (default); \"preprod\" - return only those of all (production \u0026 pre-production) releases; \"latest\" - return only those of all releases and the default branch; \"other\" - return all, including other branches and tags [aliases: \"branch\", \"tag\"]",
+            "in": "query",
+            "name": "stage",
+            "schema": {
+              "items": {
+                "enum": [
+                  "prod",
+                  "preprod",
+                  "latest",
+                  "other"
+                ],
+                "type": "string"
+              },
+              "type": "array"
+            }
+          },
+          {
+            "description": "resource subject. Multiple values are ORed.",
+            "in": "query",
+            "name": "subject",
+            "schema": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            }
+          },
+          {
+            "description": "resource flavorType. Multiple values are ORed.",
+            "in": "query",
+            "name": "flavorType",
+            "schema": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            }
+          },
+          {
+            "description": "resource flavor. Multiple values are ORed.",
+            "in": "query",
+            "name": "flavor",
+            "schema": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            }
+          },
+          {
+            "description": "resource abbreviation (identifier). Multiple values are ORed.",
+            "in": "query",
+            "name": "abbreviation",
+            "schema": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            }
+          },
+          {
+            "description": "content format (usfm, text, markdown, etc.). Multiple values are ORed.",
+            "in": "query",
+            "name": "format",
+            "schema": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            }
+          },
+          {
+            "description": "checking level. Returns items with a checking level equal or greater than the number given",
+            "in": "query",
+            "name": "checkingLevel",
+            "schema": {
+              "items": {
+                "enum": [
+                  "1",
+                  "2",
+                  "3"
+                ],
+                "type": "string"
+              },
+              "type": "array"
+            }
+          },
+          {
+            "description": "book (ingredient identifier). Multiple values are ORed",
+            "in": "query",
+            "name": "book",
+            "schema": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            }
+          },
+          {
+            "description": "metadata type. Multiple values are ORed",
+            "in": "query",
+            "name": "metadataType",
+            "schema": {
+              "items": {
+                "enum": [
+                  "rc",
+                  "sb",
+                  "tc",
+                  "ts"
+                ],
+                "type": "string"
+              },
+              "type": "array"
+            }
+          },
+          {
+            "description": "metadata version. Does not apply if metadataType is not given. Multiple values are ORed",
+            "in": "query",
+            "name": "metadataVersion",
+            "schema": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            }
+          },
+          {
+            "description": "If true, many of the above fields will do a partial match, allowing characters to come before or after your given value, default is false",
+            "in": "query",
+            "name": "partialMatch",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "description": "topic of a repo. Multiple values are ORed. If a repo of this topic has a catalog entry, its owner will be listed.",
+            "in": "query",
+            "name": "topic",
+            "schema": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            }
+          },
+          {
+            "description": "Entries with a repository without this topic will be returned. Multiple values are ANDed.",
+            "in": "query",
+            "name": "withoutTopic",
+            "schema": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            }
+          },
+          {
+            "description": "list only those with (true) or without (false) audio content in their release attachments",
+            "in": "query",
+            "name": "hasAudio",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "description": "list only those with (true) or without (false) video content in their release attachments",
+            "in": "query",
+            "name": "hasVideo",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "description": "list only those with (true) or without (false) PDF content in their release attachments",
+            "in": "query",
+            "name": "hasPdf",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "description": "list only those with (true) or without (false) a streaming platform link (e.g. YouTube, Vimeo) in their release attachments",
+            "in": "query",
+            "name": "hasStream",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "description": "list only those with (true) or without (false) other content (not audio, video, pdf nor stream) in their release attachments",
+            "in": "query",
+            "name": "hasOther",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "description": "list only those with (true) or without (false) any release attachment content (audio, video, pdf, stream or other)",
+            "in": "query",
+            "name": "hasAttachment",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "description": "if true, all entries of the given stage or lower are considered, not just the latest entry per repo, default is false",
+            "in": "query",
+            "name": "includeHistory",
+            "schema": {
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "items": {
+                        "$ref": "#/components/schemas/User"
+                      },
+                      "type": "array"
+                    },
+                    "ok": {
+                      "type": "boolean"
+                    }
+                  },
+                  "type": "object"
+                }
+              }
+            },
+            "description": "SearchResults of a successful catalog owner search"
+          }
+        },
+        "summary": "List owners in the catalog based on the given criteria",
+        "tags": [
+          "catalog"
+        ]
+      }
+    },
+    "/catalog/list/subjects": {
+      "get": {
+        "operationId": "catalogListSubjects",
+        "parameters": [
+          {
+            "description": "list only those for the given owner(s). To match multiple, give the parameter multiple times or give a list comma delimited.",
+            "in": "query",
+            "name": "owner",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "list only those for the given repo(s). To match multiple, give the parameter multiple times or give a list comma delimited.",
+            "in": "query",
+            "name": "repo",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "list only those for the given language(s). To match multiple, give the parameter multiple times or give a list comma delimited. Will perform an exact match (case insensitive) unlesss partialMatch=true",
+            "in": "query",
+            "name": "lang",
+            "schema": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            }
+          },
+          {
+            "description": "list only those that are (true) or are not (false) a gatetway language",
+            "in": "query",
+            "name": "is_gl",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "description": "list only those of the given stage or lower, with low to high being: \"prod\" - return only those of production releases (default); \"preprod\" - return only those of all (production \u0026 pre-production) releases; \"latest\" - return only those of all releases and the default branch; \"other\" - return all, including other branches and tags [aliases: \"branch\", \"tag\"]",
+            "in": "query",
+            "name": "stage",
+            "schema": {
+              "items": {
+                "enum": [
+                  "prod",
+                  "preprod",
+                  "latest",
+                  "other"
+                ],
+                "type": "string"
+              },
+              "type": "array"
+            }
+          },
+          {
+            "description": "resource subject. Multiple values are ORed.",
+            "in": "query",
+            "name": "subject",
+            "schema": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            }
+          },
+          {
+            "description": "resource flavorType. Multiple values are ORed.",
+            "in": "query",
+            "name": "flavorType",
+            "schema": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            }
+          },
+          {
+            "description": "resource flavor. Multiple values are ORed.",
+            "in": "query",
+            "name": "flavor",
+            "schema": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            }
+          },
+          {
+            "description": "resource abbreviation (identifier). Multiple values are ORed.",
+            "in": "query",
+            "name": "abbreviation",
+            "schema": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            }
+          },
+          {
+            "description": "content format (usfm, text, markdown, etc.). Multiple values are ORed.",
+            "in": "query",
+            "name": "format",
+            "schema": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            }
+          },
+          {
+            "description": "checking level. Returns items with a checking level equal or greater than the number given",
+            "in": "query",
+            "name": "checkingLevel",
+            "schema": {
+              "items": {
+                "enum": [
+                  "1",
+                  "2",
+                  "3"
+                ],
+                "type": "string"
+              },
+              "type": "array"
+            }
+          },
+          {
+            "description": "book (ingredient identifier). Multiple values are ORed",
+            "in": "query",
+            "name": "book",
+            "schema": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            }
+          },
+          {
+            "description": "metadata type. Multiple values are ORed",
+            "in": "query",
+            "name": "metadataType",
+            "schema": {
+              "items": {
+                "enum": [
+                  "rc",
+                  "sb",
+                  "tc",
+                  "ts"
+                ],
+                "type": "string"
+              },
+              "type": "array"
+            }
+          },
+          {
+            "description": "metadata version. Does not apply if metadataType is not given. Multiple values are ORed",
+            "in": "query",
+            "name": "metadataVersion",
+            "schema": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            }
+          },
+          {
+            "description": "topic of a repo. Multiple values are ORed. If a repo of this topic has a catalog entry, its subject will be listed.",
+            "in": "query",
+            "name": "topic",
+            "schema": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            }
+          },
+          {
+            "description": "Entries with a repository without this topic will be returned. Multiple values are ANDed.",
+            "in": "query",
+            "name": "withoutTopic",
+            "schema": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            }
+          },
+          {
+            "description": "list only those with (true) or without (false) audio content in their release attachments",
+            "in": "query",
+            "name": "hasAudio",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "description": "list only those with (true) or without (false) video content in their release attachments",
+            "in": "query",
+            "name": "hasVideo",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "description": "list only those with (true) or without (false) PDF content in their release attachments",
+            "in": "query",
+            "name": "hasPdf",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "description": "list only those with (true) or without (false) a streaming platform link (e.g. YouTube, Vimeo) in their release attachments",
+            "in": "query",
+            "name": "hasStream",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "description": "list only those with (true) or without (false) other content (not audio, video, pdf nor stream) in their release attachments",
+            "in": "query",
+            "name": "hasOther",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "description": "list only those with (true) or without (false) any release attachment content (audio, video, pdf, stream or other)",
+            "in": "query",
+            "name": "hasAttachment",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "description": "if true, all entries of the given stage or lower are considered, not just the latest entry per repo, default is false",
+            "in": "query",
+            "name": "includeHistory",
+            "schema": {
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "items": {
+                        "type": "string"
+                      },
+                      "type": "array"
+                    },
+                    "ok": {
+                      "type": "boolean"
+                    }
+                  },
+                  "type": "object"
+                }
+              }
+            },
+            "description": "SearchResults of a successful catalog owner search"
+          }
+        },
+        "summary": "List of subjects in the catalog based on the given criteria",
+        "tags": [
+          "catalog"
+        ]
+      }
+    },
+    "/catalog/metadata/{owner}/{repo}/{ref}": {
+      "get": {
+        "operationId": "catalogGetMetadata",
+        "parameters": [
+          {
+            "description": "name of the owner",
+            "in": "path",
+            "name": "owner",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "name of the repo",
+            "in": "path",
+            "name": "repo",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "release tag or default branch",
+            "in": "path",
+            "name": "ref",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/CatalogMetadata"
+          },
+          "404": {
+            "$ref": "#/components/responses/notFound"
+          }
+        },
+        "summary": "Get the metadata of a catalog entry",
+        "tags": [
+          "catalog"
+        ]
+      }
+    },
+    "/catalog/search": {
+      "get": {
+        "operationId": "catalogSearch",
+        "parameters": [
+          {
+            "description": "keyword(s). Can use multiple `q=\u003ckeyword\u003e`s or a comma-delimited string for more than one keyword. Is case insensitive",
+            "in": "query",
+            "name": "q",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "search only for entries with the given owner name(s). Will perform an exact match (case insensitive) unlesss partialMatch=true",
+            "in": "query",
+            "name": "owner",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "search only for entries with the given repo name(s). To match multiple, give the parameter multiple times or give a list comma delimited. Will perform an exact match (case insensitive) unlesss partialMatch=true",
+            "in": "query",
+            "name": "repo",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "search only for entries with the given release tag(s). To match multiple, give the parameter multiple times or give a list comma delimited. Will perform an exact match (case insensitive)",
+            "in": "query",
+            "name": "tag",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "search only for entries with the given language(s). To match multiple, give the parameter multiple times or give a list comma delimited. Will perform an exact match (case insensitive) unlesss partialMatch=true",
+            "in": "query",
+            "name": "lang",
+            "schema": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            }
+          },
+          {
+            "description": "list only those that are (true) or are not (false) a gatetway language",
+            "in": "query",
+            "name": "is_gl",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "description": "list only those of the given stage or lower, with low to high being: \"prod\" - return only those of production releases (default); \"preprod\" - return only those of all (production \u0026 pre-production) releases; \"latest\" - return only those of all releases and the default branch; \"branch\" - return all those in the catalog for all branches",
+            "in": "query",
+            "name": "stage",
+            "schema": {
+              "items": {
+                "enum": [
+                  "prod",
+                  "preprod",
+                  "latest",
+                  "other"
+                ],
+                "type": "string"
+              },
+              "type": "array"
+            }
+          },
+          {
+            "description": "resource subject. Multiple values are ORed.",
+            "in": "query",
+            "name": "subject",
+            "schema": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            }
+          },
+          {
+            "description": "resource flavorType. Multiple values are ORed.",
+            "in": "query",
+            "name": "flavorType",
+            "schema": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            }
+          },
+          {
+            "description": "resource flavor. Multiple values are ORed.",
+            "in": "query",
+            "name": "flavor",
+            "schema": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            }
+          },
+          {
+            "description": "resource abbreviation (identifier). Multiple values are ORed.",
+            "in": "query",
+            "name": "abbreviation",
+            "schema": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            }
+          },
+          {
+            "description": "content format (usfm, text, markdown, etc.). Multiple values are ORed.",
+            "in": "query",
+            "name": "format",
+            "schema": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            }
+          },
+          {
+            "description": "checking level. Returns items with a checking level equal or greater than the number given",
+            "in": "query",
+            "name": "checkingLevel",
+            "schema": {
+              "items": {
+                "enum": [
+                  "1",
+                  "2",
+                  "3"
+                ],
+                "type": "string"
+              },
+              "type": "array"
+            }
+          },
+          {
+            "description": "book (ingredient identifier). Multiple values are ORed",
+            "in": "query",
+            "name": "book",
+            "schema": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            }
+          },
+          {
+            "description": "metadata type. Multiple values are ORed",
+            "in": "query",
+            "name": "metadataType",
+            "schema": {
+              "items": {
+                "enum": [
+                  "rc",
+                  "sb",
+                  "tc",
+                  "ts"
+                ],
+                "type": "string"
+              },
+              "type": "array"
+            }
+          },
+          {
+            "description": "metadata version. Does not apply if metadataType is not given. Multiple values are ORed",
+            "in": "query",
+            "name": "metadataVersion",
+            "schema": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            }
+          },
+          {
+            "description": "topic of a repo. Multiple values are ORed.",
+            "in": "query",
+            "name": "topic",
+            "schema": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            }
+          },
+          {
+            "description": "Entries with a repository without this topic will be returned. Multiple values are ANDed.",
+            "in": "query",
+            "name": "withoutTopic",
+            "schema": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            }
+          },
+          {
+            "description": "list only entries with (true) or without (false) audio content in their release attachments",
+            "in": "query",
+            "name": "hasAudio",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "description": "list only entries with (true) or without (false) video content in their release attachments",
+            "in": "query",
+            "name": "hasVideo",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "description": "list only entries with (true) or without (false) PDF content in their release attachments",
+            "in": "query",
+            "name": "hasPdf",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "description": "list only entries with (true) or without (false) a streaming platform link (e.g. YouTube, Vimeo) in their release attachments",
+            "in": "query",
+            "name": "hasStream",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "description": "list only entries with (true) or without (false) other content (not audio, video, pdf nor stream) in their release attachments",
+            "in": "query",
+            "name": "hasOther",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "description": "list only entries with (true) or without (false) any release attachment content (audio, video, pdf, stream or other)",
+            "in": "query",
+            "name": "hasAttachment",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "description": "if true, subject, owner and repo search fields will use partial match (LIKE) when querying the catalog, default is false",
+            "in": "query",
+            "name": "partialMatch",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "description": "if true, all releases, not just the latest, are included, default is false",
+            "in": "query",
+            "name": "includeHistory",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "description": "if true, the list of ingredients (files/projects) in the resource and their file paths will be listed for each entry, default is true",
+            "in": "query",
+            "name": "showIngredients",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "description": "sort repos alphanumerically by attribute. Supported values are \"subject\", \"title\", \"reponame\", \"tag\", \"released\", \"lang\", \"releases\", \"stars\", \"forks\". Default is by \"language\", \"subject\" and then \"tag\"",
+            "in": "query",
+            "name": "sort",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "sort order, either \"asc\" (ascending) or \"desc\" (descending). Default is \"asc\", ignored if \"sort\" is not specified.",
+            "in": "query",
+            "name": "order",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "page number of results to return (1-based)",
+            "in": "query",
+            "name": "page",
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "description": "page size of results, defaults to no limit",
+            "in": "query",
+            "name": "limit",
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/CatalogSearchResults"
+          },
+          "422": {
+            "$ref": "#/components/responses/validationError"
+          }
+        },
+        "summary": "Search the catalog",
+        "tags": [
+          "catalog"
+        ]
+      }
+    },
+    "/catalog/stats": {
+      "get": {
+        "operationId": "catalogGetStats",
+        "parameters": [
+          {
+            "description": "keyword(s). Can use multiple `q=\u003ckeyword\u003e`s or a comma-delimited string for more than one keyword. Is case insensitive",
+            "in": "query",
+            "name": "q",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "count only entries with the given owner name(s). Will perform an exact match (case insensitive) unlesss partialMatch=true",
+            "in": "query",
+            "name": "owner",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "count only entries with the given repo name(s). To match multiple, give the parameter multiple times or give a list comma delimited. Will perform an exact match (case insensitive) unlesss partialMatch=true",
+            "in": "query",
+            "name": "repo",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "count only entries with the given release tag(s). To match multiple, give the parameter multiple times or give a list comma delimited. Will perform an exact match (case insensitive)",
+            "in": "query",
+            "name": "tag",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "count only entries with the given language(s). To match multiple, give the parameter multiple times or give a list comma delimited. Will perform an exact match (case insensitive) unlesss partialMatch=true",
+            "in": "query",
+            "name": "lang",
+            "schema": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            }
+          },
+          {
+            "description": "count only entries that are (true) or are not (false) a gatetway language",
+            "in": "query",
+            "name": "is_gl",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "description": "count only entries of the given stage or lower, with low to high being: \"prod\" - return only those of production releases (default); \"preprod\" - return only those of all (production \u0026 pre-production) releases; \"latest\" - return only those of all releases and the default branch; \"other\" - return all, including other branches and tags [aliases: \"branch\", \"tag\"]",
+            "in": "query",
+            "name": "stage",
+            "schema": {
+              "items": {
+                "enum": [
+                  "prod",
+                  "preprod",
+                  "latest",
+                  "other"
+                ],
+                "type": "string"
+              },
+              "type": "array"
+            }
+          },
+          {
+            "description": "resource subject. Multiple values are ORed.",
+            "in": "query",
+            "name": "subject",
+            "schema": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            }
+          },
+          {
+            "description": "resource flavorType. Multiple values are ORed.",
+            "in": "query",
+            "name": "flavorType",
+            "schema": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            }
+          },
+          {
+            "description": "resource flavor. Multiple values are ORed.",
+            "in": "query",
+            "name": "flavor",
+            "schema": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            }
+          },
+          {
+            "description": "resource abbreviation (identifier). Multiple values are ORed.",
+            "in": "query",
+            "name": "abbreviation",
+            "schema": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            }
+          },
+          {
+            "description": "content format (usfm, text, markdown, etc.). Multiple values are ORed.",
+            "in": "query",
+            "name": "format",
+            "schema": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            }
+          },
+          {
+            "description": "checking level. Counts entries with a checking level equal or greater than the number given",
+            "in": "query",
+            "name": "checkingLevel",
+            "schema": {
+              "items": {
+                "enum": [
+                  "1",
+                  "2",
+                  "3"
+                ],
+                "type": "string"
+              },
+              "type": "array"
+            }
+          },
+          {
+            "description": "book (ingredient identifier). Multiple values are ORed",
+            "in": "query",
+            "name": "book",
+            "schema": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            }
+          },
+          {
+            "description": "metadata type. Multiple values are ORed",
+            "in": "query",
+            "name": "metadataType",
+            "schema": {
+              "items": {
+                "enum": [
+                  "rc",
+                  "sb",
+                  "tc",
+                  "ts"
+                ],
+                "type": "string"
+              },
+              "type": "array"
+            }
+          },
+          {
+            "description": "metadata version. Does not apply if metadataType is not given. Multiple values are ORed",
+            "in": "query",
+            "name": "metadataVersion",
+            "schema": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            }
+          },
+          {
+            "description": "topic of a repo. Multiple values are ORed.",
+            "in": "query",
+            "name": "topic",
+            "schema": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            }
+          },
+          {
+            "description": "Entries with a repository without this topic will be counted. Multiple values are ANDed.",
+            "in": "query",
+            "name": "withoutTopic",
+            "schema": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            }
+          },
+          {
+            "description": "count only entries with (true) or without (false) audio content in their release attachments",
+            "in": "query",
+            "name": "hasAudio",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "description": "count only entries with (true) or without (false) video content in their release attachments",
+            "in": "query",
+            "name": "hasVideo",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "description": "count only entries with (true) or without (false) PDF content in their release attachments",
+            "in": "query",
+            "name": "hasPdf",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "description": "count only entries with (true) or without (false) a streaming platform link (e.g. YouTube, Vimeo) in their release attachments",
+            "in": "query",
+            "name": "hasStream",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "description": "count only entries with (true) or without (false) other content (not audio, video, pdf nor stream) in their release attachments",
+            "in": "query",
+            "name": "hasOther",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "description": "count only entries with (true) or without (false) any release attachment content (audio, video, pdf, stream or other)",
+            "in": "query",
+            "name": "hasAttachment",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "description": "if true, all entries of the given stage or lower are counted, not just the latest entry per repo, default is false",
+            "in": "query",
+            "name": "includeHistory",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "description": "if true, subject, owner and repo search fields will use partial match (LIKE) when querying the catalog, default is false",
+            "in": "query",
+            "name": "partialMatch",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "description": "count only entries released on or after this date (UTC). Accepts a Unix timestamp or a human date such as \"2026-07-13\", \"2026-07-13 15:04:05\" or \"Jul 13, 2026\"",
+            "in": "query",
+            "name": "startDate",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "count only entries released on or before this date (UTC). A date without a time is inclusive of that whole day. Accepts the same formats as startDate",
+            "in": "query",
+            "name": "endDate",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/CatalogStats"
+          },
+          "422": {
+            "$ref": "#/components/responses/validationError"
+          }
+        },
+        "summary": "Aggregate counts of the catalog entries matching the given criteria",
+        "tags": [
+          "catalog"
+        ]
+      }
+    },
+    "/catalog/stats-ext": {
+      "get": {
+        "operationId": "catalogGetStatsExt",
+        "parameters": [
+          {
+            "description": "keyword(s). Can use multiple `q=\u003ckeyword\u003e`s or a comma-delimited string for more than one keyword. Is case insensitive",
+            "in": "query",
+            "name": "q",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "count only entries with the given owner name(s). Will perform an exact match (case insensitive) unlesss partialMatch=true",
+            "in": "query",
+            "name": "owner",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "count only entries with the given repo name(s). To match multiple, give the parameter multiple times or give a list comma delimited. Will perform an exact match (case insensitive) unlesss partialMatch=true",
+            "in": "query",
+            "name": "repo",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "count only entries with the given release tag(s). To match multiple, give the parameter multiple times or give a list comma delimited. Will perform an exact match (case insensitive)",
+            "in": "query",
+            "name": "tag",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "count only entries with the given language(s). To match multiple, give the parameter multiple times or give a list comma delimited. Will perform an exact match (case insensitive) unlesss partialMatch=true",
+            "in": "query",
+            "name": "lang",
+            "schema": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            }
+          },
+          {
+            "description": "count only entries that are (true) or are not (false) a gatetway language",
+            "in": "query",
+            "name": "is_gl",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "description": "count only entries of the given stage or lower, with low to high being: \"prod\" - return only those of production releases (default); \"preprod\" - return only those of all (production \u0026 pre-production) releases; \"latest\" - return only those of all releases and the default branch; \"other\" - return all, including other branches and tags [aliases: \"branch\", \"tag\"]",
+            "in": "query",
+            "name": "stage",
+            "schema": {
+              "items": {
+                "enum": [
+                  "prod",
+                  "preprod",
+                  "latest",
+                  "other"
+                ],
+                "type": "string"
+              },
+              "type": "array"
+            }
+          },
+          {
+            "description": "resource subject. Multiple values are ORed.",
+            "in": "query",
+            "name": "subject",
+            "schema": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            }
+          },
+          {
+            "description": "resource flavorType. Multiple values are ORed.",
+            "in": "query",
+            "name": "flavorType",
+            "schema": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            }
+          },
+          {
+            "description": "resource flavor. Multiple values are ORed.",
+            "in": "query",
+            "name": "flavor",
+            "schema": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            }
+          },
+          {
+            "description": "resource abbreviation (identifier). Multiple values are ORed.",
+            "in": "query",
+            "name": "abbreviation",
+            "schema": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            }
+          },
+          {
+            "description": "content format (usfm, text, markdown, etc.). Multiple values are ORed.",
+            "in": "query",
+            "name": "format",
+            "schema": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            }
+          },
+          {
+            "description": "checking level. Counts entries with a checking level equal or greater than the number given",
+            "in": "query",
+            "name": "checkingLevel",
+            "schema": {
+              "items": {
+                "enum": [
+                  "1",
+                  "2",
+                  "3"
+                ],
+                "type": "string"
+              },
+              "type": "array"
+            }
+          },
+          {
+            "description": "book (ingredient identifier). Multiple values are ORed",
+            "in": "query",
+            "name": "book",
+            "schema": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            }
+          },
+          {
+            "description": "metadata type. Multiple values are ORed",
+            "in": "query",
+            "name": "metadataType",
+            "schema": {
+              "items": {
+                "enum": [
+                  "rc",
+                  "sb",
+                  "tc",
+                  "ts"
+                ],
+                "type": "string"
+              },
+              "type": "array"
+            }
+          },
+          {
+            "description": "metadata version. Does not apply if metadataType is not given. Multiple values are ORed",
+            "in": "query",
+            "name": "metadataVersion",
+            "schema": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            }
+          },
+          {
+            "description": "topic of a repo. Multiple values are ORed.",
+            "in": "query",
+            "name": "topic",
+            "schema": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            }
+          },
+          {
+            "description": "Entries with a repository without this topic will be counted. Multiple values are ANDed.",
+            "in": "query",
+            "name": "withoutTopic",
+            "schema": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            }
+          },
+          {
+            "description": "count only entries with (true) or without (false) audio content in their release attachments",
+            "in": "query",
+            "name": "hasAudio",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "description": "count only entries with (true) or without (false) video content in their release attachments",
+            "in": "query",
+            "name": "hasVideo",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "description": "count only entries with (true) or without (false) PDF content in their release attachments",
+            "in": "query",
+            "name": "hasPdf",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "description": "count only entries with (true) or without (false) a streaming platform link (e.g. YouTube, Vimeo) in their release attachments",
+            "in": "query",
+            "name": "hasStream",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "description": "count only entries with (true) or without (false) other content (not audio, video, pdf nor stream) in their release attachments",
+            "in": "query",
+            "name": "hasOther",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "description": "count only entries with (true) or without (false) any release attachment content (audio, video, pdf, stream or other)",
+            "in": "query",
+            "name": "hasAttachment",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "description": "if true, all entries of the given stage or lower are counted, not just the latest entry per repo, default is false",
+            "in": "query",
+            "name": "includeHistory",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "description": "if true, subject, owner and repo search fields will use partial match (LIKE) when querying the catalog, default is false",
+            "in": "query",
+            "name": "partialMatch",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "description": "count only entries released on or after this date (UTC). Accepts a Unix timestamp or a human date such as \"2026-07-13\", \"2026-07-13 15:04:05\" or \"Jul 13, 2026\"",
+            "in": "query",
+            "name": "startDate",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "count only entries released on or before this date (UTC). A date without a time is inclusive of that whole day. Accepts the same formats as startDate",
+            "in": "query",
+            "name": "endDate",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/CatalogStatsExt"
+          },
+          "422": {
+            "$ref": "#/components/responses/validationError"
+          }
+        },
+        "summary": "Aggregate counts plus sorted unique subjects, flavor types, flavors, owners, languages and metadata types of the catalog entries matching the given criteria. Same parameters as /catalog/stats",
+        "tags": [
+          "catalog"
+        ]
+      }
+    },
+    "/catalog/validation/{owner}/{repo}/{ref}": {
+      "get": {
+        "operationId": "catalogGetValidation",
+        "parameters": [
+          {
+            "description": "name of the owner",
+            "in": "path",
+            "name": "owner",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "name of the repo",
+            "in": "path",
+            "name": "repo",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "release tag or default branch",
+            "in": "path",
+            "name": "ref",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/CatalogValidation"
+          },
+          "404": {
+            "$ref": "#/components/responses/notFound"
+          }
+        },
+        "summary": "Get the validation errors, if any, of a catalog entry in JSON format",
+        "tags": [
+          "catalog"
+        ]
+      }
+    },
     "/gitignore/templates": {
       "get": {
         "operationId": "listGitignoresTemplates",
@@ -12243,6 +15616,122 @@
         "summary": "Returns all labels in a template",
         "tags": [
           "miscellaneous"
+        ]
+      }
+    },
+    "/languages/langnames.json": {
+      "get": {
+        "operationId": "languagesLangnamesJSON",
+        "parameters": [
+          {
+            "description": "list only the given language codes",
+            "in": "query",
+            "name": "lc",
+            "schema": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            }
+          },
+          {
+            "description": "if true, only show gateway languages, if false, only non-gateway languages (other languages)",
+            "in": "query",
+            "name": "gw",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "description": "direction of the language",
+            "in": "query",
+            "name": "ld",
+            "schema": {
+              "items": {
+                "enum": [
+                  "ltr",
+                  "rtl"
+                ],
+                "type": "string"
+              },
+              "type": "array"
+            }
+          },
+          {
+            "description": "sort alphanumerically by attribute. Supported values are \"ang\", \"hc\", \"lc\", \"ld\", \"ln\", \"lr\". Default is \"lc\"",
+            "in": "query",
+            "name": "sort",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "sort order, either \"asc\" (ascending) or \"desc\" (descending). Default is \"asc\"",
+            "in": "query",
+            "name": "order",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/LangnamesJSON"
+          }
+        },
+        "summary": "Fetches the langnames.json file",
+        "tags": [
+          "languages"
+        ]
+      }
+    },
+    "/languages/langnames_keyed.json": {
+      "get": {
+        "operationId": "languagesLangnamesJSONKeyed",
+        "parameters": [
+          {
+            "description": "list only the given language codes",
+            "in": "query",
+            "name": "lc",
+            "schema": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            }
+          },
+          {
+            "description": "if true, only show gateway languages, if false, only non-gateway languages (other languages)",
+            "in": "query",
+            "name": "gw",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "description": "direction of the language",
+            "in": "query",
+            "name": "ld",
+            "schema": {
+              "items": {
+                "enum": [
+                  "ltr",
+                  "rtl"
+                ],
+                "type": "string"
+              },
+              "type": "array"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/LangnamesJSON"
+          }
+        },
+        "summary": "Fetches the langnames.json file and keys it by language code (lc)",
+        "tags": [
+          "languages"
         ]
       }
     },
@@ -12639,6 +16128,75 @@
       "get": {
         "operationId": "orgGetAll",
         "parameters": [
+          {
+            "description": "has repos of the given language. Multiple values are ORed.",
+            "in": "query",
+            "name": "lang",
+            "schema": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            }
+          },
+          {
+            "description": "has repos with a repo that is or is not a gateway language.",
+            "in": "query",
+            "name": "is_gl",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "description": "has repos with the given subject. Multiple values are ORed.",
+            "in": "query",
+            "name": "subject",
+            "schema": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            }
+          },
+          {
+            "description": "org has repos of given flavorType. Multiple values are ORed.",
+            "in": "query",
+            "name": "flavorType",
+            "schema": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            }
+          },
+          {
+            "description": "has repos of given flavor. Multiple values are ORed.",
+            "in": "query",
+            "name": "flavor",
+            "schema": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            }
+          },
+          {
+            "description": "has repos of given metadataType. Multiple values are ORed.",
+            "in": "query",
+            "name": "metadataType",
+            "schema": {
+              "items": {
+                "enum": [
+                  "rc",
+                  "sb",
+                  "tc",
+                  "ts"
+                ],
+                "type": "string"
+              },
+              "type": "array"
+            }
+          },
           {
             "description": "page number of results to return (1-based)",
             "in": "query",
@@ -15497,15 +19055,7 @@
             }
           },
           {
-            "description": "Limit search to repositories with keyword as topic",
-            "in": "query",
-            "name": "topic",
-            "schema": {
-              "type": "boolean"
-            }
-          },
-          {
-            "description": "include search of keyword within repository description",
+            "description": "include search of keyword within repository description (defaults to false)",
             "in": "query",
             "name": "includeDesc",
             "schema": {
@@ -15592,6 +19142,179 @@
             "description": "if `uid` is given, search only for repos that the user owns",
             "in": "query",
             "name": "exclusive",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "description": "name of the repo. Multiple values are ORed.",
+            "in": "query",
+            "name": "repo",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "owner of the repo. Multiple values are ORed.",
+            "in": "query",
+            "name": "owner",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "if the repo is a resource of the given language(s), the repo will be in the results. Multiple values are ORed.",
+            "in": "query",
+            "name": "lang",
+            "schema": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            }
+          },
+          {
+            "description": "list only those that are (true) or are not (false) a gatetway language",
+            "in": "query",
+            "name": "is_gl",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "description": "resource subject. Multiple values are ORed.",
+            "in": "query",
+            "name": "subject",
+            "schema": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            }
+          },
+          {
+            "description": "resource flavorType. Multiple values are ORed.",
+            "in": "query",
+            "name": "flavorType",
+            "schema": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            }
+          },
+          {
+            "description": "resource flavor. Multiple values are ORed.",
+            "in": "query",
+            "name": "flavor",
+            "schema": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            }
+          },
+          {
+            "description": "resource abbreviation (identifier). Multiple values are ORed.",
+            "in": "query",
+            "name": "abbreviation",
+            "schema": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            }
+          },
+          {
+            "description": "content format (usfm, text, markdown, etc.). Multiple values are ORed.",
+            "in": "query",
+            "name": "format",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "book (project id or ingredients id) that exist in a resource. If the resource contains the the book, its repository will be included in the results. Multiple values are ORed.",
+            "in": "query",
+            "name": "book",
+            "schema": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            }
+          },
+          {
+            "description": "topic of repo. Multiple values are ORed.",
+            "in": "query",
+            "name": "topic",
+            "schema": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            }
+          },
+          {
+            "description": "Repositories without this topic will be returned. Multiple values are ANDed.",
+            "in": "query",
+            "name": "withoutTopic",
+            "schema": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            }
+          },
+          {
+            "description": "Healthcheck severity. Options are error, warning, info, success. Multiple values are ORed.",
+            "in": "query",
+            "name": "healthcheckSeverity",
+            "schema": {
+              "items": {
+                "enum": [
+                  "error",
+                  "warning",
+                  "info",
+                  "success"
+                ],
+                "type": "string"
+              },
+              "type": "array"
+            }
+          },
+          {
+            "description": "return repos only with metadata of this type",
+            "in": "query",
+            "name": "metadataType",
+            "schema": {
+              "items": {
+                "enum": [
+                  "rc",
+                  "sb",
+                  "tc",
+                  "ts"
+                ],
+                "type": "string"
+              },
+              "type": "array"
+            }
+          },
+          {
+            "description": "return repos only with the version of metadata given. Does not apply if metadataType is not given",
+            "in": "query",
+            "name": "metadataVersion",
+            "schema": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            }
+          },
+          {
+            "description": "If true, many of the above fields will do a partial match, allowing characters to come before or after your given value, default is false",
+            "in": "query",
+            "name": "partialMatch",
             "schema": {
               "type": "boolean"
             }
@@ -20566,9 +24289,111 @@
         "tags": [
           "repository"
         ]
+      },
+      "post": {
+        "description": "Creates a reference for your repository. You are unable to create new references for empty repositories, even if the commit SHA-1 hash used exists. Empty repositories are repositories without branches.",
+        "operationId": "repoCreateGitRef",
+        "parameters": [
+          {
+            "description": "owner of the repo",
+            "in": "path",
+            "name": "owner",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "name of the repo",
+            "in": "path",
+            "name": "repo",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateGitRefOption"
+              }
+            }
+          },
+          "x-originalParamName": "body"
+        },
+        "responses": {
+          "201": {
+            "$ref": "#/components/responses/Reference"
+          },
+          "404": {
+            "$ref": "#/components/responses/notFound"
+          },
+          "409": {
+            "description": "The git ref with the same name already exists."
+          },
+          "422": {
+            "description": "Unable to form reference"
+          }
+        },
+        "summary": "Create a reference",
+        "tags": [
+          "repository"
+        ]
       }
     },
     "/repos/{owner}/{repo}/git/refs/{ref}": {
+      "delete": {
+        "operationId": "repoDeleteGitRef",
+        "parameters": [
+          {
+            "description": "owner of the repo",
+            "in": "path",
+            "name": "owner",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "name of the repo",
+            "in": "path",
+            "name": "repo",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "name of the ref to be deleted",
+            "in": "path",
+            "name": "ref",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "$ref": "#/components/responses/empty"
+          },
+          "404": {
+            "$ref": "#/components/responses/notFound"
+          },
+          "405": {
+            "$ref": "#/components/responses/error"
+          },
+          "409": {
+            "$ref": "#/components/responses/conflict"
+          }
+        },
+        "summary": "Delete a reference",
+        "tags": [
+          "repository"
+        ]
+      },
       "get": {
         "operationId": "repoListGitRefs",
         "parameters": [
@@ -20609,6 +24434,60 @@
           }
         },
         "summary": "Get specified ref or filtered repository's refs",
+        "tags": [
+          "repository"
+        ]
+      },
+      "patch": {
+        "operationId": "repoUpdateGitRef",
+        "parameters": [
+          {
+            "description": "owner of the repo",
+            "in": "path",
+            "name": "owner",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "name of the repo",
+            "in": "path",
+            "name": "repo",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "name of the ref to update",
+            "in": "path",
+            "name": "ref",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateGitRefOption"
+              }
+            }
+          },
+          "x-originalParamName": "body"
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/Reference"
+          },
+          "404": {
+            "$ref": "#/components/responses/notFound"
+          }
+        },
+        "summary": "Update a reference",
         "tags": [
           "repository"
         ]
@@ -20731,6 +24610,46 @@
           }
         },
         "summary": "Gets the tree of a repository.",
+        "tags": [
+          "repository"
+        ]
+      }
+    },
+    "/repos/{owner}/{repo}/healthcheck": {
+      "get": {
+        "operationId": "repoGetHealthcheck",
+        "parameters": [
+          {
+            "description": "name of the owner",
+            "in": "path",
+            "name": "owner",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "name of the repo",
+            "in": "path",
+            "name": "repo",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/Door43Healthcheck"
+          },
+          "404": {
+            "$ref": "#/components/responses/notFound"
+          },
+          "422": {
+            "$ref": "#/components/responses/validationError"
+          }
+        },
+        "summary": "Get the healthcheck of a repo in JSON format",
         "tags": [
           "repository"
         ]
@@ -28249,6 +32168,14 @@
             }
           },
           {
+            "description": "show only releases that are valid catalog entries. Default is false",
+            "in": "query",
+            "name": "in-catalog",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
             "description": "page number of results to return (1-based)",
             "in": "query",
             "name": "page",
@@ -28350,6 +32277,22 @@
             "required": true,
             "schema": {
               "type": "string"
+            }
+          },
+          {
+            "description": "include pre-release as latest if one is newer than prod release. Default is false",
+            "in": "query",
+            "name": "pre-release",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "description": "show only the latest release that is a valid catalog entry. Default is false",
+            "in": "query",
+            "name": "in-catalog",
+            "schema": {
+              "type": "boolean"
             }
           }
         ],
@@ -33549,6 +37492,75 @@
             "schema": {
               "format": "int64",
               "type": "integer"
+            }
+          },
+          {
+            "description": "has repos of the given language. Multiple values are ORed.",
+            "in": "query",
+            "name": "lang",
+            "schema": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            }
+          },
+          {
+            "description": "has repos with a repo that is or is not a gateway language.",
+            "in": "query",
+            "name": "is_gl",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "description": "has repos with the given subject. Multiple values are ORed.",
+            "in": "query",
+            "name": "subject",
+            "schema": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            }
+          },
+          {
+            "description": "org has repos of given flavorType. Multiple values are ORed.",
+            "in": "query",
+            "name": "flavorType",
+            "schema": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            }
+          },
+          {
+            "description": "has repos of given flavor. Multiple values are ORed.",
+            "in": "query",
+            "name": "flavor",
+            "schema": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            }
+          },
+          {
+            "description": "has repos of given metadataType. Multiple values are ORed.",
+            "in": "query",
+            "name": "metadataType",
+            "schema": {
+              "items": {
+                "enum": [
+                  "rc",
+                  "sb",
+                  "tc",
+                  "ts"
+                ],
+                "type": "string"
+              },
+              "type": "array"
             }
           },
           {

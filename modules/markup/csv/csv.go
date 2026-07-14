@@ -27,7 +27,7 @@ func (Renderer) Name() string {
 }
 
 func (Renderer) FileNamePatterns() []string {
-	return []string{"*.csv", "*.tsv"}
+	return []string{"*.csv"} // DCS Customizations - removes .tsv and adds custom tsv parser
 }
 
 func (Renderer) SanitizerRules() []setting.MarkupSanitizerRule {

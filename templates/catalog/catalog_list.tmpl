@@ -1,0 +1,84 @@
+<div class="flex-list">
+	{{range .Door43Metadatas}}
+		<div class="flex-item">
+			<div class="flex-item-leading">
+				{{template "repo/icon" .Repo}}
+			</div>
+			<div class="flex-item-main">
+				<div class="flex-item-header">
+					<div class="flex-item-title">
+					<a class="name" href="{{.Repo.Link}}/{{if .Release}}releases/tag{{else}}src/branch{{end}}/{{.Ref | PathEscapeSegments}}" data-tooltip-content="{{ctx.Locale.Tr "dcs.repo.metadata.abbreviation"}}: {{.Abbreviation}}">
+							{{.Title}}
+					</a>
+					<span class="label-list">
+						{{if .Repo.IsFork}}
+							<span class="middle">{{svg "octicon-repo-forked" 16}}</span>
+						{{else if .Repo.IsMirror}}
+							<span class="middle">{{svg "octicon-repo-clone" 16}}</span>
+						{{end}}
+						{{if eq .MetadataType "rc"}}
+							{{template "shared/healthcheck_badge" (dict
+								"RepoLink" .Repo.Link
+								"Severity" .HealthcheckSeverity
+								"OwnerName" .Repo.OwnerName
+								"RepoName" .Repo.Name
+								"Ref" .Ref
+							)}}
+						{{end}}
+						{{if .Release}}
+							{{$color := "green"}}
+							{{$type := "Production"}}
+							{{if .Release.IsPrerelease}}
+								{{$color = "orange"}}
+								{{$type = "Pre-Release"}}
+							{{end}}
+							<a href="{{.Release.HTMLURL}}" rel="nofollow" style="opacity: inherit !important; margin: 0">
+								<button class="ui {{$color}} label compact icon button" data-tooltip-content="Catalog: {{$type}}" aria-label="Catalog: {{$type}}">
+									{{.Ref}}
+								</button>
+							</a>
+						{{end}}
+					</span>
+				</div>
+				<div class="flex-item-trailing">
+					<a class="muted" href="{{$.Link}}?sort={{$.SortType}}&q=lang%3A{{.Language}}" data-tooltip-content="{{ctx.Locale.Tr "dcs.repo.metadata.language"}}: {{.LanguageTitle}} ({{.Language}}, {{.LanguageDirection}})">
+						<span class="tx-flex tw-items-center tw-mr-2"><i class="color-icon tw-mr-2" style="background-color: {{GetColorFromString .Language}}"></i>{{.Language}}</span>
+					</a>
+					<a class="muted" href="{{$.Link}}?sort={{$.SortType}}&q=subject%3A{{.Subject}}">
+						<span class="tx-flex tw-items-center tw-mr-2"><i class="color-icon tw-mr-2" style="background-color: {{GetColorFromString .Subject}}"></i>{{.Subject}}</span>
+					</a>
+					<a class="muted" href="?sort={{$.SortType}}&q=metadata_type%3A{{.MetadataType}}" data-tooltip-content="{{ctx.Locale.Tr "dcs.repo.metadata.metadata_type"}}: {{.MetadataTypeTitle}} ({{.MetadataType}} {{.MetadataVersion}})">
+						<img src="{{AssetUrlPrefix}}/img/dcs/{{.MetadataTypeIcon}}" style="height:16px;vertical-align:middle" />
+							{{.MetadataType}} {{.MetadataVersion}}
+					</a>
+					{{if not $.DisableStars}}
+					<a class="text grey tx-flex tw-items-center tw-mr-2" href="{{.Repo.Link}}/stars">{{svg "octicon-star" 16 "tw-mr-2"}}{{.Repo.NumStars}}</a>
+					{{end}}
+					<a class="text grey tx-flex tw-items-center tw-mr-2" href="{{.Repo.Link}}/forks">{{svg "octicon-git-branch" 16 "tw-mr-2"}}{{.Repo.NumForks}}</a>
+					<a class="text grey tx-flex tw-items-center tw-mr-2" href="{{.Repo.Link}}/releases" data-tooltip-content="# of releases">{{svg "octicon-tag" 16 "tw-mr-2"}} {{.ReleaseCount ctx}}</a>
+				</div>
+			</div>
+
+			<div class="flex-item-body">
+				{{ctx.Locale.Tr "dcs.repo.metadata.publisher"}}:
+				<a href="?sort={{$.SortType}}&q=owner%3A{{.Repo.OwnerName}}">
+					{{if $.Publisher}}{{$.Publisher}}{{else if .Repo.Owner.FullName}}{{.Repo.Owner.FullName}}{{else}}{{.Repo.OwnerName}}{{end}}
+				</a>
+			</div>
+			{{if .Repo.Topics}}
+				<div class="label-list">
+					{{range .Repo.Topics}}
+						{{if ne . ""}}<a class="ui label" href="{{AppSubUrl}}/catalog?q=topic%3A{{.}}">{{.}}</a>{{end}}
+					{{end}}
+				</div>
+			{{end}}
+			<div class="flex-item-body">
+				{{if .Release}}{{ctx.Locale.Tr "dcs.explore.released"}}{{else}}{{ctx.Locale.Tr "org.repo_updated"}}{{end}} {{DateUtils.TimeSince .ReleaseDateUnix}}</div>
+			</div>
+		</div>
+	{{else}}
+	<div>
+		{{ctx.Locale.Tr "search.no_results"}}
+	</div>
+	{{end}}
+</div>

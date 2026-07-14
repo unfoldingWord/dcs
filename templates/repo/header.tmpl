@@ -8,6 +8,9 @@
 				<div class="flex-text-block tw-flex-wrap tw-text-18">
 					<a class="muted tw-font-normal" href="{{.Owner.HomeLink}}">{{.Owner.Name}}</a>/<a class="muted" href="{{$.RepoLink}}">{{.Name}}</a>
 				</div>
+				<!-- DCS Customizations -->
+				{{template "dcs/repo_header_badges" .}}
+				<!-- END DCS Customizations -->
 				<div class="flex-text-block tw-flex-wrap">
 					{{if .IsArchived}}
 						<span class="ui basic label not-mobile">{{ctx.Locale.Tr "repo.desc.archived"}}</span>
@@ -20,6 +23,7 @@
 						{{if .Owner.Visibility.IsPrivate}}
 							<span class="ui basic label not-mobile">{{ctx.Locale.Tr "repo.desc.internal"}}</span>
 							<div class="repo-icon only-mobile" data-tooltip-content="{{ctx.Locale.Tr "repo.desc.internal"}}">{{svg "octicon-shield-lock" 18}}</div>
+
 						{{end}}
 					{{end}}
 					{{if $.Permission.HasAnyUnitPublicAccess}}
@@ -37,6 +41,9 @@
 			{{if not (or .IsBeingCreated .IsBroken)}}
 				{{/* right part */}}
 				<div class="flex-text-block tw-flex-wrap">
+					<!-- DCS Customizations -->
+					{{template "dcs/repo_header_catalog_button" .}}
+					<!-- END DCS Customizations -->
 					{{if $.CanUserAcceptOrRejectTransfer}}
 						<button type="button" class="ui compact small basic primary button link-action" data-url="{{$.RepoLink}}/action/accept_transfer"
 							data-tooltip-content="{{ctx.Locale.Tr "repo.transfer.accept_desc" $.RepoTransfer.Recipient.GetDisplayName}}"
@@ -85,7 +92,7 @@
 				<div class="overflow-menu-items">
 					{{if .Permission.CanRead ctx.Consts.RepoUnitTypeCode}}
 					<a class="{{if .PageIsViewCode}}active {{end}}item" href="{{.RepoLink}}{{if and (ne .BranchName .Repository.DefaultBranch) (not $.PageIsWiki)}}/src/{{.RefTypeNameSubURL}}{{end}}">
-						{{svg "octicon-code"}} {{ctx.Locale.Tr "repo.code"}}
+						{{svg "octicon-file"}} {{ctx.Locale.Tr "repo.code"}}
 					</a>
 					{{end}}
 

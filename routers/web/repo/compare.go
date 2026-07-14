@@ -149,6 +149,19 @@ func setCsvCompareContext(ctx *context.Context) {
 				return nil, nil, err
 			}
 			var closer io.Closer = reader
+
+			/*** DCS Customizations ***/
+			if filepath.Ext(diffFile.Name) == ".tsv" {
+				csvReader, err := csv_module.CreateReaderAndDetermineDelimiter(ctx, charset.ToUTF8WithFallbackReader(reader, charset.ConvertOpts{}))
+				if csvReader != nil {
+					csvReader.Comma = '\t' // This is a .tsv file so assume \t is delimiter
+					csvReader.LazyQuotes = true
+					csvReader.TrimLeadingSpace = false
+				}
+				return csvReader, reader, err
+			}
+			/*** END DCS Customizations ***/
+
 			csvReader, err := csv_module.CreateReaderAndDetermineDelimiter(ctx, charset.ToUTF8WithFallbackReader(reader, charset.ConvertOpts{}))
 			return csvReader, closer, err
 		}
@@ -519,6 +532,17 @@ func (cpi *comparePageInfoType) prepareCompareDiff(ctx *context.Context, whitesp
 	ctx.Data["title"], ctx.Data["content"] = prepareNewPullRequestTitleContent(ci, commits, setting.Repository.PullRequest.DefaultTitleSource)
 
 	setCompareContext(ctx, beforeCommit, headCommit, ci.HeadRepo.OwnerName, repo.Name)
+
+	/*** DCS Customizations ***/
+	// For Validation
+	for _, file := range diff.Files {
+		if strings.HasSuffix(file.Name, ".json") || strings.HasSuffix(file.Name, ".yaml") || strings.HasSuffix(file.Name, ".yml") {
+			if entry, _ := headCommit.GetTreeEntryByPath(file.Name); entry != nil {
+				file.Entry = entry
+			}
+		}
+	}
+	/*** END DCS Customizations ***/
 }
 
 func getBranchesAndTagsForRepo(ctx gocontext.Context, repo *repo_model.Repository) (branches, tags []string, err error) {

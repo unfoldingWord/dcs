@@ -32,6 +32,7 @@ import (
 	"gitea.dev/modules/util"
 	"gitea.dev/modules/validation"
 	"gitea.dev/modules/web"
+	"gitea.dev/routers/api/v1/catalog"
 	"gitea.dev/routers/api/v1/utils"
 	actions_service "gitea.dev/services/actions"
 	"gitea.dev/services/context"
@@ -55,13 +56,9 @@ func Search(ctx *context.APIContext) {
 	//   in: query
 	//   description: keyword
 	//   type: string
-	// - name: topic
-	//   in: query
-	//   description: Limit search to repositories with keyword as topic
-	//   type: boolean
 	// - name: includeDesc
 	//   in: query
-	//   description: include search of keyword within repository description
+	//   description: include search of keyword within repository description (defaults to false)
 	//   type: boolean
 	// - name: uid
 	//   in: query
@@ -108,6 +105,106 @@ func Search(ctx *context.APIContext) {
 	//   in: query
 	//   description: if `uid` is given, search only for repos that the user owns
 	//   type: boolean
+	// - name: repo
+	//   in: query
+	//   description: name of the repo. Multiple values are ORed.
+	//   type: string
+	// - name: owner
+	//   in: query
+	//   description: owner of the repo. Multiple values are ORed.
+	//   type: string
+	// - name: lang
+	//   in: query
+	//   description: if the repo is a resource of the given language(s), the repo will be in the results. Multiple values are ORed.
+	//   type: array
+	//   collectionFormat: multi
+	//   items:
+	//     type: string
+	// - name: is_gl
+	//   in: query
+	//   description: list only those that are (true) or are not (false) a gatetway language
+	//   type: boolean
+	// - name: subject
+	//   in: query
+	//   description: resource subject. Multiple values are ORed.
+	//   type: array
+	//   collectionFormat: multi
+	//   items:
+	//     type: string
+	// - name: flavorType
+	//   in: query
+	//   description: resource flavorType. Multiple values are ORed.
+	//   type: array
+	//   collectionFormat: multi
+	//   items:
+	//     type: string
+	// - name: flavor
+	//   in: query
+	//   description: resource flavor. Multiple values are ORed.
+	//   type: array
+	//   collectionFormat: multi
+	//   items:
+	//     type: string
+	// - name: abbreviation
+	//   in: query
+	//   description: resource abbreviation (identifier). Multiple values are ORed.
+	//   type: array
+	//   collectionFormat: multi
+	//   items:
+	//     type: string
+	// - name: format
+	//   in: query
+	//   description: content format (usfm, text, markdown, etc.). Multiple values are ORed.
+	//   type: string
+	// - name: book
+	//   in: query
+	//   description: book (project id or ingredients id) that exist in a resource. If the resource contains the
+	//                the book, its repository will be included in the results. Multiple values are ORed.
+	//   type: array
+	//   collectionFormat: multi
+	//   items:
+	//     type: string
+	// - name: topic
+	//   in: query
+	//   description: topic of repo. Multiple values are ORed.
+	//   type: array
+	//   collectionFormat: multi
+	//   items:
+	//     type: string
+	// - name: withoutTopic
+	//   in: query
+	//   description: Repositories without this topic will be returned. Multiple values are ANDed.
+	//   type: array
+	//   collectionFormat: multi
+	//   items:
+	//     type: string
+	// - name: healthcheckSeverity
+	//   in: query
+	//   description: Healthcheck severity. Options are error, warning, info, success. Multiple values are ORed.
+	//   type: array
+	//   collectionFormat: multi
+	//   items:
+	//     type: string
+	//     enum: [error,warning,info,success]
+	// - name: metadataType
+	//   in: query
+	//   description: return repos only with metadata of this type
+	//   type: array
+	//   collectionFormat: multi
+	//   items:
+	//     type: string
+	//     enum: [rc,sb,tc,ts]
+	// - name: metadataVersion
+	//   in: query
+	//   description: return repos only with the version of metadata given. Does not apply if metadataType is not given
+	//   type: array
+	//   collectionFormat: multi
+	//   items:
+	//     type: string
+	// - name: partialMatch
+	//   in: query
+	//   description: If true, many of the above fields will do a partial match, allowing characters to come before or after your given value, default is false
+	//   type: boolean
 	// - name: sort
 	//   in: query
 	//   description: sort repos by attribute. Supported values are
@@ -133,21 +230,44 @@ func Search(ctx *context.APIContext) {
 	//   "422":
 	//     "$ref": "#/responses/validationError"
 
+	/*** DCS Customizations ***/
+	abbreviations := catalog.QueryStrings(ctx, "abbreviation")
+	abbreviations = append(abbreviations, catalog.QueryStrings(ctx, "resource")...) // For non-breaking changes, support "resource" argument
+	/*** END DCS Customizations ***/
+
 	private := ctx.IsSigned && (ctx.FormString("private") == "" || ctx.FormBool("private"))
 
 	opts := repo_model.SearchRepoOptions{
-		ListOptions:        utils.GetListOptions(ctx),
-		Actor:              ctx.Doer,
-		Keyword:            ctx.FormTrim("q"),
-		OwnerID:            ctx.FormInt64("uid"),
-		PriorityOwnerID:    ctx.FormInt64("priority_owner_id"),
-		TeamID:             ctx.FormInt64("team_id"),
-		TopicOnly:          ctx.FormBool("topic"),
+		ListOptions:     utils.GetListOptions(ctx),
+		Actor:           ctx.Doer,
+		Keyword:         ctx.FormTrim("q"),
+		OwnerID:         ctx.FormInt64("uid"),
+		PriorityOwnerID: ctx.FormInt64("priority_owner_id"),
+		TeamID:          ctx.FormInt64("team_id"),
+		// TopicOnly:          ctx.FormBool("topic"), // DCS Customizations - not used
 		Collaborate:        optional.None[bool](),
 		Private:            private,
 		Template:           optional.None[bool](),
 		StarredByID:        ctx.FormInt64("starredBy"),
 		IncludeDescription: ctx.FormBool("includeDesc"),
+		/*** DCS Customizations ***/
+		Languages:        catalog.QueryStrings(ctx, "lang"),
+		Repos:            catalog.QueryStrings(ctx, "repo"),
+		Owners:           catalog.QueryStrings(ctx, "owner"),
+		Subjects:         catalog.QueryStrings(ctx, "subject"),
+		FlavorTypes:      catalog.QueryStrings(ctx, "flavorType"),
+		Flavors:          catalog.QueryStrings(ctx, "flavor"),
+		Abbreviations:    abbreviations,
+		ContentFormats:   catalog.QueryStrings(ctx, "format"),
+		Books:            catalog.QueryStrings(ctx, "book"),
+		MetadataTypes:    catalog.QueryStrings(ctx, "metadataType"),
+		MetadataVersions: catalog.QueryStrings(ctx, "metadataVersion"),
+		Topics:           catalog.QueryStrings(ctx, "topic"),
+		InvertedTopics:   catalog.QueryStrings(ctx, "withoutTopic"),
+		Healthchecks:     catalog.QueryStrings(ctx, "healthcheckSeverity"),
+		LanguageIsGL:     ctx.FormOptionalBool("is_gl"),
+		PartialMatch:     ctx.FormBool("partialMatch"),
+		/*** END DCS Customizations ***/
 	}
 	opts.ApplyPublicOnly(ctx.PublicOnly)
 

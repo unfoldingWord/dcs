@@ -16,9 +16,10 @@ func TestBlockExpensive(t *testing.T) {
 	}{
 		{false, "/user/xxx"},
 		{false, "/login/xxx"},
-		{true, "/{username}/{reponame}/archive/xxx"},
+		{false, "/{username}/{reponame}/archive/xxx"}, // DCS Customizations - archive is not expensive
 		{true, "/{username}/{reponame}/graph"},
-		{true, "/{username}/{reponame}/src/xxx"},
+		{false, "/{username}/{reponame}/src/xxx"},       // DCS Customizations - broad src/ is not expensive
+		{true, "/{username}/{reponame}/src/commit/xxx"}, // DCS Customizations - src/commit/ is expensive
 		{true, "/{username}/{reponame}/wiki/xxx"},
 		{true, "/{username}/{reponame}/activity/xxx"},
 	}

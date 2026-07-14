@@ -21,6 +21,7 @@ import (
 	"gitea.dev/modules/htmlutil"
 	"gitea.dev/modules/httplib"
 	"gitea.dev/modules/log"
+	"gitea.dev/modules/optional" // DCS Customizations
 	repo_module "gitea.dev/modules/repository"
 	"gitea.dev/modules/setting"
 	"gitea.dev/modules/svg"
@@ -169,7 +170,7 @@ func prepareHomeSidebarLatestRelease(ctx *context.Context) {
 		return
 	}
 
-	release, err := repo_model.GetLatestReleaseByRepoID(ctx, ctx.Repo.Repository.ID)
+	release, err := repo_model.GetLatestReleaseByRepoID(ctx, ctx.Repo.Repository.ID, false, optional.None[bool]()) // DCS Customizations: Do not include prereleases
 	if err != nil && !repo_model.IsErrReleaseNotExist(err) {
 		ctx.ServerError("GetLatestReleaseByRepoID", err)
 		return
@@ -297,6 +298,9 @@ func prepareToRenderDirOrFile(entry *git.TreeEntry) func(ctx *context.Context) {
 			handleRepoViewSubmodule(ctx, commitSubmoduleFile)
 		} else if entry.IsDir() {
 			prepareToRenderDirectory(ctx)
+			/*** DCS Customizations ***/
+			ctx.Data["IgnoreLanguageDirection"] = true
+			/*** END DCS Customizations ***/
 		} else {
 			prepareFileView(ctx, entry)
 		}
@@ -454,6 +458,10 @@ func Home(ctx *context.Context) {
 			return
 		}
 	}
+
+	/*** DCS Customizations ***/
+	ctx.Data["Entry"] = entry
+	/*** END DCS Customizations ***/
 
 	if isViewHomeOnlyContent(ctx) {
 		ctx.HTML(http.StatusOK, tplRepoViewContent)

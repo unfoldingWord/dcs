@@ -1,0 +1,23 @@
+{{$release := .release}}
+{{$stage := ""}}
+{{$color := ""}}
+{{if $release.IsPrerelease}}
+	{{$stage = "preprod"}}
+	{{$color = "orange"}}
+{{else if not $release.IsDraft}}
+	{{$stage = "prod"}}
+	{{$color = "green"}}
+{{end}}
+{{if and $release.Door43Metadata (not $release.Door43Metadata.ValidationError) (lt $release.Door43Metadata.Stage 3) (gt $release.Door43Metadata.Stage 0)}}
+	<a class="catalog-badge" href="{{.root.RepoLink}}/src/tag/{{$release.TagName | PathEscapeSegments}}" rel="nofollow" style="opacity: inherit !important">
+		<button class="ui {{$color}} label compact icon button" data-tooltip-content="Stage: {{$stage}}" aria-label="Stage: {{$stage}}">
+			{{ctx.Locale.Tr "dcs.repo.metadata.catalog"}} ({{$stage}})
+		</button>
+	</a>
+{{else if (and (not $release.IsTag) (not $release.IsDraft) ($release.IsCatalogVersion))}}
+	<a class="catalog-badge" href="{{.root.RepoLink}}/src/tag/{{$release.TagName | PathEscapeSegments}}" rel="nofollow" style="opacity: inherit !important">
+		<button class="ui red label compact icon button" data-tooltip-content="{{ctx.Locale.Tr "dcs.repo.metadata.invalid_metadata_tooltip" "metadata"}}" aria-label="{{ctx.Locale.Tr "dcs.repo.metadata.invalid_metadata_tooltip" "metadata"}}">
+			{{ctx.Locale.Tr "dcs.repo.metadata.invalid"}} ({{$stage}})
+		</button>
+	</a>
+{{end}}

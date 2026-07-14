@@ -87,8 +87,17 @@ func NewGiteaDownloader(ctx context.Context, baseURL, repoPath, username, passwo
 		gitea_sdk.SetHTTPClient(NewMigrationHTTPClient()),
 	)
 	if err != nil {
-		log.Error(fmt.Sprintf("Failed to create NewGiteaDownloader for: %s. Error: %v", baseURL, err))
-		return nil, err
+		/*** DCS Customizations ***/
+		// ErrUnknownVersion means the server version string could not be parsed (e.g. DCS forks
+		// report versions like "1.25.7+dcs+2-g4f5ce5854b" which hashicorp/go-version cannot parse).
+		// NewClient intentionally returns both the client and this error so callers can decide to
+		// continue — treat it as a warning and proceed rather than failing the migration.
+		if !errors.Is(err, &gitea_sdk.ErrUnknownVersion{}) {
+			log.Error(fmt.Sprintf("Failed to create NewGiteaDownloader for: %s. Error: %v", baseURL, err))
+			return nil, err
+		}
+		log.Warn("NewGiteaDownloader: server version could not be parsed (%v); proceeding without version checks", err)
+		/*** END DCS Customizations ***/
 	}
 
 	path := strings.Split(repoPath, "/")

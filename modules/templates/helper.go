@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"gitea.dev/modules/base"
+	"gitea.dev/modules/dcs" // DCS Customizations
 	"gitea.dev/modules/htmlutil"
 	"gitea.dev/modules/markup"
 	"gitea.dev/modules/public"
@@ -78,6 +79,16 @@ func newFuncMapWebPage() template.FuncMap {
 		"AppSubUrl": func() string {
 			return setting.AppSubURL
 		},
+		/*** DCS Customizations ***/
+		// Upstream removed AppUrl from the page template helpers in #37090 (it now
+		// only exists in mail.go). DCS templates still need the configured ROOT_URL
+		// to detect the deployment environment (prod/QA/dev) by comparing against
+		// literal URLs, so we re-add it here. ctx.AppFullLink is not a substitute:
+		// it guesses the per-request host and trims the trailing slash.
+		"AppUrl": func() string {
+			return setting.AppURL
+		},
+		/*** END DCS Customizations ***/
 		"AssetUrlPrefix": func() string {
 			return setting.StaticURLPrefix + "/assets"
 		},
@@ -125,6 +136,23 @@ func newFuncMapWebPage() template.FuncMap {
 		"MermaidMaxSourceCharacters": func() int {
 			return setting.MermaidMaxSourceCharacters
 		},
+		/*** DCS Customizations ***/
+		"StringHasSuffix":  dcs.StringHasSuffix,
+		"ValidateJSONFile": dcs.ValidateJSONFile,
+		"ValidateYAMLFile": dcs.ValidateYAMLFile,
+		"Door43PreviewURL": func() string {
+			return setting.DCS.Door43PreviewURL
+		},
+		"GetCsvCellDiff":        dcs.GetCsvCellDiff,
+		"GetColorFromString":    dcs.GetColorFromString,
+		"GetRepoCount":          dcs.GetRepoCount,
+		"GetOrgCount":           dcs.GetOrgCount,
+		"GetUserCount":          dcs.GetUserCount,
+		"GetCatalogEntryCount":  dcs.GetCatalogEntryCount,
+		"GetLanguageCount":      dcs.GetLanguageCount,
+		"GetPublisherCount":     dcs.GetPublisherCount,
+		"GetActiveProjectCount": dcs.GetActiveProjectCount,
+		/*** END DCS Customizations ***/
 
 		// -----------------------------------------------------------------
 		// render

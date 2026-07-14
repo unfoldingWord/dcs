@@ -20,6 +20,7 @@ import (
 	_ "gitea.dev/modules/markup/jupyter"
 	_ "gitea.dev/modules/markup/markdown"
 	_ "gitea.dev/modules/markup/orgmode"
+	_ "gitea.dev/modules/markup/tsv" // DCS Customizations
 
 	"github.com/urfave/cli/v3"
 )

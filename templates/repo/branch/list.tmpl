@@ -1,4 +1,7 @@
 {{template "base/head" .}}
+<!-- DCS Customizations --->
+{{template "dcs/branch_list_usfm_script" .}}
+<!-- END DCS Customizations -->
 <div role="main" aria-label="{{.Title}}" class="page-content ui repository branches">
 	{{template "repo/header" .}}
 	<div class="ui container">
@@ -50,6 +53,9 @@
 										<div class="menu">
 											<a class="item archive-link" href="{{$.RepoLink}}/archive/{{PathEscapeSegments $.DefaultBranchBranch.DBBranch.Name}}.zip" rel="nofollow">{{svg "octicon-file-zip"}}&nbsp;ZIP</a>
 											<a class="item archive-link" href="{{$.RepoLink}}/archive/{{PathEscapeSegments $.DefaultBranchBranch.DBBranch.Name}}.tar.gz" rel="nofollow">{{svg "octicon-file-zip"}}&nbsp;TAR.GZ</a>
+											{{if and $.Repository.RepoDM (eq $.Repository.RepoDM.Subject "Aligned Bible")}}
+											<a class="item " href="#" onclick="window.downloadUnalignedUSFM('{{PathEscapeSegments $.Repository.OwnerName}}', '{{PathEscapeSegments $.Repository.Name}}', '{{PathEscapeSegments $.DefaultBranchBranch.DBBranch.Name}}'); return false;" rel="nofollow">{{svg "octicon-file-zip"}}&nbsp;USFM (ZIP)</a>
+											{{end}}
 										</div>
 									</div>
 								{{end}}
@@ -63,6 +69,9 @@
 										{{svg "octicon-pencil"}}
 									</button>
 								{{end}}
+								<!-- DCS Customizations -->
+								{{template "dcs/branch_list_default_preview" $}}
+								<!-- END DCS Customizations -->
 								</div>
 							</td>
 						</tr>
@@ -179,6 +188,9 @@
 										<div class="menu">
 											<a class="item archive-link" href="{{$.RepoLink}}/archive/{{PathEscapeSegments .DBBranch.Name}}.zip" rel="nofollow">{{svg "octicon-file-zip"}}&nbsp;ZIP</a>
 											<a class="item archive-link" href="{{$.RepoLink}}/archive/{{PathEscapeSegments .DBBranch.Name}}.tar.gz" rel="nofollow">{{svg "octicon-file-zip"}}&nbsp;TAR.GZ</a>
+											{{if and $.Repository.RepoDM (eq $.Repository.RepoDM.Subject "Aligned Bible")}}
+											<a class="item " href="#" onclick="window.downloadUnalignedUSFM('{{PathEscapeSegments $.Repository.OwnerName}}', '{{PathEscapeSegments $.Repository.Name}}', '{{PathEscapeSegments .DBBranch.Name}}'); return false;" rel="nofollow">{{svg "octicon-file-zip"}}&nbsp;USFM (ZIP)</a>
+											{{end}}
 										</div>
 									</div>
 								{{end}}
@@ -192,6 +204,9 @@
 										{{svg "octicon-pencil"}}
 									</button>
 								{{end}}
+<!-- DCS Customizations -->
+								{{template "dcs/branch_list_row_preview" dict "Branch" . "root" $}}
+								<!-- END DCS Customizations -->
 								{{if and $.IsWriter $.Repository.CanContentChange (not .IsProtected)}}
 									{{if .DBBranch.IsDeleted}}
 										<button class="btn interact-bg tw-p-2 link-action restore-branch-button" data-url="{{$.Link}}/restore?branch_id={{.DBBranch.ID}}&name={{.DBBranch.Name}}&page={{$.Page.Paginater.Current}}" data-tooltip-content="{{ctx.Locale.Tr "repo.branch.restore" (.DBBranch.Name)}}">

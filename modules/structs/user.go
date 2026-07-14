@@ -57,6 +57,14 @@ type User struct {
 	Followers    int `json:"followers_count"`
 	Following    int `json:"following_count"`
 	StarredRepos int `json:"starred_repos_count"`
+	/*** DCS Customizations ***/
+	// Repo languages
+	RepoLanguages []string `json:"repo_languages"`
+	// Repo subjects
+	RepoSubjects []string `json:"repo_subjects"`
+	// Repo metadata types
+	RepoMetadataTypes []string `json:"repo_metadata_types"`
+	/*** END DCS Customizations ***/
 }
 
 // MarshalJSON implements the json.Marshaler interface for User, adding field(s) for backward compatibility

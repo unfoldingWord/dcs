@@ -14,6 +14,7 @@ import (
 	"strings"
 
 	"gitea.dev/models/db"
+	"gitea.dev/models/door43metadata"
 	user_model "gitea.dev/models/user"
 	"gitea.dev/modules/container"
 	"gitea.dev/modules/optional"
@@ -87,6 +88,7 @@ type Release struct {
 	IsTag            bool               `xorm:"NOT NULL DEFAULT false"` // will be true only if the record is a tag and has no related releases
 	Attachments      []*Attachment      `xorm:"-"`
 	CreatedUnix      timeutil.TimeStamp `xorm:"INDEX"`
+	Door43Metadata   *Door43Metadata    `xorm:"-"`
 }
 
 func init() {
@@ -103,7 +105,10 @@ func (r *Release) LoadRepo(ctx context.Context) (err error) {
 	}
 
 	r.Repo, err = GetRepositoryByID(ctx, r.RepoID)
-	return err
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 // LoadAttributes load repo and publisher attributes for a release
@@ -111,6 +116,22 @@ func (r *Release) LoadAttributes(ctx context.Context) (err error) {
 	if err := r.LoadRepo(ctx); err != nil {
 		return err
 	}
+
+	/*** DCS Customizations ***/
+	// Load the Door43Metadata here (not in LoadRepo) so it is always populated:
+	// LoadRepo returns early when r.Repo is already set (e.g. preloaded by
+	// getReleaseInfos in the single-release view), which would otherwise skip this.
+	if r.Door43Metadata == nil {
+		r.Door43Metadata, err = GetDoor43MetadataByRepoIDAndRef(ctx, r.RepoID, r.TagName)
+		if err != nil && !IsErrDoor43MetadataNotExist(err) {
+			return err
+		}
+		if r.Door43Metadata != nil {
+			r.Door43Metadata.Release = r
+			r.Door43Metadata.Repo = r.Repo
+		}
+	}
+	/*** END DCS Customizations ***/
 
 	if r.Publisher == nil {
 		r.Publisher, err = user_model.GetUserByID(ctx, r.PublisherID)
@@ -266,33 +287,38 @@ type FindReleasesOptions struct {
 	TagNames      []string
 	HasSha1       optional.Option[bool] // useful to find draft releases which are created with existing tags
 	NamePattern   optional.Option[string]
+	/*** DCS Customizations ***/
+	InCatalog optional.Option[bool]
+	/*** END DCS Customizations ***/
 }
 
 func (opts FindReleasesOptions) ToConds() builder.Cond {
-	var cond builder.Cond = builder.Eq{"repo_id": opts.RepoID}
+	/*** DCS Customizations - refactored for joining with the door43_metadata table, prefix `release` ***/
+	var cond builder.Cond = builder.Eq{"`release`.repo_id": opts.RepoID}
 
 	if !opts.IncludeDrafts {
-		cond = cond.And(builder.Eq{"is_draft": false})
+		cond = cond.And(builder.Eq{"`release`.is_draft": false})
 	}
 	if !opts.IncludeTags {
-		cond = cond.And(builder.Eq{"is_tag": false})
+		cond = cond.And(builder.Eq{"`release`.is_tag": false})
 	}
 	if len(opts.TagNames) > 0 {
-		cond = cond.And(builder.In("tag_name", opts.TagNames))
+		cond = cond.And(builder.In("`release`.tag_name", opts.TagNames))
 	}
 	if opts.IsPreRelease.Has() {
-		cond = cond.And(builder.Eq{"is_prerelease": opts.IsPreRelease.Value()})
+		cond = cond.And(builder.Eq{"`release`.is_prerelease": opts.IsPreRelease.Value()})
 	}
 	if opts.IsDraft.Has() {
-		cond = cond.And(builder.Eq{"is_draft": opts.IsDraft.Value()})
+		cond = cond.And(builder.Eq{"`release`.is_draft": opts.IsDraft.Value()})
 	}
 	if opts.HasSha1.Has() {
 		if opts.HasSha1.Value() {
-			cond = cond.And(builder.Neq{"sha1": ""})
+			cond = cond.And(builder.Neq{"`release`.sha1": ""})
 		} else {
-			cond = cond.And(builder.Eq{"sha1": ""})
+			cond = cond.And(builder.Eq{"`release`.sha1": ""})
 		}
 	}
+	/*** END DCS Customizations ***/
 
 	if opts.NamePattern.Has() && opts.NamePattern.Value() != "" {
 		cond = cond.And(builder.Like{"lower_tag_name", strings.ToLower(opts.NamePattern.Value())})
@@ -302,7 +328,7 @@ func (opts FindReleasesOptions) ToConds() builder.Cond {
 }
 
 func (opts FindReleasesOptions) ToOrders() string {
-	return "created_unix DESC, id DESC"
+	return "`release`.created_unix DESC, id DESC"
 }
 
 // GetTagNamesByRepoID returns a list of release tag names of repository.
@@ -326,23 +352,35 @@ func GetTagNamesByRepoID(ctx context.Context, repoID int64) ([]string, error) {
 }
 
 // GetLatestReleaseByRepoID returns the latest release for a repository
-func GetLatestReleaseByRepoID(ctx context.Context, repoID int64) (*Release, error) {
+func GetLatestReleaseByRepoID(ctx context.Context, repoID int64, includePreRelease bool, inCatalog optional.Option[bool]) (*Release, error) {
+	/*** DCS Customizations - Refactored to use includePreRelease and inCatalog booleans ***/
 	cond := builder.NewCond().
-		And(builder.Eq{"repo_id": repoID}).
-		And(builder.Eq{"is_draft": false}).
-		And(builder.Eq{"is_prerelease": false}).
-		And(builder.Eq{"is_tag": false})
+		And(builder.Eq{"`release`.repo_id": repoID}).
+		And(builder.Eq{"`release`.is_draft": false}).
+		And(builder.Eq{"`release`.is_tag": false})
+
+	if !includePreRelease {
+		cond = cond.And(builder.Eq{"`release`.is_prerelease": false})
+	}
+
+	e := db.GetEngine(ctx)
+	if inCatalog.Has() && inCatalog.Value() {
+		e = e.Join("INNER", "door43_metadata", "`release`.id = `door43_metadata`.release_id")
+		cond = cond.And(builder.IsNull{"`door43_metadata`.validation_error"}).
+			And(builder.Lte{"`door43_metadata`.stage": door43metadata.StagePreProd})
+	}
 
 	rel := new(Release)
-	has, err := db.GetEngine(ctx).
-		Desc("created_unix", "id").
+	has, err := e.
 		Where(cond).
+		Desc("`release`.created_unix", "`release`.id").
 		Get(rel)
 	if err != nil {
 		return nil, err
 	} else if !has {
 		return nil, ErrReleaseNotExist{0, "latest"}
 	}
+	/*** END DCS Customizations ***/
 
 	return rel, nil
 }
