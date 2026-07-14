@@ -4,6 +4,7 @@
 package models
 
 import (
+	"fmt"
 	"testing"
 
 	"gitea.dev/models/db"
@@ -265,4 +266,43 @@ func TestSearchCatalogContentFlags(t *testing.T) {
 	_, count, err = SearchCatalog(t.Context(), opts)
 	require.NoError(t, err)
 	assert.EqualValues(t, 0, count)
+}
+
+// TestSearchCatalogCounts checks that the unpaginated fast path (no COUNT
+// query) reports the same total as the paginated path.
+func TestSearchCatalogCounts(t *testing.T) {
+	require.NoError(t, unittest.PrepareTestDatabase())
+
+	for i, flags := range []struct{ audio, pdf bool }{{true, false}, {false, true}, {false, false}} {
+		dm := &repo_model.Door43Metadata{
+			RepoID: 1, ReleaseID: int64(3000 + i), Ref: fmt.Sprintf("v%d", i+1), RefType: "tag",
+			CommitSHA: "0000000000000000000000000000000000003000",
+			Stage:     door43metadata.StageProd, IsLatestForStage: i == 2,
+			Language: "en", Subject: "Open Bible Stories",
+			HasAudio: flags.audio, HasPDF: flags.pdf,
+			ReleaseDateUnix: timeutil.TimeStamp(1000 + i),
+		}
+		_, err := db.GetEngine(t.Context()).Insert(dm)
+		require.NoError(t, err)
+	}
+
+	newOpts := func() *door43metadata.SearchCatalogOptions {
+		return &door43metadata.SearchCatalogOptions{Stage: door43metadata.StageProd, IncludeHistory: true}
+	}
+
+	all, total, err := SearchCatalog(t.Context(), newOpts())
+	require.NoError(t, err)
+	assert.EqualValues(t, len(all), total)
+	assert.EqualValues(t, 3, total)
+	for _, dm := range all {
+		assert.NotNil(t, dm.Repo, "repo should be batch-loaded")
+		assert.NotNil(t, dm.Repo.Owner, "owner should be batch-loaded")
+	}
+
+	opts := newOpts()
+	opts.ListOptions = db.ListOptions{Page: 1, PageSize: 2}
+	page, pagedTotal, err := SearchCatalog(t.Context(), opts)
+	require.NoError(t, err)
+	assert.Len(t, page, 2)
+	assert.Equal(t, total, pagedTotal, "paginated count must match unpaginated total")
 }
