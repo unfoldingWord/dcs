@@ -47,7 +47,7 @@ accepts a Unix timestamp or common formats like `2026-07-13`,
   "has_video": 5,
   "has_stream": 12,
   "has_other": 30,
-  "has_attachment": 102
+  "has_attachment": 85
 }
 ```
 
@@ -82,8 +82,9 @@ accepts a Unix timestamp or common formats like `2026-07-13`,
   **entry counts** (rows matching that property). With the default
   no-history/prod query these equal per-repo counts, since each repo
   contributes one entry.
-- `has_attachment` — the sum of the five `has_*` counts, so an entry with,
-  say, both audio and PDF contributes twice.
+- `has_attachment` — entries with at least one attachment content type (any of
+  the five `has_*` flags true), matching the `hasAttachment=1` filter. An entry
+  with, say, both audio and PDF counts once.
 - The `healthcheck_*_count` fields are only in `/stats-ext`.
   `no_healthcheck_count` counts entries whose `healthcheck_severity` is NULL
   or 0. Healthchecks only run against default-branch metadata, so
