@@ -573,13 +573,13 @@ func SearchRepositoryCondition(opts SearchRepoOptions) builder.Cond {
 		door43metadata.GetHealthcheckCond(opts.Healthchecks))
 
 	if len(opts.MetadataTypes) > 0 {
-		cond.And(door43metadata.GetMetadataVersionCond(opts.MetadataVersions, false))
+		cond = cond.And(door43metadata.GetMetadataVersionCond(opts.MetadataVersions, false))
 	}
 
 	if opts.LanguageIsGL.Has() {
-		cond = cond.And(builder.Eq{"`door43_metadata`.language_is_gl`": opts.LanguageIsGL.Value()})
+		cond = cond.And(builder.Eq{"`door43_metadata`.language_is_gl": opts.LanguageIsGL.Value()})
 	}
-	/*** EMD DCS Customizations ***/
+	/*** END DCS Customizations ***/
 
 	if opts.OnlyShowRelevant {
 		// Only show a repo that has at least a topic, an icon, or a description
