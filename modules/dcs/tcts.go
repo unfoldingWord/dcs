@@ -65,6 +65,14 @@ func GetTcTsManifestFromBlob(blob *git.Blob) (*structs.TcTsManifest, error) {
 			t.Subject = "Open Bible Stories"
 			t.FlavorType = "gloss"
 			t.Flavor = "textStories"
+		} else if t.Project.Type == "tn" {
+			t.Subject = "Translation Notes"
+			t.FlavorType = "peripheral"
+			t.Flavor = "x-TranslationNotes"
+		} else if t.Project.Type == "tq" {
+			t.Subject = "Translation Questions"
+			t.FlavorType = "peripheral"
+			t.Flavor = "x-TranslationQuestions"
 		} else {
 			t.Subject = "Bible"
 			t.FlavorType = "scripture"
