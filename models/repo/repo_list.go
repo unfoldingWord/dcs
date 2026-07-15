@@ -567,7 +567,7 @@ func SearchRepositoryCondition(opts SearchRepoOptions) builder.Cond {
 		door43metadata.GetHealthcheckCond(opts.Healthchecks))
 
 	if len(opts.MetadataTypes) > 0 {
-		cond.And(door43metadata.GetMetadataVersionCond(opts.MetadataVersions, false))
+		cond = cond.And(door43metadata.GetMetadataVersionCond(opts.MetadataVersions, false))
 	}
 
 	if opts.LanguageIsGL.Has() {
