@@ -32,16 +32,36 @@ func GetTcTsManifestFromBlob(blob *git.Blob) (*structs.TcTsManifest, error) {
 	} else if t.TsVersion >= 3 {
 		t.MetadataVersion = strconv.Itoa(t.TsVersion)
 		t.MetadataType = "ts"
+
 		if t.Resource.ID == "" {
-			t.Resource.ID = t.ResourceID
+			if t.ResourceID != "" {
+				t.Resource.ID = t.ResourceID
+			} else {
+				t.Resource.ID = t.Project.ID
+			}
 		}
+
 		if t.Resource.Name == "" {
 			t.Resource.Name = strings.ToUpper(t.Resource.ID)
 		}
+
 		if t.Project.Name == "" {
 			t.Project.Name = strings.ToUpper(t.Project.ID)
 		}
-		if t.Resource.ID == "obs" {
+
+		if t.Project.Type == "" {
+			t.Project.Type = t.Type.ID
+		}
+
+		if t.Resource.ID == "obs" && t.Project.Type == "tn" {
+			t.Subject = "OBS Translation Notes"
+			t.FlavorType = "peripheral"
+			t.Flavor = "x-OBSTranslationNotes"
+		} else if t.Resource.ID == "obs" && t.Project.Type == "tq" {
+			t.Subject = "OBS Translation Questions"
+			t.FlavorType = "peripheral"
+			t.Flavor = "x-OBSTranslationQuestions"
+		} else if t.Resource.ID == "obs" {
 			t.Subject = "Open Bible Stories"
 			t.FlavorType = "gloss"
 			t.Flavor = "textStories"

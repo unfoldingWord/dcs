@@ -156,7 +156,7 @@ func SearchCatalogCondition(opts *SearchCatalogOptions) builder.Cond {
 		builder.IsNull{"`door43_metadata`.validation_error"})
 
 	if len(opts.MetadataTypes) > 0 {
-		cond.And(GetMetadataVersionCond(opts.MetadataVersions, opts.PartialMatch))
+		cond = cond.And(GetMetadataVersionCond(opts.MetadataVersions, opts.PartialMatch))
 	}
 
 	return cond

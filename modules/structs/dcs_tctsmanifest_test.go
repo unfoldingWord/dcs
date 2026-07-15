@@ -24,7 +24,7 @@ func TestTcTsManifest_ProjectBinding(t *testing.T) {
 		"format": "usfm",
 		"target_language": {"id": "awa", "name": "Awadhi", "direction": "ltr"},
 		"type": {"id": "text", "name": "Text"},
-		"project": {"id": "gen", "name": "Genesis"},
+		"project": {"id": "gen", "name": "Genesis", "type": "tn"},
 		"resource": {"id": "ult", "name": "unfoldingWord Literal Text"}
 	}`
 
@@ -33,6 +33,7 @@ func TestTcTsManifest_ProjectBinding(t *testing.T) {
 
 	assert.Equal(t, "gen", m.Project.ID, `lowercase "project" must bind under jsonv2 (needs json:"project" + nested id/name tags)`)
 	assert.Equal(t, "Genesis", m.Project.Name)
+	assert.Equal(t, "tn", m.Project.Type)
 
 	// Siblings that were already tagged correctly, as a control.
 	assert.Equal(t, "ult", m.Resource.ID)

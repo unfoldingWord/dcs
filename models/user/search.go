@@ -231,7 +231,7 @@ func SearchUsers(ctx context.Context, opts SearchUserOptions) (users []*User, _ 
 	if len(opts.RepoFlavors) > 0 {
 		hasMetadataCond = true
 		repoFlavorCond := builder.NewCond()
-		for _, values := range opts.RepoFlavorTypes {
+		for _, values := range opts.RepoFlavors {
 			for value := range strings.SplitSeq(values, ",") {
 				repoFlavorCond = repoFlavorCond.Or(builder.Eq{"`door43_metadata`.flavor": strings.TrimSpace(value)})
 			}
