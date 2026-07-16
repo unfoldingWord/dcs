@@ -306,7 +306,7 @@ func TestAPICron(t *testing.T) {
 		/*** DCS Customizations ***/
 		// Verify DCS-specific cron tasks are registered, regardless of total count
 		// (total varies based on whether Actions is enabled in the test environment)
-		dcsTasks := []string{"update_metadata", "update_user_metadata", "load_schemas", "convert_rc2sb"}
+		dcsTasks := []string{"update_metadata", "update_user_metadata", "load_schemas", "convert2sb"}
 		cronNames := make([]string, len(crons))
 		for i, c := range crons {
 			cronNames[i] = c.Name

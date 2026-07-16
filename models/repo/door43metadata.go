@@ -834,23 +834,24 @@ func DeleteAllDoor43MetadatasByRepoID(ctx context.Context, repoID int64) (int64,
 	return db.GetEngine(ctx).Delete(Door43Metadata{RepoID: repoID})
 }
 
-// RepoHasDefaultBranchRCMetadata returns true if the repo has a door43_metadata row
-// for its default branch with metadata_type = "rc", regardless of validation errors.
-func RepoHasDefaultBranchRCMetadata(ctx context.Context, repoID int64) (bool, error) {
+// HasDefaultBranchConvertibleMetadata returns true if the repo has a door43_metadata row
+// for its default branch with a metadata_type convertible to Scripture Burrito ("rc" or "ts"),
+// regardless of validation errors.
+func HasDefaultBranchConvertibleMetadata(ctx context.Context, repoID int64) (bool, error) {
 	return db.GetEngine(ctx).
 		Table("door43_metadata").
 		Where(builder.Eq{"repo_id": repoID}.
 			And(builder.Eq{"stage": int(door43metadata.StageLatest)}).
 			And(builder.Eq{"is_latest_for_stage": true}).
-			And(builder.Eq{"metadata_type": "rc"})).
+			And(builder.In("metadata_type", "rc", "ts"))).
 		Exist()
 }
 
-// GetReposQualifiedForRC2SBConversion returns all repos that qualify for RC-to-SB conversion:
+// GetReposQualifiedForSBConversion returns all repos that qualify for SB conversion:
 // non-archived, non-private, default_branch = "master", have a door43_metadata row for their
-// default branch with metadata_type = "rc", and have at least one topic from the given list.
-// Returns nil, nil if topics is empty.
-func GetReposQualifiedForRC2SBConversion(ctx context.Context, topics []string) ([]*Repository, error) {
+// default branch with metadata_type = "rc" or "ts", and have at least one topic from the
+// given list. Returns nil, nil if topics is empty.
+func GetReposQualifiedForSBConversion(ctx context.Context, topics []string) ([]*Repository, error) {
 	if len(topics) == 0 {
 		return nil, nil
 	}
@@ -868,12 +869,12 @@ func GetReposQualifiedForRC2SBConversion(ctx context.Context, topics []string) (
 		Where(builder.In("topic.name", lowerTopics...)).
 		GroupBy("repo_topic.repo_id")
 
-	// Subquery: repo IDs with a default-branch DM whose metadata_type is "rc"
+	// Subquery: repo IDs with a default-branch DM whose metadata_type is "rc" or "ts"
 	dmSubQ := builder.Select("repo_id").
 		From("door43_metadata").
 		Where(builder.Eq{"stage": int(door43metadata.StageLatest)}.
 			And(builder.Eq{"is_latest_for_stage": true}).
-			And(builder.Eq{"metadata_type": "rc"}))
+			And(builder.In("metadata_type", "rc", "ts")))
 
 	cond := builder.Eq{"`repository`.default_branch": "master"}.
 		And(builder.Eq{"`repository`.is_archived": 0}).
