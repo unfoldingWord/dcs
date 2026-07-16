@@ -20,8 +20,8 @@ import (
 // CmdConvertRC2SB represents the available convertrc2sb sub-command.
 var CmdConvertRC2SB = &cli.Command{
 	Name:        "convertrc2sb",
-	Usage:       "Convert RC repos to Scripture Burrito format",
-	Description: "Converts qualifying RC repositories to SB format and pushes to the main branch",
+	Usage:       "Convert RC and tS repos to Scripture Burrito format",
+	Description: "Converts qualifying RC and translationStudio (ts) repositories to SB format and pushes to the main branch. ts repos are first converted to RC format.",
 	Action:      runConvertRC2SB,
 	Flags: []cli.Flag{
 		&cli.StringFlag{
@@ -71,7 +71,7 @@ func runConvertRC2SB(ctx context.Context, c *cli.Command) error {
 			return fmt.Errorf("error checking qualification: %w", err)
 		}
 		if !qualifies {
-			return fmt.Errorf("repository %s/%s does not qualify for RC-to-SB conversion (requires MetadataType=rc, DefaultBranch=master, and a qualifying topic)", ownerName, repoName)
+			return fmt.Errorf("repository %s/%s does not qualify for SB conversion (requires MetadataType=rc or ts, DefaultBranch=master, and a qualifying topic)", ownerName, repoName)
 		}
 
 		return convertrc2sb_service.ForBranch(stdCtx, repo, repo.DefaultBranch)
