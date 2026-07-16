@@ -918,7 +918,7 @@ func GetTcOrTsDoor43Metadata(dm *repo_model.Door43Metadata, repo *repo_model.Rep
 		versification = "ufw"
 	}
 
-	if !dcs.IsValidBook(t.Project.ID) {
+	if t.Project.ID != "tw" && t.Project.ID != "ta" && !dcs.IsValidBook(t.Project.ID) {
 		return fmt.Errorf("%s does not have a valid book in its manifest.json", repo.FullName())
 	}
 

@@ -179,7 +179,7 @@ func initBasicTasks() {
 	registerUpdateDoor43MetadataTask()
 	registerUpdateUserMetadataTask()
 	registerLoadMetadataSchemasTask()
-	registerConvertRC2SBTask()
+	registerConvert2SBTask()
 	/*** END DCS Customizations ***/
 	if !setting.Repository.DisableMigrations {
 		registerUpdateMigrationPosterID()

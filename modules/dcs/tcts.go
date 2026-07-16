@@ -53,11 +53,11 @@ func GetTcTsManifestFromBlob(blob *git.Blob) (*structs.TcTsManifest, error) {
 			t.Project.Type = t.Type.ID
 		}
 
-		if t.Resource.ID == "obs" && t.Project.Type == "tn" {
+		if t.Resource.ID == "obs" && (t.Project.Type == "tn" || t.Type.ID == "tn") {
 			t.Subject = "OBS Translation Notes"
 			t.FlavorType = "peripheral"
 			t.Flavor = "x-OBSTranslationNotes"
-		} else if t.Resource.ID == "obs" && t.Project.Type == "tq" {
+		} else if t.Resource.ID == "obs" && (t.Project.Type == "tq" || t.Type.ID == "tq") {
 			t.Subject = "OBS Translation Questions"
 			t.FlavorType = "peripheral"
 			t.Flavor = "x-OBSTranslationQuestions"
@@ -65,6 +65,18 @@ func GetTcTsManifestFromBlob(blob *git.Blob) (*structs.TcTsManifest, error) {
 			t.Subject = "Open Bible Stories"
 			t.FlavorType = "gloss"
 			t.Flavor = "textStories"
+		} else if t.Project.Type == "tn" || t.Type.ID == "tn" {
+			t.Subject = "Translation Notes"
+			t.FlavorType = "peripheral"
+			t.Flavor = "x-TranslationNotes"
+		} else if t.Project.Type == "tq" || t.Type.ID == "tq" {
+			t.Subject = "Translation Questions"
+			t.FlavorType = "peripheral"
+			t.Flavor = "x-TranslationQuestions"
+		} else if t.Project.Type == "tw" || t.Type.ID == "tw" {
+			t.Subject = "Translation Words"
+			t.FlavorType = "peripheral"
+			t.Flavor = "x-peripheralArticles"
 		} else {
 			t.Subject = "Bible"
 			t.FlavorType = "scripture"

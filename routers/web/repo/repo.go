@@ -379,7 +379,7 @@ func DownloadSB(ctx *context.Context) {
 	if err != nil {
 		if errors.Is(err, sbarchiver_service.ErrUnknownArchiveFormat{}) {
 			ctx.HTTPError(http.StatusBadRequest, err.Error())
-		} else if errors.Is(err, sbarchiver_service.RepoRefNotFoundError{}) || errors.Is(err, sbarchiver_service.ErrRepoNotRC{}) {
+		} else if errors.Is(err, sbarchiver_service.RepoRefNotFoundError{}) || errors.Is(err, sbarchiver_service.ErrRepoNotConvertible{}) {
 			ctx.HTTPError(http.StatusNotFound, err.Error())
 		} else {
 			ctx.ServerError("sbarchiver_service.NewRequest", err)
