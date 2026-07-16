@@ -34,6 +34,7 @@ import (
 	gitea_context "gitea.dev/services/context"
 
 	rc2sb "github.com/unfoldingWord/go-rc2sb"
+	ts2rc "github.com/unfoldingWord/go-ts2rc"
 )
 
 const storageCommitPrefix = "sb-"
@@ -75,17 +76,17 @@ func (e RepoRefNotFoundError) Is(err error) bool {
 	return ok
 }
 
-// ErrRepoNotRC means SB archive generation is only available for RC repositories.
-type ErrRepoNotRC struct {
+// ErrRepoNotConvertible means SB archive generation is only available for RC and ts repositories.
+type ErrRepoNotConvertible struct {
 	RepoID int64
 }
 
-func (e ErrRepoNotRC) Error() string {
-	return fmt.Sprintf("repository %d is not an RC repository", e.RepoID)
+func (e ErrRepoNotConvertible) Error() string {
+	return fmt.Sprintf("repository %d is not an RC or ts repository", e.RepoID)
 }
 
-func (e ErrRepoNotRC) Is(err error) bool {
-	_, ok := err.(ErrRepoNotRC)
+func (e ErrRepoNotConvertible) Is(err error) bool {
+	_, ok := err.(ErrRepoNotConvertible)
 	return ok
 }
 
@@ -177,9 +178,27 @@ func (aReq *ArchiveRequest) Stream(ctx context.Context, repo *repo_model.Reposit
 	}
 	defer cleanup()
 
+	// ts repos are cloned to a separate dir and first converted to RC format below.
 	rcDir := filepath.Join(tmpDir, "rc")
-	if err := cloneRepositoryAtCommit(ctx, repo.RepoPath(), aReq.archiveRefShortName, aReq.CommitID, rcDir); err != nil {
+	cloneDir := rcDir
+	isTS := repoDM.MetadataType == "ts"
+	if isTS {
+		cloneDir = filepath.Join(tmpDir, "ts")
+	}
+	if err := cloneRepositoryAtCommit(ctx, repo.RepoPath(), aReq.archiveRefShortName, aReq.CommitID, cloneDir); err != nil {
 		return fmt.Errorf("clone requested repo ref: %w", err)
+	}
+
+	// For ts repos, convert ts -> RC so the RC -> SB pipeline below applies unchanged.
+	if isTS {
+		twSourceDir, err := prepareTsTWSourceDir(ctx, tmpDir, repoDM)
+		if err != nil {
+			return err
+		}
+		rep := ts2rc.Convert(ctx, cloneDir, rcDir, ts2rc.Options{TWSourceDir: twSourceDir})
+		if !rep.OK {
+			return fmt.Errorf("ts2rc.Convert: %s", rep.Error)
+		}
 	}
 
 	payloadPath, err := preparePayloadPath(ctx, tmpDir, rcDir, repo, repoDM)
@@ -215,10 +234,53 @@ func getRepoDMForConversion(ctx context.Context, repo *repo_model.Repository) (*
 	if dm == nil {
 		dm = repo.RepoDM
 	}
-	if dm == nil || dm.MetadataType != "rc" {
-		return nil, ErrRepoNotRC{RepoID: repo.ID}
+	if dm == nil || (dm.MetadataType != "rc" && dm.MetadataType != "ts") {
+		return nil, ErrRepoNotConvertible{RepoID: repo.ID}
 	}
 	return dm, nil
+}
+
+// tsTWSourceOwners are tried in order when locating a canonical en_tw repo. ts2rc uses it
+// to place Translation Words articles under bible/{kt|names|other}/ by matching slug filenames.
+var tsTWSourceOwners = []string{"unfoldingWord", "Door43-Catalog"}
+
+// prepareTsTWSourceDir clones a canonical en_tw repo into tmpDir/tw-source for ts
+// Translation Words conversions and returns its path. Returns ("", nil) when the repo
+// is not a ts TW repo or no canonical en_tw repo exists on this server — ts2rc then
+// falls back to writing articles under bible/other/ with a warning.
+func prepareTsTWSourceDir(ctx context.Context, tmpDir string, dm *repo_model.Door43Metadata) (string, error) {
+	if dm == nil || dm.Subject != "Translation Words" {
+		return "", nil
+	}
+
+	for _, owner := range tsTWSourceOwners {
+		twRepo, err := repo_model.GetRepositoryByOwnerAndName(ctx, owner, "en_tw")
+		if err != nil {
+			if repo_model.IsErrRepoNotExist(err) {
+				continue
+			}
+			return "", fmt.Errorf("repo_model.GetRepositoryByOwnerAndName(%s/en_tw): %w", owner, err)
+		}
+
+		twGitRepo, err := gitrepo.OpenRepository(ctx, twRepo)
+		if err != nil {
+			return "", fmt.Errorf("gitrepo.OpenRepository(%s): %w", twRepo.FullName(), err)
+		}
+		commitID, err := twGitRepo.ConvertToGitID(twRepo.DefaultBranch)
+		twGitRepo.Close()
+		if err != nil {
+			return "", fmt.Errorf("resolve %s default branch: %w", twRepo.FullName(), err)
+		}
+
+		twSourceDir := filepath.Join(tmpDir, "tw-source")
+		if err := cloneRepositoryAtCommit(ctx, twRepo.RepoPath(), twRepo.DefaultBranch, commitID.String(), twSourceDir); err != nil {
+			return "", fmt.Errorf("clone TW source repo %s: %w", twRepo.FullName(), err)
+		}
+		return twSourceDir, nil
+	}
+
+	log.Warn("SB archive: no canonical en_tw repo found for TW category lookup; articles will fall back to bible/other/")
+	return "", nil
 }
 
 func preparePayloadPath(ctx context.Context, tmpDir, rcDir string, repo *repo_model.Repository, dm *repo_model.Door43Metadata) (string, error) {
@@ -626,7 +688,7 @@ func ServeRepoSBArchive(ctx *gitea_context.Base, repo *repo_model.Repository, ar
 	if setting.Repository.StreamArchives {
 		httplib.ServeSetHeaders(ctx.Resp, httplib.ServeHeaderOptions{Filename: downloadName})
 		if err := archiveReq.Stream(ctx, repo, ctx.Resp); err != nil && !ctx.Written() {
-			if errors.Is(err, ErrRepoNotRC{}) {
+			if errors.Is(err, ErrRepoNotConvertible{}) {
 				ctx.HTTPError(http.StatusNotFound)
 				return
 			}
@@ -638,7 +700,7 @@ func ServeRepoSBArchive(ctx *gitea_context.Base, repo *repo_model.Repository, ar
 
 	archiver, err := archiveReq.Await(ctx)
 	if err != nil {
-		if errors.Is(err, ErrRepoNotRC{}) {
+		if errors.Is(err, ErrRepoNotConvertible{}) {
 			ctx.HTTPError(http.StatusNotFound)
 			return
 		}

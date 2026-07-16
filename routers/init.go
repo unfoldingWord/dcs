@@ -38,7 +38,7 @@ import (
 	"gitea.dev/services/auth"
 	"gitea.dev/services/auth/source/oauth2"
 	"gitea.dev/services/automerge"
-	"gitea.dev/services/convertrc2sb" // DCS Customizations
+	"gitea.dev/services/convert2sb" // DCS Customizations
 	"gitea.dev/services/cron"
 	"gitea.dev/services/door43metadata" // DCS Customizations
 	feed_service "gitea.dev/services/feed"
@@ -136,7 +136,7 @@ func InitWebInstalled(ctx context.Context) {
 	mustInitCtx(ctx, sbarchiver.Init)
 	/*** DCS Customizations ***/
 	mustInitCtx(ctx, door43metadata.Init)
-	mustInitCtx(ctx, convertrc2sb.Init)
+	mustInitCtx(ctx, convert2sb.Init)
 	/*** END DCS Customizations ***/
 
 	external.RegisterRenderers()
