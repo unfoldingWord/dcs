@@ -23,13 +23,14 @@ import (
 	"code.gitea.io/gitea/modules/util"
 
 	rc2sb "github.com/unfoldingWord/go-rc2sb"
+	ts2rc "github.com/unfoldingWord/go-ts2rc"
 )
 
-// RepoQualifiesForConversion checks if a repo meets all criteria for RC-to-SB conversion:
+// RepoQualifiesForConversion checks if a repo meets all criteria for SB conversion:
 // 1. CONVERT_RC2SB_TOPICS is configured in app.ini (non-empty)
 // 2. DefaultBranch is "master"
 // 3. Repo has at least one of the configured topics
-// 4. DefaultBranch DM MetadataType is "rc"
+// 4. DefaultBranch DM MetadataType is "rc" or "ts" (ts repos are first converted to RC)
 func RepoQualifiesForConversion(ctx context.Context, repo *repo_model.Repository) (bool, error) {
 	if repo == nil {
 		return false, nil
@@ -50,13 +51,13 @@ func RepoQualifiesForConversion(ctx context.Context, repo *repo_model.Repository
 		return false, nil
 	}
 
-	// Check for a default-branch DM with metadata_type = "rc", regardless of validation errors
-	hasRCMetadata, err := repo_model.RepoHasDefaultBranchRCMetadata(ctx, repo.ID)
+	// Check for a default-branch DM with metadata_type = "rc" or "ts", regardless of validation errors
+	hasConvertibleMetadata, err := repo_model.HasDefaultBranchConvertibleMetadata(ctx, repo.ID)
 	if err != nil {
-		return false, fmt.Errorf("RepoHasDefaultBranchRCMetadata: %w", err)
+		return false, fmt.Errorf("HasDefaultBranchConvertibleMetadata: %w", err)
 	}
-	if !hasRCMetadata {
-		log.Debug("ConvertRC2SB: %s does not qualify — no default-branch DM with metadata_type=rc", repo.FullName())
+	if !hasConvertibleMetadata {
+		log.Debug("ConvertRC2SB: %s does not qualify — no default-branch DM with metadata_type=rc or ts", repo.FullName())
 		return false, nil
 	}
 
@@ -76,8 +77,9 @@ func repoHasQualifyingTopic(repo *repo_model.Repository) bool {
 	return false
 }
 
-// ForBranch converts an RC repo at the HEAD of the given branch to SB format
-// and pushes the result to the "main" branch.
+// ForBranch converts an RC or ts repo at the HEAD of the given branch to SB format
+// and pushes the result to the "main" branch. ts repos are first converted to RC
+// format via ts2rc, then follow the same RC-to-SB pipeline.
 func ForBranch(ctx context.Context, repo *repo_model.Repository, branchName string) error {
 	if repo == nil {
 		return errors.New("repo must not be nil")
@@ -97,17 +99,42 @@ func ForBranch(ctx context.Context, repo *repo_model.Repository, branchName stri
 	}
 	defer cleanup()
 
-	// Step 1: Shallow clone at the branch HEAD
+	dm := getConversionDM(ctx, repo)
+	isTS := dm != nil && dm.MetadataType == "ts"
+
+	// Step 1: Shallow clone at the branch HEAD.
+	// ts repos are cloned to a separate dir and first converted to RC format below.
 	rcDir := filepath.Join(tmpDir, "rc")
-	if err := cloneAtRef(ctx, repo.RepoPath(), branchName, rcDir); err != nil {
+	cloneDir := rcDir
+	if isTS {
+		cloneDir = filepath.Join(tmpDir, "ts")
+	}
+	if err := cloneAtRef(ctx, repo.RepoPath(), branchName, cloneDir); err != nil {
 		return fmt.Errorf("clone at branch %s: %w", branchName, err)
+	}
+
+	// Step 1b: For ts repos, convert ts -> RC so the RC -> SB pipeline below applies unchanged.
+	if isTS {
+		twSourceDir, err := prepareTsTWSourceDir(ctx, tmpDir, repo, dm)
+		if err != nil {
+			return fmt.Errorf("prepareTsTWSourceDir: %w", err)
+		}
+		rep := ts2rc.Convert(ctx, cloneDir, rcDir, ts2rc.Options{TWSourceDir: twSourceDir})
+		if !rep.OK {
+			return fmt.Errorf("ts2rc.Convert: %s", rep.Error)
+		}
+		for _, warning := range rep.Warnings {
+			log.Warn("ConvertRC2SB: ts2rc warning for %s: %s", repo.FullName(), warning)
+		}
+		log.Info("ConvertRC2SB: ts2rc conversion successful for %s — class=%s, package_version=%d",
+			repo.FullName(), rep.Class, rep.Version)
 	}
 
 	// Step 2: Prepare payload for TWL and TW repos.
 	// For TWL repos: returns a path to the TW clone; passed to rc2sb as PayloadPath.
 	// For TW repos:  copies the TWL clone directly into rcDir/<lang>_twl/ so the
 	//                library can auto-detect it from inDir; returns "".
-	payloadPath, err := preparePayloadPath(ctx, tmpDir, rcDir, repo)
+	payloadPath, err := preparePayloadPath(ctx, tmpDir, rcDir, repo, dm)
 	if err != nil {
 		return fmt.Errorf("preparePayloadPath: %w", err)
 	}
@@ -161,6 +188,9 @@ func ForBranch(ctx context.Context, repo *repo_model.Repository, branchName stri
 
 	// Step 9: Commit
 	commitMsg := "Convert RC to SB from branch " + branchName
+	if isTS {
+		commitMsg = "Convert tS to SB from branch " + branchName
+	}
 	doer := repo.Owner
 	sig := doer.NewGitSig()
 
@@ -346,6 +376,20 @@ func copyFile(src, dst string) error {
 	return err
 }
 
+// getConversionDM returns the Door43Metadata to base conversion decisions on:
+// the default-branch DM if present, otherwise the repo-level DM, otherwise nil.
+func getConversionDM(ctx context.Context, repo *repo_model.Repository) *repo_model.Door43Metadata {
+	if err := repo.LoadLatestDMs(ctx); err != nil {
+		log.Warn("ConvertRC2SB: LoadLatestDMs failed for %s: %v", repo.FullName(), err)
+		return nil
+	}
+	dm := repo.DefaultBranchDM
+	if dm == nil {
+		dm = repo.RepoDM
+	}
+	return dm
+}
+
 // preparePayloadPath prepares the payload for TWL, OBS TWL, and TW repos.
 //
 // For TWL repos (Subject "TSV Translation Words Links") and OBS TWL repos
@@ -359,15 +403,7 @@ func copyFile(src, dst string) error {
 // (the same pattern the TWL handler uses to auto-detect <lang>_tw/). Returns "".
 //
 // Returns ("", nil) when no payload is needed.
-func preparePayloadPath(ctx context.Context, tmpDir, rcDir string, repo *repo_model.Repository) (string, error) {
-	if err := repo.LoadLatestDMs(ctx); err != nil {
-		return "", nil
-	}
-
-	dm := repo.DefaultBranchDM
-	if dm == nil {
-		dm = repo.RepoDM
-	}
+func preparePayloadPath(ctx context.Context, tmpDir, rcDir string, repo *repo_model.Repository, dm *repo_model.Door43Metadata) (string, error) {
 	if dm == nil || dm.Language == "" {
 		return "", nil
 	}
@@ -426,4 +462,36 @@ func preparePayloadPath(ctx context.Context, tmpDir, rcDir string, repo *repo_mo
 	}
 
 	return payloadDir, nil
+}
+
+// tsTWSourceOwners are tried in order when locating a canonical en_tw repo. ts2rc uses it
+// to place Translation Words articles under bible/{kt|names|other}/ by matching slug filenames.
+var tsTWSourceOwners = []string{"unfoldingWord", "Door43-Catalog"}
+
+// prepareTsTWSourceDir clones a canonical en_tw repo into tmpDir/tw-source for ts
+// Translation Words conversions and returns its path. Returns ("", nil) when the repo
+// is not a ts TW repo or no canonical en_tw repo exists on this server — ts2rc then
+// falls back to writing articles under bible/other/ with a warning.
+func prepareTsTWSourceDir(ctx context.Context, tmpDir string, repo *repo_model.Repository, dm *repo_model.Door43Metadata) (string, error) {
+	if dm == nil || dm.Subject != "Translation Words" {
+		return "", nil
+	}
+
+	for _, owner := range tsTWSourceOwners {
+		twRepo, err := repo_model.GetRepositoryByOwnerAndName(ctx, owner, "en_tw")
+		if err != nil {
+			if repo_model.IsErrRepoNotExist(err) {
+				continue
+			}
+			return "", fmt.Errorf("GetRepositoryByOwnerAndName(%s/en_tw): %w", owner, err)
+		}
+		twSourceDir := filepath.Join(tmpDir, "tw-source")
+		if err := cloneAtRef(ctx, twRepo.RepoPath(), twRepo.DefaultBranch, twSourceDir); err != nil {
+			return "", fmt.Errorf("clone TW source repo %s: %w", twRepo.FullName(), err)
+		}
+		return twSourceDir, nil
+	}
+
+	log.Warn("ConvertRC2SB: no canonical en_tw repo found for TW category lookup; %s articles will fall back to bible/other/", repo.FullName())
+	return "", nil
 }

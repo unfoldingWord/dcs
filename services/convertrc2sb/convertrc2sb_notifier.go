@@ -15,9 +15,9 @@ import (
 	notify_service "code.gitea.io/gitea/services/notify"
 )
 
-// sbFirstTopic is a hardcoded topic that, when added to a repo, triggers a one-time RC-to-SB
+// sbFirstTopic is a hardcoded topic that, when added to a repo, triggers a one-time SB
 // conversion. It bypasses the CONVERT_RC2SB_TOPICS setting but still requires the repo to be
-// an RC repo on master. It is intentionally not used by the bulk cron task.
+// an RC or ts repo on master. It is intentionally not used by the bulk cron task.
 const sbFirstTopic = "sbfirst"
 
 type rc2sbNotifier struct {
@@ -36,7 +36,7 @@ func newNotifier() notify_service.Notifier {
 	return &rc2sbNotifier{}
 }
 
-// PushCommits triggers RC-to-SB conversion when a push is made to the master branch of a qualifying repo.
+// PushCommits triggers SB conversion when a push is made to the master branch of a qualifying repo.
 func (n *rc2sbNotifier) PushCommits(ctx context.Context, pusher *user_model.User, repo *repo_model.Repository, opts *repo_module.PushUpdateOptions, commits *repo_module.PushCommits) {
 	if repo == nil || opts == nil {
 		return
@@ -61,10 +61,10 @@ func (n *rc2sbNotifier) PushCommits(ctx context.Context, pusher *user_model.User
 	spawnConversion(repo)
 }
 
-// RepoTopicsChanged triggers RC-to-SB conversion when a qualifying topic is added to a repo.
+// RepoTopicsChanged triggers SB conversion when a qualifying topic is added to a repo.
 // Two cases trigger conversion:
-//  1. The repo now has the hardcoded "sbfirst" topic — triggers if the repo is RC on master,
-//     regardless of the CONVERT_RC2SB_TOPICS setting. This is a one-time manual trigger.
+//  1. The repo now has the hardcoded "sbfirst" topic — triggers if the repo is RC or ts on
+//     master, regardless of the CONVERT_RC2SB_TOPICS setting. This is a one-time manual trigger.
 //  2. The repo now has a topic from CONVERT_RC2SB_TOPICS — triggers via full qualification check.
 func (n *rc2sbNotifier) RepoTopicsChanged(ctx context.Context, doer *user_model.User, repo *repo_model.Repository) {
 	if repo == nil {
@@ -81,7 +81,7 @@ func (n *rc2sbNotifier) RepoTopicsChanged(ctx context.Context, doer *user_model.
 
 	log.Info("ConvertRC2SB notifier: topics changed for %s, checking qualification", freshRepo.FullName())
 
-	// Case 1: "sbfirst" topic — bypass CONVERT_RC2SB_TOPICS, but still require RC on master.
+	// Case 1: "sbfirst" topic — bypass CONVERT_RC2SB_TOPICS, but still require RC or ts on master.
 	for _, t := range freshRepo.Topics {
 		if strings.EqualFold(t, sbFirstTopic) {
 			if freshRepo.DefaultBranch != "master" {
@@ -89,13 +89,13 @@ func (n *rc2sbNotifier) RepoTopicsChanged(ctx context.Context, doer *user_model.
 					freshRepo.FullName(), sbFirstTopic, freshRepo.DefaultBranch)
 				return
 			}
-			hasRC, err := repo_model.RepoHasDefaultBranchRCMetadata(ctx, freshRepo.ID)
+			hasConvertible, err := repo_model.HasDefaultBranchConvertibleMetadata(ctx, freshRepo.ID)
 			if err != nil {
-				log.Warn("ConvertRC2SB notifier: RepoHasDefaultBranchRCMetadata failed for %s: %v", freshRepo.FullName(), err)
+				log.Warn("ConvertRC2SB notifier: HasDefaultBranchConvertibleMetadata failed for %s: %v", freshRepo.FullName(), err)
 				return
 			}
-			if !hasRC {
-				log.Info("ConvertRC2SB notifier: %s has %q topic but is not an RC repo, skipping",
+			if !hasConvertible {
+				log.Info("ConvertRC2SB notifier: %s has %q topic but is not an RC or ts repo, skipping",
 					freshRepo.FullName(), sbFirstTopic)
 				return
 			}

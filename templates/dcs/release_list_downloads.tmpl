@@ -1,6 +1,6 @@
 {{$release := .release}}
 {{if $release.Door43Metadata}}
-  {{if eq $release.Door43Metadata.MetadataType "rc"}}
+  {{if or (eq $release.Door43Metadata.MetadataType "rc") (eq $release.Door43Metadata.MetadataType "ts")}}
 		<li class="item">
 		  <a class="archive-link" download href="{{$.RepoLink}}/sb/{{$release.TagName | PathEscapeSegments}}.zip" rel="nofollow">
 			  <strong class="flex-text-inline">{{svg "octicon-file-zip" 16 "download-icon"}}{{ctx.Locale.Tr "dcs.repo.release.source_files_sb"}} (ZIP)</strong>
