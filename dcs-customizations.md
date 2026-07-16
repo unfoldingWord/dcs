@@ -109,7 +109,7 @@ This document catalogs every DCS modification to existing Gitea files. New DCS-o
 | `cmd/main.go` | CmdDoor43Metadata command registration | LOW | cmd/door43metadata.go |
 | `routers/init.go` | door43metadata service import | LOW | services/door43metadata/ |
 | `routers/web/web.go` | routers/web/dcs import | LOW | routers/web/dcs/ |
-| `go.mod` | github.com/unfoldingWord/go-rc2sb dependency | LOW | - |
+| `go.mod` | github.com/unfoldingWord/go-rc2sb and go-ts2rc dependencies | LOW | - |
 
 ### INTERFACE_EXT - Interface extensions
 

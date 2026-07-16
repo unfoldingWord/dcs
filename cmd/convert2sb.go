@@ -12,17 +12,18 @@ import (
 	"code.gitea.io/gitea/models/system"
 	"code.gitea.io/gitea/modules/log"
 	"code.gitea.io/gitea/modules/storage"
-	convertrc2sb_service "code.gitea.io/gitea/services/convertrc2sb"
+	convert2sb_service "code.gitea.io/gitea/services/convert2sb"
 
 	"github.com/urfave/cli/v3"
 )
 
-// CmdConvertRC2SB represents the available convertrc2sb sub-command.
-var CmdConvertRC2SB = &cli.Command{
-	Name:        "convertrc2sb",
+// CmdConvert2SB represents the available convert2sb sub-command.
+var CmdConvert2SB = &cli.Command{
+	Name:        "convert2sb",
+	Aliases:     []string{"convertrc2sb"}, // deprecated name, kept for existing scripts
 	Usage:       "Convert RC and tS repos to Scripture Burrito format",
 	Description: "Converts qualifying RC and translationStudio (ts) repositories to SB format and pushes to the main branch. ts repos are first converted to RC format.",
-	Action:      runConvertRC2SB,
+	Action:      runConvert2SB,
 	Flags: []cli.Flag{
 		&cli.StringFlag{
 			Name:    "owner",
@@ -39,7 +40,7 @@ var CmdConvertRC2SB = &cli.Command{
 	},
 }
 
-func runConvertRC2SB(ctx context.Context, c *cli.Command) error {
+func runConvert2SB(ctx context.Context, c *cli.Command) error {
 	ownerName := c.String("owner")
 	repoName := c.String("repo")
 	if ownerName != "" && repoName == "" {
@@ -66,7 +67,7 @@ func runConvertRC2SB(ctx context.Context, c *cli.Command) error {
 			return err
 		}
 
-		qualifies, err := convertrc2sb_service.RepoQualifiesForConversion(stdCtx, repo)
+		qualifies, err := convert2sb_service.RepoQualifiesForConversion(stdCtx, repo)
 		if err != nil {
 			return fmt.Errorf("error checking qualification: %w", err)
 		}
@@ -74,17 +75,17 @@ func runConvertRC2SB(ctx context.Context, c *cli.Command) error {
 			return fmt.Errorf("repository %s/%s does not qualify for SB conversion (requires MetadataType=rc or ts, DefaultBranch=master, and a qualifying topic)", ownerName, repoName)
 		}
 
-		return convertrc2sb_service.ForBranch(stdCtx, repo, repo.DefaultBranch)
+		return convert2sb_service.ForBranch(stdCtx, repo, repo.DefaultBranch)
 	}
 
-	if err := system.CreateRepositoryNotice("Starting FULL RC-to-SB Conversion - PROCESSING ALL QUALIFYING REPOS"); err != nil {
+	if err := system.CreateRepositoryNotice("Starting FULL RC/tS-to-SB Conversion - PROCESSING ALL QUALIFYING REPOS"); err != nil {
 		return err
 	}
 
-	if err := convertrc2sb_service.ConvertRC2SBAllRepos(stdCtx); err != nil {
+	if err := convert2sb_service.Convert2SBAllRepos(stdCtx); err != nil {
 		return err
 	}
 
-	log.Info("Finished RC-to-SB conversion for all qualifying repos")
-	return system.CreateRepositoryNotice("FINISHED FULL RC-to-SB Conversion - PROCESSED ALL QUALIFYING REPOS")
+	log.Info("Finished RC/tS-to-SB conversion for all qualifying repos")
+	return system.CreateRepositoryNotice("FINISHED FULL RC/tS-to-SB Conversion - PROCESSED ALL QUALIFYING REPOS")
 }

@@ -847,11 +847,11 @@ func HasDefaultBranchConvertibleMetadata(ctx context.Context, repoID int64) (boo
 		Exist()
 }
 
-// GetReposQualifiedForRC2SBConversion returns all repos that qualify for SB conversion:
+// GetReposQualifiedForSBConversion returns all repos that qualify for SB conversion:
 // non-archived, non-private, default_branch = "master", have a door43_metadata row for their
 // default branch with metadata_type = "rc" or "ts", and have at least one topic from the
 // given list. Returns nil, nil if topics is empty.
-func GetReposQualifiedForRC2SBConversion(ctx context.Context, topics []string) ([]*Repository, error) {
+func GetReposQualifiedForSBConversion(ctx context.Context, topics []string) ([]*Repository, error) {
 	if len(topics) == 0 {
 		return nil, nil
 	}

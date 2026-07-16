@@ -3859,7 +3859,7 @@
   "admin.dashboard.update_metadata": "Update Door43 Metadata",
   "admin.dashboard.update_user_metadata": "Update User Metadata",
   "admin.dashboard.load_schemas": "Load Metadata Schemas",
-  "admin.dashboard.convert_rc2sb": "Convert RC/tS to Scripture Burrito",
+  "admin.dashboard.convert2sb": "Convert RC/tS to Scripture Burrito",
   "dcs.admin.users.list_status_filter.is_spam_user": "Spam User",
   "dcs.explore.released": "Released",
   "dcs.repo.download_tar_sb": "Download TAR.GZ (Source as SB)",

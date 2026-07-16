@@ -1,7 +1,7 @@
 // Copyright 2026 The Gitea Authors. All rights reserved.
 // SPDX-License-Identifier: MIT
 
-package convertrc2sb
+package convert2sb
 
 import (
 	"context"
@@ -27,7 +27,7 @@ import (
 )
 
 // RepoQualifiesForConversion checks if a repo meets all criteria for SB conversion:
-// 1. CONVERT_RC2SB_TOPICS is configured in app.ini (non-empty)
+// 1. CONVERT2SB_TOPICS is configured in app.ini (non-empty)
 // 2. DefaultBranch is "master"
 // 3. Repo has at least one of the configured topics
 // 4. DefaultBranch DM MetadataType is "rc" or "ts" (ts repos are first converted to RC)
@@ -36,18 +36,18 @@ func RepoQualifiesForConversion(ctx context.Context, repo *repo_model.Repository
 		return false, nil
 	}
 
-	if len(setting.DCS.ConvertRC2SBTopics) == 0 {
-		log.Debug("ConvertRC2SB: CONVERT_RC2SB_TOPICS not configured, skipping all conversions")
+	if len(setting.DCS.Convert2SBTopics) == 0 {
+		log.Debug("Convert2SB: CONVERT2SB_TOPICS not configured, skipping all conversions")
 		return false, nil
 	}
 
 	if repo.DefaultBranch != "master" {
-		log.Debug("ConvertRC2SB: %s does not qualify — DefaultBranch is %q (need \"master\")", repo.FullName(), repo.DefaultBranch)
+		log.Debug("Convert2SB: %s does not qualify — DefaultBranch is %q (need \"master\")", repo.FullName(), repo.DefaultBranch)
 		return false, nil
 	}
 
 	if !repoHasQualifyingTopic(repo) {
-		log.Debug("ConvertRC2SB: %s does not qualify — no qualifying topic (has: %v)", repo.FullName(), repo.Topics)
+		log.Debug("Convert2SB: %s does not qualify — no qualifying topic (has: %v)", repo.FullName(), repo.Topics)
 		return false, nil
 	}
 
@@ -57,18 +57,18 @@ func RepoQualifiesForConversion(ctx context.Context, repo *repo_model.Repository
 		return false, fmt.Errorf("HasDefaultBranchConvertibleMetadata: %w", err)
 	}
 	if !hasConvertibleMetadata {
-		log.Debug("ConvertRC2SB: %s does not qualify — no default-branch DM with metadata_type=rc or ts", repo.FullName())
+		log.Debug("Convert2SB: %s does not qualify — no default-branch DM with metadata_type=rc or ts", repo.FullName())
 		return false, nil
 	}
 
-	log.Info("ConvertRC2SB: %s qualifies for conversion", repo.FullName())
+	log.Info("Convert2SB: %s qualifies for conversion", repo.FullName())
 	return true, nil
 }
 
 // repoHasQualifyingTopic checks if repo.Topics contains at least one qualifying topic.
 func repoHasQualifyingTopic(repo *repo_model.Repository) bool {
 	for _, topic := range repo.Topics {
-		for _, qt := range setting.DCS.ConvertRC2SBTopics {
+		for _, qt := range setting.DCS.Convert2SBTopics {
 			if strings.EqualFold(topic, qt) {
 				return true
 			}
@@ -85,7 +85,7 @@ func ForBranch(ctx context.Context, repo *repo_model.Repository, branchName stri
 		return errors.New("repo must not be nil")
 	}
 
-	log.Info("ConvertRC2SB: starting conversion for %s branch %s", repo.FullName(), branchName)
+	log.Info("Convert2SB: starting conversion for %s branch %s", repo.FullName(), branchName)
 
 	// Load owner for commit identity
 	if err := repo.LoadOwner(ctx); err != nil {
@@ -93,7 +93,7 @@ func ForBranch(ctx context.Context, repo *repo_model.Repository, branchName stri
 	}
 
 	// Create temp directory for conversion work
-	tmpDir, cleanup, err := setting.AppDataTempDir("repo-rc2sb-convert").MkdirTempRandom(fmt.Sprintf("%d-", repo.ID))
+	tmpDir, cleanup, err := setting.AppDataTempDir("repo-convert2sb").MkdirTempRandom(fmt.Sprintf("%d-", repo.ID))
 	if err != nil {
 		return fmt.Errorf("create temp dir: %w", err)
 	}
@@ -124,9 +124,9 @@ func ForBranch(ctx context.Context, repo *repo_model.Repository, branchName stri
 			return fmt.Errorf("ts2rc.Convert: %s", rep.Error)
 		}
 		for _, warning := range rep.Warnings {
-			log.Warn("ConvertRC2SB: ts2rc warning for %s: %s", repo.FullName(), warning)
+			log.Warn("Convert2SB: ts2rc warning for %s: %s", repo.FullName(), warning)
 		}
-		log.Info("ConvertRC2SB: ts2rc conversion successful for %s — class=%s, package_version=%d",
+		log.Info("Convert2SB: ts2rc conversion successful for %s — class=%s, package_version=%d",
 			repo.FullName(), rep.Class, rep.Version)
 	}
 
@@ -165,7 +165,7 @@ func ForBranch(ctx context.Context, repo *repo_model.Repository, branchName stri
 	if err != nil {
 		return fmt.Errorf("rc2sb.Convert: %w", err)
 	}
-	log.Info("ConvertRC2SB: conversion successful for %s — subject=%s, ingredients=%d",
+	log.Info("Convert2SB: conversion successful for %s — subject=%s, ingredients=%d",
 		repo.FullName(), result.Subject, result.Ingredients)
 
 	// Step 4: Clone the full repo to a working directory for pushing
@@ -200,7 +200,7 @@ func ForBranch(ctx context.Context, repo *repo_model.Repository, branchName stri
 		return fmt.Errorf("git status: %w", err)
 	}
 	if strings.TrimSpace(stdout) == "" {
-		log.Info("ConvertRC2SB: no changes to commit for %s branch %s", repo.FullName(), branchName)
+		log.Info("Convert2SB: no changes to commit for %s branch %s", repo.FullName(), branchName)
 		return nil
 	}
 
@@ -232,25 +232,25 @@ func ForBranch(ctx context.Context, repo *repo_model.Repository, branchName stri
 		return fmt.Errorf("git push: %w", err)
 	}
 
-	log.Info("ConvertRC2SB: successfully pushed SB content to main branch for %s", repo.FullName())
+	log.Info("Convert2SB: successfully pushed SB content to main branch for %s", repo.FullName())
 	return nil
 }
 
-// ConvertRC2SBAllRepos finds all qualifying repos and converts their default (master) branch.
-func ConvertRC2SBAllRepos(ctx context.Context) error { //nolint:revive // name is used by cron task reference
-	log.Trace("Doing: ConvertRC2SBAllRepos")
+// Convert2SBAllRepos finds all qualifying repos and converts their default (master) branch.
+func Convert2SBAllRepos(ctx context.Context) error { //nolint:revive // name is used by cron task reference
+	log.Trace("Doing: Convert2SBAllRepos")
 
-	if len(setting.DCS.ConvertRC2SBTopics) == 0 {
-		log.Debug("ConvertRC2SBAllRepos: CONVERT_RC2SB_TOPICS not configured, skipping")
+	if len(setting.DCS.Convert2SBTopics) == 0 {
+		log.Debug("Convert2SBAllRepos: CONVERT2SB_TOPICS not configured, skipping")
 		return nil
 	}
 
-	repos, err := repo_model.GetReposQualifiedForRC2SBConversion(ctx, setting.DCS.ConvertRC2SBTopics)
+	repos, err := repo_model.GetReposQualifiedForSBConversion(ctx, setting.DCS.Convert2SBTopics)
 	if err != nil {
-		return fmt.Errorf("GetReposQualifiedForRC2SBConversion: %w", err)
+		return fmt.Errorf("GetReposQualifiedForSBConversion: %w", err)
 	}
 
-	log.Info("ConvertRC2SBAllRepos: found %d qualifying repos", len(repos))
+	log.Info("Convert2SBAllRepos: found %d qualifying repos", len(repos))
 
 	for _, repo := range repos {
 		select {
@@ -260,9 +260,9 @@ func ConvertRC2SBAllRepos(ctx context.Context) error { //nolint:revive // name i
 		}
 
 		if err := ForBranch(ctx, repo, repo.DefaultBranch); err != nil {
-			log.Error("ConvertRC2SBAllRepos: conversion failed for %s branch %s: %v", repo.FullName(), repo.DefaultBranch, err)
+			log.Error("Convert2SBAllRepos: conversion failed for %s branch %s: %v", repo.FullName(), repo.DefaultBranch, err)
 			if noticeErr := system_model.CreateRepositoryNotice(
-				"ConvertRC2SB failed for repository (%s) branch (%s): %v", repo.FullName(), repo.DefaultBranch, err,
+				"Convert2SB failed for repository (%s) branch (%s): %v", repo.FullName(), repo.DefaultBranch, err,
 			); noticeErr != nil {
 				log.Error("CreateRepositoryNotice: %v", noticeErr)
 			}
@@ -270,7 +270,7 @@ func ConvertRC2SBAllRepos(ctx context.Context) error { //nolint:revive // name i
 		}
 	}
 
-	log.Trace("Finished: ConvertRC2SBAllRepos")
+	log.Trace("Finished: Convert2SBAllRepos")
 	return nil
 }
 
@@ -398,7 +398,7 @@ func copyFile(src, dst string) error {
 // the default-branch DM if present, otherwise the repo-level DM, otherwise nil.
 func getConversionDM(ctx context.Context, repo *repo_model.Repository) *repo_model.Door43Metadata {
 	if err := repo.LoadLatestDMs(ctx); err != nil {
-		log.Warn("ConvertRC2SB: LoadLatestDMs failed for %s: %v", repo.FullName(), err)
+		log.Warn("Convert2SB: LoadLatestDMs failed for %s: %v", repo.FullName(), err)
 		return nil
 	}
 	dm := repo.DefaultBranchDM
@@ -510,6 +510,6 @@ func prepareTsTWSourceDir(ctx context.Context, tmpDir string, repo *repo_model.R
 		return twSourceDir, nil
 	}
 
-	log.Warn("ConvertRC2SB: no canonical en_tw repo found for TW category lookup; %s articles will fall back to bible/other/", repo.FullName())
+	log.Warn("Convert2SB: no canonical en_tw repo found for TW category lookup; %s articles will fall back to bible/other/", repo.FullName())
 	return "", nil
 }
