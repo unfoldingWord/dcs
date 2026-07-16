@@ -139,10 +139,28 @@ func ForBranch(ctx context.Context, repo *repo_model.Repository, branchName stri
 		return fmt.Errorf("preparePayloadPath: %w", err)
 	}
 
+	// Resolve the source branch commit; recorded as the SB revision so the burrito
+	// identifies exactly which state of the repo was converted. Passed explicitly
+	// because rcDir's origin is a local path (and ts conversions have no .git),
+	// so the library cannot detect the repo identity itself.
+	gitRepo, err := gitrepo.OpenRepository(ctx, repo)
+	if err != nil {
+		return fmt.Errorf("OpenRepository: %w", err)
+	}
+	commitID, err := gitRepo.ConvertToGitID(branchName)
+	gitRepo.Close()
+	if err != nil {
+		return fmt.Errorf("resolve branch %s: %w", branchName, err)
+	}
+
 	// Step 3: Run rc2sb conversion
 	sbDir := filepath.Join(tmpDir, "sb")
 	result, err := rc2sb.Convert(ctx, rcDir, sbDir, rc2sb.Options{
 		PayloadPath: payloadPath,
+		Owner:       repo.OwnerName,                          // e.g. "unfoldingWord"
+		RepoName:    repo.Name,                               // e.g. "en_tw"
+		DCSURL:      strings.TrimSuffix(setting.AppURL, "/"), // AppURL always has a "/" suffix
+		Revision:    commitID.String(),                       // branch-head SHA being converted
 	})
 	if err != nil {
 		return fmt.Errorf("rc2sb.Convert: %w", err)
