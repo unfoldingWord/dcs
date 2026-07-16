@@ -131,7 +131,7 @@ func NewMainApp(appVer AppVersion) *cli.Command {
 		newActionsCommand(),
 		/*** DCS Customizations ***/
 		CmdDoor43Metadata,
-		CmdConvertRC2SB,
+		CmdConvert2SB,
 		/*** END DCS Customizations ***/
 	}
 
