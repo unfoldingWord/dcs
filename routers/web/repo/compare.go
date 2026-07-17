@@ -75,7 +75,7 @@ func setCompareContext(ctx *context.Context, before, head *git.Commit, headOwner
 			return st
 		}
 
-		st, err := blob.GuessContentType()
+		st, err := blob.GuessContentType(ctx)
 		if err != nil {
 			log.Error("GuessContentType failed: %v", err)
 			return st
@@ -140,11 +140,11 @@ func setCsvCompareContext(ctx *context.Context) {
 				return nil, nil, nil
 			}
 
-			if setting.UI.CSV.MaxFileSize != 0 && setting.UI.CSV.MaxFileSize < blob.Size() {
+			if setting.UI.CSV.MaxFileSize != 0 && setting.UI.CSV.MaxFileSize < blob.Size(ctx) {
 				return nil, nil, errTooLarge
 			}
 
-			reader, err := blob.DataAsync()
+			reader, err := blob.DataAsync(ctx)
 			if err != nil {
 				return nil, nil, err
 			}
@@ -249,7 +249,7 @@ func (cpi *comparePageInfoType) parseCompareInfo(ctx *context.Context, comparePa
 	baseRefName := util.IfZero(compareReq.BaseOriRef, baseRepo.GetPullRequestTargetBranch(ctx))
 	headRefName := util.IfZero(compareReq.HeadOriRef, headRepo.DefaultBranch)
 
-	baseRef, err := common.ResolveRefWithSuffix(ctx.Repo.GitRepo, baseRefName, compareReq.BaseOriRefSuffix)
+	baseRef, err := common.ResolveRefWithSuffix(ctx, ctx.Repo.GitRepo, baseRefName, compareReq.BaseOriRefSuffix)
 	if err != nil {
 		return err
 	}
@@ -258,7 +258,7 @@ func (cpi *comparePageInfoType) parseCompareInfo(ctx *context.Context, comparePa
 		return err
 	}
 
-	headRef, err := common.ResolveRefWithSuffix(headGitRepo, headRefName, compareReq.HeadOriRefSuffix)
+	headRef, err := common.ResolveRefWithSuffix(ctx, headGitRepo, headRefName, compareReq.HeadOriRefSuffix)
 	if err != nil {
 		return err
 	}
@@ -509,7 +509,7 @@ func (cpi *comparePageInfoType) prepareCompareDiff(ctx *context.Context, whitesp
 		ctx.Data["FileIconPoolHTML"] = renderedIconPool.RenderToHTML()
 	}
 
-	headCommit, err := ci.HeadGitRepo.GetCommit(headCommitID)
+	headCommit, err := ci.HeadGitRepo.GetCommit(ctx, headCommitID)
 	if err != nil {
 		ctx.ServerError("GetCommit", err)
 		return
@@ -517,7 +517,7 @@ func (cpi *comparePageInfoType) prepareCompareDiff(ctx *context.Context, whitesp
 
 	baseGitRepo := ctx.Repo.GitRepo
 
-	beforeCommit, err := baseGitRepo.GetCommit(beforeCommitID)
+	beforeCommit, err := baseGitRepo.GetCommit(ctx, beforeCommitID)
 	if err != nil {
 		ctx.ServerError("GetCommit", err)
 		return
@@ -655,9 +655,9 @@ func downloadCompareDiffOrPatch(ctx *context.Context, patch bool) {
 
 	var err error
 	if patch {
-		err = ci.HeadGitRepo.GetPatch(compareArg, ctx.Resp)
+		err = ci.HeadGitRepo.GetPatch(ctx, compareArg, ctx.Resp)
 	} else {
-		err = ci.HeadGitRepo.GetDiff(compareArg, ctx.Resp)
+		err = ci.HeadGitRepo.GetDiff(ctx, compareArg, ctx.Resp)
 	}
 	if err != nil {
 		ctx.ServerError("DownloadCompareDiffOrPatch", err)
@@ -792,7 +792,7 @@ func ExcerptBlob(ctx *context.Context) {
 		diffBlobExcerptData.BaseLink = ctx.Repo.RepoLink + "/wiki/blob_excerpt"
 	}
 
-	commit, err := gitRepo.GetCommit(commitID)
+	commit, err := gitRepo.GetCommit(ctx, commitID)
 	if err != nil {
 		ctx.ServerError("GetCommit", err)
 		return
@@ -802,7 +802,7 @@ func ExcerptBlob(ctx *context.Context) {
 		ctx.ServerError("GetBlobByPath", err)
 		return
 	}
-	reader, err := blob.DataAsync()
+	reader, err := blob.DataAsync(ctx)
 	if err != nil {
 		ctx.ServerError("DataAsync", err)
 		return

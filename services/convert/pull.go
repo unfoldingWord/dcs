@@ -148,7 +148,7 @@ func ToAPIPullRequest(ctx context.Context, pr *issues_model.PullRequest, doer *u
 		apiPullRequest.Closed = pr.Issue.ClosedUnix.AsTimePtr()
 	}
 
-	gitRepo, err := gitrepo.OpenRepository(ctx, pr.BaseRepo)
+	gitRepo, err := gitrepo.OpenRepository(pr.BaseRepo)
 	if err != nil {
 		log.Error("OpenRepository[%s]: %v", pr.BaseRepo.RelativePath(), err)
 		return nil
@@ -162,7 +162,7 @@ func ToAPIPullRequest(ctx context.Context, pr *issues_model.PullRequest, doer *u
 	}
 
 	if exist {
-		baseCommit, err = gitRepo.GetBranchCommit(pr.BaseBranch)
+		baseCommit, err = gitRepo.GetBranchCommit(ctx, pr.BaseBranch)
 		if err != nil && !git.IsErrNotExist(err) {
 			log.Error("GetCommit[%s]: %v", baseBranch, err)
 			return nil
@@ -174,7 +174,7 @@ func ToAPIPullRequest(ctx context.Context, pr *issues_model.PullRequest, doer *u
 	}
 
 	if pr.Flow == issues_model.PullRequestFlowAGit {
-		apiPullRequest.Head.Sha, err = gitRepo.GetRefCommitID(pr.GetGitHeadRefName())
+		apiPullRequest.Head.Sha, err = gitRepo.GetRefCommitID(ctx, pr.GetGitHeadRefName())
 		if err != nil {
 			log.Error("GetRefCommitID[%s]: %v", pr.GetGitHeadRefName(), err)
 			return nil
@@ -194,7 +194,7 @@ func ToAPIPullRequest(ctx context.Context, pr *issues_model.PullRequest, doer *u
 		apiPullRequest.Head.RepoID = pr.HeadRepo.ID
 		apiPullRequest.Head.Repository = ToRepo(ctx, pr.HeadRepo, p)
 
-		headGitRepo, err := gitrepo.OpenRepository(ctx, pr.HeadRepo)
+		headGitRepo, err := gitrepo.OpenRepository(pr.HeadRepo)
 		if err != nil {
 			log.Error("OpenRepository[%s]: %v", pr.HeadRepo.RelativePath(), err)
 			return nil
@@ -214,7 +214,7 @@ func ToAPIPullRequest(ctx context.Context, pr *issues_model.PullRequest, doer *u
 		)
 
 		if !exist {
-			headCommitID, err := headGitRepo.GetRefCommitID(apiPullRequest.Head.Ref)
+			headCommitID, err := headGitRepo.GetRefCommitID(ctx, apiPullRequest.Head.Ref)
 			if err != nil && !git.IsErrNotExist(err) {
 				log.Error("GetCommit[%s]: %v", pr.HeadBranch, err)
 				return nil
@@ -224,7 +224,7 @@ func ToAPIPullRequest(ctx context.Context, pr *issues_model.PullRequest, doer *u
 				endCommitID = headCommitID
 			}
 		} else {
-			commit, err := headGitRepo.GetBranchCommit(pr.HeadBranch)
+			commit, err := headGitRepo.GetBranchCommit(ctx, pr.HeadBranch)
 			if err != nil && !git.IsErrNotExist(err) {
 				log.Error("GetCommit[%s]: %v", headBranch, err)
 				return nil
@@ -250,13 +250,13 @@ func ToAPIPullRequest(ctx context.Context, pr *issues_model.PullRequest, doer *u
 	}
 
 	if len(apiPullRequest.Head.Sha) == 0 && len(apiPullRequest.Head.Ref) != 0 {
-		baseGitRepo, err := gitrepo.OpenRepository(ctx, pr.BaseRepo)
+		baseGitRepo, err := gitrepo.OpenRepository(pr.BaseRepo)
 		if err != nil {
 			log.Error("OpenRepository[%s]: %v", pr.BaseRepo.RelativePath(), err)
 			return nil
 		}
 		defer baseGitRepo.Close()
-		refs, err := baseGitRepo.GetRefsFiltered(apiPullRequest.Head.Ref)
+		refs, err := baseGitRepo.GetRefsFiltered(ctx, apiPullRequest.Head.Ref)
 		if err != nil {
 			log.Error("GetRefsFiltered[%s]: %v", apiPullRequest.Head.Ref, err)
 			return nil
@@ -332,7 +332,7 @@ func ToAPIPullRequests(ctx context.Context, baseRepo *repo_model.Repository, prs
 		return nil, err
 	}
 
-	gitRepo, err := gitrepo.OpenRepository(ctx, baseRepo)
+	gitRepo, err := gitrepo.OpenRepository(baseRepo)
 	if err != nil {
 		return nil, err
 	}
@@ -455,13 +455,13 @@ func ToAPIPullRequests(ctx context.Context, baseRepo *repo_model.Repository, prs
 		if pr.Flow == issues_model.PullRequestFlowAGit {
 			apiPullRequest.Head.Name = ""
 		}
-		apiPullRequest.Head.Sha, err = gitRepo.GetRefCommitID(pr.GetGitHeadRefName())
+		apiPullRequest.Head.Sha, err = gitRepo.GetRefCommitID(ctx, pr.GetGitHeadRefName())
 		if err != nil {
 			log.Error("GetRefCommitID[%s]: %v", pr.GetGitHeadRefName(), err)
 		}
 
 		if len(apiPullRequest.Head.Sha) == 0 && len(apiPullRequest.Head.Ref) != 0 {
-			refs, err := gitRepo.GetRefsFiltered(apiPullRequest.Head.Ref)
+			refs, err := gitRepo.GetRefsFiltered(ctx, apiPullRequest.Head.Ref)
 			if err != nil {
 				log.Error("GetRefsFiltered[%s]: %v", apiPullRequest.Head.Ref, err)
 				return nil, err

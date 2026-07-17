@@ -304,7 +304,7 @@ func (r *Repository) GetEditorconfig(ctx context.Context, optCommit ...*git.Comm
 	if len(optCommit) != 0 {
 		commit = optCommit[0]
 	} else {
-		commit, err = r.GitRepo.GetBranchCommit(r.Repository.DefaultBranch)
+		commit, err = r.GitRepo.GetBranchCommit(ctx, r.Repository.DefaultBranch)
 		if err != nil {
 			return nil, nil, err
 		}
@@ -313,10 +313,10 @@ func (r *Repository) GetEditorconfig(ctx context.Context, optCommit ...*git.Comm
 	if err != nil {
 		return nil, nil, err
 	}
-	if treeEntry.Blob(r.GitRepo).Size() >= setting.UI.MaxDisplayFileSize {
+	if treeEntry.Blob(r.GitRepo).Size(ctx) >= setting.UI.MaxDisplayFileSize {
 		return nil, nil, git.ErrNotExist{ID: "", RelPath: ".editorconfig"}
 	}
-	reader, err := treeEntry.Blob(r.GitRepo).DataAsync()
+	reader, err := treeEntry.Blob(r.GitRepo).DataAsync(ctx)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -844,7 +844,9 @@ func getRefNameLegacy(ctx *Base, repo *Repository, reqPath, extraRef string) (re
 func getRefName(ctx *Base, repo *Repository, path string, refType git.RefType) string {
 	switch refType {
 	case git.RefTypeBranch:
-		ref := getRefNameFromPath(repo, path, repo.GitRepo.IsBranchExist)
+		ref := getRefNameFromPath(repo, path, func(s string) bool {
+			return repo.GitRepo.IsBranchExist(ctx, s)
+		})
 		if len(ref) == 0 {
 			// check if ref is HEAD
 			parts := strings.Split(path, "/")
@@ -874,7 +876,9 @@ func getRefName(ctx *Base, repo *Repository, path string, refType git.RefType) s
 
 		return ref
 	case git.RefTypeTag:
-		return getRefNameFromPath(repo, path, repo.GitRepo.IsTagExist)
+		return getRefNameFromPath(repo, path, func(s string) bool {
+			return repo.GitRepo.IsTagExist(ctx, s)
+		})
 	case git.RefTypeCommit:
 		parts := strings.Split(path, "/")
 		if git.IsStringLikelyCommitID(repo.GetObjectFormat(), parts[0], 7) {
@@ -885,7 +889,7 @@ func getRefName(ctx *Base, repo *Repository, path string, refType git.RefType) s
 
 		if parts[0] == headRefName {
 			// HEAD ref points to last default branch commit
-			commit, err := repo.GitRepo.GetBranchCommit(repo.Repository.DefaultBranch)
+			commit, err := repo.GitRepo.GetBranchCommit(ctx, repo.Repository.DefaultBranch)
 			if err != nil {
 				return ""
 			}
@@ -916,7 +920,7 @@ func RepoRefByDefaultBranch() func(*Context) {
 	return func(ctx *Context) {
 		ctx.Repo.RefFullName = git.RefNameFromBranch(ctx.Repo.Repository.DefaultBranch)
 		ctx.Repo.BranchName = ctx.Repo.Repository.DefaultBranch
-		ctx.Repo.Commit, _ = ctx.Repo.GitRepo.GetBranchCommit(ctx.Repo.BranchName)
+		ctx.Repo.Commit, _ = ctx.Repo.GitRepo.GetBranchCommit(ctx, ctx.Repo.BranchName)
 		ctx.Repo.CommitsCount, _ = ctx.Repo.GetCommitsCount(ctx)
 		ctx.Data["RefFullName"] = ctx.Repo.RefFullName
 		ctx.Data["BranchName"] = ctx.Repo.BranchName
@@ -950,7 +954,7 @@ func RepoRefByType(detectRefType git.RefType) func(*Context) {
 		if reqPath == "" {
 			refShortName = ctx.Repo.Repository.DefaultBranch
 			if !gitrepo.IsBranchExist(ctx, ctx.Repo.Repository, refShortName) {
-				brs, _, err := ctx.Repo.GitRepo.GetBranchNames(0, 1)
+				brs, _, err := ctx.Repo.GitRepo.GetBranchNames(ctx, 0, 1)
 				if err == nil && len(brs) != 0 {
 					refShortName = brs[0]
 				} else if len(brs) == 0 {
@@ -961,7 +965,7 @@ func RepoRefByType(detectRefType git.RefType) func(*Context) {
 			}
 			ctx.Repo.RefFullName = git.RefNameFromBranch(refShortName)
 			ctx.Repo.BranchName = refShortName
-			ctx.Repo.Commit, err = ctx.Repo.GitRepo.GetBranchCommit(refShortName)
+			ctx.Repo.Commit, err = ctx.Repo.GitRepo.GetBranchCommit(ctx, refShortName)
 			if err == nil {
 				ctx.Repo.CommitID = ctx.Repo.Commit.ID.String()
 			} else {
@@ -990,7 +994,7 @@ func RepoRefByType(detectRefType git.RefType) func(*Context) {
 				ctx.Repo.BranchName = refShortName
 				ctx.Repo.RefFullName = git.RefNameFromBranch(refShortName)
 
-				ctx.Repo.Commit, err = ctx.Repo.GitRepo.GetBranchCommit(refShortName)
+				ctx.Repo.Commit, err = ctx.Repo.GitRepo.GetBranchCommit(ctx, refShortName)
 				if err != nil {
 					ctx.ServerError("GetBranchCommit", err)
 					return
@@ -999,7 +1003,7 @@ func RepoRefByType(detectRefType git.RefType) func(*Context) {
 			} else if refType == git.RefTypeTag && gitrepo.IsTagExist(ctx, ctx.Repo.Repository, refShortName) {
 				ctx.Repo.RefFullName = git.RefNameFromTag(refShortName)
 
-				ctx.Repo.Commit, err = ctx.Repo.GitRepo.GetTagCommit(refShortName)
+				ctx.Repo.Commit, err = ctx.Repo.GitRepo.GetTagCommit(ctx, refShortName)
 				if err != nil {
 					if git.IsErrNotExist(err) {
 						ctx.NotFound(err)
@@ -1013,7 +1017,7 @@ func RepoRefByType(detectRefType git.RefType) func(*Context) {
 				ctx.Repo.RefFullName = git.RefNameFromCommit(refShortName)
 				ctx.Repo.CommitID = refShortName
 
-				ctx.Repo.Commit, err = ctx.Repo.GitRepo.GetCommit(refShortName)
+				ctx.Repo.Commit, err = ctx.Repo.GitRepo.GetCommit(ctx, refShortName)
 				if err != nil {
 					ctx.NotFound(err)
 					return
