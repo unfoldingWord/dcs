@@ -136,6 +136,14 @@ func handleRepoDM(ctx context.Context, repo *repo_model.Repository) {
 			log.Error("handleRepoDM: failed to update Door43Metadata [%s, %d]: %v", repo.FullName(), repo.RepoDM.ID, err)
 		}
 	}
+
+	// RepoDM must never be left nil: LoadLatestDMs is memoized via
+	// repo.LatestDMsLoaded, so callers like ToRepoDCS that dereference RepoDM
+	// would not get another chance to synthesize it (a repo with no valid DMs,
+	// e.g. just created without a manifest, would panic otherwise).
+	if repo.RepoDM == nil {
+		repo.RepoDM = repo_model.SynthesizeRepoDM(repo)
+	}
 }
 
 // processDoor43MetadataForRepoLatestDMs determines the latest DMs for a repo
