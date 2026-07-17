@@ -70,7 +70,7 @@ func toUser(ctx context.Context, user *user_model.User, signed, authed bool) *ap
 		/*** END DCS Customizations ***/
 	}
 
-	result.Visibility = api.UserVisibility(user.Visibility.String())
+	result.Visibility = api.VisibilityString(user.Visibility.String())
 
 	// hide primary email if API caller is anonymous or user keep email private
 	if signed && (!user.KeepEmailPrivate || authed) {

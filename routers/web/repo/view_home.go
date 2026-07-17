@@ -11,6 +11,7 @@ import (
 	"strings"
 	"time"
 
+	auth_model "gitea.dev/models/auth"
 	"gitea.dev/models/db"
 	git_model "gitea.dev/models/git"
 	repo_model "gitea.dev/models/repo"
@@ -67,7 +68,7 @@ func prepareHomeSidebarRepoTopics(ctx *context.Context) {
 	ctx.Data["Topics"] = topics
 }
 
-func prepareOpenWithEditorApps(ctx *context.Context) {
+func prepareClonePanel(ctx *context.Context) {
 	var tmplApps []map[string]any
 	apps := setting.Config().Repository.OpenWithEditorApps.Value(ctx)
 	for _, app := range apps {
@@ -93,6 +94,12 @@ func prepareOpenWithEditorApps(ctx *context.Context) {
 		})
 	}
 	ctx.Data["OpenWithEditorApps"] = tmplApps
+
+	if !setting.Repository.DisableDownloadSourceArchives {
+		// FIXME: here it only uses the shortname in the ref to build the link, it can't distinguish the branch/tag/commit with the same name
+		// in the future, it's better to use something like "/archive/branch/the-name.zip", "/archive/tag/the-name.zip" */}}
+		ctx.Data["DownloadArchiveLinkPrefix"] = ctx.Repo.RepoLink + "/archive/" + util.PathEscapeSegments(ctx.Repo.RefFullName.ShortName())
+	}
 }
 
 func prepareHomeSidebarCitationFile(entry *git.TreeEntry) func(ctx *context.Context) {
@@ -100,12 +107,12 @@ func prepareHomeSidebarCitationFile(entry *git.TreeEntry) func(ctx *context.Cont
 		if entry.Name() != "" {
 			return
 		}
-		tree, err := ctx.Repo.Commit.SubTree(ctx.Repo.TreePath)
+		tree, err := ctx.Repo.Commit.SubTree(ctx, ctx.Repo.GitRepo, ctx.Repo.TreePath)
 		if err != nil {
 			HandleGitError(ctx, "Repo.Commit.SubTree", err)
 			return
 		}
-		allEntries, err := tree.ListEntries()
+		allEntries, err := tree.ListEntries(ctx, ctx.Repo.GitRepo)
 		if err != nil {
 			ctx.ServerError("ListEntries", err)
 			return
@@ -113,7 +120,7 @@ func prepareHomeSidebarCitationFile(entry *git.TreeEntry) func(ctx *context.Cont
 		for _, entry := range allEntries {
 			if entry.Name() == "CITATION.cff" || entry.Name() == "CITATION.bib" {
 				// Read Citation file contents
-				if content, err := entry.Blob().GetBlobContent(setting.UI.MaxDisplayFileSize); err != nil {
+				if content, err := entry.Blob(ctx.Repo.GitRepo).GetBlobContent(setting.UI.MaxDisplayFileSize); err != nil {
 					log.Error("checkCitationFile: GetBlobContent: %v", err)
 				} else {
 					ctx.Data["CitiationExist"] = true
@@ -290,7 +297,7 @@ func handleRepoViewSubmodule(ctx *context.Context, commitSubmoduleFile *git.Comm
 func prepareToRenderDirOrFile(entry *git.TreeEntry) func(ctx *context.Context) {
 	return func(ctx *context.Context) {
 		if entry.IsSubModule() {
-			commitSubmoduleFile, err := git.GetCommitInfoSubmoduleFile(ctx.Repo.RepoLink, ctx.Repo.TreePath, ctx.Repo.Commit, entry.ID)
+			commitSubmoduleFile, err := git.GetCommitInfoSubmoduleFile(ctx, ctx.Repo.RepoLink, ctx.Repo.TreePath, ctx.Repo.GitRepo, ctx.Repo.Commit, entry.ID)
 			if err != nil {
 				HandleGitError(ctx, "prepareToRenderDirOrFile: GetCommitInfoSubmoduleFile", err)
 				return
@@ -354,7 +361,7 @@ func redirectFollowSymlink(ctx *context.Context, treePathEntry *git.TreeEntry) b
 		return false
 	}
 	if treePathEntry.IsLink() {
-		if res, err := git.EntryFollowLinks(ctx.Repo.Commit, ctx.Repo.TreePath, treePathEntry); err == nil {
+		if res, err := git.EntryFollowLinks(ctx, ctx.Repo.GitRepo, ctx.Repo.Commit, ctx.Repo.TreePath, treePathEntry); err == nil {
 			redirect := ctx.Repo.RepoLink + "/src/" + ctx.Repo.RefTypeNameSubURL() + "/" + util.PathEscapeSegments(res.TargetFullPath) + "?" + ctx.Req.URL.RawQuery
 			ctx.Redirect(redirect)
 			return true
@@ -398,6 +405,13 @@ func Home(ctx *context.Context) {
 		return
 	}
 
+	// a scoped or public-only API token authenticating this web request must still satisfy
+	// the repository read scope before private repo content is served
+	context.CheckRepoScopedToken(ctx, ctx.Repo.Repository, auth_model.Read)
+	if ctx.Written() {
+		return
+	}
+
 	// Check whether the repo is viewable: not in migration, and the code unit should be enabled
 	// Ideally the "feed" logic should be after this, but old code did so, so keep it as-is.
 	checkHomeCodeViewable(ctx)
@@ -421,7 +435,7 @@ func Home(ctx *context.Context) {
 	prepareHomeTreeSideBarSwitch(ctx)
 
 	// get the current git entry which doer user is currently looking at.
-	entry, err := ctx.Repo.Commit.GetTreeEntryByPath(ctx.Repo.TreePath)
+	entry, err := ctx.Repo.Commit.GetTreeEntryByPath(ctx, ctx.Repo.GitRepo, ctx.Repo.TreePath)
 	if err != nil {
 		HandleGitError(ctx, "Repo.Commit.GetTreeEntryByPath", err)
 		return
@@ -435,7 +449,7 @@ func Home(ctx *context.Context) {
 	isTreePathRoot := ctx.Repo.TreePath == ""
 
 	prepareFuncs := []func(*context.Context){
-		prepareOpenWithEditorApps,
+		prepareClonePanel,
 		prepareHomeSidebarRepoTopics,
 		checkOutdatedBranch,
 		prepareToRenderDirOrFile(entry),

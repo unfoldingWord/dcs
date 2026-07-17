@@ -61,7 +61,7 @@ func setCompareContext(ctx *context.Context, before, head *git.Commit, headOwner
 			return nil
 		}
 
-		blob, err := commit.GetBlobByPath(path)
+		blob, err := commit.GetBlobByPath(ctx, ctx.Repo.GitRepo, path)
 		if err != nil {
 			return nil
 		}
@@ -396,7 +396,9 @@ func autoTitleFromBranchName(name string) string {
 
 func prepareNewPullRequestTitleContent(ci *git_service.CompareInfo, commits []*git_model.SignCommitWithStatuses, defaultTitleSource string) (title, content string) {
 	useFirstCommitAsTitle := len(commits) == 1 || (defaultTitleSource == setting.RepoPRTitleSourceFirstCommit && len(commits) > 0)
-	if useFirstCommitAsTitle {
+	if defaultTitleSource == setting.RepoPRTitleSourceBranchName {
+		title = ci.HeadRef.ShortName()
+	} else if useFirstCommitAsTitle {
 		// the "commits" are from "ShowPrettyFormatLogToList", which is ordered from newest to oldest, here take the oldest one
 		c := commits[len(commits)-1]
 		title = c.UserCommit.GitCommit.MessageTitle()
@@ -795,7 +797,7 @@ func ExcerptBlob(ctx *context.Context) {
 		ctx.ServerError("GetCommit", err)
 		return
 	}
-	blob, err := commit.Tree.GetBlobByPath(filePath)
+	blob, err := commit.GetBlobByPath(ctx, ctx.Repo.GitRepo, filePath)
 	if err != nil {
 		ctx.ServerError("GetBlobByPath", err)
 		return

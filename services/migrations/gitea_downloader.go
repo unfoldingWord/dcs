@@ -84,7 +84,7 @@ func NewGiteaDownloader(ctx context.Context, baseURL, repoPath, username, passwo
 		baseURL,
 		gitea_sdk.SetToken(token),
 		gitea_sdk.SetBasicAuth(username, password),
-		gitea_sdk.SetHTTPClient(NewMigrationHTTPClient()),
+		gitea_sdk.SetHTTPClient(newMigrationHTTPClient()),
 	)
 	if err != nil {
 		/*** DCS Customizations ***/
@@ -282,7 +282,7 @@ func (g *GiteaDownloader) convertGiteaRelease(rel *gitea_sdk.Release) *base.Rele
 		Created:         rel.CreatedAt,
 	}
 
-	httpClient := NewMigrationHTTPClient()
+	httpClient := newMigrationHTTPClient()
 
 	for _, asset := range rel.Attachments {
 		assetID := asset.ID // Don't optimize this, for closure we need a local variable

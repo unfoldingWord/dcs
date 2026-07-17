@@ -326,6 +326,14 @@ func ChangeTargetBranch(ctx context.Context, pr *issues_model.PullRequest, doer 
 			return fmt.Errorf("syncCommitDivergence: %w", err)
 		}
 
+		// The "official" flag of existing reviews was computed against the previous
+		// target branch's protection rules, so re-evaluate it against the new branch.
+		// Otherwise a stale official approval could bypass the new branch's protection.
+		pr.Issue.PullRequest = pr
+		if err := issues_model.RecalculateReviewsOfficial(ctx, pr.Issue); err != nil {
+			return fmt.Errorf("RecalculateReviewsOfficial: %w", err)
+		}
+
 		// Create comment
 		options := &issues_model.CreateCommentOptions{
 			Type:   issues_model.CommentTypeChangeTargetBranch,
@@ -769,30 +777,25 @@ func CloseRepoBranchesPulls(ctx context.Context, doer *user_model.User, repo *re
 }
 
 // GetSquashMergeCommitMessages returns the commit messages between head and merge base (if there is one)
-func GetSquashMergeCommitMessages(ctx context.Context, pr *issues_model.PullRequest) string {
+func GetSquashMergeCommitMessages(ctx context.Context, pr *issues_model.PullRequest) (_ string, err error) {
 	if err := pr.LoadIssue(ctx); err != nil {
-		log.Error("Cannot load issue %d for PR id %d: Error: %v", pr.IssueID, pr.ID, err)
-		return ""
+		return "", err
 	}
 
 	if err := pr.Issue.LoadPoster(ctx); err != nil {
-		log.Error("Cannot load poster %d for pr id %d, index %d Error: %v", pr.Issue.PosterID, pr.ID, pr.Index, err)
-		return ""
+		return "", err
 	}
 
 	if pr.HeadRepo == nil {
-		var err error
 		pr.HeadRepo, err = repo_model.GetRepositoryByID(ctx, pr.HeadRepoID)
 		if err != nil {
-			log.Error("GetRepositoryByIdCtx[%d]: %v", pr.HeadRepoID, err)
-			return ""
+			return "", err
 		}
 	}
 
 	gitRepo, closer, err := gitrepo.RepositoryFromContextOrOpen(ctx, pr.HeadRepo)
 	if err != nil {
-		log.Error("Unable to open head repository: Error: %v", err)
-		return ""
+		return "", err
 	}
 	defer closer.Close()
 
@@ -802,8 +805,7 @@ func GetSquashMergeCommitMessages(ctx context.Context, pr *issues_model.PullRequ
 	} else {
 		pr.HeadCommitID, err = gitRepo.GetRefCommitID(pr.GetGitHeadRefName())
 		if err != nil {
-			log.Error("Unable to get head commit: %s Error: %v", pr.GetGitHeadRefName(), err)
-			return ""
+			return "", err
 		}
 		headCommitRef = git.RefNameFromCommit(pr.HeadCommitID)
 	}
@@ -814,8 +816,7 @@ func GetSquashMergeCommitMessages(ctx context.Context, pr *issues_model.PullRequ
 
 	limitedCommits, err := gitRepo.CommitsBetween(headCommitRef, mergeBaseRef, limit)
 	if err != nil {
-		log.Error("Unable to get commits between: %s %s Error: %v", pr.HeadBranch, pr.MergeBase, err)
-		return ""
+		return "", err
 	}
 
 	mergeMessage := strings.TrimSpace(pr.Issue.Content) // use PR's title and description as squash commit message
@@ -823,7 +824,7 @@ func GetSquashMergeCommitMessages(ctx context.Context, pr *issues_model.PullRequ
 		mergeMessage = formatSquashMergeCommitMessages(limitedCommits) // use PR's commit messages as squash commit message
 	}
 	coAuthors := collectSquashMergeCommitCoAuthors(ctx, gitRepo, pr, headCommitRef, mergeBaseRef, limit, limitedCommits)
-	return buildSquashMergeCommitMessages(mergeMessage, coAuthors)
+	return buildSquashMergeCommitMessages(mergeMessage, coAuthors), nil
 }
 
 func buildSquashMergeCommitMessages(mergeMessage string, coAuthors []string) string {
@@ -1038,7 +1039,7 @@ func IsHeadEqualWithBranch(ctx context.Context, pr *issues_model.PullRequest, br
 			return false, err
 		}
 	}
-	return baseCommit.HasPreviousCommit(headCommit.ID)
+	return baseCommit.HasPreviousCommit(ctx, baseGitRepo, headCommit.ID)
 }
 
 type CommitInfo struct {
