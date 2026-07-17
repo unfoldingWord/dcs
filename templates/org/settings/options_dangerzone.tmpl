@@ -3,15 +3,19 @@
 </h4>
 <div class="ui attached error danger segment">
 	<div class="flex-divided-list items-with-main">
-		<div class="item tw-items-center">
-			<div class="item-main">
-				<div class="item-title">{{ctx.Locale.Tr "org.settings.visibility"}}</div>
-				<div class="item-body">{{ctx.Locale.Tr "org.settings.visibility_desc"}}</div>
+		<!-- DCS Customizations - only site admins can change org visibility -->
+		{{if .IsAdmin}}
+			<div class="item tw-items-center">
+				<div class="item-main">
+					<div class="item-title">{{ctx.Locale.Tr "org.settings.visibility"}}</div>
+					<div class="item-body">{{ctx.Locale.Tr "org.settings.visibility_desc"}}</div>
+				</div>
+				<div class="item-trailing">
+					<button class="ui basic red show-modal button" data-modal="#change-visibility-org-modal">{{ctx.Locale.Tr "org.settings.change_visibility"}}</button>
+				</div>
 			</div>
-			<div class="item-trailing">
-				<button class="ui basic red show-modal button" data-modal="#change-visibility-org-modal">{{ctx.Locale.Tr "org.settings.change_visibility"}}</button>
-			</div>
-		</div>
+		{{end}}
+		<!-- END DCS Customizations -->
 
 		<div class="item tw-items-center">
 			<div class="item-main">
@@ -35,6 +39,8 @@
 	</div>
 </div>
 
+<!-- DCS Customizations - only site admins can change org visibility -->
+{{if .IsAdmin}}
 <div class="ui small modal" id="change-visibility-org-modal">
 	<div class="header">
 		{{ctx.Locale.Tr "org.settings.change_visibility"}}
@@ -71,6 +77,8 @@
 		</form>
 	</div>
 </div>
+{{end}}
+<!-- END DCS Customizations -->
 
 <div class="ui small modal" id="rename-org-modal">
 	<div class="header">

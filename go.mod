@@ -98,7 +98,7 @@ require (
 	github.com/ulikunitz/xz v0.5.15
 	github.com/unfoldingWord/go-rc2sb v0.4.0
 	github.com/unfoldingWord/go-tc2rc v0.1.0
-	github.com/unfoldingWord/go-ts2rc v0.1.0
+	github.com/unfoldingWord/go-ts2rc v0.1.1
 	github.com/urfave/cli-docs/v3 v3.1.0
 	github.com/urfave/cli/v3 v3.10.1
 	github.com/wneessen/go-mail v0.8.1

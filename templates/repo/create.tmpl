@@ -43,19 +43,25 @@
 					<span class="help tw-hidden" data-help-for-repo-name=".profile-private">{{ctx.Locale.Tr "repo.repo_name_profile_private_hint"}}</span>
 				</div>
 
-				<div class="inline field">
-					<label>{{ctx.Locale.Tr "repo.visibility"}}</label>
-					<div class="ui checkbox">
-						{{if .IsForcedPrivate}}
-							<input name="private" type="checkbox" checked disabled>
-							<label>{{ctx.Locale.Tr "repo.visibility_helper_forced"}}</label>
-						{{else}}
-							<input name="private" type="checkbox" {{if .private}}checked{{end}}>
-							<label>{{ctx.Locale.Tr "repo.visibility_helper"}}</label>
-						{{end}}
+				<!-- DCS Customizations - only site admins can create private repositories -->
+				{{if .IsAdmin}}
+					<div class="inline field">
+						<label>{{ctx.Locale.Tr "repo.visibility"}}</label>
+						<div class="ui checkbox">
+							{{if .IsForcedPrivate}}
+								<input name="private" type="checkbox" checked disabled>
+								<label>{{ctx.Locale.Tr "repo.visibility_helper_forced"}}</label>
+							{{else}}
+								<input name="private" type="checkbox" {{if .private}}checked{{end}}>
+								<label>{{ctx.Locale.Tr "repo.visibility_helper"}}</label>
+							{{end}}
+						</div>
+						<span class="help">{{ctx.Locale.Tr "repo.visibility_description"}}</span>
 					</div>
-					<span class="help">{{ctx.Locale.Tr "repo.visibility_description"}}</span>
-				</div>
+				{{else}}
+					<input name="private" type="hidden" value="false">
+				{{end}}
+				<!-- END DCS Customizations -->
 				<div class="inline field {{if .Err_Description}}error{{end}}">
 					<label for="description">{{ctx.Locale.Tr "repo.repo_desc"}}</label>
 					<textarea id="description" rows="2" name="description" placeholder="{{ctx.Locale.Tr "repo.repo_desc_helper"}}" maxlength="2048">{{.description}}</textarea>
