@@ -34,6 +34,7 @@ import (
 	gitea_context "gitea.dev/services/context"
 
 	rc2sb "github.com/unfoldingWord/go-rc2sb"
+	tc2rc "github.com/unfoldingWord/go-tc2rc"
 	ts2rc "github.com/unfoldingWord/go-ts2rc"
 )
 
@@ -178,12 +179,15 @@ func (aReq *ArchiveRequest) Stream(ctx context.Context, repo *repo_model.Reposit
 	}
 	defer cleanup()
 
-	// ts repos are cloned to a separate dir and first converted to RC format below.
+	// ts and tc repos are cloned to a separate dir and first converted to RC format below.
 	rcDir := filepath.Join(tmpDir, "rc")
 	cloneDir := rcDir
 	isTS := repoDM.MetadataType == "ts"
+	isTC := repoDM.MetadataType == "tc"
 	if isTS {
 		cloneDir = filepath.Join(tmpDir, "ts")
+	} else if isTC {
+		cloneDir = filepath.Join(tmpDir, "tc")
 	}
 	if err := cloneRepositoryAtCommit(ctx, repo.RepoPath(), aReq.archiveRefShortName, aReq.CommitID, cloneDir); err != nil {
 		return fmt.Errorf("clone requested repo ref: %w", err)
@@ -198,6 +202,15 @@ func (aReq *ArchiveRequest) Stream(ctx context.Context, repo *repo_model.Reposit
 		rep := ts2rc.Convert(ctx, cloneDir, rcDir, ts2rc.Options{TWSourceDir: twSourceDir})
 		if !rep.OK {
 			return fmt.Errorf("ts2rc.Convert: %s", rep.Error)
+		}
+	}
+
+	// For tc repos, convert tc -> RC so the RC -> SB pipeline below applies unchanged.
+	// RepoName locates the exported USFM file (<repoName>.usfm) since the clone dir is "tc".
+	if isTC {
+		rep := tc2rc.Convert(ctx, cloneDir, rcDir, tc2rc.Options{RepoName: repo.Name})
+		if !rep.OK {
+			return fmt.Errorf("tc2rc.Convert: %s", rep.Error)
 		}
 	}
 
@@ -234,7 +247,7 @@ func getRepoDMForConversion(ctx context.Context, repo *repo_model.Repository) (*
 	if dm == nil {
 		dm = repo.RepoDM
 	}
-	if dm == nil || (dm.MetadataType != "rc" && dm.MetadataType != "ts") {
+	if dm == nil || (dm.MetadataType != "rc" && dm.MetadataType != "ts" && dm.MetadataType != "tc") {
 		return nil, ErrRepoNotConvertible{RepoID: repo.ID}
 	}
 	return dm, nil
