@@ -47,13 +47,13 @@ func processDoor43MetadataForRepoRefs(ctx context.Context, repo *repo_model.Repo
 		log.Error("GetRepoReleaseTagsForMetadata Error %s: %v", repo.FullName(), err)
 	}
 
-	gitRepo, err := git.OpenRepository(ctx, repo.RepoPath())
+	gitRepo, err := git.OpenRepository(repo.RepoPath())
 	if err != nil {
 		log.Error("git.OpenRepository Error %s: %v", repo.FullName(), err)
 	}
 	if gitRepo != nil {
 		defer gitRepo.Close()
-		branchNames, _, err := gitRepo.GetBranchNames(0, 0)
+		branchNames, _, err := gitRepo.GetBranchNames(ctx, 0, 0)
 		if err != nil {
 			log.Error("git.GetBranchNames Error %s: %v", repo.FullName(), err)
 		} else {
@@ -241,15 +241,15 @@ func ProcessDoor43MetadataForRepo(ctx context.Context, repo *repo_model.Reposito
 	return nil
 }
 
-func GetBookAlignmentCount(bookPath string, commit *git.Commit) (int, error) {
-	blob, err := commit.GetBlobByPath(bookPath)
+func GetBookAlignmentCount(ctx context.Context, gitRepo *git.Repository, bookPath string, commit *git.Commit) (int, error) {
+	blob, err := commit.GetBlobByPath(ctx, gitRepo, bookPath)
 	if err != nil {
 		if !git.IsErrNotExist(err) {
 			log.Error("GetBlobByPath(%s) Error: %v\n", bookPath, err)
 		}
 		return 0, err
 	}
-	dataRc, err := blob.DataAsync()
+	dataRc, err := blob.DataAsync(ctx)
 	if err != nil {
 		log.Error("blob.DataAsync() Error: %v\n", err)
 		return 0, err
@@ -281,7 +281,7 @@ func GetBooks(manifest map[string]any) []string {
 	return books
 }
 
-func GetDoor43MetadataFromRCManifest(ctx context.Context, dm *repo_model.Door43Metadata, manifest map[string]any, repo *repo_model.Repository, commit *git.Commit) error {
+func GetDoor43MetadataFromRCManifest(ctx context.Context, gitRepo *git.Repository, dm *repo_model.Door43Metadata, manifest map[string]any, repo *repo_model.Repository, commit *git.Commit) error {
 	var metadataType string
 	var metadataVersion string
 	var subject string
@@ -335,13 +335,13 @@ func GetDoor43MetadataFromRCManifest(ctx context.Context, dm *repo_model.Door43M
 			ingredient.Categories = dcs.GetBookCategories(book)
 			bookPath = ingredient.Path
 			if subject == "Aligned Bible" && strings.HasSuffix(ingredient.Path, ".usfm") {
-				count, _ := GetBookAlignmentCount(ingredient.Path, commit)
+				count, _ := GetBookAlignmentCount(ctx, gitRepo, ingredient.Path, commit)
 				ingredient.AlignmentCount = &count
 			}
-			if entry, err := commit.GetTreeEntryByPath(ingredient.Path); err == nil {
+			if entry, err := commit.GetTreeEntryByPath(ctx, gitRepo, ingredient.Path); err == nil {
 				ingredient.Exists = true
 				ingredient.IsDir = entry.IsDir()
-				ingredient.Size = entry.Size()
+				ingredient.Size = entry.GetSize(ctx, gitRepo)
 			}
 			ingredients = append(ingredients, ingredient)
 		}
@@ -444,7 +444,7 @@ func GetDoor43MetadataFromRCManifest(ctx context.Context, dm *repo_model.Door43M
 }
 
 // GetDoor43MetadataFromSBMetadata creates a Door43Metadata object from the SBMetadata100 object
-func GetDoor43MetadataFromSBMetadata(ctx context.Context, dm *repo_model.Door43Metadata, sbMetadata *dcs.SBMetadata100, repo *repo_model.Repository, commit *git.Commit) error {
+func GetDoor43MetadataFromSBMetadata(ctx context.Context, gitRepo *git.Repository, dm *repo_model.Door43Metadata, sbMetadata *dcs.SBMetadata100, repo *repo_model.Repository, commit *git.Commit) error {
 	if dm == nil {
 		return errors.New("no Door43Metadata destination provided")
 	}
@@ -509,7 +509,7 @@ func GetDoor43MetadataFromSBMetadata(ctx context.Context, dm *repo_model.Door43M
 	switch subject {
 	case "Bible", "Aligned Bible", "Greek New Testament", "Hebrew Old Testament":
 		var hasAlignment bool
-		ingredients, contentFormat, hasAlignment = getSBScriptureIngredients(sbMetadata, commit)
+		ingredients, contentFormat, hasAlignment = getSBScriptureIngredients(ctx, gitRepo, sbMetadata, commit)
 		if subject == "Bible" && hasAlignment {
 			subject = "Aligned Bible"
 		}
@@ -544,7 +544,7 @@ func GetDoor43MetadataFromSBMetadata(ctx context.Context, dm *repo_model.Door43M
 	default:
 		// Keep scripture ingredient processing for custom x-* scripture flavors.
 		if strings.EqualFold(flavorType, "scripture") {
-			ingredients, contentFormat, _ = getSBScriptureIngredients(sbMetadata, commit)
+			ingredients, contentFormat, _ = getSBScriptureIngredients(ctx, gitRepo, sbMetadata, commit)
 		}
 	}
 
@@ -602,11 +602,11 @@ func getSBLocalizedBookTitle(localizedNames map[string]*dcs.SB100LocalizedName, 
 	return lowerBookID
 }
 
-func getBookAlignmentCountSafe(bookPath string, commit *git.Commit) (int, error) {
+func getBookAlignmentCountSafe(ctx context.Context, gitRepo *git.Repository, bookPath string, commit *git.Commit) (int, error) {
 	if commit == nil {
 		return 0, nil
 	}
-	return GetBookAlignmentCount(bookPath, commit)
+	return GetBookAlignmentCount(ctx, gitRepo, bookPath, commit)
 }
 
 func getSBRepoNameSuffix(repoName string) string {
@@ -758,7 +758,7 @@ func getSBSubject(flavorType, flavor, abbreviation, repoNameSuffix string) strin
 	return "Unknown"
 }
 
-func getSBScriptureIngredients(sbMetadata *dcs.SBMetadata100, commit *git.Commit) ([]*structs.Ingredient, string, bool) {
+func getSBScriptureIngredients(ctx context.Context, gitRepo *git.Repository, sbMetadata *dcs.SBMetadata100, commit *git.Commit) ([]*structs.Ingredient, string, bool) {
 	var ingredients []*structs.Ingredient
 	contentFormat := ""
 	hasAlignment := false
@@ -771,7 +771,7 @@ func getSBScriptureIngredients(sbMetadata *dcs.SBMetadata100, commit *git.Commit
 		normalizedPath := normalizeSBIngredientPath(filePath)
 		count := 0
 		if strings.HasSuffix(strings.ToLower(normalizedPath), ".usfm") {
-			count, _ = getBookAlignmentCountSafe(normalizedPath, commit)
+			count, _ = getBookAlignmentCountSafe(ctx, gitRepo, normalizedPath, commit)
 			if count > 0 {
 				hasAlignment = true
 			}
@@ -868,17 +868,17 @@ func getSBTranslationAcademyIngredients() []*structs.Ingredient {
 	}
 }
 
-func GetRCDoor43Metadata(ctx context.Context, dm *repo_model.Door43Metadata, repo *repo_model.Repository, commit *git.Commit) error {
+func GetRCDoor43Metadata(ctx context.Context, gitRepo *git.Repository, dm *repo_model.Door43Metadata, repo *repo_model.Repository, commit *git.Commit) error {
 	var manifest map[string]any
 
-	blob, err := commit.GetBlobByPath("manifest.yaml")
+	blob, err := commit.GetBlobByPath(ctx, gitRepo, "manifest.yaml")
 	if err != nil {
 		return err
 	}
 	if blob == nil {
 		return nil
 	}
-	manifest, err = dcs.ReadYAMLFromBlob(blob)
+	manifest, err = dcs.ReadYAMLFromBlob(ctx, blob)
 	if err != nil {
 		log.Error("ReadYAMLFromBlob: %v", err)
 		return err
@@ -897,11 +897,11 @@ func GetRCDoor43Metadata(ctx context.Context, dm *repo_model.Door43Metadata, rep
 		return nil
 	}
 	log.Debug("%s/%s: manifest.yaml is valid", repo.FullName(), dm.Ref)
-	return GetDoor43MetadataFromRCManifest(ctx, dm, manifest, repo, commit)
+	return GetDoor43MetadataFromRCManifest(ctx, gitRepo, dm, manifest, repo, commit)
 }
 
-func GetTcOrTsDoor43Metadata(dm *repo_model.Door43Metadata, repo *repo_model.Repository, commit *git.Commit) error {
-	blob, err := commit.GetBlobByPath("manifest.json")
+func GetTcOrTsDoor43Metadata(ctx context.Context, gitRepo *git.Repository, dm *repo_model.Door43Metadata, repo *repo_model.Repository, commit *git.Commit) error {
+	blob, err := commit.GetBlobByPath(ctx, gitRepo, "manifest.json")
 	if err != nil || blob == nil {
 		return err
 	}
@@ -911,7 +911,7 @@ func GetTcOrTsDoor43Metadata(dm *repo_model.Door43Metadata, repo *repo_model.Rep
 	var count int
 	var versification string
 
-	t, err := dcs.GetTcTsManifestFromBlob(blob)
+	t, err := dcs.GetTcTsManifestFromBlob(ctx, blob)
 	if err != nil || t == nil {
 		return err
 	}
@@ -922,7 +922,7 @@ func GetTcOrTsDoor43Metadata(dm *repo_model.Door43Metadata, repo *repo_model.Rep
 		}
 	} else {
 		bookPath = "./" + repo.Name + ".usfm"
-		count, _ = GetBookAlignmentCount(bookPath, commit)
+		count, _ = GetBookAlignmentCount(ctx, gitRepo, bookPath, commit)
 		versification = "ufw"
 	}
 
@@ -931,7 +931,7 @@ func GetTcOrTsDoor43Metadata(dm *repo_model.Door43Metadata, repo *repo_model.Rep
 	}
 
 	// Get the manifest again in map[string]interface{} format for the DM object
-	manifest, err := dcs.ReadJSONFromBlob(blob)
+	manifest, err := dcs.ReadJSONFromBlob(ctx, blob)
 	if err != nil {
 		return err
 	}
@@ -966,15 +966,15 @@ func GetTcOrTsDoor43Metadata(dm *repo_model.Door43Metadata, repo *repo_model.Rep
 	return nil
 }
 
-func GetSBDoor43Metadata(ctx context.Context, dm *repo_model.Door43Metadata, repo *repo_model.Repository, commit *git.Commit) error {
-	blob, err := commit.GetBlobByPath("metadata.json")
+func GetSBDoor43Metadata(ctx context.Context, gitRepo *git.Repository, dm *repo_model.Door43Metadata, repo *repo_model.Repository, commit *git.Commit) error {
+	blob, err := commit.GetBlobByPath(ctx, gitRepo, "metadata.json")
 	if err != nil {
 		return err
 	}
 	if blob == nil {
 		return nil
 	}
-	sbMetadata, err := dcs.GetSBDataFromBlob(blob)
+	sbMetadata, err := dcs.GetSBDataFromBlob(ctx, blob)
 	if err != nil {
 		log.Error("GetSBDataFromBlob: %v", err)
 		return err
@@ -994,7 +994,7 @@ func GetSBDoor43Metadata(ctx context.Context, dm *repo_model.Door43Metadata, rep
 	}
 	log.Debug("%s/%s: metadata.json is valid", repo.FullName(), dm.Ref)
 
-	return GetDoor43MetadataFromSBMetadata(ctx, dm, sbMetadata, repo, commit)
+	return GetDoor43MetadataFromSBMetadata(ctx, gitRepo, dm, sbMetadata, repo, commit)
 }
 
 func processDoor43MetadataForRepoRef(ctx context.Context, repo *repo_model.Repository, ref string) error {
@@ -1029,7 +1029,7 @@ func processDoor43MetadataForRepoRef(ctx context.Context, repo *repo_model.Repos
 	}
 	dm.Repo = repo
 
-	gitRepo, err := git.OpenRepository(ctx, repo.RepoPath())
+	gitRepo, err := git.OpenRepository(repo.RepoPath())
 	if err != nil {
 		log.Error("OpenRepository Error: %v\n", err)
 		return err
@@ -1058,20 +1058,20 @@ func processDoor43MetadataForRepoRef(ctx context.Context, repo *repo_model.Repos
 			dm.Stage = door43metadata.StageOther
 			dm.IsLatestForStage = false
 		}
-		commit, err = gitRepo.GetTagCommit(ref)
+		commit, err = gitRepo.GetTagCommit(ctx, ref)
 		if err != nil {
 			log.Error("GetTagCommit [%s/%s]: %v\n", repo.FullName(), ref, err)
 			return err
 		}
 		dm.CommitSHA = commit.ID.String()
 		dm.ReleaseDateUnix = dm.Release.CreatedUnix
-	} else if !gitRepo.IsBranchExist(ref) {
+	} else if !gitRepo.IsBranchExist(ctx, ref) {
 		return fmt.Errorf("ref for repo %s [%d] does not exist: %s", repo.FullName(), repo.ID, ref)
 	} else {
 		dm.Stage = door43metadata.StageOther
 		dm.IsLatestForStage = false
 		dm.RefType = "branch"
-		commit, err = gitRepo.GetBranchCommit(ref)
+		commit, err = gitRepo.GetBranchCommit(ctx, ref)
 		if err != nil {
 			log.Error("GetBranchCommit: %v\n", err)
 			return err
@@ -1081,7 +1081,7 @@ func processDoor43MetadataForRepoRef(ctx context.Context, repo *repo_model.Repos
 	}
 
 	// Check for SB (Scripture Burrito)
-	err = GetSBDoor43Metadata(ctx, dm, repo, commit)
+	err = GetSBDoor43Metadata(ctx, gitRepo, dm, repo, commit)
 	if err != nil && !git.IsErrNotExist(err) {
 		log.Debug("processDoor43MetadataForRef: ERROR! Unable to populate DM for %s/%s/metadata.json for SB: %v\n", repo.FullName(), ref, err)
 		return err
@@ -1089,7 +1089,7 @@ func processDoor43MetadataForRepoRef(ctx context.Context, repo *repo_model.Repos
 
 	// Check for TC or TS
 	if err != nil {
-		err = GetTcOrTsDoor43Metadata(dm, repo, commit)
+		err = GetTcOrTsDoor43Metadata(ctx, gitRepo, dm, repo, commit)
 		if err != nil {
 			if !git.IsErrNotExist(err) {
 				log.Debug("processDoor43MetadataForRef: ERROR! Unable to populate DM for %s/%s/manifest.json for TS or TC: %v\n", repo.FullName(), ref, err)
@@ -1100,7 +1100,7 @@ func processDoor43MetadataForRepoRef(ctx context.Context, repo *repo_model.Repos
 
 	// Check for RC
 	if err != nil {
-		err = GetRCDoor43Metadata(ctx, dm, repo, commit)
+		err = GetRCDoor43Metadata(ctx, gitRepo, dm, repo, commit)
 		if err != nil {
 			if !git.IsErrNotExist(err) {
 				log.Debug("processDoor43MetadataForRef: ERROR! Unable to populate DM for %s/%s/manifest.yaml for RC: %v\n", repo.FullName(), ref, err)

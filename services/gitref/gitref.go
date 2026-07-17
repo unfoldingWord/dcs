@@ -16,8 +16,8 @@ import (
 )
 
 // GetReference gets the Reference object that a refName refers to
-func GetReference(gitRepo *git.Repository, refName string) (*git.Reference, error) {
-	refs, err := gitRepo.GetRefsFiltered(refName)
+func GetReference(ctx context.Context, gitRepo *git.Repository, refName string) (*git.Reference, error) {
+	refs, err := gitRepo.GetRefsFiltered(ctx, refName)
 	if err != nil {
 		return nil, err
 	}
@@ -46,7 +46,7 @@ func UpdateReferenceWithChecks(ctx *gitea_context.APIContext, refName, commitID 
 		return nil, err
 	}
 
-	return ctx.Repo.GitRepo.GetReference(refName)
+	return ctx.Repo.GitRepo.GetReference(ctx, refName)
 }
 
 // RemoveReferenceWithChecks deletes a reference, checking for format, permission and special cases

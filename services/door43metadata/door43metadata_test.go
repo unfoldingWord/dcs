@@ -60,7 +60,7 @@ func TestGetDoor43MetadataFromSBMetadata_ParascripturalMissingLocalizedName(t *t
 	}
 
 	ctx := context.Background()
-	require.NoError(t, GetDoor43MetadataFromSBMetadata(ctx, dm, sb, repo, nil))
+	require.NoError(t, GetDoor43MetadataFromSBMetadata(ctx, nil, dm, sb, repo, nil))
 	assert.Equal(t, int64(123), dm.RepoID)
 	assert.Equal(t, "sb", dm.MetadataType)
 	assert.Equal(t, "TSV Translation Notes", dm.Subject)
@@ -98,7 +98,7 @@ func TestGetDoor43MetadataFromSBMetadata_ScriptureSkipsInvalidIngredients(t *tes
 	}
 
 	ctx := context.Background()
-	require.NoError(t, GetDoor43MetadataFromSBMetadata(ctx, dm, sb, repo, nil))
+	require.NoError(t, GetDoor43MetadataFromSBMetadata(ctx, nil, dm, sb, repo, nil))
 	assert.Equal(t, "Bible", dm.Subject)
 	assert.Equal(t, "md", dm.ContentFormat)
 	require.Len(t, dm.Ingredients, 1)
@@ -138,7 +138,7 @@ func TestGetDoor43MetadataFromSBMetadata_AllowsSparseMetadata(t *testing.T) {
 	sb := &dcs.SBMetadata100{}
 
 	ctx := context.Background()
-	require.NoError(t, GetDoor43MetadataFromSBMetadata(ctx, dm, sb, repo, nil))
+	require.NoError(t, GetDoor43MetadataFromSBMetadata(ctx, nil, dm, sb, repo, nil))
 	assert.Equal(t, int64(789), dm.RepoID)
 	assert.Equal(t, "sb", dm.MetadataType)
 	assert.Equal(t, "Unknown", dm.Subject)

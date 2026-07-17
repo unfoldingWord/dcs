@@ -17,9 +17,11 @@ func (repo *Repository) GetRefs(ctx context.Context) ([]*Reference, error) {
 	return repo.GetRefsFiltered(ctx, "")
 }
 
+/*** DCS Customizations ***/
+
 // GetReference gets the Reference object that a refName refers to
-func (repo *Repository) GetReference(refName string) (*Reference, error) {
-	refs, err := repo.GetRefsFiltered(refName)
+func (repo *Repository) GetReference(ctx context.Context, refName string) (*Reference, error) {
+	refs, err := repo.GetRefsFiltered(ctx, refName)
 	if err != nil {
 		return nil, err
 	}
@@ -31,6 +33,8 @@ func (repo *Repository) GetReference(refName string) (*Reference, error) {
 	}
 	return nil, ErrRefNotFound{RefName: refName}
 }
+
+/*** END DCS Customizations ***/
 
 // ListOccurrences lists all refs of the given refType the given commit appears in sorted by creation date DESC
 // refType should only be a literal "branch" or "tag" and nothing else

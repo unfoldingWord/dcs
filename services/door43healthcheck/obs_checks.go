@@ -40,14 +40,14 @@ func CheckOBSStories(ctx context.Context, dm *repo_model.Door43Metadata) []*repo
 	}
 
 	// Open the git repo and get the commit
-	gitRepo, err := git.OpenRepository(ctx, dm.Repo.RepoPath())
+	gitRepo, err := git.OpenRepository(dm.Repo.RepoPath())
 	if err != nil {
 		log.Error("CheckOBSStories: OpenRepository Error %s: %v", dm.Repo.FullName(), err)
 		return nil
 	}
 	defer gitRepo.Close()
 
-	commit, err := gitRepo.GetCommit(dm.CommitSHA)
+	commit, err := gitRepo.GetCommit(ctx, dm.CommitSHA)
 	if err != nil {
 		log.Error("CheckOBSStories: GetCommit Error %s/%s: %v", dm.Repo.FullName(), dm.CommitSHA, err)
 		return nil
@@ -62,14 +62,14 @@ func CheckOBSStories(ctx context.Context, dm *repo_model.Door43Metadata) []*repo
 		storyNum := fmt.Sprintf("%02d", i)
 		storyFile := path.Join(contentPath, storyNum+".md")
 
-		blob, err := commit.GetBlobByPath(storyFile)
+		blob, err := commit.GetBlobByPath(ctx, gitRepo, storyFile)
 		if err != nil || blob == nil {
 			missingStories = append(missingStories, storyNum)
 			continue
 		}
 
 		// Read the file content to check title, frames, and Bible reference
-		dataRc, err := blob.DataAsync()
+		dataRc, err := blob.DataAsync(ctx)
 		if err != nil {
 			log.Error("CheckOBSStories: DataAsync Error for %s: %v", storyFile, err)
 			continue

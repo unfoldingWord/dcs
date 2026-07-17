@@ -139,12 +139,12 @@ func CreateGitRef(ctx *context.APIContext) {
 
 	opt := web.GetForm(ctx).(*api.CreateGitRefOption)
 
-	if ctx.Repo.GitRepo.IsReferenceExist(opt.RefName) {
+	if ctx.Repo.GitRepo.IsReferenceExist(ctx, opt.RefName) {
 		ctx.APIError(http.StatusConflict, fmt.Sprintf("reference already exists: %s", opt.RefName))
 		return
 	}
 
-	commitID, err := ctx.Repo.GitRepo.GetRefCommitID(opt.Target)
+	commitID, err := ctx.Repo.GitRepo.GetRefCommitID(ctx, opt.Target)
 	if err != nil {
 		if git.IsErrNotExist(err) {
 			ctx.APIError(http.StatusNotFound, fmt.Sprintf("target does not exist: %s", opt.Target))
@@ -210,12 +210,12 @@ func UpdateGitRef(ctx *context.APIContext) {
 	refName := "refs/" + ctx.PathParam("*")
 	opt := web.GetForm(ctx).(*api.UpdateGitRefOption)
 
-	if ctx.Repo.GitRepo.IsReferenceExist(refName) {
+	if ctx.Repo.GitRepo.IsReferenceExist(ctx, refName) {
 		ctx.APIError(http.StatusConflict, fmt.Sprintf("reference already exists: %s", refName))
 		return
 	}
 
-	commitID, err := ctx.Repo.GitRepo.GetRefCommitID(opt.Target)
+	commitID, err := ctx.Repo.GitRepo.GetRefCommitID(ctx, opt.Target)
 	if err != nil {
 		if git.IsErrNotExist(err) {
 			ctx.APIError(http.StatusNotFound, fmt.Sprintf("target does not exist: %s", opt.Target))
@@ -279,7 +279,7 @@ func DeleteGitRef(ctx *context.APIContext) {
 
 	refName := "refs/" + ctx.PathParam("*")
 
-	if !ctx.Repo.GitRepo.IsReferenceExist(refName) {
+	if !ctx.Repo.GitRepo.IsReferenceExist(ctx, refName) {
 		ctx.APIError(http.StatusNotFound, fmt.Sprintf("reference does not exist: %s", refName))
 		return
 	}

@@ -161,11 +161,11 @@ func ForBranch(ctx context.Context, repo *repo_model.Repository, branchName stri
 	// identifies exactly which state of the repo was converted. Passed explicitly
 	// because rcDir's origin is a local path (and ts conversions have no .git),
 	// so the library cannot detect the repo identity itself.
-	gitRepo, err := gitrepo.OpenRepository(ctx, repo)
+	gitRepo, err := gitrepo.OpenRepository(repo)
 	if err != nil {
 		return fmt.Errorf("OpenRepository: %w", err)
 	}
-	commitID, err := gitRepo.ConvertToGitID(branchName)
+	commitID, err := gitRepo.ConvertToGitID(ctx, branchName)
 	gitRepo.Close()
 	if err != nil {
 		return fmt.Errorf("resolve branch %s: %w", branchName, err)
@@ -475,13 +475,13 @@ func preparePayloadPath(ctx context.Context, tmpDir, rcDir string, repo *repo_mo
 		return "", fmt.Errorf("GetRepositoryByOwnerAndName(%s): %w", payloadRepoName, err)
 	}
 
-	payloadGitRepo, err := gitrepo.OpenRepository(ctx, payloadRepo)
+	payloadGitRepo, err := gitrepo.OpenRepository(payloadRepo)
 	if err != nil {
 		return "", fmt.Errorf("OpenRepository(%s): %w", payloadRepo.FullName(), err)
 	}
 	defer payloadGitRepo.Close()
 
-	commitID, err := payloadGitRepo.ConvertToGitID(payloadRepo.DefaultBranch)
+	commitID, err := payloadGitRepo.ConvertToGitID(ctx, payloadRepo.DefaultBranch)
 	if err != nil {
 		return "", fmt.Errorf("resolve %s default branch: %w", payloadRepo.FullName(), err)
 	}

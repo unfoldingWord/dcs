@@ -256,7 +256,7 @@ func CreateNewTag(ctx context.Context, doer *user_model.User, repo *repo_model.R
 		return err
 	}
 
-	notify_service.NewTagRelease(gitRepo.Ctx, rel)
+	notify_service.NewTagRelease(ctx, rel)
 
 	return nil
 	/*** END DCS Customizations ***/

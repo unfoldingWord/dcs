@@ -5,6 +5,7 @@ package dcs
 
 import (
 	"bytes"
+	"context"
 	"io"
 
 	"gitea.dev/modules/charset"
@@ -17,8 +18,8 @@ import (
 )
 
 // ReadFileFromBlob reads a file from a blob and returns the content
-func ReadFileFromBlob(blob *git.Blob) ([]byte, error) {
-	dataRc, err := blob.DataAsync()
+func ReadFileFromBlob(ctx context.Context, blob *git.Blob) ([]byte, error) {
+	dataRc, err := blob.DataAsync(ctx)
 	if err != nil {
 		log.Warn("DataAsync Error: %v\n", err)
 		return nil, err
@@ -39,8 +40,8 @@ func ReadFileFromBlob(blob *git.Blob) ([]byte, error) {
 }
 
 // ReadYAMLFromBlob reads a yaml file from a blob and unmarshals it
-func ReadYAMLFromBlob(blob *git.Blob) (map[string]any, error) {
-	buf, err := ReadFileFromBlob(blob)
+func ReadYAMLFromBlob(ctx context.Context, blob *git.Blob) (map[string]any, error) {
+	buf, err := ReadFileFromBlob(ctx, blob)
 	if err != nil {
 		return nil, err
 	}
@@ -61,8 +62,8 @@ func ReadYAMLFromBlob(blob *git.Blob) (map[string]any, error) {
 }
 
 // ReadJSONFromBlob reads a json file from a blob and unmarshals it
-func ReadJSONFromBlob(blob *git.Blob) (map[string]any, error) {
-	buf, err := ReadFileFromBlob(blob)
+func ReadJSONFromBlob(ctx context.Context, blob *git.Blob) (map[string]any, error) {
+	buf, err := ReadFileFromBlob(ctx, blob)
 	if err != nil {
 		return nil, err
 	}

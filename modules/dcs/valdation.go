@@ -5,6 +5,7 @@ package dcs
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"io"
 	"sort"
@@ -20,16 +21,16 @@ import (
 )
 
 // ValidateYAMLFile validates a yaml file
-func ValidateYAMLFile(entry *git.TreeEntry) string {
-	if _, err := ReadYAMLFromBlob(entry.Blob()); err != nil {
+func ValidateYAMLFile(ctx context.Context, gitRepo *git.Repository, entry *git.TreeEntry) string {
+	if _, err := ReadYAMLFromBlob(ctx, entry.Blob(gitRepo)); err != nil {
 		return strings.ReplaceAll(err.Error(), " converting YAML to JSON", "")
 	}
 	return ""
 }
 
 // ValidateJSONFile validates a json file
-func ValidateJSONFile(entry *git.TreeEntry) string {
-	if err := ValidateJSONFromBlob(entry.Blob()); err != nil {
+func ValidateJSONFile(ctx context.Context, gitRepo *git.Repository, entry *git.TreeEntry) string {
+	if err := ValidateJSONFromBlob(ctx, entry.Blob(gitRepo)); err != nil {
 		log.Warn("Error decoding JSON file %s: %v\n", entry.Name(), err)
 		return fmt.Sprintf("Error reading JSON file %s: %s\n", entry.Name(), err.Error())
 	}
@@ -70,8 +71,8 @@ func convertValidationErrorToString(valErr, parentErr *jsonschema.ValidationErro
 }
 
 // ValidateJSONFromBlob reads a json file from a blob and unmarshals it returning any errors
-func ValidateJSONFromBlob(blob *git.Blob) error {
-	dataRc, err := blob.DataAsync()
+func ValidateJSONFromBlob(ctx context.Context, blob *git.Blob) error {
+	dataRc, err := blob.DataAsync(ctx)
 	if err != nil {
 		log.Warn("DataAsync Error: %v\n", err)
 		return err

@@ -539,7 +539,7 @@ func (cpi *comparePageInfoType) prepareCompareDiff(ctx *context.Context, whitesp
 	// For Validation
 	for _, file := range diff.Files {
 		if strings.HasSuffix(file.Name, ".json") || strings.HasSuffix(file.Name, ".yaml") || strings.HasSuffix(file.Name, ".yml") {
-			if entry, _ := headCommit.GetTreeEntryByPath(file.Name); entry != nil {
+			if entry, _ := headCommit.GetTreeEntryByPath(ctx, ci.HeadGitRepo, file.Name); entry != nil {
 				file.Entry = entry
 			}
 		}

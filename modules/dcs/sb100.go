@@ -5,6 +5,7 @@ package dcs
 
 import (
 	"bytes"
+	"context"
 	"io"
 	"net/http"
 	"strings"
@@ -22,8 +23,8 @@ import (
 var sb100Schema *jsonschema.Schema
 
 // GetSBDataFromBlob reads a blob of text and unmarshals it into an SBMetadata100 object
-func GetSBDataFromBlob(blob *git.Blob) (*SBMetadata100, error) {
-	buf, err := ReadFileFromBlob(blob)
+func GetSBDataFromBlob(ctx context.Context, blob *git.Blob) (*SBMetadata100, error) {
+	buf, err := ReadFileFromBlob(ctx, blob)
 	if err != nil {
 		return nil, err
 	}

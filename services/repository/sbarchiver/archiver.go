@@ -92,7 +92,7 @@ func (e ErrRepoNotConvertible) Is(err error) bool {
 }
 
 // NewRequest creates an SB archival request from URI suffix like "master.zip".
-func NewRequest(repoID int64, repo *git.Repository, archiveRefExt string) (*ArchiveRequest, error) {
+func NewRequest(ctx context.Context, repoID int64, repo *git.Repository, archiveRefExt string) (*ArchiveRequest, error) {
 	archiveRefShortName, archiveType := repo_model.SplitArchiveNameType(archiveRefExt)
 	if archiveType == repo_model.ArchiveUnknown {
 		return nil, ErrUnknownArchiveFormat{archiveRefExt}
@@ -101,7 +101,7 @@ func NewRequest(repoID int64, repo *git.Repository, archiveRefExt string) (*Arch
 		return nil, ErrUnknownArchiveFormat{archiveRefExt}
 	}
 
-	commitID, err := repo.ConvertToGitID(archiveRefShortName)
+	commitID, err := repo.ConvertToGitID(ctx, archiveRefShortName)
 	if err != nil {
 		return nil, RepoRefNotFoundError{RefShortName: archiveRefShortName}
 	}
@@ -275,11 +275,11 @@ func prepareTsTWSourceDir(ctx context.Context, tmpDir string, dm *repo_model.Doo
 			return "", fmt.Errorf("repo_model.GetRepositoryByOwnerAndName(%s/en_tw): %w", owner, err)
 		}
 
-		twGitRepo, err := gitrepo.OpenRepository(ctx, twRepo)
+		twGitRepo, err := gitrepo.OpenRepository(twRepo)
 		if err != nil {
 			return "", fmt.Errorf("gitrepo.OpenRepository(%s): %w", twRepo.FullName(), err)
 		}
-		commitID, err := twGitRepo.ConvertToGitID(twRepo.DefaultBranch)
+		commitID, err := twGitRepo.ConvertToGitID(ctx, twRepo.DefaultBranch)
 		twGitRepo.Close()
 		if err != nil {
 			return "", fmt.Errorf("resolve %s default branch: %w", twRepo.FullName(), err)
@@ -321,13 +321,13 @@ func preparePayloadPath(ctx context.Context, tmpDir, rcDir string, repo *repo_mo
 		return "", fmt.Errorf("repo_model.GetRepositoryByOwnerAndName(%s): %w", payloadRepoName, err)
 	}
 
-	payloadGitRepo, err := gitrepo.OpenRepository(ctx, payloadRepo)
+	payloadGitRepo, err := gitrepo.OpenRepository(payloadRepo)
 	if err != nil {
 		return "", fmt.Errorf("gitrepo.OpenRepository(%s): %w", payloadRepo.FullName(), err)
 	}
 	defer payloadGitRepo.Close()
 
-	commitID, err := payloadGitRepo.ConvertToGitID(payloadRepo.DefaultBranch)
+	commitID, err := payloadGitRepo.ConvertToGitID(ctx, payloadRepo.DefaultBranch)
 	if err != nil {
 		return "", fmt.Errorf("resolve %s default branch: %w", payloadRepo.FullName(), err)
 	}

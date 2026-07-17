@@ -4,6 +4,7 @@
 package dcs
 
 import (
+	"context"
 	"strconv"
 	"strings"
 
@@ -12,8 +13,8 @@ import (
 	"gitea.dev/modules/structs"
 )
 
-func GetTcTsManifestFromBlob(blob *git.Blob) (*structs.TcTsManifest, error) {
-	buf, err := ReadFileFromBlob(blob)
+func GetTcTsManifestFromBlob(ctx context.Context, blob *git.Blob) (*structs.TcTsManifest, error) {
+	buf, err := ReadFileFromBlob(ctx, blob)
 	if err != nil {
 		return nil, err
 	}
