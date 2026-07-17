@@ -93,26 +93,7 @@ func (repo *Repository) LoadLatestDMs(ctx context.Context) error {
 		if has && dm.ID != 0 {
 			repo.RepoDM = dm
 		} else {
-			title := repo.Name
-			metadataType := dcs.GetMetadataTypeFromRepoName(repo.Name)
-			metadataVersion := dcs.GetDefaultMetadataVersionForType(metadataType)
-			subject := dcs.GetSubjectFromRepoName(repo.Name)
-			lang := dcs.GetLanguageFromRepoName(repo.Name)
-			langDir := dcs.GetLanguageDirection(lang)
-			langTitle := dcs.GetLanguageTitle(lang)
-			langIsGL := dcs.LanguageIsGL(lang)
-			repo.RepoDM = &Door43Metadata{
-				RepoID:            repo.ID,
-				Repo:              repo,
-				MetadataType:      metadataType,
-				MetadataVersion:   metadataVersion,
-				Title:             title,
-				Subject:           subject,
-				Language:          lang,
-				LanguageDirection: langDir,
-				LanguageTitle:     langTitle,
-				LanguageIsGL:      langIsGL,
-			}
+			repo.RepoDM = SynthesizeRepoDM(repo)
 		}
 	}
 
@@ -120,9 +101,9 @@ func (repo *Repository) LoadLatestDMs(ctx context.Context) error {
 	return nil
 }
 
-// synthesizeRepoDM builds the fallback RepoDM for a repo that has no
+// SynthesizeRepoDM builds the fallback RepoDM for a repo that has no
 // is_repo_metadata Door43Metadata row, deriving fields from the repo name.
-func synthesizeRepoDM(repo *Repository) *Door43Metadata {
+func SynthesizeRepoDM(repo *Repository) *Door43Metadata {
 	metadataType := dcs.GetMetadataTypeFromRepoName(repo.Name)
 	lang := dcs.GetLanguageFromRepoName(repo.Name)
 	return &Door43Metadata{
@@ -210,7 +191,7 @@ func (repos RepositoryList) LoadLatestDMs(ctx context.Context) error {
 
 	for _, repo := range repoMap {
 		if repo.RepoDM == nil {
-			repo.RepoDM = synthesizeRepoDM(repo)
+			repo.RepoDM = SynthesizeRepoDM(repo)
 		}
 		repo.LatestDMsLoaded = true
 	}
