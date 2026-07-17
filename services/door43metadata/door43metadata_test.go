@@ -8,8 +8,11 @@ import (
 	"testing"
 
 	repo_model "code.gitea.io/gitea/models/repo"
+	"code.gitea.io/gitea/models/unittest"
 	user_model "code.gitea.io/gitea/models/user"
 	"code.gitea.io/gitea/modules/dcs"
+	api "code.gitea.io/gitea/modules/structs"
+	"code.gitea.io/gitea/services/convert"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -101,6 +104,31 @@ func TestGetDoor43MetadataFromSBMetadata_ScriptureSkipsInvalidIngredients(t *tes
 	assert.Equal(t, "gen", dm.Ingredients[0].Identifier)
 	assert.Equal(t, "Genesis", dm.Ingredients[0].Title)
 	assert.Equal(t, "./ingredients/gen.md", dm.Ingredients[0].Path)
+}
+
+// TestProcessDoor43MetadataForRepo_RepoDMAfterCreate replays the notifier
+// sequence that runs when a public non-empty repo is created: the ref
+// processing memoizes LoadLatestDMs (LatestDMsLoaded=true, RepoDM synthesized),
+// then handleRepoDM reassigns RepoDM from the stage DMs. With no valid DM rows
+// this leaves RepoDM nil while LatestDMsLoaded stays true, so the actions
+// notifier's convert.ToRepo -> ToRepoDCS panics on dm.Title.
+func TestProcessDoor43MetadataForRepo_RepoDMAfterCreate(t *testing.T) {
+	require.NoError(t, unittest.PrepareTestDatabase())
+	ctx := t.Context()
+
+	repo := unittest.AssertExistsAndLoadBean(t, &repo_model.Repository{ID: 1})
+	require.False(t, repo.IsEmpty)
+	require.False(t, repo.IsPrivate)
+	require.False(t, repo.LatestDMsLoaded)
+
+	require.NoError(t, ProcessDoor43MetadataForRepo(ctx, repo, repo.DefaultBranch))
+
+	t.Logf("after ProcessDoor43MetadataForRepo: LatestDMsLoaded=%v RepoDM=%+v", repo.LatestDMsLoaded, repo.RepoDM)
+	assert.True(t, repo.LatestDMsLoaded, "LatestDMsLoaded should be memoized by the ref processing")
+	assert.NotNil(t, repo.RepoDM, "RepoDM must never be nil after processing (ToRepoDCS dereferences it)")
+	assert.NotPanics(t, func() {
+		convert.ToRepoDCS(ctx, repo, &api.Repository{})
+	}, "ToRepoDCS must not panic right after repo creation processing")
 }
 
 func TestGetDoor43MetadataFromSBMetadata_AllowsSparseMetadata(t *testing.T) {

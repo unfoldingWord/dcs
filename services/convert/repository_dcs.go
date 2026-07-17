@@ -16,6 +16,9 @@ func ToRepoDCS(ctx context.Context, repo *repo_model.Repository, apiRepo *api.Re
 		return apiRepo
 	}
 	dm := repo.RepoDM
+	if dm == nil {
+		return apiRepo
+	}
 	apiRepo.Title = dm.Title
 	apiRepo.Subject = dm.Subject
 	apiRepo.FlavorType = dm.FlavorType
