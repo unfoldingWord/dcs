@@ -23,6 +23,7 @@ import (
 	"code.gitea.io/gitea/modules/util"
 
 	rc2sb "github.com/unfoldingWord/go-rc2sb"
+	tc2rc "github.com/unfoldingWord/go-tc2rc"
 	ts2rc "github.com/unfoldingWord/go-ts2rc"
 )
 
@@ -30,7 +31,7 @@ import (
 // 1. CONVERT2SB_TOPICS is configured in app.ini (non-empty)
 // 2. DefaultBranch is "master"
 // 3. Repo has at least one of the configured topics
-// 4. DefaultBranch DM MetadataType is "rc" or "ts" (ts repos are first converted to RC)
+// 4. DefaultBranch DM MetadataType is "rc", "ts", or "tc" (ts and tc repos are first converted to RC)
 func RepoQualifiesForConversion(ctx context.Context, repo *repo_model.Repository) (bool, error) {
 	if repo == nil {
 		return false, nil
@@ -77,9 +78,9 @@ func repoHasQualifyingTopic(repo *repo_model.Repository) bool {
 	return false
 }
 
-// ForBranch converts an RC or ts repo at the HEAD of the given branch to SB format
-// and pushes the result to the "main" branch. ts repos are first converted to RC
-// format via ts2rc, then follow the same RC-to-SB pipeline.
+// ForBranch converts an RC, ts, or tc repo at the HEAD of the given branch to SB format
+// and pushes the result to the "main" branch. ts and tc repos are first converted to RC
+// format via ts2rc/tc2rc, then follow the same RC-to-SB pipeline.
 func ForBranch(ctx context.Context, repo *repo_model.Repository, branchName string) error {
 	if repo == nil {
 		return errors.New("repo must not be nil")
@@ -101,13 +102,16 @@ func ForBranch(ctx context.Context, repo *repo_model.Repository, branchName stri
 
 	dm := getConversionDM(ctx, repo)
 	isTS := dm != nil && dm.MetadataType == "ts"
+	isTC := dm != nil && dm.MetadataType == "tc"
 
 	// Step 1: Shallow clone at the branch HEAD.
-	// ts repos are cloned to a separate dir and first converted to RC format below.
+	// ts and tc repos are cloned to a separate dir and first converted to RC format below.
 	rcDir := filepath.Join(tmpDir, "rc")
 	cloneDir := rcDir
 	if isTS {
 		cloneDir = filepath.Join(tmpDir, "ts")
+	} else if isTC {
+		cloneDir = filepath.Join(tmpDir, "tc")
 	}
 	if err := cloneAtRef(ctx, repo.RepoPath(), branchName, cloneDir); err != nil {
 		return fmt.Errorf("clone at branch %s: %w", branchName, err)
@@ -128,6 +132,20 @@ func ForBranch(ctx context.Context, repo *repo_model.Repository, branchName stri
 		}
 		log.Info("Convert2SB: ts2rc conversion successful for %s — class=%s, package_version=%d",
 			repo.FullName(), rep.Class, rep.Version)
+	}
+
+	// Step 1c: For tc repos, convert tc -> RC so the RC -> SB pipeline below applies unchanged.
+	// RepoName locates the exported USFM file (<repoName>.usfm) since the clone dir is "tc".
+	if isTC {
+		rep := tc2rc.Convert(ctx, cloneDir, rcDir, tc2rc.Options{RepoName: repo.Name})
+		if !rep.OK {
+			return fmt.Errorf("tc2rc.Convert: %s", rep.Error)
+		}
+		for _, warning := range rep.Warnings {
+			log.Warn("Convert2SB: tc2rc warning for %s: %s", repo.FullName(), warning)
+		}
+		log.Info("Convert2SB: tc2rc conversion successful for %s — book=%s, tc_version=%d, usfm=%s",
+			repo.FullName(), rep.Book, rep.TCVersion, rep.USFM)
 	}
 
 	// Step 2: Prepare payload for TWL and TW repos.
@@ -208,6 +226,8 @@ func ForBranch(ctx context.Context, repo *repo_model.Repository, branchName stri
 	commitMsg := "Convert RC to SB from branch " + branchName
 	if isTS {
 		commitMsg = "Convert tS to SB from branch " + branchName
+	} else if isTC {
+		commitMsg = "Convert tC to SB from branch " + branchName
 	}
 	doer := repo.Owner
 	sig := doer.NewGitSig()

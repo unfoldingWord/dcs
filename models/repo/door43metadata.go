@@ -835,22 +835,22 @@ func DeleteAllDoor43MetadatasByRepoID(ctx context.Context, repoID int64) (int64,
 }
 
 // HasDefaultBranchConvertibleMetadata returns true if the repo has a door43_metadata row
-// for its default branch with a metadata_type convertible to Scripture Burrito ("rc" or "ts"),
-// regardless of validation errors.
+// for its default branch with a metadata_type convertible to Scripture Burrito ("rc", "ts",
+// or "tc"), regardless of validation errors.
 func HasDefaultBranchConvertibleMetadata(ctx context.Context, repoID int64) (bool, error) {
 	return db.GetEngine(ctx).
 		Table("door43_metadata").
 		Where(builder.Eq{"repo_id": repoID}.
 			And(builder.Eq{"stage": int(door43metadata.StageLatest)}).
 			And(builder.Eq{"is_latest_for_stage": true}).
-			And(builder.In("metadata_type", "rc", "ts"))).
+			And(builder.In("metadata_type", "rc", "ts", "tc"))).
 		Exist()
 }
 
 // GetReposQualifiedForSBConversion returns all repos that qualify for SB conversion:
 // non-archived, non-private, default_branch = "master", have a door43_metadata row for their
-// default branch with metadata_type = "rc" or "ts", and have at least one topic from the
-// given list. Returns nil, nil if topics is empty.
+// default branch with metadata_type = "rc", "ts", or "tc", and have at least one topic from
+// the given list. Returns nil, nil if topics is empty.
 func GetReposQualifiedForSBConversion(ctx context.Context, topics []string) ([]*Repository, error) {
 	if len(topics) == 0 {
 		return nil, nil
@@ -869,12 +869,12 @@ func GetReposQualifiedForSBConversion(ctx context.Context, topics []string) ([]*
 		Where(builder.In("topic.name", lowerTopics...)).
 		GroupBy("repo_topic.repo_id")
 
-	// Subquery: repo IDs with a default-branch DM whose metadata_type is "rc" or "ts"
+	// Subquery: repo IDs with a default-branch DM whose metadata_type is "rc", "ts", or "tc"
 	dmSubQ := builder.Select("repo_id").
 		From("door43_metadata").
 		Where(builder.Eq{"stage": int(door43metadata.StageLatest)}.
 			And(builder.Eq{"is_latest_for_stage": true}).
-			And(builder.In("metadata_type", "rc", "ts")))
+			And(builder.In("metadata_type", "rc", "ts", "tc")))
 
 	cond := builder.Eq{"`repository`.default_branch": "master"}.
 		And(builder.Eq{"`repository`.is_archived": 0}).
