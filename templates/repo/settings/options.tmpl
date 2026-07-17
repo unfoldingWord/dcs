@@ -774,7 +774,9 @@
 		</h4>
 		<div class="ui attached error danger segment">
 			<div class="flex-list">
-				{{if not .Repository.IsFork}}
+				<!-- DCS Customizations - only site admins can change repo visibility -->
+				{{if and .IsAdmin (not .Repository.IsFork)}}
+				<!-- END DCS Customizations -->
 					<div class="flex-item tw-items-center">
 						<div class="flex-item-main">
 							<div class="flex-item-title">{{ctx.Locale.Tr "repo.visibility"}}</div>
@@ -966,7 +968,9 @@
 		</div>
 	</div>
 
-	{{if not .Repository.IsFork}}
+	<!-- DCS Customizations - only site admins can change repo visibility -->
+	{{if and .IsAdmin (not .Repository.IsFork)}}
+	<!-- END DCS Customizations -->
 		<div class="ui small modal" id="visibility-repo-modal">
 			<div class="header">
 				{{ctx.Locale.Tr "repo.visibility"}}

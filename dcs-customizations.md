@@ -141,13 +141,16 @@ This document catalogs every DCS modification to existing Gitea files. New DCS-o
 | `templates/repo/branch/list.tmpl` | USFM script, preview buttons per branch | MEDIUM |
 | `templates/repo/tag/list.tmpl` | USFM script, preview buttons per tag | MEDIUM |
 | `templates/repo/diff/box.tmpl` | Validation badge in diff headers | LOW |
-| `templates/repo/create.tmpl` | CC-BY-SA license override, hidden fields | MEDIUM |
+| `templates/repo/create.tmpl` | CC-BY-SA license override, hidden fields, private checkbox restricted to admins | MEDIUM |
+| `templates/repo/migrate/*.tmpl` (9 files) | Private checkbox restricted to admins | LOW |
+| `templates/org/create.tmpl` | Visibility radios restricted to admins (non-admins forced public) | LOW |
+| `templates/org/settings/options_dangerzone.tmpl` | Visibility row and modal restricted to admins | LOW |
 | `templates/repo/clone_panel.tmpl` | Scripture Burrito download links | LOW |
 | `templates/repo/home.tmpl` | USFM alignment remover script | LOW |
 | `templates/user/auth/signup_inner.tmpl` | Agreement notice, field helper text | MEDIUM |
 | `templates/admin/user/list.tmpl` | Spam user filter radio | LOW |
 | `templates/admin/dashboard.tmpl` | 3 DCS operation rows | LOW |
-| `templates/repo/settings/options.tmpl` | Actions checkbox restricted to admins | LOW |
+| `templates/repo/settings/options.tmpl` | Actions checkbox and visibility change (danger zone) restricted to admins | LOW |
 | `templates/repo/diff/csv_diff.tmpl` | GetCsvCellDiff function call | LOW |
 | `templates/repo/home_sidebar_bottom.tmpl` | "File Types" label change | LOW |
 
