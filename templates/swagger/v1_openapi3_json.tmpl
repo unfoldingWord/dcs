@@ -1203,6 +1203,16 @@
         },
         "description": "ReactionList"
       },
+      "Reference": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Reference"
+            }
+          }
+        },
+        "description": "Reference"
+      },
       "ReferenceList": {
         "content": {
           "application/json": {
@@ -8664,7 +8674,7 @@
             "x-go-name": "RepoAdminChangeTeamAccess"
           },
           "repo_languages": {
-            "description": "DCS Customizations ***/\nAll languages of the repos the org owns",
+            "description": "- DCS Customizations **\nAll languages of the repos the org owns",
             "items": {
               "type": "string"
             },

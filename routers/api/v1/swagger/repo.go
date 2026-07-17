@@ -84,6 +84,18 @@ type swaggerResponseTagProtection struct {
 	Body api.TagProtection `json:"body"`
 }
 
+/*** DCS Customizations - upstream removed the unused singular Reference
+response (go-gitea#38299) but the DCS create/update git ref API returns it ***/
+
+// Reference
+// swagger:response Reference
+type swaggerResponseReference struct {
+	// in:body
+	Body api.Reference `json:"body"`
+}
+
+/*** END DCS Customizations ***/
+
 // ReferenceList
 // swagger:response ReferenceList
 type swaggerResponseReferenceList struct {

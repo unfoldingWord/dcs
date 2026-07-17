@@ -31575,7 +31575,7 @@
           "x-go-name": "RepoAdminChangeTeamAccess"
         },
         "repo_languages": {
-          "description": "DCS Customizations ***/\nAll languages of the repos the org owns",
+          "description": "- DCS Customizations **\nAll languages of the repos the org owns",
           "type": "array",
           "items": {
             "type": "string"
@@ -35221,6 +35221,12 @@
         "items": {
           "$ref": "#/definitions/Reaction"
         }
+      }
+    },
+    "Reference": {
+      "description": "Reference",
+      "schema": {
+        "$ref": "#/definitions/Reference"
       }
     },
     "ReferenceList": {
