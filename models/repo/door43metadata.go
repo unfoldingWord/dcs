@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"html/template"
 	"net/url"
+	"slices"
 	"sort"
 	"strings"
 
@@ -601,6 +602,54 @@ func GetDoor43MetadataByRepoIDAndRef(ctx context.Context, repoID int64, ref stri
 		return nil, ErrDoor43MetadataNotExist{0, repoID, 0, ref}
 	}
 	return dm, nil
+}
+
+// GetDoor43MetadataLanguageInfo returns a map keyed by language code of language info
+// ("language", "language_title", "language_direction", "language_is_gl",
+// "alternate_names") gathered from the door43_metadata rows of the given languages,
+// skipping rows with an empty language_title. The first row of a language provides its
+// info, with the rows ordered lowest stage first (prod before preprod, etc.) and newest
+// (highest ID) first within a stage, so the primary language_title comes from the newest
+// production entry when one exists; the differing titles of any further rows are added
+// to "alternate_names", and "language_is_gl" is true if any row has it true.
+func GetDoor43MetadataLanguageInfo(ctx context.Context, langs []string) (map[string]map[string]any, error) {
+	info := make(map[string]map[string]any, len(langs))
+	if len(langs) == 0 {
+		return info, nil
+	}
+	var dms []*Door43Metadata
+	if err := db.GetEngine(ctx).
+		Cols("language", "language_title", "language_direction", "language_is_gl").
+		In("language", langs).
+		And(builder.Neq{"language_title": ""}).
+		GroupBy("language, language_title, language_direction, language_is_gl").
+		OrderBy("MIN(stage) ASC, MAX(id) DESC").
+		Find(&dms); err != nil {
+		return nil, err
+	}
+	for _, dm := range dms {
+		langInfo, ok := info[dm.Language]
+		if !ok {
+			info[dm.Language] = map[string]any{
+				"language":           dm.Language,
+				"language_title":     dm.LanguageTitle,
+				"language_direction": dm.LanguageDirection,
+				"language_is_gl":     dm.LanguageIsGL,
+				"alternate_names":    []string{},
+			}
+			continue
+		}
+		if dm.LanguageIsGL {
+			langInfo["language_is_gl"] = true
+		}
+		if dm.LanguageTitle != langInfo["language_title"].(string) {
+			altNames := langInfo["alternate_names"].([]string)
+			if !slices.Contains(altNames, dm.LanguageTitle) {
+				langInfo["alternate_names"] = append(altNames, dm.LanguageTitle)
+			}
+		}
+	}
+	return info, nil
 }
 
 // GetDoor43MetadataMapValues gets the values of a Door43Metadata map
