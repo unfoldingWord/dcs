@@ -978,9 +978,52 @@ func ListCatalogLanguages(ctx *context.APIContext) {
 	}
 	var languages []map[string]any
 	langnames := dcs.GetLangnamesJSONKeyed()
+
+	// Languages not in langnames.json can still get their title and direction
+	// from the door43_metadata entries of that language.
+	var unknownLangs []string
+	for _, lang := range list {
+		if _, ok := langnames[lang]; !ok {
+			unknownLangs = append(unknownLangs, lang)
+		}
+	}
+	dmLangInfo, err := repo.GetDoor43MetadataLanguageInfo(ctx, unknownLangs)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, map[string]any{
+			"ok":    false,
+			"error": err.Error(),
+		})
+		return
+	}
+
 	for _, lang := range list {
 		if val, ok := langnames[lang]; ok {
 			languages = append(languages, val)
+		} else {
+			langName := lang
+			langDirection := "ltr"
+			langIsGW := false
+			if dm, ok := dmLangInfo[lang]; ok {
+				if dm.LanguageTitle != "" {
+					langName = dm.LanguageTitle
+				}
+				if dm.LanguageDirection != "" {
+					langDirection = dm.LanguageDirection
+				}
+				langIsGW = dm.LanguageIsGL
+			}
+			languages = append(languages, map[string]any{
+				"ld":  langDirection,
+				"ang": langName,
+				"pk":  0,
+				"gw":  langIsGW,
+				"lc":  lang,
+				"ln":  langName,
+				"lr":  "",
+				"hc":  "",
+				"cc":  []string{},
+				"alt": []string{},
+			})
 		}
 	}
 	ctx.RespHeader().Set("X-Total-Count", strconv.Itoa(len(list)))

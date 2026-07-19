@@ -603,6 +603,32 @@ func GetDoor43MetadataByRepoIDAndRef(ctx context.Context, repoID int64, ref stri
 	return dm, nil
 }
 
+// GetDoor43MetadataLanguageInfo returns a map keyed by language code of Door43Metadata
+// entries with only the Language, LanguageTitle and LanguageDirection fields populated,
+// at most one entry per given language, for languages that have a door43_metadata row
+// with a non-empty language_title.
+func GetDoor43MetadataLanguageInfo(ctx context.Context, langs []string) (map[string]*Door43Metadata, error) {
+	info := make(map[string]*Door43Metadata, len(langs))
+	if len(langs) == 0 {
+		return info, nil
+	}
+	var dms []*Door43Metadata
+	if err := db.GetEngine(ctx).
+		Cols("language", "language_title", "language_direction").
+		In("language", langs).
+		And(builder.Neq{"language_title": ""}).
+		GroupBy("language, language_title, language_direction").
+		Find(&dms); err != nil {
+		return nil, err
+	}
+	for _, dm := range dms {
+		if _, ok := info[dm.Language]; !ok {
+			info[dm.Language] = dm
+		}
+	}
+	return info, nil
+}
+
 // GetDoor43MetadataMapValues gets the values of a Door43Metadata map
 func GetDoor43MetadataMapValues(m map[int64]*Door43Metadata) []*Door43Metadata {
 	values := make([]*Door43Metadata, 0, len(m))
