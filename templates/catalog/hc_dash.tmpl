@@ -32,10 +32,10 @@
 		<div class="tw-text-text-light-2 tw-mb-3">Total: {{.Total}}</div>
 		<div class="divider"></div>
 
-		<div class="flex-list">
+		<div class="flex-divided-list items-with-main">
 			{{range .Door43Metadatas}}
-				<div class="flex-item">
-					<div class="flex-item-leading">
+				<div class="item">
+					<div class="item-leading">
 						{{$severity := .HealthcheckSeverity.String}}
 						{{$icon := "octicon-shield-x"}}
 						{{$color := "red"}}
@@ -56,15 +56,15 @@
 							</a>
 						</span>
 					</div>
-					<div class="flex-item-main">
-						<div class="flex-item-header">
-							<div class="flex-item-title">
+					<div class="item-main">
+						<div class="item-header">
+							<div class="item-title">
 								<a class="muted" href="{{.Repo.Owner.HomeLink}}">{{.Repo.OwnerName}}</a>/<a class="muted" href="{{.Repo.Link}}">{{.Repo.Name}}</a>
 								{{if .Ref}}<a class="ui basic label" href="{{.Repo.Link}}/releases/tag/{{.Ref | PathEscapeSegments}}">{{.Ref}}</a>{{end}}
 							</div>
 						</div>
-						<div class="flex-item-body">Subject: {{.Subject}}</div>
-						<div class="flex-item-body">{{ctx.Locale.Tr "dcs.explore.released"}} {{DateUtils.TimeSince .ReleaseDateUnix}}</div>
+						<div class="item-body">Subject: {{.Subject}}</div>
+						<div class="item-body">{{ctx.Locale.Tr "dcs.explore.released"}} {{DateUtils.TimeSince .ReleaseDateUnix}}</div>
 					</div>
 				</div>
 			{{else}}
