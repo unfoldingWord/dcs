@@ -1003,14 +1003,14 @@ func ListCatalogLanguages(ctx *context.APIContext) {
 			langName := lang
 			langDirection := "ltr"
 			langIsGW := false
-			if dm, ok := dmLangInfo[lang]; ok {
-				if dm.LanguageTitle != "" {
-					langName = dm.LanguageTitle
+			alternateNames := []string{}
+			if info, ok := dmLangInfo[lang]; ok {
+				langName = info["language_title"].(string)
+				if dir := info["language_direction"].(string); dir != "" {
+					langDirection = dir
 				}
-				if dm.LanguageDirection != "" {
-					langDirection = dm.LanguageDirection
-				}
-				langIsGW = dm.LanguageIsGL
+				langIsGW = info["language_is_gl"].(bool)
+				alternateNames = info["alternate_names"].([]string)
 			}
 			languages = append(languages, map[string]any{
 				"ld":  langDirection,
@@ -1022,7 +1022,7 @@ func ListCatalogLanguages(ctx *context.APIContext) {
 				"lr":  "",
 				"hc":  "",
 				"cc":  []string{},
-				"alt": []string{},
+				"alt": alternateNames,
 			})
 		}
 	}

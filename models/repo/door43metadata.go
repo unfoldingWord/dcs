@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"html/template"
 	"net/url"
+	"slices"
 	"sort"
 	"strings"
 
@@ -603,12 +604,14 @@ func GetDoor43MetadataByRepoIDAndRef(ctx context.Context, repoID int64, ref stri
 	return dm, nil
 }
 
-// GetDoor43MetadataLanguageInfo returns a map keyed by language code of Door43Metadata
-// entries with only the Language, LanguageTitle, LanguageDirection and LanguageIsGL
-// fields populated, at most one entry per given language, for languages that have a
-// door43_metadata row with a non-empty language_title.
-func GetDoor43MetadataLanguageInfo(ctx context.Context, langs []string) (map[string]*Door43Metadata, error) {
-	info := make(map[string]*Door43Metadata, len(langs))
+// GetDoor43MetadataLanguageInfo returns a map keyed by language code of language info
+// ("language", "language_title", "language_direction", "language_is_gl",
+// "alternate_names") gathered from the door43_metadata rows of the given languages,
+// skipping rows with an empty language_title. The first row of a language provides its
+// info; the differing titles of any further rows are added to "alternate_names", and
+// "language_is_gl" is true if any row has it true.
+func GetDoor43MetadataLanguageInfo(ctx context.Context, langs []string) (map[string]map[string]any, error) {
+	info := make(map[string]map[string]any, len(langs))
 	if len(langs) == 0 {
 		return info, nil
 	}
@@ -622,8 +625,25 @@ func GetDoor43MetadataLanguageInfo(ctx context.Context, langs []string) (map[str
 		return nil, err
 	}
 	for _, dm := range dms {
-		if _, ok := info[dm.Language]; !ok {
-			info[dm.Language] = dm
+		langInfo, ok := info[dm.Language]
+		if !ok {
+			info[dm.Language] = map[string]any{
+				"language":           dm.Language,
+				"language_title":     dm.LanguageTitle,
+				"language_direction": dm.LanguageDirection,
+				"language_is_gl":     dm.LanguageIsGL,
+				"alternate_names":    []string{},
+			}
+			continue
+		}
+		if dm.LanguageIsGL {
+			langInfo["language_is_gl"] = true
+		}
+		if dm.LanguageTitle != langInfo["language_title"].(string) {
+			altNames := langInfo["alternate_names"].([]string)
+			if !slices.Contains(altNames, dm.LanguageTitle) {
+				langInfo["alternate_names"] = append(altNames, dm.LanguageTitle)
+			}
 		}
 	}
 	return info, nil
