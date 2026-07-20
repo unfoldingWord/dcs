@@ -170,6 +170,42 @@ func SearchDoor43MetadataFieldByCondition(ctx context.Context, opts *door43metad
 	return results, nil
 }
 
+// SearchDoor43MetadataFieldCountsByCondition returns the entry count of each distinct
+// non-empty value of field among the door43_metadata entries matching cond, keyed by value.
+func SearchDoor43MetadataFieldCountsByCondition(ctx context.Context, cond builder.Cond, field string) (map[string]int64, error) {
+	if !strings.Contains(field, ".") {
+		field = "`door43_metadata`." + field
+	}
+
+	// Only join user when the selected field or conditions actually reference it — avoids unnecessary join overhead
+	condSQL, _, _ := builder.ToSQL(cond)
+	needsUserJoin := strings.Contains(field, "`user`.") || strings.Contains(condSQL, "`user`.")
+
+	var rows []struct {
+		FieldValue string
+		Cnt        int64
+	}
+	sess := db.GetEngine(ctx).Table("door43_metadata").
+		Select(field+" AS field_value, COUNT(*) AS cnt").
+		Join("INNER", "repository", "`repository`.id = `door43_metadata`.repo_id")
+	if needsUserJoin {
+		sess.Join("INNER", "user", "`repository`.owner_id = `user`.id")
+	}
+	sess.Where(cond).
+		And(builder.Neq{field: ""}).
+		GroupBy(field)
+
+	if err := sess.Find(&rows); err != nil {
+		return nil, fmt.Errorf("find: %v", err)
+	}
+
+	counts := make(map[string]int64, len(rows))
+	for _, row := range rows {
+		counts[row.FieldValue] = row.Cnt
+	}
+	return counts, nil
+}
+
 // catalogStatsRow is the scan target of the aggregate stats query: the base
 // CatalogStats columns plus the healthcheck counts, which only stats-ext exposes.
 type catalogStatsRow struct {
@@ -251,8 +287,9 @@ func GetCatalogStats(ctx context.Context, opts *door43metadata.SearchCatalogOpti
 	return &row.CatalogStats, nil
 }
 
-// GetCatalogStatsExt returns GetCatalogStats plus the healthcheck counts and the sorted
-// unique values of the subject, flavor type, flavor, owner, language and metadata type fields.
+// GetCatalogStatsExt returns GetCatalogStats plus the healthcheck counts, the entry
+// counts per subject, owner and language, and the sorted unique values of the flavor
+// type, flavor and metadata type fields.
 func GetCatalogStatsExt(ctx context.Context, opts *door43metadata.SearchCatalogOptions) (*structs.CatalogStatsExt, error) {
 	row, err := getCatalogStatsRow(ctx, opts)
 	if err != nil {
@@ -272,11 +309,8 @@ func GetCatalogStatsExt(ctx context.Context, opts *door43metadata.SearchCatalogO
 		field string
 		dest  *[]string
 	}{
-		{"`door43_metadata`.subject", &ext.Subjects},
 		{"`door43_metadata`.flavor_type", &ext.FlavorTypes},
 		{"`door43_metadata`.flavor", &ext.Flavors},
-		{"`user`.lower_name", &ext.Owners},
-		{"`door43_metadata`.language", &ext.Languages},
 		{"`door43_metadata`.metadata_type", &ext.MetadataTypes},
 	}
 	for _, fl := range fieldLists {
@@ -288,6 +322,21 @@ func GetCatalogStatsExt(ctx context.Context, opts *door43metadata.SearchCatalogO
 			list = []string{} // an empty JSON array reads better than null
 		}
 		*fl.dest = list
+	}
+	fieldCounts := []struct {
+		field string
+		dest  *map[string]int64
+	}{
+		{"`door43_metadata`.subject", &ext.Subjects},
+		{"`user`.lower_name", &ext.Owners},
+		{"`door43_metadata`.language", &ext.Languages},
+	}
+	for _, fc := range fieldCounts {
+		counts, err := SearchDoor43MetadataFieldCountsByCondition(ctx, cond, fc.field)
+		if err != nil {
+			return nil, err
+		}
+		*fc.dest = counts
 	}
 	return ext, nil
 }
