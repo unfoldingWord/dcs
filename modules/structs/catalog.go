@@ -110,21 +110,21 @@ type CatalogStats struct {
 	HasAttachment   int64 `json:"has_attachment"`
 }
 
-// CatalogStatsExt CatalogStats plus the healthcheck counts and the sorted unique
-// values of several catalog entry fields
+// CatalogStatsExt CatalogStats plus the healthcheck counts, the entry counts per
+// subject, owner and language, and the sorted unique values of several other fields
 type CatalogStatsExt struct {
 	CatalogStats
-	HealthcheckSuccessCount int64    `json:"healthcheck_success_count"`
-	HealthcheckInfoCount    int64    `json:"healthcheck_info_count"`
-	HealthcheckWarningCount int64    `json:"healthcheck_warning_count"`
-	HealthcheckErrorCount   int64    `json:"healthcheck_error_count"`
-	NoHealthcheckCount      int64    `json:"no_healthcheck_count"`
-	Subjects                []string `json:"subjects"`
-	FlavorTypes             []string `json:"flavor_types"`
-	Flavors                 []string `json:"flavors"`
-	Owners                  []string `json:"owners"`
-	Languages               []string `json:"languages"`
-	MetadataTypes           []string `json:"metadata_types"`
+	HealthcheckSuccessCount int64            `json:"healthcheck_success_count"`
+	HealthcheckInfoCount    int64            `json:"healthcheck_info_count"`
+	HealthcheckWarningCount int64            `json:"healthcheck_warning_count"`
+	HealthcheckErrorCount   int64            `json:"healthcheck_error_count"`
+	NoHealthcheckCount      int64            `json:"no_healthcheck_count"`
+	Subjects                map[string]int64 `json:"subjects"`
+	FlavorTypes             []string         `json:"flavor_types"`
+	Flavors                 []string         `json:"flavors"`
+	Owners                  map[string]int64 `json:"owners"`
+	Languages               map[string]int64 `json:"languages"`
+	MetadataTypes           []string         `json:"metadata_types"`
 }
 
 // CatalogVersionEndpoints Info on the versions of the catalog
