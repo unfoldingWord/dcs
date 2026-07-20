@@ -604,7 +604,7 @@ func GetDoor43MetadataByRepoIDAndRef(ctx context.Context, repoID int64, ref stri
 	return dm, nil
 }
 
-// GetDoor43MetadataLanguageInfo returns a map keyed by language code of language info
+// GetDoor43MetadataLanguageInfo returns a map keyed by lowercased language code of language info
 // ("language", "language_title", "language_direction", "language_is_gl",
 // "alternate_names") gathered from the door43_metadata rows of the given languages,
 // skipping rows with an empty language_title. The first row of a language provides its
@@ -628,9 +628,10 @@ func GetDoor43MetadataLanguageInfo(ctx context.Context, langs []string) (map[str
 		return nil, err
 	}
 	for _, dm := range dms {
-		langInfo, ok := info[dm.Language]
+		lowerLang := strings.ToLower(dm.Language)
+		langInfo, ok := info[lowerLang]
 		if !ok {
-			info[dm.Language] = map[string]any{
+			info[lowerLang] = map[string]any{
 				"language":           dm.Language,
 				"language_title":     dm.LanguageTitle,
 				"language_direction": dm.LanguageDirection,
