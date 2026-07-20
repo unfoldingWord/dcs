@@ -3133,7 +3133,7 @@
         "tags": [
           "catalog"
         ],
-        "summary": "Aggregate counts plus sorted unique subjects, flavor types, flavors, owners, languages and metadata types of the catalog entries matching the given criteria. Same parameters as /catalog/stats",
+        "summary": "Aggregate counts plus entry counts per subject, owner and language, and sorted unique flavor types, flavors and metadata types of the catalog entries matching the given criteria. Same parameters as /catalog/stats",
         "operationId": "catalogGetStatsExt",
         "parameters": [
           {
@@ -25612,7 +25612,7 @@
       "x-go-package": "code.gitea.io/gitea/modules/structs"
     },
     "CatalogStatsExt": {
-      "description": "CatalogStatsExt CatalogStats plus the healthcheck counts and the sorted unique\nvalues of several catalog entry fields",
+      "description": "CatalogStatsExt CatalogStats plus the healthcheck counts, the entry counts per\nsubject, owner and language, and the sorted unique values of several other fields",
       "type": "object",
       "properties": {
         "entry_count": {
@@ -25710,9 +25710,10 @@
           "x-go-name": "LangRtlCount"
         },
         "languages": {
-          "type": "array",
-          "items": {
-            "type": "string"
+          "type": "object",
+          "additionalProperties": {
+            "type": "integer",
+            "format": "int64"
           },
           "x-go-name": "Languages"
         },
@@ -25734,9 +25735,10 @@
           "x-go-name": "OwnerCount"
         },
         "owners": {
-          "type": "array",
-          "items": {
-            "type": "string"
+          "type": "object",
+          "additionalProperties": {
+            "type": "integer",
+            "format": "int64"
           },
           "x-go-name": "Owners"
         },
@@ -25761,9 +25763,10 @@
           "x-go-name": "SubjectCount"
         },
         "subjects": {
-          "type": "array",
-          "items": {
-            "type": "string"
+          "type": "object",
+          "additionalProperties": {
+            "type": "integer",
+            "format": "int64"
           },
           "x-go-name": "Subjects"
         },
