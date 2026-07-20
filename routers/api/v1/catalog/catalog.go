@@ -1008,7 +1008,7 @@ func ListCatalogLanguages(ctx *context.APIContext) {
 		dmDirection := ""
 		langIsGW := false
 		alternateNames := []string{}
-		if info, ok := dmLangInfo[lang]; ok {
+		if info, ok := dmLangInfo[lowerLang]; ok {
 			langName = info["language_title"].(string)
 			dmDirection = info["language_direction"].(string)
 			langIsGW = info["language_is_gl"].(bool)
