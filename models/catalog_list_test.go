@@ -209,7 +209,8 @@ func TestGetCatalogStats(t *testing.T) {
 	assert.EqualValues(t, 1, stats.EntryCount)
 	assert.EqualValues(t, 1, stats.HasPDF)
 
-	// stats-ext adds the healthcheck counts and the sorted unique values
+	// stats-ext adds the healthcheck counts, the entry counts per subject, owner
+	// and language, and the sorted unique values of the other fields
 	ext, err := GetCatalogStatsExt(t.Context(), &door43metadata.SearchCatalogOptions{Stage: door43metadata.StageProd})
 	require.NoError(t, err)
 	assert.EqualValues(t, 2, ext.EntryCount)
@@ -218,21 +219,21 @@ func TestGetCatalogStats(t *testing.T) {
 	assert.EqualValues(t, 0, ext.HealthcheckWarningCount)
 	assert.EqualValues(t, 0, ext.HealthcheckErrorCount)
 	assert.EqualValues(t, 1, ext.NoHealthcheckCount)
-	assert.Equal(t, []string{"Bible", "Open Bible Stories"}, ext.Subjects)
+	assert.Equal(t, map[string]int64{"Bible": 1, "Open Bible Stories": 1}, ext.Subjects)
 	assert.Equal(t, []string{"gloss", "scripture"}, ext.FlavorTypes)
 	assert.Equal(t, []string{"textStories", "textTranslation"}, ext.Flavors)
-	assert.Equal(t, []string{"user2", "user5"}, ext.Owners)
-	assert.Equal(t, []string{"ar", "en"}, ext.Languages)
+	assert.Equal(t, map[string]int64{"user2": 1, "user5": 1}, ext.Owners)
+	assert.Equal(t, map[string]int64{"ar": 1, "en": 1}, ext.Languages)
 	assert.Equal(t, []string{"rc", "sb"}, ext.MetadataTypes)
 
-	// A filter matching nothing returns zero counts and empty (not null) lists
+	// A filter matching nothing returns zero counts and empty (not null) lists and maps
 	ext, err = GetCatalogStatsExt(t.Context(), &door43metadata.SearchCatalogOptions{Stage: door43metadata.StageProd, Languages: []string{"zz"}})
 	require.NoError(t, err)
 	assert.EqualValues(t, 0, ext.EntryCount)
 	assert.EqualValues(t, 0, ext.HasAttachment)
 	assert.EqualValues(t, 0, ext.NoHealthcheckCount)
-	assert.Equal(t, []string{}, ext.Subjects)
-	assert.Equal(t, []string{}, ext.Owners)
+	assert.Equal(t, map[string]int64{}, ext.Subjects)
+	assert.Equal(t, map[string]int64{}, ext.Owners)
 }
 
 // TestSearchCatalogContentFlags checks the full catalog search with the has_*
