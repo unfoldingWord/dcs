@@ -5,6 +5,7 @@ package catalog
 
 import (
 	"fmt"
+	"maps"
 	"net/http"
 	"net/url"
 	"path"
@@ -979,11 +980,11 @@ func ListCatalogLanguages(ctx *context.APIContext) {
 	var languages []map[string]any
 	langnames := dcs.GetLangnamesJSONKeyed()
 
-	// Languages not in langnames.json can still get their title and direction
-	// from the door43_metadata entries of that language.
+	// Languages not in langnames.json (whose keys are always lowercase) can still
+	// get their title and direction from the door43_metadata entries of that language.
 	var unknownLangs []string
 	for _, lang := range list {
-		if _, ok := langnames[lang]; !ok {
+		if _, ok := langnames[strings.ToLower(lang)]; !ok {
 			unknownLangs = append(unknownLangs, lang)
 		}
 	}
@@ -997,34 +998,64 @@ func ListCatalogLanguages(ctx *context.APIContext) {
 	}
 
 	for _, lang := range list {
-		if val, ok := langnames[lang]; ok {
+		lowerLang := strings.ToLower(lang)
+		if val, ok := langnames[lowerLang]; ok {
 			languages = append(languages, val)
-		} else {
-			langName := lang
-			langDirection := "ltr"
-			langIsGW := false
-			alternateNames := []string{}
-			if info, ok := dmLangInfo[lang]; ok {
-				langName = info["language_title"].(string)
-				if dir := info["language_direction"].(string); dir != "" {
-					langDirection = dir
-				}
-				langIsGW = info["language_is_gl"].(bool)
-				alternateNames = info["alternate_names"].([]string)
-			}
-			languages = append(languages, map[string]any{
-				"ld":  langDirection,
-				"ang": langName,
-				"pk":  0,
-				"gw":  langIsGW,
-				"lc":  lang,
-				"ln":  langName,
-				"lr":  "",
-				"hc":  "",
-				"cc":  []string{},
-				"alt": alternateNames,
-			})
+			continue
 		}
+
+		langName := lang
+		dmDirection := ""
+		langIsGW := false
+		alternateNames := []string{}
+		if info, ok := dmLangInfo[lowerLang]; ok {
+			langName = info["language_title"].(string)
+			dmDirection = info["language_direction"].(string)
+			langIsGW = info["language_is_gl"].(bool)
+			alternateNames = info["alternate_names"].([]string)
+		}
+
+		// A variant code can use the langnames data of its base language, trying the
+		// part before the private-use subtag first (e.g. es-419-x-abc -> es-419), then
+		// the primary subtag (e.g. es-419 -> es), keeping the variant's own code,
+		// title and, when door43_metadata provides one, direction.
+		var baseEntry map[string]any
+		if prefix := strings.SplitN(lowerLang, "-x-", 2)[0]; prefix != lowerLang {
+			baseEntry = langnames[prefix]
+		}
+		if baseEntry == nil {
+			if prefix := strings.SplitN(lowerLang, "-", 2)[0]; prefix != lowerLang {
+				baseEntry = langnames[prefix]
+			}
+		}
+		if baseEntry != nil {
+			entry := maps.Clone(baseEntry) // langnames is cached globally, never modify its entries
+			entry["lc"] = lang
+			entry["ang"] = langName
+			entry["ln"] = langName
+			if dmDirection != "" {
+				entry["ld"] = dmDirection
+			}
+			languages = append(languages, entry)
+			continue
+		}
+
+		langDirection := dmDirection
+		if langDirection == "" {
+			langDirection = "ltr"
+		}
+		languages = append(languages, map[string]any{
+			"ld":  langDirection,
+			"ang": langName,
+			"pk":  0,
+			"gw":  langIsGW,
+			"lc":  lang,
+			"ln":  langName,
+			"lr":  "",
+			"hc":  "",
+			"cc":  []string{},
+			"alt": alternateNames,
+		})
 	}
 	ctx.RespHeader().Set("X-Total-Count", strconv.Itoa(len(list)))
 	ctx.JSON(http.StatusOK, map[string]any{
