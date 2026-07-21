@@ -431,7 +431,7 @@ func GetDoor43MetadataFromRCManifest(ctx context.Context, dm *repo_model.Door43M
 	dm.Title = title
 	dm.Publisher = publisher
 	dm.Abbreviation = abbreviation
-	dm.Language = language
+	dm.Language = strings.ToLower(language) // language codes are always stored lowercase
 	dm.LanguageTitle = languageTitle
 	dm.LanguageDirection = languageDirection
 	dm.LanguageIsGL = languageIsGL
@@ -557,7 +557,7 @@ func GetDoor43MetadataFromSBMetadata(ctx context.Context, dm *repo_model.Door43M
 	dm.Title = title
 	dm.Abbreviation = abbreviation
 	dm.Publisher = publisher
-	dm.Language = language
+	dm.Language = strings.ToLower(language) // language codes are always stored lowercase
 	dm.LanguageTitle = languageTitle
 	dm.LanguageDirection = languageDirection
 	dm.LanguageIsGL = languageIsGL
@@ -949,7 +949,7 @@ func GetTcOrTsDoor43Metadata(dm *repo_model.Door43Metadata, repo *repo_model.Rep
 	dm.Flavor = t.Flavor
 	dm.Title = t.Title
 	dm.Abbreviation = strings.ToLower(t.Resource.ID)
-	dm.Language = t.TargetLanguage.ID
+	dm.Language = strings.ToLower(t.TargetLanguage.ID) // language codes are always stored lowercase
 	dm.LanguageTitle = t.TargetLanguage.Name
 	dm.LanguageDirection = t.TargetLanguage.Direction
 	dm.LanguageIsGL = dcs.LanguageIsGL(t.TargetLanguage.ID)
