@@ -997,18 +997,27 @@ func ListCatalogLanguages(ctx *context.APIContext) {
 		return
 	}
 
+	// The language column is case-sensitive, so the same language can be in the list
+	// with multiple casings (e.g. ur-deva and ur-Deva) — only process each language once.
+	seen := make(map[string]bool, len(list))
 	for _, lang := range list {
 		lowerLang := strings.ToLower(lang)
+		if seen[lowerLang] {
+			continue
+		}
+		seen[lowerLang] = true
 		if val, ok := langnames[lowerLang]; ok {
 			languages = append(languages, val)
 			continue
 		}
 
+		langCode := lang
 		langName := lang
 		dmDirection := ""
 		langIsGW := false
 		alternateNames := []string{}
 		if info, ok := dmLangInfo[lowerLang]; ok {
+			langCode = info["language"].(string)
 			langName = info["language_title"].(string)
 			dmDirection = info["language_direction"].(string)
 			langIsGW = info["language_is_gl"].(bool)
@@ -1030,7 +1039,7 @@ func ListCatalogLanguages(ctx *context.APIContext) {
 		}
 		if baseEntry != nil {
 			entry := maps.Clone(baseEntry) // langnames is cached globally, never modify its entries
-			entry["lc"] = lang
+			entry["lc"] = langCode
 			entry["ang"] = langName
 			entry["ln"] = langName
 			if dmDirection != "" {
@@ -1049,7 +1058,7 @@ func ListCatalogLanguages(ctx *context.APIContext) {
 			"ang": langName,
 			"pk":  0,
 			"gw":  langIsGW,
-			"lc":  lang,
+			"lc":  langCode,
 			"ln":  langName,
 			"lr":  "",
 			"hc":  "",
@@ -1057,7 +1066,7 @@ func ListCatalogLanguages(ctx *context.APIContext) {
 			"alt": alternateNames,
 		})
 	}
-	ctx.RespHeader().Set("X-Total-Count", strconv.Itoa(len(list)))
+	ctx.RespHeader().Set("X-Total-Count", strconv.Itoa(len(languages)))
 	ctx.JSON(http.StatusOK, map[string]any{
 		"ok":   true,
 		"data": languages,
