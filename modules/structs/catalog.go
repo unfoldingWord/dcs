@@ -87,7 +87,9 @@ type CatalogSearchResults struct {
 	LastUpdated time.Time       `json:"last_updated"`
 }
 
-// CatalogStats aggregate counts of the catalog entries matching a catalog search
+// CatalogStats aggregate counts of the catalog entries matching a catalog search.
+// Entry-based counts are repo counts over the latest entry per repo and stage; the
+// has_* media counts are repo counts considering every release of the stage(s).
 type CatalogStats struct {
 	EntryCount      int64 `json:"entry_count"`
 	LangCount       int64 `json:"lang_count"`
