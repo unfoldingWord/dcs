@@ -1323,11 +1323,11 @@ func GetCatalogStats(ctx *context.APIContext) {
 	ctx.JSON(http.StatusOK, stats)
 }
 
-// GetCatalogStatsExt get aggregate counts plus per-field entry counts and unique field values of the catalog entries matching the given criteria
+// GetCatalogStatsExt get aggregate counts plus per-field entry counts of the catalog entries matching the given criteria
 func GetCatalogStatsExt(ctx *context.APIContext) {
 	// swagger:operation GET /catalog/stats-ext catalog catalogGetStatsExt
 	// ---
-	// summary: Aggregate counts plus entry counts per subject, owner and language, and sorted unique flavor types, flavors and metadata types of the catalog entries matching the given criteria. Same parameters as /catalog/stats
+	// summary: Aggregate counts plus entry counts per subject, flavor type, flavor, owner, language and metadata type of the catalog entries matching the given criteria. Same parameters as /catalog/stats
 	// produces:
 	// - application/json
 	// parameters:
