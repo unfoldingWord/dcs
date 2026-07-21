@@ -3107,12 +3107,6 @@
           },
           {
             "type": "boolean",
-            "description": "if true, all entries of the given stage or lower are counted, not just the latest entry per repo, default is false",
-            "name": "includeHistory",
-            "in": "query"
-          },
-          {
-            "type": "boolean",
             "description": "if true, subject, owner and repo search fields will use partial match (LIKE) when querying the catalog, default is false",
             "name": "partialMatch",
             "in": "query"
@@ -3362,12 +3356,6 @@
             "type": "boolean",
             "description": "count only entries with (true) or without (false) any release attachment content (audio, video, pdf, stream or other)",
             "name": "hasAttachment",
-            "in": "query"
-          },
-          {
-            "type": "boolean",
-            "description": "if true, all entries of the given stage or lower are counted, not just the latest entry per repo, default is false",
-            "name": "includeHistory",
             "in": "query"
           },
           {
@@ -26237,8 +26225,9 @@
       "x-go-package": "gitea.dev/modules/structs"
     },
     "CatalogStats": {
-      "description": "CatalogStats aggregate counts of the catalog entries matching a catalog search",
+      "description": "Entry-based counts are repo counts over the latest entry per repo and stage; the\nhas_* media counts are repo counts considering every release of the stage(s).",
       "type": "object",
+      "title": "CatalogStats aggregate counts of the catalog entries matching a catalog search.",
       "properties": {
         "entry_count": {
           "type": "integer",

@@ -170,7 +170,7 @@ func SearchDoor43MetadataFieldByCondition(ctx context.Context, opts *door43metad
 	return results, nil
 }
 
-// SearchDoor43MetadataFieldCountsByCondition returns the entry count of each distinct
+// SearchDoor43MetadataFieldCountsByCondition returns the repo count of each distinct
 // non-empty value of field among the door43_metadata entries matching cond, keyed by value.
 func SearchDoor43MetadataFieldCountsByCondition(ctx context.Context, cond builder.Cond, field string) (map[string]int64, error) {
 	if !strings.Contains(field, ".") {
@@ -186,7 +186,7 @@ func SearchDoor43MetadataFieldCountsByCondition(ctx context.Context, cond builde
 		Cnt        int64
 	}
 	sess := db.GetEngine(ctx).Table("door43_metadata").
-		Select(field+" AS field_value, COUNT(*) AS cnt").
+		Select(field+" AS field_value, COUNT(DISTINCT `door43_metadata`.repo_id) AS cnt").
 		Join("INNER", "repository", "`repository`.id = `door43_metadata`.repo_id")
 	if needsUserJoin {
 		sess.Join("INNER", "user", "`repository`.owner_id = `user`.id")
@@ -217,27 +217,37 @@ type catalogStatsRow struct {
 	NoHealthcheckCount      int64
 }
 
-// getCatalogStatsRow returns aggregate counts of the door43_metadata entries matching
-// opts in a single query. The unique-value counts (lang, subject, flavor, owner, repo)
-// are DISTINCT counts; the metadata-type, has_* and healthcheck counts are entry counts.
-func getCatalogStatsRow(ctx context.Context, opts *door43metadata.SearchCatalogOptions) (*catalogStatsRow, error) {
-	cond := door43metadata.SearchCatalogCondition(opts)
-	condSQL, condArgs, err := builder.ToSQL(cond)
-	if err != nil {
-		return nil, err
-	}
-
-	// Translate table references to the aliases used in the raw query below
+// translateStatsCondSQL translates table references in a condition to the
+// aliases used by the raw stats queries.
+func translateStatsCondSQL(condSQL string) string {
 	condSQL = strings.ReplaceAll(condSQL, "`door43_metadata`.", "dm.")
 	condSQL = strings.ReplaceAll(condSQL, "`repository`.", "r.")
 	condSQL = strings.ReplaceAll(condSQL, "`user`.", "u.")
 	condSQL = strings.ReplaceAll(condSQL, "`release`.", "rel.")
+	return condSQL
+}
 
-	// COUNT(DISTINCT CASE ...) ignores the NULLs of non-matching rows; COALESCE
-	// guards the SUMs, which are NULL when no rows match.
+// getCatalogStatsRow returns aggregate counts of the door43_metadata entries matching
+// opts. opts.IncludeHistory is ignored: every entry-based count (entry, metadata-type
+// and healthcheck counts) is a repo count over the latest entry per repo and stage,
+// while the has_* media counts are repo counts over EVERY release of the stage(s),
+// since an older release can have media attachments that the latest release does not.
+// The unique-value counts (lang, subject, flavor, owner) are DISTINCT value counts
+// over the latest entries.
+func getCatalogStatsRow(ctx context.Context, opts *door43metadata.SearchCatalogOptions) (*catalogStatsRow, error) {
+	latestOpts := *opts
+	latestOpts.IncludeHistory = false
+	cond := door43metadata.SearchCatalogCondition(&latestOpts)
+	condSQL, condArgs, err := builder.ToSQL(cond)
+	if err != nil {
+		return nil, err
+	}
+	condSQL = translateStatsCondSQL(condSQL)
+
+	// COUNT(DISTINCT CASE ...) ignores the NULLs of non-matching rows.
 	// Note: "release" is a MySQL reserved word and must be backtick-quoted in raw SQL.
 	query := fmt.Sprintf(`SELECT
-  COUNT(*) AS entry_count,
+  COUNT(DISTINCT dm.repo_id) AS entry_count,
   COUNT(DISTINCT dm.language) AS lang_count,
   COUNT(DISTINCT CASE WHEN dm.language_direction = 'ltr' THEN dm.language END) AS lang_ltr_count,
   COUNT(DISTINCT CASE WHEN dm.language_direction = 'rtl' THEN dm.language END) AS lang_rtl_count,
@@ -246,21 +256,15 @@ func getCatalogStatsRow(ctx context.Context, opts *door43metadata.SearchCatalogO
   COUNT(DISTINCT CASE WHEN dm.flavor <> '' THEN dm.flavor END) AS flavor_count,
   COUNT(DISTINCT r.owner_id) AS owner_count,
   COUNT(DISTINCT dm.repo_id) AS repo_count,
-  COALESCE(SUM(CASE WHEN dm.metadata_type = 'ts' THEN 1 ELSE 0 END), 0) AS ts_count,
-  COALESCE(SUM(CASE WHEN dm.metadata_type = 'tc' THEN 1 ELSE 0 END), 0) AS tc_count,
-  COALESCE(SUM(CASE WHEN dm.metadata_type = 'rc' THEN 1 ELSE 0 END), 0) AS rc_count,
-  COALESCE(SUM(CASE WHEN dm.metadata_type = 'sb' THEN 1 ELSE 0 END), 0) AS sb_count,
-  COALESCE(SUM(CASE WHEN dm.has_pdf THEN 1 ELSE 0 END), 0) AS has_pdf,
-  COALESCE(SUM(CASE WHEN dm.has_audio THEN 1 ELSE 0 END), 0) AS has_audio,
-  COALESCE(SUM(CASE WHEN dm.has_video THEN 1 ELSE 0 END), 0) AS has_video,
-  COALESCE(SUM(CASE WHEN dm.has_stream THEN 1 ELSE 0 END), 0) AS has_stream,
-  COALESCE(SUM(CASE WHEN dm.has_other THEN 1 ELSE 0 END), 0) AS has_other,
-  COALESCE(SUM(CASE WHEN dm.has_pdf OR dm.has_audio OR dm.has_video OR dm.has_stream OR dm.has_other THEN 1 ELSE 0 END), 0) AS has_attachment,
-  COALESCE(SUM(CASE WHEN dm.healthcheck_severity = %d THEN 1 ELSE 0 END), 0) AS healthcheck_success_count,
-  COALESCE(SUM(CASE WHEN dm.healthcheck_severity = %d THEN 1 ELSE 0 END), 0) AS healthcheck_info_count,
-  COALESCE(SUM(CASE WHEN dm.healthcheck_severity = %d THEN 1 ELSE 0 END), 0) AS healthcheck_warning_count,
-  COALESCE(SUM(CASE WHEN dm.healthcheck_severity = %d THEN 1 ELSE 0 END), 0) AS healthcheck_error_count,
-  COALESCE(SUM(CASE WHEN dm.healthcheck_severity IS NULL OR dm.healthcheck_severity = 0 THEN 1 ELSE 0 END), 0) AS no_healthcheck_count
+  COUNT(DISTINCT CASE WHEN dm.metadata_type = 'ts' THEN dm.repo_id END) AS ts_count,
+  COUNT(DISTINCT CASE WHEN dm.metadata_type = 'tc' THEN dm.repo_id END) AS tc_count,
+  COUNT(DISTINCT CASE WHEN dm.metadata_type = 'rc' THEN dm.repo_id END) AS rc_count,
+  COUNT(DISTINCT CASE WHEN dm.metadata_type = 'sb' THEN dm.repo_id END) AS sb_count,
+  COUNT(DISTINCT CASE WHEN dm.healthcheck_severity = %d THEN dm.repo_id END) AS healthcheck_success_count,
+  COUNT(DISTINCT CASE WHEN dm.healthcheck_severity = %d THEN dm.repo_id END) AS healthcheck_info_count,
+  COUNT(DISTINCT CASE WHEN dm.healthcheck_severity = %d THEN dm.repo_id END) AS healthcheck_warning_count,
+  COUNT(DISTINCT CASE WHEN dm.healthcheck_severity = %d THEN dm.repo_id END) AS healthcheck_error_count,
+  COUNT(DISTINCT CASE WHEN dm.healthcheck_severity IS NULL OR dm.healthcheck_severity = 0 THEN dm.repo_id END) AS no_healthcheck_count
 FROM door43_metadata dm
 INNER JOIN repository r ON r.id = dm.repo_id
 INNER JOIN user u ON r.owner_id = u.id
@@ -275,10 +279,42 @@ WHERE `+condSQL,
 	if _, err := db.GetEngine(ctx).SQL(query, condArgs...).Get(row); err != nil {
 		return nil, fmt.Errorf("stats query: %v", err)
 	}
+
+	// The has_* media counts consider every release of the stage(s), not just the
+	// latest entry per repo, since an older release can have media attachments the
+	// latest release does not. Each counts repos, not releases.
+	historyOpts := *opts
+	historyOpts.IncludeHistory = true
+	historyCond := door43metadata.SearchCatalogCondition(&historyOpts)
+	historySQL, historyArgs, err := builder.ToSQL(historyCond)
+	if err != nil {
+		return nil, err
+	}
+	historySQL = translateStatsCondSQL(historySQL)
+
+	mediaQuery := `SELECT
+  COUNT(DISTINCT CASE WHEN dm.has_pdf THEN dm.repo_id END) AS has_pdf,
+  COUNT(DISTINCT CASE WHEN dm.has_audio THEN dm.repo_id END) AS has_audio,
+  COUNT(DISTINCT CASE WHEN dm.has_video THEN dm.repo_id END) AS has_video,
+  COUNT(DISTINCT CASE WHEN dm.has_stream THEN dm.repo_id END) AS has_stream,
+  COUNT(DISTINCT CASE WHEN dm.has_other THEN dm.repo_id END) AS has_other,
+  COUNT(DISTINCT CASE WHEN dm.has_pdf OR dm.has_audio OR dm.has_video OR dm.has_stream OR dm.has_other THEN dm.repo_id END) AS has_attachment
+FROM door43_metadata dm
+INNER JOIN repository r ON r.id = dm.repo_id
+INNER JOIN user u ON r.owner_id = u.id
+LEFT JOIN ` + "`release`" + ` rel ON rel.id = dm.release_id
+WHERE ` + historySQL
+
+	if _, err := db.GetEngine(ctx).SQL(mediaQuery, historyArgs...).Get(row); err != nil {
+		return nil, fmt.Errorf("media stats query: %v", err)
+	}
 	return row, nil
 }
 
-// GetCatalogStats returns the aggregate counts of the door43_metadata entries matching opts
+// GetCatalogStats returns the aggregate counts of the door43_metadata entries matching
+// opts. All entry-based counts are repo counts and opts.IncludeHistory is ignored: only
+// the latest entry per repo and stage counts, except the has_* media counts which
+// consider every release of the stage(s) (see getCatalogStatsRow).
 func GetCatalogStats(ctx context.Context, opts *door43metadata.SearchCatalogOptions) (*structs.CatalogStats, error) {
 	row, err := getCatalogStatsRow(ctx, opts)
 	if err != nil {
@@ -287,8 +323,9 @@ func GetCatalogStats(ctx context.Context, opts *door43metadata.SearchCatalogOpti
 	return &row.CatalogStats, nil
 }
 
-// GetCatalogStatsExt returns GetCatalogStats plus the healthcheck counts and the entry
+// GetCatalogStatsExt returns GetCatalogStats plus the healthcheck counts and the repo
 // counts per subject, flavor type, flavor, owner, language and metadata type.
+// opts.IncludeHistory is ignored (see getCatalogStatsRow).
 func GetCatalogStatsExt(ctx context.Context, opts *door43metadata.SearchCatalogOptions) (*structs.CatalogStatsExt, error) {
 	row, err := getCatalogStatsRow(ctx, opts)
 	if err != nil {
@@ -303,7 +340,11 @@ func GetCatalogStatsExt(ctx context.Context, opts *door43metadata.SearchCatalogO
 		NoHealthcheckCount:      row.NoHealthcheckCount,
 	}
 
-	cond := door43metadata.SearchCatalogCondition(opts)
+	// Like the stats row, the per-field counts only consider the latest entry
+	// per repo and stage, regardless of opts.IncludeHistory.
+	latestOpts := *opts
+	latestOpts.IncludeHistory = false
+	cond := door43metadata.SearchCatalogCondition(&latestOpts)
 	fieldCounts := []struct {
 		field string
 		dest  *map[string]int64
