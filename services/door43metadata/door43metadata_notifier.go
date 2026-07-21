@@ -108,6 +108,15 @@ func (m *metadataNotifier) DeleteRelease(ctx context.Context, doer *user_model.U
 			log.Error("UpdateDoor43MetadataCols: %v", err)
 		}
 
+		// The entry may carry media flags aggregated over all the repo's releases
+		// from when it was latest for its stage; reset them to its own (deleted)
+		// release's attachments so history searches keep per-release truth.
+		if err := dm.DetermineAttachmentFlags(ctx); err != nil {
+			log.Error("DetermineAttachmentFlags: %v", err)
+		} else if err := repo_model.UpdateDoor43MetadataCols(ctx, dm, repo_model.Door43MetadataAttachmentFlagCols...); err != nil {
+			log.Error("UpdateDoor43MetadataCols: %v", err)
+		}
+
 		if err := ProcessDoor43MetadataForRepo(ctx, rel.Repo, rel.TagName); err != nil {
 			log.Error("DeleteRelease: ProcessDoor43MetadataForRepo failed [%s, %s]: %v", rel.Repo.FullName(), rel.TagName, err)
 		}
