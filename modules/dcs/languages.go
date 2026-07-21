@@ -6,9 +6,7 @@ package dcs
 import (
 	"bytes"
 	"fmt"
-	"net/http"
 	"strings"
-	"time"
 
 	"gitea.dev/modules/json"
 	"gitea.dev/modules/log"
@@ -20,46 +18,35 @@ var (
 	_langnamesJSONKeyed map[string]map[string]any
 )
 
-// GetLangnamesJSON returns an array of maps from https://td.door43.org/exports/langnames.json
-// Will use custom/options/languages/langnames.json instead if exists
+// GetLangnamesJSON returns an array of maps from options/languages/langnames.json
+// (custom/options/languages/langnames.json takes precedence if it exists). Every
+// entry's "lc" value is lowercased: language codes are lowercase throughout DCS
+// (the door43_metadata language column, lang query parameters and langnames keys)
+// so all language code lookups are effectively case insensitive.
 func GetLangnamesJSON() []map[string]any {
 	if _langnamesJSON == nil {
-		if langnames, err := GetLangnamesJSONFromCustom(); err == nil && langnames != nil {
-			_langnamesJSON = langnames
+		langnames, err := loadLangnamesJSON()
+		if err != nil {
+			log.Error("GetLangnamesJSON: %v", err)
 		} else {
-			langnames, err := GetLangnamesJSONFromTD()
-			if err != nil {
-				log.Error(err.Error())
-			} else {
-				_langnamesJSON = langnames
-			}
+			_langnamesJSON = langnames
 		}
 	}
 	return _langnamesJSON
 }
 
-func GetLangnamesJSONFromCustom() ([]map[string]any, error) {
+func loadLangnamesJSON() ([]map[string]any, error) {
 	fileBuf, err := options.AssetFS().ReadFile("languages", "langnames.json")
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("unable to read languages/langnames.json from options: %v", err)
 	}
-	reader := bytes.NewReader(fileBuf)
 	langnames := []map[string]any{}
-	if err := json.NewDecoder(reader).Decode(&langnames); err != nil {
-		return nil, fmt.Errorf("unable to decode langnames.json from custom/options/languages/langnames.json: %v", err)
+	if err := json.NewDecoder(bytes.NewReader(fileBuf)).Decode(&langnames); err != nil {
+		return nil, fmt.Errorf("unable to decode languages/langnames.json: %v", err)
 	}
-	return langnames, nil
-}
-
-func GetLangnamesJSONFromTD() ([]map[string]any, error) {
-	langnames := []map[string]any{}
-	url := "https://td.unfoldingword.org/exports/langnames.json"
-	myClient := &http.Client{Timeout: 10 * time.Second}
-	response, err := myClient.Get(url)
-	if err == nil {
-		defer response.Body.Close()
-		if err := json.NewDecoder(response.Body).Decode(&langnames); err != nil {
-			return nil, fmt.Errorf("unable to decode langnames.json from tD: %v", err)
+	for _, value := range langnames {
+		if lc, ok := value["lc"].(string); ok {
+			value["lc"] = strings.ToLower(lc)
 		}
 	}
 	return langnames, nil
