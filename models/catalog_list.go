@@ -228,12 +228,12 @@ func translateStatsCondSQL(condSQL string) string {
 }
 
 // getCatalogStatsRow returns aggregate counts of the door43_metadata entries matching
-// opts. opts.IncludeHistory is ignored: every entry-based count (entry, metadata-type
-// and healthcheck counts) is a repo count over the latest entry per repo and stage,
-// while the has_* media counts are repo counts over EVERY release of the stage(s),
-// since an older release can have media attachments that the latest release does not.
-// The unique-value counts (lang, subject, flavor, owner) are DISTINCT value counts
-// over the latest entries.
+// opts in a single query over the latest entry per repo and stage — opts.IncludeHistory
+// is ignored. Every entry-based count (entry, metadata-type, healthcheck and has_*
+// media counts) is a repo count. The latest prod/preprod entries carry the media flags
+// of ALL the repo's releases at their stage (repo_model.AggregateMediaFlagsForRepo),
+// so the has_* counts reflect media anywhere in the repo's releases. The unique-value
+// counts (lang, subject, flavor, owner) are DISTINCT value counts.
 func getCatalogStatsRow(ctx context.Context, opts *door43metadata.SearchCatalogOptions) (*catalogStatsRow, error) {
 	latestOpts := *opts
 	latestOpts.IncludeHistory = false
@@ -260,6 +260,12 @@ func getCatalogStatsRow(ctx context.Context, opts *door43metadata.SearchCatalogO
   COUNT(DISTINCT CASE WHEN dm.metadata_type = 'tc' THEN dm.repo_id END) AS tc_count,
   COUNT(DISTINCT CASE WHEN dm.metadata_type = 'rc' THEN dm.repo_id END) AS rc_count,
   COUNT(DISTINCT CASE WHEN dm.metadata_type = 'sb' THEN dm.repo_id END) AS sb_count,
+  COUNT(DISTINCT CASE WHEN dm.has_pdf THEN dm.repo_id END) AS has_pdf,
+  COUNT(DISTINCT CASE WHEN dm.has_audio THEN dm.repo_id END) AS has_audio,
+  COUNT(DISTINCT CASE WHEN dm.has_video THEN dm.repo_id END) AS has_video,
+  COUNT(DISTINCT CASE WHEN dm.has_stream THEN dm.repo_id END) AS has_stream,
+  COUNT(DISTINCT CASE WHEN dm.has_other THEN dm.repo_id END) AS has_other,
+  COUNT(DISTINCT CASE WHEN dm.has_pdf OR dm.has_audio OR dm.has_video OR dm.has_stream OR dm.has_other THEN dm.repo_id END) AS has_attachment,
   COUNT(DISTINCT CASE WHEN dm.healthcheck_severity = %d THEN dm.repo_id END) AS healthcheck_success_count,
   COUNT(DISTINCT CASE WHEN dm.healthcheck_severity = %d THEN dm.repo_id END) AS healthcheck_info_count,
   COUNT(DISTINCT CASE WHEN dm.healthcheck_severity = %d THEN dm.repo_id END) AS healthcheck_warning_count,
@@ -278,35 +284,6 @@ WHERE `+condSQL,
 	row := &catalogStatsRow{}
 	if _, err := db.GetEngine(ctx).SQL(query, condArgs...).Get(row); err != nil {
 		return nil, fmt.Errorf("stats query: %v", err)
-	}
-
-	// The has_* media counts consider every release of the stage(s), not just the
-	// latest entry per repo, since an older release can have media attachments the
-	// latest release does not. Each counts repos, not releases.
-	historyOpts := *opts
-	historyOpts.IncludeHistory = true
-	historyCond := door43metadata.SearchCatalogCondition(&historyOpts)
-	historySQL, historyArgs, err := builder.ToSQL(historyCond)
-	if err != nil {
-		return nil, err
-	}
-	historySQL = translateStatsCondSQL(historySQL)
-
-	mediaQuery := `SELECT
-  COUNT(DISTINCT CASE WHEN dm.has_pdf THEN dm.repo_id END) AS has_pdf,
-  COUNT(DISTINCT CASE WHEN dm.has_audio THEN dm.repo_id END) AS has_audio,
-  COUNT(DISTINCT CASE WHEN dm.has_video THEN dm.repo_id END) AS has_video,
-  COUNT(DISTINCT CASE WHEN dm.has_stream THEN dm.repo_id END) AS has_stream,
-  COUNT(DISTINCT CASE WHEN dm.has_other THEN dm.repo_id END) AS has_other,
-  COUNT(DISTINCT CASE WHEN dm.has_pdf OR dm.has_audio OR dm.has_video OR dm.has_stream OR dm.has_other THEN dm.repo_id END) AS has_attachment
-FROM door43_metadata dm
-INNER JOIN repository r ON r.id = dm.repo_id
-INNER JOIN user u ON r.owner_id = u.id
-LEFT JOIN ` + "`release`" + ` rel ON rel.id = dm.release_id
-WHERE ` + historySQL
-
-	if _, err := db.GetEngine(ctx).SQL(mediaQuery, historyArgs...).Get(row); err != nil {
-		return nil, fmt.Errorf("media stats query: %v", err)
 	}
 	return row, nil
 }

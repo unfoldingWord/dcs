@@ -468,6 +468,55 @@ func (dm *Door43Metadata) DetermineAttachmentFlags(ctx context.Context) error {
 	return nil
 }
 
+// AggregateMediaFlagsForRepo makes the latest-for-stage prod and preprod entries of a
+// repo the authority on the media of ALL the repo's releases at their stage: each gets
+// its has_* flags set to its own release's attachment flags OR-ed with the flags of
+// every other entry of the repo at that stage. Non-latest entries always keep the flags
+// of their own release (see the demotion reset in handleLatestStageDM), so deleting a
+// release or removing an attachment corrects the aggregate on the next run. Branch
+// (stage latest) entries have no release attachments and are not touched.
+func AggregateMediaFlagsForRepo(ctx context.Context, repoID int64) error {
+	for _, stage := range []door43metadata.Stage{door43metadata.StageProd, door43metadata.StagePreProd} {
+		dm := &Door43Metadata{}
+		has, err := db.GetEngine(ctx).
+			Where(builder.Eq{"repo_id": repoID, "stage": stage, "is_latest_for_stage": true}).
+			Get(dm)
+		if err != nil {
+			return err
+		}
+		if !has {
+			continue
+		}
+		// Start from the latest release's own attachments (which also heals a stale
+		// aggregate left on this row), then OR in the other entries of the stage.
+		if err := dm.DetermineAttachmentFlags(ctx); err != nil {
+			return err
+		}
+		var others struct {
+			HasAudio  bool
+			HasVideo  bool
+			HasPDF    bool
+			HasStream bool
+			HasOther  bool
+		}
+		if _, err := db.GetEngine(ctx).
+			SQL("SELECT MAX(has_audio) AS has_audio, MAX(has_video) AS has_video, MAX(has_pdf) AS has_pdf, MAX(has_stream) AS has_stream, MAX(has_other) AS has_other "+
+				"FROM door43_metadata WHERE repo_id = ? AND stage = ? AND id <> ?", repoID, stage, dm.ID).
+			Get(&others); err != nil {
+			return err
+		}
+		dm.HasAudio = dm.HasAudio || others.HasAudio
+		dm.HasVideo = dm.HasVideo || others.HasVideo
+		dm.HasPDF = dm.HasPDF || others.HasPDF
+		dm.HasStream = dm.HasStream || others.HasStream
+		dm.HasOther = dm.HasOther || others.HasOther
+		if err := UpdateDoor43MetadataCols(ctx, dm, Door43MetadataAttachmentFlagCols...); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 // IsDoor43MetadataExist returns true if door43 metadata with given release ID already exists.
 func IsDoor43MetadataExist(ctx context.Context, repoID, releaseID int64) (bool, error) {
 	return db.GetEngine(ctx).Get(&Door43Metadata{RepoID: repoID, ReleaseID: releaseID})
