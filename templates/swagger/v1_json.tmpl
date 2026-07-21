@@ -3148,7 +3148,7 @@
         "tags": [
           "catalog"
         ],
-        "summary": "Aggregate counts plus entry counts per subject, owner and language, and sorted unique flavor types, flavors and metadata types of the catalog entries matching the given criteria. Same parameters as /catalog/stats",
+        "summary": "Aggregate counts plus entry counts per subject, flavor type, flavor, owner, language and metadata type of the catalog entries matching the given criteria. Same parameters as /catalog/stats",
         "operationId": "catalogGetStatsExt",
         "parameters": [
           {
@@ -26339,7 +26339,7 @@
       "x-go-package": "gitea.dev/modules/structs"
     },
     "CatalogStatsExt": {
-      "description": "CatalogStatsExt CatalogStats plus the healthcheck counts, the entry counts per\nsubject, owner and language, and the sorted unique values of several other fields",
+      "description": "CatalogStatsExt CatalogStats plus the healthcheck counts and the entry counts per\nsubject, flavor type, flavor, owner, language and metadata type",
       "type": "object",
       "properties": {
         "entry_count": {
@@ -26358,16 +26358,18 @@
           "x-go-name": "FlavorTypeCount"
         },
         "flavor_types": {
-          "type": "array",
-          "items": {
-            "type": "string"
+          "type": "object",
+          "additionalProperties": {
+            "type": "integer",
+            "format": "int64"
           },
           "x-go-name": "FlavorTypes"
         },
         "flavors": {
-          "type": "array",
-          "items": {
-            "type": "string"
+          "type": "object",
+          "additionalProperties": {
+            "type": "integer",
+            "format": "int64"
           },
           "x-go-name": "Flavors"
         },
@@ -26445,9 +26447,10 @@
           "x-go-name": "Languages"
         },
         "metadata_types": {
-          "type": "array",
-          "items": {
-            "type": "string"
+          "type": "object",
+          "additionalProperties": {
+            "type": "integer",
+            "format": "int64"
           },
           "x-go-name": "MetadataTypes"
         },
