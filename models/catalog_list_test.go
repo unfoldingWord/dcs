@@ -126,7 +126,10 @@ func TestGetCatalogStats(t *testing.T) {
 			Stage: door43metadata.StageProd, IsLatestForStage: true,
 			Language: "en", LanguageDirection: "ltr", Subject: "Open Bible Stories",
 			MetadataType: "rc", FlavorType: "gloss", Flavor: "textStories",
-			HasPDF:              true,
+			// The latest entry carries the media flags of ALL the repo's releases
+			// of its stage (v0's audio and stream plus its own PDF), as maintained
+			// by repo_model.AggregateMediaFlagsForRepo
+			HasPDF: true, HasAudio: true, HasStream: true,
 			HealthcheckSeverity: repo_model.SeverityLevelSuccess,
 			ReleaseDateUnix:     timeutil.TimeStamp(1000),
 		},
@@ -159,8 +162,8 @@ func TestGetCatalogStats(t *testing.T) {
 	assert.EqualValues(t, 0, stats.TcCount)
 	assert.EqualValues(t, 1, stats.RcCount)
 	assert.EqualValues(t, 1, stats.SbCount)
-	// The has_* counts are repo counts over EVERY release of the stage: the older
-	// v0 release of repo1 provides audio and stream even though v1 is the latest
+	// The has_* counts are repo counts from the latest entries, whose flags
+	// aggregate every release of the stage (v0's audio and stream count via v1)
 	assert.EqualValues(t, 1, stats.HasPDF)
 	assert.EqualValues(t, 1, stats.HasAudio)
 	assert.EqualValues(t, 0, stats.HasVideo)
@@ -197,11 +200,11 @@ func TestGetCatalogStats(t *testing.T) {
 	require.NoError(t, err)
 	assert.EqualValues(t, 1, stats.EntryCount)
 	assert.EqualValues(t, 0, stats.HasPDF)
-	// A has* filter matching only a historical release: no repo's LATEST entry has
-	// audio (entry_count 0), but the media counts still find repo1's v0 release
+	// Audio only exists in repo1's older v0 release, but the aggregated flags on
+	// its latest entry make the hasAudio filter match the repo
 	stats, err = GetCatalogStats(t.Context(), &door43metadata.SearchCatalogOptions{Stage: door43metadata.StageProd, HasAudio: optional.Some(true), IncludeHistory: true})
 	require.NoError(t, err)
-	assert.EqualValues(t, 0, stats.EntryCount)
+	assert.EqualValues(t, 1, stats.EntryCount)
 	assert.EqualValues(t, 1, stats.HasAudio)
 
 	// Date bounds are inclusive on release_date_unix
@@ -239,6 +242,60 @@ func TestGetCatalogStats(t *testing.T) {
 	assert.EqualValues(t, 0, ext.NoHealthcheckCount)
 	assert.Equal(t, map[string]int64{}, ext.Subjects)
 	assert.Equal(t, map[string]int64{}, ext.Owners)
+}
+
+// TestAggregateMediaFlagsForRepo checks that the latest prod entry of a repo gets the
+// media flags of all the repo's prod releases, that flags not backed by any release
+// are cleared, and that non-latest entries keep the flags of their own release.
+func TestAggregateMediaFlagsForRepo(t *testing.T) {
+	require.NoError(t, unittest.PrepareTestDatabase())
+
+	v0 := &repo_model.Door43Metadata{
+		RepoID: 1, ReleaseID: 3000, Ref: "media-v0", RefType: "tag", CommitSHA: "0000000000000000000000000000000000000020",
+		Stage: door43metadata.StageProd, IsLatestForStage: false,
+		Language: "en", Subject: "Open Bible Stories", MetadataType: "rc",
+		HasAudio: true, HasStream: true,
+		ReleaseDateUnix: timeutil.TimeStamp(500),
+	}
+	// The latest entry starts with a stale PDF flag not backed by any attachment
+	v1 := &repo_model.Door43Metadata{
+		RepoID: 1, ReleaseID: 3001, Ref: "media-v1", RefType: "tag", CommitSHA: "0000000000000000000000000000000000000021",
+		Stage: door43metadata.StageProd, IsLatestForStage: true,
+		Language: "en", Subject: "Open Bible Stories", MetadataType: "rc",
+		HasPDF:          true,
+		ReleaseDateUnix: timeutil.TimeStamp(1000),
+	}
+	for _, dm := range []*repo_model.Door43Metadata{v0, v1} {
+		_, err := db.GetEngine(t.Context()).Insert(dm)
+		require.NoError(t, err)
+	}
+
+	// v1 aggregates v0's audio and stream; its stale PDF flag is cleared since
+	// release 3001 has no PDF attachment backing it
+	require.NoError(t, repo_model.AggregateMediaFlagsForRepo(t.Context(), 1))
+	latest, err := repo_model.GetDoor43MetadataByID(t.Context(), v1.ID)
+	require.NoError(t, err)
+	assert.True(t, latest.HasAudio)
+	assert.True(t, latest.HasStream)
+	assert.False(t, latest.HasPDF)
+	assert.False(t, latest.HasVideo)
+	assert.False(t, latest.HasOther)
+
+	// The non-latest entry keeps the flags of its own release
+	old, err := repo_model.GetDoor43MetadataByID(t.Context(), v0.ID)
+	require.NoError(t, err)
+	assert.True(t, old.HasAudio)
+	assert.True(t, old.HasStream)
+	assert.False(t, old.HasPDF)
+
+	// Deleting the release that provided the media clears the aggregate
+	require.NoError(t, repo_model.DeleteDoor43Metadata(t.Context(), v0))
+	require.NoError(t, repo_model.AggregateMediaFlagsForRepo(t.Context(), 1))
+	latest, err = repo_model.GetDoor43MetadataByID(t.Context(), v1.ID)
+	require.NoError(t, err)
+	assert.False(t, latest.HasAudio)
+	assert.False(t, latest.HasStream)
+	assert.False(t, latest.HasPDF)
 }
 
 // TestSearchCatalogContentFlags checks the full catalog search with the has_*
