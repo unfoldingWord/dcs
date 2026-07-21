@@ -159,24 +159,27 @@ func TestGetCatalogStats(t *testing.T) {
 	assert.EqualValues(t, 0, stats.TcCount)
 	assert.EqualValues(t, 1, stats.RcCount)
 	assert.EqualValues(t, 1, stats.SbCount)
+	// The has_* counts are repo counts over EVERY release of the stage: the older
+	// v0 release of repo1 provides audio and stream even though v1 is the latest
 	assert.EqualValues(t, 1, stats.HasPDF)
-	assert.EqualValues(t, 0, stats.HasAudio)
+	assert.EqualValues(t, 1, stats.HasAudio)
 	assert.EqualValues(t, 0, stats.HasVideo)
-	assert.EqualValues(t, 0, stats.HasStream)
+	assert.EqualValues(t, 1, stats.HasStream)
 	assert.EqualValues(t, 0, stats.HasOther)
+	// repo1 has media in both its releases but still counts once
 	assert.EqualValues(t, 1, stats.HasAttachment)
 
-	// includeHistory picks up the older v0 release of repo1 too
+	// includeHistory is ignored: entry counts stay repo counts over the latest
+	// entries, and the media counts already considered all releases above
 	stats, err = GetCatalogStats(t.Context(), &door43metadata.SearchCatalogOptions{Stage: door43metadata.StageProd, IncludeHistory: true})
 	require.NoError(t, err)
-	assert.EqualValues(t, 3, stats.EntryCount)
+	assert.EqualValues(t, 2, stats.EntryCount)
 	assert.EqualValues(t, 2, stats.LangCount)
 	assert.EqualValues(t, 2, stats.RepoCount)
-	assert.EqualValues(t, 2, stats.RcCount)
+	assert.EqualValues(t, 1, stats.RcCount)
 	assert.EqualValues(t, 1, stats.HasAudio)
 	assert.EqualValues(t, 1, stats.HasStream)
-	// v0 has two content types (audio + stream) but counts once; v1 has a PDF
-	assert.EqualValues(t, 2, stats.HasAttachment)
+	assert.EqualValues(t, 1, stats.HasAttachment)
 
 	// Topic filters work like the other catalog searches: repo1 has the
 	// "golang" topic in the fixtures, repo4 has no topics
@@ -194,9 +197,11 @@ func TestGetCatalogStats(t *testing.T) {
 	require.NoError(t, err)
 	assert.EqualValues(t, 1, stats.EntryCount)
 	assert.EqualValues(t, 0, stats.HasPDF)
+	// A has* filter matching only a historical release: no repo's LATEST entry has
+	// audio (entry_count 0), but the media counts still find repo1's v0 release
 	stats, err = GetCatalogStats(t.Context(), &door43metadata.SearchCatalogOptions{Stage: door43metadata.StageProd, HasAudio: optional.Some(true), IncludeHistory: true})
 	require.NoError(t, err)
-	assert.EqualValues(t, 1, stats.EntryCount)
+	assert.EqualValues(t, 0, stats.EntryCount)
 	assert.EqualValues(t, 1, stats.HasAudio)
 
 	// Date bounds are inclusive on release_date_unix

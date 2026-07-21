@@ -3399,7 +3399,7 @@
         "x-go-package": "gitea.dev/modules/structs"
       },
       "CatalogStats": {
-        "description": "CatalogStats aggregate counts of the catalog entries matching a catalog search",
+        "description": "Entry-based counts are repo counts over the latest entry per repo and stage; the\nhas_* media counts are repo counts considering every release of the stage(s).",
         "properties": {
           "entry_count": {
             "format": "int64",
@@ -3497,11 +3497,12 @@
             "x-go-name": "TsCount"
           }
         },
+        "title": "CatalogStats aggregate counts of the catalog entries matching a catalog search.",
         "type": "object",
         "x-go-package": "gitea.dev/modules/structs"
       },
       "CatalogStatsExt": {
-        "description": "CatalogStatsExt CatalogStats plus the healthcheck counts and the sorted unique\nvalues of several catalog entry fields",
+        "description": "CatalogStatsExt CatalogStats plus the healthcheck counts and the entry counts per\nsubject, flavor type, flavor, owner, language and metadata type",
         "properties": {
           "entry_count": {
             "format": "int64",
@@ -3519,17 +3520,19 @@
             "x-go-name": "FlavorTypeCount"
           },
           "flavor_types": {
-            "items": {
-              "type": "string"
+            "additionalProperties": {
+              "format": "int64",
+              "type": "integer"
             },
-            "type": "array",
+            "type": "object",
             "x-go-name": "FlavorTypes"
           },
           "flavors": {
-            "items": {
-              "type": "string"
+            "additionalProperties": {
+              "format": "int64",
+              "type": "integer"
             },
-            "type": "array",
+            "type": "object",
             "x-go-name": "Flavors"
           },
           "has_attachment": {
@@ -3598,17 +3601,19 @@
             "x-go-name": "LangRtlCount"
           },
           "languages": {
-            "items": {
-              "type": "string"
+            "additionalProperties": {
+              "format": "int64",
+              "type": "integer"
             },
-            "type": "array",
+            "type": "object",
             "x-go-name": "Languages"
           },
           "metadata_types": {
-            "items": {
-              "type": "string"
+            "additionalProperties": {
+              "format": "int64",
+              "type": "integer"
             },
-            "type": "array",
+            "type": "object",
             "x-go-name": "MetadataTypes"
           },
           "no_healthcheck_count": {
@@ -3622,10 +3627,11 @@
             "x-go-name": "OwnerCount"
           },
           "owners": {
-            "items": {
-              "type": "string"
+            "additionalProperties": {
+              "format": "int64",
+              "type": "integer"
             },
-            "type": "array",
+            "type": "object",
             "x-go-name": "Owners"
           },
           "rc_count": {
@@ -3649,10 +3655,11 @@
             "x-go-name": "SubjectCount"
           },
           "subjects": {
-            "items": {
-              "type": "string"
+            "additionalProperties": {
+              "format": "int64",
+              "type": "integer"
             },
-            "type": "array",
+            "type": "object",
             "x-go-name": "Subjects"
           },
           "tc_count": {
@@ -15144,14 +15151,6 @@
             }
           },
           {
-            "description": "if true, all entries of the given stage or lower are counted, not just the latest entry per repo, default is false",
-            "in": "query",
-            "name": "includeHistory",
-            "schema": {
-              "type": "boolean"
-            }
-          },
-          {
             "description": "if true, subject, owner and repo search fields will use partial match (LIKE) when querying the catalog, default is false",
             "in": "query",
             "name": "partialMatch",
@@ -15443,14 +15442,6 @@
             }
           },
           {
-            "description": "if true, all entries of the given stage or lower are counted, not just the latest entry per repo, default is false",
-            "in": "query",
-            "name": "includeHistory",
-            "schema": {
-              "type": "boolean"
-            }
-          },
-          {
             "description": "if true, subject, owner and repo search fields will use partial match (LIKE) when querying the catalog, default is false",
             "in": "query",
             "name": "partialMatch",
@@ -15483,7 +15474,7 @@
             "$ref": "#/components/responses/validationError"
           }
         },
-        "summary": "Aggregate counts plus sorted unique subjects, flavor types, flavors, owners, languages and metadata types of the catalog entries matching the given criteria. Same parameters as /catalog/stats",
+        "summary": "Aggregate counts plus entry counts per subject, flavor type, flavor, owner, language and metadata type of the catalog entries matching the given criteria. Same parameters as /catalog/stats",
         "tags": [
           "catalog"
         ]
