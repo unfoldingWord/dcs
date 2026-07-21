@@ -1029,11 +1029,11 @@ func ListCatalogLanguages(ctx *context.APIContext) {
 		// the primary subtag (e.g. es-419 -> es), keeping the variant's own code,
 		// title and, when door43_metadata provides one, direction.
 		var baseEntry map[string]any
-		if prefix := strings.SplitN(lowerLang, "-x-", 2)[0]; prefix != lowerLang {
+		if prefix, _, found := strings.Cut(lowerLang, "-x-"); found {
 			baseEntry = langnames[prefix]
 		}
 		if baseEntry == nil {
-			if prefix := strings.SplitN(lowerLang, "-", 2)[0]; prefix != lowerLang {
+			if prefix, _, found := strings.Cut(lowerLang, "-"); found {
 				baseEntry = langnames[prefix]
 			}
 		}
