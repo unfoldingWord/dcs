@@ -287,9 +287,8 @@ func GetCatalogStats(ctx context.Context, opts *door43metadata.SearchCatalogOpti
 	return &row.CatalogStats, nil
 }
 
-// GetCatalogStatsExt returns GetCatalogStats plus the healthcheck counts, the entry
-// counts per subject, owner and language, and the sorted unique values of the flavor
-// type, flavor and metadata type fields.
+// GetCatalogStatsExt returns GetCatalogStats plus the healthcheck counts and the entry
+// counts per subject, flavor type, flavor, owner, language and metadata type.
 func GetCatalogStatsExt(ctx context.Context, opts *door43metadata.SearchCatalogOptions) (*structs.CatalogStatsExt, error) {
 	row, err := getCatalogStatsRow(ctx, opts)
 	if err != nil {
@@ -305,31 +304,16 @@ func GetCatalogStatsExt(ctx context.Context, opts *door43metadata.SearchCatalogO
 	}
 
 	cond := door43metadata.SearchCatalogCondition(opts)
-	fieldLists := []struct {
-		field string
-		dest  *[]string
-	}{
-		{"`door43_metadata`.flavor_type", &ext.FlavorTypes},
-		{"`door43_metadata`.flavor", &ext.Flavors},
-		{"`door43_metadata`.metadata_type", &ext.MetadataTypes},
-	}
-	for _, fl := range fieldLists {
-		list, err := SearchDoor43MetadataFieldByCondition(ctx, opts, cond, fl.field)
-		if err != nil {
-			return nil, err
-		}
-		if list == nil {
-			list = []string{} // an empty JSON array reads better than null
-		}
-		*fl.dest = list
-	}
 	fieldCounts := []struct {
 		field string
 		dest  *map[string]int64
 	}{
 		{"`door43_metadata`.subject", &ext.Subjects},
+		{"`door43_metadata`.flavor_type", &ext.FlavorTypes},
+		{"`door43_metadata`.flavor", &ext.Flavors},
 		{"`user`.lower_name", &ext.Owners},
 		{"`door43_metadata`.language", &ext.Languages},
+		{"`door43_metadata`.metadata_type", &ext.MetadataTypes},
 	}
 	for _, fc := range fieldCounts {
 		counts, err := SearchDoor43MetadataFieldCountsByCondition(ctx, cond, fc.field)

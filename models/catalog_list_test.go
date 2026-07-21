@@ -209,8 +209,8 @@ func TestGetCatalogStats(t *testing.T) {
 	assert.EqualValues(t, 1, stats.EntryCount)
 	assert.EqualValues(t, 1, stats.HasPDF)
 
-	// stats-ext adds the healthcheck counts, the entry counts per subject, owner
-	// and language, and the sorted unique values of the other fields
+	// stats-ext adds the healthcheck counts and the entry counts per subject,
+	// flavor type, flavor, owner, language and metadata type
 	ext, err := GetCatalogStatsExt(t.Context(), &door43metadata.SearchCatalogOptions{Stage: door43metadata.StageProd})
 	require.NoError(t, err)
 	assert.EqualValues(t, 2, ext.EntryCount)
@@ -220,13 +220,13 @@ func TestGetCatalogStats(t *testing.T) {
 	assert.EqualValues(t, 0, ext.HealthcheckErrorCount)
 	assert.EqualValues(t, 1, ext.NoHealthcheckCount)
 	assert.Equal(t, map[string]int64{"Bible": 1, "Open Bible Stories": 1}, ext.Subjects)
-	assert.Equal(t, []string{"gloss", "scripture"}, ext.FlavorTypes)
-	assert.Equal(t, []string{"textStories", "textTranslation"}, ext.Flavors)
+	assert.Equal(t, map[string]int64{"gloss": 1, "scripture": 1}, ext.FlavorTypes)
+	assert.Equal(t, map[string]int64{"textStories": 1, "textTranslation": 1}, ext.Flavors)
 	assert.Equal(t, map[string]int64{"user2": 1, "user5": 1}, ext.Owners)
 	assert.Equal(t, map[string]int64{"ar": 1, "en": 1}, ext.Languages)
-	assert.Equal(t, []string{"rc", "sb"}, ext.MetadataTypes)
+	assert.Equal(t, map[string]int64{"rc": 1, "sb": 1}, ext.MetadataTypes)
 
-	// A filter matching nothing returns zero counts and empty (not null) lists and maps
+	// A filter matching nothing returns zero counts and empty (not null) maps
 	ext, err = GetCatalogStatsExt(t.Context(), &door43metadata.SearchCatalogOptions{Stage: door43metadata.StageProd, Languages: []string{"zz"}})
 	require.NoError(t, err)
 	assert.EqualValues(t, 0, ext.EntryCount)
