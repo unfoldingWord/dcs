@@ -1298,10 +1298,6 @@ func GetCatalogStats(ctx *context.APIContext) {
 	//   in: query
 	//   description: count only entries with (true) or without (false) any release attachment content (audio, video, pdf, stream or other)
 	//   type: boolean
-	// - name: includeHistory
-	//   in: query
-	//   description: if true, all entries of the given stage or lower are counted, not just the latest entry per repo, default is false
-	//   type: boolean
 	// - name: partialMatch
 	//   in: query
 	//   description: if true, subject, owner and repo search fields will use partial match (LIKE) when querying the catalog, default is false
@@ -1481,10 +1477,6 @@ func GetCatalogStatsExt(ctx *context.APIContext) {
 	// - name: hasAttachment
 	//   in: query
 	//   description: count only entries with (true) or without (false) any release attachment content (audio, video, pdf, stream or other)
-	//   type: boolean
-	// - name: includeHistory
-	//   in: query
-	//   description: if true, all entries of the given stage or lower are counted, not just the latest entry per repo, default is false
 	//   type: boolean
 	// - name: partialMatch
 	//   in: query
@@ -1736,7 +1728,6 @@ func searchCatalog(ctx *context.APIContext) {
 		ContentFormats:   QueryStrings(ctx, "format"),
 		CheckingLevels:   QueryStrings(ctx, "checkingLevel"),
 		Books:            QueryStrings(ctx, "book"),
-		IncludeHistory:   ctx.FormBool("includeHistory"),
 		ShowIngredients:  ctx.FormOptionalBool("showIngredients"),
 		MetadataTypes:    metadataTypes,
 		MetadataVersions: metadataVersions,
