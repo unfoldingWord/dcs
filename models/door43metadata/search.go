@@ -93,7 +93,7 @@ func GetMetadataCond(keyword string) builder.Cond {
 	cond = cond.And(builder.Like{"`door43_metadata`.title", keyword})
 	cond = cond.Or(builder.Eq{"`door43_metadata`.abbreviation": keyword})
 	cond = cond.Or(builder.Like{"`door43_metadata`.subject", keyword})
-	cond = cond.Or(builder.Eq{"`door43_metadata`.language": keyword})
+	cond = cond.Or(builder.Expr("LOWER(`door43_metadata`.language) = ?", strings.ToLower(keyword)))
 	cond = cond.Or(builder.Like{"`door43_metadata`.language_title", keyword})
 	return cond
 }
