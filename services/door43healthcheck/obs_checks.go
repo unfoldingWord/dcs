@@ -40,7 +40,7 @@ func CheckOBSStories(ctx context.Context, dm *repo_model.Door43Metadata) []*repo
 	}
 
 	// Open the git repo and get the commit
-	gitRepo, err := git.OpenRepository(dm.Repo.RepoPath())
+	gitRepo, err := git.OpenRepository(dm.Repo)
 	if err != nil {
 		log.Error("CheckOBSStories: OpenRepository Error %s: %v", dm.Repo.FullName(), err)
 		return nil

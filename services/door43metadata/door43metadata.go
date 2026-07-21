@@ -47,7 +47,7 @@ func processDoor43MetadataForRepoRefs(ctx context.Context, repo *repo_model.Repo
 		log.Error("GetRepoReleaseTagsForMetadata Error %s: %v", repo.FullName(), err)
 	}
 
-	gitRepo, err := git.OpenRepository(repo.RepoPath())
+	gitRepo, err := git.OpenRepository(repo)
 	if err != nil {
 		log.Error("git.OpenRepository Error %s: %v", repo.FullName(), err)
 	}
@@ -1033,7 +1033,7 @@ func processDoor43MetadataForRepoRef(ctx context.Context, repo *repo_model.Repos
 	}
 	dm.Repo = repo
 
-	gitRepo, err := git.OpenRepository(repo.RepoPath())
+	gitRepo, err := git.OpenRepository(repo)
 	if err != nil {
 		log.Error("OpenRepository Error: %v\n", err)
 		return err
