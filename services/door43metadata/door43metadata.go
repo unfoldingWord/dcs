@@ -73,6 +73,22 @@ func processDoor43MetadataForRepoRefs(ctx context.Context, repo *repo_model.Repo
 }
 
 func handleLatestStageDM(ctx context.Context, repo *repo_model.Repository, stage door43metadata.Stage, earliestDate *timeutil.TimeStamp) (*repo_model.Door43Metadata, error) {
+	// The current latest release entry may carry media flags aggregated over all
+	// the repo's releases of this stage (repo_model.AggregateMediaFlagsForRepo);
+	// remember it so that if it loses latestness below, its flags can be reset to
+	// its own release's attachments.
+	prevDM := &repo_model.Door43Metadata{}
+	hasPrev := false
+	if stage != door43metadata.StageLatest {
+		var err error
+		hasPrev, err = db.GetEngine(ctx).
+			Where(builder.Eq{"repo_id": repo.ID, "stage": stage, "is_latest_for_stage": true}).
+			Get(prevDM)
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	_, err := db.GetEngine(ctx).
 		Where(builder.Eq{"repo_id": repo.ID}).
 		And(builder.Eq{"stage": stage}).
@@ -101,6 +117,17 @@ func handleLatestStageDM(ctx context.Context, repo *repo_model.Repository, stage
 		dm.IsLatestForStage = true
 		err = repo_model.UpdateDoor43MetadataCols(ctx, dm, "stage", "is_latest_for_stage")
 		if err != nil {
+			return nil, err
+		}
+	}
+
+	// Demoted from latest: reset the aggregated media flags to the entry's own
+	// release attachments so non-latest entries always carry per-release truth.
+	if hasPrev && (dm == nil || dm.ID != prevDM.ID) {
+		if err := prevDM.DetermineAttachmentFlags(ctx); err != nil {
+			return nil, err
+		}
+		if err := repo_model.UpdateDoor43MetadataCols(ctx, prevDM, repo_model.Door43MetadataAttachmentFlagCols...); err != nil {
 			return nil, err
 		}
 	}
@@ -174,6 +201,13 @@ func processDoor43MetadataForRepoLatestDMs(ctx context.Context, repo *repo_model
 	repo.LatestPreprodDM = dm
 
 	handleRepoDM(ctx, repo)
+
+	// The latest prod/preprod entries carry the media flags of ALL the repo's
+	// releases at their stage, keeping stats and has_* filtering correct after
+	// any release is created, updated or deleted.
+	if err := repo_model.AggregateMediaFlagsForRepo(ctx, repo.ID); err != nil {
+		log.Error("AggregateMediaFlagsForRepo [%s]: %v", repo.FullName(), err)
+	}
 
 	return nil
 }
@@ -1209,7 +1243,11 @@ func UpdateDoor43MetadataAttachmentFlags(ctx context.Context, repoID, releaseID 
 	if err := dm.DetermineAttachmentFlags(ctx); err != nil {
 		return err
 	}
-	return repo_model.UpdateDoor43MetadataCols(ctx, dm, repo_model.Door43MetadataAttachmentFlagCols...)
+	if err := repo_model.UpdateDoor43MetadataCols(ctx, dm, repo_model.Door43MetadataAttachmentFlagCols...); err != nil {
+		return err
+	}
+	// An attachment change on any release can change what the repo as a whole has
+	return repo_model.AggregateMediaFlagsForRepo(ctx, repoID)
 }
 
 // UnpackJSONAttachments expands a release's files.json / links.json manifest
