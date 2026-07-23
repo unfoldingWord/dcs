@@ -22,12 +22,12 @@
 </li>
 	{{if eq $release.Door43Metadata.Subject "Aligned Bible"}}
 	<li style="display: block" class="item">
-		<a href="#" onclick="window.downloadUnalignedUSFM('{{PathEscapeSegments $release.Repo.OwnerName}}', '{{PathEscapeSegments $release.Repo.Name}}', '{{PathEscapeSegments $release.TagName}}', document.getElementById('usfm-download-status-{{PathEscapeSegments $release.TagName}}')); return false;" rel="nofollow">
+		<a href="#" class="dcs-usfm-download" data-owner="{{PathEscapeSegments $release.Repo.OwnerName}}" data-repo="{{PathEscapeSegments $release.Repo.Name}}" data-ref="{{PathEscapeSegments $release.TagName}}" rel="nofollow">
 			<strong class="flex-text-inline">
 				{{svg "octicon-file-zip" 16 "download-icon"}}Unaligned USFM (ZIP)
 			</strong>
 		</a>
-		<span id="usfm-download-status-{{PathEscapeSegments $release.TagName}}"></span>
+		<span class="dcs-usfm-download-status"></span>
 	</li>
 	{{end}}
 {{end}}
