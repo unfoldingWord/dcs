@@ -10,6 +10,7 @@ import (
 	"io"
 	"path"
 	"regexp"
+	"slices"
 	"strings"
 
 	repo_model "gitea.dev/models/repo"
@@ -18,8 +19,8 @@ import (
 )
 
 var (
-	storyTitleRegex     = regexp.MustCompile(`^#\s+\d+\.\s+.+`)
-	bibleReferenceRegex = regexp.MustCompile(`(?i)_A Bible story from:`)
+	storyTitleRegex     = regexp.MustCompile(`^#\s+\S`)
+	bibleReferenceRegex = regexp.MustCompile(`^_.*_\s*$`)
 	frameImageRegex     = regexp.MustCompile(`!\[`)
 )
 
@@ -162,28 +163,35 @@ func findOBSContentPath(dm *repo_model.Door43Metadata) string {
 }
 
 // analyzeOBSStory reads an OBS story file and checks for a title, at least one frame image,
-// and a Bible reference.
+// and a Bible reference. The checks are language-agnostic:
+//   - title: the first line of the file is a heading ("# ...") followed by a blank line
+//   - frame: at least one image ("![") anywhere in the file
+//   - Bible reference: the last non-blank line is italicized ("_..._") and preceded by a
+//     blank line, with only blank lines allowed after it
 func analyzeOBSStory(r io.Reader) (hasTitle, hasFrame, hasBibleRef bool) {
+	var lines []string
 	scanner := bufio.NewScanner(r)
-	firstNonEmpty := true
 	for scanner.Scan() {
-		line := scanner.Text()
-
-		// Check the first non-empty line for title pattern
-		if firstNonEmpty && strings.TrimSpace(line) != "" {
-			firstNonEmpty = false
-			if storyTitleRegex.MatchString(line) {
-				hasTitle = true
-			}
-		}
-
-		if frameImageRegex.MatchString(line) {
-			hasFrame = true
-		}
-
-		if bibleReferenceRegex.MatchString(line) {
-			hasBibleRef = true
-		}
+		lines = append(lines, scanner.Text())
 	}
+	if err := scanner.Err(); err != nil {
+		log.Error("analyzeOBSStory: scan error: %v", err)
+		return false, false, false
+	}
+	if len(lines) == 0 {
+		return false, false, false
+	}
+	lines[0] = strings.TrimPrefix(lines[0], "\ufeff") // ignore a UTF-8 BOM
+
+	hasTitle = len(lines) >= 2 && storyTitleRegex.MatchString(lines[0]) && strings.TrimSpace(lines[1]) == ""
+
+	hasFrame = slices.ContainsFunc(lines, frameImageRegex.MatchString)
+
+	last := len(lines) - 1
+	for last >= 0 && strings.TrimSpace(lines[last]) == "" {
+		last--
+	}
+	hasBibleRef = last >= 1 && bibleReferenceRegex.MatchString(lines[last]) && strings.TrimSpace(lines[last-1]) == ""
+
 	return hasTitle, hasFrame, hasBibleRef
 }
