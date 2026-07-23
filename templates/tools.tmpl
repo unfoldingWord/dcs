@@ -312,7 +312,7 @@
 						resources that help provide contextual accuracy to the translated text.
 					</p>
 				</div>
-				<div class="tool-more tool-link" onclick="showExtra(this)">
+				<div class="tool-more tool-link">
 					Learn more
 				</div>
 				<div class="extra">
@@ -359,7 +359,7 @@
 						language.
 					</p>
 				</div>
-				<div class="tool-more tool-link" onclick="showExtra(this)">
+				<div class="tool-more tool-link">
 					Learn more
 				</div>
 				<div class="extra">
@@ -405,7 +405,7 @@
 						to further unfoldingWord’s Gateway Language Strategy.
 					</p>
 				</div>
-				<div class="tool-more tool-link" onclick="showExtra(this)">
+				<div class="tool-more tool-link">
 					Learn more
 				</div>
 				<div class="extra">
@@ -440,7 +440,7 @@
 						and cohesion in a Book Package.
 					</p>
 				</div>
-				<div class="tool-more tool-link" onclick="showExtra(this)">
+				<div class="tool-more tool-link">
 					Learn more
 				</div>
 				<div class="extra">
@@ -485,7 +485,7 @@
 						the translation process and quality assurance measures within Scripture translation.
 					</p>
 				</div>
-				<div class="tool-more tool-link" onclick="showExtra(this)">
+				<div class="tool-more tool-link">
 					Learn more
 				</div>
 				<div class="extra">
@@ -529,7 +529,7 @@
 						accuracy of the translated resources.
 					</p>
 				</div>
-				<div class="tool-more tool-link" onclick="showExtra(this)">
+				<div class="tool-more tool-link">
 					Learn more
 				</div>
 				<div class="extra">
@@ -581,7 +581,7 @@
 						resources on Door43 Content Service (DCS).
 					</p>
 				</div>
-				<div class="tool-more tool-link" onclick="showExtra(this)">
+				<div class="tool-more tool-link">
 					Learn more
 				</div>
 				<div class="extra">
@@ -622,7 +622,7 @@
 					<p>DCS is a git-based content management system for open-licensed biblical resources, managed by unfoldingWord
 						and many volunteers.</p>
 				</div>
-				<div class="tool-more tool-link" onclick="showExtra(this)">
+				<div class="tool-more tool-link">
 					Learn more
 				</div>
 				<div class="extra">
@@ -665,7 +665,7 @@
 						test their translations, and seek constructive feedback.
 					</p>
 				</div>
-				<div class="tool-more tool-link" onclick="showExtra(this)">
+				<div class="tool-more tool-link">
 					Learn more
 				</div>
 				<div class="extra">
@@ -703,7 +703,7 @@
 							href="https://git.door43.org" class="tool-link">DCS</a>. Published content can exist in various stages of
 						development.</p>
 				</div>
-				<div class="tool-more tool-link" onclick="showExtra(this)">
+				<div class="tool-more tool-link">
 					Learn more
 				</div>
 				<div class="extra">
@@ -744,7 +744,8 @@
 		</div>
 	</div>
 </div>
-<script>
+{{- /* v1.27 CSP requires a nonce on inline scripts and blocks inline onclick handlers */ -}}
+<script nonce="{{ctx.CspScriptNonce}}">
 	document.addEventListener("DOMContentLoaded", function () {
 		document.addEventListener('click', (e) => {
 			document.querySelectorAll('.extra').forEach(el => {
@@ -756,6 +757,7 @@
 		document.querySelectorAll('.extra-close').forEach(el => el.addEventListener('click', () => {
 			el.parentElement.classList.remove('show');
 		}))
+		document.querySelectorAll('.tool-more').forEach(el => el.addEventListener('click', () => showExtra(el)))
 	});
 
 	const showExtra = (el) => {
