@@ -1,7 +1,7 @@
 {{if .Door43Metadata}}
 	{{$healthcheck := .Door43Metadata.GetHealthcheck ctx}}
 	{{if $healthcheck}}
-	<div class="ui list">
+	<div class="ui list dcs-item-list">
 	{{range $issueCode := $healthcheck.GetOrder}}
 		{{$issues := index $healthcheck.Issues $issueCode}}
 		<div class="ui item">
