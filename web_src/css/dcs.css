@@ -58,3 +58,17 @@
 .blame .file-view.code-view {
   overflow-y: auto;
 }
+/* Metadata/healthcheck list items; upstream removed the ".settings .list" styles
+   these pages borrowed (gitea#38263), so the styles are owned here now */
+.dcs-item-list > .item:not(:first-child) {
+  border-top: 1px solid var(--color-secondary);
+  padding: 1rem;
+  margin: 16px -1rem -1rem;
+}
+.dcs-item-list > .item .info {
+  margin-top: 10px;
+}
+.dcs-item-list > .item .info .tab.segment {
+  border: 0;
+  padding: 10px 0 0;
+}
