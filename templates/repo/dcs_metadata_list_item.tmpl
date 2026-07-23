@@ -120,7 +120,7 @@
 					<td style="vertical-align: top"><strong>{{ctx.Locale.Tr "dcs.repo.metadata.ingredients"}}:</strong></td>
 					<td style="vertical-align: top">
 						<div class="ingredients-toggle">
-							<a href="#" onclick="event.preventDefault(); toggleShowTable(this, 'ingredients')">Click to see ingredients</a>
+							<a href="#" class="dcs-toggle-table" data-type="ingredients">Click to see ingredients</a>
 						</div>
 						<table class="ui celled table full-width" style="padding: 10px; display: none;">
 							<thead>
@@ -162,7 +162,7 @@
 					<td style="vertical-align: top"><strong>Relations:</strong></td>
 					<td style="vertical-align: top">
 						<div class="ingredients-toggle">
-							<a href="#" onclick="event.preventDefault(); toggleShowTable(this, 'relations')">Click to see relations</a>
+							<a href="#" class="dcs-toggle-table" data-type="relations">Click to see relations</a>
 						</div>
 						<table class="ui celled table full-width" style="padding: 10px; display: none;">
 							<thead>
@@ -208,7 +208,7 @@
 					<td style="vertical-align: top"><strong>{{ctx.Locale.Tr "dcs.repo.metadata.healthcheck"}}:</strong></td>
 					<td style="vertical-align: top">
 						<div class="ingredients-toggle">
-							<a href="#" onclick="event.preventDefault(); toggleShowTable(this, 'health check')">Click to see health check</a>
+							<a href="#" class="dcs-toggle-table" data-type="health check">Click to see health check</a>
 						</div>
 						<div style="display: none">
 							{{template "repo/dcs_healthcheck_list" (dict "ctxData" .ctxData "Door43Metadata" $dm)}}

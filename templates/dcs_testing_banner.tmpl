@@ -97,7 +97,8 @@
 	</label>
 </div>
 
-<script>
+{{- /* v1.27 CSP requires a nonce on inline scripts */ -}}
+<script nonce="{{ctx.CspScriptNonce}}">
 	/* eslint-disable unicorn/no-document-cookie */
 	function createCookie(name, value, days) {
 		let expires = '';

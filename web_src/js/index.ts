@@ -72,6 +72,8 @@ import {initDCSValidationBadge} from './features/dcs-validation-badge.ts';
 import {initDCSLanguageFonts} from './features/dcs-language-fonts.ts';
 import {initDCSHealthcheckBadges} from './features/dcs-healthcheck-badge.ts';
 import {initDCSHealthcheckDashboard} from './features/dcs-hc-dash.ts';
+import {initDCSMetadataToggles} from './features/dcs-metadata.ts';
+import {initDCSUsfmDownload} from './features/dcs-usfm-download.ts';
 /** END DCS Customizations **/
 
 const initStartTime = performance.now();
@@ -176,6 +178,8 @@ const initPerformanceTracer = callInitFunctions([
   initDCSLanguageFonts,
   initDCSHealthcheckBadges,
   initDCSHealthcheckDashboard,
+  initDCSMetadataToggles,
+  initDCSUsfmDownload,
   /** END DCS Customizations **/
 ]);
 
