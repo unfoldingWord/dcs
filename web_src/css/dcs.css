@@ -72,8 +72,3 @@
   border: 0;
   padding: 10px 0 0;
 }
-/* Workaround for gitea#38603: ".ui.fixed.table td { overflow: hidden }" clips the
-   branches-page download dropdown menu; the last cell only holds buttons */
-.repository.branches .ui.fixed.table td:last-child {
-  overflow: visible;
-}
