@@ -74,6 +74,7 @@ import {initDCSHealthcheckBadges} from './features/dcs-healthcheck-badge.ts';
 import {initDCSHealthcheckDashboard} from './features/dcs-hc-dash.ts';
 import {initDCSMetadataToggles} from './features/dcs-metadata.ts';
 import {initDCSUsfmDownload} from './features/dcs-usfm-download.ts';
+import {initDCSCatalogSearch} from './features/dcs-catalog-search.ts';
 /** END DCS Customizations **/
 
 const initStartTime = performance.now();
@@ -180,6 +181,7 @@ const initPerformanceTracer = callInitFunctions([
   initDCSHealthcheckDashboard,
   initDCSMetadataToggles,
   initDCSUsfmDownload,
+  initDCSCatalogSearch,
   /** END DCS Customizations **/
 ]);
 
