@@ -14,7 +14,6 @@ import (
 	"strings"
 
 	repo_model "gitea.dev/models/repo"
-	"gitea.dev/modules/git"
 	"gitea.dev/modules/log"
 )
 
@@ -41,18 +40,11 @@ func CheckOBSStories(ctx context.Context, dm *repo_model.Door43Metadata) []*repo
 	}
 
 	// Open the git repo and get the commit
-	gitRepo, err := git.OpenRepository(ctx, dm.Repo.RepoPath())
-	if err != nil {
-		log.Error("CheckOBSStories: OpenRepository Error %s: %v", dm.Repo.FullName(), err)
+	gitRepo, commit := openCommit(ctx, dm)
+	if commit == nil {
 		return nil
 	}
 	defer gitRepo.Close()
-
-	commit, err := gitRepo.GetCommit(dm.CommitSHA)
-	if err != nil {
-		log.Error("CheckOBSStories: GetCommit Error %s/%s: %v", dm.Repo.FullName(), dm.CommitSHA, err)
-		return nil
-	}
 
 	var missingStories []string
 	var missingTitles []string

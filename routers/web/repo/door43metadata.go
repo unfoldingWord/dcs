@@ -13,6 +13,7 @@ import (
 	"gitea.dev/modules/log"
 	"gitea.dev/modules/templates"
 	"gitea.dev/services/context"
+	"gitea.dev/services/door43healthcheck"
 	door43metadata_service "gitea.dev/services/door43metadata"
 
 	"xorm.io/builder"
@@ -41,16 +42,16 @@ func GetRepoMetadata(ctx *context.Context) {
 	ctx.Data["PageIsMetadata"] = true
 	ctx.Data["Repo"] = ctx.Repo.Repository
 	ctx.Data["Door43Metadatas"] = door43Metadatas
-	ctx.Data["IsRC"] = ctx.Repo.Repository.RepoDM != nil && ctx.Repo.Repository.RepoDM.MetadataType == "rc"
 	ctx.HTML(http.StatusOK, tplDCSMetadata)
 }
 
-// GetRepoHealthcheck renders the health check page (RC repos only)
+// GetRepoHealthcheck renders the health check page
 func GetRepoHealthcheck(ctx *context.Context) {
 	_ = ctx.Repo.Repository.LoadLatestDMs(ctx)
 
-	// Redirect non-RC repos to metadata page
-	if ctx.Repo.Repository.RepoDM == nil || ctx.Repo.Repository.RepoDM.MetadataType != "rc" {
+	// Redirect repos without a checkable metadata type to the metadata page
+	if ctx.Repo.Repository.RepoDM == nil || ctx.Repo.Repository.RepoDM.ID == 0 ||
+		!door43healthcheck.Supported(ctx.Repo.Repository.RepoDM.MetadataType) {
 		ctx.Redirect(ctx.Repo.RepoLink + "/metadata")
 		return
 	}
@@ -58,7 +59,6 @@ func GetRepoHealthcheck(ctx *context.Context) {
 	ctx.Data["Title"] = "Health Check"
 	ctx.Data["PageIsHealthcheck"] = true
 	ctx.Data["Repo"] = ctx.Repo.Repository
-	ctx.Data["IsRC"] = true
 	ctx.HTML(http.StatusOK, tplDCSHealthcheck)
 }
 
@@ -107,7 +107,6 @@ func GetAllRepoDoor43Metadata(ctx *context.Context) {
 	ctx.Data["BranchDMs"] = branchDms
 	ctx.Data["ReleaseDMs"] = releaseDms
 	ctx.Data["ReleaseCount"] = releaseCount
-	ctx.Data["IsRC"] = ctx.Repo.Repository.RepoDM != nil && ctx.Repo.Repository.RepoDM.MetadataType == "rc"
 
 	pager := context.NewPagination(releaseCount, releaseDMsPerPage, page, 5)
 	pager.AddParamFromRequest(ctx.Req)

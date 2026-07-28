@@ -1,5 +1,5 @@
 {{range $i, $dm := .Door43Metadatas}}
 <div class="ui list dcs-item-list">
-	{{template "repo/dcs_metadata_list_item" (dict "ctxData" $.ctxData "Door43Metadata" $dm "IsRC" $.IsRC)}}
+	{{template "repo/dcs_metadata_list_item" (dict "ctxData" $.ctxData "Door43Metadata" $dm)}}
 </div>
 {{end}}

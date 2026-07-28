@@ -30,6 +30,10 @@ func GetHealthcheck(ctx *context.APIContext) {
 	//   description: name of the repo
 	//   type: string
 	//   required: true
+	// - name: ref
+	//   in: query
+	//   description: branch or tag to get the health check of; defaults to the repo's canonical catalog entry
+	//   type: string
 	// responses:
 	//   "200":
 	//     "$ref": "#/responses/Door43Healthcheck"
@@ -69,15 +73,16 @@ func GetHealthcheck(ctx *context.APIContext) {
 		return
 	}
 
-	if dm.MetadataType != "rc" {
+	if !door43healthcheck.Supported(dm.MetadataType) {
 		ctx.JSON(http.StatusUnprocessableEntity, map[string]any{
 			"ok":   false,
-			"info": "currently only repositories of the 'rc' metadata type are supported",
+			"info": "only repositories of the 'rc', 'ts', 'tc' and 'sb' metadata types are supported",
 		})
 		return
 	}
 
-	hc := door43healthcheck.RunHealthcheck(ctx, dm)
+	// Serves the stored results; runs and stores the check only when the entry was never checked
+	hc := dm.GetHealthcheck(ctx)
 
 	if hc == nil {
 		ctx.JSON(http.StatusUnprocessableEntity, map[string]any{

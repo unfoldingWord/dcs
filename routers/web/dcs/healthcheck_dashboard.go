@@ -28,13 +28,19 @@ func HealthcheckDashboard(ctx *context.Context) {
 		page = 1
 	}
 
-	// Defaults: tc-ready filter ON, failed-only filter OFF.
+	// Defaults: tc-ready filter ON, failed-only filter OFF, all metadata types.
 	filtersApplied := ctx.FormString("filters_applied") == "1"
 	tcReadyOnly := true
 	failedOnly := false
 	if filtersApplied {
 		tcReadyOnly = ctx.FormString("tc_ready") == "1"
 		failedOnly = ctx.FormString("failed_only") == "1"
+	}
+	metadataType := ctx.FormString("metadata_type")
+	switch metadataType {
+	case "rc", "ts", "tc", "sb":
+	default:
+		metadataType = ""
 	}
 
 	opts := &door43metadata.SearchCatalogOptions{
@@ -44,9 +50,11 @@ func HealthcheckDashboard(ctx *context.Context) {
 		},
 		Stage:          door43metadata.StagePreProd,
 		IncludeHistory: false,
-		MetadataTypes:  []string{"rc"},
 		Healthchecks:   []string{"success,error,warning,info"},
 		OrderBy:        []door43metadata.CatalogOrderBy{door43metadata.CatalogOrderByNewest},
+	}
+	if metadataType != "" {
+		opts.MetadataTypes = []string{metadataType}
 	}
 	if tcReadyOnly {
 		opts.Topics = []string{"tc-ready"}
@@ -77,6 +85,7 @@ func HealthcheckDashboard(ctx *context.Context) {
 	ctx.Data["Keyword"] = keyword
 	ctx.Data["TCReadyOnly"] = tcReadyOnly
 	ctx.Data["FailedOnly"] = failedOnly
+	ctx.Data["MetadataType"] = metadataType
 	ctx.Data["Door43Metadatas"] = dms
 	ctx.Data["Total"] = count
 

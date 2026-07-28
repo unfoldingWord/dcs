@@ -989,7 +989,7 @@ func GetTcOrTsDoor43Metadata(dm *repo_model.Door43Metadata, repo *repo_model.Rep
 	dm.LanguageIsGL = dcs.LanguageIsGL(t.TargetLanguage.ID)
 	dm.ContentFormat = t.Format
 	dm.CheckingLevel = 1
-	dm.Ingredients = []*structs.Ingredient{{
+	ingredient := &structs.Ingredient{
 		Categories:     dcs.GetBookCategories(t.Project.ID),
 		Identifier:     t.Project.ID,
 		Title:          t.Project.Name,
@@ -997,8 +997,17 @@ func GetTcOrTsDoor43Metadata(dm *repo_model.Door43Metadata, repo *repo_model.Rep
 		Sort:           dcs.GetBookSort(t.Project.ID),
 		Versification:  versification,
 		AlignmentCount: &count,
-		Exists:         true,
-	}}
+	}
+	if t.MetadataType == "ts" {
+		// ts content lives in the repo root
+		ingredient.Exists = true
+		ingredient.IsDir = true
+	} else if entry, err := commit.GetTreeEntryByPath(bookPath); err == nil {
+		ingredient.Exists = true
+		ingredient.IsDir = entry.IsDir()
+		ingredient.Size = entry.Size()
+	}
+	dm.Ingredients = []*structs.Ingredient{ingredient}
 	dm.Metadata = manifest
 
 	return nil
@@ -1136,8 +1145,9 @@ func processDoor43MetadataForRepoRef(ctx context.Context, repo *repo_model.Repos
 		}
 	}
 
-	// Check for RC
-	if err != nil {
+	// Check for RC. Also reached when a manifest.json exists but is neither tc nor ts
+	// (GetTcOrTsDoor43Metadata returns no error yet sets no metadata type).
+	if err != nil || dm.MetadataType == "" {
 		err = GetRCDoor43Metadata(ctx, dm, repo, commit)
 		if err != nil {
 			if !git.IsErrNotExist(err) {
@@ -1166,6 +1176,10 @@ func processDoor43MetadataForRepoRef(ctx context.Context, repo *repo_model.Repos
 			return err
 		}
 	}
+
+	// Run the health check for this ref so every branch and tag entry carries its own
+	// stored severity and issues (the catalog filters on them).
+	door43healthcheck.RunHealthcheck(ctx, dm)
 
 	return nil
 }

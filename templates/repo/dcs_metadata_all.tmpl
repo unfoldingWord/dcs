@@ -52,7 +52,7 @@
 				<h3 class="ui top attached header toggle show-panel" data-panel="#branches">{{ctx.Locale.Tr "repo.branches"}} ({{len .BranchDMs}})</h3>
 				<div class="ui attached segment tw-hidden" id="branches">
 					{{if .BranchDMs}}
-						{{template "repo/dcs_metadata_list" (dict "ctxData" . "Door43Metadatas" .BranchDMs "IsRC" .IsRC)}}
+						{{template "repo/dcs_metadata_list" (dict "ctxData" . "Door43Metadatas" .BranchDMs)}}
 					{{else}}
 						<span>No branch metadata found.</span>
 					{{end}}
@@ -60,7 +60,7 @@
 				<h3 class="ui top attached header">{{ctx.Locale.Tr "dcs.repo.metadata.releases"}} ({{.ReleaseCount}})</h3>
 				<div class="ui attached segment" id="releases">
 					{{if .ReleaseDMs}}
-						{{template "repo/dcs_metadata_list" (dict "ctxData" . "Door43Metadatas" .ReleaseDMs "IsRC" .IsRC)}}
+						{{template "repo/dcs_metadata_list" (dict "ctxData" . "Door43Metadatas" .ReleaseDMs)}}
 						{{template "base/paginate" .}}
 					{{else}}
 						<span>No release metadata found.</span>

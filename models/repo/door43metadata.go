@@ -84,8 +84,9 @@ type Door43Metadata struct {
 	IsRepoMetadata      bool                        `xorm:"INDEX NOT NULL DEFAULT false"`
 	Metadata            map[string]any              `xorm:"JSON MEDIUMTEXT"`
 	ValidationError     *jsonschema.ValidationError `xorm:"JSON MEDIUMTEXT"`
-	HealthcheckSeverity SeverityLevel               `xorm:"NULL DEFAULT NULL"`
+	HealthcheckSeverity SeverityLevel               `xorm:"INDEX NULL DEFAULT NULL"`
 	HealthcheckCounts   map[SeverityLevel]int       `xorm:"JSON"`
+	HealthcheckTimeUnix timeutil.TimeStamp          `xorm:"NOT NULL DEFAULT 0"`
 	ReleaseDateUnix     timeutil.TimeStamp          `xorm:"INDEX index(repo_stage_latest_date) NOT NULL"`
 	CreatedUnix         timeutil.TimeStamp          `xorm:"INDEX created NOT NULL"`
 	UpdatedUnix         timeutil.TimeStamp          `xorm:"INDEX updated"`
@@ -93,6 +94,18 @@ type Door43Metadata struct {
 
 func init() {
 	db.RegisterModel(new(Door43Metadata))
+}
+
+// MetadataFileName returns the name of the file the metadata of this entry comes from
+func (dm *Door43Metadata) MetadataFileName() string {
+	switch dm.MetadataType {
+	case "sb":
+		return "metadata.json"
+	case "tc", "ts":
+		return "manifest.json"
+	default:
+		return "manifest.yaml"
+	}
 }
 
 // LoadRepo gets the repo associated with the door43 metadata entry
@@ -157,6 +170,11 @@ func (dm *Door43Metadata) CatalogMetatadataJSONURL() string {
 // CatalogValidationErrorsURL the api url for a catalog metadata. door43 metadata must have attributes loaded
 func (dm *Door43Metadata) CatalogValidationErrorsURL() string {
 	return setting.AppURL + "api/v1/catalog/validation/" + url.PathEscape(dm.Repo.OwnerName) + "/" + url.PathEscape(dm.Repo.Name) + "/" + url.PathEscape(dm.Ref)
+}
+
+// HealthcheckAPIURL the api url for this entry's full health check results. door43 metadata must have attributes loaded
+func (dm *Door43Metadata) HealthcheckAPIURL() string {
+	return setting.AppURL + "api/v1/repos/" + url.PathEscape(dm.Repo.OwnerName) + "/" + url.PathEscape(dm.Repo.Name) + "/healthcheck?ref=" + url.QueryEscape(dm.Ref)
 }
 
 // TarballURL the tarball URL of the tag or branch
@@ -888,6 +906,11 @@ func DeleteDoor43MetadataByID(ctx context.Context, id int64) error {
 
 // DeleteDoor43Metadata deletes a metadata from database by given ID.
 func DeleteDoor43Metadata(ctx context.Context, dm *Door43Metadata) error {
+	if dm.ID > 0 {
+		if err := DeleteDoor43HealthcheckIssuesByDMID(ctx, dm.ID); err != nil {
+			return err
+		}
+	}
 	id, err := db.GetEngine(ctx).Delete(dm)
 	if id > 0 && dm.ReleaseID > 0 {
 		if err := dm.LoadRepo(ctx); err != nil {
@@ -911,6 +934,9 @@ func DeleteDoor43MetadataByRepoIDAndReleaseID(ctx context.Context, repoID, relID
 		}
 		return nil
 	}
+	if err := DeleteDoor43HealthcheckIssuesByDMID(ctx, dm.ID); err != nil {
+		return err
+	}
 	_, err = db.GetEngine(ctx).ID(dm.ID).Delete(dm)
 	return err
 }
@@ -924,12 +950,18 @@ func DeleteDoor43MetadataByRepoIDAndRef(ctx context.Context, repoID int64, ref s
 		}
 		return nil
 	}
+	if err := DeleteDoor43HealthcheckIssuesByDMID(ctx, dm.ID); err != nil {
+		return err
+	}
 	_, err = db.GetEngine(ctx).ID(dm.ID).Delete(dm)
 	return err
 }
 
 // DeleteAllDoor43MetadatasByRepoID deletes all metadatas from database for a repo by given repo ID.
 func DeleteAllDoor43MetadatasByRepoID(ctx context.Context, repoID int64) (int64, error) {
+	if err := DeleteDoor43HealthcheckIssuesByRepoID(ctx, repoID); err != nil {
+		return 0, err
+	}
 	return db.GetEngine(ctx).Delete(Door43Metadata{RepoID: repoID})
 }
 
