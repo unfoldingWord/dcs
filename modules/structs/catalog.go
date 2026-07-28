@@ -47,6 +47,14 @@ type CatalogEntry struct {
 	AttachmentTypes     *CatalogAttachmentTypes `json:"attachment_types"`
 	IsValid             bool                    `json:"is_valid"`
 	ValidationErrorsURL string                  `json:"validation_errors_url"`
+	// HealthcheckSeverity the overall severity of this entry's health check: success, info, warning or error; empty if never checked
+	HealthcheckSeverity string `json:"healthcheck_severity"`
+	// IsHealthy true when this entry passed its health check, ignoring warnings
+	IsHealthy bool `json:"is_healthy"`
+	// IsHealthyWithoutWarnings true when this entry passed its health check with no warnings
+	IsHealthyWithoutWarnings bool `json:"is_healthy_without_warnings"`
+	// HealthcheckURL the API URL for this entry's full health check results
+	HealthcheckURL string `json:"healthcheck_url"`
 }
 
 // CatalogAttachmentTypes the kinds of content found in the release attachments of a catalog entry
@@ -116,17 +124,21 @@ type CatalogStats struct {
 // subject, flavor type, flavor, owner, language and metadata type
 type CatalogStatsExt struct {
 	CatalogStats
-	HealthcheckSuccessCount int64            `json:"healthcheck_success_count"`
-	HealthcheckInfoCount    int64            `json:"healthcheck_info_count"`
-	HealthcheckWarningCount int64            `json:"healthcheck_warning_count"`
-	HealthcheckErrorCount   int64            `json:"healthcheck_error_count"`
-	NoHealthcheckCount      int64            `json:"no_healthcheck_count"`
-	Subjects                map[string]int64 `json:"subjects"`
-	FlavorTypes             map[string]int64 `json:"flavor_types"`
-	Flavors                 map[string]int64 `json:"flavors"`
-	Owners                  map[string]int64 `json:"owners"`
-	Languages               map[string]int64 `json:"languages"`
-	MetadataTypes           map[string]int64 `json:"metadata_types"`
+	HealthcheckSuccessCount int64 `json:"healthcheck_success_count"`
+	HealthcheckInfoCount    int64 `json:"healthcheck_info_count"`
+	HealthcheckWarningCount int64 `json:"healthcheck_warning_count"`
+	HealthcheckErrorCount   int64 `json:"healthcheck_error_count"`
+	NoHealthcheckCount      int64 `json:"no_healthcheck_count"`
+	// IsHealthyCount repos whose matching entry passed its health check, ignoring warnings (severity success, info or warning)
+	IsHealthyCount int64 `json:"is_healthy_count"`
+	// IsHealthyWithoutWarningsCount repos whose matching entry passed its health check with no warnings (severity success or info)
+	IsHealthyWithoutWarningsCount int64            `json:"is_healthy_without_warnings_count"`
+	Subjects                      map[string]int64 `json:"subjects"`
+	FlavorTypes                   map[string]int64 `json:"flavor_types"`
+	Flavors                       map[string]int64 `json:"flavors"`
+	Owners                        map[string]int64 `json:"owners"`
+	Languages                     map[string]int64 `json:"languages"`
+	MetadataTypes                 map[string]int64 `json:"metadata_types"`
 }
 
 // CatalogVersionEndpoints Info on the versions of the catalog

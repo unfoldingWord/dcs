@@ -76,7 +76,7 @@ func SearchCatalogByCondition(ctx context.Context, opts *door43metadata.SearchCa
 		"language_direction", "language_is_gl", "content_format", "checking_level",
 		"ingredients", "relations", "has_audio", "has_video", "has_pdf", "has_stream", "has_other",
 		"is_latest_for_stage", "is_repo_metadata", "healthcheck_severity", "healthcheck_counts",
-		"release_date_unix", "created_unix", "updated_unix",
+		"healthcheck_time_unix", "release_date_unix", "created_unix", "updated_unix",
 	}
 	searchCols := strings.Join(dmCols, ", ")
 	innerCols := "dm." + strings.Join(dmCols, ", dm.")
@@ -209,12 +209,14 @@ func SearchDoor43MetadataFieldCountsByCondition(ctx context.Context, cond builde
 // catalogStatsRow is the scan target of the aggregate stats query: the base
 // CatalogStats columns plus the healthcheck counts, which only stats-ext exposes.
 type catalogStatsRow struct {
-	structs.CatalogStats    `xorm:"extends"`
-	HealthcheckSuccessCount int64
-	HealthcheckInfoCount    int64
-	HealthcheckWarningCount int64
-	HealthcheckErrorCount   int64
-	NoHealthcheckCount      int64
+	structs.CatalogStats          `xorm:"extends"`
+	HealthcheckSuccessCount       int64
+	HealthcheckInfoCount          int64
+	HealthcheckWarningCount       int64
+	HealthcheckErrorCount         int64
+	NoHealthcheckCount            int64
+	IsHealthyCount                int64
+	IsHealthyWithoutWarningsCount int64
 }
 
 // translateStatsCondSQL translates table references in a condition to the
@@ -270,6 +272,8 @@ func getCatalogStatsRow(ctx context.Context, opts *door43metadata.SearchCatalogO
   COUNT(DISTINCT CASE WHEN dm.healthcheck_severity = %d THEN dm.repo_id END) AS healthcheck_info_count,
   COUNT(DISTINCT CASE WHEN dm.healthcheck_severity = %d THEN dm.repo_id END) AS healthcheck_warning_count,
   COUNT(DISTINCT CASE WHEN dm.healthcheck_severity = %d THEN dm.repo_id END) AS healthcheck_error_count,
+  COUNT(DISTINCT CASE WHEN dm.healthcheck_severity IN (%d, %d, %d) THEN dm.repo_id END) AS is_healthy_count,
+  COUNT(DISTINCT CASE WHEN dm.healthcheck_severity IN (%d, %d) THEN dm.repo_id END) AS is_healthy_without_warnings_count,
   COUNT(DISTINCT CASE WHEN dm.healthcheck_severity IS NULL OR dm.healthcheck_severity = 0 THEN dm.repo_id END) AS no_healthcheck_count
 FROM door43_metadata dm
 INNER JOIN repository r ON r.id = dm.repo_id
@@ -279,7 +283,12 @@ WHERE `+condSQL,
 		door43metadata.SeverityLevelSuccess,
 		door43metadata.SeverityLevelInfo,
 		door43metadata.SeverityLevelWarning,
-		door43metadata.SeverityLevelError)
+		door43metadata.SeverityLevelError,
+		door43metadata.SeverityLevelSuccess,
+		door43metadata.SeverityLevelInfo,
+		door43metadata.SeverityLevelWarning,
+		door43metadata.SeverityLevelSuccess,
+		door43metadata.SeverityLevelInfo)
 
 	row := &catalogStatsRow{}
 	if _, err := db.GetEngine(ctx).SQL(query, condArgs...).Get(row); err != nil {
@@ -309,12 +318,14 @@ func GetCatalogStatsExt(ctx context.Context, opts *door43metadata.SearchCatalogO
 		return nil, err
 	}
 	ext := &structs.CatalogStatsExt{
-		CatalogStats:            row.CatalogStats,
-		HealthcheckSuccessCount: row.HealthcheckSuccessCount,
-		HealthcheckInfoCount:    row.HealthcheckInfoCount,
-		HealthcheckWarningCount: row.HealthcheckWarningCount,
-		HealthcheckErrorCount:   row.HealthcheckErrorCount,
-		NoHealthcheckCount:      row.NoHealthcheckCount,
+		CatalogStats:                  row.CatalogStats,
+		HealthcheckSuccessCount:       row.HealthcheckSuccessCount,
+		HealthcheckInfoCount:          row.HealthcheckInfoCount,
+		HealthcheckWarningCount:       row.HealthcheckWarningCount,
+		HealthcheckErrorCount:         row.HealthcheckErrorCount,
+		NoHealthcheckCount:            row.NoHealthcheckCount,
+		IsHealthyCount:                row.IsHealthyCount,
+		IsHealthyWithoutWarningsCount: row.IsHealthyWithoutWarningsCount,
 	}
 
 	// Like the stats row, the per-field counts only consider the latest entry
@@ -416,7 +427,7 @@ SELECT
   ingredients, relations, has_audio, has_video, has_pdf, has_stream, has_other,
   is_latest_for_stage, is_repo_metadata,
   metadata, validation_error, healthcheck_severity, healthcheck_counts,
-  release_date_unix, created_unix, updated_unix
+  healthcheck_time_unix, release_date_unix, created_unix, updated_unix
 FROM ranked
 WHERE rn = 1
 ORDER BY IF(repo_id = ?, 1, 0) DESC, subject ASC`
@@ -489,7 +500,7 @@ SELECT
   ingredients, relations, has_audio, has_video, has_pdf, has_stream, has_other,
   is_latest_for_stage, is_repo_metadata,
   metadata, validation_error, healthcheck_severity, healthcheck_counts,
-  release_date_unix, created_unix, updated_unix
+  healthcheck_time_unix, release_date_unix, created_unix, updated_unix
 FROM ranked
 WHERE rn = 1`
 

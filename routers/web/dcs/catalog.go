@@ -99,7 +99,15 @@ func RenderCatalogSearch(ctx *context.Context, opts *CatalogSearchOptions) {
 	}
 
 	query := ctx.FormTrim("q")
-	searchFields := []string{"keyword", "book", "lang", "subject", "flavor_type", "flavor", "abbreviation", "content_format", "repo", "owner", "tag", "checking_level", "metadata_type", "metadata_version", "topic", "without_topic", "stage", "has", "include_history"}
+	// parseSearchBool interprets a Search Builder boolean token ("1"/"true"/"yes" = true)
+	parseSearchBool := func(s string) bool {
+		switch strings.ToLower(s) {
+		case "1", "true", "yes":
+			return true
+		}
+		return false
+	}
+	searchFields := []string{"keyword", "book", "lang", "subject", "flavor_type", "flavor", "abbreviation", "content_format", "repo", "owner", "tag", "checking_level", "metadata_type", "metadata_version", "topic", "without_topic", "stage", "has", "include_history", "is_healthy", "is_healthy_without_warnings"}
 	searchMap := map[string][]string{}
 	for _, field := range searchFields {
 		searchMap[field] = []string{}
@@ -127,10 +135,7 @@ func RenderCatalogSearch(ctx *context.Context, opts *CatalogSearchOptions) {
 	}
 	includeHistory := false
 	if len(searchMap["include_history"]) > 0 {
-		switch strings.ToLower(searchMap["include_history"][0]) {
-		case "1", "true", "yes":
-			includeHistory = true
-		}
+		includeHistory = parseSearchBool(searchMap["include_history"][0])
 	}
 
 	searchOpts := &door43metadata.SearchCatalogOptions{
@@ -158,6 +163,12 @@ func RenderCatalogSearch(ctx *context.Context, opts *CatalogSearchOptions) {
 		Tags:             searchMap["tag"],
 		CheckingLevels:   searchMap["checking_level"],
 		PartialMatch:     true,
+	}
+	if len(searchMap["is_healthy"]) > 0 {
+		searchOpts.IsHealthy = optional.Some(parseSearchBool(searchMap["is_healthy"][0]))
+	}
+	if len(searchMap["is_healthy_without_warnings"]) > 0 {
+		searchOpts.IsHealthyWithoutWarnings = optional.Some(parseSearchBool(searchMap["is_healthy_without_warnings"][0]))
 	}
 	// The "has" field is a single dropdown in the Search Builder; multiple
 	// values are ANDed, e.g. "has:audio, video" requires both.

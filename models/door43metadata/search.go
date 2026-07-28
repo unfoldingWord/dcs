@@ -52,39 +52,41 @@ const (
 // SearchCatalogOptions holds the search options
 type SearchCatalogOptions struct {
 	db.ListOptions
-	RepoID           int64
-	Keywords         []string
-	Owners           []string
-	Repos            []string
-	Tags             []string
-	Stage            Stage
-	Subjects         []string
-	FlavorTypes      []string
-	Flavors          []string
-	Abbreviations    []string
-	ContentFormats   []string
-	CheckingLevels   []string
-	Books            []string
-	IsRepoMetadata   bool
-	IncludeHistory   bool
-	MetadataTypes    []string
-	MetadataVersions []string
-	Topics           []string
-	InvertedTopics   []string
-	Healthchecks     []string
-	ShowIngredients  optional.Option[bool]
-	Languages        []string
-	LanguageIsGL     optional.Option[bool]
-	HasAudio         optional.Option[bool]
-	HasVideo         optional.Option[bool]
-	HasPDF           optional.Option[bool]
-	HasStream        optional.Option[bool]
-	HasOther         optional.Option[bool]
-	HasAttachment    optional.Option[bool]
-	StartDateUnix    int64 // release_date_unix must be >= this when > 0
-	EndDateUnix      int64 // release_date_unix must be <= this when > 0
-	OrderBy          []CatalogOrderBy
-	PartialMatch     bool
+	RepoID                   int64
+	Keywords                 []string
+	Owners                   []string
+	Repos                    []string
+	Tags                     []string
+	Stage                    Stage
+	Subjects                 []string
+	FlavorTypes              []string
+	Flavors                  []string
+	Abbreviations            []string
+	ContentFormats           []string
+	CheckingLevels           []string
+	Books                    []string
+	IsRepoMetadata           bool
+	IncludeHistory           bool
+	MetadataTypes            []string
+	MetadataVersions         []string
+	Topics                   []string
+	InvertedTopics           []string
+	Healthchecks             []string
+	IsHealthy                optional.Option[bool]
+	IsHealthyWithoutWarnings optional.Option[bool]
+	ShowIngredients          optional.Option[bool]
+	Languages                []string
+	LanguageIsGL             optional.Option[bool]
+	HasAudio                 optional.Option[bool]
+	HasVideo                 optional.Option[bool]
+	HasPDF                   optional.Option[bool]
+	HasStream                optional.Option[bool]
+	HasOther                 optional.Option[bool]
+	HasAttachment            optional.Option[bool]
+	StartDateUnix            int64 // release_date_unix must be >= this when > 0
+	EndDateUnix              int64 // release_date_unix must be <= this when > 0
+	OrderBy                  []CatalogOrderBy
+	PartialMatch             bool
 }
 
 // GetMetadataCond Get the metadata condition
@@ -141,6 +143,7 @@ func SearchCatalogCondition(opts *SearchCatalogOptions) builder.Cond {
 		GetTopicCond(opts.Topics, opts.PartialMatch),
 		GetInvertedTopicCond(opts.InvertedTopics, opts.PartialMatch),
 		GetHealthcheckCond(opts.Healthchecks),
+		GetIsHealthyCond(opts),
 		GetContentFlagsCond(opts),
 		GetReleaseDateCond(opts.StartDateUnix, opts.EndDateUnix),
 		GetTagCond(opts.Tags),
@@ -353,6 +356,30 @@ func GetHealthcheckCond(healthchecks []string) builder.Cond {
 		}
 	}
 	return healthcheckCond
+}
+
+// GetIsHealthyCond gets the condition for the is_healthy and is_healthy_without_warnings
+// filters, both derived from healthcheck_severity. is_healthy ignores warnings;
+// is_healthy_without_warnings does not. Entries never checked (NULL or 0) are not healthy.
+func GetIsHealthyCond(opts *SearchCatalogOptions) builder.Cond {
+	cond := builder.NewCond()
+	col := "`door43_metadata`.healthcheck_severity"
+	notChecked := builder.IsNull{col}.Or(builder.Eq{col: 0})
+	if opts.IsHealthy.Has() {
+		if opts.IsHealthy.Value() {
+			cond = cond.And(builder.In(col, SeverityLevelSuccess, SeverityLevelInfo, SeverityLevelWarning))
+		} else {
+			cond = cond.And(builder.Eq{col: SeverityLevelError}.Or(notChecked))
+		}
+	}
+	if opts.IsHealthyWithoutWarnings.Has() {
+		if opts.IsHealthyWithoutWarnings.Value() {
+			cond = cond.And(builder.In(col, SeverityLevelSuccess, SeverityLevelInfo))
+		} else {
+			cond = cond.And(builder.In(col, SeverityLevelWarning, SeverityLevelError).Or(notChecked))
+		}
+	}
+	return cond
 }
 
 // contentFlagColumns are the has_* release-attachment content flag columns, in a fixed
