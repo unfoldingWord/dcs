@@ -162,6 +162,11 @@ func (hgi *HealthcheckGroupedIssues) GetIssues(issueCode IssueCode) []*Door43Hea
 
 // GetOrder returns the applicable issue codes for this healthcheck's metadata type and subject
 func (hgi *HealthcheckGroupedIssues) GetOrder() []IssueCode {
+	if len(hgi.Issues[IssueCodeMetadataInvalid]) > 0 {
+		// a schema-invalid metadata file fails L1, so no deeper check ran — showing
+		// their codes would render misleading green checkmarks for unchecked rules
+		return []IssueCode{IssueCodeMetadataInvalid}
+	}
 	return IssueCodesFor(hgi.MetadataType, hgi.Subject)
 }
 

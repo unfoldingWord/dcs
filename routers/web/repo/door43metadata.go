@@ -135,6 +135,12 @@ func UpdateDoor43Metadata(ctx *context.Context) {
 
 	if runBackgroundTask {
 		go func(ctx go_context.Context, repo *repo_model.Repository) {
+			// a panic while processing one repo must never take down the server
+			defer func() {
+				if err := recover(); err != nil {
+					log.Error("ProcessDoor43MetadataForRepo: PANIC [%s]: %v\n%s", repo.FullName(), err, log.Stack(2))
+				}
+			}()
 			select {
 			case <-ctx.Done():
 				log.Warn("ProcessDoor43MetadataForRepo: Context canceled [%s]", repo.FullName())

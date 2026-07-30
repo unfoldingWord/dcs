@@ -67,10 +67,23 @@ func RunHealthcheck(ctx context.Context, dm *repo_model.Door43Metadata) *repo_mo
 		log.Error("RunHealthcheck: LoadRepo for DM %d: %v", dm.ID, err)
 		return nil
 	}
+	// LoadRepo skips owner loading when the pipeline pre-set dm.Repo, and several
+	// checks dereference dm.Repo.Owner — LoadOwner is idempotent, so always ensure it
+	if err := dm.Repo.LoadOwner(ctx); err != nil || dm.Repo.Owner == nil {
+		log.Error("RunHealthcheck: LoadOwner for DM %d (repo %s): %v", dm.ID, dm.Repo.FullName(), err)
+		return nil
+	}
 
 	issues := []*repo_model.Door43HealthcheckIssue{}
-	for _, check := range checksFor(dm) {
-		issues = append(issues, check(ctx, dm)...)
+	if dm.ValidationError != nil {
+		// A schema-invalid metadata file (L1 failure) makes every deeper check
+		// unreliable — the entry's fields were backfilled, not extracted — so only
+		// the invalid-metadata finding is reported (spec §4).
+		issues = checkMetadataValid(ctx, dm)
+	} else {
+		for _, check := range checksFor(dm) {
+			issues = append(issues, check(ctx, dm)...)
+		}
 	}
 
 	hgi := repo_model.NewHealthcheckGroupedIssues(dm.MetadataType, dm.Subject, issues)
