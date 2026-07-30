@@ -64,10 +64,12 @@ Common checks (all of `rc`, `ts`, `tc`, `sb`):
 
 - header row exactly matches the subject's column schema (legacy 9-column TN files are
   tolerated); every row has the header's column count; `ID` matches `^[a-z][a-z0-9]{3}$`
-  and is unique per file (duplicates break tC-Create); `Reference` grammar; `Occurrence`
-  is an integer ≥ -1 (0 when Quote/OrigWords is empty); `TWLink`/`SupportReference`
-  match the rc:// grammar — all errors; an empty Note/Question/TWLink cell is a warning.
-  Findings list row numbers, capped at 10 per finding.
+  and is unique per file (duplicates break tC-Create); `Reference` grammar (incl.
+  `{c}:front` and compound verse lists like `5:1,3,8-12`); `Occurrence` is an integer
+  ≥ -1 when Quote/OrigWords has text (0 or blank when it's empty, e.g. intro rows);
+  `TWLink`/`SupportReference` match the rc:// grammar; and required cells are non-empty
+  (`Note` for notes, `Question`/`Response` for questions, `OrigWords`/`TWLink` for word
+  links) — all errors. Findings list row numbers, capped at 10 per finding.
 
 `sb` only:
 

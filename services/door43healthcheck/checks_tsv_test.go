@@ -55,24 +55,42 @@ func TestCheckTSVFileContent(t *testing.T) {
 		assert.NotContains(t, codes, repo_model.IssueCodeTSVHeaderInvalid)
 	})
 
-	t.Run("TWL links and empty required cell", func(t *testing.T) {
+	t.Run("TWL links and empty required cells", func(t *testing.T) {
 		content := "Reference\tID\tTags\tOrigWords\tOccurrence\tTWLink\n" +
 			"1:1\tabc1\tkeyterm\tword\t1\trc://*/tw/dict/bible/kt/god\n" +
 			"1:2\tabc2\t\tword\t1\thttps://example.com/not-an-rc-link\n" + // TSV-008
-			"1:3\tabc3\t\tword\t1\t\n" // TSV-011 (empty TWLink)
+			"1:3\tabc3\t\tword\t1\t\n" + // TSV-011 (empty TWLink)
+			"1:4\tabc4\t\t\t0\trc://*/tw/dict/bible/kt/god\n" // TSV-011 (empty OrigWords)
 		issues := checkTSVFileContent(twlDM, "twl_GEN.tsv", strings.NewReader(content))
 		codes := tsvIssueCodesOf(issues)
 		assert.Contains(t, codes, repo_model.IssueCodeTSVLinkInvalid)
 		assert.Contains(t, codes, repo_model.IssueCodeTSVCellEmpty)
-		// the empty-cell finding is a Warning, the malformed link an Error
+		// one empty-cell finding per required column, both Errors
+		emptyCellFindings := 0
 		for _, issue := range issues {
 			if issue.IssueCode == repo_model.IssueCodeTSVCellEmpty {
-				assert.Equal(t, repo_model.SeverityLevelWarning, issue.SeverityLevel)
+				emptyCellFindings++
+				assert.Equal(t, repo_model.SeverityLevelError, issue.SeverityLevel)
 			}
 			if issue.IssueCode == repo_model.IssueCodeTSVLinkInvalid {
 				assert.Equal(t, repo_model.SeverityLevelError, issue.SeverityLevel)
 				assert.Equal(t, "TSV-008", issue.Rule)
 			}
+		}
+		assert.Equal(t, 2, emptyCellFindings, "OrigWords and TWLink each get a finding")
+	})
+
+	t.Run("TQ requires Question and Response", func(t *testing.T) {
+		tqDM := &repo_model.Door43Metadata{Subject: "TSV Translation Questions", MetadataType: "rc"}
+		content := "Reference\tID\tTags\tQuote\tOccurrence\tQuestion\tResponse\n" +
+			"1:1\tabc1\t\t\t0\tA question?\tAn answer\n" +
+			"1:2\tabc2\t\t\t0\tA question?\t\n" + // empty Response
+			"1:3\tabc3\t\t\t0\t\tAn answer\n" // empty Question
+		issues := checkTSVFileContent(tqDM, "tq_GEN.tsv", strings.NewReader(content))
+		require.Len(t, issues, 2)
+		for _, issue := range issues {
+			assert.Equal(t, repo_model.IssueCodeTSVCellEmpty, issue.IssueCode)
+			assert.Equal(t, repo_model.SeverityLevelError, issue.SeverityLevel)
 		}
 	})
 

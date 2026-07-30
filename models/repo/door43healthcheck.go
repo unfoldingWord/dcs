@@ -411,7 +411,7 @@ var IssueSuggestionsFormatStrings = map[IssueCode]string{
 	IssueCodeTSVReferenceInvalid:    "Fix the listed Reference cells to use **`front:intro`**, **`{chapter}:intro`**, **`{chapter}:front`**, **`{chapter}:{verse}`**, **`{chapter}:{verse}-{verse}`** or verse lists like **`5:1,3,8-12`** (semicolon or comma separated; a bare verse or range continues the last named chapter).",
 	IssueCodeTSVOccurrenceInvalid:   "Fix the listed Occurrence cells: an integer of -1 or greater when the Quote cell has text; 0 or blank when the Quote cell is empty (e.g. intro rows).",
 	IssueCodeTSVLinkInvalid:         "Fix the listed links to match the rc:// grammar: **`rc://*/ta/man/{manual}/{slug}`** for TA links and **`rc://*/tw/dict/bible/{category}/{slug}`** for TW links.",
-	IssueCodeTSVCellEmpty:           "Fill in the listed rows' required content cell (Note, Question or TWLink).",
+	IssueCodeTSVCellEmpty:           "Fill in the listed rows' required cells: notes resources require **`Note`**; questions resources require **`Question`** and **`Response`**; word-links resources require **`OrigWords`** and **`TWLink`**.",
 }
 
 // IssuePositiveString returns the summary format string for the issue in positive form

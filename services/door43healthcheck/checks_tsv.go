@@ -28,12 +28,30 @@ var tsvHeadersBySubject = map[string][]string{
 	"TSV OBS Study Questions":         {"Reference", "ID", "Tags", "Quote", "Occurrence", "Question", "Response"},
 	"TSV Translation Words Links":     {"Reference", "ID", "Tags", "OrigWords", "Occurrence", "TWLink"},
 	"TSV OBS Translation Words Links": {"Reference", "ID", "Tags", "OrigWords", "Occurrence", "TWLink"},
+	"TSV Study Notes":                 {"Reference", "ID", "Tags", "Quote", "Occurrence", "Note"},
 	"TSV OBS Study Notes":             {"Reference", "ID", "Tags", "Quote", "Occurrence", "Note"},
+	"TSV Study Questions":             {"Reference", "ID", "Tags", "Quote", "Occurrence", "Question", "Response"},
 }
 
 // tsv9Header is the legacy 9-column TN format; files carrying it are validated in
 // generic mode without an exact-header Error (legacy content is frozen, spec §7.6/D8)
 var tsv9Header = []string{"Book", "Chapter", "Verse", "ID", "SupportReference", "OrigQuote", "Occurrence", "GLQuote", "OccurrenceNote"}
+
+// requiredCellsBySubject are the columns that must be non-empty on every row (TSV-011,
+// Error). Reference and ID emptiness are already Errors via TSV-003/TSV-004, and TWL's
+// Occurrence via TSV-006 (a non-empty OrigWords requires an integer Occurrence).
+var requiredCellsBySubject = map[string][]string{
+	"TSV Translation Notes":           {"Note"},
+	"TSV OBS Translation Notes":       {"Note"},
+	"TSV Study Notes":                 {"Note"},
+	"TSV OBS Study Notes":             {"Note"},
+	"TSV Translation Questions":       {"Question", "Response"},
+	"TSV OBS Translation Questions":   {"Question", "Response"},
+	"TSV Study Questions":             {"Question", "Response"},
+	"TSV OBS Study Questions":         {"Question", "Response"},
+	"TSV Translation Words Links":     {"OrigWords", "TWLink"},
+	"TSV OBS Translation Words Links": {"OrigWords", "TWLink"},
+}
 
 var (
 	tsvIDRegex              = regexp.MustCompile(`^[a-z][a-z0-9]{3}$`)                                                                // TSV-004
@@ -147,19 +165,18 @@ func checkTSVFileContent(dm *repo_model.Door43Metadata, path string, r io.Reader
 	twLinkIdx := colIdx("TWLink")
 	supportRefIdx := colIdx("SupportReference")
 
-	// The subject's primary content column (TSV-011): Note for notes, Question for
-	// questions, TWLink for word links — only enforced in strict mode.
-	contentIdx := -1
+	// The subject's required content columns (TSV-011) — only enforced in strict mode
+	var requiredIdxs []int
 	if strict {
-		for _, name := range []string{"Note", "Question", "TWLink"} {
+		for _, name := range requiredCellsBySubject[dm.Subject] {
 			if idx := colIdx(name); idx >= 0 {
-				contentIdx = idx
-				break
+				requiredIdxs = append(requiredIdxs, idx)
 			}
 		}
 	}
 
-	var badColumnRows, badIDRows, dupIDRows, badRefRows, badOccRows, badLinkRows, badTALinkRows, emptyContentRows tsvRowList
+	var badColumnRows, badIDRows, dupIDRows, badRefRows, badOccRows, badLinkRows, badTALinkRows tsvRowList
+	emptyByCol := make(map[int]tsvRowList)
 	seenIDs := make(map[string]bool)
 
 	rowNum := 1 // the header is row 1
@@ -213,8 +230,10 @@ func checkTSVFileContent(dm *repo_model.Door43Metadata, path string, r io.Reader
 			}
 		}
 
-		if contentIdx >= 0 && strings.TrimSpace(cells[contentIdx]) == "" {
-			emptyContentRows = append(emptyContentRows, rowNum)
+		for _, idx := range requiredIdxs {
+			if strings.TrimSpace(cells[idx]) == "" {
+				emptyByCol[idx] = append(emptyByCol[idx], rowNum)
+			}
 		}
 	}
 	if err := scanner.Err(); err != nil {
@@ -249,9 +268,11 @@ func checkTSVFileContent(dm *repo_model.Door43Metadata, path string, r io.Reader
 		addIssue(repo_model.IssueCodeTSVLinkInvalid, repo_model.SeverityLevelError, "TSV-009",
 			fmt.Sprintf("**`%s`**: %d rows have a SupportReference not matching the rc:// TA link grammar (%s)", path, len(badTALinkRows), badTALinkRows))
 	}
-	if len(emptyContentRows) > 0 {
-		addIssue(repo_model.IssueCodeTSVCellEmpty, repo_model.SeverityLevelWarning, "",
-			fmt.Sprintf("**`%s`**: %d rows have an empty **`%s`** cell (%s)", path, len(emptyContentRows), header[contentIdx], emptyContentRows))
+	for _, idx := range requiredIdxs {
+		if rows := emptyByCol[idx]; len(rows) > 0 {
+			addIssue(repo_model.IssueCodeTSVCellEmpty, repo_model.SeverityLevelError, "",
+				fmt.Sprintf("**`%s`**: %d rows have an empty **`%s`** cell (%s)", path, len(rows), header[idx], rows))
+		}
 	}
 
 	return issues
