@@ -37,7 +37,7 @@ var tsv9Header = []string{"Book", "Chapter", "Verse", "ID", "SupportReference", 
 
 var (
 	tsvIDRegex      = regexp.MustCompile(`^[a-z][a-z0-9]{3}$`)                                                                // TSV-004
-	tsvRefPartRegex = regexp.MustCompile(`^(front:intro|\d+:intro|\d+:\d+(-\d+)?)$`)                                          // TSV-003 (one list element)
+	tsvRefPartRegex = regexp.MustCompile(`^(front:intro|\d+:intro|\d+:front|\d+:\d+(-\d+)?)$`)                                // TSV-003 (one list element)
 	twLinkRegex     = regexp.MustCompile(`^rc://(\*|[A-Za-z0-9-]+)/tw/dict/bible/(kt|names|other)/[A-Za-z0-9-]+$`)            // TSV-008
 	taLinkRegex     = regexp.MustCompile(`^rc://(\*|[A-Za-z0-9-]+)/ta/man/(intro|process|translate|checking)/[A-Za-z0-9-]+$`) // TSV-009
 )
@@ -250,8 +250,9 @@ func checkTSVFileContent(dm *repo_model.Door43Metadata, path string, r io.Reader
 }
 
 // tsvReferenceValid checks a Reference cell against the reference grammar (TSV-003):
-// front:intro, {c}:intro, {c}:{v}, {c}:{v}-{v2}, or semicolon/comma lists thereof.
-// Verse 0 is allowed (the OBS title-row convention {story}:0).
+// front:intro, {c}:intro, {c}:front, {c}:{v}, {c}:{v}-{v2}, or semicolon/comma lists
+// thereof. {c}:front anchors chapter front matter before verse 1 (Psalm descriptions
+// in tn_PSA.tsv). Verse 0 is allowed (the OBS title-row convention {story}:0).
 func tsvReferenceValid(ref string) bool {
 	ref = strings.TrimSpace(ref)
 	if ref == "" {

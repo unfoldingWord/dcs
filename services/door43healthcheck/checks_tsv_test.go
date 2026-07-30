@@ -95,6 +95,15 @@ func TestCheckTSVFileContent(t *testing.T) {
 		assert.False(t, tsvReferenceValid("1:1-"))
 		assert.False(t, tsvReferenceValid(""))
 	})
+
+	t.Run("chapter front matter reference {c}:front is valid", func(t *testing.T) {
+		// Psalm descriptions before verse 1, e.g. tn_PSA.tsv
+		assert.True(t, tsvReferenceValid("119:front"))
+		assert.True(t, tsvReferenceValid("3:front"))
+		assert.True(t, tsvReferenceValid("front:intro;1:front,1:1"))
+		assert.False(t, tsvReferenceValid("front:1"))
+		assert.False(t, tsvReferenceValid("front:front"))
+	})
 }
 
 func TestCheckTSVRowListCap(t *testing.T) {
