@@ -104,6 +104,17 @@ func TestCheckTSVFileContent(t *testing.T) {
 		assert.False(t, tsvReferenceValid("front:1"))
 		assert.False(t, tsvReferenceValid("front:front"))
 	})
+
+	t.Run("compound verse references", func(t *testing.T) {
+		assert.True(t, tsvReferenceValid("5:1,3,8,12"), "bare verses continue the chapter")
+		assert.True(t, tsvReferenceValid("5:1, 3, 8, 12"), "spaces after commas allowed")
+		assert.True(t, tsvReferenceValid("5:1-12"))
+		assert.True(t, tsvReferenceValid("5:13-14,6:1-2"), "a new chapter:verse re-anchors the chapter")
+		assert.True(t, tsvReferenceValid("5:1,3-4;6:2,7"))
+		assert.False(t, tsvReferenceValid("3,8"), "a bare verse needs a preceding chapter:verse")
+		assert.False(t, tsvReferenceValid("front:intro,3"), "front:intro names no chapter to continue")
+		assert.False(t, tsvReferenceValid("5:1,x"))
+	})
 }
 
 func TestCheckTSVRowListCap(t *testing.T) {

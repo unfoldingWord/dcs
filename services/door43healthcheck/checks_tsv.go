@@ -36,10 +36,12 @@ var tsvHeadersBySubject = map[string][]string{
 var tsv9Header = []string{"Book", "Chapter", "Verse", "ID", "SupportReference", "OrigQuote", "Occurrence", "GLQuote", "OccurrenceNote"}
 
 var (
-	tsvIDRegex      = regexp.MustCompile(`^[a-z][a-z0-9]{3}$`)                                                                // TSV-004
-	tsvRefPartRegex = regexp.MustCompile(`^(front:intro|\d+:intro|\d+:front|\d+:\d+(-\d+)?)$`)                                // TSV-003 (one list element)
-	twLinkRegex     = regexp.MustCompile(`^rc://(\*|[A-Za-z0-9-]+)/tw/dict/bible/(kt|names|other)/[A-Za-z0-9-]+$`)            // TSV-008
-	taLinkRegex     = regexp.MustCompile(`^rc://(\*|[A-Za-z0-9-]+)/ta/man/(intro|process|translate|checking)/[A-Za-z0-9-]+$`) // TSV-009
+	tsvIDRegex              = regexp.MustCompile(`^[a-z][a-z0-9]{3}$`)                                                                // TSV-004
+	tsvRefPartRegex         = regexp.MustCompile(`^(front:intro|\d+:intro|\d+:front)$`)                                               // TSV-003 (non-verse anchors)
+	tsvRefChapterVerseRegex = regexp.MustCompile(`^\d+:\d+(-\d+)?$`)                                                                  // TSV-003 ({c}:{v} or {c}:{v}-{v2})
+	tsvRefVerseRegex        = regexp.MustCompile(`^\d+(-\d+)?$`)                                                                      // TSV-003 (bare verse continuing the last chapter)
+	twLinkRegex             = regexp.MustCompile(`^rc://(\*|[A-Za-z0-9-]+)/tw/dict/bible/(kt|names|other)/[A-Za-z0-9-]+$`)            // TSV-008
+	taLinkRegex             = regexp.MustCompile(`^rc://(\*|[A-Za-z0-9-]+)/ta/man/(intro|process|translate|checking)/[A-Za-z0-9-]+$`) // TSV-009
 )
 
 // checkTSVFiles validates every TSV ingredient of a TSV-subject entry (rc and sb) per
@@ -251,15 +253,27 @@ func checkTSVFileContent(dm *repo_model.Door43Metadata, path string, r io.Reader
 
 // tsvReferenceValid checks a Reference cell against the reference grammar (TSV-003):
 // front:intro, {c}:intro, {c}:front, {c}:{v}, {c}:{v}-{v2}, or semicolon/comma lists
-// thereof. {c}:front anchors chapter front matter before verse 1 (Psalm descriptions
-// in tn_PSA.tsv). Verse 0 is allowed (the OBS title-row convention {story}:0).
+// thereof (spaces allowed around separators). Once a {c}:{v} segment names a chapter,
+// a bare {v} or {v}-{v2} segment continues that chapter — common compound Bible
+// references like 5:1,3,8,12 or 5:13-14,6:1-2. {c}:front anchors chapter front matter
+// before verse 1 (Psalm descriptions in tn_PSA.tsv). Verse 0 is allowed (the OBS
+// title-row convention {story}:0).
 func tsvReferenceValid(ref string) bool {
 	ref = strings.TrimSpace(ref)
 	if ref == "" {
 		return false
 	}
+	inChapter := false // a {c}:{v} segment has named the chapter bare verses continue
 	for _, part := range strings.FieldsFunc(ref, func(r rune) bool { return r == ';' || r == ',' }) {
-		if !tsvRefPartRegex.MatchString(strings.TrimSpace(part)) {
+		part = strings.TrimSpace(part)
+		switch {
+		case tsvRefChapterVerseRegex.MatchString(part):
+			inChapter = true
+		case tsvRefPartRegex.MatchString(part):
+			// front:intro / {c}:intro / {c}:front anchor no verse to continue from
+		case inChapter && tsvRefVerseRegex.MatchString(part):
+			// bare verse (range) in the last named chapter
+		default:
 			return false
 		}
 	}

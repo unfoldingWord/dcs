@@ -408,7 +408,7 @@ var IssueSuggestionsFormatStrings = map[IssueCode]string{
 	IssueCodeTSVRowInvalid:          "Fix the listed rows so every row has exactly as many tab-separated columns as the header; keep tabs and newlines out of cells (use a literal `\\n` for line breaks in notes).",
 	IssueCodeTSVIDInvalid:           "Give the listed rows a 4-character ID matching **`^[a-z][a-z0-9]{3}$`**.",
 	IssueCodeTSVIDDuplicate:         "Give every row a unique ID within its file.",
-	IssueCodeTSVReferenceInvalid:    "Fix the listed Reference cells to use **`front:intro`**, **`{chapter}:intro`**, **`{chapter}:front`**, **`{chapter}:{verse}`** or **`{chapter}:{verse}-{verse}`** (semicolon or comma separated lists allowed).",
+	IssueCodeTSVReferenceInvalid:    "Fix the listed Reference cells to use **`front:intro`**, **`{chapter}:intro`**, **`{chapter}:front`**, **`{chapter}:{verse}`**, **`{chapter}:{verse}-{verse}`** or verse lists like **`5:1,3,8-12`** (semicolon or comma separated; a bare verse or range continues the last named chapter).",
 	IssueCodeTSVOccurrenceInvalid:   "Fix the listed Occurrence cells to be an integer of -1 or greater.",
 	IssueCodeTSVLinkInvalid:         "Fix the listed links to match the rc:// grammar: **`rc://*/ta/man/{manual}/{slug}`** for TA links and **`rc://*/tw/dict/bible/{category}/{slug}`** for TW links.",
 	IssueCodeTSVCellEmpty:           "Fill in the listed rows' required content cell (Note, Question or TWLink).",
