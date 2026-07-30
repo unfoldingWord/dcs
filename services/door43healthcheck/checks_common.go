@@ -51,6 +51,19 @@ func checkLanguage(_ context.Context, dm *repo_model.Door43Metadata) []*repo_mod
 	return nil
 }
 
+// checkRepoNameLanguage warns when the repo name follows the {lang}_{resourceId} naming
+// convention but its language prefix doesn't match the metadata's language (META-019).
+// Repo naming is convention, not law, so names outside the convention are not flagged.
+func checkRepoNameLanguage(_ context.Context, dm *repo_model.Door43Metadata) []*repo_model.Door43HealthcheckIssue {
+	nameLang := dcs.GetLanguageFromRepoName(dm.Repo.Name)
+	if nameLang == "" || dm.Language == "" || strings.EqualFold(nameLang, dm.Language) {
+		return nil
+	}
+	return []*repo_model.Door43HealthcheckIssue{newIssue(repo_model.IssueCodeRepoNameLanguage, repo_model.SeverityLevelWarning,
+		fmt.Sprintf(repo_model.IssueCodeRepoNameLanguage.IssueDetailsFormatString(), dm.Repo.Name, nameLang, dm.Language),
+		fmt.Sprintf(repo_model.IssueCodeRepoNameLanguage.IssueSuggestionFormatString(), dm.Language, metadataFileLink(dm)))}
+}
+
 func checkIngredients(_ context.Context, dm *repo_model.Door43Metadata) []*repo_model.Door43HealthcheckIssue {
 	if dm.Ingredients == nil {
 		return nil

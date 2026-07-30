@@ -23,32 +23,57 @@ The default-branch entry is checked once more at the end of repo processing so i
 
 ## What is checked, by metadata type
 
+Checks implement the DCS Resource Validation Specification where marked with a rule ID
+(each stored issue carries the rule in its `rule` field). Severity principle: a repo that
+contradicts its own declaration gets **Errors**; deviations from convention and advisory
+data (like relations) get **Warnings**; noteworthy-but-legitimate states get **Info**.
+
 Common checks (all of `rc`, `ts`, `tc`, `sb`):
 
-- metadata file is schema-valid (`validation_error` empty; rc and sb only — ts/tc have no schema)
+- metadata file is schema-valid — META-002/011 (`validation_error` empty; rc and sb only)
 - title is set and does not still say "unfoldingWord" (skipped for the unfoldingWord org)
 - language is not left as English `en` (warning; skipped for `en_*` repos)
-- every ingredient/project file exists and is non-empty; project titles are translated
+- every ingredient/project file exists and is non-empty (FILE-001); project titles are translated
+
+`rc` and `sb`:
+
+- repo name's `{lang}_` prefix matches the metadata language — META-019 (warning)
 
 `rc` only:
 
 - publisher changed from "unfoldingWord"; identifier valid for the subject
-- relations use the resource's language; TSV Translation Notes have `tw`, `ta`, `glt`, `gst` relations
-- each relation resolves to a catalog entry (checked against the `door43_metadata`
-  table directly, not over HTTP) and, for Bible/TSV subjects, contains this
-  resource's books
-- Open Bible Stories: all 50 stories exist with titles, frames and Bible references
+- relations are **advisory** (nothing depends on their accuracy), so all relation
+  findings are warnings or info: a relation whose language differs from the
+  resource's (except `hbo`/`el-x-koine`) is a **warning** (REL-004); a relation that
+  doesn't resolve to a catalog entry — same owner first as `{lang}_{identifier}`, then
+  the fallback owners unfoldingWord and Door43-Catalog — is a **warning** (REL-001,
+  REL-002 for `?v=` pins), and one that only resolves under a fallback owner is
+  **info**; a resolved Bible/TSV relation missing this resource's books is a warning
+- TSV Translation Notes should have `tw`, `ta`, `glt`, `gst` relations (warning)
+- Open Bible Stories: a missing story is a **warning** (COMP-020 — OBS can be healthy
+  while incomplete); an existing story with no title or no frames is an **error**
+  (MD-002); a missing final Bible-reference line is a warning
 
-`tc` only:
+`rc`/`sb`/`tc` scripture subjects (Bible, Aligned Bible, Greek NT, Hebrew OT):
 
-- the USFM file is structurally valid: leading `\id` marker matching the manifest's
-  book, and chapter/verse markers present (error)
-- the USFM contains alignment data (`\zaln-s`) — **warning** for now
+- every `.usfm` book ingredient is structurally valid: leading `\id` matching the
+  declared book (USFM-001/002) and `\c`/`\v` markers present (USFM-004/005) — errors
+- Aligned Bible books with no `\zaln-s` alignment data — **warning** for now (USFM-009)
+
+`rc`/`sb` TSV subjects (TSV-001…011):
+
+- header row exactly matches the subject's column schema (legacy 9-column TN files are
+  tolerated); every row has the header's column count; `ID` matches `^[a-z][a-z0-9]{3}$`
+  and is unique per file (duplicates break tC-Create); `Reference` grammar; `Occurrence`
+  is an integer ≥ -1 (0 when Quote/OrigWords is empty); `TWLink`/`SupportReference`
+  match the rc:// grammar — all errors; an empty Note/Question/TWLink cell is a warning.
+  Findings list row numbers, capped at 10 per finding.
 
 `sb` only:
 
-- every entry in metadata.json's `ingredients` matches the repo at that commit:
-  the path exists, the size matches, and the MD5 checksum (when given) matches
+- every entry in metadata.json's `ingredients` exists in the repo at that commit —
+  **error** (FILE-001); size mismatches are **warnings** (META-015), and MD5 checksums
+  are compared (as warnings) only when validating a tag/release (D6)
 
 "Release needed" advice (default branch only) is **Info** severity: publishing is never
 gated on health; the catalog just reports each entry's own severity.
@@ -72,6 +97,9 @@ rows predate issue persistence.
   `/api/v1/catalog/stats` and `/stats-ext`: healthy = severity success/info/**warning**
   (warnings ignored by default). `false` returns errored **and never-checked** entries.
 - `is_healthy_without_warnings=true|false`: the strict variant (success/info only).
+- `healthcheck=error,warning,info,success` (comma list) on the same endpoints matches
+  entries by exact overall severity — the general form when the two booleans aren't
+  enough. Never-checked entries match no level.
 - Catalog entries include `healthcheck_severity`, `is_healthy`,
   `is_healthy_without_warnings` and `healthcheck_url`.
 - `/stats-ext` includes `is_healthy_count` and `is_healthy_without_warnings_count`.
@@ -80,8 +108,9 @@ rows predate issue persistence.
   `healthcheck:severity` filter.
 - Full results: `GET /api/v1/repos/{owner}/{repo}/healthcheck?ref={branch|tag}`.
 
-Implementation: `services/door43healthcheck/` (checks per type in `checks_*.go`),
-`models/repo/door43healthcheck.go` (issue codes, messages, persistence),
-`models/door43metadata/search.go` (`GetIsHealthyCond`). Tests:
+Implementation: `services/door43healthcheck/` (checks per type/format in `checks_*.go`),
+`models/repo/door43healthcheck.go` (issue codes, rules, messages, persistence),
+`models/door43metadata/search.go` (`GetIsHealthyCond`, `GetHealthcheckCond`). Tests:
 `models/repo/door43healthcheck_test.go`, `models/catalog_list_test.go`
-(`TestSearchCatalogIsHealthyFilter`), `services/door43healthcheck/checks_tc_test.go`.
+(`TestSearchCatalogIsHealthyFilter`), `services/door43healthcheck/checks_tsv_test.go`,
+`checks_usfm_test.go`.

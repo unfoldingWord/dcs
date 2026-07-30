@@ -90,7 +90,17 @@ const (
 	IssueCodeOBSBibleRefenceMissing IssueCode = "obs_bible_reference_missing"  // OBS bible reference is missing from story
 	IssueCodeUSFMInvalid            IssueCode = "usfm_invalid"                 // USFM file is missing or not valid USFM
 	IssueCodeUSFMNoAlignment        IssueCode = "usfm_no_alignment"            // USFM file has no alignment data
-	IssueCodeSBIngredientMismatch   IssueCode = "sb_ingredient_mismatch"       // SB ingredient entry doesn't match the file in the repo
+	IssueCodeSBIngredientMissing    IssueCode = "sb_ingredient_missing"        // SB ingredient entry's file doesn't exist in the repo
+	IssueCodeSBIngredientMismatch   IssueCode = "sb_ingredient_mismatch"       // SB ingredient entry's size/checksum doesn't match the file
+	IssueCodeRepoNameLanguage       IssueCode = "repo_name_lang_mismatch"      // repo name's language prefix doesn't match the metadata language
+	IssueCodeTSVHeaderInvalid       IssueCode = "tsv_header_invalid"           // TSV header row doesn't match the subject's column schema
+	IssueCodeTSVRowInvalid          IssueCode = "tsv_row_invalid"              // TSV row has the wrong number of columns
+	IssueCodeTSVIDInvalid           IssueCode = "tsv_id_invalid"               // TSV ID cell doesn't match ^[a-z][a-z0-9]{3}$
+	IssueCodeTSVIDDuplicate         IssueCode = "tsv_id_duplicate"             // TSV ID is not unique within the file
+	IssueCodeTSVReferenceInvalid    IssueCode = "tsv_reference_invalid"        // TSV Reference cell doesn't match the reference grammar
+	IssueCodeTSVOccurrenceInvalid   IssueCode = "tsv_occurrence_invalid"       // TSV Occurrence cell is not an integer >= -1
+	IssueCodeTSVLinkInvalid         IssueCode = "tsv_link_invalid"             // TSV TWLink/SupportReference doesn't match the rc:// grammar
+	IssueCodeTSVCellEmpty           IssueCode = "tsv_cell_empty"               // TSV required content cell is empty
 )
 
 // HealthcheckGroupedIssues groups health check issues by issue code
@@ -172,19 +182,47 @@ var commonIssueCodes = []IssueCode{
 var rcIssueCodes = []IssueCode{
 	IssueCodePublisher,
 	IssueCodeIdentifier,
+	IssueCodeRepoNameLanguage,
 	IssueCodeRelation,
 	IssueCodeRelationMissing,
 }
 
-// tcIssueCodes are only checked for translationCore (tc) repos
-var tcIssueCodes = []IssueCode{
+// usfmIssueCodes are checked for scripture subjects of rc, sb and tc repos
+var usfmIssueCodes = []IssueCode{
 	IssueCodeUSFMInvalid,
 	IssueCodeUSFMNoAlignment,
 }
 
+// tsvIssueCodes are checked for TSV subjects of rc and sb repos
+var tsvIssueCodes = []IssueCode{
+	IssueCodeTSVHeaderInvalid,
+	IssueCodeTSVRowInvalid,
+	IssueCodeTSVIDInvalid,
+	IssueCodeTSVIDDuplicate,
+	IssueCodeTSVReferenceInvalid,
+	IssueCodeTSVOccurrenceInvalid,
+	IssueCodeTSVLinkInvalid,
+	IssueCodeTSVCellEmpty,
+}
+
 // sbIssueCodes are only checked for Scripture Burrito (sb) repos
 var sbIssueCodes = []IssueCode{
+	IssueCodeSBIngredientMissing,
 	IssueCodeSBIngredientMismatch,
+}
+
+// IsScriptureSubject returns true for subjects whose content files are USFM books
+func IsScriptureSubject(subject string) bool {
+	switch subject {
+	case "Bible", "Aligned Bible", "Greek New Testament", "Hebrew Old Testament":
+		return true
+	}
+	return false
+}
+
+// IsTSVSubject returns true for subjects whose content files are TSV files
+func IsTSVSubject(subject string) bool {
+	return strings.HasPrefix(subject, "TSV ")
 }
 
 // obsIssueCodes are only checked for Open Bible Stories
@@ -206,16 +244,28 @@ func IssueCodesFor(metadataType, subject string) []IssueCode {
 	switch metadataType {
 	case "rc":
 		codes = append(codes, rcIssueCodes...)
-		switch subject {
-		case "Open Bible Stories":
+		switch {
+		case subject == "Open Bible Stories":
 			codes = append(codes, obsIssueCodes...)
-		case "TSV Translation Notes":
+		case IsScriptureSubject(subject):
+			codes = append(codes, usfmIssueCodes...)
+		case IsTSVSubject(subject):
+			codes = append(codes, tsvIssueCodes...)
+		}
+		if subject == "TSV Translation Notes" {
 			codes = append(codes, tnIssueCodes...)
 		}
 	case "tc":
-		codes = append(codes, tcIssueCodes...)
+		codes = append(codes, usfmIssueCodes...)
 	case "sb":
+		codes = append(codes, IssueCodeRepoNameLanguage)
 		codes = append(codes, sbIssueCodes...)
+		switch {
+		case IsScriptureSubject(subject):
+			codes = append(codes, usfmIssueCodes...)
+		case IsTSVSubject(subject):
+			codes = append(codes, tsvIssueCodes...)
+		}
 	}
 	return codes
 }
@@ -238,9 +288,19 @@ var IssueCodeNegatives = map[IssueCode]string{
 	IssueCodeOBSStoryTitleMissing:   "Stories are missing their titles",
 	IssueCodeOBSWrongFrameCount:     "Stories are missing their frames",
 	IssueCodeOBSBibleRefenceMissing: "Stories are missing their Bible references",
-	IssueCodeUSFMInvalid:            "USFM file is missing or invalid",
-	IssueCodeUSFMNoAlignment:        "USFM file has no alignment data",
-	IssueCodeSBIngredientMismatch:   "Ingredient entries do not match the files in the repo",
+	IssueCodeUSFMInvalid:            "USFM files are missing or invalid",
+	IssueCodeUSFMNoAlignment:        "USFM files have no alignment data",
+	IssueCodeSBIngredientMissing:    "Ingredient files are missing from the repo",
+	IssueCodeSBIngredientMismatch:   "Ingredient sizes or checksums do not match the files in the repo",
+	IssueCodeRepoNameLanguage:       "Repo name's language does not match the metadata language",
+	IssueCodeTSVHeaderInvalid:       "TSV files have an invalid header row",
+	IssueCodeTSVRowInvalid:          "TSV rows have the wrong number of columns",
+	IssueCodeTSVIDInvalid:           "TSV rows have invalid IDs",
+	IssueCodeTSVIDDuplicate:         "TSV rows have duplicate IDs",
+	IssueCodeTSVReferenceInvalid:    "TSV rows have invalid references",
+	IssueCodeTSVOccurrenceInvalid:   "TSV rows have invalid occurrences",
+	IssueCodeTSVLinkInvalid:         "TSV rows have invalid rc:// links",
+	IssueCodeTSVCellEmpty:           "TSV rows are missing required content",
 }
 
 var IssueCodePositives = map[IssueCode]string{
@@ -261,9 +321,19 @@ var IssueCodePositives = map[IssueCode]string{
 	IssueCodeOBSStoryTitleMissing:   "All stories have titles",
 	IssueCodeOBSWrongFrameCount:     "All stories have all their frames",
 	IssueCodeOBSBibleRefenceMissing: "All stories have Bible references",
-	IssueCodeUSFMInvalid:            "USFM file is valid",
-	IssueCodeUSFMNoAlignment:        "USFM file has alignment data",
-	IssueCodeSBIngredientMismatch:   "Ingredient entries match the files in the repo",
+	IssueCodeUSFMInvalid:            "USFM files are valid",
+	IssueCodeUSFMNoAlignment:        "USFM files have alignment data",
+	IssueCodeSBIngredientMissing:    "Ingredient files all exist in the repo",
+	IssueCodeSBIngredientMismatch:   "Ingredient sizes and checksums match the files in the repo",
+	IssueCodeRepoNameLanguage:       "Repo name matches the metadata language",
+	IssueCodeTSVHeaderInvalid:       "TSV files have valid header rows",
+	IssueCodeTSVRowInvalid:          "TSV rows have the correct number of columns",
+	IssueCodeTSVIDInvalid:           "TSV row IDs are valid",
+	IssueCodeTSVIDDuplicate:         "TSV row IDs are unique",
+	IssueCodeTSVReferenceInvalid:    "TSV references are valid",
+	IssueCodeTSVOccurrenceInvalid:   "TSV occurrences are valid",
+	IssueCodeTSVLinkInvalid:         "TSV rc:// links are well-formed",
+	IssueCodeTSVCellEmpty:           "TSV rows have their required content",
 }
 
 // IssueDetailsFormatStrings are the Details format strings per issue code. Codes that apply
@@ -289,7 +359,17 @@ var IssueDetailsFormatStrings = map[IssueCode]string{
 	IssueCodeOBSBibleRefenceMissing: "The following stories are missing Bible references: **`%s`**",
 	IssueCodeUSFMInvalid:            "The USFM file **`%s`** %s.",
 	IssueCodeUSFMNoAlignment:        "The USFM file **`%s`** does not contain alignment data.",
+	IssueCodeSBIngredientMissing:    "The ingredient **`%s`** does not exist in the repository.",
 	IssueCodeSBIngredientMismatch:   "The ingredient **`%s`** %s.",
+	IssueCodeRepoNameLanguage:       "The repo name **`%s`** indicates language **`%s`** but the metadata declares **`%s`**.",
+	IssueCodeTSVHeaderInvalid:       "%s",
+	IssueCodeTSVRowInvalid:          "%s",
+	IssueCodeTSVIDInvalid:           "%s",
+	IssueCodeTSVIDDuplicate:         "%s",
+	IssueCodeTSVReferenceInvalid:    "%s",
+	IssueCodeTSVOccurrenceInvalid:   "%s",
+	IssueCodeTSVLinkInvalid:         "%s",
+	IssueCodeTSVCellEmpty:           "%s",
 }
 
 // IssueSuggestionsFormatStrings are the Suggestion format strings per issue code. Suggestions
@@ -315,7 +395,17 @@ var IssueSuggestionsFormatStrings = map[IssueCode]string{
 	IssueCodeOBSBibleRefenceMissing: "The following stories are missing Bible references: **`%s`**. Find the needed Bible references at the end of the English stories.",
 	IssueCodeUSFMInvalid:            "Upload a valid USFM file for the book **`%s`** at **`%s`**.",
 	IssueCodeUSFMNoAlignment:        "Align the book with translationCore or a compatible tool so the USFM file contains alignment data.",
+	IssueCodeSBIngredientMissing:    "Update the %s file so the **`ingredients`** entries match the files in the repository, or add the missing files.",
 	IssueCodeSBIngredientMismatch:   "Update the %s file so the **`ingredients`** entries match the files in the repository, or update the files themselves.",
+	IssueCodeRepoNameLanguage:       "Rename the repository to start with **`%s_`** or fix the **`language`** in the %s file.",
+	IssueCodeTSVHeaderInvalid:       "Fix the header row to exactly match the column schema for this resource type (see the details).",
+	IssueCodeTSVRowInvalid:          "Fix the listed rows so every row has exactly as many tab-separated columns as the header; keep tabs and newlines out of cells (use a literal `\\n` for line breaks in notes).",
+	IssueCodeTSVIDInvalid:           "Give the listed rows a 4-character ID matching **`^[a-z][a-z0-9]{3}$`**.",
+	IssueCodeTSVIDDuplicate:         "Give every row a unique ID within its file.",
+	IssueCodeTSVReferenceInvalid:    "Fix the listed Reference cells to use **`front:intro`**, **`{chapter}:intro`**, **`{chapter}:{verse}`** or **`{chapter}:{verse}-{verse}`** (semicolon or comma separated lists allowed).",
+	IssueCodeTSVOccurrenceInvalid:   "Fix the listed Occurrence cells to be an integer of -1 or greater.",
+	IssueCodeTSVLinkInvalid:         "Fix the listed links to match the rc:// grammar: **`rc://*/ta/man/{manual}/{slug}`** for TA links and **`rc://*/tw/dict/bible/{category}/{slug}`** for TW links.",
+	IssueCodeTSVCellEmpty:           "Fill in the listed rows' required content cell (Note, Question or TWLink).",
 }
 
 // IssuePositiveString returns the summary format string for the issue in positive form
@@ -340,16 +430,46 @@ func (id IssueCode) IssueSuggestionFormatString() string {
 
 // Door43HealthcheckIssue represents a single health check issue for a resource.
 // The stored rows for a Door43Metadata entry are replaced each time its health check runs.
+// Rule, when set, is the rule ID from the DCS Resource Validation Specification
+// (e.g. FILE-001); DCS-specific checks with no spec rule leave it empty.
 type Door43HealthcheckIssue struct {
 	ID            int64         `xorm:"pk autoincr" json:"-"`
 	DMID          int64         `xorm:"'dm_id' INDEX NOT NULL" json:"-"`
 	RepoID        int64         `xorm:"INDEX NOT NULL" json:"-"`
 	IssueCode     IssueCode     `xorm:"NOT NULL" json:"issue_code"`
+	Rule          string        `xorm:"VARCHAR(20)" json:"rule,omitempty"`
 	SeverityLevel SeverityLevel `xorm:"NOT NULL" json:"severity_level"`
 	PositiveTitle string        `json:"positive_title"`
 	NegativeTitle string        `json:"negative_title"`
 	Details       string        `xorm:"TEXT" json:"details"`
 	Suggestion    string        `xorm:"TEXT" json:"suggestion"`
+}
+
+// IssueCodeDefaultRules maps issue codes to their rule ID in the DCS Resource Validation
+// Specification. Codes that cover more than one rule get the rule set per finding by the
+// check; codes not listed are DCS-specific with no spec rule.
+var IssueCodeDefaultRules = map[IssueCode]string{
+	IssueCodeMetadataInvalid:        "META-002",
+	IssueCodeIngredientMissing:      "FILE-001",
+	IssueCodeRelation:               "REL-004",
+	IssueCodeRelationMissing:        "REL-001",
+	IssueCodeRepoNameLanguage:       "META-019",
+	IssueCodeSBIngredientMissing:    "FILE-001",
+	IssueCodeSBIngredientMismatch:   "META-015",
+	IssueCodeUSFMInvalid:            "USFM-001",
+	IssueCodeUSFMNoAlignment:        "USFM-009",
+	IssueCodeTSVHeaderInvalid:       "TSV-001",
+	IssueCodeTSVRowInvalid:          "TSV-002",
+	IssueCodeTSVIDInvalid:           "TSV-004",
+	IssueCodeTSVIDDuplicate:         "TSV-005",
+	IssueCodeTSVReferenceInvalid:    "TSV-003",
+	IssueCodeTSVOccurrenceInvalid:   "TSV-006",
+	IssueCodeTSVLinkInvalid:         "TSV-008",
+	IssueCodeTSVCellEmpty:           "TSV-011",
+	IssueCodeOBSStoryMissing:        "COMP-020",
+	IssueCodeOBSStoryTitleMissing:   "MD-002",
+	IssueCodeOBSWrongFrameCount:     "MD-002",
+	IssueCodeOBSBibleRefenceMissing: "MD-002",
 }
 
 func init() {

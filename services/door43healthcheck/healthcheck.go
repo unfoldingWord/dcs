@@ -35,14 +35,25 @@ func checksFor(dm *repo_model.Door43Metadata) []checkFunc {
 	checks := []checkFunc{checkMetadataValid, checkTitle, checkLanguage, checkIngredients}
 	switch dm.MetadataType {
 	case "rc":
-		checks = append(checks, checkPublisher, checkIdentifier, checkRelationLanguages, checkTNRelations, checkRelationCatalog)
-		if dm.Subject == "Open Bible Stories" {
+		checks = append(checks, checkPublisher, checkIdentifier, checkRepoNameLanguage, checkRelationLanguages, checkTNRelations, checkRelationCatalog)
+		switch {
+		case dm.Subject == "Open Bible Stories":
 			checks = append(checks, CheckOBSStories)
+		case repo_model.IsScriptureSubject(dm.Subject):
+			checks = append(checks, checkUSFMBooks)
+		case repo_model.IsTSVSubject(dm.Subject):
+			checks = append(checks, checkTSVFiles)
 		}
 	case "tc":
-		checks = append(checks, checkTcUSFM)
+		checks = append(checks, checkUSFMBooks)
 	case "sb":
-		checks = append(checks, checkSBIngredients)
+		checks = append(checks, checkRepoNameLanguage, checkSBIngredients)
+		switch {
+		case repo_model.IsScriptureSubject(dm.Subject):
+			checks = append(checks, checkUSFMBooks)
+		case repo_model.IsTSVSubject(dm.Subject):
+			checks = append(checks, checkTSVFiles)
+		}
 	}
 	return checks
 }
@@ -135,10 +146,13 @@ func saveHealthcheck(ctx context.Context, dm *repo_model.Door43Metadata, hgi *re
 	}
 }
 
-// newIssue builds an issue with the standard positive/negative titles for its code
+// newIssue builds an issue with the standard positive/negative titles for its code and
+// the code's default rule ID from the DCS Resource Validation Specification. Checks whose
+// code covers several spec rules overwrite Rule on the returned issue.
 func newIssue(code repo_model.IssueCode, severity repo_model.SeverityLevel, details, suggestion string) *repo_model.Door43HealthcheckIssue {
 	return &repo_model.Door43HealthcheckIssue{
 		IssueCode:     code,
+		Rule:          repo_model.IssueCodeDefaultRules[code],
 		SeverityLevel: severity,
 		PositiveTitle: code.IssuePositiveString(),
 		NegativeTitle: code.IssueNegativeString(),

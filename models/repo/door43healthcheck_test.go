@@ -74,13 +74,26 @@ func TestIssueCodesFor(t *testing.T) {
 	assert.Contains(t, rcOBS, repo_model.IssueCodePublisher)
 	assert.Contains(t, rcOBS, repo_model.IssueCodeOBSStoryMissing)
 
+	rcBible := repo_model.IssueCodesFor("rc", "Aligned Bible")
+	assert.Contains(t, rcBible, repo_model.IssueCodeUSFMInvalid)
+	assert.NotContains(t, rcBible, repo_model.IssueCodeTSVRowInvalid)
+
+	rcTN := repo_model.IssueCodesFor("rc", "TSV Translation Notes")
+	assert.Contains(t, rcTN, repo_model.IssueCodeTSVRowInvalid)
+	assert.Contains(t, rcTN, repo_model.IssueCodeTSVIDDuplicate)
+	assert.Contains(t, rcTN, repo_model.IssueCodeOrigLangVersionMissing)
+	assert.NotContains(t, rcTN, repo_model.IssueCodeUSFMInvalid)
+
 	tc := repo_model.IssueCodesFor("tc", "Aligned Bible")
 	assert.Contains(t, tc, repo_model.IssueCodeUSFMInvalid)
 	assert.Contains(t, tc, repo_model.IssueCodeUSFMNoAlignment)
 	assert.NotContains(t, tc, repo_model.IssueCodePublisher)
 
 	sb := repo_model.IssueCodesFor("sb", "Bible")
+	assert.Contains(t, sb, repo_model.IssueCodeSBIngredientMissing)
 	assert.Contains(t, sb, repo_model.IssueCodeSBIngredientMismatch)
+	assert.Contains(t, sb, repo_model.IssueCodeUSFMInvalid)
+	assert.Contains(t, sb, repo_model.IssueCodeRepoNameLanguage)
 	assert.NotContains(t, sb, repo_model.IssueCodeOBSStoryMissing)
 
 	ts := repo_model.IssueCodesFor("ts", "Bible")

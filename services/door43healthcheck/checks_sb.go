@@ -22,8 +22,9 @@ import (
 // Checks in this file only run for Scripture Burrito (sb) repos.
 
 // checkSBIngredients verifies every ingredient entry in metadata.json against the actual
-// files at this entry's commit: the path exists, the size matches, and the MD5 checksum
-// (when given) matches.
+// files at this entry's commit. A declared ingredient whose file doesn't exist is an
+// Error (FILE-001); size and MD5 mismatches are Warnings (META-015). Per decision D6,
+// MD5 checksums are only computed when validating a tag/release, not on every branch push.
 func checkSBIngredients(ctx context.Context, dm *repo_model.Door43Metadata) []*repo_model.Door43HealthcheckIssue {
 	sbIngredients := getSBMetadataIngredients(dm)
 	if len(sbIngredients) == 0 {
@@ -45,7 +46,7 @@ func checkSBIngredients(ctx context.Context, dm *repo_model.Door43Metadata) []*r
 
 	var issues []*repo_model.Door43HealthcheckIssue
 	mismatch := func(path, reason string) {
-		issues = append(issues, newIssue(repo_model.IssueCodeSBIngredientMismatch, repo_model.SeverityLevelError,
+		issues = append(issues, newIssue(repo_model.IssueCodeSBIngredientMismatch, repo_model.SeverityLevelWarning,
 			fmt.Sprintf(repo_model.IssueCodeSBIngredientMismatch.IssueDetailsFormatString(), path, reason),
 			fmt.Sprintf(repo_model.IssueCodeSBIngredientMismatch.IssueSuggestionFormatString(), metadataFileLink(dm))))
 	}
@@ -57,7 +58,9 @@ func checkSBIngredients(ctx context.Context, dm *repo_model.Door43Metadata) []*r
 		}
 		entry, err := commit.GetTreeEntryByPath(path)
 		if err != nil || entry == nil {
-			mismatch(path, "does not exist in the repository")
+			issues = append(issues, newIssue(repo_model.IssueCodeSBIngredientMissing, repo_model.SeverityLevelError,
+				fmt.Sprintf(repo_model.IssueCodeSBIngredientMissing.IssueDetailsFormatString(), path),
+				fmt.Sprintf(repo_model.IssueCodeSBIngredientMissing.IssueSuggestionFormatString(), metadataFileLink(dm))))
 			continue
 		}
 		if entry.IsDir() {
@@ -66,7 +69,9 @@ func checkSBIngredients(ctx context.Context, dm *repo_model.Door43Metadata) []*r
 		if entry.Size() != ingredient.Size {
 			mismatch(path, fmt.Sprintf("has a size of %d in metadata.json but the file is %d bytes", ingredient.Size, entry.Size()))
 		}
-		if md5sum := ingredient.Checksum["md5"]; md5sum != "" {
+		// MD5 is only computed for tags/releases (D6) — hashing every blob on every
+		// branch push is too expensive for the value it adds.
+		if md5sum := ingredient.Checksum["md5"]; md5sum != "" && dm.RefType == "tag" {
 			actual, err := blobMD5(entry.Blob())
 			if err != nil {
 				log.Error("checkSBIngredients: hashing %s/%s: %v", dm.Repo.FullName(), path, err)

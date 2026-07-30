@@ -84,48 +84,32 @@ func CheckOBSStories(ctx context.Context, dm *repo_model.Door43Metadata) []*repo
 
 	var issues []*repo_model.Door43HealthcheckIssue
 
+	// Severities per the DCS Resource Validation Specification: OBS is published as a
+	// complete set, but a missing story is a Warning (COMP-020) — like a partial Bible —
+	// while a story file that exists but is malformed (no title, no frames) is an Error
+	// (MD-002). The missing final Bible-reference line stays a Warning (MD-002).
 	if len(missingStories) > 0 {
-		issues = append(issues, &repo_model.Door43HealthcheckIssue{
-			IssueCode:     repo_model.IssueCodeOBSStoryMissing,
-			SeverityLevel: repo_model.SeverityLevelError,
-			PositiveTitle: repo_model.IssueCodeOBSStoryMissing.IssuePositiveString(),
-			NegativeTitle: repo_model.IssueCodeOBSStoryMissing.IssueNegativeString(),
-			Details:       fmt.Sprintf(repo_model.IssueCodeOBSStoryMissing.IssueDetailsFormatString(), strings.Join(missingStories, ", ")),
-			Suggestion:    fmt.Sprintf(repo_model.IssueCodeOBSStoryMissing.IssueSuggestionFormatString(), strings.Join(missingStories, ", ")),
-		})
+		issues = append(issues, newIssue(repo_model.IssueCodeOBSStoryMissing, repo_model.SeverityLevelWarning,
+			fmt.Sprintf(repo_model.IssueCodeOBSStoryMissing.IssueDetailsFormatString(), strings.Join(missingStories, ", ")),
+			fmt.Sprintf(repo_model.IssueCodeOBSStoryMissing.IssueSuggestionFormatString(), strings.Join(missingStories, ", "))))
 	}
 
 	if len(missingTitles) > 0 {
-		issues = append(issues, &repo_model.Door43HealthcheckIssue{
-			IssueCode:     repo_model.IssueCodeOBSStoryTitleMissing,
-			SeverityLevel: repo_model.SeverityLevelWarning,
-			PositiveTitle: repo_model.IssueCodeOBSStoryTitleMissing.IssuePositiveString(),
-			NegativeTitle: repo_model.IssueCodeOBSStoryTitleMissing.IssueNegativeString(),
-			Details:       fmt.Sprintf(repo_model.IssueCodeOBSStoryTitleMissing.IssueDetailsFormatString(), strings.Join(missingTitles, ", ")),
-			Suggestion:    fmt.Sprintf(repo_model.IssueCodeOBSStoryTitleMissing.IssueSuggestionFormatString(), strings.Join(missingTitles, ", ")),
-		})
+		issues = append(issues, newIssue(repo_model.IssueCodeOBSStoryTitleMissing, repo_model.SeverityLevelError,
+			fmt.Sprintf(repo_model.IssueCodeOBSStoryTitleMissing.IssueDetailsFormatString(), strings.Join(missingTitles, ", ")),
+			fmt.Sprintf(repo_model.IssueCodeOBSStoryTitleMissing.IssueSuggestionFormatString(), strings.Join(missingTitles, ", "))))
 	}
 
 	if len(missingFrames) > 0 {
-		issues = append(issues, &repo_model.Door43HealthcheckIssue{
-			IssueCode:     repo_model.IssueCodeOBSWrongFrameCount,
-			SeverityLevel: repo_model.SeverityLevelWarning,
-			PositiveTitle: repo_model.IssueCodeOBSWrongFrameCount.IssuePositiveString(),
-			NegativeTitle: repo_model.IssueCodeOBSWrongFrameCount.IssueNegativeString(),
-			Details:       fmt.Sprintf(repo_model.IssueCodeOBSWrongFrameCount.IssueDetailsFormatString(), strings.Join(missingFrames, ", ")),
-			Suggestion:    fmt.Sprintf(repo_model.IssueCodeOBSWrongFrameCount.IssueSuggestionFormatString(), strings.Join(missingFrames, ", ")),
-		})
+		issues = append(issues, newIssue(repo_model.IssueCodeOBSWrongFrameCount, repo_model.SeverityLevelError,
+			fmt.Sprintf(repo_model.IssueCodeOBSWrongFrameCount.IssueDetailsFormatString(), strings.Join(missingFrames, ", ")),
+			fmt.Sprintf(repo_model.IssueCodeOBSWrongFrameCount.IssueSuggestionFormatString(), strings.Join(missingFrames, ", "))))
 	}
 
 	if len(missingBibleRefs) > 0 {
-		issues = append(issues, &repo_model.Door43HealthcheckIssue{
-			IssueCode:     repo_model.IssueCodeOBSBibleRefenceMissing,
-			SeverityLevel: repo_model.SeverityLevelWarning,
-			PositiveTitle: repo_model.IssueCodeOBSBibleRefenceMissing.IssuePositiveString(),
-			NegativeTitle: repo_model.IssueCodeOBSBibleRefenceMissing.IssueNegativeString(),
-			Details:       fmt.Sprintf(repo_model.IssueCodeOBSBibleRefenceMissing.IssueDetailsFormatString(), strings.Join(missingBibleRefs, ", ")),
-			Suggestion:    fmt.Sprintf(repo_model.IssueCodeOBSBibleRefenceMissing.IssueSuggestionFormatString(), strings.Join(missingBibleRefs, ", ")),
-		})
+		issues = append(issues, newIssue(repo_model.IssueCodeOBSBibleRefenceMissing, repo_model.SeverityLevelWarning,
+			fmt.Sprintf(repo_model.IssueCodeOBSBibleRefenceMissing.IssueDetailsFormatString(), strings.Join(missingBibleRefs, ", ")),
+			fmt.Sprintf(repo_model.IssueCodeOBSBibleRefenceMissing.IssueSuggestionFormatString(), strings.Join(missingBibleRefs, ", "))))
 	}
 
 	return issues
