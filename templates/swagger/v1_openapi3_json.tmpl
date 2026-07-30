@@ -13711,6 +13711,14 @@
             }
           },
           {
+            "description": "list only those whose overall health check severity is one of the given comma-separated levels (error, warning, info, success); entries never checked do not match",
+            "in": "query",
+            "name": "healthcheck",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
             "description": "if true, all entries of the given stage or lower are considered, not just the latest entry per repo, default is false",
             "in": "query",
             "name": "includeHistory",
@@ -13998,6 +14006,14 @@
             "name": "is_healthy_without_warnings",
             "schema": {
               "type": "boolean"
+            }
+          },
+          {
+            "description": "list only those whose overall health check severity is one of the given comma-separated levels (error, warning, info, success); entries never checked do not match",
+            "in": "query",
+            "name": "healthcheck",
+            "schema": {
+              "type": "string"
             }
           },
           {
@@ -14299,6 +14315,14 @@
             }
           },
           {
+            "description": "list only those whose overall health check severity is one of the given comma-separated levels (error, warning, info, success); entries never checked do not match",
+            "in": "query",
+            "name": "healthcheck",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
             "description": "if true, all entries of the given stage or lower are considered, not just the latest entry per repo, default is false",
             "in": "query",
             "name": "includeHistory",
@@ -14586,6 +14610,14 @@
             "name": "is_healthy_without_warnings",
             "schema": {
               "type": "boolean"
+            }
+          },
+          {
+            "description": "list only those whose overall health check severity is one of the given comma-separated levels (error, warning, info, success); entries never checked do not match",
+            "in": "query",
+            "name": "healthcheck",
+            "schema": {
+              "type": "string"
             }
           },
           {
@@ -14941,6 +14973,14 @@
             }
           },
           {
+            "description": "list only entries whose overall health check severity is one of the given comma-separated levels (error, warning, info, success); entries never checked do not match",
+            "in": "query",
+            "name": "healthcheck",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
             "description": "if true, subject, owner and repo search fields will use partial match (LIKE) when querying the catalog, default is false",
             "in": "query",
             "name": "partialMatch",
@@ -15280,6 +15320,14 @@
             }
           },
           {
+            "description": "count only entries whose overall health check severity is one of the given comma-separated levels (error, warning, info, success); entries never checked do not match",
+            "in": "query",
+            "name": "healthcheck",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
             "description": "if true, subject, owner and repo search fields will use partial match (LIKE) when querying the catalog, default is false",
             "in": "query",
             "name": "partialMatch",
@@ -15584,6 +15632,14 @@
             "name": "is_healthy_without_warnings",
             "schema": {
               "type": "boolean"
+            }
+          },
+          {
+            "description": "count only entries whose overall health check severity is one of the given comma-separated levels (error, warning, info, success); entries never checked do not match",
+            "in": "query",
+            "name": "healthcheck",
+            "schema": {
+              "type": "string"
             }
           },
           {

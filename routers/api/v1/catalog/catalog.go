@@ -222,6 +222,10 @@ func Search(ctx *context.APIContext) {
 	//   in: query
 	//   description: list only entries that passed (true) or did not pass (false) their health check with no warnings; entries never checked are not healthy
 	//   type: boolean
+	// - name: healthcheck
+	//   in: query
+	//   description: list only entries whose overall health check severity is one of the given comma-separated levels (error, warning, info, success); entries never checked do not match
+	//   type: string
 	// - name: partialMatch
 	//   in: query
 	//   description: if true, subject, owner and repo search fields will use partial match (LIKE) when querying the catalog, default is false
@@ -434,6 +438,10 @@ func ListCatalogSubjects(ctx *context.APIContext) {
 	//   in: query
 	//   description: list only those that passed (true) or did not pass (false) their health check with no warnings; entries never checked are not healthy
 	//   type: boolean
+	// - name: healthcheck
+	//   in: query
+	//   description: list only those whose overall health check severity is one of the given comma-separated levels (error, warning, info, success); entries never checked do not match
+	//   type: string
 	// - name: includeHistory
 	//   in: query
 	//   description: if true, all entries of the given stage or lower are considered, not just the latest entry per repo, default is false
@@ -615,6 +623,10 @@ func ListCatalogMetadataTypes(ctx *context.APIContext) {
 	//   in: query
 	//   description: list only those that passed (true) or did not pass (false) their health check with no warnings; entries never checked are not healthy
 	//   type: boolean
+	// - name: healthcheck
+	//   in: query
+	//   description: list only those whose overall health check severity is one of the given comma-separated levels (error, warning, info, success); entries never checked do not match
+	//   type: string
 	// - name: includeHistory
 	//   in: query
 	//   description: if true, all entries of the given stage or lower are considered, not just the latest entry per repo, default is false
@@ -800,6 +812,10 @@ func ListCatalogOwners(ctx *context.APIContext) {
 	//   in: query
 	//   description: list only those that passed (true) or did not pass (false) their health check with no warnings; entries never checked are not healthy
 	//   type: boolean
+	// - name: healthcheck
+	//   in: query
+	//   description: list only those whose overall health check severity is one of the given comma-separated levels (error, warning, info, success); entries never checked do not match
+	//   type: string
 	// - name: includeHistory
 	//   in: query
 	//   description: if true, all entries of the given stage or lower are considered, not just the latest entry per repo, default is false
@@ -993,6 +1009,10 @@ func ListCatalogLanguages(ctx *context.APIContext) {
 	//   in: query
 	//   description: list only those that passed (true) or did not pass (false) their health check with no warnings; entries never checked are not healthy
 	//   type: boolean
+	// - name: healthcheck
+	//   in: query
+	//   description: list only those whose overall health check severity is one of the given comma-separated levels (error, warning, info, success); entries never checked do not match
+	//   type: string
 	// - name: includeHistory
 	//   in: query
 	//   description: if true, all entries of the given stage or lower are considered, not just the latest entry per repo, default is false
@@ -1162,6 +1182,7 @@ func getCatalogStatsOpts(ctx *context.APIContext) *door43metadata.SearchCatalogO
 		HasAttachment:            ctx.FormOptionalBool("hasAttachment"),
 		IsHealthy:                ctx.FormOptionalBool("is_healthy"),
 		IsHealthyWithoutWarnings: ctx.FormOptionalBool("is_healthy_without_warnings"),
+		Healthchecks:             QueryStrings(ctx, "healthcheck"),
 		PartialMatch:             ctx.FormBool("partialMatch"),
 	}
 
@@ -1347,6 +1368,10 @@ func GetCatalogStats(ctx *context.APIContext) {
 	//   in: query
 	//   description: count only entries that passed (true) or did not pass (false) their health check with no warnings; entries never checked are not healthy
 	//   type: boolean
+	// - name: healthcheck
+	//   in: query
+	//   description: count only entries whose overall health check severity is one of the given comma-separated levels (error, warning, info, success); entries never checked do not match
+	//   type: string
 	// - name: partialMatch
 	//   in: query
 	//   description: if true, subject, owner and repo search fields will use partial match (LIKE) when querying the catalog, default is false
@@ -1535,6 +1560,10 @@ func GetCatalogStatsExt(ctx *context.APIContext) {
 	//   in: query
 	//   description: count only entries that passed (true) or did not pass (false) their health check with no warnings; entries never checked are not healthy
 	//   type: boolean
+	// - name: healthcheck
+	//   in: query
+	//   description: count only entries whose overall health check severity is one of the given comma-separated levels (error, warning, info, success); entries never checked do not match
+	//   type: string
 	// - name: partialMatch
 	//   in: query
 	//   description: if true, subject, owner and repo search fields will use partial match (LIKE) when querying the catalog, default is false
@@ -1799,6 +1828,7 @@ func searchCatalog(ctx *context.APIContext) {
 		HasAttachment:            ctx.FormOptionalBool("hasAttachment"),
 		IsHealthy:                ctx.FormOptionalBool("is_healthy"),
 		IsHealthyWithoutWarnings: ctx.FormOptionalBool("is_healthy_without_warnings"),
+		Healthchecks:             QueryStrings(ctx, "healthcheck"),
 		PartialMatch:             ctx.FormBool("partialMatch"),
 	}
 
@@ -2117,6 +2147,7 @@ func getSingleDMFieldList(ctx *context.APIContext, field string) ([]string, erro
 		HasAttachment:            ctx.FormOptionalBool("hasAttachment"),
 		IsHealthy:                ctx.FormOptionalBool("is_healthy"),
 		IsHealthyWithoutWarnings: ctx.FormOptionalBool("is_healthy_without_warnings"),
+		Healthchecks:             QueryStrings(ctx, "healthcheck"),
 		PartialMatch:             ctx.FormBool("partialMatch"),
 	}
 

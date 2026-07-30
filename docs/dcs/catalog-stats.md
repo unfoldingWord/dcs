@@ -15,8 +15,8 @@ Both accept **all the regular catalog search filters** — `q`, `owner`, `repo`,
 `tag`, `lang`, `is_gl`, `stage`, `subject`, `flavorType`, `flavor`,
 `abbreviation`, `format`, `checkingLevel`, `book`, `metadataType`,
 `metadataVersion`, `topic`, `withoutTopic`, the `has*` content flags,
-`is_healthy`, `is_healthy_without_warnings`, `includeHistory` and
-`partialMatch` — plus two date bounds:
+`is_healthy`, `is_healthy_without_warnings`, `healthcheck` (comma-separated
+severity levels), `includeHistory` and `partialMatch` — plus two date bounds:
 
 - `startDate` — only entries with `release_date_unix` **on or after** this date.
 - `endDate` — only entries **on or before** this date. A date given without a
