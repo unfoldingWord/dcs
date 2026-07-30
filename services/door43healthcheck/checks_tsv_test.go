@@ -105,6 +105,20 @@ func TestCheckTSVFileContent(t *testing.T) {
 		assert.False(t, tsvReferenceValid("front:front"))
 	})
 
+	t.Run("occurrence depends on quote content", func(t *testing.T) {
+		content := tnHeader + "\n" +
+			"front:intro\tabc1\t\t\t\t\tblank occurrence with empty quote is fine\n" + // blank occ, empty quote
+			"1:intro\tabc2\t\t\t\t0\tzero occurrence with empty quote is fine\n" +
+			"1:1\tabc3\t\t\tword\t-1\tall occurrences of a quote\n" +
+			"1:2\tabc4\t\t\t\t2\tempty quote cannot have occurrence 2\n" + // invalid
+			"1:3\tabc5\t\t\t\t-1\tempty quote cannot have occurrence -1\n" + // invalid
+			"1:4\tabc6\t\t\tword\t\tquote text requires an integer occurrence\n" // invalid
+		issues := checkTSVFileContent(tnDM, "tn_GEN.tsv", strings.NewReader(content))
+		require.Len(t, issues, 1)
+		assert.Equal(t, repo_model.IssueCodeTSVOccurrenceInvalid, issues[0].IssueCode)
+		assert.Contains(t, issues[0].Details, "3 rows")
+	})
+
 	t.Run("compound verse references", func(t *testing.T) {
 		assert.True(t, tsvReferenceValid("5:1,3,8,12"), "bare verses continue the chapter")
 		assert.True(t, tsvReferenceValid("5:1, 3, 8, 12"), "spaces after commas allowed")

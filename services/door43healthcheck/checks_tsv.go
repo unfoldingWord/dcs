@@ -141,6 +141,9 @@ func checkTSVFileContent(dm *repo_model.Door43Metadata, path string, r io.Reader
 	if quoteIdx < 0 {
 		quoteIdx = colIdx("OrigWords")
 	}
+	if quoteIdx < 0 {
+		quoteIdx = colIdx("OrigQuote") // legacy 9-column TN
+	}
 	twLinkIdx := colIdx("TWLink")
 	supportRefIdx := colIdx("SupportReference")
 
@@ -186,12 +189,15 @@ func checkTSVFileContent(dm *repo_model.Door43Metadata, path string, r io.Reader
 		}
 
 		if occIdx >= 0 {
-			occ, err := strconv.Atoi(cells[occIdx])
-			switch {
-			case err != nil || occ < -1:
-				badOccRows = append(badOccRows, rowNum)
-			case quoteIdx >= 0 && strings.TrimSpace(cells[quoteIdx]) == "" && occ != 0:
-				// an empty Quote/OrigWords requires Occurrence 0 (TSV-006)
+			// TSV-006: with Quote/OrigWords text, Occurrence is an integer >= -1; with an
+			// empty Quote — intro rows like front:intro / {c}:intro — there is nothing to
+			// count occurrences of, so Occurrence is 0 or blank
+			occStr := strings.TrimSpace(cells[occIdx])
+			if quoteIdx >= 0 && strings.TrimSpace(cells[quoteIdx]) == "" {
+				if occStr != "" && occStr != "0" {
+					badOccRows = append(badOccRows, rowNum)
+				}
+			} else if occ, err := strconv.Atoi(occStr); err != nil || occ < -1 {
 				badOccRows = append(badOccRows, rowNum)
 			}
 		}
