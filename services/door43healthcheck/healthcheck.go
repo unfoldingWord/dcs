@@ -7,7 +7,6 @@ import (
 	"context"
 	"fmt"
 
-	"gitea.dev/models/db"
 	repo_model "gitea.dev/models/repo"
 	"gitea.dev/modules/git"
 	"gitea.dev/modules/log"
@@ -130,7 +129,8 @@ func checkReleaseNeeded(ctx context.Context, dm *repo_model.Door43Metadata, hgi 
 }
 
 // saveHealthcheck stores the issues and the severity/counts for the entry.
-// Synthesized entries (ID == 0) have nothing to store against.
+// Synthesized entries (ID == 0) have nothing to store against, and an entry whose ref
+// was deleted while the check ran is skipped so no results outlive their ref.
 func saveHealthcheck(ctx context.Context, dm *repo_model.Door43Metadata, hgi *repo_model.HealthcheckGroupedIssues, issues []*repo_model.Door43HealthcheckIssue) {
 	if dm.ID == 0 {
 		return
@@ -138,11 +138,11 @@ func saveHealthcheck(ctx context.Context, dm *repo_model.Door43Metadata, hgi *re
 	dm.HealthcheckSeverity = hgi.OverallSeverityLevel
 	dm.HealthcheckCounts = hgi.SeverityLevelCount
 	dm.HealthcheckTimeUnix = timeutil.TimeStampNow()
-	if _, err := db.GetEngine(ctx).ID(dm.ID).Cols("healthcheck_severity", "healthcheck_counts", "healthcheck_time_unix").Update(dm); err != nil {
-		log.Error("saveHealthcheck: updating severity/counts for DM %d: %v", dm.ID, err)
-	}
-	if err := repo_model.ReplaceDoor43HealthcheckIssues(ctx, dm, issues); err != nil {
-		log.Error("saveHealthcheck: storing issues for DM %d: %v", dm.ID, err)
+	stored, err := repo_model.StoreHealthcheckResults(ctx, dm, issues)
+	if err != nil {
+		log.Error("saveHealthcheck: storing results for DM %d: %v", dm.ID, err)
+	} else if !stored {
+		log.Debug("saveHealthcheck: DM %d was deleted while its check ran; results discarded", dm.ID)
 	}
 }
 

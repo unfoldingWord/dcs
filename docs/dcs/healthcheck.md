@@ -91,6 +91,22 @@ Read paths (API endpoint, repo health check page, badge tooltips) serve the stor
 rows; the check is only re-run on read when an entry was never checked or its stored
 rows predate issue persistence.
 
+### Deleted refs
+
+A branch or tag can be deleted while its check is still running. Three defenses keep
+results from outliving their ref:
+
+- `StoreHealthcheckResults` writes severity, counts, time and issues in one transaction
+  that first verifies the entry still exists (`SELECT ... FOR UPDATE` on MySQL; SQLite
+  serializes writers) — a check that finishes after the delete discards its results.
+- The delete helpers remove the entry row and its issues in one transaction, entry row
+  first, so a concurrent store fully serializes against the delete.
+- The all-refs pass (`update_metadata` cron, repo events) sweeps entries whose ref no
+  longer exists (`DeleteDoor43MetadatasStaleRefs`) — the backstop for the remaining
+  window where a ref-deletion notification lands before an in-flight insert. The sweep
+  only runs when the tag and branch listings both succeeded, and spares rows touched
+  after the pass started (e.g. a branch pushed mid-pass).
+
 ## Querying
 
 - `is_healthy=true|false` on `/api/v1/catalog/search`, `/api/v1/catalog/list/*`,

@@ -10,6 +10,7 @@ import (
 	"gitea.dev/models/door43metadata"
 	repo_model "gitea.dev/models/repo"
 	"gitea.dev/models/unittest"
+	"gitea.dev/modules/timeutil"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -27,11 +28,14 @@ func TestDoor43HealthcheckIssuePersistence(t *testing.T) {
 	_, err := db.GetEngine(t.Context()).Insert(dm)
 	require.NoError(t, err)
 
+	dm.HealthcheckSeverity = repo_model.SeverityLevelError
 	issues := []*repo_model.Door43HealthcheckIssue{
 		{IssueCode: repo_model.IssueCodeTitle, SeverityLevel: repo_model.SeverityLevelError, NegativeTitle: "t1", Details: "d1", Suggestion: "s1"},
 		{IssueCode: repo_model.IssueCodeLanguage, SeverityLevel: repo_model.SeverityLevelWarning, NegativeTitle: "t2", Details: "d2", Suggestion: "s2"},
 	}
-	require.NoError(t, repo_model.ReplaceDoor43HealthcheckIssues(t.Context(), dm, issues))
+	storedOK, err := repo_model.StoreHealthcheckResults(t.Context(), dm, issues)
+	require.NoError(t, err)
+	assert.True(t, storedOK)
 
 	stored, err := repo_model.GetDoor43HealthcheckIssuesByDMID(t.Context(), dm.ID)
 	require.NoError(t, err)
@@ -42,9 +46,12 @@ func TestDoor43HealthcheckIssuePersistence(t *testing.T) {
 	assert.Equal(t, dm.ID, stored[0].DMID)
 	assert.Equal(t, dm.RepoID, stored[0].RepoID)
 
-	// a replace fully swaps the stored rows
-	require.NoError(t, repo_model.ReplaceDoor43HealthcheckIssues(t.Context(), dm,
-		[]*repo_model.Door43HealthcheckIssue{{IssueCode: repo_model.IssueCodeLanguage, SeverityLevel: repo_model.SeverityLevelWarning}}))
+	// a new store fully swaps the stored rows
+	dm.HealthcheckSeverity = repo_model.SeverityLevelWarning
+	storedOK, err = repo_model.StoreHealthcheckResults(t.Context(), dm,
+		[]*repo_model.Door43HealthcheckIssue{{IssueCode: repo_model.IssueCodeLanguage, SeverityLevel: repo_model.SeverityLevelWarning}})
+	require.NoError(t, err)
+	assert.True(t, storedOK)
 	stored, err = repo_model.GetDoor43HealthcheckIssuesByDMID(t.Context(), dm.ID)
 	require.NoError(t, err)
 	require.Len(t, stored, 1)
@@ -57,7 +64,6 @@ func TestDoor43HealthcheckIssuePersistence(t *testing.T) {
 	assert.Equal(t, 1, hgi.SeverityLevelCount[repo_model.SeverityLevelWarning])
 
 	// GetHealthcheck serves the stored rows when they add up to the stored severity
-	dm.HealthcheckSeverity = repo_model.SeverityLevelWarning
 	hgi = dm.GetHealthcheck(t.Context())
 	require.NotNil(t, hgi)
 	assert.Equal(t, repo_model.SeverityLevelWarning, hgi.OverallSeverityLevel)
@@ -67,6 +73,61 @@ func TestDoor43HealthcheckIssuePersistence(t *testing.T) {
 	stored, err = repo_model.GetDoor43HealthcheckIssuesByDMID(t.Context(), dm.ID)
 	require.NoError(t, err)
 	assert.Empty(t, stored)
+
+	// storing results for an entry deleted while its check ran writes nothing —
+	// no orphaned severity update, no orphaned issue rows
+	storedOK, err = repo_model.StoreHealthcheckResults(t.Context(), dm, issues)
+	require.NoError(t, err)
+	assert.False(t, storedOK)
+	stored, err = repo_model.GetDoor43HealthcheckIssuesByDMID(t.Context(), dm.ID)
+	require.NoError(t, err)
+	assert.Empty(t, stored)
+}
+
+func TestDeleteDoor43MetadatasStaleRefs(t *testing.T) {
+	require.NoError(t, unittest.PrepareTestDatabase())
+
+	newDM := func(ref, refType, sha string) *repo_model.Door43Metadata {
+		dm := &repo_model.Door43Metadata{
+			RepoID: 1, Ref: ref, RefType: refType, CommitSHA: sha,
+			Stage: door43metadata.StageOther, Language: "en", Subject: "Bible", MetadataType: "rc",
+		}
+		_, err := db.GetEngine(t.Context()).Insert(dm)
+		require.NoError(t, err)
+		return dm
+	}
+	live1 := newDM("master", "branch", "0000000000000000000000000000000000000041")
+	live2 := newDM("v1", "tag", "0000000000000000000000000000000000000042")
+	stale := newDM("deleted-branch", "branch", "0000000000000000000000000000000000000043")
+	_, err := repo_model.StoreHealthcheckResults(t.Context(), stale,
+		[]*repo_model.Door43HealthcheckIssue{{IssueCode: repo_model.IssueCodeTitle, SeverityLevel: repo_model.SeverityLevelError}})
+	require.NoError(t, err)
+
+	// rows updated after olderThan are spared (e.g. a branch pushed mid-pass)
+	count, err := repo_model.DeleteDoor43MetadatasStaleRefs(t.Context(), 1, []string{"master", "v1"}, timeutil.TimeStamp(1))
+	require.NoError(t, err)
+	assert.EqualValues(t, 0, count)
+
+	// an empty ref list never deletes anything
+	count, err = repo_model.DeleteDoor43MetadatasStaleRefs(t.Context(), 1, nil, timeutil.TimeStampNow()+10)
+	require.NoError(t, err)
+	assert.EqualValues(t, 0, count)
+
+	// the stale ref's entry and its issues are swept; live refs stay
+	count, err = repo_model.DeleteDoor43MetadatasStaleRefs(t.Context(), 1, []string{"master", "v1"}, timeutil.TimeStampNow()+10)
+	require.NoError(t, err)
+	assert.EqualValues(t, 1, count)
+	issues, err := repo_model.GetDoor43HealthcheckIssuesByDMID(t.Context(), stale.ID)
+	require.NoError(t, err)
+	assert.Empty(t, issues)
+	for _, id := range []int64{live1.ID, live2.ID} {
+		exists, err := db.GetEngine(t.Context()).ID(id).Exist(new(repo_model.Door43Metadata))
+		require.NoError(t, err)
+		assert.True(t, exists)
+	}
+	staleExists, err := db.GetEngine(t.Context()).ID(stale.ID).Exist(new(repo_model.Door43Metadata))
+	require.NoError(t, err)
+	assert.False(t, staleExists)
 }
 
 func TestIssueCodesFor(t *testing.T) {

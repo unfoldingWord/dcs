@@ -9,6 +9,7 @@ import (
 
 	"gitea.dev/models/db"
 	"gitea.dev/modules/json"
+	"gitea.dev/modules/setting"
 )
 
 // SeverityLevel represents the level of severity or concern for a health check
@@ -480,25 +481,49 @@ func (h *Door43HealthcheckIssue) TableName() string {
 	return "door43_healthcheck_issue"
 }
 
-// ReplaceDoor43HealthcheckIssues replaces all stored health check issues for a Door43Metadata entry
-func ReplaceDoor43HealthcheckIssues(ctx context.Context, dm *Door43Metadata, issues []*Door43HealthcheckIssue) error {
+// StoreHealthcheckResults stores the severity, counts, check time and issues for the
+// entry in one transaction. It returns false without writing anything when the entry no
+// longer exists — the ref was deleted while its check was running — so a mid-check
+// branch/tag deletion never leaves orphaned results behind. On MySQL the existence check
+// locks the row (SELECT ... FOR UPDATE) so a concurrent delete fully serializes against
+// the write; on SQLite writers are serialized by the database itself.
+func StoreHealthcheckResults(ctx context.Context, dm *Door43Metadata, issues []*Door43HealthcheckIssue) (bool, error) {
 	if dm.ID == 0 {
-		return nil
+		return false, nil
 	}
-	return db.WithTx(ctx, func(ctx context.Context) error {
-		if _, err := db.GetEngine(ctx).Where("dm_id = ?", dm.ID).Delete(new(Door43HealthcheckIssue)); err != nil {
+	stored := false
+	err := db.WithTx(ctx, func(ctx context.Context) error {
+		sess := db.GetEngine(ctx).ID(dm.ID)
+		if setting.Database.Type.IsMySQL() {
+			sess = sess.ForUpdate()
+		}
+		found, err := sess.Exist(new(Door43Metadata))
+		if err != nil {
 			return err
 		}
-		if len(issues) == 0 {
-			return nil
+		if !found {
+			return nil // the entry (its ref) was deleted while the check ran
+		}
+		if _, err := db.GetEngine(ctx).ID(dm.ID).Cols("healthcheck_severity", "healthcheck_counts", "healthcheck_time_unix").Update(dm); err != nil {
+			return err
+		}
+		if _, err := db.GetEngine(ctx).Where("dm_id = ?", dm.ID).Delete(new(Door43HealthcheckIssue)); err != nil {
+			return err
 		}
 		for _, issue := range issues {
 			issue.ID = 0
 			issue.DMID = dm.ID
 			issue.RepoID = dm.RepoID
 		}
-		return db.Insert(ctx, issues)
+		if len(issues) > 0 {
+			if err := db.Insert(ctx, issues); err != nil {
+				return err
+			}
+		}
+		stored = true
+		return nil
 	})
+	return stored, err
 }
 
 // GetDoor43HealthcheckIssuesByDMID returns the stored issues for a Door43Metadata entry in check order

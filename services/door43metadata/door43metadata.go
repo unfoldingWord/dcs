@@ -42,20 +42,26 @@ import (
 )
 
 func processDoor43MetadataForRepoRefs(ctx context.Context, repo *repo_model.Repository) error {
+	passStart := timeutil.TimeStampNow()
+	refsComplete := true
+
 	refs, err := repo_model.GetRepoReleaseTagsForMetadata(ctx, repo.ID)
 	if err != nil {
 		log.Error("GetRepoReleaseTagsForMetadata Error %s: %v", repo.FullName(), err)
+		refsComplete = false
 	}
 
 	gitRepo, err := git.OpenRepository(ctx, repo.RepoPath())
 	if err != nil {
 		log.Error("git.OpenRepository Error %s: %v", repo.FullName(), err)
+		refsComplete = false
 	}
 	if gitRepo != nil {
 		defer gitRepo.Close()
 		branchNames, _, err := gitRepo.GetBranchNames(0, 0)
 		if err != nil {
 			log.Error("git.GetBranchNames Error %s: %v", repo.FullName(), err)
+			refsComplete = false
 		} else {
 			refs = append(refs, branchNames...)
 		}
@@ -67,6 +73,18 @@ func processDoor43MetadataForRepoRefs(ctx context.Context, repo *repo_model.Repo
 			if err = system.CreateRepositoryNotice("Failed to process metadata for repository (%s) ref (%s): %v", repo.FullName(), ref, err); err != nil {
 				log.Error("processDoor43MetadataForRepoRef: %v", err)
 			}
+		}
+	}
+
+	// Sweep entries whose ref no longer exists (e.g. a branch deleted while a check was
+	// in flight, or a missed delete notification). Only runs when both the tag and
+	// branch listings succeeded — a partial ref list must never trigger deletions —
+	// and spares rows touched since this pass started (a branch pushed mid-pass).
+	if refsComplete {
+		if count, err := repo_model.DeleteDoor43MetadatasStaleRefs(ctx, repo.ID, refs, passStart); err != nil {
+			log.Error("DeleteDoor43MetadatasStaleRefs %s: %v", repo.FullName(), err)
+		} else if count > 0 {
+			log.Info("Deleted %d stale door43_metadata entries for refs no longer in %s", count, repo.FullName())
 		}
 	}
 	return nil
