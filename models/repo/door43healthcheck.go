@@ -365,7 +365,7 @@ var IssueDetailsFormatStrings = map[IssueCode]string{
 	IssueCodeOBSBibleRefenceMissing: "The following stories are missing Bible references: **`%s`**",
 	IssueCodeUSFMInvalid:            "The USFM file **`%s`** %s.",
 	IssueCodeUSFMNoAlignment:        "The USFM file **`%s`** does not contain alignment data.",
-	IssueCodeSBIngredientMissing:    "The ingredient **`%s`** does not exist in the repository.",
+	IssueCodeSBIngredientMissing:    "The ingredient **`%s`** does not exist in the repository%s.",
 	IssueCodeSBIngredientMismatch:   "The ingredient **`%s`** %s.",
 	IssueCodeRepoNameLanguage:       "The repo name **`%s`** indicates language **`%s`** but the metadata declares **`%s`**.",
 	IssueCodeTSVHeaderInvalid:       "%s",

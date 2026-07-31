@@ -44,6 +44,17 @@ func checkSBIngredients(ctx context.Context, dm *repo_model.Door43Metadata) []*r
 	}
 	sort.Strings(paths)
 
+	// Some SB repos omit the conventional "ingredients/" directory from their ingredient
+	// keys, reasoning that the containing property is already named "ingredients".
+	// Resolution rule: when no key starts with "ingredients/" and the repo has an
+	// ingredients/ directory, every key is resolved under it; when any key starts with
+	// "ingredients/", all keys are checked as-is from the repo root.
+	hasIngredientsDir := false
+	if entry, err := commit.GetTreeEntryByPath("ingredients"); err == nil && entry != nil && entry.IsDir() {
+		hasIngredientsDir = true
+	}
+	prefix := resolveSBIngredientPrefix(paths, hasIngredientsDir)
+
 	var issues []*repo_model.Door43HealthcheckIssue
 	mismatch := func(path, reason string) {
 		issues = append(issues, newIssue(repo_model.IssueCodeSBIngredientMismatch, repo_model.SeverityLevelWarning,
@@ -56,10 +67,15 @@ func checkSBIngredients(ctx context.Context, dm *repo_model.Door43Metadata) []*r
 		if ingredient == nil {
 			continue
 		}
-		entry, err := commit.GetTreeEntryByPath(path)
+		lookupPath := prefix + strings.TrimPrefix(path, "./")
+		entry, err := commit.GetTreeEntryByPath(lookupPath)
 		if err != nil || entry == nil {
+			resolutionNote := ""
+			if prefix != "" {
+				resolutionNote = fmt.Sprintf(" (resolved to **`%s`**)", lookupPath)
+			}
 			issues = append(issues, newIssue(repo_model.IssueCodeSBIngredientMissing, repo_model.SeverityLevelError,
-				fmt.Sprintf(repo_model.IssueCodeSBIngredientMissing.IssueDetailsFormatString(), path),
+				fmt.Sprintf(repo_model.IssueCodeSBIngredientMissing.IssueDetailsFormatString(), path, resolutionNote),
 				fmt.Sprintf(repo_model.IssueCodeSBIngredientMissing.IssueSuggestionFormatString(), metadataFileLink(dm))))
 			continue
 		}
@@ -83,6 +99,21 @@ func checkSBIngredients(ctx context.Context, dm *repo_model.Door43Metadata) []*r
 		}
 	}
 	return issues
+}
+
+// resolveSBIngredientPrefix returns "ingredients/" when the metadata's ingredient keys
+// omit the conventional directory: no key starts with "ingredients/" and the repo has an
+// ingredients/ directory. When any key carries the prefix, keys are taken as-is ("").
+func resolveSBIngredientPrefix(paths []string, hasIngredientsDir bool) string {
+	for _, path := range paths {
+		if strings.HasPrefix(strings.TrimPrefix(path, "./"), "ingredients/") {
+			return ""
+		}
+	}
+	if hasIngredientsDir {
+		return "ingredients/"
+	}
+	return ""
 }
 
 // getSBMetadataIngredients re-parses the ingredients section of the entry's stored SB metadata
