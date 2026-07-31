@@ -40,16 +40,23 @@
 		</h2>
 		<div class="repo-metadata-content">
 			<h4 class="ui top attached header">
-				{{ctx.Locale.Tr "dcs.repo.metadata.overall_healthcheck"}}
+				{{if .HealthcheckRef}}
+					Health Check for {{.HealthcheckDM.RefType}} <span class="tw-font-mono">{{.HealthcheckDM.Ref}}</span>
+				{{else}}
+					{{ctx.Locale.Tr "dcs.repo.metadata.overall_healthcheck"}}
+				{{end}}
 				<div class="ui right">
+						{{if .HealthcheckRef}}
+							<a class="ui tiny button" href="{{.RepoLink}}/healthcheck">Overall Health Check</a>
+						{{end}}
 						<a class="ui teal tiny button" href="{{.RepoLink}}/metadata">{{ctx.Locale.Tr "dcs.repo.metadata.see_all_branches_releases"}} &gt;</a>
 				</div>
 			</h4>
 			<div class="ui attached segment">
-				{{if and .Repo.RepoDM (gt .Repo.RepoDM.ID 0)}}
-					{{template "repo/dcs_healthcheck_list" (dict "ctxData" . "Door43Metadata" .Repo.RepoDM)}}
-					{{if gt .Repo.RepoDM.HealthcheckTimeUnix 0}}
-						<div class="ui small text grey">Last checked {{DateUtils.TimeSince .Repo.RepoDM.HealthcheckTimeUnix}} ({{.Repo.RepoDM.RefType}}: {{.Repo.RepoDM.Ref}})</div>
+				{{if and .HealthcheckDM (gt .HealthcheckDM.ID 0)}}
+					{{template "repo/dcs_healthcheck_list" (dict "ctxData" . "Door43Metadata" .HealthcheckDM)}}
+					{{if gt .HealthcheckDM.HealthcheckTimeUnix 0}}
+						<div class="ui small text grey">Last checked {{DateUtils.TimeSince .HealthcheckDM.HealthcheckTimeUnix}} ({{.HealthcheckDM.RefType}}: {{.HealthcheckDM.Ref}})</div>
 					{{end}}
 				{{else}}
 					<span>

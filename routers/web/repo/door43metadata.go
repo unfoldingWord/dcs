@@ -45,13 +45,31 @@ func GetRepoMetadata(ctx *context.Context) {
 	ctx.HTML(http.StatusOK, tplDCSMetadata)
 }
 
-// GetRepoHealthcheck renders the health check page
+// GetRepoHealthcheck renders the health check page: /healthcheck shows the repo's
+// canonical entry (default branch, falling back to the latest release), while
+// /healthcheck/{ref} shows the given branch or tag's own health check.
 func GetRepoHealthcheck(ctx *context.Context) {
 	_ = ctx.Repo.Repository.LoadLatestDMs(ctx)
 
-	// Redirect repos without a checkable metadata type to the metadata page
-	if ctx.Repo.Repository.RepoDM == nil || ctx.Repo.Repository.RepoDM.ID == 0 ||
-		!door43healthcheck.Supported(ctx.Repo.Repository.RepoDM.MetadataType) {
+	var dm *repo_model.Door43Metadata
+	ref := ctx.PathParam("*")
+	if ref != "" {
+		var err error
+		dm, err = repo_model.GetDoor43MetadataByRepoIDAndRef(ctx, ctx.Repo.Repository.ID, ref)
+		if err != nil {
+			if !repo_model.IsErrDoor43MetadataNotExist(err) {
+				ctx.ServerError("GetDoor43MetadataByRepoIDAndRef", err)
+				return
+			}
+			// no entry for this ref; fall through to the redirect below
+			dm = nil
+		}
+	} else {
+		dm = ctx.Repo.Repository.RepoDM
+	}
+
+	// Redirect refs/repos without a checkable entry to the metadata page
+	if dm == nil || dm.ID == 0 || !door43healthcheck.Supported(dm.MetadataType) {
 		ctx.Redirect(ctx.Repo.RepoLink + "/metadata")
 		return
 	}
@@ -59,6 +77,8 @@ func GetRepoHealthcheck(ctx *context.Context) {
 	ctx.Data["Title"] = "Health Check"
 	ctx.Data["PageIsHealthcheck"] = true
 	ctx.Data["Repo"] = ctx.Repo.Repository
+	ctx.Data["HealthcheckDM"] = dm
+	ctx.Data["HealthcheckRef"] = ref
 	ctx.HTML(http.StatusOK, tplDCSHealthcheck)
 }
 

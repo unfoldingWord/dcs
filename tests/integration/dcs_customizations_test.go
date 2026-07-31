@@ -137,3 +137,16 @@ func TestDCSAPIRepoHealthcheck(t *testing.T) {
 	DecodeJSON(t, resp, &payload)
 	assert.True(t, payload.OK)
 }
+
+func TestDCSWebRepoHealthcheckRefPage(t *testing.T) {
+	defer tests.PrepareTestEnv(t)()
+	insertDCSDoor43MetadataFixture(t)
+
+	// the ref-specific page renders the tag's own health check
+	MakeRequest(t, NewRequest(t, "GET", "/user2/repo1/healthcheck/v1.1"), http.StatusOK)
+	// the overall page (repo's canonical entry) still renders
+	MakeRequest(t, NewRequest(t, "GET", "/user2/repo1/healthcheck"), http.StatusOK)
+	// a ref with no catalog entry redirects to the metadata page
+	resp := MakeRequest(t, NewRequest(t, "GET", "/user2/repo1/healthcheck/no-such-ref"), http.StatusSeeOther)
+	assert.Equal(t, "/user2/repo1/metadata", resp.Header().Get("Location"))
+}

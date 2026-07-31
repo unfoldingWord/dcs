@@ -129,6 +129,10 @@ results from outliving their ref:
   `is_healthy_without_warnings:` tokens; repo search keeps the
   `healthcheck:severity` filter.
 - Full results: `GET /api/v1/repos/{owner}/{repo}/healthcheck?ref={branch|tag}`.
+- Web: `/{owner}/{repo}/healthcheck` shows the repo's canonical entry;
+  `/{owner}/{repo}/healthcheck/{ref}` shows a specific branch or tag. The badges on
+  the branches/tags/releases pages (and everywhere the shared badge partial is used
+  with a ref) link to the ref-specific page.
 
 Implementation: `services/door43healthcheck/` (checks per type/format in `checks_*.go`),
 `models/repo/door43healthcheck.go` (issue codes, rules, messages, persistence),
