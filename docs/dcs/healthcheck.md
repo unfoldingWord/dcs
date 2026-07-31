@@ -31,7 +31,8 @@ data (like relations) get **Warnings**; noteworthy-but-legitimate states get **I
 Common checks (all of `rc`, `ts`, `tc`, `sb`):
 
 - metadata file is schema-valid — META-002/011 (`validation_error` empty; rc and sb only)
-- title is set and does not still say "unfoldingWord" (skipped for the unfoldingWord org)
+- title is set and does not still say "unfoldingWord" (warning; skipped for the
+  unfoldingWord, Door43-Catalog and uW orgs, whose titles legitimately carry it)
 - language is not left as English `en` (warning; skipped for `en_*` repos)
 - every ingredient/project file exists and is non-empty (FILE-001); project titles are translated
 

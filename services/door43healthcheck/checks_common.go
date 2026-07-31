@@ -6,6 +6,7 @@ package door43healthcheck
 import (
 	"context"
 	"fmt"
+	"slices"
 	"strings"
 
 	repo_model "gitea.dev/models/repo"
@@ -23,8 +24,11 @@ func checkMetadataValid(_ context.Context, dm *repo_model.Door43Metadata) []*rep
 		fmt.Sprintf(repo_model.IssueCodeMetadataInvalid.IssueSuggestionFormatString(), metadataFileLink(dm), dcs.ConvertValidationErrorToString(dm.ValidationError)))}
 }
 
+// uwTitleExemptOwners are orgs whose resources legitimately carry "unfoldingWord" titles
+var uwTitleExemptOwners = []string{"unfoldingword", "door43-catalog", "uw"}
+
 func checkTitle(_ context.Context, dm *repo_model.Door43Metadata) []*repo_model.Door43HealthcheckIssue {
-	if dm.Repo.Owner.LowerName == "unfoldingword" {
+	if slices.Contains(uwTitleExemptOwners, dm.Repo.Owner.LowerName) {
 		return nil
 	}
 	if dm.Title != "" && !strings.HasPrefix(strings.TrimSpace(dm.Title), "unfoldingWord") {
@@ -37,7 +41,7 @@ func checkTitle(_ context.Context, dm *repo_model.Door43Metadata) []*repo_model.
 	} else {
 		suggestion = fmt.Sprintf(repo_model.IssueCodeTitle.IssueSuggestionFormatString(), metadataFileLink(dm), dm.Title, dm.Title)
 	}
-	return []*repo_model.Door43HealthcheckIssue{newIssue(repo_model.IssueCodeTitle, repo_model.SeverityLevelError,
+	return []*repo_model.Door43HealthcheckIssue{newIssue(repo_model.IssueCodeTitle, repo_model.SeverityLevelWarning,
 		fmt.Sprintf(repo_model.IssueCodeTitle.IssueDetailsFormatString(), dm.MetadataFileName()),
 		suggestion)}
 }
