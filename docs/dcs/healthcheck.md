@@ -59,6 +59,10 @@ Common checks (all of `rc`, `ts`, `tc`, `sb`):
 - every `.usfm` book ingredient is structurally valid: leading `\id` matching the
   declared book (USFM-001/002) and `\c`/`\v` markers present (USFM-004/005) — errors
 - Aligned Bible books with no `\zaln-s` alignment data — **warning** for now (USFM-009)
+- for `tc` repos, a valid `manifest.json` and the root `{repo_name}.usfm` are the only
+  things that matter for release; everything under `.apps/` and the per-chapter JSON
+  dirs is tC-internal working data and is deliberately never validated (STRUCT-011
+  was removed from the spec)
 
 `rc`/`sb` TSV subjects (TSV-001…011):
 
