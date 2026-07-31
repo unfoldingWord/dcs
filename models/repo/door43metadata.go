@@ -985,6 +985,31 @@ func DeleteAllDoor43MetadatasByRepoID(ctx context.Context, repoID int64) (int64,
 	return count, err
 }
 
+// GetHealthcheckSeveritiesByRefs returns ref -> stored health check severity for the
+// repo's given refs, for badge rendering on the branches/tags/releases pages. Refs with
+// no door43_metadata entry are absent from the map, so non-catalog refs get no badge.
+func GetHealthcheckSeveritiesByRefs(ctx context.Context, repoID int64, refs []string) (map[string]SeverityLevel, error) {
+	severities := make(map[string]SeverityLevel, len(refs))
+	if len(refs) == 0 {
+		return severities, nil
+	}
+	var rows []struct {
+		Ref                 string
+		HealthcheckSeverity SeverityLevel
+	}
+	if err := db.GetEngine(ctx).Table("door43_metadata").
+		Cols("ref", "healthcheck_severity").
+		Where(builder.Eq{"repo_id": repoID}).
+		In("ref", refs).
+		Find(&rows); err != nil {
+		return nil, err
+	}
+	for _, row := range rows {
+		severities[row.Ref] = row.HealthcheckSeverity
+	}
+	return severities, nil
+}
+
 // DeleteDoor43MetadatasStaleRefs deletes entries (and their health check issues) whose
 // ref is not in refs — the complete list of the repo's live release tags and branch
 // names — and whose last update predates olderThan. The time guard spares entries

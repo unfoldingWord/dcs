@@ -130,6 +130,34 @@ func TestDeleteDoor43MetadatasStaleRefs(t *testing.T) {
 	assert.False(t, staleExists)
 }
 
+func TestGetHealthcheckSeveritiesByRefs(t *testing.T) {
+	require.NoError(t, unittest.PrepareTestDatabase())
+
+	for ref, severity := range map[string]repo_model.SeverityLevel{
+		"badge-branch": repo_model.SeverityLevelWarning,
+		"badge-v1":     0, // entry exists but was never checked
+	} {
+		dm := &repo_model.Door43Metadata{
+			RepoID: 1, Ref: ref, RefType: "branch",
+			CommitSHA: "0000000000000000000000000000000000000061",
+			Stage:     door43metadata.StageOther, Language: "en", Subject: "Bible", MetadataType: "rc",
+			HealthcheckSeverity: severity,
+		}
+		_, err := db.GetEngine(t.Context()).Insert(dm)
+		require.NoError(t, err)
+	}
+
+	severities, err := repo_model.GetHealthcheckSeveritiesByRefs(t.Context(), 1, []string{"badge-branch", "badge-v1", "no-such-ref"})
+	require.NoError(t, err)
+	assert.Equal(t, repo_model.SeverityLevelWarning, severities["badge-branch"])
+	assert.Contains(t, severities, "badge-v1") // present but zero severity: badge hidden by the template
+	assert.NotContains(t, severities, "no-such-ref")
+
+	severities, err = repo_model.GetHealthcheckSeveritiesByRefs(t.Context(), 1, nil)
+	require.NoError(t, err)
+	assert.Empty(t, severities)
+}
+
 func TestIssueCodesFor(t *testing.T) {
 	rcOBS := repo_model.IssueCodesFor("rc", "Open Bible Stories")
 	assert.Contains(t, rcOBS, repo_model.IssueCodePublisher)
