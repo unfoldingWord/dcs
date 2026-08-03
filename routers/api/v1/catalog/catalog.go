@@ -214,6 +214,18 @@ func Search(ctx *context.APIContext) {
 	//   in: query
 	//   description: list only entries with (true) or without (false) any release attachment content (audio, video, pdf, stream or other)
 	//   type: boolean
+	// - name: is_healthy
+	//   in: query
+	//   description: list only entries that passed (true) or did not pass (false) their health check, ignoring warnings; entries never checked are not healthy
+	//   type: boolean
+	// - name: is_healthy_without_warnings
+	//   in: query
+	//   description: list only entries that passed (true) or did not pass (false) their health check with no warnings; entries never checked are not healthy
+	//   type: boolean
+	// - name: healthcheck
+	//   in: query
+	//   description: list only entries whose overall health check severity is one of the given comma-separated levels (error, warning, info, success); entries never checked do not match
+	//   type: string
 	// - name: partialMatch
 	//   in: query
 	//   description: if true, subject, owner and repo search fields will use partial match (LIKE) when querying the catalog, default is false
@@ -418,6 +430,18 @@ func ListCatalogSubjects(ctx *context.APIContext) {
 	//   in: query
 	//   description: list only those with (true) or without (false) any release attachment content (audio, video, pdf, stream or other)
 	//   type: boolean
+	// - name: is_healthy
+	//   in: query
+	//   description: list only those that passed (true) or did not pass (false) their health check, ignoring warnings; entries never checked are not healthy
+	//   type: boolean
+	// - name: is_healthy_without_warnings
+	//   in: query
+	//   description: list only those that passed (true) or did not pass (false) their health check with no warnings; entries never checked are not healthy
+	//   type: boolean
+	// - name: healthcheck
+	//   in: query
+	//   description: list only those whose overall health check severity is one of the given comma-separated levels (error, warning, info, success); entries never checked do not match
+	//   type: string
 	// - name: includeHistory
 	//   in: query
 	//   description: if true, all entries of the given stage or lower are considered, not just the latest entry per repo, default is false
@@ -591,6 +615,18 @@ func ListCatalogMetadataTypes(ctx *context.APIContext) {
 	//   in: query
 	//   description: list only those with (true) or without (false) any release attachment content (audio, video, pdf, stream or other)
 	//   type: boolean
+	// - name: is_healthy
+	//   in: query
+	//   description: list only those that passed (true) or did not pass (false) their health check, ignoring warnings; entries never checked are not healthy
+	//   type: boolean
+	// - name: is_healthy_without_warnings
+	//   in: query
+	//   description: list only those that passed (true) or did not pass (false) their health check with no warnings; entries never checked are not healthy
+	//   type: boolean
+	// - name: healthcheck
+	//   in: query
+	//   description: list only those whose overall health check severity is one of the given comma-separated levels (error, warning, info, success); entries never checked do not match
+	//   type: string
 	// - name: includeHistory
 	//   in: query
 	//   description: if true, all entries of the given stage or lower are considered, not just the latest entry per repo, default is false
@@ -768,6 +804,18 @@ func ListCatalogOwners(ctx *context.APIContext) {
 	//   in: query
 	//   description: list only those with (true) or without (false) any release attachment content (audio, video, pdf, stream or other)
 	//   type: boolean
+	// - name: is_healthy
+	//   in: query
+	//   description: list only those that passed (true) or did not pass (false) their health check, ignoring warnings; entries never checked are not healthy
+	//   type: boolean
+	// - name: is_healthy_without_warnings
+	//   in: query
+	//   description: list only those that passed (true) or did not pass (false) their health check with no warnings; entries never checked are not healthy
+	//   type: boolean
+	// - name: healthcheck
+	//   in: query
+	//   description: list only those whose overall health check severity is one of the given comma-separated levels (error, warning, info, success); entries never checked do not match
+	//   type: string
 	// - name: includeHistory
 	//   in: query
 	//   description: if true, all entries of the given stage or lower are considered, not just the latest entry per repo, default is false
@@ -953,6 +1001,18 @@ func ListCatalogLanguages(ctx *context.APIContext) {
 	//   in: query
 	//   description: list only those with (true) or without (false) any release attachment content (audio, video, pdf, stream or other)
 	//   type: boolean
+	// - name: is_healthy
+	//   in: query
+	//   description: list only those that passed (true) or did not pass (false) their health check, ignoring warnings; entries never checked are not healthy
+	//   type: boolean
+	// - name: is_healthy_without_warnings
+	//   in: query
+	//   description: list only those that passed (true) or did not pass (false) their health check with no warnings; entries never checked are not healthy
+	//   type: boolean
+	// - name: healthcheck
+	//   in: query
+	//   description: list only those whose overall health check severity is one of the given comma-separated levels (error, warning, info, success); entries never checked do not match
+	//   type: string
 	// - name: includeHistory
 	//   in: query
 	//   description: if true, all entries of the given stage or lower are considered, not just the latest entry per repo, default is false
@@ -1095,32 +1155,35 @@ func getCatalogStatsOpts(ctx *context.APIContext) *door43metadata.SearchCatalogO
 	}
 
 	opts := &door43metadata.SearchCatalogOptions{
-		ListOptions:      db.ListOptions{ListAll: true},
-		Keywords:         keywords,
-		Owners:           QueryStrings(ctx, "owner"),
-		Repos:            QueryStrings(ctx, "repo"),
-		Tags:             QueryStrings(ctx, "tag"),
-		Stage:            stage,
-		Languages:        QueryStrings(ctx, "lang"),
-		LanguageIsGL:     ctx.FormOptionalBool("is_gl"),
-		Subjects:         QueryStrings(ctx, "subject"),
-		FlavorTypes:      QueryStrings(ctx, "flavorType"),
-		Flavors:          QueryStrings(ctx, "flavor"),
-		Abbreviations:    QueryStrings(ctx, "abbreviation"),
-		ContentFormats:   QueryStrings(ctx, "format"),
-		CheckingLevels:   QueryStrings(ctx, "checkingLevel"),
-		Books:            QueryStrings(ctx, "book"),
-		MetadataTypes:    QueryStrings(ctx, "metadataType"),
-		MetadataVersions: QueryStrings(ctx, "metadataVersion"),
-		Topics:           QueryStrings(ctx, "topic"),
-		InvertedTopics:   QueryStrings(ctx, "withoutTopic"),
-		HasAudio:         ctx.FormOptionalBool("hasAudio"),
-		HasVideo:         ctx.FormOptionalBool("hasVideo"),
-		HasPDF:           ctx.FormOptionalBool("hasPdf"),
-		HasStream:        ctx.FormOptionalBool("hasStream"),
-		HasOther:         ctx.FormOptionalBool("hasOther"),
-		HasAttachment:    ctx.FormOptionalBool("hasAttachment"),
-		PartialMatch:     ctx.FormBool("partialMatch"),
+		ListOptions:              db.ListOptions{ListAll: true},
+		Keywords:                 keywords,
+		Owners:                   QueryStrings(ctx, "owner"),
+		Repos:                    QueryStrings(ctx, "repo"),
+		Tags:                     QueryStrings(ctx, "tag"),
+		Stage:                    stage,
+		Languages:                QueryStrings(ctx, "lang"),
+		LanguageIsGL:             ctx.FormOptionalBool("is_gl"),
+		Subjects:                 QueryStrings(ctx, "subject"),
+		FlavorTypes:              QueryStrings(ctx, "flavorType"),
+		Flavors:                  QueryStrings(ctx, "flavor"),
+		Abbreviations:            QueryStrings(ctx, "abbreviation"),
+		ContentFormats:           QueryStrings(ctx, "format"),
+		CheckingLevels:           QueryStrings(ctx, "checkingLevel"),
+		Books:                    QueryStrings(ctx, "book"),
+		MetadataTypes:            QueryStrings(ctx, "metadataType"),
+		MetadataVersions:         QueryStrings(ctx, "metadataVersion"),
+		Topics:                   QueryStrings(ctx, "topic"),
+		InvertedTopics:           QueryStrings(ctx, "withoutTopic"),
+		HasAudio:                 ctx.FormOptionalBool("hasAudio"),
+		HasVideo:                 ctx.FormOptionalBool("hasVideo"),
+		HasPDF:                   ctx.FormOptionalBool("hasPdf"),
+		HasStream:                ctx.FormOptionalBool("hasStream"),
+		HasOther:                 ctx.FormOptionalBool("hasOther"),
+		HasAttachment:            ctx.FormOptionalBool("hasAttachment"),
+		IsHealthy:                ctx.FormOptionalBool("is_healthy"),
+		IsHealthyWithoutWarnings: ctx.FormOptionalBool("is_healthy_without_warnings"),
+		Healthchecks:             QueryStrings(ctx, "healthcheck"),
+		PartialMatch:             ctx.FormBool("partialMatch"),
 	}
 
 	if startDateStr := ctx.FormString("startDate"); startDateStr != "" {
@@ -1297,6 +1360,18 @@ func GetCatalogStats(ctx *context.APIContext) {
 	//   in: query
 	//   description: count only entries with (true) or without (false) any release attachment content (audio, video, pdf, stream or other)
 	//   type: boolean
+	// - name: is_healthy
+	//   in: query
+	//   description: count only entries that passed (true) or did not pass (false) their health check, ignoring warnings; entries never checked are not healthy
+	//   type: boolean
+	// - name: is_healthy_without_warnings
+	//   in: query
+	//   description: count only entries that passed (true) or did not pass (false) their health check with no warnings; entries never checked are not healthy
+	//   type: boolean
+	// - name: healthcheck
+	//   in: query
+	//   description: count only entries whose overall health check severity is one of the given comma-separated levels (error, warning, info, success); entries never checked do not match
+	//   type: string
 	// - name: partialMatch
 	//   in: query
 	//   description: if true, subject, owner and repo search fields will use partial match (LIKE) when querying the catalog, default is false
@@ -1477,6 +1552,18 @@ func GetCatalogStatsExt(ctx *context.APIContext) {
 	//   in: query
 	//   description: count only entries with (true) or without (false) any release attachment content (audio, video, pdf, stream or other)
 	//   type: boolean
+	// - name: is_healthy
+	//   in: query
+	//   description: count only entries that passed (true) or did not pass (false) their health check, ignoring warnings; entries never checked are not healthy
+	//   type: boolean
+	// - name: is_healthy_without_warnings
+	//   in: query
+	//   description: count only entries that passed (true) or did not pass (false) their health check with no warnings; entries never checked are not healthy
+	//   type: boolean
+	// - name: healthcheck
+	//   in: query
+	//   description: count only entries whose overall health check severity is one of the given comma-separated levels (error, warning, info, success); entries never checked do not match
+	//   type: string
 	// - name: partialMatch
 	//   in: query
 	//   description: if true, subject, owner and repo search fields will use partial match (LIKE) when querying the catalog, default is false
@@ -1712,34 +1799,37 @@ func searchCatalog(ctx *context.APIContext) {
 	abbreviations = append(abbreviations, QueryStrings(ctx, "resource")...) // For non-breaking changes, support "resource" argument
 
 	opts := &door43metadata.SearchCatalogOptions{
-		ListOptions:      listOptions,
-		Keywords:         keywords,
-		Owners:           QueryStrings(ctx, "owner"),
-		Repos:            QueryStrings(ctx, "repo"),
-		Tags:             QueryStrings(ctx, "tag"),
-		Stage:            stage,
-		Languages:        QueryStrings(ctx, "lang"),
-		LanguageIsGL:     ctx.FormOptionalBool("is_gl"),
-		Subjects:         QueryStrings(ctx, "subject"),
-		FlavorTypes:      QueryStrings(ctx, "flavorType"),
-		Flavors:          QueryStrings(ctx, "flavor"),
-		Abbreviations:    abbreviations,
-		ContentFormats:   QueryStrings(ctx, "format"),
-		CheckingLevels:   QueryStrings(ctx, "checkingLevel"),
-		Books:            QueryStrings(ctx, "book"),
-		IncludeHistory:   ctx.FormBool("includeHistory"),
-		ShowIngredients:  ctx.FormOptionalBool("showIngredients"),
-		MetadataTypes:    metadataTypes,
-		MetadataVersions: metadataVersions,
-		Topics:           QueryStrings(ctx, "topic"),
-		InvertedTopics:   QueryStrings(ctx, "withoutTopic"),
-		HasAudio:         ctx.FormOptionalBool("hasAudio"),
-		HasVideo:         ctx.FormOptionalBool("hasVideo"),
-		HasPDF:           ctx.FormOptionalBool("hasPdf"),
-		HasStream:        ctx.FormOptionalBool("hasStream"),
-		HasOther:         ctx.FormOptionalBool("hasOther"),
-		HasAttachment:    ctx.FormOptionalBool("hasAttachment"),
-		PartialMatch:     ctx.FormBool("partialMatch"),
+		ListOptions:              listOptions,
+		Keywords:                 keywords,
+		Owners:                   QueryStrings(ctx, "owner"),
+		Repos:                    QueryStrings(ctx, "repo"),
+		Tags:                     QueryStrings(ctx, "tag"),
+		Stage:                    stage,
+		Languages:                QueryStrings(ctx, "lang"),
+		LanguageIsGL:             ctx.FormOptionalBool("is_gl"),
+		Subjects:                 QueryStrings(ctx, "subject"),
+		FlavorTypes:              QueryStrings(ctx, "flavorType"),
+		Flavors:                  QueryStrings(ctx, "flavor"),
+		Abbreviations:            abbreviations,
+		ContentFormats:           QueryStrings(ctx, "format"),
+		CheckingLevels:           QueryStrings(ctx, "checkingLevel"),
+		Books:                    QueryStrings(ctx, "book"),
+		IncludeHistory:           ctx.FormBool("includeHistory"),
+		ShowIngredients:          ctx.FormOptionalBool("showIngredients"),
+		MetadataTypes:            metadataTypes,
+		MetadataVersions:         metadataVersions,
+		Topics:                   QueryStrings(ctx, "topic"),
+		InvertedTopics:           QueryStrings(ctx, "withoutTopic"),
+		HasAudio:                 ctx.FormOptionalBool("hasAudio"),
+		HasVideo:                 ctx.FormOptionalBool("hasVideo"),
+		HasPDF:                   ctx.FormOptionalBool("hasPdf"),
+		HasStream:                ctx.FormOptionalBool("hasStream"),
+		HasOther:                 ctx.FormOptionalBool("hasOther"),
+		HasAttachment:            ctx.FormOptionalBool("hasAttachment"),
+		IsHealthy:                ctx.FormOptionalBool("is_healthy"),
+		IsHealthyWithoutWarnings: ctx.FormOptionalBool("is_healthy_without_warnings"),
+		Healthchecks:             QueryStrings(ctx, "healthcheck"),
+		PartialMatch:             ctx.FormBool("partialMatch"),
 	}
 
 	sortModes := QueryStrings(ctx, "sort")
@@ -2029,33 +2119,36 @@ func getSingleDMFieldList(ctx *context.APIContext, field string) ([]string, erro
 	}
 
 	opts := &door43metadata.SearchCatalogOptions{
-		ListOptions:      listOptions,
-		Owners:           QueryStrings(ctx, "owner"),
-		Repos:            QueryStrings(ctx, "repo"),
-		Tags:             QueryStrings(ctx, "tag"),
-		Stage:            stage,
-		Languages:        QueryStrings(ctx, "lang"),
-		LanguageIsGL:     ctx.FormOptionalBool("is_gl"),
-		Subjects:         QueryStrings(ctx, "subject"),
-		FlavorTypes:      QueryStrings(ctx, "flavorType"),
-		Flavors:          QueryStrings(ctx, "flavor"),
-		Abbreviations:    QueryStrings(ctx, "abbreviation"),
-		ContentFormats:   QueryStrings(ctx, "format"),
-		CheckingLevels:   QueryStrings(ctx, "checkingLevel"),
-		Books:            QueryStrings(ctx, "book"),
-		IncludeHistory:   ctx.FormBool("includeHistory"),
-		ShowIngredients:  ctx.FormOptionalBool("showIngredients"),
-		Topics:           QueryStrings(ctx, "topic"),
-		InvertedTopics:   QueryStrings(ctx, "withoutTopic"),
-		MetadataTypes:    QueryStrings(ctx, "metadataType"),
-		MetadataVersions: QueryStrings(ctx, "metadataVersion"),
-		HasAudio:         ctx.FormOptionalBool("hasAudio"),
-		HasVideo:         ctx.FormOptionalBool("hasVideo"),
-		HasPDF:           ctx.FormOptionalBool("hasPdf"),
-		HasStream:        ctx.FormOptionalBool("hasStream"),
-		HasOther:         ctx.FormOptionalBool("hasOther"),
-		HasAttachment:    ctx.FormOptionalBool("hasAttachment"),
-		PartialMatch:     ctx.FormBool("partialMatch"),
+		ListOptions:              listOptions,
+		Owners:                   QueryStrings(ctx, "owner"),
+		Repos:                    QueryStrings(ctx, "repo"),
+		Tags:                     QueryStrings(ctx, "tag"),
+		Stage:                    stage,
+		Languages:                QueryStrings(ctx, "lang"),
+		LanguageIsGL:             ctx.FormOptionalBool("is_gl"),
+		Subjects:                 QueryStrings(ctx, "subject"),
+		FlavorTypes:              QueryStrings(ctx, "flavorType"),
+		Flavors:                  QueryStrings(ctx, "flavor"),
+		Abbreviations:            QueryStrings(ctx, "abbreviation"),
+		ContentFormats:           QueryStrings(ctx, "format"),
+		CheckingLevels:           QueryStrings(ctx, "checkingLevel"),
+		Books:                    QueryStrings(ctx, "book"),
+		IncludeHistory:           ctx.FormBool("includeHistory"),
+		ShowIngredients:          ctx.FormOptionalBool("showIngredients"),
+		Topics:                   QueryStrings(ctx, "topic"),
+		InvertedTopics:           QueryStrings(ctx, "withoutTopic"),
+		MetadataTypes:            QueryStrings(ctx, "metadataType"),
+		MetadataVersions:         QueryStrings(ctx, "metadataVersion"),
+		HasAudio:                 ctx.FormOptionalBool("hasAudio"),
+		HasVideo:                 ctx.FormOptionalBool("hasVideo"),
+		HasPDF:                   ctx.FormOptionalBool("hasPdf"),
+		HasStream:                ctx.FormOptionalBool("hasStream"),
+		HasOther:                 ctx.FormOptionalBool("hasOther"),
+		HasAttachment:            ctx.FormOptionalBool("hasAttachment"),
+		IsHealthy:                ctx.FormOptionalBool("is_healthy"),
+		IsHealthyWithoutWarnings: ctx.FormOptionalBool("is_healthy_without_warnings"),
+		Healthchecks:             QueryStrings(ctx, "healthcheck"),
+		PartialMatch:             ctx.FormBool("partialMatch"),
 	}
 
 	sortModes := QueryStrings(ctx, "sort")

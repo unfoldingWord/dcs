@@ -15,7 +15,8 @@ Both accept **all the regular catalog search filters** — `q`, `owner`, `repo`,
 `tag`, `lang`, `is_gl`, `stage`, `subject`, `flavorType`, `flavor`,
 `abbreviation`, `format`, `checkingLevel`, `book`, `metadataType`,
 `metadataVersion`, `topic`, `withoutTopic`, the `has*` content flags,
-`includeHistory` and `partialMatch` — plus two date bounds:
+`is_healthy`, `is_healthy_without_warnings`, `healthcheck` (comma-separated
+severity levels), `includeHistory` and `partialMatch` — plus two date bounds:
 
 - `startDate` — only entries with `release_date_unix` **on or after** this date.
 - `endDate` — only entries **on or before** this date. A date given without a
@@ -51,7 +52,7 @@ accepts a Unix timestamp or common formats like `2026-07-13`,
 }
 ```
 
-`/stats-ext` adds the healthcheck counts and the unique value lists:
+`/stats-ext` adds the healthcheck counts and per-value repo counts:
 
 ```json
 {
@@ -60,12 +61,14 @@ accepts a Unix timestamp or common formats like `2026-07-13`,
   "healthcheck_warning_count": 5,
   "healthcheck_error_count": 2,
   "no_healthcheck_count": 53,
-  "subjects": ["Bible", "Open Bible Stories"],
-  "flavor_types": ["gloss", "scripture"],
-  "flavors": ["textStories", "textTranslation"],
-  "owners": ["door43-catalog", "unfoldingword"],
-  "languages": ["ar", "en", "fr"],
-  "metadata_types": ["rc", "sb"]
+  "is_healthy_count": 65,
+  "is_healthy_without_warnings_count": 60,
+  "subjects": {"Bible": 40, "Open Bible Stories": 80},
+  "flavor_types": {"gloss": 80, "scripture": 40},
+  "flavors": {"textStories": 80, "textTranslation": 40},
+  "owners": {"door43-catalog": 100, "unfoldingword": 20},
+  "languages": {"ar": 10, "en": 60, "fr": 50},
+  "metadata_types": {"rc": 80, "sb": 40}
 }
 ```
 
@@ -85,12 +88,16 @@ accepts a Unix timestamp or common formats like `2026-07-13`,
 - `has_attachment` — entries with at least one attachment content type (any of
   the five `has_*` flags true), matching the `hasAttachment=1` filter. An entry
   with, say, both audio and PDF counts once.
-- The `healthcheck_*_count` fields are only in `/stats-ext`.
-  `no_healthcheck_count` counts entries whose `healthcheck_severity` is NULL
-  or 0. Healthchecks only run against default-branch metadata, so
-  release-stage queries report mostly "none".
-- The `/stats-ext` value lists are sorted ascending; owners are lowercase
-  (`user.lower_name`), making the sort case-insensitive.
+- The `healthcheck_*_count` and `is_healthy*_count` fields are only in
+  `/stats-ext`. `no_healthcheck_count` counts entries whose
+  `healthcheck_severity` is NULL or 0 (never checked). Health checks run for
+  every branch and tag entry when its ref is processed (see
+  `docs/dcs/healthcheck.md`), so release-stage entries carry their own results.
+- `is_healthy_count` counts entries with severity success, info or warning
+  (warnings are healthy by default); `is_healthy_without_warnings_count` counts
+  severity success or info only. Never-checked entries count toward neither.
+- The `/stats-ext` value maps are repo counts keyed by value; owners are
+  lowercase (`user.lower_name`).
 
 Implementation: `GetCatalogStats` / `GetCatalogStatsExt` in
 `models/catalog_list.go` (one aggregate query reusing `SearchCatalogCondition`,

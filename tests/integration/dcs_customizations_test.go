@@ -137,3 +137,46 @@ func TestDCSAPIRepoHealthcheck(t *testing.T) {
 	DecodeJSON(t, resp, &payload)
 	assert.True(t, payload.OK)
 }
+
+func TestDCSWebRepoHealthcheckRefPage(t *testing.T) {
+	defer tests.PrepareTestEnv(t)()
+	insertDCSDoor43MetadataFixture(t)
+
+	// the ref-specific page renders the tag's own health check
+	MakeRequest(t, NewRequest(t, "GET", "/user2/repo1/healthcheck/v1.1"), http.StatusOK)
+	// the overall page (repo's canonical entry) still renders
+	MakeRequest(t, NewRequest(t, "GET", "/user2/repo1/healthcheck"), http.StatusOK)
+	// a ref with no catalog entry redirects to the metadata page
+	resp := MakeRequest(t, NewRequest(t, "GET", "/user2/repo1/healthcheck/no-such-ref"), http.StatusSeeOther)
+	assert.Equal(t, "/user2/repo1/metadata", resp.Header().Get("Location"))
+}
+
+func TestDCSAPIRepoSearchIsHealthy(t *testing.T) {
+	defer tests.PrepareTestEnv(t)()
+	dm := insertDCSDoor43MetadataFixture(t) // repo1's canonical entry, never checked
+
+	repoNames := func(query string) []string {
+		resp := MakeRequest(t, NewRequest(t, "GET", "/api/v1/repos/search?"+query), http.StatusOK)
+		var payload struct {
+			Data []struct {
+				Name string `json:"name"`
+			} `json:"data"`
+		}
+		DecodeJSON(t, resp, &payload)
+		names := make([]string, 0, len(payload.Data))
+		for _, r := range payload.Data {
+			names = append(names, r.Name)
+		}
+		return names
+	}
+
+	// never-checked repos are not healthy
+	assert.NotContains(t, repoNames("is_healthy=true"), "repo1")
+	assert.Contains(t, repoNames("is_healthy=false"), "repo1")
+
+	// a warning-severity canonical entry is healthy by default but not under the strict filter
+	dm.HealthcheckSeverity = repo_model.SeverityLevelWarning
+	require.NoError(t, repo_model.UpdateDoor43MetadataCols(t.Context(), dm, "healthcheck_severity"))
+	assert.Contains(t, repoNames("is_healthy=true"), "repo1")
+	assert.NotContains(t, repoNames("is_healthy_without_warnings=true"), "repo1")
+}

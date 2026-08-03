@@ -186,6 +186,14 @@ func Search(ctx *context.APIContext) {
 	//   items:
 	//     type: string
 	//     enum: [error,warning,info,success]
+	// - name: is_healthy
+	//   in: query
+	//   description: return only repos whose canonical catalog entry passed (true) or did not pass (false) its health check, ignoring warnings; repos never checked are not healthy
+	//   type: boolean
+	// - name: is_healthy_without_warnings
+	//   in: query
+	//   description: return only repos whose canonical catalog entry passed (true) or did not pass (false) its health check with no warnings; repos never checked are not healthy
+	//   type: boolean
 	// - name: metadataType
 	//   in: query
 	//   description: return repos only with metadata of this type
@@ -251,22 +259,24 @@ func Search(ctx *context.APIContext) {
 		StarredByID:        ctx.FormInt64("starredBy"),
 		IncludeDescription: ctx.FormBool("includeDesc"),
 		/*** DCS Customizations ***/
-		Languages:        catalog.QueryStrings(ctx, "lang"),
-		Repos:            catalog.QueryStrings(ctx, "repo"),
-		Owners:           catalog.QueryStrings(ctx, "owner"),
-		Subjects:         catalog.QueryStrings(ctx, "subject"),
-		FlavorTypes:      catalog.QueryStrings(ctx, "flavorType"),
-		Flavors:          catalog.QueryStrings(ctx, "flavor"),
-		Abbreviations:    abbreviations,
-		ContentFormats:   catalog.QueryStrings(ctx, "format"),
-		Books:            catalog.QueryStrings(ctx, "book"),
-		MetadataTypes:    catalog.QueryStrings(ctx, "metadataType"),
-		MetadataVersions: catalog.QueryStrings(ctx, "metadataVersion"),
-		Topics:           catalog.QueryStrings(ctx, "topic"),
-		InvertedTopics:   catalog.QueryStrings(ctx, "withoutTopic"),
-		Healthchecks:     catalog.QueryStrings(ctx, "healthcheckSeverity"),
-		LanguageIsGL:     ctx.FormOptionalBool("is_gl"),
-		PartialMatch:     ctx.FormBool("partialMatch"),
+		Languages:                catalog.QueryStrings(ctx, "lang"),
+		Repos:                    catalog.QueryStrings(ctx, "repo"),
+		Owners:                   catalog.QueryStrings(ctx, "owner"),
+		Subjects:                 catalog.QueryStrings(ctx, "subject"),
+		FlavorTypes:              catalog.QueryStrings(ctx, "flavorType"),
+		Flavors:                  catalog.QueryStrings(ctx, "flavor"),
+		Abbreviations:            abbreviations,
+		ContentFormats:           catalog.QueryStrings(ctx, "format"),
+		Books:                    catalog.QueryStrings(ctx, "book"),
+		MetadataTypes:            catalog.QueryStrings(ctx, "metadataType"),
+		MetadataVersions:         catalog.QueryStrings(ctx, "metadataVersion"),
+		Topics:                   catalog.QueryStrings(ctx, "topic"),
+		InvertedTopics:           catalog.QueryStrings(ctx, "withoutTopic"),
+		Healthchecks:             catalog.QueryStrings(ctx, "healthcheckSeverity"),
+		IsHealthy:                ctx.FormOptionalBool("is_healthy"),
+		IsHealthyWithoutWarnings: ctx.FormOptionalBool("is_healthy_without_warnings"),
+		LanguageIsGL:             ctx.FormOptionalBool("is_gl"),
+		PartialMatch:             ctx.FormBool("partialMatch"),
 		/*** END DCS Customizations ***/
 	}
 	opts.ApplyPublicOnly(ctx.PublicOnly)

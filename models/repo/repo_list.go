@@ -223,7 +223,11 @@ type SearchRepoOptions struct {
 	Topics           []string // DCS Customizations
 	InvertedTopics   []string // DCS Customizations
 	Healthchecks     []string // DCS Customizations
-	PartialMatch     bool     // DCS Customizations
+	// is_healthy filters on the repo's canonical entry's healthcheck severity:
+	// true = success/info/warning; the strict variant excludes warnings too
+	IsHealthy                optional.Option[bool] // DCS Customizations
+	IsHealthyWithoutWarnings optional.Option[bool] // DCS Customizations
+	PartialMatch             bool                  // DCS Customizations
 	// When specified true, apply some filters over the conditions:
 	// - Don't show forks, when opts.Fork is OptionalBoolNone.
 	// - Do not display repositories that don't have a description, an icon and topics.
@@ -564,7 +568,8 @@ func SearchRepositoryCondition(opts SearchRepoOptions) builder.Cond {
 		door43metadata.GetMetadataTypeCond(opts.MetadataTypes, false),
 		door43metadata.GetTopicCond(opts.Topics, opts.PartialMatch),
 		door43metadata.GetInvertedTopicCond(opts.InvertedTopics, opts.PartialMatch),
-		door43metadata.GetHealthcheckCond(opts.Healthchecks))
+		door43metadata.GetHealthcheckCond(opts.Healthchecks),
+		door43metadata.GetIsHealthyCond(opts.IsHealthy, opts.IsHealthyWithoutWarnings))
 
 	if len(opts.MetadataTypes) > 0 {
 		cond = cond.And(door43metadata.GetMetadataVersionCond(opts.MetadataVersions, false))
