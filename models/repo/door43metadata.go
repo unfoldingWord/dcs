@@ -543,23 +543,24 @@ func IsDoor43MetadataExist(ctx context.Context, repoID, releaseID int64) (bool, 
 // InsertDoor43Metadata inserts a door43 metadata
 func InsertDoor43Metadata(ctx context.Context, dm *Door43Metadata) error {
 	// dm.ValidationError = pruneValidationError(dm.ValidationError, 65535) // Adjust maxLength as needed
-	if id, err := db.GetEngine(ctx).Insert(dm); err != nil {
+	// Note: Insert returns the AFFECTED ROW COUNT, not the new ID — xorm fills dm.ID
+	// (the autoincr pk) on the bean itself. Assigning the return value to dm.ID used to
+	// clobber the real ID with 1, sending every post-insert health check to row 1.
+	if _, err := db.GetEngine(ctx).Insert(dm); err != nil {
 		return err
-	} else if id > 0 {
-		dm.ID = id
-		if err := dm.LoadRepo(ctx); err != nil {
-			return err
-		}
-		// if dm.ReleaseID > 0 {
-		// 	if err := system.CreateRepositoryNotice("Door43 Metadata created for repo: %s, tag: %s", dm.Repo.Name, dm.Ref); err != nil {
-		// 		return err
-		// 	}
-		// } else {
-		// 	if err := system.CreateRepositoryNotice("Door43 Metadata created for repo: %s, branch: %s", dm.Repo.Name, dm.Ref); err != nil {
-		// 		return err
-		// 	}
-		// }
 	}
+	if err := dm.LoadRepo(ctx); err != nil {
+		return err
+	}
+	// if dm.ReleaseID > 0 {
+	// 	if err := system.CreateRepositoryNotice("Door43 Metadata created for repo: %s, tag: %s", dm.Repo.Name, dm.Ref); err != nil {
+	// 		return err
+	// 	}
+	// } else {
+	// 	if err := system.CreateRepositoryNotice("Door43 Metadata created for repo: %s, branch: %s", dm.Repo.Name, dm.Ref); err != nil {
+	// 		return err
+	// 	}
+	// }
 	return nil
 }
 
