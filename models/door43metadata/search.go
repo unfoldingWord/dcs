@@ -143,7 +143,7 @@ func SearchCatalogCondition(opts *SearchCatalogOptions) builder.Cond {
 		GetTopicCond(opts.Topics, opts.PartialMatch),
 		GetInvertedTopicCond(opts.InvertedTopics, opts.PartialMatch),
 		GetHealthcheckCond(opts.Healthchecks),
-		GetIsHealthyCond(opts),
+		GetIsHealthyCond(opts.IsHealthy, opts.IsHealthyWithoutWarnings),
 		GetContentFlagsCond(opts),
 		GetReleaseDateCond(opts.StartDateUnix, opts.EndDateUnix),
 		GetTagCond(opts.Tags),
@@ -361,19 +361,19 @@ func GetHealthcheckCond(healthchecks []string) builder.Cond {
 // GetIsHealthyCond gets the condition for the is_healthy and is_healthy_without_warnings
 // filters, both derived from healthcheck_severity. is_healthy ignores warnings;
 // is_healthy_without_warnings does not. Entries never checked (NULL or 0) are not healthy.
-func GetIsHealthyCond(opts *SearchCatalogOptions) builder.Cond {
+func GetIsHealthyCond(isHealthy, isHealthyWithoutWarnings optional.Option[bool]) builder.Cond {
 	cond := builder.NewCond()
 	col := "`door43_metadata`.healthcheck_severity"
 	notChecked := builder.IsNull{col}.Or(builder.Eq{col: 0})
-	if opts.IsHealthy.Has() {
-		if opts.IsHealthy.Value() {
+	if isHealthy.Has() {
+		if isHealthy.Value() {
 			cond = cond.And(builder.In(col, SeverityLevelSuccess, SeverityLevelInfo, SeverityLevelWarning))
 		} else {
 			cond = cond.And(builder.Eq{col: SeverityLevelError}.Or(notChecked))
 		}
 	}
-	if opts.IsHealthyWithoutWarnings.Has() {
-		if opts.IsHealthyWithoutWarnings.Value() {
+	if isHealthyWithoutWarnings.Has() {
+		if isHealthyWithoutWarnings.Value() {
 			cond = cond.And(builder.In(col, SeverityLevelSuccess, SeverityLevelInfo))
 		} else {
 			cond = cond.And(builder.In(col, SeverityLevelWarning, SeverityLevelError).Or(notChecked))

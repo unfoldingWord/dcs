@@ -7112,6 +7112,18 @@
             "in": "query"
           },
           {
+            "type": "boolean",
+            "description": "return only repos whose canonical catalog entry passed (true) or did not pass (false) its health check, ignoring warnings; repos never checked are not healthy",
+            "name": "is_healthy",
+            "in": "query"
+          },
+          {
+            "type": "boolean",
+            "description": "return only repos whose canonical catalog entry passed (true) or did not pass (false) its health check with no warnings; repos never checked are not healthy",
+            "name": "is_healthy_without_warnings",
+            "in": "query"
+          },
+          {
             "type": "array",
             "items": {
               "enum": [

@@ -19476,6 +19476,22 @@
             }
           },
           {
+            "description": "return only repos whose canonical catalog entry passed (true) or did not pass (false) its health check, ignoring warnings; repos never checked are not healthy",
+            "in": "query",
+            "name": "is_healthy",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "description": "return only repos whose canonical catalog entry passed (true) or did not pass (false) its health check with no warnings; repos never checked are not healthy",
+            "in": "query",
+            "name": "is_healthy_without_warnings",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
             "description": "return repos only with metadata of this type",
             "in": "query",
             "name": "metadataType",

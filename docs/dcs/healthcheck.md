@@ -124,6 +124,10 @@ results from outliving their ref:
 - `healthcheck=error,warning,info,success` (comma list) on the same endpoints matches
   entries by exact overall severity — the general form when the two booleans aren't
   enough. Never-checked entries match no level.
+- `/api/v1/repos/search` accepts the same `is_healthy` / `is_healthy_without_warnings`
+  booleans (and its existing `healthcheckSeverity` list), filtering on the repo's
+  canonical entry — its default branch whenever that has a valid metadata entry,
+  falling back to the latest release otherwise.
 - Catalog entries include `healthcheck_severity`, `is_healthy`,
   `is_healthy_without_warnings` and `healthcheck_url`.
 - `/stats-ext` includes `is_healthy_count` and `is_healthy_without_warnings_count`.
