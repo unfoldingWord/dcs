@@ -24,11 +24,12 @@ func checkMetadataValid(_ context.Context, dm *repo_model.Door43Metadata) []*rep
 		fmt.Sprintf(repo_model.IssueCodeMetadataInvalid.IssueSuggestionFormatString(), metadataFileLink(dm), dcs.ConvertValidationErrorToString(dm.ValidationError)))}
 }
 
-// uwTitleExemptOwners are orgs whose resources legitimately carry "unfoldingWord" titles
-var uwTitleExemptOwners = []string{"unfoldingword", "door43-catalog", "uw"}
+// uwExemptOwners are orgs whose resources legitimately carry "unfoldingWord"
+// titles and publishers
+var uwExemptOwners = []string{"unfoldingword", "door43-catalog", "uw"}
 
 func checkTitle(_ context.Context, dm *repo_model.Door43Metadata) []*repo_model.Door43HealthcheckIssue {
-	if slices.Contains(uwTitleExemptOwners, dm.Repo.Owner.LowerName) {
+	if slices.Contains(uwExemptOwners, dm.Repo.Owner.LowerName) {
 		return nil
 	}
 	if dm.Title != "" && !strings.HasPrefix(strings.TrimSpace(dm.Title), "unfoldingWord") {

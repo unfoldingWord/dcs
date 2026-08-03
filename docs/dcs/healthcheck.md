@@ -42,7 +42,8 @@ Common checks (all of `rc`, `ts`, `tc`, `sb`):
 
 `rc` only:
 
-- publisher changed from "unfoldingWord"; identifier valid for the subject
+- publisher changed from "unfoldingWord" (warning; skipped for the same three
+  exempt orgs as the title check); identifier valid for the subject
 - relations are **advisory** (nothing depends on their accuracy), so all relation
   findings are warnings or info: a relation whose language differs from the
   resource's (except `hbo`/`el-x-koine`) is a **warning** (REL-004); a relation that

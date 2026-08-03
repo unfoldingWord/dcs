@@ -17,13 +17,13 @@ import (
 // Checks in this file only run for Resource Container (rc) repos.
 
 func checkPublisher(_ context.Context, dm *repo_model.Door43Metadata) []*repo_model.Door43HealthcheckIssue {
-	if dm.Repo.Owner.LowerName == "unfoldingword" {
+	if slices.Contains(uwExemptOwners, dm.Repo.Owner.LowerName) {
 		return nil
 	}
 	if dm.Publisher != "" && !strings.HasPrefix(strings.TrimSpace(dm.Publisher), "unfoldingWord") {
 		return nil
 	}
-	return []*repo_model.Door43HealthcheckIssue{newIssue(repo_model.IssueCodePublisher, repo_model.SeverityLevelError,
+	return []*repo_model.Door43HealthcheckIssue{newIssue(repo_model.IssueCodePublisher, repo_model.SeverityLevelWarning,
 		repo_model.IssueCodePublisher.IssueDetailsFormatString(),
 		fmt.Sprintf(repo_model.IssueCodePublisher.IssueSuggestionFormatString(), metadataFileLink(dm), dm.Repo.OwnerName))}
 }
