@@ -54,12 +54,12 @@ var requiredCellsBySubject = map[string][]string{
 }
 
 var (
-	tsvIDRegex              = regexp.MustCompile(`^[a-z][a-z0-9]{3}$`)                                                                // TSV-004
-	tsvRefPartRegex         = regexp.MustCompile(`^(front:intro|\d+:intro|\d+:front)$`)                                               // TSV-003 (non-verse anchors)
-	tsvRefChapterVerseRegex = regexp.MustCompile(`^\d+:\d+(-\d+)?$`)                                                                  // TSV-003 ({c}:{v} or {c}:{v}-{v2})
-	tsvRefVerseRegex        = regexp.MustCompile(`^\d+(-\d+)?$`)                                                                      // TSV-003 (bare verse continuing the last chapter)
-	twLinkRegex             = regexp.MustCompile(`^rc://(\*|[A-Za-z0-9-]+)/tw/dict/bible/(kt|names|other)/[A-Za-z0-9-]+$`)            // TSV-008
-	taLinkRegex             = regexp.MustCompile(`^rc://(\*|[A-Za-z0-9-]+)/ta/man/(intro|process|translate|checking)/[A-Za-z0-9-]+$`) // TSV-009
+	tsvIDRegex              = regexp.MustCompile(`^[a-z][a-z0-9]{3}$`)                                                                 // TSV-004
+	tsvRefPartRegex         = regexp.MustCompile(`^(front:intro|\d+:intro|\d+:front)$`)                                                // TSV-003 (non-verse anchors)
+	tsvRefChapterVerseRegex = regexp.MustCompile(`^\d+:\d+(-\d+)?$`)                                                                   // TSV-003 ({c}:{v} or {c}:{v}-{v2})
+	tsvRefVerseRegex        = regexp.MustCompile(`^\d+(-\d+)?$`)                                                                       // TSV-003 (bare verse continuing the last chapter)
+	twLinkRegex             = regexp.MustCompile(`^rc://(\*|[A-Za-z0-9-]+)/tw/dict/bible/(kt|names|other)/[A-Za-z0-9_-]+$`)            // TSV-008
+	taLinkRegex             = regexp.MustCompile(`^rc://(\*|[A-Za-z0-9-]+)/ta/man/(intro|process|translate|checking)/[A-Za-z0-9_-]+$`) // TSV-009
 )
 
 // checkTSVFiles validates every TSV ingredient of a TSV-subject entry (rc and sb) per

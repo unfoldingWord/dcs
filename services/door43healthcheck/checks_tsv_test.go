@@ -60,7 +60,8 @@ func TestCheckTSVFileContent(t *testing.T) {
 			"1:1\tabc1\tkeyterm\tword\t1\trc://*/tw/dict/bible/kt/god\n" +
 			"1:2\tabc2\t\tword\t1\thttps://example.com/not-an-rc-link\n" + // TSV-008
 			"1:3\tabc3\t\tword\t1\t\n" + // TSV-011 (empty TWLink)
-			"1:4\tabc4\t\t\t0\trc://*/tw/dict/bible/kt/god\n" // TSV-011 (empty OrigWords)
+			"1:4\tabc4\t\t\t0\trc://*/tw/dict/bible/kt/god\n" + // TSV-011 (empty OrigWords)
+			"1:5\tabc5\t\tword\t1\trc://*/tw/dict/bible/other/house-descendants_nation\n" // underscores in slugs are valid (en_tw)
 		issues := checkTSVFileContent(twlDM, "twl_GEN.tsv", strings.NewReader(content))
 		codes := tsvIssueCodesOf(issues)
 		assert.Contains(t, codes, repo_model.IssueCodeTSVLinkInvalid)
