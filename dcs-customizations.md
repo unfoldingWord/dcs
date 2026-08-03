@@ -75,7 +75,8 @@ This document catalogs every DCS modification to existing Gitea files. New DCS-o
 | `routers/web/user/profile.go` | DCS keyword parsing, search fields, LoadLatestDMs | HIGH | models/repo/repo_dcs.go |
 | `routers/web/org/home.go` | DCS keyword parsing, search fields, LoadLatestDMs | HIGH | models/repo/repo_dcs.go |
 | `routers/web/admin/users.go` | Spam user filter, LoadLatestDMs | MEDIUM | - |
-| `routers/web/repo/release.go` | Door43Metadata loading for releases/tags, GetLatestReleaseByRepoID call | HIGH | models/repo/door43metadata.go |
+| `routers/web/repo/release.go` | Door43Metadata loading for releases/tags, GetLatestReleaseByRepoID call, healthcheck severities for ref badges | HIGH | models/repo/door43metadata.go, templates/dcs/ref_healthcheck_badge.tmpl |
+| `routers/web/repo/branch.go` | Healthcheck severities for branch-list ref badges | MEDIUM | models/repo/door43metadata.go, templates/dcs/ref_healthcheck_badge.tmpl |
 | `routers/web/repo/repo.go` | DownloadSB/InitiateDownloadSB handlers, GetLatestReleaseByRepoID call | MEDIUM | services/sbarchiver/ |
 | `routers/web/repo/compare.go` | TSV reader, TreeEntry attachment for diffs | MEDIUM | - |
 | `routers/web/repo/pull.go` | TreeEntry attachment for JSON/YAML validation | MEDIUM | - |
@@ -226,7 +227,7 @@ This document catalogs every DCS modification to existing Gitea files. New DCS-o
 - `models/catalog_list.go`, `catalog_list_test.go`
 - `models/door43metadata/search.go`, `stage.go`
 - `models/git/refs.go`
-- `models/repo/catalog.go`, `door43healthcheck.go`, `door43metadata.go`, `door43metadata_test.go`, `release_dcs.go`, `repo_dcs.go`
+- `models/repo/catalog.go`, `door43healthcheck.go`, `door43healthcheck_test.go`, `door43metadata.go`, `door43metadata_test.go`, `release_dcs.go`, `repo_dcs.go`
 - `models/user_dcs.go`
 - `models/fixtures/door43_metadata.yml`
 - `modules/dcs/attachments.go`, `books.go`, `datetime.go`, `files.go`, `languages.go`, `metadata.go`, `rc02.go`, `sb100.go`, `stats.go`, `strings.go`, `subjects.go`, `tcts.go`, `valdation.go`
@@ -243,13 +244,14 @@ This document catalogs every DCS modification to existing Gitea files. New DCS-o
 - `routers/web/repo/door43metadata.go`
 - `services/convert/catalog.go`, `catalog_test.go`, `git_ref.go`, `repository_dcs.go`
 - `services/cron/tasks_dcs.go`
-- `services/door43healthcheck/healthcheck.go`, `obs_checks.go`
+- `services/door43healthcheck/healthcheck.go`, `checks_common.go`, `checks_rc.go`, `checks_sb.go`, `checks_tsv.go`, `checks_tsv_test.go`, `checks_usfm.go`, `checks_usfm_test.go`, `obs_checks.go`, `obs_checks_test.go`
 - `services/door43metadata/door43metadata.go`, `door43metadata_notifier.go`, `door43metadata_test.go`
 - `services/gitref/gitref.go`, `gitref_test.go`
 
 ### Templates
 
 - `templates/catalog/catalog.tmpl`, `catalog_list.tmpl`, `catalog_search.tmpl`, `catalog_publisher_list.tmpl`, `hc_dash.tmpl`, `info_icon.tmpl`
+- `templates/dcs/` partials (badges, previews, navbar/signup extras — incl. `ref_healthcheck_badge.tmpl` for the branches/tags/releases pages)
 - `templates/dcs_testing_banner.tmpl`
 - `templates/repo/dcs_metadata.tmpl`, `dcs_metadata_list.tmpl`, `dcs_metadata_list_item.tmpl`, `dcs_healthcheck.tmpl`, `dcs_healthcheck_list.tmpl`
 - `templates/shared/healthcheck_badge.tmpl`, `searchbuilder.tmpl`
@@ -271,4 +273,4 @@ This document catalogs every DCS modification to existing Gitea files. New DCS-o
 ### Frontend
 
 - `web_src/css/dcs.css`
-- `web_src/js/features/dcs-info-icons.ts`, `dcs-language-fonts.ts`, `dcs-search-builder.ts`, `dcs-validation-badge.ts`
+- `web_src/js/features/dcs-catalog-search.ts`, `dcs-hc-dash.ts`, `dcs-healthcheck-badge.ts`, `dcs-info-icon.ts`, `dcs-language-fonts.ts`, `dcs-metadata.ts`, `dcs-usfm-download.ts`, `dcs-validation-badge.ts`

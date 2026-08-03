@@ -12,9 +12,9 @@ import (
 	"gitea.dev/modules/log"
 	"gitea.dev/modules/options"
 
-	"github.com/santhosh-tekuri/jsonschema/v5"
-
 	_ "github.com/santhosh-tekuri/jsonschema/v5/httploader" // Loader for Schema via HTTP
+
+	"github.com/santhosh-tekuri/jsonschema/v5"
 )
 
 var rc02Schema *jsonschema.Schema

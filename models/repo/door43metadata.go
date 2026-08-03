@@ -84,8 +84,9 @@ type Door43Metadata struct {
 	IsRepoMetadata      bool                        `xorm:"INDEX NOT NULL DEFAULT false"`
 	Metadata            map[string]any              `xorm:"JSON MEDIUMTEXT"`
 	ValidationError     *jsonschema.ValidationError `xorm:"JSON MEDIUMTEXT"`
-	HealthcheckSeverity SeverityLevel               `xorm:"NULL DEFAULT NULL"`
+	HealthcheckSeverity SeverityLevel               `xorm:"INDEX NULL DEFAULT NULL"`
 	HealthcheckCounts   map[SeverityLevel]int       `xorm:"JSON"`
+	HealthcheckTimeUnix timeutil.TimeStamp          `xorm:"NOT NULL DEFAULT 0"`
 	ReleaseDateUnix     timeutil.TimeStamp          `xorm:"INDEX index(repo_stage_latest_date) NOT NULL"`
 	CreatedUnix         timeutil.TimeStamp          `xorm:"INDEX created NOT NULL"`
 	UpdatedUnix         timeutil.TimeStamp          `xorm:"INDEX updated"`
@@ -93,6 +94,18 @@ type Door43Metadata struct {
 
 func init() {
 	db.RegisterModel(new(Door43Metadata))
+}
+
+// MetadataFileName returns the name of the file the metadata of this entry comes from
+func (dm *Door43Metadata) MetadataFileName() string {
+	switch dm.MetadataType {
+	case "sb":
+		return "metadata.json"
+	case "tc", "ts":
+		return "manifest.json"
+	default:
+		return "manifest.yaml"
+	}
 }
 
 // LoadRepo gets the repo associated with the door43 metadata entry
@@ -157,6 +170,11 @@ func (dm *Door43Metadata) CatalogMetatadataJSONURL() string {
 // CatalogValidationErrorsURL the api url for a catalog metadata. door43 metadata must have attributes loaded
 func (dm *Door43Metadata) CatalogValidationErrorsURL() string {
 	return setting.AppURL + "api/v1/catalog/validation/" + url.PathEscape(dm.Repo.OwnerName) + "/" + url.PathEscape(dm.Repo.Name) + "/" + url.PathEscape(dm.Ref)
+}
+
+// HealthcheckAPIURL the api url for this entry's full health check results. door43 metadata must have attributes loaded
+func (dm *Door43Metadata) HealthcheckAPIURL() string {
+	return setting.AppURL + "api/v1/repos/" + url.PathEscape(dm.Repo.OwnerName) + "/" + url.PathEscape(dm.Repo.Name) + "/healthcheck?ref=" + url.QueryEscape(dm.Ref)
 }
 
 // TarballURL the tarball URL of the tag or branch
@@ -525,23 +543,24 @@ func IsDoor43MetadataExist(ctx context.Context, repoID, releaseID int64) (bool, 
 // InsertDoor43Metadata inserts a door43 metadata
 func InsertDoor43Metadata(ctx context.Context, dm *Door43Metadata) error {
 	// dm.ValidationError = pruneValidationError(dm.ValidationError, 65535) // Adjust maxLength as needed
-	if id, err := db.GetEngine(ctx).Insert(dm); err != nil {
+	// Note: Insert returns the AFFECTED ROW COUNT, not the new ID — xorm fills dm.ID
+	// (the autoincr pk) on the bean itself. Assigning the return value to dm.ID used to
+	// clobber the real ID with 1, sending every post-insert health check to row 1.
+	if _, err := db.GetEngine(ctx).Insert(dm); err != nil {
 		return err
-	} else if id > 0 {
-		dm.ID = id
-		if err := dm.LoadRepo(ctx); err != nil {
-			return err
-		}
-		// if dm.ReleaseID > 0 {
-		// 	if err := system.CreateRepositoryNotice("Door43 Metadata created for repo: %s, tag: %s", dm.Repo.Name, dm.Ref); err != nil {
-		// 		return err
-		// 	}
-		// } else {
-		// 	if err := system.CreateRepositoryNotice("Door43 Metadata created for repo: %s, branch: %s", dm.Repo.Name, dm.Ref); err != nil {
-		// 		return err
-		// 	}
-		// }
 	}
+	if err := dm.LoadRepo(ctx); err != nil {
+		return err
+	}
+	// if dm.ReleaseID > 0 {
+	// 	if err := system.CreateRepositoryNotice("Door43 Metadata created for repo: %s, tag: %s", dm.Repo.Name, dm.Ref); err != nil {
+	// 		return err
+	// 	}
+	// } else {
+	// 	if err := system.CreateRepositoryNotice("Door43 Metadata created for repo: %s, branch: %s", dm.Repo.Name, dm.Ref); err != nil {
+	// 		return err
+	// 	}
+	// }
 	return nil
 }
 
@@ -887,8 +906,25 @@ func DeleteDoor43MetadataByID(ctx context.Context, id int64) error {
 }
 
 // DeleteDoor43Metadata deletes a metadata from database by given ID.
+// The entry row is deleted first, inside a transaction with its health check issues, so
+// an in-flight health check (StoreHealthcheckResults) serializes against the delete and
+// never re-adds results for the deleted entry.
 func DeleteDoor43Metadata(ctx context.Context, dm *Door43Metadata) error {
-	id, err := db.GetEngine(ctx).Delete(dm)
+	var id int64
+	err := db.WithTx(ctx, func(ctx context.Context) error {
+		var err error
+		id, err = db.GetEngine(ctx).Delete(dm)
+		if err != nil {
+			return err
+		}
+		if dm.ID > 0 {
+			return DeleteDoor43HealthcheckIssuesByDMID(ctx, dm.ID)
+		}
+		return nil
+	})
+	if err != nil {
+		return err
+	}
 	if id > 0 && dm.ReleaseID > 0 {
 		if err := dm.LoadRepo(ctx); err != nil {
 			return err
@@ -896,7 +932,7 @@ func DeleteDoor43Metadata(ctx context.Context, dm *Door43Metadata) error {
 			log.Error("CreateRepositoryNotice: %v", err)
 		}
 	}
-	return err
+	return nil
 }
 
 // DeleteDoor43MetadataByRepoIDAndReleaseID deletes a metadata from database by given repo ID and release ID.
@@ -911,8 +947,12 @@ func DeleteDoor43MetadataByRepoIDAndReleaseID(ctx context.Context, repoID, relID
 		}
 		return nil
 	}
-	_, err = db.GetEngine(ctx).ID(dm.ID).Delete(dm)
-	return err
+	return db.WithTx(ctx, func(ctx context.Context) error {
+		if _, err := db.GetEngine(ctx).ID(dm.ID).Delete(dm); err != nil {
+			return err
+		}
+		return DeleteDoor43HealthcheckIssuesByDMID(ctx, dm.ID)
+	})
 }
 
 // DeleteDoor43MetadataByRepoIDAndRef deletes a metadata from database by given repo ID and ref.
@@ -924,13 +964,86 @@ func DeleteDoor43MetadataByRepoIDAndRef(ctx context.Context, repoID int64, ref s
 		}
 		return nil
 	}
-	_, err = db.GetEngine(ctx).ID(dm.ID).Delete(dm)
-	return err
+	return db.WithTx(ctx, func(ctx context.Context) error {
+		if _, err := db.GetEngine(ctx).ID(dm.ID).Delete(dm); err != nil {
+			return err
+		}
+		return DeleteDoor43HealthcheckIssuesByDMID(ctx, dm.ID)
+	})
 }
 
 // DeleteAllDoor43MetadatasByRepoID deletes all metadatas from database for a repo by given repo ID.
 func DeleteAllDoor43MetadatasByRepoID(ctx context.Context, repoID int64) (int64, error) {
-	return db.GetEngine(ctx).Delete(Door43Metadata{RepoID: repoID})
+	var count int64
+	err := db.WithTx(ctx, func(ctx context.Context) error {
+		var err error
+		count, err = db.GetEngine(ctx).Delete(Door43Metadata{RepoID: repoID})
+		if err != nil {
+			return err
+		}
+		return DeleteDoor43HealthcheckIssuesByRepoID(ctx, repoID)
+	})
+	return count, err
+}
+
+// GetHealthcheckSeveritiesByRefs returns ref -> stored health check severity for the
+// repo's given refs, for badge rendering on the branches/tags/releases pages. Refs with
+// no door43_metadata entry are absent from the map, so non-catalog refs get no badge.
+func GetHealthcheckSeveritiesByRefs(ctx context.Context, repoID int64, refs []string) (map[string]SeverityLevel, error) {
+	severities := make(map[string]SeverityLevel, len(refs))
+	if len(refs) == 0 {
+		return severities, nil
+	}
+	var rows []struct {
+		Ref                 string
+		HealthcheckSeverity SeverityLevel
+	}
+	if err := db.GetEngine(ctx).Table("door43_metadata").
+		Cols("ref", "healthcheck_severity").
+		Where(builder.Eq{"repo_id": repoID}).
+		In("ref", refs).
+		Find(&rows); err != nil {
+		return nil, err
+	}
+	for _, row := range rows {
+		severities[row.Ref] = row.HealthcheckSeverity
+	}
+	return severities, nil
+}
+
+// DeleteDoor43MetadatasStaleRefs deletes entries (and their health check issues) whose
+// ref is not in refs — the complete list of the repo's live release tags and branch
+// names — and whose last update predates olderThan. The time guard spares entries
+// created or updated after the caller captured its ref list (e.g. a branch pushed while
+// a full reprocess was running). This is the eventual-consistency backstop for entries
+// that outlive their ref: a ref deleted in the window between the delete notification
+// and an in-flight insert leaves a row behind that this sweep removes on the next full
+// reprocess (see docs/dcs/healthcheck.md).
+func DeleteDoor43MetadatasStaleRefs(ctx context.Context, repoID int64, refs []string, olderThan timeutil.TimeStamp) (int64, error) {
+	if len(refs) == 0 {
+		// an empty ref list means the repo has no refs at all; that case is handled by
+		// the repo-level cleanup (DeleteAllDoor43MetadatasByRepoID), not this sweep
+		return 0, nil
+	}
+	var staleIDs []int64
+	err := db.GetEngine(ctx).Table("door43_metadata").Cols("id").
+		Where(builder.Eq{"repo_id": repoID}).
+		And(builder.Lt{"updated_unix": olderThan}).
+		NotIn("ref", refs).
+		Find(&staleIDs)
+	if err != nil || len(staleIDs) == 0 {
+		return 0, err
+	}
+	var count int64
+	err = db.WithTx(ctx, func(ctx context.Context) error {
+		count, err = db.GetEngine(ctx).In("id", staleIDs).Delete(new(Door43Metadata))
+		if err != nil {
+			return err
+		}
+		_, err = db.GetEngine(ctx).In("dm_id", staleIDs).Delete(new(Door43HealthcheckIssue))
+		return err
+	})
+	return count, err
 }
 
 // HasDefaultBranchConvertibleMetadata returns true if the repo has a door43_metadata row

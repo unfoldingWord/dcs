@@ -87,6 +87,21 @@ func Branches(ctx *context.Context) {
 	ctx.Data["CommitStatus"] = commitStatus
 	ctx.Data["CommitStatuses"] = commitStatuses
 	ctx.Data["DefaultBranchBranch"] = defaultBranchOptional
+
+	/*** DCS Customizations ***/
+	branchNames := make([]string, 0, len(branches)+1)
+	if defaultBranchOptional != nil {
+		branchNames = append(branchNames, defaultBranchOptional.DBBranch.Name)
+	}
+	for _, branch := range branches {
+		branchNames = append(branchNames, branch.DBBranch.Name)
+	}
+	if severities, err := repo_model.GetHealthcheckSeveritiesByRefs(ctx, ctx.Repo.Repository.ID, branchNames); err != nil {
+		log.Error("GetHealthcheckSeveritiesByRefs [%s]: %v", ctx.Repo.Repository.FullName(), err)
+	} else {
+		ctx.Data["DCSHealthcheckSeverities"] = severities
+	}
+	/*** END DCS Customizations ***/
 	pager := context.NewPagination(branchesCount, pageSize, page, 5)
 	pager.AddParamFromRequest(ctx.Req)
 	ctx.Data["Page"] = pager

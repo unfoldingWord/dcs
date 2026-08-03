@@ -227,6 +227,8 @@ func TestGetCatalogStats(t *testing.T) {
 	assert.EqualValues(t, 0, ext.HealthcheckWarningCount)
 	assert.EqualValues(t, 0, ext.HealthcheckErrorCount)
 	assert.EqualValues(t, 1, ext.NoHealthcheckCount)
+	assert.EqualValues(t, 1, ext.IsHealthyCount)
+	assert.EqualValues(t, 1, ext.IsHealthyWithoutWarningsCount)
 	assert.Equal(t, map[string]int64{"Bible": 1, "Open Bible Stories": 1}, ext.Subjects)
 	assert.Equal(t, map[string]int64{"gloss": 1, "scripture": 1}, ext.FlavorTypes)
 	assert.Equal(t, map[string]int64{"textStories": 1, "textTranslation": 1}, ext.Flavors)
@@ -240,8 +242,64 @@ func TestGetCatalogStats(t *testing.T) {
 	assert.EqualValues(t, 0, ext.EntryCount)
 	assert.EqualValues(t, 0, ext.HasAttachment)
 	assert.EqualValues(t, 0, ext.NoHealthcheckCount)
+	assert.EqualValues(t, 0, ext.IsHealthyCount)
+	assert.EqualValues(t, 0, ext.IsHealthyWithoutWarningsCount)
 	assert.Equal(t, map[string]int64{}, ext.Subjects)
 	assert.Equal(t, map[string]int64{}, ext.Owners)
+}
+
+// TestSearchCatalogIsHealthyFilter checks the is_healthy / is_healthy_without_warnings
+// filters: warnings count as healthy for is_healthy but not for the stricter filter, and
+// never-checked entries (NULL or 0 severity) are not healthy under either.
+func TestSearchCatalogIsHealthyFilter(t *testing.T) {
+	require.NoError(t, unittest.PrepareTestDatabase())
+
+	dms := []*repo_model.Door43Metadata{
+		{
+			RepoID: 1, ReleaseID: 3001, Ref: "v1", RefType: "tag", CommitSHA: "0000000000000000000000000000000000000021",
+			Stage: door43metadata.StageProd, IsLatestForStage: true,
+			Language: "en", Subject: "Open Bible Stories", MetadataType: "rc",
+			HealthcheckSeverity: repo_model.SeverityLevelWarning,
+			ReleaseDateUnix:     timeutil.TimeStamp(1000),
+		},
+		{
+			RepoID: 4, ReleaseID: 3002, Ref: "v1", RefType: "tag", CommitSHA: "0000000000000000000000000000000000000022",
+			Stage: door43metadata.StageProd, IsLatestForStage: true,
+			Language: "fr", Subject: "Bible", MetadataType: "sb",
+			HealthcheckSeverity: repo_model.SeverityLevelSuccess,
+			ReleaseDateUnix:     timeutil.TimeStamp(2000),
+		},
+		{
+			// never checked: severity stays 0/NULL
+			RepoID: 10, ReleaseID: 3003, Ref: "v1", RefType: "tag", CommitSHA: "0000000000000000000000000000000000000023",
+			Stage: door43metadata.StageProd, IsLatestForStage: true,
+			Language: "es", Subject: "Bible", MetadataType: "tc",
+			ReleaseDateUnix: timeutil.TimeStamp(3000),
+		},
+	}
+	for _, dm := range dms {
+		_, err := db.GetEngine(t.Context()).Insert(dm)
+		require.NoError(t, err)
+	}
+
+	search := func(opts *door43metadata.SearchCatalogOptions) []int64 {
+		opts.Stage = door43metadata.StageProd
+		results, _, err := SearchCatalog(t.Context(), opts)
+		require.NoError(t, err)
+		repoIDs := make([]int64, 0, len(results))
+		for _, dm := range results {
+			repoIDs = append(repoIDs, dm.RepoID)
+		}
+		return repoIDs
+	}
+
+	// warnings are healthy by default
+	assert.ElementsMatch(t, []int64{1, 4}, search(&door43metadata.SearchCatalogOptions{IsHealthy: optional.Some(true)}))
+	// not healthy = errors and never-checked entries
+	assert.ElementsMatch(t, []int64{10}, search(&door43metadata.SearchCatalogOptions{IsHealthy: optional.Some(false)}))
+	// the stricter filter drops warnings too
+	assert.ElementsMatch(t, []int64{4}, search(&door43metadata.SearchCatalogOptions{IsHealthyWithoutWarnings: optional.Some(true)}))
+	assert.ElementsMatch(t, []int64{1, 10}, search(&door43metadata.SearchCatalogOptions{IsHealthyWithoutWarnings: optional.Some(false)}))
 }
 
 // TestAggregateMediaFlagsForRepo checks that the latest prod entry of a repo gets the

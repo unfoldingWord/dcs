@@ -28,4 +28,5 @@ func RegisterDCSRepoWebRoutes(m *web.Router) {
 		m.Post("/update", repo.UpdateDoor43Metadata)
 	})
 	m.Get("/healthcheck", repo.GetRepoHealthcheck)
+	m.Get("/healthcheck/*", repo.GetRepoHealthcheck)
 }

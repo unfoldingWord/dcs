@@ -15,7 +15,14 @@
 				</div>
 				<div class="six wide field">
 					<label class="tw-invisible">Filters</label>
-					<div class="tw-flex tw-flex-wrap tw-gap-3 tw-justify-end">
+					<div class="tw-flex tw-flex-wrap tw-gap-3 tw-justify-end tw-items-center">
+						<select class="ui dropdown js-hc-dash-autosubmit" name="metadata_type">
+							<option value="">All metadata types</option>
+							<option value="rc" {{if eq .MetadataType "rc"}}selected{{end}}>rc</option>
+							<option value="sb" {{if eq .MetadataType "sb"}}selected{{end}}>sb</option>
+							<option value="tc" {{if eq .MetadataType "tc"}}selected{{end}}>tc</option>
+							<option value="ts" {{if eq .MetadataType "ts"}}selected{{end}}>ts</option>
+						</select>
 						<div class="ui checkbox">
 							<input class="js-hc-dash-autosubmit" type="checkbox" name="tc_ready" value="1" {{if .TCReadyOnly}}checked{{end}}>
 							<label>Filter by tc-ready topic</label>
@@ -36,25 +43,13 @@
 			{{range .Door43Metadatas}}
 				<div class="item">
 					<div class="item-leading">
-						{{$severity := .HealthcheckSeverity.String}}
-						{{$icon := "octicon-shield-x"}}
-						{{$color := "red"}}
-						{{if eq $severity "success"}}
-							{{$icon = "octicon-shield-check"}}
-							{{$color = "green"}}
-						{{end}}
-						<span class="ui basic label">
-							<a class="muted js-healthcheck-badge"
-								href="{{.Repo.Link}}/healthcheck"
-								style="color: {{$color}}"
-								data-tooltip-content="Healthcheck: {{$severity}}"
-								data-hc-owner="{{.Repo.OwnerName}}"
-								data-hc-repo="{{.Repo.Name}}"
-								data-hc-ref="{{.Ref}}"
-							>
-								{{svg $icon 16}}
-							</a>
-						</span>
+						{{template "shared/healthcheck_badge" (dict
+							"RepoLink" .Repo.Link
+							"Severity" .HealthcheckSeverity
+							"OwnerName" .Repo.OwnerName
+							"RepoName" .Repo.Name
+							"Ref" .Ref
+						)}}
 					</div>
 					<div class="item-main">
 						<div class="item-header">
@@ -63,7 +58,7 @@
 								{{if .Ref}}<a class="ui basic label" href="{{.Repo.Link}}/releases/tag/{{.Ref | PathEscapeSegments}}">{{.Ref}}</a>{{end}}
 							</div>
 						</div>
-						<div class="item-body">Subject: {{.Subject}}</div>
+						<div class="item-body">Subject: {{.Subject}} ({{.MetadataType}})</div>
 						<div class="item-body">{{ctx.Locale.Tr "dcs.explore.released"}} {{DateUtils.TimeSince .ReleaseDateUnix}}</div>
 					</div>
 				</div>

@@ -3187,6 +3187,17 @@
             "type": "string",
             "x-go-name": "GitTreesURL"
           },
+          "healthcheck_severity": {
+            "description": "HealthcheckSeverity the overall severity of this entry's health check: success, info, warning or error; empty if never checked",
+            "type": "string",
+            "x-go-name": "HealthcheckSeverity"
+          },
+          "healthcheck_url": {
+            "description": "HealthcheckURL the API URL for this entry's full health check results",
+            "format": "uri",
+            "type": "string",
+            "x-go-name": "HealthcheckURL"
+          },
           "id": {
             "format": "int64",
             "type": "integer",
@@ -3198,6 +3209,16 @@
             },
             "type": "array",
             "x-go-name": "Ingredients"
+          },
+          "is_healthy": {
+            "description": "IsHealthy true when this entry passed its health check, ignoring warnings",
+            "type": "boolean",
+            "x-go-name": "IsHealthy"
+          },
+          "is_healthy_without_warnings": {
+            "description": "IsHealthyWithoutWarnings true when this entry passed its health check with no warnings",
+            "type": "boolean",
+            "x-go-name": "IsHealthyWithoutWarnings"
           },
           "is_valid": {
             "type": "boolean",
@@ -3578,6 +3599,18 @@
             "format": "int64",
             "type": "integer",
             "x-go-name": "HealthcheckWarningCount"
+          },
+          "is_healthy_count": {
+            "description": "IsHealthyCount repos whose matching entry passed its health check, ignoring warnings (severity success, info or warning)",
+            "format": "int64",
+            "type": "integer",
+            "x-go-name": "IsHealthyCount"
+          },
+          "is_healthy_without_warnings_count": {
+            "description": "IsHealthyWithoutWarningsCount repos whose matching entry passed its health check with no warnings (severity success or info)",
+            "format": "int64",
+            "type": "integer",
+            "x-go-name": "IsHealthyWithoutWarningsCount"
           },
           "lang_count": {
             "format": "int64",
@@ -13670,6 +13703,30 @@
             }
           },
           {
+            "description": "list only those that passed (true) or did not pass (false) their health check, ignoring warnings; entries never checked are not healthy",
+            "in": "query",
+            "name": "is_healthy",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "description": "list only those that passed (true) or did not pass (false) their health check with no warnings; entries never checked are not healthy",
+            "in": "query",
+            "name": "is_healthy_without_warnings",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "description": "list only those whose overall health check severity is one of the given comma-separated levels (error, warning, info, success); entries never checked do not match",
+            "in": "query",
+            "name": "healthcheck",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
             "description": "if true, all entries of the given stage or lower are considered, not just the latest entry per repo, default is false",
             "in": "query",
             "name": "includeHistory",
@@ -13941,6 +13998,30 @@
             "name": "hasAttachment",
             "schema": {
               "type": "boolean"
+            }
+          },
+          {
+            "description": "list only those that passed (true) or did not pass (false) their health check, ignoring warnings; entries never checked are not healthy",
+            "in": "query",
+            "name": "is_healthy",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "description": "list only those that passed (true) or did not pass (false) their health check with no warnings; entries never checked are not healthy",
+            "in": "query",
+            "name": "is_healthy_without_warnings",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "description": "list only those whose overall health check severity is one of the given comma-separated levels (error, warning, info, success); entries never checked do not match",
+            "in": "query",
+            "name": "healthcheck",
+            "schema": {
+              "type": "string"
             }
           },
           {
@@ -14226,6 +14307,30 @@
             }
           },
           {
+            "description": "list only those that passed (true) or did not pass (false) their health check, ignoring warnings; entries never checked are not healthy",
+            "in": "query",
+            "name": "is_healthy",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "description": "list only those that passed (true) or did not pass (false) their health check with no warnings; entries never checked are not healthy",
+            "in": "query",
+            "name": "is_healthy_without_warnings",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "description": "list only those whose overall health check severity is one of the given comma-separated levels (error, warning, info, success); entries never checked do not match",
+            "in": "query",
+            "name": "healthcheck",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
             "description": "if true, all entries of the given stage or lower are considered, not just the latest entry per repo, default is false",
             "in": "query",
             "name": "includeHistory",
@@ -14497,6 +14602,30 @@
             "name": "hasAttachment",
             "schema": {
               "type": "boolean"
+            }
+          },
+          {
+            "description": "list only those that passed (true) or did not pass (false) their health check, ignoring warnings; entries never checked are not healthy",
+            "in": "query",
+            "name": "is_healthy",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "description": "list only those that passed (true) or did not pass (false) their health check with no warnings; entries never checked are not healthy",
+            "in": "query",
+            "name": "is_healthy_without_warnings",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "description": "list only those whose overall health check severity is one of the given comma-separated levels (error, warning, info, success); entries never checked do not match",
+            "in": "query",
+            "name": "healthcheck",
+            "schema": {
+              "type": "string"
             }
           },
           {
@@ -14836,6 +14965,30 @@
             }
           },
           {
+            "description": "list only entries that passed (true) or did not pass (false) their health check, ignoring warnings; entries never checked are not healthy",
+            "in": "query",
+            "name": "is_healthy",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "description": "list only entries that passed (true) or did not pass (false) their health check with no warnings; entries never checked are not healthy",
+            "in": "query",
+            "name": "is_healthy_without_warnings",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "description": "list only entries whose overall health check severity is one of the given comma-separated levels (error, warning, info, success); entries never checked do not match",
+            "in": "query",
+            "name": "healthcheck",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
             "description": "if true, subject, owner and repo search fields will use partial match (LIKE) when querying the catalog, default is false",
             "in": "query",
             "name": "partialMatch",
@@ -15159,6 +15312,30 @@
             }
           },
           {
+            "description": "count only entries that passed (true) or did not pass (false) their health check, ignoring warnings; entries never checked are not healthy",
+            "in": "query",
+            "name": "is_healthy",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "description": "count only entries that passed (true) or did not pass (false) their health check with no warnings; entries never checked are not healthy",
+            "in": "query",
+            "name": "is_healthy_without_warnings",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "description": "count only entries whose overall health check severity is one of the given comma-separated levels (error, warning, info, success); entries never checked do not match",
+            "in": "query",
+            "name": "healthcheck",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
             "description": "if true, subject, owner and repo search fields will use partial match (LIKE) when querying the catalog, default is false",
             "in": "query",
             "name": "partialMatch",
@@ -15447,6 +15624,30 @@
             "name": "hasAttachment",
             "schema": {
               "type": "boolean"
+            }
+          },
+          {
+            "description": "count only entries that passed (true) or did not pass (false) their health check, ignoring warnings; entries never checked are not healthy",
+            "in": "query",
+            "name": "is_healthy",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "description": "count only entries that passed (true) or did not pass (false) their health check with no warnings; entries never checked are not healthy",
+            "in": "query",
+            "name": "is_healthy_without_warnings",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "description": "count only entries whose overall health check severity is one of the given comma-separated levels (error, warning, info, success); entries never checked do not match",
+            "in": "query",
+            "name": "healthcheck",
+            "schema": {
+              "type": "string"
             }
           },
           {
@@ -19280,6 +19481,22 @@
                 "type": "string"
               },
               "type": "array"
+            }
+          },
+          {
+            "description": "return only repos whose canonical catalog entry passed (true) or did not pass (false) its health check, ignoring warnings; repos never checked are not healthy",
+            "in": "query",
+            "name": "is_healthy",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "description": "return only repos whose canonical catalog entry passed (true) or did not pass (false) its health check with no warnings; repos never checked are not healthy",
+            "in": "query",
+            "name": "is_healthy_without_warnings",
+            "schema": {
+              "type": "boolean"
             }
           },
           {
@@ -24632,6 +24849,14 @@
             "in": "path",
             "name": "repo",
             "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "branch or tag to get the health check of; defaults to the repo's canonical catalog entry",
+            "in": "query",
+            "name": "ref",
             "schema": {
               "type": "string"
             }

@@ -40,6 +40,9 @@
 							<h4 class="release-list-title tw-break-anywhere">
 								{{if $.PageIsSingleTag}}{{$release.Title}}{{else}}<a class="muted" href="{{$.RepoLink}}/releases/tag/{{$release.TagName | PathEscapeSegments}}">{{$release.Title}}</a>{{end}}
 								{{template "repo/commit_statuses" dict "Status" $info.CommitStatus "Statuses" $info.CommitStatuses "AdditionalClasses" "tw-flex"}}
+								<!-- DCS Customizations -->
+								{{template "dcs/ref_healthcheck_badge" dict "Severities" $.DCSHealthcheckSeverities "Ref" $release.TagName "RepoLink" $.RepoLink "OwnerName" $.Repository.OwnerName "RepoName" $.Repository.Name}}
+								<!-- END DCS Customizations -->
 								{{template "repo/release/label" (dict "Release" $release)}}
 							</h4>
 							<div>

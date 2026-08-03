@@ -20,6 +20,7 @@ import (
 	user_model "gitea.dev/models/user"
 	"gitea.dev/modules/git"
 	"gitea.dev/modules/gitrepo"
+	"gitea.dev/modules/log" // DCS Customizations
 	"gitea.dev/modules/markup/markdown"
 	"gitea.dev/modules/optional"
 	"gitea.dev/modules/setting"
@@ -197,6 +198,18 @@ func Releases(ctx *context.Context) {
 		/*** END DCS Customizations ***/
 	}
 
+	/*** DCS Customizations ***/
+	tagNames := make([]string, 0, len(releases))
+	for _, rel := range releases {
+		tagNames = append(tagNames, rel.Release.TagName)
+	}
+	if severities, err := repo_model.GetHealthcheckSeveritiesByRefs(ctx, ctx.Repo.Repository.ID, tagNames); err != nil {
+		log.Error("GetHealthcheckSeveritiesByRefs [%s]: %v", ctx.Repo.Repository.FullName(), err)
+	} else {
+		ctx.Data["DCSHealthcheckSeverities"] = severities
+	}
+	/*** END DCS Customizations ***/
+
 	ctx.Data["Releases"] = releases
 
 	numReleases := ctx.Data["NumReleases"].(int64)
@@ -245,6 +258,15 @@ func TagsList(ctx *context.Context) {
 	/*** DCS Customizations ***/
 	for _, rel := range releases {
 		_ = rel.LoadAttributes(ctx)
+	}
+	tagNames := make([]string, 0, len(releases))
+	for _, rel := range releases {
+		tagNames = append(tagNames, rel.TagName)
+	}
+	if severities, err := repo_model.GetHealthcheckSeveritiesByRefs(ctx, ctx.Repo.Repository.ID, tagNames); err != nil {
+		log.Error("GetHealthcheckSeveritiesByRefs [%s]: %v", ctx.Repo.Repository.FullName(), err)
+	} else {
+		ctx.Data["DCSHealthcheckSeverities"] = severities
 	}
 	/*** END DCS Customizations ***/
 
@@ -322,6 +344,11 @@ func SingleRelease(ctx *context.Context) {
 	if err := release.LoadAttributes(ctx); err != nil {
 		ctx.ServerError("LoadAttributes", err)
 		return
+	}
+	if severities, err := repo_model.GetHealthcheckSeveritiesByRefs(ctx, ctx.Repo.Repository.ID, []string{release.TagName}); err != nil {
+		log.Error("GetHealthcheckSeveritiesByRefs [%s]: %v", ctx.Repo.Repository.FullName(), err)
+	} else {
+		ctx.Data["DCSHealthcheckSeverities"] = severities
 	}
 	/*** END DCS Customizations ***/
 

@@ -203,7 +203,7 @@
 							"dcs.repo.metadata.last_updated"}}{{end}}:</strong></td>
 					<td style="vertical-align: top">{{DateUtils.AbsoluteLong $dm.ReleaseDateUnix}}</td>
 				</tr>
-				{{if $.IsRC}}
+				{{if gt $dm.ID 0}}
 				<tr>
 					<td style="vertical-align: top"><strong>{{ctx.Locale.Tr "dcs.repo.metadata.healthcheck"}}:</strong></td>
 					<td style="vertical-align: top">
