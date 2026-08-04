@@ -50,7 +50,7 @@
 			</h4>
 			<div class="ui attached segment">
 				{{if .Door43Metadatas}}
-					{{template "repo/dcs_metadata_list" (dict "ctxData" . "Door43Metadatas" .Door43Metadatas "IsRC" .IsRC)}}
+					{{template "repo/dcs_metadata_list" (dict "ctxData" . "Door43Metadatas" .Door43Metadatas)}}
 				{{else}}
 					<span>
 						No Metadata for this Repository. Click&nbsp;<a href="{{.RepoLink}}/metadata/update">update</a>&nbsp;to scan the repo.

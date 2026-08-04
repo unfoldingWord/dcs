@@ -41,6 +41,12 @@ func processInBackground(caller string, repo *repo_model.Repository, ref string)
 	repoName := repo.FullName()
 	shutdownCtx := graceful.GetManager().ShutdownContext()
 	go func() {
+		// a panic while processing one repo must never take down the server
+		defer func() {
+			if err := recover(); err != nil {
+				log.Error("%s: PANIC while processing Door43Metadata [%s, %s]: %v\n%s", caller, repoName, ref, err, log.Stack(2))
+			}
+		}()
 		select {
 		case <-shutdownCtx.Done():
 			log.Warn("%s: Context canceled [%s, %s]", caller, repoName, ref)

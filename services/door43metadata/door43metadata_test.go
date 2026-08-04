@@ -7,13 +7,16 @@ import (
 	"context"
 	"testing"
 
+	"gitea.dev/models/door43metadata"
 	repo_model "gitea.dev/models/repo"
 	"gitea.dev/models/unittest"
 	user_model "gitea.dev/models/user"
 	"gitea.dev/modules/dcs"
 	api "gitea.dev/modules/structs"
 	"gitea.dev/services/convert"
+	"gitea.dev/services/door43healthcheck"
 
+	"github.com/santhosh-tekuri/jsonschema/v5"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -144,4 +147,37 @@ func TestGetDoor43MetadataFromSBMetadata_AllowsSparseMetadata(t *testing.T) {
 	assert.Equal(t, "Unknown", dm.Subject)
 	assert.Empty(t, dm.FlavorType)
 	assert.Empty(t, dm.Flavor)
+}
+
+// Regression test: an entry with a schema-invalid metadata file and a pipeline-style
+// pre-set repo (owner not loaded) must not panic RunHealthcheck, and must report only
+// the invalid-metadata finding — deeper checks would run on backfilled, not extracted,
+// fields (crash seen migrating unfoldingWord/en_tn v1, whose 2017 manifest has the
+// pre-RC0.2 subject "Translator Notes").
+func TestRunHealthcheckInvalidMetadataOwnerNotLoaded(t *testing.T) {
+	require.NoError(t, unittest.PrepareTestDatabase())
+
+	repo, err := repo_model.GetRepositoryByID(t.Context(), 1)
+	require.NoError(t, err)
+	require.Nil(t, repo.Owner, "test requires a repo whose owner is not yet loaded")
+
+	dm := &repo_model.Door43Metadata{
+		RepoID: repo.ID, Ref: "v1", RefType: "tag",
+		CommitSHA: "0000000000000000000000000000000000000051",
+		Stage:     door43metadata.StageOther,
+		Language:  "en", Subject: "TSV Translation Notes", MetadataType: "rc",
+		ValidationError: &jsonschema.ValidationError{Message: "value must be one of ..."},
+	}
+	require.NoError(t, repo_model.InsertDoor43Metadata(t.Context(), dm))
+	dm.Repo = repo // as processDoor43MetadataForRepoRef does: repo set, owner not loaded
+
+	hgi := door43healthcheck.RunHealthcheck(t.Context(), dm)
+	require.NotNil(t, hgi)
+	assert.Equal(t, repo_model.SeverityLevelError, hgi.OverallSeverityLevel)
+	require.Len(t, hgi.Issues[repo_model.IssueCodeMetadataInvalid], 1)
+	total := 0
+	for _, issues := range hgi.Issues {
+		total += len(issues)
+	}
+	assert.Equal(t, 1, total, "only the invalid-metadata finding should be reported for a schema-invalid entry")
 }

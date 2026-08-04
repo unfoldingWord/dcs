@@ -42,20 +42,26 @@ import (
 )
 
 func processDoor43MetadataForRepoRefs(ctx context.Context, repo *repo_model.Repository) error {
+	passStart := timeutil.TimeStampNow()
+	refsComplete := true
+
 	refs, err := repo_model.GetRepoReleaseTagsForMetadata(ctx, repo.ID)
 	if err != nil {
 		log.Error("GetRepoReleaseTagsForMetadata Error %s: %v", repo.FullName(), err)
+		refsComplete = false
 	}
 
 	gitRepo, err := git.OpenRepository(repo)
 	if err != nil {
 		log.Error("git.OpenRepository Error %s: %v", repo.FullName(), err)
+		refsComplete = false
 	}
 	if gitRepo != nil {
 		defer gitRepo.Close()
 		branchNames, _, err := gitRepo.GetBranchNames(ctx, 0, 0)
 		if err != nil {
 			log.Error("git.GetBranchNames Error %s: %v", repo.FullName(), err)
+			refsComplete = false
 		} else {
 			refs = append(refs, branchNames...)
 		}
@@ -67,6 +73,18 @@ func processDoor43MetadataForRepoRefs(ctx context.Context, repo *repo_model.Repo
 			if err = system.CreateRepositoryNotice("Failed to process metadata for repository (%s) ref (%s): %v", repo.FullName(), ref, err); err != nil {
 				log.Error("processDoor43MetadataForRepoRef: %v", err)
 			}
+		}
+	}
+
+	// Sweep entries whose ref no longer exists (e.g. a branch deleted while a check was
+	// in flight, or a missed delete notification). Only runs when both the tag and
+	// branch listings succeeded — a partial ref list must never trigger deletions —
+	// and spares rows touched since this pass started (a branch pushed mid-pass).
+	if refsComplete {
+		if count, err := repo_model.DeleteDoor43MetadatasStaleRefs(ctx, repo.ID, refs, passStart); err != nil {
+			log.Error("DeleteDoor43MetadatasStaleRefs %s: %v", repo.FullName(), err)
+		} else if count > 0 {
+			log.Info("Deleted %d stale door43_metadata entries for refs no longer in %s", count, repo.FullName())
 		}
 	}
 	return nil
@@ -989,7 +1007,7 @@ func GetTcOrTsDoor43Metadata(ctx context.Context, gitRepo *git.Repository, dm *r
 	dm.LanguageIsGL = dcs.LanguageIsGL(t.TargetLanguage.ID)
 	dm.ContentFormat = t.Format
 	dm.CheckingLevel = 1
-	dm.Ingredients = []*structs.Ingredient{{
+	ingredient := &structs.Ingredient{
 		Categories:     dcs.GetBookCategories(t.Project.ID),
 		Identifier:     t.Project.ID,
 		Title:          t.Project.Name,
@@ -997,8 +1015,17 @@ func GetTcOrTsDoor43Metadata(ctx context.Context, gitRepo *git.Repository, dm *r
 		Sort:           dcs.GetBookSort(t.Project.ID),
 		Versification:  versification,
 		AlignmentCount: &count,
-		Exists:         true,
-	}}
+	}
+	if t.MetadataType == "ts" {
+		// ts content lives in the repo root
+		ingredient.Exists = true
+		ingredient.IsDir = true
+	} else if entry, err := commit.GetTreeEntryByPath(ctx, gitRepo, bookPath); err == nil {
+		ingredient.Exists = true
+		ingredient.IsDir = entry.IsDir()
+		ingredient.Size = entry.GetSize(ctx, gitRepo)
+	}
+	dm.Ingredients = []*structs.Ingredient{ingredient}
 	dm.Metadata = manifest
 
 	return nil
@@ -1136,8 +1163,9 @@ func processDoor43MetadataForRepoRef(ctx context.Context, repo *repo_model.Repos
 		}
 	}
 
-	// Check for RC
-	if err != nil {
+	// Check for RC. Also reached when a manifest.json exists but is neither tc nor ts
+	// (GetTcOrTsDoor43Metadata returns no error yet sets no metadata type).
+	if err != nil || dm.MetadataType == "" {
 		err = GetRCDoor43Metadata(ctx, gitRepo, dm, repo, commit)
 		if err != nil {
 			if !git.IsErrNotExist(err) {
@@ -1166,6 +1194,10 @@ func processDoor43MetadataForRepoRef(ctx context.Context, repo *repo_model.Repos
 			return err
 		}
 	}
+
+	// Run the health check for this ref so every branch and tag entry carries its own
+	// stored severity and issues (the catalog filters on them).
+	door43healthcheck.RunHealthcheck(ctx, dm)
 
 	return nil
 }

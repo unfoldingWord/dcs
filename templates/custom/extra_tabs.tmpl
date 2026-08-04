@@ -6,7 +6,7 @@
 	{{ctx.Locale.Tr "dcs.repo.metadata.metadata"}}
 </a>
 {{end}}
-{{if and $.RepoDM (eq $.RepoDM.MetadataType "rc")}}
+{{if and $.RepoDM (gt $.RepoDM.ID 0)}}
 {{$healthSeverity := $.RepoDM.HealthcheckSeverity.String}}
 {{$healthSeverityLabel := $healthSeverity}}
 {{$healthColor := "var(--color-text-light-1)"}}

@@ -16,15 +16,13 @@
 							{{else if .Repo.IsMirror}}
 								<span class="middle">{{svg "octicon-repo-clone" 16}}</span>
 							{{end}}
-							{{if eq .MetadataType "rc"}}
-								{{template "shared/healthcheck_badge" (dict
-									"RepoLink" .Repo.Link
-									"Severity" .HealthcheckSeverity
-									"OwnerName" .Repo.OwnerName
-									"RepoName" .Repo.Name
-									"Ref" .Ref
-								)}}
-							{{end}}
+							{{template "shared/healthcheck_badge" (dict
+								"RepoLink" .Repo.Link
+								"Severity" .HealthcheckSeverity
+								"OwnerName" .Repo.OwnerName
+								"RepoName" .Repo.Name
+								"Ref" .Ref
+							)}}
 							{{if .Release}}
 								{{$color := "green"}}
 								{{$type := "Production"}}

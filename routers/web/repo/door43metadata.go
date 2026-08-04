@@ -13,6 +13,7 @@ import (
 	"gitea.dev/modules/log"
 	"gitea.dev/modules/templates"
 	"gitea.dev/services/context"
+	"gitea.dev/services/door43healthcheck"
 	door43metadata_service "gitea.dev/services/door43metadata"
 
 	"xorm.io/builder"
@@ -41,16 +42,34 @@ func GetRepoMetadata(ctx *context.Context) {
 	ctx.Data["PageIsMetadata"] = true
 	ctx.Data["Repo"] = ctx.Repo.Repository
 	ctx.Data["Door43Metadatas"] = door43Metadatas
-	ctx.Data["IsRC"] = ctx.Repo.Repository.RepoDM != nil && ctx.Repo.Repository.RepoDM.MetadataType == "rc"
 	ctx.HTML(http.StatusOK, tplDCSMetadata)
 }
 
-// GetRepoHealthcheck renders the health check page (RC repos only)
+// GetRepoHealthcheck renders the health check page: /healthcheck shows the repo's
+// canonical entry (default branch, falling back to the latest release), while
+// /healthcheck/{ref} shows the given branch or tag's own health check.
 func GetRepoHealthcheck(ctx *context.Context) {
 	_ = ctx.Repo.Repository.LoadLatestDMs(ctx)
 
-	// Redirect non-RC repos to metadata page
-	if ctx.Repo.Repository.RepoDM == nil || ctx.Repo.Repository.RepoDM.MetadataType != "rc" {
+	var dm *repo_model.Door43Metadata
+	ref := ctx.PathParam("*")
+	if ref != "" {
+		var err error
+		dm, err = repo_model.GetDoor43MetadataByRepoIDAndRef(ctx, ctx.Repo.Repository.ID, ref)
+		if err != nil {
+			if !repo_model.IsErrDoor43MetadataNotExist(err) {
+				ctx.ServerError("GetDoor43MetadataByRepoIDAndRef", err)
+				return
+			}
+			// no entry for this ref; fall through to the redirect below
+			dm = nil
+		}
+	} else {
+		dm = ctx.Repo.Repository.RepoDM
+	}
+
+	// Redirect refs/repos without a checkable entry to the metadata page
+	if dm == nil || dm.ID == 0 || !door43healthcheck.Supported(dm.MetadataType) {
 		ctx.Redirect(ctx.Repo.RepoLink + "/metadata")
 		return
 	}
@@ -58,7 +77,8 @@ func GetRepoHealthcheck(ctx *context.Context) {
 	ctx.Data["Title"] = "Health Check"
 	ctx.Data["PageIsHealthcheck"] = true
 	ctx.Data["Repo"] = ctx.Repo.Repository
-	ctx.Data["IsRC"] = true
+	ctx.Data["HealthcheckDM"] = dm
+	ctx.Data["HealthcheckRef"] = ref
 	ctx.HTML(http.StatusOK, tplDCSHealthcheck)
 }
 
@@ -107,7 +127,6 @@ func GetAllRepoDoor43Metadata(ctx *context.Context) {
 	ctx.Data["BranchDMs"] = branchDms
 	ctx.Data["ReleaseDMs"] = releaseDms
 	ctx.Data["ReleaseCount"] = releaseCount
-	ctx.Data["IsRC"] = ctx.Repo.Repository.RepoDM != nil && ctx.Repo.Repository.RepoDM.MetadataType == "rc"
 
 	pager := context.NewPagination(releaseCount, releaseDMsPerPage, page, 5)
 	pager.AddParamFromRequest(ctx.Req)
@@ -136,6 +155,12 @@ func UpdateDoor43Metadata(ctx *context.Context) {
 
 	if runBackgroundTask {
 		go func(ctx go_context.Context, repo *repo_model.Repository) {
+			// a panic while processing one repo must never take down the server
+			defer func() {
+				if err := recover(); err != nil {
+					log.Error("ProcessDoor43MetadataForRepo: PANIC [%s]: %v\n%s", repo.FullName(), err, log.Stack(2))
+				}
+			}()
 			select {
 			case <-ctx.Done():
 				log.Warn("ProcessDoor43MetadataForRepo: Context canceled [%s]", repo.FullName())

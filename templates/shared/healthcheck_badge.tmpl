@@ -21,7 +21,7 @@
 
 {{if not .NoLabel}}<span class="ui basic label">{{end}}
 <a class="muted js-healthcheck-badge"
-	href="{{.RepoLink}}/healthcheck"
+	href="{{.RepoLink}}/healthcheck{{if .Ref}}/{{PathEscapeSegments .Ref}}{{end}}"
 	style="color: {{$color}}"
 	data-tooltip-content="Healthcheck: {{$severityLabel}}"
 	{{if .OwnerName}}data-hc-owner="{{.OwnerName}}"{{end}}
