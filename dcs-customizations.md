@@ -67,7 +67,8 @@ This document catalogs every DCS modification to existing Gitea files. New DCS-o
 | `models/unittest/fixtures.go` | WITH allowed as read-only SQL in fixtures hook (CTE catalog queries) | LOW | models/catalog_list.go |
 | `routers/api/v1/repo/repo.go` | 20+ DCS swagger params, search field population | HIGH | models/door43metadata/ |
 | `routers/api/v1/repo/release.go` | pre-release, in-catalog params, InCatalog filter | MEDIUM | - |
-| `routers/api/v1/repo/git_ref.go` | Refactored getGitRefsInternal, added CRUD handlers | MEDIUM | services/gitref/ |
+| `routers/api/v1/repo/git_ref.go` | Refactored getGitRefsInternal, added create/update/delete handlers (marked) | MEDIUM | services/gitref/ |
+| `modules/structs/repo.go` | CreateGitRefOption, UpdateGitRefOption (marked) | LOW | routers/api/v1/repo/git_ref.go |
 | `routers/api/v1/org/org.go` | DCS swagger params, filter fields | LOW | - |
 | `routers/api/v1/user/user.go` | DCS swagger params, filter fields | LOW | - |
 | `routers/api/v1/user/app.go` | Duplicate token names allowed, default scopes | MEDIUM | - |
@@ -226,7 +227,6 @@ This document catalogs every DCS modification to existing Gitea files. New DCS-o
 - `cmd/door43metadata.go`
 - `models/catalog_list.go`, `catalog_list_test.go`
 - `models/door43metadata/search.go`, `stage.go`
-- `models/git/refs.go`
 - `models/repo/catalog.go`, `door43healthcheck.go`, `door43healthcheck_test.go`, `door43metadata.go`, `door43metadata_test.go`, `release_dcs.go`, `repo_dcs.go`
 - `models/user_dcs.go`
 - `models/fixtures/door43_metadata.yml`

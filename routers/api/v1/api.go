@@ -1498,12 +1498,16 @@ func Routes() *web.Router {
 					})
 					m.Group("/refs", func() {
 						m.Get("", repo.GetGitAllRefs)
+						/*** DCS Customizations ***/
 						m.Post("", reqToken(), reqRepoWriter(unit.TypeCode), bind(api.CreateGitRefOption{}), repo.CreateGitRef)
+						/*** END DCS Customizations ***/
 						m.Get("/*", repo.GetGitRefs)
+						/*** DCS Customizations ***/
 						m.Group("/*", func() {
 							m.Patch("", bind(api.UpdateGitRefOption{}), repo.UpdateGitRef)
 							m.Delete("", repo.DeleteGitRef)
 						}, reqToken(), reqRepoWriter(unit.TypeCode))
+						/*** END DCS Customizations ***/
 					})
 					m.Get("/trees/{sha}", repo.GetTree)
 					m.Get("/blobs/{sha}", repo.GetBlob)

@@ -340,6 +340,8 @@ type CreateBranchRepoOption struct {
 	OldRefName string `json:"old_ref_name" binding:"GitRefName;MaxSize(100)"`
 }
 
+/*** DCS Customizations ***/
+
 // CreateGitRefOption options when creating a git ref in a repository
 // swagger:model
 type CreateGitRefOption struct {
@@ -362,6 +364,8 @@ type UpdateGitRefOption struct {
 	// required: true
 	Target string `json:"target" binding:"Required"`
 }
+
+/*** END DCS Customizations ***/
 
 // RenameBranchRepoOption options when renaming a branch in a repository
 // swagger:model
