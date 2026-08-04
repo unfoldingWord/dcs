@@ -25,7 +25,7 @@ func TestGitRef_Get(t *testing.T) {
 	repo := unittest.AssertExistsAndLoadBean(t, &repo_model.Repository{ID: 1})
 	repoPath := repo_model.RepoPath(user.Name, repo.Name)
 
-	gitRepo, err := git.OpenRepository(repoPath)
+	gitRepo, err := git.OpenRepositoryLocal(repoPath)
 	assert.NoError(t, err)
 	defer gitRepo.Close()
 
