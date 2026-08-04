@@ -101,6 +101,8 @@ func getGitRefsInternal(ctx *context.APIContext, filter string) {
 	ctx.JSON(http.StatusOK, &apiRefs)
 }
 
+/*** DCS Customizations ***/
+
 // CreateGitRef creates a git ref for a repository that points to a target commitish
 func CreateGitRef(ctx *context.APIContext) {
 	// swagger:operation POST /repos/{owner}/{repo}/git/refs repository repoCreateGitRef
@@ -140,14 +142,14 @@ func CreateGitRef(ctx *context.APIContext) {
 	opt := web.GetForm(ctx).(*api.CreateGitRefOption)
 
 	if ctx.Repo.GitRepo.IsReferenceExist(ctx, opt.RefName) {
-		ctx.APIError(http.StatusConflict, fmt.Sprintf("reference already exists: %s", opt.RefName))
+		ctx.APIError(http.StatusConflict, "reference already exists: "+opt.RefName)
 		return
 	}
 
 	commitID, err := ctx.Repo.GitRepo.GetRefCommitID(ctx, opt.Target)
 	if err != nil {
 		if git.IsErrNotExist(err) {
-			ctx.APIError(http.StatusNotFound, fmt.Sprintf("target does not exist: %s", opt.Target))
+			ctx.APIError(http.StatusNotFound, "target does not exist: "+opt.Target)
 			return
 		}
 		ctx.APIErrorInternal(err)
@@ -210,15 +212,15 @@ func UpdateGitRef(ctx *context.APIContext) {
 	refName := "refs/" + ctx.PathParam("*")
 	opt := web.GetForm(ctx).(*api.UpdateGitRefOption)
 
-	if ctx.Repo.GitRepo.IsReferenceExist(ctx, refName) {
-		ctx.APIError(http.StatusConflict, fmt.Sprintf("reference already exists: %s", refName))
+	if !ctx.Repo.GitRepo.IsReferenceExist(ctx, refName) {
+		ctx.APIError(http.StatusNotFound, "reference does not exist: "+refName)
 		return
 	}
 
 	commitID, err := ctx.Repo.GitRepo.GetRefCommitID(ctx, opt.Target)
 	if err != nil {
 		if git.IsErrNotExist(err) {
-			ctx.APIError(http.StatusNotFound, fmt.Sprintf("target does not exist: %s", opt.Target))
+			ctx.APIError(http.StatusNotFound, "target does not exist: "+opt.Target)
 			return
 		}
 		ctx.APIErrorInternal(err)
@@ -239,7 +241,7 @@ func UpdateGitRef(ctx *context.APIContext) {
 		return
 	}
 
-	ctx.JSON(http.StatusCreated, ref)
+	ctx.JSON(http.StatusOK, convert.ToGitRef(ctx.Repo.Repository, ref))
 }
 
 // DeleteGitRef deletes a git ref for a repository that points to a target commitish
@@ -280,7 +282,7 @@ func DeleteGitRef(ctx *context.APIContext) {
 	refName := "refs/" + ctx.PathParam("*")
 
 	if !ctx.Repo.GitRepo.IsReferenceExist(ctx, refName) {
-		ctx.APIError(http.StatusNotFound, fmt.Sprintf("reference does not exist: %s", refName))
+		ctx.APIError(http.StatusNotFound, "reference does not exist: "+refName)
 		return
 	}
 
@@ -297,3 +299,5 @@ func DeleteGitRef(ctx *context.APIContext) {
 	}
 	ctx.Status(http.StatusNoContent)
 }
+
+/*** END DCS Customizations ***/

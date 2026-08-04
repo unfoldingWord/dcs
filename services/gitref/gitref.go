@@ -71,8 +71,8 @@ func CheckReferenceEditability(ctx context.Context, refName, commitID string, re
 	}
 
 	refPrefix := refParts[0]
-	refType := refParts[2]
-	refRest := strings.Join(refParts[2:], "/")
+	refType := refParts[1]                     // "heads", "tags", "pull", ...
+	refRest := strings.Join(refParts[2:], "/") // the branch/tag name, which may contain slashes
 
 	// Must start with 'refs/'
 	if refPrefix != "refs" {
@@ -108,13 +108,13 @@ func CheckReferenceEditability(ctx context.Context, refName, commitID string, re
 	}
 
 	if refType == "heads" {
-		// If the 2nd part is "heas" then we need to make sure the user is allowed to
+		// If the 2nd part is "heads" then we need to make sure the user is allowed to
 		//   modify this branch (not protected or is admin)
 		isProtected, err := git_model.IsBranchProtected(ctx, repoID, refRest)
 		if err != nil {
 			return err
 		}
-		if !isProtected {
+		if isProtected {
 			return git.ErrProtectedRefName{
 				RefName: refName,
 				Message: "changes must be made through a pull request",
