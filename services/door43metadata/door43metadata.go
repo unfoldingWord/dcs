@@ -713,6 +713,7 @@ func getSBSubject(flavorType, flavor, abbreviation, repoNameSuffix string) strin
 					return "Hebrew Lexicon"
 				}
 			}
+
 		case "x-obsstudyquestions":
 			return "TSV OBS Study Questions"
 		case "x-obstranslationquestions":
@@ -751,6 +752,8 @@ func getSBSubject(flavorType, flavor, abbreviation, repoNameSuffix string) strin
 			}
 		case "obssn":
 			return "TSV OBS Study Notes"
+		case "x-obstheologicalformation":
+			return "OBS Theological Formation"
 		case "x-peripheralarticles", "x-translationacademy", "x-translationwords":
 			switch abbreviationLower {
 			case "ta":

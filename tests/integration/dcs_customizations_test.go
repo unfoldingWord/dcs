@@ -151,6 +151,43 @@ func TestDCSWebRepoHealthcheckRefPage(t *testing.T) {
 	assert.Equal(t, "/user2/repo1/metadata", resp.Header().Get("Location"))
 }
 
+func TestDCSAPICatalogSearchCaseInsensitiveFilters(t *testing.T) {
+	defer tests.PrepareTestEnv(t)()
+	dm := insertDCSDoor43MetadataFixture(t)
+
+	entryRefs := func(query string) []string {
+		resp := MakeRequest(t, NewRequest(t, "GET", "/api/v1/catalog/search?"+query), http.StatusOK)
+		var results api.CatalogSearchResults
+		DecodeJSON(t, resp, &results)
+		refs := make([]string, 0, len(results.Data))
+		for _, entry := range results.Data {
+			refs = append(refs, entry.Ref)
+		}
+		return refs
+	}
+
+	// the DB collation is case-sensitive, so subject/flavor/flavorType must match
+	// regardless of the casing given
+	for _, query := range []string{
+		"subject=TSV%20Translation%20Notes",
+		"subject=tsv%20translation%20notes",
+		"subject=TSV%20TRANSLATION%20NOTES",
+		"subject=translation%20notes&partialMatch=true",
+		"subject=TRANSLATION%20NOTES&partialMatch=true",
+		"flavorType=parascriptural",
+		"flavorType=Parascriptural",
+		"flavor=x-TranslationNotes",
+		"flavor=x-translationnotes",
+		"flavor=X-TRANSLATIONNOTES",
+	} {
+		assert.Contains(t, entryRefs(query), dm.Ref, "query: %s", query)
+	}
+
+	// a value differing by more than case still does not match
+	assert.NotContains(t, entryRefs("subject=Aligned%20Bible"), dm.Ref)
+	assert.NotContains(t, entryRefs("flavor=x-Bible"), dm.Ref)
+}
+
 func TestDCSAPIRepoSearchIsHealthy(t *testing.T) {
 	defer tests.PrepareTestEnv(t)()
 	dm := insertDCSDoor43MetadataFixture(t) // repo1's canonical entry, never checked
