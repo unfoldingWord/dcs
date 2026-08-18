@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"gitea.dev/models/db"
+	"gitea.dev/models/door43metadata" // DCS Customizations
 	"gitea.dev/modules/container"
 	"gitea.dev/modules/optional"
 	"gitea.dev/modules/structs"
@@ -210,33 +211,15 @@ func SearchUsers(ctx context.Context, opts SearchUserOptions) (users []*User, _ 
 	}
 	if len(opts.RepoSubjects) > 0 {
 		hasMetadataCond = true
-		repoSubsCond := builder.NewCond()
-		for _, values := range opts.RepoSubjects {
-			for value := range strings.SplitSeq(values, ",") {
-				repoSubsCond = repoSubsCond.Or(builder.Eq{"`door43_metadata`.subject": strings.TrimSpace(value)})
-			}
-		}
-		repoMetadataCond = repoMetadataCond.And(repoSubsCond)
+		repoMetadataCond = repoMetadataCond.And(door43metadata.GetSubjectCond(opts.RepoSubjects, false))
 	}
 	if len(opts.RepoFlavorTypes) > 0 {
 		hasMetadataCond = true
-		repoFlavorTypesCond := builder.NewCond()
-		for _, values := range opts.RepoFlavorTypes {
-			for value := range strings.SplitSeq(values, ",") {
-				repoFlavorTypesCond = repoFlavorTypesCond.Or(builder.Eq{"`door43_metadata`.flavor_type": strings.TrimSpace(value)})
-			}
-		}
-		repoMetadataCond = repoMetadataCond.And(repoFlavorTypesCond)
+		repoMetadataCond = repoMetadataCond.And(door43metadata.GetFlavorTypeCond(opts.RepoFlavorTypes, false))
 	}
 	if len(opts.RepoFlavors) > 0 {
 		hasMetadataCond = true
-		repoFlavorCond := builder.NewCond()
-		for _, values := range opts.RepoFlavors {
-			for value := range strings.SplitSeq(values, ",") {
-				repoFlavorCond = repoFlavorCond.Or(builder.Eq{"`door43_metadata`.flavor": strings.TrimSpace(value)})
-			}
-		}
-		repoMetadataCond = repoMetadataCond.And(repoFlavorCond)
+		repoMetadataCond = repoMetadataCond.And(door43metadata.GetFlavorCond(opts.RepoFlavors, false))
 	}
 	if len(opts.RepoMetadataTypes) > 0 {
 		hasMetadataCond = true

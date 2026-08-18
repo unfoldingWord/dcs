@@ -214,49 +214,38 @@ func GetHistoryCond(includeHistory bool) builder.Cond {
 	return builder.Eq{"`door43_metadata`.is_latest_for_stage": true}
 }
 
-// GetSubjectCond gets the subject condition
-func GetSubjectCond(subjects []string, partialMatch bool) builder.Cond {
-	subjectCond := builder.NewCond()
-	for _, subject := range subjects {
-		for v := range strings.SplitSeq(subject, ",") {
+// GetLowerMatchCond ORs a case-insensitive match on col for every comma-separated
+// value given. Both sides are lowercased because Gitea requires a case-sensitive
+// database collation (see models/db/collation.go), which would otherwise make these
+// filters case-sensitive.
+func GetLowerMatchCond(col string, values []string, partialMatch bool) builder.Cond {
+	cond := builder.NewCond()
+	for _, value := range values {
+		for v := range strings.SplitSeq(value, ",") {
+			v = strings.ToLower(strings.TrimSpace(v))
 			if partialMatch {
-				subjectCond = subjectCond.Or(builder.Like{"`door43_metadata`.subject", strings.TrimSpace(v)})
+				cond = cond.Or(builder.Expr("LOWER("+col+") LIKE ?", "%"+v+"%"))
 			} else {
-				subjectCond = subjectCond.Or(builder.Eq{"`door43_metadata`.subject": strings.TrimSpace(v)})
+				cond = cond.Or(builder.Expr("LOWER("+col+") = ?", v))
 			}
 		}
 	}
-	return subjectCond
+	return cond
+}
+
+// GetSubjectCond gets the subject condition
+func GetSubjectCond(subjects []string, partialMatch bool) builder.Cond {
+	return GetLowerMatchCond("`door43_metadata`.subject", subjects, partialMatch)
 }
 
 // GetFlavorTypeCond gets the flavor type condition
 func GetFlavorTypeCond(flavorTypes []string, partialMatch bool) builder.Cond {
-	flavorTypeCond := builder.NewCond()
-	for _, flavorType := range flavorTypes {
-		for v := range strings.SplitSeq(flavorType, ",") {
-			if partialMatch {
-				flavorTypeCond = flavorTypeCond.Or(builder.Like{"`door43_metadata`.flavor_type", strings.TrimSpace(v)})
-			} else {
-				flavorTypeCond = flavorTypeCond.Or(builder.Eq{"`door43_metadata`.flavor_type": strings.TrimSpace(v)})
-			}
-		}
-	}
-	return flavorTypeCond
+	return GetLowerMatchCond("`door43_metadata`.flavor_type", flavorTypes, partialMatch)
 }
 
 // GetFlavorCond gets the flavor type condition
 func GetFlavorCond(flavors []string, partialMatch bool) builder.Cond {
-	flavorCond := builder.NewCond()
-	for _, flavor := range flavors {
-		for v := range strings.SplitSeq(flavor, ",") {
-			if partialMatch {
-				flavorCond = flavorCond.Or(builder.Like{"`door43_metadata`.flavor", strings.TrimSpace(v)})
-			} else {
-				flavorCond = flavorCond.Or(builder.Eq{"`door43_metadata`.flavor": strings.TrimSpace(v)})
-			}
-		}
-	}
-	return flavorCond
+	return GetLowerMatchCond("`door43_metadata`.flavor", flavors, partialMatch)
 }
 
 // GetAbbreviationCond gets the abbreviation condition
