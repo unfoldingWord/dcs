@@ -130,8 +130,8 @@ func checkTSVFileContent(dm *repo_model.Door43Metadata, path string, r io.Reader
 	header := strings.Split(strings.TrimPrefix(scanner.Text(), "\ufeff"), "\t")
 
 	var issues []*repo_model.Door43HealthcheckIssue
-	addIssue := func(code repo_model.IssueCode, severity repo_model.SeverityLevel, rule, details string) {
-		issue := newIssue(code, severity,
+	addIssue := func(code repo_model.IssueCode, rule, details string) {
+		issue := newIssue(code, repo_model.SeverityLevelError,
 			fmt.Sprintf(code.IssueDetailsFormatString(), details),
 			code.IssueSuggestionFormatString())
 		if rule != "" {
@@ -146,7 +146,7 @@ func checkTSVFileContent(dm *repo_model.Door43Metadata, path string, r io.Reader
 	expected := tsvHeadersBySubject[dm.Subject]
 	strict := expected != nil && slices.Equal(header, expected)
 	if expected != nil && !strict && !slices.Equal(header, tsv9Header) {
-		addIssue(repo_model.IssueCodeTSVHeaderInvalid, repo_model.SeverityLevelError, "",
+		addIssue(repo_model.IssueCodeTSVHeaderInvalid, "",
 			fmt.Sprintf("**`%s`**: the header row is `%s` but this resource type requires exactly `%s`",
 				path, strings.Join(header, " | "), strings.Join(expected, " | ")))
 	}
@@ -241,36 +241,36 @@ func checkTSVFileContent(dm *repo_model.Door43Metadata, path string, r io.Reader
 	}
 
 	if len(badColumnRows) > 0 {
-		addIssue(repo_model.IssueCodeTSVRowInvalid, repo_model.SeverityLevelError, "",
+		addIssue(repo_model.IssueCodeTSVRowInvalid, "",
 			fmt.Sprintf("**`%s`**: %d rows do not have exactly %d tab-separated columns (%s)", path, len(badColumnRows), len(header), badColumnRows))
 	}
 	if len(badIDRows) > 0 {
-		addIssue(repo_model.IssueCodeTSVIDInvalid, repo_model.SeverityLevelError, "",
+		addIssue(repo_model.IssueCodeTSVIDInvalid, "",
 			fmt.Sprintf("**`%s`**: %d rows have an ID not matching `^[a-z][a-z0-9]{3}$` (%s)", path, len(badIDRows), badIDRows))
 	}
 	if len(dupIDRows) > 0 {
-		addIssue(repo_model.IssueCodeTSVIDDuplicate, repo_model.SeverityLevelError, "",
+		addIssue(repo_model.IssueCodeTSVIDDuplicate, "",
 			fmt.Sprintf("**`%s`**: %d rows reuse an ID already used earlier in the file (%s)", path, len(dupIDRows), dupIDRows))
 	}
 	if len(badRefRows) > 0 {
-		addIssue(repo_model.IssueCodeTSVReferenceInvalid, repo_model.SeverityLevelError, "",
+		addIssue(repo_model.IssueCodeTSVReferenceInvalid, "",
 			fmt.Sprintf("**`%s`**: %d rows have an invalid Reference (%s)", path, len(badRefRows), badRefRows))
 	}
 	if len(badOccRows) > 0 {
-		addIssue(repo_model.IssueCodeTSVOccurrenceInvalid, repo_model.SeverityLevelError, "",
+		addIssue(repo_model.IssueCodeTSVOccurrenceInvalid, "",
 			fmt.Sprintf("**`%s`**: %d rows have an invalid Occurrence (%s)", path, len(badOccRows), badOccRows))
 	}
 	if len(badLinkRows) > 0 {
-		addIssue(repo_model.IssueCodeTSVLinkInvalid, repo_model.SeverityLevelError, "TSV-008",
+		addIssue(repo_model.IssueCodeTSVLinkInvalid, "TSV-008",
 			fmt.Sprintf("**`%s`**: %d rows have a TWLink not matching the rc:// TW link grammar (%s)", path, len(badLinkRows), badLinkRows))
 	}
 	if len(badTALinkRows) > 0 {
-		addIssue(repo_model.IssueCodeTSVLinkInvalid, repo_model.SeverityLevelError, "TSV-009",
+		addIssue(repo_model.IssueCodeTSVLinkInvalid, "TSV-009",
 			fmt.Sprintf("**`%s`**: %d rows have a SupportReference not matching the rc:// TA link grammar (%s)", path, len(badTALinkRows), badTALinkRows))
 	}
 	for _, idx := range requiredIdxs {
 		if rows := emptyByCol[idx]; len(rows) > 0 {
-			addIssue(repo_model.IssueCodeTSVCellEmpty, repo_model.SeverityLevelError, "",
+			addIssue(repo_model.IssueCodeTSVCellEmpty, "",
 				fmt.Sprintf("**`%s`**: %d rows have an empty **`%s`** cell (%s)", path, len(rows), header[idx], rows))
 		}
 	}

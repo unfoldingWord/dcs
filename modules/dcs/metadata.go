@@ -27,9 +27,8 @@ func GetCsvCellDiff(old, cur string) template.HTML {
 }
 
 func writeDiffHTML(diffs []diffmatchpatch.Diff) string {
-	removedCode := ""
+	var removedCode, addedCode strings.Builder
 	removed := false
-	addedCode := ""
 	added := false
 
 	// write the diff
@@ -38,29 +37,29 @@ func writeDiffHTML(diffs []diffmatchpatch.Diff) string {
 		txt = strings.ReplaceAll(txt, "\n", "↩\n")
 		switch chunk.Type {
 		case diffmatchpatch.DiffInsert:
-			addedCode += `<span class="added-code">`
-			addedCode += txt
-			addedCode += `</span>`
+			addedCode.WriteString(`<span class="added-code">`)
+			addedCode.WriteString(txt)
+			addedCode.WriteString(`</span>`)
 			added = true
 		case diffmatchpatch.DiffDelete:
-			removedCode += `<span class="removed-code">`
-			removedCode += txt
-			removedCode += `</span>`
+			removedCode.WriteString(`<span class="removed-code">`)
+			removedCode.WriteString(txt)
+			removedCode.WriteString(`</span>`)
 			removed = true
 		case diffmatchpatch.DiffEqual:
-			addedCode += txt
-			removedCode += txt
+			addedCode.WriteString(txt)
+			removedCode.WriteString(txt)
 		}
 	}
 
 	if added && removed {
-		return fmt.Sprintf(`<div class="del-code">%s</div><div class="add-code">%s</div>`, removedCode, addedCode)
+		return fmt.Sprintf(`<div class="del-code">%s</div><div class="add-code">%s</div>`, removedCode.String(), addedCode.String())
 	} else if added {
-		return fmt.Sprintf(`<div class="add-code">%s</div>`, addedCode)
+		return fmt.Sprintf(`<div class="add-code">%s</div>`, addedCode.String())
 	} else if removed {
-		return fmt.Sprintf(`<div class="del-code">%s</div>`, removedCode)
+		return fmt.Sprintf(`<div class="del-code">%s</div>`, removedCode.String())
 	}
-	return fmt.Sprintf(`<div class="same-code">%s</div>`, addedCode)
+	return fmt.Sprintf(`<div class="same-code">%s</div>`, addedCode.String())
 }
 
 // GetMetadataTypeFromRepoName determines the metadata type of a repo by its repo name format

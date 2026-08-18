@@ -1,9 +1,9 @@
 {{$release := .release}}
 {{if $release.Door43Metadata}}
-  {{if or (eq $release.Door43Metadata.MetadataType "rc") (eq $release.Door43Metadata.MetadataType "ts") (eq $release.Door43Metadata.MetadataType "tc")}}
+	{{if or (eq $release.Door43Metadata.MetadataType "rc") (eq $release.Door43Metadata.MetadataType "ts") (eq $release.Door43Metadata.MetadataType "tc")}}
 		<li class="item">
-		  <a class="archive-link" download href="{{$.RepoLink}}/sb/{{$release.TagName | PathEscapeSegments}}.zip" rel="nofollow">
-			  <strong class="flex-text-inline">{{svg "octicon-file-zip" 16 "download-icon"}}{{ctx.Locale.Tr "dcs.repo.release.source_files_sb"}} (ZIP)</strong>
+			<a class="archive-link" download href="{{$.RepoLink}}/sb/{{$release.TagName | PathEscapeSegments}}.zip" rel="nofollow">
+				<strong class="flex-text-inline">{{svg "octicon-file-zip" 16 "download-icon"}}{{ctx.Locale.Tr "dcs.repo.release.source_files_sb"}} (ZIP)</strong>
 			</a>
 		</li>
 		<li class="item">
@@ -11,7 +11,7 @@
 				<strong class="flex-text-inline">{{svg "octicon-file-zip" 16 "download-icon"}}{{ctx.Locale.Tr "dcs.repo.release.source_files_sb"}} (TAR.GZ)</strong>
 			</a>
 		</li>
-  {{end}}
+	{{end}}
 <li class="item">
 	<a href="{{Door43PreviewURL}}/u/{{$release.Repo.OwnerName | PathEscapeSegments}}/{{$release.Repo.Name | PathEscapeSegments}}/{{$release.TagName | PathEscapeSegments}}{{if eq AppUrl "https://qa.door43.org/"}}?server=QA{{end}}{{if eq AppUrl "https://develop.door43.org/"}}?server=DEV{{end}}"
 		target="_blank" rel="nofollow noopener">

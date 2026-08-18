@@ -1,7 +1,7 @@
 {{- /* Health check badge for one ref on the branches/tags/releases pages.
-     Expects: Severities (map ref -> SeverityLevel from GetHealthcheckSeveritiesByRefs),
-     Ref, RepoLink, OwnerName, RepoName. Renders nothing when the ref has no checked
-     door43_metadata entry, so non-catalog refs and repos stay badge-free. */ -}}
+	Expects: Severities (map ref -> SeverityLevel from GetHealthcheckSeveritiesByRefs),
+	Ref, RepoLink, OwnerName, RepoName. Renders nothing when the ref has no checked
+	door43_metadata entry, so non-catalog refs and repos stay badge-free. */ -}}
 {{if .Severities}}
 	{{$severity := index .Severities .Ref}}
 	{{if $severity}}
