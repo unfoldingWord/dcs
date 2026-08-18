@@ -29,7 +29,6 @@ import (
 	"gitea.dev/modules/commitstatus"
 	"gitea.dev/modules/git"
 	"gitea.dev/modules/git/gitcmd"
-	"gitea.dev/modules/gitrepo"
 	"gitea.dev/modules/json"
 	"gitea.dev/modules/queue"
 	"gitea.dev/modules/setting"
@@ -243,7 +242,7 @@ func TestPullSquashWithHeadCommitID(t *testing.T) {
 		resp := testPullCreate(t, session, "user1", "repo1", false, "master", "master", "This is a pull title")
 
 		repo1 := unittest.AssertExistsAndLoadBean(t, &repo_model.Repository{OwnerName: "user1", Name: "repo1"})
-		headBranch, err := git_model.GetBranch(t.Context(), repo1.ID, "master")
+		headBranch, err := git_model.GetBranchExisting(t.Context(), repo1.ID, "master")
 		assert.NoError(t, err)
 		assert.NotNil(t, headBranch)
 
@@ -386,13 +385,12 @@ func TestCantMergeUnrelated(t *testing.T) {
 			OwnerID: user1.ID,
 			Name:    "repo1",
 		})
-		path := repo_model.RepoPath(user1.Name, repo1.Name)
 
-		err := gitcmd.NewCommand("read-tree", "--empty").WithDir(path).Run(t.Context())
+		err := gitcmd.NewCommand("read-tree", "--empty").WithRepo(repo1).Run(t.Context())
 		assert.NoError(t, err)
 
 		stdout, _, err := gitcmd.NewCommand("hash-object", "-w", "--stdin").
-			WithDir(path).
+			WithRepo(repo1).
 			WithStdinBytes([]byte("Unrelated File")).
 			RunStdString(t.Context())
 
@@ -401,11 +399,11 @@ func TestCantMergeUnrelated(t *testing.T) {
 
 		_, _, err = gitcmd.NewCommand("update-index", "--add", "--replace", "--cacheinfo").
 			AddDynamicArguments("100644", sha, "somewhere-over-the-rainbow").
-			WithDir(path).
+			WithRepo(repo1).
 			RunStdString(t.Context())
 		assert.NoError(t, err)
 
-		treeSha, _, err := gitcmd.NewCommand("write-tree").WithDir(path).RunStdString(t.Context())
+		treeSha, _, err := gitcmd.NewCommand("write-tree").WithRepo(repo1).RunStdString(t.Context())
 		assert.NoError(t, err)
 		treeSha = strings.TrimSpace(treeSha)
 
@@ -426,7 +424,7 @@ func TestCantMergeUnrelated(t *testing.T) {
 
 		stdout, _, err = gitcmd.NewCommand("commit-tree").AddDynamicArguments(treeSha).
 			WithEnv(env).
-			WithDir(path).
+			WithRepo(repo1).
 			WithStdinBytes(messageBytes.Bytes()).
 			RunStdString(t.Context())
 		assert.NoError(t, err)
@@ -434,7 +432,7 @@ func TestCantMergeUnrelated(t *testing.T) {
 
 		_, _, err = gitcmd.NewCommand("branch", "unrelated").
 			AddDynamicArguments(commitSha).
-			WithDir(path).
+			WithRepo(repo1).
 			RunStdString(t.Context())
 		assert.NoError(t, err)
 
@@ -838,7 +836,7 @@ func TestPullAutoMergeAfterCommitStatusSucceed(t *testing.T) {
 		assert.Empty(t, pr.MergedCommitID)
 
 		// update commit status to success, then it should be merged automatically
-		baseGitRepo, err := gitrepo.OpenRepository(baseRepo)
+		baseGitRepo, err := git.OpenRepository(t.Context(), baseRepo)
 		assert.NoError(t, err)
 		sha, err := baseGitRepo.GetRefCommitID(t.Context(), pr.GetGitHeadRefName())
 		assert.NoError(t, err)
@@ -910,7 +908,7 @@ func TestPullAutoMergeAfterCommitStatusSucceedAndApproval(t *testing.T) {
 		assert.Empty(t, pr.MergedCommitID)
 
 		// update commit status to success, then it should be merged automatically
-		baseGitRepo, err := gitrepo.OpenRepository(baseRepo)
+		baseGitRepo, err := git.OpenRepository(t.Context(), baseRepo)
 		assert.NoError(t, err)
 		sha, err := baseGitRepo.GetRefCommitID(t.Context(), pr.GetGitHeadRefName())
 		assert.NoError(t, err)
@@ -1023,7 +1021,7 @@ func TestPullAutoMergeAfterCommitStatusSucceedAndApprovalForAgitFlow(t *testing.
 		assert.Empty(t, pr.MergedCommitID)
 
 		// update commit status to success, then it should be merged automatically
-		baseGitRepo, err := gitrepo.OpenRepository(baseRepo)
+		baseGitRepo, err := git.OpenRepository(t.Context(), baseRepo)
 		assert.NoError(t, err)
 		sha, err := baseGitRepo.GetRefCommitID(t.Context(), pr.GetGitHeadRefName())
 		assert.NoError(t, err)

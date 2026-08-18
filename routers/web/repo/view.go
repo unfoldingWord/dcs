@@ -128,13 +128,13 @@ func loadLatestCommitData(ctx *context.Context, latestCommit *git.Commit) bool {
 		verification := asymkey_service.ParseCommitWithSignature(ctx, latestCommit)
 
 		if err := asymkey_model.CalculateTrustStatus(verification, ctx.Repo.Repository.GetTrustModel(), func(user *user_model.User) (bool, error) {
-			return repo_model.IsOwnerMemberCollaborator(ctx, ctx.Repo.Repository, user.ID)
+			return repo_model.HasAccessToRepoCodeUnit(ctx, ctx.Repo.Repository, user.ID)
 		}, nil); err != nil {
 			ctx.ServerError("CalculateTrustStatus", err)
 			return false
 		}
 
-		avatarStackData := gituser.BuildAvatarStackData(ctx, latestCommit.AllParticipantIdentities(), nil)
+		avatarStackData := gituser.BuildAvatarStackData(ctx, latestCommit.AllAuthorIdentities(), nil)
 		avatarStackData.SearchByEmailLink = gituser.RepoCommitSearchByEmailLink(ctx.Repo.RepoLink, ctx.Repo.RefFullName)
 		ctx.Data["LatestCommitAvatarStackData"] = avatarStackData
 		ctx.Data["LatestCommitVerification"] = verification
@@ -268,11 +268,11 @@ func prepareDirectoryFileIcons(ctx *context.Context, files []git.CommitInfo) {
 	ctx.Data["FileIconPoolHTML"] = renderedIconPool.RenderToHTML()
 }
 
-func renderDirectoryFiles(ctx *context.Context, timeout time.Duration) git.Entries {
+func renderDirectoryFiles(ctx *context.Context, timeout time.Duration) (*git.TreeEntry, git.Entries) {
 	tree, err := ctx.Repo.Commit.SubTree(ctx, ctx.Repo.GitRepo, ctx.Repo.TreePath)
 	if err != nil {
 		HandleGitError(ctx, "Repo.Commit.SubTree", err)
-		return nil
+		return nil, nil
 	}
 
 	// TODO: LAST-COMMIT-ASYNC-LOADING: search this keyword to see more details
@@ -283,32 +283,25 @@ func renderDirectoryFiles(ctx *context.Context, timeout time.Duration) git.Entri
 	entry, err := ctx.Repo.Commit.GetTreeEntryByPath(ctx, ctx.Repo.GitRepo, ctx.Repo.TreePath)
 	if err != nil {
 		HandleGitError(ctx, "Repo.Commit.GetTreeEntryByPath", err)
-		return nil
+		return nil, nil
 	}
 
 	if !entry.IsDir() {
 		HandleGitError(ctx, "Repo.Commit.GetTreeEntryByPath", err)
-		return nil
+		return nil, nil
 	}
 
-	allEntries, err := tree.ListEntries(ctx, ctx.Repo.GitRepo)
+	subEntries, err := tree.ListEntries(ctx, ctx.Repo.GitRepo)
 	if err != nil {
 		ctx.ServerError("ListEntries", err)
-		return nil
+		return nil, nil
 	}
-	allEntries.CustomSort(base.NaturalSortCompare)
+	subEntries.CustomSort(base.NaturalSortCompare)
 
-	commitInfoCtx := gocontext.Context(ctx)
-	if timeout > 0 {
-		var cancel gocontext.CancelFunc
-		commitInfoCtx, cancel = gocontext.WithTimeout(ctx, timeout)
-		defer cancel()
-	}
-
-	files, latestCommit, err := allEntries.GetCommitsInfo(commitInfoCtx, ctx.Repo.RepoLink, ctx.Repo.GitRepo, ctx.Repo.Commit, ctx.Repo.TreePath)
+	files, latestCommit, err := subEntries.GetCommitsInfo(ctx, timeout, ctx.Repo.RepoLink, ctx.Repo.GitRepo, ctx.Repo.Commit, ctx.Repo.TreePath)
 	if err != nil {
 		ctx.ServerError("GetCommitsInfo", err)
-		return nil
+		return nil, nil
 	}
 
 	{ // this block is for testing purpose only
@@ -340,9 +333,9 @@ func renderDirectoryFiles(ctx *context.Context, timeout time.Duration) git.Entri
 	}
 
 	if !loadLatestCommitData(ctx, latestCommit) {
-		return nil
+		return nil, nil
 	}
-	return allEntries
+	return entry, subEntries
 }
 
 // RenderUserCards render a page show users according the input template

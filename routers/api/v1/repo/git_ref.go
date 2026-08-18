@@ -139,7 +139,7 @@ func CreateGitRef(ctx *context.APIContext) {
 	//   "422":
 	//     description: Unable to form reference
 
-	opt := web.GetForm(ctx).(*api.CreateGitRefOption)
+	opt := web.GetForm[*api.CreateGitRefOption](ctx)
 
 	if ctx.Repo.GitRepo.IsReferenceExist(ctx, opt.RefName) {
 		ctx.APIError(http.StatusConflict, "reference already exists: "+opt.RefName)
@@ -210,7 +210,7 @@ func UpdateGitRef(ctx *context.APIContext) {
 	//     "$ref": "#/responses/notFound"
 
 	refName := "refs/" + ctx.PathParam("*")
-	opt := web.GetForm(ctx).(*api.UpdateGitRefOption)
+	opt := web.GetForm[*api.UpdateGitRefOption](ctx)
 
 	if !ctx.Repo.GitRepo.IsReferenceExist(ctx, refName) {
 		ctx.APIError(http.StatusNotFound, "reference does not exist: "+refName)

@@ -22,7 +22,7 @@ import (
 	repo_model "gitea.dev/models/repo"
 	"gitea.dev/modules/git"
 	"gitea.dev/modules/git/gitcmd"
-	"gitea.dev/modules/gitrepo"
+	"gitea.dev/modules/git/gitrepo"
 	"gitea.dev/modules/graceful"
 	"gitea.dev/modules/httplib"
 	"gitea.dev/modules/log"
@@ -189,7 +189,7 @@ func (aReq *ArchiveRequest) Stream(ctx context.Context, repo *repo_model.Reposit
 	} else if isTC {
 		cloneDir = filepath.Join(tmpDir, "tc")
 	}
-	if err := cloneRepositoryAtCommit(ctx, repo.RepoPath(), aReq.archiveRefShortName, aReq.CommitID, cloneDir); err != nil {
+	if err := cloneRepositoryAtCommit(ctx, gitrepo.RepoLocalPath(repo.CodeStorageRepo()), aReq.archiveRefShortName, aReq.CommitID, cloneDir); err != nil {
 		return fmt.Errorf("clone requested repo ref: %w", err)
 	}
 
@@ -275,9 +275,9 @@ func prepareTsTWSourceDir(ctx context.Context, tmpDir string, dm *repo_model.Doo
 			return "", fmt.Errorf("repo_model.GetRepositoryByOwnerAndName(%s/en_tw): %w", owner, err)
 		}
 
-		twGitRepo, err := gitrepo.OpenRepository(twRepo)
+		twGitRepo, err := git.OpenRepository(ctx, twRepo)
 		if err != nil {
-			return "", fmt.Errorf("gitrepo.OpenRepository(%s): %w", twRepo.FullName(), err)
+			return "", fmt.Errorf("git.OpenRepository(%s): %w", twRepo.FullName(), err)
 		}
 		commitID, err := twGitRepo.ConvertToGitID(ctx, twRepo.DefaultBranch)
 		twGitRepo.Close()
@@ -286,7 +286,7 @@ func prepareTsTWSourceDir(ctx context.Context, tmpDir string, dm *repo_model.Doo
 		}
 
 		twSourceDir := filepath.Join(tmpDir, "tw-source")
-		if err := cloneRepositoryAtCommit(ctx, twRepo.RepoPath(), twRepo.DefaultBranch, commitID.String(), twSourceDir); err != nil {
+		if err := cloneRepositoryAtCommit(ctx, gitrepo.RepoLocalPath(twRepo.CodeStorageRepo()), twRepo.DefaultBranch, commitID.String(), twSourceDir); err != nil {
 			return "", fmt.Errorf("clone TW source repo %s: %w", twRepo.FullName(), err)
 		}
 		return twSourceDir, nil
@@ -321,9 +321,9 @@ func preparePayloadPath(ctx context.Context, tmpDir, rcDir string, repo *repo_mo
 		return "", fmt.Errorf("repo_model.GetRepositoryByOwnerAndName(%s): %w", payloadRepoName, err)
 	}
 
-	payloadGitRepo, err := gitrepo.OpenRepository(payloadRepo)
+	payloadGitRepo, err := git.OpenRepository(ctx, payloadRepo)
 	if err != nil {
-		return "", fmt.Errorf("gitrepo.OpenRepository(%s): %w", payloadRepo.FullName(), err)
+		return "", fmt.Errorf("git.OpenRepository(%s): %w", payloadRepo.FullName(), err)
 	}
 	defer payloadGitRepo.Close()
 
@@ -336,14 +336,14 @@ func preparePayloadPath(ctx context.Context, tmpDir, rcDir string, repo *repo_mo
 		// Clone the TWL repo directly into rcDir/<lang>_twl/ so the library auto-detects
 		// it from inDir (the same pattern the TWL handler uses to auto-detect <lang>_tw/).
 		destDir := filepath.Join(rcDir, payloadRepoName)
-		if err := cloneRepositoryAtCommit(ctx, payloadRepo.RepoPath(), payloadRepo.DefaultBranch, commitID.String(), destDir); err != nil {
+		if err := cloneRepositoryAtCommit(ctx, gitrepo.RepoLocalPath(payloadRepo.CodeStorageRepo()), payloadRepo.DefaultBranch, commitID.String(), destDir); err != nil {
 			return "", fmt.Errorf("clone TWL payload into rcDir: %w", err)
 		}
 		return "", nil
 	}
 
 	payloadDir := filepath.Join(tmpDir, "payload")
-	if err := cloneRepositoryAtCommit(ctx, payloadRepo.RepoPath(), payloadRepo.DefaultBranch, commitID.String(), payloadDir); err != nil {
+	if err := cloneRepositoryAtCommit(ctx, gitrepo.RepoLocalPath(payloadRepo.CodeStorageRepo()), payloadRepo.DefaultBranch, commitID.String(), payloadDir); err != nil {
 		return "", fmt.Errorf("clone payload repository %s: %w", payloadRepo.FullName(), err)
 	}
 
@@ -361,7 +361,7 @@ func cloneRepositoryAtCommit(ctx context.Context, sourceRepoPath, refShortName, 
 		if err == nil {
 			return checkoutCommit(ctx, destination, commitID)
 		}
-		if removeErr := util.RemoveAll(destination); removeErr != nil {
+		if removeErr := util.RemoveAllWithRetry(destination); removeErr != nil {
 			log.Warn("cloneRepositoryAtCommit: failed to clean shallow clone destination %q: %v", destination, removeErr)
 		}
 	}

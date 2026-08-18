@@ -66,10 +66,7 @@ func (c *Commit) ParentCount() int {
 
 // GetCommitByPath return the commit of relative path object.
 func (c *Commit) GetCommitByPath(ctx context.Context, gitRepo *Repository, relpath string) (*Commit, error) {
-	if gitRepo.LastCommitCache != nil {
-		return gitRepo.LastCommitCache.GetCommitByPath(ctx, c.ID.String(), relpath)
-	}
-	return gitRepo.getCommitByPathWithID(ctx, c.ID, relpath)
+	return gitRepo.LastCommitCache.GetCommitByPath(ctx, c.ID, relpath)
 }
 
 func (c *Commit) Tree() *Tree {
@@ -112,7 +109,7 @@ func (c *Commit) HasPreviousCommit(ctx context.Context, gitRepo *Repository, obj
 
 	_, _, err := gitcmd.NewCommand("merge-base", "--is-ancestor").
 		AddDynamicArguments(that, this).
-		WithDir(gitRepo.Path).
+		WithRepo(gitRepo).
 		RunStdString(ctx)
 	if err == nil {
 		return true, nil
@@ -239,10 +236,10 @@ func (c *Commit) GetFileContent(ctx context.Context, gitRepo *Repository, filena
 }
 
 // GetFullCommitID returns full length (40) of commit ID by given short SHA in a repository.
-func GetFullCommitID(ctx context.Context, repoPath, shortID string) (string, error) {
+func GetFullCommitID(ctx context.Context, repo RepositoryFacade, shortID string) (string, error) {
 	commitID, _, err := gitcmd.NewCommand("rev-parse").
 		AddDynamicArguments(shortID).
-		WithDir(repoPath).
+		WithRepo(repo).
 		RunStdString(ctx)
 	if err != nil {
 		if gitcmd.IsErrorExitCode(err, 128) {

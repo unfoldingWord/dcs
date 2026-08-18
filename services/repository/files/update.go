@@ -17,7 +17,6 @@ import (
 	user_model "gitea.dev/models/user"
 	"gitea.dev/modules/git"
 	"gitea.dev/modules/git/attribute"
-	"gitea.dev/modules/gitrepo"
 	"gitea.dev/modules/lfs"
 	"gitea.dev/modules/log"
 	"gitea.dev/modules/setting"
@@ -105,7 +104,7 @@ func ChangeRepoFiles(ctx context.Context, repo *repo_model.Repository, doer *use
 		opts.NewBranch = opts.OldBranch
 	}
 
-	gitRepo, closer, err := gitrepo.RepositoryFromContextOrOpen(ctx, repo)
+	gitRepo, closer, err := git.RepositoryFromContextOrOpen(ctx, repo)
 	if err != nil {
 		return nil, err
 	}
@@ -175,7 +174,7 @@ func ChangeRepoFiles(ctx context.Context, repo *repo_model.Repository, doer *use
 
 	t, err := NewTemporaryUploadRepository(repo)
 	if err != nil {
-		log.Error("NewTemporaryUploadRepository failed: %v", err)
+		return nil, fmt.Errorf("NewTemporaryUploadRepository failed: %w", err)
 	}
 	defer t.Close()
 	hasOldBranch := true

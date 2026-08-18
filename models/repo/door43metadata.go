@@ -711,8 +711,8 @@ func GetDoor43MetadataLanguageInfo(ctx context.Context, langs []string) (map[str
 		if dm.LanguageIsGL {
 			langInfo["language_is_gl"] = true
 		}
-		if dm.LanguageTitle != langInfo["language_title"].(string) {
-			altNames := langInfo["alternate_names"].([]string)
+		if dm.LanguageTitle != dcs.MapStr(langInfo, "language_title") {
+			altNames := dcs.MapStrSlice(langInfo, "alternate_names")
 			if !slices.Contains(altNames, dm.LanguageTitle) {
 				langInfo["alternate_names"] = append(altNames, dm.LanguageTitle)
 			}

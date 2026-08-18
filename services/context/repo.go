@@ -22,9 +22,9 @@ import (
 	repo_model "gitea.dev/models/repo"
 	unit_model "gitea.dev/models/unit"
 	user_model "gitea.dev/models/user"
+	"gitea.dev/modules/base"
 	"gitea.dev/modules/cache"
 	"gitea.dev/modules/git"
-	"gitea.dev/modules/gitrepo"
 	"gitea.dev/modules/httplib"
 	code_indexer "gitea.dev/modules/indexer/code"
 	"gitea.dev/modules/log"
@@ -188,7 +188,7 @@ func PrepareCommitFormOptions(ctx *Context, doer *user_model.User, targetRepo *r
 		}
 	}
 
-	targetGitRepo, closer, err := gitrepo.RepositoryFromContextOrOpen(ctx, targetRepo)
+	targetGitRepo, closer, err := git.RepositoryFromContextOrOpen(ctx, targetRepo)
 	if err != nil {
 		return nil, err
 	}
@@ -196,8 +196,8 @@ func PrepareCommitFormOptions(ctx *Context, doer *user_model.User, targetRepo *r
 
 	willSign, signKey, _, err := asymkey_service.SignCRUDAction(ctx, doer, targetGitRepo, refName.String())
 	wontSignReason := ""
-	if asymkey_service.IsErrWontSign(err) {
-		wontSignReason = string(err.(*asymkey_service.ErrWontSign).Reason)
+	if errWontSign, ok := err.(*asymkey_service.ErrWontSign); ok {
+		wontSignReason = string(errWontSign.Reason)
 	} else if err != nil {
 		return nil, err
 	}
@@ -255,29 +255,18 @@ func (r *Repository) CanCreateIssueDependencies(ctx context.Context, user *user_
 	return r.Repository.IsDependenciesEnabled(ctx) && r.Permission.CanWriteIssuesOrPulls(isPull)
 }
 
-// GetCommitsCount returns cached commit count for current view
-func (r *Repository) GetCommitsCount(ctx context.Context) (int64, error) {
-	if r.Commit == nil {
-		return 0, nil
-	}
-	contextName := r.RefFullName.ShortName()
-	isRef := r.RefFullName.IsBranch() || r.RefFullName.IsTag()
-	return cache.GetInt64(r.Repository.GetCommitsCountCacheKey(contextName, isRef), func() (int64, error) {
-		return gitrepo.CommitsCountOfCommit(ctx, r.Repository, r.Commit.ID.String())
-	})
-}
-
 // GetCommitGraphsCount returns cached commit count for current view
-func (r *Repository) GetCommitGraphsCount(ctx context.Context, hidePRRefs bool, branches, files []string) (int64, error) {
-	cacheKey := fmt.Sprintf("commits-count-%d-graph-%t-%s-%s", r.Repository.ID, hidePRRefs, branches, files)
-
+func (r *Repository) GetCommitGraphsCount(ctx context.Context, hidePRRefs bool, refs, files []string) (int64, error) {
+	refFileKey := strings.Join(refs, "\x00") + "\x00\x00" + strings.Join(files, "\x00")
+	refFileKey = base.EncodeSha256(refFileKey)
+	cacheKey := cache.SafeCacheKey(fmt.Sprintf("git-commits-graph-count:%d:%v", r.Repository.ID, hidePRRefs), refFileKey)
 	return cache.GetInt64(cacheKey, func() (int64, error) {
-		if len(branches) == 0 {
-			return gitrepo.AllCommitsCount(ctx, r.Repository, hidePRRefs, files...)
+		if len(refs) == 0 {
+			return git.AllCommitsCount(ctx, r.Repository, hidePRRefs, files...)
 		}
-		return gitrepo.CommitsCount(ctx, r.Repository,
-			gitrepo.CommitsCountOptions{
-				Revision: branches,
+		return git.CommitsCount(ctx, r.Repository,
+			git.CommitsCountOptions{
+				Revision: refs,
 				RelPath:  files,
 			})
 	})
@@ -664,7 +653,12 @@ func repoAssignmentPrepareTemplateData(ctx *Context, data *repoAssignmentPrepare
 	}
 
 	if ctx.IsSigned {
-		ctx.Data["IsWatchingRepo"] = repo_model.IsWatching(ctx, ctx.Doer.ID, repo.ID)
+		watch, err := repo_model.GetWatch(ctx, ctx.Doer.ID, repo.ID)
+		if err != nil {
+			ctx.ServerError("GetWatch", err)
+			return
+		}
+		ctx.Data["RepoWatch"] = watch
 		ctx.Data["IsStaringRepo"] = repo_model.IsStaring(ctx, ctx.Doer.ID, repo.ID)
 	}
 
@@ -703,7 +697,7 @@ func repoAssignmentAutoRedirectNotReady(ctx *Context, data *repoAssignmentPrepar
 func repoAssignmentPrepareGitRepo(ctx *Context, data *repoAssignmentPrepareDataStruct) {
 	var err error
 	repo := data.repo
-	ctx.Repo.GitRepo, err = gitrepo.RepositoryFromRequestContextOrOpen(ctx, repo)
+	ctx.Repo.GitRepo, err = git.RepositoryFromRequestContextOrOpen(ctx, repo)
 	if err != nil {
 		if strings.Contains(err.Error(), "repository does not exist") || strings.Contains(err.Error(), "no such file or directory") {
 			log.Error("Repository %-v has a broken repository on the file system: %s Error: %v", ctx.Repo.Repository, ctx.Repo.Repository.FullName(), err)
@@ -921,7 +915,7 @@ func RepoRefByDefaultBranch() func(*Context) {
 		ctx.Repo.RefFullName = git.RefNameFromBranch(ctx.Repo.Repository.DefaultBranch)
 		ctx.Repo.BranchName = ctx.Repo.Repository.DefaultBranch
 		ctx.Repo.Commit, _ = ctx.Repo.GitRepo.GetBranchCommit(ctx, ctx.Repo.BranchName)
-		ctx.Repo.CommitsCount, _ = ctx.Repo.GetCommitsCount(ctx)
+		ctx.Repo.CommitsCount, _ = git.GetCommitsCountCache(ctx, ctx.Repo.Repository, ctx.Repo.RefFullName, ctx.Repo.Commit)
 		ctx.Data["RefFullName"] = ctx.Repo.RefFullName
 		ctx.Data["BranchName"] = ctx.Repo.BranchName
 		ctx.Data["CommitsCount"] = ctx.Repo.CommitsCount
@@ -953,7 +947,7 @@ func RepoRefByType(detectRefType git.RefType) func(*Context) {
 		reqPath := ctx.PathParam("*")
 		if reqPath == "" {
 			refShortName = ctx.Repo.Repository.DefaultBranch
-			if !gitrepo.IsBranchExist(ctx, ctx.Repo.Repository, refShortName) {
+			if !git.IsBranchExist(ctx, ctx.Repo.Repository, refShortName) {
 				brs, _, err := ctx.Repo.GitRepo.GetBranchNames(ctx, 0, 1)
 				if err == nil && len(brs) != 0 {
 					refShortName = brs[0]
@@ -983,14 +977,14 @@ func RepoRefByType(detectRefType git.RefType) func(*Context) {
 			ctx.Repo.RefFullName = repoRefFullName(refType, refShortName)
 			isRenamedBranch, has := ctx.Data["IsRenamedBranch"].(bool)
 			if isRenamedBranch && has {
-				renamedBranchName := ctx.Data["RenamedBranchName"].(string)
+				renamedBranchName := ctx.Data["RenamedBranchName"].(string) //nolint:forcetypeassert // must exist
 				ctx.Flash.Info(ctx.Tr("repo.branch.renamed", refShortName, renamedBranchName))
 				link := setting.AppSubURL + strings.Replace(ctx.Req.URL.EscapedPath(), util.PathEscapeSegments(refShortName), util.PathEscapeSegments(renamedBranchName), 1)
 				ctx.Redirect(link)
 				return
 			}
 
-			if refType == git.RefTypeBranch && gitrepo.IsBranchExist(ctx, ctx.Repo.Repository, refShortName) {
+			if refType == git.RefTypeBranch && git.IsBranchExist(ctx, ctx.Repo.Repository, refShortName) {
 				ctx.Repo.BranchName = refShortName
 				ctx.Repo.RefFullName = git.RefNameFromBranch(refShortName)
 
@@ -1000,7 +994,7 @@ func RepoRefByType(detectRefType git.RefType) func(*Context) {
 					return
 				}
 				ctx.Repo.CommitID = ctx.Repo.Commit.ID.String()
-			} else if refType == git.RefTypeTag && gitrepo.IsTagExist(ctx, ctx.Repo.Repository, refShortName) {
+			} else if refType == git.RefTypeTag && git.IsTagExist(ctx, ctx.Repo.Repository, refShortName) {
 				ctx.Repo.RefFullName = git.RefNameFromTag(refShortName)
 
 				ctx.Repo.Commit, err = ctx.Repo.GitRepo.GetTagCommit(ctx, refShortName)
@@ -1078,7 +1072,7 @@ func RepoRefByType(detectRefType git.RefType) func(*Context) {
 
 		ctx.Data["CanCreateBranch"] = ctx.Repo.CanCreateBranch() // only used by the branch selector dropdown: AllowCreateNewRef
 
-		ctx.Repo.CommitsCount, err = ctx.Repo.GetCommitsCount(ctx)
+		ctx.Repo.CommitsCount, err = git.GetCommitsCountCache(ctx, ctx.Repo.Repository, ctx.Repo.RefFullName, ctx.Repo.Commit)
 		if err != nil {
 			ctx.ServerError("GetCommitsCount", err)
 			return
@@ -1093,7 +1087,6 @@ func RepoRefByType(detectRefType git.RefType) func(*Context) {
 			}
 		}
 		ctx.Data["CommitsCount"] = ctx.Repo.CommitsCount
-		ctx.Repo.GitRepo.LastCommitCache = git.NewLastCommitCache(ctx.Repo.CommitsCount, ctx.Repo.Repository.FullName(), ctx.Repo.GitRepo, cache.GetCache())
 	}
 }
 

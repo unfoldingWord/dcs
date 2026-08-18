@@ -57,7 +57,7 @@ func GetLangnamesJSONKeyed() map[string]map[string]any {
 		_langnamesJSONKeyed = map[string]map[string]any{}
 		langnames := GetLangnamesJSON()
 		for _, value := range langnames {
-			_langnamesJSONKeyed[strings.ToLower(value["lc"].(string))] = value
+			_langnamesJSONKeyed[strings.ToLower(MapStr(value, "lc"))] = value
 		}
 	}
 	return _langnamesJSONKeyed

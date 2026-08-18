@@ -20,7 +20,6 @@ import (
 	"gitea.dev/models/unittest"
 	user_model "gitea.dev/models/user"
 	"gitea.dev/modules/git"
-	"gitea.dev/modules/gitrepo"
 	"gitea.dev/modules/test"
 	"gitea.dev/modules/translation"
 	"gitea.dev/modules/util"
@@ -221,7 +220,7 @@ func testEditorWebGitCommitEmail(t *testing.T) {
 	require.True(t, user.KeepEmailPrivate)
 
 	repo1 := unittest.AssertExistsAndLoadBean(t, &repo_model.Repository{ID: 1})
-	gitRepo, _ := gitrepo.OpenRepository(repo1)
+	gitRepo, _ := git.OpenRepository(t.Context(), repo1)
 	defer gitRepo.Close()
 	getLastCommit := func(t *testing.T) *git.Commit {
 		c, err := gitRepo.GetBranchCommit(t.Context(), "master")
@@ -421,7 +420,7 @@ func testForkToEditFile(t *testing.T, session *TestSession, user, owner, repo, b
 		resp := session.MakeRequest(t, req, http.StatusOK)
 		htmlDoc := NewHTMLParser(t, resp.Body)
 
-		uploadForm := htmlDoc.doc.Find(".form-fetch-action")
+		uploadForm := htmlDoc.doc.Find(".repo-file-upload.form-fetch-action")
 		formAction := uploadForm.AttrOr("action", "")
 		assert.Equal(t, fmt.Sprintf("/%s/%s-1/_upload/%s/%s?from_base_branch=%s&foo=bar", user, repo, branch, filePath, branch), formAction)
 		uploadLink := uploadForm.Find(".dropzone").AttrOr("data-link-url", "")

@@ -14,7 +14,6 @@ import (
 
 	repo_model "gitea.dev/models/repo"
 	"gitea.dev/modules/git"
-	"gitea.dev/modules/gitrepo"
 	"gitea.dev/modules/setting"
 	api "gitea.dev/modules/structs"
 	"gitea.dev/services/contexttest"
@@ -110,6 +109,7 @@ func getExpectedFileResponseForRepoFilesCreate(commitID string, lastCommit *git.
 			LastCommitterDate: new(lastCommit.Committer.When),
 			LastAuthorDate:    new(lastCommit.Author.When),
 			Type:              "file",
+			Mode:              "100644",
 			Size:              18,
 			Encoding:          &encoding,
 			Content:           &content,
@@ -180,6 +180,7 @@ func getExpectedFileResponseForRepoFilesUpdate(commitID, filename, lastCommitSHA
 			LastCommitterDate: new(lastCommitterWhen),
 			LastAuthorDate:    new(lastAuthorWhen),
 			Type:              "file",
+			Mode:              "100644",
 			Size:              43,
 			Encoding:          &encoding,
 			Content:           &content,
@@ -284,6 +285,7 @@ func getExpectedFileResponseForRepoFilesUpdateRename(commitID, lastCommitSHA str
 			SHA:           detail.sha,
 			LastCommitSHA: new(lastCommitSHA),
 			Type:          "file",
+			Mode:          "100644",
 			Size:          detail.size,
 			Encoding:      new("base64"),
 			Content:       &detail.content,
@@ -362,7 +364,7 @@ func TestChangeRepoFilesForCreate(t *testing.T) {
 
 		// asserts
 		assert.NoError(t, err)
-		gitRepo, _ := gitrepo.OpenRepository(repo)
+		gitRepo, _ := git.OpenRepository(ctx, repo)
 		defer gitRepo.Close()
 
 		commitID, _ := gitRepo.GetBranchCommitID(t.Context(), opts.NewBranch)
@@ -399,7 +401,7 @@ func TestChangeRepoFilesForUpdate(t *testing.T) {
 
 		// asserts
 		assert.NoError(t, err)
-		gitRepo, _ := gitrepo.OpenRepository(repo)
+		gitRepo, _ := git.OpenRepository(ctx, repo)
 		defer gitRepo.Close()
 
 		commit, _ := gitRepo.GetBranchCommit(t.Context(), opts.NewBranch)
@@ -435,7 +437,7 @@ func TestChangeRepoFilesForUpdateWithFileMove(t *testing.T) {
 
 		// asserts
 		assert.NoError(t, err)
-		gitRepo, _ := gitrepo.OpenRepository(repo)
+		gitRepo, _ := git.OpenRepository(ctx, repo)
 		defer gitRepo.Close()
 
 		commit, _ := gitRepo.GetBranchCommit(t.Context(), opts.NewBranch)
@@ -481,7 +483,7 @@ func TestChangeRepoFilesForUpdateWithFileRename(t *testing.T) {
 
 		// asserts
 		assert.NoError(t, err)
-		gitRepo, _ := gitrepo.OpenRepository(repo)
+		gitRepo, _ := git.OpenRepository(ctx, repo)
 		defer gitRepo.Close()
 
 		commit, _ := gitRepo.GetBranchCommit(t.Context(), repo.DefaultBranch)
@@ -518,7 +520,7 @@ func TestChangeRepoFilesWithoutBranchNames(t *testing.T) {
 
 		// asserts
 		assert.NoError(t, err)
-		gitRepo, _ := gitrepo.OpenRepository(repo)
+		gitRepo, _ := git.OpenRepository(ctx, repo)
 		defer gitRepo.Close()
 
 		commit, _ := gitRepo.GetBranchCommit(t.Context(), repo.DefaultBranch)

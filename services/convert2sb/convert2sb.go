@@ -16,7 +16,7 @@ import (
 	system_model "gitea.dev/models/system"
 	"gitea.dev/modules/git"
 	"gitea.dev/modules/git/gitcmd"
-	"gitea.dev/modules/gitrepo"
+	"gitea.dev/modules/git/gitrepo"
 	"gitea.dev/modules/log"
 	repo_module "gitea.dev/modules/repository"
 	"gitea.dev/modules/setting"
@@ -113,7 +113,7 @@ func ForBranch(ctx context.Context, repo *repo_model.Repository, branchName stri
 	} else if isTC {
 		cloneDir = filepath.Join(tmpDir, "tc")
 	}
-	if err := cloneAtRef(ctx, repo.RepoPath(), branchName, cloneDir); err != nil {
+	if err := cloneAtRef(ctx, gitrepo.RepoLocalPath(repo.CodeStorageRepo()), branchName, cloneDir); err != nil {
 		return fmt.Errorf("clone at branch %s: %w", branchName, err)
 	}
 
@@ -161,7 +161,7 @@ func ForBranch(ctx context.Context, repo *repo_model.Repository, branchName stri
 	// identifies exactly which state of the repo was converted. Passed explicitly
 	// because rcDir's origin is a local path (and ts conversions have no .git),
 	// so the library cannot detect the repo identity itself.
-	gitRepo, err := gitrepo.OpenRepository(repo)
+	gitRepo, err := git.OpenRepository(ctx, repo)
 	if err != nil {
 		return fmt.Errorf("OpenRepository: %w", err)
 	}
@@ -188,7 +188,7 @@ func ForBranch(ctx context.Context, repo *repo_model.Repository, branchName stri
 
 	// Step 4: Clone the full repo to a working directory for pushing
 	workDir := filepath.Join(tmpDir, "work")
-	if err := git.Clone(ctx, repo.RepoPath(), workDir, git.CloneRepoOptions{Quiet: true}); err != nil {
+	if err := git.Clone(ctx, gitrepo.RepoLocalPath(repo.CodeStorageRepo()), workDir, git.CloneRepoOptions{Quiet: true}); err != nil {
 		return fmt.Errorf("clone work dir: %w", err)
 	}
 
@@ -245,7 +245,7 @@ func ForBranch(ctx context.Context, repo *repo_model.Repository, branchName stri
 	// and Door43Metadata is processed for the new main branch
 	env := repo_module.PushingEnvironment(doer, repo)
 	if err := git.Push(ctx, workDir, git.PushOptions{
-		Remote: repo.RepoPath(),
+		Remote: gitrepo.RepoLocalPath(repo.CodeStorageRepo()),
 		Branch: "main",
 		Env:    env,
 	}); err != nil {
@@ -312,7 +312,7 @@ func cloneAtRef(ctx context.Context, repoPath, ref, destination string) error {
 	})
 	if err != nil {
 		// Fallback to full clone if shallow clone fails
-		if removeErr := util.RemoveAll(destination); removeErr != nil {
+		if removeErr := util.RemoveAllWithRetry(destination); removeErr != nil {
 			log.Warn("cloneAtRef: failed to clean shallow clone destination: %v", removeErr)
 		}
 		if err := git.Clone(ctx, repoPath, destination, git.CloneRepoOptions{Quiet: true}); err != nil {
@@ -475,7 +475,7 @@ func preparePayloadPath(ctx context.Context, tmpDir, rcDir string, repo *repo_mo
 		return "", fmt.Errorf("GetRepositoryByOwnerAndName(%s): %w", payloadRepoName, err)
 	}
 
-	payloadGitRepo, err := gitrepo.OpenRepository(payloadRepo)
+	payloadGitRepo, err := git.OpenRepository(ctx, payloadRepo)
 	if err != nil {
 		return "", fmt.Errorf("OpenRepository(%s): %w", payloadRepo.FullName(), err)
 	}
@@ -487,9 +487,9 @@ func preparePayloadPath(ctx context.Context, tmpDir, rcDir string, repo *repo_mo
 	}
 
 	payloadDir := filepath.Join(tmpDir, "payload")
-	if err := cloneAtRef(ctx, payloadRepo.RepoPath(), payloadRepo.DefaultBranch, payloadDir); err != nil {
-		_ = util.RemoveAll(payloadDir)
-		if err := git.Clone(ctx, payloadRepo.RepoPath(), payloadDir, git.CloneRepoOptions{Quiet: true}); err != nil {
+	if err := cloneAtRef(ctx, gitrepo.RepoLocalPath(payloadRepo.CodeStorageRepo()), payloadRepo.DefaultBranch, payloadDir); err != nil {
+		_ = util.RemoveAllWithRetry(payloadDir)
+		if err := git.Clone(ctx, gitrepo.RepoLocalPath(payloadRepo.CodeStorageRepo()), payloadDir, git.CloneRepoOptions{Quiet: true}); err != nil {
 			return "", fmt.Errorf("clone payload repo %s: %w", payloadRepo.FullName(), err)
 		}
 		_, _, checkoutErr := gitcmd.NewCommand("checkout", "--detach").AddDynamicArguments(commitID.String()).
@@ -533,7 +533,7 @@ func prepareTsTWSourceDir(ctx context.Context, tmpDir string, repo *repo_model.R
 			return "", fmt.Errorf("GetRepositoryByOwnerAndName(%s/en_tw): %w", owner, err)
 		}
 		twSourceDir := filepath.Join(tmpDir, "tw-source")
-		if err := cloneAtRef(ctx, twRepo.RepoPath(), twRepo.DefaultBranch, twSourceDir); err != nil {
+		if err := cloneAtRef(ctx, gitrepo.RepoLocalPath(twRepo.CodeStorageRepo()), twRepo.DefaultBranch, twSourceDir); err != nil {
 			return "", fmt.Errorf("clone TW source repo %s: %w", twRepo.FullName(), err)
 		}
 		return twSourceDir, nil

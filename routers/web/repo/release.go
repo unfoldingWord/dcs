@@ -19,7 +19,6 @@ import (
 	"gitea.dev/models/unit"
 	user_model "gitea.dev/models/user"
 	"gitea.dev/modules/git"
-	"gitea.dev/modules/gitrepo"
 	"gitea.dev/modules/log" // DCS Customizations
 	"gitea.dev/modules/markup/markdown"
 	"gitea.dev/modules/optional"
@@ -50,8 +49,8 @@ func calReleaseNumCommitsBehind(ctx stdCtx.Context, repoCtx *context.Repository,
 	if _, ok := countCache[target]; !ok {
 		commit, err := repoCtx.GitRepo.GetBranchCommit(ctx, target)
 		if err != nil {
-			var errNotExist git.ErrNotExist
-			if target == repoCtx.Repository.DefaultBranch || !errors.As(err, &errNotExist) {
+			_, isNotExist := errors.AsType[git.ErrNotExist](err)
+			if target == repoCtx.Repository.DefaultBranch || !isNotExist {
 				return fmt.Errorf("GetBranchCommit: %w", err)
 			}
 			// fallback to default branch
@@ -61,7 +60,7 @@ func calReleaseNumCommitsBehind(ctx stdCtx.Context, repoCtx *context.Repository,
 				return fmt.Errorf("GetBranchCommit(DefaultBranch): %w", err)
 			}
 		}
-		countCache[target], err = gitrepo.CommitsCountOfCommit(ctx, repoCtx.Repository, commit.ID.String())
+		countCache[target], err = git.CommitsCountOfCommit(ctx, repoCtx.Repository, commit.ID.String())
 		if err != nil {
 			return fmt.Errorf("CommitsCount: %w", err)
 		}
@@ -212,7 +211,7 @@ func Releases(ctx *context.Context) {
 
 	ctx.Data["Releases"] = releases
 
-	numReleases := ctx.Data["NumReleases"].(int64)
+	numReleases := ctx.Data["NumReleases"].(int64) //nolint:forcetypeassert // must exist
 	pager := context.NewPagination(numReleases, listOptions.PageSize, listOptions.Page, 5)
 	pager.AddParamFromRequest(ctx.Req)
 	ctx.Data["Page"] = pager
@@ -437,7 +436,7 @@ func NewRelease(ctx *context.Context) {
 
 // GenerateReleaseNotes builds release notes content for the given tag and base.
 func GenerateReleaseNotes(ctx *context.Context) {
-	form := web.GetForm(ctx).(*forms.GenerateReleaseNotesForm)
+	form := web.GetForm[*forms.GenerateReleaseNotesForm](ctx)
 
 	if ctx.HasError() {
 		ctx.JSONError(ctx.GetErrMsg())
@@ -468,7 +467,7 @@ func NewReleasePost(ctx *context.Context) {
 		return
 	}
 
-	form := web.GetForm(ctx).(*forms.NewReleaseForm)
+	form := web.GetForm[*forms.NewReleaseForm](ctx)
 
 	// first, check whether the release exists, and prepare "ShowCreateTagOnlyButton"
 	// the logic should be done before the form error check to make the tmpl has correct variables
@@ -637,7 +636,7 @@ func EditReleasePost(ctx *context.Context) {
 		return
 	}
 
-	form := web.GetForm(ctx).(*forms.EditReleaseForm)
+	form := web.GetForm[*forms.EditReleaseForm](ctx)
 
 	tagName := ctx.PathParam("*")
 	rel, err := repo_model.GetRelease(ctx, ctx.Repo.Repository.ID, tagName)

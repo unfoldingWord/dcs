@@ -13,27 +13,40 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
+	"gitea.dev/modules/cache"
 	"gitea.dev/modules/git/gitcmd"
+	"gitea.dev/modules/git/gitrepo"
 	"gitea.dev/modules/proxy"
 	"gitea.dev/modules/setting"
 	"gitea.dev/modules/util"
 )
 
-type RepositoryFacade = gitcmd.RepositoryFacade
+type RepositoryFacade = gitrepo.RepositoryFacade
 
 type RepositoryBase struct {
-	Path string // absolute path
-
 	LastCommitCache *LastCommitCache
 
 	repoFacade        RepositoryFacade
 	tagCache          *ObjectCache[*Tag]
 	objectFormatCache ObjectFormat
+
+	mu sync.Mutex
+	// Unfortunately, we can't completely remove the ctx, because CatFileBatch still heavily depends on a parent context.
+	// If we remove the ctx, then CatFileBatch's process management will become a mess and create a lot of unnecessary git processes.
+	// ref: http://localhost:3000/-/admin/monitor/perftrace
+	// The root problem is that some functions like "GetCommit" need to use CatFileBatch,
+	// if CatFileBatch accepts its own ctx, then every sub-context needs a git process.
+	// e.g.: open a repo home, dozens of git processes (duplicate cat-file)
+	// ATTENTION: this ctx is for cached cat-file process only, don't use it for other purposes.
+	catFileBatchCtx    context.Context
+	catFileBatchCloser CatFileBatchCloser
+	catFileBatchInUse  bool
 }
 
-var _ gitcmd.RepositoryFacade = (*Repository)(nil)
+var _ RepositoryFacade = (*Repository)(nil)
 
 func (repo *Repository) GitRepoManagedID() string {
 	return repo.repoFacade.GitRepoManagedID()
@@ -43,8 +56,12 @@ func (repo *Repository) GitRepoLocation() string {
 	return repo.repoFacade.GitRepoLocation()
 }
 
-func OpenRepository(repo RepositoryFacade) (*Repository, error) {
-	repoPath := gitcmd.RepoLocalPath(repo)
+func (repo *Repository) LogString() string {
+	return repo.repoFacade.LogString()
+}
+
+func OpenRepository(catFileBatchCtx context.Context, repo RepositoryFacade) (*Repository, error) {
+	repoPath := gitrepo.RepoLocalPath(repo)
 	exist, err := util.IsDir(repoPath)
 	if err != nil {
 		return nil, err
@@ -53,7 +70,12 @@ func OpenRepository(repo RepositoryFacade) (*Repository, error) {
 		return nil, util.NewNotExistErrorf("no such file or directory")
 	}
 	gitRepo := &Repository{
-		RepositoryBase: RepositoryBase{Path: repoPath, tagCache: newObjectCache[*Tag](), repoFacade: repo},
+		RepositoryBase: RepositoryBase{tagCache: newObjectCache[*Tag](), repoFacade: repo, catFileBatchCtx: catFileBatchCtx},
+	}
+	gitRepo.RepositoryBase.LastCommitCache = &LastCommitCache{
+		repo:  gitRepo,
+		ttlFn: setting.LastCommitCacheTTLSeconds,
+		cache: cache.GetCache(),
 	}
 	if err = openRepositoryInternal(gitRepo); err != nil {
 		return nil, err
@@ -61,14 +83,16 @@ func OpenRepository(repo RepositoryFacade) (*Repository, error) {
 	return gitRepo, nil
 }
 
-func OpenRepositoryLocal(localPath string) (_ *Repository, err error) {
+// OpenRepositoryLocal opens a local repository that is not managed by Gitea
+// If the path is relative, it will be converted to an absolute path using filepath.Abs (base on current working path)
+func OpenRepositoryLocal(catFileBatchCtx context.Context, localPath string) (_ *Repository, err error) {
 	if !filepath.IsAbs(localPath) {
 		localPath, err = filepath.Abs(localPath)
 		if err != nil {
 			return nil, err
 		}
 	}
-	return OpenRepository(gitcmd.RepositoryUnmanaged(localPath))
+	return OpenRepository(catFileBatchCtx, gitrepo.RepositoryUnmanaged(localPath))
 }
 
 func (repo *Repository) Close() error {
@@ -78,6 +102,14 @@ func (repo *Repository) Close() error {
 	}
 	repo.LastCommitCache = nil
 	repo.tagCache = nil
+
+	repo.mu.Lock()
+	defer repo.mu.Unlock()
+	if repo.catFileBatchCloser != nil {
+		repo.catFileBatchCloser.Close()
+		repo.catFileBatchCloser = nil
+		repo.catFileBatchInUse = false
+	}
 	return repo.closeInternal()
 }
 
@@ -87,9 +119,9 @@ func IsRepoURLAccessible(ctx context.Context, url string) bool {
 	return err == nil
 }
 
-// InitRepository initializes a new Git repository.
-func InitRepository(ctx context.Context, repoPath string, bare bool, objectFormatName string) error {
-	err := os.MkdirAll(repoPath, os.ModePerm)
+// InitRepositoryLocal initializes a new Git repository.
+func InitRepositoryLocal(ctx context.Context, localRepoPath string, bare bool, objectFormatName string) error {
+	err := os.MkdirAll(localRepoPath, os.ModePerm)
 	if err != nil {
 		return err
 	}
@@ -106,16 +138,16 @@ func InitRepository(ctx context.Context, repoPath string, bare bool, objectForma
 	if bare {
 		cmd.AddArguments("--bare")
 	}
-	_, _, err = cmd.WithDir(repoPath).RunStdString(ctx)
+	_, _, err = cmd.WithDir(localRepoPath).RunStdString(ctx)
 	return err
 }
 
 // IsEmpty Check if repository is empty.
 func (repo *Repository) IsEmpty(ctx context.Context) (bool, error) {
 	stdout, _, err := gitcmd.NewCommand().
-		AddOptionFormat("--git-dir=%s", repo.Path).
+		AddOptionFormat("--git-dir=%s", gitrepo.RepoLocalPath(repo)). // TODO: all git commands should use "--git-dir" or "GIT_DIR=..."
 		AddArguments("rev-list", "-n", "1", "--all").
-		WithDir(repo.Path).
+		WithRepo(repo).
 		RunStdString(ctx)
 	if err != nil {
 		if (gitcmd.IsErrorExitCode(err, 1) && err.Stderr() == "") || gitcmd.IsErrorExitCode(err, 129) {
@@ -151,9 +183,7 @@ func Clone(ctx context.Context, from, to string, opts CloneRepoOptions) error {
 	}
 
 	cmd := gitcmd.NewCommand().AddArguments("clone")
-	// Never follow HTTP redirects: no clone caller needs them, and a remote redirecting to an
-	// otherwise-blocked address would be an SSRF vector (e.g. migrating from an attacker URL).
-	cmd.AddArguments("-c", "http.followRedirects=false")
+	HandleGitCmdHTTPRedirection(cmd, from, to)
 	if opts.SkipTLSVerify {
 		cmd.AddArguments("-c", "http.sslVerify=false")
 	}
@@ -219,7 +249,7 @@ type PushOptions struct {
 }
 
 // Push pushs local commits to given remote branch.
-func Push(ctx context.Context, repoPath string, opts PushOptions) error {
+func Push(ctx context.Context, localRepoPath string, opts PushOptions) error {
 	cmd := gitcmd.NewCommand("push")
 	if opts.ForceWithLease != "" {
 		cmd.AddOptionFormat("--force-with-lease=%s", opts.ForceWithLease)
@@ -241,7 +271,7 @@ func Push(ctx context.Context, repoPath string, opts PushOptions) error {
 	}
 	cmd.AddDashesAndList(remoteBranchArgs...)
 
-	stdout, stderr, err := cmd.WithEnv(opts.Env).WithTimeout(opts.Timeout).WithDir(repoPath).RunStdString(ctx)
+	stdout, stderr, err := cmd.WithEnv(opts.Env).WithTimeout(opts.Timeout).WithDir(localRepoPath).RunStdString(ctx)
 	if err != nil {
 		if strings.Contains(stderr, "non-fast-forward") {
 			return &ErrPushOutOfDate{StdOut: stdout, StdErr: stderr, Err: err}
@@ -256,4 +286,37 @@ func Push(ctx context.Context, repoPath string, opts PushOptions) error {
 	}
 
 	return nil
+}
+
+// CatFileBatch obtains a "batch object provider" for this repository.
+// It reuses an existing one if available, otherwise creates a new one.
+func (repo *Repository) CatFileBatch() (_ CatFileBatch, closeFunc func(), err error) {
+	repo.mu.Lock()
+	defer repo.mu.Unlock()
+
+	// if no cached batcher, make a new managed one, and cache it
+	if repo.catFileBatchCloser == nil {
+		repo.catFileBatchCloser, err = NewBatch(repo.catFileBatchCtx, repo)
+		if err != nil {
+			repo.catFileBatchCloser = nil // otherwise it is "interface(nil)" and will cause wrong logic
+			return nil, nil, err
+		}
+	}
+
+	// if the cached batcher is not in use, return it
+	if !repo.catFileBatchInUse {
+		repo.catFileBatchInUse = true
+		return CatFileBatch(repo.catFileBatchCloser), func() {
+			repo.mu.Lock()
+			defer repo.mu.Unlock()
+			repo.catFileBatchInUse = false
+		}, nil
+	}
+
+	// return a temp one (won't be cached or shared)
+	tempBatch, err := NewBatch(repo.catFileBatchCtx, repo)
+	if err != nil {
+		return nil, nil, err
+	}
+	return tempBatch, tempBatch.Close, nil
 }

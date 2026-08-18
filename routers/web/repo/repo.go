@@ -136,7 +136,7 @@ func createCommon(ctx *context.Context) {
 	ctx.Data["CanCreateRepoInDoer"] = ctx.Doer.CanCreateRepoIn(ctx.Doer)
 	ctx.Data["MaxCreationLimitOfDoer"] = ctx.Doer.MaxCreationLimit()
 	ctx.Data["SupportedObjectFormats"] = git.DefaultFeatures().SupportedObjectFormats
-	ctx.Data["DefaultObjectFormat"] = git.Sha1ObjectFormat
+	ctx.Data["DefaultObjectFormat"] = git.ObjectFormatFromName(setting.Repository.DefaultObjectFormat)
 }
 
 // Create render creating repository page
@@ -166,6 +166,8 @@ func Create(ctx *context.Context) {
 }
 
 func handleCreateError(ctx *context.Context, owner *user_model.User, err error, name string, tpl templates.TplName, form any) {
+	var errNameReserved db.ErrNameReserved
+	var errNamePatternNotAllowed db.ErrNamePatternNotAllowed
 	switch {
 	case repo_model.IsErrReachLimitOfRepo(err):
 		maxCreationLimit := owner.MaxCreationLimit()
@@ -186,12 +188,12 @@ func handleCreateError(ctx *context.Context, owner *user_model.User, err error, 
 		default:
 			ctx.RenderWithErrDeprecated(ctx.Tr("form.repository_files_already_exist"), tpl, form)
 		}
-	case db.IsErrNameReserved(err):
+	case errors.As(err, &errNameReserved):
 		ctx.Data["Err_RepoName"] = true
-		ctx.RenderWithErrDeprecated(ctx.Tr("repo.form.name_reserved", err.(db.ErrNameReserved).Name), tpl, form)
-	case db.IsErrNamePatternNotAllowed(err):
+		ctx.RenderWithErrDeprecated(ctx.Tr("repo.form.name_reserved", errNameReserved.Name), tpl, form)
+	case errors.As(err, &errNamePatternNotAllowed):
 		ctx.Data["Err_RepoName"] = true
-		ctx.RenderWithErrDeprecated(ctx.Tr("repo.form.name_pattern_not_allowed", err.(db.ErrNamePatternNotAllowed).Pattern), tpl, form)
+		ctx.RenderWithErrDeprecated(ctx.Tr("repo.form.name_pattern_not_allowed", errNamePatternNotAllowed.Pattern), tpl, form)
 	default:
 		ctx.ServerError(name, err)
 	}
@@ -200,7 +202,7 @@ func handleCreateError(ctx *context.Context, owner *user_model.User, err error, 
 // CreatePost response for creating repository
 func CreatePost(ctx *context.Context) {
 	createCommon(ctx)
-	form := web.GetForm(ctx).(*forms.CreateRepoForm)
+	form := web.GetForm[*forms.CreateRepoForm](ctx)
 
 	ctxUser := checkContextUser(ctx, form.UID)
 	if ctx.Written() {
@@ -283,12 +285,13 @@ func CreatePost(ctx *context.Context) {
 	handleCreateError(ctx, ctxUser, err, "CreatePost", tplCreate, &form)
 }
 
-func handleActionError(ctx *context.Context, err error) {
+func handleRepoActionError(ctx *context.Context, err error) {
+	var errLimitReached repo_service.LimitReachedError
 	switch {
 	case errors.Is(err, user_model.ErrBlockedUser):
 		ctx.JSONError(ctx.Tr("repo.action.blocked_user"))
-	case repo_service.IsRepositoryLimitReached(err):
-		limit := err.(repo_service.LimitReachedError).Limit
+	case errors.As(err, &errLimitReached):
+		limit := errLimitReached.Limit
 		ctx.JSONError(ctx.TrN(limit, "repo.form.reach_limit_of_creation_1", "repo.form.reach_limit_of_creation_n", limit))
 	case errors.Is(err, util.ErrPermissionDenied):
 		ctx.JSONError(ctx.Tr("error.permission_denied"))

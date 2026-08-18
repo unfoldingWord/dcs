@@ -1077,11 +1077,11 @@ func ListCatalogLanguages(ctx *context.APIContext) {
 		langIsGW := false
 		alternateNames := []string{}
 		if info, ok := dmLangInfo[lowerLang]; ok {
-			langCode = info["language"].(string)
-			langName = info["language_title"].(string)
-			dmDirection = info["language_direction"].(string)
-			langIsGW = info["language_is_gl"].(bool)
-			alternateNames = info["alternate_names"].([]string)
+			langCode = dcs.MapStr(info, "language")
+			langName = dcs.MapStr(info, "language_title")
+			dmDirection = dcs.MapStr(info, "language_direction")
+			langIsGW = dcs.MapBool(info, "language_is_gl")
+			alternateNames = dcs.MapStrSlice(info, "alternate_names")
 		}
 
 		// A variant code can use the langnames data of its base language, trying the

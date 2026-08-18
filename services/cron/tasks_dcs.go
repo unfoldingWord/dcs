@@ -16,7 +16,7 @@ func registerUpdateDoor43MetadataTask() {
 		Enabled:    true,
 		RunAtStart: false,
 		Schedule:   "@every 72h",
-	}, func(ctx context.Context, _ *user_model.User, _ Config) error {
+	}, func(ctx context.Context, _ *user_model.User, _ *BaseConfig) error {
 		return metadata_service.UpdateDoor43Metadata(ctx)
 	})
 }
@@ -26,7 +26,7 @@ func registerUpdateUserMetadataTask() {
 		Enabled:    true,
 		RunAtStart: false,
 		Schedule:   "@every 72h",
-	}, func(ctx context.Context, _ *user_model.User, _ Config) error {
+	}, func(ctx context.Context, _ *user_model.User, _ *BaseConfig) error {
 		return metadata_service.UpdateUserMetadata(ctx)
 	})
 }
@@ -36,7 +36,7 @@ func registerLoadMetadataSchemasTask() {
 		Enabled:    true,
 		RunAtStart: true,
 		Schedule:   "@every 72h",
-	}, func(ctx context.Context, _ *user_model.User, _ Config) error {
+	}, func(ctx context.Context, _ *user_model.User, _ *BaseConfig) error {
 		return metadata_service.LoadMetadataSchemas(ctx)
 	})
 }
@@ -46,7 +46,7 @@ func registerConvert2SBTask() {
 		Enabled:    true,
 		RunAtStart: false,
 		Schedule:   "@every 72h",
-	}, func(ctx context.Context, _ *user_model.User, _ Config) error {
+	}, func(ctx context.Context, _ *user_model.User, _ *BaseConfig) error {
 		return convert2sb_service.Convert2SBAllRepos(ctx)
 	})
 }

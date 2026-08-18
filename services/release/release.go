@@ -16,7 +16,6 @@ import (
 	"gitea.dev/modules/container"
 	"gitea.dev/modules/git"
 	"gitea.dev/modules/git/gitcmd"
-	"gitea.dev/modules/gitrepo"
 	"gitea.dev/modules/graceful"
 	"gitea.dev/modules/log"
 	"gitea.dev/modules/repository"
@@ -78,9 +77,9 @@ func createTag(ctx context.Context, gitRepo *git.Repository, rel *repo_model.Rel
 	}
 
 	var created bool
-	// Only actual create when publish.
+	// Only actual create when a release is published.
 	if !rel.IsDraft {
-		if !gitrepo.IsTagExist(ctx, rel.Repo, rel.TagName) {
+		if !git.IsTagExist(ctx, rel.Repo, rel.TagName) {
 			if err := rel.LoadAttributes(ctx); err != nil {
 				log.Error("LoadAttributes: %v", err)
 				return false, err
@@ -91,8 +90,6 @@ func createTag(ctx context.Context, gitRepo *git.Repository, rel *repo_model.Rel
 				return false, fmt.Errorf("GetProtectedTags: %w", err)
 			}
 
-			// Trim '--' prefix to prevent command line argument vulnerability.
-			rel.TagName = strings.TrimPrefix(rel.TagName, "--")
 			isAllowed, err := git_model.IsUserAllowedToControlTag(ctx, protectedTags, rel.TagName, rel.PublisherID)
 			if err != nil {
 				return false, err
@@ -103,7 +100,8 @@ func createTag(ctx context.Context, gitRepo *git.Repository, rel *repo_model.Rel
 				}
 			}
 
-			commit, err := gitRepo.GetCommit(ctx, rel.Target)
+			target := util.IfZero(rel.Target, rel.Repo.DefaultBranch)
+			commit, err := gitRepo.GetCommit(ctx, target)
 			if err != nil {
 				return false, err
 			}
@@ -150,7 +148,7 @@ func createTag(ctx context.Context, gitRepo *git.Repository, rel *repo_model.Rel
 		}
 
 		rel.Sha1 = commit.ID.String()
-		rel.NumCommits, err = gitrepo.CommitsCountOfCommit(ctx, rel.Repo, commit.ID.String())
+		rel.NumCommits, err = git.CommitsCountOfCommit(ctx, rel.Repo, commit.ID.String())
 		if err != nil {
 			return false, fmt.Errorf("CommitsCount: %w", err)
 		}
@@ -229,7 +227,7 @@ func CreateNewTag(ctx context.Context, doer *user_model.User, repo *repo_model.R
 		}
 	}
 
-	gitRepo, closer, err := gitrepo.RepositoryFromContextOrOpen(ctx, repo)
+	gitRepo, closer, err := git.RepositoryFromContextOrOpen(ctx, repo)
 	if err != nil {
 		return err
 	}
@@ -385,9 +383,8 @@ func DeleteReleaseByID(ctx context.Context, repo *repo_model.Repository, rel *re
 			}
 		}
 
-		if stdout, _, err := gitrepo.RunCmdString(ctx, repo,
-			gitcmd.NewCommand("tag", "-d").AddDashesAndList(rel.TagName),
-		); err != nil && !strings.Contains(err.Error(), "not found") {
+		stdout, _, err := gitcmd.NewCommand("tag", "-d").AddDashesAndList(rel.TagName).WithRepo(repo).RunStdString(ctx)
+		if err != nil && !strings.Contains(err.Error(), "not found") {
 			log.Error("DeleteReleaseByID (git tag -d): %d in %v Failed:\nStdout: %s\nError: %v", rel.ID, repo, stdout, err)
 			return fmt.Errorf("git tag -d: %w", err)
 		}

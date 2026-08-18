@@ -51,7 +51,7 @@ func processDoor43MetadataForRepoRefs(ctx context.Context, repo *repo_model.Repo
 		refsComplete = false
 	}
 
-	gitRepo, err := git.OpenRepository(repo)
+	gitRepo, err := git.OpenRepository(ctx, repo)
 	if err != nil {
 		log.Error("git.OpenRepository Error %s: %v", repo.FullName(), err)
 		refsComplete = false
@@ -325,9 +325,9 @@ func GetBookAlignmentCount(ctx context.Context, gitRepo *git.Repository, bookPat
 // GetBooks get the books of the manifest
 func GetBooks(manifest map[string]any) []string {
 	var books []string
-	if len((manifest)["projects"].([]any)) > 0 {
-		for _, prod := range (manifest)["projects"].([]any) {
-			books = append(books, prod.(map[string]any)["identifier"].(string))
+	for _, prod := range dcs.MapSlice(manifest, "projects") {
+		if prodMap, ok := prod.(map[string]any); ok {
+			books = append(books, dcs.MapStr(prodMap, "identifier"))
 		}
 	}
 	return books
@@ -353,8 +353,9 @@ func GetDoor43MetadataFromRCManifest(ctx context.Context, gitRepo *git.Repositor
 	var relations []*structs.Relation
 
 	_ = repo.LoadOwner(ctx)
+	dublinCore := dcs.MapMap(manifest, "dublin_core")
 	re := regexp.MustCompile("^([^0-9]+)(.*)$")
-	matches := re.FindStringSubmatch(manifest["dublin_core"].(map[string]any)["conformsto"].(string))
+	matches := re.FindStringSubmatch(dcs.MapStr(dublinCore, "conformsto"))
 	if len(matches) == 3 {
 		metadataType = matches[1]
 		metadataVersion = matches[2]
@@ -363,23 +364,24 @@ func GetDoor43MetadataFromRCManifest(ctx context.Context, gitRepo *git.Repositor
 		metadataType = "rc"
 		metadataVersion = "0.2"
 	}
-	subject = manifest["dublin_core"].(map[string]any)["subject"].(string)
-	abbreviation = manifest["dublin_core"].(map[string]any)["identifier"].(string)
-	title = manifest["dublin_core"].(map[string]any)["title"].(string)
-	publisher = manifest["dublin_core"].(map[string]any)["publisher"].(string)
+	subject = dcs.MapStr(dublinCore, "subject")
+	abbreviation = dcs.MapStr(dublinCore, "identifier")
+	title = dcs.MapStr(dublinCore, "title")
+	publisher = dcs.MapStr(dublinCore, "publisher")
 	if publisher == "" {
 		publisher = repo.Owner.FullName
 		if publisher == "" {
 			publisher = repo.OwnerName
 		}
 	}
-	language = manifest["dublin_core"].(map[string]any)["language"].(map[string]any)["identifier"].(string)
-	languageTitle = manifest["dublin_core"].(map[string]any)["language"].(map[string]any)["title"].(string)
-	format = manifest["dublin_core"].(map[string]any)["format"].(string)
+	dcLanguage := dcs.MapMap(dublinCore, "language")
+	language = dcs.MapStr(dcLanguage, "identifier")
+	languageTitle = dcs.MapStr(dcLanguage, "title")
+	format = dcs.MapStr(dublinCore, "format")
 	languageDirection = dcs.GetLanguageDirection(language)
 	languageIsGL = dcs.LanguageIsGL(language)
 	var bookPath string
-	for _, prod := range manifest["projects"].([]any) {
+	for _, prod := range dcs.MapSlice(manifest, "projects") {
 		if prodMap, ok := prod.(map[string]any); ok {
 			ingredient := convert.ToIngredient(prodMap)
 			book := ingredient.Identifier
@@ -398,8 +400,12 @@ func GetDoor43MetadataFromRCManifest(ctx context.Context, gitRepo *git.Repositor
 			ingredients = append(ingredients, ingredient)
 		}
 	}
-	for _, relation := range manifest["dublin_core"].(map[string]any)["relation"].([]any) {
-		parts := strings.Split(relation.(string), "/")
+	for _, relation := range dcs.MapSlice(dublinCore, "relation") {
+		relationStr, ok := relation.(string)
+		if !ok {
+			continue
+		}
+		parts := strings.Split(relationStr, "/")
 		lang := parts[0]
 		if len(parts) > 1 {
 			identifierParts := strings.Split(parts[1], "?v=")
@@ -409,7 +415,7 @@ func GetDoor43MetadataFromRCManifest(ctx context.Context, gitRepo *git.Repositor
 				version = identifierParts[1]
 			}
 			relations = append(relations, &structs.Relation{
-				FullRelation: relation.(string),
+				FullRelation: relationStr,
 				Language:     lang,
 				Identifier:   identifier,
 				Version:      version,
@@ -1094,7 +1100,7 @@ func processDoor43MetadataForRepoRef(ctx context.Context, repo *repo_model.Repos
 	}
 	dm.Repo = repo
 
-	gitRepo, err := git.OpenRepository(repo)
+	gitRepo, err := git.OpenRepository(ctx, repo)
 	if err != nil {
 		log.Error("OpenRepository Error: %v\n", err)
 		return err

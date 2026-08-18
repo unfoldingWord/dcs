@@ -13,8 +13,8 @@ import (
 	repo_model "gitea.dev/models/repo"
 	"gitea.dev/models/unittest"
 	user_model "gitea.dev/models/user"
+	"gitea.dev/modules/git"
 	"gitea.dev/modules/git/gitcmd"
-	"gitea.dev/modules/gitrepo"
 	"gitea.dev/modules/test"
 	"gitea.dev/modules/util"
 	"gitea.dev/routers/common"
@@ -182,7 +182,7 @@ func TestResolveRefWithSuffixContract(t *testing.T) {
 	defer tests.PrepareTestEnv(t)()
 
 	repo := unittest.AssertExistsAndLoadBean(t, &repo_model.Repository{ID: 31})
-	gitRepo, err := gitrepo.OpenRepository(repo)
+	gitRepo, err := git.OpenRepository(t.Context(), repo)
 	require.NoError(t, err)
 	defer gitRepo.Close()
 
@@ -211,8 +211,7 @@ func TestCompareBranchesNoCommonMergeBase(t *testing.T) {
 	user2 := unittest.AssertExistsAndLoadBean(t, &user_model.User{Name: "user2"})
 	repo1 := unittest.AssertExistsAndLoadBean(t, &repo_model.Repository{OwnerID: user2.ID, Name: "repo1"})
 
-	repoPath := repo_model.RepoPath(user2.Name, repo1.Name)
-	_, _, runErr := gitcmd.NewCommand("fast-import").WithDir(repoPath).WithStdinBytes([]byte(strings.TrimSpace(`
+	_, _, runErr := gitcmd.NewCommand("fast-import").WithRepo(repo1).WithStdinBytes([]byte(strings.TrimSpace(`
 commit refs/heads/unrelated-history
 committer User <user@example.com> 1714310400 +0000
 data 13

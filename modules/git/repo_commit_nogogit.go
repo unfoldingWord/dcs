@@ -19,7 +19,7 @@ import (
 func (repo *Repository) ResolveReference(ctx context.Context, name string) (string, error) {
 	stdout, _, err := gitcmd.NewCommand("show-ref", "--hash").
 		AddDynamicArguments(name).
-		WithDir(repo.Path).
+		WithRepo(repo).
 		RunStdString(ctx)
 	if err != nil {
 		if strings.Contains(err.Error(), "not a valid ref") {
@@ -37,7 +37,7 @@ func (repo *Repository) ResolveReference(ctx context.Context, name string) (stri
 
 // GetRefCommitID returns the last commit ID string of given reference (branch or tag).
 func (repo *Repository) GetRefCommitID(ctx context.Context, name string) (string, error) {
-	batch, cancel, err := repo.CatFileBatch(ctx)
+	batch, cancel, err := repo.CatFileBatch()
 	if err != nil {
 		return "", err
 	}
@@ -52,7 +52,7 @@ func (repo *Repository) GetRefCommitID(ctx context.Context, name string) (string
 }
 
 func (repo *Repository) getCommit(ctx context.Context, id ObjectID) (*Commit, error) {
-	batch, cancel, err := repo.CatFileBatch(ctx)
+	batch, cancel, err := repo.CatFileBatch()
 	if err != nil {
 		return nil, err
 	}
@@ -123,7 +123,7 @@ func (repo *Repository) ConvertToGitID(ctx context.Context, ref string) (ObjectI
 		}
 	}
 
-	batch, cancel, err := repo.CatFileBatch(ctx)
+	batch, cancel, err := repo.CatFileBatch()
 	if err != nil {
 		return nil, err
 	}

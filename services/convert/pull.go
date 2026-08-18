@@ -16,7 +16,6 @@ import (
 	"gitea.dev/modules/cache"
 	"gitea.dev/modules/cachegroup"
 	"gitea.dev/modules/git"
-	"gitea.dev/modules/gitrepo"
 	"gitea.dev/modules/log"
 	"gitea.dev/modules/setting"
 	api "gitea.dev/modules/structs"
@@ -148,7 +147,7 @@ func ToAPIPullRequest(ctx context.Context, pr *issues_model.PullRequest, doer *u
 		apiPullRequest.Closed = pr.Issue.ClosedUnix.AsTimePtr()
 	}
 
-	gitRepo, err := gitrepo.OpenRepository(pr.BaseRepo)
+	gitRepo, err := git.OpenRepository(ctx, pr.BaseRepo)
 	if err != nil {
 		log.Error("OpenRepository[%s]: %v", pr.BaseRepo.FullName(), err)
 		return nil
@@ -194,7 +193,7 @@ func ToAPIPullRequest(ctx context.Context, pr *issues_model.PullRequest, doer *u
 		apiPullRequest.Head.RepoID = pr.HeadRepo.ID
 		apiPullRequest.Head.Repository = ToRepo(ctx, pr.HeadRepo, p)
 
-		headGitRepo, err := gitrepo.OpenRepository(pr.HeadRepo)
+		headGitRepo, err := git.OpenRepository(ctx, pr.HeadRepo)
 		if err != nil {
 			log.Error("OpenRepository[%s]: %v", pr.HeadRepo.FullName(), err)
 			return nil
@@ -239,7 +238,7 @@ func ToAPIPullRequest(ctx context.Context, pr *issues_model.PullRequest, doer *u
 		// Calculate diff
 		startCommitID = pr.MergeBase
 
-		diffShortStats, err := gitdiff.GetDiffShortStat(ctx, pr.BaseRepo, gitRepo, startCommitID, endCommitID)
+		diffShortStats, err := gitdiff.GetDiffShortStat(ctx, gitRepo, startCommitID, endCommitID)
 		if err != nil {
 			log.Error("GetDiffShortStat: %v", err)
 		} else {
@@ -250,7 +249,7 @@ func ToAPIPullRequest(ctx context.Context, pr *issues_model.PullRequest, doer *u
 	}
 
 	if len(apiPullRequest.Head.Sha) == 0 && len(apiPullRequest.Head.Ref) != 0 {
-		baseGitRepo, err := gitrepo.OpenRepository(pr.BaseRepo)
+		baseGitRepo, err := git.OpenRepository(ctx, pr.BaseRepo)
 		if err != nil {
 			log.Error("OpenRepository[%s]: %v", pr.BaseRepo.FullName(), err)
 			return nil
@@ -332,7 +331,7 @@ func ToAPIPullRequests(ctx context.Context, baseRepo *repo_model.Repository, prs
 		return nil, err
 	}
 
-	gitRepo, err := gitrepo.OpenRepository(baseRepo)
+	gitRepo, err := git.OpenRepository(ctx, baseRepo)
 	if err != nil {
 		return nil, err
 	}
@@ -414,7 +413,7 @@ func ToAPIPullRequests(ctx context.Context, baseRepo *repo_model.Repository, prs
 
 		baseBranch, ok := baseBranchCache[pr.BaseBranch]
 		if !ok {
-			baseBranch, err = git_model.GetBranch(ctx, baseRepo.ID, pr.BaseBranch)
+			baseBranch, err = git_model.GetBranchExisting(ctx, baseRepo.ID, pr.BaseBranch)
 			if err == nil {
 				baseBranchCache[pr.BaseBranch] = baseBranch
 			} else if !git_model.IsErrBranchNotExist(err) {

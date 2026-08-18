@@ -12,6 +12,7 @@ import (
 	"gitea.dev/models/unittest"
 	user_model "gitea.dev/models/user"
 	"gitea.dev/modules/git"
+	"gitea.dev/modules/git/gitrepo"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -26,9 +27,9 @@ func TestGitRef_Get(t *testing.T) {
 
 	user := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: 2})
 	repo := unittest.AssertExistsAndLoadBean(t, &repo_model.Repository{ID: 1})
-	repoPath := repo_model.RepoPath(user.Name, repo.Name)
+	repoPath := gitrepo.RepoLocalPath(gitrepo.CodeRepoByName(user.Name, repo.Name))
 
-	gitRepo, err := git.OpenRepositoryLocal(repoPath)
+	gitRepo, err := git.OpenRepositoryLocal(t.Context(), repoPath)
 	assert.NoError(t, err)
 	defer gitRepo.Close()
 

@@ -116,7 +116,7 @@ func searchLangnamesJSON(ctx *context.APIContext) []map[string]any {
 			if len(lcArr) > 0 {
 				lcMatches = false
 				for _, lc := range lcArr {
-					if strings.EqualFold(data["lc"].(string), lc) {
+					if strings.EqualFold(dcs.MapStr(data, "lc"), lc) {
 						lcMatches = true
 						break
 					}
@@ -124,7 +124,7 @@ func searchLangnamesJSON(ctx *context.APIContext) []map[string]any {
 			}
 			if gw.Has() {
 				gwMatches = false
-				if data["gw"].(bool) == gw.Value() {
+				if dcs.MapBool(data, "gw") == gw.Value() {
 					gwMatches = true
 				}
 			}
@@ -151,8 +151,8 @@ func searchLangnamesJSON(ctx *context.APIContext) []map[string]any {
 			return false
 		}
 		if iStr == jStr {
-			iStr = langnames[i]["lc"].(string)
-			jStr = langnames[j]["lc"].(string)
+			iStr = dcs.MapStr(langnames[i], "lc")
+			jStr = dcs.MapStr(langnames[j], "lc")
 		}
 		if orderAsc {
 			return iStr < jStr
@@ -167,7 +167,7 @@ func searchLangnamesJSONKeyed(ctx *context.APIContext) map[string]map[string]any
 	langnames := searchLangnamesJSON(ctx)
 	langnamesKeyed := map[string]map[string]any{}
 	for _, data := range langnames {
-		langnamesKeyed[data["lc"].(string)] = data
+		langnamesKeyed[dcs.MapStr(data, "lc")] = data
 	}
 	return langnamesKeyed
 }

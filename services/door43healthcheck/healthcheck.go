@@ -186,7 +186,7 @@ func openCommit(ctx context.Context, dm *repo_model.Door43Metadata) (*git.Reposi
 	if dm.Repo == nil || dm.CommitSHA == "" {
 		return nil, nil
 	}
-	gitRepo, err := git.OpenRepository(dm.Repo)
+	gitRepo, err := git.OpenRepository(ctx, dm.Repo)
 	if err != nil {
 		log.Error("openCommit: OpenRepository %s: %v", dm.Repo.FullName(), err)
 		return nil, nil
