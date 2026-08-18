@@ -15,6 +15,7 @@ permissions:
 
 jobs:
   build-and-publish:
+    if: github.repository == 'go-gitea/gitea' # DCS Customizations
     strategy:
       fail-fast: false
       matrix:
