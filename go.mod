@@ -97,7 +97,7 @@ require (
 	github.com/syndtr/goleveldb v1.0.0
 	github.com/tstranex/u2f v1.0.0
 	github.com/ulikunitz/xz v0.5.15
-	github.com/unfoldingWord/go-rc2sb v0.4.0
+	github.com/unfoldingWord/go-rc2sb v0.5.0
 	github.com/unfoldingWord/go-tc2rc v0.1.0
 	github.com/unfoldingWord/go-ts2rc v0.1.1
 	github.com/urfave/cli-docs/v3 v3.1.0
