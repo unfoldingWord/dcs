@@ -12,6 +12,7 @@ var SubjectToResourceMap = map[string][]string{
 	"Aligned Bible":                   {"glt", "gst", "ult", "ust"},
 	"OBS Study Notes":                 {"obs-sn2"},
 	"OBS Study Questions":             {"obs-sq"},
+	"OBS Theological Formation":       {"obs-tf"},
 	"OBS Translation Notes":           {"obs-tn"},
 	"OBS Translation Questions":       {"obs-tq"},
 	"Open Bible Stories":              {"obs"},

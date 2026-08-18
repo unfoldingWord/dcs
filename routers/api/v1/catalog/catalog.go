@@ -61,7 +61,7 @@ var searchOrderByMap = map[string]map[string]door43metadata.CatalogOrderBy{
 
 var (
 	bibleBPSubjects = []string{"Aligned Bible", "Hebrew Old Testament", "Greek New Testament", "TSV Translation Notes", "TSV Translation Questions", "TSV Translation Words Links", "Translation Academy", "Translation Words"}
-	obsBPSubjects   = []string{"Open Bible Stories", "TSV OBS Translation Notes", "TSV OBS Translation Questions", "TSV OBS Translation Words Links", "Translation Academy", "Translation Words"}
+	obsBPSubjects   = []string{"Open Bible Stories", "OBS Theological Formation", "TSV OBS Translation Notes", "TSV OBS Translation Questions", "TSV OBS Translation Words Links", "Translation Academy", "Translation Words"}
 )
 
 // Search search the catalog via options
