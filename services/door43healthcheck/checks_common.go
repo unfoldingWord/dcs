@@ -79,7 +79,7 @@ func checkIngredients(_ context.Context, dm *repo_model.Door43Metadata) []*repo_
 		// Acts, Numbers and Deuteronomy are only in English and not other languages, so using those
 		if !doneIngredientTitle && dm.Repo.Owner.LowerName != "unfoldingword" && (ingredient.Title == "" || (dm.Language != "en" && (ingredient.Title == "Numbers" || ingredient.Title == "Deuteronomy" || ingredient.Title == "Acts"))) {
 			doneIngredientTitle = true
-			issues = append(issues, newIssue(repo_model.IssueCodeIngredientTitle, repo_model.SeverityLevelError,
+			issues = append(issues, newIssue(repo_model.IssueCodeIngredientTitle, repo_model.SeverityLevelWarning,
 				fmt.Sprintf(repo_model.IssueCodeIngredientTitle.IssueDetailsFormatString(), ingredient.Identifier, ingredient.Title),
 				fmt.Sprintf(repo_model.IssueCodeIngredientTitle.IssueSuggestionFormatString(), metadataFileLink(dm), ingredient.Title)))
 		}
