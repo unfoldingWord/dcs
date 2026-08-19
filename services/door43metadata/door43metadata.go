@@ -582,10 +582,10 @@ func GetDoor43MetadataFromSBMetadata(ctx context.Context, gitRepo *git.Repositor
 		}}
 	case "TSV Translation Notes", "TSV Translation Questions", "TSV Translation Words Links":
 		contentFormat = "tsv7"
-		ingredients = getSBTSVIngredients(sbMetadata, commit)
+		ingredients = getSBTSVIngredients(ctx, gitRepo, sbMetadata, commit)
 	case "TSV OBS Study Questions", "TSV OBS Translation Questions", "TSV OBS Study Notes", "TSV OBS Translation Notes":
 		contentFormat = "tsv7"
-		ingredients = getSBOBSTSVIngredients(sbMetadata, commit)
+		ingredients = getSBOBSTSVIngredients(ctx, gitRepo, sbMetadata, commit)
 	case "Translation Academy":
 		contentFormat = "markdown"
 		ingredients = getSBTranslationAcademyIngredients()
@@ -840,7 +840,7 @@ func getSBScriptureIngredients(ctx context.Context, gitRepo *git.Repository, sbM
 		} else if contentFormat == "" {
 			contentFormat = strings.TrimPrefix(strings.ToLower(filepath.Ext(normalizedPath)), ".")
 		}
-		size, isDir := getSBIngredientSize(normalizedPath, ingredient, commit)
+		size, isDir := getSBIngredientSize(ctx, gitRepo, normalizedPath, ingredient, commit)
 		ingredients = append(ingredients, &structs.Ingredient{
 			Categories:     dcs.GetBookCategories(lowerBookID),
 			Identifier:     lowerBookID,
@@ -861,10 +861,10 @@ func getSBScriptureIngredients(ctx context.Context, gitRepo *git.Repository, sbM
 // getSBIngredientSize returns the ingredient file's size and dir flag from the repo, falling
 // back to the size metadata.json declares when the path doesn't resolve. A declared size that
 // disagrees with the file is reported separately by the sb ingredient healthcheck (META-015).
-func getSBIngredientSize(path string, ingredient *dcs.SB100Ingredient, commit *git.Commit) (int64, bool) {
+func getSBIngredientSize(ctx context.Context, gitRepo *git.Repository, path string, ingredient *dcs.SB100Ingredient, commit *git.Commit) (int64, bool) {
 	if commit != nil {
-		if entry, err := commit.GetTreeEntryByPath(path); err == nil && entry != nil {
-			return entry.Size(), entry.IsDir()
+		if entry, err := commit.GetTreeEntryByPath(ctx, gitRepo, path); err == nil && entry != nil {
+			return entry.GetSize(ctx, gitRepo), entry.IsDir()
 		}
 	}
 	if ingredient == nil {
@@ -873,7 +873,7 @@ func getSBIngredientSize(path string, ingredient *dcs.SB100Ingredient, commit *g
 	return ingredient.Size, false
 }
 
-func getSBTSVIngredients(sbMetadata *dcs.SBMetadata100, commit *git.Commit) []*structs.Ingredient {
+func getSBTSVIngredients(ctx context.Context, gitRepo *git.Repository, sbMetadata *dcs.SBMetadata100, commit *git.Commit) []*structs.Ingredient {
 	ingredients := make([]*structs.Ingredient, 0, len(sbMetadata.Ingredients))
 	for path, ingredient := range sbMetadata.Ingredients {
 		bookID, lowerBookID, ok := getSBIngredientBookID(ingredient)
@@ -881,7 +881,7 @@ func getSBTSVIngredients(sbMetadata *dcs.SBMetadata100, commit *git.Commit) []*s
 			continue
 		}
 		normalizedPath := normalizeSBIngredientPath(path)
-		size, isDir := getSBIngredientSize(normalizedPath, ingredient, commit)
+		size, isDir := getSBIngredientSize(ctx, gitRepo, normalizedPath, ingredient, commit)
 		ingredients = append(ingredients, &structs.Ingredient{
 			Identifier:    lowerBookID,
 			Title:         getSBLocalizedBookTitle(sbMetadata.LocalizedNames, bookID, lowerBookID),
@@ -896,12 +896,12 @@ func getSBTSVIngredients(sbMetadata *dcs.SBMetadata100, commit *git.Commit) []*s
 	return ingredients
 }
 
-func getSBOBSTSVIngredients(sbMetadata *dcs.SBMetadata100, commit *git.Commit) []*structs.Ingredient {
+func getSBOBSTSVIngredients(ctx context.Context, gitRepo *git.Repository, sbMetadata *dcs.SBMetadata100, commit *git.Commit) []*structs.Ingredient {
 	obsIngredient, ok := sbMetadata.Ingredients["ingredients/OBS.tsv"]
 	if !ok || obsIngredient == nil {
 		return nil
 	}
-	size, isDir := getSBIngredientSize("./ingredients/OBS.tsv", obsIngredient, commit)
+	size, isDir := getSBIngredientSize(ctx, gitRepo, "./ingredients/OBS.tsv", obsIngredient, commit)
 	return []*structs.Ingredient{
 		{
 			Identifier: "obs",
