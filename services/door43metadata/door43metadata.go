@@ -236,15 +236,27 @@ func processDoor43MetadataForUser(ctx context.Context, user *user_model.User) er
 		return errors.New("no user provided")
 	}
 
-	user.RepoLanguages = models.GetRepoLanguages(ctx, user)
-	user.RepoSubjects = models.GetRepoSubjects(ctx, user)
-	user.RepoMetadataTypes = models.GetRepoMetadataTypes(ctx, user)
+	languages, subjects, metadataTypes, err := models.GetRepoMetadataFacets(ctx, user)
+	if err != nil {
+		return err
+	}
+	user.RepoLanguages = languages
+	user.RepoSubjects = subjects
+	user.RepoMetadataTypes = metadataTypes
 
 	return user_model.UpdateUserCols(ctx, user, "repo_languages", "repo_subjects", "repo_metadata_types")
 }
 
 // ProcessDoor43MetadataForRepo handles the metadata for a given repo for all its releases
 func ProcessDoor43MetadataForRepo(ctx context.Context, repo *repo_model.Repository, ref string) error {
+	return processDoor43MetadataForRepo(ctx, repo, ref, true)
+}
+
+// processDoor43MetadataForRepo does the work of ProcessDoor43MetadataForRepo. Bulk
+// callers pass updateOwner=false and roll each owner up once themselves: the rollup
+// reads all of the owner's entries, so running it per repo repeats the same scan for
+// every repo the owner has.
+func processDoor43MetadataForRepo(ctx context.Context, repo *repo_model.Repository, ref string, updateOwner bool) error {
 	if ctx == nil || repo == nil {
 		return errors.New("no repository provided")
 	}
@@ -280,9 +292,10 @@ func ProcessDoor43MetadataForRepo(ctx context.Context, repo *repo_model.Reposito
 	if err != nil {
 		return err
 	}
-	err = processDoor43MetadataForUser(ctx, repo.Owner)
-	if err != nil {
-		return err
+	if updateOwner {
+		if err = processDoor43MetadataForUser(ctx, repo.Owner); err != nil {
+			return err
+		}
 	}
 
 	_ = repo.LoadLatestDMs(ctx)
@@ -1270,11 +1283,27 @@ func UpdateDoor43Metadata(ctx context.Context) error {
 		log.Error("GetReposForMetadata: %v", err)
 	}
 
+	// The owner rollup is deferred out of the per-repo work and run once per distinct
+	// owner at the end: it reads every one of the owner's entries, so doing it inside
+	// the loop repeated the same scan for each of the owner's repos.
+	owners := map[int64]*user_model.User{}
 	for _, repo := range repos {
-		if err := ProcessDoor43MetadataForRepo(ctx, repo, ""); err != nil {
+		if err := processDoor43MetadataForRepo(ctx, repo, "", false); err != nil {
 			log.Info("Failed to process metadata for repo (%v): %v", repo, err)
 			if err = system.CreateRepositoryNotice("Failed to process metadata for repository (%s): %v", repo.FullName(), err); err != nil {
 				log.Error("ProcessDoor43MetadataForRepo: %v", err)
+			}
+		}
+		if repo.Owner != nil {
+			owners[repo.Owner.ID] = repo.Owner
+		}
+	}
+
+	for _, owner := range owners {
+		if err := processDoor43MetadataForUser(ctx, owner); err != nil {
+			log.Info("Failed to process metadata for user (%v): %v", owner, err)
+			if err = system.CreateRepositoryNotice("Failed to process metadata for user (%s): %v", owner.Name, err); err != nil {
+				log.Error("processDoor43MetadataForUser: %v", err)
 			}
 		}
 	}
