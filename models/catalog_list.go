@@ -6,6 +6,7 @@ package models
 import (
 	"context"
 	"fmt"
+	"slices"
 	"strings"
 
 	"gitea.dev/models/db"
@@ -159,13 +160,19 @@ func SearchDoor43MetadataFieldByCondition(ctx context.Context, opts *door43metad
 		sess.Join("INNER", "user", "`repository`.owner_id = `user`.id")
 	}
 	sess.Where(cond).
-		And(builder.Neq{field: ""}).
-		OrderBy(field)
+		And(builder.Neq{field: ""})
 
 	err := sess.Find(&results)
 	if err != nil {
 		return nil, fmt.Errorf("find: %v", err)
 	}
+
+	// Sorted here rather than with ORDER BY: an ORDER BY on an indexed
+	// door43_metadata column makes the planner scan that column's index to get the
+	// rows already ordered, which drives the join from door43_metadata instead of
+	// from the far more selective repository/user side. The result is a handful of
+	// distinct values, so sorting them in Go costs nothing.
+	slices.Sort(results)
 
 	return results, nil
 }

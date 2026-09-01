@@ -55,6 +55,7 @@ type SearchCatalogOptions struct {
 	RepoID                   int64
 	Keywords                 []string
 	Owners                   []string
+	OwnerIDs                 []int64
 	Repos                    []string
 	Tags                     []string
 	Stage                    Stage
@@ -110,6 +111,8 @@ func SearchCatalogCondition(opts *SearchCatalogOptions) builder.Cond {
 		ownerCond = GetOwnerCond(opts.Owners, opts.PartialMatch)
 	}
 
+	ownerIDCond := GetOwnerIDCond(opts.OwnerIDs)
+
 	keywordCond := builder.NewCond()
 	for _, keyword := range opts.Keywords {
 		keywordCond = keywordCond.Or(builder.Like{"`repository`.lower_name", strings.TrimSpace(keyword)})
@@ -149,6 +152,7 @@ func SearchCatalogCondition(opts *SearchCatalogOptions) builder.Cond {
 		GetTagCond(opts.Tags),
 		repoCond,
 		ownerCond,
+		ownerIDCond,
 		stageCond,
 		historyCond,
 		langIsGLCond,
@@ -501,6 +505,16 @@ func GetRepoCond(repos []string, partialMatch bool) builder.Cond {
 		}
 	}
 	return repoCond
+}
+
+// GetOwnerIDCond gets the owner condition for callers that already know the owner's
+// ID. Matching `repository`.owner_id keeps the `user` table out of the query, and gives
+// the planner a selective indexed predicate on `repository` to drive the join from.
+func GetOwnerIDCond(ownerIDs []int64) builder.Cond {
+	if len(ownerIDs) == 0 {
+		return nil
+	}
+	return builder.In("`repository`.owner_id", ownerIDs)
 }
 
 // GetOwnerCond gets the owner condition
