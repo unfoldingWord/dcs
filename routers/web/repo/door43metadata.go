@@ -128,9 +128,7 @@ func GetAllRepoDoor43Metadata(ctx *context.Context) {
 	ctx.Data["ReleaseDMs"] = releaseDms
 	ctx.Data["ReleaseCount"] = releaseCount
 
-	pager := context.NewPagination(releaseCount, releaseDMsPerPage, page, 5)
-	pager.AddParamFromRequest(ctx.Req)
-	ctx.Data["Page"] = pager
+	ctx.Data["Page"] = context.NewPagerBuilder(ctx).TotalCount(releaseCount).PerPageLimit(releaseDMsPerPage).CurPage(page).Build()
 
 	ctx.HTML(http.StatusOK, tplDCSMetadataAll)
 }

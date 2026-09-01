@@ -149,7 +149,7 @@
 										{{else if .IsDir}}
 										(Dir)
 										{{else}}
-										{{FileSize .Size}}
+										{{FormatByteSize .Size}}
 										{{end}}
 									</td>
 								</tr>

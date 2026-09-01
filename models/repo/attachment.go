@@ -13,6 +13,7 @@ import (
 	"strings" // DCS Customizations
 
 	"gitea.dev/models/db"
+	"gitea.dev/modules/httplib"
 	"gitea.dev/modules/log"
 	"gitea.dev/modules/setting"
 	"gitea.dev/modules/storage"
@@ -101,18 +102,19 @@ func (a *Attachment) RelativePath() string {
 }
 
 // DownloadURL returns the download url of the attached file
-func (a *Attachment) DownloadURL() string {
+func (a *Attachment) DownloadURL(optCtx ...context.Context) string {
 	/*** DCS Customizations ***/
 	if a.BrowserDownloadURL != "" {
 		return a.BrowserDownloadURL
 	}
 	/*** END DCS Customizations ***/
 
+	// mail template doesn't have context, so we need to use a default one
+	ctx := util.OptionalArg(optCtx, context.TODO())
 	if a.CustomDownloadURL != "" {
 		return a.CustomDownloadURL
 	}
-
-	return setting.AppURL + "attachments/" + url.PathEscape(a.UUID)
+	return httplib.MakeAbsoluteURL(ctx, setting.AppSubURL+"/attachments/"+url.PathEscape(a.UUID))
 }
 
 // ErrAttachmentNotExist represents a "AttachmentNotExist" kind of error.

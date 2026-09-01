@@ -69,6 +69,10 @@ type SearchUserOptions struct {
 	/*** END DCS CUSTOMIZATIONS ***/
 }
 
+func (opts *SearchUserOptions) ToOrders() string {
+	return "id"
+}
+
 func (opts *SearchUserOptions) ApplyPublicOnly(publicOnly bool) {
 	if publicOnly {
 		opts.Visible = []structs.VisibleType{structs.VisibleTypePublic}

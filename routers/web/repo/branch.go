@@ -70,14 +70,10 @@ func Branches(ctx *context.Context) {
 		ctx.ServerError("LoadBranches", err)
 		return
 	}
-	if !ctx.Repo.Permission.CanRead(unit.TypeActions) {
-		for key := range commitStatuses {
-			git_model.CommitStatusesHideActionsURL(ctx, commitStatuses[key])
-		}
-	}
 
 	commitStatus := make(map[string]*git_model.CommitStatus)
 	for commitID, cs := range commitStatuses {
+		git_model.CommitStatusesApplyDoerPermission(ctx, ctx.Doer, cs)
 		commitStatus[commitID] = git_model.CalcCommitStatus(cs)
 	}
 
@@ -101,8 +97,7 @@ func Branches(ctx *context.Context) {
 		ctx.Data["DCSHealthcheckSeverities"] = severities
 	}
 	/*** END DCS Customizations ***/
-	pager := context.NewPagination(branchesCount, pageSize, page, 5)
-	pager.AddParamFromRequest(ctx.Req)
+	pager := context.NewPagerBuilder(ctx).TotalCount(branchesCount).PerPageLimit(pageSize).CurPage(page).Build()
 	ctx.Data["Page"] = pager
 	ctx.HTML(http.StatusOK, tplBranch)
 }
