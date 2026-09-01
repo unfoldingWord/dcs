@@ -4,7 +4,6 @@
 package actions
 
 import (
-	"bytes"
 	"context"
 	"fmt"
 	"slices"
@@ -19,6 +18,7 @@ import (
 	unit_model "gitea.dev/models/unit"
 	user_model "gitea.dev/models/user"
 	actions_module "gitea.dev/modules/actions"
+	"gitea.dev/modules/actions/jobparser"
 	"gitea.dev/modules/container"
 	"gitea.dev/modules/git"
 	"gitea.dev/modules/gitrepo"
@@ -28,8 +28,6 @@ import (
 	api "gitea.dev/modules/structs"
 	webhook_module "gitea.dev/modules/webhook"
 	"gitea.dev/services/convert"
-
-	"gitea.com/gitea/runner/act/model"
 )
 
 type methodCtxKeyType struct{}
@@ -83,6 +81,12 @@ func newNotifyInput(repo *repo_model.Repository, doer *user_model.User, event we
 func newNotifyInputForSchedules(repo *repo_model.Repository) *notifyInput {
 	// the doer here will be ignored as we force using action user when handling schedules
 	return newNotifyInput(repo, user_model.NewActionsUser(), webhook_module.HookEventSchedule)
+}
+
+func newPullRequestReviewNotifyInput(repo *repo_model.Repository, reviewer *user_model.User, event webhook_module.HookEventType, commitID string, pr *issues_model.PullRequest) *notifyInput {
+	return newNotifyInput(repo, reviewer, event).
+		WithRef(commitID).
+		WithPullRequest(pr)
 }
 
 func (input *notifyInput) WithDoer(doer *user_model.User) *notifyInput {
@@ -414,11 +418,18 @@ func handleFilteredWorkflows(ctx context.Context, input *notifyInput, filteredWo
 		return
 	}
 	for _, dwf := range filteredWorkflows {
+		if !shouldCreateSkippedCommitStatusForFilteredWorkflow(input, dwf) {
+			continue
+		}
 		if err := CreateSkippedCommitStatusForFilteredWorkflow(ctx, input.Repo, input.Event, dwf.TriggerEvent.Name, dwf.EntryName, dwf.Content, input.Payload, "", requiredGlobs); err != nil {
 			log.Error("repo %s: skipped commit status for workflow %s: %v", input.Repo.RelativePath(), dwf.EntryName, err)
 			continue
 		}
 	}
+}
+
+func shouldCreateSkippedCommitStatusForFilteredWorkflow(input *notifyInput, workflow *actions_module.DetectedWorkflow) bool {
+	return !isForkPullRequestInput(input) || workflow.TriggerEvent.Name == actions_module.GithubEventPullRequestTarget
 }
 
 func newNotifyInputFromIssue(issue *issues_model.Issue, event webhook_module.HookEventType) *notifyInput {
@@ -555,7 +566,7 @@ func handleSchedules(
 	crons := make([]*actions_model.ActionSchedule, 0, len(detectedWorkflows))
 	for _, dwf := range detectedWorkflows {
 		// Check cron job condition. Only working in default branch
-		workflow, err := model.ReadWorkflow(bytes.NewReader(dwf.Content))
+		workflow, err := jobparser.ReadWorkflow(dwf.Content)
 		if err != nil {
 			log.Error("ReadWorkflow: %v", err)
 			continue
