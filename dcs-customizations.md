@@ -39,7 +39,7 @@ This document catalogs every DCS modification to existing Gitea files. New DCS-o
 | `models/repo/repo.go` | LoadLatestDMs() call in LoadAttributes() | HIGH | models/repo/repo_dcs.go |
 | `modules/setting/setting.go` | loadDCSFrom(cfg) call | LOW | modules/setting/dcs.go |
 | `modules/templates/helper.go` | 13 DCS template functions registered | MEDIUM | modules/dcs/ |
-| `routers/init.go` | mustInitCtx(ctx, door43metadata.Init); door43metadata_model.EnsureFullTextIndexes(ctx) after InitDBEngine | MEDIUM | services/door43metadata/, models/door43metadata/fulltext.go |
+| `routers/init.go` | mustInitCtx(ctx, door43metadata.Init) | MEDIUM | services/door43metadata/ |
 | `routers/private/default_branch.go` | ProcessDoor43MetadataForRepo() call | MEDIUM | services/door43metadata/ |
 | `routers/api/v1/repo/release_attachment.go` | notifyReleaseAttachmentChanged() helper + calls in create/edit/delete handlers (manifest expansion, has_* flag updates) | MEDIUM | services/door43metadata/, modules/dcs/attachments.go |
 | `routers/web/repo/view_file.go` | FileExt, IgnoreLanguageDirection ctx.Data | LOW | - |
@@ -110,7 +110,7 @@ This document catalogs every DCS modification to existing Gitea files. New DCS-o
 | ------ | ------------- | ------ | ------------ |
 | `main.go` | `_ "gitea.dev/modules/markup/tsv"` | LOW | modules/markup/tsv/ |
 | `cmd/main.go` | CmdDoor43Metadata command registration | LOW | cmd/door43metadata.go |
-| `routers/init.go` | door43metadata service import; door43metadata_model (aliased, models/door43metadata) import | LOW | services/door43metadata/, models/door43metadata/fulltext.go |
+| `routers/init.go` | door43metadata service import | LOW | services/door43metadata/ |
 | `routers/web/web.go` | routers/web/dcs import | LOW | routers/web/dcs/ |
 | `go.mod` | github.com/unfoldingWord/go-rc2sb and go-ts2rc dependencies | LOW | - |
 
@@ -226,7 +226,7 @@ This document catalogs every DCS modification to existing Gitea files. New DCS-o
 
 - `cmd/door43metadata.go`
 - `models/catalog_list.go`, `catalog_list_test.go`
-- `models/door43metadata/search.go`, `stage.go`, `fulltext.go`, `fulltext_test.go`
+- `models/door43metadata/search.go`, `stage.go`
 - `models/repo/catalog.go`, `door43healthcheck.go`, `door43healthcheck_test.go`, `door43metadata.go`, `door43metadata_test.go`, `release_dcs.go`, `repo_dcs.go`
 - `models/user_dcs.go`
 - `models/fixtures/door43_metadata.yml`

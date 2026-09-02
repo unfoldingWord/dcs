@@ -5,7 +5,6 @@ package door43metadata
 
 import (
 	"strings"
-	"unicode"
 
 	"gitea.dev/models/db"
 	"gitea.dev/modules/optional"
@@ -91,11 +90,12 @@ type SearchCatalogOptions struct {
 	PartialMatch             bool
 }
 
-// GetMetadataCond Get the metadata condition
+// GetMetadataCond Get the metadata condition. These stay leading-wildcard LIKEs on
+// purpose: both callers reach door43_metadata through the repo_id join and evaluate
+// this whole OR as a per-row filter, so no index on these columns is ever used as an
+// access path. A FULLTEXT MATCH() here (tried 2026-09) was measurably slower than LIKE
+// for exactly that reason — the same rows get checked, with a costlier check per row.
 func GetMetadataCond(keyword string) builder.Cond {
-	if fullTextSearchAvailable() {
-		return getMetadataCondFullText(keyword)
-	}
 	cond := builder.NewCond()
 	cond = cond.And(likeCond("`door43_metadata`.title", keyword))
 	cond = cond.Or(builder.Eq{"`door43_metadata`.abbreviation": keyword})
@@ -103,46 +103,6 @@ func GetMetadataCond(keyword string) builder.Cond {
 	cond = cond.Or(builder.Expr("LOWER(`door43_metadata`.language) = ?", strings.ToLower(keyword)))
 	cond = cond.Or(likeCond("`door43_metadata`.language_title", keyword))
 	return cond
-}
-
-// getMetadataCondFullText is GetMetadataCond's MySQL path: title/subject/language_title
-// go through the FULLTEXT index EnsureFullTextIndexes creates instead of a
-// leading-wildcard LIKE, which MySQL can't use any index for.
-func getMetadataCondFullText(keyword string) builder.Cond {
-	cond := builder.NewCond()
-	if term := buildBooleanFullTextTerm(keyword); term != "" {
-		cond = cond.Or(builder.Expr(
-			"MATCH(`door43_metadata`.title, `door43_metadata`.subject, `door43_metadata`.language_title) AGAINST(? IN BOOLEAN MODE)",
-			term,
-		))
-	}
-	cond = cond.Or(builder.Eq{"`door43_metadata`.abbreviation": keyword})
-	cond = cond.Or(builder.Expr("LOWER(`door43_metadata`.language) = ?", strings.ToLower(keyword)))
-	return cond
-}
-
-// buildBooleanFullTextTerm turns keyword into a MySQL boolean-mode FULLTEXT search
-// string. Each run of letters/digits becomes a required term (non-alphanumeric
-// characters, including "_", are not MySQL FULLTEXT word characters, so a compound
-// identifier like "azn_luk_text_reg" is indexed and searched as separate words); the
-// final term gets a trailing "*" for a prefix match, so a partial last word still
-// matches. Returns "" if keyword has no letters or digits at all (e.g. only
-// punctuation), in which case the caller should skip the FULLTEXT branch entirely
-// rather than send AGAINST an empty or all-operator string.
-func buildBooleanFullTextTerm(keyword string) string {
-	words := strings.FieldsFunc(keyword, func(r rune) bool {
-		return !unicode.IsLetter(r) && !unicode.IsDigit(r)
-	})
-	if len(words) == 0 {
-		return ""
-	}
-	for i, w := range words {
-		if i == len(words)-1 {
-			w += "*"
-		}
-		words[i] = "+" + w
-	}
-	return strings.Join(words, " ")
 }
 
 // likeCond builds a "col LIKE '%keyword%' ESCAPE '!'" condition with "_" and "%" (and
