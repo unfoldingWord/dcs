@@ -78,3 +78,15 @@ func TestSubjectFlavorCondsAreCaseInsensitive(t *testing.T) {
 		})
 	}
 }
+
+// TestGetMetadataCondEscapesLikeWildcards checks that a literal "_" or "%" in a keyword
+// is escaped rather than read as a LIKE wildcard, and that the escape character is
+// declared explicitly (SQLite has no default one).
+func TestGetMetadataCondEscapesLikeWildcards(t *testing.T) {
+	sql, args, err := builder.ToSQL(GetMetadataCond("jup_mat"))
+	require.NoError(t, err)
+	assert.Equal(t,
+		"((`door43_metadata`.title LIKE ? ESCAPE '!')) OR `door43_metadata`.abbreviation=? OR (`door43_metadata`.subject LIKE ? ESCAPE '!') OR (LOWER(`door43_metadata`.language) = ?) OR (`door43_metadata`.language_title LIKE ? ESCAPE '!')",
+		sql)
+	assert.Equal(t, []any{"%jup!_mat%", "jup_mat", "%jup!_mat%", "jup_mat", "%jup!_mat%"}, args)
+}

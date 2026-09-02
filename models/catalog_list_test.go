@@ -429,7 +429,7 @@ func TestSearchCatalogCounts(t *testing.T) {
 }
 
 // TestSearchCatalogKeywordUnderscoreIsLiteral exercises GetMetadataCond's LIKE
-// fallback against a real database (not just the generated SQL text), so a query
+// conditions against a real database (not just the generated SQL text), so a query
 // that's syntactically valid Go but gets mis-parsed by a specific SQL dialect (as
 // happened with an early "ESCAPE '\'" version of this condition on MySQL, which
 // SQLite's different string-literal rules didn't surface) fails a test instead of
