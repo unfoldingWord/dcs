@@ -11,6 +11,7 @@ import (
 
 	"gitea.dev/models"
 	authmodel "gitea.dev/models/auth"
+	door43metadata_model "gitea.dev/models/door43metadata" // DCS Customizations
 	"gitea.dev/modules/cache"
 	"gitea.dev/modules/eventsource"
 	"gitea.dev/modules/git"
@@ -144,6 +145,16 @@ func InitWebInstalled(ctx context.Context) {
 
 	mustInitCtx(ctx, common.InitDBEngine)
 	log.Info("ORM engine initialization successful!")
+
+	/*** DCS Customizations ***/
+	// Must run after InitDBEngine: xorm's Sync (called by InitDBEngine) drops any
+	// index it doesn't recognize from a Go struct tag, and has no FULLTEXT or
+	// functional-index concept, so this recreates them right after Sync has already
+	// run rather than in a migration that would just get dropped again on the next
+	// restart. See door43metadata_model.EnsureFullTextIndexes.
+	door43metadata_model.EnsureFullTextIndexes(ctx)
+	/*** END DCS Customizations ***/
+
 	mustInit(system.Init)
 	mustInitCtx(ctx, oauth2.Init)
 	mustInitCtx(ctx, oauth2_provider.Init)
