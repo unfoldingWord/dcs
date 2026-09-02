@@ -145,16 +145,20 @@ func buildBooleanFullTextTerm(keyword string) string {
 	return strings.Join(words, " ")
 }
 
-// likeCond builds a "col LIKE '%keyword%' ESCAPE '\'" condition with "_" and "%" (and
+// likeCond builds a "col LIKE '%keyword%' ESCAPE '!'" condition with "_" and "%" (and
 // the escape character itself) escaped in keyword, so e.g. a literal underscore in
-// "jup_mat" isn't read as the LIKE wildcard for "any single character". The explicit
-// ESCAPE clause is required for correctness on SQLite, which — unlike MySQL — does not
-// treat "\" as an escape character in LIKE patterns by default.
+// "jup_mat" isn't read as the LIKE wildcard for "any single character". The escape
+// character is "!", not the more conventional "\": MySQL treats "\" as an escape
+// character within its own string literals (unless NO_BACKSLASH_ESCAPES is set), so
+// writing the SQL text "ESCAPE '\'" is misparsed there ("\'" reads as an escaped quote,
+// not "backslash then end of string"), while SQLite has no such string-literal
+// escaping and parses the same text differently. "!" has no special meaning in either
+// dialect's string-literal syntax, so it doesn't run into that mismatch.
 func likeCond(col, keyword string) builder.Cond {
-	keyword = strings.ReplaceAll(keyword, "\\", "\\\\")
-	keyword = strings.ReplaceAll(keyword, "_", "\\_")
-	keyword = strings.ReplaceAll(keyword, "%", "\\%")
-	return builder.Expr(col+" LIKE ? ESCAPE '\\'", "%"+keyword+"%")
+	keyword = strings.ReplaceAll(keyword, "!", "!!")
+	keyword = strings.ReplaceAll(keyword, "_", "!_")
+	keyword = strings.ReplaceAll(keyword, "%", "!%")
+	return builder.Expr(col+" LIKE ? ESCAPE '!'", "%"+keyword+"%")
 }
 
 // SearchCatalogCondition creates a query condition according search repository options
