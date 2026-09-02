@@ -97,15 +97,15 @@ type SearchCatalogOptions struct {
 // for exactly that reason — the same rows get checked, with a costlier check per row.
 func GetMetadataCond(keyword string) builder.Cond {
 	cond := builder.NewCond()
-	cond = cond.And(likeCond("`door43_metadata`.title", keyword))
+	cond = cond.And(LikeCond("`door43_metadata`.title", keyword))
 	cond = cond.Or(builder.Eq{"`door43_metadata`.abbreviation": keyword})
-	cond = cond.Or(likeCond("`door43_metadata`.subject", keyword))
+	cond = cond.Or(LikeCond("`door43_metadata`.subject", keyword))
 	cond = cond.Or(builder.Expr("LOWER(`door43_metadata`.language) = ?", strings.ToLower(keyword)))
-	cond = cond.Or(likeCond("`door43_metadata`.language_title", keyword))
+	cond = cond.Or(LikeCond("`door43_metadata`.language_title", keyword))
 	return cond
 }
 
-// likeCond builds a "col LIKE '%keyword%' ESCAPE '!'" condition with "_" and "%" (and
+// LikeCond builds a "col LIKE '%keyword%' ESCAPE '!'" condition with "_" and "%" (and
 // the escape character itself) escaped in keyword, so e.g. a literal underscore in
 // "jup_mat" isn't read as the LIKE wildcard for "any single character". The escape
 // character is "!", not the more conventional "\": MySQL treats "\" as an escape
@@ -114,11 +114,22 @@ func GetMetadataCond(keyword string) builder.Cond {
 // not "backslash then end of string"), while SQLite has no such string-literal
 // escaping and parses the same text differently. "!" has no special meaning in either
 // dialect's string-literal syntax, so it doesn't run into that mismatch.
-func likeCond(col, keyword string) builder.Cond {
-	keyword = strings.ReplaceAll(keyword, "!", "!!")
-	keyword = strings.ReplaceAll(keyword, "_", "!_")
-	keyword = strings.ReplaceAll(keyword, "%", "!%")
-	return builder.Expr(col+" LIKE ? ESCAPE '!'", "%"+keyword+"%")
+func LikeCond(col, keyword string) builder.Cond {
+	return likePatternCond(col, "%"+escapeLike(keyword)+"%")
+}
+
+// likePatternCond is LikeCond for a caller-built pattern: the literal parts must already
+// be passed through escapeLike, and "_" / "%" are the LIKE wildcards.
+func likePatternCond(col, pattern string) builder.Cond {
+	return builder.Expr(col+" LIKE ? ESCAPE '!'", pattern)
+}
+
+// escapeLike makes s match literally inside a LikeCond/likePatternCond pattern.
+func escapeLike(s string) string {
+	s = strings.ReplaceAll(s, "!", "!!")
+	s = strings.ReplaceAll(s, "_", "!_")
+	s = strings.ReplaceAll(s, "%", "!%")
+	return s
 }
 
 // SearchCatalogCondition creates a query condition according search repository options
@@ -135,8 +146,8 @@ func SearchCatalogCondition(opts *SearchCatalogOptions) builder.Cond {
 
 	keywordCond := builder.NewCond()
 	for _, keyword := range opts.Keywords {
-		keywordCond = keywordCond.Or(builder.Like{"`repository`.lower_name", strings.TrimSpace(keyword)})
-		keywordCond = keywordCond.Or(builder.Like{"`user`.lower_name", strings.TrimSpace(keyword)})
+		keywordCond = keywordCond.Or(LikeCond("`repository`.lower_name", strings.TrimSpace(keyword)))
+		keywordCond = keywordCond.Or(LikeCond("`user`.lower_name", strings.TrimSpace(keyword)))
 		keywordCond = keywordCond.Or(GetMetadataCond(keyword))
 	}
 
@@ -248,7 +259,7 @@ func GetLowerMatchCond(col string, values []string, partialMatch bool) builder.C
 		for v := range strings.SplitSeq(value, ",") {
 			v = strings.ToLower(strings.TrimSpace(v))
 			if partialMatch {
-				cond = cond.Or(builder.Expr("LOWER("+col+") LIKE ?", "%"+v+"%"))
+				cond = cond.Or(LikeCond("LOWER("+col+")", v))
 			} else {
 				cond = cond.Or(builder.Expr("LOWER("+col+") = ?", v))
 			}
@@ -289,7 +300,7 @@ func GetContentFormatCond(formats []string, partialMatch bool) builder.Cond {
 	for _, format := range formats {
 		for v := range strings.SplitSeq(format, ",") {
 			if partialMatch {
-				formatCond = formatCond.Or(builder.Like{"`door43_metadata`.content_format", strings.TrimSpace(v)})
+				formatCond = formatCond.Or(LikeCond("`door43_metadata`.content_format", strings.TrimSpace(v)))
 			} else {
 				formatCond = formatCond.Or(builder.Eq{"`door43_metadata`.content_format": strings.TrimSpace(v)})
 			}
@@ -315,7 +326,7 @@ func GetTopicCond(topics []string, partialMatch bool) builder.Cond {
 	for _, topic := range topics {
 		for v := range strings.SplitSeq(topic, ",") {
 			if partialMatch {
-				topicCond = topicCond.Or(builder.In("`repository`.id", builder.Select("repo_id").From("repo_topic").InnerJoin("topic", "`repo_topic`.topic_id = `topic`.id").Where(builder.Like{"`topic`.name", strings.TrimSpace(v)})))
+				topicCond = topicCond.Or(builder.In("`repository`.id", builder.Select("repo_id").From("repo_topic").InnerJoin("topic", "`repo_topic`.topic_id = `topic`.id").Where(LikeCond("`topic`.name", strings.TrimSpace(v)))))
 			} else {
 				topicCond = topicCond.Or(builder.In("`repository`.id", builder.Select("repo_id").From("repo_topic").InnerJoin("topic", "`repo_topic`.topic_id = `topic`.id").Where(builder.Eq{"`topic`.name": strings.TrimSpace(v)})))
 			}
@@ -330,7 +341,7 @@ func GetInvertedTopicCond(topics []string, partialMatch bool) builder.Cond {
 	for _, topic := range topics {
 		for v := range strings.SplitSeq(topic, ",") {
 			if partialMatch {
-				topicCond = topicCond.And(builder.NotIn("`repository`.id", builder.Select("repo_id").From("repo_topic").InnerJoin("topic", "`repo_topic`.topic_id = `topic`.id").Where(builder.Like{"`topic`.name", strings.TrimSpace(v)})))
+				topicCond = topicCond.And(builder.NotIn("`repository`.id", builder.Select("repo_id").From("repo_topic").InnerJoin("topic", "`repo_topic`.topic_id = `topic`.id").Where(LikeCond("`topic`.name", strings.TrimSpace(v)))))
 			} else {
 				topicCond = topicCond.And(builder.NotIn("`repository`.id", builder.Select("repo_id").From("repo_topic").InnerJoin("topic", "`repo_topic`.topic_id = `topic`.id").Where(builder.Eq{"`topic`.name": strings.TrimSpace(v)})))
 			}
@@ -449,7 +460,7 @@ func GetMetadataVersionCond(versions []string, partialMatch bool) builder.Cond {
 	for _, version := range versions {
 		for v := range strings.SplitSeq(version, ",") {
 			if partialMatch {
-				versionCond = versionCond.Or(builder.Like{"`door43_metadata`.metadata_version", strings.TrimSpace(v)})
+				versionCond = versionCond.Or(LikeCond("`door43_metadata`.metadata_version", strings.TrimSpace(v)))
 			} else {
 				versionCond = versionCond.Or(builder.Eq{"`door43_metadata`.metadata_version": strings.TrimSpace(v)})
 			}
@@ -466,12 +477,12 @@ func GetLanguageCond(languages []string, partialMatch bool) builder.Cond {
 			lv := strings.ToLower(strings.TrimSpace(v)) // match case insensitively; lower_name is already lowercased
 			if partialMatch {
 				langCond = langCond.
-					Or(builder.Expr("LOWER(`door43_metadata`.language) LIKE ?", "%"+lv+"%")).
-					Or(builder.Expr("`repository`.lower_name LIKE ?", "%"+lv+"\\_%")) // %lang\_% — contains "lang_"
+					Or(LikeCond("LOWER(`door43_metadata`.language)", lv)).
+					Or(likePatternCond("`repository`.lower_name", "%"+escapeLike(lv)+"!_%")) // contains "lang_"
 			} else {
 				langCond = langCond.
 					Or(builder.Expr("LOWER(`door43_metadata`.language) = ?", lv)).
-					Or(builder.Expr("`repository`.lower_name LIKE ?", lv+"\\_%")) // lang\_% — starts with "lang_"
+					Or(likePatternCond("`repository`.lower_name", escapeLike(lv)+"!_%")) // starts with "lang_"
 			}
 		}
 	}
@@ -518,7 +529,7 @@ func GetRepoCond(repos []string, partialMatch bool) builder.Cond {
 	for _, repo := range repos {
 		for v := range strings.SplitSeq(repo, ",") {
 			if partialMatch {
-				repoCond = repoCond.Or(builder.Like{"`repository`.lower_name", strings.ToLower(v)})
+				repoCond = repoCond.Or(LikeCond("`repository`.lower_name", strings.ToLower(v)))
 			} else {
 				repoCond = repoCond.Or(builder.Eq{"`repository`.lower_name": strings.ToLower(v)})
 			}
@@ -543,7 +554,7 @@ func GetOwnerCond(owners []string, partialMatch bool) builder.Cond {
 	for _, owner := range owners {
 		for v := range strings.SplitSeq(owner, ",") {
 			if partialMatch {
-				ownerCond = ownerCond.Or(builder.Like{"`user`.lower_name", strings.ToLower(v)})
+				ownerCond = ownerCond.Or(LikeCond("`user`.lower_name", strings.ToLower(v)))
 			} else {
 				ownerCond = ownerCond.Or(builder.Eq{"`user`.lower_name": strings.ToLower(v)})
 			}

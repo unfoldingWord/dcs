@@ -67,11 +67,10 @@ func HealthcheckDashboard(ctx *context.Context) {
 	keyword := ctx.FormTrim("q")
 	if keyword != "" {
 		keyword = strings.ToLower(keyword)
-		likePattern := "%" + keyword + "%"
 		ownerOrRepoCond := builder.NewCond().
-			Or(builder.Like{"`repository`.lower_name", likePattern}).
-			Or(builder.Like{"`user`.lower_name", likePattern}).
-			Or(builder.Expr("LOWER(`door43_metadata`.subject) LIKE ?", likePattern))
+			Or(door43metadata.LikeCond("`repository`.lower_name", keyword)).
+			Or(door43metadata.LikeCond("`user`.lower_name", keyword)).
+			Or(door43metadata.LikeCond("LOWER(`door43_metadata`.subject)", keyword))
 		cond = cond.And(ownerOrRepoCond)
 	}
 
