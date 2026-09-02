@@ -47,9 +47,9 @@ func TestGetMetadataCondLikeFallback(t *testing.T) {
 	sql, args, err := builder.ToSQL(GetMetadataCond("jup_mat"))
 	require.NoError(t, err)
 	assert.Equal(t,
-		"((`door43_metadata`.title LIKE ? ESCAPE '\\')) OR `door43_metadata`.abbreviation=? OR (`door43_metadata`.subject LIKE ? ESCAPE '\\') OR (LOWER(`door43_metadata`.language) = ?) OR (`door43_metadata`.language_title LIKE ? ESCAPE '\\')",
+		"((`door43_metadata`.title LIKE ? ESCAPE '!')) OR `door43_metadata`.abbreviation=? OR (`door43_metadata`.subject LIKE ? ESCAPE '!') OR (LOWER(`door43_metadata`.language) = ?) OR (`door43_metadata`.language_title LIKE ? ESCAPE '!')",
 		sql)
-	assert.Equal(t, []any{"%jup\\_mat%", "jup_mat", "%jup\\_mat%", "jup_mat", "%jup\\_mat%"}, args)
+	assert.Equal(t, []any{"%jup!_mat%", "jup_mat", "%jup!_mat%", "jup_mat", "%jup!_mat%"}, args)
 }
 
 // TestGetMetadataCondFullText checks the MySQL path once EnsureFullTextIndexes has
