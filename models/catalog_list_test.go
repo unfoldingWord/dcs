@@ -427,3 +427,42 @@ func TestSearchCatalogCounts(t *testing.T) {
 	assert.Len(t, page, 2)
 	assert.Equal(t, total, pagedTotal, "paginated count must match unpaginated total")
 }
+
+// TestSearchCatalogKeywordUnderscoreIsLiteral exercises GetMetadataCond's LIKE
+// conditions against a real database (not just the generated SQL text), so a query
+// that's syntactically valid Go but gets mis-parsed by a specific SQL dialect (as
+// happened with an early "ESCAPE '\'" version of this condition on MySQL, which
+// SQLite's different string-literal rules didn't surface) fails a test instead of
+// only showing up against a live server.
+//
+// It also checks the actual behavior the escaping is for: a keyword search for
+// "jup_mat" must match a title containing that literal substring, but not one that
+// only matches if "_" is read as the SQL LIKE wildcard for "any single character".
+func TestSearchCatalogKeywordUnderscoreIsLiteral(t *testing.T) {
+	require.NoError(t, unittest.PrepareTestDatabase())
+
+	literalMatch := &repo_model.Door43Metadata{
+		RepoID: 1, Ref: "master", RefType: "branch", CommitSHA: "0000000000000000000000000000000000000001",
+		Stage: door43metadata.StageProd, IsLatestForStage: true,
+		Language: "en", Subject: "Open Bible Stories", Title: "jup_mat resource",
+	}
+	wildcardOnlyMatch := &repo_model.Door43Metadata{
+		RepoID: 33, Ref: "master", RefType: "branch", CommitSHA: "0000000000000000000000000000000000000002",
+		Stage: door43metadata.StageProd, IsLatestForStage: true,
+		Language: "en", Subject: "Open Bible Stories", Title: "jupXmat resource",
+	}
+	for _, dm := range []*repo_model.Door43Metadata{literalMatch, wildcardOnlyMatch} {
+		_, err := db.GetEngine(t.Context()).Insert(dm)
+		require.NoError(t, err)
+	}
+
+	opts := &door43metadata.SearchCatalogOptions{
+		Stage:    door43metadata.StageProd,
+		Keywords: []string{"jup_mat"},
+	}
+	results, count, err := SearchCatalog(t.Context(), opts)
+	require.NoError(t, err)
+	require.EqualValues(t, 1, count)
+	require.Len(t, results, 1)
+	assert.Equal(t, literalMatch.RepoID, results[0].RepoID)
+}
