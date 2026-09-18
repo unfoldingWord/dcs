@@ -46,7 +46,7 @@ type ArchiveRequest struct {
 	Type     repo_model.ArchiveType
 	CommitID string
 
-	archiveRefShortName string // "master", "v1.0.0", commit id, etc.
+	RefShortName string // "master", "v1.0.0", commit id, etc. Exported so it survives queue serialization.
 }
 
 // ErrUnknownArchiveFormat means the requested archive format is not supported.
@@ -77,13 +77,13 @@ func (e RepoRefNotFoundError) Is(err error) bool {
 	return ok
 }
 
-// ErrRepoNotConvertible means SB archive generation is only available for RC and ts repositories.
+// ErrRepoNotConvertible means SB archive generation is only available for rc, ts, tc, and sb repositories.
 type ErrRepoNotConvertible struct {
 	RepoID int64
 }
 
 func (e ErrRepoNotConvertible) Error() string {
-	return fmt.Sprintf("repository %d is not an RC or ts repository", e.RepoID)
+	return fmt.Sprintf("repository %d is not an rc, ts, tc, or sb repository", e.RepoID)
 }
 
 func (e ErrRepoNotConvertible) Is(err error) bool {
@@ -107,16 +107,16 @@ func NewRequest(ctx context.Context, repoID int64, repo *git.Repository, archive
 	}
 
 	return &ArchiveRequest{
-		RepoID:              repoID,
-		Type:                archiveType,
-		CommitID:            commitID.String(),
-		archiveRefShortName: archiveRefShortName,
+		RepoID:       repoID,
+		Type:         archiveType,
+		CommitID:     commitID.String(),
+		RefShortName: archiveRefShortName,
 	}, nil
 }
 
 // GetArchiveName returns archive name based on requested ref.
 func (aReq *ArchiveRequest) GetArchiveName() string {
-	return strings.ReplaceAll(aReq.archiveRefShortName, "/", "-") + "-sb." + aReq.Type.String()
+	return strings.ReplaceAll(aReq.RefShortName, "/", "-") + "-sb." + aReq.Type.String()
 }
 
 // StorageCommitID returns the cache key commit ID used in repo_archiver.
@@ -166,11 +166,16 @@ func (aReq *ArchiveRequest) Await(ctx context.Context) (*repo_model.RepoArchiver
 	}
 }
 
-// Stream generates and streams a converted SB archive.
+// Stream generates and streams an SB archive. Repos already in SB format are archived
+// as-is via "git archive"; rc, ts, and tc repos are converted to SB first.
 func (aReq *ArchiveRequest) Stream(ctx context.Context, repo *repo_model.Repository, w io.Writer) error {
-	repoDM, err := getRepoDMForConversion(ctx, repo)
+	repoDM, err := getRepoDMForArchive(ctx, repo, aReq.RefShortName)
 	if err != nil {
 		return err
+	}
+
+	if repoDM.MetadataType == "sb" {
+		return git.CreateArchive(ctx, repo, repo.Name, aReq.Type.String(), w, aReq.CommitID, nil)
 	}
 
 	tmpDir, cleanup, err := setting.AppDataTempDir("repo-sb-archive").MkdirTempRandom(fmt.Sprintf("%d-", repo.ID))
@@ -189,7 +194,7 @@ func (aReq *ArchiveRequest) Stream(ctx context.Context, repo *repo_model.Reposit
 	} else if isTC {
 		cloneDir = filepath.Join(tmpDir, "tc")
 	}
-	if err := cloneRepositoryAtCommit(ctx, gitrepo.RepoLocalPath(repo.CodeStorageRepo()), aReq.archiveRefShortName, aReq.CommitID, cloneDir); err != nil {
+	if err := cloneRepositoryAtCommit(ctx, gitrepo.RepoLocalPath(repo.CodeStorageRepo()), aReq.RefShortName, aReq.CommitID, cloneDir); err != nil {
 		return fmt.Errorf("clone requested repo ref: %w", err)
 	}
 
@@ -238,7 +243,32 @@ func (aReq *ArchiveRequest) Stream(ctx context.Context, repo *repo_model.Reposit
 	return nil
 }
 
-func getRepoDMForConversion(ctx context.Context, repo *repo_model.Repository) (*repo_model.Door43Metadata, error) {
+// isArchivableMetadataType reports whether SB archives can be produced for the metadata type.
+func isArchivableMetadataType(metadataType string) bool {
+	switch metadataType {
+	case "rc", "ts", "tc", "sb":
+		return true
+	default:
+		return false
+	}
+}
+
+// getRepoDMForArchive returns the Door43Metadata that decides how the requested ref is
+// archived. The ref's own row wins (a repo's "main" branch may be SB while its default
+// branch is RC); a bare commit ID or an unprocessed ref falls back to the default branch
+// metadata, then the repo-level metadata.
+func getRepoDMForArchive(ctx context.Context, repo *repo_model.Repository, refShortName string) (*repo_model.Door43Metadata, error) {
+	if refShortName != "" {
+		refDM, err := repo_model.GetDoor43MetadataByRepoIDAndRef(ctx, repo.ID, refShortName)
+		if err != nil && !repo_model.IsErrDoor43MetadataNotExist(err) {
+			return nil, fmt.Errorf("repo_model.GetDoor43MetadataByRepoIDAndRef: %w", err)
+		}
+		if refDM != nil && isArchivableMetadataType(refDM.MetadataType) {
+			refDM.Repo = repo
+			return refDM, nil
+		}
+	}
+
 	if err := repo.LoadLatestDMs(ctx); err != nil {
 		return nil, fmt.Errorf("repo.LoadLatestDMs: %w", err)
 	}
@@ -247,7 +277,7 @@ func getRepoDMForConversion(ctx context.Context, repo *repo_model.Repository) (*
 	if dm == nil {
 		dm = repo.RepoDM
 	}
-	if dm == nil || (dm.MetadataType != "rc" && dm.MetadataType != "ts" && dm.MetadataType != "tc") {
+	if dm == nil || !isArchivableMetadataType(dm.MetadataType) {
 		return nil, ErrRepoNotConvertible{RepoID: repo.ID}
 	}
 	return dm, nil
@@ -690,8 +720,10 @@ func StartArchive(request *ArchiveRequest) error {
 
 // ServeRepoSBArchive serves the generated SB archive to the client.
 func ServeRepoSBArchive(ctx *gitea_context.Base, repo *repo_model.Repository, archiveReq *ArchiveRequest) {
+	// Mirror the upstream archiver's nix "immutable" link header, but point at the web
+	// route: /sb/ is only registered under the repo's HTML URL, not the API.
 	ctx.Resp.Header().Add("Link", fmt.Sprintf(`<%s/sb/%s.%s?rev=%s>; rel="immutable"`,
-		repo.APIURL(),
+		repo.HTMLURL(),
 		archiveReq.CommitID,
 		archiveReq.Type.String(),
 		archiveReq.CommitID,
