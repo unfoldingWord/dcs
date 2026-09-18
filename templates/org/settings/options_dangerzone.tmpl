@@ -11,7 +11,7 @@
 					<div class="item-body">{{ctx.Locale.Tr "org.settings.visibility_desc"}}</div>
 				</div>
 				<div class="item-trailing">
-					<button class="ui basic red show-modal button" data-modal="#change-visibility-org-modal">{{ctx.Locale.Tr "org.settings.change_visibility"}}</button>
+					<button type="button" class="ui basic red show-modal button" data-modal="#change-visibility-org-modal">{{ctx.Locale.Tr "org.settings.change_visibility"}}</button>
 				</div>
 			</div>
 		{{end}}
@@ -23,7 +23,7 @@
 				<div class="item-body">{{ctx.Locale.Tr "org.settings.rename_desc"}}</div>
 			</div>
 			<div class="item-trailing">
-				<button class="ui basic red show-modal button" data-modal="#rename-org-modal">{{ctx.Locale.Tr "org.settings.rename"}}</button>
+				<button type="button" class="ui basic red show-modal button" data-modal="#rename-org-modal">{{ctx.Locale.Tr "org.settings.rename"}}</button>
 			</div>
 		</div>
 
@@ -33,7 +33,7 @@
 				<div class="item-body">{{ctx.Locale.Tr "org.settings.delete_prompt"}}</div>
 			</div>
 			<div class="item-trailing">
-				<button class="ui basic red show-modal button" data-modal="#delete-org-modal">{{ctx.Locale.Tr "org.settings.delete_account"}}</button>
+				<button type="button" class="ui basic red show-modal button" data-modal="#delete-org-modal">{{ctx.Locale.Tr "org.settings.delete_account"}}</button>
 			</div>
 		</div>
 	</div>
@@ -71,8 +71,8 @@
 			</div>
 
 			<div class="actions">
-				<button class="ui cancel button">{{ctx.Locale.Tr "settings.cancel"}}</button>
-				<button class="ui red button">{{ctx.Locale.Tr "org.settings.change_visibility"}}</button>
+				<button type="button" class="ui cancel button">{{ctx.Locale.Tr "settings.cancel"}}</button>
+				<button type="submit" class="ui red button">{{ctx.Locale.Tr "org.settings.change_visibility"}}</button>
 			</div>
 		</form>
 	</div>
@@ -109,8 +109,8 @@
 			</div>
 
 			<div class="actions">
-				<button class="ui cancel button">{{ctx.Locale.Tr "settings.cancel"}}</button>
-				<button class="ui red button">{{ctx.Locale.Tr "org.settings.rename"}}</button>
+				<button type="button" class="ui cancel button">{{ctx.Locale.Tr "settings.cancel"}}</button>
+				<button type="submit" class="ui red button">{{ctx.Locale.Tr "org.settings.rename"}}</button>
 			</div>
 		</form>
 	</div>
@@ -142,8 +142,8 @@
 			</div>
 
 			<div class="actions">
-				<button class="ui cancel button">{{ctx.Locale.Tr "settings.cancel"}}</button>
-				<button class="ui red button">{{ctx.Locale.Tr "org.settings.delete_account"}}</button>
+				<button type="button" class="ui cancel button">{{ctx.Locale.Tr "settings.cancel"}}</button>
+				<button type="submit" class="ui red button">{{ctx.Locale.Tr "org.settings.delete_account"}}</button>
 			</div>
 		</form>
 	</div>
