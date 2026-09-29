@@ -13,6 +13,7 @@ import (
 	access_model "gitea.dev/models/perm/access"
 	repo_model "gitea.dev/models/repo"
 	user_model "gitea.dev/models/user"
+	"gitea.dev/modules/log" // DCS Customizations
 	"gitea.dev/modules/optional"
 	api "gitea.dev/modules/structs"
 	"gitea.dev/modules/util"
@@ -69,6 +70,12 @@ func ListForks(ctx *context.APIContext) {
 		ctx.APIErrorInternal(err)
 		return
 	}
+
+	/*** DCS Customizations ***/
+	if err := repo_model.RepositoryList(forks).LoadLatestDMs(ctx); err != nil { // one batch instead of 4 queries per repo in ToRepo
+		log.Error("LoadLatestDMs: %v", err)
+	}
+	/*** END DCS Customizations ***/
 
 	apiForks := make([]*api.Repository, len(forks))
 	for i, fork := range forks {

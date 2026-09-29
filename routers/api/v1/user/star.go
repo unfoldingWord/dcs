@@ -11,6 +11,7 @@ import (
 	access_model "gitea.dev/models/perm/access"
 	repo_model "gitea.dev/models/repo"
 	user_model "gitea.dev/models/user"
+	"gitea.dev/modules/log" // DCS Customizations
 	api "gitea.dev/modules/structs"
 	"gitea.dev/routers/api/v1/utils"
 	"gitea.dev/services/context"
@@ -31,6 +32,12 @@ func getStarredRepos(ctx *context.APIContext, user *user_model.User, private boo
 	if err != nil {
 		return nil, err
 	}
+
+	/*** DCS Customizations ***/
+	if err := repo_model.RepositoryList(starredRepos).LoadLatestDMs(ctx); err != nil { // one batch instead of 4 queries per repo in ToRepo
+		log.Error("LoadLatestDMs: %v", err)
+	}
+	/*** END DCS Customizations ***/
 
 	repos := make([]*api.Repository, len(starredRepos))
 	for i, starred := range starredRepos {
