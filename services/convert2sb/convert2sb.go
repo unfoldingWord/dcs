@@ -78,7 +78,7 @@ func repoHasQualifyingTopic(repo *repo_model.Repository) bool {
 	return false
 }
 
-// ForBranch converts an RC, ts, or tc repo at the HEAD of the given branch to SB format
+// ForBranch converts an rc, ts, or tc repo at the HEAD of the given branch to SB format
 // and pushes the result to the "main" branch. ts and tc repos are first converted to RC
 // format via ts2rc/tc2rc, then follow the same RC-to-SB pipeline.
 func ForBranch(ctx context.Context, repo *repo_model.Repository, branchName string) error {

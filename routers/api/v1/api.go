@@ -1546,7 +1546,7 @@ func Routes() *web.Router {
 					m.Delete("", repo.DeleteAvatar)
 				}, reqAdmin(), reqToken())
 				/*** DCS Customizations ***/
-				dcs.RegisterDCSRepoAPIRoutes(m)
+				dcs.RegisterDCSRepoAPIRoutes(m, reqRepoReader)
 				/*** END DCS Customizations ***/
 
 				m.Methods("HEAD,GET", "/{ball_type:tarball|zipball|bundle}/*", reqRepoReader(unit.TypeCode), context.ReferencesGitRepo(true), repo.DownloadArchive)

@@ -54,9 +54,12 @@ func RegisterDCSAPIRoutes(m *web.Router,
 	})
 }
 
-// RegisterDCSRepoAPIRoutes registers DCS repo-scoped API routes (healthcheck)
-func RegisterDCSRepoAPIRoutes(m *web.Router) {
+// RegisterDCSRepoAPIRoutes registers DCS repo-scoped API routes (healthcheck, Scripture Burrito archive).
+// Called inside the /repos/{username}/{reponame} group, so repoAssignment is already applied.
+func RegisterDCSRepoAPIRoutes(m *web.Router, reqRepoReader func(unitType unit.Type) func(ctx *context.APIContext)) {
 	m.Get("/healthcheck", repo.GetHealthcheck)
+	// Same middleware as upstream's /archive/* so token auth and empty-repo handling match
+	m.Methods("HEAD,GET", "/sb/*", reqRepoReader(unit.TypeCode), context.ReferencesGitRepo(true), repo.GetSBArchive)
 }
 
 // RegisterDCSAdminAPIRoutes registers DCS admin API routes (spam users)

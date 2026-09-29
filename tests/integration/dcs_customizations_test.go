@@ -4,11 +4,17 @@
 package integration
 
 import (
+	"archive/zip"
+	"bytes"
+	"compress/gzip"
 	"net/http"
+	"regexp"
 	"testing"
 
+	auth_model "gitea.dev/models/auth"
 	door43metadata_model "gitea.dev/models/door43metadata"
 	repo_model "gitea.dev/models/repo"
+	"gitea.dev/modules/setting"
 	api "gitea.dev/modules/structs"
 	"gitea.dev/modules/timeutil"
 	"gitea.dev/tests"
@@ -114,6 +120,9 @@ func TestDCSAPICatalogEntryEndpoints(t *testing.T) {
 	DecodeJSON(t, entryResp, &entry)
 	assert.Equal(t, dm.Ref, entry.Ref)
 	assert.Equal(t, "prod", entry.Stage)
+	assert.Equal(t, setting.AppURL+"user2/repo1/archive/v1.1.zip", entry.ZipballURL)
+	assert.Equal(t, setting.AppURL+"user2/repo1/sb/v1.1.zip", entry.SBZipballURL)
+	assert.Equal(t, setting.AppURL+"user2/repo1/sb/v1.1.tar.gz", entry.SBTarballURL)
 
 	metadataResp := MakeRequest(t, NewRequest(t, "GET", "/api/v1/catalog/metadata/user2/repo1/v1.1"), http.StatusOK)
 	var metadata map[string]any
@@ -124,6 +133,57 @@ func TestDCSAPICatalogEntryEndpoints(t *testing.T) {
 	var validation any
 	DecodeJSON(t, validationResp, &validation)
 	assert.Nil(t, validation)
+}
+
+// TestDCSAPIRepoSBArchive covers /api/v1/repos/{owner}/{repo}/sb/{ref}.{zip|tar.gz}, the API twin of the
+// web /sb/ download. user2/repo1 is marked as already being in SB format so the archive is its tree as is.
+func TestDCSAPIRepoSBArchive(t *testing.T) {
+	defer tests.PrepareTestEnv(t)()
+
+	// No metadata at all: nothing to convert
+	MakeRequest(t, NewRequest(t, "GET", "/api/v1/repos/user2/repo1/sb/master.zip"), http.StatusNotFound)
+
+	require.NoError(t, repo_model.InsertDoor43Metadata(t.Context(), &repo_model.Door43Metadata{
+		RepoID: 1, Ref: "master", RefType: "branch", CommitSHA: "65f1bf27bc3bf70f64657658635e66094edbcb4d",
+		Stage: door43metadata_model.StageLatest, MetadataType: "sb", MetadataVersion: "1.0.0",
+		IsLatestForStage: true, IsRepoMetadata: true,
+	}))
+
+	MakeRequest(t, NewRequest(t, "GET", "/api/v1/repos/user2/repo1/sb/master"), http.StatusBadRequest)
+	MakeRequest(t, NewRequest(t, "GET", "/api/v1/repos/user2/repo1/sb/master.bundle"), http.StatusBadRequest)
+	MakeRequest(t, NewRequest(t, "GET", "/api/v1/repos/user2/repo1/sb/no-such-ref.zip"), http.StatusNotFound)
+
+	resp := MakeRequest(t, NewRequest(t, "GET", "/api/v1/repos/user2/repo1/sb/master.zip"), http.StatusOK)
+	assert.Equal(t, "application/zip", resp.Header().Get("Content-Type"))
+	assert.Contains(t, resp.Header().Get("Content-Disposition"), "repo1-master-sb.zip")
+	zr, err := zip.NewReader(bytes.NewReader(resp.Body.Bytes()), int64(resp.Body.Len()))
+	require.NoError(t, err)
+	var names []string
+	for _, f := range zr.File {
+		names = append(names, f.Name)
+	}
+	assert.Contains(t, names, "repo1/README.md")
+
+	// The "immutable" link must point at this API route, pinned to the commit
+	linkHeaderRe := regexp.MustCompile(`^<(https?://.*/api/v1/repos/user2/repo1/sb/[a-f0-9]+\.zip\?rev=[a-f0-9]+)>; rel="immutable"$`)
+	m := linkHeaderRe.FindStringSubmatch(resp.Header().Get("Link"))
+	require.Len(t, m, 2, "Link header %q", resp.Header().Get("Link"))
+	pinned := MakeRequest(t, NewRequest(t, "GET", m[1]), http.StatusOK)
+	assert.Equal(t, resp.Body.Bytes(), pinned.Body.Bytes())
+
+	resp = MakeRequest(t, NewRequest(t, "GET", "/api/v1/repos/user2/repo1/sb/master.tar.gz"), http.StatusOK)
+	assert.Equal(t, "application/gzip", resp.Header().Get("Content-Type"))
+	assert.Contains(t, resp.Header().Get("Content-Disposition"), "repo1-master-sb.tar.gz")
+	_, err = gzip.NewReader(bytes.NewReader(resp.Body.Bytes()))
+	require.NoError(t, err)
+
+	MakeRequest(t, NewRequest(t, "HEAD", "/api/v1/repos/user2/repo1/sb/master.zip"), http.StatusOK)
+
+	// Private repo: hidden anonymously, readable with a token (the web /sb/ route has no token auth)
+	_ = repo_model.UpdateRepositoryColsNoAutoTime(t.Context(), &repo_model.Repository{ID: 1, IsPrivate: true}, "is_private")
+	MakeRequest(t, NewRequest(t, "HEAD", "/api/v1/repos/user2/repo1/sb/master.zip"), http.StatusNotFound)
+	token := getTokenForLoggedInUser(t, loginUser(t, "user2"), auth_model.AccessTokenScopeReadRepository)
+	MakeRequest(t, NewRequest(t, "HEAD", "/api/v1/repos/user2/repo1/sb/master.zip").AddTokenAuth(token), http.StatusOK)
 }
 
 func TestDCSAPIRepoHealthcheck(t *testing.T) {

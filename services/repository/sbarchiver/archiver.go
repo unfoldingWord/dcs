@@ -720,18 +720,18 @@ func StartArchive(request *ArchiveRequest) error {
 
 // ServeRepoSBArchive serves the generated SB archive to the client.
 func ServeRepoSBArchive(ctx *gitea_context.Base, repo *repo_model.Repository, archiveReq *ArchiveRequest) {
-	// Mirror the upstream archiver's nix "immutable" link header, but point at the web
-	// route: /sb/ is only registered under the repo's HTML URL, not the API.
+	// Mirror the upstream archiver's nix "immutable" link header (see ServeRepoArchive)
 	ctx.Resp.Header().Add("Link", fmt.Sprintf(`<%s/sb/%s.%s?rev=%s>; rel="immutable"`,
-		repo.HTMLURL(),
+		repo.APIURL(),
 		archiveReq.CommitID,
 		archiveReq.Type.String(),
 		archiveReq.CommitID,
 	))
 	downloadName := repo.Name + "-" + archiveReq.GetArchiveName()
+	contentType := archiveContentType(archiveReq.Type)
 
 	if setting.Repository.StreamArchives {
-		httplib.ServeSetHeaders(ctx.Resp, httplib.ServeHeaderOptions{Filename: downloadName})
+		httplib.ServeSetHeaders(ctx.Resp, httplib.ServeHeaderOptions{Filename: downloadName, ContentType: contentType})
 		if err := archiveReq.Stream(ctx, repo, ctx.Resp); err != nil && !ctx.Written() {
 			if errors.Is(err, ErrRepoNotConvertible{}) {
 				ctx.HTTPError(http.StatusNotFound)
@@ -773,6 +773,15 @@ func ServeRepoSBArchive(ctx *gitea_context.Base, repo *repo_model.Repository, ar
 
 	ctx.ServeContent(fr, gitea_context.ServeHeaderOptions{
 		Filename:     downloadName,
+		ContentType:  contentType,
 		LastModified: archiver.CreatedUnix.AsLocalTime(),
 	})
+}
+
+// archiveContentType is the media type sent for an SB archive; the API's swagger "produces" lists the same ones.
+func archiveContentType(t repo_model.ArchiveType) string {
+	if t == repo_model.ArchiveTarGz {
+		return "application/gzip"
+	}
+	return "application/zip"
 }
