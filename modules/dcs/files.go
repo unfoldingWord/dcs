@@ -78,7 +78,7 @@ func ReadJSONFromBlob(ctx context.Context, blob *git.Blob) (map[string]any, erro
 		if val, err := ToStringKeys(v); err != nil {
 			log.Error("ToStringKeys: %v", err)
 		} else {
-			(result)[k] = val
+			result[k] = val
 		}
 	}
 	return result, nil
