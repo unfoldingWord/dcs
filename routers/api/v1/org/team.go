@@ -585,6 +585,12 @@ func GetTeamRepos(ctx *context.APIContext) {
 		ctx.APIErrorInternal(err)
 		return
 	}
+	/*** DCS Customizations ***/
+	if err := teamRepos.LoadLatestDMs(ctx); err != nil { // one batch instead of 4 queries per repo in ToRepo
+		log.Error("LoadLatestDMs: %v", err)
+	}
+	/*** END DCS Customizations ***/
+
 	repos := make([]*api.Repository, 0, len(teamRepos))
 	for _, repo := range teamRepos {
 		permission, err := access_model.GetDoerRepoPermission(ctx, repo, ctx.Doer)
