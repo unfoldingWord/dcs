@@ -9,15 +9,19 @@ import (
 
 // CatalogEntry represents a repository's metadata of a tag or default branch as an entry of the catalog
 type CatalogEntry struct {
-	ID                     int64         `json:"id"`
-	Self                   string        `json:"url"`
-	Name                   string        `json:"name"`
-	Owner                  string        `json:"owner"`
-	FullName               string        `json:"full_name"`
-	Repo                   *Repository   `json:"repo,omitempty"`
-	Release                *Release      `json:"release,omitempty"`
-	TarballURL             string        `json:"tarbar_url"`
-	ZipballURL             string        `json:"zipball_url"`
+	ID         int64       `json:"id"`
+	Self       string      `json:"url"`
+	Name       string      `json:"name"`
+	Owner      string      `json:"owner"`
+	FullName   string      `json:"full_name"`
+	Repo       *Repository `json:"repo,omitempty"`
+	Release    *Release    `json:"release,omitempty"`
+	TarballURL string      `json:"tarbar_url"`
+	ZipballURL string      `json:"zipball_url"`
+	// SBTarballURL the URL of this entry as a Scripture Burrito tarball; rc, ts and tc repos are converted on download
+	SBTarballURL string `json:"sb_tarball_url"`
+	// SBZipballURL the URL of this entry as a Scripture Burrito zipball; rc, ts and tc repos are converted on download
+	SBZipballURL           string        `json:"sb_zipball_url"`
 	GitTreesURL            string        `json:"git_trees_url"`
 	ContentsURL            string        `json:"contents_url"`
 	Language               string        `json:"language"`
@@ -156,12 +160,16 @@ type CatalogStages struct {
 
 // CatalogStage a repo's catalog stage metadata
 type CatalogStage struct {
-	Ref         string    `json:"branch_or_tag_name"`
-	ReleaseURL  *string   `json:"release_url"`
-	CommitSHA   string    `json:"commit_sha"`
-	Released    time.Time `json:"released"`
-	ZipballURL  string    `json:"zipball_url"`
-	TarballURL  string    `json:"tarball_url"`
-	GitTreesURL string    `json:"git_trees_url"`
-	ContentsURL string    `json:"contents_url"`
+	Ref        string    `json:"branch_or_tag_name"`
+	ReleaseURL *string   `json:"release_url"`
+	CommitSHA  string    `json:"commit_sha"`
+	Released   time.Time `json:"released"`
+	ZipballURL string    `json:"zipball_url"`
+	TarballURL string    `json:"tarball_url"`
+	// SBZipballURL the URL of this stage as a Scripture Burrito zipball; rc, ts and tc repos are converted on download
+	SBZipballURL string `json:"sb_zipball_url"`
+	// SBTarballURL the URL of this stage as a Scripture Burrito tarball; rc, ts and tc repos are converted on download
+	SBTarballURL string `json:"sb_tarball_url"`
+	GitTreesURL  string `json:"git_trees_url"`
+	ContentsURL  string `json:"contents_url"`
 }

@@ -3299,6 +3299,18 @@
           "repo": {
             "$ref": "#/components/schemas/Repository"
           },
+          "sb_tarball_url": {
+            "description": "SBTarballURL the URL of this entry as a Scripture Burrito tarball; rc, ts and tc repos are converted on download",
+            "format": "uri",
+            "type": "string",
+            "x-go-name": "SBTarballURL"
+          },
+          "sb_zipball_url": {
+            "description": "SBZipballURL the URL of this entry as a Scripture Burrito zipball; rc, ts and tc repos are converted on download",
+            "format": "uri",
+            "type": "string",
+            "x-go-name": "SBZipballURL"
+          },
           "stage": {
             "type": "string",
             "x-go-name": "Stage"
@@ -3388,6 +3400,18 @@
             "format": "date-time",
             "type": "string",
             "x-go-name": "Released"
+          },
+          "sb_tarball_url": {
+            "description": "SBTarballURL the URL of this stage as a Scripture Burrito tarball; rc, ts and tc repos are converted on download",
+            "format": "uri",
+            "type": "string",
+            "x-go-name": "SBTarballURL"
+          },
+          "sb_zipball_url": {
+            "description": "SBZipballURL the URL of this stage as a Scripture Burrito zipball; rc, ts and tc repos are converted on download",
+            "format": "uri",
+            "type": "string",
+            "x-go-name": "SBZipballURL"
           },
           "tarball_url": {
             "format": "uri",
@@ -33117,6 +33141,70 @@
           }
         },
         "summary": "Return all users that can be requested to review in this repo",
+        "tags": [
+          "repository"
+        ]
+      }
+    },
+    "/repos/{owner}/{repo}/sb/{archive}": {
+      "get": {
+        "description": "Returns the repository at the given git reference as a Scripture Burrito (SB) archive.\nResource Container (rc), translationStudio (ts) and translationCore (tc) repositories are\nconverted to SB on the fly; repositories already in SB format are archived as they are.\nAny other repository returns 404. The same archive can be downloaded without an API token\nfrom the repository's HTML URL, `/{owner}/{repo}/sb/{archive}`. The plain (unconverted) git\narchive is available from `/repos/{owner}/{repo}/archive/{archive}`.\n",
+        "operationId": "repoGetSBArchive",
+        "parameters": [
+          {
+            "description": "owner of the repo",
+            "in": "path",
+            "name": "owner",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "name of the repo",
+            "in": "path",
+            "name": "repo",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "the git reference (branch, tag or commit) with the archive format appended, either .zip or .tar.gz (e.g. master.zip, v1.tar.gz)",
+            "in": "path",
+            "name": "archive",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/gzip": {
+                "schema": {
+                  "format": "binary",
+                  "type": "string"
+                }
+              },
+              "application/zip": {
+                "schema": {
+                  "format": "binary",
+                  "type": "string"
+                }
+              }
+            },
+            "description": "the Scripture Burrito archive; Content-Disposition names it {repo}-{ref}-sb.{zip|tar.gz}"
+          },
+          "400": {
+            "description": "the archive format is not .zip or .tar.gz"
+          },
+          "404": {
+            "description": "the ref does not exist, or the repository is not an rc, ts, tc or sb repository"
+          }
+        },
+        "summary": "Get a Scripture Burrito archive of a repository",
         "tags": [
           "repository"
         ]
