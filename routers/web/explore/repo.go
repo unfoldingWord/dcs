@@ -5,9 +5,9 @@ package explore
 
 import (
 	"net/http"
-	"strings"
 
 	"gitea.dev/models/db"
+	"gitea.dev/models/door43metadata" // DCS Customizations
 	repo_model "gitea.dev/models/repo"
 	"gitea.dev/modules/log"
 	"gitea.dev/modules/setting"
@@ -79,27 +79,8 @@ func RenderRepoSearch(ctx *context.Context, opts *RepoSearchOptions) {
 
 	/*** DCS Customizations ***/
 	origKeyword := keyword
-	searchFields := []string{"keyword", "book", "lang", "subject", "flavor_type", "flavor", "abbreviation", "content_format", "repo", "owner", "tag", "checking_level", "metadata_type", "metadata_version", "topic", "without_topic", "healthcheck", "stage"}
-	searchMap := map[string][]string{}
-	for _, field := range searchFields {
-		searchMap[field] = []string{}
-	}
-	currentField := "keyword"
-	if keyword != "" {
-		for token := range strings.SplitSeq(keyword, ",") {
-			token = strings.TrimSpace(token)
-			value := token
-			for key := range searchMap {
-				if strings.HasPrefix(token, key+":") {
-					currentField = key
-					value = strings.TrimSpace(strings.TrimPrefix(token, key+":"))
-					break
-				}
-			}
-			searchMap[currentField] = append(searchMap[currentField], value)
-		}
-		keyword = strings.Join(searchMap["keyword"], ", ")
-	}
+	searchMap, dcsKeyword := door43metadata.ParseRepoSearchKeyword(keyword) // "field:value" tokens, shared with the API
+	keyword = dcsKeyword
 	/*** END DCS Customizations ***/
 
 	language := ctx.FormTrim("language")

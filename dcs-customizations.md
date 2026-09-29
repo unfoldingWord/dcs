@@ -53,25 +53,30 @@ This document catalogs every DCS modification to existing Gitea files. New DCS-o
 | `services/convert/pull.go` | Status, ConflictedFiles mapping | LOW | - |
 | `services/convert/release.go` | ToCatalogEntry() for Door43Metadata | LOW | services/convert/catalog.go |
 | `services/convert/user.go` | RepoLanguages/Subjects/MetadataTypes mapping | LOW | - |
+| `routers/api/v1/user/repo.go` | Batched LoadLatestDMs before the ToRepo loops (2 places) | LOW | models/repo/repo_dcs.go |
+| `routers/api/v1/user/star.go` | Batched LoadLatestDMs before the ToRepo loop | LOW | models/repo/repo_dcs.go |
+| `routers/api/v1/user/watch.go` | Batched LoadLatestDMs before the ToRepo loop | LOW | models/repo/repo_dcs.go |
+| `routers/api/v1/repo/fork.go` | Batched LoadLatestDMs before the ToRepo loop | LOW | models/repo/repo_dcs.go |
+| `routers/api/v1/org/team.go` | Batched LoadLatestDMs before the ToRepo loop | LOW | models/repo/repo_dcs.go |
 
 ### LOGIC_MOD - Logic changes in existing functions (highest conflict risk)
 
 | File | Description | Risk | Depends On |
 | ------ | ------------- | ------ | ------------ |
-| `models/repo/repo_list.go` | 33 DCS mods: search options, door43_metadata JOINs, column prefixing | HIGH | models/door43metadata/ |
+| `models/repo/repo_list.go` | DCS search options; metadata filters as one semijoin subquery (RepoMetadataIDsCond), language filter as a derived-table JOIN (dcsRepoSearchJoin), owner via owner_id subquery; column prefixing | HIGH | models/door43metadata/ |
 | `models/user/search.go` | DCS search fields, door43_metadata subquery JOINs (~65 lines) | HIGH | models/door43metadata/ |
 | `models/repo/release.go` | Door43Metadata field, InCatalog filter, GetLatestReleaseByRepoID signature change | HIGH | models/repo/door43metadata.go |
 | `models/repo/attachment.go` | BrowserDownloadURL, XORM hooks for URL encoding | MEDIUM | - |
 | `models/issues/pull.go` | String() method on PullRequestStatus | LOW | - |
 | `models/unittest/fixtures.go` | WITH allowed as read-only SQL in fixtures hook (CTE catalog queries) | LOW | models/catalog_list.go |
-| `routers/api/v1/repo/repo.go` | 20+ DCS swagger params, search field population | HIGH | models/door43metadata/ |
+| `routers/api/v1/repo/repo.go` | 20+ DCS swagger params, search field population, q "field:value" parsing (ParseRepoSearchKeyword), batched LoadLatestDMs | HIGH | models/door43metadata/ |
 | `routers/api/v1/repo/release.go` | pre-release, in-catalog params, InCatalog filter | MEDIUM | - |
 | `routers/api/v1/repo/git_ref.go` | Refactored getGitRefsInternal, added create/update/delete handlers (marked) | MEDIUM | services/gitref/ |
 | `modules/structs/repo.go` | CreateGitRefOption, UpdateGitRefOption (marked) | LOW | routers/api/v1/repo/git_ref.go |
 | `routers/api/v1/org/org.go` | DCS swagger params, filter fields | LOW | - |
 | `routers/api/v1/user/user.go` | DCS swagger params, filter fields | LOW | - |
 | `routers/api/v1/user/app.go` | Duplicate token names allowed, default scopes | MEDIUM | - |
-| `routers/web/explore/repo.go` | DCS keyword parsing, search fields, LoadLatestDMs | HIGH | models/repo/repo_dcs.go |
+| `routers/web/explore/repo.go` | DCS keyword parsing (ParseRepoSearchKeyword), search fields, LoadLatestDMs | HIGH | models/repo/repo_dcs.go |
 | `routers/web/user/profile.go` | DCS keyword parsing, search fields, LoadLatestDMs | HIGH | models/repo/repo_dcs.go |
 | `routers/web/org/home.go` | DCS keyword parsing, search fields, LoadLatestDMs | HIGH | models/repo/repo_dcs.go |
 | `routers/web/admin/users.go` | Spam user filter, LoadLatestDMs | MEDIUM | - |

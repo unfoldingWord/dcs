@@ -9,6 +9,7 @@ import (
 	access_model "gitea.dev/models/perm/access"
 	repo_model "gitea.dev/models/repo"
 	user_model "gitea.dev/models/user"
+	"gitea.dev/modules/log" // DCS Customizations
 	api "gitea.dev/modules/structs"
 	"gitea.dev/routers/api/v1/utils"
 	"gitea.dev/services/context"
@@ -37,6 +38,12 @@ func listUserRepos(ctx *context.APIContext, u *user_model.User, private bool) {
 		ctx.APIErrorInternal(err)
 		return
 	}
+
+	/*** DCS Customizations ***/
+	if err := repos.LoadLatestDMs(ctx); err != nil { // one batch instead of 4 queries per repo in ToRepo
+		log.Error("LoadLatestDMs: %v", err)
+	}
+	/*** END DCS Customizations ***/
 
 	apiRepos := make([]*api.Repository, 0, len(repos))
 	for i := range repos {
@@ -119,6 +126,12 @@ func ListMyRepos(ctx *context.APIContext) {
 		ctx.APIErrorInternal(err)
 		return
 	}
+
+	/*** DCS Customizations ***/
+	if err := repos.LoadLatestDMs(ctx); err != nil { // one batch instead of 4 queries per repo in ToRepo
+		log.Error("LoadLatestDMs: %v", err)
+	}
+	/*** END DCS Customizations ***/
 
 	results := make([]*api.Repository, len(repos))
 	for i, repo := range repos {

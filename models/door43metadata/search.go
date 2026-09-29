@@ -100,9 +100,108 @@ func GetMetadataCond(keyword string) builder.Cond {
 	cond = cond.And(LikeCond("`door43_metadata`.title", keyword))
 	cond = cond.Or(builder.Eq{"`door43_metadata`.abbreviation": keyword})
 	cond = cond.Or(LikeCond("`door43_metadata`.subject", keyword))
-	cond = cond.Or(builder.Expr("LOWER(`door43_metadata`.language) = ?", strings.ToLower(keyword)))
+	cond = cond.Or(builder.Eq{"`door43_metadata`.language": strings.ToLower(keyword)}) // language codes are stored lowercase
 	cond = cond.Or(LikeCond("`door43_metadata`.language_title", keyword))
 	return cond
+}
+
+// RepoMetadataIDsCond matches the repositories whose repo entry (the is_repo_metadata
+// Door43Metadata row) satisfies metaCond, as an IN-subquery on `repository`.id:
+//
+//	`repository`.id IN (SELECT repo_id FROM door43_metadata WHERE is_repo_metadata AND <metaCond>)
+//
+// The repo search used to LEFT JOIN that row and filter on its columns, which made
+// MySQL evaluate every filter row by row over all repositories (OR conditions spanning
+// two tables can't use an index as the access path). Written as a top-level IN, the
+// planner runs it as a semijoin: the matching repo IDs are materialised once from
+// door43_metadata's own indexes and either drive the query (rare values) or serve as a
+// hash lookup while the ordering index is walked (common values). metaCond must only
+// reference `door43_metadata` columns; an invalid (empty) cond matches everything.
+func RepoMetadataIDsCond(metaCond builder.Cond) builder.Cond {
+	if metaCond == nil || !metaCond.IsValid() {
+		return builder.NewCond()
+	}
+	return builder.In("`repository`.id", builder.Select("repo_id").From("door43_metadata").
+		Where(builder.Eq{"`door43_metadata`.is_repo_metadata": true}.And(metaCond)))
+}
+
+// RepoIsHealthyCond is GetIsHealthyCond for the repo search, where the healthcheck
+// severity lives on the repo entry (see RepoMetadataIDsCond). "Not healthy" is the
+// complement of the healthy set so that repositories without a repo entry, which were
+// never checked, still count as not healthy.
+func RepoIsHealthyCond(isHealthy, isHealthyWithoutWarnings optional.Option[bool]) builder.Cond {
+	cond := builder.NewCond()
+	col := "`door43_metadata`.healthcheck_severity"
+	if isHealthy.Has() {
+		healthy := RepoMetadataIDsCond(builder.In(col, SeverityLevelSuccess, SeverityLevelInfo, SeverityLevelWarning))
+		if isHealthy.Value() {
+			cond = cond.And(healthy)
+		} else {
+			cond = cond.And(builder.Not{healthy})
+		}
+	}
+	if isHealthyWithoutWarnings.Has() {
+		healthy := RepoMetadataIDsCond(builder.In(col, SeverityLevelSuccess, SeverityLevelInfo))
+		if isHealthyWithoutWarnings.Value() {
+			cond = cond.And(healthy)
+		} else {
+			cond = cond.And(builder.Not{healthy})
+		}
+	}
+	return cond
+}
+
+// RepoOwnerCond is GetOwnerCond for the repo search, which no longer joins the user
+// table: the owner is matched through `repository`.owner_id, whose index the planner
+// can then use.
+func RepoOwnerCond(owners []string, partialMatch bool) builder.Cond {
+	ownerCond := GetOwnerCond(owners, partialMatch)
+	if !ownerCond.IsValid() {
+		return builder.NewCond()
+	}
+	return builder.In("`repository`.owner_id", builder.Select("id").From("`user`").Where(ownerCond))
+}
+
+// RepoLanguageIDsSQL returns the SQL (with placeholders and args) of a derived table
+// holding the IDs of the repositories matching the given language filter, or "" when
+// there is no filter. A repository matches when its repo entry has the language, or
+// when its name starts with "<lang>_" ("contains" for partialMatch), which is how the
+// language of a repository without a repo entry is derived (see SynthesizeRepoDM).
+//
+// Unlike the other metadata filters (RepoMetadataIDsCond) this one is applied as an
+// INNER JOIN on the derived table rather than as an IN condition: the name fallback
+// makes it a UNION, which MySQL cannot run as a semijoin — as an IN it degrades to a
+// per-row dependent subquery over every repository. Joined, the UNION is materialised
+// once and drives the query (see searchRepositoryByCondition in models/repo).
+func RepoLanguageIDsSQL(languages []string, partialMatch bool) (string, []any, error) {
+	dmCond := builder.NewCond()
+	nameCond := builder.NewCond()
+	for _, lang := range languages {
+		for v := range strings.SplitSeq(lang, ",") {
+			lv := strings.ToLower(strings.TrimSpace(v)) // language codes and lower_name are lowercase
+			if partialMatch {
+				dmCond = dmCond.Or(LikeCond("`door43_metadata`.language", lv))
+				nameCond = nameCond.Or(likePatternCond("`repository`.lower_name", "%"+escapeLike(lv)+"!_%")) // contains "lang_"
+			} else {
+				dmCond = dmCond.Or(builder.Eq{"`door43_metadata`.language": lv})
+				nameCond = nameCond.Or(likePatternCond("`repository`.lower_name", escapeLike(lv)+"!_%")) // starts with "lang_"
+			}
+		}
+	}
+	if !dmCond.IsValid() {
+		return "", nil, nil
+	}
+	dmSQL, dmArgs, err := builder.ToSQL(builder.Select("repo_id").From("door43_metadata").
+		Where(builder.Eq{"`door43_metadata`.is_repo_metadata": true}.And(dmCond)))
+	if err != nil {
+		return "", nil, err
+	}
+	nameSQL, nameArgs, err := builder.ToSQL(builder.Select("id").From("repository").Where(nameCond))
+	if err != nil {
+		return "", nil, err
+	}
+	// UNION (not UNION ALL) also dedupes a repo that matches both ways
+	return dmSQL + " UNION " + nameSQL, append(dmArgs, nameArgs...), nil
 }
 
 // LikeCond builds a "col LIKE '%keyword%' ESCAPE '!'" condition with "_" and "%" (and
@@ -198,6 +297,41 @@ func SearchCatalogCondition(opts *SearchCatalogOptions) builder.Cond {
 	}
 
 	return cond
+}
+
+// RepoSearchKeywordFields are the "field:" prefixes ParseRepoSearchKeyword recognises in
+// a repo search keyword. "keyword" is the plain free-text search; the catalog-only fields
+// (tag, checking_level, stage) are parsed so they don't leak into the free text, and ignored.
+var RepoSearchKeywordFields = []string{"keyword", "book", "lang", "subject", "flavor_type", "flavor", "abbreviation", "content_format", "repo", "owner", "tag", "checking_level", "metadata_type", "metadata_version", "topic", "without_topic", "healthcheck", "stage"}
+
+// ParseRepoSearchKeyword splits a repo search keyword such as "lang:en, subject:Bible, tn"
+// into its per-field values. Tokens are comma separated; a token starting with a known
+// "field:" prefix switches the field for itself and the following unprefixed tokens, and
+// tokens before any prefix are free-text keywords. The returned map has an entry for every
+// RepoSearchKeywordFields field, and keyword is the free text as one comma-separated
+// string, ready for SearchRepoOptions.Keyword.
+func ParseRepoSearchKeyword(keyword string) (fields map[string][]string, plainKeyword string) {
+	fields = make(map[string][]string, len(RepoSearchKeywordFields))
+	for _, field := range RepoSearchKeywordFields {
+		fields[field] = []string{}
+	}
+	if keyword == "" {
+		return fields, ""
+	}
+	currentField := "keyword"
+	for token := range strings.SplitSeq(keyword, ",") {
+		token = strings.TrimSpace(token)
+		value := token
+		for _, field := range RepoSearchKeywordFields {
+			if strings.HasPrefix(token, field+":") {
+				currentField = field
+				value = strings.TrimSpace(strings.TrimPrefix(token, field+":"))
+				break
+			}
+		}
+		fields[currentField] = append(fields[currentField], value)
+	}
+	return fields, strings.Join(fields["keyword"], ",")
 }
 
 // SplitAtCommaNotInString split s at commas, ignoring commas in strings.
@@ -474,14 +608,14 @@ func GetLanguageCond(languages []string, partialMatch bool) builder.Cond {
 	langCond := builder.NewCond()
 	for _, lang := range languages {
 		for v := range strings.SplitSeq(lang, ",") {
-			lv := strings.ToLower(strings.TrimSpace(v)) // match case insensitively; lower_name is already lowercased
+			lv := strings.ToLower(strings.TrimSpace(v)) // language codes and lower_name are stored lowercase
 			if partialMatch {
 				langCond = langCond.
-					Or(LikeCond("LOWER(`door43_metadata`.language)", lv)).
+					Or(LikeCond("`door43_metadata`.language", lv)).
 					Or(likePatternCond("`repository`.lower_name", "%"+escapeLike(lv)+"!_%")) // contains "lang_"
 			} else {
 				langCond = langCond.
-					Or(builder.Expr("LOWER(`door43_metadata`.language) = ?", lv)).
+					Or(builder.Eq{"`door43_metadata`.language": lv}).
 					Or(likePatternCond("`repository`.lower_name", escapeLike(lv)+"!_%")) // starts with "lang_"
 			}
 		}
@@ -494,8 +628,9 @@ func GetBookCond(books []string) builder.Cond {
 	bookCond := builder.NewCond()
 	for _, book := range books {
 		for v := range strings.SplitSeq(book, ",") {
-			bookCond = bookCond.Or(builder.Expr("JSON_SEARCH(dm.ingredients, 'one', ? COLLATE utf8mb4_general_ci, NULL, '$[*].identifier') IS NOT NULL", strings.ToLower(v)))
-			// bookCond = bookCond.Or(builder.Expr("JSON_CONTAINS(LOWER(JSON_EXTRACT(dm.ingredients, '$')), JSON_OBJECT('identifier', ?))", strings.ToLower(v)))
+			// `door43_metadata`. rather than the catalog CTEs' dm. alias (they translate the
+			// prefix): the repo search and the field searches query the table by its name
+			bookCond = bookCond.Or(builder.Expr("JSON_SEARCH(`door43_metadata`.ingredients, 'one', ? COLLATE utf8mb4_general_ci, NULL, '$[*].identifier') IS NOT NULL", strings.ToLower(v)))
 		}
 	}
 	return bookCond

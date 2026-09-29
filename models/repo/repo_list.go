@@ -511,7 +511,7 @@ func SearchRepositoryCondition(opts SearchRepoOptions) builder.Cond {
 					likes = likes.Or(builder.Like{"LOWER(`repository`.description)", strings.ToLower(v)}) // DCS Customizations - adds `repository`.
 				}
 				/*** DCS Customizations ***/
-				likes = likes.Or(door43metadata.GetMetadataCond(v))
+				likes = likes.Or(door43metadata.RepoMetadataIDsCond(door43metadata.GetMetadataCond(v)))
 				/*** END DCS Customizations ***/
 			}
 			keywordCond = keywordCond.Or(likes)
@@ -559,28 +559,32 @@ func SearchRepositoryCondition(opts SearchRepoOptions) builder.Cond {
 	}
 
 	/*** DCS Customizations ***/
-	cond = cond.And(door43metadata.GetRepoCond(opts.Repos, opts.PartialMatch),
-		door43metadata.GetOwnerCond(opts.Owners, opts.PartialMatch),
+	// The filters on the repo's Door43Metadata entry are one semijoin subquery on
+	// `repository`.id (door43metadata.RepoMetadataIDsCond) instead of conditions on a
+	// LEFT JOINed door43_metadata row, and the query no longer joins user either. The
+	// language filter also matches on the repo name and is a derived-table JOIN instead
+	// (dcsRepoSearchJoin), so it is not part of this condition.
+	metaCond := builder.NewCond().And(
 		door43metadata.GetSubjectCond(opts.Subjects, opts.PartialMatch),
 		door43metadata.GetFlavorTypeCond(opts.FlavorTypes, opts.PartialMatch),
 		door43metadata.GetFlavorCond(opts.Flavors, opts.PartialMatch),
 		door43metadata.GetAbbreviationCond(opts.Abbreviations),
 		door43metadata.GetContentFormatCond(opts.ContentFormats, false),
 		door43metadata.GetBookCond(opts.Books),
-		door43metadata.GetLanguageCond(opts.Languages, opts.PartialMatch),
 		door43metadata.GetMetadataTypeCond(opts.MetadataTypes, false),
-		door43metadata.GetTopicCond(opts.Topics, opts.PartialMatch),
-		door43metadata.GetInvertedTopicCond(opts.InvertedTopics, opts.PartialMatch),
-		door43metadata.GetHealthcheckCond(opts.Healthchecks),
-		door43metadata.GetIsHealthyCond(opts.IsHealthy, opts.IsHealthyWithoutWarnings))
-
+		door43metadata.GetHealthcheckCond(opts.Healthchecks))
 	if len(opts.MetadataTypes) > 0 {
-		cond = cond.And(door43metadata.GetMetadataVersionCond(opts.MetadataVersions, false))
+		metaCond = metaCond.And(door43metadata.GetMetadataVersionCond(opts.MetadataVersions, false))
 	}
-
 	if opts.LanguageIsGL.Has() {
-		cond = cond.And(builder.Eq{"`door43_metadata`.language_is_gl": opts.LanguageIsGL.Value()})
+		metaCond = metaCond.And(builder.Eq{"`door43_metadata`.language_is_gl": opts.LanguageIsGL.Value()})
 	}
+	cond = cond.And(door43metadata.RepoMetadataIDsCond(metaCond),
+		door43metadata.RepoIsHealthyCond(opts.IsHealthy, opts.IsHealthyWithoutWarnings),
+		door43metadata.GetRepoCond(opts.Repos, opts.PartialMatch),
+		door43metadata.RepoOwnerCond(opts.Owners, opts.PartialMatch),
+		door43metadata.GetTopicCond(opts.Topics, opts.PartialMatch),
+		door43metadata.GetInvertedTopicCond(opts.InvertedTopics, opts.PartialMatch))
 	/*** END DCS Customizations ***/
 
 	if opts.OnlyShowRelevant {
@@ -618,13 +622,34 @@ func SearchRepository(ctx context.Context, opts SearchRepoOptions) (RepositoryLi
 
 // CountRepository counts repositories based on search options,
 func CountRepository(ctx context.Context, opts SearchRepoOptions) (int64, error) {
-	/*** DCS Customizations ***/
-	return db.GetEngine(ctx).
-		Join("INNER", "user", "`user`.id = `repository`.owner_id").
-		Join("LEFT", "door43_metadata", builder.Expr("`door43_metadata`.repo_id = `repository`.id AND `door43_metadata`.is_repo_metadata = ?", true)).
-		Where(SearchRepositoryCondition(opts)).Count(new(Repository))
+	/*** DCS Customizations - the language filter is a JOIN, see dcsRepoSearchJoin ***/
+	sess, err := dcsRepoSearchJoin(db.GetEngine(ctx), opts, false)
+	if err != nil {
+		return 0, err
+	}
+	return sess.Where(SearchRepositoryCondition(opts)).Count(new(Repository))
 	/*** END DCS Customizations ***/
 }
+
+/*** DCS Customizations ***/
+// dcsRepoSearchJoin applies opts' language filter to sess as an INNER JOIN on the
+// derived table of the matching repo IDs (door43metadata.RepoLanguageIDsSQL); without
+// a language filter sess is returned as is. forFind selects `repository`.* for the
+// Find query: with a join xorm would select * of every joined table. The Count query
+// must not get that Select (xorm would count with it), hence the flag.
+func dcsRepoSearchJoin(sess db.Engine, opts SearchRepoOptions, forFind bool) (db.Engine, error) {
+	joinSQL, args, err := door43metadata.RepoLanguageIDsSQL(opts.Languages, opts.PartialMatch)
+	if err != nil || joinSQL == "" {
+		return sess, err
+	}
+	joined := sess.Join("INNER", "("+joinSQL+") dcs_lang", "dcs_lang.repo_id = `repository`.id", args...)
+	if forFind {
+		return joined.Select("`repository`.*"), nil
+	}
+	return joined, nil
+}
+
+/*** END DCS Customizations ***/
 
 // SearchRepositoryByCondition search repositories by condition
 func SearchRepositoryByCondition(ctx context.Context, opts SearchRepoOptions, cond builder.Cond, loadAttributes bool) (RepositoryList, int64, error) {
@@ -690,19 +715,27 @@ func searchRepositoryByCondition(ctx context.Context, opts SearchRepoOptions, co
 	var count int64
 	if opts.PageSize > 0 {
 		var err error
-		count, err = sess.
-			Join("INNER", "user", "`user`.id = `repository`.owner_id").                                                                                    // DCS Customizations - for owner search
-			Join("LEFT", "door43_metadata", builder.Expr("`door43_metadata`.repo_id = `repository`.id AND `door43_metadata`.is_repo_metadata = ?", true)). // DCS Customizations
-			Where(cond).
-			Count(new(Repository))
+		/*** DCS Customizations - the language filter is a JOIN, see dcsRepoSearchJoin ***/
+		countSess, err := dcsRepoSearchJoin(sess, opts, false)
+		if err != nil {
+			return nil, 0, err
+		}
+		/*** END DCS Customizations ***/
+		count, err = countSess. // DCS Customizations (was: sess.)
+					Where(cond).
+					Count(new(Repository))
 		if err != nil {
 			return nil, 0, fmt.Errorf("Count: %w", err)
 		}
 	}
 
-	sess = sess.Where(cond).OrderBy(orderBy.String(), args...). // DCS Customizations - Adds .
-									Join("INNER", "user", "`user`.id = `repository`.owner_id").                                                                                   // DCS Customizations - for owner search
-									Join("LEFT", "door43_metadata", builder.Expr("`door43_metadata`.repo_id = `repository`.id AND `door43_metadata`.is_repo_metadata = ?", true)) // DCS Customizations
+	/*** DCS Customizations - the language filter is a JOIN, see dcsRepoSearchJoin ***/
+	findSess, err := dcsRepoSearchJoin(sess, opts, true)
+	if err != nil {
+		return nil, 0, err
+	}
+	/*** END DCS Customizations ***/
+	sess = findSess.Where(cond).OrderBy(orderBy.String(), args...) // DCS Customizations (was: sess.Where(cond)...)
 	if opts.PageSize > 0 {
 		sess = sess.Limit(opts.PageSize, (page-1)*opts.PageSize)
 	}

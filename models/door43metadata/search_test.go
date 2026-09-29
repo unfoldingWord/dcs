@@ -6,6 +6,8 @@ package door43metadata
 import (
 	"testing"
 
+	"gitea.dev/modules/optional"
+
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"xorm.io/builder"
@@ -93,7 +95,7 @@ func TestGetMetadataCondEscapesLikeWildcards(t *testing.T) {
 	sql, args, err := builder.ToSQL(GetMetadataCond("jup_mat"))
 	require.NoError(t, err)
 	assert.Equal(t,
-		"((`door43_metadata`.title LIKE ? ESCAPE '!')) OR `door43_metadata`.abbreviation=? OR (`door43_metadata`.subject LIKE ? ESCAPE '!') OR (LOWER(`door43_metadata`.language) = ?) OR (`door43_metadata`.language_title LIKE ? ESCAPE '!')",
+		"((`door43_metadata`.title LIKE ? ESCAPE '!')) OR `door43_metadata`.abbreviation=? OR (`door43_metadata`.subject LIKE ? ESCAPE '!') OR `door43_metadata`.language=? OR (`door43_metadata`.language_title LIKE ? ESCAPE '!')",
 		sql)
 	assert.Equal(t, []any{"%jup!_mat%", "jup_mat", "%jup!_mat%", "jup_mat", "%jup!_mat%"}, args)
 }
@@ -105,11 +107,103 @@ func TestGetMetadataCondEscapesLikeWildcards(t *testing.T) {
 func TestGetLanguageCondRepoNamePattern(t *testing.T) {
 	sql, args, err := builder.ToSQL(GetLanguageCond([]string{"en"}, false))
 	require.NoError(t, err)
-	assert.Equal(t, "(LOWER(`door43_metadata`.language) = ?) OR (`repository`.lower_name LIKE ? ESCAPE '!')", sql)
+	assert.Equal(t, "`door43_metadata`.language=? OR (`repository`.lower_name LIKE ? ESCAPE '!')", sql)
 	assert.Equal(t, []any{"en", "en!_%"}, args)
 
 	sql, args, err = builder.ToSQL(GetLanguageCond([]string{"En"}, true))
 	require.NoError(t, err)
-	assert.Equal(t, "(LOWER(`door43_metadata`.language) LIKE ? ESCAPE '!') OR (`repository`.lower_name LIKE ? ESCAPE '!')", sql)
+	assert.Equal(t, "(`door43_metadata`.language LIKE ? ESCAPE '!') OR (`repository`.lower_name LIKE ? ESCAPE '!')", sql)
 	assert.Equal(t, []any{"%en%", "%en!_%"}, args)
+}
+
+func TestRepoMetadataIDsCond(t *testing.T) {
+	// no metadata condition: matches everything, no subquery
+	assert.False(t, RepoMetadataIDsCond(builder.NewCond()).IsValid())
+	assert.False(t, RepoMetadataIDsCond(nil).IsValid())
+
+	sql, args, err := builder.ToSQL(RepoMetadataIDsCond(GetSubjectCond([]string{"Bible"}, false)))
+	require.NoError(t, err)
+	assert.Equal(t, "`repository`.id IN (SELECT repo_id FROM door43_metadata WHERE `door43_metadata`.is_repo_metadata=? AND ((LOWER(`door43_metadata`.subject) = ?)))", sql)
+	assert.Equal(t, []any{true, "bible"}, args)
+}
+
+func TestRepoIsHealthyCond(t *testing.T) {
+	healthy := "`repository`.id IN (SELECT repo_id FROM door43_metadata WHERE `door43_metadata`.is_repo_metadata=? AND `door43_metadata`.healthcheck_severity IN (?,?,?))"
+	cases := []struct {
+		name                   string
+		isHealthy, withoutWarn optional.Option[bool]
+		wantSQL                string
+		wantArgs               []any
+	}{
+		{"unset", optional.None[bool](), optional.None[bool](), "", nil},
+		{"healthy", optional.Some(true), optional.None[bool](), healthy, []any{true, SeverityLevelSuccess, SeverityLevelInfo, SeverityLevelWarning}},
+		// the complement, so repos without a (checked) repo entry are not healthy
+		{"not healthy", optional.Some(false), optional.None[bool](), "NOT " + healthy, []any{true, SeverityLevelSuccess, SeverityLevelInfo, SeverityLevelWarning}},
+		{
+			"not healthy without warnings", optional.None[bool](), optional.Some(false),
+			"NOT `repository`.id IN (SELECT repo_id FROM door43_metadata WHERE `door43_metadata`.is_repo_metadata=? AND `door43_metadata`.healthcheck_severity IN (?,?))",
+			[]any{true, SeverityLevelSuccess, SeverityLevelInfo},
+		},
+	}
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			sql, args, err := builder.ToSQL(RepoIsHealthyCond(c.isHealthy, c.withoutWarn))
+			require.NoError(t, err)
+			assert.Equal(t, c.wantSQL, sql)
+			assert.Equal(t, c.wantArgs, args)
+		})
+	}
+}
+
+func TestRepoOwnerCond(t *testing.T) {
+	assert.False(t, RepoOwnerCond(nil, false).IsValid())
+
+	sql, args, err := builder.ToSQL(RepoOwnerCond([]string{"unfoldingWord"}, false))
+	require.NoError(t, err)
+	assert.Equal(t, "`repository`.owner_id IN (SELECT id FROM `user` WHERE `user`.lower_name=?)", sql)
+	assert.Equal(t, []any{"unfoldingword"}, args)
+}
+
+func TestRepoLanguageIDsSQL(t *testing.T) {
+	sql, args, err := RepoLanguageIDsSQL(nil, false)
+	require.NoError(t, err)
+	assert.Empty(t, sql)
+	assert.Nil(t, args)
+
+	// exact: the repo entry's language, or a repo named "<lang>_..."
+	sql, args, err = RepoLanguageIDsSQL([]string{"En, fr"}, false)
+	require.NoError(t, err)
+	assert.Equal(t, "SELECT repo_id FROM door43_metadata WHERE `door43_metadata`.is_repo_metadata=? AND (`door43_metadata`.language=? OR `door43_metadata`.language=?) UNION SELECT id FROM repository WHERE (`repository`.lower_name LIKE ? ESCAPE '!') OR (`repository`.lower_name LIKE ? ESCAPE '!')", sql)
+	assert.Equal(t, []any{true, "en", "fr", "en!_%", "fr!_%"}, args)
+
+	// partial: contained in the language code, or in the repo name followed by "_"
+	sql, args, err = RepoLanguageIDsSQL([]string{"e_n"}, true)
+	require.NoError(t, err)
+	assert.Equal(t, "SELECT repo_id FROM door43_metadata WHERE `door43_metadata`.is_repo_metadata=? AND ((`door43_metadata`.language LIKE ? ESCAPE '!')) UNION SELECT id FROM repository WHERE (`repository`.lower_name LIKE ? ESCAPE '!')", sql)
+	assert.Equal(t, []any{true, "%e!_n%", "%e!_n!_%"}, args)
+}
+
+func TestParseRepoSearchKeyword(t *testing.T) {
+	fields, keyword := ParseRepoSearchKeyword("")
+	assert.Empty(t, keyword)
+	assert.Len(t, fields, len(RepoSearchKeywordFields))
+	for _, field := range RepoSearchKeywordFields {
+		assert.Empty(t, fields[field], field)
+	}
+
+	// unprefixed tokens continue the current field; "keyword" is the initial one
+	fields, keyword = ParseRepoSearchKeyword(" tn , tq, lang:en, fr ,subject: Bible,keyword:obs")
+	assert.Equal(t, "tn,tq,obs", keyword)
+	assert.Equal(t, []string{"tn", "tq", "obs"}, fields["keyword"])
+	assert.Equal(t, []string{"en", "fr"}, fields["lang"])
+	assert.Equal(t, []string{"Bible"}, fields["subject"])
+	assert.Empty(t, fields["flavor"])
+
+	// a field prefix must match a whole field name
+	fields, keyword = ParseRepoSearchKeyword("flavor_type:scripture, without_topic:x, unknown:y")
+	assert.Equal(t, []string{"scripture"}, fields["flavor_type"])
+	assert.Empty(t, fields["flavor"])
+	assert.Equal(t, []string{"x", "unknown:y"}, fields["without_topic"], "an unknown prefix stays a value of the current field")
+	assert.Empty(t, fields["topic"])
+	assert.Empty(t, keyword)
 }

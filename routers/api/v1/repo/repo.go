@@ -16,6 +16,7 @@ import (
 	activities_model "gitea.dev/models/activities"
 	audit_model "gitea.dev/models/audit"
 	"gitea.dev/models/db"
+	"gitea.dev/models/door43metadata" // DCS Customizations
 	"gitea.dev/models/organization"
 	"gitea.dev/models/perm"
 	access_model "gitea.dev/models/perm/access"
@@ -56,7 +57,7 @@ func Search(ctx *context.APIContext) {
 	// parameters:
 	// - name: q
 	//   in: query
-	//   description: keyword
+	//   description: keyword; also accepts the explore page's comma-separated "field:value" tokens, e.g. "lang:en, subject:Bible" (DCS)
 	//   type: string
 	// - name: includeDesc
 	//   in: query
@@ -243,6 +244,9 @@ func Search(ctx *context.APIContext) {
 	/*** DCS Customizations ***/
 	abbreviations := catalog.QueryStrings(ctx, "abbreviation")
 	abbreviations = append(abbreviations, catalog.QueryStrings(ctx, "resource")...) // For non-breaking changes, support "resource" argument
+	// q takes the explore page's "field:value" tokens too; a "lang:en" left in the free
+	// text would otherwise be searched literally (and never match)
+	searchFields, keyword := door43metadata.ParseRepoSearchKeyword(ctx.FormTrim("q"))
 	/*** END DCS Customizations ***/
 
 	private := ctx.IsSigned && (ctx.FormString("private") == "" || ctx.FormBool("private"))
@@ -250,7 +254,7 @@ func Search(ctx *context.APIContext) {
 	opts := repo_model.SearchRepoOptions{
 		ListOptions:     utils.GetListOptions(ctx),
 		Actor:           ctx.Doer,
-		Keyword:         ctx.FormTrim("q"),
+		Keyword:         keyword, // DCS Customizations (was: ctx.FormTrim("q"))
 		OwnerID:         ctx.FormInt64("uid"),
 		PriorityOwnerID: ctx.FormInt64("priority_owner_id"),
 		TeamID:          ctx.FormInt64("team_id"),
@@ -261,20 +265,20 @@ func Search(ctx *context.APIContext) {
 		StarredByID:        ctx.FormInt64("starredBy"),
 		IncludeDescription: ctx.FormBool("includeDesc"),
 		/*** DCS Customizations ***/
-		Languages:                catalog.QueryStrings(ctx, "lang"),
-		Repos:                    catalog.QueryStrings(ctx, "repo"),
-		Owners:                   catalog.QueryStrings(ctx, "owner"),
-		Subjects:                 catalog.QueryStrings(ctx, "subject"),
-		FlavorTypes:              catalog.QueryStrings(ctx, "flavorType"),
-		Flavors:                  catalog.QueryStrings(ctx, "flavor"),
-		Abbreviations:            abbreviations,
-		ContentFormats:           catalog.QueryStrings(ctx, "format"),
-		Books:                    catalog.QueryStrings(ctx, "book"),
-		MetadataTypes:            catalog.QueryStrings(ctx, "metadataType"),
-		MetadataVersions:         catalog.QueryStrings(ctx, "metadataVersion"),
-		Topics:                   catalog.QueryStrings(ctx, "topic"),
-		InvertedTopics:           catalog.QueryStrings(ctx, "withoutTopic"),
-		Healthchecks:             catalog.QueryStrings(ctx, "healthcheckSeverity"),
+		Languages:                append(catalog.QueryStrings(ctx, "lang"), searchFields["lang"]...),
+		Repos:                    append(catalog.QueryStrings(ctx, "repo"), searchFields["repo"]...),
+		Owners:                   append(catalog.QueryStrings(ctx, "owner"), searchFields["owner"]...),
+		Subjects:                 append(catalog.QueryStrings(ctx, "subject"), searchFields["subject"]...),
+		FlavorTypes:              append(catalog.QueryStrings(ctx, "flavorType"), searchFields["flavor_type"]...),
+		Flavors:                  append(catalog.QueryStrings(ctx, "flavor"), searchFields["flavor"]...),
+		Abbreviations:            append(abbreviations, searchFields["abbreviation"]...),
+		ContentFormats:           append(catalog.QueryStrings(ctx, "format"), searchFields["content_format"]...),
+		Books:                    append(catalog.QueryStrings(ctx, "book"), searchFields["book"]...),
+		MetadataTypes:            append(catalog.QueryStrings(ctx, "metadataType"), searchFields["metadata_type"]...),
+		MetadataVersions:         append(catalog.QueryStrings(ctx, "metadataVersion"), searchFields["metadata_version"]...),
+		Topics:                   append(catalog.QueryStrings(ctx, "topic"), searchFields["topic"]...),
+		InvertedTopics:           append(catalog.QueryStrings(ctx, "withoutTopic"), searchFields["without_topic"]...),
+		Healthchecks:             append(catalog.QueryStrings(ctx, "healthcheckSeverity"), searchFields["healthcheck"]...),
 		IsHealthy:                ctx.FormOptionalBool("is_healthy"),
 		IsHealthyWithoutWarnings: ctx.FormOptionalBool("is_healthy_without_warnings"),
 		LanguageIsGL:             ctx.FormOptionalBool("is_gl"),
@@ -331,6 +335,12 @@ func Search(ctx *context.APIContext) {
 		})
 		return
 	}
+
+	/*** DCS Customizations ***/
+	if err := repos.LoadLatestDMs(ctx); err != nil { // one batch instead of 4 queries per repo in ToRepo
+		log.Error("LoadLatestDMs: %v", err)
+	}
+	/*** END DCS Customizations ***/
 
 	results := make([]*api.Repository, len(repos))
 	for i, repo := range repos {
