@@ -12093,7 +12093,7 @@
         "operationId": "listAdminWorkflowJobs",
         "parameters": [
           {
-            "description": "workflow status (pending, queued, in_progress, failure, success, skipped)",
+            "description": "workflow status (requested, pending, queued, in_progress, failure, success, skipped)",
             "in": "query",
             "name": "status",
             "schema": {
@@ -12320,7 +12320,7 @@
             }
           },
           {
-            "description": "workflow status (pending, queued, in_progress, failure, success, skipped)",
+            "description": "workflow status (requested, pending, queued, in_progress, failure, success, skipped)",
             "in": "query",
             "name": "status",
             "schema": {
@@ -12802,9 +12802,9 @@
             }
           },
           {
-            "description": "pattern of repositories to search for",
+            "description": "glob pattern of repositories to search for, in the form owner or owner/repo",
             "in": "query",
-            "name": "pattern",
+            "name": "query",
             "schema": {
               "type": "string"
             }
@@ -16901,7 +16901,7 @@
             }
           },
           {
-            "description": "workflow status (pending, queued, in_progress, failure, success, skipped)",
+            "description": "workflow status (requested, pending, queued, in_progress, failure, success, skipped)",
             "in": "query",
             "name": "status",
             "schema": {
@@ -17165,7 +17165,7 @@
             }
           },
           {
-            "description": "workflow status (pending, queued, in_progress, failure, success, skipped)",
+            "description": "workflow status (requested, pending, queued, in_progress, failure, success, skipped)",
             "in": "query",
             "name": "status",
             "schema": {
@@ -21124,7 +21124,7 @@
             }
           },
           {
-            "description": "workflow status (pending, queued, in_progress, failure, success, skipped)",
+            "description": "workflow status (requested, pending, queued, in_progress, failure, success, skipped)",
             "in": "query",
             "name": "status",
             "schema": {
@@ -21559,7 +21559,7 @@
             }
           },
           {
-            "description": "workflow status (pending, queued, in_progress, failure, success, skipped)",
+            "description": "workflow status (requested, pending, queued, in_progress, failure, success, skipped)",
             "in": "query",
             "name": "status",
             "schema": {
@@ -21931,7 +21931,7 @@
             }
           },
           {
-            "description": "workflow status (pending, queued, in_progress, failure, success, skipped)",
+            "description": "workflow status (requested, pending, queued, in_progress, failure, success, skipped)",
             "in": "query",
             "name": "status",
             "schema": {
@@ -22115,7 +22115,7 @@
             }
           },
           {
-            "description": "workflow status (pending, queued, in_progress, failure, success, skipped)",
+            "description": "workflow status (requested, pending, queued, in_progress, failure, success, skipped)",
             "in": "query",
             "name": "status",
             "schema": {
@@ -23262,7 +23262,7 @@
             }
           },
           {
-            "description": "workflow status (pending, queued, in_progress, failure, success, skipped)",
+            "description": "workflow status (requested, pending, queued, in_progress, failure, success, skipped)",
             "in": "query",
             "name": "status",
             "schema": {
@@ -24876,6 +24876,22 @@
                 "patch"
               ],
               "type": "string"
+            }
+          },
+          {
+            "description": "include verification for every commit (disable for speedup, default 'true')",
+            "in": "query",
+            "name": "verification",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "description": "include a list of affected files for every commit (disable for speedup, default 'true')",
+            "in": "query",
+            "name": "files",
+            "schema": {
+              "type": "boolean"
             }
           }
         ],
@@ -38291,7 +38307,7 @@
         "operationId": "getUserWorkflowJobs",
         "parameters": [
           {
-            "description": "workflow status (pending, queued, in_progress, failure, success, skipped)",
+            "description": "workflow status (requested, pending, queued, in_progress, failure, success, skipped)",
             "in": "query",
             "name": "status",
             "schema": {
@@ -38518,7 +38534,7 @@
             }
           },
           {
-            "description": "workflow status (pending, queued, in_progress, failure, success, skipped)",
+            "description": "workflow status (requested, pending, queued, in_progress, failure, success, skipped)",
             "in": "query",
             "name": "status",
             "schema": {
