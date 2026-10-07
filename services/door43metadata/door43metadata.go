@@ -1335,8 +1335,10 @@ func processDoor43MetadataForRepoRef(ctx context.Context, repo *repo_model.Repos
 			case notTcTs:
 				// only the unsupported manifest.json exists: keep the invalid tc/ts entry it produced
 			default:
+				// Not a resource ref: nothing to record, and not an error either (the all-refs
+				// pass would otherwise raise an admin notice for every plain branch).
 				log.Debug("processDoor43MetadataForRef: %s/%s is not a SB, TC, TS nor RC repo. Not adding to door43_metadata\n", repo.FullName(), ref)
-				return nil // nothing to process, not a SB, TC, TS nor RC repo
+				return nil
 			}
 		}
 	}

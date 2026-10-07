@@ -382,7 +382,7 @@ func TestProcessDoor43MetadataForRepoRef_InvalidMetadataFiles(t *testing.T) {
 		assert.Equal(t, "Aligned Bible", dm.Subject)
 	})
 
-	t.Run("a ref with no metadata file is still skipped", func(t *testing.T) {
+	t.Run("a ref with no metadata file is skipped without error", func(t *testing.T) {
 		require.NoError(t, processDoor43MetadataForRepoRef(ctx, repo, repo.DefaultBranch))
 		_, err := repo_model.GetDoor43MetadataByRepoIDAndRef(ctx, repo.ID, repo.DefaultBranch)
 		assert.True(t, repo_model.IsErrDoor43MetadataNotExist(err))
