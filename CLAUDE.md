@@ -220,6 +220,8 @@ All DCS modifications to existing Gitea files MUST be marked with comments.
 
 Gitea works on `main` until they are ready for an alpha/beta release, then creates a `release/v#.##` branch. After that, selected fixes from `main` are backported to the release branch via separate PRs.
 
+**Versioning change at v28 (2026):** upstream dropped the leading `1.` — `release/v1.27` was followed by `release/v28`, with tags `v28.0.0`, `v28.1.0`, `v28.1.1`. DCS follows suit: `dcs-base-v28`, `release/dcs/v28`, release tags `v28.X.Y+dcs`. The Docker workflows derive `28-nightly` from pushes to `release/dcs/v28` and `28` / `28.X` / `28.X.Y` from a `v28.X.Y+dcs` tag (`.github/workflows/release-nightly-dcs.yml`, `release-tag-version-dcs.yml`). Where this document says `v#.##`, read `v28`, `v29`, ... for anything after v1.27.
+
 ### DCS branching model
 
 DCS avoids maintaining separate backports by using a **shared base branch** that merges into both targets:
@@ -229,12 +231,12 @@ upstream/main ──────────────────────
                   \
                    fork point (merge-base)
                   /                        \
-upstream/release/v1.25 ─────────────────────► (evolving)
+upstream/release/v28 ───────────────────────► (evolving)
                   |
-            dcs-base-v1.25    ◄── All DCS customizations go here FIRST
+            dcs-base-v28      ◄── All DCS customizations go here FIRST
                   |       \
                   ▼        ▼
-      release/dcs/v1.25    main-and-base ──► main
+      release/dcs/v28      main-and-base ──► main
       (production)         (integration)
 ```
 
@@ -291,7 +293,7 @@ git merge origin/main    # or: git merge upstream/main
 
 ### Creating a new dcs-base for a new Gitea version
 
-When upstream creates `release/v#.##` (e.g., moving from v1.25 to v1.26):
+When upstream creates `release/v#.##` (e.g., moving from v1.27 to v28):
 
 ```bash
 # 1. Find the merge-base (the commit where main and the new release diverge)
@@ -316,6 +318,8 @@ git merge dcs-base-v#.##
 ```
 
 **Tip:** Use `git log --oneline dcs-base-v<prev>` to see all DCS commits that need porting. Claude Code can automate the cherry-pick and conflict resolution process.
+
+**Shortcut (used for v28, 2026-10-07):** if `main-and-base` has just been synced with `main` and `git merge-base upstream/main main-and-base` equals the new release's merge-base, then `main-and-base` already *is* "the fork point plus every DCS change adapted to its API" — create the new base straight from it (`git checkout -b dcs-base-v28 main-and-base`) and skip the cherry-picks. Check first that `main-and-base` contains no upstream commits beyond that merge-base.
 
 ---
 
