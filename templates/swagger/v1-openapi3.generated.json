@@ -12928,7 +12928,7 @@
         "operationId": "adminSearchUsers",
         "parameters": [
           {
-            "description": "ID of the user's login source to search for",
+            "description": "ID of the user's login source to search for, 0 means the local users",
             "in": "query",
             "name": "source_id",
             "schema": {
@@ -33380,6 +33380,9 @@
         "responses": {
           "201": {
             "$ref": "#/components/responses/PullRequest"
+          },
+          "400": {
+            "$ref": "#/components/responses/error"
           },
           "403": {
             "$ref": "#/components/responses/forbidden"
