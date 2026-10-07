@@ -267,6 +267,8 @@ func IssueCodesFor(metadataType, subject string) []IssueCode {
 		codes = append(codes, IssueCodeRepoNameLanguage)
 		codes = append(codes, sbIssueCodes...)
 		switch {
+		case subject == "Open Bible Stories":
+			codes = append(codes, obsIssueCodes...)
 		case IsScriptureSubject(subject):
 			codes = append(codes, usfmIssueCodes...)
 		case IsTSVSubject(subject):
@@ -361,7 +363,7 @@ var IssueDetailsFormatStrings = map[IssueCode]string{
 	IssueCodeOrigLangVersionMissing: "The relation **`%s`** is missing a version in the manifest.yaml file",
 	IssueCodeOBSStoryMissing:        "The following stories are missing: **`%s`**",
 	IssueCodeOBSStoryTitleMissing:   "The following stories are missing titles: **`%s`**",
-	IssueCodeOBSWrongFrameCount:     "The following stories have no frames: **`%s`**",
+	IssueCodeOBSWrongFrameCount:     "The following stories have fewer than %d frames: **`%s`**",
 	IssueCodeOBSBibleRefenceMissing: "The following stories are missing Bible references: **`%s`**",
 	IssueCodeUSFMInvalid:            "The USFM file **`%s`** %s.",
 	IssueCodeUSFMNoAlignment:        "The USFM file **`%s`** does not contain alignment data.",
@@ -397,7 +399,7 @@ var IssueSuggestionsFormatStrings = map[IssueCode]string{
 	IssueCodeOrigLangVersionMissing: "Edit the %s file and add version used for the relation **`%s`**.",
 	IssueCodeOBSStoryMissing:        "Add and translate the following stories: **`%s`**.",
 	IssueCodeOBSStoryTitleMissing:   "Add titles to the following stories: **`%s`**. Translate the titles from the English version.",
-	IssueCodeOBSWrongFrameCount:     "Add frames to the following stories: **`%s`**. Check the English version for the expected frames.",
+	IssueCodeOBSWrongFrameCount:     "Add the missing frames to the following stories: **`%s`**. Check the English version for the expected frames.",
 	IssueCodeOBSBibleRefenceMissing: "The following stories are missing Bible references: **`%s`**. Find the needed Bible references at the end of the English stories.",
 	IssueCodeUSFMInvalid:            "Upload a valid USFM file for the book **`%s`** at **`%s`**.",
 	IssueCodeUSFMNoAlignment:        "Align the book with translationCore or a compatible tool so the USFM file contains alignment data.",

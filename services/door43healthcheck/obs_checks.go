@@ -10,7 +10,6 @@ import (
 	"io"
 	"path"
 	"regexp"
-	"slices"
 	"strings"
 
 	repo_model "gitea.dev/models/repo"
@@ -23,8 +22,19 @@ var (
 	frameImageRegex     = regexp.MustCompile(`!\[`)
 )
 
+// minOBSFrames is the fewest frames a complete story may have; the shortest English stories have 7
+const minOBSFrames = 5
+
+// obsStory is the analysis of one existing story file
+type obsStory struct {
+	num         string
+	hasTitle    bool
+	frames      int
+	hasBibleRef bool
+}
+
 // CheckOBSStories checks that all 50 OBS story files exist and have valid content.
-// It verifies: file existence, story titles, at least one frame/image, and Bible references.
+// It verifies: file existence, story titles, a minimum frame count, and Bible references.
 func CheckOBSStories(ctx context.Context, dm *repo_model.Door43Metadata) []*repo_model.Door43HealthcheckIssue {
 	if dm.Subject != "Open Bible Stories" {
 		return nil
@@ -46,10 +56,13 @@ func CheckOBSStories(ctx context.Context, dm *repo_model.Door43Metadata) []*repo
 	}
 	defer gitRepo.Close()
 
+	// Burritos converted from RCs keep the stories in a content/ dir under the ingredient dir
+	if entry, err := commit.GetTreeEntryByPath(ctx, gitRepo, path.Join(contentPath, "content")); err == nil && entry.IsDir() {
+		contentPath = path.Join(contentPath, "content")
+	}
+
 	var missingStories []string
-	var missingTitles []string
-	var missingFrames []string
-	var missingBibleRefs []string
+	var stories []obsStory
 
 	for i := 1; i <= 50; i++ {
 		storyNum := fmt.Sprintf("%02d", i)
@@ -68,28 +81,49 @@ func CheckOBSStories(ctx context.Context, dm *repo_model.Door43Metadata) []*repo
 			continue
 		}
 
-		hasTitle, hasFrame, hasBibleRef := analyzeOBSStory(dataRc)
+		story := analyzeOBSStory(dataRc)
 		dataRc.Close()
+		story.num = storyNum
+		stories = append(stories, story)
+	}
 
-		if !hasTitle {
-			missingTitles = append(missingTitles, storyNum)
+	return obsStoryIssues(missingStories, stories)
+}
+
+// isOBSPlaceholder reports whether the stories are just 01 with at most one frame, which
+// stands in for an audio/video-only OBS (e.g. Door43-Catalog/ylb_obs) and so is not checked
+func isOBSPlaceholder(stories []obsStory) bool {
+	return len(stories) == 1 && stories[0].num == "01" && stories[0].frames <= 1
+}
+
+// obsStoryIssues builds the issues for the missing and existing stories. Severities per
+// the DCS Resource Validation Specification: a missing story (COMP-020) and a story with
+// no title or too few frames (MD-002) are Errors; a missing final Bible-reference line
+// is a Warning (MD-002).
+func obsStoryIssues(missingStories []string, stories []obsStory) []*repo_model.Door43HealthcheckIssue {
+	if isOBSPlaceholder(stories) {
+		return nil
+	}
+
+	var missingTitles []string
+	var missingFrames []string
+	var missingBibleRefs []string
+	for _, story := range stories {
+		if !story.hasTitle {
+			missingTitles = append(missingTitles, story.num)
 		}
-		if !hasFrame {
-			missingFrames = append(missingFrames, storyNum)
+		if story.frames < minOBSFrames {
+			missingFrames = append(missingFrames, story.num)
 		}
-		if !hasBibleRef {
-			missingBibleRefs = append(missingBibleRefs, storyNum)
+		if !story.hasBibleRef {
+			missingBibleRefs = append(missingBibleRefs, story.num)
 		}
 	}
 
 	var issues []*repo_model.Door43HealthcheckIssue
 
-	// Severities per the DCS Resource Validation Specification: OBS is published as a
-	// complete set, but a missing story is a Warning (COMP-020) — like a partial Bible —
-	// while a story file that exists but is malformed (no title, no frames) is an Error
-	// (MD-002). The missing final Bible-reference line stays a Warning (MD-002).
 	if len(missingStories) > 0 {
-		issues = append(issues, newIssue(repo_model.IssueCodeOBSStoryMissing, repo_model.SeverityLevelWarning,
+		issues = append(issues, newIssue(repo_model.IssueCodeOBSStoryMissing, repo_model.SeverityLevelError,
 			fmt.Sprintf(repo_model.IssueCodeOBSStoryMissing.IssueDetailsFormatString(), strings.Join(missingStories, ", ")),
 			fmt.Sprintf(repo_model.IssueCodeOBSStoryMissing.IssueSuggestionFormatString(), strings.Join(missingStories, ", "))))
 	}
@@ -102,7 +136,7 @@ func CheckOBSStories(ctx context.Context, dm *repo_model.Door43Metadata) []*repo
 
 	if len(missingFrames) > 0 {
 		issues = append(issues, newIssue(repo_model.IssueCodeOBSWrongFrameCount, repo_model.SeverityLevelError,
-			fmt.Sprintf(repo_model.IssueCodeOBSWrongFrameCount.IssueDetailsFormatString(), strings.Join(missingFrames, ", ")),
+			fmt.Sprintf(repo_model.IssueCodeOBSWrongFrameCount.IssueDetailsFormatString(), minOBSFrames, strings.Join(missingFrames, ", ")),
 			fmt.Sprintf(repo_model.IssueCodeOBSWrongFrameCount.IssueSuggestionFormatString(), strings.Join(missingFrames, ", "))))
 	}
 
@@ -138,13 +172,13 @@ func findOBSContentPath(dm *repo_model.Door43Metadata) string {
 	return ""
 }
 
-// analyzeOBSStory reads an OBS story file and checks for a title, at least one frame image,
-// and a Bible reference. The checks are language-agnostic:
+// analyzeOBSStory reads an OBS story file and checks for a title, its frames, and a Bible
+// reference. The checks are language-agnostic:
 //   - title: the first line of the file is a heading ("# ...") followed by a blank line
-//   - frame: at least one image ("![") anywhere in the file
+//   - frames: the number of lines with an image ("![")
 //   - Bible reference: the last non-blank line is italicized ("_..._") and preceded by a
 //     blank line, with only blank lines allowed after it
-func analyzeOBSStory(r io.Reader) (hasTitle, hasFrame, hasBibleRef bool) {
+func analyzeOBSStory(r io.Reader) (story obsStory) {
 	var lines []string
 	scanner := bufio.NewScanner(r)
 	for scanner.Scan() {
@@ -152,22 +186,26 @@ func analyzeOBSStory(r io.Reader) (hasTitle, hasFrame, hasBibleRef bool) {
 	}
 	if err := scanner.Err(); err != nil {
 		log.Error("analyzeOBSStory: scan error: %v", err)
-		return false, false, false
+		return story
 	}
 	if len(lines) == 0 {
-		return false, false, false
+		return story
 	}
 	lines[0] = strings.TrimPrefix(lines[0], "\ufeff") // ignore a UTF-8 BOM
 
-	hasTitle = len(lines) >= 2 && storyTitleRegex.MatchString(lines[0]) && strings.TrimSpace(lines[1]) == ""
+	story.hasTitle = len(lines) >= 2 && storyTitleRegex.MatchString(lines[0]) && strings.TrimSpace(lines[1]) == ""
 
-	hasFrame = slices.ContainsFunc(lines, frameImageRegex.MatchString)
+	for _, line := range lines {
+		if frameImageRegex.MatchString(line) {
+			story.frames++
+		}
+	}
 
 	last := len(lines) - 1
 	for last >= 0 && strings.TrimSpace(lines[last]) == "" {
 		last--
 	}
-	hasBibleRef = last >= 1 && bibleReferenceRegex.MatchString(lines[last]) && strings.TrimSpace(lines[last-1]) == ""
+	story.hasBibleRef = last >= 1 && bibleReferenceRegex.MatchString(lines[last]) && strings.TrimSpace(lines[last-1]) == ""
 
-	return hasTitle, hasFrame, hasBibleRef
+	return story
 }
