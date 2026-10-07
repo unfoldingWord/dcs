@@ -79,7 +79,10 @@ Common checks (all of `rc`, `ts`, `tc`, `sb`):
   than 5 frames (image lines; the shortest English stories have 7) is an **error**
   (MD-002); a missing final Bible-reference line is a warning
 - `sb` stories are read from the `ingredients/` dir, or `ingredients/content/` when
-  present (burritos converted from RCs)
+  present (burritos converted from RCs). A burrito lists every story file in
+  `metadata.json`, so a story file it doesn't list counts as missing (an `rc` manifest
+  lists only the `content/` dir). A listed story whose size or checksum is wrong is only
+  the `sb` ingredient-mismatch **warning** (META-015)
 - a repo whose only story is `01.md` with at most one frame is a placeholder for an
   audio/video-only OBS (e.g. Door43-Catalog/ylb_obs) and gets no story findings
 

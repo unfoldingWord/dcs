@@ -61,7 +61,14 @@ func CheckOBSStories(ctx context.Context, dm *repo_model.Door43Metadata) []*repo
 		contentPath = path.Join(contentPath, "content")
 	}
 
+	// A burrito lists each story file in metadata.json, so a story it doesn't list is missing
+	var listed map[string]bool
+	if dm.MetadataType == "sb" {
+		listed = listedSBIngredientPaths(ctx, gitRepo, commit, dm)
+	}
+
 	var missingStories []string
+	var unlistedStories []string
 	var stories []obsStory
 
 	for i := 1; i <= 50; i++ {
@@ -71,6 +78,10 @@ func CheckOBSStories(ctx context.Context, dm *repo_model.Door43Metadata) []*repo
 		blob, err := commit.GetBlobByPath(ctx, gitRepo, storyFile)
 		if err != nil || blob == nil {
 			missingStories = append(missingStories, storyNum)
+			continue
+		}
+		if listed != nil && !listed[storyFile] {
+			unlistedStories = append(unlistedStories, storyNum)
 			continue
 		}
 
@@ -87,7 +98,7 @@ func CheckOBSStories(ctx context.Context, dm *repo_model.Door43Metadata) []*repo
 		stories = append(stories, story)
 	}
 
-	return obsStoryIssues(missingStories, stories)
+	return obsStoryIssues(missingStories, unlistedStories, stories, metadataFileLink(dm))
 }
 
 // isOBSPlaceholder reports whether the stories are just 01 with at most one frame, which
@@ -99,8 +110,9 @@ func isOBSPlaceholder(stories []obsStory) bool {
 // obsStoryIssues builds the issues for the missing and existing stories. Severities per
 // the DCS Resource Validation Specification: a missing story (COMP-020) and a story with
 // no title or too few frames (MD-002) are Errors; a missing final Bible-reference line
-// is a Warning (MD-002).
-func obsStoryIssues(missingStories []string, stories []obsStory) []*repo_model.Door43HealthcheckIssue {
+// is a Warning (MD-002). unlistedStories exist but are not listed in a burrito's
+// metadata.json, so they are missing too.
+func obsStoryIssues(missingStories, unlistedStories []string, stories []obsStory, metadataLink string) []*repo_model.Door43HealthcheckIssue {
 	if isOBSPlaceholder(stories) {
 		return nil
 	}
@@ -126,6 +138,12 @@ func obsStoryIssues(missingStories []string, stories []obsStory) []*repo_model.D
 		issues = append(issues, newIssue(repo_model.IssueCodeOBSStoryMissing, repo_model.SeverityLevelError,
 			fmt.Sprintf(repo_model.IssueCodeOBSStoryMissing.IssueDetailsFormatString(), strings.Join(missingStories, ", ")),
 			fmt.Sprintf(repo_model.IssueCodeOBSStoryMissing.IssueSuggestionFormatString(), strings.Join(missingStories, ", "))))
+	}
+
+	if len(unlistedStories) > 0 {
+		issues = append(issues, newIssue(repo_model.IssueCodeOBSStoryMissing, repo_model.SeverityLevelError,
+			fmt.Sprintf("The following stories are not listed in the **`ingredients`** of metadata.json: **`%s`**", strings.Join(unlistedStories, ", ")),
+			fmt.Sprintf("Add the following stories to the **`ingredients`** of %s with their sizes: **`%s`**.", metadataLink, strings.Join(unlistedStories, ", "))))
 	}
 
 	if len(missingTitles) > 0 {
