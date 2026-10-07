@@ -48,6 +48,8 @@ func checksFor(dm *repo_model.Door43Metadata) []checkFunc {
 	case "sb":
 		checks = append(checks, checkRepoNameLanguage, checkSBIngredients)
 		switch {
+		case dm.Subject == "Open Bible Stories":
+			checks = append(checks, CheckOBSStories)
 		case repo_model.IsScriptureSubject(dm.Subject):
 			checks = append(checks, checkUSFMBooks)
 		case repo_model.IsTSVSubject(dm.Subject):
