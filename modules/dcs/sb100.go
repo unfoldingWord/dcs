@@ -4,22 +4,21 @@
 package dcs
 
 import (
-	"bytes"
-	"io"
-	"net/http"
-	"strings"
-
 	"gitea.dev/modules/git"
 	"gitea.dev/modules/json"
 	"gitea.dev/modules/log"
-	"gitea.dev/modules/options"
-
-	_ "github.com/santhosh-tekuri/jsonschema/v5/httploader" // Loader for Schema via HTTP
 
 	"github.com/santhosh-tekuri/jsonschema/v5"
 )
 
-var sb100Schema *jsonschema.Schema
+// sb100Schema is the Scripture Burrito 1.0.0 schema bundled in options/schema/sb100.
+// The files keep their upstream https://burrito.bible/schema/ $ids, which are mapped
+// onto that directory (or a server's custom/options copy of it) rather than fetched.
+var sb100Schema = &localSchema{
+	dir:      "sb100",
+	idPrefix: "https://burrito.bible/schema/",
+	rootFile: "metadata.schema.json",
+}
 
 // GetSBDataFromBlob reads a blob of text and unmarshals it into an SBMetadata100 object
 func GetSBDataFromBlob(blob *git.Blob) (*SBMetadata100, error) {
@@ -27,71 +26,36 @@ func GetSBDataFromBlob(blob *git.Blob) (*SBMetadata100, error) {
 	if err != nil {
 		return nil, err
 	}
+	return ParseSBMetadata(buf)
+}
 
+// ParseSBMetadata unmarshals the content of a metadata.json into an SBMetadata100 object,
+// keeping the generic map of the whole document in its Metadata field.
+func ParseSBMetadata(buf []byte) (*SBMetadata100, error) {
 	sb100 := &SBMetadata100{}
 	if err := json.Unmarshal(buf, sb100); err != nil {
-		log.Error("SBMetadata100{} Unmarshal: %v", err)
+		log.Debug("SBMetadata100{} Unmarshal: %v", err)
 		return nil, err
 	}
 
 	// Now make a generic map of the buffer to store in the database table
 	sb100.Metadata = map[string]any{}
 	if err := json.Unmarshal(buf, &sb100.Metadata); err != nil {
-		log.Error("sb100 map[string]interface{}{} Unmarshal: %v", err)
+		log.Debug("sb100 map[string]interface{}{} Unmarshal: %v", err)
 		return nil, err
 	}
 
 	return sb100, nil
 }
 
-// GetSB100Schema returns the schema for SB v1.0.0
+// GetSB100Schema returns the schema for SB v1.0.0, compiled from options/schema/sb100
 func GetSB100Schema(reload bool) (*jsonschema.Schema, error) {
-	// We must use githubURLPrefix due to certificate issues
-	burritoBiblePrefix := "https://burrito.bible/schema/"
-	githubPrefix := "https://raw.githubusercontent.com/bible-technology/scripture-burrito/v1.0.0/schema/"
-	if sb100Schema == nil || reload {
-		jsonschema.Loaders["https"] = func(url string) (io.ReadCloser, error) {
-			uriPath := strings.TrimPrefix(url, burritoBiblePrefix)
-			githubURL := githubPrefix + uriPath
-			res, err := http.Get(githubURL)
-			if err == nil && res != nil && res.StatusCode == http.StatusOK {
-				return res.Body, nil
-			}
-			log.Error("GetSB100Schema: not able to get the schema file remotely [%q]: %v", url, err)
-			fileBuf, err := options.AssetFS().ReadFile("schema", "sb100", uriPath)
-			if err != nil {
-				log.Error("GetSB100Schema: local schema file not found: [options/schema/sb100/%s]: %v", uriPath, err)
-				return nil, err
-			}
-			return io.NopCloser(bytes.NewReader(fileBuf)), nil
-		}
-		var err error
-		sb100Schema, err = jsonschema.Compile(burritoBiblePrefix + "metadata.schema.json")
-		if err != nil {
-			return nil, err
-		}
-	}
-	return sb100Schema, nil
+	return sb100Schema.Get(reload)
 }
 
-// ValidateMapBySB100Schema Validates a map structure by the RC v0.2.0 schema and returns the result
+// ValidateMapBySB100Schema validates a map structure by the SB v1.0.0 schema and returns the result
 func ValidateMapBySB100Schema(data map[string]any) (*jsonschema.ValidationError, error) {
-	if data == nil {
-		return &jsonschema.ValidationError{Message: "file cannot be empty"}, nil
-	}
-	schema, err := GetSB100Schema(false)
-	if err != nil {
-		return nil, err
-	}
-	if err = schema.Validate(data); err != nil {
-		switch e := err.(type) {
-		case *jsonschema.ValidationError:
-			return e, nil
-		default:
-			return nil, e
-		}
-	}
-	return nil, nil
+	return sb100Schema.Validate(data)
 }
 
 type SBMetadata100 struct {

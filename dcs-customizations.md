@@ -235,7 +235,7 @@ This document catalogs every DCS modification to existing Gitea files. New DCS-o
 - `models/repo/catalog.go`, `door43healthcheck.go`, `door43healthcheck_test.go`, `door43metadata.go`, `door43metadata_test.go`, `release_dcs.go`, `repo_dcs.go`
 - `models/user_dcs.go`
 - `models/fixtures/door43_metadata.yml`
-- `modules/dcs/attachments.go`, `books.go`, `datetime.go`, `files.go`, `languages.go`, `metadata.go`, `rc02.go`, `sb100.go`, `stats.go`, `strings.go`, `subjects.go`, `tcts.go`, `valdation.go`
+- `modules/dcs/attachments.go`, `books.go`, `datetime.go`, `files.go`, `languages.go`, `metadata.go`, `rc02.go`, `sb100.go`, `schema.go`, `stats.go`, `strings.go`, `subjects.go`, `tcts.go`, `valdation.go`
 - `modules/markup/tsv/tsv.go`
 - `modules/options/dcs.go`
 - `modules/setting/dcs.go`

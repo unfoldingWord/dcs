@@ -21,6 +21,19 @@ Door43Metadata pipeline (`services/door43metadata`):
 The default-branch entry is checked once more at the end of repo processing so its
 "release needed" advice sees the latest prod entry.
 
+### Which refs get an entry
+
+A ref's metadata type is decided by which file its commit carries, in order of
+precedence: `metadata.json` (Scripture Burrito, `sb`), `manifest.json` (`tc`/`ts`),
+`manifest.yaml` (`rc`). A `manifest.json` that is neither tc nor ts defers to a
+`manifest.yaml` beside it. The file's **presence** is what makes the ref a resource:
+a file that cannot be parsed, fails its schema or (tc/ts) is not a supported manifest
+still gets an entry of that type, with the problem stored in `validation_error` and
+reported as META-002 on the metadata and health check pages. Such entries are kept at
+stage "other", never become latest for a stage and never enter the catalog; their
+display fields are backfilled from the repo's canonical entry (or from the repo name).
+Only a ref with none of the three files is skipped.
+
 ## What is checked, by metadata type
 
 Checks implement the DCS Resource Validation Specification where marked with a rule ID
@@ -30,7 +43,14 @@ data (like relations) get **Warnings**; noteworthy-but-legitimate states get **I
 
 Common checks (all of `rc`, `ts`, `tc`, `sb`):
 
-- metadata file is schema-valid — META-002/011 (`validation_error` empty; rc and sb only)
+- metadata file is schema-valid — META-002/011 (`validation_error` empty). `rc` and `sb`
+  files are checked against the JSON schemas bundled in `options/schema/rc02` and
+  `options/schema/sb100` (a server's `custom/options/schema/...` copy overrides them;
+  nothing is fetched from the network). `tc`/`ts` have no schema: a `manifest.json` is
+  invalid when it is not JSON, has a field of the wrong type, declares neither
+  `tc_version >= 7` nor `package_version >= 3`, or names no valid book. Since tc and ts
+  share the file name, an invalid `manifest.json` is typed by the repo naming convention
+  (`_book` suffix is tc, `_text_` is ts), then by the version key the file carries, else tc.
 - title is set and does not still say "unfoldingWord" (warning; skipped for the
   unfoldingWord, Door43-Catalog and uW orgs, whose titles legitimately carry it)
 - language is not left as English `en` (warning; skipped for `en_*` repos)
