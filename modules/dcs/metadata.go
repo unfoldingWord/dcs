@@ -81,6 +81,21 @@ func GetMetadataTypeFromRepoName(repoName string) string {
 	return ""
 }
 
+// GetTcTsMetadataTypeFromRepoName tells tc and ts repos apart by naming convention alone,
+// for a manifest.json whose content can't say: translationCore repos end in "_book"
+// (e.g. en_ult_gen_book), translationStudio repos carry "_text_" (e.g. en_gen_text_ulb).
+// It returns "" when the name follows neither convention.
+func GetTcTsMetadataTypeFromRepoName(repoName string) string {
+	name := strings.ToLower(repoName)
+	switch {
+	case strings.HasSuffix(name, "_book"):
+		return "tc"
+	case strings.Contains(name, "_text_"):
+		return "ts"
+	}
+	return ""
+}
+
 // GetMetadataVersionFromRepoName returns the default version for each metadata type based on given metadata type
 func GetDefaultMetadataVersionForType(metadataType string) string {
 	if metadataType == "rc" {

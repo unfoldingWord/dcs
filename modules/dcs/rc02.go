@@ -4,64 +4,24 @@
 package dcs
 
 import (
-	"bytes"
-	"io"
-	"net/http"
-	"strings"
-
-	"gitea.dev/modules/log"
-	"gitea.dev/modules/options"
-
-	_ "github.com/santhosh-tekuri/jsonschema/v5/httploader" // Loader for Schema via HTTP
-
 	"github.com/santhosh-tekuri/jsonschema/v5"
 )
 
-var rc02Schema *jsonschema.Schema
-
-// GetRC02Schema returns the schema for RC v0.2
-func GetRC02Schema(reload bool) (*jsonschema.Schema, error) {
-	githubPrefix := "https://raw.githubusercontent.com/unfoldingWord/rc-schema/master/"
-	if rc02Schema == nil || reload {
-		jsonschema.Loaders["https"] = func(url string) (io.ReadCloser, error) {
-			res, err := http.Get(url)
-			if err == nil && res != nil && res.StatusCode == http.StatusOK {
-				return res.Body, nil
-			}
-			log.Warn("GetRC02Schema: not able to get the schema file remotely [%q]: %v", url, err)
-			uriPath := strings.TrimPrefix(url, githubPrefix)
-			fileBuf, err := options.AssetFS().ReadFile("schema", "rc02", uriPath)
-			if err != nil {
-				log.Error("GetRC02Schema: local schema file not found: [options/schema/rc02/%s]: %v", uriPath, err)
-				return nil, err
-			}
-			return io.NopCloser(bytes.NewReader(fileBuf)), nil
-		}
-		var err error
-		rc02Schema, err = jsonschema.Compile(githubPrefix + "rc.schema.json")
-		if err != nil {
-			return nil, err
-		}
-	}
-	return rc02Schema, nil
+// rc02Schema is the Resource Container 0.2 schema bundled in options/schema/rc02. The
+// file keeps its upstream GitHub $id, which is mapped onto that directory (or a
+// server's custom/options copy of it) rather than fetched.
+var rc02Schema = &localSchema{
+	dir:      "rc02",
+	idPrefix: "https://raw.githubusercontent.com/unfoldingWord/rc-schema/master/",
+	rootFile: "rc.schema.json",
 }
 
-// ValidateMapByRC02Schema Validates a map structure by the RC v0.2.0 schema and returns the result
+// GetRC02Schema returns the schema for RC v0.2, compiled from options/schema/rc02
+func GetRC02Schema(reload bool) (*jsonschema.Schema, error) {
+	return rc02Schema.Get(reload)
+}
+
+// ValidateMapByRC02Schema validates a map structure by the RC v0.2.0 schema and returns the result
 func ValidateMapByRC02Schema(data map[string]any) (*jsonschema.ValidationError, error) {
-	if data == nil {
-		return &jsonschema.ValidationError{Message: "file cannot be empty"}, nil
-	}
-	schema, err := GetRC02Schema(false)
-	if err != nil {
-		return nil, err
-	}
-	if err = schema.Validate(data); err != nil {
-		switch e := err.(type) {
-		case *jsonschema.ValidationError:
-			return e, nil
-		default:
-			return nil, e
-		}
-	}
-	return nil, nil //nolint:nilnil // nil validation error means validation passed
+	return rc02Schema.Validate(data)
 }

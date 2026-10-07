@@ -36,6 +36,7 @@ import (
 	"gitea.dev/services/door43healthcheck"
 
 	"github.com/google/uuid"
+	"github.com/santhosh-tekuri/jsonschema/v5"
 	text_cases "golang.org/x/text/cases"
 	text_language "golang.org/x/text/language"
 	"xorm.io/builder"
@@ -316,7 +317,7 @@ func GetBookAlignmentCount(ctx context.Context, gitRepo *git.Repository, bookPat
 	}
 	dataRc, err := blob.DataAsync(ctx)
 	if err != nil {
-		log.Error("blob.DataAsync() Error: %v\n", err)
+		log.Error("blob.DataAsync(ctx) Error: %v\n", err)
 		return 0, err
 	}
 	defer dataRc.Close()
@@ -402,13 +403,15 @@ func GetDoor43MetadataFromRCManifest(ctx context.Context, gitRepo *git.Repositor
 			ingredient.Categories = dcs.GetBookCategories(book)
 			bookPath = ingredient.Path
 			if subject == "Aligned Bible" && strings.HasSuffix(ingredient.Path, ".usfm") {
-				count, _ := GetBookAlignmentCount(ctx, gitRepo, ingredient.Path, commit)
+				count, _ := getBookAlignmentCountSafe(ctx, gitRepo, ingredient.Path, commit)
 				ingredient.AlignmentCount = &count
 			}
-			if entry, err := commit.GetTreeEntryByPath(ctx, gitRepo, ingredient.Path); err == nil {
-				ingredient.Exists = true
-				ingredient.IsDir = entry.IsDir()
-				ingredient.Size = entry.GetSize(ctx, gitRepo)
+			if commit != nil {
+				if entry, err := commit.GetTreeEntryByPath(ctx, gitRepo, ingredient.Path); err == nil {
+					ingredient.Exists = true
+					ingredient.IsDir = entry.IsDir()
+					ingredient.Size = entry.GetSize(ctx, gitRepo)
+				}
 			}
 			ingredients = append(ingredients, ingredient)
 		}
@@ -965,53 +968,134 @@ func getSBTranslationAcademyIngredients() []*structs.Ingredient {
 	}
 }
 
-func GetRCDoor43Metadata(ctx context.Context, gitRepo *git.Repository, dm *repo_model.Door43Metadata, repo *repo_model.Repository, commit *git.Commit) error {
-	var manifest map[string]any
+// metadataFileError builds the ValidationError stored for a metadata file that exists
+// but could not be parsed, or does not describe a resource at all. Such a file is
+// treated like a schema-invalid one: the entry is kept so the problem is reported on
+// the repo's metadata and health check pages instead of the repo silently vanishing.
+func metadataFileError(format string, args ...any) *jsonschema.ValidationError {
+	return &jsonschema.ValidationError{Message: fmt.Sprintf(format, args...)}
+}
 
+// errNotTcTsManifest reports a manifest.json that parses but is neither a tC nor a tS
+// manifest, so the caller can look for an RC manifest.yaml before giving up on it.
+var errNotTcTsManifest = errors.New("manifest.json is not a translationCore or translationStudio manifest")
+
+// nestedString returns the string at the given key path of a parsed document, or ""
+func nestedString(doc map[string]any, keys ...string) string {
+	var value any = doc
+	for _, key := range keys {
+		m, ok := value.(map[string]any)
+		if !ok {
+			return ""
+		}
+		value = m[key]
+	}
+	str, _ := value.(string)
+	return str
+}
+
+// GetRCDoor43Metadata populates dm from the commit's manifest.yaml. It returns a git
+// not-exist error when the commit has no such file.
+func GetRCDoor43Metadata(ctx context.Context, gitRepo *git.Repository, dm *repo_model.Door43Metadata, repo *repo_model.Repository, commit *git.Commit) error {
 	blob, err := commit.GetBlobByPath(ctx, gitRepo, "manifest.yaml")
 	if err != nil {
 		return err
 	}
-	if blob == nil {
-		return nil
-	}
-	manifest, err = dcs.ReadYAMLFromBlob(ctx, blob)
+	buf, err := dcs.ReadFileFromBlob(ctx, blob)
 	if err != nil {
-		log.Error("ReadYAMLFromBlob: %v", err)
 		return err
 	}
+	return populateRCDoor43Metadata(ctx, gitRepo, dm, repo, commit, buf)
+}
+
+// populateRCDoor43Metadata fills dm from the content of a manifest.yaml. The file's
+// presence makes the entry an "rc" one whatever its content: YAML that can't be parsed
+// or that fails the RC 0.2 schema is recorded with its error.
+func populateRCDoor43Metadata(ctx context.Context, gitRepo *git.Repository, dm *repo_model.Door43Metadata, repo *repo_model.Repository, commit *git.Commit, buf []byte) error {
+	dm.RepoID = repo.ID
+	dm.MetadataType = "rc"
+	dm.MetadataVersion = dcs.GetDefaultMetadataVersionForType("rc")
+	dm.Metadata = nil
+	dm.ValidationError = nil
+
+	manifest, err := dcs.ParseYAML(buf)
+	if err != nil {
+		dm.ValidationError = metadataFileError("manifest.yaml could not be parsed as YAML: %v", err)
+		return nil
+	}
 	dm.Metadata = manifest
+	if conformsTo := nestedString(manifest, "dublin_core", "conformsto"); strings.HasPrefix(conformsTo, "rc") {
+		dm.MetadataVersion = strings.TrimPrefix(conformsTo, "rc")
+	}
 
 	dm.ValidationError, err = dcs.ValidateMapByRC02Schema(manifest)
 	if err != nil {
-		return err
+		return err // the schema itself could not be loaded: a server problem, not the repo's
 	}
 	if dm.ValidationError != nil {
-		dm.IsLatestForStage = false
-		dm.Stage = door43metadata.StageOther
-		log.Debug("%s: manifest.yaml is not valid. see errors:", repo.FullName())
-		log.Debug(dcs.ConvertValidationErrorToString(dm.ValidationError))
 		return nil
 	}
-	log.Debug("%s/%s: manifest.yaml is valid", repo.FullName(), dm.Ref)
 	return GetDoor43MetadataFromRCManifest(ctx, gitRepo, dm, manifest, repo, commit)
 }
 
+// GetTcOrTsDoor43Metadata populates dm from the commit's manifest.json. It returns a
+// git not-exist error when the commit has no such file, and errNotTcTsManifest when
+// the file is JSON but not a tC/tS manifest (dm then describes it as invalid).
 func GetTcOrTsDoor43Metadata(ctx context.Context, gitRepo *git.Repository, dm *repo_model.Door43Metadata, repo *repo_model.Repository, commit *git.Commit) error {
 	blob, err := commit.GetBlobByPath(ctx, gitRepo, "manifest.json")
-	if err != nil || blob == nil {
+	if err != nil {
 		return err
 	}
-
 	log.Debug("%s/%s (%s): manifest.json exists so might be a tC or tS repo", repo.FullName(), dm.Ref, commit.ID)
+	buf, err := dcs.ReadFileFromBlob(ctx, blob)
+	if err != nil {
+		return err
+	}
+	return populateTcTsDoor43Metadata(ctx, gitRepo, dm, repo, commit, buf)
+}
+
+// populateTcTsDoor43Metadata fills dm from the content of a manifest.json. A file that
+// is not JSON, has a field of the wrong type, or names no valid book is recorded as an
+// invalid tc/ts entry. A JSON file that is neither tc nor ts is described as invalid
+// too, but errNotTcTsManifest is returned so the caller can prefer a manifest.yaml.
+func populateTcTsDoor43Metadata(ctx context.Context, gitRepo *git.Repository, dm *repo_model.Door43Metadata, repo *repo_model.Repository, commit *git.Commit, buf []byte) error {
+	dm.RepoID = repo.ID
+	dm.Metadata = nil
+	dm.ValidationError = nil
+
+	manifest, err := dcs.ParseJSON(buf)
+	if err != nil {
+		dm.MetadataType, dm.MetadataVersion = guessTcTsTypeAndVersion(nil, buf, repo.Name)
+		dm.ValidationError = metadataFileError("manifest.json could not be parsed as JSON: %v", err)
+		return nil
+	}
+	dm.Metadata = manifest
+
+	t, err := dcs.ParseTcTsManifest(buf)
+	if err != nil {
+		dm.MetadataType, dm.MetadataVersion = guessTcTsTypeAndVersion(nil, buf, repo.Name)
+		dm.ValidationError = metadataFileError("manifest.json has a field of the wrong type: %v", err)
+		return nil
+	}
+	if t.MetadataType == "" {
+		dm.MetadataType, dm.MetadataVersion = guessTcTsTypeAndVersion(t, buf, repo.Name)
+		dm.ValidationError = metadataFileError("manifest.json is not a supported manifest: translationCore needs tc_version 7 or later, translationStudio needs package_version 3 or later")
+		return errNotTcTsManifest
+	}
+	dm.MetadataType = t.MetadataType
+	dm.MetadataVersion = t.MetadataVersion
+
+	if (t.Project.ID == "" || t.Project.ID == "bible") && t.Type.ID != "" {
+		t.Project.ID = t.Type.ID
+	}
+	if t.Project.ID != "tw" && t.Project.ID != "ta" && !dcs.IsValidBook(t.Project.ID) {
+		dm.ValidationError = metadataFileError("manifest.json: project id %q is not a valid book identifier", t.Project.ID)
+		return nil
+	}
+
 	var bookPath string
 	var count int
 	var versification string
-
-	t, err := dcs.GetTcTsManifestFromBlob(ctx, blob)
-	if err != nil || t == nil {
-		return err
-	}
 	if t.MetadataType == "ts" {
 		bookPath = "."
 		if t.Project.ID != "obs" {
@@ -1019,28 +1103,13 @@ func GetTcOrTsDoor43Metadata(ctx context.Context, gitRepo *git.Repository, dm *r
 		}
 	} else {
 		bookPath = "./" + repo.Name + ".usfm"
-		count, _ = GetBookAlignmentCount(ctx, gitRepo, bookPath, commit)
+		if commit != nil {
+			count, _ = GetBookAlignmentCount(ctx, gitRepo, bookPath, commit)
+		}
 		versification = "ufw"
 	}
 
-	if (t.Project.ID == "" || t.Project.ID == "bible") && t.Type.ID != "" {
-		t.Project.ID = t.Type.ID
-	}
-
-	if t.Project.ID != "tw" && t.Project.ID != "ta" && !dcs.IsValidBook(t.Project.ID) {
-		return fmt.Errorf("%s does not have a valid book in its manifest.json", repo.FullName())
-	}
-
-	// Get the manifest again in map[string]interface{} format for the DM object
-	manifest, err := dcs.ReadJSONFromBlob(ctx, blob)
-	if err != nil {
-		return err
-	}
-
-	dm.RepoID = repo.ID
 	dm.Repo = repo
-	dm.MetadataType = t.MetadataType
-	dm.MetadataVersion = t.MetadataVersion
 	dm.Subject = t.Subject
 	dm.FlavorType = t.FlavorType
 	dm.Flavor = t.Flavor
@@ -1065,45 +1134,94 @@ func GetTcOrTsDoor43Metadata(ctx context.Context, gitRepo *git.Repository, dm *r
 		// ts content lives in the repo root
 		ingredient.Exists = true
 		ingredient.IsDir = true
-	} else if entry, err := commit.GetTreeEntryByPath(ctx, gitRepo, bookPath); err == nil {
-		ingredient.Exists = true
-		ingredient.IsDir = entry.IsDir()
-		ingredient.Size = entry.GetSize(ctx, gitRepo)
+	} else if commit != nil {
+		if entry, err := commit.GetTreeEntryByPath(ctx, gitRepo, bookPath); err == nil {
+			ingredient.Exists = true
+			ingredient.IsDir = entry.IsDir()
+			ingredient.Size = entry.GetSize(ctx, gitRepo)
+		}
 	}
 	dm.Ingredients = []*structs.Ingredient{ingredient}
-	dm.Metadata = manifest
 
 	return nil
 }
 
+// guessTcTsTypeAndVersion picks tc or ts, and a version, for a manifest.json that did
+// not validate. The repo naming convention decides first ("_book" is tc, "_text_" is
+// ts); failing that, the version key the file carries (parsed when t is given, else
+// sniffed from the raw bytes); failing that, tc. The version is the one the file
+// declares for the chosen type when it has one, else the type's default.
+func guessTcTsTypeAndVersion(t *structs.TcTsManifest, buf []byte, repoName string) (metadataType, version string) {
+	metadataType = dcs.GetTcTsMetadataTypeFromRepoName(repoName)
+	if metadataType == "" {
+		switch {
+		case t != nil && t.TcVersion > 0, bytes.Contains(buf, []byte(`"tc_version"`)):
+			metadataType = "tc"
+		case t != nil && t.TsVersion > 0, bytes.Contains(buf, []byte(`"package_version"`)):
+			metadataType = "ts"
+		default:
+			metadataType = "tc"
+		}
+	}
+	switch {
+	case t != nil && metadataType == "tc" && t.TcVersion > 0:
+		version = strconv.Itoa(t.TcVersion)
+	case t != nil && metadataType == "ts" && t.TsVersion > 0:
+		version = strconv.Itoa(t.TsVersion)
+	default:
+		version = dcs.GetDefaultMetadataVersionForType(metadataType)
+	}
+	return metadataType, version
+}
+
+// GetSBDoor43Metadata populates dm from the commit's metadata.json. It returns a git
+// not-exist error when the commit has no such file.
 func GetSBDoor43Metadata(ctx context.Context, gitRepo *git.Repository, dm *repo_model.Door43Metadata, repo *repo_model.Repository, commit *git.Commit) error {
 	blob, err := commit.GetBlobByPath(ctx, gitRepo, "metadata.json")
 	if err != nil {
 		return err
 	}
-	if blob == nil {
+	buf, err := dcs.ReadFileFromBlob(ctx, blob)
+	if err != nil {
+		return err
+	}
+	return populateSBDoor43Metadata(ctx, gitRepo, dm, repo, commit, buf)
+}
+
+// populateSBDoor43Metadata fills dm from the content of a metadata.json. The file's
+// presence makes the entry an "sb" one whatever its content: JSON that can't be parsed
+// or that fails the Scripture Burrito schema is recorded with its error.
+func populateSBDoor43Metadata(ctx context.Context, gitRepo *git.Repository, dm *repo_model.Door43Metadata, repo *repo_model.Repository, commit *git.Commit, buf []byte) error {
+	dm.RepoID = repo.ID
+	dm.MetadataType = "sb"
+	dm.MetadataVersion = dcs.GetDefaultMetadataVersionForType("sb")
+	dm.Metadata = nil
+	dm.ValidationError = nil
+
+	metadata, err := dcs.ParseJSON(buf)
+	if err != nil {
+		dm.ValidationError = metadataFileError("metadata.json could not be parsed as JSON: %v", err)
 		return nil
 	}
-	sbMetadata, err := dcs.GetSBDataFromBlob(ctx, blob)
-	if err != nil {
-		log.Error("GetSBDataFromBlob: %v", err)
-		return err
+	dm.Metadata = metadata
+	if version := nestedString(metadata, "meta", "version"); version != "" {
+		dm.MetadataVersion = version
 	}
-	dm.Metadata = sbMetadata.Metadata
 
-	dm.ValidationError, err = dcs.ValidateMapBySB100Schema(sbMetadata.Metadata)
+	dm.ValidationError, err = dcs.ValidateMapBySB100Schema(metadata)
 	if err != nil {
-		return err
+		return err // the schema itself could not be loaded: a server problem, not the repo's
 	}
 	if dm.ValidationError != nil {
-		dm.IsLatestForStage = false
-		dm.Stage = door43metadata.StageOther
-		log.Debug("%s/%s: metadata.json is not valid. see errors:", repo.FullName(), dm.Ref)
-		log.Debug(dcs.ConvertValidationErrorToString(dm.ValidationError))
 		return nil
 	}
-	log.Debug("%s/%s: metadata.json is valid", repo.FullName(), dm.Ref)
 
+	sbMetadata, err := dcs.ParseSBMetadata(buf)
+	if err != nil {
+		// schema-valid, yet a field has a shape the struct can't hold: report it the same way
+		dm.ValidationError = metadataFileError("metadata.json has a field of the wrong type: %v", err)
+		return nil
+	}
 	return GetDoor43MetadataFromSBMetadata(ctx, gitRepo, dm, sbMetadata, repo, commit)
 }
 
@@ -1190,36 +1308,49 @@ func processDoor43MetadataForRepoRef(ctx context.Context, repo *repo_model.Repos
 		dm.ReleaseDateUnix = timeutil.TimeStamp(commit.Author.When.Unix())
 	}
 
-	// Check for SB (Scripture Burrito)
+	// Decide the metadata type by which file the commit carries, in order of precedence:
+	// metadata.json (Scripture Burrito), manifest.json (tC/tS), manifest.yaml (RC). A file
+	// that exists but can't be parsed or validated still yields an entry of its type
+	// carrying the error; only a commit with none of the files is skipped.
 	err = GetSBDoor43Metadata(ctx, gitRepo, dm, repo, commit)
 	if err != nil && !git.IsErrNotExist(err) {
 		log.Debug("processDoor43MetadataForRef: ERROR! Unable to populate DM for %s/%s/metadata.json for SB: %v\n", repo.FullName(), ref, err)
 		return err
 	}
-
-	// Check for TC or TS
 	if err != nil {
 		err = GetTcOrTsDoor43Metadata(ctx, gitRepo, dm, repo, commit)
+		notTcTs := errors.Is(err, errNotTcTsManifest)
+		if err != nil && !notTcTs && !git.IsErrNotExist(err) {
+			log.Debug("processDoor43MetadataForRef: ERROR! Unable to populate DM for %s/%s/manifest.json for TS or TC: %v\n", repo.FullName(), ref, err)
+			return err
+		}
 		if err != nil {
-			if !git.IsErrNotExist(err) {
-				log.Debug("processDoor43MetadataForRef: ERROR! Unable to populate DM for %s/%s/manifest.json for TS or TC: %v\n", repo.FullName(), ref, err)
-				return err
+			// no manifest.json, or one that is neither tc nor ts: look for an RC manifest.yaml
+			rcErr := GetRCDoor43Metadata(ctx, gitRepo, dm, repo, commit)
+			switch {
+			case rcErr == nil:
+			case !git.IsErrNotExist(rcErr):
+				log.Debug("processDoor43MetadataForRef: ERROR! Unable to populate DM for %s/%s/manifest.yaml for RC: %v\n", repo.FullName(), ref, rcErr)
+				return rcErr
+			case notTcTs:
+				// only the unsupported manifest.json exists: keep the invalid tc/ts entry it produced
+			default:
+				log.Debug("processDoor43MetadataForRef: %s/%s is not a SB, TC, TS nor RC repo. Not adding to door43_metadata\n", repo.FullName(), ref)
+				return nil // nothing to process, not a SB, TC, TS nor RC repo
 			}
 		}
 	}
 
-	// Check for RC. Also reached when a manifest.json exists but is neither tc nor ts
-	// (GetTcOrTsDoor43Metadata returns no error yet sets no metadata type).
-	if err != nil || dm.MetadataType == "" {
-		err = GetRCDoor43Metadata(ctx, gitRepo, dm, repo, commit)
-		if err != nil {
-			if !git.IsErrNotExist(err) {
-				log.Debug("processDoor43MetadataForRef: ERROR! Unable to populate DM for %s/%s/manifest.yaml for RC: %v\n", repo.FullName(), ref, err)
-				return err
-			}
-			log.Debug("processDoor43MetadataForRef: %s/%s is not a SB, TC, TS nor RC repo. Not adding to door43_metadata\n", repo.FullName(), ref)
-			return nil // nothing to process, not a SB, TC, TS nor RC repo
-		}
+	if dm.ValidationError != nil {
+		// An invalid entry never stands for a stage; it is kept only to report the error.
+		dm.Stage = door43metadata.StageOther
+		dm.IsLatestForStage = false
+		// Nothing could be extracted from the file, so carry the repo's known values for
+		// the display fields (title, language, subject...) instead of leaving them blank.
+		dm.CopyEmptyPropertiesFromRepoDM(ctx)
+		log.Debug("%s/%s: %s is not valid: %s", repo.FullName(), ref, dm.MetadataFileName(), dcs.ConvertValidationErrorToString(dm.ValidationError))
+	} else {
+		log.Debug("%s/%s: %s is valid", repo.FullName(), ref, dm.MetadataFileName())
 	}
 
 	if err := dm.DetermineAttachmentFlags(ctx); err != nil {
@@ -1230,14 +1361,8 @@ func processDoor43MetadataForRepoRef(ctx context.Context, repo *repo_model.Repos
 		if err = repo_model.UpdateDoor43Metadata(ctx, dm); err != nil {
 			return err
 		}
-	} else {
-		if dm.ValidationError != nil {
-			// We didn't get any properties from the metadata file since it was invalid
-			dm.CopyEmptyPropertiesFromRepoDM(ctx)
-		}
-		if err = repo_model.InsertDoor43Metadata(ctx, dm); err != nil {
-			return err
-		}
+	} else if err = repo_model.InsertDoor43Metadata(ctx, dm); err != nil {
+		return err
 	}
 
 	// Run the health check for this ref so every branch and tag entry carries its own

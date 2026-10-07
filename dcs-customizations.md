@@ -29,7 +29,7 @@ This document catalogs every DCS modification to existing Gitea files. New DCS-o
 
 | File | Description | Risk | Depends On |
 | ------ | ------------- | ------ | ------------ |
-| `routers/api/v1/api.go` | 4 blocks: reqExploreSignIn disabled, healthcheck endpoint, spam admin, catalog/languages routes | HIGH | routers/api/v1/dcs/, routers/api/v1/catalog/ |
+| `routers/api/v1/api.go` | 4 blocks: reqExploreSignIn disabled, repo healthcheck + sb archive endpoints, spam admin, catalog/languages routes | HIGH | routers/api/v1/dcs/, routers/api/v1/catalog/ |
 | `routers/web/web.go` | 2 blocks: repo healthcheck/metadata routes, top-level about/tools/catalog | HIGH | routers/web/dcs/, routers/web/repo/door43metadata.go |
 
 ### FUNC_CALL - Single function calls added to existing functions
@@ -234,7 +234,7 @@ This document catalogs every DCS modification to existing Gitea files. New DCS-o
 - `models/repo/catalog.go`, `door43healthcheck.go`, `door43healthcheck_test.go`, `door43metadata.go`, `door43metadata_test.go`, `release_dcs.go`, `repo_dcs.go`
 - `models/user_dcs.go`
 - `models/fixtures/door43_metadata.yml`
-- `modules/dcs/attachments.go`, `books.go`, `datetime.go`, `files.go`, `languages.go`, `metadata.go`, `rc02.go`, `sb100.go`, `stats.go`, `strings.go`, `subjects.go`, `tcts.go`, `valdation.go`
+- `modules/dcs/attachments.go`, `books.go`, `datetime.go`, `files.go`, `languages.go`, `metadata.go`, `rc02.go`, `sb100.go`, `schema.go`, `stats.go`, `strings.go`, `subjects.go`, `tcts.go`, `valdation.go`
 - `modules/markup/tsv/tsv.go`
 - `modules/options/dcs.go`
 - `modules/setting/dcs.go`
@@ -242,7 +242,7 @@ This document catalogs every DCS modification to existing Gitea files. New DCS-o
 - `routers/api/v1/admin/user_dcs.go`
 - `routers/api/v1/catalog/catalog.go`
 - `routers/api/v1/dcs/dcs.go`
-- `routers/api/v1/repo/door43healthcheck.go`
+- `routers/api/v1/repo/door43healthcheck.go`, `download_dcs.go`
 - `routers/api/v1/swagger/catalog.go`, `dcs.go`
 - `routers/web/dcs/about.go`, `catalog.go`, `healthcheck_dashboard.go`
 - `routers/web/repo/door43metadata.go`

@@ -193,6 +193,22 @@ func (dm *Door43Metadata) ZipballURL() string {
 	return fmt.Sprintf("%s/archive/%s.zip", dm.Repo.HTMLURL(), dm.Ref)
 }
 
+// SBTarballURL the Scripture Burrito tarball URL of the tag or branch (rc, ts and tc repos are converted on download)
+func (dm *Door43Metadata) SBTarballURL() string {
+	if dm.RefType == "branch" {
+		return fmt.Sprintf("%s/sb/%s.tar.gz", dm.Repo.HTMLURL(), dm.CommitSHA[0:10])
+	}
+	return fmt.Sprintf("%s/sb/%s.tar.gz", dm.Repo.HTMLURL(), dm.Ref)
+}
+
+// SBZipballURL the Scripture Burrito zipball URL of the tag or branch (rc, ts and tc repos are converted on download)
+func (dm *Door43Metadata) SBZipballURL() string {
+	if dm.RefType == "branch" {
+		return fmt.Sprintf("%s/sb/%s.zip", dm.Repo.HTMLURL(), dm.CommitSHA[0:10])
+	}
+	return fmt.Sprintf("%s/sb/%s.zip", dm.Repo.HTMLURL(), dm.Ref)
+}
+
 // ReleaseURL the URL the release API
 func (dm *Door43Metadata) ReleaseURL(ctx context.Context) string {
 	if dm.ReleaseID > 0 {

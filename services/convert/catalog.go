@@ -91,6 +91,8 @@ func ToCatalogEntry(ctx context.Context, dm *repo.Door43Metadata, repo *api.Repo
 		Release:                  release,
 		TarballURL:               dm.TarballURL(),
 		ZipballURL:               dm.ZipballURL(),
+		SBTarballURL:             dm.SBTarballURL(),
+		SBZipballURL:             dm.SBZipballURL(),
 		GitTreesURL:              dm.GitTreesURL(),
 		ContentsURL:              dm.ContentsURL(),
 		Ref:                      dm.Ref,
@@ -133,13 +135,15 @@ func ToCatalogStage(ctx context.Context, dm *repo.Door43Metadata) *api.CatalogSt
 	}
 	_ = dm.LoadAttributes(ctx)
 	catalogStage := &api.CatalogStage{
-		Ref:         dm.Ref,
-		Released:    dm.ReleaseDateUnix.AsTime(),
-		CommitSHA:   dm.CommitSHA,
-		ZipballURL:  dm.ZipballURL(),
-		TarballURL:  dm.TarballURL(),
-		GitTreesURL: dm.GitTreesURL(),
-		ContentsURL: dm.ContentsURL(),
+		Ref:          dm.Ref,
+		Released:     dm.ReleaseDateUnix.AsTime(),
+		CommitSHA:    dm.CommitSHA,
+		ZipballURL:   dm.ZipballURL(),
+		TarballURL:   dm.TarballURL(),
+		SBZipballURL: dm.SBZipballURL(),
+		SBTarballURL: dm.SBTarballURL(),
+		GitTreesURL:  dm.GitTreesURL(),
+		ContentsURL:  dm.ContentsURL(),
 	}
 	url := dm.ReleaseURL(ctx)
 	if url != "" {
