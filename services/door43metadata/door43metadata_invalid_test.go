@@ -12,7 +12,6 @@ import (
 	"gitea.dev/models/door43metadata"
 	repo_model "gitea.dev/models/repo"
 	"gitea.dev/models/unittest"
-	"gitea.dev/modules/git"
 	"gitea.dev/modules/git/gitcmd"
 
 	"github.com/stretchr/testify/assert"
@@ -382,11 +381,9 @@ func TestProcessDoor43MetadataForRepoRef_InvalidMetadataFiles(t *testing.T) {
 		assert.Equal(t, "Aligned Bible", dm.Subject)
 	})
 
-	t.Run("a ref with no metadata file is still skipped", func(t *testing.T) {
-		err := processDoor43MetadataForRepoRef(ctx, repo, repo.DefaultBranch)
-		require.Error(t, err)
-		assert.True(t, git.IsErrNotExist(err), "expected a not-exist error, got %v", err)
-		_, err = repo_model.GetDoor43MetadataByRepoIDAndRef(ctx, repo.ID, repo.DefaultBranch)
+	t.Run("a ref with no metadata file is skipped without error", func(t *testing.T) {
+		require.NoError(t, processDoor43MetadataForRepoRef(ctx, repo, repo.DefaultBranch))
+		_, err := repo_model.GetDoor43MetadataByRepoIDAndRef(ctx, repo.ID, repo.DefaultBranch)
 		assert.True(t, repo_model.IsErrDoor43MetadataNotExist(err))
 	})
 }
