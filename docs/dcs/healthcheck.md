@@ -72,9 +72,16 @@ Common checks (all of `rc`, `ts`, `tc`, `sb`):
   REL-002 for `?v=` pins), and one that only resolves under a fallback owner is
   **info**; a resolved Bible/TSV relation missing this resource's books is a warning
 - TSV Translation Notes should have `tw`, `ta`, `glt`, `gst` relations (warning)
-- Open Bible Stories: a missing story is a **warning** (COMP-020 — OBS can be healthy
-  while incomplete); an existing story with no title or no frames is an **error**
+
+`rc`/`sb` Open Bible Stories:
+
+- a missing story is an **error** (COMP-020); an existing story with no title or fewer
+  than 5 frames (image lines; the shortest English stories have 7) is an **error**
   (MD-002); a missing final Bible-reference line is a warning
+- `sb` stories are read from the `ingredients/` dir, or `ingredients/content/` when
+  present (burritos converted from RCs)
+- a repo whose only story is `01.md` with at most one frame is a placeholder for an
+  audio/video-only OBS (e.g. Door43-Catalog/ylb_obs) and gets no story findings
 
 `rc`/`sb`/`tc` scripture subjects (Bible, Aligned Bible, Greek NT, Hebrew OT):
 

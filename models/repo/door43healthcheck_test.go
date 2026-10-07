@@ -185,6 +185,11 @@ func TestIssueCodesFor(t *testing.T) {
 	assert.Contains(t, sb, repo_model.IssueCodeRepoNameLanguage)
 	assert.NotContains(t, sb, repo_model.IssueCodeOBSStoryMissing)
 
+	sbOBS := repo_model.IssueCodesFor("sb", "Open Bible Stories")
+	assert.Contains(t, sbOBS, repo_model.IssueCodeOBSStoryMissing)
+	assert.Contains(t, sbOBS, repo_model.IssueCodeOBSWrongFrameCount)
+	assert.NotContains(t, sbOBS, repo_model.IssueCodeUSFMInvalid)
+
 	ts := repo_model.IssueCodesFor("ts", "Bible")
 	assert.Contains(t, ts, repo_model.IssueCodeIngredientMissing)
 	assert.NotContains(t, ts, repo_model.IssueCodeUSFMInvalid)
