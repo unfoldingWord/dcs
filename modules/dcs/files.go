@@ -44,10 +44,14 @@ func ReadYAMLFromBlob(blob *git.Blob) (map[string]any, error) {
 	if err != nil {
 		return nil, err
 	}
+	return ParseYAML(buf)
+}
 
+// ParseYAML unmarshals yaml content into a map with string keys at every level
+func ParseYAML(buf []byte) (map[string]any, error) {
 	var result map[string]any
 	if err := yaml.Unmarshal(buf, &result); err != nil {
-		log.Error("yaml.Unmarshal: %v", err)
+		log.Debug("yaml.Unmarshal: %v", err)
 		return nil, err
 	}
 	for k, v := range result {
@@ -66,10 +70,14 @@ func ReadJSONFromBlob(blob *git.Blob) (map[string]any, error) {
 	if err != nil {
 		return nil, err
 	}
+	return ParseJSON(buf)
+}
 
+// ParseJSON unmarshals json content into a map with string keys at every level
+func ParseJSON(buf []byte) (map[string]any, error) {
 	var result map[string]any
-	if err = json.Unmarshal(buf, &result); err != nil {
-		log.Error("json.Unmarshal: %v", err)
+	if err := json.Unmarshal(buf, &result); err != nil {
+		log.Debug("json.Unmarshal: %v", err)
 		return nil, err
 	}
 
@@ -77,7 +85,7 @@ func ReadJSONFromBlob(blob *git.Blob) (map[string]any, error) {
 		if val, err := ToStringKeys(v); err != nil {
 			log.Error("ToStringKeys: %v", err)
 		} else {
-			(result)[k] = val
+			result[k] = val
 		}
 	}
 	return result, nil

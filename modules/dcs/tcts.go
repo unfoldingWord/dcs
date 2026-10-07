@@ -12,14 +12,25 @@ import (
 	"gitea.dev/modules/structs"
 )
 
+// GetTcTsManifestFromBlob reads a manifest.json blob; see ParseTcTsManifest
 func GetTcTsManifestFromBlob(blob *git.Blob) (*structs.TcTsManifest, error) {
 	buf, err := ReadFileFromBlob(blob)
 	if err != nil {
 		return nil, err
 	}
+	t, err := ParseTcTsManifest(buf)
+	if err != nil || t.MetadataType == "" {
+		return nil, err
+	}
+	return t, nil
+}
+
+// ParseTcTsManifest unmarshals the content of a manifest.json and derives the DCS
+// metadata fields from it. MetadataType is left empty when the file is neither a
+// translationCore (tc_version >= 7) nor a translationStudio (package_version >= 3) manifest.
+func ParseTcTsManifest(buf []byte) (*structs.TcTsManifest, error) {
 	t := &structs.TcTsManifest{}
-	err = json.Unmarshal(buf, t)
-	if err != nil {
+	if err := json.Unmarshal(buf, t); err != nil {
 		return nil, err
 	}
 	if t.TcVersion >= 7 {
@@ -83,7 +94,7 @@ func GetTcTsManifestFromBlob(blob *git.Blob) (*structs.TcTsManifest, error) {
 			t.Flavor = "textTranslation"
 		}
 	} else {
-		return nil, nil
+		return t, nil
 	}
 
 	if t.Resource.Name != "" {
