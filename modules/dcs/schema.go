@@ -75,8 +75,7 @@ func (ls *localSchema) Validate(data map[string]any) (*jsonschema.ValidationErro
 		return nil, err
 	}
 	if err = schema.Validate(data); err != nil {
-		var valErr *jsonschema.ValidationError
-		if errors.As(err, &valErr) {
+		if valErr, ok := errors.AsType[*jsonschema.ValidationError](err); ok {
 			return valErr, nil
 		}
 		return nil, err
