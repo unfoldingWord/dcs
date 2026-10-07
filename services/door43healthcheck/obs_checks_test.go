@@ -119,12 +119,12 @@ func TestOBSStoryIssues(t *testing.T) {
 	}
 
 	t.Run("lone 01 with at most one frame is a placeholder", func(t *testing.T) {
-		assert.Empty(t, obsStoryIssues(allButFirst, []obsStory{{num: "01", hasTitle: true, frames: 1}}))
-		assert.Empty(t, obsStoryIssues(allButFirst, []obsStory{{num: "01"}}))
+		assert.Empty(t, obsStoryIssues(allButFirst, nil, []obsStory{{num: "01", hasTitle: true, frames: 1}}, "metadata.json"))
+		assert.Empty(t, obsStoryIssues(allButFirst, nil, []obsStory{{num: "01"}}, "metadata.json"))
 	})
 
 	t.Run("lone 01 with more frames is checked", func(t *testing.T) {
-		got := codes(obsStoryIssues(allButFirst, []obsStory{{num: "01", hasTitle: true, frames: 2, hasBibleRef: true}}))
+		got := codes(obsStoryIssues(allButFirst, nil, []obsStory{{num: "01", hasTitle: true, frames: 2, hasBibleRef: true}}, "metadata.json"))
 		assert.Equal(t, map[repo_model.IssueCode]repo_model.SeverityLevel{
 			repo_model.IssueCodeOBSStoryMissing:    repo_model.SeverityLevelError,
 			repo_model.IssueCodeOBSWrongFrameCount: repo_model.SeverityLevelError,
@@ -132,7 +132,7 @@ func TestOBSStoryIssues(t *testing.T) {
 	})
 
 	t.Run("lone story other than 01 is checked", func(t *testing.T) {
-		got := codes(obsStoryIssues([]string{"01"}, []obsStory{{num: "02", hasTitle: true, frames: 1, hasBibleRef: true}}))
+		got := codes(obsStoryIssues([]string{"01"}, nil, []obsStory{{num: "02", hasTitle: true, frames: 1, hasBibleRef: true}}, "metadata.json"))
 		assert.Contains(t, got, repo_model.IssueCodeOBSStoryMissing)
 		assert.Contains(t, got, repo_model.IssueCodeOBSWrongFrameCount)
 	})
@@ -142,11 +142,21 @@ func TestOBSStoryIssues(t *testing.T) {
 		short.num, short.frames = "03", minOBSFrames-1
 		first := complete
 		first.num = "01"
-		issues := obsStoryIssues(nil, []obsStory{first, short})
+		issues := obsStoryIssues(nil, nil, []obsStory{first, short}, "metadata.json")
 		assert.Equal(t, map[repo_model.IssueCode]repo_model.SeverityLevel{
 			repo_model.IssueCodeOBSWrongFrameCount: repo_model.SeverityLevelError,
 		}, codes(issues))
 		assert.Contains(t, issues[0].Details, "fewer than 5 frames: **`03`**")
+	})
+
+	t.Run("story not listed in metadata.json is a missing-story error", func(t *testing.T) {
+		first := complete
+		first.num = "01"
+		issues := obsStoryIssues(nil, []string{"03"}, []obsStory{first}, "metadata.json")
+		assert.Equal(t, map[repo_model.IssueCode]repo_model.SeverityLevel{
+			repo_model.IssueCodeOBSStoryMissing: repo_model.SeverityLevelError,
+		}, codes(issues))
+		assert.Contains(t, issues[0].Details, "not listed in the **`ingredients`** of metadata.json: **`03`**")
 	})
 
 	t.Run("missing Bible reference is a warning", func(t *testing.T) {
@@ -154,6 +164,6 @@ func TestOBSStoryIssues(t *testing.T) {
 		noRef.num, noRef.hasBibleRef = "01", false
 		assert.Equal(t, map[repo_model.IssueCode]repo_model.SeverityLevel{
 			repo_model.IssueCodeOBSBibleRefenceMissing: repo_model.SeverityLevelWarning,
-		}, codes(obsStoryIssues(nil, []obsStory{noRef})))
+		}, codes(obsStoryIssues(nil, nil, []obsStory{noRef}, "metadata.json")))
 	})
 }
