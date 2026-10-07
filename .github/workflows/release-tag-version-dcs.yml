@@ -2,10 +2,12 @@ name: release-tag-version
 
 on:
   push:
+    # DCS release tags are vX.Y.Z+dcs (v1.27.4+dcs, v28.1.0+dcs); upstream dropped the
+    # leading "1" at v28, so match any major version
     tags:
-      - "v1.*"
-      - "!v1*-rc*"
-      - "!v1*-dev"
+      - "v[0-9]*"
+      - "!v*-rc*"
+      - "!v*-dev"
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -37,11 +39,11 @@ jobs:
         id: meta
         with:
           images: unfoldingword/dcs
-          # this will generate tags in the following format:
+          # the +dcs build suffix is dropped; a v28.1.0+dcs tag yields:
           # latest
-          # 1
-          # 1.2
-          # 1.2.3
+          # 28
+          # 28.1
+          # 28.1.0
           tags: |
             type=semver,pattern={{major}}
             type=semver,pattern={{major}}.{{minor}}
@@ -94,11 +96,11 @@ jobs:
           # each tag below will have the suffix of -rootless
           flavor: |
             suffix=-rootless,onlatest=true
-          # this will generate tags in the following format (with -rootless suffix added):
+          # the +dcs build suffix is dropped; a v28.1.0+dcs tag yields (with -rootless suffix added):
           # latest
-          # 1
-          # 1.2
-          # 1.2.3
+          # 28
+          # 28.1
+          # 28.1.0
           tags: |
             type=semver,pattern={{major}}
             type=semver,pattern={{major}}.{{minor}}
