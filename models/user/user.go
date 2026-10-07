@@ -176,6 +176,12 @@ type User struct {
 	// * Actions task doer needs to bind to the task
 	// * Deploy-key doer needs to bind to the key
 	ExtDoerData ExtDoerData `xorm:"-"`
+
+	/*** DCS Customizations ***/
+	RepoLanguages     []string `xorm:"JSON TEXT"`
+	RepoSubjects      []string `xorm:"JSON TEXT"`
+	RepoMetadataTypes []string `xorm:"JSON TEXT"`
+	/*** END DCS Customizations ***/
 }
 
 // Meta defines the meta information of a user, to be stored in the K/V table
@@ -641,6 +647,12 @@ var (
 		"pulls",
 		"milestones",
 		"notifications",
+
+		/*** DCS Customizations ***/
+		"about",
+		"catalog",
+		"tools",
+		/*** END DCS Customizations ***/
 
 		"favicon.ico",
 		"manifest.json", // web app manifests

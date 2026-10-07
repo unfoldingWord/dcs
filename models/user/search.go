@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"gitea.dev/models/db"
+	"gitea.dev/models/door43metadata" // DCS Customizations
 	"gitea.dev/modules/container"
 	"gitea.dev/modules/optional"
 	"gitea.dev/modules/structs"
@@ -54,6 +55,16 @@ type SearchUserOptions struct {
 	IsRestricted       optional.Option[bool]
 	IsTwoFactorEnabled optional.Option[bool]
 	IsProhibitLogin    optional.Option[bool]
+
+	/*** DCS CUSTOMIZATIONS ***/
+	IsSpamUser        optional.Option[bool]
+	RepoLanguages     []string              // Find repos that have the given language ids in a repo's metadata
+	RepoSubjects      []string              // Find repos that have the given subjects in a repo's metadata
+	RepoFlavorTypes   []string              // Find repos that have the given flavor types in a repo's metadata
+	RepoFlavors       []string              // Find repos that have the given flavors in a repo's metadata
+	RepoMetadataTypes []string              // Find repos that have the given metadata types in a repo's metadata
+	RepoLanguageIsGL  optional.Option[bool] // Find repos that are gateway languages
+	/*** END DCS CUSTOMIZATIONS ***/
 }
 
 func (opts *SearchUserOptions) ToOrders() string {
@@ -129,6 +140,12 @@ func (opts *SearchUserOptions) toSearchQueryBase(ctx context.Context) db.Session
 		cond = cond.And(builder.Eq{"prohibit_login": opts.IsProhibitLogin.Value()})
 	}
 
+	/*** DCS Customizations ***/
+	if opts.IsSpamUser.Has() && opts.IsSpamUser.Value() {
+		cond = cond.And(builder.Expr("type = 0 AND description != '' AND website != ''"))
+	}
+	/*** END DCS Customizations ***/
+
 	e := db.GetEngine(ctx)
 	if !opts.IsTwoFactorEnabled.Has() {
 		return e.Where(cond)
@@ -168,6 +185,54 @@ func SearchUsers(ctx context.Context, opts SearchUserOptions) (users []*User, _ 
 	if opts.Page > 0 {
 		db.SetSessionPagination(sessQuery, &opts)
 	}
+
+	/*** DCS Customizations ***/
+	repoMetadataCond := builder.NewCond()
+	hasMetadataCond := false
+	if len(opts.RepoLanguages) > 0 {
+		hasMetadataCond = true
+		repoLangsCond := builder.NewCond()
+		for _, values := range opts.RepoLanguages {
+			for value := range strings.SplitSeq(values, ",") {
+				repoLangsCond = repoLangsCond.Or(builder.Eq{"`door43_metadata`.language": strings.TrimSpace(value)})
+			}
+		}
+		repoMetadataCond = repoMetadataCond.And(repoLangsCond)
+	}
+	if len(opts.RepoSubjects) > 0 {
+		hasMetadataCond = true
+		repoMetadataCond = repoMetadataCond.And(door43metadata.GetSubjectCond(opts.RepoSubjects, false))
+	}
+	if len(opts.RepoFlavorTypes) > 0 {
+		hasMetadataCond = true
+		repoMetadataCond = repoMetadataCond.And(door43metadata.GetFlavorTypeCond(opts.RepoFlavorTypes, false))
+	}
+	if len(opts.RepoFlavors) > 0 {
+		hasMetadataCond = true
+		repoMetadataCond = repoMetadataCond.And(door43metadata.GetFlavorCond(opts.RepoFlavors, false))
+	}
+	if len(opts.RepoMetadataTypes) > 0 {
+		hasMetadataCond = true
+		repoMetadataTypesCond := builder.NewCond()
+		for _, values := range opts.RepoMetadataTypes {
+			for value := range strings.SplitSeq(values, ",") {
+				repoMetadataTypesCond = repoMetadataTypesCond.Or(builder.Eq{"`door43_metadata`.metadata_type": strings.TrimSpace(value)})
+			}
+		}
+		repoMetadataCond = repoMetadataCond.And(repoMetadataTypesCond)
+	}
+	if opts.RepoLanguageIsGL.Has() {
+		hasMetadataCond = true
+		repoMetadataCond = repoMetadataCond.And(builder.Eq{"`door43_metadata`.language_is_gl": opts.RepoLanguageIsGL.Value()})
+	}
+	if hasMetadataCond {
+		metadataSelect := builder.Select("owner_id").
+			From("repository").
+			Join("INNER", "`door43_metadata`", "repo_id = `repository`.id").
+			Where(repoMetadataCond)
+		sessQuery.In("`user`.id", metadataSelect)
+	}
+	/*** END DCS Customizations ***/
 
 	// the sql may contain JOIN, so we must only select User related columns
 	sessQuery.Select("`user`.*")

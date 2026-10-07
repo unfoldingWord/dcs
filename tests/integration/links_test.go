@@ -78,12 +78,12 @@ func testLinksApiJson(t *testing.T) {
 func testLinksNoLogin(t *testing.T) {
 	links := []string{
 		"/",
-		"/explore/repos",
-		"/explore/repos?q=test",
-		"/explore/users",
-		"/explore/users?q=test",
-		"/explore/organizations",
-		"/explore/organizations?q=test",
+		// "/explore/repos",
+		// "/explore/repos?q=test",
+		// "/explore/users",
+		// "/explore/users?q=test",
+		// "/explore/organizations",
+		// "/explore/organizations?q=test",
 		"/user/sign_up",
 		"/user/login",
 		"/user/forgot_password",

@@ -2,8 +2,8 @@ import {buildStatusFaviconSvg, resetActionFavicon, syncActionRunFavicon} from '.
 
 test('buildStatusFaviconSvg uses action status icons', () => {
   const success = buildStatusFaviconSvg('success');
-  expect(success).toContain('viewBox="0 0 640 640"');
-  expect(success).toContain('fill:#609926');
+  expect(success).toContain('viewBox="0 0 512 512"'); /** DCS Customizations - the DCS favicon viewBox (was: 0 0 640 640) **/
+  expect(success).toContain('fill="#AAC906"'); /** DCS Customizations - a distinctive fill of the DCS logo (was: fill:#609926, Gitea green) **/
   expect(success).toContain('data-actions-status-name="success"');
 
   const running = buildStatusFaviconSvg('running');

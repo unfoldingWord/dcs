@@ -5,7 +5,7 @@
 {{$showOpenWithEditorApps := and $showCloneLinks $openWithEditorApps}}{{/* the editor apps need the clone link */}}
 {{if or $showCloneLinks $showOpenWithEditorApps $downloadArchiveLinkPrefix}}
 <button type="button" class="ui compact primary button" data-global-init="initRepoClonePanel">
-	{{svg "octicon-code" 16}}
+	{{svg "octicon-download" 16}}{{/* DCS Customization: download icon instead of octicon-code */}}
 	<span>{{ctx.Locale.Tr "repo.code"}}</span>
 	{{svg "octicon-triangle-down" 14 "dropdown icon"}}
 </button>
@@ -50,6 +50,9 @@
 			<a class="item muted archive-link" href="{{$downloadArchiveLinkPrefix}}.zip" rel="nofollow">{{svg "octicon-file-zip"}} {{ctx.Locale.Tr "repo.download_zip"}}</a>
 			<a class="item muted archive-link" href="{{$downloadArchiveLinkPrefix}}.tar.gz" rel="nofollow">{{svg "octicon-file-zip"}} {{ctx.Locale.Tr "repo.download_tar"}}</a>
 			<a class="item muted archive-link" href="{{$downloadArchiveLinkPrefix}}.bundle" rel="nofollow">{{svg "octicon-package"}} {{ctx.Locale.Tr "repo.download_bundle"}}</a>
+			<!-- DCS Customizations -->
+			{{template "dcs/clone_extras" $}}
+			<!-- END DCS Customizations -->
 		</div>
 	{{end}}
 </div>

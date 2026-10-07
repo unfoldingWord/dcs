@@ -61,6 +61,11 @@ RUN apk --no-cache add \
     su-exec \
     gnupg
 
+#For DCS local scripts
+RUN apk --no-cache add jq yq nodejs npm \
+    && npm install -g usfm2html \
+    && rm -rf /var/cache/apk/*
+
 RUN addgroup \
     -S -g 1000 \
     git && \

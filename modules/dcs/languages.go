@@ -1,0 +1,117 @@
+// Copyright 2021 The Gitea Authors. All rights reserved.
+// SPDX-License-Identifier: MIT
+
+package dcs
+
+import (
+	"bytes"
+	"fmt"
+	"strings"
+
+	"gitea.dev/modules/json"
+	"gitea.dev/modules/log"
+	"gitea.dev/modules/options"
+)
+
+var (
+	_langnamesJSON      []map[string]any
+	_langnamesJSONKeyed map[string]map[string]any
+)
+
+// GetLangnamesJSON returns an array of maps from options/languages/langnames.json
+// (custom/options/languages/langnames.json takes precedence if it exists). Every
+// entry's "lc" value is lowercased: language codes are lowercase throughout DCS
+// (the door43_metadata language column, lang query parameters and langnames keys)
+// so all language code lookups are effectively case insensitive.
+func GetLangnamesJSON() []map[string]any {
+	if _langnamesJSON == nil {
+		langnames, err := loadLangnamesJSON()
+		if err != nil {
+			log.Error("GetLangnamesJSON: %v", err)
+		} else {
+			_langnamesJSON = langnames
+		}
+	}
+	return _langnamesJSON
+}
+
+func loadLangnamesJSON() ([]map[string]any, error) {
+	fileBuf, err := options.AssetFS().ReadFile("languages", "langnames.json")
+	if err != nil {
+		return nil, fmt.Errorf("unable to read languages/langnames.json from options: %v", err)
+	}
+	langnames := []map[string]any{}
+	if err := json.NewDecoder(bytes.NewReader(fileBuf)).Decode(&langnames); err != nil {
+		return nil, fmt.Errorf("unable to decode languages/langnames.json: %v", err)
+	}
+	for _, value := range langnames {
+		if lc, ok := value["lc"].(string); ok {
+			value["lc"] = strings.ToLower(lc)
+		}
+	}
+	return langnames, nil
+}
+
+func GetLangnamesJSONKeyed() map[string]map[string]any {
+	if _langnamesJSONKeyed == nil {
+		_langnamesJSONKeyed = map[string]map[string]any{}
+		langnames := GetLangnamesJSON()
+		for _, value := range langnames {
+			_langnamesJSONKeyed[strings.ToLower(MapStr(value, "lc"))] = value
+		}
+	}
+	return _langnamesJSONKeyed
+}
+
+// GetLanguageFromRepoName determines the language of a repo by its repo name
+func GetLanguageFromRepoName(repoName string) string {
+	parts := strings.Split(strings.ToLower(repoName), "_")
+	if len(parts) >= 2 && IsValidLanguage(parts[0]) && IsValidResource(parts[1]) {
+		return parts[0]
+	}
+	parts = strings.Split(strings.ToLower(repoName), "-")
+	if len(parts) == 3 && IsValidLanguage(parts[0]) && (parts[1] == "texttranslation" || parts[2] == "textstories") {
+		return parts[0]
+	}
+	return ""
+}
+
+// IsValidLanguage returns true if string is a valid language code
+func IsValidLanguage(lang string) bool {
+	langnames := GetLangnamesJSONKeyed()
+	_, ok := langnames[strings.ToLower(lang)]
+	return ok
+}
+
+// GetLanguageDirection returns the language direction
+func GetLanguageDirection(lang string) string {
+	langnames := GetLangnamesJSONKeyed()
+	if data, ok := langnames[strings.ToLower(lang)]; ok {
+		if val, ok := data["ld"].(string); ok {
+			return val
+		}
+	}
+	return "ltr"
+}
+
+// GetLanguageTitle returns the language title
+func GetLanguageTitle(lang string) string {
+	langnames := GetLangnamesJSONKeyed()
+	if data, ok := langnames[strings.ToLower(lang)]; ok {
+		if val, ok := data["ln"].(string); ok {
+			return val
+		}
+	}
+	return ""
+}
+
+// LanguageIsGL returns true if string is a valid language and is a GL
+func LanguageIsGL(lang string) bool {
+	langnames := GetLangnamesJSONKeyed()
+	if data, ok := langnames[strings.ToLower(lang)]; ok {
+		if val, ok := data["gw"].(bool); ok {
+			return val
+		}
+	}
+	return false
+}

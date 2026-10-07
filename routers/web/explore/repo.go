@@ -7,6 +7,7 @@ import (
 	"net/http"
 
 	"gitea.dev/models/db"
+	"gitea.dev/models/door43metadata" // DCS Customizations
 	repo_model "gitea.dev/models/repo"
 	"gitea.dev/modules/log"
 	"gitea.dev/modules/setting"
@@ -50,7 +51,7 @@ func RenderRepoSearch(ctx *context.Context, opts *RepoSearchOptions) {
 	}
 
 	var (
-		repos   []*repo_model.Repository
+		repos   repo_model.RepositoryList // DCS Customizations - Fixed this
 		count   int64
 		err     error
 		orderBy db.SearchOrderBy
@@ -75,6 +76,12 @@ func RenderRepoSearch(ctx *context.Context, opts *RepoSearchOptions) {
 
 	topicOnly := ctx.FormBool("topic")
 	ctx.Data["TopicOnly"] = topicOnly
+
+	/*** DCS Customizations ***/
+	origKeyword := keyword
+	searchMap, dcsKeyword := door43metadata.ParseRepoSearchKeyword(keyword) // "field:value" tokens, shared with the API
+	keyword = dcsKeyword
+	/*** END DCS Customizations ***/
 
 	language := ctx.FormTrim("language")
 	ctx.Data["Language"] = language
@@ -109,6 +116,20 @@ func RenderRepoSearch(ctx *context.Context, opts *RepoSearchOptions) {
 		TopicOnly:          topicOnly,
 		Language:           language,
 		IncludeDescription: setting.UI.SearchRepoDescription,
+		Books:              searchMap["book"],             // DCS Customizations
+		Languages:          searchMap["lang"],             // DCS Customizations
+		Subjects:           searchMap["subject"],          // DCS Customizations
+		FlavorTypes:        searchMap["flavor_type"],      // DCS Customizations
+		Flavors:            searchMap["flavor"],           // DCS Customizations
+		Abbreviations:      searchMap["abbreviation"],     // DCS Customizations
+		ContentFormats:     searchMap["content_format"],   // DCS Customizations
+		Repos:              searchMap["repo"],             // DCS Customizations
+		Owners:             searchMap["owner"],            // DCS Customizations
+		MetadataTypes:      searchMap["metadata_type"],    // DCS Customizations
+		MetadataVersions:   searchMap["metadata_version"], // DCS Customizations
+		Topics:             searchMap["topic"],            // DCS Customizations
+		InvertedTopics:     searchMap["without_topic"],    // DCS Customizations
+		Healthchecks:       searchMap["healthcheck"],      // DCS Customizations
 		OnlyShowRelevant:   opts.OnlyShowRelevant,
 		Archived:           archived,
 		Fork:               fork,
@@ -120,6 +141,14 @@ func RenderRepoSearch(ctx *context.Context, opts *RepoSearchOptions) {
 		ctx.ServerError("SearchRepository", err)
 		return
 	}
+
+	/*** DCS Customizations ***/
+	err = repos.LoadLatestDMs(ctx)
+	if err != nil {
+		log.Error("LoadLatestDMs: unable to load DMs for repos")
+	}
+	/*** END DCS Customizations ***/
+
 	if isSitemap {
 		m := sitemap.NewSitemap()
 		for _, item := range repos {
@@ -132,7 +161,7 @@ func RenderRepoSearch(ctx *context.Context, opts *RepoSearchOptions) {
 		return
 	}
 
-	ctx.Data["Keyword"] = keyword
+	ctx.Data["Keyword"] = origKeyword // DCS Customizations
 	ctx.Data["Total"] = count
 	ctx.Data["Repos"] = repos
 	ctx.Data["IsRepoIndexerEnabled"] = setting.Indexer.RepoIndexerEnabled

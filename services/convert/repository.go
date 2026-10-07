@@ -180,10 +180,12 @@ func innerToRepo(ctx context.Context, repo *repo_model.Repository, permissionInR
 		}
 	}
 
-	var language string
-	if repo.PrimaryLanguage != nil {
-		language = repo.PrimaryLanguage.Language
-	}
+	/*** DCS Customizations ***/
+	// var language string
+	// if repo.PrimaryLanguage != nil {
+	// 	language = repo.PrimaryLanguage.Language
+	// }
+	/*** END DCS Customizations ***/
 
 	repoLicenses, err := repo_model.GetRepoLicenses(ctx, repo)
 	if err != nil {
@@ -192,7 +194,7 @@ func innerToRepo(ctx context.Context, repo *repo_model.Repository, permissionInR
 
 	repoAPIURL := repo.APIURL()
 
-	return &api.Repository{
+	return ToRepoDCS(ctx, repo, &api.Repository{
 		ID:                            repo.ID,
 		Owner:                         ToUserWithAccessMode(ctx, repo.Owner, permissionInRepo.AccessMode),
 		Name:                          repo.Name,
@@ -212,7 +214,6 @@ func innerToRepo(ctx context.Context, repo *repo_model.Repository, permissionInR
 		CloneURL:                      cloneLink.HTTPS,
 		OriginalURL:                   repo.SanitizedOriginalURL(),
 		Website:                       repo.Website,
-		Language:                      language,
 		LanguagesURL:                  repoAPIURL + "/languages",
 		Stars:                         repo.NumStars,
 		Forks:                         repo.NumForks,
@@ -262,7 +263,7 @@ func innerToRepo(ctx context.Context, repo *repo_model.Repository, permissionInR
 		Topics:                        util.SliceNilAsEmpty(repo.Topics),
 		ObjectFormatName:              api.ObjectFormatName(repo.ObjectFormatName),
 		Licenses:                      util.SliceNilAsEmpty(repoLicenses.StringList()),
-	}
+	})
 }
 
 // ToRepoTransfer convert a models.RepoTransfer to a structs.RepeTransfer

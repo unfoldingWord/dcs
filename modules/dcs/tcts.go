@@ -1,0 +1,112 @@
+// Copyright 2023 The Gitea Authors. All rights reserved.
+// SPDX-License-Identifier: MIT
+
+package dcs
+
+import (
+	"context"
+	"strconv"
+	"strings"
+
+	"gitea.dev/modules/git"
+	"gitea.dev/modules/json"
+	"gitea.dev/modules/structs"
+)
+
+// GetTcTsManifestFromBlob reads a manifest.json blob; see ParseTcTsManifest
+func GetTcTsManifestFromBlob(ctx context.Context, blob *git.Blob) (*structs.TcTsManifest, error) {
+	buf, err := ReadFileFromBlob(ctx, blob)
+	if err != nil {
+		return nil, err
+	}
+	t, err := ParseTcTsManifest(buf)
+	if err != nil || t.MetadataType == "" {
+		return nil, err
+	}
+	return t, nil
+}
+
+// ParseTcTsManifest unmarshals the content of a manifest.json and derives the DCS
+// metadata fields from it. MetadataType is left empty when the file is neither a
+// translationCore (tc_version >= 7) nor a translationStudio (package_version >= 3) manifest.
+func ParseTcTsManifest(buf []byte) (*structs.TcTsManifest, error) {
+	t := &structs.TcTsManifest{}
+	if err := json.Unmarshal(buf, t); err != nil {
+		return nil, err
+	}
+	if t.TcVersion >= 7 {
+		t.MetadataVersion = strconv.Itoa(t.TcVersion)
+		t.MetadataType = "tc"
+		t.Format = "usfm"
+		t.Subject = "Aligned Bible"
+		t.FlavorType = "scripture"
+		t.Flavor = "textTranslation"
+	} else if t.TsVersion >= 3 {
+		t.MetadataVersion = strconv.Itoa(t.TsVersion)
+		t.MetadataType = "ts"
+
+		if t.Resource.ID == "" {
+			if t.ResourceID != "" {
+				t.Resource.ID = t.ResourceID
+			} else {
+				t.Resource.ID = t.Project.ID
+			}
+		}
+
+		if t.Resource.Name == "" {
+			t.Resource.Name = strings.ToUpper(t.Resource.ID)
+		}
+
+		if t.Project.Name == "" {
+			t.Project.Name = strings.ToUpper(t.Project.ID)
+		}
+
+		if t.Project.Type == "" {
+			t.Project.Type = t.Type.ID
+		}
+
+		if t.Resource.ID == "obs" && (t.Project.Type == "tn" || t.Type.ID == "tn") {
+			t.Subject = "OBS Translation Notes"
+			t.FlavorType = "peripheral"
+			t.Flavor = "x-OBSTranslationNotes"
+		} else if t.Resource.ID == "obs" && (t.Project.Type == "tq" || t.Type.ID == "tq") {
+			t.Subject = "OBS Translation Questions"
+			t.FlavorType = "peripheral"
+			t.Flavor = "x-OBSTranslationQuestions"
+		} else if t.Resource.ID == "obs" {
+			t.Subject = "Open Bible Stories"
+			t.FlavorType = "gloss"
+			t.Flavor = "textStories"
+		} else if t.Project.Type == "tn" || t.Type.ID == "tn" {
+			t.Subject = "Translation Notes"
+			t.FlavorType = "peripheral"
+			t.Flavor = "x-TranslationNotes"
+		} else if t.Project.Type == "tq" || t.Type.ID == "tq" {
+			t.Subject = "Translation Questions"
+			t.FlavorType = "peripheral"
+			t.Flavor = "x-TranslationQuestions"
+		} else if t.Project.Type == "tw" || t.Type.ID == "tw" {
+			t.Subject = "Translation Words"
+			t.FlavorType = "peripheral"
+			t.Flavor = "x-peripheralArticles"
+		} else {
+			t.Subject = "Bible"
+			t.FlavorType = "scripture"
+			t.Flavor = "textTranslation"
+		}
+	} else {
+		return t, nil
+	}
+
+	if t.Resource.Name != "" {
+		t.Title = t.Resource.Name
+	}
+	if !strings.EqualFold(t.Resource.ID, "obs") && t.Project.Name != "" && !strings.Contains(strings.ToLower(t.Title), strings.ToLower(t.Project.Name)) {
+		if t.Title != "" {
+			t.Title += " - "
+		}
+		t.Title += t.Project.Name
+	}
+
+	return t, nil
+}

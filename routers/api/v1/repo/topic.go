@@ -15,6 +15,7 @@ import (
 	"gitea.dev/routers/api/v1/utils"
 	"gitea.dev/services/context"
 	"gitea.dev/services/convert"
+	notify_service "gitea.dev/services/notify" // DCS Customizations
 )
 
 // ListTopics returns list of current topics for repo
@@ -130,6 +131,11 @@ func UpdateTopics(ctx *context.APIContext) {
 		return
 	}
 
+	/*** DCS Customizations ***/
+	ctx.Repo.Repository.Topics = validTopics
+	notify_service.RepoTopicsChanged(ctx, ctx.Doer, ctx.Repo.Repository)
+	/*** END DCS Customizations ***/
+
 	ctx.Status(http.StatusNoContent)
 }
 
@@ -198,6 +204,11 @@ func AddTopic(ctx *context.APIContext) {
 		ctx.APIErrorInternal(err)
 		return
 	}
+
+	/*** DCS Customizations ***/
+	ctx.Repo.Repository.Topics = append(ctx.Repo.Repository.Topics, topicName)
+	notify_service.RepoTopicsChanged(ctx, ctx.Doer, ctx.Repo.Repository)
+	/*** END DCS Customizations ***/
 
 	ctx.Status(http.StatusNoContent)
 }

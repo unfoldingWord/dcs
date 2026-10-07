@@ -218,6 +218,13 @@ type Repository struct {
 	CreatedUnix  timeutil.TimeStamp `xorm:"INDEX created"`
 	UpdatedUnix  timeutil.TimeStamp `xorm:"INDEX updated"`
 	ArchivedUnix timeutil.TimeStamp `xorm:"DEFAULT 0"`
+	/*** DCS Customizations ***/
+	LatestProdDM    *Door43Metadata `xorm:"-"`
+	LatestPreprodDM *Door43Metadata `xorm:"-"`
+	DefaultBranchDM *Door43Metadata `xorm:"-"`
+	RepoDM          *Door43Metadata `xorm:"-"`
+	LatestDMsLoaded bool            `xorm:"-"` // memoizes LoadLatestDMs, incl. stages that have no DM
+	/*** END DCS Customizations ***/
 }
 
 func init() {
@@ -332,6 +339,13 @@ func (repo *Repository) LoadAttributes(ctx context.Context) error {
 			break
 		}
 	}
+
+	/*** DCS Customizations ***/
+	if err := repo.LoadLatestDMs(ctx); err != nil {
+		return err
+	}
+	/*** END DCS Customizations ***/
+
 	return nil
 }
 

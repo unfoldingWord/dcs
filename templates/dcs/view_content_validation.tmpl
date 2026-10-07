@@ -1,0 +1,5 @@
+{{if or (StringHasSuffix .Entry.Name ".yaml") (StringHasSuffix .Entry.Name ".json")}}
+<div class="fitted item">
+	{{template "repo/validation-badge" dict "file" .Entry "root" .}}
+</div>
+{{end}}

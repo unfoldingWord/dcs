@@ -12,6 +12,7 @@ permissions: {}
 
 jobs:
   nightly-binary:
+    if: github.repository == 'go-gitea/gitea' # DCS Customizations
     runs-on: namespace-profile-gitea-release-binary
     permissions:
       contents: read
@@ -67,6 +68,7 @@ jobs:
           aws s3 sync dist/release "s3://$CLOUDFLARE_R2_BUCKET/gitea/$BRANCH" --endpoint-url "https://$CLOUDFLARE_R2_ACCOUNT_ID.r2.cloudflarestorage.com" --no-progress
 
   nightly-container:
+    if: github.repository == 'go-gitea/gitea' # DCS Customizations
     runs-on: namespace-profile-gitea-release-docker
     permissions:
       contents: read

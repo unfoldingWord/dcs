@@ -1,0 +1,3 @@
+{{if .Repository.DefaultBranchDM}}
+	<a role="button" class="btn interact-bg tw-p-2" href="{{Door43PreviewURL}}/u/{{.Repository.OwnerName}}/{{.Repository.Name}}/{{PathEscapeSegments .DefaultBranchBranch.DBBranch.Name}}{{if eq AppUrl "https://qa.door43.org/"}}?server=QA{{end}}{{if eq AppUrl "https://develop.door43.org/"}}?server=DEV{{end}}" target="_blank" rel="nofollow noopener" data-tooltip-content="{{ctx.Locale.Tr "preview"}} / PDF">{{svg "octicon-book"}}</a>
+{{end}}

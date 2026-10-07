@@ -14,7 +14,8 @@ permissions: {}
 
 jobs:
   binary:
-    runs-on: namespace-profile-gitea-release-binary
+    if: github.repository == 'go-gitea/gitea' # DCS Customizations
+    runs-on: ubuntu-latest
     permissions:
       contents: read
       packages: write # to publish to ghcr.io
@@ -87,6 +88,7 @@ jobs:
           gh release create "$TAG" --title "$TAG" --notes-file git-cliff/CHANGELOG.md dist/release/*
 
   container:
+    if: github.repository == 'go-gitea/gitea' # DCS Customizations
     runs-on: namespace-profile-gitea-release-docker
     permissions:
       contents: read

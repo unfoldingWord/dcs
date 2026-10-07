@@ -13,23 +13,29 @@
 					<span class="help">{{ctx.Locale.Tr "org.org_name_helper"}}</span>
 				</div>
 
-				<div class="inline field required {{if .Err_OrgVisibility}}error{{end}}">
-					<label for="visibility">{{ctx.Locale.Tr "org.settings.visibility"}}</label>
-					<div class="inline-right">
-						<div class="ui radio checkbox">
-							<input class="enable-system-radio" name="visibility" type="radio" value="0" {{if .visibility.IsPublic}}checked{{end}}>
-							<label>{{ctx.Locale.Tr "org.settings.visibility.public"}}</label>
-						</div>
-						<div class="ui radio checkbox">
-							<input class="enable-system-radio" name="visibility" type="radio" value="1" {{if .visibility.IsLimited}}checked{{end}}>
-							<label>{{ctx.Locale.Tr "org.settings.visibility.limited"}}</label>
-						</div>
-						<div class="ui radio checkbox">
-							<input class="enable-system-radio" name="visibility" type="radio" value="2" {{if .visibility.IsPrivate}}checked{{end}}>
-							<label>{{ctx.Locale.Tr "org.settings.visibility.private"}}</label>
+				<!-- DCS Customizations - only site admins can set org visibility -->
+				{{if .IsAdmin}}
+					<div class="inline field required {{if .Err_OrgVisibility}}error{{end}}">
+						<label for="visibility">{{ctx.Locale.Tr "org.settings.visibility"}}</label>
+						<div class="inline-right">
+							<div class="ui radio checkbox">
+								<input class="enable-system-radio" name="visibility" type="radio" value="0" {{if .visibility.IsPublic}}checked{{end}}>
+								<label>{{ctx.Locale.Tr "org.settings.visibility.public"}}</label>
+							</div>
+							<div class="ui radio checkbox">
+								<input class="enable-system-radio" name="visibility" type="radio" value="1" {{if .visibility.IsLimited}}checked{{end}}>
+								<label>{{ctx.Locale.Tr "org.settings.visibility.limited"}}</label>
+							</div>
+							<div class="ui radio checkbox">
+								<input class="enable-system-radio" name="visibility" type="radio" value="2" {{if .visibility.IsPrivate}}checked{{end}}>
+								<label>{{ctx.Locale.Tr "org.settings.visibility.private"}}</label>
+							</div>
 						</div>
 					</div>
-				</div>
+				{{else}}
+					<input name="visibility" type="hidden" value="0">
+				{{end}}
+				<!-- END DCS Customizations -->
 
 				<div class="inline field" id="permission_box">
 					<label>{{ctx.Locale.Tr "org.settings.permission"}}</label>

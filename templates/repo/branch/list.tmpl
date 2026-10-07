@@ -1,4 +1,7 @@
 {{template "base/head" .}}
+<!-- DCS Customizations --->
+{{template "dcs/branch_list_usfm_script" .}}
+<!-- END DCS Customizations -->
 <div role="main" aria-label="{{.Title}}" class="page-content ui repository branches">
 	{{template "repo/header" .}}
 	<div class="ui container">
@@ -26,6 +29,9 @@
 									{{end}}
 									<button type="button" class="btn interact-fg tw-px-1" data-clipboard-text="{{.DefaultBranchBranch.DBBranch.Name}}" data-tooltip-content="{{ctx.Locale.Tr "copy_branch"}}">{{svg "octicon-copy" 14}}</button>
 									{{template "repo/commit_statuses" dict "Status" (index $.CommitStatus .DefaultBranchBranch.DBBranch.CommitID) "Statuses" (index $.CommitStatuses .DefaultBranchBranch.DBBranch.CommitID)}}
+									<!-- DCS Customizations -->
+									{{template "dcs/ref_healthcheck_badge" dict "Severities" .DCSHealthcheckSeverities "Ref" .DefaultBranchBranch.DBBranch.Name "RepoLink" .RepoLink "OwnerName" .Repository.OwnerName "RepoName" .Repository.Name}}
+									<!-- END DCS Customizations -->
 								</div>
 								<p class="info tw-flex tw-items-center tw-my-1">{{svg "octicon-git-commit" 16 "tw-mr-1"}}<a href="{{.RepoLink}}/commit/{{PathEscape .DefaultBranchBranch.DBBranch.CommitID}}">{{ShortSha .DefaultBranchBranch.DBBranch.CommitID}}</a> · <span class="commit-message">{{ctx.RenderUtils.RenderCommitMessage .DefaultBranchBranch.DBBranch.CommitMessage .Repository}}</span> · {{ctx.Locale.Tr "org.repo_updated"}} {{DateUtils.TimeSince .DefaultBranchBranch.DBBranch.CommitTime}}{{if .DefaultBranchBranch.DBBranch.Pusher}} &nbsp;{{template "shared/user/avatarlink" dict "user" .DefaultBranchBranch.DBBranch.Pusher}}{{template "shared/user/namelink" .DefaultBranchBranch.DBBranch.Pusher}}{{end}}</p>
 							</td>
@@ -50,6 +56,11 @@
 										<div class="menu">
 											<a class="item archive-link" href="{{$.RepoLink}}/archive/{{PathEscapeSegments $.DefaultBranchBranch.DBBranch.Name}}.zip" rel="nofollow">{{svg "octicon-file-zip"}}&nbsp;ZIP</a>
 											<a class="item archive-link" href="{{$.RepoLink}}/archive/{{PathEscapeSegments $.DefaultBranchBranch.DBBranch.Name}}.tar.gz" rel="nofollow">{{svg "octicon-file-zip"}}&nbsp;TAR.GZ</a>
+											<!-- DCS Customizations -->
+											{{if and $.Repository.RepoDM (eq $.Repository.RepoDM.Subject "Aligned Bible")}}
+											<a class="item dcs-usfm-download" href="#" data-owner="{{PathEscapeSegments $.Repository.OwnerName}}" data-repo="{{PathEscapeSegments $.Repository.Name}}" data-ref="{{PathEscapeSegments $.DefaultBranchBranch.DBBranch.Name}}" rel="nofollow">{{svg "octicon-file-zip"}}&nbsp;USFM (ZIP)</a>
+											{{end}}
+											<!-- END DCS Customizations -->
 										</div>
 									</div>
 								{{end}}
@@ -63,6 +74,9 @@
 										{{svg "octicon-pencil"}}
 									</button>
 								{{end}}
+								<!-- DCS Customizations -->
+								{{template "dcs/branch_list_default_preview" $}}
+								<!-- END DCS Customizations -->
 								</div>
 							</td>
 						</tr>
@@ -105,6 +119,9 @@
 									{{end}}
 									<button type="button" class="btn interact-fg tw-px-1" data-clipboard-text="{{.DBBranch.Name}}" data-tooltip-content="{{ctx.Locale.Tr "copy_branch"}}">{{svg "octicon-copy" 14}}</button>
 									{{template "repo/commit_statuses" dict "Status" (index $.CommitStatus .DBBranch.CommitID) "Statuses" (index $.CommitStatuses .DBBranch.CommitID)}}
+									<!-- DCS Customizations -->
+									{{template "dcs/ref_healthcheck_badge" dict "Severities" $.DCSHealthcheckSeverities "Ref" .DBBranch.Name "RepoLink" $.RepoLink "OwnerName" $.Repository.OwnerName "RepoName" $.Repository.Name}}
+									<!-- END DCS Customizations -->
 								</div>
 								<p class="info tw-flex tw-items-center tw-my-1">{{svg "octicon-git-commit" 16 "tw-mr-1"}}<a href="{{$.RepoLink}}/commit/{{PathEscape .DBBranch.CommitID}}">{{ShortSha .DBBranch.CommitID}}</a> · <span class="commit-message">{{ctx.RenderUtils.RenderCommitMessage .DBBranch.CommitMessage $.Repository}}</span> · {{ctx.Locale.Tr "org.repo_updated"}} {{DateUtils.TimeSince .DBBranch.CommitTime}}{{if .DBBranch.Pusher}} &nbsp;{{template "shared/user/avatarlink" dict "user" .DBBranch.Pusher}} &nbsp;{{template "shared/user/namelink" .DBBranch.Pusher}}{{end}}</p>
 							{{end}}
@@ -179,6 +196,11 @@
 										<div class="menu">
 											<a class="item archive-link" href="{{$.RepoLink}}/archive/{{PathEscapeSegments .DBBranch.Name}}.zip" rel="nofollow">{{svg "octicon-file-zip"}}&nbsp;ZIP</a>
 											<a class="item archive-link" href="{{$.RepoLink}}/archive/{{PathEscapeSegments .DBBranch.Name}}.tar.gz" rel="nofollow">{{svg "octicon-file-zip"}}&nbsp;TAR.GZ</a>
+											<!-- DCS Customizations -->
+											{{if and $.Repository.RepoDM (eq $.Repository.RepoDM.Subject "Aligned Bible")}}
+											<a class="item dcs-usfm-download" href="#" data-owner="{{PathEscapeSegments $.Repository.OwnerName}}" data-repo="{{PathEscapeSegments $.Repository.Name}}" data-ref="{{PathEscapeSegments .DBBranch.Name}}" rel="nofollow">{{svg "octicon-file-zip"}}&nbsp;USFM (ZIP)</a>
+											{{end}}
+											<!-- END DCS Customizations -->
 										</div>
 									</div>
 								{{end}}
@@ -192,6 +214,9 @@
 										{{svg "octicon-pencil"}}
 									</button>
 								{{end}}
+<!-- DCS Customizations -->
+								{{template "dcs/branch_list_row_preview" dict "Branch" . "root" $}}
+								<!-- END DCS Customizations -->
 								{{if and $.IsWriter $.Repository.CanContentChange (not .IsProtected)}}
 									{{if .DBBranch.IsDeleted}}
 										<button type="button" class="btn interact-bg tw-p-2 link-action restore-branch-button" data-url="{{$.Link}}/restore?branch_id={{.DBBranch.ID}}&name={{.DBBranch.Name}}" data-tooltip-content="{{ctx.Locale.Tr "repo.branch.restore" (.DBBranch.Name)}}">

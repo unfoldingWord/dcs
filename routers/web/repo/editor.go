@@ -230,6 +230,10 @@ func editFileOpenExisting(ctx *context.Context) (prefetch []byte, dataRc io.Read
 		return nil, nil, nil
 	}
 
+	/*** DCS Customizations ***/
+	ctx.Data["Entry"] = entry
+	/*** END DCS Customizations ***/
+
 	// No way to edit a directory online.
 	if entry.IsDir() {
 		ctx.NotFound(nil)
@@ -279,6 +283,7 @@ func EditFile(ctx *context.Context) {
 		if newQueryParams := urlQuery.Encode(); newQueryParams != "" {
 			redirectTo += "?" + newQueryParams
 		}
+
 		ctx.Redirect(redirectTo)
 		return
 	}
@@ -290,6 +295,10 @@ func EditFile(ctx *context.Context) {
 	if ctx.Written() {
 		return
 	}
+
+	/*** DCS Customizations ***/
+	ctx.Data["Entry"] = nil
+	/*** END DCS Customizations ***/
 
 	if !isNewFile {
 		prefetch, dataRc, fInfo := editFileOpenExisting(ctx)

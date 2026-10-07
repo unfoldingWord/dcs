@@ -1,0 +1,14 @@
+{{if .RepoDM}}
+	{{if .RepoDM.Language}}
+		<a class="item muted" href="{{AppSubUrl}}/explore/repos?q=lang:{{.RepoDM.Language}}" data-tooltip-content="{{if .RepoDM.LanguageIsGL}}*Is a Gateway{{else}}Is an Other{{end}} Language; Direction: {{.RepoDM.LanguageDirection}}">
+			{{svg "octicon-globe"}} <span style="font-weight: bold"><span data-language="{{.RepoDM.Language}}" data-language-direction="{{.RepoDM.LanguageDirection}}">{{.RepoDM.LanguageTitle}}</span> ({{.RepoDM.Language}}){{if .RepoDM.LanguageIsGL}}*{{end}}</span>
+		</a>
+	{{end}}
+	{{if .RepoDM.MetadataType}}
+		{{$metadataTypeTitle := (.RepoDM.MetadataTypeTitle)}}
+		{{$metadataTypeIcon := (.RepoDM.MetadataTypeIcon)}}
+		<a class="item muted" href="{{AppSubUrl}}/explore/repos?q=metadata_type:{{.RepoDM.MetadataType}}" data-tooltip-content="Metadata Type: {{$metadataTypeTitle}} v{{.RepoDM.MetadataVersion}}">
+			<img src="{{AssetUrlPrefix}}/img/dcs/{{$metadataTypeIcon}}" style="height:16px;vertical-align:middle"/> <span style="font-weight: bold">{{.RepoDM.MetadataType}}{{.RepoDM.MetadataVersion}}</span>
+		</a>
+	{{end}}
+{{end}}

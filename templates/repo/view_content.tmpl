@@ -28,6 +28,10 @@
 		</a>
 	{{end}}
 
+	<!-- DCS Customizations -->
+	{{template "dcs/view_content_preview" .}}
+	<!-- END DCS Customizations -->
+
 	{{if and $isTreePathRoot .Repository.IsTemplate}}
 		<a role="button" class="ui primary compact button" href="{{AppSubUrl}}/repo/create?template_id={{.Repository.ID}}">
 			{{ctx.Locale.Tr "repo.use_template"}}
@@ -48,6 +52,9 @@
 				{{- end -}}
 			{{- end -}}
 		</span>
+		<!-- DCS Customizations -->
+		{{template "dcs/view_content_validation" .}}
+		<!-- END DCS Customizations -->
 	{{end}}
 	</div>
 

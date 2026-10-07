@@ -12,6 +12,7 @@ import (
 	auth_model "gitea.dev/models/auth"
 	"gitea.dev/models/db"
 	user_model "gitea.dev/models/user"
+	"gitea.dev/modules/log" // DCS Customizations
 	"gitea.dev/modules/setting"
 	"gitea.dev/modules/templates"
 	"gitea.dev/modules/util"
@@ -101,8 +102,11 @@ func CreateAccessToken(ctx *context.Context, owner *user_model.User) {
 		return
 	}
 	if exist {
-		ctx.JSONErrorWithField(ctx.Tr("settings.generate_token_name_duplicate", t.Name), "name")
-		return
+		/*** DCS Customizations - Commented out so tokens can have the same name for translationCore ***/
+		//ctx.JSONErrorWithField(ctx.Tr("settings.generate_token_name_duplicate", t.Name), "name")
+		//return
+		log.Info("Ignoring existing Access Token for DCS/translationCore, UID: %v, Token Name: %v", owner.ID, form.Name)
+		/*** END DCS Customizations ***/
 	}
 
 	// a token-authenticated request must not mint a token with a broader scope than its own, nor

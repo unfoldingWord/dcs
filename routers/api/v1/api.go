@@ -2,9 +2,9 @@
 // Copyright 2016 The Gitea Authors. All rights reserved.
 // SPDX-License-Identifier: MIT
 
-// Package v1 Gitea API
+// Package v1 DCS (Gitea) API
 //
-// This documentation describes the Gitea API.
+// This documentation describes the DCS (Gitea) API.
 //
 //	Schemes: https, http
 //	License: MIT http://opensource.org/licenses/MIT
@@ -86,6 +86,7 @@ import (
 	"gitea.dev/modules/web/middleware"
 	"gitea.dev/routers/api/v1/activitypub"
 	"gitea.dev/routers/api/v1/admin"
+	"gitea.dev/routers/api/v1/dcs"
 	"gitea.dev/routers/api/v1/misc"
 	"gitea.dev/routers/api/v1/notify"
 	"gitea.dev/routers/api/v1/org"
@@ -384,9 +385,11 @@ func reqToken() func(ctx *context.APIContext) {
 
 func reqExploreSignIn() func(ctx *context.APIContext) {
 	return func(ctx *context.APIContext) {
-		if (setting.Service.RequireSignInViewStrict || setting.Service.Explore.RequireSigninView) && !ctx.IsSigned {
-			ctx.APIError(http.StatusUnauthorized, "you must be signed in to search for users")
-		}
+		/*** DCS Customizations ***/
+		// if (setting.Service.RequireSignInViewStrict || setting.Service.Explore.RequireSigninView) && !ctx.IsSigned {
+		// 	ctx.APIError(http.StatusUnauthorized, "you must be signed in to search for users")
+		// }
+		/*** END DCS Customizations ***/
 	}
 }
 
@@ -1556,8 +1559,19 @@ func Routes() *web.Router {
 						m.Get("/{sha}", repo.GetSingleCommit)
 						m.Get("/{sha}.{diffType:diff|patch}", repo.DownloadCommitDiffOrPatch)
 					})
-					m.Get("/refs", repo.GetGitAllRefs)
-					m.Get("/refs/*", repo.GetGitRefs)
+					m.Group("/refs", func() {
+						m.Get("", repo.GetGitAllRefs)
+						/*** DCS Customizations ***/
+						m.Post("", reqToken(), reqRepoWriter(unit.TypeCode), bind(api.CreateGitRefOption{}), repo.CreateGitRef)
+						/*** END DCS Customizations ***/
+						m.Get("/*", repo.GetGitRefs)
+						/*** DCS Customizations ***/
+						m.Group("/*", func() {
+							m.Patch("", bind(api.UpdateGitRefOption{}), repo.UpdateGitRef)
+							m.Delete("", repo.DeleteGitRef)
+						}, reqToken(), reqRepoWriter(unit.TypeCode))
+						/*** END DCS Customizations ***/
+					})
 					m.Get("/trees/{sha}", repo.GetTree)
 					m.Get("/blobs/{sha}", repo.GetBlob)
 					m.Get("/tags/{sha}", repo.GetAnnotatedTag)
@@ -1605,6 +1619,9 @@ func Routes() *web.Router {
 					m.Post("", bind(api.UpdateRepoAvatarOption{}), repo.UpdateAvatar)
 					m.Delete("", repo.DeleteAvatar)
 				}, reqAdmin(), reqToken())
+				/*** DCS Customizations ***/
+				dcs.RegisterDCSRepoAPIRoutes(m, reqRepoReader)
+				/*** END DCS Customizations ***/
 
 				m.Methods("HEAD,GET", "/{ball_type:tarball|zipball|bundle}/*", reqRepoReader(unit.TypeCode), context.ReferencesGitRepo(true), repo.DownloadArchive)
 			}, repoAssignment(), checkTokenPublicOnly())
@@ -1877,6 +1894,9 @@ func Routes() *web.Router {
 			m.Get("/packages", admin.ListPackages)
 			m.Group("/users", func() {
 				m.Get("", admin.SearchUsers)
+				/*** DCS Customizations ***/
+				dcs.RegisterDCSAdminAPIRoutes(m)
+				/*** END DCS Customizations ***/
 				m.Post("", bind(api.CreateUserOption{}), admin.CreateUser)
 				m.Group("/{username}", func() {
 					m.Combo("").Patch(bind(api.EditUserOption{}), admin.EditUser).
@@ -1926,6 +1946,10 @@ func Routes() *web.Router {
 		m.Group("/topics", func() {
 			m.Get("/search", repo.TopicSearch)
 		}, tokenRequiresScopes(auth_model.AccessTokenScopeCategoryRepository))
+
+		/*** DCS Customizations ***/
+		dcs.RegisterDCSAPIRoutes(m, repoAssignment, reqRepoReader)
+		/*** END DCS Customizations ***/
 	}, sudo())
 
 	return m

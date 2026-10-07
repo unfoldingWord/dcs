@@ -26,22 +26,4 @@ jobs:
         with:
           platform: linux/amd64
 
-  container-arm64:
-    if: needs.files-changed.outputs.dockerfile == 'true'
-    needs: [files-changed]
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
-      - uses: ./.github/actions/docker-dryrun
-        with:
-          platform: linux/arm64
-
-  container-riscv64:
-    if: needs.files-changed.outputs.dockerfile == 'true'
-    needs: [files-changed]
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
-      - uses: ./.github/actions/docker-dryrun
-        with:
-          platform: linux/riscv64
+  # DCS Customizations: upstream's arm64 and riscv64 dryrun jobs are removed — QEMU builds are slow and DCS only ships amd64 images

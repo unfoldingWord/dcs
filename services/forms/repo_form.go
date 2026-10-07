@@ -583,3 +583,20 @@ type AddDeployTokenForm struct {
 	Title      string `binding:"Required;MaxSize(50)"`
 	IsWritable bool
 }
+
+/*** DCS Customizations ***/
+
+// NewDoor43MetadataForm form for creating release
+type NewDoor43MetadataForm struct {
+	middleware.FormDefaultValidator
+	TagName  string `form:"tag_name" binding:"MaxSize(255)"`
+	Metadata string `form:"metadata"`
+}
+
+// EditDoor43MetadataForm form for changing release
+type EditDoor43MetadataForm struct {
+	middleware.FormDefaultValidator
+	Metadata []byte `form:"metadata"`
+}
+
+/*** END DCS Customizations ***/

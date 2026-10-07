@@ -22,7 +22,9 @@
 	{{if and (not .IsEmptyRepo) .LanguageStats}}
 		<div class="divider"></div>
 		<div class="repo-home-sidebar-header">
-			{{ctx.Locale.Tr "repo.repo_lang"}}
+			<!-- DCS Customizations -->
+			{{ctx.Locale.Tr "dcs.repo.file_types"}}
+			<!-- END DCS Customizations -->
 		</div>
 
 		<div>

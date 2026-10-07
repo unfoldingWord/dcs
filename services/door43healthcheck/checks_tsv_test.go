@@ -1,0 +1,164 @@
+// Copyright 2026 The Gitea Authors. All rights reserved.
+// SPDX-License-Identifier: MIT
+
+package door43healthcheck
+
+import (
+	"strings"
+	"testing"
+
+	repo_model "gitea.dev/models/repo"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+)
+
+func tsvIssueCodesOf(issues []*repo_model.Door43HealthcheckIssue) []repo_model.IssueCode {
+	codes := make([]repo_model.IssueCode, 0, len(issues))
+	for _, issue := range issues {
+		codes = append(codes, issue.IssueCode)
+	}
+	return codes
+}
+
+func TestCheckTSVFileContent(t *testing.T) {
+	tnDM := &repo_model.Door43Metadata{Subject: "TSV Translation Notes", MetadataType: "rc"}
+	twlDM := &repo_model.Door43Metadata{Subject: "TSV Translation Words Links", MetadataType: "rc"}
+	tnHeader := "Reference\tID\tTags\tSupportReference\tQuote\tOccurrence\tNote"
+
+	t.Run("valid TN file", func(t *testing.T) {
+		content := tnHeader + "\n" +
+			"front:intro\tabc1\t\t\t\t0\tAn intro note\n" +
+			"1:1\tabc2\t\trc://*/ta/man/translate/figs-metaphor\tword\t1\tA note\n" +
+			"1:2-3\tabc3\t\t\t\t0\tAnother note\n" +
+			"1:4;1:6\tabc4\t\t\t\t0\tList reference\n"
+		assert.Empty(t, checkTSVFileContent(tnDM, "tn_GEN.tsv", strings.NewReader(content)))
+	})
+
+	t.Run("column count, IDs, reference, occurrence, link", func(t *testing.T) {
+		content := tnHeader + "\n" +
+			"1:1\tabc1\t\t\tword\t1\tgood row\n" +
+			"1:2\tabc1\t\t\t\t0\tduplicate id\n" + // TSV-005
+			"1:3\tAB!\t\t\t\t0\tbad id\n" + // TSV-004
+			"one:1\tabc4\t\t\t\t0\tbad reference\n" + // TSV-003
+			"1:5\tabc5\t\t\tword\tX\tbad occurrence\n" + // TSV-006
+			"1:6\tabc6\t\t\t\t2\tempty quote needs occurrence 0\n" + // TSV-006
+			"1:7\tabc7\t\tfigs-metaphor\t\t0\tbare slug support ref\n" + // TSV-009
+			"1:8\tabc8\ttoo\tfew\tcolumns\n" // TSV-002
+		codes := tsvIssueCodesOf(checkTSVFileContent(tnDM, "tn_GEN.tsv", strings.NewReader(content)))
+		assert.Contains(t, codes, repo_model.IssueCodeTSVIDDuplicate)
+		assert.Contains(t, codes, repo_model.IssueCodeTSVIDInvalid)
+		assert.Contains(t, codes, repo_model.IssueCodeTSVReferenceInvalid)
+		assert.Contains(t, codes, repo_model.IssueCodeTSVOccurrenceInvalid)
+		assert.Contains(t, codes, repo_model.IssueCodeTSVLinkInvalid)
+		assert.Contains(t, codes, repo_model.IssueCodeTSVRowInvalid)
+		assert.NotContains(t, codes, repo_model.IssueCodeTSVHeaderInvalid)
+	})
+
+	t.Run("TWL links and empty required cells", func(t *testing.T) {
+		content := "Reference\tID\tTags\tOrigWords\tOccurrence\tTWLink\n" +
+			"1:1\tabc1\tkeyterm\tword\t1\trc://*/tw/dict/bible/kt/god\n" +
+			"1:2\tabc2\t\tword\t1\thttps://example.com/not-an-rc-link\n" + // TSV-008
+			"1:3\tabc3\t\tword\t1\t\n" + // TSV-011 (empty TWLink)
+			"1:4\tabc4\t\t\t0\trc://*/tw/dict/bible/kt/god\n" + // TSV-011 (empty OrigWords)
+			"1:5\tabc5\t\tword\t1\trc://*/tw/dict/bible/other/house-descendants_nation\n" // underscores in slugs are valid (en_tw)
+		issues := checkTSVFileContent(twlDM, "twl_GEN.tsv", strings.NewReader(content))
+		codes := tsvIssueCodesOf(issues)
+		assert.Contains(t, codes, repo_model.IssueCodeTSVLinkInvalid)
+		assert.Contains(t, codes, repo_model.IssueCodeTSVCellEmpty)
+		// one empty-cell finding per required column, both Errors
+		emptyCellFindings := 0
+		for _, issue := range issues {
+			if issue.IssueCode == repo_model.IssueCodeTSVCellEmpty {
+				emptyCellFindings++
+				assert.Equal(t, repo_model.SeverityLevelError, issue.SeverityLevel)
+			}
+			if issue.IssueCode == repo_model.IssueCodeTSVLinkInvalid {
+				assert.Equal(t, repo_model.SeverityLevelError, issue.SeverityLevel)
+				assert.Equal(t, "TSV-008", issue.Rule)
+			}
+		}
+		assert.Equal(t, 2, emptyCellFindings, "OrigWords and TWLink each get a finding")
+	})
+
+	t.Run("TQ requires Question and Response", func(t *testing.T) {
+		tqDM := &repo_model.Door43Metadata{Subject: "TSV Translation Questions", MetadataType: "rc"}
+		content := "Reference\tID\tTags\tQuote\tOccurrence\tQuestion\tResponse\n" +
+			"1:1\tabc1\t\t\t0\tA question?\tAn answer\n" +
+			"1:2\tabc2\t\t\t0\tA question?\t\n" + // empty Response
+			"1:3\tabc3\t\t\t0\t\tAn answer\n" // empty Question
+		issues := checkTSVFileContent(tqDM, "tq_GEN.tsv", strings.NewReader(content))
+		require.Len(t, issues, 2)
+		for _, issue := range issues {
+			assert.Equal(t, repo_model.IssueCodeTSVCellEmpty, issue.IssueCode)
+			assert.Equal(t, repo_model.SeverityLevelError, issue.SeverityLevel)
+		}
+	})
+
+	t.Run("wrong header for the subject", func(t *testing.T) {
+		content := "Ref\tID\tNote\n1:1\tabc1\tnote\n"
+		codes := tsvIssueCodesOf(checkTSVFileContent(tnDM, "tn_GEN.tsv", strings.NewReader(content)))
+		assert.Contains(t, codes, repo_model.IssueCodeTSVHeaderInvalid)
+	})
+
+	t.Run("legacy 9-column TN file is tolerated", func(t *testing.T) {
+		content := "Book\tChapter\tVerse\tID\tSupportReference\tOrigQuote\tOccurrence\tGLQuote\tOccurrenceNote\n" +
+			"GEN\t1\t1\tabc1\tfigs-metaphor\tword\t1\tgloss\ta note\n" // bare slug OK in legacy mode
+		assert.Empty(t, checkTSVFileContent(tnDM, "en_tn_01-GEN.tsv", strings.NewReader(content)))
+	})
+
+	t.Run("OBS title-row reference {s}:0 is valid", func(t *testing.T) {
+		assert.True(t, tsvReferenceValid("1:0"))
+		assert.True(t, tsvReferenceValid("50:17"))
+		assert.False(t, tsvReferenceValid("intro"))
+		assert.False(t, tsvReferenceValid("1:1-"))
+		assert.False(t, tsvReferenceValid(""))
+	})
+
+	t.Run("chapter front matter reference {c}:front is valid", func(t *testing.T) {
+		// Psalm descriptions before verse 1, e.g. tn_PSA.tsv
+		assert.True(t, tsvReferenceValid("119:front"))
+		assert.True(t, tsvReferenceValid("3:front"))
+		assert.True(t, tsvReferenceValid("front:intro;1:front,1:1"))
+		assert.False(t, tsvReferenceValid("front:1"))
+		assert.False(t, tsvReferenceValid("front:front"))
+	})
+
+	t.Run("occurrence depends on quote content", func(t *testing.T) {
+		content := tnHeader + "\n" +
+			"front:intro\tabc1\t\t\t\t\tblank occurrence with empty quote is fine\n" + // blank occ, empty quote
+			"1:intro\tabc2\t\t\t\t0\tzero occurrence with empty quote is fine\n" +
+			"1:1\tabc3\t\t\tword\t-1\tall occurrences of a quote\n" +
+			"1:2\tabc4\t\t\t\t2\tempty quote cannot have occurrence 2\n" + // invalid
+			"1:3\tabc5\t\t\t\t-1\tempty quote cannot have occurrence -1\n" + // invalid
+			"1:4\tabc6\t\t\tword\t\tquote text requires an integer occurrence\n" // invalid
+		issues := checkTSVFileContent(tnDM, "tn_GEN.tsv", strings.NewReader(content))
+		require.Len(t, issues, 1)
+		assert.Equal(t, repo_model.IssueCodeTSVOccurrenceInvalid, issues[0].IssueCode)
+		assert.Contains(t, issues[0].Details, "3 rows")
+	})
+
+	t.Run("compound verse references", func(t *testing.T) {
+		assert.True(t, tsvReferenceValid("5:1,3,8,12"), "bare verses continue the chapter")
+		assert.True(t, tsvReferenceValid("5:1, 3, 8, 12"), "spaces after commas allowed")
+		assert.True(t, tsvReferenceValid("5:1-12"))
+		assert.True(t, tsvReferenceValid("5:13-14,6:1-2"), "a new chapter:verse re-anchors the chapter")
+		assert.True(t, tsvReferenceValid("5:1,3-4;6:2,7"))
+		assert.False(t, tsvReferenceValid("3,8"), "a bare verse needs a preceding chapter:verse")
+		assert.False(t, tsvReferenceValid("front:intro,3"), "front:intro names no chapter to continue")
+		assert.False(t, tsvReferenceValid("5:1,x"))
+	})
+}
+
+func TestCheckTSVRowListCap(t *testing.T) {
+	var sb strings.Builder
+	sb.WriteString("Reference\tID\tTags\tSupportReference\tQuote\tOccurrence\tNote\n")
+	for range 25 {
+		sb.WriteString("bad reference\n") // wrong column count on every row
+	}
+	dm := &repo_model.Door43Metadata{Subject: "TSV Translation Notes", MetadataType: "rc"}
+	issues := checkTSVFileContent(dm, "tn_GEN.tsv", strings.NewReader(sb.String()))
+	require.Len(t, issues, 1)
+	assert.Contains(t, issues[0].Details, "25 rows")
+	assert.Contains(t, issues[0].Details, "and 15 more")
+}

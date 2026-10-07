@@ -1,4 +1,7 @@
 {{template "base/head" .}}
+<!-- DCS Customizations --->
+{{template "dcs/tag_list_usfm_script" .}}
+<!-- END DCS Customizations --->
 <div role="main" aria-label="{{.Title}}" class="page-content repository tags">
 	{{template "repo/header" .}}
 	<div class="ui container">
@@ -24,6 +27,9 @@
 							{{else}}
 								<a class="tag-list-row-link" href="{{$.RepoLink}}/src/tag/{{.TagName | PathEscapeSegments}}" rel="nofollow">{{.TagName}}</a>
 							{{end}}
+							<!-- DCS Customizations -->
+							{{template "dcs/ref_healthcheck_badge" dict "Severities" $.DCSHealthcheckSeverities "Ref" .TagName "RepoLink" $.RepoLink "OwnerName" $.Repository.OwnerName "RepoName" $.Repository.Name}}
+							<!-- END DCS Customizations -->
 						</h3>
 						<div class="flex-text-block muted-links tw-gap-4 tw-flex-wrap">
 							{{if $.Permission.CanRead ctx.Consts.RepoUnitTypeCode}}
@@ -36,7 +42,14 @@
 								{{if not $.DisableDownloadSourceArchives}}
 									<a class="archive-link flex-text-inline" href="{{$.RepoLink}}/archive/{{.TagName | PathEscapeSegments}}.zip" rel="nofollow">{{svg "octicon-file-zip"}}ZIP</a>
 									<a class="archive-link flex-text-inline" href="{{$.RepoLink}}/archive/{{.TagName | PathEscapeSegments}}.tar.gz" rel="nofollow">{{svg "octicon-file-zip"}}TAR.GZ</a>
+									<!-- DCS Customizations --->
+									{{template "dcs/tag_list_usfm_download" .}}
+									<!-- END DCS Customizations --->
 								{{end}}
+
+								<!-- DCS Customizations -->
+								{{template "dcs/tag_list_preview" .}}
+								<!-- END DCS Customizations -->
 
 								{{if (and $canReadReleases $.CanCreateRelease $release.IsTag)}}
 									<a class="flex-text-inline" href="{{$.RepoLink}}/releases/new?tag={{.TagName}}">{{svg "octicon-tag"}}{{ctx.Locale.Tr "repo.release.new_release"}}</a>

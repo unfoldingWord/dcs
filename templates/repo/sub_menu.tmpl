@@ -13,6 +13,9 @@
 					{{svg "octicon-tag"}} <b>{{ctx.Locale.PrettyNumber .NumTags}}</b> {{ctx.Locale.TrN .NumTags "repo.tag" "repo.tags"}}
 				</a>
 			{{end}}
+			<!-- DCS Customizations -->
+			{{template "dcs/repo_sub_menu" .}}
+			<!-- END DCS Customizations -->
 		{{end}}
 	</div>
 </div>

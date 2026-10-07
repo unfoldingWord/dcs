@@ -168,6 +168,12 @@ func initBasicTasks() {
 	registerArchiveCleanup()
 	registerSyncExternalUsers()
 	registerDeletedBranchesCleanup()
+	/*** DCS Customizations ***/
+	registerUpdateDoor43MetadataTask()
+	registerUpdateUserMetadataTask()
+	registerLoadMetadataSchemasTask()
+	registerConvert2SBTask()
+	/*** END DCS Customizations ***/
 	if !setting.Repository.DisableMigrations {
 		registerUpdateMigrationPosterID()
 	}

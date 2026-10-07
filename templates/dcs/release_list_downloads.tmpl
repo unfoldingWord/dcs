@@ -1,0 +1,33 @@
+{{$release := .release}}
+{{if $release.Door43Metadata}}
+	{{if or (eq $release.Door43Metadata.MetadataType "rc") (eq $release.Door43Metadata.MetadataType "ts") (eq $release.Door43Metadata.MetadataType "tc") (eq $release.Door43Metadata.MetadataType "sb")}}
+		<li class="item">
+			<a class="archive-link" download href="{{.root.RepoLink}}/sb/{{$release.TagName | PathEscapeSegments}}.zip" rel="nofollow">
+				<strong class="flex-text-inline">{{svg "octicon-file-zip" 16 "download-icon"}}{{ctx.Locale.Tr "dcs.repo.release.source_files_sb"}} (ZIP)</strong>
+			</a>
+		</li>
+		<li class="item">
+			<a class="archive-link" download href="{{.root.RepoLink}}/sb/{{$release.TagName | PathEscapeSegments}}.tar.gz" rel="nofollow">
+				<strong class="flex-text-inline">{{svg "octicon-file-zip" 16 "download-icon"}}{{ctx.Locale.Tr "dcs.repo.release.source_files_sb"}} (TAR.GZ)</strong>
+			</a>
+		</li>
+	{{end}}
+<li class="item">
+	<a href="{{Door43PreviewURL}}/u/{{$release.Repo.OwnerName | PathEscapeSegments}}/{{$release.Repo.Name | PathEscapeSegments}}/{{$release.TagName | PathEscapeSegments}}{{if eq AppUrl "https://qa.door43.org/"}}?server=QA{{end}}{{if eq AppUrl "https://develop.door43.org/"}}?server=DEV{{end}}"
+		target="_blank" rel="nofollow noopener">
+		<strong class="flex-text-inline">
+			{{svg "octicon-book" 16 "download-icon"}}{{ctx.Locale.Tr "preview"}} / PDF
+		</strong>
+	</a>
+</li>
+	{{if eq $release.Door43Metadata.Subject "Aligned Bible"}}
+	<li style="display: block" class="item">
+		<a href="#" class="dcs-usfm-download" data-owner="{{PathEscapeSegments $release.Repo.OwnerName}}" data-repo="{{PathEscapeSegments $release.Repo.Name}}" data-ref="{{PathEscapeSegments $release.TagName}}" rel="nofollow">
+			<strong class="flex-text-inline">
+				{{svg "octicon-file-zip" 16 "download-icon"}}Unaligned USFM (ZIP)
+			</strong>
+		</a>
+		<span class="dcs-usfm-download-status"></span>
+	</li>
+	{{end}}
+{{end}}

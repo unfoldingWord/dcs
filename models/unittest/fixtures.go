@@ -93,6 +93,7 @@ func (f fixturesHookStruct) BeforeProcess(c *contexts.ContextHook) (context.Cont
 
 	// ignore the SQLs which don't change data
 	if util.AsciiEqualFold(cmdPart, "SELECT") ||
+		util.AsciiEqualFold(cmdPart, "WITH") || // DCS Customizations: read-only CTE queries (catalog search/stats)
 		util.AsciiEqualFold(cmdPart, "SHOW") ||
 		util.AsciiEqualFold(cmdPart, "PRAGMA") ||
 		util.AsciiEqualFold(cmdPart, "ALTER") ||

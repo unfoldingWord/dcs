@@ -12,6 +12,7 @@ import (
 	"gitea.dev/models/unittest"
 	user_model "gitea.dev/models/user"
 	"gitea.dev/modules/git"
+	"gitea.dev/modules/optional"
 	"gitea.dev/modules/setting"
 	"gitea.dev/modules/test"
 	"gitea.dev/modules/timeutil"
@@ -85,7 +86,7 @@ func TestRelease_Create(t *testing.T) {
 		PublisherID:  user.ID,
 		Publisher:    user,
 		TagName:      "v0.1.3",
-		Target:       "65f1bf2",
+		Target:       repo.DefaultBranch,
 		Title:        "v0.1.3 is released",
 		Note:         "v0.1.3 is released",
 		IsDraft:      true,
@@ -181,7 +182,7 @@ func TestRelease_Update(t *testing.T) {
 		PublisherID:  user.ID,
 		Publisher:    user,
 		TagName:      "v1.2.1",
-		Target:       "65f1bf2",
+		Target:       "master",
 		Title:        "v1.2.1 is draft",
 		Note:         "v1.2.1 is draft",
 		IsDraft:      true,
@@ -353,7 +354,7 @@ func TestRelease_createTag(t *testing.T) {
 		PublisherID:  user.ID,
 		Publisher:    user,
 		TagName:      "v2.2.1",
-		Target:       "65f1bf2",
+		Target:       "master",
 		Title:        "v2.2.1 is draft",
 		Note:         "v2.2.1 is draft",
 		IsDraft:      true,
@@ -429,7 +430,7 @@ func TestRelease_DatedByTargetCommit(t *testing.T) {
 	assert.Equal(t, oldCommit.Committer.When.Unix(), int64(old.CreatedUnix), "a release is dated by the commit it points at")
 	assert.Greater(t, int64(old.PublishedUnix), int64(old.CreatedUnix), "but its publication time is now")
 
-	latest, err := repo_model.GetLatestReleaseByRepoID(t.Context(), repo.ID)
+	latest, err := repo_model.GetLatestReleaseByRepoID(t.Context(), repo.ID, false, optional.None[bool]())
 	assert.NoError(t, err)
 	assert.Equal(t, recent.ID, latest.ID)
 }
