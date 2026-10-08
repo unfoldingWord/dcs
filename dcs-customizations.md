@@ -140,7 +140,7 @@ This document catalogs every DCS modification to existing Gitea files. New DCS-o
 | `templates/shared/repo/search.tmpl` | Search builder UI include | MEDIUM |
 | `templates/repo/header.tmpl` | Catalog version badges, tag button, file icon | MEDIUM |
 | `templates/repo/sub_menu.tmpl` | Language, metadata type, repo size display | MEDIUM |
-| `templates/repo/view_content.tmpl` | Preview button, validation badge | MEDIUM |
+| `templates/repo/view_content.tmpl` | Preview button, validation badge, RepoDM/RepoLink/RefFullName passed to clone_panel dict for SB downloads | MEDIUM |
 | `templates/repo/view_file.tmpl` | Expand toggle, direction attrs, validation script | MEDIUM |
 | `templates/repo/view_list.tmpl` | Validation badge for JSON/YAML | LOW |
 | `templates/repo/release/list.tmpl` | USFM script, catalog badges, preview links | HIGH |

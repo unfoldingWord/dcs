@@ -1,4 +1,5 @@
-{{if and .RepoDM (or (eq .RepoDM.MetadataType "rc") (eq .RepoDM.MetadataType "ts") (eq .RepoDM.MetadataType "tc") (eq .RepoDM.MetadataType "sb")) (ne .RefFullName.ShortName "main")}}
+{{/* Expects RepoDM, RepoLink and RefFullName in the dict passed to repo/clone_panel (templates/repo/view_content.tmpl) */}}
+{{if and .RepoDM .RefFullName (or (eq .RepoDM.MetadataType "rc") (eq .RepoDM.MetadataType "ts") (eq .RepoDM.MetadataType "tc") (eq .RepoDM.MetadataType "sb"))}}
 	<a class="item muted archive-link" href="{{.RepoLink}}/sb/{{PathEscapeSegments .RefFullName.ShortName}}.zip" rel="nofollow">{{svg "octicon-file-zip"}} {{ctx.Locale.Tr "dcs.repo.download_zip_sb"}}</a>
 	<a class="item muted archive-link" href="{{.RepoLink}}/sb/{{PathEscapeSegments .RefFullName.ShortName}}.tar.gz" rel="nofollow">{{svg "octicon-file-zip"}} {{ctx.Locale.Tr "dcs.repo.download_tar_sb"}}</a>
 {{end}}
