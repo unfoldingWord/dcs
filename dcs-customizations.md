@@ -250,10 +250,10 @@ This document catalogs every DCS modification to existing Gitea files. New DCS-o
 ### Templates
 
 - `templates/catalog/catalog.tmpl`, `catalog_list.tmpl`, `catalog_search.tmpl`, `catalog_publisher_list.tmpl`, `hc_dash.tmpl`, `info_icon.tmpl`
-- `templates/dcs/` partials (badges, previews, navbar/signup extras — incl. `ref_healthcheck_badge.tmpl` for the branches/tags/releases pages)
+- `templates/dcs/` partials (badges, previews, navbar/signup extras — incl. `ref_healthcheck_badge.tmpl` for the branches/tags/releases pages, and `search_builder.tmpl` shared by the repo lists and the catalog)
 - `templates/dcs_testing_banner.tmpl`
 - `templates/repo/dcs_metadata.tmpl`, `dcs_metadata_list.tmpl`, `dcs_metadata_list_item.tmpl`, `dcs_healthcheck.tmpl`, `dcs_healthcheck_list.tmpl`
-- `templates/shared/healthcheck_badge.tmpl`, `searchbuilder.tmpl`
+- `templates/shared/healthcheck_badge.tmpl`
 - `templates/tools.tmpl`
 
 ### CI/CD
@@ -272,4 +272,4 @@ This document catalogs every DCS modification to existing Gitea files. New DCS-o
 ### Frontend
 
 - `web_src/css/dcs.css`
-- `web_src/js/features/dcs-catalog-search.ts`, `dcs-hc-dash.ts`, `dcs-healthcheck-badge.ts`, `dcs-info-icon.ts`, `dcs-language-fonts.ts`, `dcs-metadata.ts`, `dcs-usfm-download.ts`, `dcs-validation-badge.ts`
+- `web_src/js/features/dcs-catalog-search.ts`, `dcs-search-builder.ts` (+ test), `dcs-hc-dash.ts`, `dcs-healthcheck-badge.ts`, `dcs-info-icon.ts`, `dcs-language-fonts.ts`, `dcs-metadata.ts`, `dcs-usfm-download.ts`, `dcs-validation-badge.ts`

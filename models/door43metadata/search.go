@@ -4,6 +4,7 @@
 package door43metadata
 
 import (
+	"slices"
 	"strings"
 
 	"gitea.dev/models/db"
@@ -303,6 +304,10 @@ func SearchCatalogCondition(opts *SearchCatalogOptions) builder.Cond {
 // a repo search keyword. "keyword" is the plain free-text search; the catalog-only fields
 // (tag, checking_level, stage) are parsed so they don't leak into the free text, and ignored.
 var RepoSearchKeywordFields = []string{"keyword", "book", "lang", "subject", "flavor_type", "flavor", "abbreviation", "content_format", "repo", "owner", "tag", "checking_level", "metadata_type", "metadata_version", "topic", "without_topic", "healthcheck", "stage"}
+
+// CatalogSearchKeywordFields are the "field:" prefixes the catalog page (routers/web/dcs)
+// parses from its q parameter: the repo fields plus the release-level ones.
+var CatalogSearchKeywordFields = slices.Concat(RepoSearchKeywordFields, []string{"has", "include_history", "is_healthy", "is_healthy_without_warnings"})
 
 // ParseRepoSearchKeyword splits a repo search keyword such as "lang:en, subject:Bible, tn"
 // into its per-field values. Tokens are comma separated; a token starting with a known

@@ -1,0 +1,24 @@
+{{/* Expects IsCatalogSearch. Must be rendered in the same parent element as the search form:
+	web_src/js/features/dcs-search-builder.ts finds the form's input[name="q"] there. */}}
+<div class="dcs-search-builder" data-global-init="initDCSSearchBuilder">
+	<button type="button" class="btn interact-fg dcs-search-builder-toggle" aria-expanded="false" aria-controls="dcs-search-builder-fields">
+		{{svg "octicon-chevron-right" 14 "dcs-search-builder-collapsed"}}{{svg "octicon-chevron-down" 14 "dcs-search-builder-expanded tw-hidden"}}
+		{{ctx.Locale.Tr "dcs.search_builder.title"}}
+	</button>
+	<div id="dcs-search-builder-fields" class="dcs-search-builder-fields tw-hidden">
+		{{range DCSSearchBuilderFields .IsCatalogSearch}}
+			{{$tooltip := ctx.Locale.Tr (printf "dcs.search_builder.%s.tooltip" .Name)}}
+			<label class="dcs-search-builder-field">
+				<span data-tooltip-content="{{$tooltip}}">{{ctx.Locale.Tr (printf "dcs.search_builder.%s" .Name)}}</span>
+				<div class="ui small input">
+					<input type="text" data-field="{{.Name}}" placeholder="{{$tooltip}}"{{if .Options}} list="dcs-search-builder-options-{{.Name}}"{{end}}>
+				</div>
+				{{if .Options}}
+					<datalist id="dcs-search-builder-options-{{.Name}}">
+						{{range .Options}}<option value="{{.}}"></option>{{end}}
+					</datalist>
+				{{end}}
+			</label>
+		{{end}}
+	</div>
+</div>

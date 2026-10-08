@@ -107,9 +107,8 @@ func RenderCatalogSearch(ctx *context.Context, opts *CatalogSearchOptions) {
 		}
 		return false
 	}
-	searchFields := []string{"keyword", "book", "lang", "subject", "flavor_type", "flavor", "abbreviation", "content_format", "repo", "owner", "tag", "checking_level", "metadata_type", "metadata_version", "topic", "without_topic", "stage", "has", "include_history", "is_healthy", "is_healthy_without_warnings", "healthcheck"}
 	searchMap := map[string][]string{}
-	for _, field := range searchFields {
+	for _, field := range door43metadata.CatalogSearchKeywordFields {
 		searchMap[field] = []string{}
 	}
 	currentField := "keyword"
