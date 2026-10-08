@@ -44,7 +44,9 @@
 				<div class="ui right">
 					<a class="ui teal tiny button" href="{{.RepoLink}}/metadata/all">{{ctx.Locale.Tr "dcs.repo.metadata.see_all_branches_releases"}} &gt;</a>
 					{{if .Permission.IsAdmin}}
-						<a class="ui teal tiny button" href="{{.RepoLink}}/metadata/update">{{ctx.Locale.Tr "dcs.repo.metadata.update_metadata"}}</a>
+						<form class="item" action="{{.RepoLink}}/metadata/update" method="post">
+							<button type="submit" class="ui teal tiny button">{{ctx.Locale.Tr "dcs.repo.metadata.update_metadata"}}</button>
+						</form>
 					{{end}}
 				</div>
 			</h4>
@@ -53,7 +55,12 @@
 					{{template "repo/dcs_metadata_list" (dict "ctxData" . "Door43Metadatas" .Door43Metadatas)}}
 				{{else}}
 					<span>
-						No Metadata for this Repository. Click&nbsp;<a href="{{.RepoLink}}/metadata/update">update</a>&nbsp;to scan the repo.
+						{{ctx.Locale.Tr "dcs.repo.metadata.no_metadata"}}
+						{{if .Permission.IsAdmin}}
+							<form class="tw-inline" action="{{.RepoLink}}/metadata/update" method="post">
+								<button type="submit" class="ui tiny button">{{ctx.Locale.Tr "dcs.repo.metadata.update_metadata"}}</button>
+							</form>
+						{{end}}
 					</span>
 				{{end}}
 			</div>

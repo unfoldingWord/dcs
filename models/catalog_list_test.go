@@ -382,6 +382,10 @@ func TestSearchCatalogContentFlags(t *testing.T) {
 	assert.True(t, results[0].HasAudio)
 	assert.True(t, results[0].HasStream)
 	assert.False(t, results[0].HasPDF)
+	expectedReleaseCount, err := results[0].ReleaseCount(t.Context())
+	require.NoError(t, err)
+	require.NoError(t, results.LoadReleaseCounts(t.Context()))
+	assert.Equal(t, expectedReleaseCount, results[0].ReleaseCountValue)
 
 	opts.HasAudio = optional.Some(false)
 	_, count, err = SearchCatalog(t.Context(), opts)

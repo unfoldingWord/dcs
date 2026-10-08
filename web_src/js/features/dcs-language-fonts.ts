@@ -11,7 +11,7 @@ export function initDCSLanguageFonts() {
   for (const tag of document.querySelectorAll('[data-language]')) {
     const lang = tag.getAttribute('data-language')!;
     if (lang_font_families[lang]) {
-      setDCSFontsHTML(lang_font_families[lang], `[data-language=${lang}], [data-language=${lang}] *`);
+      setDCSFontsHTML(lang_font_families[lang], `[data-language="${CSS.escape(lang)}"], [data-language="${CSS.escape(lang)}"] *`);
     }
   }
 }
@@ -20,10 +20,11 @@ function setDCSFontsHTML(fonts: string[], selector: string) {
   if (set_dcs_selectors.includes(selector)) {
     return;
   }
-  if (!fonts.includes('Noto Sans')) {
-    fonts.push('Noto Sans');
+  const fontFamilies = [...fonts];
+  if (!fontFamilies.includes('Noto Sans')) {
+    fontFamilies.push('Noto Sans');
   }
-  for (const font of fonts) {
+  for (const font of fontFamilies) {
     if (!set_dcs_fonts.includes(font) && lang_font_links[font]) {
       const link = document.createElement('link');
       link.href = lang_font_links[font];
@@ -32,11 +33,8 @@ function setDCSFontsHTML(fonts: string[], selector: string) {
       set_dcs_fonts.push(font);
     }
   }
-  document.head.insertAdjacentHTML('beforeend', `
-<style type="text/css">
-    ${selector} {
-    font-family: "${fonts.join(', ')}, sans-serif" !important;
-  };
-</style>`);
+  const style = document.createElement('style');
+  style.textContent = `${selector} { font-family: ${fontFamilies.map((font) => `"${font.replaceAll('"', '\\"')}"`).join(', ')}, sans-serif !important; }`;
+  document.head.append(style);
   set_dcs_selectors.push(selector);
 }

@@ -16,7 +16,7 @@ Both accept **all the regular catalog search filters** — `q`, `owner`, `repo`,
 `abbreviation`, `format`, `checkingLevel`, `book`, `metadataType`,
 `metadataVersion`, `topic`, `withoutTopic`, the `has*` content flags,
 `is_healthy`, `is_healthy_without_warnings`, `healthcheck` (comma-separated
-severity levels), `includeHistory` and `partialMatch` — plus two date bounds:
+severity levels) and `partialMatch` — plus two date bounds:
 
 - `startDate` — only entries with `release_date_unix` **on or after** this date.
 - `endDate` — only entries **on or before** this date. A date given without a
@@ -74,9 +74,9 @@ accepts a Unix timestamp or common formats like `2026-07-13`,
 
 ## Semantics
 
-- `entry_count` — matching `door43_metadata` rows. Without `includeHistory`,
-  that's the latest entry per repo for the stage; with it, every release of the
-  given stage or lower.
+- `entry_count` — repos with a matching `door43_metadata` row. Only the latest
+  entry per repo and stage is considered; `includeHistory` is not supported by
+  the stats endpoints.
 - `lang_count`, `subject_count`, `flavor_type_count`, `flavor_count`,
   `owner_count`, `repo_count` — `DISTINCT` counts of the respective field.
 - `lang_ltr_count` / `lang_rtl_count` — **unique languages** whose

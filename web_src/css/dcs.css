@@ -72,3 +72,30 @@
   border: 0;
   padding: 10px 0 0;
 }
+
+/* Search builder above the repo and catalog lists (templates/dcs/search_builder.tmpl) */
+.dcs-search-builder {
+  margin-top: 0.5rem;
+}
+.dcs-search-builder-toggle {
+  gap: 0.25em;
+  font-weight: var(--font-weight-semibold);
+}
+.dcs-search-builder-fields {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+  gap: 0.5rem 1rem;
+  margin-top: 0.5rem;
+}
+.dcs-search-builder-field {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.dcs-search-builder-field > span {
+  flex: 0 0 10em;
+  font-weight: var(--font-weight-semibold);
+}
+.dcs-search-builder-field > .ui.input {
+  flex: 1;
+}

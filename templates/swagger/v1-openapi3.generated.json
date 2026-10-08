@@ -13732,7 +13732,7 @@
             }
           },
           {
-            "description": "sort repos alphanumerically by attribute. Supported values are \"subject\", \"title\", \"reponame\", \"tag\", \"released\", \"lang\", \"releases\", \"stars\", \"forks\". Default is by \"subject\" and then \"abbreviation\"",
+            "description": "sort by attribute. Supported values are \"subject\", \"title\", \"flavortype\", \"flavor\", \"abbreviation\", \"reponame\", \"tag\", \"released\", \"lang\", \"releases\", \"stars\", \"forks\". Default is by \"subject\" and then \"abbreviation\"",
             "in": "query",
             "name": "sort",
             "schema": {
@@ -15379,7 +15379,7 @@
             }
           },
           {
-            "description": "sort repos alphanumerically by attribute. Supported values are \"subject\", \"title\", \"reponame\", \"tag\", \"released\", \"lang\", \"releases\", \"stars\", \"forks\". Default is by \"language\", \"subject\" and then \"tag\"",
+            "description": "sort by attribute. Supported values are \"subject\", \"title\", \"flavortype\", \"flavor\", \"abbreviation\", \"reponame\", \"tag\", \"released\", \"lang\", \"releases\", \"stars\", \"forks\". Default is by \"language\", \"subject\" and then \"tag\"",
             "in": "query",
             "name": "sort",
             "schema": {
