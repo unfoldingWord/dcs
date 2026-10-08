@@ -290,6 +290,28 @@ func commitFileOnBranch(t *testing.T, repoPath, branch, fileName, content string
 	})
 }
 
+func commitEmptyTreeOnBranch(t *testing.T, repoPath, branch string) {
+	t.Helper()
+	ctx := t.Context()
+	treeSha, _, err := gitcmd.NewCommand("mktree").WithDir(repoPath).WithStdinBytes(nil).RunStdString(ctx)
+	require.NoError(t, err)
+
+	when := time.Now().Format(time.RFC3339)
+	env := append(os.Environ(),
+		"GIT_AUTHOR_NAME=test", "GIT_AUTHOR_EMAIL=test@example.com", "GIT_AUTHOR_DATE="+when,
+		"GIT_COMMITTER_NAME=test", "GIT_COMMITTER_EMAIL=test@example.com", "GIT_COMMITTER_DATE="+when,
+	)
+	commitSha, _, err := gitcmd.NewCommand("commit-tree").AddDynamicArguments(strings.TrimSpace(treeSha)).
+		WithEnv(env).WithDir(repoPath).WithStdinBytes([]byte("remove metadata\n")).RunStdString(ctx)
+	require.NoError(t, err)
+
+	_, _, err = gitcmd.NewCommand("update-ref").AddDynamicArguments("refs/heads/"+branch, strings.TrimSpace(commitSha)).WithDir(repoPath).RunStdString(ctx)
+	require.NoError(t, err)
+	t.Cleanup(func() {
+		_, _, _ = gitcmd.NewCommand("update-ref", "-d").AddDynamicArguments("refs/heads/" + branch).WithDir(repoPath).RunStdString(t.Context())
+	})
+}
+
 // TestProcessDoor43MetadataForRepoRef_InvalidMetadataFiles drives the real pipeline over
 // branches whose metadata file exists but is broken. Before this behaviour, an invalid
 // metadata.json fell through to the RC path and the whole ref was dropped, so nothing
@@ -386,5 +408,23 @@ func TestProcessDoor43MetadataForRepoRef_InvalidMetadataFiles(t *testing.T) {
 		require.NoError(t, processDoor43MetadataForRepoRef(ctx, repo, repo.DefaultBranch))
 		_, err := repo_model.GetDoor43MetadataByRepoIDAndRef(ctx, repo.ID, repo.DefaultBranch)
 		assert.True(t, repo_model.IsErrDoor43MetadataNotExist(err))
+	})
+
+	t.Run("removing metadata deletes the ref entry and its healthcheck issues", func(t *testing.T) {
+		const ref = "dcs-metadata-removed"
+		commitFileOnBranch(t, repoPath, ref, "metadata.json", validSBMetadata)
+		require.NoError(t, processDoor43MetadataForRepoRef(ctx, repo, ref))
+		dm := loadDM(t, ref)
+		issues, err := repo_model.GetDoor43HealthcheckIssuesByDMID(ctx, dm.ID)
+		require.NoError(t, err)
+		require.NotEmpty(t, issues, "the initial check must persist issues for the ref")
+
+		commitEmptyTreeOnBranch(t, repoPath, ref)
+		require.NoError(t, processDoor43MetadataForRepoRef(ctx, repo, ref))
+		_, err = repo_model.GetDoor43MetadataByRepoIDAndRef(ctx, repo.ID, ref)
+		require.True(t, repo_model.IsErrDoor43MetadataNotExist(err), "metadata row should be removed")
+		issues, err = repo_model.GetDoor43HealthcheckIssuesByDMID(ctx, dm.ID)
+		require.NoError(t, err)
+		assert.Empty(t, issues, "healthcheck issues should be removed with their metadata row")
 	})
 }

@@ -68,6 +68,15 @@ func TestDoor43HealthcheckIssuePersistence(t *testing.T) {
 	require.NotNil(t, hgi)
 	assert.Equal(t, repo_model.SeverityLevelWarning, hgi.OverallSeverityLevel)
 
+	// LoadHealthchecks does the same for a list; an entry never checked gets nothing
+	// here since no HealthcheckFunc is registered in model tests
+	unchecked := &repo_model.Door43Metadata{ID: dm.ID + 1000, MetadataType: "rc", Subject: "Open Bible Stories"}
+	require.NoError(t, repo_model.Door43MetadataList{dm, unchecked}.LoadHealthchecks(t.Context()))
+	require.NotNil(t, dm.Healthcheck)
+	assert.Equal(t, repo_model.SeverityLevelWarning, dm.Healthcheck.OverallSeverityLevel)
+	assert.Equal(t, 1, dm.Healthcheck.SeverityLevelCount[repo_model.SeverityLevelWarning])
+	assert.Nil(t, unchecked.Healthcheck)
+
 	// deleting the DM removes its issues
 	require.NoError(t, repo_model.DeleteDoor43Metadata(t.Context(), dm))
 	stored, err = repo_model.GetDoor43HealthcheckIssuesByDMID(t.Context(), dm.ID)

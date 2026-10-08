@@ -6,6 +6,7 @@ package repo
 import (
 	go_context "context"
 	"net/http"
+	"slices"
 
 	"gitea.dev/models/db"
 	repo_model "gitea.dev/models/repo"
@@ -29,13 +30,20 @@ const (
 
 // GetRepoMetadata renders the metadata summary page (default branch + latest release)
 func GetRepoMetadata(ctx *context.Context) {
-	_ = ctx.Repo.Repository.LoadLatestDMs(ctx)
+	if err := ctx.Repo.Repository.LoadLatestDMs(ctx); err != nil {
+		ctx.ServerError("LoadLatestDMs", err)
+		return
+	}
 	door43Metadatas := []*repo_model.Door43Metadata{}
 	if ctx.Repo.Repository.RepoDM != nil && ctx.Repo.Repository.RepoDM.ID > 0 {
 		door43Metadatas = append(door43Metadatas, ctx.Repo.Repository.RepoDM)
 	}
 	if ctx.Repo.Repository.LatestProdDM != nil {
 		door43Metadatas = append(door43Metadatas, ctx.Repo.Repository.LatestProdDM)
+	}
+	if err := prepareDoor43MetadataForView(ctx, door43Metadatas); err != nil {
+		ctx.ServerError("prepareDoor43MetadataForView", err)
+		return
 	}
 
 	ctx.Data["Title"] = "Metadata"
@@ -49,7 +57,10 @@ func GetRepoMetadata(ctx *context.Context) {
 // canonical entry (default branch, falling back to the latest release), while
 // /healthcheck/{ref} shows the given branch or tag's own health check.
 func GetRepoHealthcheck(ctx *context.Context) {
-	_ = ctx.Repo.Repository.LoadLatestDMs(ctx)
+	if err := ctx.Repo.Repository.LoadLatestDMs(ctx); err != nil {
+		ctx.ServerError("LoadLatestDMs", err)
+		return
+	}
 
 	var dm *repo_model.Door43Metadata
 	ref := ctx.PathParam("*")
@@ -74,6 +85,7 @@ func GetRepoHealthcheck(ctx *context.Context) {
 		return
 	}
 
+	dm.Healthcheck = dm.GetHealthcheck(ctx)
 	ctx.Data["Title"] = "Health Check"
 	ctx.Data["PageIsHealthcheck"] = true
 	ctx.Data["Repo"] = ctx.Repo.Repository
@@ -84,7 +96,10 @@ func GetRepoHealthcheck(ctx *context.Context) {
 
 // GetAllRepoDoor43Metadata renders all door43metadatas for a repo with paginated releases
 func GetAllRepoDoor43Metadata(ctx *context.Context) {
-	_ = ctx.Repo.Repository.LoadLatestDMs(ctx)
+	if err := ctx.Repo.Repository.LoadLatestDMs(ctx); err != nil {
+		ctx.ServerError("LoadLatestDMs", err)
+		return
+	}
 
 	// Branches: load all (typically < 20)
 	branchDms := make([]*repo_model.Door43Metadata, 0, 50)
@@ -94,7 +109,8 @@ func GetAllRepoDoor43Metadata(ctx *context.Context) {
 		OrderBy("is_repo_metadata DESC, stage ASC, release_date_unix DESC").
 		Find(&branchDms)
 	if err != nil {
-		log.Error("Find(dms) for branches: %v", err)
+		ctx.ServerError("FindDoor43MetadataBranches", err)
+		return
 	}
 
 	// Releases: paginated
@@ -108,7 +124,8 @@ func GetAllRepoDoor43Metadata(ctx *context.Context) {
 		And(builder.Eq{"ref_type": "tag"}).
 		Count(&repo_model.Door43Metadata{})
 	if err != nil {
-		log.Error("Count(dms) for releases: %v", err)
+		ctx.ServerError("CountDoor43MetadataReleases", err)
+		return
 	}
 
 	releaseDms := make([]*repo_model.Door43Metadata, 0, releaseDMsPerPage)
@@ -119,7 +136,12 @@ func GetAllRepoDoor43Metadata(ctx *context.Context) {
 		Limit(releaseDMsPerPage, (page-1)*releaseDMsPerPage).
 		Find(&releaseDms)
 	if err != nil {
-		log.Error("Find(dms) for releases: %v", err)
+		ctx.ServerError("FindDoor43MetadataReleases", err)
+		return
+	}
+	if err := prepareDoor43MetadataForView(ctx, slices.Concat(branchDms, releaseDms)); err != nil {
+		ctx.ServerError("prepareDoor43MetadataForView", err)
+		return
 	}
 
 	ctx.Data["Title"] = "Door43 Metadata"
@@ -131,6 +153,18 @@ func GetAllRepoDoor43Metadata(ctx *context.Context) {
 	ctx.Data["Page"] = context.NewPagerBuilder(ctx).TotalCount(releaseCount).PerPageLimit(releaseDMsPerPage).CurPage(page).Build()
 
 	ctx.HTML(http.StatusOK, tplDCSMetadataAll)
+}
+
+// prepareDoor43MetadataForView loads what the metadata list templates read (release,
+// healthcheck) so rendering does no database or healthcheck work.
+func prepareDoor43MetadataForView(ctx *context.Context, dms repo_model.Door43MetadataList) error {
+	for _, dm := range dms {
+		dm.Repo = ctx.Repo.Repository
+	}
+	if err := dms.LoadAttributes(ctx); err != nil {
+		return err
+	}
+	return dms.LoadHealthchecks(ctx)
 }
 
 // UpdateDoor43Metadata updates the repo's metadata

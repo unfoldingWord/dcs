@@ -46,8 +46,8 @@ var searchOrderByMap = map[string]map[string]door43metadata.CatalogOrderBy{
 	"desc": {
 		"title":        door43metadata.CatalogOrderByTitleReverse,
 		"subject":      door43metadata.CatalogOrderBySubjectReverse,
-		"flavortype":   door43metadata.CatalogOrderByFlavorType,
-		"flavor":       door43metadata.CatalogOrderByFlavor,
+		"flavortype":   door43metadata.CatalogOrderByFlavorTypeReverse,
+		"flavor":       door43metadata.CatalogOrderByFlavorReverse,
 		"abbreviation": door43metadata.CatalogOrderByAbbreviationReverse,
 		"reponame":     door43metadata.CatalogOrderByRepoNameReverse,
 		"released":     door43metadata.CatalogOrderByNewest,
@@ -240,8 +240,8 @@ func Search(ctx *context.APIContext) {
 	//   type: boolean
 	// - name: sort
 	//   in: query
-	//   description: sort repos alphanumerically by attribute. Supported values are
-	//                "subject", "title", "reponame", "tag", "released", "lang", "releases", "stars", "forks".
+	//   description: sort by attribute. Supported values are "subject", "title", "flavortype", "flavor",
+	//                "abbreviation", "reponame", "tag", "released", "lang", "releases", "stars", "forks".
 	//                Default is by "language", "subject" and then "tag"
 	//   type: string
 	// - name: order
@@ -2308,8 +2308,8 @@ func GetCatalogBookPackage(ctx *context.APIContext) {
 	//   type: boolean
 	// - name: sort
 	//   in: query
-	//   description: sort repos alphanumerically by attribute. Supported values are
-	//                "subject", "title", "reponame", "tag", "released", "lang", "releases", "stars", "forks".
+	//   description: sort by attribute. Supported values are "subject", "title", "flavortype", "flavor",
+	//                "abbreviation", "reponame", "tag", "released", "lang", "releases", "stars", "forks".
 	//                Default is by "subject" and then "abbreviation"
 	//   type: string
 	// - name: order

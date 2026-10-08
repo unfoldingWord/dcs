@@ -1,26 +1,23 @@
+{{$dm := .Door43Metadata}}
 {{if .Door43Metadata}}
-	{{$healthcheck := .Door43Metadata.GetHealthcheck ctx}}
+	{{$healthcheck := .Door43Metadata.Healthcheck}}
 	{{if $healthcheck}}
 	<div class="ui list dcs-item-list">
 	{{range $issueCode := $healthcheck.GetOrder}}
 		{{$issues := index $healthcheck.Issues $issueCode}}
 		<div class="ui item">
-			<div{{if $issues}} class="toggle show-panel" data-panel="#{{$issueCode}}"{{end}}>
-			{{if not $issues}}
-				<span style="color: green;">{{svg "octicon-shield-check" 16}}</span>
-			{{else}}
-				{{if eq ((index $issues 0).SeverityLevel.String) "error"}}
-					<span style="color: red;">{{svg "octicon-shield-x" 16}}</span>
-				{{else if eq ((index $issues 0).SeverityLevel.String) "warning"}}
-					<span style="color: orange;">{{svg "octicon-shield" 16}}</span>
-				{{else if eq ((index $issues 0).SeverityLevel.String) "info"}}
-					<span style="color: blue;">{{svg "octicon-shield-lock" 16}}</span>
-				{{end}}
-			{{end}}
-			{{$issueCode.IssuePositiveString}}
-			</div>
 			{{if $issues}}
-				<div class="ui list tw-hidden" id="{{$issueCode}}">
+				<button type="button" class="btn flex-text-inline toggle show-panel" data-panel="#{{$issueCode}}-{{$dm.ID}}">
+					{{if eq ((index $issues 0).SeverityLevel.String) "error"}}
+						{{svg "octicon-shield-x" 16 "tw-text-red"}}
+					{{else if eq ((index $issues 0).SeverityLevel.String) "warning"}}
+						{{svg "octicon-shield" 16 "tw-text-orange"}}
+					{{else if eq ((index $issues 0).SeverityLevel.String) "info"}}
+						{{svg "octicon-shield-lock" 16 "tw-text-blue"}}
+					{{end}}
+					{{$issueCode.IssuePositiveString}}
+				</button>
+				<div class="ui list tw-hidden" id="{{$issueCode}}-{{$dm.ID}}">
 					{{range $issue := $issues}}
 						<div class="status-item {{$issue.SeverityLevel}}">
 							<div class="item-text">
@@ -34,10 +31,14 @@
 						</div>
 					{{end}}
 				</div>
+			{{else}}
+				<div class="flex-text-inline">
+					{{svg "octicon-shield-check" 16 "tw-text-green"}}
+					{{$issueCode.IssuePositiveString}}
+				</div>
 			{{end}}
 		</div>
 	{{end}}
 	</div>
 	{{end}}
 {{end}}
-

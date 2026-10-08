@@ -1338,6 +1338,9 @@ func processDoor43MetadataForRepoRef(ctx context.Context, repo *repo_model.Repos
 				// Not a resource ref: nothing to record, and not an error either (the all-refs
 				// pass would otherwise raise an admin notice for every plain branch).
 				log.Debug("processDoor43MetadataForRef: %s/%s is not a SB, TC, TS nor RC repo. Not adding to door43_metadata\n", repo.FullName(), ref)
+				if err := repo_model.DeleteDoor43MetadataByRepoIDAndRef(ctx, repo.ID, ref); err != nil {
+					return fmt.Errorf("delete stale metadata for %s/%s: %w", repo.FullName(), ref, err)
+				}
 				return nil
 			}
 		}
@@ -1488,37 +1491,39 @@ func UnpackJSONAttachments(ctx context.Context, release *repo_model.Release) {
 				log.Error("GetAttachmentsFromJSON Error: %v", err)
 				continue
 			}
+			attachmentsByName := make(map[string]*repo_model.Attachment, len(release.Attachments))
+			for _, existing := range release.Attachments {
+				attachmentsByName[existing.Name] = existing
+			}
+			persistenceFailed := false
 			for _, remoteAttachment := range remoteAttachments {
 				remoteAttachment.ReleaseID = attachment.ReleaseID
 				remoteAttachment.RepoID = attachment.RepoID
 				remoteAttachment.UploaderID = attachment.UploaderID
-				foundExisting := false
-				for _, a := range release.Attachments {
-					if a.Name == remoteAttachment.Name {
-						if remoteAttachment.Size > 0 {
-							a.Size = remoteAttachment.Size
-						}
-						if remoteAttachment.BrowserDownloadURL != "" {
-							a.BrowserDownloadURL = remoteAttachment.BrowserDownloadURL
-						}
-						a.BrowserDownloadURL = remoteAttachment.BrowserDownloadURL
-						if err := repo_model.UpdateAttachment(ctx, a); err != nil {
-							log.Error("UpdateAttachment [%d]: %v", a.ID, err)
-							continue
-						}
-						foundExisting = true
-						break
+				if existing := attachmentsByName[remoteAttachment.Name]; existing != nil {
+					if remoteAttachment.Size > 0 {
+						existing.Size = remoteAttachment.Size
 					}
-				}
-				if foundExisting {
+					if remoteAttachment.BrowserDownloadURL != "" {
+						existing.BrowserDownloadURL = remoteAttachment.BrowserDownloadURL
+					}
+					if err := repo_model.UpdateAttachment(ctx, existing); err != nil {
+						log.Error("UpdateAttachment [%d]: %v", existing.ID, err)
+						persistenceFailed = true
+					}
 					continue
 				}
 				// No existing attachment was found with the same name, so we insert a new one
 				remoteAttachment.UUID = uuid.New().String()
-				if _, err = db.GetEngine(ctx).Insert(remoteAttachment); err != nil {
+				if _, err := db.GetEngine(ctx).Insert(remoteAttachment); err != nil {
 					log.Error("insert attachment [%d]: %v", remoteAttachment.ID, err)
+					persistenceFailed = true
 					continue
 				}
+				attachmentsByName[remoteAttachment.Name] = remoteAttachment
+			}
+			if persistenceFailed {
+				continue
 			}
 			if err := repo_model.DeleteAttachment(ctx, attachment, true); err != nil {
 				log.Error("delete attachment [%d]: %v", attachment.ID, err)

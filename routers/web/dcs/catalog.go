@@ -59,11 +59,11 @@ func RenderCatalogSearch(ctx *context.Context, opts *CatalogSearchOptions) {
 		orderBy = door43metadata.CatalogOrderBySubject
 	case "reverseflavortype":
 		orderBy = door43metadata.CatalogOrderByFlavorTypeReverse
-	case "falvortype":
+	case "flavortype":
 		orderBy = door43metadata.CatalogOrderByFlavorType
 	case "reverseflavor":
 		orderBy = door43metadata.CatalogOrderByFlavorReverse
-	case "falvor":
+	case "flavor":
 		orderBy = door43metadata.CatalogOrderByFlavor
 	case "reverserabbreviation":
 		orderBy = door43metadata.CatalogOrderByAbbreviationReverse
@@ -107,9 +107,8 @@ func RenderCatalogSearch(ctx *context.Context, opts *CatalogSearchOptions) {
 		}
 		return false
 	}
-	searchFields := []string{"keyword", "book", "lang", "subject", "flavor_type", "flavor", "abbreviation", "content_format", "repo", "owner", "tag", "checking_level", "metadata_type", "metadata_version", "topic", "without_topic", "stage", "has", "include_history", "is_healthy", "is_healthy_without_warnings", "healthcheck"}
 	searchMap := map[string][]string{}
-	for _, field := range searchFields {
+	for _, field := range door43metadata.CatalogSearchKeywordFields {
 		searchMap[field] = []string{}
 	}
 	currentField := "keyword"
@@ -193,6 +192,10 @@ func RenderCatalogSearch(ctx *context.Context, opts *CatalogSearchOptions) {
 	dms, count, err = models.SearchCatalog(ctx, searchOpts)
 	if err != nil {
 		ctx.ServerError("SearchCatalog", err)
+		return
+	}
+	if err := dms.LoadReleaseCounts(ctx); err != nil {
+		ctx.ServerError("LoadReleaseCounts", err)
 		return
 	}
 	ctx.Data["Keyword"] = query

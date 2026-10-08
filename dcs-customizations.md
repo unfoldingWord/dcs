@@ -89,7 +89,6 @@ This document catalogs every DCS modification to existing Gitea files. New DCS-o
 | `services/convert/repository.go` | Removed Language field, wraps return with ToRepoDCS() | MEDIUM | services/convert/repository_dcs.go |
 | `services/release/release.go` | notify_service.NewTagRelease() call in CreateNewTag | MEDIUM | services/notify/notifier.go |
 | `services/repository/create.go` | LICENSE → LICENSE.md extension change | LOW | - |
-| `services/auth/auth.go` | archivePathRe extended for /sb/ path | LOW | - |
 | `services/forms/repo_form.go` | NewDoor43MetadataForm, EditDoor43MetadataForm structs | LOW | - |
 
 ### VALUE_CHANGE - Single-line value changes
@@ -140,7 +139,7 @@ This document catalogs every DCS modification to existing Gitea files. New DCS-o
 | `templates/shared/repo/search.tmpl` | Search builder UI include | MEDIUM |
 | `templates/repo/header.tmpl` | Catalog version badges, tag button, file icon | MEDIUM |
 | `templates/repo/sub_menu.tmpl` | Language, metadata type, repo size display | MEDIUM |
-| `templates/repo/view_content.tmpl` | Preview button, validation badge | MEDIUM |
+| `templates/repo/view_content.tmpl` | Preview button, validation badge, RepoDM/RepoLink/RefFullName passed to clone_panel dict for SB downloads | MEDIUM |
 | `templates/repo/view_file.tmpl` | Expand toggle, direction attrs, validation script | MEDIUM |
 | `templates/repo/view_list.tmpl` | Validation badge for JSON/YAML | LOW |
 | `templates/repo/release/list.tmpl` | USFM script, catalog badges, preview links | HIGH |
@@ -149,7 +148,7 @@ This document catalogs every DCS modification to existing Gitea files. New DCS-o
 | `templates/repo/tag/list.tmpl` | USFM script, preview buttons per tag | MEDIUM |
 | `templates/repo/diff/box.tmpl` | Validation badge in diff headers | LOW |
 | `templates/repo/create.tmpl` | CC-BY-SA license override, hidden fields, private checkbox restricted to admins | MEDIUM |
-| `templates/repo/migrate/*.tmpl` (9 files) | Private checkbox restricted to admins | LOW |
+| `templates/repo/migrate/{git,codebase,codecommit,gitlab,gitea,gitbucket,gogs,github,onedev}.tmpl` | Private checkbox restricted to admins | LOW |
 | `templates/org/create.tmpl` | Visibility radios restricted to admins (non-admins forced public) | LOW |
 | `templates/org/settings/options_dangerzone.tmpl` | Visibility row and modal restricted to admins | LOW |
 | `templates/repo/clone_panel.tmpl` | Scripture Burrito download links | LOW |
@@ -173,7 +172,7 @@ This document catalogs every DCS modification to existing Gitea files. New DCS-o
 | ------ | ------------- | ------ |
 | `templates/explore/navbar.tmpl` | octicon-code → octicon-file | LOW |
 | `templates/repo/editor/edit.tmpl` | octicon-code → octicon-file | LOW |
-| `templates/swagger/ui.tmpl` | "Gitea API" → "DCS (Gitea) API" | LOW |
+| `templates/swagger/openapi-viewer.tmpl` | "Gitea API" → "DCS (Gitea) API" | LOW |
 
 ### BRANDING/AUTO-GENERATED
 
@@ -191,12 +190,11 @@ This document catalogs every DCS modification to existing Gitea files. New DCS-o
 | `.github/workflows/release-tag-version.yml` | CI runner change | LOW |
 | `.gitignore` | DCS-specific entries | LOW |
 | `Dockerfile` | sqlite_json tag, DCS tools (jq, yq, nodejs) | MEDIUM |
-| `Dockerfile.rootless` | sqlite_json tag | LOW |
 | `Makefile` | Docker image name, test targets | MEDIUM |
 | `README.md` | DCS branding | LOW |
 | `custom/conf/app.example.ini` | [dcs] section | LOW |
 | `docker/manifest*.tmpl` | Docker image references | LOW |
-| `options/locale/locale_en-US.ini` | DCS locale strings, rebranding | MEDIUM |
+| `options/locale/locale_en-US.json` | DCS locale strings (`dcs.*` block at end), rebranding overrides | MEDIUM |
 
 ---
 
@@ -206,10 +204,8 @@ This document catalogs every DCS modification to existing Gitea files. New DCS-o
 | ------ | ------------- | ------ |
 | `web_src/css/index.css` | DCS CSS import | LOW |
 | `web_src/css/markup/content.css` | Markup style tweaks | LOW |
-| `web_src/css/standalone/swagger.css` | Swagger style tweaks | LOW |
 | `web_src/js/features/repo-home.ts` | Minor DCS integration | LOW |
-| `web_src/js/features/repo-projects.ts` | Minor DCS integration | LOW |
-| `web_src/js/index-domready.ts` | DCS feature imports | LOW |
+| `web_src/js/index.ts` | DCS feature imports and init registrations | LOW |
 
 ---
 
@@ -217,7 +213,6 @@ This document catalogs every DCS modification to existing Gitea files. New DCS-o
 
 | File | Description | Risk |
 | ------ | ------------- | ------ |
-| `services/auth/auth_test.go` | Test for /sb/ archive path | LOW |
 | `services/release/release_test.go` | Changed test targets for DCS compatibility | LOW |
 | `tests/integration/links_test.go` | Updated for DCS links | LOW |
 | `tests/integration/user_test.go` | Updated for DCS behavior | LOW |
@@ -255,10 +250,10 @@ This document catalogs every DCS modification to existing Gitea files. New DCS-o
 ### Templates
 
 - `templates/catalog/catalog.tmpl`, `catalog_list.tmpl`, `catalog_search.tmpl`, `catalog_publisher_list.tmpl`, `hc_dash.tmpl`, `info_icon.tmpl`
-- `templates/dcs/` partials (badges, previews, navbar/signup extras — incl. `ref_healthcheck_badge.tmpl` for the branches/tags/releases pages)
+- `templates/dcs/` partials (badges, previews, navbar/signup extras — incl. `ref_healthcheck_badge.tmpl` for the branches/tags/releases pages, and `search_builder.tmpl` shared by the repo lists and the catalog)
 - `templates/dcs_testing_banner.tmpl`
 - `templates/repo/dcs_metadata.tmpl`, `dcs_metadata_list.tmpl`, `dcs_metadata_list_item.tmpl`, `dcs_healthcheck.tmpl`, `dcs_healthcheck_list.tmpl`
-- `templates/shared/healthcheck_badge.tmpl`, `searchbuilder.tmpl`
+- `templates/shared/healthcheck_badge.tmpl`
 - `templates/tools.tmpl`
 
 ### CI/CD
@@ -277,4 +272,4 @@ This document catalogs every DCS modification to existing Gitea files. New DCS-o
 ### Frontend
 
 - `web_src/css/dcs.css`
-- `web_src/js/features/dcs-catalog-search.ts`, `dcs-hc-dash.ts`, `dcs-healthcheck-badge.ts`, `dcs-info-icon.ts`, `dcs-language-fonts.ts`, `dcs-metadata.ts`, `dcs-usfm-download.ts`, `dcs-validation-badge.ts`
+- `web_src/js/features/dcs-catalog-search.ts`, `dcs-search-builder.ts` (+ test), `dcs-hc-dash.ts`, `dcs-healthcheck-badge.ts`, `dcs-info-icon.ts`, `dcs-language-fonts.ts`, `dcs-metadata.ts`, `dcs-usfm-download.ts`, `dcs-validation-badge.ts`

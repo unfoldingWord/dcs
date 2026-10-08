@@ -9468,7 +9468,7 @@ function downloadUnalignedUSFM(owner, repo, ref, statusElement) {
       statusElement.textContent = 'owner, repo and ref must be provided';
     }
   } else {
-    const dcsZipUrl = `/${owner}/${repo}/archive/${ref}.zip`;
+    const dcsZipUrl = `${window.config.appSubUrl}/${owner}/${repo}/archive/${ref}.zip`;
 
     // Step 2: Fetch Zip File from DCS
     axios
