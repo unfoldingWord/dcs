@@ -148,7 +148,7 @@ This document catalogs every DCS modification to existing Gitea files. New DCS-o
 | `templates/repo/tag/list.tmpl` | USFM script, preview buttons per tag | MEDIUM |
 | `templates/repo/diff/box.tmpl` | Validation badge in diff headers | LOW |
 | `templates/repo/create.tmpl` | CC-BY-SA license override, hidden fields, private checkbox restricted to admins | MEDIUM |
-| `templates/repo/migrate/{git,codebase,codecommit,gitlab,gitea,gitbucket,gogs,github,onedev}.tmpl` | Private checkbox restricted to admins | LOW |
+| `templates/repo/migrate/common-migrated-repo.tmpl` | Private checkbox restricted to admins (the per-service templates include this partial since go-gitea#39672) | LOW |
 | `templates/org/create.tmpl` | Visibility radios restricted to admins (non-admins forced public) | LOW |
 | `templates/org/settings/options_dangerzone.tmpl` | Visibility row and modal restricted to admins | LOW |
 | `templates/repo/clone_panel.tmpl` | Scripture Burrito download links | LOW |
