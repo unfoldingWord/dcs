@@ -61,7 +61,7 @@
 			</a>
 		</div>
 		<div class="ui bottom attached tab segment active" data-tab="db-{{$dm.ID}}">
-			<table class="tw-mb-4">
+			<table class="tw-w-full tw-mb-4">
 				{{if $dm.ValidationError}}
 				<tr>
 					<td colspan="2">
@@ -72,48 +72,64 @@
 				</tr>
 				{{end}}
 				<tr>
-					<td class="tw-align-top"><strong>{{ctx.Locale.Tr "dcs.repo.metadata.title"}}:</strong></td>
+					<td class="tw-align-top tw-whitespace-nowrap tw-w-0"><strong>{{ctx.Locale.Tr "dcs.repo.metadata.title"}}:</strong></td>
 					<td class="tw-align-top">{{$dm.Title}}</td>
 				</tr>
 				<tr>
-					<td class="tw-align-top"><strong>{{ctx.Locale.Tr "dcs.repo.metadata.publisher"}}:</strong></td>
+					<td class="tw-align-top tw-whitespace-nowrap tw-w-0"><strong>{{ctx.Locale.Tr "dcs.repo.metadata.publisher"}}:</strong></td>
 					<td class="tw-align-top">{{$dm.Publisher}}</td>
 				</tr>
 				<tr>
-					<td class="tw-align-top"><strong>{{ctx.Locale.Tr "dcs.repo.metadata.abbreviation"}}:</strong>
+					<td class="tw-align-top tw-whitespace-nowrap tw-w-0"><strong>{{ctx.Locale.Tr "dcs.repo.metadata.abbreviation"}}:</strong>
 					</td>
 					<td class="tw-align-top">{{$dm.Abbreviation}}</td>
 				</tr>
 				<tr>
-					<td class="tw-align-top"><strong>{{ctx.Locale.Tr "dcs.repo.metadata.subject"}}:</strong></td>
+					<td class="tw-align-top tw-whitespace-nowrap tw-w-0"><strong>{{ctx.Locale.Tr "dcs.repo.metadata.subject"}}:</strong></td>
 					<td class="tw-align-top">{{$dm.Subject}}</td>
 				</tr>
 				<tr>
-					<td class="tw-align-top"><strong>{{ctx.Locale.Tr "dcs.repo.metadata.flavor_type"}}:</strong></td>
+					<td class="tw-align-top tw-whitespace-nowrap tw-w-0"><strong>{{ctx.Locale.Tr "dcs.repo.metadata.flavor_type"}}:</strong></td>
 					<td class="tw-align-top">{{$dm.FlavorType}}</td>
 				</tr>
 				<tr>
-					<td class="tw-align-top"><strong>{{ctx.Locale.Tr "dcs.repo.metadata.flavor"}}:</strong></td>
+					<td class="tw-align-top tw-whitespace-nowrap tw-w-0"><strong>{{ctx.Locale.Tr "dcs.repo.metadata.flavor"}}:</strong></td>
 					<td class="tw-align-top">{{$dm.Flavor}}</td>
 				</tr>
 				<tr>
-					<td class="tw-align-top"><strong>{{ctx.Locale.Tr "dcs.repo.metadata.metadata_type"}}:</strong>
+					<td class="tw-align-top tw-whitespace-nowrap tw-w-0"><strong>{{ctx.Locale.Tr "dcs.repo.metadata.metadata_type"}}:</strong>
 					</td>
 					<td class="tw-align-top"><img src="{{AssetUrlPrefix}}/img/dcs/{{$dm.MetadataTypeIcon}}" height="16" class="tw-align-middle" /> {{$dm.MetadataTypeTitle}} ({{$dm.MetadataType}}
 						{{$dm.MetadataVersion}})</td>
 				</tr>
 				<tr>
-					<td class="tw-align-top"><strong>{{ctx.Locale.Tr "dcs.repo.metadata.language"}}:</strong></td>
+					<td class="tw-align-top tw-whitespace-nowrap tw-w-0"><strong>{{ctx.Locale.Tr "dcs.repo.metadata.language"}}:</strong></td>
 					<td class="tw-align-top">{{$dm.LanguageTitle}} ({{$dm.Language}}, {{$dm.LanguageDirection}})</td>
 				</tr>
 				<tr>
-					<td class="tw-align-top"><strong>{{ctx.Locale.Tr "dcs.repo.metadata.ingredients"}}:</strong></td>
-					<td class="tw-align-top">
-						<button type="button" class="ui button dcs-toggle-table" aria-controls="ingredients-{{$dm.ID}}" aria-expanded="false"
-							data-expand-text="{{ctx.Locale.Tr "dcs.repo.metadata.show_ingredients"}}" data-collapse-text="{{ctx.Locale.Tr "dcs.repo.metadata.hide_ingredients"}}">
-							{{ctx.Locale.Tr "dcs.repo.metadata.show_ingredients"}}
-						</button>
-						<table id="ingredients-{{$dm.ID}}" class="ui celled table full-width tw-hidden tw-p-2">
+					<td class="tw-align-top tw-whitespace-nowrap tw-w-0"><strong>{{ctx.Locale.Tr "dcs.repo.metadata.content_format"}}:</strong>
+					</td>
+					<td class="tw-align-top">{{$dm.ContentFormat}}</td>
+				</tr>
+				<tr>
+					<td class="tw-align-top tw-whitespace-nowrap tw-w-0"><strong>{{ctx.Locale.Tr "dcs.repo.metadata.stage"}}:</strong></td>
+					<td class="tw-align-top">{{$dm.StageStr}}</td>
+				</tr>
+				<tr>
+					<td class="tw-align-top tw-whitespace-nowrap tw-w-0"><strong>SHA:</strong></td>
+					<td class="tw-align-top">{{$dm.CommitSHA}}</td>
+				</tr>
+				<tr>
+					<td class="tw-align-top tw-whitespace-nowrap tw-w-0"><strong>{{if $dm.Release}}{{ctx.Locale.Tr
+							"dcs.repo.metadata.release_date"}}{{else}}{{ctx.Locale.Tr
+							"dcs.repo.metadata.last_updated"}}{{end}}:</strong></td>
+					<td class="tw-align-top">{{DateUtils.AbsoluteLong $dm.ReleaseDateUnix}}</td>
+				</tr>
+				<tr>
+					<td class="tw-align-top" colspan="2">
+						<details class="dcs-pane">
+							<summary>{{ctx.Locale.Tr "dcs.repo.metadata.ingredients"}} ({{len $dm.Ingredients}}) {{svg "octicon-chevron-right" 14 "dcs-pane-chevron tw-ml-auto"}}</summary>
+						<table class="ui celled table full-width">
 							<thead>
 								<tr>
 									<th>ID</th>
@@ -147,16 +163,14 @@
 								{{end}}
 							</tbody>
 						</table>
+						</details>
 					</td>
 				</tr>
 				<tr>
-					<td class="tw-align-top"><strong>{{ctx.Locale.Tr "dcs.repo.metadata.relations"}}:</strong></td>
-					<td class="tw-align-top">
-						<button type="button" class="ui button dcs-toggle-table" aria-controls="relations-{{$dm.ID}}" aria-expanded="false"
-							data-expand-text="{{ctx.Locale.Tr "dcs.repo.metadata.show_relations"}}" data-collapse-text="{{ctx.Locale.Tr "dcs.repo.metadata.hide_relations"}}">
-							{{ctx.Locale.Tr "dcs.repo.metadata.show_relations"}}
-						</button>
-						<table id="relations-{{$dm.ID}}" class="ui celled table full-width tw-hidden tw-p-2">
+					<td class="tw-align-top" colspan="2">
+						<details class="dcs-pane">
+							<summary>{{ctx.Locale.Tr "dcs.repo.metadata.relations"}} ({{len $dm.Relations}}) {{svg "octicon-chevron-right" 14 "dcs-pane-chevron tw-ml-auto"}}</summary>
+						<table class="ui celled table full-width">
 							<thead>
 								<tr>
 									<th>Language</th>
@@ -174,38 +188,16 @@
 								{{end}}
 							</tbody>
 						</table>
+						</details>
 					</td>
-				</tr>
-				<tr>
-					<td class="tw-align-top"><strong>{{ctx.Locale.Tr "dcs.repo.metadata.content_format"}}:</strong>
-					</td>
-					<td class="tw-align-top">{{$dm.ContentFormat}}</td>
-				</tr>
-				<tr>
-					<td class="tw-align-top"><strong>{{ctx.Locale.Tr "dcs.repo.metadata.stage"}}:</strong></td>
-					<td class="tw-align-top">{{$dm.StageStr}}</td>
-				</tr>
-				<tr>
-					<td class="tw-align-top"><strong>SHA:</strong></td>
-					<td class="tw-align-top">{{$dm.CommitSHA}}</td>
-				</tr>
-				<tr>
-					<td class="tw-align-top"><strong>{{if $dm.Release}}{{ctx.Locale.Tr
-							"dcs.repo.metadata.release_date"}}{{else}}{{ctx.Locale.Tr
-							"dcs.repo.metadata.last_updated"}}{{end}}:</strong></td>
-					<td class="tw-align-top">{{DateUtils.AbsoluteLong $dm.ReleaseDateUnix}}</td>
 				</tr>
 				{{if gt $dm.ID 0}}
 				<tr>
-					<td class="tw-align-top"><strong>{{ctx.Locale.Tr "dcs.repo.metadata.healthcheck"}}:</strong></td>
-					<td class="tw-align-top">
-						<button type="button" class="ui button dcs-toggle-table" aria-controls="healthcheck-{{$dm.ID}}" aria-expanded="false"
-							data-expand-text="{{ctx.Locale.Tr "dcs.repo.metadata.show_healthcheck"}}" data-collapse-text="{{ctx.Locale.Tr "dcs.repo.metadata.hide_healthcheck"}}">
-							{{ctx.Locale.Tr "dcs.repo.metadata.show_healthcheck"}}
-						</button>
-						<div id="healthcheck-{{$dm.ID}}" class="tw-hidden">
+					<td class="tw-align-top" colspan="2">
+						<details class="dcs-pane">
+							<summary>{{ctx.Locale.Tr "dcs.repo.metadata.healthcheck"}}{{if $dm.Healthcheck}} ({{$dm.Healthcheck.OverallSeverityLevel}}){{end}} {{svg "octicon-chevron-right" 14 "dcs-pane-chevron tw-ml-auto"}}</summary>
 							{{template "repo/dcs_healthcheck_list" (dict "ctxData" .ctxData "Door43Metadata" $dm)}}
-						</div>
+						</details>
 					</td>
 				</tr>
 				{{end}}

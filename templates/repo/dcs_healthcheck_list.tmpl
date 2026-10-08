@@ -2,12 +2,13 @@
 {{if .Door43Metadata}}
 	{{$healthcheck := .Door43Metadata.Healthcheck}}
 	{{if $healthcheck}}
-	<div class="ui list dcs-item-list">
+	<div class="ui list dcs-healthcheck-list">
 	{{range $issueCode := $healthcheck.GetOrder}}
 		{{$issues := index $healthcheck.Issues $issueCode}}
 		<div class="ui item">
 			{{if $issues}}
-				<button type="button" class="btn flex-text-inline toggle show-panel" data-panel="#{{$issueCode}}-{{$dm.ID}}">
+				<details class="dcs-pane dcs-pane-row">
+				<summary>
 					{{if eq ((index $issues 0).SeverityLevel.String) "error"}}
 						{{svg "octicon-shield-x" 16 "tw-text-red"}}
 					{{else if eq ((index $issues 0).SeverityLevel.String) "warning"}}
@@ -15,9 +16,10 @@
 					{{else if eq ((index $issues 0).SeverityLevel.String) "info"}}
 						{{svg "octicon-shield-lock" 16 "tw-text-blue"}}
 					{{end}}
-					{{$issueCode.IssuePositiveString}}
-				</button>
-				<div class="ui list tw-hidden" id="{{$issueCode}}-{{$dm.ID}}">
+					{{$issueCode.IssuePositiveString}} ({{len $issues}})
+					{{svg "octicon-chevron-right" 14 "dcs-pane-chevron"}}
+				</summary>
+				<div class="ui list">
 					{{range $issue := $issues}}
 						<div class="status-item {{$issue.SeverityLevel}}">
 							<div class="item-text">
@@ -31,6 +33,7 @@
 						</div>
 					{{end}}
 				</div>
+				</details>
 			{{else}}
 				<div class="flex-text-inline">
 					{{svg "octicon-shield-check" 16 "tw-text-green"}}
