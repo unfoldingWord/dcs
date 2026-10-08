@@ -65,9 +65,9 @@
 				{{if $dm.ValidationError}}
 				<tr>
 					<td colspan="2">
-						<div class="ui negative message tw-p-2">INVALID <a
-													href="{{.ctxData.RepoLink}}/src/{{$dm.RefType}}/{{PathEscapeSegments $dm.Ref}}/{{$dm.MetadataFilename}}">{{$dm.MetadataFilename}}</a>
-							FILE</div>
+						<div class="ui negative message tw-p-2">
+							INVALID <a href="{{.ctxData.RepoLink}}/src/{{$dm.RefType}}/{{PathEscapeSegments $dm.Ref}}/{{$dm.MetadataFilename}}">{{$dm.MetadataFilename}}</a> FILE
+						</div>
 					</td>
 				</tr>
 				{{end}}
@@ -99,7 +99,7 @@
 				<tr>
 					<td class="tw-align-top"><strong>{{ctx.Locale.Tr "dcs.repo.metadata.metadata_type"}}:</strong>
 					</td>
-					<td class="tw-align-top"><img src="{{AssetUrlPrefix}}/img/dcs/{{$dm.MetadataTypeIcon}}" width="16" height="16" class="tw-align-middle" /> {{$dm.MetadataTypeTitle}} ({{$dm.MetadataType}}
+					<td class="tw-align-top"><img src="{{AssetUrlPrefix}}/img/dcs/{{$dm.MetadataTypeIcon}}" height="16" class="tw-align-middle" /> {{$dm.MetadataTypeTitle}} ({{$dm.MetadataType}}
 						{{$dm.MetadataVersion}})</td>
 				</tr>
 				<tr>

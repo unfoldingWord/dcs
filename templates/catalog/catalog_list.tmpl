@@ -44,7 +44,7 @@
 							<i class="color-icon" style="background-color: {{GetColorFromString .Subject}}"></i>{{.Subject}}
 						</a>
 						<a class="muted flex-text-inline" href="?sort={{QueryEscape $.SortType}}&q={{QueryEscape (printf "metadata_type:%s" .MetadataType)}}" data-tooltip-content="{{ctx.Locale.Tr "dcs.repo.metadata.metadata_type"}}: {{.MetadataTypeTitle}} ({{.MetadataType}} {{.MetadataVersion}})">
-							<img src="{{AssetUrlPrefix}}/img/dcs/{{.MetadataTypeIcon}}" width="16" height="16" class="tw-align-middle">
+							<img src="{{AssetUrlPrefix}}/img/dcs/{{.MetadataTypeIcon}}" height="16" class="tw-align-middle">
 							{{.MetadataType}} {{.MetadataVersion}}
 						</a>
 						{{if not $.DisableStars}}

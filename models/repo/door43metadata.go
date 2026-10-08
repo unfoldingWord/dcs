@@ -773,7 +773,7 @@ func (dms Door43MetadataList) Swap(i, j int) {
 	dms[i], dms[j] = dms[j], dms[i]
 }
 
-// LoadReleaseCounts loads the per-repository release counts used by catalog rows in one query.
+// LoadReleaseCounts sets ReleaseCountValue on every entry in one query; same semantics as ReleaseCount.
 func (dms Door43MetadataList) LoadReleaseCounts(ctx context.Context) error {
 	repoIDSet := make(map[int64]struct{}, len(dms))
 	for _, dm := range dms {
@@ -802,7 +802,7 @@ func (dms Door43MetadataList) LoadReleaseCounts(ctx context.Context) error {
 	for _, dm := range dms {
 		dm.ReleaseCountValue = 0
 		for _, count := range countsByRepo[dm.RepoID] {
-			if count.Stage <= dm.Stage {
+			if dm.Stage == door43metadata.StageNotSet || count.Stage <= dm.Stage {
 				dm.ReleaseCountValue += count.Count
 			}
 		}

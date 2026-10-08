@@ -44,7 +44,6 @@
 			{{if .Permission.IsAdmin}}
 			<div class="ui right">
 				<form class="item" action="{{.RepoLink}}/metadata/update" method="post">
-					{{.CsrfTokenHtml}}
 					<button type="submit" class="ui teal tiny button">{{ctx.Locale.Tr "dcs.repo.metadata.update_metadata"}}</button>
 				</form>
 			</div>
@@ -71,11 +70,10 @@
 				</div>
 			{{else}}
 				<span>
-					{{ctx.Locale.Tr "packages.no_metadata"}}
+					{{ctx.Locale.Tr "dcs.repo.metadata.no_metadata"}}
 					{{if .Permission.IsAdmin}}
 						<form class="tw-inline" action="{{.RepoLink}}/metadata/update" method="post">
-							{{.CsrfTokenHtml}}
-							<button type="submit" class="ui link button">{{ctx.Locale.Tr "dcs.repo.metadata.update_metadata"}}</button>
+							<button type="submit" class="ui tiny button">{{ctx.Locale.Tr "dcs.repo.metadata.update_metadata"}}</button>
 						</form>
 					{{end}}
 				</span>

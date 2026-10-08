@@ -566,7 +566,8 @@ func (dm *Door43Metadata) LoadHealthcheck(ctx context.Context) (*HealthcheckGrou
 	return NewHealthcheckGroupedIssues(dm.MetadataType, dm.Subject, issues), nil
 }
 
-// LoadHealthchecks loads stored results for a list of metadata entries in one query.
+// LoadHealthchecks sets dm.Healthcheck on every entry, reading the stored issues in one
+// query. Entries with no stored result, or a stale one (see GetHealthcheck), are re-checked.
 func (dms Door43MetadataList) LoadHealthchecks(ctx context.Context) error {
 	ids := make([]int64, 0, len(dms))
 	for _, dm := range dms {
@@ -590,10 +591,11 @@ func (dms Door43MetadataList) LoadHealthchecks(ctx context.Context) error {
 			continue
 		}
 		hgi := NewHealthcheckGroupedIssues(dm.MetadataType, dm.Subject, issuesByDM[dm.ID])
-		if dm.HealthcheckSeverity > 0 && hgi.OverallSeverityLevel == dm.HealthcheckSeverity {
+		switch {
+		case dm.HealthcheckSeverity > 0 && hgi.OverallSeverityLevel == dm.HealthcheckSeverity:
 			dm.Healthcheck = hgi
-		} else {
-			dm.Healthcheck = dm.GetHealthcheck(ctx)
+		case HealthcheckFunc != nil:
+			dm.Healthcheck = HealthcheckFunc(ctx, dm)
 		}
 	}
 	return nil

@@ -41,8 +41,8 @@ func GetRepoMetadata(ctx *context.Context) {
 	if ctx.Repo.Repository.LatestProdDM != nil {
 		door43Metadatas = append(door43Metadatas, ctx.Repo.Repository.LatestProdDM)
 	}
-	if err := loadDoor43MetadataHealthchecks(ctx, door43Metadatas); err != nil {
-		ctx.ServerError("LoadDoor43MetadataHealthchecks", err)
+	if err := prepareDoor43MetadataForView(ctx, door43Metadatas); err != nil {
+		ctx.ServerError("prepareDoor43MetadataForView", err)
 		return
 	}
 
@@ -85,11 +85,11 @@ func GetRepoHealthcheck(ctx *context.Context) {
 		return
 	}
 
+	dm.Healthcheck = dm.GetHealthcheck(ctx)
 	ctx.Data["Title"] = "Health Check"
 	ctx.Data["PageIsHealthcheck"] = true
 	ctx.Data["Repo"] = ctx.Repo.Repository
 	ctx.Data["HealthcheckDM"] = dm
-	dm.Healthcheck = dm.GetHealthcheck(ctx)
 	ctx.Data["HealthcheckRef"] = ref
 	ctx.HTML(http.StatusOK, tplDCSHealthcheck)
 }
@@ -139,13 +139,8 @@ func GetAllRepoDoor43Metadata(ctx *context.Context) {
 		ctx.ServerError("FindDoor43MetadataReleases", err)
 		return
 	}
-	if err := repo_model.Door43MetadataList(releaseDms).LoadAttributes(ctx); err != nil {
-		ctx.ServerError("LoadDoor43MetadataReleaseAttributes", err)
-		return
-	}
-	allDms := slices.Concat(branchDms, releaseDms)
-	if err := loadDoor43MetadataHealthchecks(ctx, allDms); err != nil {
-		ctx.ServerError("LoadDoor43MetadataHealthchecks", err)
+	if err := prepareDoor43MetadataForView(ctx, slices.Concat(branchDms, releaseDms)); err != nil {
+		ctx.ServerError("prepareDoor43MetadataForView", err)
 		return
 	}
 
@@ -160,8 +155,16 @@ func GetAllRepoDoor43Metadata(ctx *context.Context) {
 	ctx.HTML(http.StatusOK, tplDCSMetadataAll)
 }
 
-func loadDoor43MetadataHealthchecks(ctx *context.Context, metadatas []*repo_model.Door43Metadata) error {
-	return repo_model.Door43MetadataList(metadatas).LoadHealthchecks(ctx)
+// prepareDoor43MetadataForView loads what the metadata list templates read (release,
+// healthcheck) so rendering does no database or healthcheck work.
+func prepareDoor43MetadataForView(ctx *context.Context, dms repo_model.Door43MetadataList) error {
+	for _, dm := range dms {
+		dm.Repo = ctx.Repo.Repository
+	}
+	if err := dms.LoadAttributes(ctx); err != nil {
+		return err
+	}
+	return dms.LoadHealthchecks(ctx)
 }
 
 // UpdateDoor43Metadata updates the repo's metadata

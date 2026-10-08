@@ -6,21 +6,17 @@
 	{{range $issueCode := $healthcheck.GetOrder}}
 		{{$issues := index $healthcheck.Issues $issueCode}}
 		<div class="ui item">
-			<button{{if $issues}} type="button" class="ui link button toggle show-panel" data-panel="#{{$issueCode}}-{{$dm.ID}}"{{else}} type="button" class="ui item"{{end}}>
-			{{if not $issues}}
-				{{svg "octicon-shield-check" 16 "tw-text-green-500"}}
-			{{else}}
-				{{if eq ((index $issues 0).SeverityLevel.String) "error"}}
-					{{svg "octicon-shield-x" 16 "tw-text-red-500"}}
-				{{else if eq ((index $issues 0).SeverityLevel.String) "warning"}}
-					{{svg "octicon-shield" 16 "tw-text-orange-500"}}
-				{{else if eq ((index $issues 0).SeverityLevel.String) "info"}}
-					{{svg "octicon-shield-lock" 16 "tw-text-blue-500"}}
-				{{end}}
-			{{end}}
-			{{$issueCode.IssuePositiveString}}
-			</button>
 			{{if $issues}}
+				<button type="button" class="btn flex-text-inline toggle show-panel" data-panel="#{{$issueCode}}-{{$dm.ID}}">
+					{{if eq ((index $issues 0).SeverityLevel.String) "error"}}
+						{{svg "octicon-shield-x" 16 "tw-text-red"}}
+					{{else if eq ((index $issues 0).SeverityLevel.String) "warning"}}
+						{{svg "octicon-shield" 16 "tw-text-orange"}}
+					{{else if eq ((index $issues 0).SeverityLevel.String) "info"}}
+						{{svg "octicon-shield-lock" 16 "tw-text-blue"}}
+					{{end}}
+					{{$issueCode.IssuePositiveString}}
+				</button>
 				<div class="ui list tw-hidden" id="{{$issueCode}}-{{$dm.ID}}">
 					{{range $issue := $issues}}
 						<div class="status-item {{$issue.SeverityLevel}}">
@@ -34,6 +30,11 @@
 							{{end}}
 						</div>
 					{{end}}
+				</div>
+			{{else}}
+				<div class="flex-text-inline">
+					{{svg "octicon-shield-check" 16 "tw-text-green"}}
+					{{$issueCode.IssuePositiveString}}
 				</div>
 			{{end}}
 		</div>

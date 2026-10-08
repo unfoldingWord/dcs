@@ -63,8 +63,7 @@
 						No Health Check could be performed for this Repository.
 						{{if .Permission.IsAdmin}}
 							<form class="tw-inline" action="{{.RepoLink}}/metadata/update" method="post">
-								{{.CsrfTokenHtml}}
-								<button type="submit" class="ui link button">{{ctx.Locale.Tr "dcs.repo.metadata.update_metadata"}}</button>
+								<button type="submit" class="ui tiny button">{{ctx.Locale.Tr "dcs.repo.metadata.update_metadata"}}</button>
 							</form>
 						{{end}}
 					</span>
