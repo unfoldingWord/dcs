@@ -272,4 +272,4 @@ This document catalogs every DCS modification to existing Gitea files. New DCS-o
 ### Frontend
 
 - `web_src/css/dcs.css`
-- `web_src/js/features/dcs-catalog-search.ts`, `dcs-search-builder.ts` (+ test), `dcs-hc-dash.ts`, `dcs-healthcheck-badge.ts`, `dcs-info-icon.ts`, `dcs-language-fonts.ts`, `dcs-metadata.ts`, `dcs-usfm-download.ts`, `dcs-validation-badge.ts`
+- `web_src/js/features/dcs-catalog-search.ts`, `dcs-search-builder.ts` (+ test), `dcs-hc-dash.ts`, `dcs-healthcheck-badge.ts`, `dcs-info-icon.ts`, `dcs-language-fonts.ts`, `dcs-usfm-download.ts`, `dcs-validation-badge.ts`
