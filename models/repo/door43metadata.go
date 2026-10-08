@@ -87,6 +87,8 @@ type Door43Metadata struct {
 	HealthcheckSeverity SeverityLevel               `xorm:"INDEX NULL DEFAULT NULL"`
 	HealthcheckCounts   map[SeverityLevel]int       `xorm:"JSON"`
 	HealthcheckTimeUnix timeutil.TimeStamp          `xorm:"NOT NULL DEFAULT 0"`
+	Healthcheck         *HealthcheckGroupedIssues   `xorm:"-" json:"-"`
+	ReleaseCountValue   int64                       `xorm:"-" json:"-"`
 	ReleaseDateUnix     timeutil.TimeStamp          `xorm:"INDEX index(repo_stage_latest_date) NOT NULL"`
 	CreatedUnix         timeutil.TimeStamp          `xorm:"INDEX created NOT NULL"`
 	UpdatedUnix         timeutil.TimeStamp          `xorm:"INDEX updated"`
@@ -331,7 +333,7 @@ func (dm *Door43Metadata) AlignmentCounts() map[string]int {
 	return counts
 }
 
-// ReleaseCount the count of releases of repository of the Door43Metadata's stage
+// ReleaseCount returns the number of metadata entries for the repository up to this entry's stage.
 func (dm *Door43Metadata) ReleaseCount(ctx context.Context) (int64, error) {
 	stageCond := door43metadata.GetStageCond(dm.Stage)
 	return db.GetEngine(ctx).Join("LEFT", "release", "`release`.id = `door43_metadata`.release_id").
@@ -753,6 +755,12 @@ func GetDoor43MetadataMapValues(m map[int64]*Door43Metadata) []*Door43Metadata {
 // Door43MetadataList contains a list of repositories
 type Door43MetadataList []*Door43Metadata
 
+type door43MetadataStageCount struct {
+	RepoID int64                `xorm:"repo_id"`
+	Stage  door43metadata.Stage `xorm:"stage"`
+	Count  int64                `xorm:"release_count"`
+}
+
 func (dms Door43MetadataList) Len() int {
 	return len(dms)
 }
@@ -763,6 +771,43 @@ func (dms Door43MetadataList) Less(i, j int) bool {
 
 func (dms Door43MetadataList) Swap(i, j int) {
 	dms[i], dms[j] = dms[j], dms[i]
+}
+
+// LoadReleaseCounts loads the per-repository release counts used by catalog rows in one query.
+func (dms Door43MetadataList) LoadReleaseCounts(ctx context.Context) error {
+	repoIDSet := make(map[int64]struct{}, len(dms))
+	for _, dm := range dms {
+		repoIDSet[dm.RepoID] = struct{}{}
+	}
+	if len(repoIDSet) == 0 {
+		return nil
+	}
+	repoIDs := make([]int64, 0, len(repoIDSet))
+	for repoID := range repoIDSet {
+		repoIDs = append(repoIDs, repoID)
+	}
+	var counts []*door43MetadataStageCount
+	if err := db.GetEngine(ctx).
+		Table("door43_metadata").
+		Select("repo_id, stage, COUNT(*) AS release_count").
+		In("repo_id", repoIDs).
+		GroupBy("repo_id, stage").
+		Find(&counts); err != nil {
+		return fmt.Errorf("find release counts: %w", err)
+	}
+	countsByRepo := make(map[int64][]*door43MetadataStageCount, len(repoIDs))
+	for _, count := range counts {
+		countsByRepo[count.RepoID] = append(countsByRepo[count.RepoID], count)
+	}
+	for _, dm := range dms {
+		dm.ReleaseCountValue = 0
+		for _, count := range countsByRepo[dm.RepoID] {
+			if count.Stage <= dm.Stage {
+				dm.ReleaseCountValue += count.Count
+			}
+		}
+	}
+	return nil
 }
 
 // Door43MetadataListOfMap make list from values of map

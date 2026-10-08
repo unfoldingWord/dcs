@@ -59,11 +59,11 @@ func RenderCatalogSearch(ctx *context.Context, opts *CatalogSearchOptions) {
 		orderBy = door43metadata.CatalogOrderBySubject
 	case "reverseflavortype":
 		orderBy = door43metadata.CatalogOrderByFlavorTypeReverse
-	case "falvortype":
+	case "flavortype":
 		orderBy = door43metadata.CatalogOrderByFlavorType
 	case "reverseflavor":
 		orderBy = door43metadata.CatalogOrderByFlavorReverse
-	case "falvor":
+	case "flavor":
 		orderBy = door43metadata.CatalogOrderByFlavor
 	case "reverserabbreviation":
 		orderBy = door43metadata.CatalogOrderByAbbreviationReverse
@@ -193,6 +193,10 @@ func RenderCatalogSearch(ctx *context.Context, opts *CatalogSearchOptions) {
 	dms, count, err = models.SearchCatalog(ctx, searchOpts)
 	if err != nil {
 		ctx.ServerError("SearchCatalog", err)
+		return
+	}
+	if err := dms.LoadReleaseCounts(ctx); err != nil {
+		ctx.ServerError("LoadReleaseCounts", err)
 		return
 	}
 	ctx.Data["Keyword"] = query
