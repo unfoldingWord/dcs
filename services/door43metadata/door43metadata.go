@@ -684,8 +684,8 @@ func getBookAlignmentCountSafe(ctx context.Context, gitRepo *git.Repository, boo
 }
 
 func getSBRepoNameSuffix(repoName string) string {
-	if idx := strings.LastIndex(repoName, "_"); idx >= 0 {
-		return strings.ToLower(repoName[idx+1:])
+	if _, suffix, found := strings.CutLast(repoName, "_"); found {
+		return strings.ToLower(suffix)
 	}
 	return strings.ToLower(repoName)
 }
