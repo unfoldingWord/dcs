@@ -74,7 +74,6 @@ import {initDCSValidationBadge} from './features/dcs-validation-badge.ts';
 import {initDCSLanguageFonts} from './features/dcs-language-fonts.ts';
 import {initDCSHealthcheckBadges} from './features/dcs-healthcheck-badge.ts';
 import {initDCSHealthcheckDashboard} from './features/dcs-hc-dash.ts';
-import {initDCSMetadataToggles} from './features/dcs-metadata.ts';
 import {initDCSUsfmDownload} from './features/dcs-usfm-download.ts';
 import {initDCSCatalogSearch} from './features/dcs-catalog-search.ts';
 import {initDCSSearchBuilder} from './features/dcs-search-builder.ts';
@@ -183,7 +182,6 @@ const initPerformanceTracer = callInitFunctions([
   initDCSLanguageFonts,
   initDCSHealthcheckBadges,
   initDCSHealthcheckDashboard,
-  initDCSMetadataToggles,
   initDCSUsfmDownload,
   initDCSCatalogSearch,
   initDCSSearchBuilder,

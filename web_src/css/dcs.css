@@ -65,6 +65,12 @@
   padding: 1rem;
   margin: 16px -1rem -1rem;
 }
+/* Health check result rows: plain dividers, no edge-to-edge margins (they sit inside panes) */
+.dcs-healthcheck-list > .item:not(:first-child) {
+  border-top: 1px solid var(--color-secondary);
+  margin-top: 0.5rem;
+  padding-top: 0.5rem;
+}
 .dcs-item-list > .item .info {
   margin-top: 10px;
 }
@@ -98,4 +104,56 @@
 }
 .dcs-search-builder-field > .ui.input {
   flex: 1;
+}
+
+/* Collapsible panes on the repo metadata and health check pages: a <details> whose summary looks like an attached header */
+.dcs-pane > summary {
+  display: flex;
+  align-items: center;
+  gap: 0.5em;
+  padding: 0.5em 0.75em;
+  border: 1px solid var(--color-secondary);
+  border-radius: var(--border-radius);
+  background: var(--color-box-header);
+  font-weight: var(--font-weight-semibold);
+  list-style: none;
+}
+.dcs-pane > summary::-webkit-details-marker {
+  display: none;
+}
+.dcs-pane > summary:hover {
+  background: var(--color-hover);
+}
+.dcs-pane[open] > summary {
+  border-bottom-left-radius: 0;
+  border-bottom-right-radius: 0;
+}
+.dcs-pane[open] > summary .dcs-pane-chevron {
+  transform: rotate(90deg);
+}
+.dcs-pane > :not(summary) {
+  padding: 0.75em;
+  border: 1px solid var(--color-secondary);
+  border-top: none;
+  border-radius: 0 0 var(--border-radius) var(--border-radius);
+}
+.dcs-pane > table.ui.table {
+  margin-top: 0;
+  border-radius: 0 0 var(--border-radius) var(--border-radius);
+}
+/* Flat variant for lists of peer rows (health check results): aligned like the non-expandable rows, chevron at the right edge */
+.dcs-pane-row > summary,
+.dcs-pane-row[open] > summary {
+  padding: 0;
+  border: none;
+  border-radius: 0;
+  background: none;
+  font-weight: inherit;
+}
+.dcs-pane-row > summary:hover {
+  color: var(--color-primary);
+}
+.dcs-pane-row > :not(summary) {
+  padding: 0.5em 0 0;
+  border: none;
 }
