@@ -5,6 +5,7 @@ package repo
 
 import (
 	"context"
+	"fmt"
 	"strings"
 
 	"gitea.dev/models/db"
@@ -565,10 +566,43 @@ func (dm *Door43Metadata) LoadHealthcheck(ctx context.Context) (*HealthcheckGrou
 	return NewHealthcheckGroupedIssues(dm.MetadataType, dm.Subject, issues), nil
 }
 
+// LoadHealthchecks loads stored results for a list of metadata entries in one query.
+func (dms Door43MetadataList) LoadHealthchecks(ctx context.Context) error {
+	ids := make([]int64, 0, len(dms))
+	for _, dm := range dms {
+		if dm.ID > 0 {
+			ids = append(ids, dm.ID)
+		}
+	}
+	if len(ids) == 0 {
+		return nil
+	}
+	var issues []*Door43HealthcheckIssue
+	if err := db.GetEngine(ctx).In("dm_id", ids).OrderBy("id").Find(&issues); err != nil {
+		return fmt.Errorf("load healthcheck issues: %w", err)
+	}
+	issuesByDM := make(map[int64][]*Door43HealthcheckIssue, len(dms))
+	for _, issue := range issues {
+		issuesByDM[issue.DMID] = append(issuesByDM[issue.DMID], issue)
+	}
+	for _, dm := range dms {
+		if dm.ID == 0 {
+			continue
+		}
+		hgi := NewHealthcheckGroupedIssues(dm.MetadataType, dm.Subject, issuesByDM[dm.ID])
+		if dm.HealthcheckSeverity > 0 && hgi.OverallSeverityLevel == dm.HealthcheckSeverity {
+			dm.Healthcheck = hgi
+		} else {
+			dm.Healthcheck = dm.GetHealthcheck(ctx)
+		}
+	}
+	return nil
+}
+
 // GetHealthcheck returns the stored health check results for this entry. When the entry has
 // never been checked, or its stored issues no longer add up to its stored severity (rows
 // written before issues were persisted), the check is re-run and stored via HealthcheckFunc.
-// This allows templates to call dm.GetHealthcheck(ctx) without the model
+// This lets the web layer call dm.GetHealthcheck(ctx) without the model
 // needing to import the service package.
 func (dm *Door43Metadata) GetHealthcheck(ctx context.Context) *HealthcheckGroupedIssues {
 	if dm.ID > 0 && dm.HealthcheckSeverity > 0 {
