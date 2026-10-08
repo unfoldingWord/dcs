@@ -43,7 +43,10 @@
 			{{ctx.Locale.Tr "dcs.repo.metadata.all_branches_releases_metadata"}}
 			{{if .Permission.IsAdmin}}
 			<div class="ui right">
-				<a class="ui teal tiny button" href="{{.RepoLink}}/metadata/update">{{ctx.Locale.Tr "dcs.repo.metadata.update_metadata"}}</a>
+				<form class="item" action="{{.RepoLink}}/metadata/update" method="post">
+					{{.CsrfTokenHtml}}
+					<button type="submit" class="ui teal tiny button">{{ctx.Locale.Tr "dcs.repo.metadata.update_metadata"}}</button>
+				</form>
 			</div>
 			{{end}}
 		</h2>
@@ -68,7 +71,13 @@
 				</div>
 			{{else}}
 				<span>
-					No Metadata for this Repository. Click&nbsp;<a href="{{.RepoLink}}/metadata/update">update</a>&nbsp;to scan the repo.
+					{{ctx.Locale.Tr "packages.no_metadata"}}
+					{{if .Permission.IsAdmin}}
+						<form class="tw-inline" action="{{.RepoLink}}/metadata/update" method="post">
+							{{.CsrfTokenHtml}}
+							<button type="submit" class="ui link button">{{ctx.Locale.Tr "dcs.repo.metadata.update_metadata"}}</button>
+						</form>
+					{{end}}
 				</span>
 			{{end}}
 		</div>

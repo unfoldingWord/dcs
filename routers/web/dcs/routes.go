@@ -24,8 +24,7 @@ func RegisterDCSRepoWebRoutes(m *web.Router) {
 	m.Group("/metadata", func() {
 		m.Get("", repo.GetRepoMetadata)
 		m.Get("/all", repo.GetAllRepoDoor43Metadata)
-		m.Get("/update", repo.UpdateDoor43Metadata)
-		m.Post("/update", repo.UpdateDoor43Metadata)
+		m.Post("/update", context.RequireRepoAdmin(), repo.UpdateDoor43Metadata)
 	})
 	m.Get("/healthcheck", repo.GetRepoHealthcheck)
 	m.Get("/healthcheck/*", repo.GetRepoHealthcheck)

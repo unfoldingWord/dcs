@@ -47,7 +47,7 @@
 				{{end}}
 				<div class="ui right">
 						{{if .HealthcheckRef}}
-							<a class="ui tiny button" href="{{.RepoLink}}/healthcheck">Overall Health Check</a>
+						<a class="ui tiny button" href="{{.RepoLink}}/healthcheck">Overall Health Check</a>
 						{{end}}
 						<a class="ui teal tiny button" href="{{.RepoLink}}/metadata">{{ctx.Locale.Tr "dcs.repo.metadata.see_all_branches_releases"}} &gt;</a>
 				</div>
@@ -61,7 +61,12 @@
 				{{else}}
 					<span>
 						No Health Check could be performed for this Repository.
-						Click&nbsp;<a href="{{.RepoLink}}/metadata/update">update</a>&nbsp;to scan the repo.
+						{{if .Permission.IsAdmin}}
+							<form class="tw-inline" action="{{.RepoLink}}/metadata/update" method="post">
+								{{.CsrfTokenHtml}}
+								<button type="submit" class="ui link button">{{ctx.Locale.Tr "dcs.repo.metadata.update_metadata"}}</button>
+							</form>
+						{{end}}
 					</span>
 				{{end}}
 			</div>
