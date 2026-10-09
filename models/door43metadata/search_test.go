@@ -207,3 +207,18 @@ func TestParseRepoSearchKeyword(t *testing.T) {
 	assert.Empty(t, fields["topic"])
 	assert.Empty(t, keyword)
 }
+
+// An OBS repo lists its stories, not an obs project, so book=obs also matches the subject
+func TestGetBookCondOBSMatchesSubject(t *testing.T) {
+	sql, args, err := builder.ToSQL(GetBookCond([]string{"OBS"}))
+	require.NoError(t, err)
+	assert.Equal(t,
+		"(JSON_SEARCH(`door43_metadata`.ingredients, 'one', ? COLLATE utf8mb4_general_ci, NULL, '$[*].identifier') IS NOT NULL) OR `door43_metadata`.subject=?",
+		sql)
+	assert.Equal(t, []any{"obs", "Open Bible Stories"}, args)
+
+	sql, args, err = builder.ToSQL(GetBookCond([]string{"gen"}))
+	require.NoError(t, err)
+	assert.NotContains(t, sql, "subject")
+	assert.Equal(t, []any{"gen"}, args)
+}
