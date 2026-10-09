@@ -636,6 +636,9 @@ func GetBookCond(books []string) builder.Cond {
 			// `door43_metadata`. rather than the catalog CTEs' dm. alias (they translate the
 			// prefix): the repo search and the field searches query the table by its name
 			bookCond = bookCond.Or(builder.Expr("JSON_SEARCH(`door43_metadata`.ingredients, 'one', ? COLLATE utf8mb4_general_ci, NULL, '$[*].identifier') IS NOT NULL", strings.ToLower(v)))
+			if strings.EqualFold(v, "obs") {
+				bookCond = bookCond.Or(builder.Eq{"`door43_metadata`.subject": "Open Bible Stories"}) // OBS lists its stories, not an obs project
+			}
 		}
 	}
 	return bookCond
