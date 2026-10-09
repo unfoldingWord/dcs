@@ -5,6 +5,7 @@ package dcs
 
 import (
 	"context"
+	"time"
 
 	"gitea.dev/models/db"
 	"gitea.dev/models/door43metadata"
@@ -90,10 +91,10 @@ func GetPublisherCount(ctx context.Context) int64 {
 	return count
 }
 
-// GetActiveProjectCount return the number of repos with a door43metadata release_date_unix in the last 7 days
+// GetActiveProjectCount return the number of repos with a door43metadata release_date_unix in the last 30 days
 func GetActiveProjectCount(ctx context.Context) int64 {
 	sess := db.GetEngine(ctx).Table("door43_metadata").
-		Where("release_date_unix > UNIX_TIMESTAMP(NOW() - INTERVAL 30 DAY)").
+		Where(builder.Gt{"release_date_unix": time.Now().AddDate(0, 0, -30).Unix()}).
 		GroupBy("repo_id")
 	count, err := sess.Count()
 	if err != nil {

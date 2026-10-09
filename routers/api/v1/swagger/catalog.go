@@ -49,13 +49,6 @@ type swaggerResponseCatalogValidation struct {
 	Body map[string]any `json:"body"`
 }
 
-// Language
-// swagger:response Language
-type swaggerResponseLanguage struct {
-	// in:body
-	Body map[string]any `json:"body"`
-}
-
 // Door43Healthcheck
 // swagger:response Door43Healthcheck
 type swaggerResponseDoor43Healthcheck struct {
