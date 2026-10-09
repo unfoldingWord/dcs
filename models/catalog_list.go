@@ -12,6 +12,7 @@ import (
 	"gitea.dev/models/db"
 	"gitea.dev/models/door43metadata"
 	"gitea.dev/models/repo"
+	"gitea.dev/modules/setting"
 	"gitea.dev/modules/structs"
 
 	"xorm.io/builder"
@@ -83,14 +84,14 @@ func SearchCatalogByCondition(ctx context.Context, opts *door43metadata.SearchCa
 	innerCols := "dm." + strings.Join(dmCols, ", dm.")
 
 	// CTE filters first (using indexes), then ranks — avoids full-table derived table materialization
-	// Note: "release" is a MySQL reserved word and must be backtick-quoted in raw SQL.
+	// Note: "release" and "user" are reserved words and must be backtick-quoted in raw SQL (xorm requotes backticks per dialect).
 	cteSQL := "WITH catalog_filtered AS (\n" +
 		"  SELECT " + innerCols + ",\n" +
 		"         r.lower_name AS lower_name, r.num_stars, r.num_forks,\n" +
 		"         COUNT(*) OVER (PARTITION BY dm.repo_id) AS release_count" + rnSelect + "\n" +
 		"  FROM door43_metadata dm\n" +
 		"  INNER JOIN repository r ON r.id = dm.repo_id\n" +
-		"  INNER JOIN user u ON r.owner_id = u.id\n" +
+		"  INNER JOIN `user` u ON r.owner_id = u.id\n" +
 		"  LEFT JOIN `release` rel ON rel.id = dm.release_id\n" +
 		"  WHERE " + condSQL + "\n)\n"
 
@@ -112,7 +113,12 @@ func SearchCatalogByCondition(ctx context.Context, opts *door43metadata.SearchCa
 
 		limitSQL := ""
 		if opts.PageSize > 0 || opts.Page > 1 {
-			limitSQL = fmt.Sprintf("\nLIMIT %d OFFSET %d", opts.PageSize, (opts.Page-1)*opts.PageSize)
+			offset := (opts.Page - 1) * opts.PageSize
+			if setting.Database.Type.IsMSSQL() {
+				limitSQL = fmt.Sprintf("\nOFFSET %d ROWS FETCH NEXT %d ROWS ONLY", offset, opts.PageSize)
+			} else {
+				limitSQL = fmt.Sprintf("\nLIMIT %d OFFSET %d", opts.PageSize, offset)
+			}
 		}
 
 		dataSQL := cteSQL + "SELECT " + searchCols + `,
@@ -254,7 +260,7 @@ func getCatalogStatsRow(ctx context.Context, opts *door43metadata.SearchCatalogO
 	condSQL = translateStatsCondSQL(condSQL)
 
 	// COUNT(DISTINCT CASE ...) ignores the NULLs of non-matching rows.
-	// Note: "release" is a MySQL reserved word and must be backtick-quoted in raw SQL.
+	// Note: "release" and "user" are reserved words and must be backtick-quoted in raw SQL (xorm requotes backticks per dialect).
 	query := fmt.Sprintf(`SELECT
   COUNT(DISTINCT dm.repo_id) AS entry_count,
   COUNT(DISTINCT dm.language) AS lang_count,
@@ -284,7 +290,7 @@ func getCatalogStatsRow(ctx context.Context, opts *door43metadata.SearchCatalogO
   COUNT(DISTINCT CASE WHEN dm.healthcheck_severity IS NULL OR dm.healthcheck_severity = 0 THEN dm.repo_id END) AS no_healthcheck_count
 FROM door43_metadata dm
 INNER JOIN repository r ON r.id = dm.repo_id
-INNER JOIN user u ON r.owner_id = u.id
+INNER JOIN `+"`user`"+` u ON r.owner_id = u.id
 LEFT JOIN `+"`release`"+` rel ON rel.id = dm.release_id
 WHERE `+condSQL,
 		door43metadata.SeverityLevelSuccess,
@@ -437,7 +443,7 @@ SELECT
   healthcheck_time_unix, release_date_unix, created_unix, updated_unix
 FROM ranked
 WHERE rn = 1
-ORDER BY IF(repo_id = ?, 1, 0) DESC, subject ASC`
+ORDER BY CASE WHEN repo_id = ? THEN 1 ELSE 0 END DESC, subject ASC`
 
 	// Prepare query arguments: owner, repoName, ref, then all condition args
 	queryArgs := []any{dm.ReleaseDateUnix, dm.Stage, dm.Language, dm.Repo.OwnerID}
@@ -483,7 +489,7 @@ WITH filtered AS (
     ABS(dm.release_date_unix - ?) AS time_diff
   FROM door43_metadata dm
   JOIN repository r ON r.id = dm.repo_id
-	JOIN user u ON r.owner_id = u.id
+	JOIN ` + "`user`" + ` u ON r.owner_id = u.id
   WHERE
     dm.stage <= 2
     AND u.lower_name = 'unfoldingword'
