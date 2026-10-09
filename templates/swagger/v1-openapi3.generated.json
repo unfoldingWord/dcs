@@ -816,17 +816,6 @@
         },
         "description": "LanguLangnamesJSON"
       },
-      "Language": {
-        "content": {
-          "application/json": {
-            "schema": {
-              "additionalProperties": {},
-              "type": "object"
-            }
-          }
-        },
-        "description": "Language"
-      },
       "LanguageStatistics": {
         "content": {
           "application/json": {

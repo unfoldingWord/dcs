@@ -38420,13 +38420,6 @@
         "additionalProperties": {}
       }
     },
-    "Language": {
-      "description": "Language",
-      "schema": {
-        "type": "object",
-        "additionalProperties": {}
-      }
-    },
     "LanguageStatistics": {
       "description": "LanguageStatistics",
       "schema": {
