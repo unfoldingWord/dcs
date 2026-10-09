@@ -39160,8 +39160,16 @@
       "name": "admin"
     },
     {
+      "description": "DCS catalog of published resources and their metadata",
+      "name": "catalog"
+    },
+    {
       "description": "Issues, pull requests, comments, labels and milestones",
       "name": "issue"
+    },
+    {
+      "description": "DCS language names and codes",
+      "name": "languages"
     },
     {
       "description": "Miscellaneous endpoints",
