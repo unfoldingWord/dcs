@@ -593,13 +593,7 @@ func GetDoor43MetadataFromSBMetadata(ctx context.Context, gitRepo *git.Repositor
 		}
 	case "Open Bible Stories":
 		contentFormat = "markdown"
-		ingredients = append([]*structs.Ingredient{{
-			Identifier: "obs",
-			Title:      title,
-			Path:       "./ingredients",
-			IsDir:      true,
-			Exists:     true,
-		}}, getSBOBSIngredients(ctx, gitRepo, sbMetadata, commit)...)
+		ingredients = getSBOBSIngredients(ctx, gitRepo, sbMetadata, commit)
 	case "TSV Translation Notes", "TSV Translation Questions", "TSV Translation Words Links":
 		contentFormat = "tsv7"
 		ingredients = getSBTSVIngredients(ctx, gitRepo, sbMetadata, commit)

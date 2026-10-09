@@ -378,7 +378,11 @@ func SearchCatalogForBookPackage(ctx context.Context, dm *repo.Door43Metadata, o
 		innerBookCond := builder.NewCond()
 		for _, book := range books {
 			for v := range strings.SplitSeq(book, ",") {
-				innerBookCond = innerBookCond.And(builder.Expr("JSON_SEARCH(dm.ingredients, 'one', ? COLLATE utf8mb4_general_ci, NULL, '$[*].identifier') IS NOT NULL", strings.ToLower(v)))
+				hasBook := builder.Expr("JSON_SEARCH(dm.ingredients, 'one', ? COLLATE utf8mb4_general_ci, NULL, '$[*].identifier') IS NOT NULL", strings.ToLower(v))
+				if strings.EqualFold(v, "obs") {
+					hasBook = builder.Or(hasBook, builder.Eq{"`door43_metadata`.subject": "Open Bible Stories"}) // OBS lists its stories, not an obs project
+				}
+				innerBookCond = innerBookCond.And(hasBook)
 				// innerBookCond = innerBookCond.And(builder.Expr("JSON_CONTAINS(LOWER(JSON_EXTRACT(dm.ingredients, '$')), JSON_OBJECT('identifier', ?))", strings.ToLower(v)))
 			}
 		}

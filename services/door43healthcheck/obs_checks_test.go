@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	repo_model "gitea.dev/models/repo"
+	"gitea.dev/modules/structs"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -166,4 +167,35 @@ func TestOBSStoryIssues(t *testing.T) {
 			repo_model.IssueCodeOBSBibleRefenceMissing: repo_model.SeverityLevelWarning,
 		}, codes(obsStoryIssues(nil, nil, []obsStory{noRef}, "metadata.json")))
 	})
+}
+
+func TestFindOBSContentPath(t *testing.T) {
+	ingredients := func(paths ...[2]string) []*structs.Ingredient {
+		list := make([]*structs.Ingredient, 0, len(paths))
+		for _, p := range paths {
+			list = append(list, &structs.Ingredient{Identifier: p[0], Path: p[1]})
+		}
+		return list
+	}
+	for _, tc := range []struct {
+		metadataType string
+		metadata     map[string]any
+		ingredients  []*structs.Ingredient
+		want         string
+	}{
+		{"rc", nil, ingredients([2]string{"obs", "./content"}, [2]string{"front", "./content/front"}), "content"},
+		{"ts", nil, ingredients([2]string{"obs", "."}, [2]string{"01", "./01"}), "."},
+		{"sb", nil, ingredients([2]string{"obs", "./ingredients"}), "ingredients"}, // stored before the folder was dropped
+		{"sb", nil, ingredients([2]string{"front", "./ingredients/content/front"}, [2]string{"01", "./ingredients/content/01.md"}), "ingredients/content"},
+		{"sb", nil, ingredients([2]string{"front", "./ingredients/front.md"}, [2]string{"01", "./ingredients/01.md"}), "ingredients"},
+		// no stories listed: still checked where the format keeps them
+		{"sb", nil, nil, "ingredients"},
+		{"ts", nil, nil, "."},
+		{"rc", map[string]any{"projects": []any{map[string]any{"identifier": "obs", "path": "./stories"}}}, nil, "stories"},
+		{"rc", nil, nil, "content"},
+		{"tc", nil, nil, ""},
+	} {
+		dm := &repo_model.Door43Metadata{MetadataType: tc.metadataType, Metadata: tc.metadata, Ingredients: tc.ingredients}
+		assert.Equal(t, tc.want, findOBSContentPath(dm), "%s %v", tc.metadataType, tc.ingredients)
+	}
 }

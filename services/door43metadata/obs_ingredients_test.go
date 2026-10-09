@@ -132,7 +132,6 @@ func TestOBSIngredients(t *testing.T) {
 		require.NoError(t, GetDoor43MetadataFromSBMetadata(ctx, gitRepo, dm, sb, repo, commit))
 		assert.Equal(t, "Open Bible Stories", dm.Subject)
 		assert.Equal(t, []string{
-			`obs ./ingredients "Histoires Bibliques" sort=0 dir=true exists=true`,
 			`front ./ingredients/content/front "Front Matter" sort=0 dir=true exists=true`,
 			`01 ./ingredients/content/01.md "1. La Création" sort=1 dir=false exists=true`,
 			`02 ./ingredients/content/02.md "" sort=2 dir=false exists=false`,
@@ -151,7 +150,6 @@ func TestOBSIngredients(t *testing.T) {
 		dm := &repo_model.Door43Metadata{}
 		require.NoError(t, GetDoor43MetadataFromSBMetadata(ctx, gitRepo, dm, sb, repo, commit))
 		assert.Equal(t, []string{
-			`obs ./ingredients "Histoires Bibliques" sort=0 dir=true exists=true`,
 			`front ./ingredients/front.md "Front Matter" sort=0 dir=false exists=true`,
 			`01 ./ingredients/01.md "1. La Création" sort=1 dir=false exists=true`,
 			`back ./ingredients/back.md "Back Matter" sort=51 dir=false exists=true`,
@@ -168,7 +166,6 @@ func TestOBSIngredients(t *testing.T) {
 		dm := &repo_model.Door43Metadata{}
 		require.NoError(t, GetDoor43MetadataFromSBMetadata(ctx, gitRepo, dm, sb, repo, commit))
 		assert.Equal(t, []string{
-			`obs ./ingredients "Histoires Bibliques" sort=0 dir=true exists=true`,
 			`front ./ingredients/content/front "Front Matter" sort=0 dir=true exists=true`,
 			`01 ./ingredients/content/01.md "1. La Création" sort=1 dir=false exists=true`,
 		}, summarizeIngredients(dm.Ingredients))

@@ -13,6 +13,7 @@ import (
 	"strings"
 
 	repo_model "gitea.dev/models/repo"
+	"gitea.dev/modules/dcs"
 	"gitea.dev/modules/log"
 )
 
@@ -42,10 +43,8 @@ func CheckOBSStories(ctx context.Context, dm *repo_model.Door43Metadata) []*repo
 
 	_ = dm.LoadRepo(ctx)
 
-	// Find the content path from the OBS ingredient
 	contentPath := findOBSContentPath(dm)
 	if contentPath == "" {
-		// No ingredient found; the ingredient check will already flag this
 		return nil
 	}
 
@@ -167,25 +166,30 @@ func obsStoryIssues(missingStories, unlistedStories []string, stories []obsStory
 	return issues
 }
 
-// findOBSContentPath returns the content path for OBS stories from the manifest ingredients.
-// For OBS, there's typically one ingredient with identifier "obs" and a path like "./content".
+// findOBSContentPath returns the dir that holds the stories: the dir of the first story or
+// front/back matter listed (a tS story is a dir of its own), or where the format keeps them
+// when none is listed, so a repo with no stories is still checked
 func findOBSContentPath(dm *repo_model.Door43Metadata) string {
 	for _, ingredient := range dm.Ingredients {
-		if ingredient.Identifier == "obs" {
-			p := strings.TrimPrefix(ingredient.Path, "./")
-			if p == "" {
-				p = "."
-			}
-			return p
+		if ingredient.Identifier == "obs" { // the dir itself, listed before the stories were
+			return path.Clean(ingredient.Path)
 		}
 	}
-	// Fallback: if the only ingredient is a directory, use it
-	if len(dm.Ingredients) == 1 && dm.Ingredients[0].IsDir {
-		p := strings.TrimPrefix(dm.Ingredients[0].Path, "./")
-		if p == "" {
-			p = "."
+	if len(dm.Ingredients) > 0 {
+		return path.Dir(path.Clean(dm.Ingredients[0].Path))
+	}
+	switch dm.MetadataType {
+	case "sb":
+		return "ingredients"
+	case "ts":
+		return "."
+	case "rc":
+		for _, project := range dcs.MapSlice(dm.Metadata, "projects") {
+			if project, ok := project.(map[string]any); ok && dcs.MapStr(project, "path") != "" {
+				return path.Clean(dcs.MapStr(project, "path"))
+			}
 		}
-		return p
+		return "content"
 	}
 	return ""
 }
