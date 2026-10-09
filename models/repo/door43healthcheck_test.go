@@ -4,6 +4,7 @@
 package repo_test
 
 import (
+	"strings"
 	"testing"
 
 	"gitea.dev/models/db"
@@ -259,6 +260,21 @@ func TestHealthcheckGroupedIssuesJSONChecks(t *testing.T) {
 		assert.Equal(t, string(code), got.Checks[i].IssueCode)
 	}
 
+	// the maps' keys keep one order: issues in check order, counts from success to error
+	buf, err := json.Marshal(hgi)
+	require.NoError(t, err)
+	for range 20 {
+		again, err := json.Marshal(hgi)
+		require.NoError(t, err)
+		require.Equal(t, string(buf), string(again))
+	}
+	last := -1
+	for _, code := range order {
+		pos := strings.Index(string(buf), `"`+string(code)+`":[`)
+		require.Greater(t, pos, last, code)
+		last = pos
+	}
+	assert.Contains(t, string(buf), `"severity_level_count":{"success":0,"info":0,"warning":1,"error":1}`)
 	assert.Contains(t, got.Checks, check{
 		IssueCode: "no_metadata", SeverityLevel: "success", IssueCount: 0,
 		PositiveTitle: "Metadata found for the repository", NegativeTitle: "No metadata found for the repository",

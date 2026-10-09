@@ -6,6 +6,8 @@ package repo
 import (
 	"context"
 	"fmt"
+	"maps"
+	"slices"
 	"strings"
 
 	"gitea.dev/models/db"
@@ -118,11 +120,33 @@ type HealthcheckGroupedIssues struct {
 type SeverityLevelCount map[SeverityLevel]int
 
 func (slc SeverityLevelCount) MarshalJSON() ([]byte, error) {
-	result := make(map[string]int)
-	for level, count := range slc {
-		result[level.String()] = count
+	return marshalObjectInOrder(slc, slices.Sorted(maps.Keys(slc)), SeverityLevel.String)
+}
+
+// rawJSON is JSON that is already encoded
+type rawJSON []byte
+
+func (r rawJSON) MarshalJSON() ([]byte, error) { return r, nil }
+
+// marshalObjectInOrder encodes m as a JSON object with its keys in the given order, as
+// encoding a Go map gives them in a different order each time
+func marshalObjectInOrder[K comparable, V any](m map[K]V, keys []K, name func(K) string) ([]byte, error) {
+	buf := []byte{'{'}
+	for i, key := range keys {
+		k, err := json.Marshal(name(key))
+		if err != nil {
+			return nil, err
+		}
+		v, err := json.Marshal(m[key])
+		if err != nil {
+			return nil, err
+		}
+		if i > 0 {
+			buf = append(buf, ',')
+		}
+		buf = append(append(append(buf, k...), ':'), v...)
 	}
-	return json.Marshal(result)
+	return append(buf, '}'), nil
 }
 
 // NewHealthcheckGroupedIssues creates a new HealthcheckGroupedIssues for a given metadata type and subject.
@@ -201,14 +225,28 @@ func (hgi *HealthcheckGroupedIssues) Checks() []*HealthcheckCheck {
 	return checks
 }
 
-// MarshalJSON adds Checks, as the issues map neither keeps an order nor titles a check that
-// found nothing
+// MarshalJSON gives the issues in check order, then any other codes sorted, and adds Checks,
+// as the issues map titles no check that found nothing
 func (hgi *HealthcheckGroupedIssues) MarshalJSON() ([]byte, error) {
-	type groupedIssues HealthcheckGroupedIssues // drops this method so Marshal doesn't recurse
+	codes := slices.DeleteFunc(IssueCodesFor(hgi.MetadataType, hgi.Subject), func(code IssueCode) bool {
+		_, ok := hgi.Issues[code]
+		return !ok
+	})
+	for _, code := range slices.Sorted(maps.Keys(hgi.Issues)) {
+		if !slices.Contains(codes, code) {
+			codes = append(codes, code)
+		}
+	}
+	issues, err := marshalObjectInOrder(hgi.Issues, codes, func(code IssueCode) string { return string(code) })
+	if err != nil {
+		return nil, err
+	}
 	return json.Marshal(&struct {
-		*groupedIssues
-		Checks []*HealthcheckCheck `json:"checks"`
-	}{(*groupedIssues)(hgi), hgi.Checks()})
+		Issues               rawJSON             `json:"issues"`
+		OverallSeverityLevel SeverityLevel       `json:"overall_severity_level"`
+		SeverityLevelCount   SeverityLevelCount  `json:"severity_level_count"`
+		Checks               []*HealthcheckCheck `json:"checks"`
+	}{issues, hgi.OverallSeverityLevel, hgi.SeverityLevelCount, hgi.Checks()})
 }
 
 // Issue code lists by metadata type and subject applicability
