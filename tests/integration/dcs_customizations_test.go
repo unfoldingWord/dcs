@@ -192,10 +192,24 @@ func TestDCSAPIRepoHealthcheck(t *testing.T) {
 
 	resp := MakeRequest(t, NewRequest(t, "GET", "/api/v1/repos/user2/repo1/healthcheck"), http.StatusOK)
 	var payload struct {
-		OK bool `json:"ok"`
+		OK   bool `json:"ok"`
+		Data struct {
+			Checks []struct {
+				IssueCode     string `json:"issue_code"`
+				SeverityLevel string `json:"severity_level"`
+				PositiveTitle string `json:"positive_title"`
+				NegativeTitle string `json:"negative_title"`
+			} `json:"checks"`
+		} `json:"data"`
 	}
 	DecodeJSON(t, resp, &payload)
 	assert.True(t, payload.OK)
+	require.NotEmpty(t, payload.Data.Checks)
+	for _, check := range payload.Data.Checks {
+		assert.NotEmpty(t, check.SeverityLevel, check.IssueCode)
+		assert.NotEmpty(t, check.PositiveTitle, check.IssueCode)
+		assert.NotEmpty(t, check.NegativeTitle, check.IssueCode)
+	}
 }
 
 func TestDCSWebRepoHealthcheckRefPage(t *testing.T) {

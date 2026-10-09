@@ -10,6 +10,7 @@ import (
 	"gitea.dev/models/door43metadata"
 	repo_model "gitea.dev/models/repo"
 	"gitea.dev/models/unittest"
+	"gitea.dev/modules/json"
 	"gitea.dev/modules/timeutil"
 
 	"github.com/stretchr/testify/assert"
@@ -216,4 +217,72 @@ func TestSeverityLevelIsHealthy(t *testing.T) {
 	assert.False(t, repo_model.SeverityLevelWarning.IsHealthyWithoutWarnings())
 	assert.False(t, repo_model.SeverityLevelError.IsHealthyWithoutWarnings())
 	assert.False(t, repo_model.SeverityLevel(0).IsHealthyWithoutWarnings())
+}
+
+func TestHealthcheckGroupedIssuesJSONChecks(t *testing.T) {
+	type check struct {
+		IssueCode     string `json:"issue_code"`
+		SeverityLevel string `json:"severity_level"`
+		PositiveTitle string `json:"positive_title"`
+		NegativeTitle string `json:"negative_title"`
+		IssueCount    int    `json:"issue_count"`
+	}
+	type grouped struct {
+		Issues               map[string][]map[string]any `json:"issues"`
+		OverallSeverityLevel string                      `json:"overall_severity_level"`
+		SeverityLevelCount   map[string]int              `json:"severity_level_count"`
+		Checks               []check                     `json:"checks"`
+	}
+	decode := func(t *testing.T, hgi *repo_model.HealthcheckGroupedIssues) grouped {
+		buf, err := json.Marshal(map[string]any{"data": hgi})
+		require.NoError(t, err)
+		var resp struct {
+			Data grouped `json:"data"`
+		}
+		require.NoError(t, json.Unmarshal(buf, &resp))
+		return resp.Data
+	}
+
+	hgi := repo_model.NewHealthcheckGroupedIssues("rc", "Open Bible Stories", []*repo_model.Door43HealthcheckIssue{
+		{IssueCode: repo_model.IssueCodeOBSStoryMissing, SeverityLevel: repo_model.SeverityLevelWarning},
+		{IssueCode: repo_model.IssueCodeOBSStoryMissing, SeverityLevel: repo_model.SeverityLevelError},
+	})
+	got := decode(t, hgi)
+	assert.Equal(t, "error", got.OverallSeverityLevel)
+	assert.Equal(t, 1, got.SeverityLevelCount["error"])
+	assert.Len(t, got.Issues[string(repo_model.IssueCodeOBSStoryMissing)], 2)
+	assert.Empty(t, got.Issues[string(repo_model.IssueCodeNoMetadata)])
+
+	order := repo_model.IssueCodesFor("rc", "Open Bible Stories")
+	require.Len(t, got.Checks, len(order))
+	for i, code := range order {
+		assert.Equal(t, string(code), got.Checks[i].IssueCode)
+	}
+
+	assert.Contains(t, got.Checks, check{
+		IssueCode: "no_metadata", SeverityLevel: "success", IssueCount: 0,
+		PositiveTitle: "Metadata found for the repository", NegativeTitle: "No metadata found for the repository",
+	})
+	assert.Contains(t, got.Checks, check{
+		IssueCode: "obs_story_missing", SeverityLevel: "error", IssueCount: 2,
+		PositiveTitle: "All 50 stories are present", NegativeTitle: "Not all 50 stories are present",
+	})
+
+	// clients list every check by its titles, so no check may lack one
+	for _, mt := range []string{"rc", "sb", "tc", "ts"} {
+		for _, subject := range []string{"Open Bible Stories", "Aligned Bible", "TSV Translation Notes", "Translation Words"} {
+			for _, code := range repo_model.IssueCodesFor(mt, subject) {
+				assert.NotEmpty(t, code.IssuePositiveString(), code)
+				assert.NotEmpty(t, code.IssueNegativeString(), code)
+			}
+		}
+	}
+
+	// an invalid metadata file means no deeper check ran, so only that check is listed
+	invalid := decode(t, repo_model.NewHealthcheckGroupedIssues("rc", "Open Bible Stories", []*repo_model.Door43HealthcheckIssue{
+		{IssueCode: repo_model.IssueCodeMetadataInvalid, SeverityLevel: repo_model.SeverityLevelError},
+	}))
+	require.Len(t, invalid.Checks, 1)
+	assert.Equal(t, "metadata_invalid", invalid.Checks[0].IssueCode)
+	assert.Equal(t, "error", invalid.Checks[0].SeverityLevel)
 }

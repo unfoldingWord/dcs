@@ -171,6 +171,46 @@ func (hgi *HealthcheckGroupedIssues) GetOrder() []IssueCode {
 	return IssueCodesFor(hgi.MetadataType, hgi.Subject)
 }
 
+// HealthcheckCheck is one check that ran and its result, with its words for either outcome
+type HealthcheckCheck struct {
+	IssueCode     IssueCode     `json:"issue_code"`
+	SeverityLevel SeverityLevel `json:"severity_level"`
+	PositiveTitle string        `json:"positive_title"`
+	NegativeTitle string        `json:"negative_title"`
+	IssueCount    int           `json:"issue_count"`
+}
+
+// Checks returns the checks that ran in GetOrder's order, each at the worst severity of its
+// issues, or success when it found none
+func (hgi *HealthcheckGroupedIssues) Checks() []*HealthcheckCheck {
+	order := hgi.GetOrder()
+	checks := make([]*HealthcheckCheck, 0, len(order))
+	for _, code := range order {
+		check := &HealthcheckCheck{
+			IssueCode:     code,
+			SeverityLevel: SeverityLevelSuccess,
+			PositiveTitle: code.IssuePositiveString(),
+			NegativeTitle: code.IssueNegativeString(),
+			IssueCount:    len(hgi.Issues[code]),
+		}
+		for _, issue := range hgi.Issues[code] {
+			check.SeverityLevel = max(check.SeverityLevel, issue.SeverityLevel)
+		}
+		checks = append(checks, check)
+	}
+	return checks
+}
+
+// MarshalJSON adds Checks, as the issues map neither keeps an order nor titles a check that
+// found nothing
+func (hgi *HealthcheckGroupedIssues) MarshalJSON() ([]byte, error) {
+	type groupedIssues HealthcheckGroupedIssues // drops this method so Marshal doesn't recurse
+	return json.Marshal(&struct {
+		*groupedIssues
+		Checks []*HealthcheckCheck `json:"checks"`
+	}{(*groupedIssues)(hgi), hgi.Checks()})
+}
+
 // Issue code lists by metadata type and subject applicability
 
 // commonIssueCodes are checked for all metadata types (rc, ts, tc, sb)
