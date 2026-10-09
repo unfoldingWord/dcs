@@ -139,15 +139,38 @@ func TestOBSIngredients(t *testing.T) {
 		}, summarizeIngredients(dm.Ingredients))
 	})
 
-	t.Run("sb with Scribe's flat layout", func(t *testing.T) {
-		sb := sbOBS("ingredients/01.md", "ingredients/front.md", "ingredients/back.md", "ingredients/scribe-settings.json")
+	t.Run("sb with Scribe's flat layout, written on Windows", func(t *testing.T) {
+		commit := branchCommit(t, "dcs-obs-sb-scribe", map[string]string{
+			"metadata.json":                    "{}",
+			"ingredients/01.md":                "# 1. La Création\n",
+			"ingredients/front.md":             "# Histoires Bibliques\n",
+			"ingredients/back.md":              "## Au sujet\n",
+			"ingredients/scribe-settings.json": "{}",
+		})
+		sb := sbOBS(`ingredients\01.md`, `ingredients\front.md`, `ingredients\back.md`, `ingredients\scribe-settings.json`)
 		dm := &repo_model.Door43Metadata{}
-		require.NoError(t, GetDoor43MetadataFromSBMetadata(ctx, nil, dm, sb, repo, nil))
+		require.NoError(t, GetDoor43MetadataFromSBMetadata(ctx, gitRepo, dm, sb, repo, commit))
 		assert.Equal(t, []string{
 			`obs ./ingredients "Histoires Bibliques" sort=0 dir=true exists=true`,
-			`front ./ingredients/front.md "Front Matter" sort=0 dir=false exists=false`,
-			`01 ./ingredients/01.md "" sort=1 dir=false exists=false`,
-			`back ./ingredients/back.md "Back Matter" sort=51 dir=false exists=false`,
+			`front ./ingredients/front.md "Front Matter" sort=0 dir=false exists=true`,
+			`01 ./ingredients/01.md "1. La Création" sort=1 dir=false exists=true`,
+			`back ./ingredients/back.md "Back Matter" sort=51 dir=false exists=true`,
+		}, summarizeIngredients(dm.Ingredients))
+	})
+
+	t.Run("sb keys that leave out the ingredients dir resolve under it", func(t *testing.T) {
+		commit := branchCommit(t, "dcs-obs-sb-noprefix", map[string]string{
+			"metadata.json":                      "{}",
+			"ingredients/content/01.md":          "# 1. La Création\n",
+			"ingredients/content/front/title.md": "Histoires Bibliques",
+		})
+		sb := sbOBS("content/01.md", "content/front/title.md")
+		dm := &repo_model.Door43Metadata{}
+		require.NoError(t, GetDoor43MetadataFromSBMetadata(ctx, gitRepo, dm, sb, repo, commit))
+		assert.Equal(t, []string{
+			`obs ./ingredients "Histoires Bibliques" sort=0 dir=true exists=true`,
+			`front ./ingredients/content/front "Front Matter" sort=0 dir=true exists=true`,
+			`01 ./ingredients/content/01.md "1. La Création" sort=1 dir=false exists=true`,
 		}, summarizeIngredients(dm.Ingredients))
 	})
 }

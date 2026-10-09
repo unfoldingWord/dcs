@@ -5,6 +5,8 @@ package dcs
 
 import (
 	"context"
+	"path"
+	"strings"
 
 	"gitea.dev/modules/git"
 	"gitea.dev/modules/json"
@@ -48,6 +50,39 @@ func ParseSBMetadata(buf []byte) (*SBMetadata100, error) {
 	}
 
 	return sb100, nil
+}
+
+// HasSBIngredientsDir reports whether the commit has the conventional ingredients/ dir
+func HasSBIngredientsDir(ctx context.Context, gitRepo *git.Repository, commit *git.Commit) bool {
+	if commit == nil {
+		return false
+	}
+	entry, err := commit.GetTreeEntryByPath(ctx, gitRepo, "ingredients")
+	return err == nil && entry != nil && entry.IsDir()
+}
+
+// SBIngredientRepoPaths maps each ingredient key of a metadata.json to the repo path of its
+// file. Keys are read with "/" separators, as Scribe on Windows writes them with "\". Some
+// repos omit the conventional ingredients/ dir from their keys, as the property is already
+// named "ingredients": when no key starts with "ingredients/" and the repo has that dir,
+// every key resolves under it; otherwise keys resolve from the repo root.
+func SBIngredientRepoPaths(keys []string, hasIngredientsDir bool) map[string]string {
+	repoPaths := make(map[string]string, len(keys))
+	prefix := ""
+	if hasIngredientsDir {
+		prefix = "ingredients/"
+	}
+	for _, key := range keys {
+		repoPath := strings.TrimPrefix(strings.ReplaceAll(key, `\`, "/"), "./")
+		if strings.HasPrefix(repoPath, "ingredients/") {
+			prefix = ""
+		}
+		repoPaths[key] = repoPath
+	}
+	for key, repoPath := range repoPaths {
+		repoPaths[key] = path.Clean(prefix + repoPath)
+	}
+	return repoPaths
 }
 
 // GetSB100Schema returns the schema for SB v1.0.0, compiled from options/schema/sb100

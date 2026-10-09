@@ -7,6 +7,7 @@ import (
 	"cmp"
 	"context"
 	"fmt"
+	"maps"
 	"path"
 	"slices"
 	"strconv"
@@ -82,8 +83,9 @@ func getOBSTreeIngredients(ctx context.Context, gitRepo *git.Repository, commit 
 func getSBOBSIngredients(ctx context.Context, gitRepo *git.Repository, sbMetadata *dcs.SBMetadata100, commit *git.Commit) []*structs.Ingredient {
 	var ingredients []*structs.Ingredient
 	seen := map[string]bool{}
-	for key := range sbMetadata.Ingredients {
-		names := strings.Split(strings.TrimPrefix(key, "./"), "/")
+	keys := slices.Collect(maps.Keys(sbMetadata.Ingredients))
+	for _, repoPath := range dcs.SBIngredientRepoPaths(keys, dcs.HasSBIngredientsDir(ctx, gitRepo, commit)) {
+		names := strings.Split(repoPath, "/")
 		for i, name := range names {
 			ingredient := newOBSIngredient(name, path.Join(names[:i+1]...), i < len(names)-1)
 			if ingredient == nil {
