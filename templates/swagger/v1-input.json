@@ -5,7 +5,9 @@
   "basePath": "/GITEA-API-APP-SUBURL/api/v1",
   "tags": [
     {"name": "admin", "description": "Site administration"},
+    {"name": "catalog", "description": "DCS catalog of published resources and their metadata"},
     {"name": "issue", "description": "Issues, pull requests, comments, labels and milestones"},
+    {"name": "languages", "description": "DCS language names and codes"},
     {"name": "miscellaneous", "description": "Miscellaneous endpoints"},
     {"name": "notification", "description": "User notifications"},
     {"name": "organization", "description": "Organizations and teams"},

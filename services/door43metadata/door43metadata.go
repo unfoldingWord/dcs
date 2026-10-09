@@ -416,6 +416,10 @@ func GetDoor43MetadataFromRCManifest(ctx context.Context, gitRepo *git.Repositor
 			ingredients = append(ingredients, ingredient)
 		}
 	}
+	// the obs project stays first: clients read the stories' dir from ingredients[0]
+	if subject == "Open Bible Stories" && len(ingredients) > 0 {
+		ingredients = append(ingredients, getOBSTreeIngredients(ctx, gitRepo, commit, ingredients[0].Path)...)
+	}
 	for _, relation := range dcs.MapSlice(dublinCore, "relation") {
 		relationStr, ok := relation.(string)
 		if !ok {
@@ -589,13 +593,13 @@ func GetDoor43MetadataFromSBMetadata(ctx context.Context, gitRepo *git.Repositor
 		}
 	case "Open Bible Stories":
 		contentFormat = "markdown"
-		ingredients = []*structs.Ingredient{{
+		ingredients = append([]*structs.Ingredient{{
 			Identifier: "obs",
 			Title:      title,
 			Path:       "./ingredients",
 			IsDir:      true,
 			Exists:     true,
-		}}
+		}}, getSBOBSIngredients(ctx, gitRepo, sbMetadata, commit)...)
 	case "TSV Translation Notes", "TSV Translation Questions", "TSV Translation Words Links":
 		contentFormat = "tsv7"
 		ingredients = getSBTSVIngredients(ctx, gitRepo, sbMetadata, commit)
@@ -1142,6 +1146,9 @@ func populateTcTsDoor43Metadata(ctx context.Context, gitRepo *git.Repository, dm
 		}
 	}
 	dm.Ingredients = []*structs.Ingredient{ingredient}
+	if t.Subject == "Open Bible Stories" {
+		dm.Ingredients = append(dm.Ingredients, getOBSTreeIngredients(ctx, gitRepo, commit, bookPath)...)
+	}
 
 	return nil
 }

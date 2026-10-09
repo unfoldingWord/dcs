@@ -195,6 +195,7 @@ This document catalogs every DCS modification to existing Gitea files. New DCS-o
 | `custom/conf/app.example.ini` | [dcs] section | LOW |
 | `docker/manifest*.tmpl` | Docker image references | LOW |
 | `options/locale/locale_en-US.json` | DCS locale strings (`dcs.*` block at end), rebranding overrides | MEDIUM |
+| `templates/swagger/v1-input.json` | DCS `catalog` and `languages` global tags, kept alphabetical for spectral (JSON allows no markers) | LOW |
 
 ---
 
