@@ -8,6 +8,7 @@ import (
 
 	repo_model "gitea.dev/models/repo"
 	user_model "gitea.dev/models/user"
+	"gitea.dev/modules/structs"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -65,4 +66,25 @@ func TestCheckPublisher(t *testing.T) {
 
 	// a properly changed publisher passes
 	assert.Empty(t, checkPublisher(t.Context(), newDM("someuser", "Iglesia Ejemplo")))
+}
+
+func TestCheckIngredientsSkipsOBSStories(t *testing.T) {
+	dm := &repo_model.Door43Metadata{
+		MetadataType: "rc", Subject: "Open Bible Stories", Language: "fr", Ref: "master",
+		Repo: &repo_model.Repository{
+			Name: "fr_obs", OwnerName: "someuser",
+			Owner: &user_model.User{Name: "someuser", LowerName: "someuser"},
+		},
+		Ingredients: []*structs.Ingredient{
+			{Identifier: "obs", Path: "./content", Title: "Histoires Bibliques", IsDir: true},
+			{Identifier: "01", Path: "./content/01.md"},
+		},
+	}
+
+	// the untitled, missing story is left to CheckOBSStories; the manifest's obs project is still checked
+	issues := checkIngredients(t.Context(), dm)
+	require.Len(t, issues, 1)
+	assert.Equal(t, repo_model.IssueCodeIngredientMissing, issues[0].IssueCode)
+	assert.Contains(t, issues[0].Details, "./content")
+	assert.NotContains(t, issues[0].Details, "01.md")
 }

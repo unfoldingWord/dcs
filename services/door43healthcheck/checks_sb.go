@@ -10,7 +10,6 @@ import (
 	"fmt"
 	"io"
 	"maps"
-	"path"
 	"slices"
 	"sort"
 	"strings"
@@ -47,12 +46,7 @@ func checkSBIngredients(ctx context.Context, dm *repo_model.Door43Metadata) []*r
 	}
 	sort.Strings(paths)
 
-	// Some SB repos omit the conventional "ingredients/" directory from their ingredient
-	// keys, reasoning that the containing property is already named "ingredients".
-	// Resolution rule: when no key starts with "ingredients/" and the repo has an
-	// ingredients/ directory, every key is resolved under it; when any key starts with
-	// "ingredients/", all keys are checked as-is from the repo root.
-	prefix := resolveSBIngredientPrefix(paths, hasIngredientsDir(ctx, gitRepo, commit))
+	repoPaths := dcs.SBIngredientRepoPaths(paths, dcs.HasSBIngredientsDir(ctx, gitRepo, commit))
 
 	var issues []*repo_model.Door43HealthcheckIssue
 	mismatch := func(path, reason string) {
@@ -66,11 +60,11 @@ func checkSBIngredients(ctx context.Context, dm *repo_model.Door43Metadata) []*r
 		if ingredient == nil {
 			continue
 		}
-		lookupPath := prefix + strings.TrimPrefix(path, "./")
+		lookupPath := repoPaths[path]
 		entry, err := commit.GetTreeEntryByPath(ctx, gitRepo, lookupPath)
 		if err != nil || entry == nil {
 			resolutionNote := ""
-			if prefix != "" {
+			if lookupPath != strings.TrimPrefix(path, "./") {
 				resolutionNote = fmt.Sprintf(" (resolved to **`%s`**)", lookupPath)
 			}
 			issues = append(issues, newIssue(repo_model.IssueCodeSBIngredientMissing, repo_model.SeverityLevelError,
@@ -100,36 +94,15 @@ func checkSBIngredients(ctx context.Context, dm *repo_model.Door43Metadata) []*r
 	return issues
 }
 
-func hasIngredientsDir(ctx context.Context, gitRepo *git.Repository, commit *git.Commit) bool {
-	entry, err := commit.GetTreeEntryByPath(ctx, gitRepo, "ingredients")
-	return err == nil && entry != nil && entry.IsDir()
-}
-
 // listedSBIngredientPaths returns the repo paths of the files metadata.json lists as
-// ingredients, resolved with the same ingredients/-prefix rule as checkSBIngredients
+// ingredients, resolved the same way as checkSBIngredients
 func listedSBIngredientPaths(ctx context.Context, gitRepo *git.Repository, commit *git.Commit, dm *repo_model.Door43Metadata) map[string]bool {
 	keys := slices.Collect(maps.Keys(getSBMetadataIngredients(dm)))
-	prefix := resolveSBIngredientPrefix(keys, hasIngredientsDir(ctx, gitRepo, commit))
 	listed := make(map[string]bool, len(keys))
-	for _, key := range keys {
-		listed[path.Clean(prefix+strings.TrimPrefix(key, "./"))] = true
+	for _, repoPath := range dcs.SBIngredientRepoPaths(keys, dcs.HasSBIngredientsDir(ctx, gitRepo, commit)) {
+		listed[repoPath] = true
 	}
 	return listed
-}
-
-// resolveSBIngredientPrefix returns "ingredients/" when the metadata's ingredient keys
-// omit the conventional directory: no key starts with "ingredients/" and the repo has an
-// ingredients/ directory. When any key carries the prefix, keys are taken as-is ("").
-func resolveSBIngredientPrefix(paths []string, hasIngredientsDir bool) string {
-	for _, path := range paths {
-		if strings.HasPrefix(strings.TrimPrefix(path, "./"), "ingredients/") {
-			return ""
-		}
-	}
-	if hasIngredientsDir {
-		return "ingredients/"
-	}
-	return ""
 }
 
 // getSBMetadataIngredients re-parses the ingredients section of the entry's stored SB metadata
