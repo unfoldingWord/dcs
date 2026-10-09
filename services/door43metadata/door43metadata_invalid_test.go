@@ -5,6 +5,7 @@ package door43metadata
 
 import (
 	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 	"time"
@@ -266,12 +267,23 @@ func TestPopulateTcTsDoor43Metadata(t *testing.T) {
 // at it, using plumbing so no working tree is needed on the bare fixture repo.
 func commitFileOnBranch(t *testing.T, repoPath, branch, fileName, content string) {
 	t.Helper()
+	commitFilesOnBranch(t, repoPath, branch, map[string]string{fileName: content})
+}
+
+// commitFilesOnBranch points branch at a new commit holding only files, keyed by their paths
+func commitFilesOnBranch(t *testing.T, repoPath, branch string, files map[string]string) {
+	t.Helper()
 	ctx := t.Context()
 
-	blobSha, _, err := gitcmd.NewCommand("hash-object", "-w", "--stdin").WithDir(repoPath).WithStdinBytes([]byte(content)).RunStdString(ctx)
-	require.NoError(t, err)
-	treeSha, _, err := gitcmd.NewCommand("mktree").WithDir(repoPath).
-		WithStdinBytes([]byte("100644 blob " + strings.TrimSpace(blobSha) + "\t" + fileName + "\n")).RunStdString(ctx)
+	indexEnv := append(os.Environ(), "GIT_INDEX_FILE="+filepath.Join(t.TempDir(), "index"))
+	for fileName, content := range files {
+		blobSha, _, err := gitcmd.NewCommand("hash-object", "-w", "--stdin").WithDir(repoPath).WithStdinBytes([]byte(content)).RunStdString(ctx)
+		require.NoError(t, err)
+		_, _, err = gitcmd.NewCommand("update-index", "--add", "--cacheinfo").AddDynamicArguments("100644," + strings.TrimSpace(blobSha) + "," + fileName).
+			WithEnv(indexEnv).WithDir(repoPath).RunStdString(ctx)
+		require.NoError(t, err)
+	}
+	treeSha, _, err := gitcmd.NewCommand("write-tree").WithEnv(indexEnv).WithDir(repoPath).RunStdString(ctx)
 	require.NoError(t, err)
 
 	when := time.Now().Format(time.RFC3339)
@@ -280,7 +292,7 @@ func commitFileOnBranch(t *testing.T, repoPath, branch, fileName, content string
 		"GIT_COMMITTER_NAME=test", "GIT_COMMITTER_EMAIL=test@example.com", "GIT_COMMITTER_DATE="+when,
 	)
 	commitSha, _, err := gitcmd.NewCommand("commit-tree").AddDynamicArguments(strings.TrimSpace(treeSha)).
-		WithEnv(env).WithDir(repoPath).WithStdinBytes([]byte("add " + fileName + "\n")).RunStdString(ctx)
+		WithEnv(env).WithDir(repoPath).WithStdinBytes([]byte("add files\n")).RunStdString(ctx)
 	require.NoError(t, err)
 
 	_, _, err = gitcmd.NewCommand("update-ref").AddDynamicArguments("refs/heads/"+branch, strings.TrimSpace(commitSha)).WithDir(repoPath).RunStdString(ctx)

@@ -76,6 +76,9 @@ func checkIngredients(_ context.Context, dm *repo_model.Door43Metadata) []*repo_
 	var issues []*repo_model.Door43HealthcheckIssue
 	doneIngredientTitle := false
 	for _, ingredient := range dm.Ingredients {
+		if dm.Subject == "Open Bible Stories" && ingredient.Identifier != "obs" {
+			continue // stories are listed from the repo, not the manifest, and CheckOBSStories checks them
+		}
 		// Acts, Numbers and Deuteronomy are only in English and not other languages, so using those
 		if !doneIngredientTitle && dm.Repo.Owner.LowerName != "unfoldingword" && (ingredient.Title == "" || (dm.Language != "en" && (ingredient.Title == "Numbers" || ingredient.Title == "Deuteronomy" || ingredient.Title == "Acts"))) {
 			doneIngredientTitle = true
