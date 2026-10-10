@@ -3183,6 +3183,7 @@
             "$ref": "#/components/schemas/CatalogAttachmentTypes"
           },
           "books": {
+            "description": "Books the identifiers of the entry's ingredients, always listed: empty when the entry has none",
             "items": {
               "type": "string"
             },

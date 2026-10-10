@@ -45,8 +45,9 @@ type CatalogEntry struct {
 	ContentFormat          string        `json:"content_format"`
 	Released               time.Time     `json:"released"`
 	Ingredients            []*Ingredient `json:"ingredients,omitempty"`
-	Books                  []string      `json:"books,omitempty"`
-	Relations              []*Relation   `json:"relations"`
+	// Books the identifiers of the entry's ingredients, always listed: empty when the entry has none
+	Books     []string    `json:"books"`
+	Relations []*Relation `json:"relations"`
 	// AttachmentTypes the kinds of content available in the entry's release attachments; null if the entry is not a release
 	AttachmentTypes     *CatalogAttachmentTypes `json:"attachment_types"`
 	IsValid             bool                    `json:"is_valid"`
