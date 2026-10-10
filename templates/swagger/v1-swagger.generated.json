@@ -29088,6 +29088,7 @@
           "$ref": "#/definitions/CatalogAttachmentTypes"
         },
         "books": {
+          "description": "Books the identifiers of the entry's ingredients, always listed: empty when the entry has none",
           "type": "array",
           "items": {
             "type": "string"
