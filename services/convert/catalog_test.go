@@ -9,6 +9,8 @@ import (
 	"gitea.dev/models/door43metadata"
 	repo_model "gitea.dev/models/repo"
 	"gitea.dev/models/unittest"
+	"gitea.dev/modules/json"
+	api "gitea.dev/modules/structs"
 	"gitea.dev/modules/timeutil"
 
 	"github.com/stretchr/testify/assert"
@@ -45,4 +47,28 @@ func TestToCatalogEntryAttachmentTypes(t *testing.T) {
 	entry = ToCatalogEntry(t.Context(), dm, nil, nil)
 	require.NotNil(t, entry)
 	assert.Nil(t, entry.AttachmentTypes)
+}
+
+func TestToCatalogEntryBooksAlwaysListed(t *testing.T) {
+	assert.NoError(t, unittest.PrepareTestDatabase())
+
+	repo1 := unittest.AssertExistsAndLoadBean(t, &repo_model.Repository{ID: 1})
+	require.NoError(t, repo1.LoadOwner(t.Context()))
+
+	// an entry with no ingredients says so with an empty books list rather than leaving it out
+	dm := &repo_model.Door43Metadata{
+		RepoID: 1, Repo: repo1, Ref: "master", RefType: "branch",
+		CommitSHA: "0000000000000000000000000000000000000009",
+	}
+	entry := ToCatalogEntry(t.Context(), dm, nil, nil)
+	require.NotNil(t, entry)
+	buf, err := json.Marshal(entry)
+	require.NoError(t, err)
+	assert.Contains(t, string(buf), `"books":[]`)
+	assert.NotContains(t, string(buf), `"ingredients"`)
+
+	dm.Ingredients = []*api.Ingredient{{Identifier: "gen"}, {Identifier: "exo"}}
+	entry = ToCatalogEntry(t.Context(), dm, nil, nil)
+	require.NotNil(t, entry)
+	assert.Equal(t, []string{"gen", "exo"}, entry.Books)
 }

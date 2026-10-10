@@ -303,13 +303,11 @@ func (dm *Door43Metadata) ContentsURL() string {
 	return fmt.Sprintf("%s/contents?ref=%s", dm.Repo.APIURL(), dm.Ref)
 }
 
-// IngredientsIdentifierList the identifiers of the igredients and returns them as a list of strings
+// IngredientsIdentifierList returns the identifiers of the ingredients, an empty list when there are none
 func (dm *Door43Metadata) IngredientsIdentifierList() []string {
-	var ids []string
-	if len(dm.Ingredients) > 0 {
-		for _, ing := range dm.Ingredients {
-			ids = append(ids, ing.Identifier)
-		}
+	ids := make([]string, 0, len(dm.Ingredients))
+	for _, ing := range dm.Ingredients {
+		ids = append(ids, ing.Identifier)
 	}
 	return ids
 }
