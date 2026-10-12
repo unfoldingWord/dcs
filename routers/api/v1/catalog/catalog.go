@@ -1765,6 +1765,15 @@ func QueryStrings(ctx *context.APIContext, name string) []string {
 	return newStrs
 }
 
+// queryStringsAliased returns the values of every one of the given query parameter names.
+func queryStringsAliased(ctx *context.APIContext, names ...string) []string {
+	var values []string
+	for _, name := range names {
+		values = append(values, QueryStrings(ctx, name)...)
+	}
+	return values
+}
+
 func searchCatalog(ctx *context.APIContext) {
 	stageStr := ctx.FormString("stage")
 	stage := door43metadata.StageProd
@@ -1991,9 +2000,12 @@ func getCatalogBookPackage(ctx *context.APIContext) {
 		listOptions.Page = 1
 	}
 
-	subjects := QueryStrings(ctx, "subjects")
-	flavors := QueryStrings(ctx, "flavors")
-	flavorTypes := QueryStrings(ctx, "flavorTypes")
+	// The documented names are the singular ones used by every other catalog endpoint;
+	// the plural spellings were the only ones this handler read before and are kept
+	// as aliases so existing callers keep working.
+	subjects := queryStringsAliased(ctx, "subject", "subjects")
+	flavors := queryStringsAliased(ctx, "flavor", "flavors")
+	flavorTypes := queryStringsAliased(ctx, "flavorType", "flavorTypes")
 	if len(subjects) == 0 && len(flavors) == 0 && len(flavorTypes) == 0 {
 		if slices.Contains(bibleBPSubjects, dm.Subject) {
 			subjects = bibleBPSubjects
