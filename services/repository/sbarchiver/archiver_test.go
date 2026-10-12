@@ -221,40 +221,65 @@ func TestPayloadRefForArchive(t *testing.T) {
 
 	// A production release pairs with the payload's production release closest in time,
 	// not its latest release and not the pre-release that is even closer.
-	ref, err := payloadRefForArchive(t.Context(), requested("v1", "tag", door43metadata.StageProd, 1000), "v1", payloadRepo, payloadGitRepo)
+	ref, err := payloadRefForArchive(t.Context(), requested("v1", "tag", door43metadata.StageProd, 1000), "v1", "tag", payloadRepo, payloadGitRepo)
 	require.NoError(t, err)
 	assert.Equal(t, "v1", ref)
 
-	ref, err = payloadRefForArchive(t.Context(), requested("v2", "tag", door43metadata.StageProd, 5000), "v2", payloadRepo, payloadGitRepo)
+	ref, err = payloadRefForArchive(t.Context(), requested("v2", "tag", door43metadata.StageProd, 5000), "v2", "tag", payloadRepo, payloadGitRepo)
 	require.NoError(t, err)
 	assert.Equal(t, "v2", ref)
 
 	// A pre-release may pair with a pre-release.
-	ref, err = payloadRefForArchive(t.Context(), requested("v1.1-rc", "tag", door43metadata.StagePreProd, 1020), "v1.1-rc", payloadRepo, payloadGitRepo)
+	ref, err = payloadRefForArchive(t.Context(), requested("v1.1-rc", "tag", door43metadata.StagePreProd, 1020), "v1.1-rc", "tag", payloadRepo, payloadGitRepo)
 	require.NoError(t, err)
 	assert.Equal(t, "v1.1", ref)
 
 	// Another language has no book package entry and the payload has no such tag: default branch.
 	fr := requested("v3", "tag", door43metadata.StageProd, 1000)
 	fr.Language = "fr"
-	ref, err = payloadRefForArchive(t.Context(), fr, "v3", payloadRepo, payloadGitRepo)
+	ref, err = payloadRefForArchive(t.Context(), fr, "v3", "tag", payloadRepo, payloadGitRepo)
 	require.NoError(t, err)
 	assert.Equal(t, "master", ref)
 
 	// A branch pairs with the payload's same-named branch when it has one, else its default branch.
-	ref, err = payloadRefForArchive(t.Context(), requested("test/archive", "branch", door43metadata.StageOther, 0), "test/archive", payloadRepo, payloadGitRepo)
+	ref, err = payloadRefForArchive(t.Context(), requested("test/archive", "branch", door43metadata.StageOther, 0), "test/archive", "branch", payloadRepo, payloadGitRepo)
 	require.NoError(t, err)
 	assert.Equal(t, "master", ref)
 
 	selfGitRepo, err := git.OpenRepository(t.Context(), loadRepo(t))
 	require.NoError(t, err)
 	defer selfGitRepo.Close()
-	ref, err = payloadRefForArchive(t.Context(), requested("test/archive", "branch", door43metadata.StageOther, 0), "test/archive", loadRepo(t), selfGitRepo)
+	ref, err = payloadRefForArchive(t.Context(), requested("test/archive", "branch", door43metadata.StageOther, 0), "test/archive", "branch", loadRepo(t), selfGitRepo)
 	require.NoError(t, err)
 	assert.Equal(t, "test/archive", ref)
 
-	// A bare commit falls back to the default branch metadata, whose ref is not the request: default branch.
-	ref, err = payloadRefForArchive(t.Context(), requested("master", "branch", door43metadata.StageLatest, 0), testFirstCommit, payloadRepo, payloadGitRepo)
+	// A requested tag never pairs with a same-named payload branch (and a branch never with a tag).
+	ref, err = payloadRefForArchive(t.Context(), requested("test/archive", "tag", door43metadata.StageProd, 0), "test/archive", "tag", loadRepo(t), selfGitRepo)
 	require.NoError(t, err)
 	assert.Equal(t, "master", ref)
+
+	// A bare commit falls back to the default branch metadata, whose ref is not the request: default branch.
+	ref, err = payloadRefForArchive(t.Context(), requested("master", "branch", door43metadata.StageLatest, 0), testFirstCommit, "", payloadRepo, payloadGitRepo)
+	require.NoError(t, err)
+	assert.Equal(t, "master", ref)
+}
+
+func TestRequestedRefType(t *testing.T) {
+	require.NoError(t, unittest.PrepareTestDatabase())
+	repo := loadRepo(t)
+
+	// The ref's own metadata row answers without touching git.
+	refType, err := requestedRefType(t.Context(), repo, &repo_model.Door43Metadata{Ref: "v1", RefType: "tag"}, "v1")
+	require.NoError(t, err)
+	assert.Equal(t, "tag", refType)
+
+	// Otherwise git decides: a branch, or a bare commit that is neither branch nor tag.
+	fallbackDM := &repo_model.Door43Metadata{Ref: "master", RefType: "branch"}
+	refType, err = requestedRefType(t.Context(), repo, fallbackDM, "test/archive")
+	require.NoError(t, err)
+	assert.Equal(t, "branch", refType)
+
+	refType, err = requestedRefType(t.Context(), repo, fallbackDM, testFirstCommit)
+	require.NoError(t, err)
+	assert.Empty(t, refType)
 }

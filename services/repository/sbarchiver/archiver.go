@@ -328,6 +328,28 @@ func prepareTsTWSourceDir(ctx context.Context, tmpDir string, dm *repo_model.Doo
 	return "", nil
 }
 
+// requestedRefType reports whether refShortName names a branch or a tag of repo
+// ("branch", "tag"), or "" for anything else such as a bare commit ID. The ref's own
+// metadata row answers when it has one; otherwise the git repository is consulted.
+func requestedRefType(ctx context.Context, repo *repo_model.Repository, dm *repo_model.Door43Metadata, refShortName string) (string, error) {
+	if dm.Ref == refShortName && (dm.RefType == "branch" || dm.RefType == "tag") {
+		return dm.RefType, nil
+	}
+	gitRepo, err := git.OpenRepository(ctx, repo)
+	if err != nil {
+		return "", fmt.Errorf("git.OpenRepository(%s): %w", repo.FullName(), err)
+	}
+	defer gitRepo.Close()
+	switch {
+	case gitRepo.IsBranchExist(ctx, refShortName):
+		return "branch", nil
+	case gitRepo.IsTagExist(ctx, refShortName):
+		return "tag", nil
+	default:
+		return "", nil
+	}
+}
+
 // payloadRefForArchive picks the ref of payloadRepo to pair with the requested ref of the
 // repo being archived, so a release's archive carries the payload as it was when that
 // release was made rather than whatever the payload repo's default branch holds today:
@@ -336,20 +358,28 @@ func prepareTsTWSourceDir(ctx context.Context, tmpDir string, dm *repo_model.Doo
 //   - a branch: the same-named branch when the payload repo has one
 //   - otherwise (a bare commit, no match above): the payload repo's default branch
 //
-// dm is the requested repo's metadata as chosen by getRepoDMForArchive; it describes
-// refShortName itself unless that ref has no metadata of its own.
-func payloadRefForArchive(ctx context.Context, dm *repo_model.Door43Metadata, refShortName string, payloadRepo *repo_model.Repository, payloadGitRepo *git.Repository) (string, error) {
-	if dm.Ref == refShortName && dm.RefType == "tag" {
-		ref, err := bookPackageRef(ctx, dm, payloadRepo)
-		if err != nil {
-			return "", err
+// refType is the requested ref's kind from requestedRefType. dm is the requested repo's
+// metadata as chosen by getRepoDMForArchive; it describes refShortName itself unless
+// that ref has no metadata of its own, in which case the book package is not consulted.
+func payloadRefForArchive(ctx context.Context, dm *repo_model.Door43Metadata, refShortName, refType string, payloadRepo *repo_model.Repository, payloadGitRepo *git.Repository) (string, error) {
+	switch refType {
+	case "tag":
+		if dm.Ref == refShortName {
+			ref, err := bookPackageRef(ctx, dm, payloadRepo)
+			if err != nil {
+				return "", err
+			}
+			if ref != "" {
+				return ref, nil
+			}
 		}
-		if ref != "" {
-			return ref, nil
+		if payloadGitRepo.IsTagExist(ctx, refShortName) {
+			return refShortName, nil
 		}
-	}
-	if payloadGitRepo.IsBranchExist(ctx, refShortName) || payloadGitRepo.IsTagExist(ctx, refShortName) {
-		return refShortName, nil
+	case "branch":
+		if payloadGitRepo.IsBranchExist(ctx, refShortName) {
+			return refShortName, nil
+		}
 	}
 	return payloadRepo.DefaultBranch, nil
 }
@@ -408,7 +438,11 @@ func preparePayloadPath(ctx context.Context, tmpDir, rcDir string, repo *repo_mo
 	}
 	defer payloadGitRepo.Close()
 
-	payloadRef, err := payloadRefForArchive(ctx, dm, refShortName, payloadRepo, payloadGitRepo)
+	refType, err := requestedRefType(ctx, repo, dm, refShortName)
+	if err != nil {
+		return "", err
+	}
+	payloadRef, err := payloadRefForArchive(ctx, dm, refShortName, refType, payloadRepo, payloadGitRepo)
 	if err != nil {
 		return "", err
 	}
