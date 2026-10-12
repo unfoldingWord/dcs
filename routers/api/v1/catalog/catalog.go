@@ -1926,7 +1926,12 @@ func searchCatalog(ctx *context.APIContext) {
 }
 
 func getCatalogBookPackage(ctx *context.APIContext) {
+	// The ref comes from the trailing path (/bp/{owner}/{repo}/{ref}) or, as the
+	// swagger documents it, from the ?ref= query parameter.
 	ref := ctx.PathParam("*")
+	if ref == "" {
+		ref = ctx.FormString("ref")
+	}
 	stageStr := ctx.FormString("stage")
 	stage := door43metadata.StageNotSet
 	if stageStr != "" {
@@ -2001,9 +2006,10 @@ func getCatalogBookPackage(ctx *context.APIContext) {
 
 	books := QueryStrings(ctx, "book")
 
+	// No Tags option: the requested ref already fixes the book package's release, and the
+	// tag condition filters on the release table, which the book package query never joins.
 	opts := &door43metadata.SearchCatalogOptions{
 		ListOptions:      listOptions,
-		Tags:             QueryStrings(ctx, "tag"),
 		Stage:            stage,
 		Languages:        QueryStrings(ctx, "lang"),
 		LanguageIsGL:     ctx.FormOptionalBool("is_gl"),
@@ -2204,12 +2210,154 @@ func GetCatalogBookPackage(ctx *context.APIContext) {
 	//   required: true
 	// - name: ref
 	//   in: query
-	//   description: optional reference (tag/branch). If not provided, uses the most recent entry based on stage
+	//   description: 'optional reference (tag/branch), an alternative to giving it in the path
+	//                (/catalog/bp/{owner}/{repo}/{ref}). If not provided, uses the most recent entry based on stage'
 	//   type: string
-	// - name: tag
+	// - name: stage
 	//   in: query
-	//   description: search only for entries with the given release tag(s). To match multiple, give the parameter multiple times or give a list comma delimited. Will perform an exact match (case insensitive)
+	//   description: 'list only those of the given stage or lower, with low to high being:
+	//                "prod" - return only those of production releases (default);
+	//                "preprod" - return only those of all (production & pre-production) releases;
+	//                "latest" - return only those of all releases and the default branch;
+	//                "other" - return all, including other branches and tags [aliases: "branch", "tag"]'
+	//   type: array
+	//   collectionFormat: multi
+	//   items:
+	//     type: string
+	//     enum: [prod,preprod,latest,other]
+	// - name: subject
+	//   in: query
+	//   description: 'subject(s) desired for the book package.
+	//                Default list: Aligned Bible, TSV Translation Notes, TSV Translation Questions, TSV Translation Words Links, Translation Words, Translation Academy'
+	//   type: array
+	//   collectionFormat: multi
+	//   items:
+	//     type: string
+	// - name: flavorType
+	//   in: query
+	//   description: resource flavorType. Multiple values are ORed. If given, subjects ignored.
+	//   type: array
+	//   collectionFormat: multi
+	//   items:
+	//     type: string
+	// - name: flavor
+	//   in: query
+	//   description: resource flavor. Multiple values are ORed. If given, subjects ignored.
+	//   type: array
+	//   collectionFormat: multi
+	//   items:
+	//     type: string
+	// - name: abbreviation
+	//   in: query
+	//   description: resource abbreviation (identifier). Multiple values are ORed.
+	//   type: array
+	//   collectionFormat: multi
+	//   items:
+	//     type: string
+	// - name: format
+	//   in: query
+	//   description: content format (usfm, text, markdown, etc.). Multiple values are ORed.
+	//   type: array
+	//   collectionFormat: multi
+	//   items:
+	//     type: string
+	// - name: checkingLevel
+	//   in: query
+	//   description: checking level. Returns items with a checking level equal or greater than the number given
+	//   type: array
+	//   collectionFormat: multi
+	//   items:
+	//     type: string
+	//     enum: ["1","2","3"]
+	// - name: book
+	//   in: query
+	//   description: book (ingredient identifier). Multiple values are ORed
+	//   type: array
+	//   collectionFormat: multi
+	//   items:
+	//     type: string
+	// - name: metadataType
+	//   in: query
+	//   description: metadata type. Multiple values are ORed
+	//   type: array
+	//   collectionFormat: multi
+	//   items:
+	//     type: string
+	//     enum: [rc,sb,tc,ts]
+	// - name: metadataVersion
+	//   in: query
+	//   description: metadata version. Does not apply if metadataType is not given. Multiple values are ORed
+	//   type: array
+	//   collectionFormat: multi
+	//   items:
+	//     type: string
+	// - name: topic
+	//   in: query
+	//   description: topic of a repo. Multiple values are ORed
+	//   type: array
+	//   collectionFormat: multi
+	//   items:
+	//     type: string
+	// - name: withoutTopic
+	//   in: query
+	//   description: Entries with a repository without this topic will be returned. Multiple values are ANDed.
+	//   type: array
+	//   collectionFormat: multi
+	//   items:
+	//     type: string
+	// - name: showIngredients
+	//   in: query
+	//   description: if true, the list of ingredients (files/projects) in the resource and their file paths will be listed for each entry, default is true
+	//   type: boolean
+	// - name: sort
+	//   in: query
+	//   description: sort by attribute. Supported values are "subject", "title", "flavortype", "flavor",
+	//                "abbreviation", "reponame", "tag", "released", "lang", "releases", "stars", "forks".
+	//                Default is by "subject" and then "abbreviation"
 	//   type: string
+	// - name: order
+	//   in: query
+	//   description: sort order, either "asc" (ascending) or "desc" (descending).
+	//                Default is "asc", ignored if "sort" is not specified.
+	//   type: string
+	// - name: page
+	//   in: query
+	//   description: page number of results to return (1-based)
+	//   type: integer
+	// - name: limit
+	//   in: query
+	//   description: page size of results, defaults to no limit
+	//   type: integer
+	// responses:
+	//   "200":
+	//     "$ref": "#/responses/CatalogSearchResults"
+	//   "422":
+	//     "$ref": "#/responses/validationError"
+
+	getCatalogBookPackage(ctx)
+}
+
+// GetCatalogBookPackageByRef get all catalog entries for the book package of a catalog entry's ref
+func GetCatalogBookPackageByRef(ctx *context.APIContext) {
+	// swagger:operation GET /catalog/bp/{owner}/{repo}/{ref} catalog catalogGetBookPackageByRef
+	// ---
+	// summary: Get all catalog entries for the book package of a catalog entry's ref (tag or branch)
+	// parameters:
+	// - name: owner
+	//   in: path
+	//   description: search only for entries with the given owner name(s). Will perform an exact match (case insensitive) unlesss partialMatch=true
+	//   type: string
+	//   required: true
+	// - name: repo
+	//   in: path
+	//   description: search only for entries with the given repo name(s). To match multiple, give the parameter multiple times or give a list comma delimited. Will perform an exact match (case insensitive) unlesss partialMatch=true
+	//   type: string
+	//   required: true
+	// - name: ref
+	//   in: path
+	//   description: release tag or branch whose book package is wanted
+	//   type: string
+	//   required: true
 	// - name: stage
 	//   in: query
 	//   description: 'list only those of the given stage or lower, with low to high being:
