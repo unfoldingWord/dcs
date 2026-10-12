@@ -18,7 +18,9 @@ import (
 	"strings"
 	"time"
 
+	"gitea.dev/models"
 	"gitea.dev/models/db"
+	"gitea.dev/models/door43metadata"
 	repo_model "gitea.dev/models/repo"
 	"gitea.dev/modules/git"
 	"gitea.dev/modules/git/gitcmd"
@@ -219,7 +221,7 @@ func (aReq *ArchiveRequest) Stream(ctx context.Context, repo *repo_model.Reposit
 		}
 	}
 
-	payloadPath, err := preparePayloadPath(ctx, tmpDir, rcDir, repo, repoDM)
+	payloadPath, err := preparePayloadPath(ctx, tmpDir, rcDir, repo, repoDM, aReq.RefShortName)
 	if err != nil {
 		return err
 	}
@@ -326,7 +328,93 @@ func prepareTsTWSourceDir(ctx context.Context, tmpDir string, dm *repo_model.Doo
 	return "", nil
 }
 
-func preparePayloadPath(ctx context.Context, tmpDir, rcDir string, repo *repo_model.Repository, dm *repo_model.Door43Metadata) (string, error) {
+// requestedRefType reports whether refShortName names a branch or a tag of repo
+// ("branch", "tag"), or "" for anything else such as a bare commit ID. The ref's own
+// metadata row answers when it has one; otherwise the git repository is consulted.
+func requestedRefType(ctx context.Context, repo *repo_model.Repository, dm *repo_model.Door43Metadata, refShortName string) (string, error) {
+	if dm.Ref == refShortName && (dm.RefType == "branch" || dm.RefType == "tag") {
+		return dm.RefType, nil
+	}
+	gitRepo, err := git.OpenRepository(ctx, repo)
+	if err != nil {
+		return "", fmt.Errorf("git.OpenRepository(%s): %w", repo.FullName(), err)
+	}
+	defer gitRepo.Close()
+	switch {
+	case gitRepo.IsBranchExist(ctx, refShortName):
+		return "branch", nil
+	case gitRepo.IsTagExist(ctx, refShortName):
+		return "tag", nil
+	default:
+		return "", nil
+	}
+}
+
+// payloadRefForArchive picks the ref of payloadRepo to pair with the requested ref of the
+// repo being archived, so a release's archive carries the payload as it was when that
+// release was made rather than whatever the payload repo's default branch holds today:
+//   - a release tag: the payload repo's entry in the requested ref's book package (its
+//     release closest in time to the requested one), else a same-named tag
+//   - a branch: the same-named branch when the payload repo has one
+//   - otherwise (a bare commit, no match above): the payload repo's default branch
+//
+// The result is fully qualified (refs/tags/..., refs/heads/...) so that resolving it is
+// unambiguous when the payload repo has a branch and a tag of the same name.
+//
+// refType is the requested ref's kind from requestedRefType. dm is the requested repo's
+// metadata as chosen by getRepoDMForArchive; it describes refShortName itself unless
+// that ref has no metadata of its own, in which case the book package is not consulted.
+func payloadRefForArchive(ctx context.Context, dm *repo_model.Door43Metadata, refShortName, refType string, payloadRepo *repo_model.Repository, payloadGitRepo *git.Repository) (git.RefName, error) {
+	switch refType {
+	case "tag":
+		if dm.Ref == refShortName {
+			ref, err := bookPackageRef(ctx, dm, payloadRepo)
+			if err != nil {
+				return "", err
+			}
+			if ref != "" {
+				return ref, nil
+			}
+		}
+		if payloadGitRepo.IsTagExist(ctx, refShortName) {
+			return git.RefNameFromTag(refShortName), nil
+		}
+	case "branch":
+		if payloadGitRepo.IsBranchExist(ctx, refShortName) {
+			return git.RefNameFromBranch(refShortName), nil
+		}
+	}
+	return git.RefNameFromBranch(payloadRepo.DefaultBranch), nil
+}
+
+// bookPackageRef returns the ref of payloadRepo that the book package of dm's release
+// pairs with it (what /api/v1/catalog/bp/{owner}/{repo}/{ref} reports), or "" when the
+// book package has no entry for payloadRepo.
+func bookPackageRef(ctx context.Context, dm *repo_model.Door43Metadata, payloadRepo *repo_model.Repository) (git.RefName, error) {
+	if err := dm.LoadRepo(ctx); err != nil {
+		return "", fmt.Errorf("dm.LoadRepo: %w", err)
+	}
+	opts := &door43metadata.SearchCatalogOptions{
+		Repos:          []string{payloadRepo.Name},
+		IncludeHistory: true,
+	}
+	dms, _, err := models.SearchCatalogForBookPackage(ctx, dm, opts)
+	if err != nil {
+		return "", fmt.Errorf("models.SearchCatalogForBookPackage(%s/%s): %w", dm.Repo.FullName(), dm.Ref, err)
+	}
+	for _, bpDM := range dms {
+		if bpDM.RepoID != payloadRepo.ID {
+			continue
+		}
+		if bpDM.RefType == "tag" {
+			return git.RefNameFromTag(bpDM.Ref), nil
+		}
+		return git.RefNameFromBranch(bpDM.Ref), nil
+	}
+	return "", nil
+}
+
+func preparePayloadPath(ctx context.Context, tmpDir, rcDir string, repo *repo_model.Repository, dm *repo_model.Door43Metadata, refShortName string) (string, error) {
 	if dm.Language == "" {
 		return "", nil
 	}
@@ -357,29 +445,42 @@ func preparePayloadPath(ctx context.Context, tmpDir, rcDir string, repo *repo_mo
 	}
 	defer payloadGitRepo.Close()
 
-	commitID, err := payloadGitRepo.ConvertToGitID(ctx, payloadRepo.DefaultBranch)
+	refType, err := requestedRefType(ctx, repo, dm, refShortName)
 	if err != nil {
-		return "", fmt.Errorf("resolve %s default branch: %w", payloadRepo.FullName(), err)
+		return "", err
 	}
+	payloadRef, err := payloadRefForArchive(ctx, dm, refShortName, refType, payloadRepo, payloadGitRepo)
+	if err != nil {
+		return "", err
+	}
+	commitID, err := payloadGitRepo.ConvertToGitID(ctx, payloadRef.String())
+	if err != nil {
+		return "", fmt.Errorf("resolve %s ref %s: %w", payloadRepo.FullName(), payloadRef, err)
+	}
+	log.Debug("SB archive of %s@%s: using payload %s@%s (%s)", repo.FullName(), refShortName, payloadRepo.FullName(), payloadRef, commitID.String())
 
 	if isTWRepo {
 		// Clone the TWL repo directly into rcDir/<lang>_twl/ so the library auto-detects
 		// it from inDir (the same pattern the TWL handler uses to auto-detect <lang>_tw/).
 		destDir := filepath.Join(rcDir, payloadRepoName)
-		if err := cloneRepositoryAtCommit(ctx, gitrepo.RepoLocalPath(payloadRepo.CodeStorageRepo()), payloadRepo.DefaultBranch, commitID.String(), destDir); err != nil {
+		if err := cloneRepositoryAtCommit(ctx, gitrepo.RepoLocalPath(payloadRepo.CodeStorageRepo()), payloadRef.ShortName(), commitID.String(), destDir); err != nil {
 			return "", fmt.Errorf("clone TWL payload into rcDir: %w", err)
 		}
 		return "", nil
 	}
 
 	payloadDir := filepath.Join(tmpDir, "payload")
-	if err := cloneRepositoryAtCommit(ctx, gitrepo.RepoLocalPath(payloadRepo.CodeStorageRepo()), payloadRepo.DefaultBranch, commitID.String(), payloadDir); err != nil {
+	if err := cloneRepositoryAtCommit(ctx, gitrepo.RepoLocalPath(payloadRepo.CodeStorageRepo()), payloadRef.ShortName(), commitID.String(), payloadDir); err != nil {
 		return "", fmt.Errorf("clone payload repository %s: %w", payloadRepo.FullName(), err)
 	}
 
 	return payloadDir, nil
 }
 
+// cloneRepositoryAtCommit clones sourceRepoPath into destination and checks out commitID.
+// It first tries a shallow clone of refShortName; "git clone -b" takes a short name and
+// prefers a branch over a same-named tag, so when the shallow clone does not contain
+// commitID (or fails) it falls back to a full clone.
 func cloneRepositoryAtCommit(ctx context.Context, sourceRepoPath, refShortName, commitID, destination string) error {
 	tryShallow := refShortName != "" && commitID != ""
 	if tryShallow {
@@ -389,7 +490,11 @@ func cloneRepositoryAtCommit(ctx context.Context, sourceRepoPath, refShortName, 
 			Branch: refShortName,
 		})
 		if err == nil {
-			return checkoutCommit(ctx, destination, commitID)
+			err = checkoutCommit(ctx, destination, commitID)
+			if err == nil {
+				return nil
+			}
+			log.Debug("cloneRepositoryAtCommit: shallow clone of %q lacks %s, falling back to a full clone: %v", refShortName, commitID, err)
 		}
 		if removeErr := util.RemoveAllWithRetry(destination); removeErr != nil {
 			log.Warn("cloneRepositoryAtCommit: failed to clean shallow clone destination %q: %v", destination, removeErr)
