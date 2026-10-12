@@ -17,8 +17,11 @@ import (
 	"gitea.dev/models/door43metadata"
 	repo_model "gitea.dev/models/repo"
 	"gitea.dev/models/unittest"
+	"gitea.dev/modules/git"
+	"gitea.dev/modules/git/gitcmd"
 	"gitea.dev/modules/setting"
 	"gitea.dev/modules/test"
+	"gitea.dev/modules/timeutil"
 	"gitea.dev/services/contexttest"
 
 	_ "gitea.dev/models/actions"
@@ -186,4 +189,115 @@ func assertPassThroughNames(t *testing.T, names []string) {
 		assert.False(t, strings.HasPrefix(name, "repo49/.git/"), "git internals leaked: %q", name)
 		assert.NotEqual(t, "repo49/metadata.json", name, "conversion ran on an SB repo")
 	}
+}
+
+// TestPayloadRefForArchive uses user27/template1 (repo 44, git branches: "master" only) as
+// the payload repo of repo49 and checks which of its refs each requested ref pairs with.
+func TestPayloadRefForArchive(t *testing.T) {
+	require.NoError(t, unittest.PrepareTestDatabase())
+
+	const payloadRepoID int64 = 44
+	payloadRepo := unittest.AssertExistsAndLoadBean(t, &repo_model.Repository{ID: payloadRepoID})
+	payloadGitRepo, err := git.OpenRepository(t.Context(), payloadRepo)
+	require.NoError(t, err)
+	defer payloadGitRepo.Close()
+	// A tag with no catalog entry, for the same-named fallbacks.
+	require.NoError(t, payloadGitRepo.CreateTag(t.Context(), "v9", "master"))
+
+	// Payload repo releases around the requested repo's v1 (released at 1000) and v2 (at 5000).
+	for _, dm := range []*repo_model.Door43Metadata{
+		{Ref: "v1", RefType: "tag", Stage: door43metadata.StageProd, ReleaseDateUnix: 900},
+		{Ref: "v1.1", RefType: "tag", Stage: door43metadata.StagePreProd, ReleaseDateUnix: 1010},
+		{Ref: "v2", RefType: "tag", Stage: door43metadata.StageProd, ReleaseDateUnix: 4000, IsLatestForStage: true},
+		{Ref: "master", RefType: "branch", Stage: door43metadata.StageLatest, ReleaseDateUnix: 6000, IsLatestForStage: true},
+	} {
+		dm.RepoID, dm.CommitSHA, dm.MetadataType, dm.Language = payloadRepoID, "2a83b34", "rc", "en"
+		insertDM(t, dm)
+	}
+
+	requested := func(ref, refType string, stage door43metadata.Stage, released timeutil.TimeStamp) *repo_model.Door43Metadata {
+		return &repo_model.Door43Metadata{
+			RepoID: testRepoID, Repo: loadRepo(t), Ref: ref, RefType: refType, CommitSHA: testFirstCommit,
+			Stage: stage, MetadataType: "rc", Language: "en", ReleaseDateUnix: released,
+		}
+	}
+	resolve := func(dm *repo_model.Door43Metadata, refShortName, refType string, payload *repo_model.Repository, payloadGit *git.Repository) git.RefName {
+		ref, err := payloadRefForArchive(t.Context(), dm, refShortName, refType, payload, payloadGit)
+		require.NoError(t, err)
+		return ref
+	}
+
+	// A production release pairs with the payload's production release closest in time,
+	// not its latest release and not the pre-release that is even closer.
+	assert.Equal(t, git.RefNameFromTag("v1"), resolve(requested("v1", "tag", door43metadata.StageProd, 1000), "v1", "tag", payloadRepo, payloadGitRepo))
+	assert.Equal(t, git.RefNameFromTag("v2"), resolve(requested("v2", "tag", door43metadata.StageProd, 5000), "v2", "tag", payloadRepo, payloadGitRepo))
+
+	// A pre-release may pair with a pre-release.
+	assert.Equal(t, git.RefNameFromTag("v1.1"), resolve(requested("v1.1-rc", "tag", door43metadata.StagePreProd, 1020), "v1.1-rc", "tag", payloadRepo, payloadGitRepo))
+
+	// Another language has no book package entry: a same-named tag if the payload has one, else default branch.
+	fr := requested("v3", "tag", door43metadata.StageProd, 1000)
+	fr.Language = "fr"
+	assert.Equal(t, git.RefNameFromBranch("master"), resolve(fr, "v3", "tag", payloadRepo, payloadGitRepo))
+	fr.Ref = "v9"
+	assert.Equal(t, git.RefNameFromTag("v9"), resolve(fr, "v9", "tag", payloadRepo, payloadGitRepo))
+
+	// A branch never pairs with a same-named tag.
+	assert.Equal(t, git.RefNameFromBranch("master"), resolve(requested("v9", "branch", door43metadata.StageOther, 0), "v9", "branch", payloadRepo, payloadGitRepo))
+
+	// A branch pairs with the payload's same-named branch when it has one, else its default branch.
+	assert.Equal(t, git.RefNameFromBranch("master"), resolve(requested("test/archive", "branch", door43metadata.StageOther, 0), "test/archive", "branch", payloadRepo, payloadGitRepo))
+
+	selfRepo := loadRepo(t)
+	selfGitRepo, err := git.OpenRepository(t.Context(), selfRepo)
+	require.NoError(t, err)
+	defer selfGitRepo.Close()
+	assert.Equal(t, git.RefNameFromBranch("test/archive"), resolve(requested("test/archive", "branch", door43metadata.StageOther, 0), "test/archive", "branch", selfRepo, selfGitRepo))
+
+	// A tag never pairs with a same-named branch.
+	assert.Equal(t, git.RefNameFromBranch("master"), resolve(requested("test/archive", "tag", door43metadata.StageProd, 0), "test/archive", "tag", selfRepo, selfGitRepo))
+
+	// A payload with a branch and a tag of the same name at different commits: each kind
+	// of request resolves to its own kind, even though git's short-name lookup prefers the tag.
+	_, _, err = gitcmd.NewCommand("branch", "both", "master").WithRepo(selfGitRepo).RunStdString(t.Context())
+	require.NoError(t, err)
+	require.NoError(t, selfGitRepo.CreateTag(t.Context(), "both", testFirstCommit))
+	branchRef := resolve(requested("both", "branch", door43metadata.StageOther, 0), "both", "branch", selfRepo, selfGitRepo)
+	tagRef := resolve(requested("both", "tag", door43metadata.StageProd, 0), "both", "tag", selfRepo, selfGitRepo)
+	assert.Equal(t, git.RefNameFromBranch("both"), branchRef)
+	assert.Equal(t, git.RefNameFromTag("both"), tagRef)
+	branchID, err := selfGitRepo.ConvertToGitID(t.Context(), branchRef.String())
+	require.NoError(t, err)
+	tagID, err := selfGitRepo.ConvertToGitID(t.Context(), tagRef.String())
+	require.NoError(t, err)
+	masterID, err := selfGitRepo.ConvertToGitID(t.Context(), "master")
+	require.NoError(t, err)
+	assert.Equal(t, masterID.String(), branchID.String())
+	assert.True(t, strings.HasPrefix(tagID.String(), testFirstCommit))
+	shortID, err := selfGitRepo.ConvertToGitID(t.Context(), "both")
+	require.NoError(t, err)
+	assert.Equal(t, tagID.String(), shortID.String(), "git resolves the bare name to the tag; the archiver must not rely on it")
+
+	// A bare commit falls back to the default branch metadata, whose ref is not the request: default branch.
+	assert.Equal(t, git.RefNameFromBranch("master"), resolve(requested("master", "branch", door43metadata.StageLatest, 0), testFirstCommit, "", payloadRepo, payloadGitRepo))
+}
+
+func TestRequestedRefType(t *testing.T) {
+	require.NoError(t, unittest.PrepareTestDatabase())
+	repo := loadRepo(t)
+
+	// The ref's own metadata row answers without touching git.
+	refType, err := requestedRefType(t.Context(), repo, &repo_model.Door43Metadata{Ref: "v1", RefType: "tag"}, "v1")
+	require.NoError(t, err)
+	assert.Equal(t, "tag", refType)
+
+	// Otherwise git decides: a branch, or a bare commit that is neither branch nor tag.
+	fallbackDM := &repo_model.Door43Metadata{Ref: "master", RefType: "branch"}
+	refType, err = requestedRefType(t.Context(), repo, fallbackDM, "test/archive")
+	require.NoError(t, err)
+	assert.Equal(t, "branch", refType)
+
+	refType, err = requestedRefType(t.Context(), repo, fallbackDM, testFirstCommit)
+	require.NoError(t, err)
+	assert.Empty(t, refType)
 }
