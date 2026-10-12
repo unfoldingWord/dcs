@@ -18,6 +18,7 @@ import (
 	repo_model "gitea.dev/models/repo"
 	"gitea.dev/models/unittest"
 	"gitea.dev/modules/git"
+	"gitea.dev/modules/git/gitcmd"
 	"gitea.dev/modules/setting"
 	"gitea.dev/modules/test"
 	"gitea.dev/modules/timeutil"
@@ -200,6 +201,8 @@ func TestPayloadRefForArchive(t *testing.T) {
 	payloadGitRepo, err := git.OpenRepository(t.Context(), payloadRepo)
 	require.NoError(t, err)
 	defer payloadGitRepo.Close()
+	// A tag with no catalog entry, for the same-named fallbacks.
+	require.NoError(t, payloadGitRepo.CreateTag(t.Context(), "v9", "master"))
 
 	// Payload repo releases around the requested repo's v1 (released at 1000) and v2 (at 5000).
 	for _, dm := range []*repo_model.Door43Metadata{
@@ -218,50 +221,65 @@ func TestPayloadRefForArchive(t *testing.T) {
 			Stage: stage, MetadataType: "rc", Language: "en", ReleaseDateUnix: released,
 		}
 	}
+	resolve := func(dm *repo_model.Door43Metadata, refShortName, refType string, payload *repo_model.Repository, payloadGit *git.Repository) git.RefName {
+		ref, err := payloadRefForArchive(t.Context(), dm, refShortName, refType, payload, payloadGit)
+		require.NoError(t, err)
+		return ref
+	}
 
 	// A production release pairs with the payload's production release closest in time,
 	// not its latest release and not the pre-release that is even closer.
-	ref, err := payloadRefForArchive(t.Context(), requested("v1", "tag", door43metadata.StageProd, 1000), "v1", "tag", payloadRepo, payloadGitRepo)
-	require.NoError(t, err)
-	assert.Equal(t, "v1", ref)
-
-	ref, err = payloadRefForArchive(t.Context(), requested("v2", "tag", door43metadata.StageProd, 5000), "v2", "tag", payloadRepo, payloadGitRepo)
-	require.NoError(t, err)
-	assert.Equal(t, "v2", ref)
+	assert.Equal(t, git.RefNameFromTag("v1"), resolve(requested("v1", "tag", door43metadata.StageProd, 1000), "v1", "tag", payloadRepo, payloadGitRepo))
+	assert.Equal(t, git.RefNameFromTag("v2"), resolve(requested("v2", "tag", door43metadata.StageProd, 5000), "v2", "tag", payloadRepo, payloadGitRepo))
 
 	// A pre-release may pair with a pre-release.
-	ref, err = payloadRefForArchive(t.Context(), requested("v1.1-rc", "tag", door43metadata.StagePreProd, 1020), "v1.1-rc", "tag", payloadRepo, payloadGitRepo)
-	require.NoError(t, err)
-	assert.Equal(t, "v1.1", ref)
+	assert.Equal(t, git.RefNameFromTag("v1.1"), resolve(requested("v1.1-rc", "tag", door43metadata.StagePreProd, 1020), "v1.1-rc", "tag", payloadRepo, payloadGitRepo))
 
-	// Another language has no book package entry and the payload has no such tag: default branch.
+	// Another language has no book package entry: a same-named tag if the payload has one, else default branch.
 	fr := requested("v3", "tag", door43metadata.StageProd, 1000)
 	fr.Language = "fr"
-	ref, err = payloadRefForArchive(t.Context(), fr, "v3", "tag", payloadRepo, payloadGitRepo)
-	require.NoError(t, err)
-	assert.Equal(t, "master", ref)
+	assert.Equal(t, git.RefNameFromBranch("master"), resolve(fr, "v3", "tag", payloadRepo, payloadGitRepo))
+	fr.Ref = "v9"
+	assert.Equal(t, git.RefNameFromTag("v9"), resolve(fr, "v9", "tag", payloadRepo, payloadGitRepo))
+
+	// A branch never pairs with a same-named tag.
+	assert.Equal(t, git.RefNameFromBranch("master"), resolve(requested("v9", "branch", door43metadata.StageOther, 0), "v9", "branch", payloadRepo, payloadGitRepo))
 
 	// A branch pairs with the payload's same-named branch when it has one, else its default branch.
-	ref, err = payloadRefForArchive(t.Context(), requested("test/archive", "branch", door43metadata.StageOther, 0), "test/archive", "branch", payloadRepo, payloadGitRepo)
-	require.NoError(t, err)
-	assert.Equal(t, "master", ref)
+	assert.Equal(t, git.RefNameFromBranch("master"), resolve(requested("test/archive", "branch", door43metadata.StageOther, 0), "test/archive", "branch", payloadRepo, payloadGitRepo))
 
-	selfGitRepo, err := git.OpenRepository(t.Context(), loadRepo(t))
+	selfRepo := loadRepo(t)
+	selfGitRepo, err := git.OpenRepository(t.Context(), selfRepo)
 	require.NoError(t, err)
 	defer selfGitRepo.Close()
-	ref, err = payloadRefForArchive(t.Context(), requested("test/archive", "branch", door43metadata.StageOther, 0), "test/archive", "branch", loadRepo(t), selfGitRepo)
-	require.NoError(t, err)
-	assert.Equal(t, "test/archive", ref)
+	assert.Equal(t, git.RefNameFromBranch("test/archive"), resolve(requested("test/archive", "branch", door43metadata.StageOther, 0), "test/archive", "branch", selfRepo, selfGitRepo))
 
-	// A requested tag never pairs with a same-named payload branch (and a branch never with a tag).
-	ref, err = payloadRefForArchive(t.Context(), requested("test/archive", "tag", door43metadata.StageProd, 0), "test/archive", "tag", loadRepo(t), selfGitRepo)
+	// A tag never pairs with a same-named branch.
+	assert.Equal(t, git.RefNameFromBranch("master"), resolve(requested("test/archive", "tag", door43metadata.StageProd, 0), "test/archive", "tag", selfRepo, selfGitRepo))
+
+	// A payload with a branch and a tag of the same name at different commits: each kind
+	// of request resolves to its own kind, even though git's short-name lookup prefers the tag.
+	_, _, err = gitcmd.NewCommand("branch", "both", "master").WithRepo(selfGitRepo).RunStdString(t.Context())
 	require.NoError(t, err)
-	assert.Equal(t, "master", ref)
+	require.NoError(t, selfGitRepo.CreateTag(t.Context(), "both", testFirstCommit))
+	branchRef := resolve(requested("both", "branch", door43metadata.StageOther, 0), "both", "branch", selfRepo, selfGitRepo)
+	tagRef := resolve(requested("both", "tag", door43metadata.StageProd, 0), "both", "tag", selfRepo, selfGitRepo)
+	assert.Equal(t, git.RefNameFromBranch("both"), branchRef)
+	assert.Equal(t, git.RefNameFromTag("both"), tagRef)
+	branchID, err := selfGitRepo.ConvertToGitID(t.Context(), branchRef.String())
+	require.NoError(t, err)
+	tagID, err := selfGitRepo.ConvertToGitID(t.Context(), tagRef.String())
+	require.NoError(t, err)
+	masterID, err := selfGitRepo.ConvertToGitID(t.Context(), "master")
+	require.NoError(t, err)
+	assert.Equal(t, masterID.String(), branchID.String())
+	assert.True(t, strings.HasPrefix(tagID.String(), testFirstCommit))
+	shortID, err := selfGitRepo.ConvertToGitID(t.Context(), "both")
+	require.NoError(t, err)
+	assert.Equal(t, tagID.String(), shortID.String(), "git resolves the bare name to the tag; the archiver must not rely on it")
 
 	// A bare commit falls back to the default branch metadata, whose ref is not the request: default branch.
-	ref, err = payloadRefForArchive(t.Context(), requested("master", "branch", door43metadata.StageLatest, 0), testFirstCommit, "", payloadRepo, payloadGitRepo)
-	require.NoError(t, err)
-	assert.Equal(t, "master", ref)
+	assert.Equal(t, git.RefNameFromBranch("master"), resolve(requested("master", "branch", door43metadata.StageLatest, 0), testFirstCommit, "", payloadRepo, payloadGitRepo))
 }
 
 func TestRequestedRefType(t *testing.T) {
