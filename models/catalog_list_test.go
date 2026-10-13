@@ -470,3 +470,100 @@ func TestSearchCatalogKeywordUnderscoreIsLiteral(t *testing.T) {
 	require.Len(t, results, 1)
 	assert.Equal(t, literalMatch.RepoID, results[0].RepoID)
 }
+
+// TestSearchCatalogForBookPackage checks which entry each repo of a book package
+// contributes for a requested ref. repo1 (user2) is the requested repo; its partners
+// are user2's other public repos: utf8 (33) with master and releases, repo-release (57)
+// with only a "main" default branch, commits_search_test (36) with only a release, and
+// git_hooks_test (37) with a "topic" branch besides master.
+func TestSearchCatalogForBookPackage(t *testing.T) {
+	require.NoError(t, unittest.PrepareTestDatabase())
+
+	const (
+		requestedRepo = int64(1)
+		withBranches  = int64(33)
+		mainOnly      = int64(57)
+		releaseOnly   = int64(36)
+		withTopic     = int64(37)
+	)
+	type row struct {
+		repoID  int64
+		ref     string
+		refType string
+		stage   door43metadata.Stage
+		latest  bool
+		release timeutil.TimeStamp
+	}
+	rows := []row{
+		{requestedRepo, "master", "branch", door43metadata.StageLatest, true, 1000},
+		{requestedRepo, "topic", "branch", door43metadata.StageOther, false, 1000},
+		{requestedRepo, "v1", "tag", door43metadata.StageProd, false, 1000},
+		{requestedRepo, "v2", "tag", door43metadata.StageProd, true, 5000},
+
+		{withBranches, "master", "branch", door43metadata.StageLatest, true, 6000},
+		{withBranches, "v1", "tag", door43metadata.StageProd, false, 900},
+		{withBranches, "v1.1", "tag", door43metadata.StagePreProd, false, 1010},
+		{withBranches, "v2", "tag", door43metadata.StageProd, true, 4000},
+
+		{mainOnly, "main", "branch", door43metadata.StageLatest, true, 999},
+
+		{releaseOnly, "v1", "tag", door43metadata.StageProd, true, 900},
+
+		{withTopic, "master", "branch", door43metadata.StageLatest, true, 6000},
+		{withTopic, "topic", "branch", door43metadata.StageOther, false, 7000},
+	}
+	for i, r := range rows {
+		_, err := db.GetEngine(t.Context()).Insert(&repo_model.Door43Metadata{
+			RepoID: r.repoID, Ref: r.ref, RefType: r.refType, CommitSHA: fmt.Sprintf("%040d", i+1),
+			Stage: r.stage, IsLatestForStage: r.latest, ReleaseDateUnix: r.release,
+			Language: "en", Subject: "Translation Words", MetadataType: "rc",
+		})
+		require.NoError(t, err)
+	}
+
+	requested := unittest.AssertExistsAndLoadBean(t, &repo_model.Repository{ID: requestedRepo})
+	search := func(ref string, opts *door43metadata.SearchCatalogOptions) map[int64]string {
+		dm, err := repo_model.GetDoor43MetadataByRepoIDAndRef(t.Context(), requestedRepo, ref)
+		require.NoError(t, err)
+		dm.Repo = requested
+		if opts == nil {
+			opts = &door43metadata.SearchCatalogOptions{}
+		}
+		opts.IncludeHistory = true
+		results, _, err := SearchCatalogForBookPackage(t.Context(), dm, opts)
+		require.NoError(t, err)
+		refs := make(map[int64]string, len(results))
+		for _, result := range results {
+			refs[result.RepoID] = result.Ref
+		}
+		return refs
+	}
+
+	// A default-branch request pairs with each partner's same-named branch, else its
+	// default branch, and only falls back to the closest release when it has no branch
+	// entry at all; utf8's v1 is closer in time than its master and must not win.
+	assert.Equal(t, map[int64]string{
+		requestedRepo: "master", withBranches: "master", mainOnly: "main", releaseOnly: "v1", withTopic: "master",
+	}, search("master", nil))
+
+	// A feature-branch request pairs with the same-named branch where it exists.
+	assert.Equal(t, map[int64]string{
+		requestedRepo: "topic", withBranches: "master", mainOnly: "main", releaseOnly: "v1", withTopic: "topic",
+	}, search("topic", nil))
+
+	// A release pairs with each partner's release closest in time (same stage or better,
+	// so the closer pre-release is skipped), and with the default branch of a partner
+	// that has no release at all.
+	assert.Equal(t, map[int64]string{
+		requestedRepo: "v1", withBranches: "v1", mainOnly: "main", releaseOnly: "v1", withTopic: "master",
+	}, search("v1", nil))
+	assert.Equal(t, map[int64]string{
+		requestedRepo: "v2", withBranches: "v2", mainOnly: "main", releaseOnly: "v1", withTopic: "master",
+	}, search("v2", nil))
+
+	// An explicit stage filter still limits the candidates: branches are no longer
+	// eligible, so a branch request falls back to the closest production release.
+	assert.Equal(t, map[int64]string{
+		requestedRepo: "v1", withBranches: "v1", releaseOnly: "v1",
+	}, search("master", &door43metadata.SearchCatalogOptions{Stage: door43metadata.StageProd}))
+}

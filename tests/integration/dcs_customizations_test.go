@@ -291,3 +291,50 @@ func TestDCSAPIRepoSearchIsHealthy(t *testing.T) {
 	assert.Contains(t, repoNames("is_healthy=true"), "repo1")
 	assert.NotContains(t, repoNames("is_healthy_without_warnings=true"), "repo1")
 }
+
+// TestDCSAPICatalogBookPackage checks the ref each partner repo contributes to a book
+// package and the request forms of /catalog/bp. repo1 (TSV Translation Notes, with the
+// v1.1 release of the fixture helper and a master branch) is the requested repo; user2's
+// public utf8 repo (33) is a Translation Words partner with a master branch and a v1
+// release that is closer in time to repo1's master than utf8's own master is.
+func TestDCSAPICatalogBookPackage(t *testing.T) {
+	defer tests.PrepareTestEnv(t)()
+	tn := insertDCSDoor43MetadataFixture(t)
+
+	insert := func(repoID int64, ref, refType string, stage door43metadata_model.Stage, latest bool, released timeutil.TimeStamp, subject string) {
+		require.NoError(t, repo_model.InsertDoor43Metadata(t.Context(), &repo_model.Door43Metadata{
+			RepoID: repoID, Ref: ref, RefType: refType, CommitSHA: tn.CommitSHA,
+			Stage: stage, IsLatestForStage: latest, ReleaseDateUnix: released,
+			MetadataType: "rc", Language: "en", Subject: subject,
+		}))
+	}
+	insert(1, "master", "branch", door43metadata_model.StageLatest, true, tn.ReleaseDateUnix+100, tn.Subject)
+	insert(33, "master", "branch", door43metadata_model.StageLatest, true, tn.ReleaseDateUnix+5000, "Translation Words")
+	insert(33, "v1", "tag", door43metadata_model.StageProd, true, tn.ReleaseDateUnix+10, "Translation Words")
+
+	refsFor := func(pathAndQuery string) map[string]string {
+		resp := MakeRequest(t, NewRequest(t, "GET", "/api/v1/catalog/bp/user2/"+pathAndQuery), http.StatusOK)
+		var results api.CatalogSearchResults
+		DecodeJSON(t, resp, &results)
+		refs := make(map[string]string, len(results.Data))
+		for _, entry := range results.Data {
+			refs[entry.Repo.Name] = entry.Ref
+		}
+		return refs
+	}
+
+	// A branch pairs with the partner's same-named branch, not its release that is
+	// closer in time; the ref may be given in the path or as ?ref=.
+	assert.Equal(t, map[string]string{"repo1": "master", "utf8": "master"}, refsFor("repo1/master"))
+	assert.Equal(t, map[string]string{"repo1": "master", "utf8": "master"}, refsFor("repo1?ref=master"))
+
+	// A release pairs with the partner's release closest in time.
+	assert.Equal(t, map[string]string{"repo1": "v1.1", "utf8": "v1"}, refsFor("repo1/v1.1"))
+
+	// The documented singular filter names and their plural aliases both apply.
+	assert.Equal(t, map[string]string{"utf8": "master"}, refsFor("repo1/master?subject=Translation%20Words"))
+	assert.Equal(t, map[string]string{"utf8": "master"}, refsFor("repo1/master?subjects=Translation%20Words"))
+
+	// The removed tag= option is ignored rather than failing the request.
+	assert.Equal(t, map[string]string{"repo1": "master", "utf8": "master"}, refsFor("repo1/master?tag=v1"))
+}
