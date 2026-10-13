@@ -413,16 +413,42 @@ func SearchCatalogForBookPackageByCondition(ctx context.Context, dm *repo.Door43
 	condSQL = strings.ReplaceAll(condSQL, "`repository`.", "r.")
 	condSQL = strings.ReplaceAll(condSQL, "`user`.", "u.")
 
+	// Each repo of the package contributes its one entry that best matches the
+	// requested ref. The candidates are ranked by priority, then by closeness in time:
+	//   - requested ref is a branch: its same-named branch (0), its default branch (1),
+	//     then its releases closest in time to the requested ref (2)
+	//   - requested ref is a release: its releases of the requested stage or better,
+	//     closest in time to the requested release (0), then its default branch (1)
+	// The default branch therefore stands in when a repo has no matching branch or
+	// no release at all; an explicit stage filter in cond can still exclude it.
+	isBranch := dm.RefType == "branch"
+	var prioritySQL string
+	var priorityArgs []any
+	if isBranch {
+		prioritySQL = "CASE WHEN dm.ref = ? AND dm.ref_type = ? THEN 0 WHEN dm.stage = ? AND dm.is_latest_for_stage = ? THEN 1 ELSE 2 END"
+		priorityArgs = []any{dm.Ref, "branch", door43metadata.StageLatest, true}
+	} else {
+		prioritySQL = "CASE WHEN dm.stage = ? AND dm.is_latest_for_stage = ? THEN 1 ELSE 0 END"
+		priorityArgs = []any{door43metadata.StageLatest, true}
+	}
+	candidateSQL := "dm.stage <= ? OR (dm.stage = ? AND dm.is_latest_for_stage = ?)"
+	candidateArgs := []any{dm.Stage, door43metadata.StageLatest, true}
+	if isBranch {
+		candidateSQL += " OR (dm.ref = ? AND dm.ref_type = ?)"
+		candidateArgs = append(candidateArgs, dm.Ref, "branch")
+	}
+
 	// Build the complete query with CTEs
 	query := `
 WITH filtered AS (
   SELECT
     dm.*,
-    ABS(dm.release_date_unix - ?) AS time_diff
+    ABS(dm.release_date_unix - ?) AS time_diff,
+    ` + prioritySQL + ` AS priority
   FROM door43_metadata dm
   JOIN repository r ON r.id = dm.repo_id
   WHERE
-    dm.stage <= ?
+    (` + candidateSQL + `)
     AND dm.language = ?
     AND r.owner_id = ?
     AND (` + condSQL + `)
@@ -432,7 +458,7 @@ ranked AS (
     f.*,
     ROW_NUMBER() OVER (
       PARTITION BY f.repo_id
-      ORDER BY f.time_diff ASC, f.release_date_unix ASC
+      ORDER BY f.priority ASC, f.time_diff ASC, f.release_date_unix ASC
     ) AS rn
   FROM filtered f
 )
@@ -449,8 +475,11 @@ FROM ranked
 WHERE rn = 1
 ORDER BY CASE WHEN repo_id = ? THEN 1 ELSE 0 END DESC, subject ASC`
 
-	// Prepare query arguments: owner, repoName, ref, then all condition args
-	queryArgs := []any{dm.ReleaseDateUnix, dm.Stage, dm.Language, dm.Repo.OwnerID}
+	// Prepare query arguments in the order the placeholders appear above
+	queryArgs := []any{dm.ReleaseDateUnix}
+	queryArgs = append(queryArgs, priorityArgs...)
+	queryArgs = append(queryArgs, candidateArgs...)
+	queryArgs = append(queryArgs, dm.Language, dm.Repo.OwnerID)
 	queryArgs = append(queryArgs, condArgs...)
 	queryArgs = append(queryArgs, dm.Repo.ID)
 
