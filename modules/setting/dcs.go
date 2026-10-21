@@ -16,7 +16,7 @@ func loadDCSFrom(rootCfg ConfigProvider) {
 	sec := rootCfg.Section("dcs")
 	DCS.Door43PreviewURL = sec.Key("DOOR43_PREVIEW_URL").MustString("https://preview.door43.org")
 	// CONVERT_RC2SB_TOPICS was renamed to CONVERT2SB_TOPICS when tS-to-SB conversion was added
-	deprecatedSetting(rootCfg, "dcs", "CONVERT_RC2SB_TOPICS", "dcs", "CONVERT2SB_TOPICS", "v1.28.0")
+	deprecatedSetting(rootCfg, "dcs", "CONVERT_RC2SB_TOPICS", "dcs", "CONVERT2SB_TOPICS")
 	topicsStr := sec.Key("CONVERT2SB_TOPICS").MustString(sec.Key("CONVERT_RC2SB_TOPICS").MustString(""))
 	DCS.Convert2SBTopics = nil
 	if topicsStr != "" {

@@ -3011,6 +3011,20 @@
             "type": "string",
             "x-go-name": "Created"
           },
+          "deletion_allowlist_teams": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "x-go-name": "DeletionAllowlistTeams"
+          },
+          "deletion_allowlist_usernames": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "x-go-name": "DeletionAllowlistUsernames"
+          },
           "dismiss_stale_approvals": {
             "type": "boolean",
             "x-go-name": "DismissStaleApprovals"
@@ -3022,6 +3036,14 @@
           "enable_bypass_allowlist": {
             "type": "boolean",
             "x-go-name": "EnableBypassAllowlist"
+          },
+          "enable_deletion": {
+            "type": "boolean",
+            "x-go-name": "EnableDeletion"
+          },
+          "enable_deletion_allowlist": {
+            "type": "boolean",
+            "x-go-name": "EnableDeletionAllowlist"
           },
           "enable_force_push": {
             "type": "boolean",
@@ -4530,6 +4552,20 @@
             "type": "array",
             "x-go-name": "BypassAllowlistUsernames"
           },
+          "deletion_allowlist_teams": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "x-go-name": "DeletionAllowlistTeams"
+          },
+          "deletion_allowlist_usernames": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "x-go-name": "DeletionAllowlistUsernames"
+          },
           "dismiss_stale_approvals": {
             "type": "boolean",
             "x-go-name": "DismissStaleApprovals"
@@ -4541,6 +4577,14 @@
           "enable_bypass_allowlist": {
             "type": "boolean",
             "x-go-name": "EnableBypassAllowlist"
+          },
+          "enable_deletion": {
+            "type": "boolean",
+            "x-go-name": "EnableDeletion"
+          },
+          "enable_deletion_allowlist": {
+            "type": "boolean",
+            "x-go-name": "EnableDeletionAllowlist"
           },
           "enable_force_push": {
             "type": "boolean",
@@ -6106,6 +6150,20 @@
             "type": "array",
             "x-go-name": "BypassAllowlistUsernames"
           },
+          "deletion_allowlist_teams": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "x-go-name": "DeletionAllowlistTeams"
+          },
+          "deletion_allowlist_usernames": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "x-go-name": "DeletionAllowlistUsernames"
+          },
           "dismiss_stale_approvals": {
             "type": "boolean",
             "x-go-name": "DismissStaleApprovals"
@@ -6117,6 +6175,14 @@
           "enable_bypass_allowlist": {
             "type": "boolean",
             "x-go-name": "EnableBypassAllowlist"
+          },
+          "enable_deletion": {
+            "type": "boolean",
+            "x-go-name": "EnableDeletion"
+          },
+          "enable_deletion_allowlist": {
+            "type": "boolean",
+            "x-go-name": "EnableDeletionAllowlist"
           },
           "enable_force_push": {
             "type": "boolean",
@@ -6230,17 +6296,15 @@
         "x-go-package": "gitea.dev/modules/structs"
       },
       "EditDeadlineOption": {
-        "description": "EditDeadlineOption options for creating a deadline",
+        "description": "EditDeadlineOption options for editing a deadline",
         "properties": {
           "due_date": {
+            "description": "Deadline is the updated due date for the issue or pull request, use null or empty string to remove the deadline",
             "format": "date-time",
             "type": "string",
             "x-go-name": "Deadline"
           }
         },
-        "required": [
-          "due_date"
-        ],
         "type": "object",
         "x-go-package": "gitea.dev/modules/structs"
       },
@@ -6341,6 +6405,7 @@
             "x-go-name": "ContentVersion"
           },
           "due_date": {
+            "description": "Deadline is the updated due date for the issue, use null or empty string to remove the deadline",
             "format": "date-time",
             "type": "string",
             "x-go-name": "Deadline"
@@ -6420,7 +6485,7 @@
             "x-go-name": "Description"
           },
           "due_on": {
-            "description": "Deadline is the updated due date for the milestone",
+            "description": "Deadline is the due date for the milestone, use null or empty string to remove the deadline",
             "format": "date-time",
             "type": "string",
             "x-go-name": "Deadline"
@@ -6570,6 +6635,7 @@
             "x-go-name": "ContentVersion"
           },
           "due_date": {
+            "description": "Deadline is the updated due date for the pull request, use null or empty string to remove the deadline",
             "format": "date-time",
             "type": "string",
             "x-go-name": "Deadline"
@@ -6834,6 +6900,11 @@
             "description": "`repo` to only allow repo-level projects, `owner` to only allow owner projects, `all` to allow both.",
             "type": "string",
             "x-go-name": "ProjectsMode"
+          },
+          "squash_merge_commit_message": {
+            "description": "set the default squash merge commit message body: \"PR_BODY\", \"COMMIT_MESSAGES\", or \"BLANK\".",
+            "type": "string",
+            "x-go-name": "SquashMergeCommitMessage"
           },
           "template": {
             "description": "either `true` to make this repository a template or `false` to make it a normal repository",
@@ -8664,7 +8735,7 @@
         "x-go-package": "gitea.dev/modules/structs"
       },
       "Milestone": {
-        "description": "Milestone milestone is a collection of issues on one repository",
+        "description": "Milestone is a collection of issues on one repository",
         "properties": {
           "closed_at": {
             "format": "date-time",
@@ -10739,6 +10810,10 @@
             "format": "int64",
             "type": "integer",
             "x-go-name": "Size"
+          },
+          "squash_merge_commit_message": {
+            "type": "string",
+            "x-go-name": "SquashMergeCommitMessage"
           },
           "ssh_url": {
             "format": "uri",
@@ -28145,6 +28220,9 @@
           },
           "404": {
             "$ref": "#/components/responses/notFound"
+          },
+          "423": {
+            "$ref": "#/components/responses/repoArchivedError"
           }
         },
         "summary": "Delete an issue",
@@ -28252,6 +28330,9 @@
           },
           "412": {
             "$ref": "#/components/responses/error"
+          },
+          "423": {
+            "$ref": "#/components/responses/repoArchivedError"
           }
         },
         "summary": "Edit an issue. If using deadline only the date will be taken into account, and time of day ignored.",
@@ -29471,6 +29552,9 @@
           },
           "404": {
             "$ref": "#/components/responses/notFound"
+          },
+          "423": {
+            "$ref": "#/components/responses/repoArchivedError"
           }
         },
         "summary": "Remove all labels from an issue",
@@ -29574,6 +29658,9 @@
           },
           "404": {
             "$ref": "#/components/responses/notFound"
+          },
+          "423": {
+            "$ref": "#/components/responses/repoArchivedError"
           }
         },
         "summary": "Add a label to an issue",
@@ -29632,6 +29719,9 @@
           },
           "404": {
             "$ref": "#/components/responses/notFound"
+          },
+          "423": {
+            "$ref": "#/components/responses/repoArchivedError"
           }
         },
         "summary": "Replace an issue's labels",
@@ -29695,6 +29785,9 @@
           },
           "422": {
             "$ref": "#/components/responses/validationError"
+          },
+          "423": {
+            "$ref": "#/components/responses/repoArchivedError"
           }
         },
         "summary": "Remove a label from an issue",

@@ -41,7 +41,7 @@
 
 <!-- DCS Customizations - only site admins can change org visibility -->
 {{if .IsAdmin}}
-<div class="ui small modal" id="change-visibility-org-modal">
+<dialog class="modal-dialog" id="change-visibility-org-modal">
 	<div class="header">
 		{{ctx.Locale.Tr "org.settings.change_visibility"}}
 	</div>
@@ -76,11 +76,11 @@
 			</div>
 		</form>
 	</div>
-</div>
+</dialog>
 {{end}}
 <!-- END DCS Customizations -->
 
-<div class="ui small modal" id="rename-org-modal">
+<dialog class="modal-dialog" id="rename-org-modal">
 	<div class="header">
 		{{ctx.Locale.Tr "org.settings.rename"}}
 	</div>
@@ -114,9 +114,9 @@
 			</div>
 		</form>
 	</div>
-</div>
+</dialog>
 
-<div class="ui small modal" id="delete-org-modal">
+<dialog class="modal-dialog" id="delete-org-modal">
 	<div class="header">
 		{{ctx.Locale.Tr "org.settings.delete_account"}}
 	</div>
@@ -147,4 +147,4 @@
 			</div>
 		</form>
 	</div>
-</div>
+</dialog>
