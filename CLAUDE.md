@@ -45,6 +45,32 @@ Before creating a PR, run these checks to ensure CI will pass:
 - `make lint-md` - fix markdown lint errors (blank lines around headings/lists/tables/fences, no trailing punctuation in headings)
 - Verify DCS translation keys exist in locale files for any new cron tasks or admin dashboard items (see Localization section)
 
+### Pull Request Reviews (uwreview)
+
+New DCS work goes on a feature branch cut from `dcs-base-v#.##`, with a pull request back into that branch. The unfoldingWord review bench (`uwreview`) reviews every pull request:
+
+- Frank (Codex) and George (Grok) each review every pushed head a few minutes after the push and post a verdict (`clean` or `findings`).
+- A fix lane may then commit one small repair for a blocking finding, but only in the files the pull request already changes.
+
+The bench's guide, shared by Rich, is the authority on its process. This section only says what this repository needs from agents.
+
+- Open the pull request when the Pre-PR Checklist passes, then request `uwreview` as a reviewer (`gh pr edit <number> --add-reviewer uwreview`). Every push starts a new round, so push only finished work.
+- The bench cannot run Go. Its reviewers judge the diff by reading it, and the fix lane commits without building, formatting or testing. After a fix-lane commit, pull it and run here:
+  - `make fmt` (it should change nothing)
+  - `TAGS="bindata" make build`
+  - `go test` for each touched package
+  - the matching `TestDCS*` integration tests
+  - golangci-lint on the touched packages
+
+  Post the results on the pull request, and push a fix if anything fails.
+- Leave blocking findings to the fix lane. After a `findings` verdict, wait a few minutes and pull before pushing. Never force-push over the bench's commits, and keep its fixes when merging yours. Revert one of its commits only when you disagree with it, and say why on the pull request.
+- Answer every finding in one comment per round: fixed (with the commit), deferred (to an issue or a follow-up push), or refuted (with evidence). Check each claim against the code before acting on it.
+- A deferred finding is the author's to take after the round closes, in one push. This includes a blocking finding that the fix lane deferred because its file was outside the files the lane may edit.
+- A `needs-author` finding is a decision for Rich: ask him, then answer on the pull request.
+- After 5 rounds with findings, the fix lane gets one grace round. Then the pull request goes to a person, who either merges it with follow-ups or comments `@uwreview grant a round`.
+- George reads at most about 290 KB of diff, in file order. Keep test fixtures small, or put them in their own pull request.
+- The bench's approval is advice only. A person merges.
+
 ---
 
 ## Fork Architecture
@@ -251,7 +277,7 @@ upstream/release/v28 ───────────────────�
 
 ### Day-to-day development workflow
 
-1. **All new DCS work goes to `dcs-base-v#.##` first** — features, bug fixes, refactoring
+1. **All new DCS work goes to `dcs-base-v#.##` first** — features, bug fixes, refactoring — through a feature-branch pull request reviewed by `uwreview` (see Pull Request Reviews)
 2. **Merge `dcs-base-v#.##` → `release/dcs/v#.##`** via PR to get production releases
 3. **Merge `dcs-base-v#.##` → `main-and-base`** to keep main in sync
 4. Fix any API differences in the target branches (not in `dcs-base-v#.##`)
