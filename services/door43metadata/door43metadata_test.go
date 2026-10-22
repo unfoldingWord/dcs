@@ -12,7 +12,10 @@ import (
 	"gitea.dev/models/unittest"
 	user_model "gitea.dev/models/user"
 	"gitea.dev/modules/dcs"
+	"gitea.dev/modules/git"
+	"gitea.dev/modules/git/gitrepo"
 	api "gitea.dev/modules/structs"
+	"gitea.dev/modules/timeutil"
 	"gitea.dev/services/convert"
 	"gitea.dev/services/door43healthcheck"
 
@@ -133,6 +136,66 @@ func TestProcessDoor43MetadataForRepo_RepoDMAfterCreate(t *testing.T) {
 	assert.NotPanics(t, func() {
 		convert.ToRepoDCS(ctx, repo, &api.Repository{})
 	}, "ToRepoDCS must not panic right after repo creation processing")
+}
+
+func TestProcessDoor43MetadataForRepo_DefaultBranchRecheck(t *testing.T) {
+	unittest.PrepareTestEnv(t)
+	ctx := t.Context()
+
+	const defaultBranch, userBranch = "dcs-recheck-default", "dcs-recheck-user"
+	loadRepo := func(t *testing.T) *repo_model.Repository {
+		t.Helper()
+		repo, err := repo_model.GetRepositoryByID(ctx, 1)
+		require.NoError(t, err)
+		repo.DefaultBranch = defaultBranch
+		return repo
+	}
+	checkTime := func(t *testing.T, ref string) timeutil.TimeStamp {
+		t.Helper()
+		dm, err := repo_model.GetDoor43MetadataByRepoIDAndRef(ctx, 1, ref)
+		require.NoError(t, err)
+		return dm.HealthcheckTimeUnix
+	}
+
+	repoPath := gitrepo.RepoLocalPath(loadRepo(t).CodeStorageRepo())
+	commitFileOnBranch(t, repoPath, defaultBranch, "manifest.yaml", validRCManifest)
+	commitFileOnBranch(t, repoPath, userBranch, "manifest.yaml", validRCManifest)
+
+	require.NoError(t, processDoor43MetadataForRepo(ctx, loadRepo(t), defaultBranch, false))
+	defaultDM, err := repo_model.GetDoor43MetadataByRepoIDAndRef(ctx, 1, defaultBranch)
+	require.NoError(t, err)
+	require.Equal(t, door43metadata.StageLatest, defaultDM.Stage)
+	defaultDM.HealthcheckTimeUnix = 1 // a re-check overwrites it with the current time
+	require.NoError(t, repo_model.UpdateDoor43MetadataCols(ctx, defaultDM, "healthcheck_time_unix"))
+
+	require.NoError(t, processDoor43MetadataForRepo(ctx, loadRepo(t), userBranch, false))
+	assert.EqualValues(t, 1, checkTime(t, defaultBranch), "pushing another branch must not re-check the default branch")
+	assert.Greater(t, checkTime(t, userBranch), timeutil.TimeStamp(1), "the pushed branch itself is checked")
+
+	require.NoError(t, processDoor43MetadataForRepo(ctx, loadRepo(t), "v1.1", false))
+	assert.Greater(t, checkTime(t, defaultBranch), timeutil.TimeStamp(1), "a release can change the default branch's release advice")
+}
+
+func TestGetBookAlignmentCount(t *testing.T) {
+	unittest.PrepareTestEnv(t)
+	ctx := t.Context()
+
+	repo, err := repo_model.GetRepositoryByID(ctx, 1)
+	require.NoError(t, err)
+	commitFileOnBranch(t, gitrepo.RepoLocalPath(repo.CodeStorageRepo()), "dcs-alignments", "01-GEN.usfm", `\id GEN
+\c 1
+\v 1 \zaln-s |x-strong="H7225"\*\w In|x-occurrence="1"\w*\zaln-e\*
+\v 2 \zaln-s |x-strong="a"\*\zaln-s |x-strong="b"\*\w the\w*\zaln-e\*\zaln-e\*
+`)
+	gitRepo, err := git.OpenRepository(ctx, repo)
+	require.NoError(t, err)
+	defer gitRepo.Close()
+	commit, err := gitRepo.GetBranchCommit(ctx, "dcs-alignments")
+	require.NoError(t, err)
+
+	count, err := GetBookAlignmentCount(ctx, gitRepo, "01-GEN.usfm", commit)
+	require.NoError(t, err)
+	assert.Equal(t, 3, count)
 }
 
 func TestGetDoor43MetadataFromSBMetadata_AllowsSparseMetadata(t *testing.T) {
