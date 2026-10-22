@@ -34,8 +34,6 @@ type metadataQueueItem struct {
 var metadataQueue *queue.WorkerPoolQueue[metadataQueueItem]
 
 func Init(ctx context.Context) error {
-	notify_service.RegisterNotifier(NewNotifier())
-
 	metadataQueue = queue.CreateUniqueQueue(graceful.GetManager().ShutdownContext(), "door43_metadata", func(items ...metadataQueueItem) []metadataQueueItem {
 		for _, item := range items {
 			processQueueItem(graceful.GetManager().ShutdownContext(), item)
@@ -47,6 +45,7 @@ func Init(ctx context.Context) error {
 	}
 	go graceful.GetManager().RunWithCancel(metadataQueue)
 
+	notify_service.RegisterNotifier(NewNotifier())
 	return nil
 }
 

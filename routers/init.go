@@ -134,16 +134,16 @@ func InitWebInstalled(ctx context.Context) {
 	mustInit(uinotification.Init)
 	mustInitCtx(ctx, archiver.Init)
 	mustInitCtx(ctx, sbarchiver.Init)
-	/*** DCS Customizations ***/
-	mustInitCtx(ctx, door43metadata.Init)
-	mustInitCtx(ctx, convert2sb.Init)
-	/*** END DCS Customizations ***/
 
 	external.RegisterRenderers()
 	markup.Init(markup_service.FormalRenderHelperFuncs())
 
 	mustInitCtx(ctx, common.InitDBEngine)
 	log.Info("ORM engine initialization successful!")
+	/*** DCS Customizations ***/
+	mustInitCtx(ctx, door43metadata.Init) // after the DB: its queue reads it as soon as it starts
+	mustInitCtx(ctx, convert2sb.Init)
+	/*** END DCS Customizations ***/
 	mustInit(system.Init)
 	mustInitCtx(ctx, oauth2.Init)
 	mustInitCtx(ctx, oauth2_provider.Init)

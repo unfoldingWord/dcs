@@ -7,6 +7,7 @@ import (
 	"context"
 	"testing"
 
+	"gitea.dev/models/db"
 	"gitea.dev/models/door43metadata"
 	repo_model "gitea.dev/models/repo"
 	"gitea.dev/models/unittest"
@@ -143,11 +144,11 @@ func TestProcessDoor43MetadataForRepo_DefaultBranchRecheck(t *testing.T) {
 	ctx := t.Context()
 
 	const defaultBranch, userBranch = "dcs-recheck-default", "dcs-recheck-user"
+	require.NoError(t, repo_model.UpdateRepositoryColsNoAutoTime(ctx, &repo_model.Repository{ID: 1, DefaultBranch: defaultBranch}, "default_branch"))
 	loadRepo := func(t *testing.T) *repo_model.Repository {
 		t.Helper()
 		repo, err := repo_model.GetRepositoryByID(ctx, 1)
 		require.NoError(t, err)
-		repo.DefaultBranch = defaultBranch
 		return repo
 	}
 	checkTime := func(t *testing.T, ref string) timeutil.TimeStamp {
@@ -155,6 +156,13 @@ func TestProcessDoor43MetadataForRepo_DefaultBranchRecheck(t *testing.T) {
 		dm, err := repo_model.GetDoor43MetadataByRepoIDAndRef(ctx, 1, ref)
 		require.NoError(t, err)
 		return dm.HealthcheckTimeUnix
+	}
+	resetDefaultCheckTime := func(t *testing.T) { // a re-check overwrites it with the current time
+		t.Helper()
+		dm, err := repo_model.GetDoor43MetadataByRepoIDAndRef(ctx, 1, defaultBranch)
+		require.NoError(t, err)
+		dm.HealthcheckTimeUnix = 1
+		require.NoError(t, repo_model.UpdateDoor43MetadataCols(ctx, dm, "healthcheck_time_unix"))
 	}
 
 	repoPath := gitrepo.RepoLocalPath(loadRepo(t).CodeStorageRepo())
@@ -165,15 +173,25 @@ func TestProcessDoor43MetadataForRepo_DefaultBranchRecheck(t *testing.T) {
 	defaultDM, err := repo_model.GetDoor43MetadataByRepoIDAndRef(ctx, 1, defaultBranch)
 	require.NoError(t, err)
 	require.Equal(t, door43metadata.StageLatest, defaultDM.Stage)
-	defaultDM.HealthcheckTimeUnix = 1 // a re-check overwrites it with the current time
-	require.NoError(t, repo_model.UpdateDoor43MetadataCols(ctx, defaultDM, "healthcheck_time_unix"))
 
+	resetDefaultCheckTime(t)
 	require.NoError(t, processDoor43MetadataForRepo(ctx, loadRepo(t), userBranch, false))
 	assert.EqualValues(t, 1, checkTime(t, defaultBranch), "pushing another branch must not re-check the default branch")
 	assert.Greater(t, checkTime(t, userBranch), timeutil.TimeStamp(1), "the pushed branch itself is checked")
 
+	require.NoError(t, processDoor43MetadataForRepo(ctx, loadRepo(t), defaultBranch, false))
+	assert.Greater(t, checkTime(t, defaultBranch), timeutil.TimeStamp(1), "pushing the default branch checks it in its own ref pass")
+
+	resetDefaultCheckTime(t)
 	require.NoError(t, processDoor43MetadataForRepo(ctx, loadRepo(t), "v1.1", false))
 	assert.Greater(t, checkTime(t, defaultBranch), timeutil.TimeStamp(1), "a release can change the default branch's release advice")
+
+	resetDefaultCheckTime(t)
+	rel := unittest.AssertExistsAndLoadBean(t, &repo_model.Release{RepoID: 1, LowerTagName: "v1.1"})
+	_, err = db.DeleteByID[repo_model.Release](ctx, rel.ID)
+	require.NoError(t, err)
+	NewNotifier().DeleteRelease(ctx, nil, rel)
+	assert.Greater(t, checkTime(t, defaultBranch), timeutil.TimeStamp(1), "deleting a release can change the default branch's release advice")
 }
 
 func TestGetBookAlignmentCount(t *testing.T) {
