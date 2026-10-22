@@ -15,6 +15,7 @@ import (
 	"gitea.dev/modules/log"
 	"gitea.dev/modules/queue"
 	"gitea.dev/modules/repository"
+	"gitea.dev/services/door43healthcheck"
 	notify_service "gitea.dev/services/notify"
 )
 
@@ -152,6 +153,23 @@ func (m *metadataNotifier) DeleteRelease(ctx context.Context, doer *user_model.U
 	err = repo_model.DeleteDoor43MetadataByRepoIDAndReleaseID(ctx, rel.RepoID, rel.ID)
 	if err != nil {
 		log.Error("DeleteRelease: DeleteDoor43MetadataByRepoIDAndReleaseID failed [repo: %s, releaseID: %d]: %v", rel.Repo.FullName(), rel.ID, err)
+	}
+	recheckDefaultBranch(ctx, rel.RepoID)
+}
+
+// recheckDefaultBranch re-checks the default branch after a release is removed, as its release
+// advice compares against the latest release and no later branch push re-checks it.
+func recheckDefaultBranch(ctx context.Context, repoID int64) {
+	repo, err := repo_model.GetRepositoryByID(ctx, repoID)
+	if err != nil || repo.IsArchived || repo.IsPrivate || repo.IsMirror || repo.IsEmpty {
+		return
+	}
+	if err := processDoor43MetadataForRepoLatestDMs(ctx, repo); err != nil {
+		log.Error("recheckDefaultBranch: processDoor43MetadataForRepoLatestDMs [%s]: %v", repo.FullName(), err)
+		return
+	}
+	if repo.DefaultBranchDM != nil {
+		door43healthcheck.RunHealthcheck(ctx, repo.DefaultBranchDM)
 	}
 }
 
