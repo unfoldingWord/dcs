@@ -480,7 +480,7 @@ func searchRelationEntries(ctx context.Context, dm *repo.Door43Metadata, relatio
 		delete(pins, entry.Repo.LowerName)
 	}
 
-	published, err := searchRelationRepos(ctx, dm, "r.owner_id <> ? AND dm.ref_type = ?", []any{dm.Repo.OwnerID, "tag"}, pins, cond)
+	published, err := searchRelationRepos(ctx, dm, "r.owner_id <> ? AND "+publishedReleaseSQL, []any{dm.Repo.OwnerID, "tag", true}, pins, cond)
 	if err != nil {
 		return nil, err
 	}
@@ -508,12 +508,16 @@ func searchRelationEntries(ctx context.Context, dm *repo.Door43Metadata, relatio
 	for _, entry := range ownEnglish {
 		delete(english, entry.Repo.LowerName)
 	}
-	uwEnglish, err := searchRelationRepos(ctx, dm, "r.owner_id = (SELECT id FROM `user` WHERE lower_name = ?) AND dm.ref_type = ?", []any{"unfoldingword", "tag"}, english, cond)
+	uwEnglish, err := searchRelationRepos(ctx, dm, "r.owner_id = (SELECT id FROM `user` WHERE lower_name = ?) AND "+publishedReleaseSQL, []any{"unfoldingword", "tag", true}, english, cond)
 	if err != nil {
 		return nil, err
 	}
 	return append(found, uwEnglish...), nil
 }
+
+// publishedReleaseSQL keeps release entries, not bare git tags, which also have ref_type "tag";
+// its args are "tag", true
+const publishedReleaseSQL = "dm.ref_type = ? AND dm.release_id NOT IN (SELECT id FROM `release` WHERE is_tag = ?)"
 
 // searchRelationRepos returns, for each repo matching scopeSQL whose name is a key of pins, its
 // entry that best matches dm's ref, the pinned release first
@@ -559,7 +563,8 @@ func pickPublishedEntries(ctx context.Context, dm *repo.Door43Metadata, publishe
 		Latest timeutil.TimeStamp
 	}
 	if err := db.GetEngine(ctx).Table("door43_metadata").Select("repo_id, MAX(release_date_unix) AS latest").
-		In("repo_id", repoIDs).And("ref_type = ?", "tag").And("stage <= ?", dm.Stage).
+		In("repo_id", repoIDs).And("ref_type = ?", "tag").And("release_id NOT IN (SELECT id FROM `release` WHERE is_tag = ?)", true).
+		And("stage <= ?", dm.Stage).
 		GroupBy("repo_id").Find(&latest); err != nil {
 		return nil, fmt.Errorf("find latest releases: %v", err)
 	}

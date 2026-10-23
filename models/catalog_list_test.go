@@ -722,4 +722,28 @@ func TestSearchCatalogForBookPackageRelations(t *testing.T) {
 	})
 	require.NoError(t, err)
 	assert.Equal(t, map[int64]string{ownFrTN: "master", ownEnTWL: "master"}, refs(results))
+
+	// A non-default branch requests StageOther, which bare git tags share; user4's bare tag
+	// of fr_twl is not a release, so user2's own English en_twl still stands in.
+	user4FrTWL := newRepo(user4, "fr_twl")
+	bareTag := &repo_model.Release{RepoID: user4FrTWL, TagName: "draft", LowerTagName: "draft", IsTag: true}
+	require.NoError(t, db.Insert(ctx, bareTag))
+	other := func(repoID, releaseID int64, ref, refType, lang, subject string, relations ...*structs.Relation) {
+		inserted++
+		require.NoError(t, db.Insert(ctx, &repo_model.Door43Metadata{
+			RepoID: repoID, ReleaseID: releaseID, Ref: ref, RefType: refType, CommitSHA: fmt.Sprintf("%040d", inserted),
+			Stage: door43metadata.StageOther, ReleaseDateUnix: 1000, Language: lang, Subject: subject, MetadataType: "rc", Relations: relations,
+		}))
+	}
+	other(user4FrTWL, bareTag.ID, "draft", "tag", "fr", twl)
+	other(ownFrTN, 0, "feature", "branch", "fr", tn, relation("fr", "twl", ""))
+	feature, err := repo_model.GetDoor43MetadataByRepoIDAndRef(ctx, ownFrTN, "feature")
+	require.NoError(t, err)
+	feature.Repo = frTN.Repo
+	results, _, err = SearchCatalogForBookPackage(ctx, feature, &door43metadata.SearchCatalogOptions{
+		Subjects:       []string{tn, twl},
+		IncludeHistory: true,
+	})
+	require.NoError(t, err)
+	assert.Equal(t, map[int64]string{ownFrTN: "feature", ownEnTWL: "master"}, refs(results))
 }
