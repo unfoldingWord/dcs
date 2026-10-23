@@ -188,9 +188,12 @@ func TestProcessDoor43MetadataForRepo_DefaultBranchRecheck(t *testing.T) {
 
 	resetDefaultCheckTime(t)
 	rel := unittest.AssertExistsAndLoadBean(t, &repo_model.Release{RepoID: 1, LowerTagName: "v1.1"})
+	rel.Repo = loadRepo(t) // as release_service.DeleteReleaseByID sets it before notifying
 	_, err = db.DeleteByID[repo_model.Release](ctx, rel.ID)
 	require.NoError(t, err)
-	NewNotifier().DeleteRelease(ctx, nil, rel)
+	requestCtx, cancel := context.WithCancel(ctx)
+	cancel() // the client went away before the notifier ran
+	NewNotifier().DeleteRelease(requestCtx, nil, rel)
 	assert.Greater(t, checkTime(t, defaultBranch), timeutil.TimeStamp(1), "deleting a release can change the default branch's release advice")
 }
 
