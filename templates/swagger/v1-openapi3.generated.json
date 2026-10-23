@@ -13633,6 +13633,7 @@
           },
           {
             "description": "list only those of the given stage or lower, with low to high being: \"prod\" - return only those of production releases (default); \"preprod\" - return only those of all (production \u0026 pre-production) releases; \"latest\" - return only those of all releases and the default branch; \"other\" - return all, including other branches and tags [aliases: \"branch\", \"tag\"]",
+            "explode": true,
             "in": "query",
             "name": "stage",
             "schema": {
@@ -13646,10 +13647,12 @@
                 "type": "string"
               },
               "type": "array"
-            }
+            },
+            "style": "form"
           },
           {
             "description": "subject(s) desired for the book package. Default list: Aligned Bible, TSV Translation Notes, TSV Translation Questions, TSV Translation Words Links, Translation Words, Translation Academy",
+            "explode": true,
             "in": "query",
             "name": "subject",
             "schema": {
@@ -13657,10 +13660,12 @@
                 "type": "string"
               },
               "type": "array"
-            }
+            },
+            "style": "form"
           },
           {
             "description": "resource flavorType. Multiple values are ORed. If given, subjects ignored.",
+            "explode": true,
             "in": "query",
             "name": "flavorType",
             "schema": {
@@ -13668,10 +13673,12 @@
                 "type": "string"
               },
               "type": "array"
-            }
+            },
+            "style": "form"
           },
           {
             "description": "resource flavor. Multiple values are ORed. If given, subjects ignored.",
+            "explode": true,
             "in": "query",
             "name": "flavor",
             "schema": {
@@ -13679,10 +13686,12 @@
                 "type": "string"
               },
               "type": "array"
-            }
+            },
+            "style": "form"
           },
           {
             "description": "resource abbreviation (identifier). Multiple values are ORed.",
+            "explode": true,
             "in": "query",
             "name": "abbreviation",
             "schema": {
@@ -13690,10 +13699,12 @@
                 "type": "string"
               },
               "type": "array"
-            }
+            },
+            "style": "form"
           },
           {
             "description": "content format (usfm, text, markdown, etc.). Multiple values are ORed.",
+            "explode": true,
             "in": "query",
             "name": "format",
             "schema": {
@@ -13701,10 +13712,12 @@
                 "type": "string"
               },
               "type": "array"
-            }
+            },
+            "style": "form"
           },
           {
             "description": "checking level. Returns items with a checking level equal or greater than the number given",
+            "explode": true,
             "in": "query",
             "name": "checkingLevel",
             "schema": {
@@ -13717,10 +13730,12 @@
                 "type": "string"
               },
               "type": "array"
-            }
+            },
+            "style": "form"
           },
           {
             "description": "book (ingredient identifier). Multiple values are ORed",
+            "explode": true,
             "in": "query",
             "name": "book",
             "schema": {
@@ -13728,10 +13743,12 @@
                 "type": "string"
               },
               "type": "array"
-            }
+            },
+            "style": "form"
           },
           {
             "description": "metadata type. Multiple values are ORed",
+            "explode": true,
             "in": "query",
             "name": "metadataType",
             "schema": {
@@ -13745,10 +13762,12 @@
                 "type": "string"
               },
               "type": "array"
-            }
+            },
+            "style": "form"
           },
           {
             "description": "metadata version. Does not apply if metadataType is not given. Multiple values are ORed",
+            "explode": true,
             "in": "query",
             "name": "metadataVersion",
             "schema": {
@@ -13756,10 +13775,12 @@
                 "type": "string"
               },
               "type": "array"
-            }
+            },
+            "style": "form"
           },
           {
             "description": "topic of a repo. Multiple values are ORed",
+            "explode": true,
             "in": "query",
             "name": "topic",
             "schema": {
@@ -13767,10 +13788,12 @@
                 "type": "string"
               },
               "type": "array"
-            }
+            },
+            "style": "form"
           },
           {
             "description": "Entries with a repository without this topic will be returned. Multiple values are ANDed.",
+            "explode": true,
             "in": "query",
             "name": "withoutTopic",
             "schema": {
@@ -13778,7 +13801,8 @@
                 "type": "string"
               },
               "type": "array"
-            }
+            },
+            "style": "form"
           },
           {
             "description": "if true, the list of ingredients (files/projects) in the resource and their file paths will be listed for each entry, default is true",
@@ -13868,6 +13892,7 @@
           },
           {
             "description": "list only those of the given stage or lower, with low to high being: \"prod\" - return only those of production releases (default); \"preprod\" - return only those of all (production \u0026 pre-production) releases; \"latest\" - return only those of all releases and the default branch; \"other\" - return all, including other branches and tags [aliases: \"branch\", \"tag\"]",
+            "explode": true,
             "in": "query",
             "name": "stage",
             "schema": {
@@ -13881,10 +13906,12 @@
                 "type": "string"
               },
               "type": "array"
-            }
+            },
+            "style": "form"
           },
           {
             "description": "subject(s) desired for the book package. Default list: Aligned Bible, TSV Translation Notes, TSV Translation Questions, TSV Translation Words Links, Translation Words, Translation Academy",
+            "explode": true,
             "in": "query",
             "name": "subject",
             "schema": {
@@ -13892,10 +13919,12 @@
                 "type": "string"
               },
               "type": "array"
-            }
+            },
+            "style": "form"
           },
           {
             "description": "resource flavorType. Multiple values are ORed. If given, subjects ignored.",
+            "explode": true,
             "in": "query",
             "name": "flavorType",
             "schema": {
@@ -13903,10 +13932,12 @@
                 "type": "string"
               },
               "type": "array"
-            }
+            },
+            "style": "form"
           },
           {
             "description": "resource flavor. Multiple values are ORed. If given, subjects ignored.",
+            "explode": true,
             "in": "query",
             "name": "flavor",
             "schema": {
@@ -13914,10 +13945,12 @@
                 "type": "string"
               },
               "type": "array"
-            }
+            },
+            "style": "form"
           },
           {
             "description": "resource abbreviation (identifier). Multiple values are ORed.",
+            "explode": true,
             "in": "query",
             "name": "abbreviation",
             "schema": {
@@ -13925,10 +13958,12 @@
                 "type": "string"
               },
               "type": "array"
-            }
+            },
+            "style": "form"
           },
           {
             "description": "content format (usfm, text, markdown, etc.). Multiple values are ORed.",
+            "explode": true,
             "in": "query",
             "name": "format",
             "schema": {
@@ -13936,10 +13971,12 @@
                 "type": "string"
               },
               "type": "array"
-            }
+            },
+            "style": "form"
           },
           {
             "description": "checking level. Returns items with a checking level equal or greater than the number given",
+            "explode": true,
             "in": "query",
             "name": "checkingLevel",
             "schema": {
@@ -13952,10 +13989,12 @@
                 "type": "string"
               },
               "type": "array"
-            }
+            },
+            "style": "form"
           },
           {
             "description": "book (ingredient identifier). Multiple values are ORed",
+            "explode": true,
             "in": "query",
             "name": "book",
             "schema": {
@@ -13963,10 +14002,12 @@
                 "type": "string"
               },
               "type": "array"
-            }
+            },
+            "style": "form"
           },
           {
             "description": "metadata type. Multiple values are ORed",
+            "explode": true,
             "in": "query",
             "name": "metadataType",
             "schema": {
@@ -13980,10 +14021,12 @@
                 "type": "string"
               },
               "type": "array"
-            }
+            },
+            "style": "form"
           },
           {
             "description": "metadata version. Does not apply if metadataType is not given. Multiple values are ORed",
+            "explode": true,
             "in": "query",
             "name": "metadataVersion",
             "schema": {
@@ -13991,10 +14034,12 @@
                 "type": "string"
               },
               "type": "array"
-            }
+            },
+            "style": "form"
           },
           {
             "description": "topic of a repo. Multiple values are ORed",
+            "explode": true,
             "in": "query",
             "name": "topic",
             "schema": {
@@ -14002,10 +14047,12 @@
                 "type": "string"
               },
               "type": "array"
-            }
+            },
+            "style": "form"
           },
           {
             "description": "Entries with a repository without this topic will be returned. Multiple values are ANDed.",
+            "explode": true,
             "in": "query",
             "name": "withoutTopic",
             "schema": {
@@ -14013,7 +14060,8 @@
                 "type": "string"
               },
               "type": "array"
-            }
+            },
+            "style": "form"
           },
           {
             "description": "if true, the list of ingredients (files/projects) in the resource and their file paths will be listed for each entry, default is true",
@@ -14138,6 +14186,7 @@
           },
           {
             "description": "list only the given languages(s) if they have entries in the catalog meeting the criteria given (e.g. way to test an language has a given owner and/or subject)",
+            "explode": true,
             "in": "query",
             "name": "lang",
             "schema": {
@@ -14145,7 +14194,8 @@
                 "type": "string"
               },
               "type": "array"
-            }
+            },
+            "style": "form"
           },
           {
             "description": "list only those that are (true) or are not (false) a gatetway language",
@@ -14157,6 +14207,7 @@
           },
           {
             "description": "list only those of the given stage or lower, with low to high being: \"prod\" - return only those of production releases (default); \"preprod\" - return only those of all (production \u0026 pre-production) releases; \"latest\" - return only those of all releases and the default branch; \"other\" - return all, including other branches and tags [aliases: \"branch\", \"tag\"]",
+            "explode": true,
             "in": "query",
             "name": "stage",
             "schema": {
@@ -14170,10 +14221,12 @@
                 "type": "string"
               },
               "type": "array"
-            }
+            },
+            "style": "form"
           },
           {
             "description": "resource subject. Multiple values are ORed.",
+            "explode": true,
             "in": "query",
             "name": "subject",
             "schema": {
@@ -14181,10 +14234,12 @@
                 "type": "string"
               },
               "type": "array"
-            }
+            },
+            "style": "form"
           },
           {
             "description": "resource flavorType. Multiple values are ORed.",
+            "explode": true,
             "in": "query",
             "name": "flavorType",
             "schema": {
@@ -14192,10 +14247,12 @@
                 "type": "string"
               },
               "type": "array"
-            }
+            },
+            "style": "form"
           },
           {
             "description": "resource flavor. Multiple values are ORed.",
+            "explode": true,
             "in": "query",
             "name": "flavor",
             "schema": {
@@ -14203,10 +14260,12 @@
                 "type": "string"
               },
               "type": "array"
-            }
+            },
+            "style": "form"
           },
           {
             "description": "resource abbreviation (identifier). Multiple values are ORed.",
+            "explode": true,
             "in": "query",
             "name": "abbreviation",
             "schema": {
@@ -14214,10 +14273,12 @@
                 "type": "string"
               },
               "type": "array"
-            }
+            },
+            "style": "form"
           },
           {
             "description": "content format (usfm, text, markdown, etc.). Multiple values are ORed.",
+            "explode": true,
             "in": "query",
             "name": "format",
             "schema": {
@@ -14225,10 +14286,12 @@
                 "type": "string"
               },
               "type": "array"
-            }
+            },
+            "style": "form"
           },
           {
             "description": "checking level. Returns items with a checking level equal or greater than the number given",
+            "explode": true,
             "in": "query",
             "name": "checkingLevel",
             "schema": {
@@ -14241,10 +14304,12 @@
                 "type": "string"
               },
               "type": "array"
-            }
+            },
+            "style": "form"
           },
           {
             "description": "book (ingredient identifier). Multiple values are ORed",
+            "explode": true,
             "in": "query",
             "name": "book",
             "schema": {
@@ -14252,10 +14317,12 @@
                 "type": "string"
               },
               "type": "array"
-            }
+            },
+            "style": "form"
           },
           {
             "description": "metadata type. Multiple values are ORed",
+            "explode": true,
             "in": "query",
             "name": "metadataType",
             "schema": {
@@ -14269,10 +14336,12 @@
                 "type": "string"
               },
               "type": "array"
-            }
+            },
+            "style": "form"
           },
           {
             "description": "metadata version. Does not apply if metadataType is not given. Multiple values are ORed",
+            "explode": true,
             "in": "query",
             "name": "metadataVersion",
             "schema": {
@@ -14280,7 +14349,8 @@
                 "type": "string"
               },
               "type": "array"
-            }
+            },
+            "style": "form"
           },
           {
             "description": "If true, many of the above fields will do a partial match, allowing characters to come before or after your given value, default is false",
@@ -14292,6 +14362,7 @@
           },
           {
             "description": "topic of a repo. Multiple values are ORed. If a repo of this topic has a catalog entry, its language will be listed.",
+            "explode": true,
             "in": "query",
             "name": "topic",
             "schema": {
@@ -14299,10 +14370,12 @@
                 "type": "string"
               },
               "type": "array"
-            }
+            },
+            "style": "form"
           },
           {
             "description": "Entries with a repository without this topic will be returned. Multiple values are ANDed.",
+            "explode": true,
             "in": "query",
             "name": "withoutTopic",
             "schema": {
@@ -14310,7 +14383,8 @@
                 "type": "string"
               },
               "type": "array"
-            }
+            },
+            "style": "form"
           },
           {
             "description": "list only those with (true) or without (false) audio content in their release attachments",
@@ -14444,6 +14518,7 @@
           },
           {
             "description": "list only those in the given language(s). To match multiple, give the parameter multiple times or give a list comma delimited. Will perform an exact match (case insensitive) unlesss partialMatch=true",
+            "explode": true,
             "in": "query",
             "name": "lang",
             "schema": {
@@ -14451,7 +14526,8 @@
                 "type": "string"
               },
               "type": "array"
-            }
+            },
+            "style": "form"
           },
           {
             "description": "list only those that are (true) or are not (false) a gatetway language",
@@ -14463,6 +14539,7 @@
           },
           {
             "description": "list only those of the given stage or lower, with low to high being: \"prod\" - return only those of production releases (default); \"preprod\" - return only those of all (production \u0026 pre-production) releases; \"latest\" - return only those of all releases and the default branch; \"other\" - return all, including other branches and tags [aliases: \"branch\", \"tag\"]",
+            "explode": true,
             "in": "query",
             "name": "stage",
             "schema": {
@@ -14476,10 +14553,12 @@
                 "type": "string"
               },
               "type": "array"
-            }
+            },
+            "style": "form"
           },
           {
             "description": "resource subject. Multiple values are ORed.",
+            "explode": true,
             "in": "query",
             "name": "subject",
             "schema": {
@@ -14487,10 +14566,12 @@
                 "type": "string"
               },
               "type": "array"
-            }
+            },
+            "style": "form"
           },
           {
             "description": "resource flavorType. Multiple values are ORed.",
+            "explode": true,
             "in": "query",
             "name": "flavorType",
             "schema": {
@@ -14498,10 +14579,12 @@
                 "type": "string"
               },
               "type": "array"
-            }
+            },
+            "style": "form"
           },
           {
             "description": "resource flavor. Multiple values are ORed.",
+            "explode": true,
             "in": "query",
             "name": "flavor",
             "schema": {
@@ -14509,10 +14592,12 @@
                 "type": "string"
               },
               "type": "array"
-            }
+            },
+            "style": "form"
           },
           {
             "description": "resource abbreviation (identifier). Multiple values are ORed.",
+            "explode": true,
             "in": "query",
             "name": "abbreviation",
             "schema": {
@@ -14520,10 +14605,12 @@
                 "type": "string"
               },
               "type": "array"
-            }
+            },
+            "style": "form"
           },
           {
             "description": "content format (usfm, text, markdown, etc.). Multiple values are ORed.",
+            "explode": true,
             "in": "query",
             "name": "format",
             "schema": {
@@ -14531,10 +14618,12 @@
                 "type": "string"
               },
               "type": "array"
-            }
+            },
+            "style": "form"
           },
           {
             "description": "checking level. Returns items with a checking level equal or greater than the number given",
+            "explode": true,
             "in": "query",
             "name": "checkingLevel",
             "schema": {
@@ -14547,10 +14636,12 @@
                 "type": "string"
               },
               "type": "array"
-            }
+            },
+            "style": "form"
           },
           {
             "description": "book (ingredient identifier). Multiple values are ORed",
+            "explode": true,
             "in": "query",
             "name": "book",
             "schema": {
@@ -14558,10 +14649,12 @@
                 "type": "string"
               },
               "type": "array"
-            }
+            },
+            "style": "form"
           },
           {
             "description": "metadata type. Multiple values are ORed",
+            "explode": true,
             "in": "query",
             "name": "metadataType",
             "schema": {
@@ -14575,10 +14668,12 @@
                 "type": "string"
               },
               "type": "array"
-            }
+            },
+            "style": "form"
           },
           {
             "description": "metadata version. Does not apply if metadataType is not given. Multiple values are ORed",
+            "explode": true,
             "in": "query",
             "name": "metadataVersion",
             "schema": {
@@ -14586,10 +14681,12 @@
                 "type": "string"
               },
               "type": "array"
-            }
+            },
+            "style": "form"
           },
           {
             "description": "topic of a repo. Multiple values are ORed. If a repo of this topic has a catalog entry, its metadata type will be listed.",
+            "explode": true,
             "in": "query",
             "name": "topic",
             "schema": {
@@ -14597,10 +14694,12 @@
                 "type": "string"
               },
               "type": "array"
-            }
+            },
+            "style": "form"
           },
           {
             "description": "Entries with a repository without this topic will be returned. Multiple values are ANDed.",
+            "explode": true,
             "in": "query",
             "name": "withoutTopic",
             "schema": {
@@ -14608,7 +14707,8 @@
                 "type": "string"
               },
               "type": "array"
-            }
+            },
+            "style": "form"
           },
           {
             "description": "list only those with (true) or without (false) audio content in their release attachments",
@@ -14742,6 +14842,7 @@
           },
           {
             "description": "list only those with entries in the given language(s). To match multiple, give the parameter multiple times or give a list comma delimited. Will perform an exact match (case insensitive) unlesss partialMatch=true",
+            "explode": true,
             "in": "query",
             "name": "lang",
             "schema": {
@@ -14749,7 +14850,8 @@
                 "type": "string"
               },
               "type": "array"
-            }
+            },
+            "style": "form"
           },
           {
             "description": "list only those that are (true) or are not (false) a gatetway language",
@@ -14761,6 +14863,7 @@
           },
           {
             "description": "list only those of the given stage or lower, with low to high being: \"prod\" - return only those of production releases (default); \"preprod\" - return only those of all (production \u0026 pre-production) releases; \"latest\" - return only those of all releases and the default branch; \"other\" - return all, including other branches and tags [aliases: \"branch\", \"tag\"]",
+            "explode": true,
             "in": "query",
             "name": "stage",
             "schema": {
@@ -14774,10 +14877,12 @@
                 "type": "string"
               },
               "type": "array"
-            }
+            },
+            "style": "form"
           },
           {
             "description": "resource subject. Multiple values are ORed.",
+            "explode": true,
             "in": "query",
             "name": "subject",
             "schema": {
@@ -14785,10 +14890,12 @@
                 "type": "string"
               },
               "type": "array"
-            }
+            },
+            "style": "form"
           },
           {
             "description": "resource flavorType. Multiple values are ORed.",
+            "explode": true,
             "in": "query",
             "name": "flavorType",
             "schema": {
@@ -14796,10 +14903,12 @@
                 "type": "string"
               },
               "type": "array"
-            }
+            },
+            "style": "form"
           },
           {
             "description": "resource flavor. Multiple values are ORed.",
+            "explode": true,
             "in": "query",
             "name": "flavor",
             "schema": {
@@ -14807,10 +14916,12 @@
                 "type": "string"
               },
               "type": "array"
-            }
+            },
+            "style": "form"
           },
           {
             "description": "resource abbreviation (identifier). Multiple values are ORed.",
+            "explode": true,
             "in": "query",
             "name": "abbreviation",
             "schema": {
@@ -14818,10 +14929,12 @@
                 "type": "string"
               },
               "type": "array"
-            }
+            },
+            "style": "form"
           },
           {
             "description": "content format (usfm, text, markdown, etc.). Multiple values are ORed.",
+            "explode": true,
             "in": "query",
             "name": "format",
             "schema": {
@@ -14829,10 +14942,12 @@
                 "type": "string"
               },
               "type": "array"
-            }
+            },
+            "style": "form"
           },
           {
             "description": "checking level. Returns items with a checking level equal or greater than the number given",
+            "explode": true,
             "in": "query",
             "name": "checkingLevel",
             "schema": {
@@ -14845,10 +14960,12 @@
                 "type": "string"
               },
               "type": "array"
-            }
+            },
+            "style": "form"
           },
           {
             "description": "book (ingredient identifier). Multiple values are ORed",
+            "explode": true,
             "in": "query",
             "name": "book",
             "schema": {
@@ -14856,10 +14973,12 @@
                 "type": "string"
               },
               "type": "array"
-            }
+            },
+            "style": "form"
           },
           {
             "description": "metadata type. Multiple values are ORed",
+            "explode": true,
             "in": "query",
             "name": "metadataType",
             "schema": {
@@ -14873,10 +14992,12 @@
                 "type": "string"
               },
               "type": "array"
-            }
+            },
+            "style": "form"
           },
           {
             "description": "metadata version. Does not apply if metadataType is not given. Multiple values are ORed",
+            "explode": true,
             "in": "query",
             "name": "metadataVersion",
             "schema": {
@@ -14884,7 +15005,8 @@
                 "type": "string"
               },
               "type": "array"
-            }
+            },
+            "style": "form"
           },
           {
             "description": "If true, many of the above fields will do a partial match, allowing characters to come before or after your given value, default is false",
@@ -14896,6 +15018,7 @@
           },
           {
             "description": "topic of a repo. Multiple values are ORed. If a repo of this topic has a catalog entry, its owner will be listed.",
+            "explode": true,
             "in": "query",
             "name": "topic",
             "schema": {
@@ -14903,10 +15026,12 @@
                 "type": "string"
               },
               "type": "array"
-            }
+            },
+            "style": "form"
           },
           {
             "description": "Entries with a repository without this topic will be returned. Multiple values are ANDed.",
+            "explode": true,
             "in": "query",
             "name": "withoutTopic",
             "schema": {
@@ -14914,7 +15039,8 @@
                 "type": "string"
               },
               "type": "array"
-            }
+            },
+            "style": "form"
           },
           {
             "description": "list only those with (true) or without (false) audio content in their release attachments",
@@ -15048,6 +15174,7 @@
           },
           {
             "description": "list only those for the given language(s). To match multiple, give the parameter multiple times or give a list comma delimited. Will perform an exact match (case insensitive) unlesss partialMatch=true",
+            "explode": true,
             "in": "query",
             "name": "lang",
             "schema": {
@@ -15055,7 +15182,8 @@
                 "type": "string"
               },
               "type": "array"
-            }
+            },
+            "style": "form"
           },
           {
             "description": "list only those that are (true) or are not (false) a gatetway language",
@@ -15067,6 +15195,7 @@
           },
           {
             "description": "list only those of the given stage or lower, with low to high being: \"prod\" - return only those of production releases (default); \"preprod\" - return only those of all (production \u0026 pre-production) releases; \"latest\" - return only those of all releases and the default branch; \"other\" - return all, including other branches and tags [aliases: \"branch\", \"tag\"]",
+            "explode": true,
             "in": "query",
             "name": "stage",
             "schema": {
@@ -15080,10 +15209,12 @@
                 "type": "string"
               },
               "type": "array"
-            }
+            },
+            "style": "form"
           },
           {
             "description": "resource subject. Multiple values are ORed.",
+            "explode": true,
             "in": "query",
             "name": "subject",
             "schema": {
@@ -15091,10 +15222,12 @@
                 "type": "string"
               },
               "type": "array"
-            }
+            },
+            "style": "form"
           },
           {
             "description": "resource flavorType. Multiple values are ORed.",
+            "explode": true,
             "in": "query",
             "name": "flavorType",
             "schema": {
@@ -15102,10 +15235,12 @@
                 "type": "string"
               },
               "type": "array"
-            }
+            },
+            "style": "form"
           },
           {
             "description": "resource flavor. Multiple values are ORed.",
+            "explode": true,
             "in": "query",
             "name": "flavor",
             "schema": {
@@ -15113,10 +15248,12 @@
                 "type": "string"
               },
               "type": "array"
-            }
+            },
+            "style": "form"
           },
           {
             "description": "resource abbreviation (identifier). Multiple values are ORed.",
+            "explode": true,
             "in": "query",
             "name": "abbreviation",
             "schema": {
@@ -15124,10 +15261,12 @@
                 "type": "string"
               },
               "type": "array"
-            }
+            },
+            "style": "form"
           },
           {
             "description": "content format (usfm, text, markdown, etc.). Multiple values are ORed.",
+            "explode": true,
             "in": "query",
             "name": "format",
             "schema": {
@@ -15135,10 +15274,12 @@
                 "type": "string"
               },
               "type": "array"
-            }
+            },
+            "style": "form"
           },
           {
             "description": "checking level. Returns items with a checking level equal or greater than the number given",
+            "explode": true,
             "in": "query",
             "name": "checkingLevel",
             "schema": {
@@ -15151,10 +15292,12 @@
                 "type": "string"
               },
               "type": "array"
-            }
+            },
+            "style": "form"
           },
           {
             "description": "book (ingredient identifier). Multiple values are ORed",
+            "explode": true,
             "in": "query",
             "name": "book",
             "schema": {
@@ -15162,10 +15305,12 @@
                 "type": "string"
               },
               "type": "array"
-            }
+            },
+            "style": "form"
           },
           {
             "description": "metadata type. Multiple values are ORed",
+            "explode": true,
             "in": "query",
             "name": "metadataType",
             "schema": {
@@ -15179,10 +15324,12 @@
                 "type": "string"
               },
               "type": "array"
-            }
+            },
+            "style": "form"
           },
           {
             "description": "metadata version. Does not apply if metadataType is not given. Multiple values are ORed",
+            "explode": true,
             "in": "query",
             "name": "metadataVersion",
             "schema": {
@@ -15190,10 +15337,12 @@
                 "type": "string"
               },
               "type": "array"
-            }
+            },
+            "style": "form"
           },
           {
             "description": "topic of a repo. Multiple values are ORed. If a repo of this topic has a catalog entry, its subject will be listed.",
+            "explode": true,
             "in": "query",
             "name": "topic",
             "schema": {
@@ -15201,10 +15350,12 @@
                 "type": "string"
               },
               "type": "array"
-            }
+            },
+            "style": "form"
           },
           {
             "description": "Entries with a repository without this topic will be returned. Multiple values are ANDed.",
+            "explode": true,
             "in": "query",
             "name": "withoutTopic",
             "schema": {
@@ -15212,7 +15363,8 @@
                 "type": "string"
               },
               "type": "array"
-            }
+            },
+            "style": "form"
           },
           {
             "description": "list only those with (true) or without (false) audio content in their release attachments",
@@ -15408,6 +15560,7 @@
           },
           {
             "description": "search only for entries with the given language(s). To match multiple, give the parameter multiple times or give a list comma delimited. Will perform an exact match (case insensitive) unlesss partialMatch=true",
+            "explode": true,
             "in": "query",
             "name": "lang",
             "schema": {
@@ -15415,7 +15568,8 @@
                 "type": "string"
               },
               "type": "array"
-            }
+            },
+            "style": "form"
           },
           {
             "description": "list only those that are (true) or are not (false) a gatetway language",
@@ -15427,6 +15581,7 @@
           },
           {
             "description": "list only those of the given stage or lower, with low to high being: \"prod\" - return only those of production releases (default); \"preprod\" - return only those of all (production \u0026 pre-production) releases; \"latest\" - return only those of all releases and the default branch; \"branch\" - return all those in the catalog for all branches",
+            "explode": true,
             "in": "query",
             "name": "stage",
             "schema": {
@@ -15440,10 +15595,12 @@
                 "type": "string"
               },
               "type": "array"
-            }
+            },
+            "style": "form"
           },
           {
             "description": "resource subject. Multiple values are ORed.",
+            "explode": true,
             "in": "query",
             "name": "subject",
             "schema": {
@@ -15451,10 +15608,12 @@
                 "type": "string"
               },
               "type": "array"
-            }
+            },
+            "style": "form"
           },
           {
             "description": "resource flavorType. Multiple values are ORed.",
+            "explode": true,
             "in": "query",
             "name": "flavorType",
             "schema": {
@@ -15462,10 +15621,12 @@
                 "type": "string"
               },
               "type": "array"
-            }
+            },
+            "style": "form"
           },
           {
             "description": "resource flavor. Multiple values are ORed.",
+            "explode": true,
             "in": "query",
             "name": "flavor",
             "schema": {
@@ -15473,10 +15634,12 @@
                 "type": "string"
               },
               "type": "array"
-            }
+            },
+            "style": "form"
           },
           {
             "description": "resource abbreviation (identifier). Multiple values are ORed.",
+            "explode": true,
             "in": "query",
             "name": "abbreviation",
             "schema": {
@@ -15484,10 +15647,12 @@
                 "type": "string"
               },
               "type": "array"
-            }
+            },
+            "style": "form"
           },
           {
             "description": "content format (usfm, text, markdown, etc.). Multiple values are ORed.",
+            "explode": true,
             "in": "query",
             "name": "format",
             "schema": {
@@ -15495,10 +15660,12 @@
                 "type": "string"
               },
               "type": "array"
-            }
+            },
+            "style": "form"
           },
           {
             "description": "checking level. Returns items with a checking level equal or greater than the number given",
+            "explode": true,
             "in": "query",
             "name": "checkingLevel",
             "schema": {
@@ -15511,10 +15678,12 @@
                 "type": "string"
               },
               "type": "array"
-            }
+            },
+            "style": "form"
           },
           {
             "description": "book (ingredient identifier). Multiple values are ORed",
+            "explode": true,
             "in": "query",
             "name": "book",
             "schema": {
@@ -15522,10 +15691,12 @@
                 "type": "string"
               },
               "type": "array"
-            }
+            },
+            "style": "form"
           },
           {
             "description": "metadata type. Multiple values are ORed",
+            "explode": true,
             "in": "query",
             "name": "metadataType",
             "schema": {
@@ -15539,10 +15710,12 @@
                 "type": "string"
               },
               "type": "array"
-            }
+            },
+            "style": "form"
           },
           {
             "description": "metadata version. Does not apply if metadataType is not given. Multiple values are ORed",
+            "explode": true,
             "in": "query",
             "name": "metadataVersion",
             "schema": {
@@ -15550,10 +15723,12 @@
                 "type": "string"
               },
               "type": "array"
-            }
+            },
+            "style": "form"
           },
           {
             "description": "topic of a repo. Multiple values are ORed.",
+            "explode": true,
             "in": "query",
             "name": "topic",
             "schema": {
@@ -15561,10 +15736,12 @@
                 "type": "string"
               },
               "type": "array"
-            }
+            },
+            "style": "form"
           },
           {
             "description": "Entries with a repository without this topic will be returned. Multiple values are ANDed.",
+            "explode": true,
             "in": "query",
             "name": "withoutTopic",
             "schema": {
@@ -15572,7 +15749,8 @@
                 "type": "string"
               },
               "type": "array"
-            }
+            },
+            "style": "form"
           },
           {
             "description": "list only entries with (true) or without (false) audio content in their release attachments",
@@ -15755,6 +15933,7 @@
           },
           {
             "description": "count only entries with the given language(s). To match multiple, give the parameter multiple times or give a list comma delimited. Will perform an exact match (case insensitive) unlesss partialMatch=true",
+            "explode": true,
             "in": "query",
             "name": "lang",
             "schema": {
@@ -15762,7 +15941,8 @@
                 "type": "string"
               },
               "type": "array"
-            }
+            },
+            "style": "form"
           },
           {
             "description": "count only entries that are (true) or are not (false) a gatetway language",
@@ -15774,6 +15954,7 @@
           },
           {
             "description": "count only entries of the given stage or lower, with low to high being: \"prod\" - return only those of production releases (default); \"preprod\" - return only those of all (production \u0026 pre-production) releases; \"latest\" - return only those of all releases and the default branch; \"other\" - return all, including other branches and tags [aliases: \"branch\", \"tag\"]",
+            "explode": true,
             "in": "query",
             "name": "stage",
             "schema": {
@@ -15787,10 +15968,12 @@
                 "type": "string"
               },
               "type": "array"
-            }
+            },
+            "style": "form"
           },
           {
             "description": "resource subject. Multiple values are ORed.",
+            "explode": true,
             "in": "query",
             "name": "subject",
             "schema": {
@@ -15798,10 +15981,12 @@
                 "type": "string"
               },
               "type": "array"
-            }
+            },
+            "style": "form"
           },
           {
             "description": "resource flavorType. Multiple values are ORed.",
+            "explode": true,
             "in": "query",
             "name": "flavorType",
             "schema": {
@@ -15809,10 +15994,12 @@
                 "type": "string"
               },
               "type": "array"
-            }
+            },
+            "style": "form"
           },
           {
             "description": "resource flavor. Multiple values are ORed.",
+            "explode": true,
             "in": "query",
             "name": "flavor",
             "schema": {
@@ -15820,10 +16007,12 @@
                 "type": "string"
               },
               "type": "array"
-            }
+            },
+            "style": "form"
           },
           {
             "description": "resource abbreviation (identifier). Multiple values are ORed.",
+            "explode": true,
             "in": "query",
             "name": "abbreviation",
             "schema": {
@@ -15831,10 +16020,12 @@
                 "type": "string"
               },
               "type": "array"
-            }
+            },
+            "style": "form"
           },
           {
             "description": "content format (usfm, text, markdown, etc.). Multiple values are ORed.",
+            "explode": true,
             "in": "query",
             "name": "format",
             "schema": {
@@ -15842,10 +16033,12 @@
                 "type": "string"
               },
               "type": "array"
-            }
+            },
+            "style": "form"
           },
           {
             "description": "checking level. Counts entries with a checking level equal or greater than the number given",
+            "explode": true,
             "in": "query",
             "name": "checkingLevel",
             "schema": {
@@ -15858,10 +16051,12 @@
                 "type": "string"
               },
               "type": "array"
-            }
+            },
+            "style": "form"
           },
           {
             "description": "book (ingredient identifier). Multiple values are ORed",
+            "explode": true,
             "in": "query",
             "name": "book",
             "schema": {
@@ -15869,10 +16064,12 @@
                 "type": "string"
               },
               "type": "array"
-            }
+            },
+            "style": "form"
           },
           {
             "description": "metadata type. Multiple values are ORed",
+            "explode": true,
             "in": "query",
             "name": "metadataType",
             "schema": {
@@ -15886,10 +16083,12 @@
                 "type": "string"
               },
               "type": "array"
-            }
+            },
+            "style": "form"
           },
           {
             "description": "metadata version. Does not apply if metadataType is not given. Multiple values are ORed",
+            "explode": true,
             "in": "query",
             "name": "metadataVersion",
             "schema": {
@@ -15897,10 +16096,12 @@
                 "type": "string"
               },
               "type": "array"
-            }
+            },
+            "style": "form"
           },
           {
             "description": "topic of a repo. Multiple values are ORed.",
+            "explode": true,
             "in": "query",
             "name": "topic",
             "schema": {
@@ -15908,10 +16109,12 @@
                 "type": "string"
               },
               "type": "array"
-            }
+            },
+            "style": "form"
           },
           {
             "description": "Entries with a repository without this topic will be counted. Multiple values are ANDed.",
+            "explode": true,
             "in": "query",
             "name": "withoutTopic",
             "schema": {
@@ -15919,7 +16122,8 @@
                 "type": "string"
               },
               "type": "array"
-            }
+            },
+            "style": "form"
           },
           {
             "description": "count only entries with (true) or without (false) audio content in their release attachments",
@@ -16070,6 +16274,7 @@
           },
           {
             "description": "count only entries with the given language(s). To match multiple, give the parameter multiple times or give a list comma delimited. Will perform an exact match (case insensitive) unlesss partialMatch=true",
+            "explode": true,
             "in": "query",
             "name": "lang",
             "schema": {
@@ -16077,7 +16282,8 @@
                 "type": "string"
               },
               "type": "array"
-            }
+            },
+            "style": "form"
           },
           {
             "description": "count only entries that are (true) or are not (false) a gatetway language",
@@ -16089,6 +16295,7 @@
           },
           {
             "description": "count only entries of the given stage or lower, with low to high being: \"prod\" - return only those of production releases (default); \"preprod\" - return only those of all (production \u0026 pre-production) releases; \"latest\" - return only those of all releases and the default branch; \"other\" - return all, including other branches and tags [aliases: \"branch\", \"tag\"]",
+            "explode": true,
             "in": "query",
             "name": "stage",
             "schema": {
@@ -16102,10 +16309,12 @@
                 "type": "string"
               },
               "type": "array"
-            }
+            },
+            "style": "form"
           },
           {
             "description": "resource subject. Multiple values are ORed.",
+            "explode": true,
             "in": "query",
             "name": "subject",
             "schema": {
@@ -16113,10 +16322,12 @@
                 "type": "string"
               },
               "type": "array"
-            }
+            },
+            "style": "form"
           },
           {
             "description": "resource flavorType. Multiple values are ORed.",
+            "explode": true,
             "in": "query",
             "name": "flavorType",
             "schema": {
@@ -16124,10 +16335,12 @@
                 "type": "string"
               },
               "type": "array"
-            }
+            },
+            "style": "form"
           },
           {
             "description": "resource flavor. Multiple values are ORed.",
+            "explode": true,
             "in": "query",
             "name": "flavor",
             "schema": {
@@ -16135,10 +16348,12 @@
                 "type": "string"
               },
               "type": "array"
-            }
+            },
+            "style": "form"
           },
           {
             "description": "resource abbreviation (identifier). Multiple values are ORed.",
+            "explode": true,
             "in": "query",
             "name": "abbreviation",
             "schema": {
@@ -16146,10 +16361,12 @@
                 "type": "string"
               },
               "type": "array"
-            }
+            },
+            "style": "form"
           },
           {
             "description": "content format (usfm, text, markdown, etc.). Multiple values are ORed.",
+            "explode": true,
             "in": "query",
             "name": "format",
             "schema": {
@@ -16157,10 +16374,12 @@
                 "type": "string"
               },
               "type": "array"
-            }
+            },
+            "style": "form"
           },
           {
             "description": "checking level. Counts entries with a checking level equal or greater than the number given",
+            "explode": true,
             "in": "query",
             "name": "checkingLevel",
             "schema": {
@@ -16173,10 +16392,12 @@
                 "type": "string"
               },
               "type": "array"
-            }
+            },
+            "style": "form"
           },
           {
             "description": "book (ingredient identifier). Multiple values are ORed",
+            "explode": true,
             "in": "query",
             "name": "book",
             "schema": {
@@ -16184,10 +16405,12 @@
                 "type": "string"
               },
               "type": "array"
-            }
+            },
+            "style": "form"
           },
           {
             "description": "metadata type. Multiple values are ORed",
+            "explode": true,
             "in": "query",
             "name": "metadataType",
             "schema": {
@@ -16201,10 +16424,12 @@
                 "type": "string"
               },
               "type": "array"
-            }
+            },
+            "style": "form"
           },
           {
             "description": "metadata version. Does not apply if metadataType is not given. Multiple values are ORed",
+            "explode": true,
             "in": "query",
             "name": "metadataVersion",
             "schema": {
@@ -16212,10 +16437,12 @@
                 "type": "string"
               },
               "type": "array"
-            }
+            },
+            "style": "form"
           },
           {
             "description": "topic of a repo. Multiple values are ORed.",
+            "explode": true,
             "in": "query",
             "name": "topic",
             "schema": {
@@ -16223,10 +16450,12 @@
                 "type": "string"
               },
               "type": "array"
-            }
+            },
+            "style": "form"
           },
           {
             "description": "Entries with a repository without this topic will be counted. Multiple values are ANDed.",
+            "explode": true,
             "in": "query",
             "name": "withoutTopic",
             "schema": {
@@ -16234,7 +16463,8 @@
                 "type": "string"
               },
               "type": "array"
-            }
+            },
+            "style": "form"
           },
           {
             "description": "count only entries with (true) or without (false) audio content in their release attachments",
@@ -16483,6 +16713,7 @@
         "parameters": [
           {
             "description": "list only the given language codes",
+            "explode": true,
             "in": "query",
             "name": "lc",
             "schema": {
@@ -16490,7 +16721,8 @@
                 "type": "string"
               },
               "type": "array"
-            }
+            },
+            "style": "form"
           },
           {
             "description": "if true, only show gateway languages, if false, only non-gateway languages (other languages)",
@@ -16502,6 +16734,7 @@
           },
           {
             "description": "direction of the language",
+            "explode": true,
             "in": "query",
             "name": "ld",
             "schema": {
@@ -16513,7 +16746,8 @@
                 "type": "string"
               },
               "type": "array"
-            }
+            },
+            "style": "form"
           },
           {
             "description": "sort alphanumerically by attribute. Supported values are \"ang\", \"hc\", \"lc\", \"ld\", \"ln\", \"lr\". Default is \"lc\"",
@@ -16549,6 +16783,7 @@
         "parameters": [
           {
             "description": "list only the given language codes",
+            "explode": true,
             "in": "query",
             "name": "lc",
             "schema": {
@@ -16556,7 +16791,8 @@
                 "type": "string"
               },
               "type": "array"
-            }
+            },
+            "style": "form"
           },
           {
             "description": "if true, only show gateway languages, if false, only non-gateway languages (other languages)",
@@ -16568,6 +16804,7 @@
           },
           {
             "description": "direction of the language",
+            "explode": true,
             "in": "query",
             "name": "ld",
             "schema": {
@@ -16579,7 +16816,8 @@
                 "type": "string"
               },
               "type": "array"
-            }
+            },
+            "style": "form"
           }
         ],
         "responses": {
@@ -16994,6 +17232,7 @@
         "parameters": [
           {
             "description": "has repos of the given language. Multiple values are ORed.",
+            "explode": true,
             "in": "query",
             "name": "lang",
             "schema": {
@@ -17001,7 +17240,8 @@
                 "type": "string"
               },
               "type": "array"
-            }
+            },
+            "style": "form"
           },
           {
             "description": "has repos with a repo that is or is not a gateway language.",
@@ -17013,6 +17253,7 @@
           },
           {
             "description": "has repos with the given subject. Multiple values are ORed.",
+            "explode": true,
             "in": "query",
             "name": "subject",
             "schema": {
@@ -17020,10 +17261,12 @@
                 "type": "string"
               },
               "type": "array"
-            }
+            },
+            "style": "form"
           },
           {
             "description": "org has repos of given flavorType. Multiple values are ORed.",
+            "explode": true,
             "in": "query",
             "name": "flavorType",
             "schema": {
@@ -17031,10 +17274,12 @@
                 "type": "string"
               },
               "type": "array"
-            }
+            },
+            "style": "form"
           },
           {
             "description": "has repos of given flavor. Multiple values are ORed.",
+            "explode": true,
             "in": "query",
             "name": "flavor",
             "schema": {
@@ -17042,10 +17287,12 @@
                 "type": "string"
               },
               "type": "array"
-            }
+            },
+            "style": "form"
           },
           {
             "description": "has repos of given metadataType. Multiple values are ORed.",
+            "explode": true,
             "in": "query",
             "name": "metadataType",
             "schema": {
@@ -17059,7 +17306,8 @@
                 "type": "string"
               },
               "type": "array"
-            }
+            },
+            "style": "form"
           },
           {
             "description": "page number of results to return (1-based)",
@@ -20885,6 +21133,7 @@
           },
           {
             "description": "if the repo is a resource of the given language(s), the repo will be in the results. Multiple values are ORed.",
+            "explode": true,
             "in": "query",
             "name": "lang",
             "schema": {
@@ -20892,7 +21141,8 @@
                 "type": "string"
               },
               "type": "array"
-            }
+            },
+            "style": "form"
           },
           {
             "description": "list only those that are (true) or are not (false) a gatetway language",
@@ -20904,6 +21154,7 @@
           },
           {
             "description": "resource subject. Multiple values are ORed.",
+            "explode": true,
             "in": "query",
             "name": "subject",
             "schema": {
@@ -20911,10 +21162,12 @@
                 "type": "string"
               },
               "type": "array"
-            }
+            },
+            "style": "form"
           },
           {
             "description": "resource flavorType. Multiple values are ORed.",
+            "explode": true,
             "in": "query",
             "name": "flavorType",
             "schema": {
@@ -20922,10 +21175,12 @@
                 "type": "string"
               },
               "type": "array"
-            }
+            },
+            "style": "form"
           },
           {
             "description": "resource flavor. Multiple values are ORed.",
+            "explode": true,
             "in": "query",
             "name": "flavor",
             "schema": {
@@ -20933,10 +21188,12 @@
                 "type": "string"
               },
               "type": "array"
-            }
+            },
+            "style": "form"
           },
           {
             "description": "resource abbreviation (identifier). Multiple values are ORed.",
+            "explode": true,
             "in": "query",
             "name": "abbreviation",
             "schema": {
@@ -20944,7 +21201,8 @@
                 "type": "string"
               },
               "type": "array"
-            }
+            },
+            "style": "form"
           },
           {
             "description": "content format (usfm, text, markdown, etc.). Multiple values are ORed.",
@@ -20956,6 +21214,7 @@
           },
           {
             "description": "book (project id or ingredients id) that exist in a resource. If the resource contains the the book, its repository will be included in the results. Multiple values are ORed.",
+            "explode": true,
             "in": "query",
             "name": "book",
             "schema": {
@@ -20963,10 +21222,12 @@
                 "type": "string"
               },
               "type": "array"
-            }
+            },
+            "style": "form"
           },
           {
             "description": "topic of repo. Multiple values are ORed.",
+            "explode": true,
             "in": "query",
             "name": "topic",
             "schema": {
@@ -20974,10 +21235,12 @@
                 "type": "string"
               },
               "type": "array"
-            }
+            },
+            "style": "form"
           },
           {
             "description": "Repositories without this topic will be returned. Multiple values are ANDed.",
+            "explode": true,
             "in": "query",
             "name": "withoutTopic",
             "schema": {
@@ -20985,10 +21248,12 @@
                 "type": "string"
               },
               "type": "array"
-            }
+            },
+            "style": "form"
           },
           {
             "description": "Healthcheck severity. Options are error, warning, info, success. Multiple values are ORed.",
+            "explode": true,
             "in": "query",
             "name": "healthcheckSeverity",
             "schema": {
@@ -21002,7 +21267,8 @@
                 "type": "string"
               },
               "type": "array"
-            }
+            },
+            "style": "form"
           },
           {
             "description": "return only repos whose canonical catalog entry passed (true) or did not pass (false) its health check, ignoring warnings; repos never checked are not healthy",
@@ -21022,6 +21288,7 @@
           },
           {
             "description": "return repos only with metadata of this type",
+            "explode": true,
             "in": "query",
             "name": "metadataType",
             "schema": {
@@ -21035,10 +21302,12 @@
                 "type": "string"
               },
               "type": "array"
-            }
+            },
+            "style": "form"
           },
           {
             "description": "return repos only with the version of metadata given. Does not apply if metadataType is not given",
+            "explode": true,
             "in": "query",
             "name": "metadataVersion",
             "schema": {
@@ -21046,7 +21315,8 @@
                 "type": "string"
               },
               "type": "array"
-            }
+            },
+            "style": "form"
           },
           {
             "description": "If true, many of the above fields will do a partial match, allowing characters to come before or after your given value, default is false",
@@ -41429,6 +41699,7 @@
           },
           {
             "description": "has repos of the given language. Multiple values are ORed.",
+            "explode": true,
             "in": "query",
             "name": "lang",
             "schema": {
@@ -41436,7 +41707,8 @@
                 "type": "string"
               },
               "type": "array"
-            }
+            },
+            "style": "form"
           },
           {
             "description": "has repos with a repo that is or is not a gateway language.",
@@ -41448,6 +41720,7 @@
           },
           {
             "description": "has repos with the given subject. Multiple values are ORed.",
+            "explode": true,
             "in": "query",
             "name": "subject",
             "schema": {
@@ -41455,10 +41728,12 @@
                 "type": "string"
               },
               "type": "array"
-            }
+            },
+            "style": "form"
           },
           {
             "description": "org has repos of given flavorType. Multiple values are ORed.",
+            "explode": true,
             "in": "query",
             "name": "flavorType",
             "schema": {
@@ -41466,10 +41741,12 @@
                 "type": "string"
               },
               "type": "array"
-            }
+            },
+            "style": "form"
           },
           {
             "description": "has repos of given flavor. Multiple values are ORed.",
+            "explode": true,
             "in": "query",
             "name": "flavor",
             "schema": {
@@ -41477,10 +41754,12 @@
                 "type": "string"
               },
               "type": "array"
-            }
+            },
+            "style": "form"
           },
           {
             "description": "has repos of given metadataType. Multiple values are ORed.",
+            "explode": true,
             "in": "query",
             "name": "metadataType",
             "schema": {
@@ -41494,7 +41773,8 @@
                 "type": "string"
               },
               "type": "array"
-            }
+            },
+            "style": "form"
           },
           {
             "description": "page number of results to return (1-based)",
