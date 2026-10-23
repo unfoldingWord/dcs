@@ -98,6 +98,17 @@ func init() {
 	db.RegisterModel(new(Door43Metadata))
 }
 
+// RelationFallbackOwners are searched, in order, for the repo a manifest relation names
+// when the resource's own owner doesn't have it.
+var RelationFallbackOwners = []string{"unfoldingWord", "Door43-Catalog"}
+
+// IsOrigLanguageRelation reports whether relation names the Hebrew or Greek Bible, which
+// canonically live under unfoldingWord.
+func IsOrigLanguageRelation(relation *structs.Relation) bool {
+	return (strings.EqualFold(relation.Language, "hbo") && strings.EqualFold(relation.Identifier, "uhb")) ||
+		(strings.EqualFold(relation.Language, "el-x-koine") && strings.EqualFold(relation.Identifier, "ugnt"))
+}
+
 // MetadataFileName returns the name of the file the metadata of this entry comes from
 func (dm *Door43Metadata) MetadataFileName() string {
 	switch dm.MetadataType {
