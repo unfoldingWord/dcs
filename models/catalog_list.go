@@ -461,7 +461,8 @@ func relationRepoName(language, identifier string) string {
 //  1. dm's owner's repo of the relation, in any language, released or not
 //  2. a release of it under another owner: unfoldingWord's, then Door43-Catalog's, then that of
 //     the owner with the most recent release; one that is the release the relation pins goes first
-//  3. a release of unfoldingWord's English repo of the relation's identifier
+//  3. dm's owner's English repo of the relation's identifier, released or not, else a release of
+//     unfoldingWord's
 //
 // Within a repo, the entry is the pinned release when it is a candidate, else the one that best
 // matches dm's ref.
@@ -492,11 +493,20 @@ func searchRelationEntries(ctx context.Context, dm *repo.Door43Metadata, relatio
 		delete(pins, entry.Repo.LowerName)
 	}
 
+	// English is every language's fallback; an English relation was already looked up above
 	english := make(map[string]string, len(pins))
 	for _, relation := range relations {
-		if _, unresolved := pins[relationRepoName(relation.Language, relation.Identifier)]; unresolved {
+		if _, unresolved := pins[relationRepoName(relation.Language, relation.Identifier)]; unresolved && !strings.EqualFold(relation.Language, "en") {
 			english[relationRepoName("en", relation.Identifier)] = "" // the pin is for the relation's language
 		}
+	}
+	ownEnglish, err := searchRelationRepos(ctx, dm, "r.owner_id = ?", []any{dm.Repo.OwnerID}, english, cond)
+	if err != nil {
+		return nil, err
+	}
+	found = append(found, ownEnglish...)
+	for _, entry := range ownEnglish {
+		delete(english, entry.Repo.LowerName)
 	}
 	uwEnglish, err := searchRelationRepos(ctx, dm, "r.owner_id = (SELECT id FROM `user` WHERE lower_name = ?) AND dm.ref_type = ?", []any{"unfoldingword", "tag"}, english, cond)
 	if err != nil {

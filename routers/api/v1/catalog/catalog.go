@@ -2217,7 +2217,8 @@ func GetCatalogBookPackage(ctx *context.APIContext) {
 	// description: 'The entries of the owner of the requested entry in its language. Each manifest relation (up to 32) whose repo
 	//               is not among them adds that repo: from the same owner in any language, released or not; else a release of it
 	//               from unfoldingWord, then Door43-Catalog, then the owner with the most recent release, where one that is the
-	//               release the relation pins (?v=) comes first; else a release of the English repo of unfoldingWord.
+	//               release the relation pins (?v=) comes first; else the English repo of the same owner, released or not,
+	//               else a release of the English repo of unfoldingWord.
 	//               With Hebrew Old Testament or Greek New Testament among the subjects, the unfoldingWord hbo_uhb and el-x-koine_ugnt
 	//               are added at the releases the relations pin. A pin counts only when the stage and book filters keep that release;
 	//               otherwise a related repo gives the entry that pairs with the requested ref, and hbo_uhb and el-x-koine_ugnt give
@@ -2372,7 +2373,8 @@ func GetCatalogBookPackageByRef(ctx *context.APIContext) {
 	// description: 'The entries of the owner of the requested entry in its language. Each manifest relation (up to 32) whose repo
 	//               is not among them adds that repo: from the same owner in any language, released or not; else a release of it
 	//               from unfoldingWord, then Door43-Catalog, then the owner with the most recent release, where one that is the
-	//               release the relation pins (?v=) comes first; else a release of the English repo of unfoldingWord.
+	//               release the relation pins (?v=) comes first; else the English repo of the same owner, released or not,
+	//               else a release of the English repo of unfoldingWord.
 	//               With Hebrew Old Testament or Greek New Testament among the subjects, the unfoldingWord hbo_uhb and el-x-koine_ugnt
 	//               are added at the releases the relations pin. A pin counts only when the stage and book filters keep that release;
 	//               otherwise a related repo gives the entry that pairs with the requested ref, and hbo_uhb and el-x-koine_ugnt give
