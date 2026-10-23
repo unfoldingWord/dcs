@@ -11,7 +11,9 @@ import (
 	"gitea.dev/models/door43metadata"
 	repo_model "gitea.dev/models/repo"
 	"gitea.dev/models/unittest"
+	user_model "gitea.dev/models/user"
 	"gitea.dev/modules/optional"
+	"gitea.dev/modules/structs"
 	"gitea.dev/modules/timeutil"
 
 	"github.com/stretchr/testify/assert"
@@ -566,4 +568,96 @@ func TestSearchCatalogForBookPackage(t *testing.T) {
 	assert.Equal(t, map[int64]string{
 		requestedRepo: "v1", withBranches: "v1", releaseOnly: "v1",
 	}, search("master", &door43metadata.SearchCatalogOptions{Stage: door43metadata.StageProd}))
+}
+
+// TestSearchCatalogForBookPackageRelations checks the entries a book package takes from the
+// requested entry's manifest relations. repo1 (user2) relates to en/ult, which user2 has,
+// and to en/ust?v=1 and en/ta, which only unfoldingWord has; ta is outside the requested
+// subjects. Its relations pin hbo/uhb but not el-x-koine/ugnt.
+func TestSearchCatalogForBookPackageRelations(t *testing.T) {
+	require.NoError(t, unittest.PrepareTestDatabase())
+	ctx := t.Context()
+
+	user2 := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: 2})
+	uw := &user_model.User{Name: "unfoldingWord", LowerName: "unfoldingword", Email: "uw@example.com", Type: user_model.UserTypeOrganization}
+	require.NoError(t, db.Insert(ctx, uw))
+	newRepo := func(owner *user_model.User, name string) int64 {
+		r := &repo_model.Repository{OwnerID: owner.ID, OwnerName: owner.Name, Name: name, LowerName: name}
+		require.NoError(t, db.Insert(ctx, r))
+		return r.ID
+	}
+	const requestedRepo = int64(1)
+	ownULT := newRepo(user2, "en_ult")
+	uwULT := newRepo(uw, "en_ult")
+	uwUST := newRepo(uw, "en_ust")
+	uwTA := newRepo(uw, "en_ta")
+	uhb := newRepo(uw, "hbo_uhb")
+	ugnt := newRepo(uw, "el-x-koine_ugnt")
+
+	relation := func(lang, id, version string) *structs.Relation {
+		return &structs.Relation{Language: lang, Identifier: id, Version: version}
+	}
+	type row struct {
+		repoID   int64
+		ref      string
+		stage    door43metadata.Stage
+		release  timeutil.TimeStamp
+		language string
+		subject  string
+	}
+	rows := []row{
+		{requestedRepo, "master", door43metadata.StageLatest, 1000, "en", "TSV Study Notes"},
+		{ownULT, "master", door43metadata.StageLatest, 1000, "en", "Aligned Bible"},
+		{uwULT, "master", door43metadata.StageLatest, 1000, "en", "Aligned Bible"},
+		{uwUST, "master", door43metadata.StageLatest, 1000, "en", "Aligned Bible"},
+		{uwUST, "v1", door43metadata.StageProd, 100, "en", "Aligned Bible"},
+		{uwUST, "v2", door43metadata.StageProd, 990, "en", "Aligned Bible"},
+		{uwTA, "master", door43metadata.StageLatest, 1000, "en", "Translation Academy"},
+		{uhb, "v2.1.17", door43metadata.StageProd, 100, "hbo", "Hebrew Old Testament"},
+		{uhb, "v2.1.30", door43metadata.StageProd, 990, "hbo", "Hebrew Old Testament"},
+		{ugnt, "v0.18", door43metadata.StageProd, 100, "el-x-koine", "Greek New Testament"},
+		{ugnt, "v0.30", door43metadata.StageProd, 990, "el-x-koine", "Greek New Testament"},
+	}
+	for i, r := range rows {
+		dm := &repo_model.Door43Metadata{
+			RepoID: r.repoID, Ref: r.ref, RefType: "tag", CommitSHA: fmt.Sprintf("%040d", i+1),
+			Stage: r.stage, IsLatestForStage: true, ReleaseDateUnix: r.release,
+			Language: r.language, Subject: r.subject, MetadataType: "rc",
+		}
+		if r.stage == door43metadata.StageLatest {
+			dm.RefType = "branch"
+		}
+		if r.repoID == requestedRepo {
+			dm.Relations = []*structs.Relation{relation("en", "ult", ""), relation("en", "ust", "1"), relation("en", "ta", ""), relation("hbo", "uhb", "2.1.17"), relation("el-x-koine", "ugnt", "")}
+		}
+		_, err := db.GetEngine(ctx).Insert(dm)
+		require.NoError(t, err)
+	}
+
+	dm, err := repo_model.GetDoor43MetadataByRepoIDAndRef(ctx, requestedRepo, "master")
+	require.NoError(t, err)
+	dm.Repo = unittest.AssertExistsAndLoadBean(t, &repo_model.Repository{ID: requestedRepo})
+	refs := func(dms repo_model.Door43MetadataList) map[int64]string {
+		m := make(map[int64]string, len(dms))
+		for _, entry := range dms {
+			m[entry.RepoID] = entry.Ref
+		}
+		return m
+	}
+
+	// user2's own en_ult is kept over unfoldingWord's; unfoldingWord's en_ust comes at the
+	// pinned v1 rather than its master; en_ta is filtered out by the subjects like any entry.
+	results, count, err := SearchCatalogForBookPackage(ctx, dm, &door43metadata.SearchCatalogOptions{
+		Subjects:       []string{"TSV Study Notes", "Aligned Bible"},
+		IncludeHistory: true,
+	})
+	require.NoError(t, err)
+	assert.EqualValues(t, 3, count)
+	assert.Equal(t, map[int64]string{requestedRepo: "master", ownULT: "master", uwUST: "v1"}, refs(results))
+
+	// The pinned Hebrew release wins over the one closer in time; the unpinned Greek
+	// Bible is still the release closest in time.
+	results, _, err = GetOrigLanguageBibles(ctx, dm, nil)
+	require.NoError(t, err)
+	assert.Equal(t, map[int64]string{uhb: "v2.1.17", ugnt: "v0.30"}, refs(results))
 }

@@ -60,9 +60,20 @@ var searchOrderByMap = map[string]map[string]door43metadata.CatalogOrderBy{
 }
 
 var (
-	bibleBPSubjects = []string{"Aligned Bible", "Hebrew Old Testament", "Greek New Testament", "TSV Translation Notes", "TSV Translation Questions", "TSV Translation Words Links", "Translation Academy", "Translation Words"}
-	obsBPSubjects   = []string{"Open Bible Stories", "OBS Theological Formation", "TSV OBS Translation Notes", "TSV OBS Translation Questions", "TSV OBS Translation Words Links", "Translation Academy", "Translation Words"}
+	bibleBPSubjects = []string{"Aligned Bible", "Hebrew Old Testament", "Greek New Testament", "TSV Translation Notes", "TSV Translation Questions", "TSV Study Notes", "TSV Study Questions", "TSV Translation Words Links", "Translation Academy", "Translation Words"}
+	obsBPSubjects   = []string{"Open Bible Stories", "OBS Theological Formation", "TSV OBS Translation Notes", "TSV OBS Translation Questions", "TSV OBS Study Notes", "TSV OBS Study Questions", "TSV OBS Translation Words Links", "Translation Academy", "Translation Words"}
 )
+
+// bookPackageSubjects returns the subjects of the book package a resource of subject belongs to
+func bookPackageSubjects(subject string) []string {
+	switch {
+	case slices.Contains(bibleBPSubjects, subject):
+		return bibleBPSubjects
+	case slices.Contains(obsBPSubjects, subject):
+		return obsBPSubjects
+	}
+	return []string{subject}
+}
 
 // Search search the catalog via options
 func Search(ctx *context.APIContext) {
@@ -2007,13 +2018,7 @@ func getCatalogBookPackage(ctx *context.APIContext) {
 	flavors := queryStringsAliased(ctx, "flavor", "flavors")
 	flavorTypes := queryStringsAliased(ctx, "flavorType", "flavorTypes")
 	if len(subjects) == 0 && len(flavors) == 0 && len(flavorTypes) == 0 {
-		if slices.Contains(bibleBPSubjects, dm.Subject) {
-			subjects = bibleBPSubjects
-		} else if slices.Contains(obsBPSubjects, dm.Subject) {
-			subjects = obsBPSubjects
-		} else {
-			subjects = []string{dm.Subject}
-		}
+		subjects = bookPackageSubjects(dm.Subject)
 	}
 
 	books := QueryStrings(ctx, "book")
@@ -2209,6 +2214,10 @@ func GetCatalogBookPackage(ctx *context.APIContext) {
 	// swagger:operation GET /catalog/bp/{owner}/{repo} catalog catalogGetBookPackage
 	// ---
 	// summary: Get all catalog entries for a catalog entry's book package
+	// description: 'The entries of the owner of the requested entry in its language. A manifest relation whose repo that owner lacks
+	//               adds that repo from unfoldingWord, else Door43-Catalog, at the version the relation pins when it has one.
+	//               With Hebrew Old Testament or Greek New Testament among the subjects, the unfoldingWord hbo_uhb and el-x-koine_ugnt
+	//               are added at the versions the relations pin, else at their releases closest in time to the requested entry.'
 	// parameters:
 	// - name: owner
 	//   in: path
@@ -2239,8 +2248,10 @@ func GetCatalogBookPackage(ctx *context.APIContext) {
 	//     enum: [prod,preprod,latest,other]
 	// - name: subject
 	//   in: query
-	//   description: 'subject(s) desired for the book package.
-	//                Default list: Aligned Bible, TSV Translation Notes, TSV Translation Questions, TSV Translation Words Links, Translation Words, Translation Academy'
+	//   description: 'subject(s) desired for the book package. The default depends on the subject of the requested entry:
+	//                a Bible subject gives Aligned Bible, Hebrew Old Testament, Greek New Testament, TSV Translation Notes, TSV Translation Questions, TSV Study Notes, TSV Study Questions, TSV Translation Words Links, Translation Academy, Translation Words;
+	//                an OBS subject gives Open Bible Stories, OBS Theological Formation, TSV OBS Translation Notes, TSV OBS Translation Questions, TSV OBS Study Notes, TSV OBS Study Questions, TSV OBS Translation Words Links, Translation Academy, Translation Words;
+	//                any other subject gives that subject alone'
 	//   type: array
 	//   collectionFormat: multi
 	//   items:
@@ -2354,6 +2365,10 @@ func GetCatalogBookPackageByRef(ctx *context.APIContext) {
 	// swagger:operation GET /catalog/bp/{owner}/{repo}/{ref} catalog catalogGetBookPackageByRef
 	// ---
 	// summary: Get all catalog entries for the book package of a catalog entry's ref (tag or branch)
+	// description: 'The entries of the owner of the requested entry in its language. A manifest relation whose repo that owner lacks
+	//               adds that repo from unfoldingWord, else Door43-Catalog, at the version the relation pins when it has one.
+	//               With Hebrew Old Testament or Greek New Testament among the subjects, the unfoldingWord hbo_uhb and el-x-koine_ugnt
+	//               are added at the versions the relations pin, else at their releases closest in time to the requested entry.'
 	// parameters:
 	// - name: owner
 	//   in: path
@@ -2384,8 +2399,10 @@ func GetCatalogBookPackageByRef(ctx *context.APIContext) {
 	//     enum: [prod,preprod,latest,other]
 	// - name: subject
 	//   in: query
-	//   description: 'subject(s) desired for the book package.
-	//                Default list: Aligned Bible, TSV Translation Notes, TSV Translation Questions, TSV Translation Words Links, Translation Words, Translation Academy'
+	//   description: 'subject(s) desired for the book package. The default depends on the subject of the requested entry:
+	//                a Bible subject gives Aligned Bible, Hebrew Old Testament, Greek New Testament, TSV Translation Notes, TSV Translation Questions, TSV Study Notes, TSV Study Questions, TSV Translation Words Links, Translation Academy, Translation Words;
+	//                an OBS subject gives Open Bible Stories, OBS Theological Formation, TSV OBS Translation Notes, TSV OBS Translation Questions, TSV OBS Study Notes, TSV OBS Study Questions, TSV OBS Translation Words Links, Translation Academy, Translation Words;
+	//                any other subject gives that subject alone'
 	//   type: array
 	//   collectionFormat: multi
 	//   items:

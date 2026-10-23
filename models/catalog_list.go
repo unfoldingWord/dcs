@@ -12,6 +12,7 @@ import (
 	"gitea.dev/models/db"
 	"gitea.dev/models/door43metadata"
 	"gitea.dev/models/repo"
+	"gitea.dev/modules/container"
 	"gitea.dev/modules/setting"
 	"gitea.dev/modules/structs"
 
@@ -398,13 +399,67 @@ func SearchCatalogForBookPackage(ctx context.Context, dm *repo.Door43Metadata, o
 	return SearchCatalogForBookPackageByCondition(ctx, dm, opts, cond)
 }
 
-// SearchCatalogForBookPackageByCondition search repositories by condition for a book package
+// SearchCatalogForBookPackageByCondition search repositories by condition for a book package:
+// the entries of dm's owner in dm's language, then, for each of dm's manifest relations whose
+// repo isn't among them, that repo's entry under the first of repo.RelationFallbackOwners that
+// has one. The original-language Bibles are left to GetOrigLanguageBibles.
 func SearchCatalogForBookPackageByCondition(ctx context.Context, dm *repo.Door43Metadata, opts *door43metadata.SearchCatalogOptions, cond builder.Cond) (repo.Door43MetadataList, int64, error) {
+	dms, err := searchBookPackageEntries(ctx, dm, "dm.language = ? AND r.owner_id = ?", []any{dm.Language, dm.Repo.OwnerID}, "", cond)
+	if err != nil {
+		return nil, 0, err
+	}
+	if err = dms.LoadAttributes(ctx); err != nil {
+		return nil, 0, fmt.Errorf("LoadAttributes: %v", err)
+	}
+
+	inPackage := make(container.Set[string], len(dms))
+	for _, entry := range dms {
+		inPackage.Add(entry.Repo.LowerName)
+	}
+	for _, relation := range dm.Relations {
+		if relation.Language == "" || relation.Identifier == "" || repo.IsOrigLanguageRelation(relation) {
+			continue
+		}
+		repoName := strings.ToLower(relation.Language + "_" + relation.Identifier)
+		if !inPackage.Add(repoName) {
+			continue
+		}
+		for _, owner := range repo.RelationFallbackOwners {
+			if strings.EqualFold(owner, dm.Repo.OwnerName) {
+				continue
+			}
+			relRepo, err := repo.GetRepositoryByOwnerAndName(ctx, owner, repoName)
+			if repo.IsErrRepoNotExist(err) {
+				continue
+			} else if err != nil {
+				return nil, 0, err
+			}
+			entries, err := searchBookPackageEntries(ctx, dm, "dm.repo_id = ?", []any{relRepo.ID}, relation.Version, cond)
+			if err != nil {
+				return nil, 0, err
+			}
+			if len(entries) > 0 {
+				dms = append(dms, entries...)
+				break
+			}
+		}
+	}
+
+	if err = dms.LoadAttributes(ctx); err != nil {
+		return nil, 0, fmt.Errorf("LoadAttributes: %v", err)
+	}
+	return dms, int64(len(dms)), nil
+}
+
+// searchBookPackageEntries returns, for each repo matching scopeSQL and cond, its one entry
+// that best matches dm's ref. A non-empty version (a manifest relation's, "v" prefix
+// optional) ranks that release first.
+func searchBookPackageEntries(ctx context.Context, dm *repo.Door43Metadata, scopeSQL string, scopeArgs []any, version string, cond builder.Cond) (repo.Door43MetadataList, error) {
 	// Build the WHERE clause from the builder.Cond for use in the filtered CTE
 	// We need to convert the builder conditions to SQL that can be used in the native query
 	condSQL, condArgs, err := builder.ToSQL(cond)
 	if err != nil {
-		return nil, 0, fmt.Errorf("failed to build condition SQL: %v", err)
+		return nil, fmt.Errorf("failed to build condition SQL: %v", err)
 	}
 
 	// Replace table aliases in the condition to match the CTE context
@@ -414,7 +469,8 @@ func SearchCatalogForBookPackageByCondition(ctx context.Context, dm *repo.Door43
 	condSQL = strings.ReplaceAll(condSQL, "`user`.", "u.")
 
 	// Each repo of the package contributes its one entry that best matches the
-	// requested ref. The candidates are ranked by priority, then by closeness in time:
+	// requested ref (or the pinned version's release, priority -1, when it is a candidate).
+	// The candidates are ranked by priority, then by closeness in time:
 	//   - requested ref is a branch: its same-named branch (0), its default branch (1),
 	//     then its releases closest in time to the requested ref (2)
 	//   - requested ref is a release: its releases of the requested stage or better,
@@ -422,14 +478,18 @@ func SearchCatalogForBookPackageByCondition(ctx context.Context, dm *repo.Door43
 	// The default branch therefore stands in when a repo has no matching branch or
 	// no release at all; an explicit stage filter in cond can still exclude it.
 	isBranch := dm.RefType == "branch"
-	var prioritySQL string
+	prioritySQL := "CASE "
 	var priorityArgs []any
+	if version != "" {
+		prioritySQL += "WHEN dm.ref IN (?, ?) THEN -1 "
+		priorityArgs = append(priorityArgs, version, "v"+version)
+	}
 	if isBranch {
-		prioritySQL = "CASE WHEN dm.ref = ? AND dm.ref_type = ? THEN 0 WHEN dm.stage = ? AND dm.is_latest_for_stage = ? THEN 1 ELSE 2 END"
-		priorityArgs = []any{dm.Ref, "branch", door43metadata.StageLatest, true}
+		prioritySQL += "WHEN dm.ref = ? AND dm.ref_type = ? THEN 0 WHEN dm.stage = ? AND dm.is_latest_for_stage = ? THEN 1 ELSE 2 END"
+		priorityArgs = append(priorityArgs, dm.Ref, "branch", door43metadata.StageLatest, true)
 	} else {
-		prioritySQL = "CASE WHEN dm.stage = ? AND dm.is_latest_for_stage = ? THEN 1 ELSE 0 END"
-		priorityArgs = []any{door43metadata.StageLatest, true}
+		prioritySQL += "WHEN dm.stage = ? AND dm.is_latest_for_stage = ? THEN 1 ELSE 0 END"
+		priorityArgs = append(priorityArgs, door43metadata.StageLatest, true)
 	}
 	candidateSQL := "dm.stage <= ? OR (dm.stage = ? AND dm.is_latest_for_stage = ?)"
 	candidateArgs := []any{dm.Stage, door43metadata.StageLatest, true}
@@ -449,8 +509,7 @@ WITH filtered AS (
   JOIN repository r ON r.id = dm.repo_id
   WHERE
     (` + candidateSQL + `)
-    AND dm.language = ?
-    AND r.owner_id = ?
+    AND ` + scopeSQL + `
     AND (` + condSQL + `)
 ),
 ranked AS (
@@ -462,7 +521,7 @@ ranked AS (
     ) AS rn
   FROM filtered f
 )
-SELECT 
+SELECT
   id, repo_id, release_id, ref, ref_type, commit_sha, stage,
   metadata_type, metadata_version, subject, flavor_type, flavor,
   abbreviation, title, publisher, language, language_title,
@@ -479,7 +538,7 @@ ORDER BY CASE WHEN repo_id = ? THEN 1 ELSE 0 END DESC, subject ASC`
 	queryArgs := []any{dm.ReleaseDateUnix}
 	queryArgs = append(queryArgs, priorityArgs...)
 	queryArgs = append(queryArgs, candidateArgs...)
-	queryArgs = append(queryArgs, dm.Language, dm.Repo.OwnerID)
+	queryArgs = append(queryArgs, scopeArgs...)
 	queryArgs = append(queryArgs, condArgs...)
 	queryArgs = append(queryArgs, dm.Repo.ID)
 
@@ -487,19 +546,28 @@ ORDER BY CASE WHEN repo_id = ? THEN 1 ELSE 0 END DESC, subject ASC`
 	var dms repo.Door43MetadataList
 	err = db.GetEngine(ctx).SQL(query, queryArgs...).Find(&dms)
 	if err != nil {
-		return nil, 0, fmt.Errorf("query failed: %v", err)
+		return nil, fmt.Errorf("query failed: %v", err)
 	}
 
-	// Load attributes for the results
-	if err = dms.LoadAttributes(ctx); err != nil {
-		return nil, 0, fmt.Errorf("LoadAttributes: %v", err)
-	}
-
-	return dms, int64(len(dms)), nil
+	return dms, nil
 }
 
-// GetOrigLanguageBibles get the repositories for Hebrew and Greek Bibles with optional book filtering
+// GetOrigLanguageBibles get the repositories for Hebrew and Greek Bibles with optional book filtering:
+// the release a relation of dm pins with its version, else the release closest in time to dm
 func GetOrigLanguageBibles(ctx context.Context, dm *repo.Door43Metadata, books []string) (repo.Door43MetadataList, int64, error) {
+	var pins []string
+	var priorityArgs []any
+	for _, relation := range dm.Relations {
+		if relation.Version != "" && repo.IsOrigLanguageRelation(relation) {
+			pins = append(pins, "WHEN r.lower_name = ? AND dm.ref IN (?, ?) THEN 0")
+			priorityArgs = append(priorityArgs, relation.Language+"_"+relation.Identifier, relation.Version, "v"+relation.Version)
+		}
+	}
+	prioritySQL := "1"
+	if len(pins) > 0 {
+		prioritySQL = "CASE " + strings.Join(pins, " ") + " ELSE 1 END"
+	}
+
 	bookCond := door43metadata.GetBookCond(books)
 	// Build the WHERE clause from the builder.Cond for use in the filtered CTE
 	// We need to convert the builder conditions to SQL that can be used in the native query
@@ -519,7 +587,8 @@ func GetOrigLanguageBibles(ctx context.Context, dm *repo.Door43Metadata, books [
 WITH filtered AS (
   SELECT
     dm.*,
-    ABS(dm.release_date_unix - ?) AS time_diff
+    ABS(dm.release_date_unix - ?) AS time_diff,
+    ` + prioritySQL + ` AS priority
   FROM door43_metadata dm
   JOIN repository r ON r.id = dm.repo_id
 	JOIN ` + "`user`" + ` u ON r.owner_id = u.id
@@ -534,11 +603,11 @@ ranked AS (
     f.*,
     ROW_NUMBER() OVER (
       PARTITION BY f.repo_id
-      ORDER BY f.time_diff ASC, f.release_date_unix ASC
+      ORDER BY f.priority ASC, f.time_diff ASC, f.release_date_unix ASC
     ) AS rn
   FROM filtered f
 )
-SELECT 
+SELECT
   id, repo_id, release_id, ref, ref_type, commit_sha, stage,
   metadata_type, metadata_version, subject, flavor_type, flavor,
   abbreviation, title, publisher, language, language_title,
@@ -551,6 +620,7 @@ FROM ranked
 WHERE rn = 1`
 
 	queryArgs := []any{dm.ReleaseDateUnix}
+	queryArgs = append(queryArgs, priorityArgs...)
 	queryArgs = append(queryArgs, condArgs...)
 
 	// Execute the query
