@@ -21,6 +21,7 @@ import (
 	repo_model "gitea.dev/models/repo"
 	system_model "gitea.dev/models/system"
 	"gitea.dev/models/unittest"
+	user_model "gitea.dev/models/user"
 	"gitea.dev/modules/dcs"
 	"gitea.dev/modules/json"
 	"gitea.dev/modules/setting"
@@ -681,4 +682,22 @@ func TestDCSAPICatalogBookPackage(t *testing.T) {
 
 	// The removed tag= option is ignored rather than failing the request.
 	assert.Equal(t, map[string]string{"repo1": "master", "utf8": "master"}, refsFor("repo1/master?tag=v1"))
+
+	// Relations user2 has no repo for come as releases from unfoldingWord: en/ust at its pinned v1,
+	// and fr/tw, released nowhere in French, as unfoldingWord's English en_tw.
+	uw := &user_model.User{Name: "unfoldingWord", LowerName: "unfoldingword", Email: "uw@example.com", Type: user_model.UserTypeOrganization}
+	require.NoError(t, db.Insert(t.Context(), uw))
+	for _, name := range []string{"en_ust", "en_tw"} {
+		r := &repo_model.Repository{OwnerID: uw.ID, OwnerName: uw.Name, Name: name, LowerName: name}
+		require.NoError(t, db.Insert(t.Context(), r))
+		subject := map[string]string{"en_ust": "Aligned Bible", "en_tw": "Translation Words"}[name]
+		insert(r.ID, "v1", "tag", door43metadata_model.StageProd, false, tn.ReleaseDateUnix-50, subject)
+		insert(r.ID, "v2", "tag", door43metadata_model.StageProd, true, tn.ReleaseDateUnix+50, subject)
+	}
+	master, err := repo_model.GetDoor43MetadataByRepoIDAndRef(t.Context(), 1, "master")
+	require.NoError(t, err)
+	master.Relations = []*api.Relation{{Language: "en", Identifier: "ust", Version: "1"}, {Language: "fr", Identifier: "tw"}}
+	_, err = db.GetEngine(t.Context()).ID(master.ID).Cols("relations").Update(master)
+	require.NoError(t, err)
+	assert.Equal(t, map[string]string{"repo1": "master", "utf8": "master", "en_ust": "v1", "en_tw": "v2"}, refsFor("repo1/master"))
 }

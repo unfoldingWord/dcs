@@ -5,6 +5,7 @@ package models
 
 import (
 	"fmt"
+	"strings"
 	"testing"
 
 	"gitea.dev/models/db"
@@ -571,37 +572,43 @@ func TestSearchCatalogForBookPackage(t *testing.T) {
 }
 
 // TestSearchCatalogForBookPackageRelations checks the entries a book package takes from the
-// requested entry's manifest relations. repo1 (user2) relates to en/ult, which user2 has,
-// to en/ust?v=1 and en/ta, which only unfoldingWord has (ta is outside the requested
-// subjects), to en/glt?v=3, which only Door43-Catalog has at v3, and to fr/tw, which user2
-// has in French besides unfoldingWord. Its relations pin hbo/uhb but not el-x-koine/ugnt.
-// The pinned releases are not the latest ones.
+// requested entry's manifest relations, for repo1 (user2, en, master):
+//   - en/ult: user2's own en_ult is in its package, so unfoldingWord's is not looked at
+//   - fr/tw?v=5: user2's own French fr_tw, unreleased, beats unfoldingWord's pinned v5
+//   - en/ust?v=1: unfoldingWord's pinned (non-latest) v1 beats Door43-Catalog's v1 and its own v2
+//   - en/glt?v=3: Door43-Catalog's pinned v3 beats unfoldingWord's v2
+//   - en/tq: user5's release, the most recent, beats user4's; unfoldingWord's is unreleased
+//   - fr/tn: no fr_tn is released anywhere, so unfoldingWord's English en_tn stands in
+//   - en/ta: unfoldingWord's en_ta is outside the requested subjects
+//   - hbo/uhb?v=2.1.17, el-x-koine/ugnt: left to GetOrigLanguageBibles
 func TestSearchCatalogForBookPackageRelations(t *testing.T) {
 	require.NoError(t, unittest.PrepareTestDatabase())
 	ctx := t.Context()
 
 	user2 := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: 2})
-	uw := &user_model.User{Name: "unfoldingWord", LowerName: "unfoldingword", Email: "uw@example.com", Type: user_model.UserTypeOrganization}
-	require.NoError(t, db.Insert(ctx, uw))
+	user4 := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: 4})
+	user5 := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: 5})
+	newOrg := func(name string) *user_model.User {
+		org := &user_model.User{Name: name, LowerName: strings.ToLower(name), Email: name + "@example.com", Type: user_model.UserTypeOrganization}
+		require.NoError(t, db.Insert(ctx, org))
+		return org
+	}
+	uw := newOrg("unfoldingWord")
+	d43 := newOrg("Door43-Catalog")
 	newRepo := func(owner *user_model.User, name string) int64 {
 		r := &repo_model.Repository{OwnerID: owner.ID, OwnerName: owner.Name, Name: name, LowerName: name}
 		require.NoError(t, db.Insert(ctx, r))
 		return r.ID
 	}
 	const requestedRepo = int64(1)
-	ownULT := newRepo(user2, "en_ult")
-	uwULT := newRepo(uw, "en_ult")
-	uwUST := newRepo(uw, "en_ust")
+	ownULT, uwULT := newRepo(user2, "en_ult"), newRepo(uw, "en_ult")
+	ownFrTW, uwFrTW := newRepo(user2, "fr_tw"), newRepo(uw, "fr_tw")
+	uwUST, d43UST := newRepo(uw, "en_ust"), newRepo(d43, "en_ust")
+	uwGLT, d43GLT := newRepo(uw, "en_glt"), newRepo(d43, "en_glt")
+	uwTQ, user4TQ, user5TQ := newRepo(uw, "en_tq"), newRepo(user4, "en_tq"), newRepo(user5, "en_tq")
+	uwEnTN := newRepo(uw, "en_tn")
 	uwTA := newRepo(uw, "en_ta")
-	uhb := newRepo(uw, "hbo_uhb")
-	ugnt := newRepo(uw, "el-x-koine_ugnt")
-	// en/glt?v=3: unfoldingWord has en_glt but not v3, Door43-Catalog has v3
-	d43 := &user_model.User{Name: "Door43-Catalog", LowerName: "door43-catalog", Email: "d43@example.com", Type: user_model.UserTypeOrganization}
-	require.NoError(t, db.Insert(ctx, d43))
-	uwGLT := newRepo(uw, "en_glt")
-	d43GLT := newRepo(d43, "en_glt")
-	ownFrTW := newRepo(user2, "fr_tw")
-	uwFrTW := newRepo(uw, "fr_tw")
+	uhb, ugnt := newRepo(uw, "hbo_uhb"), newRepo(uw, "el-x-koine_ugnt")
 
 	relation := func(lang, id, version string) *structs.Relation {
 		return &structs.Relation{Language: lang, Identifier: id, Version: version}
@@ -615,22 +622,35 @@ func TestSearchCatalogForBookPackageRelations(t *testing.T) {
 		language string
 		subject  string
 	}
+	const (
+		bible = "Aligned Bible"
+		tw    = "Translation Words"
+		tq    = "TSV Translation Questions"
+		tn    = "TSV Translation Notes"
+		prod  = door43metadata.StageProd
+		head  = door43metadata.StageLatest
+	)
 	rows := []row{
-		{requestedRepo, "master", door43metadata.StageLatest, true, 1000, "en", "TSV Study Notes"},
-		{ownULT, "master", door43metadata.StageLatest, true, 1000, "en", "Aligned Bible"},
-		{uwULT, "master", door43metadata.StageLatest, true, 1000, "en", "Aligned Bible"},
-		{uwUST, "master", door43metadata.StageLatest, true, 1000, "en", "Aligned Bible"},
-		{uwUST, "v1", door43metadata.StageProd, false, 100, "en", "Aligned Bible"},
-		{uwUST, "v2", door43metadata.StageProd, true, 990, "en", "Aligned Bible"},
-		{uwTA, "master", door43metadata.StageLatest, true, 1000, "en", "Translation Academy"},
-		{uhb, "v2.1.17", door43metadata.StageProd, false, 100, "hbo", "Hebrew Old Testament"},
-		{uhb, "v2.1.30", door43metadata.StageProd, true, 990, "hbo", "Hebrew Old Testament"},
-		{ugnt, "v0.18", door43metadata.StageProd, false, 100, "el-x-koine", "Greek New Testament"},
-		{ugnt, "v0.30", door43metadata.StageProd, true, 990, "el-x-koine", "Greek New Testament"},
-		{uwGLT, "master", door43metadata.StageLatest, true, 1000, "en", "Aligned Bible"},
-		{d43GLT, "v3", door43metadata.StageProd, true, 100, "en", "Aligned Bible"},
-		{ownFrTW, "master", door43metadata.StageLatest, true, 1000, "fr", "Translation Words"},
-		{uwFrTW, "master", door43metadata.StageLatest, true, 1000, "fr", "Translation Words"},
+		{requestedRepo, "master", head, true, 1000, "en", "TSV Study Notes"},
+		{ownULT, "master", head, true, 1000, "en", bible},
+		{uwULT, "v1", prod, true, 1000, "en", bible},
+		{ownFrTW, "master", head, true, 1000, "fr", tw},
+		{uwFrTW, "v5", prod, true, 1000, "fr", tw},
+		{uwUST, "master", head, true, 1000, "en", bible},
+		{uwUST, "v1", prod, false, 100, "en", bible},
+		{uwUST, "v2", prod, true, 990, "en", bible},
+		{d43UST, "v1", prod, true, 100, "en", bible},
+		{uwGLT, "v2", prod, true, 990, "en", bible},
+		{d43GLT, "v3", prod, true, 100, "en", bible},
+		{uwTQ, "master", head, true, 1000, "en", tq},
+		{user4TQ, "v1", prod, true, 500, "en", tq},
+		{user5TQ, "v1", prod, true, 800, "en", tq},
+		{uwEnTN, "v3", prod, true, 990, "en", tn},
+		{uwTA, "v1", prod, true, 990, "en", "Translation Academy"},
+		{uhb, "v2.1.17", prod, false, 100, "hbo", "Hebrew Old Testament"},
+		{uhb, "v2.1.30", prod, true, 990, "hbo", "Hebrew Old Testament"},
+		{ugnt, "v0.18", prod, false, 100, "el-x-koine", "Greek New Testament"},
+		{ugnt, "v0.30", prod, true, 990, "el-x-koine", "Greek New Testament"},
 	}
 	for i, r := range rows {
 		dm := &repo_model.Door43Metadata{
@@ -638,11 +658,15 @@ func TestSearchCatalogForBookPackageRelations(t *testing.T) {
 			Stage: r.stage, IsLatestForStage: r.latest, ReleaseDateUnix: r.release,
 			Language: r.language, Subject: r.subject, MetadataType: "rc",
 		}
-		if r.stage == door43metadata.StageLatest {
+		if r.stage == head {
 			dm.RefType = "branch"
 		}
 		if r.repoID == requestedRepo {
-			dm.Relations = []*structs.Relation{relation("en", "ult", ""), relation("en", "ust", "1"), relation("en", "ta", ""), relation("hbo", "uhb", "2.1.17"), relation("el-x-koine", "ugnt", ""), relation("en", "glt", "3"), relation("fr", "tw", "")}
+			dm.Relations = []*structs.Relation{
+				relation("en", "ult", ""), relation("fr", "tw", "5"), relation("en", "ust", "1"), relation("en", "glt", "3"),
+				relation("en", "tq", ""), relation("fr", "tn", ""), relation("en", "ta", ""),
+				relation("hbo", "uhb", "2.1.17"), relation("el-x-koine", "ugnt", ""),
+			}
 		}
 		_, err := db.GetEngine(ctx).Insert(dm)
 		require.NoError(t, err)
@@ -659,18 +683,15 @@ func TestSearchCatalogForBookPackageRelations(t *testing.T) {
 		return m
 	}
 
-	// user2's own en_ult is kept over unfoldingWord's; unfoldingWord's en_ust comes at the
-	// pinned v1 rather than its master; en_ta is filtered out by the subjects like any entry;
-	// en_glt comes from Door43-Catalog at the pinned v3, not from unfoldingWord's master;
-	// user2's own French fr_tw is kept over unfoldingWord's; hbo_uhb is left to
-	// GetOrigLanguageBibles even with its subject requested.
 	results, count, err := SearchCatalogForBookPackage(ctx, dm, &door43metadata.SearchCatalogOptions{
-		Subjects:       []string{"TSV Study Notes", "Aligned Bible", "Hebrew Old Testament", "Translation Words"},
+		Subjects:       []string{"TSV Study Notes", bible, "Hebrew Old Testament", tw, tq, tn},
 		IncludeHistory: true,
 	})
 	require.NoError(t, err)
-	assert.EqualValues(t, 5, count)
-	assert.Equal(t, map[int64]string{requestedRepo: "master", ownULT: "master", uwUST: "v1", d43GLT: "v3", ownFrTW: "master"}, refs(results))
+	assert.EqualValues(t, 7, count)
+	assert.Equal(t, map[int64]string{
+		requestedRepo: "master", ownULT: "master", ownFrTW: "master", uwUST: "v1", d43GLT: "v3", user5TQ: "v1", uwEnTN: "v3",
+	}, refs(results))
 
 	// The pinned Hebrew release wins over the one closer in time; the unpinned Greek
 	// Bible is still the release closest in time.
