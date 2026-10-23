@@ -18,8 +18,10 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"runtime/debug"
 	"slices"
 	"strings"
+	"sync"
 	"time"
 
 	"gitea.dev/models"
@@ -47,6 +49,23 @@ import (
 )
 
 const storageCommitPrefix = "sb-"
+
+// converterVersions lists the versions of the modules that convert rc, ts and tc repos to SB, as built in
+var converterVersions = sync.OnceValue(func() string {
+	info, ok := debug.ReadBuildInfo()
+	if !ok {
+		return ""
+	}
+	var versions []string
+	for _, dep := range info.Deps {
+		switch dep.Path {
+		case "github.com/unfoldingWord/go-rc2sb", "github.com/unfoldingWord/go-ts2rc", "github.com/unfoldingWord/go-tc2rc":
+			versions = append(versions, dep.Path+"@"+dep.Version)
+		}
+	}
+	slices.Sort(versions)
+	return strings.Join(versions, " ")
+})
 
 // ArchiveRequest defines the parameters of an SB archive request.
 type ArchiveRequest struct {
@@ -178,7 +197,8 @@ func (aReq *ArchiveRequest) GetArchiveName() string {
 
 // StorageCommitID returns the cache key used as the commit ID in repo_archiver. Everything that decides the
 // archive's bytes is in it: the commit, the metadata type, the TW/TWL partner commit, the en_tw commit of a
-// ts Translation Words conversion, and whether the files sit in a prefix folder (PREFIX_ARCHIVE_FILES). It is
+// ts Translation Words conversion, whether the files sit in a prefix folder (PREFIX_ARCHIVE_FILES), and the
+// converter versions, so that an upgrade doesn't serve old conversions until the archive cleanup. It is
 // hashed to fit the column's 64 characters, which "sb-" and a SHA-256 commit ID alone would exceed.
 func (aReq *ArchiveRequest) StorageCommitID() string {
 	key := aReq.CommitID + "\n" + aReq.MetadataType + "\n" + aReq.PayloadCommitID
@@ -187,6 +207,9 @@ func (aReq *ArchiveRequest) StorageCommitID() string {
 	}
 	if !setting.Repository.PrefixArchiveFiles {
 		key += "\nunprefixed"
+	}
+	if aReq.MetadataType != "sb" {
+		key += "\n" + converterVersions()
 	}
 	sum := sha256.Sum256([]byte(key))
 	return storageCommitPrefix + hex.EncodeToString(sum[:])[:60]
@@ -294,18 +317,20 @@ func (aReq *ArchiveRequest) Stream(ctx context.Context, repo *repo_model.Reposit
 		return err
 	}
 
+	// The commit time stamps metadata.json and every archive entry, so a commit always converts to the same bytes
+	modTime, err := aReq.getCommitTime(ctx, repo)
+	if err != nil {
+		return err
+	}
 	sbDir := filepath.Join(tmpDir, "sb")
 	_, err = rc2sb.Convert(ctx, rcDir, sbDir, rc2sb.Options{
 		PayloadPath: payloadPath,
+		Timestamp:   modTime,
 	})
 	if err != nil {
 		return fmt.Errorf("rc2sb.Convert: %w", err)
 	}
 
-	modTime, err := aReq.getCommitTime(ctx, repo)
-	if err != nil {
-		return err
-	}
 	prefixDir := ""
 	if setting.Repository.PrefixArchiveFiles {
 		prefixDir = repo.Name
@@ -726,6 +751,7 @@ func writeZipArchive(ctx context.Context, sourceDir, prefixDir string, modTime t
 		hdr.Name = zipPath
 		hdr.Method = zip.Deflate
 		hdr.Modified = modTime
+		hdr.SetMode(0o644) // not the umask of the server that converted it
 
 		writer, err := zw.CreateHeader(hdr)
 		if err != nil {
@@ -801,8 +827,11 @@ func writeTarGzArchive(ctx context.Context, sourceDir, prefixDir string, modTime
 		}
 		hdr.Name = archivePath
 		hdr.ModTime = modTime
+		// Nothing of the server that converted it: its umask, user and group
+		hdr.Mode, hdr.Uid, hdr.Gid, hdr.Uname, hdr.Gname = 0o644, 0, 0, "", ""
 		if d.IsDir() {
 			hdr.Name = strings.TrimSuffix(hdr.Name, "/") + "/"
+			hdr.Mode = 0o755
 		}
 
 		if err := tw.WriteHeader(hdr); err != nil {
@@ -974,8 +1003,7 @@ func ServeRepoSBArchive(ctx *gitea_context.Base, repo *repo_model.Repository, ar
 	}
 
 	if !setting.DCS.CacheSBArchives {
-		// Weak, as upstream's streamed archives: each request builds the archive anew
-		etag := fmt.Sprintf(`W/"%s.%s"`, archiveReq.StorageCommitID(), archiveReq.Type)
+		etag := sbArchiveETag(archiveReq)
 		if handleNotModified(ctx, etag, cacheControl) {
 			return
 		}
@@ -1014,9 +1042,15 @@ func ServeRepoSBArchive(ctx *gitea_context.Base, repo *repo_model.Repository, ar
 
 	httplib.ServeSetHeaders(ctx.Resp, httplib.ServeHeaderOptions{Filename: downloadName, ContentType: contentType})
 	ctx.Resp.Header().Set("Cache-Control", cacheControl)
-	// The stored archive is rebuilt once the archive cleanup has removed it, so its creation time is part of the tag
-	ctx.Resp.Header().Set("ETag", fmt.Sprintf(`"%s-%d.%s"`, archiveReq.StorageCommitID(), archiver.CreatedUnix, archiveReq.Type))
+	ctx.Resp.Header().Set("ETag", sbArchiveETag(archiveReq))
 	http.ServeContent(ctx.Resp, ctx.Req, downloadName, time.Time{}, fr) // no Last-Modified, see sbCacheControl
+}
+
+// sbArchiveETag names an SB archive by its cache key, which covers everything that decides its bytes, so a
+// rebuild after the archive cleanup keeps the tag. It is weak because "git archive" output of an SB repo can
+// change with the git version, so a resumed download (If-Range) must not join bytes of two builds.
+func sbArchiveETag(aReq *ArchiveRequest) string {
+	return fmt.Sprintf(`W/"%s.%s"`, aReq.StorageCommitID(), aReq.Type)
 }
 
 // sbCacheControl has every SB response revalidated with its ETag, and SB responses send no Last-Modified.
