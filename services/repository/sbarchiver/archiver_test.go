@@ -194,6 +194,10 @@ func TestStorageCommitID(t *testing.T) {
 	assert.Equal(t, asIsKey, asIs.StorageCommitID())
 	restore()
 
+	// A rename, transfer or new ROOT_URL changes the identity metadata.json records, at the same commits
+	renamed := &ArchiveRequest{CommitID: strings.Repeat("a", 40), MetadataType: "rc", Identity: "https://example.com\nuser2/repo1-renamed"}
+	assert.NotEqual(t, convertedKey, renamed.StorageCommitID())
+
 	// An archive built with PREFIX_ARCHIVE_FILES has other paths than one built without it
 	defer test.MockVariableValue(&setting.Repository.PrefixArchiveFiles, !setting.Repository.PrefixArchiveFiles)()
 	assert.NotEqual(t, convertedKey, converted.StorageCommitID())
