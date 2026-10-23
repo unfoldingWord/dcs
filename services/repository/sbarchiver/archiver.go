@@ -51,7 +51,8 @@ import (
 const storageCommitPrefix = "sb-"
 
 // sbArchiveWriterVersion goes up whenever writeZipArchive or writeTarGzArchive change what they write, so that
-// archives kept from before are converted anew rather than served with an ETag that still matches
+// archives kept from before are converted anew rather than served with an ETag that still matches. Repos
+// already in SB format are archived by "git archive", not these writers, so their keys leave it out.
 const sbArchiveWriterVersion = 2
 
 // converterVersions lists the versions of the modules that convert rc, ts and tc repos to SB, as built in

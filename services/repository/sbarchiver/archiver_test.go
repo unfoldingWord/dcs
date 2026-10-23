@@ -233,19 +233,23 @@ func TestWriteDirectoryArchiveDeterministic(t *testing.T) {
 		}
 		gzr, err := gzip.NewReader(bytes.NewReader(first.Bytes()))
 		require.NoError(t, err)
+		defer gzr.Close()
 		tr := tar.NewReader(gzr)
+		entries := 0
 		for {
 			hdr, err := tr.Next()
 			if errors.Is(err, io.EOF) {
 				break
 			}
 			require.NoError(t, err)
+			entries++
 			assert.True(t, commitTime.Equal(hdr.ModTime), "%s: %v", hdr.Name, hdr.ModTime)
 			assert.Equal(t, util.Iif(hdr.Typeflag == tar.TypeDir, int64(0o755), int64(0o644)), hdr.Mode, hdr.Name)
 			assert.Zero(t, hdr.Uid, hdr.Name)
 			assert.Zero(t, hdr.Gid, hdr.Name)
 			assert.Empty(t, hdr.Uname+hdr.Gname, hdr.Name)
 		}
+		assert.Equal(t, 4, entries) // en_tn/, en_tn/ingredients/ and the two files
 	}
 }
 
