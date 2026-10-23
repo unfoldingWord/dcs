@@ -21,7 +21,9 @@ type CatalogEntry struct {
 	// SBTarballURL the URL of this entry as a Scripture Burrito tarball; rc, ts and tc repos are converted on download
 	SBTarballURL string `json:"sb_tarball_url"`
 	// SBZipballURL the URL of this entry as a Scripture Burrito zipball; rc, ts and tc repos are converted on download
-	SBZipballURL           string        `json:"sb_zipball_url"`
+	SBZipballURL string `json:"sb_zipball_url"`
+	// SBMetadataURL the URL of this entry's Scripture Burrito metadata.json, one file of the SB zipball
+	SBMetadataURL          string        `json:"sb_metadata_url"`
 	GitTreesURL            string        `json:"git_trees_url"`
 	ContentsURL            string        `json:"contents_url"`
 	Language               string        `json:"language"`
@@ -171,6 +173,8 @@ type CatalogStage struct {
 	SBZipballURL string `json:"sb_zipball_url"`
 	// SBTarballURL the URL of this stage as a Scripture Burrito tarball; rc, ts and tc repos are converted on download
 	SBTarballURL string `json:"sb_tarball_url"`
-	GitTreesURL  string `json:"git_trees_url"`
-	ContentsURL  string `json:"contents_url"`
+	// SBMetadataURL the URL of this stage's Scripture Burrito metadata.json, one file of the SB zipball
+	SBMetadataURL string `json:"sb_metadata_url"`
+	GitTreesURL   string `json:"git_trees_url"`
+	ContentsURL   string `json:"contents_url"`
 }

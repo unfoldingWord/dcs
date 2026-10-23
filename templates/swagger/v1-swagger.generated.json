@@ -30283,6 +30283,11 @@
         "repo": {
           "$ref": "#/definitions/Repository"
         },
+        "sb_metadata_url": {
+          "description": "SBMetadataURL the URL of this entry's Scripture Burrito metadata.json, one file of the SB zipball",
+          "type": "string",
+          "x-go-name": "SBMetadataURL"
+        },
         "sb_tarball_url": {
           "description": "SBTarballURL the URL of this entry as a Scripture Burrito tarball; rc, ts and tc repos are converted on download",
           "type": "string",
@@ -30375,6 +30380,11 @@
           "type": "string",
           "format": "date-time",
           "x-go-name": "Released"
+        },
+        "sb_metadata_url": {
+          "description": "SBMetadataURL the URL of this stage's Scripture Burrito metadata.json, one file of the SB zipball",
+          "type": "string",
+          "x-go-name": "SBMetadataURL"
         },
         "sb_tarball_url": {
           "description": "SBTarballURL the URL of this stage as a Scripture Burrito tarball; rc, ts and tc repos are converted on download",

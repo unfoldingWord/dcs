@@ -50,10 +50,11 @@ import (
 
 const storageCommitPrefix = "sb-"
 
-// sbArchiveWriterVersion goes up whenever writeZipArchive or writeTarGzArchive change what they write, so that
-// archives kept from before are converted anew rather than served with an ETag that still matches. Repos
-// already in SB format are archived by "git archive", not these writers, so their keys leave it out.
-const sbArchiveWriterVersion = 2
+// sbArchiveWriterVersion goes up whenever DCS changes what a conversion produces, in what writeZipArchive and
+// writeTarGzArchive write or in what Stream passes the converters, so that archives kept from before are
+// converted anew rather than served with an ETag that still matches. Repos already in SB format are archived
+// by "git archive", so their keys leave it out.
+const sbArchiveWriterVersion = 3
 
 // converterVersions lists the versions of the modules that convert rc, ts and tc repos to SB, as built in
 var converterVersions = sync.OnceValue(func() string {
@@ -97,6 +98,10 @@ type ArchiveRequest struct {
 	// resolveTsTWSource). The commit is part of the cache key, since that repo's default branch can move.
 	TWSourceRepoID   int64
 	TWSourceCommitID string
+	// Identity is this server and the full names of this repo and its upstream repos, as a conversion's
+	// metadata.json records them and an archive's root folder is named. It is part of the cache key, since a
+	// rename, transfer or new ROOT_URL keeps the commits.
+	Identity string
 
 	commitTime time.Time // set by NewRequest; a request from the queue looks it up
 }
@@ -197,6 +202,15 @@ func newRequest(ctx context.Context, repo *repo_model.Repository, gitRepo *git.R
 		}
 		aReq.PayloadRef, aReq.PayloadCommitID = payloadRef.String(), payloadCommitID
 	}
+
+	upstream, err := upstreamRepos(ctx, repo, dm, aReq)
+	if err != nil {
+		return nil, err
+	}
+	aReq.Identity = strings.TrimSuffix(setting.AppURL, "/") + "\n" + repo.FullName()
+	for _, u := range upstream {
+		aReq.Identity += "\n" + u.repo.FullName()
+	}
 	return aReq, nil
 }
 
@@ -207,9 +221,10 @@ func (aReq *ArchiveRequest) GetArchiveName() string {
 
 // StorageCommitID returns the cache key used as the commit ID in repo_archiver. Everything that decides the
 // archive's bytes is in it: the commit, the metadata type, the TW/TWL partner commit, the en_tw commit of a
-// ts Translation Words conversion, whether the files sit in a prefix folder (PREFIX_ARCHIVE_FILES), and the
-// converter and archive writer versions, so that an upgrade doesn't serve old conversions until the archive cleanup. It is
-// hashed to fit the column's 64 characters, which "sb-" and a SHA-256 commit ID alone would exceed.
+// ts Translation Words conversion, whether the files sit in a prefix folder (PREFIX_ARCHIVE_FILES), the
+// converter and archive writer versions, so that an upgrade doesn't serve old conversions until the archive
+// cleanup, and the Identity of the repos it names. It is hashed to fit the column's 64 characters, which
+// "sb-" and a SHA-256 commit ID alone would exceed.
 func (aReq *ArchiveRequest) StorageCommitID() string {
 	key := aReq.CommitID + "\n" + aReq.MetadataType + "\n" + aReq.PayloadCommitID
 	if aReq.TWSourceCommitID != "" {
@@ -221,6 +236,7 @@ func (aReq *ArchiveRequest) StorageCommitID() string {
 	if aReq.MetadataType != "sb" {
 		key += fmt.Sprintf("\n%s\nwriter %d", converterVersions(), sbArchiveWriterVersion)
 	}
+	key += "\n" + aReq.Identity
 	sum := sha256.Sum256([]byte(key))
 	return storageCommitPrefix + hex.EncodeToString(sum[:])[:60]
 }
@@ -333,9 +349,19 @@ func (aReq *ArchiveRequest) Stream(ctx context.Context, repo *repo_model.Reposit
 		return err
 	}
 	sbDir := filepath.Join(tmpDir, "sb")
+	upstream, err := upstreamRevisions(ctx, repo, repoDM, aReq)
+	if err != nil {
+		return err
+	}
+	// The clone of a ts or tc repo was converted to rc first, so it is no git clone that rc2sb could read these from
 	_, err = rc2sb.Convert(ctx, rcDir, sbDir, rc2sb.Options{
 		PayloadPath: payloadPath,
+		Owner:       repo.OwnerName,
+		RepoName:    repo.Name,
+		DCSURL:      strings.TrimSuffix(setting.AppURL, "/"),
+		Revision:    aReq.CommitID,
 		Timestamp:   modTime,
+		Upstream:    upstream,
 	})
 	if err != nil {
 		return fmt.Errorf("rc2sb.Convert: %w", err)
@@ -613,12 +639,70 @@ func resolvePayload(ctx context.Context, repo *repo_model.Repository, dm *repo_m
 	if err != nil {
 		return "", "", err
 	}
-	commitID, err := payloadGitRepo.ConvertToGitID(ctx, payloadRef.String())
+	// GetCommit peels an annotated tag, so metadata.json names the partner's commit, not its tag object
+	commit, err := payloadGitRepo.GetCommit(ctx, payloadRef.String())
 	if err != nil {
 		return "", "", fmt.Errorf("resolve %s ref %s: %w", payloadRepo.FullName(), payloadRef, err)
 	}
-	log.Debug("SB archive of %s@%s: using payload %s@%s (%s)", repo.FullName(), refShortName, payloadRepo.FullName(), payloadRef, commitID.String())
-	return payloadRef, commitID.String(), nil
+	log.Debug("SB archive of %s@%s: using payload %s@%s (%s)", repo.FullName(), refShortName, payloadRepo.FullName(), payloadRef, commit.ID.String())
+	return payloadRef, commit.ID.String(), nil
+}
+
+type upstreamRepo struct {
+	repo     *repo_model.Repository
+	commitID string
+}
+
+// upstreamRepos lists the other repo commits a conversion of aReq takes content from: the TW/TWL partner
+// commit, and the en_tw commit a ts Translation Words conversion places its articles by.
+func upstreamRepos(ctx context.Context, repo *repo_model.Repository, dm *repo_model.Door43Metadata, aReq *ArchiveRequest) ([]upstreamRepo, error) {
+	var repos []upstreamRepo
+	if aReq.PayloadCommitID != "" {
+		payloadRepoName, _ := payloadRepoNameFor(dm)
+		payloadRepo, err := repo_model.GetRepositoryByOwnerAndName(ctx, repo.OwnerName, payloadRepoName)
+		if err != nil {
+			return nil, fmt.Errorf("upstreamRepos: %w", err)
+		}
+		repos = append(repos, upstreamRepo{payloadRepo, aReq.PayloadCommitID})
+	}
+	if aReq.TWSourceCommitID != "" {
+		twRepo, err := repo_model.GetRepositoryByID(ctx, aReq.TWSourceRepoID)
+		if err != nil {
+			return nil, fmt.Errorf("upstreamRepos: %w", err)
+		}
+		repos = append(repos, upstreamRepo{twRepo, aReq.TWSourceCommitID})
+	}
+	return repos, nil
+}
+
+// upstreamRevisions lists the upstreamRepos of aReq for metadata.json's identification.upstream
+func upstreamRevisions(ctx context.Context, repo *repo_model.Repository, dm *repo_model.Door43Metadata, aReq *ArchiveRequest) ([]rc2sb.Upstream, error) {
+	repos, err := upstreamRepos(ctx, repo, dm, aReq)
+	if err != nil {
+		return nil, err
+	}
+	var upstream []rc2sb.Upstream
+	for _, r := range repos {
+		u, err := upstreamRevision(ctx, r.repo, r.commitID)
+		if err != nil {
+			return nil, err
+		}
+		upstream = append(upstream, u)
+	}
+	return upstream, nil
+}
+
+func upstreamRevision(ctx context.Context, repo *repo_model.Repository, commitID string) (rc2sb.Upstream, error) {
+	gitRepo, err := git.OpenRepository(ctx, repo)
+	if err != nil {
+		return rc2sb.Upstream{}, fmt.Errorf("upstreamRevision(%s): %w", repo.FullName(), err)
+	}
+	defer gitRepo.Close()
+	commit, err := gitRepo.GetCommit(ctx, commitID)
+	if err != nil {
+		return rc2sb.Upstream{}, fmt.Errorf("upstreamRevision(%s@%s): %w", repo.FullName(), commitID, err)
+	}
+	return rc2sb.Upstream{Owner: repo.OwnerName, RepoName: repo.Name, Revision: commitID, Timestamp: commit.Committer.When}, nil
 }
 
 // preparePayloadPath clones the partner commit of aReq for rc2sb: into rcDir/<lang>_twl/ for a TW repo,
