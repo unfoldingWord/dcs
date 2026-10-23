@@ -105,7 +105,8 @@ var RelationFallbackOwners = []string{"unfoldingWord", "Door43-Catalog"}
 // IsOrigLanguageRelation reports whether relation names the Hebrew or Greek Bible, which
 // canonically live under unfoldingWord.
 func IsOrigLanguageRelation(relation *structs.Relation) bool {
-	return (relation.Language == "hbo" && relation.Identifier == "uhb") || (relation.Language == "el-x-koine" && relation.Identifier == "ugnt")
+	return (strings.EqualFold(relation.Language, "hbo") && strings.EqualFold(relation.Identifier, "uhb")) ||
+		(strings.EqualFold(relation.Language, "el-x-koine") && strings.EqualFold(relation.Identifier, "ugnt"))
 }
 
 // MetadataFileName returns the name of the file the metadata of this entry comes from

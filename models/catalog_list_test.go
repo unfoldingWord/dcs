@@ -572,8 +572,10 @@ func TestSearchCatalogForBookPackage(t *testing.T) {
 
 // TestSearchCatalogForBookPackageRelations checks the entries a book package takes from the
 // requested entry's manifest relations. repo1 (user2) relates to en/ult, which user2 has,
-// and to en/ust?v=1 and en/ta, which only unfoldingWord has; ta is outside the requested
-// subjects. Its relations pin hbo/uhb but not el-x-koine/ugnt.
+// to en/ust?v=1 and en/ta, which only unfoldingWord has (ta is outside the requested
+// subjects), to en/glt?v=3, which only Door43-Catalog has at v3, and to fr/tw, which user2
+// has in French besides unfoldingWord. Its relations pin hbo/uhb but not el-x-koine/ugnt.
+// The pinned releases are not the latest ones.
 func TestSearchCatalogForBookPackageRelations(t *testing.T) {
 	require.NoError(t, unittest.PrepareTestDatabase())
 	ctx := t.Context()
@@ -598,6 +600,8 @@ func TestSearchCatalogForBookPackageRelations(t *testing.T) {
 	require.NoError(t, db.Insert(ctx, d43))
 	uwGLT := newRepo(uw, "en_glt")
 	d43GLT := newRepo(d43, "en_glt")
+	ownFrTW := newRepo(user2, "fr_tw")
+	uwFrTW := newRepo(uw, "fr_tw")
 
 	relation := func(lang, id, version string) *structs.Relation {
 		return &structs.Relation{Language: lang, Identifier: id, Version: version}
@@ -606,36 +610,39 @@ func TestSearchCatalogForBookPackageRelations(t *testing.T) {
 		repoID   int64
 		ref      string
 		stage    door43metadata.Stage
+		latest   bool
 		release  timeutil.TimeStamp
 		language string
 		subject  string
 	}
 	rows := []row{
-		{requestedRepo, "master", door43metadata.StageLatest, 1000, "en", "TSV Study Notes"},
-		{ownULT, "master", door43metadata.StageLatest, 1000, "en", "Aligned Bible"},
-		{uwULT, "master", door43metadata.StageLatest, 1000, "en", "Aligned Bible"},
-		{uwUST, "master", door43metadata.StageLatest, 1000, "en", "Aligned Bible"},
-		{uwUST, "v1", door43metadata.StageProd, 100, "en", "Aligned Bible"},
-		{uwUST, "v2", door43metadata.StageProd, 990, "en", "Aligned Bible"},
-		{uwTA, "master", door43metadata.StageLatest, 1000, "en", "Translation Academy"},
-		{uhb, "v2.1.17", door43metadata.StageProd, 100, "hbo", "Hebrew Old Testament"},
-		{uhb, "v2.1.30", door43metadata.StageProd, 990, "hbo", "Hebrew Old Testament"},
-		{ugnt, "v0.18", door43metadata.StageProd, 100, "el-x-koine", "Greek New Testament"},
-		{ugnt, "v0.30", door43metadata.StageProd, 990, "el-x-koine", "Greek New Testament"},
-		{uwGLT, "master", door43metadata.StageLatest, 1000, "en", "Aligned Bible"},
-		{d43GLT, "v3", door43metadata.StageProd, 100, "en", "Aligned Bible"},
+		{requestedRepo, "master", door43metadata.StageLatest, true, 1000, "en", "TSV Study Notes"},
+		{ownULT, "master", door43metadata.StageLatest, true, 1000, "en", "Aligned Bible"},
+		{uwULT, "master", door43metadata.StageLatest, true, 1000, "en", "Aligned Bible"},
+		{uwUST, "master", door43metadata.StageLatest, true, 1000, "en", "Aligned Bible"},
+		{uwUST, "v1", door43metadata.StageProd, false, 100, "en", "Aligned Bible"},
+		{uwUST, "v2", door43metadata.StageProd, true, 990, "en", "Aligned Bible"},
+		{uwTA, "master", door43metadata.StageLatest, true, 1000, "en", "Translation Academy"},
+		{uhb, "v2.1.17", door43metadata.StageProd, false, 100, "hbo", "Hebrew Old Testament"},
+		{uhb, "v2.1.30", door43metadata.StageProd, true, 990, "hbo", "Hebrew Old Testament"},
+		{ugnt, "v0.18", door43metadata.StageProd, false, 100, "el-x-koine", "Greek New Testament"},
+		{ugnt, "v0.30", door43metadata.StageProd, true, 990, "el-x-koine", "Greek New Testament"},
+		{uwGLT, "master", door43metadata.StageLatest, true, 1000, "en", "Aligned Bible"},
+		{d43GLT, "v3", door43metadata.StageProd, true, 100, "en", "Aligned Bible"},
+		{ownFrTW, "master", door43metadata.StageLatest, true, 1000, "fr", "Translation Words"},
+		{uwFrTW, "master", door43metadata.StageLatest, true, 1000, "fr", "Translation Words"},
 	}
 	for i, r := range rows {
 		dm := &repo_model.Door43Metadata{
 			RepoID: r.repoID, Ref: r.ref, RefType: "tag", CommitSHA: fmt.Sprintf("%040d", i+1),
-			Stage: r.stage, IsLatestForStage: true, ReleaseDateUnix: r.release,
+			Stage: r.stage, IsLatestForStage: r.latest, ReleaseDateUnix: r.release,
 			Language: r.language, Subject: r.subject, MetadataType: "rc",
 		}
 		if r.stage == door43metadata.StageLatest {
 			dm.RefType = "branch"
 		}
 		if r.repoID == requestedRepo {
-			dm.Relations = []*structs.Relation{relation("en", "ult", ""), relation("en", "ust", "1"), relation("en", "ta", ""), relation("hbo", "uhb", "2.1.17"), relation("el-x-koine", "ugnt", ""), relation("en", "glt", "3")}
+			dm.Relations = []*structs.Relation{relation("en", "ult", ""), relation("en", "ust", "1"), relation("en", "ta", ""), relation("hbo", "uhb", "2.1.17"), relation("el-x-koine", "ugnt", ""), relation("en", "glt", "3"), relation("fr", "tw", "")}
 		}
 		_, err := db.GetEngine(ctx).Insert(dm)
 		require.NoError(t, err)
@@ -654,14 +661,16 @@ func TestSearchCatalogForBookPackageRelations(t *testing.T) {
 
 	// user2's own en_ult is kept over unfoldingWord's; unfoldingWord's en_ust comes at the
 	// pinned v1 rather than its master; en_ta is filtered out by the subjects like any entry;
-	// en_glt comes from Door43-Catalog at the pinned v3, not from unfoldingWord's master.
+	// en_glt comes from Door43-Catalog at the pinned v3, not from unfoldingWord's master;
+	// user2's own French fr_tw is kept over unfoldingWord's; hbo_uhb is left to
+	// GetOrigLanguageBibles even with its subject requested.
 	results, count, err := SearchCatalogForBookPackage(ctx, dm, &door43metadata.SearchCatalogOptions{
-		Subjects:       []string{"TSV Study Notes", "Aligned Bible"},
+		Subjects:       []string{"TSV Study Notes", "Aligned Bible", "Hebrew Old Testament", "Translation Words"},
 		IncludeHistory: true,
 	})
 	require.NoError(t, err)
-	assert.EqualValues(t, 4, count)
-	assert.Equal(t, map[int64]string{requestedRepo: "master", ownULT: "master", uwUST: "v1", d43GLT: "v3"}, refs(results))
+	assert.EqualValues(t, 5, count)
+	assert.Equal(t, map[int64]string{requestedRepo: "master", ownULT: "master", uwUST: "v1", d43GLT: "v3", ownFrTW: "master"}, refs(results))
 
 	// The pinned Hebrew release wins over the one closer in time; the unpinned Greek
 	// Bible is still the release closest in time.

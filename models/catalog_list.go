@@ -6,6 +6,7 @@ package models
 import (
 	"context"
 	"fmt"
+	"maps"
 	"slices"
 	"strings"
 
@@ -399,13 +400,15 @@ func SearchCatalogForBookPackage(ctx context.Context, dm *repo.Door43Metadata, o
 	return SearchCatalogForBookPackageByCondition(ctx, dm, opts, cond)
 }
 
+// maxRelationLookups bounds how many of a manifest's relations one book package request resolves
+const maxRelationLookups = 32
+
 // SearchCatalogForBookPackageByCondition search repositories by condition for a book package:
-// the entries of dm's owner in dm's language, then, for each of dm's manifest relations whose
-// repo isn't among them, that repo's entry under the first of repo.RelationFallbackOwners that
-// has the pinned release, else under the first that has one. The original-language Bibles are
-// left to GetOrigLanguageBibles.
+// the entries of dm's owner in dm's language, then the entries searchRelationEntries finds for
+// the first maxRelationLookups of dm's manifest relations whose repo isn't among them. The
+// original-language Bibles are left to GetOrigLanguageBibles.
 func SearchCatalogForBookPackageByCondition(ctx context.Context, dm *repo.Door43Metadata, opts *door43metadata.SearchCatalogOptions, cond builder.Cond) (repo.Door43MetadataList, int64, error) {
-	dms, err := searchBookPackageEntries(ctx, dm, "dm.language = ? AND r.owner_id = ?", []any{dm.Language, dm.Repo.OwnerID}, "", cond)
+	dms, err := searchBookPackageEntries(ctx, dm, "dm.language = ? AND r.owner_id = ?", []any{dm.Language, dm.Repo.OwnerID}, nil, cond)
 	if err != nil {
 		return nil, 0, err
 	}
@@ -417,43 +420,23 @@ func SearchCatalogForBookPackageByCondition(ctx context.Context, dm *repo.Door43
 	for _, entry := range dms {
 		inPackage.Add(entry.Repo.LowerName)
 	}
+	var relations []*structs.Relation
 	for _, relation := range dm.Relations {
 		if relation.Language == "" || relation.Identifier == "" || repo.IsOrigLanguageRelation(relation) {
 			continue
 		}
-		repoName := strings.ToLower(relation.Language + "_" + relation.Identifier)
-		if !inPackage.Add(repoName) {
-			continue
+		if inPackage.Add(strings.ToLower(relation.Language + "_" + relation.Identifier)) {
+			relations = append(relations, relation)
 		}
-		var found repo.Door43MetadataList
-		for _, owner := range repo.RelationFallbackOwners {
-			if strings.EqualFold(owner, dm.Repo.OwnerName) {
-				continue
-			}
-			relRepo, err := repo.GetRepositoryByOwnerAndName(ctx, owner, repoName)
-			if repo.IsErrRepoNotExist(err) {
-				continue
-			} else if err != nil {
-				return nil, 0, err
-			}
-			entries, err := searchBookPackageEntries(ctx, dm, "dm.repo_id = ?", []any{relRepo.ID}, relation.Version, cond)
-			if err != nil {
-				return nil, 0, err
-			}
-			if len(entries) == 0 {
-				continue
-			}
-			if found == nil {
-				found = entries
-			}
-			// like the healthcheck, a later owner that has the pinned release beats an earlier one that doesn't
-			if relation.Version == "" || entries[0].Ref == relation.Version || entries[0].Ref == "v"+relation.Version {
-				found = entries
-				break
-			}
-		}
-		dms = append(dms, found...)
 	}
+	if len(relations) > maxRelationLookups {
+		relations = relations[:maxRelationLookups]
+	}
+	relationDMs, err := searchRelationEntries(ctx, dm, relations, cond)
+	if err != nil {
+		return nil, 0, err
+	}
+	dms = append(dms, relationDMs...)
 
 	if err = dms.LoadAttributes(ctx); err != nil {
 		return nil, 0, fmt.Errorf("LoadAttributes: %v", err)
@@ -461,10 +444,90 @@ func SearchCatalogForBookPackageByCondition(ctx context.Context, dm *repo.Door43
 	return dms, int64(len(dms)), nil
 }
 
+// searchRelationEntries finds, in two queries, an entry for each of relations: that of its repo
+// under the first of dm's owner (in any language) and repo.RelationFallbackOwners whose entry is
+// the release the relation pins, else under the first that has an entry, as the healthcheck
+// resolves relations.
+func searchRelationEntries(ctx context.Context, dm *repo.Door43Metadata, relations []*structs.Relation, cond builder.Cond) (repo.Door43MetadataList, error) {
+	if len(relations) == 0 {
+		return nil, nil
+	}
+	owners := []string{strings.ToLower(dm.Repo.OwnerName)}
+	for _, owner := range repo.RelationFallbackOwners {
+		if owner = strings.ToLower(owner); !slices.Contains(owners, owner) {
+			owners = append(owners, owner)
+		}
+	}
+	versions := make(map[string]string, len(relations))
+	for _, relation := range relations {
+		versions[strings.ToLower(relation.Language+"_"+relation.Identifier)] = relation.Version
+	}
+
+	var relRepos []*repo.Repository
+	if err := db.GetEngine(ctx).Table("repository").Select("repository.*").
+		Join("INNER", "`user`", "`user`.id = repository.owner_id").
+		In("`user`.lower_name", owners).
+		In("repository.lower_name", slices.Collect(maps.Keys(versions))).
+		Find(&relRepos); err != nil {
+		return nil, fmt.Errorf("find relation repos: %v", err)
+	}
+	if len(relRepos) == 0 {
+		return nil, nil
+	}
+	repoIDs := make([]int64, len(relRepos))
+	pins := make(map[int64]string, len(relRepos))
+	repoKeys := make(map[int64][2]string, len(relRepos))
+	for i, relRepo := range relRepos {
+		repoIDs[i] = relRepo.ID
+		pins[relRepo.ID] = versions[relRepo.LowerName]
+		repoKeys[relRepo.ID] = [2]string{strings.ToLower(relRepo.OwnerName), relRepo.LowerName}
+	}
+	scopeSQL, scopeArgs, err := builder.ToSQL(builder.In("dm.repo_id", repoIDs))
+	if err != nil {
+		return nil, fmt.Errorf("failed to build scope SQL: %v", err)
+	}
+	entries, err := searchBookPackageEntries(ctx, dm, scopeSQL, scopeArgs, pins, cond)
+	if err != nil {
+		return nil, err
+	}
+	byOwnerAndName := make(map[[2]string]*repo.Door43Metadata, len(entries))
+	for _, entry := range entries {
+		byOwnerAndName[repoKeys[entry.RepoID]] = entry
+	}
+
+	var found repo.Door43MetadataList
+	for _, relation := range relations {
+		name := strings.ToLower(relation.Language + "_" + relation.Identifier)
+		var pick *repo.Door43Metadata
+		for _, owner := range owners {
+			entry := byOwnerAndName[[2]string{owner, name}]
+			if entry == nil {
+				continue
+			}
+			pinned := relation.Version == "" || isPinnedRelease(entry, relation.Version)
+			if pick == nil || pinned {
+				pick = entry
+			}
+			if pinned {
+				break
+			}
+		}
+		if pick != nil {
+			found = append(found, pick)
+		}
+	}
+	return found, nil
+}
+
+// isPinnedRelease reports whether entry is the release of version, "v" prefix optional
+func isPinnedRelease(entry *repo.Door43Metadata, version string) bool {
+	return entry.RefType == "tag" && (entry.Ref == version || entry.Ref == "v"+version)
+}
+
 // searchBookPackageEntries returns, for each repo matching scopeSQL and cond, its one entry
-// that best matches dm's ref. A non-empty version (a manifest relation's, "v" prefix
+// that best matches dm's ref. A repo's version in pins (a manifest relation's, "v" prefix
 // optional) ranks that release first.
-func searchBookPackageEntries(ctx context.Context, dm *repo.Door43Metadata, scopeSQL string, scopeArgs []any, version string, cond builder.Cond) (repo.Door43MetadataList, error) {
+func searchBookPackageEntries(ctx context.Context, dm *repo.Door43Metadata, scopeSQL string, scopeArgs []any, pins map[int64]string, cond builder.Cond) (repo.Door43MetadataList, error) {
 	// Build the WHERE clause from the builder.Cond for use in the filtered CTE
 	// We need to convert the builder conditions to SQL that can be used in the native query
 	condSQL, condArgs, err := builder.ToSQL(cond)
@@ -488,17 +551,20 @@ func searchBookPackageEntries(ctx context.Context, dm *repo.Door43Metadata, scop
 	// The default branch therefore stands in when a repo has no matching branch or
 	// no release at all; an explicit stage filter in cond can still exclude it.
 	isBranch := dm.RefType == "branch"
-	prioritySQL := "CASE "
+	var prioritySQL strings.Builder
 	var priorityArgs []any
-	if version != "" {
-		prioritySQL += "WHEN dm.ref IN (?, ?) THEN -1 "
-		priorityArgs = append(priorityArgs, version, "v"+version)
+	prioritySQL.WriteString("CASE ")
+	for _, repoID := range slices.Sorted(maps.Keys(pins)) {
+		if version := pins[repoID]; version != "" {
+			prioritySQL.WriteString("WHEN dm.repo_id = ? AND dm.ref_type = ? AND dm.ref IN (?, ?) THEN -1 ")
+			priorityArgs = append(priorityArgs, repoID, "tag", version, "v"+version)
+		}
 	}
 	if isBranch {
-		prioritySQL += "WHEN dm.ref = ? AND dm.ref_type = ? THEN 0 WHEN dm.stage = ? AND dm.is_latest_for_stage = ? THEN 1 ELSE 2 END"
+		prioritySQL.WriteString("WHEN dm.ref = ? AND dm.ref_type = ? THEN 0 WHEN dm.stage = ? AND dm.is_latest_for_stage = ? THEN 1 ELSE 2 END")
 		priorityArgs = append(priorityArgs, dm.Ref, "branch", door43metadata.StageLatest, true)
 	} else {
-		prioritySQL += "WHEN dm.stage = ? AND dm.is_latest_for_stage = ? THEN 1 ELSE 0 END"
+		prioritySQL.WriteString("WHEN dm.stage = ? AND dm.is_latest_for_stage = ? THEN 1 ELSE 0 END")
 		priorityArgs = append(priorityArgs, door43metadata.StageLatest, true)
 	}
 	candidateSQL := "dm.stage <= ? OR (dm.stage = ? AND dm.is_latest_for_stage = ?)"
@@ -514,7 +580,7 @@ WITH filtered AS (
   SELECT
     dm.*,
     ABS(dm.release_date_unix - ?) AS time_diff,
-    ` + prioritySQL + ` AS priority
+    ` + prioritySQL.String() + ` AS priority
   FROM door43_metadata dm
   JOIN repository r ON r.id = dm.repo_id
   WHERE
@@ -569,8 +635,8 @@ func GetOrigLanguageBibles(ctx context.Context, dm *repo.Door43Metadata, books [
 	var priorityArgs []any
 	for _, relation := range dm.Relations {
 		if relation.Version != "" && repo.IsOrigLanguageRelation(relation) {
-			pins = append(pins, "WHEN r.lower_name = ? AND dm.ref IN (?, ?) THEN 0")
-			priorityArgs = append(priorityArgs, relation.Language+"_"+relation.Identifier, relation.Version, "v"+relation.Version)
+			pins = append(pins, "WHEN r.lower_name = ? AND dm.ref_type = ? AND dm.ref IN (?, ?) THEN 0")
+			priorityArgs = append(priorityArgs, strings.ToLower(relation.Language+"_"+relation.Identifier), "tag", relation.Version, "v"+relation.Version)
 		}
 	}
 	prioritySQL := "1"
