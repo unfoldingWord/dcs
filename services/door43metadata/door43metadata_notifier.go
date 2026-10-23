@@ -5,6 +5,7 @@ package door43metadata
 
 import (
 	"context"
+	"errors"
 
 	"gitea.dev/models/door43metadata"
 	repo_model "gitea.dev/models/repo"
@@ -12,7 +13,9 @@ import (
 	"gitea.dev/modules/git"
 	"gitea.dev/modules/graceful"
 	"gitea.dev/modules/log"
+	"gitea.dev/modules/queue"
 	"gitea.dev/modules/repository"
+	"gitea.dev/services/door43healthcheck"
 	notify_service "gitea.dev/services/notify"
 )
 
@@ -22,9 +25,27 @@ type metadataNotifier struct {
 
 var _ notify_service.Notifier = &metadataNotifier{}
 
-func Init(ctx context.Context) error {
-	notify_service.RegisterNotifier(NewNotifier())
+// metadataQueueItem is a repo ref to process, with an empty Ref meaning all of its refs
+type metadataQueueItem struct {
+	RepoID int64
+	Ref    string
+}
 
+var metadataQueue *queue.WorkerPoolQueue[metadataQueueItem]
+
+func Init(ctx context.Context) error {
+	metadataQueue = queue.CreateUniqueQueue(graceful.GetManager().ShutdownContext(), "door43_metadata", func(items ...metadataQueueItem) []metadataQueueItem {
+		for _, item := range items {
+			processQueueItem(graceful.GetManager().ShutdownContext(), item)
+		}
+		return nil
+	})
+	if metadataQueue == nil {
+		return errors.New("unable to create door43_metadata queue")
+	}
+	go graceful.GetManager().RunWithCancel(metadataQueue)
+
+	notify_service.RegisterNotifier(NewNotifier())
 	return nil
 }
 
@@ -33,35 +54,34 @@ func NewNotifier() notify_service.Notifier {
 	return &metadataNotifier{}
 }
 
-// processInBackground loads a fresh copy of the repo by ID and processes
-// Door43Metadata in a background goroutine. This avoids data races with
-// other notifiers that may be reading the same repo pointer concurrently.
+// processInBackground queues the ref for processing. The queue is unique, so pushes to a
+// ref that is still waiting are merged, and its worker limit bounds the concurrent work.
 func processInBackground(caller string, repo *repo_model.Repository, ref string) {
-	repoID := repo.ID
-	repoName := repo.FullName()
-	shutdownCtx := graceful.GetManager().ShutdownContext()
-	go func() {
-		// a panic while processing one repo must never take down the server
-		defer func() {
-			if err := recover(); err != nil {
-				log.Error("%s: PANIC while processing Door43Metadata [%s, %s]: %v\n%s", caller, repoName, ref, err, log.Stack(2))
-			}
-		}()
-		select {
-		case <-shutdownCtx.Done():
-			log.Warn("%s: Context canceled [%s, %s]", caller, repoName, ref)
-			return
-		default:
-			freshRepo, err := repo_model.GetRepositoryByID(shutdownCtx, repoID)
-			if err != nil {
-				log.Error("%s: GetRepositoryByID(%d) failed: %v", caller, repoID, err)
-				return
-			}
-			if err := ProcessDoor43MetadataForRepo(shutdownCtx, freshRepo, ref); err != nil {
-				log.Error("%s: ProcessDoor43MetadataForRepo failed [%s, %s]: %v", caller, repoName, ref, err)
-			}
+	err := metadataQueue.Push(metadataQueueItem{RepoID: repo.ID, Ref: ref})
+	if err != nil && !errors.Is(err, queue.ErrAlreadyInQueue) {
+		log.Error("%s: queueing Door43Metadata [%s, %s] failed: %v", caller, repo.FullName(), ref, err)
+	}
+}
+
+// processQueueItem loads a fresh copy of the repo, which may have changed since it was
+// queued, and processes its Door43Metadata.
+func processQueueItem(ctx context.Context, item metadataQueueItem) {
+	// a panic must not drop the rest of the queue's batch
+	defer func() {
+		if err := recover(); err != nil {
+			log.Error("PANIC while processing Door43Metadata [repo %d, %s]: %v\n%s", item.RepoID, item.Ref, err, log.Stack(2))
 		}
 	}()
+	repo, err := repo_model.GetRepositoryByID(ctx, item.RepoID)
+	if err != nil {
+		if !repo_model.IsErrRepoNotExist(err) {
+			log.Error("GetRepositoryByID(%d) failed: %v", item.RepoID, err)
+		}
+		return
+	}
+	if err := ProcessDoor43MetadataForRepo(ctx, repo, item.Ref); err != nil {
+		log.Error("ProcessDoor43MetadataForRepo failed [%s, %s]: %v", repo.FullName(), item.Ref, err)
+	}
 }
 
 func (m *metadataNotifier) CreateRepository(ctx context.Context, doer, u *user_model.User, repo *repo_model.Repository) {
@@ -132,6 +152,23 @@ func (m *metadataNotifier) DeleteRelease(ctx context.Context, doer *user_model.U
 	err = repo_model.DeleteDoor43MetadataByRepoIDAndReleaseID(ctx, rel.RepoID, rel.ID)
 	if err != nil {
 		log.Error("DeleteRelease: DeleteDoor43MetadataByRepoIDAndReleaseID failed [repo: %s, releaseID: %d]: %v", rel.Repo.FullName(), rel.ID, err)
+	}
+	recheckDefaultBranch(ctx, rel.RepoID)
+}
+
+// recheckDefaultBranch re-checks the default branch after a release is removed, as its release
+// advice compares against the latest release and no later branch push re-checks it.
+func recheckDefaultBranch(ctx context.Context, repoID int64) {
+	repo, err := repo_model.GetRepositoryByID(ctx, repoID)
+	if err != nil || repo.IsArchived || repo.IsPrivate || repo.IsMirror || repo.IsEmpty {
+		return
+	}
+	if err := processDoor43MetadataForRepoLatestDMs(ctx, repo); err != nil {
+		log.Error("recheckDefaultBranch: processDoor43MetadataForRepoLatestDMs [%s]: %v", repo.FullName(), err)
+		return
+	}
+	if repo.DefaultBranchDM != nil {
+		door43healthcheck.RunHealthcheck(ctx, repo.DefaultBranchDM)
 	}
 }
 
