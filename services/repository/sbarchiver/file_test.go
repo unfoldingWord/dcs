@@ -22,7 +22,7 @@ func TestIsValidBurritoPath(t *testing.T) {
 	for _, p := range []string{"metadata.json", "ingredients/TIT.tsv", "ingredients/payload/kt/god.md", "ingredients/..x.md"} {
 		assert.True(t, isValidBurritoPath(p), p)
 	}
-	for _, p := range []string{"", "/metadata.json", "..", "../en_tw/metadata.json", "ingredients/../../x"} {
+	for _, p := range []string{"", "/metadata.json", "..", "../en_tw/metadata.json", "ingredients/../../x", `ingredients\..\x`, "ingredients/./TIT.tsv"} {
 		assert.False(t, isValidBurritoPath(p), p)
 	}
 }
@@ -131,4 +131,13 @@ func TestHandleNotModified(t *testing.T) {
 	ctx.Req.Header.Set("If-None-Match", `"abc-0"`)
 	ctx.Req.Header.Set("If-Modified-Since", lastModified.Format(http.TimeFormat))
 	assert.False(t, handleNotModified(ctx.Base, etag, lastModified, "max-age=0"))
+
+	// A burrito with partner content has no Last-Modified, so a date alone can't keep a stale copy
+	aReq := &ArchiveRequest{commitTime: lastModified, PayloadCommitID: "0123456789abcdef0123456789abcdef01234567"}
+	ctx, resp := contexttest.MockContext(t, "user27/repo49/sb/raw/metadata.json")
+	ctx.Req.Header.Set("If-Modified-Since", lastModified.Format(http.TimeFormat))
+	assert.False(t, handleNotModified(ctx.Base, etag, aReq.lastModified(), "max-age=0"))
+	assert.Empty(t, resp.Header().Get("Last-Modified"))
+	aReq.PayloadCommitID = ""
+	assert.Equal(t, lastModified, aReq.lastModified())
 }

@@ -980,7 +980,16 @@ func ServeRepoSBArchive(ctx *gitea_context.Base, repo *repo_model.Repository, ar
 	ctx.Resp.Header().Set("Cache-Control", cacheControl)
 	// The stored archive is rebuilt once the archive cleanup has removed it, so its creation time is part of the tag
 	ctx.Resp.Header().Set("ETag", fmt.Sprintf(`"%s-%d.%s"`, archiveReq.StorageCommitID(), archiver.CreatedUnix, archiveReq.Type))
-	http.ServeContent(ctx.Resp, ctx.Req, downloadName, archiveReq.commitTime, fr)
+	http.ServeContent(ctx.Resp, ctx.Req, downloadName, archiveReq.lastModified(), fr)
+}
+
+// lastModified is the commit time, or zero when the burrito carries partner content, whose changes the
+// commit time doesn't show; a zero time sends no Last-Modified, so If-Modified-Since can't answer 304.
+func (aReq *ArchiveRequest) lastModified() time.Time {
+	if aReq.PayloadCommitID != "" {
+		return time.Time{}
+	}
+	return aReq.commitTime
 }
 
 // cacheControl allows long-lived caching only when the ref pins what the burrito holds: a tag or a
