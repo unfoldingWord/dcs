@@ -19,6 +19,7 @@ import (
 	"gitea.dev/models/db"
 	door43metadata_model "gitea.dev/models/door43metadata"
 	repo_model "gitea.dev/models/repo"
+	system_model "gitea.dev/models/system"
 	"gitea.dev/models/unittest"
 	"gitea.dev/modules/dcs"
 	"gitea.dev/modules/json"
@@ -497,6 +498,35 @@ projects:
 		metadata = sbMetadata(t, resp.Body.Bytes())
 		assert.Contains(t, metadata.Identification.Primary["dcs"], "user2/repo1-renamed")
 		assert.Contains(t, metadata.Identification.Upstream["dcs"][0], "user2/en_tw")
+	})
+}
+
+// TestDCSRenameRepoReprocessesMetadata checks that a rename's metadata reprocessing reads the repo at its new
+// path. Gitea notifies of a rename before its caller saves the new name, so the database still has the old one.
+func TestDCSRenameRepoReprocessesMetadata(t *testing.T) {
+	onGiteaRun(t, func(t *testing.T, _ *url.URL) {
+		token := getTokenForLoggedInUser(t, loginUser(t, "user2"), auth_model.AccessTokenScopeWriteRepository)
+		opts := getCreateFileOptions()
+		opts.NewBranchName = "rename-check"
+		opts.ContentBase64 = base64.StdEncoding.EncodeToString([]byte("dublin_core:\n  identifier: ult\n  language: {identifier: en, title: English, direction: ltr}\n  subject: Bible\n  title: Test Bible\nprojects: []\n"))
+		MakeRequest(t, NewRequestWithJSON(t, "POST", "/api/v1/repos/user2/repo1/contents/manifest.yaml", &opts).AddTokenAuth(token), http.StatusCreated)
+		// Forget the push's metadata, so that only the rename's reprocessing can bring it back
+		_, err := repo_model.GetDoor43MetadataByRepoIDAndRef(t.Context(), 1, "rename-check")
+		require.NoError(t, err)
+		require.NoError(t, repo_model.DeleteDoor43MetadataByRepoIDAndRef(t.Context(), 1, "rename-check"))
+
+		newName := "repo1-renamed"
+		MakeRequest(t, NewRequestWithJSON(t, "PATCH", "/api/v1/repos/user2/repo1", &api.EditRepoOption{Name: &newName}).AddTokenAuth(token), http.StatusOK)
+
+		dm, err := repo_model.GetDoor43MetadataByRepoIDAndRef(t.Context(), 1, "rename-check")
+		require.NoError(t, err, "the rename reprocesses the repo at its new path")
+		assert.Equal(t, "rc", dm.MetadataType)
+		// repo1's fixture releases name tags its git repo lacks, so other ref failures are expected here
+		var notices []*system_model.Notice
+		require.NoError(t, db.GetEngine(t.Context()).Find(&notices))
+		for _, notice := range notices {
+			assert.NotContains(t, notice.Description, "no such file or directory")
+		}
 	})
 }
 

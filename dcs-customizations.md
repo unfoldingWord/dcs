@@ -245,7 +245,7 @@ This document catalogs every DCS modification to existing Gitea files. New DCS-o
 - `services/convert/catalog.go`, `catalog_test.go`, `git_ref.go`, `repository_dcs.go`
 - `services/cron/tasks_dcs.go`
 - `services/door43healthcheck/healthcheck.go`, `checks_common.go`, `checks_rc.go`, `checks_sb.go`, `checks_tsv.go`, `checks_tsv_test.go`, `checks_usfm.go`, `checks_usfm_test.go`, `obs_checks.go`, `obs_checks_test.go`
-- `services/door43metadata/door43metadata.go`, `door43metadata_notifier.go`, `door43metadata_test.go`
+- `services/door43metadata/door43metadata.go`, `door43metadata_notifier.go`, `door43metadata_notifier_test.go`, `door43metadata_test.go`
 - `services/gitref/gitref.go`, `gitref_test.go`
 - `services/repository/sbarchiver/archiver.go`, `archiver_test.go`, `file.go`, `file_test.go`
 
