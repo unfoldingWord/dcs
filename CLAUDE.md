@@ -52,24 +52,33 @@ New DCS work goes on a feature branch cut from `dcs-base-v#.##`, with a pull req
 - Frank (Codex) and George (Grok) each review every pushed head a few minutes after the push and post a verdict (`clean` or `findings`).
 - A fix lane may then commit one small repair for a blocking finding, but only in the files the pull request already changes.
 
-The bench's guide, shared by Rich, is the authority on its process. This section only says what this repository needs from agents.
+The bench's guide, shared by Rich, is the authority on its process. Its comments cite that guide as `docs/review-policy.md` and `RULINGS` in the bench's own repository, which agents here can't open. When the guide isn't in context, this section is the procedure. Comment `@uwreview help` on a pull request to list what the bench can do on request.
 
 - Open the pull request when the Pre-PR Checklist passes, then request `uwreview` as a reviewer (`gh pr edit <number> --add-reviewer uwreview`). Every push starts a new round, so push only finished work.
 - The bench cannot run Go. Its reviewers judge the diff by reading it, and the fix lane commits without building, formatting or testing. After a fix-lane commit, pull it and run here:
   - `make fmt` (it should change nothing)
   - `TAGS="bindata" make build`
-  - `go test` for each touched package
-  - the matching `TestDCS*` integration tests
-  - golangci-lint on the touched packages
+  - `go test ./path/to/pkg/...` for each touched package
+  - `TAGS="" make test-dcs-sqlite` for the `TestDCS*` integration tests (empty `TAGS` keeps a stale gitignored `bindata.dat` out of the test binary)
+  - `make lint-go`, or, without a local `golangci-lint`, `go run <GOLANGCI_LINT_PACKAGE from the Makefile> run ./path/to/pkg/...`
+  - `make lint-md` when it touched Markdown
 
   Post the results on the pull request, and push a fix if anything fails.
 - Leave blocking findings to the fix lane. After a `findings` verdict, wait a few minutes and pull before pushing. Never force-push over the bench's commits, and keep its fixes when merging yours. Revert one of its commits only when you disagree with it, and say why on the pull request.
 - Answer every finding in one comment per round: fixed (with the commit), deferred (to an issue or a follow-up push), or refuted (with evidence). Check each claim against the code before acting on it.
 - A deferred finding is the author's to take after the round closes, in one push. This includes a blocking finding that the fix lane deferred because its file was outside the files the lane may edit.
 - A `needs-author` finding is a decision for Rich: ask him, then answer on the pull request.
-- After 5 rounds with findings, the fix lane gets one grace round. Then the pull request goes to a person, who either merges it with follow-ups or comments `@uwreview grant a round`.
+- After 5 rounds with findings, the fix lane gets one grace round. Then the pull request goes to a person, who either merges it with follow-ups or comments `@uwreview grant a round`. Only a person who can merge posts that comment. An agent never does.
 - George reads at most about 290 KB of diff, in file order. Keep test fixtures small, or put them in their own pull request.
 - The bench's approval is advice only. A person merges.
+
+How the bench reports, so agents watch the right places:
+
+- Each reviewer comment ends with a marker such as `<!-- uw:review george round=2 verdict=findings sha=… -->`. The fix lane posts a list of dispositions. A round may have no fix-lane comment at all, for example when the only blocking finding is in a file outside the pull request.
+- The approval arrives as a pull request **review** (`APPROVED`), not as a comment, and it is pinned to one head. Watch both `issues/<n>/comments` and `pulls/<n>/reviews`. After an approval, push again only if the pull request still needs changes, because a push restarts review.
+- The gate approves only a head whose CI checks pass. A failed check, even a flaky one, gets a `gate-refused` comment. For a flaky failure:
+  1. Check the job log, then rerun with `gh run rerun <run-id> --failed`.
+  2. A passing rerun may not re-trigger the gate. If it doesn't, tell Rich, who can merge or ask the bench through `@uwreview help`.
 
 ---
 
