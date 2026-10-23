@@ -22,6 +22,7 @@ import (
 	"gitea.dev/modules/git"
 	"gitea.dev/modules/httplib"
 	"gitea.dev/modules/json"
+	"gitea.dev/modules/setting"
 	"gitea.dev/modules/storage"
 	"gitea.dev/modules/typesniffer"
 	"gitea.dev/modules/util"
@@ -34,7 +35,7 @@ const (
 	sniffLen               = 1024
 )
 
-// burritoFile is one file of a burrito, found in the SB archive or, for a repo already in SB format, in git.
+// burritoFile is one file of a burrito, found in its SB zip archive.
 type burritoFile struct {
 	path string
 	size int64
@@ -45,8 +46,9 @@ type burritoFile struct {
 }
 
 // ServeSBFile serves one file of the repo's burrito at ref (the default branch when empty), at its path
-// inside the burrito: metadata.json or an ingredient. The bytes are those of the same path in the ref's
-// SB zip archive, read from the cached archive; a repo already in SB format is read from git, as /raw does.
+// inside the burrito: metadata.json or an ingredient. It is read out of the ref's SB zip archive, the one
+// /sb/{ref}.zip serves, so the bytes are the same, including for a repo already in SB format, whose
+// archive "git archive" makes with its .gitattributes export-ignore and export-subst applied.
 // The returned errors are util.ErrInvalidArgument for a bad path, and util.ErrNotExist,
 // RepoRefNotFoundError and ErrRepoNotConvertible for what can't be found; nothing is written then.
 func ServeSBFile(ctx *gitea_context.Base, repo *repo_model.Repository, gitRepo *git.Repository, ref, filePath string) error {
@@ -65,26 +67,14 @@ func ServeSBFile(ctx *gitea_context.Base, repo *repo_model.Repository, gitRepo *
 		return err
 	}
 
-	if aReq.dm.MetadataType == "sb" {
-		file, err := burritoFileFromGit(ctx, gitRepo, aReq.CommitID, filePath)
-		if err != nil {
-			return err
-		}
-		return serveBurritoFile(ctx, file, aReq, cacheControl)
-	}
-
-	archiver, err := aReq.Await(ctx)
+	fr, err := openSBZipArchive(ctx, repo, aReq)
 	if err != nil {
 		return err
-	}
-	fr, err := storage.RepoArchives.Open(archiver.RelativePath())
-	if err != nil {
-		return fmt.Errorf("open SB archive: %w", err)
 	}
 	defer fr.Close()
 	zr, err := openZip(fr)
 	if err != nil {
-		return fmt.Errorf("read SB archive %s: %w", archiver.RelativePath(), err)
+		return fmt.Errorf("read SB archive of %s: %w", aReq.StorageCommitID(), err)
 	}
 	file, err := burritoFileFromZip(zr, aReq.StorageCommitID(), filePath)
 	if err != nil {
@@ -106,31 +96,42 @@ func isValidBurritoPath(filePath string) bool {
 	return true
 }
 
-func burritoFileFromGit(ctx context.Context, gitRepo *git.Repository, commitID, filePath string) (*burritoFile, error) {
-	commit, err := gitRepo.GetCommit(ctx, commitID)
-	if err != nil {
-		return nil, fmt.Errorf("gitRepo.GetCommit(%s): %w", commitID, err)
-	}
-	blob, err := commit.GetBlobByPath(ctx, gitRepo, filePath)
-	if err != nil {
-		if git.IsErrNotExist(err) {
-			return nil, util.NewNotExistErrorf("%s is not in the burrito", filePath)
+// openSBZipArchive opens the kept zip archive of aReq, which is built first when the commit (or the
+// TW/TWL partner commit) has none yet. Without CACHE_SB_ARCHIVES it is built into a temporary file
+// for this request alone.
+func openSBZipArchive(ctx context.Context, repo *repo_model.Repository, aReq *ArchiveRequest) (storage.Object, error) {
+	if !setting.DCS.CacheSBArchives {
+		f, cleanup, err := setting.AppDataTempDir("repo-sb-archive").CreateTempFileRandom(fmt.Sprintf("%d-*.zip", repo.ID))
+		if err != nil {
+			return nil, fmt.Errorf("create temporary file: %w", err)
 		}
+		if err := aReq.Stream(ctx, repo, f); err != nil {
+			cleanup()
+			return nil, err
+		}
+		return &tempObject{File: f, cleanup: cleanup}, nil
+	}
+
+	archiver, err := aReq.Await(ctx)
+	if err != nil {
 		return nil, err
 	}
-	return &burritoFile{
-		path: filePath,
-		size: blob.Size(ctx),
-		etag: `"` + blob.ID.String() + `"`, // as /raw
-		open: func() (io.ReadCloser, error) { return blob.DataAsync(ctx) },
-		readMetadata: func() ([]byte, error) {
-			metadataBlob, err := commit.GetBlobByPath(ctx, gitRepo, burritoMetadataFile)
-			if err != nil {
-				return nil, err
-			}
-			return metadataBlob.GetBlobBytes(ctx, maxBurritoMetadataSize)
-		},
-	}, nil
+	fr, err := storage.RepoArchives.Open(archiver.RelativePath())
+	if err != nil {
+		return nil, fmt.Errorf("open SB archive %s: %w", archiver.RelativePath(), err)
+	}
+	return fr, nil
+}
+
+// tempObject removes its file on Close
+type tempObject struct {
+	*os.File
+	cleanup func()
+}
+
+func (t *tempObject) Close() error {
+	t.cleanup()
+	return nil
 }
 
 func openZip(fr storage.Object) (*zip.Reader, error) {
@@ -138,8 +139,11 @@ func openZip(fr storage.Object) (*zip.Reader, error) {
 	if err != nil {
 		return nil, err
 	}
-	if f, ok := fr.(*os.File); ok {
+	switch f := fr.(type) {
+	case *os.File:
 		return zip.NewReader(f, fi.Size())
+	case *tempObject:
+		return zip.NewReader(f.File, fi.Size())
 	}
 	return zip.NewReader(&streamReaderAt{rs: fr, pos: -1}, fi.Size())
 }
@@ -212,18 +216,18 @@ func burritoFileFromZip(zr *zip.Reader, storageCommitID, filePath string) (*burr
 	}, nil
 }
 
-// burritoRoot returns the archive folder holding metadata.json, with a trailing slash: the repo-named
-// folder, or "" when archive files have no prefix. A repo renamed since the archive was built keeps its old
-// folder name there, so the folder is looked up rather than derived from the repo name.
+// burritoRoot returns the folder that holds every file of the archive, with a trailing slash, or "" when
+// the archive has files at its top level (PREFIX_ARCHIVE_FILES = false). It is read from the archive
+// rather than made from the repo name, since a repo renamed after the archive was built keeps its old
+// name there, and "git archive" lowercases it.
 func burritoRoot(zr *zip.Reader) string {
 	root := ""
 	for _, f := range zr.File {
-		if f.Name == burritoMetadataFile {
+		folder, _, found := strings.Cut(f.Name, "/")
+		if !found || root != "" && folder+"/" != root {
 			return ""
 		}
-		if dir, ok := strings.CutSuffix(f.Name, "/"+burritoMetadataFile); ok && root == "" && !strings.Contains(dir, "/") {
-			root = dir + "/"
-		}
+		root = folder + "/"
 	}
 	return root
 }

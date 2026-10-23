@@ -95,14 +95,14 @@ func TestNewRequest(t *testing.T) {
 	_, err = NewRequest(ctx, ctx.Repo.Repository, ctx.Repo.GitRepo, strings.Repeat("0", len(masterID.String()))+".zip")
 	assert.ErrorIs(t, err, RepoRefNotFoundError{})
 
-	// The response headers need the ref's kind and the commit time
+	// The response headers need to know whether the ref can move, and the commit time
 	aReq, err = NewRequest(ctx, ctx.Repo.Repository, ctx.Repo.GitRepo, "master.zip")
 	require.NoError(t, err)
-	assert.Empty(t, aReq.refType)
+	assert.False(t, aReq.refIsCommitID)
 	assert.False(t, aReq.commitTime.IsZero())
 	aReq, err = NewRequest(ctx, ctx.Repo.Repository, ctx.Repo.GitRepo, masterID.String()+".zip")
 	require.NoError(t, err)
-	assert.Equal(t, "commit", aReq.refType)
+	assert.True(t, aReq.refIsCommitID)
 
 	// An annotated tag shares its commit's archive
 	_, _, err = gitcmd.NewCommand("tag", "-a", "-m", "release", "v-annotated", "master").WithRepo(ctx.Repo.GitRepo).RunStdString(t.Context())
@@ -110,7 +110,7 @@ func TestNewRequest(t *testing.T) {
 	aReq, err = NewRequest(ctx, ctx.Repo.Repository, ctx.Repo.GitRepo, "v-annotated.zip")
 	require.NoError(t, err)
 	assert.Equal(t, masterID.String(), aReq.CommitID)
-	assert.Equal(t, "tag", aReq.refType)
+	assert.False(t, aReq.refIsCommitID)
 }
 
 func TestCacheControl(t *testing.T) {
@@ -119,24 +119,25 @@ func TestCacheControl(t *testing.T) {
 	const immutable = "public, max-age=31536000, immutable"
 	const revalidate = "max-age=0, public, must-revalidate"
 
+	// Only a commit ID without partner content can't change: a tag can be made again, and so can a partner's ref
 	for _, c := range []struct {
-		refType, payloadRef, want string
+		refIsCommitID   bool
+		payloadCommitID string
+		want            string
 	}{
-		{"tag", "", immutable},
-		{"commit", "", immutable},
-		{"", "", revalidate},
-		{"tag", "refs/tags/v86", immutable},
-		{"tag", "refs/heads/master", revalidate}, // no partner release to pair with
-		{"commit", "refs/heads/master", revalidate},
+		{true, "", immutable},
+		{false, "", revalidate},
+		{true, "0123456789abcdef0123456789abcdef01234567", revalidate},
+		{false, "0123456789abcdef0123456789abcdef01234567", revalidate},
 	} {
-		aReq := &ArchiveRequest{refType: c.refType, PayloadRef: c.payloadRef}
+		aReq := &ArchiveRequest{refIsCommitID: c.refIsCommitID, PayloadCommitID: c.payloadCommitID}
 		cacheControl, err := aReq.cacheControl(t.Context(), repo)
 		require.NoError(t, err)
-		assert.Equal(t, c.want, cacheControl, "refType %q, payload %q", c.refType, c.payloadRef)
+		assert.Equal(t, c.want, cacheControl, "commit ID %t, partner %q", c.refIsCommitID, c.payloadCommitID)
 	}
 
 	repo.IsPrivate = true
-	cacheControl, err := (&ArchiveRequest{refType: "tag"}).cacheControl(t.Context(), repo)
+	cacheControl, err := (&ArchiveRequest{refIsCommitID: true}).cacheControl(t.Context(), repo)
 	require.NoError(t, err)
 	assert.Equal(t, "private, max-age=31536000, immutable", cacheControl)
 }
@@ -221,10 +222,12 @@ func TestGetRepoDMForArchive(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, "rc", dm.MetadataType)
 
-	// A commit ID reads like the release whose head it is, before a branch at the same commit
+	// A commit ID reads like the production release whose head it is, before a newer pre-release or a
+	// branch at the same commit
 	const headCommit = "0123456789abcdef0123456789abcdef01234567"
 	for _, row := range []*repo_model.Door43Metadata{
-		{Ref: "v1", RefType: "tag", Stage: door43metadata.StageProd, MetadataType: "sb"},
+		{Ref: "v1", RefType: "tag", Stage: door43metadata.StageProd, MetadataType: "sb", ReleaseDateUnix: 1000},
+		{Ref: "v2-rc", RefType: "tag", Stage: door43metadata.StagePreProd, MetadataType: "rc", ReleaseDateUnix: 2000},
 		{Ref: "v1-draft", RefType: "tag", Stage: door43metadata.StageOther, MetadataType: ""},
 		{Ref: "release", RefType: "branch", Stage: door43metadata.StageOther, MetadataType: "rc"},
 	} {

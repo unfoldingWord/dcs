@@ -74,14 +74,18 @@ func GetSBFile(ctx *context.APIContext) {
 	// summary: Get a file of a repository's Scripture Burrito
 	// description: |
 	//   Returns one file of the repository's Scripture Burrito (SB) at the given git reference: its
-	//   `metadata.json` or an ingredient. The bytes are those of the same path inside the archive from
-	//   `/repos/{owner}/{repo}/sb/{ref}.zip`, below its root folder, so a client can read single files or the
-	//   whole archive interchangeably. Repositories already in SB format are read from git at that commit.
+	//   `metadata.json` or an ingredient. It is read out of the archive from `/repos/{owner}/{repo}/sb/{ref}.zip`,
+	//   below its root folder, so a client can read single files or the whole archive interchangeably.
 	//   The Content-Type is the ingredient's `mimeType` from `metadata.json`, and `application/json` for
-	//   `metadata.json` itself. A tag or a full commit ID gets a long-lived, immutable Cache-Control; a branch
-	//   is revalidated with the ETag. The same file can be read without an API token from the repository's
-	//   HTML URL, `/{owner}/{repo}/sb/raw/{filepath}?ref={ref}`.
+	//   `metadata.json` itself. A full commit ID gets a long-lived, immutable Cache-Control, unless the burrito
+	//   also carries a partner repository's content (Translation Words and Translation Words Links); other
+	//   refs are revalidated with the ETag. The same file can be read without an API token from the
+	//   repository's HTML URL, `/{owner}/{repo}/sb/raw/{filepath}?ref={ref}`.
 	// produces:
+	// - application/json
+	// - text/markdown
+	// - text/plain
+	// - text/tab-separated-values
 	// - application/octet-stream
 	// parameters:
 	// - name: owner

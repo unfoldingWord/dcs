@@ -441,7 +441,13 @@ func InitiateDownload(ctx *context.Context) {
 
 // InitiateDownloadSB enqueues an SB archival request if needed.
 func InitiateDownloadSB(ctx *context.Context) {
-	// SB archives are kept even with STREAM_ARCHIVES, see sbarchiver_service.ServeRepoSBArchive
+	if !setting.DCS.CacheSBArchives {
+		ctx.JSON(http.StatusOK, map[string]any{
+			"complete": true,
+		})
+		return
+	}
+
 	aReq, err := sbarchiver_service.NewRequest(ctx, ctx.Repo.Repository, ctx.Repo.GitRepo, ctx.PathParam("*"))
 	if err != nil {
 		ctx.HTTPError(http.StatusBadRequest, "invalid SB archive request")

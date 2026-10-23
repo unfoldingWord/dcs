@@ -233,7 +233,7 @@ This document catalogs every DCS modification to existing Gitea files. New DCS-o
 - `modules/dcs/attachments.go`, `books.go`, `datetime.go`, `files.go`, `languages.go`, `metadata.go`, `rc02.go`, `sb100.go`, `schema.go`, `stats.go`, `strings.go`, `subjects.go`, `tcts.go`, `valdation.go`
 - `modules/markup/tsv/tsv.go`
 - `modules/options/dcs.go`
-- `modules/setting/dcs.go`
+- `modules/setting/dcs.go`, `dcs_test.go`
 - `modules/structs/catalog.go`, `dcs_tctsmanifest.go`
 - `routers/api/v1/admin/user_dcs.go`
 - `routers/api/v1/catalog/catalog.go`

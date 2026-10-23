@@ -35886,7 +35886,7 @@
     },
     "/repos/{owner}/{repo}/sb/raw/{filepath}": {
       "get": {
-        "description": "Returns one file of the repository's Scripture Burrito (SB) at the given git reference: its\n`metadata.json` or an ingredient. The bytes are those of the same path inside the archive from\n`/repos/{owner}/{repo}/sb/{ref}.zip`, below its root folder, so a client can read single files or the\nwhole archive interchangeably. Repositories already in SB format are read from git at that commit.\nThe Content-Type is the ingredient's `mimeType` from `metadata.json`, and `application/json` for\n`metadata.json` itself. A tag or a full commit ID gets a long-lived, immutable Cache-Control; a branch\nis revalidated with the ETag. The same file can be read without an API token from the repository's\nHTML URL, `/{owner}/{repo}/sb/raw/{filepath}?ref={ref}`.\n",
+        "description": "Returns one file of the repository's Scripture Burrito (SB) at the given git reference: its\n`metadata.json` or an ingredient. It is read out of the archive from `/repos/{owner}/{repo}/sb/{ref}.zip`,\nbelow its root folder, so a client can read single files or the whole archive interchangeably.\nThe Content-Type is the ingredient's `mimeType` from `metadata.json`, and `application/json` for\n`metadata.json` itself. A full commit ID gets a long-lived, immutable Cache-Control, unless the burrito\nalso carries a partner repository's content (Translation Words and Translation Words Links); other\nrefs are revalidated with the ETag. The same file can be read without an API token from the\nrepository's HTML URL, `/{owner}/{repo}/sb/raw/{filepath}?ref={ref}`.\n",
         "operationId": "repoGetSBFile",
         "parameters": [
           {
@@ -35928,7 +35928,31 @@
         "responses": {
           "200": {
             "content": {
+              "application/json": {
+                "schema": {
+                  "format": "binary",
+                  "type": "string"
+                }
+              },
               "application/octet-stream": {
+                "schema": {
+                  "format": "binary",
+                  "type": "string"
+                }
+              },
+              "text/markdown": {
+                "schema": {
+                  "format": "binary",
+                  "type": "string"
+                }
+              },
+              "text/plain": {
+                "schema": {
+                  "format": "binary",
+                  "type": "string"
+                }
+              },
+              "text/tab-separated-values": {
                 "schema": {
                   "format": "binary",
                   "type": "string"

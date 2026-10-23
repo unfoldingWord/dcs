@@ -15,11 +15,15 @@ import (
 	"testing"
 
 	auth_model "gitea.dev/models/auth"
+	"gitea.dev/models/db"
 	door43metadata_model "gitea.dev/models/door43metadata"
 	repo_model "gitea.dev/models/repo"
+	"gitea.dev/models/unittest"
 	"gitea.dev/modules/setting"
 	api "gitea.dev/modules/structs"
+	"gitea.dev/modules/test"
 	"gitea.dev/modules/timeutil"
+	"gitea.dev/modules/util"
 	"gitea.dev/tests"
 
 	"github.com/stretchr/testify/assert"
@@ -217,7 +221,7 @@ func sbZipEntry(t *testing.T, archive []byte, name string) []byte {
 }
 
 // TestDCSAPIRepoSBFile covers /api/v1/repos/{owner}/{repo}/sb/raw/{filepath} and its web twin for a repo already
-// in SB format, which is read from git, and checks that a file has the bytes of the same path in the archive.
+// in SB format, and checks that a file has the bytes of the same path in the archive.
 func TestDCSAPIRepoSBFile(t *testing.T) {
 	defer tests.PrepareTestEnv(t)()
 
@@ -244,11 +248,14 @@ func TestDCSAPIRepoSBFile(t *testing.T) {
 	require.NotEmpty(t, etag)
 	MakeRequest(t, NewRequest(t, "GET", "/api/v1/repos/user2/repo1/sb/raw/README.md").SetHeader("If-None-Match", etag), http.StatusNotModified)
 
-	// A tag or a full commit ID can't change
-	for _, ref := range []string{"v1.1", "65f1bf27bc3bf70f64657658635e66094edbcb4d"} {
+	// A full commit ID can't change; a tag can be deleted and made again
+	for ref, cacheControl := range map[string]string{
+		"65f1bf27bc3bf70f64657658635e66094edbcb4d": "public, max-age=31536000, immutable",
+		"v1.1": "max-age=0, public, must-revalidate",
+	} {
 		resp = MakeRequest(t, NewRequest(t, "GET", "/api/v1/repos/user2/repo1/sb/raw/README.md?ref="+ref), http.StatusOK)
 		assert.Equal(t, readme, resp.Body.Bytes(), ref)
-		assert.Equal(t, "public, max-age=31536000, immutable", resp.Header().Get("Cache-Control"), ref)
+		assert.Equal(t, cacheControl, resp.Header().Get("Cache-Control"), ref)
 	}
 
 	MakeRequest(t, NewRequest(t, "GET", "/api/v1/repos/user2/repo1/sb/raw/ingredients/%2E%2E/README.md"), http.StatusBadRequest)
@@ -304,6 +311,58 @@ func TestDCSAPIRepoSBFileConverted(t *testing.T) {
 		assert.Equal(t, "public, max-age=31536000, immutable", resp.Header().Get("Cache-Control"))
 		MakeRequest(t, NewRequest(t, "GET", "/api/v1/repos/user2/repo1/sb/raw/ingredients/GEN.tsv?ref=sb-tn"), http.StatusNotFound)
 		MakeRequest(t, NewRequest(t, "GET", "/api/v1/repos/user2/repo1/sb/raw/ingredients?ref=sb-tn"), http.StatusNotFound)
+
+		// A new commit on the branch is read from a new archive, not the one kept for the old commit
+		etag := resp.Header().Get("ETag")
+		var contents api.ContentsResponse
+		DecodeJSON(t, MakeRequest(t, NewRequest(t, "GET", "/api/v1/repos/user2/repo1/contents/tn_TIT.tsv?ref=sb-tn"), http.StatusOK), &contents)
+		updated := notes + "1:2\tefgh\t\t\t\t0\tAnother note\n"
+		MakeRequest(t, NewRequestWithJSON(t, "PUT", "/api/v1/repos/user2/repo1/contents/tn_TIT.tsv", &api.UpdateFileOptions{
+			FileOptions:   api.FileOptions{BranchName: "sb-tn", Message: "Add a note"},
+			SHA:           contents.SHA,
+			ContentBase64: base64.StdEncoding.EncodeToString([]byte(updated)),
+		}).AddTokenAuth(token), http.StatusOK)
+		resp = MakeRequest(t, NewRequest(t, "GET", "/api/v1/repos/user2/repo1/sb/raw/ingredients/TIT.tsv?ref=sb-tn"), http.StatusOK)
+		assert.Equal(t, updated, resp.Body.String())
+		assert.NotEqual(t, etag, resp.Header().Get("ETag"))
+
+		// A tag made again on another commit serves that commit, and was never cached as immutable
+		for _, target := range []string{dm.CommitSHA, "sb-tn"} {
+			MakeRequest(t, NewRequest(t, "DELETE", "/api/v1/repos/user2/repo1/tags/moved-tag").AddTokenAuth(token), NoExpectedStatus)
+			MakeRequest(t, NewRequestWithJSON(t, "POST", "/api/v1/repos/user2/repo1/tags", &api.CreateTagOption{TagName: "moved-tag", Target: target}).AddTokenAuth(token), http.StatusCreated)
+			resp = MakeRequest(t, NewRequest(t, "GET", "/api/v1/repos/user2/repo1/sb/raw/ingredients/TIT.tsv?ref=moved-tag"), http.StatusOK)
+			assert.Equal(t, util.Iif(target == "sb-tn", updated, notes), resp.Body.String(), target)
+			assert.Equal(t, "max-age=0, public, must-revalidate", resp.Header().Get("Cache-Control"))
+		}
+
+		// A repo already in SB format is read from its archive too, so .gitattributes apply as in /sb/{ref}.zip
+		resp = MakeRequest(t, NewRequestWithJSON(t, "POST", "/api/v1/repos/user2/repo1/contents", &api.ChangeFilesOptions{
+			FileOptions: api.FileOptions{BranchName: "master", NewBranchName: "sb-attr", Message: "Add attributes"},
+			Files: []*api.ChangeFileOperation{
+				{Operation: "create", Path: ".gitattributes", ContentBase64: base64.StdEncoding.EncodeToString([]byte("excluded.md export-ignore\nversion.txt export-subst\n"))},
+				{Operation: "create", Path: "excluded.md", ContentBase64: base64.StdEncoding.EncodeToString([]byte("not archived\n"))},
+				{Operation: "create", Path: "version.txt", ContentBase64: base64.StdEncoding.EncodeToString([]byte("$Format:%H$\n"))},
+			},
+		}).AddTokenAuth(token), http.StatusCreated)
+		var changed api.FilesResponse
+		DecodeJSON(t, resp, &changed)
+		_, err = db.GetEngine(t.Context()).Delete(&repo_model.Door43Metadata{RepoID: 1, Ref: "sb-attr"})
+		require.NoError(t, err)
+		require.NoError(t, repo_model.InsertDoor43Metadata(t.Context(), &repo_model.Door43Metadata{
+			RepoID: 1, Ref: "sb-attr", RefType: "branch", CommitSHA: changed.Commit.SHA,
+			Stage: door43metadata_model.StageOther, MetadataType: "sb", MetadataVersion: "1.0.0",
+		}))
+		resp = MakeRequest(t, NewRequest(t, "GET", "/api/v1/repos/user2/repo1/sb/raw/version.txt?ref=sb-attr"), http.StatusOK)
+		assert.Equal(t, changed.Commit.SHA+"\n", resp.Body.String())
+		MakeRequest(t, NewRequest(t, "GET", "/api/v1/repos/user2/repo1/sb/raw/excluded.md?ref=sb-attr"), http.StatusNotFound)
+
+		// Without CACHE_SB_ARCHIVES each request converts anew and nothing is kept
+		defer test.MockVariableValue(&setting.DCS.CacheSBArchives, false)()
+		kept := unittest.GetCount(t, &repo_model.RepoArchiver{RepoID: 1})
+		resp = MakeRequest(t, NewRequest(t, "GET", "/api/v1/repos/user2/repo1/sb/raw/ingredients/TIT.tsv?ref=sb-tn"), http.StatusOK)
+		assert.Equal(t, updated, resp.Body.String())
+		MakeRequest(t, NewRequest(t, "GET", "/api/v1/repos/user2/repo1/sb/sb-tn.zip"), http.StatusOK)
+		assert.Equal(t, kept, unittest.GetCount(t, &repo_model.RepoArchiver{RepoID: 1}))
 	})
 }
 

@@ -60,10 +60,9 @@ type ArchiveRequest struct {
 	PayloadRef      string
 	PayloadCommitID string
 
-	// Set by NewRequest for serving; a request from the queue has none of them.
-	dm         *repo_model.Door43Metadata
-	refType    string // "tag", "commit" (a full commit ID) or "" for anything else
-	commitTime time.Time
+	// Set by NewRequest for serving; a request from the queue has neither.
+	refIsCommitID bool // a full commit ID, the only ref that can't be moved
+	commitTime    time.Time
 }
 
 // ErrUnknownArchiveFormat means the requested archive format is not supported.
@@ -134,29 +133,24 @@ func newRequest(ctx context.Context, repo *repo_model.Repository, gitRepo *git.R
 		commitTime:   commit.Committer.When,
 	}
 
-	isBranch, isTag := gitRepo.IsBranchExist(ctx, refShortName), gitRepo.IsTagExist(ctx, refShortName)
-	switch {
-	case refShortName == aReq.CommitID:
-		aReq.refType = "commit"
-	case isTag && !isBranch:
-		aReq.refType = "tag"
-	}
+	aReq.refIsCommitID = refShortName == aReq.CommitID
 	headOf := ""
-	if !isBranch && !isTag {
+	if !gitRepo.IsBranchExist(ctx, refShortName) && !gitRepo.IsTagExist(ctx, refShortName) {
 		headOf = aReq.CommitID
 	}
-	if aReq.dm, err = getRepoDMForArchive(ctx, repo, refShortName, headOf); err != nil {
+	dm, err := getRepoDMForArchive(ctx, repo, refShortName, headOf)
+	if err != nil {
 		return nil, err
 	}
-	aReq.MetadataRef = aReq.dm.Ref
+	aReq.MetadataRef = dm.Ref
 
-	if aReq.dm.MetadataType != "sb" {
+	if dm.MetadataType != "sb" {
 		// A commit ID pairs with the partner as the release or branch it is the head of would
 		payloadFor := refShortName
-		if headOf != "" && aReq.dm.CommitSHA == headOf {
-			payloadFor = aReq.dm.Ref
+		if headOf != "" && dm.CommitSHA == headOf {
+			payloadFor = dm.Ref
 		}
-		payloadRef, payloadCommitID, err := resolvePayload(ctx, repo, aReq.dm, payloadFor)
+		payloadRef, payloadCommitID, err := resolvePayload(ctx, repo, dm, payloadFor)
 		if err != nil {
 			return nil, err
 		}
@@ -331,7 +325,7 @@ func isArchivableMetadataType(metadataType string) bool {
 // getRepoDMForArchive returns the Door43Metadata that decides how the requested ref is
 // archived. The ref's own row wins (a repo's "main" branch may be SB while its default
 // branch is RC). A commit ID, passed as headOf, takes the row of a tag or branch whose head
-// it is, a tag's first, so that it reads like the release it is. An unprocessed ref falls
+// it is, a production release's first, so that it reads like the release it is. An unprocessed ref falls
 // back to the default branch metadata, then the repo-level metadata.
 func getRepoDMForArchive(ctx context.Context, repo *repo_model.Repository, refShortName, headOf string) (*repo_model.Door43Metadata, error) {
 	if refShortName != "" {
@@ -350,7 +344,8 @@ func getRepoDMForArchive(ctx context.Context, repo *repo_model.Repository, refSh
 		has, err := db.GetEngine(ctx).
 			Where(builder.Eq{"repo_id": repo.ID, "commit_sha": headOf}).
 			And(builder.In("metadata_type", archivableMetadataTypes)).
-			Desc("ref_type", "release_date_unix", "id"). // "tag" sorts before "branch"
+			// A tag before a branch ("tag" sorts after "branch"), then prod before preprod and the rest
+			OrderBy("ref_type DESC, CASE WHEN stage = 0 THEN 9 ELSE stage END, release_date_unix DESC, id DESC").
 			Get(headDM)
 		if err != nil {
 			return nil, fmt.Errorf("find the metadata of commit %s: %w", headOf, err)
@@ -950,8 +945,21 @@ func ServeRepoSBArchive(ctx *gitea_context.Base, repo *repo_model.Repository, ar
 		return
 	}
 
-	// Unlike git archives, SB archives are always kept, whatever STREAM_ARCHIVES says: a conversion
-	// costs far more than a "git archive", and /sb/raw/ reads its files out of the kept archive.
+	if !setting.DCS.CacheSBArchives {
+		// Weak, as upstream's streamed archives: each request builds the archive anew
+		etag := fmt.Sprintf(`W/"%s.%s"`, archiveReq.StorageCommitID(), archiveReq.Type)
+		if handleNotModified(ctx, etag, archiveReq.lastModified(), cacheControl) {
+			return
+		}
+		httplib.ServeSetHeaders(ctx.Resp, httplib.ServeHeaderOptions{Filename: downloadName, ContentType: contentType, LastModified: archiveReq.lastModified()})
+		ctx.Resp.Header().Set("Cache-Control", cacheControl)
+		if err := archiveReq.Stream(ctx, repo, ctx.Resp); err != nil && !ctx.Written() {
+			log.Error("SB archive %v streaming failed: %v", archiveReq, err)
+			ctx.HTTPError(http.StatusInternalServerError)
+		}
+		return
+	}
+
 	archiver, err := archiveReq.Await(ctx)
 	if err != nil {
 		log.Error("SB archive %v await failed: %v", archiveReq, err)
@@ -992,15 +1000,14 @@ func (aReq *ArchiveRequest) lastModified() time.Time {
 	return aReq.commitTime
 }
 
-// cacheControl allows long-lived caching only when the ref pins what the burrito holds: a tag or a
-// commit ID, whose partner content, if any, is also a tag's.
+// cacheControl allows long-lived caching only when the ref pins all the burrito holds: a commit ID of a
+// burrito without partner content. A tag can be deleted and made again, and so can a partner's ref.
 func (aReq *ArchiveRequest) cacheControl(ctx context.Context, repo *repo_model.Repository) (string, error) {
 	if err := repo.LoadOwner(ctx); err != nil {
 		return "", fmt.Errorf("repo.LoadOwner: %w", err)
 	}
 	scope := util.Iif(!repo.IsPrivate && repo.Owner.Visibility == structs.VisibleTypePublic, "public", "private")
-	pinnedPayload := aReq.PayloadRef == "" || git.RefName(aReq.PayloadRef).IsTag()
-	if (aReq.refType == "tag" || aReq.refType == "commit") && pinnedPayload {
+	if aReq.refIsCommitID && aReq.PayloadCommitID == "" {
 		return scope + ", max-age=31536000, immutable", nil
 	}
 	return "max-age=0, " + scope + ", must-revalidate", nil
