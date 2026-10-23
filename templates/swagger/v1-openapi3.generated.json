@@ -35965,7 +35965,7 @@
             "description": "the copy named by If-None-Match is current"
           },
           "400": {
-            "description": "the path is empty, absolute or has a `..` segment"
+            "description": "the path is empty or absolute, or has a backslash or an empty, `.` or `..` segment"
           },
           "404": {
             "description": "the ref does not exist, the repository is not an rc, ts, tc or sb repository, or the file is not in the burrito"

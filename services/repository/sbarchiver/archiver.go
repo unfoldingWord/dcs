@@ -17,6 +17,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"regexp"
 	"slices"
 	"strings"
 	"time"
@@ -530,10 +531,13 @@ func bookPackageRef(ctx context.Context, dm *repo_model.Door43Metadata, payloadR
 	return "", nil
 }
 
+var languageCodeRe = regexp.MustCompile(`^[A-Za-z0-9][A-Za-z0-9_-]*$`)
+
 // payloadRepoNameFor names the partner repo whose content a converted burrito of dm also carries:
 // a TWL burrito holds the TW articles, and a TW burrito (isTWRepo) holds the TWL TSVs.
 func payloadRepoNameFor(dm *repo_model.Door43Metadata) (payloadRepoName string, isTWRepo bool) {
-	if dm.Language == "" {
+	// The name becomes a folder of the conversion, so it must be a plain language code
+	if !languageCodeRe.MatchString(dm.Language) {
 		return "", false
 	}
 	switch dm.Subject {

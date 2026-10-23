@@ -124,6 +124,17 @@ func TestSBCacheControl(t *testing.T) {
 	assert.Equal(t, "max-age=0, private, must-revalidate", cacheControl)
 }
 
+func TestPayloadRepoNameFor(t *testing.T) {
+	for language, want := range map[string]string{"en": "en_tw", "es-419": "es-419_tw", "": "", "../x": "", "a/b": "", `a\b`: "", ".": ""} {
+		name, isTWRepo := payloadRepoNameFor(&repo_model.Door43Metadata{Language: language, Subject: "TSV Translation Words Links"})
+		assert.Equal(t, want, name, language)
+		assert.False(t, isTWRepo)
+	}
+	name, isTWRepo := payloadRepoNameFor(&repo_model.Door43Metadata{Language: "en", Subject: "Translation Words"})
+	assert.Equal(t, "en_twl", name)
+	assert.True(t, isTWRepo)
+}
+
 func TestStorageCommitID(t *testing.T) {
 	// Every input that decides the bytes gets its own key, within repo_archiver's VARCHAR(64) for SHA-256 too
 	keys := map[string]bool{}
