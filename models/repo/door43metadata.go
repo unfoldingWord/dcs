@@ -211,6 +211,15 @@ func (dm *Door43Metadata) SBZipballURL() string {
 	return fmt.Sprintf("%s/sb/%s.zip", dm.Repo.HTMLURL(), dm.Ref)
 }
 
+// SBMetadataURL the URL of the Scripture Burrito metadata.json of the tag or branch, one file of the SB zipball
+func (dm *Door43Metadata) SBMetadataURL() string {
+	ref := dm.Ref
+	if dm.RefType == "branch" {
+		ref = dm.CommitSHA[0:10]
+	}
+	return fmt.Sprintf("%s/sb/raw/metadata.json?ref=%s", dm.Repo.HTMLURL(), url.QueryEscape(ref))
+}
+
 // ReleaseURL the URL the release API
 func (dm *Door43Metadata) ReleaseURL(ctx context.Context) string {
 	if dm.ReleaseID > 0 {
