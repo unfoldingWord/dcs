@@ -63,10 +63,15 @@ type ArchiveRequest struct {
 	// It is part of the cache key, since the partner ref paired with a branch can move.
 	PayloadRef      string
 	PayloadCommitID string
+	// The canonical en_tw repo and commit a ts Translation Words conversion places its articles by (see
+	// resolveTsTWSource). The commit is part of the cache key, since that repo's default branch can move.
+	TWSourceRepoID   int64
+	TWSourceCommitID string
 
 	// Set by NewRequest for serving; a request from the queue has neither.
 	refIsCommitID  bool // a full commit ID, the only ref that can't be moved
 	mayHavePartner bool // the subject pairs with a partner repo, even one that doesn't exist yet
+	readsTWSource  bool // a ts Translation Words conversion, which reads en_tw even if it doesn't exist yet
 	ownMetadata    bool // the metadata was made from this commit, not borrowed from the default branch
 	commitTime     time.Time
 }
@@ -151,6 +156,13 @@ func newRequest(ctx context.Context, repo *repo_model.Repository, gitRepo *git.R
 	aReq.MetadataRef, aReq.MetadataType = dm.Ref, dm.MetadataType
 	aReq.ownMetadata = dm.CommitSHA == aReq.CommitID
 
+	if dm.MetadataType == "ts" && dm.Subject == "Translation Words" {
+		aReq.readsTWSource = true
+		if aReq.TWSourceRepoID, aReq.TWSourceCommitID, err = resolveTsTWSource(ctx); err != nil {
+			return nil, err
+		}
+	}
+
 	if dm.MetadataType != "sb" {
 		partnerName, _ := payloadRepoNameFor(dm)
 		aReq.mayHavePartner = partnerName != ""
@@ -174,10 +186,15 @@ func (aReq *ArchiveRequest) GetArchiveName() string {
 }
 
 // StorageCommitID returns the cache key used as the commit ID in repo_archiver. Everything that decides the
-// archive's bytes is in it: the commit, the metadata type, and the TW/TWL partner commit. It is hashed to fit
-// the column's 64 characters, which "sb-" and a SHA-256 commit ID alone would exceed.
+// archive's bytes is in it: the commit, the metadata type, the TW/TWL partner commit, and the en_tw commit of
+// a ts Translation Words conversion. It is hashed to fit the column's 64 characters, which "sb-" and a SHA-256
+// commit ID alone would exceed.
 func (aReq *ArchiveRequest) StorageCommitID() string {
-	sum := sha256.Sum256([]byte(aReq.CommitID + "\n" + aReq.MetadataType + "\n" + aReq.PayloadCommitID))
+	key := aReq.CommitID + "\n" + aReq.MetadataType + "\n" + aReq.PayloadCommitID
+	if aReq.TWSourceCommitID != "" {
+		key += "\n" + aReq.TWSourceCommitID
+	}
+	sum := sha256.Sum256([]byte(key))
 	return storageCommitPrefix + hex.EncodeToString(sum[:])[:60]
 }
 
@@ -259,7 +276,7 @@ func (aReq *ArchiveRequest) Stream(ctx context.Context, repo *repo_model.Reposit
 
 	// For ts repos, convert ts -> RC so the RC -> SB pipeline below applies unchanged.
 	if isTS {
-		twSourceDir, err := prepareTsTWSourceDir(ctx, tmpDir, repoDM)
+		twSourceDir, err := prepareTsTWSourceDir(ctx, tmpDir, repoDM, aReq)
 		if err != nil {
 			return err
 		}
@@ -384,43 +401,54 @@ func getRepoDMForArchive(ctx context.Context, repo *repo_model.Repository, refSh
 // to place Translation Words articles under bible/{kt|names|other}/ by matching slug filenames.
 var tsTWSourceOwners = []string{"unfoldingWord", "Door43-Catalog"}
 
-// prepareTsTWSourceDir clones a canonical en_tw repo into tmpDir/tw-source for ts
-// Translation Words conversions and returns its path. Returns ("", nil) when the repo
-// is not a ts TW repo or no canonical en_tw repo exists on this server — ts2rc then
-// falls back to writing articles under bible/other/ with a warning.
-func prepareTsTWSourceDir(ctx context.Context, tmpDir string, dm *repo_model.Door43Metadata) (string, error) {
-	if dm == nil || dm.Subject != "Translation Words" {
-		return "", nil
-	}
-
+// resolveTsTWSource finds the canonical en_tw repo a ts Translation Words conversion reads and its
+// default branch's commit now, or returns (0, "", nil) when no canonical en_tw repo exists on this server.
+func resolveTsTWSource(ctx context.Context) (int64, string, error) {
 	for _, owner := range tsTWSourceOwners {
 		twRepo, err := repo_model.GetRepositoryByOwnerAndName(ctx, owner, "en_tw")
 		if err != nil {
 			if repo_model.IsErrRepoNotExist(err) {
 				continue
 			}
-			return "", fmt.Errorf("repo_model.GetRepositoryByOwnerAndName(%s/en_tw): %w", owner, err)
+			return 0, "", fmt.Errorf("repo_model.GetRepositoryByOwnerAndName(%s/en_tw): %w", owner, err)
 		}
 
 		twGitRepo, err := git.OpenRepository(ctx, twRepo)
 		if err != nil {
-			return "", fmt.Errorf("git.OpenRepository(%s): %w", twRepo.FullName(), err)
+			return 0, "", fmt.Errorf("git.OpenRepository(%s): %w", twRepo.FullName(), err)
 		}
 		commitID, err := twGitRepo.ConvertToGitID(ctx, twRepo.DefaultBranch)
 		twGitRepo.Close()
 		if err != nil {
-			return "", fmt.Errorf("resolve %s default branch: %w", twRepo.FullName(), err)
+			return 0, "", fmt.Errorf("resolve %s default branch: %w", twRepo.FullName(), err)
 		}
+		return twRepo.ID, commitID.String(), nil
+	}
+	return 0, "", nil
+}
 
-		twSourceDir := filepath.Join(tmpDir, "tw-source")
-		if err := cloneRepositoryAtCommit(ctx, gitrepo.RepoLocalPath(twRepo.CodeStorageRepo()), twRepo.DefaultBranch, commitID.String(), twSourceDir); err != nil {
-			return "", fmt.Errorf("clone TW source repo %s: %w", twRepo.FullName(), err)
-		}
-		return twSourceDir, nil
+// prepareTsTWSourceDir clones the en_tw commit the request resolved (see resolveTsTWSource) into
+// tmpDir/tw-source for ts Translation Words conversions and returns its path. Returns ("", nil) when
+// the repo is not a ts TW repo or no canonical en_tw repo was found — ts2rc then falls back to
+// writing articles under bible/other/ with a warning.
+func prepareTsTWSourceDir(ctx context.Context, tmpDir string, dm *repo_model.Door43Metadata, aReq *ArchiveRequest) (string, error) {
+	if dm == nil || dm.Subject != "Translation Words" {
+		return "", nil
+	}
+	if aReq.TWSourceRepoID == 0 {
+		log.Warn("SB archive: no canonical en_tw repo found for TW category lookup; articles will fall back to bible/other/")
+		return "", nil
 	}
 
-	log.Warn("SB archive: no canonical en_tw repo found for TW category lookup; articles will fall back to bible/other/")
-	return "", nil
+	twRepo, err := repo_model.GetRepositoryByID(ctx, aReq.TWSourceRepoID)
+	if err != nil {
+		return "", fmt.Errorf("repo_model.GetRepositoryByID(%d): %w", aReq.TWSourceRepoID, err)
+	}
+	twSourceDir := filepath.Join(tmpDir, "tw-source")
+	if err := cloneRepositoryAtCommit(ctx, gitrepo.RepoLocalPath(twRepo.CodeStorageRepo()), twRepo.DefaultBranch, aReq.TWSourceCommitID, twSourceDir); err != nil {
+		return "", fmt.Errorf("clone TW source repo %s: %w", twRepo.FullName(), err)
+	}
+	return twSourceDir, nil
 }
 
 // requestedRefType reports whether refShortName names a branch or a tag of repo
@@ -1011,10 +1039,10 @@ func (aReq *ArchiveRequest) lastModified() time.Time {
 }
 
 // isPinned reports whether the ref pins all the burrito holds: a commit ID, with metadata made from that commit,
-// of a burrito that can't carry partner content. A tag can be deleted and made again, borrowed metadata can
-// change, a partner's ref can move, and a partner repo can be created.
+// of a burrito that can't carry partner content or read en_tw. A tag can be deleted and made again, borrowed
+// metadata can change, a partner's ref or en_tw's default branch can move, and a partner repo can be created.
 func (aReq *ArchiveRequest) isPinned() bool {
-	return aReq.refIsCommitID && aReq.ownMetadata && !aReq.mayHavePartner && aReq.PayloadCommitID == ""
+	return aReq.refIsCommitID && aReq.ownMetadata && !aReq.mayHavePartner && aReq.PayloadCommitID == "" && !aReq.readsTWSource
 }
 
 // cacheControl allows long-lived caching only when the ref is pinned (see isPinned).

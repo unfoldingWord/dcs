@@ -148,8 +148,15 @@ func TestCacheControl(t *testing.T) {
 		assert.Equal(t, c.want == immutable, !aReq.lastModified().IsZero(), "Last-Modified: %+v", c)
 	}
 
+	// A ts Translation Words conversion reads en_tw's default branch, which can move
+	tsTW := &ArchiveRequest{refIsCommitID: true, ownMetadata: true, readsTWSource: true, commitTime: time.Unix(1000, 0)}
+	cacheControl, err := tsTW.cacheControl(t.Context(), repo)
+	require.NoError(t, err)
+	assert.Equal(t, revalidate, cacheControl)
+	assert.True(t, tsTW.lastModified().IsZero())
+
 	repo.IsPrivate = true
-	cacheControl, err := (&ArchiveRequest{refIsCommitID: true, ownMetadata: true}).cacheControl(t.Context(), repo)
+	cacheControl, err = (&ArchiveRequest{refIsCommitID: true, ownMetadata: true}).cacheControl(t.Context(), repo)
 	require.NoError(t, err)
 	assert.Equal(t, "private, max-age=31536000, immutable", cacheControl)
 }
@@ -168,6 +175,15 @@ func TestStorageCommitID(t *testing.T) {
 		}
 	}
 	assert.Len(t, keys, 12)
+
+	// A ts Translation Words conversion is keyed by the en_tw commit it places articles by
+	tsTW := &ArchiveRequest{CommitID: strings.Repeat("a", 40), MetadataType: "ts"}
+	withoutTWSource := tsTW.StorageCommitID()
+	tsTW.TWSourceCommitID = strings.Repeat("c", 40)
+	withTWSource := tsTW.StorageCommitID()
+	tsTW.TWSourceCommitID = strings.Repeat("d", 64)
+	assert.Len(t, map[string]bool{withoutTWSource: true, withTWSource: true, tsTW.StorageCommitID(): true}, 3)
+	assert.LessOrEqual(t, len(tsTW.StorageCommitID()), 64)
 }
 
 // TestWriteDirectoryArchiveDeterministic checks that converted archives carry the commit time, not the
