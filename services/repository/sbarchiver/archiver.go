@@ -61,8 +61,9 @@ type ArchiveRequest struct {
 	PayloadCommitID string
 
 	// Set by NewRequest for serving; a request from the queue has neither.
-	refIsCommitID bool // a full commit ID, the only ref that can't be moved
-	commitTime    time.Time
+	refIsCommitID  bool // a full commit ID, the only ref that can't be moved
+	mayHavePartner bool // the subject pairs with a partner repo, even one that doesn't exist yet
+	commitTime     time.Time
 }
 
 // ErrUnknownArchiveFormat means the requested archive format is not supported.
@@ -145,6 +146,8 @@ func newRequest(ctx context.Context, repo *repo_model.Repository, gitRepo *git.R
 	aReq.MetadataRef = dm.Ref
 
 	if dm.MetadataType != "sb" {
+		partnerName, _ := payloadRepoNameFor(dm)
+		aReq.mayHavePartner = partnerName != ""
 		// A commit ID pairs with the partner as the release or branch it is the head of would
 		payloadFor := refShortName
 		if headOf != "" && dm.CommitSHA == headOf {
@@ -991,23 +994,28 @@ func ServeRepoSBArchive(ctx *gitea_context.Base, repo *repo_model.Repository, ar
 	http.ServeContent(ctx.Resp, ctx.Req, downloadName, archiveReq.lastModified(), fr)
 }
 
-// lastModified is the commit time, or zero when the burrito carries partner content, whose changes the
-// commit time doesn't show; a zero time sends no Last-Modified, so If-Modified-Since can't answer 304.
+// lastModified is the commit time when the ref is pinned (see isPinned), or zero: a moved ref can serve an
+// older commit, and partner changes don't show in it. A zero time sends no Last-Modified, so If-Modified-Since can't answer 304.
 func (aReq *ArchiveRequest) lastModified() time.Time {
-	if aReq.PayloadCommitID != "" {
+	if !aReq.isPinned() {
 		return time.Time{}
 	}
 	return aReq.commitTime
 }
 
-// cacheControl allows long-lived caching only when the ref pins all the burrito holds: a commit ID of a
-// burrito without partner content. A tag can be deleted and made again, and so can a partner's ref.
+// isPinned reports whether the ref pins all the burrito holds: a commit ID of a burrito that can't carry
+// partner content. A tag can be deleted and made again, a partner's ref can move, and a partner repo can be created.
+func (aReq *ArchiveRequest) isPinned() bool {
+	return aReq.refIsCommitID && !aReq.mayHavePartner && aReq.PayloadCommitID == ""
+}
+
+// cacheControl allows long-lived caching only when the ref is pinned (see isPinned).
 func (aReq *ArchiveRequest) cacheControl(ctx context.Context, repo *repo_model.Repository) (string, error) {
 	if err := repo.LoadOwner(ctx); err != nil {
 		return "", fmt.Errorf("repo.LoadOwner: %w", err)
 	}
 	scope := util.Iif(!repo.IsPrivate && repo.Owner.Visibility == structs.VisibleTypePublic, "public", "private")
-	if aReq.refIsCommitID && aReq.PayloadCommitID == "" {
+	if aReq.isPinned() {
 		return scope + ", max-age=31536000, immutable", nil
 	}
 	return "max-age=0, " + scope + ", must-revalidate", nil

@@ -243,7 +243,7 @@ func TestDCSAPIRepoSBFile(t *testing.T) {
 	assert.Equal(t, readme, resp.Body.Bytes())
 	assert.Contains(t, resp.Header().Get("Content-Type"), "text/plain")
 	assert.Equal(t, "max-age=0, public, must-revalidate", resp.Header().Get("Cache-Control"))
-	assert.NotEmpty(t, resp.Header().Get("Last-Modified"))
+	assert.Empty(t, resp.Header().Get("Last-Modified")) // a branch can be reset to an older commit
 	etag := resp.Header().Get("ETag")
 	require.NotEmpty(t, etag)
 	MakeRequest(t, NewRequest(t, "GET", "/api/v1/repos/user2/repo1/sb/raw/README.md").SetHeader("If-None-Match", etag), http.StatusNotModified)
@@ -298,7 +298,9 @@ func TestDCSAPIRepoSBFileConverted(t *testing.T) {
 		assert.Equal(t, notes, string(sbZipEntry(t, archive.Body.Bytes(), "repo1/ingredients/TIT.tsv")))
 
 		// The entries carry the commit time, not the time of the conversion
-		commitTime, err := http.ParseTime(archive.Header().Get("Last-Modified"))
+		assert.Empty(t, archive.Header().Get("Last-Modified")) // a branch can be reset to an older commit
+		pinned := MakeRequest(t, NewRequest(t, "GET", "/api/v1/repos/user2/repo1/sb/"+dm.CommitSHA+".zip"), http.StatusOK)
+		commitTime, err := http.ParseTime(pinned.Header().Get("Last-Modified"))
 		require.NoError(t, err)
 		zr, err := zip.NewReader(bytes.NewReader(archive.Body.Bytes()), int64(archive.Body.Len()))
 		require.NoError(t, err)

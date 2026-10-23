@@ -119,21 +119,26 @@ func TestCacheControl(t *testing.T) {
 	const immutable = "public, max-age=31536000, immutable"
 	const revalidate = "max-age=0, public, must-revalidate"
 
-	// Only a commit ID without partner content can't change: a tag can be made again, and so can a partner's ref
+	// Only a commit ID without partner content can't change: a tag can be made again, a partner's ref can move,
+	// and a partner repo missing today can be created
 	for _, c := range []struct {
 		refIsCommitID   bool
+		mayHavePartner  bool
 		payloadCommitID string
 		want            string
 	}{
-		{true, "", immutable},
-		{false, "", revalidate},
-		{true, "0123456789abcdef0123456789abcdef01234567", revalidate},
-		{false, "0123456789abcdef0123456789abcdef01234567", revalidate},
+		{true, false, "", immutable},
+		{false, false, "", revalidate},
+		{true, true, "", revalidate},
+		{true, true, "0123456789abcdef0123456789abcdef01234567", revalidate},
+		{false, true, "0123456789abcdef0123456789abcdef01234567", revalidate},
 	} {
-		aReq := &ArchiveRequest{refIsCommitID: c.refIsCommitID, PayloadCommitID: c.payloadCommitID}
+		aReq := &ArchiveRequest{refIsCommitID: c.refIsCommitID, mayHavePartner: c.mayHavePartner, PayloadCommitID: c.payloadCommitID, commitTime: time.Unix(1000, 0)}
 		cacheControl, err := aReq.cacheControl(t.Context(), repo)
 		require.NoError(t, err)
-		assert.Equal(t, c.want, cacheControl, "commit ID %t, partner %q", c.refIsCommitID, c.payloadCommitID)
+		assert.Equal(t, c.want, cacheControl, "commit ID %t, may have partner %t, partner %q", c.refIsCommitID, c.mayHavePartner, c.payloadCommitID)
+		// Last-Modified follows the same rule: a moved ref or a new partner commit doesn't change the commit time
+		assert.Equal(t, c.want == immutable, !aReq.lastModified().IsZero(), "Last-Modified: commit ID %t, may have partner %t", c.refIsCommitID, c.mayHavePartner)
 	}
 
 	repo.IsPrivate = true
