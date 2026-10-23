@@ -176,13 +176,16 @@ func (aReq *ArchiveRequest) GetArchiveName() string {
 }
 
 // StorageCommitID returns the cache key used as the commit ID in repo_archiver. Everything that decides the
-// archive's bytes is in it: the commit, the metadata type, the TW/TWL partner commit, and the en_tw commit of
-// a ts Translation Words conversion. It is hashed to fit the column's 64 characters, which "sb-" and a SHA-256
-// commit ID alone would exceed.
+// archive's bytes is in it: the commit, the metadata type, the TW/TWL partner commit, the en_tw commit of a
+// ts Translation Words conversion, and whether the files sit in a prefix folder (PREFIX_ARCHIVE_FILES). It is
+// hashed to fit the column's 64 characters, which "sb-" and a SHA-256 commit ID alone would exceed.
 func (aReq *ArchiveRequest) StorageCommitID() string {
 	key := aReq.CommitID + "\n" + aReq.MetadataType + "\n" + aReq.PayloadCommitID
 	if aReq.TWSourceCommitID != "" {
 		key += "\n" + aReq.TWSourceCommitID
+	}
+	if !setting.Repository.PrefixArchiveFiles {
+		key += "\nunprefixed"
 	}
 	sum := sha256.Sum256([]byte(key))
 	return storageCommitPrefix + hex.EncodeToString(sum[:])[:60]

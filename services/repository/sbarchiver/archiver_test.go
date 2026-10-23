@@ -147,6 +147,12 @@ func TestStorageCommitID(t *testing.T) {
 	tsTW.TWSourceCommitID = strings.Repeat("d", 64)
 	assert.Len(t, map[string]bool{withoutTWSource: true, withTWSource: true, tsTW.StorageCommitID(): true}, 3)
 	assert.LessOrEqual(t, len(tsTW.StorageCommitID()), 64)
+
+	// An archive built with PREFIX_ARCHIVE_FILES has other paths than one built without it
+	aReq := &ArchiveRequest{CommitID: strings.Repeat("a", 40), MetadataType: "rc"}
+	before := aReq.StorageCommitID()
+	defer test.MockVariableValue(&setting.Repository.PrefixArchiveFiles, !setting.Repository.PrefixArchiveFiles)()
+	assert.NotEqual(t, before, aReq.StorageCommitID())
 }
 
 // TestWriteDirectoryArchiveDeterministic checks that converted archives carry the commit time, not the

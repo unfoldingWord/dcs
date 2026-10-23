@@ -450,7 +450,13 @@ func InitiateDownloadSB(ctx *context.Context) {
 
 	aReq, err := sbarchiver_service.NewRequest(ctx, ctx.Repo.Repository, ctx.Repo.GitRepo, ctx.PathParam("*"))
 	if err != nil {
-		ctx.HTTPError(http.StatusBadRequest, "invalid SB archive request")
+		if errors.Is(err, sbarchiver_service.ErrUnknownArchiveFormat{}) {
+			ctx.HTTPError(http.StatusBadRequest, err.Error())
+		} else if errors.Is(err, sbarchiver_service.RepoRefNotFoundError{}) || errors.Is(err, sbarchiver_service.ErrRepoNotConvertible{}) {
+			ctx.HTTPError(http.StatusNotFound, err.Error())
+		} else {
+			ctx.ServerError("sbarchiver_service.NewRequest", err)
+		}
 		return
 	}
 	if aReq == nil {

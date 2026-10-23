@@ -162,8 +162,9 @@ func TestDCSAPIFileSaveProcessesMetadata(t *testing.T) {
 func TestDCSAPIRepoSBArchive(t *testing.T) {
 	defer tests.PrepareTestEnv(t)()
 
-	// No metadata at all: nothing to convert
+	// No metadata at all: nothing to convert, from the API and from the web route
 	MakeRequest(t, NewRequest(t, "GET", "/api/v1/repos/user2/repo1/sb/master.zip"), http.StatusNotFound)
+	MakeRequest(t, NewRequest(t, "GET", "/user2/repo1/sb/master.zip"), http.StatusNotFound)
 
 	require.NoError(t, repo_model.InsertDoor43Metadata(t.Context(), &repo_model.Door43Metadata{
 		RepoID: 1, Ref: "master", RefType: "branch", CommitSHA: "65f1bf27bc3bf70f64657658635e66094edbcb4d",

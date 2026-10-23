@@ -24,7 +24,7 @@ func TestIsValidBurritoPath(t *testing.T) {
 	for _, p := range []string{"metadata.json", "ingredients/TIT.tsv", "ingredients/payload/kt/god.md", "ingredients/..x.md"} {
 		assert.True(t, isValidBurritoPath(p), p)
 	}
-	for _, p := range []string{"", "/metadata.json", "..", "../en_tw/metadata.json", "ingredients/../../x", `ingredients\..\x`, "ingredients/./TIT.tsv"} {
+	for _, p := range []string{"", "/metadata.json", "..", "../en_tw/metadata.json", "ingredients/../../x", `ingredients\..\x`, "ingredients/./TIT.tsv", "ingredients//TIT.tsv", "ingredients/"} {
 		assert.False(t, isValidBurritoPath(p), p)
 	}
 }
@@ -85,23 +85,20 @@ func TestBurritoFileFromZip(t *testing.T) {
 		assert.ErrorIs(t, err, util.ErrNotExist, p)
 	}
 
-	// Archives without a root folder (PREFIX_ARCHIVE_FILES = false)
-	files = map[string]string{"metadata.json": metadata, "ingredients/TIT.tsv": "x", "ingredients/metadata.json": "{}"}
-	zr = makeZip(t, files, "ingredients/", "ingredients/TIT.tsv", "ingredients/metadata.json", "metadata.json")
-	assert.Empty(t, burritoRoot(zr))
-	file, err = burritoFileFromZip(zr, "abc123", "metadata.json")
-	require.NoError(t, err)
-	assert.EqualValues(t, len(metadata), file.size)
-
-	// An unprefixed archive that .gitattributes cut down to one folder, which isn't a prefix
+	// Without PREFIX_ARCHIVE_FILES there is no root folder, whatever folders the archive has: .gitattributes can
+	// cut an archive down to one folder, which can even hold a metadata.json of its own
 	defer test.MockVariableValue(&setting.Repository.PrefixArchiveFiles, false)()
-	zr = makeZip(t, map[string]string{"ingredients/TIT.tsv": "x"}, "ingredients/", "ingredients/TIT.tsv")
-	assert.Empty(t, burritoRoot(zr))
-	_, err = burritoFileFromZip(zr, "abc123", "ingredients/TIT.tsv")
-	require.NoError(t, err)
-	// A prefixed archive built before PREFIX_ARCHIVE_FILES was turned off still has its prefix
-	zr = makeZip(t, map[string]string{"en_tn/metadata.json": metadata}, "en_tn/", "en_tn/metadata.json")
-	assert.Equal(t, "en_tn/", burritoRoot(zr))
+	for _, names := range [][]string{
+		{"ingredients/", "ingredients/TIT.tsv", "ingredients/metadata.json", "metadata.json"},
+		{"ingredients/", "ingredients/TIT.tsv"},
+		{"ingredients/", "ingredients/TIT.tsv", "ingredients/metadata.json"},
+	} {
+		zr = makeZip(t, map[string]string{"ingredients/TIT.tsv": "x", "metadata.json": metadata, "ingredients/metadata.json": "{}"}, names...)
+		assert.Empty(t, burritoRoot(zr), names)
+		file, err = burritoFileFromZip(zr, "abc123", "ingredients/TIT.tsv")
+		require.NoError(t, err, names)
+		assert.EqualValues(t, 1, file.size, names)
+	}
 }
 
 func TestSniffContentType(t *testing.T) {

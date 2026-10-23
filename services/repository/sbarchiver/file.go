@@ -83,13 +83,13 @@ func ServeSBFile(ctx *gitea_context.Base, repo *repo_model.Repository, gitRepo *
 	return serveBurritoFile(ctx, file, aReq, cacheControl)
 }
 
-// isValidBurritoPath rejects an empty or absolute path, a backslash, and a "." or ".." segment
+// isValidBurritoPath rejects an empty or absolute path, a backslash, and an empty, "." or ".." segment
 func isValidBurritoPath(filePath string) bool {
 	if filePath == "" || strings.HasPrefix(filePath, "/") || strings.Contains(filePath, `\`) {
 		return false
 	}
 	for segment := range strings.SplitSeq(filePath, "/") {
-		if segment == "." || segment == ".." {
+		if segment == "" || segment == "." || segment == ".." {
 			return false
 		}
 	}
@@ -216,30 +216,16 @@ func burritoFileFromZip(zr *zip.Reader, storageCommitID, filePath string) (*burr
 	}, nil
 }
 
-// burritoRoot returns the folder that holds every file of the archive, with a trailing slash, or "" when
-// the archive has files at its top level (PREFIX_ARCHIVE_FILES = false). It is read from the archive
-// rather than made from the repo name, since a repo renamed after the archive was built keeps its old
-// name there, and "git archive" lowercases it.
+// burritoRoot returns the archive's prefix folder with a trailing slash, or "" without PREFIX_ARCHIVE_FILES.
+// The setting is part of the cache key (see StorageCommitID), so a kept archive was built as it says now. The
+// folder is read from the archive rather than made from the repo name, since a repo renamed after the archive
+// was built keeps its old name there, and "git archive" lowercases it.
 func burritoRoot(zr *zip.Reader) string {
-	root := ""
-	for _, f := range zr.File {
-		folder, _, found := strings.Cut(f.Name, "/")
-		if !found || root != "" && folder+"/" != root {
-			return ""
-		}
-		root = folder + "/"
+	if !setting.Repository.PrefixArchiveFiles || len(zr.File) == 0 {
+		return ""
 	}
-	if root == "" || setting.Repository.PrefixArchiveFiles {
-		return root
-	}
-	// An unprefixed archive whose .gitattributes export only one folder looks prefixed too, so it is a prefix
-	// only when the burrito's metadata.json is right under it
-	for _, f := range zr.File {
-		if f.Name == root+burritoMetadataFile {
-			return root
-		}
-	}
-	return ""
+	folder, _, _ := strings.Cut(zr.File[0].Name, "/")
+	return folder + "/"
 }
 
 // handleNotModified sets the cache headers and answers 304 when If-None-Match names the current ETag.
