@@ -153,14 +153,26 @@ func (m *metadataNotifier) DeleteRelease(ctx context.Context, doer *user_model.U
 	if err != nil {
 		log.Error("DeleteRelease: DeleteDoor43MetadataByRepoIDAndReleaseID failed [repo: %s, releaseID: %d]: %v", rel.Repo.FullName(), rel.ID, err)
 	}
-	recheckDefaultBranch(ctx, rel.RepoID)
+	recheckDefaultBranch(graceful.GetManager().ShutdownContext(), rel.RepoID) // a client disconnect must not cut the check short
 }
 
 // recheckDefaultBranch re-checks the default branch after a release is removed, as its release
 // advice compares against the latest release and no later branch push re-checks it.
 func recheckDefaultBranch(ctx context.Context, repoID int64) {
+	// a panic must not stop the notifiers that run after this one
+	defer func() {
+		if err := recover(); err != nil {
+			log.Error("recheckDefaultBranch: PANIC [repo %d]: %v\n%s", repoID, err, log.Stack(2))
+		}
+	}()
 	repo, err := repo_model.GetRepositoryByID(ctx, repoID)
-	if err != nil || repo.IsArchived || repo.IsPrivate || repo.IsMirror || repo.IsEmpty {
+	if err != nil {
+		if !repo_model.IsErrRepoNotExist(err) {
+			log.Error("recheckDefaultBranch: GetRepositoryByID(%d): %v", repoID, err)
+		}
+		return
+	}
+	if repo.IsArchived || repo.IsPrivate || repo.IsMirror || repo.IsEmpty {
 		return
 	}
 	if err := processDoor43MetadataForRepoLatestDMs(ctx, repo); err != nil {

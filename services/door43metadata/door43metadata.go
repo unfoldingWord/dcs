@@ -310,6 +310,7 @@ func processDoor43MetadataForRepo(ctx context.Context, repo *repo_model.Reposito
 // defaultBranchNeedsRecheck reports whether processing ref can have changed the default
 // branch's check results. Only its release advice depends on another ref (the latest
 // release), which a branch cannot change, and a processed default branch was just checked.
+// A deleted release has no row left to find here, so DeleteRelease re-checks for it.
 func defaultBranchNeedsRecheck(ctx context.Context, repo *repo_model.Repository, ref string) bool {
 	if ref == "" {
 		return true
