@@ -300,11 +300,27 @@ func processDoor43MetadataForRepo(ctx context.Context, repo *repo_model.Reposito
 	}
 
 	_ = repo.LoadLatestDMs(ctx)
-	if repo.DefaultBranchDM != nil {
+	if repo.DefaultBranchDM != nil && defaultBranchNeedsRecheck(ctx, repo, ref) {
 		door43healthcheck.RunHealthcheck(ctx, repo.DefaultBranchDM)
 	}
 
 	return nil
+}
+
+// defaultBranchNeedsRecheck reports whether processing ref can have changed the default
+// branch's check results. Only its release advice depends on another ref (the latest
+// release), which a branch cannot change, and a processed default branch was just checked.
+// A deleted release has no row left to find here, so DeleteRelease re-checks for it.
+func defaultBranchNeedsRecheck(ctx context.Context, repo *repo_model.Repository, ref string) bool {
+	if ref == "" {
+		return true
+	}
+	isRelease, err := repo_model.IsReleaseExist(ctx, repo.ID, ref)
+	if err != nil {
+		log.Error("IsReleaseExist [%s, %s]: %v", repo.FullName(), ref, err)
+		return true
+	}
+	return isRelease // processDoor43MetadataForRepoRef also treats a ref with a release as its tag
 }
 
 func GetBookAlignmentCount(ctx context.Context, gitRepo *git.Repository, bookPath string, commit *git.Commit) (int, error) {
@@ -332,8 +348,7 @@ func GetBookAlignmentCount(ctx context.Context, gitRepo *git.Repository, bookPat
 		log.Error("io.ReadAll Error: %v", err)
 		return 0, err
 	}
-	matches := regexp.MustCompile(`\\zaln-s`).FindAllStringIndex(string(buf), -1)
-	return len(matches), nil
+	return bytes.Count(buf, []byte(`\zaln-s`)), nil
 }
 
 // GetBooks get the books of the manifest
