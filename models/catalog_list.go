@@ -402,7 +402,8 @@ func SearchCatalogForBookPackage(ctx context.Context, dm *repo.Door43Metadata, o
 // SearchCatalogForBookPackageByCondition search repositories by condition for a book package:
 // the entries of dm's owner in dm's language, then, for each of dm's manifest relations whose
 // repo isn't among them, that repo's entry under the first of repo.RelationFallbackOwners that
-// has one. The original-language Bibles are left to GetOrigLanguageBibles.
+// has the pinned release, else under the first that has one. The original-language Bibles are
+// left to GetOrigLanguageBibles.
 func SearchCatalogForBookPackageByCondition(ctx context.Context, dm *repo.Door43Metadata, opts *door43metadata.SearchCatalogOptions, cond builder.Cond) (repo.Door43MetadataList, int64, error) {
 	dms, err := searchBookPackageEntries(ctx, dm, "dm.language = ? AND r.owner_id = ?", []any{dm.Language, dm.Repo.OwnerID}, "", cond)
 	if err != nil {
@@ -424,6 +425,7 @@ func SearchCatalogForBookPackageByCondition(ctx context.Context, dm *repo.Door43
 		if !inPackage.Add(repoName) {
 			continue
 		}
+		var found repo.Door43MetadataList
 		for _, owner := range repo.RelationFallbackOwners {
 			if strings.EqualFold(owner, dm.Repo.OwnerName) {
 				continue
@@ -438,11 +440,19 @@ func SearchCatalogForBookPackageByCondition(ctx context.Context, dm *repo.Door43
 			if err != nil {
 				return nil, 0, err
 			}
-			if len(entries) > 0 {
-				dms = append(dms, entries...)
+			if len(entries) == 0 {
+				continue
+			}
+			if found == nil {
+				found = entries
+			}
+			// like the healthcheck, a later owner that has the pinned release beats an earlier one that doesn't
+			if relation.Version == "" || entries[0].Ref == relation.Version || entries[0].Ref == "v"+relation.Version {
+				found = entries
 				break
 			}
 		}
+		dms = append(dms, found...)
 	}
 
 	if err = dms.LoadAttributes(ctx); err != nil {

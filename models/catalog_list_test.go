@@ -593,6 +593,11 @@ func TestSearchCatalogForBookPackageRelations(t *testing.T) {
 	uwTA := newRepo(uw, "en_ta")
 	uhb := newRepo(uw, "hbo_uhb")
 	ugnt := newRepo(uw, "el-x-koine_ugnt")
+	// en/glt?v=3: unfoldingWord has en_glt but not v3, Door43-Catalog has v3
+	d43 := &user_model.User{Name: "Door43-Catalog", LowerName: "door43-catalog", Email: "d43@example.com", Type: user_model.UserTypeOrganization}
+	require.NoError(t, db.Insert(ctx, d43))
+	uwGLT := newRepo(uw, "en_glt")
+	d43GLT := newRepo(d43, "en_glt")
 
 	relation := func(lang, id, version string) *structs.Relation {
 		return &structs.Relation{Language: lang, Identifier: id, Version: version}
@@ -617,6 +622,8 @@ func TestSearchCatalogForBookPackageRelations(t *testing.T) {
 		{uhb, "v2.1.30", door43metadata.StageProd, 990, "hbo", "Hebrew Old Testament"},
 		{ugnt, "v0.18", door43metadata.StageProd, 100, "el-x-koine", "Greek New Testament"},
 		{ugnt, "v0.30", door43metadata.StageProd, 990, "el-x-koine", "Greek New Testament"},
+		{uwGLT, "master", door43metadata.StageLatest, 1000, "en", "Aligned Bible"},
+		{d43GLT, "v3", door43metadata.StageProd, 100, "en", "Aligned Bible"},
 	}
 	for i, r := range rows {
 		dm := &repo_model.Door43Metadata{
@@ -628,7 +635,7 @@ func TestSearchCatalogForBookPackageRelations(t *testing.T) {
 			dm.RefType = "branch"
 		}
 		if r.repoID == requestedRepo {
-			dm.Relations = []*structs.Relation{relation("en", "ult", ""), relation("en", "ust", "1"), relation("en", "ta", ""), relation("hbo", "uhb", "2.1.17"), relation("el-x-koine", "ugnt", "")}
+			dm.Relations = []*structs.Relation{relation("en", "ult", ""), relation("en", "ust", "1"), relation("en", "ta", ""), relation("hbo", "uhb", "2.1.17"), relation("el-x-koine", "ugnt", ""), relation("en", "glt", "3")}
 		}
 		_, err := db.GetEngine(ctx).Insert(dm)
 		require.NoError(t, err)
@@ -646,14 +653,15 @@ func TestSearchCatalogForBookPackageRelations(t *testing.T) {
 	}
 
 	// user2's own en_ult is kept over unfoldingWord's; unfoldingWord's en_ust comes at the
-	// pinned v1 rather than its master; en_ta is filtered out by the subjects like any entry.
+	// pinned v1 rather than its master; en_ta is filtered out by the subjects like any entry;
+	// en_glt comes from Door43-Catalog at the pinned v3, not from unfoldingWord's master.
 	results, count, err := SearchCatalogForBookPackage(ctx, dm, &door43metadata.SearchCatalogOptions{
 		Subjects:       []string{"TSV Study Notes", "Aligned Bible"},
 		IncludeHistory: true,
 	})
 	require.NoError(t, err)
-	assert.EqualValues(t, 3, count)
-	assert.Equal(t, map[int64]string{requestedRepo: "master", ownULT: "master", uwUST: "v1"}, refs(results))
+	assert.EqualValues(t, 4, count)
+	assert.Equal(t, map[int64]string{requestedRepo: "master", ownULT: "master", uwUST: "v1", d43GLT: "v3"}, refs(results))
 
 	// The pinned Hebrew release wins over the one closer in time; the unpinned Greek
 	// Bible is still the release closest in time.
