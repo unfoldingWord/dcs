@@ -25,7 +25,6 @@ require (
 	github.com/buildkite/terminal-to-html/v3 v3.17.1
 	github.com/caddyserver/certmagic v0.25.6
 	github.com/charmbracelet/git-lfs-transfer v0.1.1-0.20260812203852-971c0284dc33
-	github.com/chi-middleware/proxy v1.1.1
 	github.com/coder/websocket v1.8.15
 	github.com/dlclark/regexp2/v2 v2.8.4
 	github.com/dsnet/compress v0.0.2-0.20230904184137-39efe44ab707
@@ -82,7 +81,7 @@ require (
 	github.com/stretchr/testify v1.12.1
 	github.com/syndtr/goleveldb v1.0.0
 	github.com/ulikunitz/xz v0.5.17
-	github.com/unfoldingWord/go-rc2sb v0.5.0
+	github.com/unfoldingWord/go-rc2sb v0.6.0
 	github.com/unfoldingWord/go-tc2rc v0.1.0
 	github.com/unfoldingWord/go-ts2rc v0.1.1
 	github.com/urfave/cli-docs/v3 v3.1.0
