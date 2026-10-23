@@ -6,6 +6,7 @@ package door43metadata
 import (
 	"context"
 	"errors"
+	"strings"
 
 	"gitea.dev/models/door43metadata"
 	repo_model "gitea.dev/models/repo"
@@ -29,6 +30,17 @@ var _ notify_service.Notifier = &metadataNotifier{}
 type metadataQueueItem struct {
 	RepoID int64
 	Ref    string
+	// A rename's old and new names: Gitea notifies of a rename before its caller saves the new name, so the
+	// worker can still load the old one while the repo is already at the new path
+	RenamedFrom, RenamedTo string
+}
+
+// applyRename gives repo the new name of a rename its database row doesn't have yet. A later rename has
+// already saved its own name, which stays.
+func (item metadataQueueItem) applyRename(repo *repo_model.Repository) {
+	if item.RenamedTo != "" && repo.Name == item.RenamedFrom {
+		repo.Name, repo.LowerName = item.RenamedTo, strings.ToLower(item.RenamedTo)
+	}
 }
 
 var metadataQueue *queue.WorkerPoolQueue[metadataQueueItem]
@@ -57,9 +69,13 @@ func NewNotifier() notify_service.Notifier {
 // processInBackground queues the ref for processing. The queue is unique, so pushes to a
 // ref that is still waiting are merged, and its worker limit bounds the concurrent work.
 func processInBackground(caller string, repo *repo_model.Repository, ref string) {
-	err := metadataQueue.Push(metadataQueueItem{RepoID: repo.ID, Ref: ref})
+	queueItem(caller, repo, metadataQueueItem{RepoID: repo.ID, Ref: ref})
+}
+
+func queueItem(caller string, repo *repo_model.Repository, item metadataQueueItem) {
+	err := metadataQueue.Push(item)
 	if err != nil && !errors.Is(err, queue.ErrAlreadyInQueue) {
-		log.Error("%s: queueing Door43Metadata [%s, %s] failed: %v", caller, repo.FullName(), ref, err)
+		log.Error("%s: queueing Door43Metadata [%s, %s] failed: %v", caller, repo.FullName(), item.Ref, err)
 	}
 }
 
@@ -79,6 +95,7 @@ func processQueueItem(ctx context.Context, item metadataQueueItem) {
 		}
 		return
 	}
+	item.applyRename(repo)
 	if err := ProcessDoor43MetadataForRepo(ctx, repo, item.Ref); err != nil {
 		log.Error("ProcessDoor43MetadataForRepo failed [%s, %s]: %v", repo.FullName(), item.Ref, err)
 	}
@@ -225,7 +242,7 @@ func (m *metadataNotifier) ForkRepository(ctx context.Context, doer *user_model.
 }
 
 func (m *metadataNotifier) RenameRepository(ctx context.Context, doer *user_model.User, repo *repo_model.Repository, oldName string) {
-	processInBackground("RenameRepository", repo, "")
+	queueItem("RenameRepository", repo, metadataQueueItem{RepoID: repo.ID, RenamedFrom: oldName, RenamedTo: repo.Name})
 }
 
 func (m *metadataNotifier) DeleteRef(ctx context.Context, doer *user_model.User, repo *repo_model.Repository, refFullName git.RefName) {
