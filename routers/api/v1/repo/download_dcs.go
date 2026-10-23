@@ -77,10 +77,9 @@ func GetSBFile(ctx *context.APIContext) {
 	//   `metadata.json` or an ingredient. It is read out of the archive from `/repos/{owner}/{repo}/sb/{ref}.zip`,
 	//   below its root folder, so a client can read single files or the whole archive interchangeably.
 	//   The Content-Type is the ingredient's `mimeType` from `metadata.json`, and `application/json` for
-	//   `metadata.json` itself. A full commit ID gets a long-lived, immutable Cache-Control, unless the burrito
-	//   also carries a partner repository's content (Translation Words and Translation Words Links); other
-	//   refs are revalidated with the ETag. The same file can be read without an API token from the
-	//   repository's HTML URL, `/{owner}/{repo}/sb/raw/{filepath}?ref={ref}`.
+	//   `metadata.json` itself. Every response is revalidated with its ETag (If-None-Match gets a 304 while the
+	//   file is unchanged), for any ref, since a burrito can change without its commit changing. The same file
+	//   can be read without an API token from the repository's HTML URL, `/{owner}/{repo}/sb/raw/{filepath}?ref={ref}`.
 	// produces:
 	// - application/json
 	// - text/markdown

@@ -99,7 +99,6 @@ func TestSniffContentType(t *testing.T) {
 }
 
 func TestHandleNotModified(t *testing.T) {
-	lastModified := time.Date(2026, 10, 22, 20, 6, 43, 0, time.UTC)
 	const etag = `"abc-1"`
 	for _, c := range []struct {
 		header, value string
@@ -111,40 +110,19 @@ func TestHandleNotModified(t *testing.T) {
 		{"If-None-Match", `"other", "abc-1"`, true},
 		{"If-None-Match", `*`, true},
 		{"If-None-Match", `"abc-0"`, false},
-		{"If-Modified-Since", lastModified.Format(http.TimeFormat), true},
-		{"If-Modified-Since", lastModified.Add(-time.Second).Format(http.TimeFormat), false},
+		// SB responses have no Last-Modified, so a date alone never keeps a copy that may be stale
+		{"If-Modified-Since", time.Now().Format(http.TimeFormat), false},
 	} {
 		ctx, resp := contexttest.MockContext(t, "user27/repo49/sb/raw/metadata.json")
 		if c.header != "" {
 			ctx.Req.Header.Set(c.header, c.value)
 		}
-		assert.Equal(t, c.want, handleNotModified(ctx.Base, etag, lastModified, "max-age=0"), "%s: %s", c.header, c.value)
+		assert.Equal(t, c.want, handleNotModified(ctx.Base, etag, "max-age=0"), "%s: %s", c.header, c.value)
 		assert.Equal(t, etag, resp.Header().Get("ETag"))
 		assert.Equal(t, "max-age=0", resp.Header().Get("Cache-Control"))
+		assert.Empty(t, resp.Header().Get("Last-Modified"))
 		if c.want {
 			assert.Equal(t, http.StatusNotModified, resp.Code)
 		}
 	}
-
-	// A stale ETag outweighs a current date: the burrito's partner content may have changed since
-	ctx, _ := contexttest.MockContext(t, "user27/repo49/sb/raw/metadata.json")
-	ctx.Req.Header.Set("If-None-Match", `"abc-0"`)
-	ctx.Req.Header.Set("If-Modified-Since", lastModified.Format(http.TimeFormat))
-	assert.False(t, handleNotModified(ctx.Base, etag, lastModified, "max-age=0"))
-
-	// A burrito with partner content has no Last-Modified, so a date alone can't keep a stale copy
-	aReq := &ArchiveRequest{commitTime: lastModified, refIsCommitID: true, ownMetadata: true, mayHavePartner: true, PayloadCommitID: "0123456789abcdef0123456789abcdef01234567"}
-	ctx, resp := contexttest.MockContext(t, "user27/repo49/sb/raw/metadata.json")
-	ctx.Req.Header.Set("If-Modified-Since", lastModified.Format(http.TimeFormat))
-	assert.False(t, handleNotModified(ctx.Base, etag, aReq.lastModified(), "max-age=0"))
-	assert.Empty(t, resp.Header().Get("Last-Modified"))
-	aReq.PayloadCommitID, aReq.mayHavePartner = "", false
-	assert.Equal(t, lastModified, aReq.lastModified())
-
-	// A branch or tag can be moved to an older commit, so it has no Last-Modified either
-	aReq.refIsCommitID = false
-	ctx, resp = contexttest.MockContext(t, "user27/repo49/sb/raw/metadata.json")
-	ctx.Req.Header.Set("If-Modified-Since", lastModified.Format(http.TimeFormat))
-	assert.False(t, handleNotModified(ctx.Base, etag, aReq.lastModified(), "max-age=0"))
-	assert.Empty(t, resp.Header().Get("Last-Modified"))
 }

@@ -15,7 +15,6 @@ import (
 	"os"
 	"path"
 	"strings"
-	"time"
 
 	repo_model "gitea.dev/models/repo"
 	"gitea.dev/modules/charset"
@@ -63,7 +62,7 @@ func ServeSBFile(ctx *gitea_context.Base, repo *repo_model.Repository, gitRepo *
 	if err != nil {
 		return err
 	}
-	cacheControl, err := aReq.cacheControl(ctx, repo)
+	cacheControl, err := sbCacheControl(ctx, repo)
 	if err != nil {
 		return err
 	}
@@ -233,37 +232,24 @@ func burritoRoot(zr *zip.Reader) string {
 	return root
 }
 
-// handleNotModified sets the cache headers and answers a conditional request whose copy is current.
-// If-Modified-Since only counts without If-None-Match (RFC 9110 13.2.2), and not at all with a zero
-// lastModified, which ArchiveRequest.lastModified returns when partner content can move.
-func handleNotModified(ctx *gitea_context.Base, etag string, lastModified time.Time, cacheControl string) bool {
+// handleNotModified sets the cache headers and answers 304 when If-None-Match names the current ETag.
+// If-Modified-Since isn't answered, since SB responses have no Last-Modified (see sbCacheControl).
+func handleNotModified(ctx *gitea_context.Base, etag, cacheControl string) bool {
 	header := ctx.Resp.Header()
 	header.Set("ETag", etag)
 	header.Set("Cache-Control", cacheControl)
-	if !lastModified.IsZero() {
-		header.Set("Last-Modified", lastModified.UTC().Format(http.TimeFormat))
-	}
-
-	notModified := false
-	if ifNoneMatch := ctx.Req.Header.Get("If-None-Match"); ifNoneMatch != "" {
-		for tag := range strings.SplitSeq(ifNoneMatch, ",") {
-			tag = strings.TrimPrefix(strings.TrimSpace(tag), "W/")
-			if tag == "*" || tag == strings.TrimPrefix(etag, "W/") {
-				notModified = true
-				break
-			}
+	for tag := range strings.SplitSeq(ctx.Req.Header.Get("If-None-Match"), ",") {
+		tag = strings.TrimPrefix(strings.TrimSpace(tag), "W/")
+		if tag == "*" || tag != "" && tag == strings.TrimPrefix(etag, "W/") {
+			ctx.Resp.WriteHeader(http.StatusNotModified)
+			return true
 		}
-	} else if since, err := http.ParseTime(ctx.Req.Header.Get("If-Modified-Since")); err == nil && !lastModified.IsZero() {
-		notModified = !lastModified.Truncate(time.Second).After(since)
 	}
-	if notModified {
-		ctx.Resp.WriteHeader(http.StatusNotModified)
-	}
-	return notModified
+	return false
 }
 
 func serveBurritoFile(ctx *gitea_context.Base, file *burritoFile, aReq *ArchiveRequest, cacheControl string) error {
-	if handleNotModified(ctx, file.etag, aReq.lastModified(), cacheControl) {
+	if handleNotModified(ctx, file.etag, cacheControl) {
 		return nil
 	}
 
@@ -288,7 +274,6 @@ func serveBurritoFile(ctx *gitea_context.Base, file *burritoFile, aReq *ArchiveR
 		ContentLength:      &file.size,
 		Filename:           path.Base(file.path),
 		ContentDisposition: httplib.ContentDispositionInline,
-		LastModified:       aReq.lastModified(),
 	})
 	ctx.Resp.Header().Set("Cache-Control", cacheControl) // ServeSetHeaders sets its own
 	ctx.Resp.WriteHeader(http.StatusOK)

@@ -21917,7 +21917,7 @@
     },
     "/repos/{owner}/{repo}/sb/raw/{filepath}": {
       "get": {
-        "description": "Returns one file of the repository's Scripture Burrito (SB) at the given git reference: its\n`metadata.json` or an ingredient. It is read out of the archive from `/repos/{owner}/{repo}/sb/{ref}.zip`,\nbelow its root folder, so a client can read single files or the whole archive interchangeably.\nThe Content-Type is the ingredient's `mimeType` from `metadata.json`, and `application/json` for\n`metadata.json` itself. A full commit ID gets a long-lived, immutable Cache-Control, unless the burrito\nalso carries a partner repository's content (Translation Words and Translation Words Links); other\nrefs are revalidated with the ETag. The same file can be read without an API token from the\nrepository's HTML URL, `/{owner}/{repo}/sb/raw/{filepath}?ref={ref}`.\n",
+        "description": "Returns one file of the repository's Scripture Burrito (SB) at the given git reference: its\n`metadata.json` or an ingredient. It is read out of the archive from `/repos/{owner}/{repo}/sb/{ref}.zip`,\nbelow its root folder, so a client can read single files or the whole archive interchangeably.\nThe Content-Type is the ingredient's `mimeType` from `metadata.json`, and `application/json` for\n`metadata.json` itself. Every response is revalidated with its ETag (If-None-Match gets a 304 while the\nfile is unchanged), for any ref, since a burrito can change without its commit changing. The same file\ncan be read without an API token from the repository's HTML URL, `/{owner}/{repo}/sb/raw/{filepath}?ref={ref}`.\n",
         "produces": [
           "application/json",
           "text/markdown",

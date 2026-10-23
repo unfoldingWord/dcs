@@ -96,14 +96,10 @@ func TestNewRequest(t *testing.T) {
 	_, err = NewRequest(ctx, ctx.Repo.Repository, ctx.Repo.GitRepo, strings.Repeat("0", len(masterID.String()))+".zip")
 	assert.ErrorIs(t, err, RepoRefNotFoundError{})
 
-	// The response headers need to know whether the ref can move, and the commit time
+	// The commit time stamps a converted archive's entries
 	aReq, err = NewRequest(ctx, ctx.Repo.Repository, ctx.Repo.GitRepo, "master.zip")
 	require.NoError(t, err)
-	assert.False(t, aReq.refIsCommitID)
 	assert.False(t, aReq.commitTime.IsZero())
-	aReq, err = NewRequest(ctx, ctx.Repo.Repository, ctx.Repo.GitRepo, masterID.String()+".zip")
-	require.NoError(t, err)
-	assert.True(t, aReq.refIsCommitID)
 
 	// An annotated tag shares its commit's archive
 	_, _, err = gitcmd.NewCommand("tag", "-a", "-m", "release", "v-annotated", "master").WithRepo(ctx.Repo.GitRepo).RunStdString(t.Context())
@@ -111,54 +107,21 @@ func TestNewRequest(t *testing.T) {
 	aReq, err = NewRequest(ctx, ctx.Repo.Repository, ctx.Repo.GitRepo, "v-annotated.zip")
 	require.NoError(t, err)
 	assert.Equal(t, masterID.String(), aReq.CommitID)
-	assert.False(t, aReq.refIsCommitID)
 }
 
-func TestCacheControl(t *testing.T) {
+func TestSBCacheControl(t *testing.T) {
 	require.NoError(t, unittest.PrepareTestDatabase())
 	repo := loadRepo(t)
-	const immutable = "public, max-age=31536000, immutable"
-	const revalidate = "max-age=0, public, must-revalidate"
 
-	// Only a commit ID with its own metadata and without partner content can't change: a tag can be made
-	// again, metadata borrowed from the default branch can change, a partner's ref can move, and a partner
-	// repo missing today can be created
-	for _, c := range []struct {
-		refIsCommitID   bool
-		ownMetadata     bool
-		mayHavePartner  bool
-		payloadCommitID string
-		want            string
-	}{
-		{true, true, false, "", immutable},
-		{false, true, false, "", revalidate},
-		{true, false, false, "", revalidate},
-		{true, true, true, "", revalidate},
-		{true, true, true, "0123456789abcdef0123456789abcdef01234567", revalidate},
-		{false, true, true, "0123456789abcdef0123456789abcdef01234567", revalidate},
-	} {
-		aReq := &ArchiveRequest{
-			refIsCommitID: c.refIsCommitID, ownMetadata: c.ownMetadata, mayHavePartner: c.mayHavePartner,
-			PayloadCommitID: c.payloadCommitID, commitTime: time.Unix(1000, 0),
-		}
-		cacheControl, err := aReq.cacheControl(t.Context(), repo)
-		require.NoError(t, err)
-		assert.Equal(t, c.want, cacheControl, "%+v", c)
-		// Last-Modified follows the same rule: a moved ref or a new partner commit doesn't change the commit time
-		assert.Equal(t, c.want == immutable, !aReq.lastModified().IsZero(), "Last-Modified: %+v", c)
-	}
-
-	// A ts Translation Words conversion reads en_tw's default branch, which can move
-	tsTW := &ArchiveRequest{refIsCommitID: true, ownMetadata: true, readsTWSource: true, commitTime: time.Unix(1000, 0)}
-	cacheControl, err := tsTW.cacheControl(t.Context(), repo)
+	// Every SB response is revalidated, whatever its ref; only the scope follows the repo's visibility
+	cacheControl, err := sbCacheControl(t.Context(), repo)
 	require.NoError(t, err)
-	assert.Equal(t, revalidate, cacheControl)
-	assert.True(t, tsTW.lastModified().IsZero())
+	assert.Equal(t, "max-age=0, public, must-revalidate", cacheControl)
 
 	repo.IsPrivate = true
-	cacheControl, err = (&ArchiveRequest{refIsCommitID: true, ownMetadata: true}).cacheControl(t.Context(), repo)
+	cacheControl, err = sbCacheControl(t.Context(), repo)
 	require.NoError(t, err)
-	assert.Equal(t, "private, max-age=31536000, immutable", cacheControl)
+	assert.Equal(t, "max-age=0, private, must-revalidate", cacheControl)
 }
 
 func TestStorageCommitID(t *testing.T) {

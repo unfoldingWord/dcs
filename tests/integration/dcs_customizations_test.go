@@ -11,8 +11,8 @@ import (
 	"io"
 	"net/http"
 	"net/url"
-	"regexp"
 	"testing"
+	"time"
 
 	auth_model "gitea.dev/models/auth"
 	"gitea.dev/models/db"
@@ -186,12 +186,10 @@ func TestDCSAPIRepoSBArchive(t *testing.T) {
 	}
 	assert.Contains(t, names, "repo1/README.md")
 
-	// The "immutable" link must point at this API route, pinned to the commit
-	linkHeaderRe := regexp.MustCompile(`^<(https?://.*/api/v1/repos/user2/repo1/sb/[a-f0-9]+\.zip\?rev=[a-f0-9]+)>; rel="immutable"$`)
-	m := linkHeaderRe.FindStringSubmatch(resp.Header().Get("Link"))
-	require.Len(t, m, 2, "Link header %q", resp.Header().Get("Link"))
-	pinned := MakeRequest(t, NewRequest(t, "GET", m[1]), http.StatusOK)
-	assert.Equal(t, resp.Body.Bytes(), pinned.Body.Bytes())
+	// No "immutable" link as git archives have: a commit's burrito can still change, and its ETag with it
+	assert.Empty(t, resp.Header().Get("Link"))
+	byCommit := MakeRequest(t, NewRequest(t, "GET", "/api/v1/repos/user2/repo1/sb/65f1bf27bc3bf70f64657658635e66094edbcb4d.zip"), http.StatusOK)
+	assert.Equal(t, resp.Body.Bytes(), byCommit.Body.Bytes())
 
 	resp = MakeRequest(t, NewRequest(t, "GET", "/api/v1/repos/user2/repo1/sb/master.tar.gz"), http.StatusOK)
 	assert.Equal(t, "application/gzip", resp.Header().Get("Content-Type"))
@@ -243,19 +241,16 @@ func TestDCSAPIRepoSBFile(t *testing.T) {
 	assert.Equal(t, readme, resp.Body.Bytes())
 	assert.Contains(t, resp.Header().Get("Content-Type"), "text/plain")
 	assert.Equal(t, "max-age=0, public, must-revalidate", resp.Header().Get("Cache-Control"))
-	assert.Empty(t, resp.Header().Get("Last-Modified")) // a branch can be reset to an older commit
+	assert.Empty(t, resp.Header().Get("Last-Modified"))
 	etag := resp.Header().Get("ETag")
 	require.NotEmpty(t, etag)
 	MakeRequest(t, NewRequest(t, "GET", "/api/v1/repos/user2/repo1/sb/raw/README.md").SetHeader("If-None-Match", etag), http.StatusNotModified)
 
-	// A full commit ID can't change; a tag can be deleted and made again
-	for ref, cacheControl := range map[string]string{
-		"65f1bf27bc3bf70f64657658635e66094edbcb4d": "public, max-age=31536000, immutable",
-		"v1.1": "max-age=0, public, must-revalidate",
-	} {
+	// Every ref is revalidated, a full commit ID too
+	for _, ref := range []string{"65f1bf27bc3bf70f64657658635e66094edbcb4d", "v1.1"} {
 		resp = MakeRequest(t, NewRequest(t, "GET", "/api/v1/repos/user2/repo1/sb/raw/README.md?ref="+ref), http.StatusOK)
 		assert.Equal(t, readme, resp.Body.Bytes(), ref)
-		assert.Equal(t, cacheControl, resp.Header().Get("Cache-Control"), ref)
+		assert.Equal(t, "max-age=0, public, must-revalidate", resp.Header().Get("Cache-Control"), ref)
 	}
 
 	MakeRequest(t, NewRequest(t, "GET", "/api/v1/repos/user2/repo1/sb/raw/ingredients/%2E%2E/README.md"), http.StatusBadRequest)
@@ -298,9 +293,10 @@ func TestDCSAPIRepoSBFileConverted(t *testing.T) {
 		assert.Equal(t, notes, string(sbZipEntry(t, archive.Body.Bytes(), "repo1/ingredients/TIT.tsv")))
 
 		// The entries carry the commit time, not the time of the conversion
-		assert.Empty(t, archive.Header().Get("Last-Modified")) // a branch can be reset to an older commit
-		pinned := MakeRequest(t, NewRequest(t, "GET", "/api/v1/repos/user2/repo1/sb/"+dm.CommitSHA+".zip"), http.StatusOK)
-		commitTime, err := http.ParseTime(pinned.Header().Get("Last-Modified"))
+		assert.Empty(t, archive.Header().Get("Last-Modified"))
+		var commit api.Commit
+		DecodeJSON(t, MakeRequest(t, NewRequest(t, "GET", "/api/v1/repos/user2/repo1/git/commits/"+dm.CommitSHA), http.StatusOK), &commit)
+		commitTime, err := time.Parse(time.RFC3339, commit.RepoCommit.Committer.Date)
 		require.NoError(t, err)
 		zr, err := zip.NewReader(bytes.NewReader(archive.Body.Bytes()), int64(archive.Body.Len()))
 		require.NoError(t, err)
@@ -308,11 +304,12 @@ func TestDCSAPIRepoSBFileConverted(t *testing.T) {
 			assert.True(t, commitTime.Equal(f.Modified), "%s: %v", f.Name, f.Modified)
 		}
 
-		resp := MakeRequest(t, NewRequest(t, "GET", "/api/v1/repos/user2/repo1/sb/raw/ingredients/TIT.tsv?ref="+dm.CommitSHA), http.StatusOK)
-		assert.Equal(t, notes, resp.Body.String())
-		assert.Equal(t, "public, max-age=31536000, immutable", resp.Header().Get("Cache-Control"))
+		resp := MakeRequest(t, NewRequest(t, "GET", "/api/v1/repos/user2/repo1/sb/raw/metadata.json?ref="+dm.CommitSHA), http.StatusOK)
+		assert.Equal(t, "max-age=0, public, must-revalidate", resp.Header().Get("Cache-Control"))
+		convertedETag := resp.Header().Get("ETag")
 
-		// The metadata type is part of the archive's key: an SB release on the same commit is archived as it is
+		// The metadata type is part of the archive's key: an SB release on the same commit is archived as it is.
+		// So a commit ID's response can change, and is revalidated rather than cached as immutable.
 		MakeRequest(t, NewRequest(t, "GET", "/api/v1/repos/user2/repo1/sb/raw/tn_TIT.tsv?ref="+dm.CommitSHA), http.StatusNotFound)
 		sbRelease := &repo_model.Door43Metadata{
 			RepoID: 1, Ref: "v-sb", RefType: "tag", CommitSHA: dm.CommitSHA,
@@ -321,6 +318,8 @@ func TestDCSAPIRepoSBFileConverted(t *testing.T) {
 		require.NoError(t, repo_model.InsertDoor43Metadata(t.Context(), sbRelease))
 		resp = MakeRequest(t, NewRequest(t, "GET", "/api/v1/repos/user2/repo1/sb/raw/tn_TIT.tsv?ref="+dm.CommitSHA), http.StatusOK)
 		assert.Equal(t, notes, resp.Body.String())
+		assert.Equal(t, "max-age=0, public, must-revalidate", resp.Header().Get("Cache-Control"))
+		MakeRequest(t, NewRequest(t, "GET", "/api/v1/repos/user2/repo1/sb/raw/metadata.json?ref="+dm.CommitSHA).SetHeader("If-None-Match", convertedETag), http.StatusNotFound)
 		_, err = db.GetEngine(t.Context()).ID(sbRelease.ID).Delete(&repo_model.Door43Metadata{})
 		require.NoError(t, err)
 		MakeRequest(t, NewRequest(t, "GET", "/api/v1/repos/user2/repo1/sb/raw/tn_TIT.tsv?ref="+dm.CommitSHA), http.StatusNotFound)

@@ -68,12 +68,7 @@ type ArchiveRequest struct {
 	TWSourceRepoID   int64
 	TWSourceCommitID string
 
-	// Set by NewRequest for serving; a request from the queue has neither.
-	refIsCommitID  bool // a full commit ID, the only ref that can't be moved
-	mayHavePartner bool // the subject pairs with a partner repo, even one that doesn't exist yet
-	readsTWSource  bool // a ts Translation Words conversion, which reads en_tw even if it doesn't exist yet
-	ownMetadata    bool // the metadata was made from this commit, not borrowed from the default branch
-	commitTime     time.Time
+	commitTime time.Time // set by NewRequest; a request from the queue looks it up
 }
 
 // ErrUnknownArchiveFormat means the requested archive format is not supported.
@@ -144,7 +139,6 @@ func newRequest(ctx context.Context, repo *repo_model.Repository, gitRepo *git.R
 		commitTime:   commit.Committer.When,
 	}
 
-	aReq.refIsCommitID = refShortName == aReq.CommitID
 	headOf := ""
 	if !gitRepo.IsBranchExist(ctx, refShortName) && !gitRepo.IsTagExist(ctx, refShortName) {
 		headOf = aReq.CommitID
@@ -154,18 +148,14 @@ func newRequest(ctx context.Context, repo *repo_model.Repository, gitRepo *git.R
 		return nil, err
 	}
 	aReq.MetadataRef, aReq.MetadataType = dm.Ref, dm.MetadataType
-	aReq.ownMetadata = dm.CommitSHA == aReq.CommitID
 
 	if dm.MetadataType == "ts" && dm.Subject == "Translation Words" {
-		aReq.readsTWSource = true
 		if aReq.TWSourceRepoID, aReq.TWSourceCommitID, err = resolveTsTWSource(ctx); err != nil {
 			return nil, err
 		}
 	}
 
 	if dm.MetadataType != "sb" {
-		partnerName, _ := payloadRepoNameFor(dm)
-		aReq.mayHavePartner = partnerName != ""
 		// A commit ID pairs with the partner as the release or branch it is the head of would
 		payloadFor := refShortName
 		if headOf != "" && dm.CommitSHA == headOf {
@@ -966,17 +956,10 @@ func StartArchive(request *ArchiveRequest) error {
 
 // ServeRepoSBArchive serves the generated SB archive to the client.
 func ServeRepoSBArchive(ctx *gitea_context.Base, repo *repo_model.Repository, archiveReq *ArchiveRequest) {
-	// Mirror the upstream archiver's nix "immutable" link header (see ServeRepoArchive)
-	ctx.Resp.Header().Add("Link", fmt.Sprintf(`<%s/sb/%s.%s?rev=%s>; rel="immutable"`,
-		repo.APIURL(),
-		archiveReq.CommitID,
-		archiveReq.Type.String(),
-		archiveReq.CommitID,
-	))
 	downloadName := repo.Name + "-" + archiveReq.GetArchiveName()
 	contentType := archiveContentType(archiveReq.Type)
 
-	cacheControl, err := archiveReq.cacheControl(ctx, repo)
+	cacheControl, err := sbCacheControl(ctx, repo)
 	if err != nil {
 		log.Error("SB archive %v: %v", archiveReq, err)
 		ctx.HTTPError(http.StatusInternalServerError)
@@ -986,10 +969,10 @@ func ServeRepoSBArchive(ctx *gitea_context.Base, repo *repo_model.Repository, ar
 	if !setting.DCS.CacheSBArchives {
 		// Weak, as upstream's streamed archives: each request builds the archive anew
 		etag := fmt.Sprintf(`W/"%s.%s"`, archiveReq.StorageCommitID(), archiveReq.Type)
-		if handleNotModified(ctx, etag, archiveReq.lastModified(), cacheControl) {
+		if handleNotModified(ctx, etag, cacheControl) {
 			return
 		}
-		httplib.ServeSetHeaders(ctx.Resp, httplib.ServeHeaderOptions{Filename: downloadName, ContentType: contentType, LastModified: archiveReq.lastModified()})
+		httplib.ServeSetHeaders(ctx.Resp, httplib.ServeHeaderOptions{Filename: downloadName, ContentType: contentType})
 		ctx.Resp.Header().Set("Cache-Control", cacheControl)
 		if err := archiveReq.Stream(ctx, repo, ctx.Resp); err != nil && !ctx.Written() {
 			log.Error("SB archive %v streaming failed: %v", archiveReq, err)
@@ -1026,34 +1009,17 @@ func ServeRepoSBArchive(ctx *gitea_context.Base, repo *repo_model.Repository, ar
 	ctx.Resp.Header().Set("Cache-Control", cacheControl)
 	// The stored archive is rebuilt once the archive cleanup has removed it, so its creation time is part of the tag
 	ctx.Resp.Header().Set("ETag", fmt.Sprintf(`"%s-%d.%s"`, archiveReq.StorageCommitID(), archiver.CreatedUnix, archiveReq.Type))
-	http.ServeContent(ctx.Resp, ctx.Req, downloadName, archiveReq.lastModified(), fr)
+	http.ServeContent(ctx.Resp, ctx.Req, downloadName, time.Time{}, fr) // no Last-Modified, see sbCacheControl
 }
 
-// lastModified is the commit time when the ref is pinned (see isPinned), or zero: a moved ref can serve an
-// older commit, and partner changes don't show in it. A zero time sends no Last-Modified, so If-Modified-Since can't answer 304.
-func (aReq *ArchiveRequest) lastModified() time.Time {
-	if !aReq.isPinned() {
-		return time.Time{}
-	}
-	return aReq.commitTime
-}
-
-// isPinned reports whether the ref pins all the burrito holds: a commit ID, with metadata made from that commit,
-// of a burrito that can't carry partner content or read en_tw. A tag can be deleted and made again, borrowed
-// metadata can change, a partner's ref or en_tw's default branch can move, and a partner repo can be created.
-func (aReq *ArchiveRequest) isPinned() bool {
-	return aReq.refIsCommitID && aReq.ownMetadata && !aReq.mayHavePartner && aReq.PayloadCommitID == "" && !aReq.readsTWSource
-}
-
-// cacheControl allows long-lived caching only when the ref is pinned (see isPinned).
-func (aReq *ArchiveRequest) cacheControl(ctx context.Context, repo *repo_model.Repository) (string, error) {
+// sbCacheControl has every SB response revalidated with its ETag, and SB responses send no Last-Modified.
+// No URL fixes everything a burrito is made from: a tag or branch can move, and a commit's metadata rows,
+// TW/TWL partner commit and en_tw commit can change, while the ETag changes with any of them.
+func sbCacheControl(ctx context.Context, repo *repo_model.Repository) (string, error) {
 	if err := repo.LoadOwner(ctx); err != nil {
 		return "", fmt.Errorf("repo.LoadOwner: %w", err)
 	}
 	scope := util.Iif(!repo.IsPrivate && repo.Owner.Visibility == structs.VisibleTypePublic, "public", "private")
-	if aReq.isPinned() {
-		return scope + ", max-age=31536000, immutable", nil
-	}
 	return "max-age=0, " + scope + ", must-revalidate", nil
 }
 
