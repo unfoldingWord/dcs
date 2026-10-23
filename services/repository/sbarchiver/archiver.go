@@ -99,7 +99,8 @@ type ArchiveRequest struct {
 	TWSourceRepoID   int64
 	TWSourceCommitID string
 	// Identity is this server and the full names of this repo and its upstream repos, as a conversion's
-	// metadata.json records them. It is part of the cache key, since a rename, transfer or new ROOT_URL keeps the commits.
+	// metadata.json records them and an archive's root folder is named. It is part of the cache key, since a
+	// rename, transfer or new ROOT_URL keeps the commits.
 	Identity string
 
 	commitTime time.Time // set by NewRequest; a request from the queue looks it up
@@ -200,15 +201,15 @@ func newRequest(ctx context.Context, repo *repo_model.Repository, gitRepo *git.R
 			return nil, err
 		}
 		aReq.PayloadRef, aReq.PayloadCommitID = payloadRef.String(), payloadCommitID
+	}
 
-		upstream, err := upstreamRepos(ctx, repo, dm, aReq)
-		if err != nil {
-			return nil, err
-		}
-		aReq.Identity = strings.TrimSuffix(setting.AppURL, "/") + "\n" + repo.FullName()
-		for _, u := range upstream {
-			aReq.Identity += "\n" + u.repo.FullName()
-		}
+	upstream, err := upstreamRepos(ctx, repo, dm, aReq)
+	if err != nil {
+		return nil, err
+	}
+	aReq.Identity = strings.TrimSuffix(setting.AppURL, "/") + "\n" + repo.FullName()
+	for _, u := range upstream {
+		aReq.Identity += "\n" + u.repo.FullName()
 	}
 	return aReq, nil
 }
@@ -220,9 +221,10 @@ func (aReq *ArchiveRequest) GetArchiveName() string {
 
 // StorageCommitID returns the cache key used as the commit ID in repo_archiver. Everything that decides the
 // archive's bytes is in it: the commit, the metadata type, the TW/TWL partner commit, the en_tw commit of a
-// ts Translation Words conversion, whether the files sit in a prefix folder (PREFIX_ARCHIVE_FILES), and the
-// converter and archive writer versions and the Identity a conversion records, so that an upgrade doesn't serve old conversions until the archive cleanup. It is
-// hashed to fit the column's 64 characters, which "sb-" and a SHA-256 commit ID alone would exceed.
+// ts Translation Words conversion, whether the files sit in a prefix folder (PREFIX_ARCHIVE_FILES), the
+// converter and archive writer versions, so that an upgrade doesn't serve old conversions until the archive
+// cleanup, and the Identity of the repos it names. It is hashed to fit the column's 64 characters, which
+// "sb-" and a SHA-256 commit ID alone would exceed.
 func (aReq *ArchiveRequest) StorageCommitID() string {
 	key := aReq.CommitID + "\n" + aReq.MetadataType + "\n" + aReq.PayloadCommitID
 	if aReq.TWSourceCommitID != "" {
@@ -232,8 +234,9 @@ func (aReq *ArchiveRequest) StorageCommitID() string {
 		key += "\nunprefixed"
 	}
 	if aReq.MetadataType != "sb" {
-		key += fmt.Sprintf("\n%s\nwriter %d\n%s", converterVersions(), sbArchiveWriterVersion, aReq.Identity)
+		key += fmt.Sprintf("\n%s\nwriter %d", converterVersions(), sbArchiveWriterVersion)
 	}
+	key += "\n" + aReq.Identity
 	sum := sha256.Sum256([]byte(key))
 	return storageCommitPrefix + hex.EncodeToString(sum[:])[:60]
 }

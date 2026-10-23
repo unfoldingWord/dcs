@@ -489,6 +489,14 @@ projects:
 
 		resp = MakeRequest(t, NewRequest(t, "GET", "/api/v1/repos/user2/repo1/sb/raw/ingredients/payload/kt/god.md?ref=sb-twl"), http.StatusOK)
 		assert.Equal(t, article, resp.Body.String())
+
+		// A renamed repo keeps its commits, but its metadata.json must name it as it is now
+		newName := "repo1-renamed"
+		MakeRequest(t, NewRequestWithJSON(t, "PATCH", "/api/v1/repos/user2/repo1", &api.EditRepoOption{Name: &newName}).AddTokenAuth(token), http.StatusOK)
+		resp = MakeRequest(t, NewRequest(t, "GET", "/api/v1/repos/user2/repo1-renamed/sb/raw/metadata.json?ref=sb-twl"), http.StatusOK)
+		metadata = sbMetadata(t, resp.Body.Bytes())
+		assert.Contains(t, metadata.Identification.Primary["dcs"], "user2/repo1-renamed")
+		assert.Contains(t, metadata.Identification.Upstream["dcs"][0], "user2/en_tw")
 	})
 }
 

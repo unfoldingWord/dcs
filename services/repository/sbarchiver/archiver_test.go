@@ -34,6 +34,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	rc2sb "github.com/unfoldingWord/go-rc2sb"
 )
 
 func TestMain(m *testing.M) {
@@ -159,6 +160,30 @@ func TestConverterVersionsFrom(t *testing.T) {
 	defer test.MockVariableValue(&setting.AppVer, "28.2.0+dcs")()
 	assert.Equal(t, "dcs@28.2.0+dcs", converterVersionsFrom(nil, false))
 	assert.Equal(t, "dcs@28.2.0+dcs", converterVersionsFrom(&debug.BuildInfo{}, true))
+}
+
+// TestUpstreamRevisions checks the en_tw commit a ts Translation Words conversion records; the TW/TWL
+// partner is covered end to end by TestDCSAPIRepoSBUpstream.
+func TestUpstreamRevisions(t *testing.T) {
+	require.NoError(t, unittest.PrepareTestDatabase())
+	repo := loadRepo(t)
+	gitRepo, err := git.OpenRepository(t.Context(), repo)
+	require.NoError(t, err)
+	defer gitRepo.Close()
+	commit, err := gitRepo.GetCommit(t.Context(), "master")
+	require.NoError(t, err)
+
+	dm := &repo_model.Door43Metadata{MetadataType: "ts", Language: "en", Subject: "Translation Words"}
+	upstream, err := upstreamRevisions(t.Context(), repo, dm, &ArchiveRequest{TWSourceRepoID: repo.ID, TWSourceCommitID: commit.ID.String()})
+	require.NoError(t, err)
+	require.Len(t, upstream, 1)
+	assert.Equal(t, rc2sb.Upstream{
+		Owner: repo.OwnerName, RepoName: repo.Name, Revision: commit.ID.String(), Timestamp: commit.Committer.When,
+	}, upstream[0])
+
+	upstream, err = upstreamRevisions(t.Context(), repo, dm, &ArchiveRequest{})
+	require.NoError(t, err)
+	assert.Empty(t, upstream)
 }
 
 func TestStorageCommitID(t *testing.T) {
