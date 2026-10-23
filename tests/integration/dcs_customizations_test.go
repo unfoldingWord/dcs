@@ -7,7 +7,9 @@ import (
 	"archive/zip"
 	"bytes"
 	"compress/gzip"
+	"encoding/base64"
 	"net/http"
+	"net/url"
 	"regexp"
 	"testing"
 
@@ -133,6 +135,21 @@ func TestDCSAPICatalogEntryEndpoints(t *testing.T) {
 	var validation any
 	DecodeJSON(t, validationResp, &validation)
 	assert.Nil(t, validation)
+}
+
+func TestDCSAPIFileSaveProcessesMetadata(t *testing.T) {
+	onGiteaRun(t, func(t *testing.T, _ *url.URL) {
+		token := getTokenForLoggedInUser(t, loginUser(t, "user2"), auth_model.AccessTokenScopeWriteRepository)
+		opts := getCreateFileOptions()
+		opts.NewBranchName = "dcs-metadata-save"
+		opts.ContentBase64 = base64.StdEncoding.EncodeToString([]byte("dublin_core:\n  identifier: ult\n  language: {identifier: en, title: English, direction: ltr}\n  subject: Bible\n  title: Test Bible\nprojects: []\n"))
+		MakeRequest(t, NewRequestWithJSON(t, "POST", "/api/v1/repos/user2/repo1/contents/manifest.yaml", &opts).AddTokenAuth(token), http.StatusCreated)
+
+		// test queues are immediate, so the push has been processed by the time the save returns
+		dm, err := repo_model.GetDoor43MetadataByRepoIDAndRef(t.Context(), 1, "dcs-metadata-save")
+		require.NoError(t, err)
+		assert.Equal(t, "rc", dm.MetadataType)
+	})
 }
 
 // TestDCSAPIRepoSBArchive covers /api/v1/repos/{owner}/{repo}/sb/{ref}.{zip|tar.gz}, the API twin of the
