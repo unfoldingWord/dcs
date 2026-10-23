@@ -124,6 +124,23 @@ func TestSBCacheControl(t *testing.T) {
 	assert.Equal(t, "max-age=0, private, must-revalidate", cacheControl)
 }
 
+func TestPayloadRepoNameFor(t *testing.T) {
+	for language, want := range map[string]string{"en": "en_tw", "es-419": "es-419_tw", "": "", "../x": "", "a/b": "", `a\b`: "", ".": ""} {
+		name, isTWRepo := payloadRepoNameFor(&repo_model.Door43Metadata{Language: language, Subject: "TSV Translation Words Links"})
+		assert.Equal(t, want, name, language)
+		assert.False(t, isTWRepo)
+	}
+	name, isTWRepo := payloadRepoNameFor(&repo_model.Door43Metadata{Language: "en", Subject: "Translation Words"})
+	assert.Equal(t, "en_twl", name)
+	assert.True(t, isTWRepo)
+}
+
+func TestConverterVersions(t *testing.T) {
+	assert.Contains(t, converterVersions(), "github.com/unfoldingWord/go-rc2sb@v")
+	assert.Contains(t, converterVersions(), "github.com/unfoldingWord/go-ts2rc@v")
+	assert.Contains(t, converterVersions(), "github.com/unfoldingWord/go-tc2rc@v")
+}
+
 func TestStorageCommitID(t *testing.T) {
 	// Every input that decides the bytes gets its own key, within repo_archiver's VARCHAR(64) for SHA-256 too
 	keys := map[string]bool{}
@@ -148,11 +165,18 @@ func TestStorageCommitID(t *testing.T) {
 	assert.Len(t, map[string]bool{withoutTWSource: true, withTWSource: true, tsTW.StorageCommitID(): true}, 3)
 	assert.LessOrEqual(t, len(tsTW.StorageCommitID()), 64)
 
+	// A converter upgrade builds new archives of converted repos; an SB repo's archive doesn't use them
+	converted := &ArchiveRequest{CommitID: strings.Repeat("a", 40), MetadataType: "rc"}
+	asIs := &ArchiveRequest{CommitID: strings.Repeat("a", 40), MetadataType: "sb"}
+	convertedKey, asIsKey := converted.StorageCommitID(), asIs.StorageCommitID()
+	restore := test.MockVariableValue(&converterVersions, func() string { return "github.com/unfoldingWord/go-rc2sb@v9.9.9" })
+	assert.NotEqual(t, convertedKey, converted.StorageCommitID())
+	assert.Equal(t, asIsKey, asIs.StorageCommitID())
+	restore()
+
 	// An archive built with PREFIX_ARCHIVE_FILES has other paths than one built without it
-	aReq := &ArchiveRequest{CommitID: strings.Repeat("a", 40), MetadataType: "rc"}
-	before := aReq.StorageCommitID()
 	defer test.MockVariableValue(&setting.Repository.PrefixArchiveFiles, !setting.Repository.PrefixArchiveFiles)()
-	assert.NotEqual(t, before, aReq.StorageCommitID())
+	assert.NotEqual(t, convertedKey, converted.StorageCommitID())
 }
 
 // TestWriteDirectoryArchiveDeterministic checks that converted archives carry the commit time, not the
@@ -170,6 +194,9 @@ func TestWriteDirectoryArchiveDeterministic(t *testing.T) {
 		later := time.Now().Add(time.Hour)
 		require.NoError(t, os.Chtimes(filepath.Join(dir, "metadata.json"), later, later))
 		require.NoError(t, os.Chtimes(filepath.Join(dir, "ingredients"), later, later))
+		// another server's umask
+		require.NoError(t, os.Chmod(filepath.Join(dir, "metadata.json"), 0o600))
+		require.NoError(t, os.Chmod(filepath.Join(dir, "ingredients"), 0o700))
 		require.NoError(t, writeDirectoryArchive(t.Context(), dir, "en_tn", archiveType, commitTime, &second))
 		assert.Equal(t, first.Bytes(), second.Bytes(), archiveType.String())
 

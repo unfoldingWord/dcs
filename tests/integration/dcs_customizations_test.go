@@ -20,6 +20,7 @@ import (
 	repo_model "gitea.dev/models/repo"
 	"gitea.dev/models/unittest"
 	"gitea.dev/modules/setting"
+	"gitea.dev/modules/storage"
 	api "gitea.dev/modules/structs"
 	"gitea.dev/modules/test"
 	"gitea.dev/modules/timeutil"
@@ -304,6 +305,21 @@ func TestDCSAPIRepoSBFileConverted(t *testing.T) {
 		for _, f := range zr.File {
 			assert.True(t, commitTime.Equal(f.Modified), "%s: %v", f.Name, f.Modified)
 		}
+		assert.Contains(t, string(sbZipEntry(t, archive.Body.Bytes(), "repo1/metadata.json")),
+			`"dateCreated": "`+commitTime.UTC().Format("2006-01-02T15:04:05.000Z")+`"`)
+
+		// So the archive cleanup can delete a kept archive: its rebuild has the same bytes and ETag
+		var keptArchives []*repo_model.RepoArchiver
+		require.NoError(t, db.GetEngine(t.Context()).Where("repo_id = ?", 1).Find(&keptArchives))
+		require.NotEmpty(t, keptArchives)
+		for _, a := range keptArchives {
+			require.NoError(t, storage.RepoArchives.Delete(a.RelativePath()))
+			_, err = db.DeleteByID[repo_model.RepoArchiver](t.Context(), a.ID)
+			require.NoError(t, err)
+		}
+		rebuilt := MakeRequest(t, NewRequest(t, "GET", "/api/v1/repos/user2/repo1/sb/sb-tn.zip"), http.StatusOK)
+		assert.Equal(t, archive.Body.Bytes(), rebuilt.Body.Bytes())
+		assert.Equal(t, archive.Header().Get("ETag"), rebuilt.Header().Get("ETag"))
 
 		resp := MakeRequest(t, NewRequest(t, "GET", "/api/v1/repos/user2/repo1/sb/raw/metadata.json?ref="+dm.CommitSHA), http.StatusOK)
 		assert.Equal(t, "max-age=0, public, must-revalidate", resp.Header().Get("Cache-Control"))
