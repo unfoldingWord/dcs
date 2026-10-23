@@ -39,7 +39,7 @@ This document catalogs every DCS modification to existing Gitea files. New DCS-o
 | `models/repo/repo.go` | LoadLatestDMs() call in LoadAttributes() | HIGH | models/repo/repo_dcs.go |
 | `modules/setting/setting.go` | loadDCSFrom(cfg) call | LOW | modules/setting/dcs.go |
 | `modules/templates/helper.go` | 13 DCS template functions registered | MEDIUM | modules/dcs/ |
-| `routers/init.go` | mustInitCtx(ctx, door43metadata.Init) | MEDIUM | services/door43metadata/ |
+| `routers/init.go` | mustInitCtx(ctx, door43metadata.Init) and convert2sb.Init, after common.InitDBEngine (the door43_metadata queue reads the DB as soon as it starts) | MEDIUM | services/door43metadata/, services/convert2sb/ |
 | `routers/api/v1/repo/release_attachment.go` | notifyReleaseAttachmentChanged() helper + calls in create/edit/delete handlers (manifest expansion, has_* flag updates) | MEDIUM | services/door43metadata/, modules/dcs/attachments.go |
 | `routers/web/repo/view_file.go` | FileExt, IgnoreLanguageDirection ctx.Data | LOW | - |
 | `routers/web/repo/view_home.go` | IgnoreLanguageDirection, Entry ctx.Data | LOW | - |
