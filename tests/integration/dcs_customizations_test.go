@@ -8,17 +8,23 @@ import (
 	"bytes"
 	"compress/gzip"
 	"encoding/base64"
+	"io"
 	"net/http"
 	"net/url"
-	"regexp"
 	"testing"
+	"time"
 
 	auth_model "gitea.dev/models/auth"
+	"gitea.dev/models/db"
 	door43metadata_model "gitea.dev/models/door43metadata"
 	repo_model "gitea.dev/models/repo"
+	"gitea.dev/models/unittest"
 	"gitea.dev/modules/setting"
+	"gitea.dev/modules/storage"
 	api "gitea.dev/modules/structs"
+	"gitea.dev/modules/test"
 	"gitea.dev/modules/timeutil"
+	"gitea.dev/modules/util"
 	"gitea.dev/tests"
 
 	"github.com/stretchr/testify/assert"
@@ -157,8 +163,9 @@ func TestDCSAPIFileSaveProcessesMetadata(t *testing.T) {
 func TestDCSAPIRepoSBArchive(t *testing.T) {
 	defer tests.PrepareTestEnv(t)()
 
-	// No metadata at all: nothing to convert
+	// No metadata at all: nothing to convert, from the API and from the web route
 	MakeRequest(t, NewRequest(t, "GET", "/api/v1/repos/user2/repo1/sb/master.zip"), http.StatusNotFound)
+	MakeRequest(t, NewRequest(t, "GET", "/user2/repo1/sb/master.zip"), http.StatusNotFound)
 
 	require.NoError(t, repo_model.InsertDoor43Metadata(t.Context(), &repo_model.Door43Metadata{
 		RepoID: 1, Ref: "master", RefType: "branch", CommitSHA: "65f1bf27bc3bf70f64657658635e66094edbcb4d",
@@ -181,12 +188,10 @@ func TestDCSAPIRepoSBArchive(t *testing.T) {
 	}
 	assert.Contains(t, names, "repo1/README.md")
 
-	// The "immutable" link must point at this API route, pinned to the commit
-	linkHeaderRe := regexp.MustCompile(`^<(https?://.*/api/v1/repos/user2/repo1/sb/[a-f0-9]+\.zip\?rev=[a-f0-9]+)>; rel="immutable"$`)
-	m := linkHeaderRe.FindStringSubmatch(resp.Header().Get("Link"))
-	require.Len(t, m, 2, "Link header %q", resp.Header().Get("Link"))
-	pinned := MakeRequest(t, NewRequest(t, "GET", m[1]), http.StatusOK)
-	assert.Equal(t, resp.Body.Bytes(), pinned.Body.Bytes())
+	// No "immutable" link as git archives have: a commit's burrito can still change, and its ETag with it
+	assert.Empty(t, resp.Header().Get("Link"))
+	byCommit := MakeRequest(t, NewRequest(t, "GET", "/api/v1/repos/user2/repo1/sb/65f1bf27bc3bf70f64657658635e66094edbcb4d.zip"), http.StatusOK)
+	assert.Equal(t, resp.Body.Bytes(), byCommit.Body.Bytes())
 
 	resp = MakeRequest(t, NewRequest(t, "GET", "/api/v1/repos/user2/repo1/sb/master.tar.gz"), http.StatusOK)
 	assert.Equal(t, "application/gzip", resp.Header().Get("Content-Type"))
@@ -201,6 +206,195 @@ func TestDCSAPIRepoSBArchive(t *testing.T) {
 	MakeRequest(t, NewRequest(t, "HEAD", "/api/v1/repos/user2/repo1/sb/master.zip"), http.StatusNotFound)
 	token := getTokenForLoggedInUser(t, loginUser(t, "user2"), auth_model.AccessTokenScopeReadRepository)
 	MakeRequest(t, NewRequest(t, "HEAD", "/api/v1/repos/user2/repo1/sb/master.zip").AddTokenAuth(token), http.StatusOK)
+}
+
+func sbZipEntry(t *testing.T, archive []byte, name string) []byte {
+	t.Helper()
+	zr, err := zip.NewReader(bytes.NewReader(archive), int64(len(archive)))
+	require.NoError(t, err)
+	rc, err := zr.Open(name)
+	require.NoError(t, err)
+	defer rc.Close()
+	content, err := io.ReadAll(rc)
+	require.NoError(t, err)
+	return content
+}
+
+// TestDCSAPIRepoSBFile covers /api/v1/repos/{owner}/{repo}/sb/raw/{filepath} and its web twin for a repo already
+// in SB format, and checks that a file has the bytes of the same path in the archive.
+func TestDCSAPIRepoSBFile(t *testing.T) {
+	defer tests.PrepareTestEnv(t)()
+
+	// No metadata at all: nothing to convert
+	MakeRequest(t, NewRequest(t, "GET", "/api/v1/repos/user2/repo1/sb/raw/README.md"), http.StatusNotFound)
+
+	require.NoError(t, repo_model.InsertDoor43Metadata(t.Context(), &repo_model.Door43Metadata{
+		RepoID: 1, Ref: "master", RefType: "branch", CommitSHA: "65f1bf27bc3bf70f64657658635e66094edbcb4d",
+		Stage: door43metadata_model.StageLatest, MetadataType: "sb", MetadataVersion: "1.0.0",
+		IsLatestForStage: true, IsRepoMetadata: true,
+	}))
+
+	archive := MakeRequest(t, NewRequest(t, "GET", "/api/v1/repos/user2/repo1/sb/master.zip"), http.StatusOK)
+	assert.NotEmpty(t, archive.Header().Get("ETag"))
+	assert.Equal(t, "max-age=0, public, must-revalidate", archive.Header().Get("Cache-Control"))
+	readme := sbZipEntry(t, archive.Body.Bytes(), "repo1/README.md")
+
+	resp := MakeRequest(t, NewRequest(t, "GET", "/api/v1/repos/user2/repo1/sb/raw/README.md"), http.StatusOK)
+	assert.Equal(t, readme, resp.Body.Bytes())
+	assert.Contains(t, resp.Header().Get("Content-Type"), "text/plain")
+	assert.Equal(t, "max-age=0, public, must-revalidate", resp.Header().Get("Cache-Control"))
+	assert.Empty(t, resp.Header().Get("Last-Modified"))
+	etag := resp.Header().Get("ETag")
+	require.NotEmpty(t, etag)
+	MakeRequest(t, NewRequest(t, "GET", "/api/v1/repos/user2/repo1/sb/raw/README.md").SetHeader("If-None-Match", etag), http.StatusNotModified)
+
+	// Every ref is revalidated, a full commit ID too
+	for _, ref := range []string{"65f1bf27bc3bf70f64657658635e66094edbcb4d", "v1.1"} {
+		resp = MakeRequest(t, NewRequest(t, "GET", "/api/v1/repos/user2/repo1/sb/raw/README.md?ref="+ref), http.StatusOK)
+		assert.Equal(t, readme, resp.Body.Bytes(), ref)
+		assert.Equal(t, "max-age=0, public, must-revalidate", resp.Header().Get("Cache-Control"), ref)
+	}
+
+	MakeRequest(t, NewRequest(t, "GET", "/api/v1/repos/user2/repo1/sb/raw/ingredients/%2E%2E/README.md"), http.StatusBadRequest)
+	MakeRequest(t, NewRequest(t, "GET", "/api/v1/repos/user2/repo1/sb/raw/no-such-file.md"), http.StatusNotFound)
+	MakeRequest(t, NewRequest(t, "GET", "/api/v1/repos/user2/repo1/sb/raw/README.md?ref=no-such-ref"), http.StatusNotFound)
+
+	// An archive of a ref named "raw" is still an archive request
+	resp = MakeRequest(t, NewRequest(t, "GET", "/api/v1/repos/user2/repo1/sb/raw.zip"), http.StatusNotFound)
+	assert.Contains(t, resp.Body.String(), "unrecognized repository reference: raw")
+
+	resp = MakeRequest(t, NewRequest(t, "GET", "/user2/repo1/sb/raw/README.md?ref=v1.1"), http.StatusOK)
+	assert.Equal(t, readme, resp.Body.Bytes())
+	MakeRequest(t, NewRequest(t, "GET", "/user2/repo1/sb/raw/no-such-file.md"), http.StatusNotFound)
+}
+
+// TestDCSAPIRepoSBFileConverted reads files of an rc repo, which come out of its converted SB archive.
+func TestDCSAPIRepoSBFileConverted(t *testing.T) {
+	onGiteaRun(t, func(t *testing.T, _ *url.URL) {
+		token := getTokenForLoggedInUser(t, loginUser(t, "user2"), auth_model.AccessTokenScopeWriteRepository)
+		manifest := "dublin_core:\n  conformsto: rc0.2\n  identifier: tn\n  language: {identifier: en, title: English, direction: ltr}\n" +
+			"  subject: TSV Translation Notes\n  title: Test Notes\nprojects:\n  - {identifier: tit, path: ./tn_TIT.tsv, title: Titus}\n"
+		notes := "Reference\tID\tTags\tSupportReference\tQuote\tOccurrence\tNote\n1:1\tabcd\t\t\t\t0\tA note\n"
+		MakeRequest(t, NewRequestWithJSON(t, "POST", "/api/v1/repos/user2/repo1/contents", &api.ChangeFilesOptions{
+			FileOptions: api.FileOptions{BranchName: "master", NewBranchName: "sb-tn", Message: "Add notes"},
+			Files: []*api.ChangeFileOperation{
+				{Operation: "create", Path: "manifest.yaml", ContentBase64: base64.StdEncoding.EncodeToString([]byte(manifest))},
+				{Operation: "create", Path: "tn_TIT.tsv", ContentBase64: base64.StdEncoding.EncodeToString([]byte(notes))},
+			},
+		}).AddTokenAuth(token), http.StatusCreated)
+		dm, err := repo_model.GetDoor43MetadataByRepoIDAndRef(t.Context(), 1, "sb-tn")
+		require.NoError(t, err)
+		require.Equal(t, "rc", dm.MetadataType)
+
+		archive := MakeRequest(t, NewRequest(t, "GET", "/api/v1/repos/user2/repo1/sb/sb-tn.zip"), http.StatusOK)
+		for filePath, contentType := range map[string]string{"metadata.json": "application/json", "ingredients/TIT.tsv": "text/tab-separated-values"} {
+			resp := MakeRequest(t, NewRequest(t, "GET", "/api/v1/repos/user2/repo1/sb/raw/"+filePath+"?ref=sb-tn"), http.StatusOK)
+			assert.Equal(t, sbZipEntry(t, archive.Body.Bytes(), "repo1/"+filePath), resp.Body.Bytes(), filePath)
+			assert.Equal(t, contentType, resp.Header().Get("Content-Type"), filePath)
+		}
+		assert.Equal(t, notes, string(sbZipEntry(t, archive.Body.Bytes(), "repo1/ingredients/TIT.tsv")))
+
+		// The entries carry the commit time, not the time of the conversion
+		assert.Empty(t, archive.Header().Get("Last-Modified"))
+		var commit api.Commit
+		DecodeJSON(t, MakeRequest(t, NewRequest(t, "GET", "/api/v1/repos/user2/repo1/git/commits/"+dm.CommitSHA), http.StatusOK), &commit)
+		commitTime, err := time.Parse(time.RFC3339, commit.RepoCommit.Committer.Date)
+		require.NoError(t, err)
+		zr, err := zip.NewReader(bytes.NewReader(archive.Body.Bytes()), int64(archive.Body.Len()))
+		require.NoError(t, err)
+		for _, f := range zr.File {
+			assert.True(t, commitTime.Equal(f.Modified), "%s: %v", f.Name, f.Modified)
+		}
+		assert.Contains(t, string(sbZipEntry(t, archive.Body.Bytes(), "repo1/metadata.json")),
+			`"dateCreated": "`+commitTime.UTC().Format("2006-01-02T15:04:05.000Z")+`"`)
+
+		// So the archive cleanup can delete a kept archive: its rebuild has the same bytes and ETag
+		var keptArchives []*repo_model.RepoArchiver
+		require.NoError(t, db.GetEngine(t.Context()).Where("repo_id = ?", 1).Find(&keptArchives))
+		require.NotEmpty(t, keptArchives)
+		for _, a := range keptArchives {
+			require.NoError(t, storage.RepoArchives.Delete(a.RelativePath()))
+			_, err = db.DeleteByID[repo_model.RepoArchiver](t.Context(), a.ID)
+			require.NoError(t, err)
+		}
+		rebuilt := MakeRequest(t, NewRequest(t, "GET", "/api/v1/repos/user2/repo1/sb/sb-tn.zip"), http.StatusOK)
+		assert.Equal(t, archive.Body.Bytes(), rebuilt.Body.Bytes())
+		assert.Equal(t, archive.Header().Get("ETag"), rebuilt.Header().Get("ETag"))
+
+		resp := MakeRequest(t, NewRequest(t, "GET", "/api/v1/repos/user2/repo1/sb/raw/metadata.json?ref="+dm.CommitSHA), http.StatusOK)
+		assert.Equal(t, "max-age=0, public, must-revalidate", resp.Header().Get("Cache-Control"))
+		convertedETag := resp.Header().Get("ETag")
+
+		// The metadata type is part of the archive's key: an SB release on the same commit is archived as it is.
+		// So a commit ID's response can change, and is revalidated rather than cached as immutable.
+		MakeRequest(t, NewRequest(t, "GET", "/api/v1/repos/user2/repo1/sb/raw/tn_TIT.tsv?ref="+dm.CommitSHA), http.StatusNotFound)
+		sbRelease := &repo_model.Door43Metadata{
+			RepoID: 1, Ref: "v-sb", RefType: "tag", CommitSHA: dm.CommitSHA,
+			Stage: door43metadata_model.StageProd, MetadataType: "sb", MetadataVersion: "1.0.0",
+		}
+		require.NoError(t, repo_model.InsertDoor43Metadata(t.Context(), sbRelease))
+		resp = MakeRequest(t, NewRequest(t, "GET", "/api/v1/repos/user2/repo1/sb/raw/tn_TIT.tsv?ref="+dm.CommitSHA), http.StatusOK)
+		assert.Equal(t, notes, resp.Body.String())
+		assert.Equal(t, "max-age=0, public, must-revalidate", resp.Header().Get("Cache-Control"))
+		MakeRequest(t, NewRequest(t, "GET", "/api/v1/repos/user2/repo1/sb/raw/metadata.json?ref="+dm.CommitSHA).SetHeader("If-None-Match", convertedETag), http.StatusNotFound)
+		_, err = db.GetEngine(t.Context()).ID(sbRelease.ID).Delete(&repo_model.Door43Metadata{})
+		require.NoError(t, err)
+		MakeRequest(t, NewRequest(t, "GET", "/api/v1/repos/user2/repo1/sb/raw/tn_TIT.tsv?ref="+dm.CommitSHA), http.StatusNotFound)
+		MakeRequest(t, NewRequest(t, "GET", "/api/v1/repos/user2/repo1/sb/raw/ingredients/GEN.tsv?ref=sb-tn"), http.StatusNotFound)
+		MakeRequest(t, NewRequest(t, "GET", "/api/v1/repos/user2/repo1/sb/raw/ingredients?ref=sb-tn"), http.StatusNotFound)
+
+		// A new commit on the branch is read from a new archive, not the one kept for the old commit
+		etag := resp.Header().Get("ETag")
+		var contents api.ContentsResponse
+		DecodeJSON(t, MakeRequest(t, NewRequest(t, "GET", "/api/v1/repos/user2/repo1/contents/tn_TIT.tsv?ref=sb-tn"), http.StatusOK), &contents)
+		updated := notes + "1:2\tefgh\t\t\t\t0\tAnother note\n"
+		MakeRequest(t, NewRequestWithJSON(t, "PUT", "/api/v1/repos/user2/repo1/contents/tn_TIT.tsv", &api.UpdateFileOptions{
+			FileOptions:   api.FileOptions{BranchName: "sb-tn", Message: "Add a note"},
+			SHA:           contents.SHA,
+			ContentBase64: base64.StdEncoding.EncodeToString([]byte(updated)),
+		}).AddTokenAuth(token), http.StatusOK)
+		resp = MakeRequest(t, NewRequest(t, "GET", "/api/v1/repos/user2/repo1/sb/raw/ingredients/TIT.tsv?ref=sb-tn"), http.StatusOK)
+		assert.Equal(t, updated, resp.Body.String())
+		assert.NotEqual(t, etag, resp.Header().Get("ETag"))
+
+		// A tag made again on another commit serves that commit, and was never cached as immutable
+		for _, target := range []string{dm.CommitSHA, "sb-tn"} {
+			MakeRequest(t, NewRequest(t, "DELETE", "/api/v1/repos/user2/repo1/tags/moved-tag").AddTokenAuth(token), NoExpectedStatus)
+			MakeRequest(t, NewRequestWithJSON(t, "POST", "/api/v1/repos/user2/repo1/tags", &api.CreateTagOption{TagName: "moved-tag", Target: target}).AddTokenAuth(token), http.StatusCreated)
+			resp = MakeRequest(t, NewRequest(t, "GET", "/api/v1/repos/user2/repo1/sb/raw/ingredients/TIT.tsv?ref=moved-tag"), http.StatusOK)
+			assert.Equal(t, util.Iif(target == "sb-tn", updated, notes), resp.Body.String(), target)
+			assert.Equal(t, "max-age=0, public, must-revalidate", resp.Header().Get("Cache-Control"))
+		}
+
+		// A repo already in SB format is read from its archive too, so .gitattributes apply as in /sb/{ref}.zip
+		resp = MakeRequest(t, NewRequestWithJSON(t, "POST", "/api/v1/repos/user2/repo1/contents", &api.ChangeFilesOptions{
+			FileOptions: api.FileOptions{BranchName: "master", NewBranchName: "sb-attr", Message: "Add attributes"},
+			Files: []*api.ChangeFileOperation{
+				{Operation: "create", Path: ".gitattributes", ContentBase64: base64.StdEncoding.EncodeToString([]byte("excluded.md export-ignore\nversion.txt export-subst\n"))},
+				{Operation: "create", Path: "excluded.md", ContentBase64: base64.StdEncoding.EncodeToString([]byte("not archived\n"))},
+				{Operation: "create", Path: "version.txt", ContentBase64: base64.StdEncoding.EncodeToString([]byte("$Format:%H$\n"))},
+			},
+		}).AddTokenAuth(token), http.StatusCreated)
+		var changed api.FilesResponse
+		DecodeJSON(t, resp, &changed)
+		_, err = db.GetEngine(t.Context()).Delete(&repo_model.Door43Metadata{RepoID: 1, Ref: "sb-attr"})
+		require.NoError(t, err)
+		require.NoError(t, repo_model.InsertDoor43Metadata(t.Context(), &repo_model.Door43Metadata{
+			RepoID: 1, Ref: "sb-attr", RefType: "branch", CommitSHA: changed.Commit.SHA,
+			Stage: door43metadata_model.StageOther, MetadataType: "sb", MetadataVersion: "1.0.0",
+		}))
+		resp = MakeRequest(t, NewRequest(t, "GET", "/api/v1/repos/user2/repo1/sb/raw/version.txt?ref=sb-attr"), http.StatusOK)
+		assert.Equal(t, changed.Commit.SHA+"\n", resp.Body.String())
+		MakeRequest(t, NewRequest(t, "GET", "/api/v1/repos/user2/repo1/sb/raw/excluded.md?ref=sb-attr"), http.StatusNotFound)
+
+		// Without CACHE_SB_ARCHIVES each request converts anew and nothing is kept
+		defer test.MockVariableValue(&setting.DCS.CacheSBArchives, false)()
+		kept := unittest.GetCount(t, &repo_model.RepoArchiver{RepoID: 1})
+		resp = MakeRequest(t, NewRequest(t, "GET", "/api/v1/repos/user2/repo1/sb/raw/ingredients/TIT.tsv?ref=sb-tn"), http.StatusOK)
+		assert.Equal(t, updated, resp.Body.String())
+		MakeRequest(t, NewRequest(t, "GET", "/api/v1/repos/user2/repo1/sb/sb-tn.zip"), http.StatusOK)
+		assert.Equal(t, kept, unittest.GetCount(t, &repo_model.RepoArchiver{RepoID: 1}))
+	})
 }
 
 func TestDCSAPIRepoHealthcheck(t *testing.T) {
