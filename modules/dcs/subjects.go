@@ -77,3 +77,36 @@ func IsValidResource(str string) bool {
 	_, ok := ResourceToSubjectMap[str]
 	return ok
 }
+
+// SBFlavor is a Scripture Burrito flavor type and flavor
+type SBFlavor struct {
+	FlavorType string
+	Flavor     string
+}
+
+// ConvertedSBFlavors are the flavors of the burritos go-rc2sb converts an RC of each subject
+// to, so that a catalog entry agrees with its /sb/ download. TestConvertedSBFlavors keeps
+// it in step with the converter.
+var ConvertedSBFlavors = map[string]SBFlavor{
+	"Aligned Bible":                   {"scripture", "textTranslation"},
+	"Bible":                           {"scripture", "textTranslation"},
+	"Hebrew Old Testament":            {"scripture", "textTranslation"},
+	"Greek New Testament":             {"scripture", "textTranslation"},
+	"Open Bible Stories":              {"gloss", "textStories"},
+	"Translation Academy":             {"peripheral", "x-peripheralArticles"},
+	"Translation Words":               {"parascriptural", "x-bcvarticles"},
+	"TSV Translation Words Links":     {"parascriptural", "x-bcvarticles"},
+	"TSV OBS Translation Words Links": {"parascriptural", "x-bcvarticles"},
+	"TSV Translation Notes":           {"parascriptural", "x-bcvnotes"},
+	"TSV Study Notes":                 {"parascriptural", "x-bcvnotes"},
+	"TSV Translation Questions":       {"parascriptural", "x-bcvquestions"},
+	"TSV Study Questions":             {"parascriptural", "x-bcvquestions"},
+	"TSV OBS Translation Notes":       {"peripheral", "x-obsnotes"},
+	"TSV OBS Study Notes":             {"peripheral", "x-obsnotes"},
+	"OBS Translation Notes":           {"peripheral", "x-obsnotes"},
+	"OBS Study Notes":                 {"peripheral", "x-obsnotes"},
+	"TSV OBS Translation Questions":   {"peripheral", "x-obsquestions"},
+	"TSV OBS Study Questions":         {"peripheral", "x-obsquestions"},
+	"OBS Translation Questions":       {"peripheral", "x-obsquestions"},
+	"OBS Study Questions":             {"peripheral", "x-obsquestions"},
+}
