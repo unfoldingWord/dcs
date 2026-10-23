@@ -50,22 +50,31 @@ import (
 
 const storageCommitPrefix = "sb-"
 
+// sbArchiveWriterVersion goes up whenever writeZipArchive or writeTarGzArchive change what they write, so that
+// archives kept from before are converted anew rather than served with an ETag that still matches
+const sbArchiveWriterVersion = 2
+
 // converterVersions lists the versions of the modules that convert rc, ts and tc repos to SB, as built in
 var converterVersions = sync.OnceValue(func() string {
-	info, ok := debug.ReadBuildInfo()
-	if !ok {
-		return ""
-	}
+	return converterVersionsFrom(debug.ReadBuildInfo())
+})
+
+func converterVersionsFrom(info *debug.BuildInfo, ok bool) string {
 	var versions []string
-	for _, dep := range info.Deps {
-		switch dep.Path {
-		case "github.com/unfoldingWord/go-rc2sb", "github.com/unfoldingWord/go-ts2rc", "github.com/unfoldingWord/go-tc2rc":
-			versions = append(versions, dep.Path+"@"+dep.Version)
+	if ok {
+		for _, dep := range info.Deps {
+			switch dep.Path {
+			case "github.com/unfoldingWord/go-rc2sb", "github.com/unfoldingWord/go-ts2rc", "github.com/unfoldingWord/go-tc2rc":
+				versions = append(versions, dep.Path+"@"+dep.Version)
+			}
 		}
+	}
+	if len(versions) == 0 { // a binary without build info: its own version changes with every upgrade
+		return "dcs@" + setting.AppVer
 	}
 	slices.Sort(versions)
 	return strings.Join(versions, " ")
-})
+}
 
 // ArchiveRequest defines the parameters of an SB archive request.
 type ArchiveRequest struct {
@@ -198,7 +207,7 @@ func (aReq *ArchiveRequest) GetArchiveName() string {
 // StorageCommitID returns the cache key used as the commit ID in repo_archiver. Everything that decides the
 // archive's bytes is in it: the commit, the metadata type, the TW/TWL partner commit, the en_tw commit of a
 // ts Translation Words conversion, whether the files sit in a prefix folder (PREFIX_ARCHIVE_FILES), and the
-// converter versions, so that an upgrade doesn't serve old conversions until the archive cleanup. It is
+// converter and archive writer versions, so that an upgrade doesn't serve old conversions until the archive cleanup. It is
 // hashed to fit the column's 64 characters, which "sb-" and a SHA-256 commit ID alone would exceed.
 func (aReq *ArchiveRequest) StorageCommitID() string {
 	key := aReq.CommitID + "\n" + aReq.MetadataType + "\n" + aReq.PayloadCommitID
@@ -209,7 +218,7 @@ func (aReq *ArchiveRequest) StorageCommitID() string {
 		key += "\nunprefixed"
 	}
 	if aReq.MetadataType != "sb" {
-		key += "\n" + converterVersions()
+		key += fmt.Sprintf("\n%s\nwriter %d", converterVersions(), sbArchiveWriterVersion)
 	}
 	sum := sha256.Sum256([]byte(key))
 	return storageCommitPrefix + hex.EncodeToString(sum[:])[:60]
@@ -556,7 +565,7 @@ func bookPackageRef(ctx context.Context, dm *repo_model.Door43Metadata, payloadR
 	return "", nil
 }
 
-var languageCodeRe = regexp.MustCompile(`^[A-Za-z0-9][A-Za-z0-9_-]*$`)
+var languageCodeRe = regexp.MustCompile(`^[A-Za-z0-9][A-Za-z0-9_-]{0,63}$`)
 
 // payloadRepoNameFor names the partner repo whose content a converted burrito of dm also carries:
 // a TWL burrito holds the TW articles, and a TW burrito (isTWRepo) holds the TWL TSVs.
@@ -700,6 +709,7 @@ func writeZipArchive(ctx context.Context, sourceDir, prefixDir string, modTime t
 			Method:   zip.Store,
 			Modified: modTime,
 		}
+		hdr.SetMode(fs.ModeDir | 0o755)
 		if _, err := zw.CreateHeader(hdr); err != nil {
 			return err
 		}
@@ -740,6 +750,7 @@ func writeZipArchive(ctx context.Context, sourceDir, prefixDir string, modTime t
 				Method:   zip.Store,
 				Modified: modTime,
 			}
+			hdr.SetMode(fs.ModeDir | 0o755)
 			_, err := zw.CreateHeader(hdr)
 			return err
 		}

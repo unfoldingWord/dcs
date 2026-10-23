@@ -10,8 +10,10 @@ import (
 	"compress/gzip"
 	"errors"
 	"io"
+	"io/fs"
 	"os"
 	"path/filepath"
+	"runtime/debug"
 	"strings"
 	"testing"
 	"time"
@@ -25,6 +27,7 @@ import (
 	"gitea.dev/modules/setting"
 	"gitea.dev/modules/test"
 	"gitea.dev/modules/timeutil"
+	"gitea.dev/modules/util"
 	"gitea.dev/services/contexttest"
 
 	_ "gitea.dev/models/actions"
@@ -125,7 +128,10 @@ func TestSBCacheControl(t *testing.T) {
 }
 
 func TestPayloadRepoNameFor(t *testing.T) {
-	for language, want := range map[string]string{"en": "en_tw", "es-419": "es-419_tw", "": "", "../x": "", "a/b": "", `a\b`: "", ".": ""} {
+	for language, want := range map[string]string{
+		"en": "en_tw", "es-419": "es-419_tw", strings.Repeat("a", 64): strings.Repeat("a", 64) + "_tw",
+		"": "", "../x": "", "a/b": "", `a\b`: "", ".": "", strings.Repeat("a", 65): "",
+	} {
 		name, isTWRepo := payloadRepoNameFor(&repo_model.Door43Metadata{Language: language, Subject: "TSV Translation Words Links"})
 		assert.Equal(t, want, name, language)
 		assert.False(t, isTWRepo)
@@ -139,6 +145,20 @@ func TestConverterVersions(t *testing.T) {
 	assert.Contains(t, converterVersions(), "github.com/unfoldingWord/go-rc2sb@v")
 	assert.Contains(t, converterVersions(), "github.com/unfoldingWord/go-ts2rc@v")
 	assert.Contains(t, converterVersions(), "github.com/unfoldingWord/go-tc2rc@v")
+}
+
+func TestConverterVersionsFrom(t *testing.T) {
+	info := &debug.BuildInfo{Deps: []*debug.Module{
+		{Path: "github.com/unfoldingWord/go-ts2rc", Version: "v0.1.1"},
+		{Path: "github.com/unfoldingWord/go-rc2sb", Version: "v0.6.0"},
+		{Path: "github.com/stretchr/testify", Version: "v1.12.1"},
+	}}
+	assert.Equal(t, "github.com/unfoldingWord/go-rc2sb@v0.6.0 github.com/unfoldingWord/go-ts2rc@v0.1.1", converterVersionsFrom(info, true))
+
+	// Without build info the DCS version stands in, which also changes with every upgrade
+	defer test.MockVariableValue(&setting.AppVer, "28.2.0+dcs")()
+	assert.Equal(t, "dcs@28.2.0+dcs", converterVersionsFrom(nil, false))
+	assert.Equal(t, "dcs@28.2.0+dcs", converterVersionsFrom(&debug.BuildInfo{}, true))
 }
 
 func TestStorageCommitID(t *testing.T) {
@@ -182,13 +202,14 @@ func TestStorageCommitID(t *testing.T) {
 // TestWriteDirectoryArchiveDeterministic checks that converted archives carry the commit time, not the
 // conversion's file times, so that a commit always archives to the same bytes.
 func TestWriteDirectoryArchiveDeterministic(t *testing.T) {
-	dir := t.TempDir()
-	require.NoError(t, os.MkdirAll(filepath.Join(dir, "ingredients"), 0o755))
-	require.NoError(t, os.WriteFile(filepath.Join(dir, "metadata.json"), []byte("{}"), 0o644))
-	require.NoError(t, os.WriteFile(filepath.Join(dir, "ingredients", "TIT.tsv"), []byte("Reference\tNote\n"), 0o644))
 	commitTime := time.Date(2026, 10, 22, 15, 6, 43, 0, time.FixedZone("CDT", -5*60*60))
 
 	for _, archiveType := range []repo_model.ArchiveType{repo_model.ArchiveZip, repo_model.ArchiveTarGz} {
+		dir := t.TempDir()
+		require.NoError(t, os.MkdirAll(filepath.Join(dir, "ingredients"), 0o755))
+		require.NoError(t, os.WriteFile(filepath.Join(dir, "metadata.json"), []byte("{}"), 0o644))
+		require.NoError(t, os.WriteFile(filepath.Join(dir, "ingredients", "TIT.tsv"), []byte("Reference\tNote\n"), 0o644))
+
 		var first, second bytes.Buffer
 		require.NoError(t, writeDirectoryArchive(t.Context(), dir, "en_tn", archiveType, commitTime, &first))
 		later := time.Now().Add(time.Hour)
@@ -206,7 +227,24 @@ func TestWriteDirectoryArchiveDeterministic(t *testing.T) {
 			assert.Len(t, zr.File, 4) // en_tn/, en_tn/ingredients/ and the two files
 			for _, f := range zr.File {
 				assert.True(t, commitTime.Equal(f.Modified), "%s: %v", f.Name, f.Modified)
+				assert.Equal(t, util.Iif(strings.HasSuffix(f.Name, "/"), fs.ModeDir|0o755, fs.FileMode(0o644)), f.Mode(), f.Name)
 			}
+			continue
+		}
+		gzr, err := gzip.NewReader(bytes.NewReader(first.Bytes()))
+		require.NoError(t, err)
+		tr := tar.NewReader(gzr)
+		for {
+			hdr, err := tr.Next()
+			if errors.Is(err, io.EOF) {
+				break
+			}
+			require.NoError(t, err)
+			assert.True(t, commitTime.Equal(hdr.ModTime), "%s: %v", hdr.Name, hdr.ModTime)
+			assert.Equal(t, util.Iif(hdr.Typeflag == tar.TypeDir, int64(0o755), int64(0o644)), hdr.Mode, hdr.Name)
+			assert.Zero(t, hdr.Uid, hdr.Name)
+			assert.Zero(t, hdr.Gid, hdr.Name)
+			assert.Empty(t, hdr.Uname+hdr.Gname, hdr.Name)
 		}
 	}
 }
