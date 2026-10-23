@@ -229,7 +229,17 @@ func burritoRoot(zr *zip.Reader) string {
 		}
 		root = folder + "/"
 	}
-	return root
+	if root == "" || setting.Repository.PrefixArchiveFiles {
+		return root
+	}
+	// An unprefixed archive whose .gitattributes export only one folder looks prefixed too, so it is a prefix
+	// only when the burrito's metadata.json is right under it
+	for _, f := range zr.File {
+		if f.Name == root+burritoMetadataFile {
+			return root
+		}
+	}
+	return ""
 }
 
 // handleNotModified sets the cache headers and answers 304 when If-None-Match names the current ETag.

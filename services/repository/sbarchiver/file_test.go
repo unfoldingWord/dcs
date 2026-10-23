@@ -11,6 +11,8 @@ import (
 	"testing"
 	"time"
 
+	"gitea.dev/modules/setting"
+	"gitea.dev/modules/test"
 	"gitea.dev/modules/util"
 	"gitea.dev/services/contexttest"
 
@@ -90,6 +92,16 @@ func TestBurritoFileFromZip(t *testing.T) {
 	file, err = burritoFileFromZip(zr, "abc123", "metadata.json")
 	require.NoError(t, err)
 	assert.EqualValues(t, len(metadata), file.size)
+
+	// An unprefixed archive that .gitattributes cut down to one folder, which isn't a prefix
+	defer test.MockVariableValue(&setting.Repository.PrefixArchiveFiles, false)()
+	zr = makeZip(t, map[string]string{"ingredients/TIT.tsv": "x"}, "ingredients/", "ingredients/TIT.tsv")
+	assert.Empty(t, burritoRoot(zr))
+	_, err = burritoFileFromZip(zr, "abc123", "ingredients/TIT.tsv")
+	require.NoError(t, err)
+	// A prefixed archive built before PREFIX_ARCHIVE_FILES was turned off still has its prefix
+	zr = makeZip(t, map[string]string{"en_tn/metadata.json": metadata}, "en_tn/", "en_tn/metadata.json")
+	assert.Equal(t, "en_tn/", burritoRoot(zr))
 }
 
 func TestSniffContentType(t *testing.T) {
