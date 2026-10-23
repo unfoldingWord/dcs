@@ -8,6 +8,8 @@ import (
 	"archive/zip"
 	"compress/gzip"
 	"context"
+	"crypto/sha256"
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"io"
@@ -53,8 +55,10 @@ type ArchiveRequest struct {
 
 	RefShortName string // "master", "v1.0.0", commit id, etc. Exported so it survives queue serialization.
 
-	// MetadataRef is the ref whose metadata decides the conversion; see getRepoDMForArchive.
-	MetadataRef string
+	// MetadataRef is the ref whose metadata decides the conversion (see getRepoDMForArchive), and
+	// MetadataType is its type then, which is part of the cache key: "sb" archives the tree as it is.
+	MetadataRef  string
+	MetadataType string
 	// The partner repo commit whose content a TW or TWL burrito also carries (see payloadRefForArchive).
 	// It is part of the cache key, since the partner ref paired with a branch can move.
 	PayloadRef      string
@@ -63,6 +67,7 @@ type ArchiveRequest struct {
 	// Set by NewRequest for serving; a request from the queue has neither.
 	refIsCommitID  bool // a full commit ID, the only ref that can't be moved
 	mayHavePartner bool // the subject pairs with a partner repo, even one that doesn't exist yet
+	ownMetadata    bool // the metadata was made from this commit, not borrowed from the default branch
 	commitTime     time.Time
 }
 
@@ -143,7 +148,8 @@ func newRequest(ctx context.Context, repo *repo_model.Repository, gitRepo *git.R
 	if err != nil {
 		return nil, err
 	}
-	aReq.MetadataRef = dm.Ref
+	aReq.MetadataRef, aReq.MetadataType = dm.Ref, dm.MetadataType
+	aReq.ownMetadata = dm.CommitSHA == aReq.CommitID
 
 	if dm.MetadataType != "sb" {
 		partnerName, _ := payloadRepoNameFor(dm)
@@ -167,13 +173,12 @@ func (aReq *ArchiveRequest) GetArchiveName() string {
 	return strings.ReplaceAll(aReq.RefShortName, "/", "-") + "-sb." + aReq.Type.String()
 }
 
-// StorageCommitID returns the cache key commit ID used in repo_archiver.
+// StorageCommitID returns the cache key used as the commit ID in repo_archiver. Everything that decides the
+// archive's bytes is in it: the commit, the metadata type, and the TW/TWL partner commit. It is hashed to fit
+// the column's 64 characters, which "sb-" and a SHA-256 commit ID alone would exceed.
 func (aReq *ArchiveRequest) StorageCommitID() string {
-	if aReq.PayloadCommitID == "" {
-		return storageCommitPrefix + aReq.CommitID
-	}
-	// 20 characters of the partner commit keep a SHA-1 key within the 64 of repo_archiver.commit_id
-	return storageCommitPrefix + aReq.CommitID + "-" + aReq.PayloadCommitID[:min(20, len(aReq.PayloadCommitID))]
+	sum := sha256.Sum256([]byte(aReq.CommitID + "\n" + aReq.MetadataType + "\n" + aReq.PayloadCommitID))
+	return storageCommitPrefix + hex.EncodeToString(sum[:])[:60]
 }
 
 // Await waits for archive generation completion.
@@ -225,6 +230,8 @@ func (aReq *ArchiveRequest) Stream(ctx context.Context, repo *repo_model.Reposit
 	if err != nil {
 		return err
 	}
+	// Convert as the cache key says, even if the metadata has changed since the request was made
+	repoDM.MetadataType = util.IfZero(aReq.MetadataType, repoDM.MetadataType)
 
 	if repoDM.MetadataType == "sb" {
 		return git.CreateArchive(ctx, repo, repo.Name, aReq.Type.String(), w, aReq.CommitID, nil)
@@ -1003,10 +1010,11 @@ func (aReq *ArchiveRequest) lastModified() time.Time {
 	return aReq.commitTime
 }
 
-// isPinned reports whether the ref pins all the burrito holds: a commit ID of a burrito that can't carry
-// partner content. A tag can be deleted and made again, a partner's ref can move, and a partner repo can be created.
+// isPinned reports whether the ref pins all the burrito holds: a commit ID, with metadata made from that commit,
+// of a burrito that can't carry partner content. A tag can be deleted and made again, borrowed metadata can
+// change, a partner's ref can move, and a partner repo can be created.
 func (aReq *ArchiveRequest) isPinned() bool {
-	return aReq.refIsCommitID && !aReq.mayHavePartner && aReq.PayloadCommitID == ""
+	return aReq.refIsCommitID && aReq.ownMetadata && !aReq.mayHavePartner && aReq.PayloadCommitID == ""
 }
 
 // cacheControl allows long-lived caching only when the ref is pinned (see isPinned).

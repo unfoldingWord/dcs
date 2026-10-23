@@ -311,6 +311,19 @@ func TestDCSAPIRepoSBFileConverted(t *testing.T) {
 		resp := MakeRequest(t, NewRequest(t, "GET", "/api/v1/repos/user2/repo1/sb/raw/ingredients/TIT.tsv?ref="+dm.CommitSHA), http.StatusOK)
 		assert.Equal(t, notes, resp.Body.String())
 		assert.Equal(t, "public, max-age=31536000, immutable", resp.Header().Get("Cache-Control"))
+
+		// The metadata type is part of the archive's key: an SB release on the same commit is archived as it is
+		MakeRequest(t, NewRequest(t, "GET", "/api/v1/repos/user2/repo1/sb/raw/tn_TIT.tsv?ref="+dm.CommitSHA), http.StatusNotFound)
+		sbRelease := &repo_model.Door43Metadata{
+			RepoID: 1, Ref: "v-sb", RefType: "tag", CommitSHA: dm.CommitSHA,
+			Stage: door43metadata_model.StageProd, MetadataType: "sb", MetadataVersion: "1.0.0",
+		}
+		require.NoError(t, repo_model.InsertDoor43Metadata(t.Context(), sbRelease))
+		resp = MakeRequest(t, NewRequest(t, "GET", "/api/v1/repos/user2/repo1/sb/raw/tn_TIT.tsv?ref="+dm.CommitSHA), http.StatusOK)
+		assert.Equal(t, notes, resp.Body.String())
+		_, err = db.GetEngine(t.Context()).ID(sbRelease.ID).Delete(&repo_model.Door43Metadata{})
+		require.NoError(t, err)
+		MakeRequest(t, NewRequest(t, "GET", "/api/v1/repos/user2/repo1/sb/raw/tn_TIT.tsv?ref="+dm.CommitSHA), http.StatusNotFound)
 		MakeRequest(t, NewRequest(t, "GET", "/api/v1/repos/user2/repo1/sb/raw/ingredients/GEN.tsv?ref=sb-tn"), http.StatusNotFound)
 		MakeRequest(t, NewRequest(t, "GET", "/api/v1/repos/user2/repo1/sb/raw/ingredients?ref=sb-tn"), http.StatusNotFound)
 

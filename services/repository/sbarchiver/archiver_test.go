@@ -75,7 +75,8 @@ func TestNewRequest(t *testing.T) {
 	masterID, err := ctx.Repo.GitRepo.ConvertToGitID(ctx, "master")
 	require.NoError(t, err)
 	assert.Equal(t, masterID.String(), aReq.CommitID)
-	assert.Equal(t, storageCommitPrefix+aReq.CommitID, aReq.StorageCommitID())
+	assert.Equal(t, "rc", aReq.MetadataType)
+	assert.True(t, strings.HasPrefix(aReq.StorageCommitID(), storageCommitPrefix))
 
 	aReq, err = NewRequest(ctx, ctx.Repo.Repository, ctx.Repo.GitRepo, "test/archive.tar.gz")
 	require.NoError(t, err)
@@ -119,43 +120,54 @@ func TestCacheControl(t *testing.T) {
 	const immutable = "public, max-age=31536000, immutable"
 	const revalidate = "max-age=0, public, must-revalidate"
 
-	// Only a commit ID without partner content can't change: a tag can be made again, a partner's ref can move,
-	// and a partner repo missing today can be created
+	// Only a commit ID with its own metadata and without partner content can't change: a tag can be made
+	// again, metadata borrowed from the default branch can change, a partner's ref can move, and a partner
+	// repo missing today can be created
 	for _, c := range []struct {
 		refIsCommitID   bool
+		ownMetadata     bool
 		mayHavePartner  bool
 		payloadCommitID string
 		want            string
 	}{
-		{true, false, "", immutable},
-		{false, false, "", revalidate},
-		{true, true, "", revalidate},
-		{true, true, "0123456789abcdef0123456789abcdef01234567", revalidate},
-		{false, true, "0123456789abcdef0123456789abcdef01234567", revalidate},
+		{true, true, false, "", immutable},
+		{false, true, false, "", revalidate},
+		{true, false, false, "", revalidate},
+		{true, true, true, "", revalidate},
+		{true, true, true, "0123456789abcdef0123456789abcdef01234567", revalidate},
+		{false, true, true, "0123456789abcdef0123456789abcdef01234567", revalidate},
 	} {
-		aReq := &ArchiveRequest{refIsCommitID: c.refIsCommitID, mayHavePartner: c.mayHavePartner, PayloadCommitID: c.payloadCommitID, commitTime: time.Unix(1000, 0)}
+		aReq := &ArchiveRequest{
+			refIsCommitID: c.refIsCommitID, ownMetadata: c.ownMetadata, mayHavePartner: c.mayHavePartner,
+			PayloadCommitID: c.payloadCommitID, commitTime: time.Unix(1000, 0),
+		}
 		cacheControl, err := aReq.cacheControl(t.Context(), repo)
 		require.NoError(t, err)
-		assert.Equal(t, c.want, cacheControl, "commit ID %t, may have partner %t, partner %q", c.refIsCommitID, c.mayHavePartner, c.payloadCommitID)
+		assert.Equal(t, c.want, cacheControl, "%+v", c)
 		// Last-Modified follows the same rule: a moved ref or a new partner commit doesn't change the commit time
-		assert.Equal(t, c.want == immutable, !aReq.lastModified().IsZero(), "Last-Modified: commit ID %t, may have partner %t", c.refIsCommitID, c.mayHavePartner)
+		assert.Equal(t, c.want == immutable, !aReq.lastModified().IsZero(), "Last-Modified: %+v", c)
 	}
 
 	repo.IsPrivate = true
-	cacheControl, err := (&ArchiveRequest{refIsCommitID: true}).cacheControl(t.Context(), repo)
+	cacheControl, err := (&ArchiveRequest{refIsCommitID: true, ownMetadata: true}).cacheControl(t.Context(), repo)
 	require.NoError(t, err)
 	assert.Equal(t, "private, max-age=31536000, immutable", cacheControl)
 }
 
 func TestStorageCommitID(t *testing.T) {
-	commitID := strings.Repeat("a", 40)
-	aReq := &ArchiveRequest{CommitID: commitID}
-	assert.Equal(t, "sb-"+commitID, aReq.StorageCommitID())
-
-	// A partner commit is part of the key, within repo_archiver's VARCHAR(64)
-	aReq.PayloadCommitID = strings.Repeat("b", 40)
-	assert.Equal(t, "sb-"+commitID+"-"+strings.Repeat("b", 20), aReq.StorageCommitID())
-	assert.Len(t, aReq.StorageCommitID(), 64)
+	// Every input that decides the bytes gets its own key, within repo_archiver's VARCHAR(64) for SHA-256 too
+	keys := map[string]bool{}
+	for _, commitID := range []string{strings.Repeat("a", 40), strings.Repeat("a", 64)} {
+		for _, metadataType := range []string{"rc", "sb"} {
+			for _, payloadCommitID := range []string{"", strings.Repeat("b", 40), strings.Repeat("b", 64)} {
+				key := (&ArchiveRequest{CommitID: commitID, MetadataType: metadataType, PayloadCommitID: payloadCommitID}).StorageCommitID()
+				assert.True(t, strings.HasPrefix(key, storageCommitPrefix), key)
+				assert.LessOrEqual(t, len(key), 64, key)
+				keys[key] = true
+			}
+		}
+	}
+	assert.Len(t, keys, 12)
 }
 
 // TestWriteDirectoryArchiveDeterministic checks that converted archives carry the commit time, not the

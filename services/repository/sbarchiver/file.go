@@ -22,6 +22,7 @@ import (
 	"gitea.dev/modules/git"
 	"gitea.dev/modules/httplib"
 	"gitea.dev/modules/json"
+	"gitea.dev/modules/log"
 	"gitea.dev/modules/setting"
 	"gitea.dev/modules/storage"
 	"gitea.dev/modules/typesniffer"
@@ -291,7 +292,9 @@ func serveBurritoFile(ctx *gitea_context.Base, file *burritoFile, aReq *ArchiveR
 	})
 	ctx.Resp.Header().Set("Cache-Control", cacheControl) // ServeSetHeaders sets its own
 	ctx.Resp.WriteHeader(http.StatusOK)
-	_, _ = io.Copy(ctx.Resp, br) // the status is sent, so there's nothing left to report an error with
+	if _, err := io.Copy(ctx.Resp, br); err != nil {
+		log.Debug("SB file %s of %s: %v", file.path, aReq.StorageCommitID(), err) // the status is sent, so it can't be reported
+	}
 	return nil
 }
 

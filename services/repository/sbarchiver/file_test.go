@@ -133,7 +133,7 @@ func TestHandleNotModified(t *testing.T) {
 	assert.False(t, handleNotModified(ctx.Base, etag, lastModified, "max-age=0"))
 
 	// A burrito with partner content has no Last-Modified, so a date alone can't keep a stale copy
-	aReq := &ArchiveRequest{commitTime: lastModified, refIsCommitID: true, mayHavePartner: true, PayloadCommitID: "0123456789abcdef0123456789abcdef01234567"}
+	aReq := &ArchiveRequest{commitTime: lastModified, refIsCommitID: true, ownMetadata: true, mayHavePartner: true, PayloadCommitID: "0123456789abcdef0123456789abcdef01234567"}
 	ctx, resp := contexttest.MockContext(t, "user27/repo49/sb/raw/metadata.json")
 	ctx.Req.Header.Set("If-Modified-Since", lastModified.Format(http.TimeFormat))
 	assert.False(t, handleNotModified(ctx.Base, etag, aReq.lastModified(), "max-age=0"))
