@@ -35884,6 +35884,75 @@
         ]
       }
     },
+    "/repos/{owner}/{repo}/sb/raw/{filepath}": {
+      "get": {
+        "description": "Returns one file of the repository's Scripture Burrito (SB) at the given git reference: its\n`metadata.json` or an ingredient. The bytes are those of the same path inside the archive from\n`/repos/{owner}/{repo}/sb/{ref}.zip`, below its root folder, so a client can read single files or the\nwhole archive interchangeably. Repositories already in SB format are read from git at that commit.\nThe Content-Type is the ingredient's `mimeType` from `metadata.json`, and `application/json` for\n`metadata.json` itself. A tag or a full commit ID gets a long-lived, immutable Cache-Control; a branch\nis revalidated with the ETag. The same file can be read without an API token from the repository's\nHTML URL, `/{owner}/{repo}/sb/raw/{filepath}?ref={ref}`.\n",
+        "operationId": "repoGetSBFile",
+        "parameters": [
+          {
+            "description": "owner of the repo",
+            "in": "path",
+            "name": "owner",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "name of the repo",
+            "in": "path",
+            "name": "repo",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "path of the file inside the burrito, e.g. metadata.json or ingredients/TIT.tsv",
+            "in": "path",
+            "name": "filepath",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "the git reference (branch, tag or commit). Defaults to the repository's default branch",
+            "in": "query",
+            "name": "ref",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/octet-stream": {
+                "schema": {
+                  "format": "binary",
+                  "type": "string"
+                }
+              }
+            },
+            "description": "the file"
+          },
+          "304": {
+            "description": "the copy named by If-None-Match is current"
+          },
+          "400": {
+            "description": "the path is empty, absolute or has a `..` segment"
+          },
+          "404": {
+            "description": "the ref does not exist, the repository is not an rc, ts, tc or sb repository, or the file is not in the burrito"
+          }
+        },
+        "summary": "Get a file of a repository's Scripture Burrito",
+        "tags": [
+          "repository"
+        ]
+      }
+    },
     "/repos/{owner}/{repo}/sb/{archive}": {
       "get": {
         "description": "Returns the repository at the given git reference as a Scripture Burrito (SB) archive.\nResource Container (rc), translationStudio (ts) and translationCore (tc) repositories are\nconverted to SB on the fly; repositories already in SB format are archived as they are.\nAny other repository returns 404. The same archive can be downloaded without an API token\nfrom the repository's HTML URL, `/{owner}/{repo}/sb/{archive}`. The plain (unconverted) git\narchive is available from `/repos/{owner}/{repo}/archive/{archive}`.\n",

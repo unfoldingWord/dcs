@@ -30,7 +30,7 @@ This document catalogs every DCS modification to existing Gitea files. New DCS-o
 | File | Description | Risk | Depends On |
 | ------ | ------------- | ------ | ------------ |
 | `routers/api/v1/api.go` | 4 blocks: reqExploreSignIn disabled, repo healthcheck + sb archive endpoints, spam admin, catalog/languages routes | HIGH | routers/api/v1/dcs/, routers/api/v1/catalog/ |
-| `routers/web/web.go` | 2 blocks: repo healthcheck/metadata routes, top-level about/tools/catalog | HIGH | routers/web/dcs/, routers/web/repo/door43metadata.go |
+| `routers/web/web.go` | 3 blocks: repo healthcheck/metadata routes, the repo `/sb` group (SB archive and `/sb/raw/*` files), top-level about/tools/catalog | HIGH | routers/web/dcs/, routers/web/repo/door43metadata.go, routers/web/repo/repo_dcs.go |
 
 ### FUNC_CALL - Single function calls added to existing functions
 
@@ -82,7 +82,7 @@ This document catalogs every DCS modification to existing Gitea files. New DCS-o
 | `routers/web/admin/users.go` | Spam user filter, LoadLatestDMs | MEDIUM | - |
 | `routers/web/repo/release.go` | Door43Metadata loading for releases/tags, GetLatestReleaseByRepoID call, healthcheck severities for ref badges | HIGH | models/repo/door43metadata.go, templates/dcs/ref_healthcheck_badge.tmpl |
 | `routers/web/repo/branch.go` | Healthcheck severities for branch-list ref badges | MEDIUM | models/repo/door43metadata.go, templates/dcs/ref_healthcheck_badge.tmpl |
-| `routers/web/repo/repo.go` | DownloadSB/InitiateDownloadSB handlers, GetLatestReleaseByRepoID call | MEDIUM | services/sbarchiver/ |
+| `routers/web/repo/repo.go` | DownloadSB/InitiateDownloadSB handlers, GetLatestReleaseByRepoID call | MEDIUM | services/repository/sbarchiver/ |
 | `routers/web/repo/compare.go` | TSV reader, TreeEntry attachment for diffs | MEDIUM | - |
 | `routers/web/repo/pull.go` | TreeEntry attachment for JSON/YAML validation | MEDIUM | - |
 | `services/context/repo.go` | LoadLatestDMs in repoAssignment, Door43Metadata by ref in RepoRefByType | HIGH | models/repo/door43metadata.go |
@@ -241,12 +241,13 @@ This document catalogs every DCS modification to existing Gitea files. New DCS-o
 - `routers/api/v1/repo/door43healthcheck.go`, `download_dcs.go`
 - `routers/api/v1/swagger/catalog.go`, `dcs.go`
 - `routers/web/dcs/about.go`, `catalog.go`, `healthcheck_dashboard.go`
-- `routers/web/repo/door43metadata.go`
+- `routers/web/repo/door43metadata.go`, `repo_dcs.go`
 - `services/convert/catalog.go`, `catalog_test.go`, `git_ref.go`, `repository_dcs.go`
 - `services/cron/tasks_dcs.go`
 - `services/door43healthcheck/healthcheck.go`, `checks_common.go`, `checks_rc.go`, `checks_sb.go`, `checks_tsv.go`, `checks_tsv_test.go`, `checks_usfm.go`, `checks_usfm_test.go`, `obs_checks.go`, `obs_checks_test.go`
 - `services/door43metadata/door43metadata.go`, `door43metadata_notifier.go`, `door43metadata_test.go`
 - `services/gitref/gitref.go`, `gitref_test.go`
+- `services/repository/sbarchiver/archiver.go`, `archiver_test.go`, `file.go`, `file_test.go`
 
 ### Templates
 

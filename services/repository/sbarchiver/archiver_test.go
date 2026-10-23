@@ -10,8 +10,11 @@ import (
 	"compress/gzip"
 	"errors"
 	"io"
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 
 	"gitea.dev/models/db"
 	"gitea.dev/models/door43metadata"
@@ -57,7 +60,15 @@ func TestNewRequest(t *testing.T) {
 	contexttest.LoadGitRepo(t, ctx)
 	defer ctx.Repo.GitRepo.Close()
 
-	aReq, err := NewRequest(ctx, testRepoID, ctx.Repo.GitRepo, "master.zip")
+	_, err := NewRequest(ctx, loadRepo(t), ctx.Repo.GitRepo, "master.zip")
+	assert.ErrorIs(t, err, ErrRepoNotConvertible{})
+	insertDM(t, &repo_model.Door43Metadata{
+		RepoID: testRepoID, Ref: "master", RefType: "branch", CommitSHA: testFirstCommit,
+		Stage: door43metadata.StageLatest, IsLatestForStage: true, MetadataType: "rc",
+		Language: "en", Subject: "TSV Translation Notes",
+	})
+
+	aReq, err := NewRequest(ctx, ctx.Repo.Repository, ctx.Repo.GitRepo, "master.zip")
 	require.NoError(t, err)
 	assert.Equal(t, repo_model.ArchiveZip, aReq.Type)
 	assert.Equal(t, "master-sb.zip", aReq.GetArchiveName())
@@ -66,27 +77,115 @@ func TestNewRequest(t *testing.T) {
 	assert.Equal(t, masterID.String(), aReq.CommitID)
 	assert.Equal(t, storageCommitPrefix+aReq.CommitID, aReq.StorageCommitID())
 
-	aReq, err = NewRequest(ctx, testRepoID, ctx.Repo.GitRepo, "test/archive.tar.gz")
+	aReq, err = NewRequest(ctx, ctx.Repo.Repository, ctx.Repo.GitRepo, "test/archive.tar.gz")
 	require.NoError(t, err)
 	assert.Equal(t, repo_model.ArchiveTarGz, aReq.Type)
 	assert.Equal(t, "test-archive-sb.tar.gz", aReq.GetArchiveName())
 
 	// Bundles are git-specific and never SB.
-	_, err = NewRequest(ctx, testRepoID, ctx.Repo.GitRepo, "master.bundle")
+	_, err = NewRequest(ctx, ctx.Repo.Repository, ctx.Repo.GitRepo, "master.bundle")
 	assert.ErrorIs(t, err, ErrUnknownArchiveFormat{})
 
-	_, err = NewRequest(ctx, testRepoID, ctx.Repo.GitRepo, "master.unknown")
+	_, err = NewRequest(ctx, ctx.Repo.Repository, ctx.Repo.GitRepo, "master.unknown")
 	assert.ErrorIs(t, err, ErrUnknownArchiveFormat{})
 
-	_, err = NewRequest(ctx, testRepoID, ctx.Repo.GitRepo, "no-such-ref.zip")
+	_, err = NewRequest(ctx, ctx.Repo.Repository, ctx.Repo.GitRepo, "no-such-ref.zip")
 	assert.ErrorIs(t, err, RepoRefNotFoundError{})
+	// A full commit ID is passed through by ConvertToGitID, so it must be looked up too
+	_, err = NewRequest(ctx, ctx.Repo.Repository, ctx.Repo.GitRepo, strings.Repeat("0", len(masterID.String()))+".zip")
+	assert.ErrorIs(t, err, RepoRefNotFoundError{})
+
+	// The response headers need the ref's kind and the commit time
+	aReq, err = NewRequest(ctx, ctx.Repo.Repository, ctx.Repo.GitRepo, "master.zip")
+	require.NoError(t, err)
+	assert.Empty(t, aReq.refType)
+	assert.False(t, aReq.commitTime.IsZero())
+	aReq, err = NewRequest(ctx, ctx.Repo.Repository, ctx.Repo.GitRepo, masterID.String()+".zip")
+	require.NoError(t, err)
+	assert.Equal(t, "commit", aReq.refType)
+
+	// An annotated tag shares its commit's archive
+	_, _, err = gitcmd.NewCommand("tag", "-a", "-m", "release", "v-annotated", "master").WithRepo(ctx.Repo.GitRepo).RunStdString(t.Context())
+	require.NoError(t, err)
+	aReq, err = NewRequest(ctx, ctx.Repo.Repository, ctx.Repo.GitRepo, "v-annotated.zip")
+	require.NoError(t, err)
+	assert.Equal(t, masterID.String(), aReq.CommitID)
+	assert.Equal(t, "tag", aReq.refType)
+}
+
+func TestCacheControl(t *testing.T) {
+	require.NoError(t, unittest.PrepareTestDatabase())
+	repo := loadRepo(t)
+	const immutable = "public, max-age=31536000, immutable"
+	const revalidate = "max-age=0, public, must-revalidate"
+
+	for _, c := range []struct {
+		refType, payloadRef, want string
+	}{
+		{"tag", "", immutable},
+		{"commit", "", immutable},
+		{"", "", revalidate},
+		{"tag", "refs/tags/v86", immutable},
+		{"tag", "refs/heads/master", revalidate}, // no partner release to pair with
+		{"commit", "refs/heads/master", revalidate},
+	} {
+		aReq := &ArchiveRequest{refType: c.refType, PayloadRef: c.payloadRef}
+		cacheControl, err := aReq.cacheControl(t.Context(), repo)
+		require.NoError(t, err)
+		assert.Equal(t, c.want, cacheControl, "refType %q, payload %q", c.refType, c.payloadRef)
+	}
+
+	repo.IsPrivate = true
+	cacheControl, err := (&ArchiveRequest{refType: "tag"}).cacheControl(t.Context(), repo)
+	require.NoError(t, err)
+	assert.Equal(t, "private, max-age=31536000, immutable", cacheControl)
+}
+
+func TestStorageCommitID(t *testing.T) {
+	commitID := strings.Repeat("a", 40)
+	aReq := &ArchiveRequest{CommitID: commitID}
+	assert.Equal(t, "sb-"+commitID, aReq.StorageCommitID())
+
+	// A partner commit is part of the key, within repo_archiver's VARCHAR(64)
+	aReq.PayloadCommitID = strings.Repeat("b", 40)
+	assert.Equal(t, "sb-"+commitID+"-"+strings.Repeat("b", 20), aReq.StorageCommitID())
+	assert.Len(t, aReq.StorageCommitID(), 64)
+}
+
+// TestWriteDirectoryArchiveDeterministic checks that converted archives carry the commit time, not the
+// conversion's file times, so that a commit always archives to the same bytes.
+func TestWriteDirectoryArchiveDeterministic(t *testing.T) {
+	dir := t.TempDir()
+	require.NoError(t, os.MkdirAll(filepath.Join(dir, "ingredients"), 0o755))
+	require.NoError(t, os.WriteFile(filepath.Join(dir, "metadata.json"), []byte("{}"), 0o644))
+	require.NoError(t, os.WriteFile(filepath.Join(dir, "ingredients", "TIT.tsv"), []byte("Reference\tNote\n"), 0o644))
+	commitTime := time.Date(2026, 10, 22, 15, 6, 43, 0, time.FixedZone("CDT", -5*60*60))
+
+	for _, archiveType := range []repo_model.ArchiveType{repo_model.ArchiveZip, repo_model.ArchiveTarGz} {
+		var first, second bytes.Buffer
+		require.NoError(t, writeDirectoryArchive(t.Context(), dir, "en_tn", archiveType, commitTime, &first))
+		later := time.Now().Add(time.Hour)
+		require.NoError(t, os.Chtimes(filepath.Join(dir, "metadata.json"), later, later))
+		require.NoError(t, os.Chtimes(filepath.Join(dir, "ingredients"), later, later))
+		require.NoError(t, writeDirectoryArchive(t.Context(), dir, "en_tn", archiveType, commitTime, &second))
+		assert.Equal(t, first.Bytes(), second.Bytes(), archiveType.String())
+
+		if archiveType == repo_model.ArchiveZip {
+			zr, err := zip.NewReader(bytes.NewReader(first.Bytes()), int64(first.Len()))
+			require.NoError(t, err)
+			assert.Len(t, zr.File, 4) // en_tn/, en_tn/ingredients/ and the two files
+			for _, f := range zr.File {
+				assert.True(t, commitTime.Equal(f.Modified), "%s: %v", f.Name, f.Modified)
+			}
+		}
+	}
 }
 
 func TestGetRepoDMForArchive(t *testing.T) {
 	require.NoError(t, unittest.PrepareTestDatabase())
 
 	// No metadata rows at all and a repo name that yields no type: not archivable.
-	_, err := getRepoDMForArchive(t.Context(), loadRepo(t), "master")
+	_, err := getRepoDMForArchive(t.Context(), loadRepo(t), "master", "")
 	assert.ErrorIs(t, err, ErrRepoNotConvertible{})
 
 	// Default branch is RC; a second branch already holds converted SB content.
@@ -99,17 +198,17 @@ func TestGetRepoDMForArchive(t *testing.T) {
 		Stage: door43metadata.StageOther, MetadataType: "sb",
 	})
 
-	dm, err := getRepoDMForArchive(t.Context(), loadRepo(t), "master")
+	dm, err := getRepoDMForArchive(t.Context(), loadRepo(t), "master", "")
 	require.NoError(t, err)
 	assert.Equal(t, "rc", dm.MetadataType)
 
 	// The requested ref's own row decides, not the default branch.
-	dm, err = getRepoDMForArchive(t.Context(), loadRepo(t), "test/archive")
+	dm, err = getRepoDMForArchive(t.Context(), loadRepo(t), "test/archive", "")
 	require.NoError(t, err)
 	assert.Equal(t, "sb", dm.MetadataType)
 
 	// A bare commit ID has no row of its own and falls back to the default branch row.
-	dm, err = getRepoDMForArchive(t.Context(), loadRepo(t), testFirstCommit)
+	dm, err = getRepoDMForArchive(t.Context(), loadRepo(t), testFirstCommit, "")
 	require.NoError(t, err)
 	assert.Equal(t, "rc", dm.MetadataType)
 
@@ -118,9 +217,26 @@ func TestGetRepoDMForArchive(t *testing.T) {
 		RepoID: testRepoID, Ref: "v0", RefType: "tag", CommitSHA: testFirstCommit,
 		Stage: door43metadata.StageProd, MetadataType: "",
 	})
-	dm, err = getRepoDMForArchive(t.Context(), loadRepo(t), "v0")
+	dm, err = getRepoDMForArchive(t.Context(), loadRepo(t), "v0", "")
 	require.NoError(t, err)
 	assert.Equal(t, "rc", dm.MetadataType)
+
+	// A commit ID reads like the release whose head it is, before a branch at the same commit
+	const headCommit = "0123456789abcdef0123456789abcdef01234567"
+	for _, row := range []*repo_model.Door43Metadata{
+		{Ref: "v1", RefType: "tag", Stage: door43metadata.StageProd, MetadataType: "sb"},
+		{Ref: "v1-draft", RefType: "tag", Stage: door43metadata.StageOther, MetadataType: ""},
+		{Ref: "release", RefType: "branch", Stage: door43metadata.StageOther, MetadataType: "rc"},
+	} {
+		row.RepoID, row.CommitSHA = testRepoID, headCommit
+		insertDM(t, row)
+	}
+	dm, err = getRepoDMForArchive(t.Context(), loadRepo(t), headCommit, headCommit)
+	require.NoError(t, err)
+	assert.Equal(t, "v1", dm.Ref)
+	dm, err = getRepoDMForArchive(t.Context(), loadRepo(t), headCommit[:10], headCommit)
+	require.NoError(t, err)
+	assert.Equal(t, "v1", dm.Ref)
 }
 
 func TestStreamSBPassThrough(t *testing.T) {
@@ -138,7 +254,7 @@ func TestStreamSBPassThrough(t *testing.T) {
 	defer ctx.Repo.GitRepo.Close()
 
 	t.Run("zip", func(t *testing.T) {
-		aReq, err := NewRequest(ctx, testRepoID, ctx.Repo.GitRepo, "test/archive.zip")
+		aReq, err := NewRequest(ctx, ctx.Repo.Repository, ctx.Repo.GitRepo, "test/archive.zip")
 		require.NoError(t, err)
 
 		var buf bytes.Buffer
@@ -154,7 +270,7 @@ func TestStreamSBPassThrough(t *testing.T) {
 	})
 
 	t.Run("tar.gz", func(t *testing.T) {
-		aReq, err := NewRequest(ctx, testRepoID, ctx.Repo.GitRepo, "test/archive.tar.gz")
+		aReq, err := NewRequest(ctx, ctx.Repo.Repository, ctx.Repo.GitRepo, "test/archive.tar.gz")
 		require.NoError(t, err)
 
 		var buf bytes.Buffer

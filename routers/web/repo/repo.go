@@ -378,7 +378,7 @@ func Download(ctx *context.Context) {
 
 // DownloadSB downloads an SB-converted archive of a repository.
 func DownloadSB(ctx *context.Context) {
-	aReq, err := sbarchiver_service.NewRequest(ctx, ctx.Repo.Repository.ID, ctx.Repo.GitRepo, ctx.PathParam("*"))
+	aReq, err := sbarchiver_service.NewRequest(ctx, ctx.Repo.Repository, ctx.Repo.GitRepo, ctx.PathParam("*"))
 	if err != nil {
 		if errors.Is(err, sbarchiver_service.ErrUnknownArchiveFormat{}) {
 			ctx.HTTPError(http.StatusBadRequest, err.Error())
@@ -441,14 +441,8 @@ func InitiateDownload(ctx *context.Context) {
 
 // InitiateDownloadSB enqueues an SB archival request if needed.
 func InitiateDownloadSB(ctx *context.Context) {
-	if setting.Repository.StreamArchives {
-		ctx.JSON(http.StatusOK, map[string]any{
-			"complete": true,
-		})
-		return
-	}
-
-	aReq, err := sbarchiver_service.NewRequest(ctx, ctx.Repo.Repository.ID, ctx.Repo.GitRepo, ctx.PathParam("*"))
+	// SB archives are kept even with STREAM_ARCHIVES, see sbarchiver_service.ServeRepoSBArchive
+	aReq, err := sbarchiver_service.NewRequest(ctx, ctx.Repo.Repository, ctx.Repo.GitRepo, ctx.PathParam("*"))
 	if err != nil {
 		ctx.HTTPError(http.StatusBadRequest, "invalid SB archive request")
 		return

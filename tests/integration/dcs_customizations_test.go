@@ -8,6 +8,7 @@ import (
 	"bytes"
 	"compress/gzip"
 	"encoding/base64"
+	"io"
 	"net/http"
 	"net/url"
 	"regexp"
@@ -201,6 +202,109 @@ func TestDCSAPIRepoSBArchive(t *testing.T) {
 	MakeRequest(t, NewRequest(t, "HEAD", "/api/v1/repos/user2/repo1/sb/master.zip"), http.StatusNotFound)
 	token := getTokenForLoggedInUser(t, loginUser(t, "user2"), auth_model.AccessTokenScopeReadRepository)
 	MakeRequest(t, NewRequest(t, "HEAD", "/api/v1/repos/user2/repo1/sb/master.zip").AddTokenAuth(token), http.StatusOK)
+}
+
+func sbZipEntry(t *testing.T, archive []byte, name string) []byte {
+	t.Helper()
+	zr, err := zip.NewReader(bytes.NewReader(archive), int64(len(archive)))
+	require.NoError(t, err)
+	rc, err := zr.Open(name)
+	require.NoError(t, err)
+	defer rc.Close()
+	content, err := io.ReadAll(rc)
+	require.NoError(t, err)
+	return content
+}
+
+// TestDCSAPIRepoSBFile covers /api/v1/repos/{owner}/{repo}/sb/raw/{filepath} and its web twin for a repo already
+// in SB format, which is read from git, and checks that a file has the bytes of the same path in the archive.
+func TestDCSAPIRepoSBFile(t *testing.T) {
+	defer tests.PrepareTestEnv(t)()
+
+	// No metadata at all: nothing to convert
+	MakeRequest(t, NewRequest(t, "GET", "/api/v1/repos/user2/repo1/sb/raw/README.md"), http.StatusNotFound)
+
+	require.NoError(t, repo_model.InsertDoor43Metadata(t.Context(), &repo_model.Door43Metadata{
+		RepoID: 1, Ref: "master", RefType: "branch", CommitSHA: "65f1bf27bc3bf70f64657658635e66094edbcb4d",
+		Stage: door43metadata_model.StageLatest, MetadataType: "sb", MetadataVersion: "1.0.0",
+		IsLatestForStage: true, IsRepoMetadata: true,
+	}))
+
+	archive := MakeRequest(t, NewRequest(t, "GET", "/api/v1/repos/user2/repo1/sb/master.zip"), http.StatusOK)
+	assert.NotEmpty(t, archive.Header().Get("ETag"))
+	assert.Equal(t, "max-age=0, public, must-revalidate", archive.Header().Get("Cache-Control"))
+	readme := sbZipEntry(t, archive.Body.Bytes(), "repo1/README.md")
+
+	resp := MakeRequest(t, NewRequest(t, "GET", "/api/v1/repos/user2/repo1/sb/raw/README.md"), http.StatusOK)
+	assert.Equal(t, readme, resp.Body.Bytes())
+	assert.Contains(t, resp.Header().Get("Content-Type"), "text/plain")
+	assert.Equal(t, "max-age=0, public, must-revalidate", resp.Header().Get("Cache-Control"))
+	assert.NotEmpty(t, resp.Header().Get("Last-Modified"))
+	etag := resp.Header().Get("ETag")
+	require.NotEmpty(t, etag)
+	MakeRequest(t, NewRequest(t, "GET", "/api/v1/repos/user2/repo1/sb/raw/README.md").SetHeader("If-None-Match", etag), http.StatusNotModified)
+
+	// A tag or a full commit ID can't change
+	for _, ref := range []string{"v1.1", "65f1bf27bc3bf70f64657658635e66094edbcb4d"} {
+		resp = MakeRequest(t, NewRequest(t, "GET", "/api/v1/repos/user2/repo1/sb/raw/README.md?ref="+ref), http.StatusOK)
+		assert.Equal(t, readme, resp.Body.Bytes(), ref)
+		assert.Equal(t, "public, max-age=31536000, immutable", resp.Header().Get("Cache-Control"), ref)
+	}
+
+	MakeRequest(t, NewRequest(t, "GET", "/api/v1/repos/user2/repo1/sb/raw/ingredients/%2E%2E/README.md"), http.StatusBadRequest)
+	MakeRequest(t, NewRequest(t, "GET", "/api/v1/repos/user2/repo1/sb/raw/no-such-file.md"), http.StatusNotFound)
+	MakeRequest(t, NewRequest(t, "GET", "/api/v1/repos/user2/repo1/sb/raw/README.md?ref=no-such-ref"), http.StatusNotFound)
+
+	// An archive of a ref named "raw" is still an archive request
+	resp = MakeRequest(t, NewRequest(t, "GET", "/api/v1/repos/user2/repo1/sb/raw.zip"), http.StatusNotFound)
+	assert.Contains(t, resp.Body.String(), "unrecognized repository reference: raw")
+
+	resp = MakeRequest(t, NewRequest(t, "GET", "/user2/repo1/sb/raw/README.md?ref=v1.1"), http.StatusOK)
+	assert.Equal(t, readme, resp.Body.Bytes())
+	MakeRequest(t, NewRequest(t, "GET", "/user2/repo1/sb/raw/no-such-file.md"), http.StatusNotFound)
+}
+
+// TestDCSAPIRepoSBFileConverted reads files of an rc repo, which come out of its converted SB archive.
+func TestDCSAPIRepoSBFileConverted(t *testing.T) {
+	onGiteaRun(t, func(t *testing.T, _ *url.URL) {
+		token := getTokenForLoggedInUser(t, loginUser(t, "user2"), auth_model.AccessTokenScopeWriteRepository)
+		manifest := "dublin_core:\n  conformsto: rc0.2\n  identifier: tn\n  language: {identifier: en, title: English, direction: ltr}\n" +
+			"  subject: TSV Translation Notes\n  title: Test Notes\nprojects:\n  - {identifier: tit, path: ./tn_TIT.tsv, title: Titus}\n"
+		notes := "Reference\tID\tTags\tSupportReference\tQuote\tOccurrence\tNote\n1:1\tabcd\t\t\t\t0\tA note\n"
+		MakeRequest(t, NewRequestWithJSON(t, "POST", "/api/v1/repos/user2/repo1/contents", &api.ChangeFilesOptions{
+			FileOptions: api.FileOptions{BranchName: "master", NewBranchName: "sb-tn", Message: "Add notes"},
+			Files: []*api.ChangeFileOperation{
+				{Operation: "create", Path: "manifest.yaml", ContentBase64: base64.StdEncoding.EncodeToString([]byte(manifest))},
+				{Operation: "create", Path: "tn_TIT.tsv", ContentBase64: base64.StdEncoding.EncodeToString([]byte(notes))},
+			},
+		}).AddTokenAuth(token), http.StatusCreated)
+		dm, err := repo_model.GetDoor43MetadataByRepoIDAndRef(t.Context(), 1, "sb-tn")
+		require.NoError(t, err)
+		require.Equal(t, "rc", dm.MetadataType)
+
+		archive := MakeRequest(t, NewRequest(t, "GET", "/api/v1/repos/user2/repo1/sb/sb-tn.zip"), http.StatusOK)
+		for filePath, contentType := range map[string]string{"metadata.json": "application/json", "ingredients/TIT.tsv": "text/tab-separated-values"} {
+			resp := MakeRequest(t, NewRequest(t, "GET", "/api/v1/repos/user2/repo1/sb/raw/"+filePath+"?ref=sb-tn"), http.StatusOK)
+			assert.Equal(t, sbZipEntry(t, archive.Body.Bytes(), "repo1/"+filePath), resp.Body.Bytes(), filePath)
+			assert.Equal(t, contentType, resp.Header().Get("Content-Type"), filePath)
+		}
+		assert.Equal(t, notes, string(sbZipEntry(t, archive.Body.Bytes(), "repo1/ingredients/TIT.tsv")))
+
+		// The entries carry the commit time, not the time of the conversion
+		commitTime, err := http.ParseTime(archive.Header().Get("Last-Modified"))
+		require.NoError(t, err)
+		zr, err := zip.NewReader(bytes.NewReader(archive.Body.Bytes()), int64(archive.Body.Len()))
+		require.NoError(t, err)
+		for _, f := range zr.File {
+			assert.True(t, commitTime.Equal(f.Modified), "%s: %v", f.Name, f.Modified)
+		}
+
+		resp := MakeRequest(t, NewRequest(t, "GET", "/api/v1/repos/user2/repo1/sb/raw/ingredients/TIT.tsv?ref="+dm.CommitSHA), http.StatusOK)
+		assert.Equal(t, notes, resp.Body.String())
+		assert.Equal(t, "public, max-age=31536000, immutable", resp.Header().Get("Cache-Control"))
+		MakeRequest(t, NewRequest(t, "GET", "/api/v1/repos/user2/repo1/sb/raw/ingredients/GEN.tsv?ref=sb-tn"), http.StatusNotFound)
+		MakeRequest(t, NewRequest(t, "GET", "/api/v1/repos/user2/repo1/sb/raw/ingredients?ref=sb-tn"), http.StatusNotFound)
+	})
 }
 
 func TestDCSAPIRepoHealthcheck(t *testing.T) {
