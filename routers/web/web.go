@@ -1694,10 +1694,13 @@ func registerWebRoutes(m *web.Router, webAuth *AuthMiddleware) {
 			m.Post("/*", repo.InitiateDownload)
 		}, webAuth.AllowBasic, webAuth.AllowOAuth2, repo.MustBeNotEmpty, dlSourceEnabled)
 
+		/*** DCS Customizations ***/
 		m.Group("/sb", func() {
+			m.Get("/raw/*", repo.DownloadSBFile)
 			m.Get("/*", repo.DownloadSB)
 			m.Post("/*", repo.InitiateDownloadSB)
 		}, repo.MustBeNotEmpty, dlSourceEnabled)
+		/*** END DCS Customizations ***/
 
 		m.Group("/branches", func() {
 			m.Get("/list", repo.GetBranchesList)

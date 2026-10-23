@@ -7,6 +7,7 @@ import (
 	"errors"
 	"net/http"
 
+	"gitea.dev/modules/util"
 	"gitea.dev/services/context"
 	sbarchiver_service "gitea.dev/services/repository/sbarchiver"
 )
@@ -52,11 +53,11 @@ func GetSBArchive(ctx *context.APIContext) {
 	//   "404":
 	//     description: the ref does not exist, or the repository is not an rc, ts, tc or sb repository
 
-	aReq, err := sbarchiver_service.NewRequest(ctx, ctx.Repo.Repository.ID, ctx.Repo.GitRepo, ctx.PathParam("*"))
+	aReq, err := sbarchiver_service.NewRequest(ctx, ctx.Repo.Repository, ctx.Repo.GitRepo, ctx.PathParam("*"))
 	if err != nil {
 		if errors.Is(err, sbarchiver_service.ErrUnknownArchiveFormat{}) {
 			ctx.APIError(http.StatusBadRequest, err.Error())
-		} else if errors.Is(err, sbarchiver_service.RepoRefNotFoundError{}) {
+		} else if errors.Is(err, sbarchiver_service.RepoRefNotFoundError{}) || errors.Is(err, sbarchiver_service.ErrRepoNotConvertible{}) {
 			ctx.APIError(http.StatusNotFound, err.Error())
 		} else {
 			ctx.APIErrorInternal(err)
@@ -64,4 +65,68 @@ func GetSBArchive(ctx *context.APIContext) {
 		return
 	}
 	sbarchiver_service.ServeRepoSBArchive(ctx.Base, ctx.Repo.Repository, aReq)
+}
+
+// GetSBFile gets one file of a repository's Scripture Burrito
+func GetSBFile(ctx *context.APIContext) {
+	// swagger:operation GET /repos/{owner}/{repo}/sb/raw/{filepath} repository repoGetSBFile
+	// ---
+	// summary: Get a file of a repository's Scripture Burrito
+	// description: |
+	//   Returns one file of the repository's Scripture Burrito (SB) at the given git reference: its
+	//   `metadata.json` or an ingredient. It is read out of the archive from `/repos/{owner}/{repo}/sb/{ref}.zip`,
+	//   below its root folder, so a client can read single files or the whole archive interchangeably.
+	//   The Content-Type is the ingredient's `mimeType` from `metadata.json`, and `application/json` for
+	//   `metadata.json` itself. Every response is revalidated with its ETag (If-None-Match gets a 304 while the
+	//   file is unchanged), for any ref, since a burrito can change without its commit changing. The same file
+	//   can be read without an API token from the repository's HTML URL, `/{owner}/{repo}/sb/raw/{filepath}?ref={ref}`.
+	// produces:
+	// - application/json
+	// - text/markdown
+	// - text/plain
+	// - text/tab-separated-values
+	// - application/octet-stream
+	// parameters:
+	// - name: owner
+	//   in: path
+	//   description: owner of the repo
+	//   type: string
+	//   required: true
+	// - name: repo
+	//   in: path
+	//   description: name of the repo
+	//   type: string
+	//   required: true
+	// - name: filepath
+	//   in: path
+	//   description: path of the file inside the burrito, e.g. metadata.json or ingredients/TIT.tsv
+	//   type: string
+	//   required: true
+	// - name: ref
+	//   in: query
+	//   description: the git reference (branch, tag or commit). Defaults to the repository's default branch
+	//   type: string
+	//   required: false
+	// responses:
+	//   200:
+	//     description: the file
+	//     schema:
+	//       type: file
+	//   "304":
+	//     description: the copy named by If-None-Match is current
+	//   "400":
+	//     description: the path is empty, absolute or has a `..` segment
+	//   "404":
+	//     description: the ref does not exist, the repository is not an rc, ts, tc or sb repository, or the file is not in the burrito
+
+	err := sbarchiver_service.ServeSBFile(ctx.Base, ctx.Repo.Repository, ctx.Repo.GitRepo, ctx.FormTrim("ref"), ctx.PathParam("*"))
+	switch {
+	case err == nil:
+	case errors.Is(err, util.ErrInvalidArgument):
+		ctx.APIError(http.StatusBadRequest, err.Error())
+	case errors.Is(err, util.ErrNotExist), errors.Is(err, sbarchiver_service.RepoRefNotFoundError{}), errors.Is(err, sbarchiver_service.ErrRepoNotConvertible{}):
+		ctx.APIError(http.StatusNotFound, err.Error())
+	default:
+		ctx.APIErrorInternal(err)
+	}
 }

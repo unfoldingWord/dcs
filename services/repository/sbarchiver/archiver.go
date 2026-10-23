@@ -8,6 +8,8 @@ import (
 	"archive/zip"
 	"compress/gzip"
 	"context"
+	"crypto/sha256"
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"io"
@@ -15,6 +17,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 	"time"
 
@@ -32,12 +35,14 @@ import (
 	"gitea.dev/modules/queue"
 	"gitea.dev/modules/setting"
 	"gitea.dev/modules/storage"
+	"gitea.dev/modules/structs"
 	"gitea.dev/modules/util"
 	gitea_context "gitea.dev/services/context"
 
 	rc2sb "github.com/unfoldingWord/go-rc2sb"
 	tc2rc "github.com/unfoldingWord/go-tc2rc"
 	ts2rc "github.com/unfoldingWord/go-ts2rc"
+	"xorm.io/builder"
 )
 
 const storageCommitPrefix = "sb-"
@@ -49,6 +54,21 @@ type ArchiveRequest struct {
 	CommitID string
 
 	RefShortName string // "master", "v1.0.0", commit id, etc. Exported so it survives queue serialization.
+
+	// MetadataRef is the ref whose metadata decides the conversion (see getRepoDMForArchive), and
+	// MetadataType is its type then, which is part of the cache key: "sb" archives the tree as it is.
+	MetadataRef  string
+	MetadataType string
+	// The partner repo commit whose content a TW or TWL burrito also carries (see payloadRefForArchive).
+	// It is part of the cache key, since the partner ref paired with a branch can move.
+	PayloadRef      string
+	PayloadCommitID string
+	// The canonical en_tw repo and commit a ts Translation Words conversion places its articles by (see
+	// resolveTsTWSource). The commit is part of the cache key, since that repo's default branch can move.
+	TWSourceRepoID   int64
+	TWSourceCommitID string
+
+	commitTime time.Time // set by NewRequest; a request from the queue looks it up
 }
 
 // ErrUnknownArchiveFormat means the requested archive format is not supported.
@@ -94,7 +114,7 @@ func (e ErrRepoNotConvertible) Is(err error) bool {
 }
 
 // NewRequest creates an SB archival request from URI suffix like "master.zip".
-func NewRequest(ctx context.Context, repoID int64, repo *git.Repository, archiveRefExt string) (*ArchiveRequest, error) {
+func NewRequest(ctx context.Context, repo *repo_model.Repository, gitRepo *git.Repository, archiveRefExt string) (*ArchiveRequest, error) {
 	archiveRefShortName, archiveType := repo_model.SplitArchiveNameType(archiveRefExt)
 	if archiveType == repo_model.ArchiveUnknown {
 		return nil, ErrUnknownArchiveFormat{archiveRefExt}
@@ -102,18 +122,52 @@ func NewRequest(ctx context.Context, repoID int64, repo *git.Repository, archive
 	if archiveType == repo_model.ArchiveBundle {
 		return nil, ErrUnknownArchiveFormat{archiveRefExt}
 	}
+	return newRequest(ctx, repo, gitRepo, archiveRefShortName, archiveType)
+}
 
-	commitID, err := repo.ConvertToGitID(ctx, archiveRefShortName)
+func newRequest(ctx context.Context, repo *repo_model.Repository, gitRepo *git.Repository, refShortName string, archiveType repo_model.ArchiveType) (*ArchiveRequest, error) {
+	// GetCommit peels an annotated tag to its commit, so a tag and its commit ID share one cached archive
+	commit, err := gitRepo.GetCommit(ctx, refShortName)
 	if err != nil {
-		return nil, RepoRefNotFoundError{RefShortName: archiveRefShortName}
+		return nil, RepoRefNotFoundError{RefShortName: refShortName}
+	}
+	aReq := &ArchiveRequest{
+		RepoID:       repo.ID,
+		Type:         archiveType,
+		CommitID:     commit.ID.String(),
+		RefShortName: refShortName,
+		commitTime:   commit.Committer.When,
 	}
 
-	return &ArchiveRequest{
-		RepoID:       repoID,
-		Type:         archiveType,
-		CommitID:     commitID.String(),
-		RefShortName: archiveRefShortName,
-	}, nil
+	headOf := ""
+	if !gitRepo.IsBranchExist(ctx, refShortName) && !gitRepo.IsTagExist(ctx, refShortName) {
+		headOf = aReq.CommitID
+	}
+	dm, err := getRepoDMForArchive(ctx, repo, refShortName, headOf)
+	if err != nil {
+		return nil, err
+	}
+	aReq.MetadataRef, aReq.MetadataType = dm.Ref, dm.MetadataType
+
+	if dm.MetadataType == "ts" && dm.Subject == "Translation Words" {
+		if aReq.TWSourceRepoID, aReq.TWSourceCommitID, err = resolveTsTWSource(ctx); err != nil {
+			return nil, err
+		}
+	}
+
+	if dm.MetadataType != "sb" {
+		// A commit ID pairs with the partner as the release or branch it is the head of would
+		payloadFor := refShortName
+		if headOf != "" && dm.CommitSHA == headOf {
+			payloadFor = dm.Ref
+		}
+		payloadRef, payloadCommitID, err := resolvePayload(ctx, repo, dm, payloadFor)
+		if err != nil {
+			return nil, err
+		}
+		aReq.PayloadRef, aReq.PayloadCommitID = payloadRef.String(), payloadCommitID
+	}
+	return aReq, nil
 }
 
 // GetArchiveName returns archive name based on requested ref.
@@ -121,9 +175,20 @@ func (aReq *ArchiveRequest) GetArchiveName() string {
 	return strings.ReplaceAll(aReq.RefShortName, "/", "-") + "-sb." + aReq.Type.String()
 }
 
-// StorageCommitID returns the cache key commit ID used in repo_archiver.
+// StorageCommitID returns the cache key used as the commit ID in repo_archiver. Everything that decides the
+// archive's bytes is in it: the commit, the metadata type, the TW/TWL partner commit, the en_tw commit of a
+// ts Translation Words conversion, and whether the files sit in a prefix folder (PREFIX_ARCHIVE_FILES). It is
+// hashed to fit the column's 64 characters, which "sb-" and a SHA-256 commit ID alone would exceed.
 func (aReq *ArchiveRequest) StorageCommitID() string {
-	return storageCommitPrefix + aReq.CommitID
+	key := aReq.CommitID + "\n" + aReq.MetadataType + "\n" + aReq.PayloadCommitID
+	if aReq.TWSourceCommitID != "" {
+		key += "\n" + aReq.TWSourceCommitID
+	}
+	if !setting.Repository.PrefixArchiveFiles {
+		key += "\nunprefixed"
+	}
+	sum := sha256.Sum256([]byte(key))
+	return storageCommitPrefix + hex.EncodeToString(sum[:])[:60]
 }
 
 // Await waits for archive generation completion.
@@ -171,10 +236,12 @@ func (aReq *ArchiveRequest) Await(ctx context.Context) (*repo_model.RepoArchiver
 // Stream generates and streams an SB archive. Repos already in SB format are archived
 // as-is via "git archive"; rc, ts, and tc repos are converted to SB first.
 func (aReq *ArchiveRequest) Stream(ctx context.Context, repo *repo_model.Repository, w io.Writer) error {
-	repoDM, err := getRepoDMForArchive(ctx, repo, aReq.RefShortName)
+	repoDM, err := getRepoDMForArchive(ctx, repo, util.IfZero(aReq.MetadataRef, aReq.RefShortName), "")
 	if err != nil {
 		return err
 	}
+	// Convert as the cache key says, even if the metadata has changed since the request was made
+	repoDM.MetadataType = util.IfZero(aReq.MetadataType, repoDM.MetadataType)
 
 	if repoDM.MetadataType == "sb" {
 		return git.CreateArchive(ctx, repo, repo.Name, aReq.Type.String(), w, aReq.CommitID, nil)
@@ -202,7 +269,7 @@ func (aReq *ArchiveRequest) Stream(ctx context.Context, repo *repo_model.Reposit
 
 	// For ts repos, convert ts -> RC so the RC -> SB pipeline below applies unchanged.
 	if isTS {
-		twSourceDir, err := prepareTsTWSourceDir(ctx, tmpDir, repoDM)
+		twSourceDir, err := prepareTsTWSourceDir(ctx, tmpDir, repoDM, aReq)
 		if err != nil {
 			return err
 		}
@@ -221,7 +288,7 @@ func (aReq *ArchiveRequest) Stream(ctx context.Context, repo *repo_model.Reposit
 		}
 	}
 
-	payloadPath, err := preparePayloadPath(ctx, tmpDir, rcDir, repo, repoDM, aReq.RefShortName)
+	payloadPath, err := preparePayloadPath(ctx, tmpDir, rcDir, repo, repoDM, aReq)
 	if err != nil {
 		return err
 	}
@@ -234,32 +301,53 @@ func (aReq *ArchiveRequest) Stream(ctx context.Context, repo *repo_model.Reposit
 		return fmt.Errorf("rc2sb.Convert: %w", err)
 	}
 
+	modTime, err := aReq.getCommitTime(ctx, repo)
+	if err != nil {
+		return err
+	}
 	prefixDir := ""
 	if setting.Repository.PrefixArchiveFiles {
 		prefixDir = repo.Name
 	}
-	if err := writeDirectoryArchive(ctx, sbDir, prefixDir, aReq.Type, w); err != nil {
+	if err := writeDirectoryArchive(ctx, sbDir, prefixDir, aReq.Type, modTime, w); err != nil {
 		return fmt.Errorf("write archive: %w", err)
 	}
 
 	return nil
 }
 
+// getCommitTime returns the committer time of the archived commit. It stamps every entry of a
+// converted archive, as "git archive" does, so that the entries don't carry the conversion time.
+func (aReq *ArchiveRequest) getCommitTime(ctx context.Context, repo *repo_model.Repository) (time.Time, error) {
+	if !aReq.commitTime.IsZero() {
+		return aReq.commitTime, nil
+	}
+	gitRepo, err := git.OpenRepository(ctx, repo)
+	if err != nil {
+		return time.Time{}, fmt.Errorf("git.OpenRepository(%s): %w", repo.FullName(), err)
+	}
+	defer gitRepo.Close()
+	commit, err := gitRepo.GetCommit(ctx, aReq.CommitID)
+	if err != nil {
+		return time.Time{}, fmt.Errorf("gitRepo.GetCommit(%s): %w", aReq.CommitID, err)
+	}
+	aReq.commitTime = commit.Committer.When
+	return aReq.commitTime, nil
+}
+
+var archivableMetadataTypes = []string{"rc", "ts", "tc", "sb"}
+
 // isArchivableMetadataType reports whether SB archives can be produced for the metadata type.
 func isArchivableMetadataType(metadataType string) bool {
-	switch metadataType {
-	case "rc", "ts", "tc", "sb":
-		return true
-	default:
-		return false
-	}
+	return slices.Contains(archivableMetadataTypes, metadataType)
 }
 
 // getRepoDMForArchive returns the Door43Metadata that decides how the requested ref is
 // archived. The ref's own row wins (a repo's "main" branch may be SB while its default
-// branch is RC); a bare commit ID or an unprocessed ref falls back to the default branch
-// metadata, then the repo-level metadata.
-func getRepoDMForArchive(ctx context.Context, repo *repo_model.Repository, refShortName string) (*repo_model.Door43Metadata, error) {
+// branch is RC). A commit ID, passed as headOf, takes the row of a tag or branch whose head
+// it is, a production release's first, so that it reads like the release it is. An unprocessed ref falls
+// back to the default branch metadata, then the repo-level metadata.
+func getRepoDMForArchive(ctx context.Context, repo *repo_model.Repository, refShortName, headOf string) (*repo_model.Door43Metadata, error) {
 	if refShortName != "" {
 		refDM, err := repo_model.GetDoor43MetadataByRepoIDAndRef(ctx, repo.ID, refShortName)
 		if err != nil && !repo_model.IsErrDoor43MetadataNotExist(err) {
@@ -268,6 +356,23 @@ func getRepoDMForArchive(ctx context.Context, repo *repo_model.Repository, refSh
 		if refDM != nil && isArchivableMetadataType(refDM.MetadataType) {
 			refDM.Repo = repo
 			return refDM, nil
+		}
+	}
+
+	if headOf != "" {
+		headDM := &repo_model.Door43Metadata{}
+		has, err := db.GetEngine(ctx).
+			Where(builder.Eq{"repo_id": repo.ID, "commit_sha": headOf}).
+			And(builder.In("metadata_type", archivableMetadataTypes)).
+			// A tag before a branch ("tag" sorts after "branch"), then prod before preprod and the rest
+			OrderBy("ref_type DESC, CASE WHEN stage = 0 THEN 9 ELSE stage END, release_date_unix DESC, id DESC").
+			Get(headDM)
+		if err != nil {
+			return nil, fmt.Errorf("find the metadata of commit %s: %w", headOf, err)
+		}
+		if has {
+			headDM.Repo = repo
+			return headDM, nil
 		}
 	}
 
@@ -289,43 +394,54 @@ func getRepoDMForArchive(ctx context.Context, repo *repo_model.Repository, refSh
 // to place Translation Words articles under bible/{kt|names|other}/ by matching slug filenames.
 var tsTWSourceOwners = []string{"unfoldingWord", "Door43-Catalog"}
 
-// prepareTsTWSourceDir clones a canonical en_tw repo into tmpDir/tw-source for ts
-// Translation Words conversions and returns its path. Returns ("", nil) when the repo
-// is not a ts TW repo or no canonical en_tw repo exists on this server — ts2rc then
-// falls back to writing articles under bible/other/ with a warning.
-func prepareTsTWSourceDir(ctx context.Context, tmpDir string, dm *repo_model.Door43Metadata) (string, error) {
-	if dm == nil || dm.Subject != "Translation Words" {
-		return "", nil
-	}
-
+// resolveTsTWSource finds the canonical en_tw repo a ts Translation Words conversion reads and its
+// default branch's commit now, or returns (0, "", nil) when no canonical en_tw repo exists on this server.
+func resolveTsTWSource(ctx context.Context) (int64, string, error) {
 	for _, owner := range tsTWSourceOwners {
 		twRepo, err := repo_model.GetRepositoryByOwnerAndName(ctx, owner, "en_tw")
 		if err != nil {
 			if repo_model.IsErrRepoNotExist(err) {
 				continue
 			}
-			return "", fmt.Errorf("repo_model.GetRepositoryByOwnerAndName(%s/en_tw): %w", owner, err)
+			return 0, "", fmt.Errorf("repo_model.GetRepositoryByOwnerAndName(%s/en_tw): %w", owner, err)
 		}
 
 		twGitRepo, err := git.OpenRepository(ctx, twRepo)
 		if err != nil {
-			return "", fmt.Errorf("git.OpenRepository(%s): %w", twRepo.FullName(), err)
+			return 0, "", fmt.Errorf("git.OpenRepository(%s): %w", twRepo.FullName(), err)
 		}
 		commitID, err := twGitRepo.ConvertToGitID(ctx, twRepo.DefaultBranch)
 		twGitRepo.Close()
 		if err != nil {
-			return "", fmt.Errorf("resolve %s default branch: %w", twRepo.FullName(), err)
+			return 0, "", fmt.Errorf("resolve %s default branch: %w", twRepo.FullName(), err)
 		}
+		return twRepo.ID, commitID.String(), nil
+	}
+	return 0, "", nil
+}
 
-		twSourceDir := filepath.Join(tmpDir, "tw-source")
-		if err := cloneRepositoryAtCommit(ctx, gitrepo.RepoLocalPath(twRepo.CodeStorageRepo()), twRepo.DefaultBranch, commitID.String(), twSourceDir); err != nil {
-			return "", fmt.Errorf("clone TW source repo %s: %w", twRepo.FullName(), err)
-		}
-		return twSourceDir, nil
+// prepareTsTWSourceDir clones the en_tw commit the request resolved (see resolveTsTWSource) into
+// tmpDir/tw-source for ts Translation Words conversions and returns its path. Returns ("", nil) when
+// the repo is not a ts TW repo or no canonical en_tw repo was found — ts2rc then falls back to
+// writing articles under bible/other/ with a warning.
+func prepareTsTWSourceDir(ctx context.Context, tmpDir string, dm *repo_model.Door43Metadata, aReq *ArchiveRequest) (string, error) {
+	if dm == nil || dm.Subject != "Translation Words" {
+		return "", nil
+	}
+	if aReq.TWSourceRepoID == 0 {
+		log.Warn("SB archive: no canonical en_tw repo found for TW category lookup; articles will fall back to bible/other/")
+		return "", nil
 	}
 
-	log.Warn("SB archive: no canonical en_tw repo found for TW category lookup; articles will fall back to bible/other/")
-	return "", nil
+	twRepo, err := repo_model.GetRepositoryByID(ctx, aReq.TWSourceRepoID)
+	if err != nil {
+		return "", fmt.Errorf("repo_model.GetRepositoryByID(%d): %w", aReq.TWSourceRepoID, err)
+	}
+	twSourceDir := filepath.Join(tmpDir, "tw-source")
+	if err := cloneRepositoryAtCommit(ctx, gitrepo.RepoLocalPath(twRepo.CodeStorageRepo()), twRepo.DefaultBranch, aReq.TWSourceCommitID, twSourceDir); err != nil {
+		return "", fmt.Errorf("clone TW source repo %s: %w", twRepo.FullName(), err)
+	}
+	return twSourceDir, nil
 }
 
 // requestedRefType reports whether refShortName names a branch or a tag of repo
@@ -414,67 +530,81 @@ func bookPackageRef(ctx context.Context, dm *repo_model.Door43Metadata, payloadR
 	return "", nil
 }
 
-func preparePayloadPath(ctx context.Context, tmpDir, rcDir string, repo *repo_model.Repository, dm *repo_model.Door43Metadata, refShortName string) (string, error) {
+// payloadRepoNameFor names the partner repo whose content a converted burrito of dm also carries:
+// a TWL burrito holds the TW articles, and a TW burrito (isTWRepo) holds the TWL TSVs.
+func payloadRepoNameFor(dm *repo_model.Door43Metadata) (payloadRepoName string, isTWRepo bool) {
 	if dm.Language == "" {
-		return "", nil
+		return "", false
 	}
-
-	var payloadRepoName string
-	isTWRepo := false
 	switch dm.Subject {
 	case "TSV Translation Words Links":
-		payloadRepoName = dm.Language + "_tw"
+		return dm.Language + "_tw", false
 	case "Translation Words":
-		payloadRepoName = dm.Language + "_twl"
-		isTWRepo = true
-	default:
-		return "", nil
+		return dm.Language + "_twl", true
 	}
+	return "", false
+}
 
+// resolvePayload picks the commit of the partner repo whose content dm's burrito also carries, or
+// returns "" when it has none or the partner repo doesn't exist.
+func resolvePayload(ctx context.Context, repo *repo_model.Repository, dm *repo_model.Door43Metadata, refShortName string) (git.RefName, string, error) {
+	payloadRepoName, _ := payloadRepoNameFor(dm)
+	if payloadRepoName == "" {
+		return "", "", nil
+	}
 	payloadRepo, err := repo_model.GetRepositoryByOwnerAndName(ctx, repo.OwnerName, payloadRepoName)
 	if err != nil {
 		if repo_model.IsErrRepoNotExist(err) {
-			return "", nil
+			return "", "", nil
 		}
-		return "", fmt.Errorf("repo_model.GetRepositoryByOwnerAndName(%s): %w", payloadRepoName, err)
+		return "", "", fmt.Errorf("repo_model.GetRepositoryByOwnerAndName(%s): %w", payloadRepoName, err)
 	}
 
 	payloadGitRepo, err := git.OpenRepository(ctx, payloadRepo)
 	if err != nil {
-		return "", fmt.Errorf("git.OpenRepository(%s): %w", payloadRepo.FullName(), err)
+		return "", "", fmt.Errorf("git.OpenRepository(%s): %w", payloadRepo.FullName(), err)
 	}
 	defer payloadGitRepo.Close()
 
 	refType, err := requestedRefType(ctx, repo, dm, refShortName)
 	if err != nil {
-		return "", err
+		return "", "", err
 	}
 	payloadRef, err := payloadRefForArchive(ctx, dm, refShortName, refType, payloadRepo, payloadGitRepo)
 	if err != nil {
-		return "", err
+		return "", "", err
 	}
 	commitID, err := payloadGitRepo.ConvertToGitID(ctx, payloadRef.String())
 	if err != nil {
-		return "", fmt.Errorf("resolve %s ref %s: %w", payloadRepo.FullName(), payloadRef, err)
+		return "", "", fmt.Errorf("resolve %s ref %s: %w", payloadRepo.FullName(), payloadRef, err)
 	}
 	log.Debug("SB archive of %s@%s: using payload %s@%s (%s)", repo.FullName(), refShortName, payloadRepo.FullName(), payloadRef, commitID.String())
+	return payloadRef, commitID.String(), nil
+}
 
-	if isTWRepo {
-		// Clone the TWL repo directly into rcDir/<lang>_twl/ so the library auto-detects
-		// it from inDir (the same pattern the TWL handler uses to auto-detect <lang>_tw/).
-		destDir := filepath.Join(rcDir, payloadRepoName)
-		if err := cloneRepositoryAtCommit(ctx, gitrepo.RepoLocalPath(payloadRepo.CodeStorageRepo()), payloadRef.ShortName(), commitID.String(), destDir); err != nil {
-			return "", fmt.Errorf("clone TWL payload into rcDir: %w", err)
-		}
+// preparePayloadPath clones the partner commit of aReq for rc2sb: into rcDir/<lang>_twl/ for a TW repo,
+// which rc2sb finds there, otherwise into its own folder, whose path is returned.
+func preparePayloadPath(ctx context.Context, tmpDir, rcDir string, repo *repo_model.Repository, dm *repo_model.Door43Metadata, aReq *ArchiveRequest) (string, error) {
+	payloadRepoName, isTWRepo := payloadRepoNameFor(dm)
+	if payloadRepoName == "" || aReq.PayloadCommitID == "" {
 		return "", nil
 	}
-
-	payloadDir := filepath.Join(tmpDir, "payload")
-	if err := cloneRepositoryAtCommit(ctx, gitrepo.RepoLocalPath(payloadRepo.CodeStorageRepo()), payloadRef.ShortName(), commitID.String(), payloadDir); err != nil {
-		return "", fmt.Errorf("clone payload repository %s: %w", payloadRepo.FullName(), err)
+	payloadRepo, err := repo_model.GetRepositoryByOwnerAndName(ctx, repo.OwnerName, payloadRepoName)
+	if err != nil {
+		return "", fmt.Errorf("repo_model.GetRepositoryByOwnerAndName(%s): %w", payloadRepoName, err)
 	}
 
-	return payloadDir, nil
+	destDir := filepath.Join(tmpDir, "payload")
+	if isTWRepo {
+		destDir = filepath.Join(rcDir, payloadRepoName)
+	}
+	if err := cloneRepositoryAtCommit(ctx, gitrepo.RepoLocalPath(payloadRepo.CodeStorageRepo()), git.RefName(aReq.PayloadRef).ShortName(), aReq.PayloadCommitID, destDir); err != nil {
+		return "", fmt.Errorf("clone payload repository %s: %w", payloadRepo.FullName(), err)
+	}
+	if isTWRepo {
+		return "", nil
+	}
+	return destDir, nil
 }
 
 // cloneRepositoryAtCommit clones sourceRepoPath into destination and checks out commitID.
@@ -518,26 +648,28 @@ func checkoutCommit(ctx context.Context, repoPath, commitID string) error {
 		WithDir(repoPath).RunWithStderr(ctx)
 }
 
-func writeDirectoryArchive(ctx context.Context, sourceDir, prefixDir string, archiveType repo_model.ArchiveType, w io.Writer) error {
+func writeDirectoryArchive(ctx context.Context, sourceDir, prefixDir string, archiveType repo_model.ArchiveType, modTime time.Time, w io.Writer) error {
 	switch archiveType {
 	case repo_model.ArchiveZip:
-		return writeZipArchive(ctx, sourceDir, prefixDir, w)
+		return writeZipArchive(ctx, sourceDir, prefixDir, modTime, w)
 	case repo_model.ArchiveTarGz:
-		return writeTarGzArchive(ctx, sourceDir, prefixDir, w)
+		return writeTarGzArchive(ctx, sourceDir, prefixDir, modTime, w)
 	default:
 		return ErrUnknownArchiveFormat{RequestNameType: archiveType.String()}
 	}
 }
 
-func writeZipArchive(ctx context.Context, sourceDir, prefixDir string, out io.Writer) error {
+func writeZipArchive(ctx context.Context, sourceDir, prefixDir string, modTime time.Time, out io.Writer) error {
 	zw := zip.NewWriter(out)
 	defer zw.Close()
 
+	// The legacy MS-DOS time field follows the time's location, which differs between servers
+	modTime = modTime.UTC()
 	if prefixDir != "" {
 		hdr := &zip.FileHeader{
 			Name:     filepath.ToSlash(prefixDir) + "/",
 			Method:   zip.Store,
-			Modified: time.Now(),
+			Modified: modTime,
 		}
 		if _, err := zw.CreateHeader(hdr); err != nil {
 			return err
@@ -577,7 +709,7 @@ func writeZipArchive(ctx context.Context, sourceDir, prefixDir string, out io.Wr
 			hdr := &zip.FileHeader{
 				Name:     strings.TrimSuffix(zipPath, "/") + "/",
 				Method:   zip.Store,
-				Modified: info.ModTime(),
+				Modified: modTime,
 			}
 			_, err := zw.CreateHeader(hdr)
 			return err
@@ -589,6 +721,7 @@ func writeZipArchive(ctx context.Context, sourceDir, prefixDir string, out io.Wr
 		}
 		hdr.Name = zipPath
 		hdr.Method = zip.Deflate
+		hdr.Modified = modTime
 
 		writer, err := zw.CreateHeader(hdr)
 		if err != nil {
@@ -606,7 +739,7 @@ func writeZipArchive(ctx context.Context, sourceDir, prefixDir string, out io.Wr
 	})
 }
 
-func writeTarGzArchive(ctx context.Context, sourceDir, prefixDir string, out io.Writer) error {
+func writeTarGzArchive(ctx context.Context, sourceDir, prefixDir string, modTime time.Time, out io.Writer) error {
 	gzw := gzip.NewWriter(out)
 	defer gzw.Close()
 
@@ -618,7 +751,7 @@ func writeTarGzArchive(ctx context.Context, sourceDir, prefixDir string, out io.
 			Name:     strings.TrimSuffix(filepath.ToSlash(prefixDir), "/") + "/",
 			Mode:     0o755,
 			Typeflag: tar.TypeDir,
-			ModTime:  time.Now(),
+			ModTime:  modTime,
 		}
 		if err := tw.WriteHeader(rootHdr); err != nil {
 			return err
@@ -663,6 +796,7 @@ func writeTarGzArchive(ctx context.Context, sourceDir, prefixDir string, out io.
 			return err
 		}
 		hdr.Name = archivePath
+		hdr.ModTime = modTime
 		if d.IsDir() {
 			hdr.Name = strings.TrimSuffix(hdr.Name, "/") + "/"
 		}
@@ -825,23 +959,25 @@ func StartArchive(request *ArchiveRequest) error {
 
 // ServeRepoSBArchive serves the generated SB archive to the client.
 func ServeRepoSBArchive(ctx *gitea_context.Base, repo *repo_model.Repository, archiveReq *ArchiveRequest) {
-	// Mirror the upstream archiver's nix "immutable" link header (see ServeRepoArchive)
-	ctx.Resp.Header().Add("Link", fmt.Sprintf(`<%s/sb/%s.%s?rev=%s>; rel="immutable"`,
-		repo.APIURL(),
-		archiveReq.CommitID,
-		archiveReq.Type.String(),
-		archiveReq.CommitID,
-	))
 	downloadName := repo.Name + "-" + archiveReq.GetArchiveName()
 	contentType := archiveContentType(archiveReq.Type)
 
-	if setting.Repository.StreamArchives {
+	cacheControl, err := sbCacheControl(ctx, repo)
+	if err != nil {
+		log.Error("SB archive %v: %v", archiveReq, err)
+		ctx.HTTPError(http.StatusInternalServerError)
+		return
+	}
+
+	if !setting.DCS.CacheSBArchives {
+		// Weak, as upstream's streamed archives: each request builds the archive anew
+		etag := fmt.Sprintf(`W/"%s.%s"`, archiveReq.StorageCommitID(), archiveReq.Type)
+		if handleNotModified(ctx, etag, cacheControl) {
+			return
+		}
 		httplib.ServeSetHeaders(ctx.Resp, httplib.ServeHeaderOptions{Filename: downloadName, ContentType: contentType})
+		ctx.Resp.Header().Set("Cache-Control", cacheControl)
 		if err := archiveReq.Stream(ctx, repo, ctx.Resp); err != nil && !ctx.Written() {
-			if errors.Is(err, ErrRepoNotConvertible{}) {
-				ctx.HTTPError(http.StatusNotFound)
-				return
-			}
 			log.Error("SB archive %v streaming failed: %v", archiveReq, err)
 			ctx.HTTPError(http.StatusInternalServerError)
 		}
@@ -850,10 +986,6 @@ func ServeRepoSBArchive(ctx *gitea_context.Base, repo *repo_model.Repository, ar
 
 	archiver, err := archiveReq.Await(ctx)
 	if err != nil {
-		if errors.Is(err, ErrRepoNotConvertible{}) {
-			ctx.HTTPError(http.StatusNotFound)
-			return
-		}
 		log.Error("SB archive %v await failed: %v", archiveReq, err)
 		ctx.HTTPError(http.StatusInternalServerError)
 		return
@@ -876,11 +1008,22 @@ func ServeRepoSBArchive(ctx *gitea_context.Base, repo *repo_model.Repository, ar
 	}
 	defer fr.Close()
 
-	ctx.ServeContent(fr, gitea_context.ServeHeaderOptions{
-		Filename:     downloadName,
-		ContentType:  contentType,
-		LastModified: archiver.CreatedUnix.AsLocalTime(),
-	})
+	httplib.ServeSetHeaders(ctx.Resp, httplib.ServeHeaderOptions{Filename: downloadName, ContentType: contentType})
+	ctx.Resp.Header().Set("Cache-Control", cacheControl)
+	// The stored archive is rebuilt once the archive cleanup has removed it, so its creation time is part of the tag
+	ctx.Resp.Header().Set("ETag", fmt.Sprintf(`"%s-%d.%s"`, archiveReq.StorageCommitID(), archiver.CreatedUnix, archiveReq.Type))
+	http.ServeContent(ctx.Resp, ctx.Req, downloadName, time.Time{}, fr) // no Last-Modified, see sbCacheControl
+}
+
+// sbCacheControl has every SB response revalidated with its ETag, and SB responses send no Last-Modified.
+// No URL fixes everything a burrito is made from: a tag or branch can move, and a commit's metadata rows,
+// TW/TWL partner commit and en_tw commit can change, while the ETag changes with any of them.
+func sbCacheControl(ctx context.Context, repo *repo_model.Repository) (string, error) {
+	if err := repo.LoadOwner(ctx); err != nil {
+		return "", fmt.Errorf("repo.LoadOwner: %w", err)
+	}
+	scope := util.Iif(!repo.IsPrivate && repo.Owner.Visibility == structs.VisibleTypePublic, "public", "private")
+	return "max-age=0, " + scope + ", must-revalidate", nil
 }
 
 // archiveContentType is the media type sent for an SB archive; the API's swagger "produces" lists the same ones.
