@@ -262,6 +262,11 @@ func processDoor43MetadataForRepo(ctx context.Context, repo *repo_model.Reposito
 		return errors.New("no repository provided")
 	}
 
+	err := repo.LoadOwner(ctx)
+	if err != nil {
+		return err
+	}
+
 	if repo.IsArchived || repo.IsPrivate || repo.IsMirror || repo.IsEmpty {
 		_, err := repo_model.DeleteAllDoor43MetadatasByRepoID(ctx, repo.ID)
 		if err != nil {
@@ -285,11 +290,7 @@ func processDoor43MetadataForRepo(ctx context.Context, repo *repo_model.Reposito
 		}
 	}
 
-	err := processDoor43MetadataForRepoLatestDMs(ctx, repo)
-	if err != nil {
-		return err
-	}
-	err = repo.LoadOwner(ctx)
+	err = processDoor43MetadataForRepoLatestDMs(ctx, repo)
 	if err != nil {
 		return err
 	}
