@@ -1,11 +1,9 @@
-{{if and $.RepoDM (gt $.RepoDM.ID 0)}}
 <a class="{{if .PageIsMetadata}}active {{end}}item"
 	href="{{.RepoLink}}/metadata"
 	data-tooltip-content="{{ctx.Locale.Tr "dcs.repo.metadata.metadata"}}">
 	{{svg "octicon-file-badge" 16}}
 	{{ctx.Locale.Tr "dcs.repo.metadata.metadata"}}
 </a>
-{{end}}
 {{if and $.RepoDM (gt $.RepoDM.ID 0)}}
 {{$healthSeverity := $.RepoDM.HealthcheckSeverity.String}}
 {{$healthSeverityLabel := $healthSeverity}}
