@@ -262,6 +262,11 @@ func processDoor43MetadataForRepo(ctx context.Context, repo *repo_model.Reposito
 		return errors.New("no repository provided")
 	}
 
+	err := repo.LoadOwner(ctx)
+	if err != nil {
+		return err
+	}
+
 	if repo.IsArchived || repo.IsPrivate || repo.IsMirror || repo.IsEmpty {
 		_, err := repo_model.DeleteAllDoor43MetadatasByRepoID(ctx, repo.ID)
 		if err != nil {
@@ -285,11 +290,7 @@ func processDoor43MetadataForRepo(ctx context.Context, repo *repo_model.Reposito
 		}
 	}
 
-	err := processDoor43MetadataForRepoLatestDMs(ctx, repo)
-	if err != nil {
-		return err
-	}
-	err = repo.LoadOwner(ctx)
+	err = processDoor43MetadataForRepoLatestDMs(ctx, repo)
 	if err != nil {
 		return err
 	}
@@ -1074,11 +1075,15 @@ func populateTcTsDoor43Metadata(ctx context.Context, gitRepo *git.Repository, dm
 	}
 	if t.MetadataType == "" {
 		dm.MetadataType, dm.MetadataVersion = guessTcTsTypeAndVersion(t, buf, repo.Name)
-		dm.ValidationError = metadataFileError("manifest.json is not a supported manifest: translationCore needs tc_version 7 or later, translationStudio needs package_version 3 or later")
+		dm.ValidationError = metadataFileError("manifest.json is not a supported manifest: translationCore needs tc_version 7 or later.")
 		return errNotTcTsManifest
 	}
 	dm.MetadataType = t.MetadataType
 	dm.MetadataVersion = t.MetadataVersion
+	dm.Publisher = repo.Owner.FullName
+	if dm.Publisher == "" {
+		dm.Publisher = repo.OwnerName
+	}
 
 	if (t.Project.ID == "" || t.Project.ID == "bible") && t.Type.ID != "" {
 		t.Project.ID = t.Type.ID

@@ -39,13 +39,18 @@ func ParseTcTsManifest(buf []byte) (*structs.TcTsManifest, error) {
 		t.MetadataType = "tc"
 		t.Format = "usfm"
 		t.Subject = "Aligned Bible"
-	} else if t.TsVersion >= 3 {
+	} else if t.TsVersion >= 1 {
 		t.MetadataVersion = strconv.Itoa(t.TsVersion)
 		t.MetadataType = "ts"
 
-		if t.TsVersion == 3 {
-			t.Project.ID = t.ProjectID
-			t.Type.ID = "text"
+		if t.Project.ID == "" {
+			if t.ProjectID == "" && t.Slug != "" {
+				t.ProjectID = t.Slug
+			}
+			if t.ProjectID != "" {
+				t.Project.ID = t.ProjectID
+				t.Project.Type = "text"
+			}
 		}
 
 		if t.Resource.ID == "" {
@@ -71,28 +76,36 @@ func ParseTcTsManifest(buf []byte) (*structs.TcTsManifest, error) {
 		if t.Resource.ID == "obs" && (t.Project.Type == "tn" || t.Type.ID == "tn") {
 			t.Resource.ID = "obs-tn"
 			t.Subject = "OBS Translation Notes"
+			t.Format = "json"
 		} else if t.Resource.ID == "obs" && (t.Project.Type == "tq" || t.Type.ID == "tq") {
 			t.Resource.ID = "obs-tq"
 			t.Subject = "OBS Translation Questions"
+			t.Format = "json"
 		} else if t.Resource.ID == "obs" {
 			t.Subject = "Open Bible Stories"
+			t.Format = "text"
 		} else if t.Project.Type == "tn" || t.Type.ID == "tn" {
 			t.Resource.ID = "tn"
 			t.Subject = "Translation Notes"
+			t.Format = "json"
 		} else if t.Project.Type == "tq" || t.Type.ID == "tq" {
 			t.Resource.ID = "tq"
 			t.Subject = "Translation Questions"
+			t.Format = "json"
 		} else if t.Project.Type == "tw" || t.Type.ID == "tw" {
 			t.Resource.ID = "tw"
 			t.Subject = "Translation Words"
+			t.Format = "json"
 		} else if t.Project.Type == "ta" || t.Type.ID == "ta" {
 			t.Resource.ID = "ta"
 			t.Subject = "Translation Academy"
+			t.Format = "json"
 		} else {
 			if t.Resource.ID == "" {
 				t.Resource.ID = "bible"
 			}
 			t.Subject = "Bible"
+			t.Format = "usfm"
 		}
 	} else {
 		return t, nil
