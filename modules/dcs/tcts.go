@@ -39,8 +39,6 @@ func ParseTcTsManifest(buf []byte) (*structs.TcTsManifest, error) {
 		t.MetadataType = "tc"
 		t.Format = "usfm"
 		t.Subject = "Aligned Bible"
-		t.FlavorType = "scripture"
-		t.Flavor = "textTranslation"
 	} else if t.TsVersion >= 3 {
 		t.MetadataVersion = strconv.Itoa(t.TsVersion)
 		t.MetadataType = "ts"
@@ -73,45 +71,41 @@ func ParseTcTsManifest(buf []byte) (*structs.TcTsManifest, error) {
 		if t.Resource.ID == "obs" && (t.Project.Type == "tn" || t.Type.ID == "tn") {
 			t.Resource.ID = "obs-tn"
 			t.Subject = "OBS Translation Notes"
-			t.FlavorType = "peripheral"
-			t.Flavor = "x-obsnotes"
 		} else if t.Resource.ID == "obs" && (t.Project.Type == "tq" || t.Type.ID == "tq") {
 			t.Resource.ID = "obs-tq"
 			t.Subject = "OBS Translation Questions"
-			t.FlavorType = "peripheral"
-			t.Flavor = "x-obsquestions"
 		} else if t.Resource.ID == "obs" {
 			t.Subject = "Open Bible Stories"
-			t.FlavorType = "gloss"
-			t.Flavor = "textStories"
 		} else if t.Project.Type == "tn" || t.Type.ID == "tn" {
 			t.Resource.ID = "tn"
 			t.Subject = "Translation Notes"
-			t.FlavorType = "peripheral"
-			t.Flavor = "x-bcvnotes"
 		} else if t.Project.Type == "tq" || t.Type.ID == "tq" {
 			t.Resource.ID = "tq"
 			t.Subject = "Translation Questions"
-			t.FlavorType = "peripheral"
-			t.Flavor = "x-bcvquestions"
 		} else if t.Project.Type == "tw" || t.Type.ID == "tw" {
 			t.Resource.ID = "tw"
 			t.Subject = "Translation Words"
-			t.FlavorType = "peripheral"
-			t.Flavor = "x-peripheralArticles"
 		} else if t.Project.Type == "ta" || t.Type.ID == "ta" {
 			t.Resource.ID = "ta"
 			t.Subject = "Translation Academy"
-			t.FlavorType = "peripheral"
-			t.Flavor = "x-peripheralArticles"
 		} else {
+			if t.Resource.ID == "" {
+				t.Resource.ID = "bible"
+			}
 			t.Subject = "Bible"
-			t.FlavorType = "scripture"
-			t.Flavor = "textTranslation"
 		}
 	} else {
 		return t, nil
 	}
+
+	// The flavor of the burrito /sb/ converts the repo to, by way of go-ts2rc, which turns
+	// ts Translation Notes and Questions into their TSV subjects
+	convertedSubject := t.Subject
+	if t.Subject == "Translation Notes" || t.Subject == "Translation Questions" {
+		convertedSubject = "TSV " + t.Subject
+	}
+	sbFlavor := ConvertedSBFlavors[convertedSubject]
+	t.FlavorType, t.Flavor = sbFlavor.FlavorType, sbFlavor.Flavor
 
 	if t.Resource.Name != "" {
 		t.Title = t.Resource.Name

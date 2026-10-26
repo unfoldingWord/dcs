@@ -457,52 +457,30 @@ func GetDoor43MetadataFromRCManifest(ctx context.Context, gitRepo *git.Repositor
 			})
 		}
 	}
+	isTSV := strings.HasPrefix(subject, "TSV ")
 	if subject == "Bible" || subject == "Aligned Bible" || subject == "Greek New Testament" || subject == "Hebrew Old Testament" {
 		contentFormat = "usfm"
-		flavorType = "scripture"
-		flavor = "textTranslation"
-	} else if strings.HasPrefix(subject, "TSV ") {
+	} else if isTSV {
 		if strings.HasPrefix(bookPath, fmt.Sprintf("./%s_", abbreviation)) {
 			contentFormat = "tsv7"
 		} else {
 			contentFormat = "tsv9"
 		}
-		flavorType = "parascriptural"
-
-		switch subject {
-		case "TSV Translation Notes":
-			flavor = "x-bcvnotes"
-		case "TSV Translation Questions":
-			flavor = "x-bcvquestions"
-		case "TSV Translation Words Links":
-			flavor = "x-bcvarticles"
-		default:
-			flavor = "x-" + strings.ToLower(strings.Fields(subject)[len(strings.Fields(subject))-1])
-		}
-	} else if subject == "Lexicon" {
-		flavorType = "peripheral"
-		flavor = "x-lexicon"
-		contentFormat = ""
+	} else if strings.Contains(format, "/") {
+		contentFormat = strings.Split(format, "/")[1]
+	} else if repo.PrimaryLanguage != nil {
+		contentFormat = strings.ToLower(repo.PrimaryLanguage.Language)
 	} else {
-		if strings.Contains(format, "/") {
-			contentFormat = strings.Split(format, "/")[1]
-		} else if repo.PrimaryLanguage != nil {
-			contentFormat = strings.ToLower(repo.PrimaryLanguage.Language)
-		} else {
-			contentFormat = "markdown"
-		}
-
-		switch subject {
-		case "Open Bible Stories":
-			flavorType = "gloss"
-			flavor = "textStories"
-		case "Translation Academy", "Translation Words":
-			flavorType = "peripheral"
-			flavor = "x-peripheralArticles"
-		default:
-			flavorType = "peripheral"
-			flavor = "x-" + strings.ReplaceAll(subject, " ", "")
-		}
+		contentFormat = "markdown"
+	}
+	if sbFlavor, ok := dcs.ConvertedSBFlavors[subject]; ok {
+		flavorType, flavor = sbFlavor.FlavorType, sbFlavor.Flavor
+	} else if isTSV {
+		flavorType = "parascriptural"
+		flavor = "x-" + strings.ToLower(strings.Fields(subject)[len(strings.Fields(subject))-1])
+	} else {
+		flavorType = "peripheral"
+		flavor = "x-" + strings.ReplaceAll(subject, " ", "")
 	}
 	var ok bool
 	checkingLevel, ok = manifest["checking"].(map[string]any)["checking_level"].(int)
