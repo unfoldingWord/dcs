@@ -1079,6 +1079,10 @@ func populateTcTsDoor43Metadata(ctx context.Context, gitRepo *git.Repository, dm
 	}
 	dm.MetadataType = t.MetadataType
 	dm.MetadataVersion = t.MetadataVersion
+	dm.Publisher = repo.Owner.FullName
+	if dm.Publisher == "" {
+		dm.Publisher = repo.OwnerName
+	}
 
 	if (t.Project.ID == "" || t.Project.ID == "bible") && t.Type.ID != "" {
 		t.Project.ID = t.Type.ID
