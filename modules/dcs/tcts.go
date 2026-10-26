@@ -43,9 +43,9 @@ func ParseTcTsManifest(buf []byte) (*structs.TcTsManifest, error) {
 		t.MetadataVersion = strconv.Itoa(t.TsVersion)
 		t.MetadataType = "ts"
 
-		if t.TsVersion == 3 {
+		if t.TsVersion == 3 && t.Project.ID == "" {
 			t.Project.ID = t.ProjectID
-			t.Type.ID = "text"
+			t.Project.Type = "text"
 		}
 
 		if t.Resource.ID == "" {
