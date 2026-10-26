@@ -457,48 +457,30 @@ func GetDoor43MetadataFromRCManifest(ctx context.Context, gitRepo *git.Repositor
 			})
 		}
 	}
+	isTSV := strings.HasPrefix(subject, "TSV ")
 	if subject == "Bible" || subject == "Aligned Bible" || subject == "Greek New Testament" || subject == "Hebrew Old Testament" {
 		contentFormat = "usfm"
-		flavorType = "scripture"
-		flavor = "textTranslation"
-	} else if strings.HasPrefix(subject, "TSV ") {
+	} else if isTSV {
 		if strings.HasPrefix(bookPath, fmt.Sprintf("./%s_", abbreviation)) {
 			contentFormat = "tsv7"
 		} else {
 			contentFormat = "tsv9"
 		}
-		flavorType = "parascriptural"
-
-		switch subject {
-		case "TSV Translation Notes":
-			flavor = "x-bcvnotes"
-		case "TSV Translation Questions":
-			flavor = "x-bcvquestions"
-		case "TSV Translation Words Links":
-			flavor = "x-bcvarticles"
-		default:
-			flavor = "x-" + strings.ToLower(strings.Fields(subject)[len(strings.Fields(subject))-1])
-		}
+	} else if strings.Contains(format, "/") {
+		contentFormat = strings.Split(format, "/")[1]
+	} else if repo.PrimaryLanguage != nil {
+		contentFormat = strings.ToLower(repo.PrimaryLanguage.Language)
 	} else {
-		if strings.Contains(format, "/") {
-			contentFormat = strings.Split(format, "/")[1]
-		} else if repo.PrimaryLanguage != nil {
-			contentFormat = strings.ToLower(repo.PrimaryLanguage.Language)
-		} else {
-			contentFormat = "markdown"
-		}
-
-		switch subject {
-		case "Open Bible Stories":
-			flavorType = "gloss"
-			flavor = "textStories"
-		case "Translation Academy", "Translation Words":
-			flavorType = "peripheral"
-			flavor = "x-peripheralArticles"
-		default:
-			flavorType = "peripheral"
-			flavor = "x-" + strings.ReplaceAll(subject, " ", "")
-		}
+		contentFormat = "markdown"
+	}
+	if sbFlavor, ok := dcs.ConvertedSBFlavors[subject]; ok {
+		flavorType, flavor = sbFlavor.FlavorType, sbFlavor.Flavor
+	} else if isTSV {
+		flavorType = "parascriptural"
+		flavor = "x-" + strings.ToLower(strings.Fields(subject)[len(strings.Fields(subject))-1])
+	} else {
+		flavorType = "peripheral"
+		flavor = "x-" + strings.ReplaceAll(subject, " ", "")
 	}
 	var ok bool
 	checkingLevel, ok = manifest["checking"].(map[string]any)["checking_level"].(int)
@@ -1101,7 +1083,7 @@ func populateTcTsDoor43Metadata(ctx context.Context, gitRepo *git.Repository, dm
 	if (t.Project.ID == "" || t.Project.ID == "bible") && t.Type.ID != "" {
 		t.Project.ID = t.Type.ID
 	}
-	if t.Project.ID != "tw" && t.Project.ID != "ta" && !dcs.IsValidBook(t.Project.ID) {
+	if t.Project.ID != "tw" && t.Project.ID != "ta" && t.Type.ID != "ta" && t.Type.ID != "tw" && !dcs.IsValidBook(t.Project.ID) {
 		dm.ValidationError = metadataFileError("manifest.json: project id %q is not a valid book identifier", t.Project.ID)
 		return nil
 	}
