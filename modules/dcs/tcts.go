@@ -39,13 +39,18 @@ func ParseTcTsManifest(buf []byte) (*structs.TcTsManifest, error) {
 		t.MetadataType = "tc"
 		t.Format = "usfm"
 		t.Subject = "Aligned Bible"
-	} else if t.TsVersion >= 2 {
+	} else if t.TsVersion >= 1 {
 		t.MetadataVersion = strconv.Itoa(t.TsVersion)
 		t.MetadataType = "ts"
 
-		if t.Project.ID == "" && t.ProjectID != "" {
-			t.Project.ID = t.ProjectID
-			t.Project.Type = "text"
+		if t.Project.ID == "" {
+			if t.ProjectID == "" and t.Slug != "" {
+				t.ProjectID = t.Slug
+			}
+			if t.ProjectID != "" {
+				t.Project.ID = t.ProjectID
+				t.Project.Type = "text"
+			}
 		}
 
 		if t.Resource.ID == "" {

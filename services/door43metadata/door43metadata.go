@@ -1074,7 +1074,7 @@ func populateTcTsDoor43Metadata(ctx context.Context, gitRepo *git.Repository, dm
 	}
 	if t.MetadataType == "" {
 		dm.MetadataType, dm.MetadataVersion = guessTcTsTypeAndVersion(t, buf, repo.Name)
-		dm.ValidationError = metadataFileError("manifest.json is not a supported manifest: translationCore needs tc_version 7 or later, translationStudio needs package_version 3 or later")
+		dm.ValidationError = metadataFileError("manifest.json is not a supported manifest: translationCore needs tc_version 7 or later.")
 		return errNotTcTsManifest
 	}
 	dm.MetadataType = t.MetadataType
