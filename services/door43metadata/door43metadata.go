@@ -479,6 +479,10 @@ func GetDoor43MetadataFromRCManifest(ctx context.Context, gitRepo *git.Repositor
 		default:
 			flavor = "x-" + strings.ToLower(strings.Fields(subject)[len(strings.Fields(subject))-1])
 		}
+	} else if subject == "Lexicon" {
+		flavorType = "peripheral"
+		flavor = "x-lexicon"
+		contentFormat = ""
 	} else {
 		if strings.Contains(format, "/") {
 			contentFormat = strings.Split(format, "/")[1]
@@ -1101,7 +1105,7 @@ func populateTcTsDoor43Metadata(ctx context.Context, gitRepo *git.Repository, dm
 	if (t.Project.ID == "" || t.Project.ID == "bible") && t.Type.ID != "" {
 		t.Project.ID = t.Type.ID
 	}
-	if t.Project.ID != "tw" && t.Project.ID != "ta" && !dcs.IsValidBook(t.Project.ID) {
+	if t.Project.ID != "tw" && t.Project.ID != "ta" && t.Type.ID != "ta" && t.Type.ID != "tw" && !dcs.IsValidBook(t.Project.ID) {
 		dm.ValidationError = metadataFileError("manifest.json: project id %q is not a valid book identifier", t.Project.ID)
 		return nil
 	}

@@ -45,6 +45,11 @@ func ParseTcTsManifest(buf []byte) (*structs.TcTsManifest, error) {
 		t.MetadataVersion = strconv.Itoa(t.TsVersion)
 		t.MetadataType = "ts"
 
+		if t.TsVersion == 3 {
+			t.Project.ID = t.ProjectID
+			t.Type.ID = "text"
+		}
+
 		if t.Resource.ID == "" {
 			if t.ResourceID != "" {
 				t.Resource.ID = t.ResourceID
@@ -66,27 +71,37 @@ func ParseTcTsManifest(buf []byte) (*structs.TcTsManifest, error) {
 		}
 
 		if t.Resource.ID == "obs" && (t.Project.Type == "tn" || t.Type.ID == "tn") {
+			t.Resource.ID = "obs-tn"
 			t.Subject = "OBS Translation Notes"
 			t.FlavorType = "peripheral"
-			t.Flavor = "x-OBSTranslationNotes"
+			t.Flavor = "x-obsnotes"
 		} else if t.Resource.ID == "obs" && (t.Project.Type == "tq" || t.Type.ID == "tq") {
+			t.Resource.ID = "obs-tq"
 			t.Subject = "OBS Translation Questions"
 			t.FlavorType = "peripheral"
-			t.Flavor = "x-OBSTranslationQuestions"
+			t.Flavor = "x-obsquestions"
 		} else if t.Resource.ID == "obs" {
 			t.Subject = "Open Bible Stories"
 			t.FlavorType = "gloss"
 			t.Flavor = "textStories"
 		} else if t.Project.Type == "tn" || t.Type.ID == "tn" {
+			t.Resource.ID = "tn"
 			t.Subject = "Translation Notes"
 			t.FlavorType = "peripheral"
-			t.Flavor = "x-TranslationNotes"
+			t.Flavor = "x-bcvnotes"
 		} else if t.Project.Type == "tq" || t.Type.ID == "tq" {
+			t.Resource.ID = "tq"
 			t.Subject = "Translation Questions"
 			t.FlavorType = "peripheral"
-			t.Flavor = "x-TranslationQuestions"
+			t.Flavor = "x-bcvquestions"
 		} else if t.Project.Type == "tw" || t.Type.ID == "tw" {
+			t.Resource.ID = "tw"
 			t.Subject = "Translation Words"
+			t.FlavorType = "peripheral"
+			t.Flavor = "x-peripheralArticles"
+		} else if t.Project.Type == "ta" || t.Type.ID == "ta" {
+			t.Resource.ID = "ta"
+			t.Subject = "Translation Academy"
 			t.FlavorType = "peripheral"
 			t.Flavor = "x-peripheralArticles"
 		} else {

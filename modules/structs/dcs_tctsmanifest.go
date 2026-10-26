@@ -32,7 +32,8 @@ type TcTsManifest struct {
 		ID   string `json:"id"`
 		Name string `json:"name"`
 	} `json:"resource"`
-	Project struct {
+	ProjectID string `json:"project_id"`
+	Project   struct {
 		ID   string `json:"id"`
 		Name string `json:"name"`
 		Type string `json:"type"`
