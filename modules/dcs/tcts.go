@@ -44,7 +44,7 @@ func ParseTcTsManifest(buf []byte) (*structs.TcTsManifest, error) {
 		t.MetadataType = "ts"
 
 		if t.Project.ID == "" {
-			if t.ProjectID == "" and t.Slug != "" {
+			if t.ProjectID == "" && t.Slug != "" {
 				t.ProjectID = t.Slug
 			}
 			if t.ProjectID != "" {
