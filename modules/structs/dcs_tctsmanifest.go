@@ -38,4 +38,5 @@ type TcTsManifest struct {
 		Name string `json:"name"`
 		Type string `json:"type"`
 	} `json:"project"`
+	Slug string `json:"slug"`
 }
