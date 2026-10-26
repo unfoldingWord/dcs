@@ -39,7 +39,7 @@ func ParseTcTsManifest(buf []byte) (*structs.TcTsManifest, error) {
 		t.MetadataType = "tc"
 		t.Format = "usfm"
 		t.Subject = "Aligned Bible"
-	} else if t.TsVersion >= 3 {
+	} else if t.TsVersion >= 2 {
 		t.MetadataVersion = strconv.Itoa(t.TsVersion)
 		t.MetadataType = "ts"
 
