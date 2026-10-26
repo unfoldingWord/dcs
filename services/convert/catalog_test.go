@@ -72,3 +72,16 @@ func TestToCatalogEntryBooksAlwaysListed(t *testing.T) {
 	require.NotNil(t, entry)
 	assert.Equal(t, []string{"gen", "exo"}, entry.Books)
 }
+
+func TestToCatalogStageSBURLs(t *testing.T) {
+	assert.NoError(t, unittest.PrepareTestDatabase())
+	repo1 := unittest.AssertExistsAndLoadBean(t, &repo_model.Repository{ID: 1})
+
+	stage := ToCatalogStage(t.Context(), &repo_model.Door43Metadata{
+		RepoID: 1, Repo: repo1, Ref: "v9", RefType: "tag", CommitSHA: "0000000000000000000000000000000000000009",
+		Stage: door43metadata.StageProd,
+	})
+	require.NotNil(t, stage)
+	assert.Equal(t, repo1.HTMLURL()+"/sb/v9.zip", stage.SBZipballURL)
+	assert.Equal(t, repo1.HTMLURL()+"/sb/raw/metadata.json?ref=v9", stage.SBMetadataURL)
+}

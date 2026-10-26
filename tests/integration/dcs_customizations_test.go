@@ -11,6 +11,7 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"strings"
 	"testing"
 	"time"
 
@@ -18,7 +19,10 @@ import (
 	"gitea.dev/models/db"
 	door43metadata_model "gitea.dev/models/door43metadata"
 	repo_model "gitea.dev/models/repo"
+	system_model "gitea.dev/models/system"
 	"gitea.dev/models/unittest"
+	"gitea.dev/modules/dcs"
+	"gitea.dev/modules/json"
 	"gitea.dev/modules/setting"
 	"gitea.dev/modules/storage"
 	api "gitea.dev/modules/structs"
@@ -130,6 +134,7 @@ func TestDCSAPICatalogEntryEndpoints(t *testing.T) {
 	assert.Equal(t, "prod", entry.Stage)
 	assert.Equal(t, setting.AppURL+"user2/repo1/archive/v1.1.zip", entry.ZipballURL)
 	assert.Equal(t, setting.AppURL+"user2/repo1/sb/v1.1.zip", entry.SBZipballURL)
+	assert.Equal(t, setting.AppURL+"user2/repo1/sb/raw/metadata.json?ref=v1.1", entry.SBMetadataURL)
 	assert.Equal(t, setting.AppURL+"user2/repo1/sb/v1.1.tar.gz", entry.SBTarballURL)
 
 	metadataResp := MakeRequest(t, NewRequest(t, "GET", "/api/v1/catalog/metadata/user2/repo1/v1.1"), http.StatusOK)
@@ -308,6 +313,12 @@ func TestDCSAPIRepoSBFileConverted(t *testing.T) {
 		assert.Contains(t, string(sbZipEntry(t, archive.Body.Bytes(), "repo1/metadata.json")),
 			`"dateCreated": "`+commitTime.UTC().Format("2006-01-02T15:04:05.000Z")+`"`)
 
+		// metadata.json names this repo at this commit on this server, and is a valid burrito
+		metadata := sbMetadata(t, sbZipEntry(t, archive.Body.Bytes(), "repo1/metadata.json"))
+		assert.Equal(t, strings.TrimSuffix(setting.AppURL, "/"), metadata.IDAuthorities["dcs"].ID)
+		assert.Equal(t, dm.CommitSHA, metadata.Identification.Primary["dcs"]["user2/repo1"].Revision)
+		assert.Empty(t, metadata.Identification.Upstream, "Translation Notes have no partner repo")
+
 		// So the archive cleanup can delete a kept archive: its rebuild has the same bytes and ETag
 		var keptArchives []*repo_model.RepoArchiver
 		require.NoError(t, db.GetEngine(t.Context()).Where("repo_id = ?", 1).Find(&keptArchives))
@@ -394,6 +405,128 @@ func TestDCSAPIRepoSBFileConverted(t *testing.T) {
 		assert.Equal(t, updated, resp.Body.String())
 		MakeRequest(t, NewRequest(t, "GET", "/api/v1/repos/user2/repo1/sb/sb-tn.zip"), http.StatusOK)
 		assert.Equal(t, kept, unittest.GetCount(t, &repo_model.RepoArchiver{RepoID: 1}))
+	})
+}
+
+// sbMetadata checks that a converted metadata.json is a valid Scripture Burrito and returns the parts the tests read
+func sbMetadata(t *testing.T, content []byte) (metadata struct {
+	IDAuthorities map[string]struct {
+		ID string `json:"id"`
+	} `json:"idAuthorities"`
+	Identification struct {
+		Primary  map[string]map[string]sbRevision   `json:"primary"`
+		Upstream map[string][]map[string]sbRevision `json:"upstream"`
+	} `json:"identification"`
+},
+) {
+	t.Helper()
+	var data map[string]any
+	require.NoError(t, json.Unmarshal(content, &data))
+	validationErr, err := dcs.ValidateMapBySB100Schema(data)
+	require.NoError(t, err)
+	require.Nil(t, validationErr, "%v", validationErr)
+	require.NoError(t, json.Unmarshal(content, &metadata))
+	return metadata
+}
+
+type sbRevision struct {
+	Revision  string `json:"revision"`
+	Timestamp string `json:"timestamp"`
+}
+
+// TestDCSAPIRepoSBUpstream checks that a TWL burrito records the commit of the Translation Words repo whose
+// articles it carries, as identification.upstream in metadata.json.
+func TestDCSAPIRepoSBUpstream(t *testing.T) {
+	onGiteaRun(t, func(t *testing.T, _ *url.URL) {
+		token := getTokenForLoggedInUser(t, loginUser(t, "user2"), auth_model.AccessTokenScopeWriteRepository, auth_model.AccessTokenScopeWriteUser)
+		MakeRequest(t, NewRequestWithJSON(t, "POST", "/api/v1/user/repos", &api.CreateRepoOption{
+			Name: "en_tw", AutoInit: true, Readme: "Default", DefaultBranch: "master",
+		}).AddTokenAuth(token), http.StatusCreated)
+		article := "# God\n\nThe one true God.\n"
+		MakeRequest(t, NewRequestWithJSON(t, "POST", "/api/v1/repos/user2/en_tw/contents/bible/kt/god.md", &api.CreateFileOptions{
+			FileOptions:   api.FileOptions{BranchName: "master", Message: "Add an article"},
+			ContentBase64: base64.StdEncoding.EncodeToString([]byte(article)),
+		}).AddTokenAuth(token), http.StatusCreated)
+		var twBranch api.Branch
+		DecodeJSON(t, MakeRequest(t, NewRequest(t, "GET", "/api/v1/repos/user2/en_tw/branches/master"), http.StatusOK), &twBranch)
+
+		manifest := `dublin_core:
+  conformsto: rc0.2
+  contributor: []
+  creator: Test
+  description: Test Links
+  format: text/tsv
+  identifier: twl
+  issued: "2026-10-23"
+  language: {identifier: en, title: English, direction: ltr}
+  modified: "2026-10-23"
+  publisher: Test
+  relation: []
+  rights: CC BY-SA 4.0
+  source: []
+  subject: TSV Translation Words Links
+  title: Test Links
+  type: help
+  version: "1"
+checking: {checking_entity: [Test], checking_level: "1"}
+projects:
+  - {identifier: tit, path: ./twl_TIT.tsv, title: Titus}
+`
+		links := "Reference\tID\tTags\tOrigWords\tOccurrence\tTWLink\n1:1\tabcd\tkeyterm\tθεοῦ\t1\trc://*/tw/dict/bible/kt/god\n"
+		MakeRequest(t, NewRequestWithJSON(t, "POST", "/api/v1/repos/user2/repo1/contents", &api.ChangeFilesOptions{
+			FileOptions: api.FileOptions{BranchName: "master", NewBranchName: "sb-twl", Message: "Add links"},
+			Files: []*api.ChangeFileOperation{
+				{Operation: "create", Path: "manifest.yaml", ContentBase64: base64.StdEncoding.EncodeToString([]byte(manifest))},
+				{Operation: "create", Path: "twl_TIT.tsv", ContentBase64: base64.StdEncoding.EncodeToString([]byte(links))},
+			},
+		}).AddTokenAuth(token), http.StatusCreated)
+
+		resp := MakeRequest(t, NewRequest(t, "GET", "/api/v1/repos/user2/repo1/sb/raw/metadata.json?ref=sb-twl"), http.StatusOK)
+		metadata := sbMetadata(t, resp.Body.Bytes())
+		require.Len(t, metadata.Identification.Upstream["dcs"], 1)
+		upstream := metadata.Identification.Upstream["dcs"][0]["user2/en_tw"]
+		assert.Equal(t, twBranch.Commit.ID, upstream.Revision)
+		assert.Equal(t, twBranch.Commit.Timestamp.UTC().Format("2006-01-02T15:04:05.000Z"), upstream.Timestamp)
+
+		resp = MakeRequest(t, NewRequest(t, "GET", "/api/v1/repos/user2/repo1/sb/raw/ingredients/payload/kt/god.md?ref=sb-twl"), http.StatusOK)
+		assert.Equal(t, article, resp.Body.String())
+
+		// A renamed repo keeps its commits, but its metadata.json must name it as it is now
+		newName := "repo1-renamed"
+		MakeRequest(t, NewRequestWithJSON(t, "PATCH", "/api/v1/repos/user2/repo1", &api.EditRepoOption{Name: &newName}).AddTokenAuth(token), http.StatusOK)
+		resp = MakeRequest(t, NewRequest(t, "GET", "/api/v1/repos/user2/repo1-renamed/sb/raw/metadata.json?ref=sb-twl"), http.StatusOK)
+		metadata = sbMetadata(t, resp.Body.Bytes())
+		assert.Contains(t, metadata.Identification.Primary["dcs"], "user2/repo1-renamed")
+		assert.Contains(t, metadata.Identification.Upstream["dcs"][0], "user2/en_tw")
+	})
+}
+
+// TestDCSRenameRepoReprocessesMetadata checks that a rename's metadata reprocessing reads the repo at its new
+// path. Gitea notifies of a rename before its caller saves the new name, so the database still has the old one.
+func TestDCSRenameRepoReprocessesMetadata(t *testing.T) {
+	onGiteaRun(t, func(t *testing.T, _ *url.URL) {
+		token := getTokenForLoggedInUser(t, loginUser(t, "user2"), auth_model.AccessTokenScopeWriteRepository)
+		opts := getCreateFileOptions()
+		opts.NewBranchName = "rename-check"
+		opts.ContentBase64 = base64.StdEncoding.EncodeToString([]byte("dublin_core:\n  identifier: ult\n  language: {identifier: en, title: English, direction: ltr}\n  subject: Bible\n  title: Test Bible\nprojects: []\n"))
+		MakeRequest(t, NewRequestWithJSON(t, "POST", "/api/v1/repos/user2/repo1/contents/manifest.yaml", &opts).AddTokenAuth(token), http.StatusCreated)
+		// Forget the push's metadata, so that only the rename's reprocessing can bring it back
+		_, err := repo_model.GetDoor43MetadataByRepoIDAndRef(t.Context(), 1, "rename-check")
+		require.NoError(t, err)
+		require.NoError(t, repo_model.DeleteDoor43MetadataByRepoIDAndRef(t.Context(), 1, "rename-check"))
+
+		newName := "repo1-renamed"
+		MakeRequest(t, NewRequestWithJSON(t, "PATCH", "/api/v1/repos/user2/repo1", &api.EditRepoOption{Name: &newName}).AddTokenAuth(token), http.StatusOK)
+
+		dm, err := repo_model.GetDoor43MetadataByRepoIDAndRef(t.Context(), 1, "rename-check")
+		require.NoError(t, err, "the rename reprocesses the repo at its new path")
+		assert.Equal(t, "rc", dm.MetadataType)
+		// repo1's fixture releases name tags its git repo lacks, so other ref failures are expected here
+		var notices []*system_model.Notice
+		require.NoError(t, db.GetEngine(t.Context()).Find(&notices))
+		for _, notice := range notices {
+			assert.NotContains(t, notice.Description, "no such file or directory")
+		}
 	})
 }
 

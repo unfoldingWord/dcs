@@ -34,6 +34,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	rc2sb "github.com/unfoldingWord/go-rc2sb"
 )
 
 func TestMain(m *testing.M) {
@@ -161,6 +162,30 @@ func TestConverterVersionsFrom(t *testing.T) {
 	assert.Equal(t, "dcs@28.2.0+dcs", converterVersionsFrom(&debug.BuildInfo{}, true))
 }
 
+// TestUpstreamRevisions checks the en_tw commit a ts Translation Words conversion records; the TW/TWL
+// partner is covered end to end by TestDCSAPIRepoSBUpstream.
+func TestUpstreamRevisions(t *testing.T) {
+	require.NoError(t, unittest.PrepareTestDatabase())
+	repo := loadRepo(t)
+	gitRepo, err := git.OpenRepository(t.Context(), repo)
+	require.NoError(t, err)
+	defer gitRepo.Close()
+	commit, err := gitRepo.GetCommit(t.Context(), "master")
+	require.NoError(t, err)
+
+	dm := &repo_model.Door43Metadata{MetadataType: "ts", Language: "en", Subject: "Translation Words"}
+	upstream, err := upstreamRevisions(t.Context(), repo, dm, &ArchiveRequest{TWSourceRepoID: repo.ID, TWSourceCommitID: commit.ID.String()})
+	require.NoError(t, err)
+	require.Len(t, upstream, 1)
+	assert.Equal(t, rc2sb.Upstream{
+		Owner: repo.OwnerName, RepoName: repo.Name, Revision: commit.ID.String(), Timestamp: commit.Committer.When,
+	}, upstream[0])
+
+	upstream, err = upstreamRevisions(t.Context(), repo, dm, &ArchiveRequest{})
+	require.NoError(t, err)
+	assert.Empty(t, upstream)
+}
+
 func TestStorageCommitID(t *testing.T) {
 	// Every input that decides the bytes gets its own key, within repo_archiver's VARCHAR(64) for SHA-256 too
 	keys := map[string]bool{}
@@ -193,6 +218,14 @@ func TestStorageCommitID(t *testing.T) {
 	assert.NotEqual(t, convertedKey, converted.StorageCommitID())
 	assert.Equal(t, asIsKey, asIs.StorageCommitID())
 	restore()
+
+	// A rename, transfer or new ROOT_URL changes the names a converted metadata.json records and the root
+	// folder an SB repo's "git archive" is named after, at the same commits
+	for _, aReq := range []*ArchiveRequest{converted, asIs} {
+		renamed := *aReq
+		renamed.Identity = "https://example.com\nuser2/repo1-renamed"
+		assert.NotEqual(t, aReq.StorageCommitID(), renamed.StorageCommitID(), aReq.MetadataType)
+	}
 
 	// An archive built with PREFIX_ARCHIVE_FILES has other paths than one built without it
 	defer test.MockVariableValue(&setting.Repository.PrefixArchiveFiles, !setting.Repository.PrefixArchiveFiles)()
@@ -233,19 +266,23 @@ func TestWriteDirectoryArchiveDeterministic(t *testing.T) {
 		}
 		gzr, err := gzip.NewReader(bytes.NewReader(first.Bytes()))
 		require.NoError(t, err)
+		defer gzr.Close()
 		tr := tar.NewReader(gzr)
+		entries := 0
 		for {
 			hdr, err := tr.Next()
 			if errors.Is(err, io.EOF) {
 				break
 			}
 			require.NoError(t, err)
+			entries++
 			assert.True(t, commitTime.Equal(hdr.ModTime), "%s: %v", hdr.Name, hdr.ModTime)
 			assert.Equal(t, util.Iif(hdr.Typeflag == tar.TypeDir, int64(0o755), int64(0o644)), hdr.Mode, hdr.Name)
 			assert.Zero(t, hdr.Uid, hdr.Name)
 			assert.Zero(t, hdr.Gid, hdr.Name)
 			assert.Empty(t, hdr.Uname+hdr.Gname, hdr.Name)
 		}
+		assert.Equal(t, 4, entries) // en_tn/, en_tn/ingredients/ and the two files
 	}
 }
 
