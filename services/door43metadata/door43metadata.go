@@ -1365,6 +1365,13 @@ func processDoor43MetadataForRepoRef(ctx context.Context, repo *repo_model.Repos
 		log.Error("DetermineAttachmentFlags [%s/%s]: %v", repo.FullName(), ref, err)
 	}
 
+	if dm.Publisher == "" {
+		dm.Publisher = repo.Owner.Name
+		if dm.Publisher == "" {
+			dm.Publisher = repo.OwnerName
+		}
+	}
+
 	if dm.ID > 0 {
 		if err = repo_model.UpdateDoor43Metadata(ctx, dm); err != nil {
 			return err

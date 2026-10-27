@@ -225,10 +225,10 @@ func TestPopulateTcTsDoor43Metadata(t *testing.T) {
 
 	t.Run("neither tc nor ts reports errNotTcTsManifest but still describes the entry", func(t *testing.T) {
 		dm := &repo_model.Door43Metadata{}
-		err := populateTcTsDoor43Metadata(t.Context(), nil, dm, testRepo(1), nil, []byte(`{"package_version": 2, "project": {"id": "gen"}}`))
+		err := populateTcTsDoor43Metadata(t.Context(), nil, dm, testRepo(1), nil, []byte(`{"package_version": 0, "project": {"id": "gen"}}`))
 		require.ErrorIs(t, err, errNotTcTsManifest)
 		assert.Equal(t, "ts", dm.MetadataType)
-		assert.Equal(t, "2", dm.MetadataVersion)
+		assert.Equal(t, "0", dm.MetadataVersion)
 		assert.NotNil(t, dm.Metadata)
 		require.NotNil(t, dm.ValidationError)
 		assert.Contains(t, dm.ValidationError.Message, "not a supported manifest")
@@ -400,7 +400,7 @@ func TestProcessDoor43MetadataForRepoRef_InvalidMetadataFiles(t *testing.T) {
 	})
 
 	t.Run("tc/ts: manifest.json that is neither, with no manifest.yaml", func(t *testing.T) {
-		commitFileOnBranch(t, repoPath, "dcs-junk-manifest", "manifest.json", `{"package_version": 2}`)
+		commitFileOnBranch(t, repoPath, "dcs-junk-manifest", "manifest.json", `{"package_version": 0}`)
 		require.NoError(t, processDoor43MetadataForRepoRef(ctx, repo, "dcs-junk-manifest"))
 		dm := loadDM(t, "dcs-junk-manifest")
 		assertInvalid(t, dm, "ts")
