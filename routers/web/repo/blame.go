@@ -98,6 +98,7 @@ func RefBlame(ctx *context.Context) {
 	}
 
 	renderBlame(ctx, result.Parts, commitNames)
+	SetEditorconfigIfExists(ctx)
 
 	ctx.HTML(http.StatusOK, tplName)
 }
