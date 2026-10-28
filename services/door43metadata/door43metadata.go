@@ -395,6 +395,9 @@ func GetDoor43MetadataFromRCManifest(ctx context.Context, gitRepo *git.Repositor
 		metadataVersion = "0.2"
 	}
 	subject = dcs.MapStr(dublinCore, "subject")
+	if subject == "" {
+		subject = "unknown"
+	}
 	abbreviation = dcs.MapStr(dublinCore, "identifier")
 	title = dcs.MapStr(dublinCore, "title")
 	publisher = dcs.MapStr(dublinCore, "publisher")
