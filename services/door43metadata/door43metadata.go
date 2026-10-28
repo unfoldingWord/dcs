@@ -402,7 +402,7 @@ func GetDoor43MetadataFromRCManifest(ctx context.Context, gitRepo *git.Repositor
 		subject = "Open Bible Stories"
 	}
 	if strings.HasPrefix(subject, "Translator ") {
-		subject = strings.Replace(subject, "Translator ", "Transation ", 1)
+		subject = strings.Replace(subject, "Translator ", "Translation ", 1)
 	}
 	abbreviation = dcs.MapStr(dublinCore, "identifier")
 	title = dcs.MapStr(dublinCore, "title")
@@ -490,7 +490,7 @@ func GetDoor43MetadataFromRCManifest(ctx context.Context, gitRepo *git.Repositor
 		flavor = "x-" + strings.ToLower(strings.Fields(subject)[len(strings.Fields(subject))-1])
 	} else {
 		flavorType = "peripheral"
-		flavor = "x-" + strings.ReplaceAll(subject, " ", "")
+		flavor = "x-" + strings.ToLower(strings.ReplaceAll(strings.ReplaceAll(subject, " ", ""), "-", ""))
 	}
 	var ok bool
 	checkingLevel, ok = manifest["checking"].(map[string]any)["checking_level"].(int)
@@ -757,7 +757,7 @@ func getSBSubject(flavorType, flavor, abbreviation, repoNameSuffix string) strin
 			return "Hebrew-Aramaic Lexicon"
 		case "x-lexicon", "x-lexicons":
 			switch abbreviationLower {
-			case "hl", "thl", "uhl", "uhal":
+			case "hl", "hal", "thl", "thal", "uhl", "uhal":
 				return "Hebrew-Aramaic Lexicon"
 			case "gl", "tgl", "ugl":
 				return "Greek Lexicon"
