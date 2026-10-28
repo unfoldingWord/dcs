@@ -398,6 +398,12 @@ func GetDoor43MetadataFromRCManifest(ctx context.Context, gitRepo *git.Repositor
 	if subject == "" {
 		subject = "unknown"
 	}
+	if strings.ToLower(subject) == "bible stories" {
+		subject = "Open Bible Stories"
+	}
+	if strings.HasPrefix(subject, "Translator ") {
+		subject = strings.Replace(subject, "Translator ", "Transation ", 1)
+	}
 	abbreviation = dcs.MapStr(dublinCore, "identifier")
 	title = dcs.MapStr(dublinCore, "title")
 	publisher = dcs.MapStr(dublinCore, "publisher")
