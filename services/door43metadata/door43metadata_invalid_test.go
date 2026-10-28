@@ -13,6 +13,7 @@ import (
 	"gitea.dev/models/door43metadata"
 	repo_model "gitea.dev/models/repo"
 	"gitea.dev/models/unittest"
+	"gitea.dev/modules/dcs"
 	"gitea.dev/modules/git/gitcmd"
 	"gitea.dev/modules/git/gitrepo"
 
@@ -236,7 +237,7 @@ func TestPopulateTcTsDoor43Metadata(t *testing.T) {
 		err := populateTcTsDoor43Metadata(t.Context(), nil, dm, testRepo(1), nil, []byte(`{"package_version": 0, "project": {"id": "gen"}}`))
 		require.ErrorIs(t, err, errNotTcTsManifest)
 		assert.Equal(t, "ts", dm.MetadataType)
-		assert.Equal(t, "0", dm.MetadataVersion)
+		assert.Equal(t, dcs.GetDefaultMetadataVersionForType("ts"), dm.MetadataVersion, "a version of 0 falls back to the default")
 		assert.NotNil(t, dm.Metadata)
 		require.NotNil(t, dm.ValidationError)
 		assert.Contains(t, dm.ValidationError.Message, "not a supported manifest")
