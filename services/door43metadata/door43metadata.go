@@ -395,6 +395,9 @@ func GetDoor43MetadataFromRCManifest(ctx context.Context, gitRepo *git.Repositor
 		metadataVersion = "0.2"
 	}
 	subject = dcs.MapStr(dublinCore, "subject")
+	if subject == "" {
+		subject = "unknown"
+	}
 	abbreviation = dcs.MapStr(dublinCore, "identifier")
 	title = dcs.MapStr(dublinCore, "title")
 	publisher = dcs.MapStr(dublinCore, "publisher")
@@ -1240,6 +1243,9 @@ func processDoor43MetadataForRepoRef(ctx context.Context, repo *repo_model.Repos
 		return errors.New("repo must not be empty, an archive, a mirror or private")
 	}
 
+	if err := repo.LoadOwner(ctx); err != nil { // the publisher fallback reads repo.Owner
+		return err
+	}
 	if err := repo.LoadLatestDMs(ctx); err != nil {
 		return err
 	}
@@ -1363,6 +1369,13 @@ func processDoor43MetadataForRepoRef(ctx context.Context, repo *repo_model.Repos
 
 	if err := dm.DetermineAttachmentFlags(ctx); err != nil {
 		log.Error("DetermineAttachmentFlags [%s/%s]: %v", repo.FullName(), ref, err)
+	}
+
+	if dm.Publisher == "" {
+		dm.Publisher = repo.Owner.Name
+		if dm.Publisher == "" {
+			dm.Publisher = repo.OwnerName
+		}
 	}
 
 	if dm.ID > 0 {

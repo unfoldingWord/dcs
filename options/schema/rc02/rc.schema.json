@@ -234,7 +234,8 @@
 					"$id": "#root/dublin_core/subject",
 					"title": "Subject",
 					"type": "string",
-					"enum": [
+					"default": "",
+					"examples": [
 						"Aligned Bible",
 						"Aramaic Grammar",
 						"Bible",
