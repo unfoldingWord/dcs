@@ -5,6 +5,7 @@ package dcs
 
 import (
 	"testing"
+	"time"
 
 	"gitea.dev/modules/setting"
 
@@ -45,4 +46,9 @@ func TestGetRC02SchemaCompilesFromLocalOptions(t *testing.T) {
 	valErr, err := ValidateMapByRC02Schema(map[string]any{"dublin_core": map[string]any{}})
 	require.NoError(t, err)
 	require.NotNil(t, valErr, "a manifest without the required dublin_core fields must fail validation")
+
+	valErr, err = ValidateMapByRC02Schema(map[string]any{"dublin_core": map[string]any{"issued": time.Time{}}})
+	require.NoError(t, err, "a value JSON has no type for is the file's problem, not the server's")
+	require.NotNil(t, valErr)
+	assert.Contains(t, valErr.Message, "time.Time")
 }

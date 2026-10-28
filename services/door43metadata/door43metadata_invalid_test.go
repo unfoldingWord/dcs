@@ -182,6 +182,14 @@ func TestPopulateRCDoor43Metadata(t *testing.T) {
 		require.Len(t, dm.Ingredients, 1)
 		assert.Equal(t, "gen", dm.Ingredients[0].Identifier)
 	})
+
+	t.Run("unquoted dates validate as the text written", func(t *testing.T) {
+		dm := &repo_model.Door43Metadata{}
+		manifest := strings.ReplaceAll(validRCManifest, "'2024-01-01'", "2024-01-01")
+		require.NoError(t, populateRCDoor43Metadata(ctx, nil, dm, repo, nil, []byte(manifest)))
+		assert.Nil(t, dm.ValidationError)
+		assert.Equal(t, "2024-01-01", nestedString(dm.Metadata, "dublin_core", "issued"))
+	})
 }
 
 func TestPopulateTcTsDoor43Metadata(t *testing.T) {
