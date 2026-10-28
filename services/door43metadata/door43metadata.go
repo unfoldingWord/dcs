@@ -714,22 +714,51 @@ func getSBSubject(flavorType, flavor, abbreviation, repoNameSuffix string) strin
 	case "parascriptural":
 		switch flavorLower {
 		case "x-bcvnotes":
-			return "TSV Translation Notes"
+			switch abbreviation {
+			case "sn":
+				return "TSV Study Notes"
+			case "tn":
+				return "TSV Translation Notes"
+			case "obs-sn":
+				return "TSV OBS Study Notes"
+			case "obs-tn":
+				return "TSV OBS Translation Notes"
+			default:
+				return "TSV Translation Notes"
+			}
 		case "x-bcvquestions":
-			return "TSV Translation Questions"
+			switch abbreviation {
+			case "sq":
+				return "TSV Study Questions"
+			case "tq":
+				return "TSV Translation Questions"
+			case "obs-sq":
+				return "TSV OBS Study Questions"
+			case "obs-tq":
+				return "TSV OBS Translation Questions"
+			default:
+				return "TSV Translation Questions"
+			}
 		case "x-bcvarticles":
-			return "TSV Translation Words Links"
+			switch abbreviation {
+			case "twl":
+				return "TSV Translation Words Links"
+			case "obs-twl":
+				return "TSV OBS Translation Words Links"
+			default:
+				return "TSV Translation Words Links"
+			}
 		}
 	case "peripheral":
 		switch flavorLower {
 		case "x-greeklexicon", "x-greeklexicons":
 			return "Greek Lexicon"
-		case "x-hebrewlexicon", "x-hebrewlexicons":
-			return "Hebrew Lexicon"
+		case "x-hebrewlexicon", "x-hebrewlexicons", "x-hebrewaramaiclexicon":
+			return "Hebrew-Aramaic Lexicon"
 		case "x-lexicon", "x-lexicons":
 			switch abbreviationLower {
-			case "hl", "thl", "uhl":
-				return "Hebrew Lexicon"
+			case "hl", "thl", "uhl", "uhal":
+				return "Hebrew-Aramaic Lexicon"
 			case "gl", "tgl", "ugl":
 				return "Greek Lexicon"
 			default:
