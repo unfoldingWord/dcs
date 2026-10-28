@@ -1240,6 +1240,9 @@ func processDoor43MetadataForRepoRef(ctx context.Context, repo *repo_model.Repos
 		return errors.New("repo must not be empty, an archive, a mirror or private")
 	}
 
+	if err := repo.LoadOwner(ctx); err != nil { // the publisher fallback reads repo.Owner
+		return err
+	}
 	if err := repo.LoadLatestDMs(ctx); err != nil {
 		return err
 	}
