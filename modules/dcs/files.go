@@ -48,11 +48,18 @@ func ReadYAMLFromBlob(ctx context.Context, blob *git.Blob) (map[string]any, erro
 	return ParseYAML(buf)
 }
 
-// ParseYAML unmarshals yaml content into a map with string keys at every level
+// ParseYAML unmarshals yaml content into a map with string keys at every level.
+// Unquoted dates and timestamps are kept as the text written, since JSON has no date type.
 func ParseYAML(buf []byte) (map[string]any, error) {
-	var result map[string]any
-	if err := yaml.Unmarshal(buf, &result); err != nil {
+	var doc yaml.Node
+	if err := yaml.Unmarshal(buf, &doc); err != nil {
 		log.Debug("yaml.Unmarshal: %v", err)
+		return nil, err
+	}
+	keepTimestampsAsText(&doc)
+	var result map[string]any
+	if err := doc.Decode(&result); err != nil {
+		log.Debug("yaml.Node.Decode: %v", err)
 		return nil, err
 	}
 	for k, v := range result {
@@ -63,6 +70,15 @@ func ParseYAML(buf []byte) (map[string]any, error) {
 		}
 	}
 	return result, nil
+}
+
+func keepTimestampsAsText(n *yaml.Node) {
+	if n.Kind == yaml.ScalarNode && n.ShortTag() == "!!timestamp" {
+		n.Tag = "!!str"
+	}
+	for _, child := range n.Content {
+		keepTimestampsAsText(child)
+	}
 }
 
 // ReadJSONFromBlob reads a json file from a blob and unmarshals it
