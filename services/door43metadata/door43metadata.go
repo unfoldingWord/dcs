@@ -1147,6 +1147,13 @@ func populateTcTsDoor43Metadata(ctx context.Context, gitRepo *git.Repository, dm
 		versification = "ufw"
 	}
 
+	if t.ProjectID != "" && t.Project.ID == "" {
+		t.Project.ID = t.ProjectID
+	}
+	if t.Resource.ID == "" && t.Project.ID != "" {
+		t.Resource.ID = t.Project.ID
+	}
+
 	dm.Repo = repo
 	dm.Subject = t.Subject
 	dm.FlavorType = t.FlavorType
