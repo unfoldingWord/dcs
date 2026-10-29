@@ -48,7 +48,7 @@ Common checks (all of `rc`, `ts`, `tc`, `sb`):
   `options/schema/sb100` (a server's `custom/options/schema/...` copy overrides them;
   nothing is fetched from the network). `tc`/`ts` have no schema: a `manifest.json` is
   invalid when it is not JSON, has a field of the wrong type, declares neither
-  `tc_version >= 7` nor `package_version >= 3`, or names no valid book. Since tc and ts
+  `tc_version >= 1` nor `package_version >= 1`, or names no valid book. Since tc and ts
   share the file name, an invalid `manifest.json` is typed by the repo naming convention
   (`_book` suffix is tc, `_text_` is ts), then by the version key the file carries, else tc.
 - title is set and does not still say "unfoldingWord" (warning; skipped for the
