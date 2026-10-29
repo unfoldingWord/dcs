@@ -28,13 +28,13 @@ func GetTcTsManifestFromBlob(ctx context.Context, blob *git.Blob) (*structs.TcTs
 
 // ParseTcTsManifest unmarshals the content of a manifest.json and derives the DCS
 // metadata fields from it. MetadataType is left empty when the file is neither a
-// translationCore (tc_version >= 5) nor a translationStudio (package_version >= 3) manifest.
+// translationCore (tc_version >= 1) nor a translationStudio (package_version >= 1) manifest.
 func ParseTcTsManifest(buf []byte) (*structs.TcTsManifest, error) {
 	t := &structs.TcTsManifest{}
 	if err := json.Unmarshal(buf, t); err != nil {
 		return nil, err
 	}
-	if t.TcVersion >= 5 {
+	if t.TcVersion >= 1 {
 		t.MetadataVersion = strconv.Itoa(t.TcVersion)
 		t.MetadataType = "tc"
 		t.Format = "usfm"
