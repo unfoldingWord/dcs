@@ -414,10 +414,10 @@ func GetDoor43MetadataFromRCManifest(ctx context.Context, gitRepo *git.Repositor
 		}
 	}
 	dcLanguage := dcs.MapMap(dublinCore, "language")
-	language = dcs.MapStr(dcLanguage, "identifier")
-	languageTitle = dcs.MapStr(dcLanguage, "title")
-	format = dcs.MapStr(dublinCore, "format")
+	language = strings.ToLower(dcs.MapStr(dcLanguage, "identifier"))
+	languageTitle = dcs.GetLanguageTitle(language)
 	languageDirection = dcs.GetLanguageDirection(language)
+	format = dcs.MapStr(dublinCore, "format")
 	languageIsGL = dcs.LanguageIsGL(language)
 	var bookPath string
 	for _, prod := range dcs.MapSlice(manifest, "projects") {
@@ -1154,8 +1154,8 @@ func populateTcTsDoor43Metadata(ctx context.Context, gitRepo *git.Repository, dm
 	dm.Title = t.Title
 	dm.Abbreviation = strings.ToLower(t.Resource.ID)
 	dm.Language = strings.ToLower(t.TargetLanguage.ID) // language codes are always stored lowercase
-	dm.LanguageTitle = t.TargetLanguage.Name
-	dm.LanguageDirection = t.TargetLanguage.Direction
+	dm.LanguageTitle = dcs.GetLanguageTitle(dm.Language)
+	dm.LanguageDirection = dcs.GetLanguageDirection(dm.Language)
 	dm.LanguageIsGL = dcs.LanguageIsGL(t.TargetLanguage.ID)
 	dm.ContentFormat = t.Format
 	dm.CheckingLevel = 1
