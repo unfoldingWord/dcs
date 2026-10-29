@@ -42,7 +42,8 @@
 					"title": "Conformsto",
 					"type": "string",
 					"default": "rc0.2",
-					"enum": [
+					"pattern": "^rc",
+					"examples": [
 						"rc0.2"
 					]
 				},
@@ -81,7 +82,6 @@
 				},
 				"format": {
 					"$id": "#root/dublin_core/format",
-					"$ref": "#/definitions/mimeType",
 					"title": "Format",
 					"default": ""
 				},
@@ -97,7 +97,6 @@
 				},
 				"issued": {
 					"$id": "#root/dublin_core/issued",
-					"$ref": "#/definitions/timestamp",
 					"title": "Issued",
 					"type": "string",
 					"default": "",
@@ -107,7 +106,6 @@
 				},
 				"modified": {
 					"$id": "#root/dublin_core/modified",
-					"$ref": "#/definitions/timestamp",
 					"title": "Modified",
 					"type": "string",
 					"default": "",
@@ -151,7 +149,7 @@
 							"title": "Direction",
 							"type": "string",
 							"default": "ltr",
-							"enum": ["ltr", "rtl"]
+							"examples": ["ltr", "rtl"]
 						}
 					}
 				},
@@ -175,7 +173,7 @@
 					"title": "Rights",
 					"type": "string",
 					"default": "CC BY-SA 4.0",
-					"enum": [
+					"examples": [
 						"CC BY 3.0",
 						"CC BY-SA 3.0",
 						"CC BY-SA 4.0",
@@ -284,10 +282,7 @@
 					"title": "Type",
 					"type": "string",
 					"default": "",
-					"examples": [
-						"bundle"
-					],
-					"enum": ["book", "bundle", "dict", "help", "man"]
+					"examples": ["book", "bundle", "dict", "help", "man"]
 				},
 				"version": {
 					"$id": "#root/dublin_core/version",
@@ -329,7 +324,7 @@
 					"title": "Checking_level",
 					"type": ["integer", "string"],
 					"default": "1",
-					"enum": [
+					"examples": [
 						1,
 						2,
 						3,
@@ -369,10 +364,7 @@
 						"title": "Versification",
 						"type": ["string", "null"],
 						"default": null,
-						"examples": [
-							"ufw"
-						],
-						"enum": ["avd", "odx", "odx-hr", "other", "rsc", "ufw", "ufw-bn", "ufw-ml", "ufw-odx", "ufw-rev", "obs", "", null]
+						"examples": ["avd", "odx", "odx-hr", "other", "rsc", "ufw", "ufw-bn", "ufw-ml", "ufw-odx", "ufw-rev", "obs"]
 					},
 					"identifier": {
 						"$id": "#root/projects/items/identifier",
@@ -403,7 +395,7 @@
 							"$id": "#root/projects/items/categories/items",
 							"title": "Items",
 							"type": "string",
-							"enum": [
+							"examples": [
 								"bible-frt",
 								"bible-bak",
 								"bible-cnc",
@@ -415,6 +407,13 @@
 								"bible-ndx",
 								"bible-tdx",
 								"bible-xx",
+								"bible",
+								"lexicon-nt",
+								"lexicon-ot",
+								"lexicon",
+								"grammar-ot",
+								"grammar-nt",
+								"grammar",
 								"obs",
 								"ta",
 								"tw"
@@ -537,7 +536,15 @@
 				"xxf",
 				"xxg",
 				"obs",
+				"obs-tn",
+				"obs-tq",
+				"obs-sn",
+				"obs-sq",
+				"obs-twl",
+				"obw-tw",
 				"intro",
+				"nt",
+				"ot",
 				"process",
 				"translate",
 				"checking",
@@ -545,10 +552,17 @@
 				"content",
 				"ugl",
 				"uhal",
+				"uhl",
+				"hal",
+				"thal",
+				"thl",
 				"ggl",
 				"ghal",
 				"ugg",
-				"uhg"
+				"uhg",
+				"hg",
+				"thg",
+				"thag"
 			]
 		},
 		"relationItem": {
