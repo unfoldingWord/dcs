@@ -215,7 +215,7 @@ func TestPopulateTcTsDoor43Metadata(t *testing.T) {
 		tsRepo := testRepo(1)
 		tsRepo.Name = "fr_gen_text_ulb"
 		dm = &repo_model.Door43Metadata{}
-		require.ErrorIs(t, populateTcTsDoor43Metadata(t.Context(), nil, dm, tsRepo, nil, []byte(`{"tc_version": 2}`)), errNotTcTsManifest)
+		require.ErrorIs(t, populateTcTsDoor43Metadata(t.Context(), nil, dm, tsRepo, nil, []byte(`{}`)), errNotTcTsManifest)
 		assert.Equal(t, "ts", dm.MetadataType, "_text_ in the name means translationStudio")
 		assert.Equal(t, "7", dm.MetadataVersion, "the file's tc_version is not a ts version, so the default applies")
 		require.NotNil(t, dm.ValidationError)
