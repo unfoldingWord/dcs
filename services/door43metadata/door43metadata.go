@@ -398,7 +398,7 @@ func GetDoor43MetadataFromRCManifest(ctx context.Context, gitRepo *git.Repositor
 	if subject == "" {
 		subject = "unknown"
 	}
-	if strings.ToLower(subject) == "bible stories" {
+	if strings.EqualFold(subject, "bible stories") {
 		subject = "Open Bible Stories"
 	}
 	if strings.HasPrefix(subject, "Translator ") {
