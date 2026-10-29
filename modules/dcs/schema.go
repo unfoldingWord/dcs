@@ -50,6 +50,7 @@ func (ls *localSchema) Get(reload bool) (*jsonschema.Schema, error) {
 
 func (ls *localSchema) compile() (*jsonschema.Schema, error) {
 	compiler := jsonschema.NewCompiler()
+	compiler.ExtractAnnotations = true // searchBuilderSubjects reads the RC subject "examples"
 	compiler.LoadURL = func(url string) (io.ReadCloser, error) {
 		rel, ok := strings.CutPrefix(url, ls.idPrefix)
 		if !ok {

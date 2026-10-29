@@ -398,6 +398,12 @@ func GetDoor43MetadataFromRCManifest(ctx context.Context, gitRepo *git.Repositor
 	if subject == "" {
 		subject = "unknown"
 	}
+	if strings.EqualFold(subject, "bible stories") {
+		subject = "Open Bible Stories"
+	}
+	if strings.HasPrefix(subject, "Translator ") {
+		subject = strings.Replace(subject, "Translator ", "Translation ", 1)
+	}
 	abbreviation = dcs.MapStr(dublinCore, "identifier")
 	title = dcs.MapStr(dublinCore, "title")
 	publisher = dcs.MapStr(dublinCore, "publisher")
@@ -408,10 +414,10 @@ func GetDoor43MetadataFromRCManifest(ctx context.Context, gitRepo *git.Repositor
 		}
 	}
 	dcLanguage := dcs.MapMap(dublinCore, "language")
-	language = dcs.MapStr(dcLanguage, "identifier")
-	languageTitle = dcs.MapStr(dcLanguage, "title")
-	format = dcs.MapStr(dublinCore, "format")
+	language = strings.ToLower(dcs.MapStr(dcLanguage, "identifier"))
+	languageTitle = dcs.GetLanguageTitle(language)
 	languageDirection = dcs.GetLanguageDirection(language)
+	format = dcs.MapStr(dublinCore, "format")
 	languageIsGL = dcs.LanguageIsGL(language)
 	var bookPath string
 	for _, prod := range dcs.MapSlice(manifest, "projects") {
@@ -484,7 +490,7 @@ func GetDoor43MetadataFromRCManifest(ctx context.Context, gitRepo *git.Repositor
 		flavor = "x-" + strings.ToLower(strings.Fields(subject)[len(strings.Fields(subject))-1])
 	} else {
 		flavorType = "peripheral"
-		flavor = "x-" + strings.ReplaceAll(subject, " ", "")
+		flavor = "x-" + strings.ToLower(strings.ReplaceAll(strings.ReplaceAll(subject, " ", ""), "-", ""))
 	}
 	var ok bool
 	checkingLevel, ok = manifest["checking"].(map[string]any)["checking_level"].(int)
@@ -708,22 +714,51 @@ func getSBSubject(flavorType, flavor, abbreviation, repoNameSuffix string) strin
 	case "parascriptural":
 		switch flavorLower {
 		case "x-bcvnotes":
-			return "TSV Translation Notes"
+			switch abbreviation {
+			case "sn":
+				return "TSV Study Notes"
+			case "tn":
+				return "TSV Translation Notes"
+			case "obs-sn":
+				return "TSV OBS Study Notes"
+			case "obs-tn":
+				return "TSV OBS Translation Notes"
+			default:
+				return "TSV Translation Notes"
+			}
 		case "x-bcvquestions":
-			return "TSV Translation Questions"
+			switch abbreviation {
+			case "sq":
+				return "TSV Study Questions"
+			case "tq":
+				return "TSV Translation Questions"
+			case "obs-sq":
+				return "TSV OBS Study Questions"
+			case "obs-tq":
+				return "TSV OBS Translation Questions"
+			default:
+				return "TSV Translation Questions"
+			}
 		case "x-bcvarticles":
-			return "TSV Translation Words Links"
+			switch abbreviation {
+			case "twl":
+				return "TSV Translation Words Links"
+			case "obs-twl":
+				return "TSV OBS Translation Words Links"
+			default:
+				return "TSV Translation Words Links"
+			}
 		}
 	case "peripheral":
 		switch flavorLower {
 		case "x-greeklexicon", "x-greeklexicons":
 			return "Greek Lexicon"
-		case "x-hebrewlexicon", "x-hebrewlexicons":
-			return "Hebrew Lexicon"
+		case "x-hebrewlexicon", "x-hebrewlexicons", "x-hebrewaramaiclexicon":
+			return "Hebrew-Aramaic Lexicon"
 		case "x-lexicon", "x-lexicons":
 			switch abbreviationLower {
-			case "hl", "thl", "uhl":
-				return "Hebrew Lexicon"
+			case "hl", "hal", "thl", "thal", "uhl", "uhal":
+				return "Hebrew-Aramaic Lexicon"
 			case "gl", "tgl", "ugl":
 				return "Greek Lexicon"
 			default:
@@ -1112,6 +1147,13 @@ func populateTcTsDoor43Metadata(ctx context.Context, gitRepo *git.Repository, dm
 		versification = "ufw"
 	}
 
+	if t.ProjectID != "" && t.Project.ID == "" {
+		t.Project.ID = t.ProjectID
+	}
+	if t.Resource.ID == "" && t.Project.ID != "" {
+		t.Resource.ID = t.Project.ID
+	}
+
 	dm.Repo = repo
 	dm.Subject = t.Subject
 	dm.FlavorType = t.FlavorType
@@ -1119,8 +1161,8 @@ func populateTcTsDoor43Metadata(ctx context.Context, gitRepo *git.Repository, dm
 	dm.Title = t.Title
 	dm.Abbreviation = strings.ToLower(t.Resource.ID)
 	dm.Language = strings.ToLower(t.TargetLanguage.ID) // language codes are always stored lowercase
-	dm.LanguageTitle = t.TargetLanguage.Name
-	dm.LanguageDirection = t.TargetLanguage.Direction
+	dm.LanguageTitle = dcs.GetLanguageTitle(dm.Language)
+	dm.LanguageDirection = dcs.GetLanguageDirection(dm.Language)
 	dm.LanguageIsGL = dcs.LanguageIsGL(t.TargetLanguage.ID)
 	dm.ContentFormat = t.Format
 	dm.CheckingLevel = 1
