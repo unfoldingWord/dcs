@@ -13,6 +13,7 @@ import (
 	"gitea.dev/models/door43metadata"
 	repo_model "gitea.dev/models/repo"
 	"gitea.dev/models/unittest"
+	"gitea.dev/modules/dcs"
 	"gitea.dev/modules/git/gitcmd"
 	"gitea.dev/modules/git/gitrepo"
 
@@ -182,6 +183,14 @@ func TestPopulateRCDoor43Metadata(t *testing.T) {
 		require.Len(t, dm.Ingredients, 1)
 		assert.Equal(t, "gen", dm.Ingredients[0].Identifier)
 	})
+
+	t.Run("unquoted dates validate as the text written", func(t *testing.T) {
+		dm := &repo_model.Door43Metadata{}
+		manifest := strings.ReplaceAll(validRCManifest, "'2024-01-01'", "2024-01-01")
+		require.NoError(t, populateRCDoor43Metadata(ctx, nil, dm, repo, nil, []byte(manifest)))
+		assert.Nil(t, dm.ValidationError)
+		assert.Equal(t, "2024-01-01", nestedString(dm.Metadata, "dublin_core", "issued"))
+	})
 }
 
 func TestPopulateTcTsDoor43Metadata(t *testing.T) {
@@ -228,7 +237,7 @@ func TestPopulateTcTsDoor43Metadata(t *testing.T) {
 		err := populateTcTsDoor43Metadata(t.Context(), nil, dm, testRepo(1), nil, []byte(`{"package_version": 0, "project": {"id": "gen"}}`))
 		require.ErrorIs(t, err, errNotTcTsManifest)
 		assert.Equal(t, "ts", dm.MetadataType)
-		assert.Equal(t, "0", dm.MetadataVersion)
+		assert.Equal(t, dcs.GetDefaultMetadataVersionForType("ts"), dm.MetadataVersion, "a version of 0 falls back to the default")
 		assert.NotNil(t, dm.Metadata)
 		require.NotNil(t, dm.ValidationError)
 		assert.Contains(t, dm.ValidationError.Message, "not a supported manifest")
