@@ -431,7 +431,10 @@ func GetDoor43MetadataFromRCManifest(ctx context.Context, gitRepo *git.Repositor
 				count, _ := getBookAlignmentCountSafe(ctx, gitRepo, ingredient.Path, commit)
 				ingredient.AlignmentCount = &count
 			}
-			if commit != nil {
+			if ingredient.Path == "." || ingredient.Path == "./" {
+				ingredient.Exists = true
+				ingredient.IsDir = true
+			} else if commit != nil {
 				if entry, err := commit.GetTreeEntryByPath(ctx, gitRepo, ingredient.Path); err == nil {
 					ingredient.Exists = true
 					ingredient.IsDir = entry.IsDir()
@@ -714,10 +717,7 @@ func getSBSubject(flavorType, flavor, abbreviation, repoNameSuffix, title string
 	// Now we don't care about flavor type, just go by flavorLower
 	switch flavorLower {
 	case "textstories":
-		if strings.HasSuffix(abbreviationLower, "obs") || repoNameSuffix == "obs" || strings.Contains(titleLower, "open bible stories") || strings.Contains(titleLower, "obs") {
-			return "Open Bible Stories"
-		}
-		return "Bible Stories"
+		return "Open Bible Stories"
 	case "x-bcvnotes":
 		if strings.HasSuffix(abbreviationLower, "sn") || repoNameSuffix == "sn" || strings.Contains(titleLower, "study") {
 			return "TSV Study Notes"
