@@ -81,13 +81,9 @@ func checkTNRelations(_ context.Context, dm *repo_model.Door43Metadata) []*repo_
 	return nil
 }
 
-// relationFallbackOwners are tried when a relation doesn't resolve under the repo's own
-// owner (REL-001). Resolution under one of these downgrades the finding to Info.
-var relationFallbackOwners = []string{"unfoldingWord", "Door43-Catalog"}
-
 // checkRelationCatalog verifies each relation resolves to a catalog entry — under the
-// same owner first, then the fallback owners — and, for Bible/TSV subjects, that this
-// resource's books exist in the relation's ingredients. Relations are advisory, so an
+// same owner first, then repo_model.RelationFallbackOwners — and, for Bible/TSV subjects,
+// that this resource's books exist in the relation's ingredients. Relations are advisory, so an
 // unresolvable relation is a Warning (REL-001/REL-002) and one resolvable only under a
 // fallback owner is Info. It queries the door43_metadata table directly rather than
 // calling the catalog API over HTTP.
@@ -102,8 +98,8 @@ func checkRelationCatalog(ctx context.Context, dm *repo_model.Door43Metadata) []
 		}
 		repoName := fmt.Sprintf("%s_%s", relation.Language, relation.Identifier)
 
-		owners := append([]string{dm.Repo.Owner.Name}, relationFallbackOwners...)
-		isOrigLanguage := (relation.Language == "hbo" && relation.Identifier == "uhb") || (relation.Language == "el-x-koine" && relation.Identifier == "ugnt")
+		owners := append([]string{dm.Repo.Owner.Name}, repo_model.RelationFallbackOwners...)
+		isOrigLanguage := repo_model.IsOrigLanguageRelation(relation)
 		if isOrigLanguage {
 			// the original-text anchors canonically live under unfoldingWord
 			owners = []string{"unfoldingWord"}
