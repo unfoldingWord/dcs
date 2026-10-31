@@ -109,7 +109,7 @@ func GetAllRepoDoor43Metadata(ctx *context.Context) {
 		OrderBy("is_repo_metadata DESC, stage ASC, release_date_unix DESC").
 		Find(&branchDms)
 	if err != nil {
-		ctx.ServerError("FindDoor43MetadataBranches", err)
+		ctx.ServerError("GetAllRepoDoor43Metadata", err)
 		return
 	}
 

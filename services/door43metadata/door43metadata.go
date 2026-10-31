@@ -589,7 +589,7 @@ func GetDoor43MetadataFromSBMetadata(ctx context.Context, gitRepo *git.Repositor
 	languageDirection = dcs.GetLanguageDirection(language)
 	languageIsGL = dcs.LanguageIsGL(language)
 	repoNameSuffix := getSBRepoNameSuffix(repo.Name)
-	subject = getSBSubject(flavorType, flavor, abbreviation, repoNameSuffix)
+	subject = getSBSubject(flavorType, flavor, abbreviation, repoNameSuffix, title)
 
 	switch subject {
 	case "Bible", "Aligned Bible", "Greek New Testament", "Hebrew Old Testament":
@@ -695,174 +695,137 @@ func getSBRepoNameSuffix(repoName string) string {
 	return strings.ToLower(repoName)
 }
 
-func getSBSubject(flavorType, flavor, abbreviation, repoNameSuffix string) string {
+func getSBSubject(flavorType, flavor, abbreviation, repoNameSuffix, title string) string {
 	flavorLower := strings.ToLower(flavor)
 	abbreviationLower := strings.ToLower(abbreviation)
+	titleLower := strings.ToLower(title)
 
-	switch strings.ToLower(flavorType) {
-	case "scripture":
+	if flavorType == "scripture" {
+		if flavorLower == "texttranslation" {
+			return "Bible" // Leave it as Bible now. If we find alignments later, will be Aligned Bible
+		}
 		if after, ok := strings.CutPrefix(flavor, "x-"); ok {
 			return text_cases.Title(text_language.English).String(after)
 		}
-		if flavor == "textTranslation" {
-			return "Bible" // Leave it as Bible now. If we find alignments later, will be Aligned Bible
-		}
-	case "gloss":
-		if flavor == "textStories" {
+
+		return "Unknown"
+	}
+
+	// Now we don't care about flavor type, just go by flavorLower
+	switch flavorLower {
+	case "textstories":
+		if strings.HasSuffix(abbreviationLower, "obs") || repoNameSuffix == "obs" || strings.Contains(titleLower, "open bible stories") || strings.Contains(titleLower, "obs") {
 			return "Open Bible Stories"
 		}
-	case "parascriptural":
-		switch flavorLower {
-		case "x-bcvnotes":
-			switch abbreviation {
-			case "sn":
-				return "TSV Study Notes"
-			case "tn":
-				return "TSV Translation Notes"
-			case "obs-sn":
-				return "TSV OBS Study Notes"
-			case "obs-tn":
-				return "TSV OBS Translation Notes"
-			default:
-				return "TSV Translation Notes"
-			}
-		case "x-bcvquestions":
-			switch abbreviation {
-			case "sq":
-				return "TSV Study Questions"
-			case "tq":
-				return "TSV Translation Questions"
-			case "obs-sq":
-				return "TSV OBS Study Questions"
-			case "obs-tq":
-				return "TSV OBS Translation Questions"
-			default:
-				return "TSV Translation Questions"
-			}
-		case "x-bcvarticles":
-			switch abbreviation {
-			case "twl":
-				return "TSV Translation Words Links"
-			case "obs-twl":
-				return "TSV OBS Translation Words Links"
-			default:
-				return "TSV Translation Words Links"
-			}
+		return "Bible Stories"
+	case "x-bcvnotes":
+		if strings.HasSuffix(abbreviationLower, "sn") || repoNameSuffix == "sn" || strings.Contains(titleLower, "study") {
+			return "TSV Study Notes"
 		}
-	case "peripheral":
-		switch flavorLower {
-		case "x-greeklexicon", "x-greeklexicons":
-			return "Greek Lexicon"
-		case "x-hebrewlexicon", "x-hebrewlexicons", "x-hebrewaramaiclexicon":
-			return "Hebrew-Aramaic Lexicon"
-		case "x-lexicon", "x-lexicons":
-			switch abbreviationLower {
-			case "hl", "hal", "thl", "thal", "uhl", "uhal":
-				return "Hebrew-Aramaic Lexicon"
-			case "gl", "tgl", "ugl":
-				return "Greek Lexicon"
-			default:
-				switch repoNameSuffix {
-				case "ugl":
-					return "Greek Lexicon"
-				case "uhl":
-					return "Hebrew Lexicon"
-				}
-			}
-
-		case "x-obsstudyquestions":
+		return "TSV Translation Notes"
+	case "x-bcvquestions":
+		if strings.HasSuffix(abbreviation, "sq") || repoNameSuffix == "sq" || strings.Contains(titleLower, "study") {
+			return "TSV Study Questions"
+		}
+		return "TSV Translation Questions"
+	case "x-obsnotes":
+		if strings.HasSuffix(abbreviationLower, "sn") || repoNameSuffix == "sn" || strings.Contains(titleLower, "study") {
+			return "TSV OBS Study Notes"
+		}
+		return "TSV OBS Translation Notes"
+	case "x-obsquestions":
+		if strings.HasSuffix(abbreviationLower, "sq") || repoNameSuffix == "sq" || strings.Contains(titleLower, "study") {
 			return "TSV OBS Study Questions"
-		case "x-obstranslationquestions":
-			return "TSV OBS Translation Questions"
-		case "x-obsquestions":
-			switch abbreviationLower {
-			case "obstq":
-				return "TSV OBS Translation Questions"
-			case "obssq":
-				return "TSV OBS Study Questions"
-			default:
-				switch repoNameSuffix {
-				case "obs-tq":
-					return "TSV OBS Translation Questions"
-				case "obs-sq":
-					return "TSV OBS Study Questions"
-				}
-			}
-		case "x-obsstudynotes":
-			return "TSV OBS Study Notes"
-		case "x-obstranslationnotes", "obstn":
-			return "TSV OBS Translation Notes"
-		case "x-obsnotes":
-			switch abbreviationLower {
-			case "obstn":
-				return "TSV OBS Translation Notes"
-			case "obssn":
-				return "TSV OBS Study Notes"
-			default:
-				switch repoNameSuffix {
-				case "obs-tn":
-					return "TSV OBS Translation Notes"
-				case "obs-sn":
-					return "TSV OBS Study Notes"
-				}
-			}
-		case "obssn":
-			return "TSV OBS Study Notes"
-		case "x-obstheologicalformation":
-			return "OBS Theological Formation"
-		case "x-peripheralarticles", "x-translationacademy", "x-translationwords":
-			switch abbreviationLower {
-			case "ta":
-				return "Translation Academy"
-			case "tw":
-				return "Translation Words"
-			default:
-				switch repoNameSuffix {
-				case "ta":
-					return "Translation Academy"
-				case "tw":
-					return "Translation Words"
-				}
-			}
+		}
+		return "TSV OBS Translation Questions"
+	case "x-obsstudyquestions":
+		return "TSV OBS Study Questions"
+	case "x-obstranslationquestions":
+		return "TSV OBS Translation Questions"
+	case "x-obsstudynotes":
+		return "TSV OBS Study Notes"
+	case "x-obstranslationnotes":
+		return "TSV OBS Translation Notes"
+	case "x-bcvarticles":
+		switch abbreviationLower {
+		case "twl":
+			return "TSV Translation Words Links"
+		case "obs-twl":
+			return "TSV OBS Translation Words Links"
+		default:
+			return "TSV Translation Words Links"
+		}
+	case "x-greeklexicon", "x-greeklexicons":
+		return "Greek Lexicon"
+	case "x-hebrewlexicon", "x-hebrewlexicons", "x-hebrewaramaiclexicon":
+		return "Hebrew-Aramaic Lexicon"
+	case "x-lexicon", "x-lexicons":
+		switch abbreviationLower {
+		case "hl", "hal", "thl", "thal", "uhl", "uhal":
+			return "Hebrew-Aramaic Lexicon"
+		case "gl", "tgl", "ugl":
+			return "Greek Lexicon"
 		default:
 			switch repoNameSuffix {
-			case "sn":
-				return "TSV Study Notes"
-			case "sq":
-				return "TSV Study Questions"
-			case "ta":
-				return "Translation Academy"
-			case "tw":
-				return "Translation Words"
-			case "tn":
-				return "TSV Translation Notes"
-			case "tq":
-				return "TSV Translation Questions"
-			case "twl":
-				return "TSV Translation Words Links"
-			case "obs":
-				return "Open Bible Stories"
-			case "obs-tn":
-				return "TSV OBS Translation Notes"
-			case "obs-tq":
-				return "TSV OBS Translation Questions"
-			case "obs-sn":
-				return "TSV OBS Study Notes"
-			case "obs-sq":
-				return "TSV OBS Study Questions"
-			case "glt", "gst", "ult", "ust":
-				return "Aligned Bible"
-			case "uhl", "thl", "hl":
-				return "Hebrew Lexicon"
 			case "ugl", "tgl", "gl":
 				return "Greek Lexicon"
-			case "ugg", "tgg", "gg":
-				return "Greek Grammar"
-			case "uhg", "thg", "hg":
-				return "Hebrew Grammar"
-			case "uag", "tag", "ag":
-				return "Aramaic Grammar"
+			case "uhl", "uhal", "thl", "thal", "hal", "hl":
+				return "Hebrew-Aramaic Lexicon"
 			}
+		}
+	case "x-theologicalformation":
+		return "Theological Formation"
+	case "x-obstheologicalformation":
+		return "OBS Theological Formation"
+	case "x-translationacademy":
+		return "Translation Academy"
+	case "x-translationwords":
+		return "Translation Words"
+	case "x-peripheralarticles":
+		switch abbreviationLower {
+		case "ta":
+			return "Translation Academy"
+		case "tw":
+			return "Translation Words"
+		}
+
+		switch repoNameSuffix {
+		case "sn":
+			return "TSV Study Notes"
+		case "sq":
+			return "TSV Study Questions"
+		case "ta":
+			return "Translation Academy"
+		case "tw":
+			return "Translation Words"
+		case "tn":
+			return "TSV Translation Notes"
+		case "tq":
+			return "TSV Translation Questions"
+		case "twl":
+			return "TSV Translation Words Links"
+		case "obs":
+			return "Open Bible Stories"
+		case "obs-tn":
+			return "TSV OBS Translation Notes"
+		case "obs-tq":
+			return "TSV OBS Translation Questions"
+		case "obs-sn":
+			return "TSV OBS Study Notes"
+		case "obs-sq":
+			return "TSV OBS Study Questions"
+		case "glt", "gst", "ult", "ust":
+			return "Aligned Bible"
+		case "uhl", "uhal", "thl", "thal", "hl", "hal":
+			return "Hebrew-Aramaic Lexicon"
+		case "ugl", "tgl", "gl":
+			return "Greek Lexicon"
+		case "ugg", "tgg", "gg":
+			return "Greek Grammar"
+		case "uhg", "thg", "hg":
+			return "Hebrew Grammar"
+		case "uag", "tag", "ag":
+			return "Aramaic Grammar"
 		}
 	}
 
