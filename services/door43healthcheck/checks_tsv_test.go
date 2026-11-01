@@ -41,6 +41,8 @@ func TestCheckTSVFileContent(t *testing.T) {
 		assert.Empty(t, checkTSVFileContent(snDM, "sn_GEN.tsv", strings.NewReader("Reference\tID\tTags\tQuote\tOccurrence\tNote\n1:1\tabc1\t\tword\t1\tA note\n")))
 		codes := tsvIssueCodesOf(checkTSVFileContent(snDM, "sn_GEN.tsv", strings.NewReader("Reference\tID\tQuote\tNote\n1:1\tabc1\tword\tA note\n")))
 		assert.Contains(t, codes, repo_model.IssueCodeTSVHeaderInvalid)
+		codes = tsvIssueCodesOf(checkTSVFileContent(tnDM, "tn_GEN.tsv", strings.NewReader("\n1:1\tabc1\t\t\tword\t1\tA note\n")))
+		assert.Contains(t, codes, repo_model.IssueCodeTSVHeaderInvalid, "an empty header row fails on a subject with no alternate header")
 	})
 
 	t.Run("column count, IDs, reference, occurrence, link", func(t *testing.T) {

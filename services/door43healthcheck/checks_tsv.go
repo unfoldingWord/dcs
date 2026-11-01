@@ -152,7 +152,7 @@ func checkTSVFileContent(dm *repo_model.Door43Metadata, path string, r io.Reader
 	// then generic checks against its own header (self-consistency still matters).
 	expected := tsvHeadersBySubject[dm.Subject]
 	alternate := tsvAltHeadersBySubject[dm.Subject]
-	strict := expected != nil && (slices.Equal(header, expected) || slices.Equal(header, alternate))
+	strict := expected != nil && (slices.Equal(header, expected) || (alternate != nil && slices.Equal(header, alternate)))
 	if expected != nil && !strict && !slices.Equal(header, tsv9Header) {
 		required := "`" + strings.Join(expected, " | ") + "`"
 		if alternate != nil {

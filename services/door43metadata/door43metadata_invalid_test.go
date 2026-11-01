@@ -230,7 +230,7 @@ func TestPopulateTcTsDoor43Metadata(t *testing.T) {
 		tsRepo.Name = "fr_gen_text_ulb"
 		dm = &repo_model.Door43Metadata{}
 		require.ErrorIs(t, populateTcTsDoor43Metadata(t.Context(), nil, dm, tsRepo, nil, []byte(`{"tc_version": 0}`)), errNotTcTsManifest)
-		assert.Equal(t, "ts", dm.MetadataType, "_text_ in the name outranks the tc_version key")
+		assert.Equal(t, "ts", dm.MetadataType, "_text_ in the name outranks the hint of a tc_version key that is no version (tc_version 1 or more would make a valid tC manifest)")
 		assert.Equal(t, "7", dm.MetadataVersion, "a tc_version of 0 is no version, so the ts default applies")
 		require.NotNil(t, dm.ValidationError)
 	})
