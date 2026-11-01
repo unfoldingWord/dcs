@@ -285,14 +285,30 @@ func TestGetSBSubject(t *testing.T) {
 	}
 }
 
-func TestPopulateTcTsDoor43MetadataLanguageTitle(t *testing.T) {
+func TestPopulateTcTsDoor43MetadataLanguage(t *testing.T) {
 	manifest := func(lang, name string) []byte {
-		return []byte(`{"tc_version": 8, "target_language": {"id": "` + lang + `", "name": "` + name + `"}, "project": {"id": "tit"}, "resource": {"id": "ult"}}`)
+		return []byte(`{"tc_version": 8, "target_language": {"id": "` + lang + `", "name": "` + name + `", "direction": "rtl"}, "project": {"id": "tit"}, "resource": {"id": "ult"}}`)
 	}
 	dm := &repo_model.Door43Metadata{}
 	require.NoError(t, populateTcTsDoor43Metadata(t.Context(), nil, dm, testRepo(1), nil, manifest("en", "Anglais")))
 	assert.Equal(t, "English", dm.LanguageTitle, "langnames outranks the manifest")
+	assert.Equal(t, "ltr", dm.LanguageDirection, "langnames outranks the manifest")
 	dm = &repo_model.Door43Metadata{}
 	require.NoError(t, populateTcTsDoor43Metadata(t.Context(), nil, dm, testRepo(1), nil, manifest("qqq-x-none", "Testish")))
 	assert.Equal(t, "Testish", dm.LanguageTitle, "a code not in langnames keeps the manifest's title")
+	assert.Equal(t, "rtl", dm.LanguageDirection, "a code not in langnames keeps the manifest's direction")
+}
+
+func TestPopulateTcTsDoor43MetadataAbbreviation(t *testing.T) {
+	manifest := []byte(`{"tc_version": 8, "target_language": {"id": "en"}, "project": {"id": "tit"}}`)
+	for repoName, want := range map[string]string{
+		"en_ult_tit_book": "ult", // tC's naming convention names the resource
+		"titus-draft":     "tit", // otherwise the one-book repo goes by its book
+	} {
+		repo := testRepo(1)
+		repo.Name = repoName
+		dm := &repo_model.Door43Metadata{}
+		require.NoError(t, populateTcTsDoor43Metadata(t.Context(), nil, dm, repo, nil, manifest))
+		assert.Equal(t, want, dm.Abbreviation, repoName)
+	}
 }

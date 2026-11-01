@@ -49,7 +49,9 @@ func ParseTcTsManifest(buf []byte) (*structs.TcTsManifest, error) {
 			}
 			if t.ProjectID != "" {
 				t.Project.ID = t.ProjectID
-				t.Project.Type = "text"
+				if t.Project.Type == "" {
+					t.Project.Type = "text"
+				}
 			}
 		}
 

@@ -35,6 +35,14 @@ func TestCheckTSVFileContent(t *testing.T) {
 		assert.Empty(t, checkTSVFileContent(tnDM, "tn_GEN.tsv", strings.NewReader(content)))
 	})
 
+	t.Run("Study Notes pass with or without SupportReference", func(t *testing.T) {
+		snDM := &repo_model.Door43Metadata{Subject: "TSV Study Notes", MetadataType: "rc"}
+		assert.Empty(t, checkTSVFileContent(snDM, "sn_GEN.tsv", strings.NewReader(tnHeader+"\n1:1\tabc1\t\t\tword\t1\tA note\n")))
+		assert.Empty(t, checkTSVFileContent(snDM, "sn_GEN.tsv", strings.NewReader("Reference\tID\tTags\tQuote\tOccurrence\tNote\n1:1\tabc1\t\tword\t1\tA note\n")))
+		codes := tsvIssueCodesOf(checkTSVFileContent(snDM, "sn_GEN.tsv", strings.NewReader("Reference\tID\tQuote\tNote\n1:1\tabc1\tword\tA note\n")))
+		assert.Contains(t, codes, repo_model.IssueCodeTSVHeaderInvalid)
+	})
+
 	t.Run("column count, IDs, reference, occurrence, link", func(t *testing.T) {
 		content := tnHeader + "\n" +
 			"1:1\tabc1\t\t\tword\t1\tgood row\n" +

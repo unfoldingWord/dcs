@@ -419,7 +419,7 @@ func GetDoor43MetadataFromRCManifest(ctx context.Context, gitRepo *git.Repositor
 	if languageTitle == "" {
 		languageTitle = dcs.MapStr(dcLanguage, "title")
 	}
-	languageDirection = dcs.GetLanguageDirection(language)
+	languageDirection = directionForLanguage(language, dcs.MapStr(dcLanguage, "direction"))
 	format = dcs.MapStr(dublinCore, "format")
 	languageIsGL = dcs.LanguageIsGL(language)
 	var bookPath string
@@ -1108,11 +1108,13 @@ func populateTcTsDoor43Metadata(ctx context.Context, gitRepo *git.Repository, dm
 		versification = "ufw"
 	}
 
-	if t.ProjectID != "" && t.Project.ID == "" {
-		t.Project.ID = t.ProjectID
-	}
-	if t.Resource.ID == "" && t.Project.ID != "" {
-		t.Resource.ID = t.Project.ID
+	if t.Resource.ID == "" {
+		// tC names repos {lang}_{resource}_{book}_book; off that convention, a one-book repo goes by its book
+		if parts := strings.Split(strings.ToLower(repo.Name), "_"); len(parts) == 4 && parts[3] == "book" && dcs.IsValidBook(parts[2]) {
+			t.Resource.ID = parts[1]
+		} else {
+			t.Resource.ID = t.Project.ID
+		}
 	}
 
 	dm.Repo = repo
@@ -1126,8 +1128,8 @@ func populateTcTsDoor43Metadata(ctx context.Context, gitRepo *git.Repository, dm
 	if dm.LanguageTitle == "" {
 		dm.LanguageTitle = t.TargetLanguage.Name
 	}
-	dm.LanguageDirection = dcs.GetLanguageDirection(dm.Language)
-	dm.LanguageIsGL = dcs.LanguageIsGL(t.TargetLanguage.ID)
+	dm.LanguageDirection = directionForLanguage(dm.Language, t.TargetLanguage.Direction)
+	dm.LanguageIsGL = dcs.LanguageIsGL(dm.Language)
 	dm.ContentFormat = t.Format
 	dm.CheckingLevel = 1
 	ingredient := &structs.Ingredient{
@@ -1163,6 +1165,15 @@ func populateTcTsDoor43Metadata(ctx context.Context, gitRepo *git.Repository, dm
 // ts); failing that, the version key the file carries (parsed when t is given, else
 // sniffed from the raw bytes); failing that, tc. The version is the one the file
 // declares for the chosen type when it has one, else the type's default.
+// directionForLanguage is langnames' direction for lang, or the manifest's own ltr/rtl
+// when langnames doesn't know the code (its lookup would just answer ltr)
+func directionForLanguage(lang, manifestDirection string) string {
+	if dir := strings.ToLower(manifestDirection); !dcs.IsValidLanguage(lang) && (dir == "ltr" || dir == "rtl") {
+		return dir
+	}
+	return dcs.GetLanguageDirection(lang)
+}
+
 func guessTcTsTypeAndVersion(t *structs.TcTsManifest, buf []byte, repoName string) (metadataType, version string) {
 	metadataType = dcs.GetTcTsMetadataTypeFromRepoName(repoName)
 	if metadataType == "" {

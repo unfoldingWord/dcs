@@ -99,7 +99,7 @@ Common checks (all of `rc`, `ts`, `tc`, `sb`):
 `rc`/`sb` TSV subjects (TSV-001…011):
 
 - header row exactly matches the subject's column schema (legacy 9-column TN files are
-  tolerated); every row has the header's column count; `ID` matches `^[a-z][a-z0-9]{3}$`
+  tolerated, and Study Notes may omit `SupportReference`); every row has the header's column count; `ID` matches `^[a-z][a-z0-9]{3}$`
   and is unique per file (duplicates break tC-Create); `Reference` grammar (incl.
   `{c}:front` and compound verse lists like `5:1,3,8-12`); `Occurrence` is an integer
   ≥ -1 when Quote/OrigWords has text (0 or blank when it's empty, e.g. intro rows);
