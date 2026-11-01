@@ -21,6 +21,9 @@ func TestParseTcTsManifestFlavor(t *testing.T) {
 		`{"package_version": 6, "type": {"id": "tw"}, "project": {"id": "bible"}, "resource": {"id": "tw"}}`:  {"parascriptural", "x-bcvarticles"},
 		`{"package_version": 6, "type": {"id": "tn"}, "project": {"id": "obs"}, "resource": {"id": "obs"}}`:   {"peripheral", "x-obsnotes"},
 		`{"package_version": 3, "project_id": "gen", "project": {"type": "tn"}}`:                              {"parascriptural", "x-bcvnotes"},
+		`{"package_version": 1, "project_id": "obs"}`:                                                         {"gloss", "textStories"},
+		`{"package_version": 3, "project": {"id": "tw"}}`:                                                     {"parascriptural", "x-bcvarticles"},
+		`{"package_version": 3, "project": {"id": "ta"}}`:                                                     {"peripheral", "x-peripheralArticles"},
 	} {
 		ts, err := ParseTcTsManifest([]byte(manifest))
 		require.NoError(t, err)

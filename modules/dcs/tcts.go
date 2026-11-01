@@ -94,11 +94,11 @@ func ParseTcTsManifest(buf []byte) (*structs.TcTsManifest, error) {
 			t.Resource.ID = "tq"
 			t.Subject = "Translation Questions"
 			t.Format = "json"
-		} else if t.Project.Type == "tw" || t.Type.ID == "tw" {
+		} else if t.Project.Type == "tw" || t.Type.ID == "tw" || t.Project.ID == "tw" {
 			t.Resource.ID = "tw"
 			t.Subject = "Translation Words"
 			t.Format = "json"
-		} else if t.Project.Type == "ta" || t.Type.ID == "ta" {
+		} else if t.Project.Type == "ta" || t.Type.ID == "ta" || t.Project.ID == "ta" {
 			t.Resource.ID = "ta"
 			t.Subject = "Translation Academy"
 			t.Format = "json"

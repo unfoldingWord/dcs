@@ -42,7 +42,7 @@
 					"title": "Conformsto",
 					"type": "string",
 					"default": "rc0.2",
-					"pattern": "^rc",
+					"pattern": "^rc[0-9]+(\\.[0-9]+)*$",
 					"examples": [
 						"rc0.2"
 					]

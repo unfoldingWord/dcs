@@ -11,7 +11,6 @@ import (
 	"io"
 	"net/http"
 	"path/filepath"
-	"regexp"
 	"strconv"
 	"strings"
 	"time"
@@ -384,14 +383,9 @@ func GetDoor43MetadataFromRCManifest(ctx context.Context, gitRepo *git.Repositor
 
 	_ = repo.LoadOwner(ctx)
 	dublinCore := dcs.MapMap(manifest, "dublin_core")
-	re := regexp.MustCompile("^([^0-9]+)(.*)$")
-	matches := re.FindStringSubmatch(dcs.MapStr(dublinCore, "conformsto"))
-	if len(matches) == 3 {
-		metadataType = matches[1]
-		metadataVersion = matches[2]
-	} else {
-		// should never get here since schema validated
-		metadataType = "rc"
+	metadataType = "rc" // a manifest.yaml is an RC; the schema has already pinned conformsto to rc<version>
+	metadataVersion = strings.TrimPrefix(dcs.MapStr(dublinCore, "conformsto"), "rc")
+	if metadataVersion == "" {
 		metadataVersion = "0.2"
 	}
 	subject = dcs.MapStr(dublinCore, "subject")

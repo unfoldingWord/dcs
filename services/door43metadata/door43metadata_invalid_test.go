@@ -171,6 +171,20 @@ func TestPopulateRCDoor43Metadata(t *testing.T) {
 		assert.NotEmpty(t, dm.ValidationError.Causes)
 	})
 
+	t.Run("a malformed conformsto fails the schema but stays a checked rc entry", func(t *testing.T) {
+		for _, conformsTo := range []string{"rcfoo", "rc 0.2"} {
+			dm := &repo_model.Door43Metadata{}
+			require.NoError(t, populateRCDoor43Metadata(ctx, nil, dm, repo, nil, []byte(strings.Replace(validRCManifest, "conformsto: rc0.2", "conformsto: "+conformsTo, 1))))
+			assert.Equal(t, "rc", dm.MetadataType, conformsTo)
+			require.NotNil(t, dm.ValidationError, conformsTo)
+		}
+		dm := &repo_model.Door43Metadata{}
+		require.NoError(t, populateRCDoor43Metadata(ctx, nil, dm, repo, nil, []byte(strings.Replace(validRCManifest, "conformsto: rc0.2", "conformsto: rc0.3", 1))))
+		assert.Nil(t, dm.ValidationError, "other rc versions stay accepted")
+		assert.Equal(t, "rc", dm.MetadataType)
+		assert.Equal(t, "0.3", dm.MetadataVersion)
+	})
+
 	t.Run("valid manifest is extracted", func(t *testing.T) {
 		dm := &repo_model.Door43Metadata{}
 		require.NoError(t, populateRCDoor43Metadata(ctx, nil, dm, repo, nil, []byte(validRCManifest)))
