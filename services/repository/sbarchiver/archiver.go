@@ -134,13 +134,14 @@ func (e RepoRefNotFoundError) Is(err error) bool {
 	return ok
 }
 
-// ErrRepoNotConvertible means SB archive generation is only available for rc, ts, tc, and sb repositories.
+// ErrRepoNotConvertible means the repository has no SB archive: it is not an rc, ts, tc or sb
+// repository, or no converter supports its subject.
 type ErrRepoNotConvertible struct {
 	RepoID int64
 }
 
 func (e ErrRepoNotConvertible) Error() string {
-	return fmt.Sprintf("repository %d is not an rc, ts, tc, or sb repository", e.RepoID)
+	return fmt.Sprintf("repository %d has no Scripture Burrito conversion for its metadata type and subject", e.RepoID)
 }
 
 func (e ErrRepoNotConvertible) Is(err error) bool {
@@ -181,6 +182,9 @@ func newRequest(ctx context.Context, repo *repo_model.Repository, gitRepo *git.R
 	dm, err := getRepoDMForArchive(ctx, repo, refShortName, headOf)
 	if err != nil {
 		return nil, err
+	}
+	if !dm.CanConvertToSB() {
+		return nil, ErrRepoNotConvertible{RepoID: repo.ID}
 	}
 	aReq.MetadataRef, aReq.MetadataType = dm.Ref, dm.MetadataType
 

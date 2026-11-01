@@ -53,6 +53,7 @@ type TcTsManifest struct {
 	Title           string
 	TargetLanguage  struct {
 		ID        string `json:"id"`
+		Slug      string `json:"slug"` // for tS package_version 2, which has no id
 		Name      string `json:"name"`
 		Direction string `json:"direction"`
 	} `json:"target_language"`
