@@ -272,6 +272,8 @@ func TestGetSBSubject(t *testing.T) {
 		{"peripheral", "x-obsnotes", "obs", "en_obs-sn", "OBS Notes", "TSV OBS Study Notes"},
 		{"peripheral", "x-obsquestions", "obs", "en_obs-sq", "OBS Questions", "TSV OBS Study Questions"},
 		{"parascriptural", "x-bcvquestions", "SQ", "en_questions", "Questions", "TSV Study Questions"},
+		{"parascriptural", "x-bcvnotes", "TN", "en_tn", "Bible study notes on Genesis", "TSV Study Notes"},
+		{"parascriptural", "x-bcvnotes", "TN", "en_tn", "A Bible study of Genesis", "TSV Translation Notes"},
 		{"parascriptural", "x-bcvarticles", "TW", "en_tw", "Words", "Translation Words"},
 		{"parascriptural", "x-bcvarticles", "TW", "en_twl", "Words Links", "TSV Translation Words Links"},
 		{"parascriptural", "x-bcvarticles", "OBSTWL", "en_links", "Words Links", "TSV OBS Translation Words Links"},

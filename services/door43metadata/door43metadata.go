@@ -262,17 +262,17 @@ func processDoor43MetadataForRepo(ctx context.Context, repo *repo_model.Reposito
 		return errors.New("no repository provided")
 	}
 
-	err := repo.LoadOwner(ctx)
-	if err != nil {
-		return err
-	}
-
 	if repo.IsArchived || repo.IsPrivate || repo.IsMirror || repo.IsEmpty {
 		_, err := repo_model.DeleteAllDoor43MetadatasByRepoID(ctx, repo.ID)
 		if err != nil {
 			log.Error("DeleteAllDoor43MetadatasByRepoID: %v", err)
 		}
 		return err // No need to process any thing else below
+	}
+
+	err := repo.LoadOwner(ctx) // after the purge, so an owner lookup failure cannot keep private metadata listed
+	if err != nil {
+		return err
 	}
 
 	if ref == "" {
@@ -608,10 +608,10 @@ func GetDoor43MetadataFromSBMetadata(ctx context.Context, gitRepo *git.Repositor
 	case "Open Bible Stories":
 		contentFormat = "markdown"
 		ingredients = getSBOBSIngredients(ctx, gitRepo, sbMetadata, commit)
-	case "TSV Translation Notes", "TSV Translation Questions", "TSV Translation Words Links":
+	case "TSV Translation Notes", "TSV Translation Questions", "TSV Translation Words Links", "TSV Study Notes", "TSV Study Questions":
 		contentFormat = "tsv7"
 		ingredients = getSBTSVIngredients(ctx, gitRepo, sbMetadata, commit)
-	case "TSV OBS Study Questions", "TSV OBS Translation Questions", "TSV OBS Study Notes", "TSV OBS Translation Notes":
+	case "TSV OBS Study Questions", "TSV OBS Translation Questions", "TSV OBS Study Notes", "TSV OBS Translation Notes", "TSV OBS Translation Words Links":
 		contentFormat = "tsv7"
 		ingredients = getSBOBSTSVIngredients(ctx, gitRepo, sbMetadata, commit)
 	case "Translation Academy":
@@ -723,22 +723,22 @@ func getSBSubject(flavorType, flavor, abbreviation, repoNameSuffix, title string
 	case "textstories":
 		return "Open Bible Stories"
 	case "x-bcvnotes":
-		if strings.HasSuffix(abbreviationLower, "sn") || repoNameSuffix == "sn" || strings.Contains(titleLower, "study") {
+		if strings.HasSuffix(abbreviationLower, "sn") || repoNameSuffix == "sn" || strings.Contains(titleLower, "study notes") {
 			return "TSV Study Notes"
 		}
 		return "TSV Translation Notes"
 	case "x-bcvquestions":
-		if strings.HasSuffix(abbreviationLower, "sq") || repoNameSuffix == "sq" || strings.Contains(titleLower, "study") {
+		if strings.HasSuffix(abbreviationLower, "sq") || repoNameSuffix == "sq" || strings.Contains(titleLower, "study questions") {
 			return "TSV Study Questions"
 		}
 		return "TSV Translation Questions"
 	case "x-obsnotes":
-		if strings.HasSuffix(abbreviationLower, "sn") || repoNameSuffix == "obs-sn" || strings.Contains(titleLower, "study") {
+		if strings.HasSuffix(abbreviationLower, "sn") || repoNameSuffix == "obs-sn" || strings.Contains(titleLower, "study notes") {
 			return "TSV OBS Study Notes"
 		}
 		return "TSV OBS Translation Notes"
 	case "x-obsquestions":
-		if strings.HasSuffix(abbreviationLower, "sq") || repoNameSuffix == "obs-sq" || strings.Contains(titleLower, "study") {
+		if strings.HasSuffix(abbreviationLower, "sq") || repoNameSuffix == "obs-sq" || strings.Contains(titleLower, "study questions") {
 			return "TSV OBS Study Questions"
 		}
 		return "TSV OBS Translation Questions"
