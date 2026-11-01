@@ -28,8 +28,8 @@ var tsvHeadersBySubject = map[string][]string{
 	"TSV OBS Study Questions":         {"Reference", "ID", "Tags", "Quote", "Occurrence", "Question", "Response"},
 	"TSV Translation Words Links":     {"Reference", "ID", "Tags", "OrigWords", "Occurrence", "TWLink"},
 	"TSV OBS Translation Words Links": {"Reference", "ID", "Tags", "OrigWords", "Occurrence", "TWLink"},
-	"TSV Study Notes":                 {"Reference", "ID", "Tags", "Quote", "Occurrence", "Note"},
-	"TSV OBS Study Notes":             {"Reference", "ID", "Tags", "Quote", "Occurrence", "Note"},
+	"TSV Study Notes":                 {"Reference", "ID", "Tags", "SupportReference", "Quote", "Occurrence", "Note"},
+	"TSV OBS Study Notes":             {"Reference", "ID", "Tags", "SupportReference", "Quote", "Occurrence", "Note"},
 	"TSV Study Questions":             {"Reference", "ID", "Tags", "Quote", "Occurrence", "Question", "Response"},
 }
 

@@ -488,6 +488,8 @@ func GetDoor43MetadataFromRCManifest(ctx context.Context, gitRepo *git.Repositor
 	}
 	if sbFlavor, ok := dcs.ConvertedSBFlavors[subject]; ok {
 		flavorType, flavor = sbFlavor.FlavorType, sbFlavor.Flavor
+	} else if sbFlavor, ok := dcs.ConvertedSBFlavors["TSV "+subject]; ok {
+		flavorType, flavor = sbFlavor.FlavorType, sbFlavor.Flavor
 	} else if isTSV {
 		flavorType = "parascriptural"
 		flavor = "x-" + strings.ToLower(strings.Fields(subject)[len(strings.Fields(subject))-1])
@@ -495,8 +497,7 @@ func GetDoor43MetadataFromRCManifest(ctx context.Context, gitRepo *git.Repositor
 		flavorType = "peripheral"
 		flavor = "x-" + strings.ToLower(strings.ReplaceAll(strings.ReplaceAll(subject, " ", ""), "-", ""))
 	}
-	var ok bool
-	checkingLevel, ok = manifest["checking"].(map[string]any)["checking_level"].(int)
+	checkingLevel, ok := manifest["checking"].(map[string]any)["checking_level"].(int)
 	if !ok {
 		cL, ok := manifest["checking"].(map[string]any)["checking_level"].(string)
 		if !ok {

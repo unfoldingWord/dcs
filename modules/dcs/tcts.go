@@ -112,13 +112,16 @@ func ParseTcTsManifest(buf []byte) (*structs.TcTsManifest, error) {
 	}
 
 	// The flavor of the burrito /sb/ converts the repo to, by way of go-ts2rc, which turns
-	// ts Translation Notes and Questions into their TSV subjects
-	convertedSubject := t.Subject
-	if t.Subject == "Translation Notes" || t.Subject == "Translation Questions" {
-		convertedSubject = "TSV " + t.Subject
+	// non-TSV Notes and Questions into their TSV subjects
+	// Try the exact match first
+	sbFlavor, ok := ConvertedSBFlavors[t.Subject]
+	if !ok {
+		// If not found, fall back to the "TSV " prefix
+		sbFlavor, ok = ConvertedSBFlavors["TSV "+t.Subject]
 	}
-	sbFlavor := ConvertedSBFlavors[convertedSubject]
-	t.FlavorType, t.Flavor = sbFlavor.FlavorType, sbFlavor.Flavor
+	if ok {
+		t.FlavorType, t.Flavor = sbFlavor.FlavorType, sbFlavor.Flavor
+	}
 
 	if t.Resource.Name != "" {
 		t.Title = t.Resource.Name
