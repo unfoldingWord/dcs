@@ -10,7 +10,7 @@ import (
 // SubjectToResourceMap maps subjects to their valid resource IDs
 var SubjectToResourceMap = map[string][]string{
 	"Aligned Bible":                   {"glt", "gst", "ult", "ust"},
-	"OBS Study Notes":                 {"obs-sn2"},
+	"OBS Study Notes":                 {"obs-sn"},
 	"OBS Study Questions":             {"obs-sq"},
 	"OBS Theological Formation":       {"obs-tf"},
 	"OBS Translation Notes":           {"obs-tn"},
@@ -21,12 +21,12 @@ var SubjectToResourceMap = map[string][]string{
 	"Study Questions":                 {"sq"},
 	"Translation Academy":             {"ta"},
 	"Training Library":                {"tl"},
-	"TSV Translation Notes":           {"tn", "tn-tsv"},
-	"TSV Translation Questions":       {"tq", "tq-tsv"},
+	"TSV Translation Notes":           {"tn"},
+	"TSV Translation Questions":       {"tq"},
 	"Translation Words":               {"tw"},
 	"TSV Translation Words Links":     {"twl"},
-	"TSV Study Notes":                 {"sn-tsv"},
-	"TSV Study Questions":             {"sq-tsv"},
+	"TSV Study Notes":                 {"sn"},
+	"TSV Study Questions":             {"sq"},
 	"TSV OBS Study Notes":             {"obs-sn"},
 	"TSV OBS Study Questions":         {"obs-sq"},
 	"TSV OBS Translation Notes":       {"obs-tn"},
@@ -35,12 +35,15 @@ var SubjectToResourceMap = map[string][]string{
 	"Hebrew Old Testament":            {"uhb"},
 }
 
-// ResourceToSubjectMap is the inverse of SubjectToResourceMap
+// ResourceToSubjectMap is the inverse of SubjectToResourceMap. A resource ID listed
+// under two subjects maps to the TSV one, as map order would otherwise pick at random.
 var ResourceToSubjectMap = func() map[string]string {
 	m := make(map[string]string)
 	for subject, resources := range SubjectToResourceMap {
 		for _, resource := range resources {
-			m[resource] = subject
+			if _, taken := m[resource]; !taken || strings.HasPrefix(subject, "TSV ") {
+				m[resource] = subject
+			}
 		}
 	}
 	return m

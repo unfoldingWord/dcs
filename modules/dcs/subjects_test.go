@@ -65,3 +65,15 @@ projects:
 		})
 	}
 }
+
+func TestResourceToSubjectMapPrefersTSV(t *testing.T) {
+	for resource, subject := range map[string]string{
+		"sn":     "TSV Study Notes",
+		"sq":     "TSV Study Questions",
+		"obs-sn": "TSV OBS Study Notes",
+		"obs-tn": "TSV OBS Translation Notes",
+		"ta":     "Translation Academy",
+	} {
+		assert.Equal(t, subject, ResourceToSubjectMap[resource], resource)
+	}
+}

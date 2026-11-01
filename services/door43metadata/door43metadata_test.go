@@ -265,3 +265,50 @@ func TestRunHealthcheckInvalidMetadataOwnerNotLoaded(t *testing.T) {
 	}
 	assert.Equal(t, 1, total, "only the invalid-metadata finding should be reported for a schema-invalid entry")
 }
+
+func TestGetSBSubject(t *testing.T) {
+	cases := []struct{ flavorType, flavor, abbreviation, repoName, title, want string }{
+		{"Scripture", "textTranslation", "ult", "en_ult", "", "Bible"},
+		{"peripheral", "x-obsnotes", "obs", "en_obs-sn", "OBS Notes", "TSV OBS Study Notes"},
+		{"peripheral", "x-obsquestions", "obs", "en_obs-sq", "OBS Questions", "TSV OBS Study Questions"},
+		{"parascriptural", "x-bcvquestions", "SQ", "en_questions", "Questions", "TSV Study Questions"},
+		{"parascriptural", "x-bcvnotes", "TN", "en_tn", "Bible study notes on Genesis", "TSV Study Notes"},
+		{"parascriptural", "x-bcvnotes", "TN", "en_tn", "A Bible study of Genesis", "TSV Translation Notes"},
+		{"parascriptural", "x-bcvarticles", "TW", "en_tw", "Words", "Translation Words"},
+		{"parascriptural", "x-bcvarticles", "TW", "en_twl", "Words Links", "TSV Translation Words Links"},
+		{"parascriptural", "x-bcvarticles", "OBSTWL", "en_links", "Words Links", "TSV OBS Translation Words Links"},
+		{"peripheral", "x-greekgrammar", "", "el-x-koine_ugg", "Grammar", "Greek Grammar"},
+		{"peripheral", "x-other", "", "en_other", "", "Unknown"},
+	}
+	for _, c := range cases {
+		assert.Equal(t, c.want, getSBSubject(c.flavorType, c.flavor, c.abbreviation, getSBRepoNameSuffix(c.repoName), c.title), "%+v", c)
+	}
+}
+
+func TestPopulateTcTsDoor43MetadataLanguage(t *testing.T) {
+	manifest := func(lang, name string) []byte {
+		return []byte(`{"tc_version": 8, "target_language": {"id": "` + lang + `", "name": "` + name + `", "direction": "rtl"}, "project": {"id": "tit"}, "resource": {"id": "ult"}}`)
+	}
+	dm := &repo_model.Door43Metadata{}
+	require.NoError(t, populateTcTsDoor43Metadata(t.Context(), nil, dm, testRepo(1), nil, manifest("en", "Anglais")))
+	assert.Equal(t, "English", dm.LanguageTitle, "langnames outranks the manifest")
+	assert.Equal(t, "ltr", dm.LanguageDirection, "langnames outranks the manifest")
+	dm = &repo_model.Door43Metadata{}
+	require.NoError(t, populateTcTsDoor43Metadata(t.Context(), nil, dm, testRepo(1), nil, manifest("qqq-x-none", "Testish")))
+	assert.Equal(t, "Testish", dm.LanguageTitle, "a code not in langnames keeps the manifest's title")
+	assert.Equal(t, "rtl", dm.LanguageDirection, "a code not in langnames keeps the manifest's direction")
+}
+
+func TestPopulateTcTsDoor43MetadataAbbreviation(t *testing.T) {
+	manifest := []byte(`{"tc_version": 8, "target_language": {"id": "en"}, "project": {"id": "tit"}}`)
+	for repoName, want := range map[string]string{
+		"en_ult_tit_book": "ult", // tC's naming convention names the resource
+		"titus-draft":     "tit", // otherwise the one-book repo goes by its book
+	} {
+		repo := testRepo(1)
+		repo.Name = repoName
+		dm := &repo_model.Door43Metadata{}
+		require.NoError(t, populateTcTsDoor43Metadata(t.Context(), nil, dm, repo, nil, manifest))
+		assert.Equal(t, want, dm.Abbreviation, repoName)
+	}
+}

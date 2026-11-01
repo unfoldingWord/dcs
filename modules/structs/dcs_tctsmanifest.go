@@ -9,26 +9,26 @@ import (
 	"gitea.dev/modules/json"
 )
 
-// Type represents the structure "type" as an object.
-type Type struct {
+// TcTsType is the "type" of a tC/tS manifest, which some manifests give as a bare ID string instead of an object.
+type TcTsType struct {
 	ID   string `json:"id"`
 	Name string `json:"name"`
 }
 
 // UnmarshalJSON inspects the raw bytes to determine if it's a string or object.
-func (t *Type) UnmarshalJSON(data []byte) error {
+func (t *TcTsType) UnmarshalJSON(data []byte) error {
 	// Trim leading/trailing whitespace
 	data = bytes.TrimSpace(data)
 
 	// If it starts with '{', it's a JSON object -> unmarshal all fields normally
 	if bytes.HasPrefix(data, []byte("{")) {
 		// Using an alias avoids infinite recursion loop during unmarshalling
-		type Alias Type
+		type Alias TcTsType
 		var aux Alias
 		if err := json.Unmarshal(data, &aux); err != nil {
 			return err
 		}
-		*t = Type(aux)
+		*t = TcTsType(aux)
 		return nil
 	}
 
@@ -56,8 +56,8 @@ type TcTsManifest struct {
 		Name      string `json:"name"`
 		Direction string `json:"direction"`
 	} `json:"target_language"`
-	Type       Type   `json:"type"`
-	ResourceID string `json:"resource_id"` // for tS package_version < 5
+	Type       TcTsType `json:"type"`
+	ResourceID string   `json:"resource_id"` // for tS package_version < 5
 	Resource   struct {
 		ID   string `json:"id"`
 		Name string `json:"name"`
