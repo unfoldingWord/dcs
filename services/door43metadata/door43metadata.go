@@ -416,6 +416,9 @@ func GetDoor43MetadataFromRCManifest(ctx context.Context, gitRepo *git.Repositor
 	dcLanguage := dcs.MapMap(dublinCore, "language")
 	language = strings.ToLower(dcs.MapStr(dcLanguage, "identifier"))
 	languageTitle = dcs.GetLanguageTitle(language)
+	if languageTitle == "" {
+		languageTitle = dcs.MapStr(dcLanguage, "title")
+	}
 	languageDirection = dcs.GetLanguageDirection(language)
 	format = dcs.MapStr(dublinCore, "format")
 	languageIsGL = dcs.LanguageIsGL(language)
@@ -704,7 +707,7 @@ func getSBSubject(flavorType, flavor, abbreviation, repoNameSuffix, title string
 	abbreviationLower := strings.ToLower(abbreviation)
 	titleLower := strings.ToLower(title)
 
-	if flavorType == "scripture" {
+	if strings.EqualFold(flavorType, "scripture") {
 		if flavorLower == "texttranslation" {
 			return "Bible" // Leave it as Bible now. If we find alignments later, will be Aligned Bible
 		}
@@ -725,17 +728,17 @@ func getSBSubject(flavorType, flavor, abbreviation, repoNameSuffix, title string
 		}
 		return "TSV Translation Notes"
 	case "x-bcvquestions":
-		if strings.HasSuffix(abbreviation, "sq") || repoNameSuffix == "sq" || strings.Contains(titleLower, "study") {
+		if strings.HasSuffix(abbreviationLower, "sq") || repoNameSuffix == "sq" || strings.Contains(titleLower, "study") {
 			return "TSV Study Questions"
 		}
 		return "TSV Translation Questions"
 	case "x-obsnotes":
-		if strings.HasSuffix(abbreviationLower, "sn") || repoNameSuffix == "sn" || strings.Contains(titleLower, "study") {
+		if strings.HasSuffix(abbreviationLower, "sn") || repoNameSuffix == "obs-sn" || strings.Contains(titleLower, "study") {
 			return "TSV OBS Study Notes"
 		}
 		return "TSV OBS Translation Notes"
 	case "x-obsquestions":
-		if strings.HasSuffix(abbreviationLower, "sq") || repoNameSuffix == "sq" || strings.Contains(titleLower, "study") {
+		if strings.HasSuffix(abbreviationLower, "sq") || repoNameSuffix == "obs-sq" || strings.Contains(titleLower, "study") {
 			return "TSV OBS Study Questions"
 		}
 		return "TSV OBS Translation Questions"
@@ -748,14 +751,14 @@ func getSBSubject(flavorType, flavor, abbreviation, repoNameSuffix, title string
 	case "x-obstranslationnotes":
 		return "TSV OBS Translation Notes"
 	case "x-bcvarticles":
-		switch abbreviationLower {
-		case "twl":
-			return "TSV Translation Words Links"
-		case "obs-twl":
+		// go-rc2sb abbreviates both TW and TWL burritos "TW", so only the repo name tells them apart
+		switch {
+		case strings.HasPrefix(abbreviationLower, "obs"), repoNameSuffix == "obs-twl":
 			return "TSV OBS Translation Words Links"
-		default:
-			return "TSV Translation Words Links"
+		case repoNameSuffix == "tw":
+			return "Translation Words"
 		}
+		return "TSV Translation Words Links"
 	case "x-greeklexicon", "x-greeklexicons":
 		return "Greek Lexicon"
 	case "x-hebrewlexicon", "x-hebrewlexicons", "x-hebrewaramaiclexicon":
@@ -766,13 +769,6 @@ func getSBSubject(flavorType, flavor, abbreviation, repoNameSuffix, title string
 			return "Hebrew-Aramaic Lexicon"
 		case "gl", "tgl", "ugl":
 			return "Greek Lexicon"
-		default:
-			switch repoNameSuffix {
-			case "ugl", "tgl", "gl":
-				return "Greek Lexicon"
-			case "uhl", "uhal", "thl", "thal", "hal", "hl":
-				return "Hebrew-Aramaic Lexicon"
-			}
 		}
 	case "x-theologicalformation":
 		return "Theological Formation"
@@ -789,45 +785,46 @@ func getSBSubject(flavorType, flavor, abbreviation, repoNameSuffix, title string
 		case "tw":
 			return "Translation Words"
 		}
+	}
 
-		switch repoNameSuffix {
-		case "sn":
-			return "TSV Study Notes"
-		case "sq":
-			return "TSV Study Questions"
-		case "ta":
-			return "Translation Academy"
-		case "tw":
-			return "Translation Words"
-		case "tn":
-			return "TSV Translation Notes"
-		case "tq":
-			return "TSV Translation Questions"
-		case "twl":
-			return "TSV Translation Words Links"
-		case "obs":
-			return "Open Bible Stories"
-		case "obs-tn":
-			return "TSV OBS Translation Notes"
-		case "obs-tq":
-			return "TSV OBS Translation Questions"
-		case "obs-sn":
-			return "TSV OBS Study Notes"
-		case "obs-sq":
-			return "TSV OBS Study Questions"
-		case "glt", "gst", "ult", "ust":
-			return "Aligned Bible"
-		case "uhl", "uhal", "thl", "thal", "hl", "hal":
-			return "Hebrew-Aramaic Lexicon"
-		case "ugl", "tgl", "gl":
-			return "Greek Lexicon"
-		case "ugg", "tgg", "gg":
-			return "Greek Grammar"
-		case "uhg", "thg", "hg":
-			return "Hebrew Grammar"
-		case "uag", "tag", "ag":
-			return "Aramaic Grammar"
-		}
+	// A flavor that doesn't settle the subject falls back to the repo naming convention
+	switch repoNameSuffix {
+	case "sn":
+		return "TSV Study Notes"
+	case "sq":
+		return "TSV Study Questions"
+	case "ta":
+		return "Translation Academy"
+	case "tw":
+		return "Translation Words"
+	case "tn":
+		return "TSV Translation Notes"
+	case "tq":
+		return "TSV Translation Questions"
+	case "twl":
+		return "TSV Translation Words Links"
+	case "obs":
+		return "Open Bible Stories"
+	case "obs-tn":
+		return "TSV OBS Translation Notes"
+	case "obs-tq":
+		return "TSV OBS Translation Questions"
+	case "obs-sn":
+		return "TSV OBS Study Notes"
+	case "obs-sq":
+		return "TSV OBS Study Questions"
+	case "glt", "gst", "ult", "ust":
+		return "Aligned Bible"
+	case "uhl", "uhal", "thl", "thal", "hl", "hal":
+		return "Hebrew-Aramaic Lexicon"
+	case "ugl", "tgl", "gl":
+		return "Greek Lexicon"
+	case "ugg", "tgg", "gg":
+		return "Greek Grammar"
+	case "uhg", "thg", "hg":
+		return "Hebrew Grammar"
+	case "uag", "tag", "ag":
+		return "Aramaic Grammar"
 	}
 
 	return "Unknown"
@@ -1077,7 +1074,7 @@ func populateTcTsDoor43Metadata(ctx context.Context, gitRepo *git.Repository, dm
 	}
 	if t.MetadataType == "" {
 		dm.MetadataType, dm.MetadataVersion = guessTcTsTypeAndVersion(t, buf, repo.Name)
-		dm.ValidationError = metadataFileError("manifest.json is not a supported manifest: translationCore needs tc_version 5 or later.")
+		dm.ValidationError = metadataFileError("manifest.json is not a supported manifest: it needs a tc_version (translationCore) or package_version (translationStudio) of 1 or later.")
 		return errNotTcTsManifest
 	}
 	dm.MetadataType = t.MetadataType
@@ -1126,6 +1123,9 @@ func populateTcTsDoor43Metadata(ctx context.Context, gitRepo *git.Repository, dm
 	dm.Abbreviation = strings.ToLower(t.Resource.ID)
 	dm.Language = strings.ToLower(t.TargetLanguage.ID) // language codes are always stored lowercase
 	dm.LanguageTitle = dcs.GetLanguageTitle(dm.Language)
+	if dm.LanguageTitle == "" {
+		dm.LanguageTitle = t.TargetLanguage.Name
+	}
 	dm.LanguageDirection = dcs.GetLanguageDirection(dm.Language)
 	dm.LanguageIsGL = dcs.LanguageIsGL(t.TargetLanguage.ID)
 	dm.ContentFormat = t.Format

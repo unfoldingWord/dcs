@@ -35,12 +35,15 @@ var SubjectToResourceMap = map[string][]string{
 	"Hebrew Old Testament":            {"uhb"},
 }
 
-// ResourceToSubjectMap is the inverse of SubjectToResourceMap
+// ResourceToSubjectMap is the inverse of SubjectToResourceMap. A resource ID listed
+// under two subjects maps to the TSV one, as map order would otherwise pick at random.
 var ResourceToSubjectMap = func() map[string]string {
 	m := make(map[string]string)
 	for subject, resources := range SubjectToResourceMap {
 		for _, resource := range resources {
-			m[resource] = subject
+			if _, taken := m[resource]; !taken || strings.HasPrefix(subject, "TSV ") {
+				m[resource] = subject
+			}
 		}
 	}
 	return m
