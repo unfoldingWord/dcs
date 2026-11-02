@@ -312,3 +312,13 @@ func TestPopulateTcTsDoor43MetadataAbbreviation(t *testing.T) {
 		assert.Equal(t, want, dm.Abbreviation, repoName)
 	}
 }
+
+func TestRepoPublisher(t *testing.T) {
+	repo := testRepo(1)
+	repo.OwnerName = "testowner"
+	assert.Equal(t, "Test Owner", repoPublisher(repo))
+	repo.Owner.FullName = ""
+	assert.Equal(t, "testowner", repoPublisher(repo))
+	repo.Owner = nil
+	assert.Equal(t, "testowner", repoPublisher(repo), "an unloaded owner falls back to the repo's owner name")
+}

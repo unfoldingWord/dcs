@@ -398,10 +398,7 @@ func GetDoor43MetadataFromRCManifest(ctx context.Context, gitRepo *git.Repositor
 	title = dcs.MapStr(dublinCore, "title")
 	publisher = dcs.MapStr(dublinCore, "publisher")
 	if publisher == "" {
-		publisher = repo.Owner.FullName
-		if publisher == "" {
-			publisher = repo.OwnerName
-		}
+		publisher = repoPublisher(repo)
 	}
 	dcLanguage := dcs.MapMap(dublinCore, "language")
 	language = strings.ToLower(dcs.MapStr(dcLanguage, "identifier"))
@@ -554,10 +551,7 @@ func GetDoor43MetadataFromSBMetadata(ctx context.Context, gitRepo *git.Repositor
 	var subject string
 
 	_ = repo.LoadOwner(ctx)
-	publisher = repo.Owner.FullName
-	if publisher == "" {
-		publisher = repo.Owner.Name
-	}
+	publisher = repoPublisher(repo)
 
 	metadataType = "sb"
 	if sbMetadata.Meta != nil {
@@ -1071,10 +1065,7 @@ func populateTcTsDoor43Metadata(ctx context.Context, gitRepo *git.Repository, dm
 	}
 	dm.MetadataType = t.MetadataType
 	dm.MetadataVersion = t.MetadataVersion
-	dm.Publisher = repo.Owner.FullName
-	if dm.Publisher == "" {
-		dm.Publisher = repo.OwnerName
-	}
+	dm.Publisher = repoPublisher(repo)
 
 	if (t.Project.ID == "" || t.Project.ID == "bible") && t.Type.ID != "" {
 		t.Project.ID = t.Type.ID
@@ -1152,11 +1143,6 @@ func populateTcTsDoor43Metadata(ctx context.Context, gitRepo *git.Repository, dm
 	return nil
 }
 
-// guessTcTsTypeAndVersion picks tc or ts, and a version, for a manifest.json that did
-// not validate. The repo naming convention decides first ("_book" is tc, "_text_" is
-// ts); failing that, the version key the file carries (parsed when t is given, else
-// sniffed from the raw bytes); failing that, tc. The version is the one the file
-// declares for the chosen type when it has one, else the type's default.
 // directionForLanguage is langnames' direction for lang, or the manifest's own ltr/rtl
 // when langnames doesn't know the code (its lookup would just answer ltr)
 func directionForLanguage(lang, manifestDirection string) string {
@@ -1166,6 +1152,25 @@ func directionForLanguage(lang, manifestDirection string) string {
 	return dcs.GetLanguageDirection(lang)
 }
 
+// repoPublisher is the publisher of a repo whose metadata names none: the owner's full
+// name, else the owner's username
+func repoPublisher(repo *repo_model.Repository) string {
+	if repo.Owner != nil {
+		if repo.Owner.FullName != "" {
+			return repo.Owner.FullName
+		}
+		if repo.Owner.Name != "" {
+			return repo.Owner.Name
+		}
+	}
+	return repo.OwnerName
+}
+
+// guessTcTsTypeAndVersion picks tc or ts, and a version, for a manifest.json that did
+// not validate. The repo naming convention decides first ("_book" is tc, "_text_" is
+// ts); failing that, the version key the file carries (parsed when t is given, else
+// sniffed from the raw bytes); failing that, tc. The version is the one the file
+// declares for the chosen type when it has one, else the type's default.
 func guessTcTsTypeAndVersion(t *structs.TcTsManifest, buf []byte, repoName string) (metadataType, version string) {
 	metadataType = dcs.GetTcTsMetadataTypeFromRepoName(repoName)
 	if metadataType == "" {
@@ -1381,10 +1386,7 @@ func processDoor43MetadataForRepoRef(ctx context.Context, repo *repo_model.Repos
 	}
 
 	if dm.Publisher == "" {
-		dm.Publisher = repo.Owner.Name
-		if dm.Publisher == "" {
-			dm.Publisher = repo.OwnerName
-		}
+		dm.Publisher = repoPublisher(repo)
 	}
 
 	if dm.ID > 0 {
