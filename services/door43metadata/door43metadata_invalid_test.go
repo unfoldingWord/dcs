@@ -112,6 +112,15 @@ func TestPopulateSBDoor43Metadata(t *testing.T) {
 		assert.NotEmpty(t, dm.ValidationError.Causes, "schema violations should carry the per-field causes")
 	})
 
+	t.Run("meta.version must be a whole 1.0.x version", func(t *testing.T) {
+		for version, valid := range map[string]bool{"1.0.0": true, "1.0.0-rc2": true, "1.0.1": true, "1.0.0garbage": false, "1.0.": false} {
+			dm := &repo_model.Door43Metadata{}
+			doc := strings.Replace(validSBMetadata, `"version": "1.0.0"`, `"version": "`+version+`"`, 1)
+			require.NoError(t, populateSBDoor43Metadata(ctx, nil, dm, repo, nil, []byte(doc)))
+			assert.Equal(t, valid, dm.ValidationError == nil, version)
+		}
+	})
+
 	t.Run("valid document is extracted and clears a previous error", func(t *testing.T) {
 		dm := &repo_model.Door43Metadata{ValidationError: metadataFileError("stale")}
 		require.NoError(t, populateSBDoor43Metadata(ctx, nil, dm, repo, nil, []byte(validSBMetadata)))
