@@ -6,6 +6,7 @@ package dcs
 import (
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"gitea.dev/modules/json"
@@ -29,9 +30,12 @@ func TestConvertedSBFlavors(t *testing.T) {
 				require.NoError(t, os.MkdirAll(filepath.Dir(path), 0o755))
 				require.NoError(t, os.WriteFile(path, []byte(content), 0o644))
 			}
-			projectPath := "./x_OBS.tsv"
+			// go-rc2sb resolves a helps subject by its project, so OBS subjects get the obs project
+			project, projectPath := "tit", "./x_TIT.tsv"
 			if subject == "Open Bible Stories" {
-				projectPath = "./content" // the stories' folder, where the others take a TSV
+				project, projectPath = "obs", "./content" // the stories' folder, where the others take a TSV
+			} else if strings.Contains(subject, "OBS") {
+				project, projectPath = "obs", "./x_OBS.tsv"
 			}
 			write("manifest.yaml", `dublin_core:
   conformsto: rc0.2
@@ -40,9 +44,10 @@ func TestConvertedSBFlavors(t *testing.T) {
   title: X
   language: {identifier: en, title: English, direction: ltr}
 projects:
-  - {identifier: obs, title: X, path: `+projectPath+`}
+  - {identifier: `+project+`, title: X, path: `+projectPath+`}
 `)
 			write("x_OBS.tsv", "Reference\tID\tTags\tQuote\tOccurrence\tNote\n")
+			write("x_TIT.tsv", "Reference\tID\tTags\tQuote\tOccurrence\tNote\n")
 			write("bible/kt/god.md", "# God\n")
 
 			outDir := t.TempDir()
@@ -75,5 +80,25 @@ func TestResourceToSubjectMapPrefersTSV(t *testing.T) {
 		"ta":     "Translation Academy",
 	} {
 		assert.Equal(t, subject, ResourceToSubjectMap[resource], resource)
+	}
+}
+
+func TestSBConvertible(t *testing.T) {
+	for _, tc := range []struct {
+		metadataType, subject string
+		want                  bool
+	}{
+		{"sb", "Greek Lexicon", true},
+		{"tc", "Aligned Bible", true},
+		{"rc", "Translation Notes", true},
+		{"rc", "OBS Study Notes", true},
+		{"rc", "Greek Lexicon", false},
+		{"rc", "Bible Study Notes", false},
+		{"ts", "Translation Words", true},
+		{"ts", "Translation Academy", true},
+		{"ts", "Study Notes", false},
+		{"", "Bible", false},
+	} {
+		assert.Equal(t, tc.want, SBConvertible(tc.metadataType, tc.subject), "%s %s", tc.metadataType, tc.subject)
 	}
 }

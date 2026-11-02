@@ -79,7 +79,7 @@ func TestToCatalogStageSBURLs(t *testing.T) {
 
 	stage := ToCatalogStage(t.Context(), &repo_model.Door43Metadata{
 		RepoID: 1, Repo: repo1, Ref: "v9", RefType: "tag", CommitSHA: "0000000000000000000000000000000000000009",
-		Stage: door43metadata.StageProd,
+		Stage: door43metadata.StageProd, MetadataType: "tc", Subject: "Aligned Bible",
 	})
 	require.NotNil(t, stage)
 	assert.Equal(t, repo1.HTMLURL()+"/sb/v9.zip", stage.SBZipballURL)

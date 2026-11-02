@@ -42,6 +42,9 @@ func ParseTcTsManifest(buf []byte) (*structs.TcTsManifest, error) {
 	} else if t.TsVersion >= 1 {
 		t.MetadataVersion = strconv.Itoa(t.TsVersion)
 		t.MetadataType = "ts"
+		if t.TargetLanguage.ID == "" {
+			t.TargetLanguage.ID = t.TargetLanguage.Slug
+		}
 
 		if t.Project.ID == "" {
 			if t.ProjectID == "" && t.Slug != "" {

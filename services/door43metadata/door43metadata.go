@@ -36,6 +36,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/santhosh-tekuri/jsonschema/v5"
+	rc2sb "github.com/unfoldingWord/go-rc2sb"
 	text_cases "golang.org/x/text/cases"
 	text_language "golang.org/x/text/language"
 	"xorm.io/builder"
@@ -388,15 +389,10 @@ func GetDoor43MetadataFromRCManifest(ctx context.Context, gitRepo *git.Repositor
 	if metadataVersion == "" {
 		metadataVersion = "0.2"
 	}
-	subject = dcs.MapStr(dublinCore, "subject")
+	// The subject go-rc2sb converts the repo as, so the entry agrees with its /sb/ download
+	subject = rc2sb.ResolveSubject(dcs.MapStr(dublinCore, "subject"), GetBooks(manifest))
 	if subject == "" {
 		subject = "unknown"
-	}
-	if strings.EqualFold(subject, "bible stories") {
-		subject = "Open Bible Stories"
-	}
-	if strings.HasPrefix(subject, "Translator ") {
-		subject = strings.Replace(subject, "Translator ", "Translation ", 1)
 	}
 	abbreviation = dcs.MapStr(dublinCore, "identifier")
 	title = dcs.MapStr(dublinCore, "title")
@@ -1010,6 +1006,8 @@ func populateRCDoor43Metadata(ctx context.Context, gitRepo *git.Repository, dm *
 	if conformsTo := nestedString(manifest, "dublin_core", "conformsto"); strings.HasPrefix(conformsTo, "rc") {
 		dm.MetadataVersion = strings.TrimPrefix(conformsTo, "rc")
 	}
+	// go-rc2sb converts a manifest that fails the schema too, so the SB download goes by its subject either way
+	dm.Subject = rc2sb.ResolveSubject(nestedString(manifest, "dublin_core", "subject"), GetBooks(manifest))
 
 	dm.ValidationError, err = dcs.ValidateMapByRC02Schema(manifest)
 	if err != nil {
