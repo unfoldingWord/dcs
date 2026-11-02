@@ -89,9 +89,9 @@ require (
 	github.com/stretchr/testify v1.12.1
 	github.com/syndtr/goleveldb v1.0.0
 	github.com/ulikunitz/xz v0.5.17
-	github.com/unfoldingWord/go-rc2sb v0.7.1-0.20261101204818-1f27a58849e6
+	github.com/unfoldingWord/go-rc2sb v0.8.0
 	github.com/unfoldingWord/go-tc2rc v0.1.0
-	github.com/unfoldingWord/go-ts2rc v0.1.2-0.20261101205650-4c452272cbc0
+	github.com/unfoldingWord/go-ts2rc v0.2.0
 	github.com/urfave/cli-docs/v3 v3.1.0
 	github.com/urfave/cli/v3 v3.13.0
 	github.com/wneessen/go-mail v0.8.1
