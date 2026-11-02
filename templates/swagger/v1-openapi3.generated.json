@@ -3331,19 +3331,19 @@
             "$ref": "#/components/schemas/Repository"
           },
           "sb_metadata_url": {
-            "description": "SBMetadataURL the URL of this entry's Scripture Burrito metadata.json, one file of the SB zipball",
+            "description": "SBMetadataURL the URL of this entry's Scripture Burrito metadata.json, one file of the SB zipball. Empty when no converter supports the entry's subject",
             "format": "uri",
             "type": "string",
             "x-go-name": "SBMetadataURL"
           },
           "sb_tarball_url": {
-            "description": "SBTarballURL the URL of this entry as a Scripture Burrito tarball; rc, ts and tc repos are converted on download",
+            "description": "SBTarballURL the URL of this entry as a Scripture Burrito tarball; rc, ts and tc repos are converted on download. Empty when no converter supports the entry's subject",
             "format": "uri",
             "type": "string",
             "x-go-name": "SBTarballURL"
           },
           "sb_zipball_url": {
-            "description": "SBZipballURL the URL of this entry as a Scripture Burrito zipball; rc, ts and tc repos are converted on download",
+            "description": "SBZipballURL the URL of this entry as a Scripture Burrito zipball; rc, ts and tc repos are converted on download. Empty when no converter supports the entry's subject",
             "format": "uri",
             "type": "string",
             "x-go-name": "SBZipballURL"

@@ -42,7 +42,7 @@
 					"title": "Conformsto",
 					"type": "string",
 					"default": "rc0.2",
-					"pattern": "^rc",
+					"pattern": "^rc[0-9]+(\\.[0-9]+)*$",
 					"examples": [
 						"rc0.2"
 					]
@@ -83,6 +83,7 @@
 				"format": {
 					"$id": "#root/dublin_core/format",
 					"title": "Format",
+					"type": "string",
 					"default": ""
 				},
 				"identifier": {
@@ -541,7 +542,7 @@
 				"obs-sn",
 				"obs-sq",
 				"obs-twl",
-				"obw-tw",
+				"obs-tw",
 				"intro",
 				"nt",
 				"ot",

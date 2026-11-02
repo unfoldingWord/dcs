@@ -112,6 +112,15 @@ func TestPopulateSBDoor43Metadata(t *testing.T) {
 		assert.NotEmpty(t, dm.ValidationError.Causes, "schema violations should carry the per-field causes")
 	})
 
+	t.Run("meta.version must be a whole 1.0.x version", func(t *testing.T) {
+		for version, valid := range map[string]bool{"1.0.0": true, "1.0.0-rc2": true, "1.0.1": true, "1.0.0garbage": false, "1.0.": false} {
+			dm := &repo_model.Door43Metadata{}
+			doc := strings.Replace(validSBMetadata, `"version": "1.0.0"`, `"version": "`+version+`"`, 1)
+			require.NoError(t, populateSBDoor43Metadata(ctx, nil, dm, repo, nil, []byte(doc)))
+			assert.Equal(t, valid, dm.ValidationError == nil, version)
+		}
+	})
+
 	t.Run("valid document is extracted and clears a previous error", func(t *testing.T) {
 		dm := &repo_model.Door43Metadata{ValidationError: metadataFileError("stale")}
 		require.NoError(t, populateSBDoor43Metadata(ctx, nil, dm, repo, nil, []byte(validSBMetadata)))
@@ -163,12 +172,41 @@ func TestPopulateRCDoor43Metadata(t *testing.T) {
 
 	t.Run("schema failure keeps the parsed document and the conformsto version", func(t *testing.T) {
 		dm := &repo_model.Door43Metadata{}
-		require.NoError(t, populateRCDoor43Metadata(ctx, nil, dm, repo, nil, []byte("dublin_core:\n  conformsto: rc0.3\n  title: Incomplete\n")))
+		require.NoError(t, populateRCDoor43Metadata(ctx, nil, dm, repo, nil, []byte("dublin_core:\n  conformsto: rc0.3\n  subject: Translator Notes\n  title: Incomplete\n")))
 		assert.Equal(t, "rc", dm.MetadataType)
 		assert.Equal(t, "0.3", dm.MetadataVersion)
+		assert.Equal(t, "Translation Notes", dm.Subject, "the subject is resolved even when the manifest fails the schema")
 		assert.NotNil(t, dm.Metadata)
 		require.NotNil(t, dm.ValidationError)
 		assert.NotEmpty(t, dm.ValidationError.Causes)
+	})
+
+	t.Run("a malformed conformsto fails the schema but stays a checked rc entry", func(t *testing.T) {
+		for _, conformsTo := range []string{"rcfoo", "rc 0.2"} {
+			dm := &repo_model.Door43Metadata{}
+			require.NoError(t, populateRCDoor43Metadata(ctx, nil, dm, repo, nil, []byte(strings.Replace(validRCManifest, "conformsto: rc0.2", "conformsto: "+conformsTo, 1))))
+			assert.Equal(t, "rc", dm.MetadataType, conformsTo)
+			require.NotNil(t, dm.ValidationError, conformsTo)
+		}
+		dm := &repo_model.Door43Metadata{}
+		require.NoError(t, populateRCDoor43Metadata(ctx, nil, dm, repo, nil, []byte(strings.Replace(validRCManifest, "conformsto: rc0.2", "conformsto: rc0.3", 1))))
+		assert.Nil(t, dm.ValidationError, "other rc versions stay accepted")
+		assert.Equal(t, "rc", dm.MetadataType)
+		assert.Equal(t, "0.3", dm.MetadataVersion)
+	})
+
+	t.Run("subject and flavor are the ones go-rc2sb converts the repo as", func(t *testing.T) {
+		obsNotes := strings.NewReplacer("subject: Bible", "subject: Study Notes", "identifier: gen", "identifier: obs", "path: ./01-GEN.usfm", "path: ./content").Replace(validRCManifest)
+		bibleNotes := strings.Replace(validRCManifest, "subject: Bible", "subject: Translation Notes", 1)
+		for manifest, want := range map[string][3]string{
+			obsNotes:   {"OBS Study Notes", "peripheral", "x-obsnotes"},
+			bibleNotes: {"Translation Notes", "parascriptural", "x-bcvnotes"},
+		} {
+			dm := &repo_model.Door43Metadata{}
+			require.NoError(t, populateRCDoor43Metadata(ctx, nil, dm, repo, nil, []byte(manifest)))
+			assert.Equal(t, want, [3]string{dm.Subject, dm.FlavorType, dm.Flavor})
+			assert.True(t, dm.CanConvertToSB())
+		}
 	})
 
 	t.Run("valid manifest is extracted", func(t *testing.T) {
@@ -215,9 +253,9 @@ func TestPopulateTcTsDoor43Metadata(t *testing.T) {
 		tsRepo := testRepo(1)
 		tsRepo.Name = "fr_gen_text_ulb"
 		dm = &repo_model.Door43Metadata{}
-		require.ErrorIs(t, populateTcTsDoor43Metadata(t.Context(), nil, dm, tsRepo, nil, []byte(`{}`)), errNotTcTsManifest)
-		assert.Equal(t, "ts", dm.MetadataType, "_text_ in the name means translationStudio")
-		assert.Equal(t, "7", dm.MetadataVersion, "the file's tc_version is not a ts version, so the default applies")
+		require.ErrorIs(t, populateTcTsDoor43Metadata(t.Context(), nil, dm, tsRepo, nil, []byte(`{"tc_version": 0}`)), errNotTcTsManifest)
+		assert.Equal(t, "ts", dm.MetadataType, "_text_ in the name outranks the hint of a tc_version key that is no version (tc_version 1 or more would make a valid tC manifest)")
+		assert.Equal(t, "7", dm.MetadataVersion, "a tc_version of 0 is no version, so the ts default applies")
 		require.NotNil(t, dm.ValidationError)
 	})
 

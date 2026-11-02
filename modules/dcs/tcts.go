@@ -42,6 +42,9 @@ func ParseTcTsManifest(buf []byte) (*structs.TcTsManifest, error) {
 	} else if t.TsVersion >= 1 {
 		t.MetadataVersion = strconv.Itoa(t.TsVersion)
 		t.MetadataType = "ts"
+		if t.TargetLanguage.ID == "" {
+			t.TargetLanguage.ID = t.TargetLanguage.Slug
+		}
 
 		if t.Project.ID == "" {
 			if t.ProjectID == "" && t.Slug != "" {
@@ -49,7 +52,9 @@ func ParseTcTsManifest(buf []byte) (*structs.TcTsManifest, error) {
 			}
 			if t.ProjectID != "" {
 				t.Project.ID = t.ProjectID
-				t.Project.Type = "text"
+				if t.Project.Type == "" {
+					t.Project.Type = "text"
+				}
 			}
 		}
 
@@ -92,11 +97,11 @@ func ParseTcTsManifest(buf []byte) (*structs.TcTsManifest, error) {
 			t.Resource.ID = "tq"
 			t.Subject = "Translation Questions"
 			t.Format = "json"
-		} else if t.Project.Type == "tw" || t.Type.ID == "tw" {
+		} else if t.Project.Type == "tw" || t.Type.ID == "tw" || t.Project.ID == "tw" {
 			t.Resource.ID = "tw"
 			t.Subject = "Translation Words"
 			t.Format = "json"
-		} else if t.Project.Type == "ta" || t.Type.ID == "ta" {
+		} else if t.Project.Type == "ta" || t.Type.ID == "ta" || t.Project.ID == "ta" {
 			t.Resource.ID = "ta"
 			t.Subject = "Translation Academy"
 			t.Format = "json"
@@ -112,13 +117,16 @@ func ParseTcTsManifest(buf []byte) (*structs.TcTsManifest, error) {
 	}
 
 	// The flavor of the burrito /sb/ converts the repo to, by way of go-ts2rc, which turns
-	// ts Translation Notes and Questions into their TSV subjects
-	convertedSubject := t.Subject
-	if t.Subject == "Translation Notes" || t.Subject == "Translation Questions" {
-		convertedSubject = "TSV " + t.Subject
+	// non-TSV Notes and Questions into their TSV subjects
+	// Try the exact match first
+	sbFlavor, ok := ConvertedSBFlavors[t.Subject]
+	if !ok {
+		// If not found, fall back to the "TSV " prefix
+		sbFlavor, ok = ConvertedSBFlavors["TSV "+t.Subject]
 	}
-	sbFlavor := ConvertedSBFlavors[convertedSubject]
-	t.FlavorType, t.Flavor = sbFlavor.FlavorType, sbFlavor.Flavor
+	if ok {
+		t.FlavorType, t.Flavor = sbFlavor.FlavorType, sbFlavor.Flavor
+	}
 
 	if t.Resource.Name != "" {
 		t.Title = t.Resource.Name

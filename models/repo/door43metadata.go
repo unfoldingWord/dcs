@@ -195,24 +195,38 @@ func (dm *Door43Metadata) ZipballURL() string {
 	return fmt.Sprintf("%s/archive/%s.zip", dm.Repo.HTMLURL(), dm.Ref)
 }
 
-// SBTarballURL the Scripture Burrito tarball URL of the tag or branch (rc, ts and tc repos are converted on download)
+// CanConvertToSB reports whether the entry has a Scripture Burrito download
+func (dm *Door43Metadata) CanConvertToSB() bool {
+	return dcs.SBConvertible(dm.MetadataType, dm.Subject)
+}
+
+// SBTarballURL the Scripture Burrito tarball URL of the tag or branch (rc, ts and tc repos are converted on download), or "" when it can't be converted
 func (dm *Door43Metadata) SBTarballURL() string {
+	if !dm.CanConvertToSB() {
+		return ""
+	}
 	if dm.RefType == "branch" {
 		return fmt.Sprintf("%s/sb/%s.tar.gz", dm.Repo.HTMLURL(), dm.CommitSHA[0:10])
 	}
 	return fmt.Sprintf("%s/sb/%s.tar.gz", dm.Repo.HTMLURL(), dm.Ref)
 }
 
-// SBZipballURL the Scripture Burrito zipball URL of the tag or branch (rc, ts and tc repos are converted on download)
+// SBZipballURL the Scripture Burrito zipball URL of the tag or branch (rc, ts and tc repos are converted on download), or "" when it can't be converted
 func (dm *Door43Metadata) SBZipballURL() string {
+	if !dm.CanConvertToSB() {
+		return ""
+	}
 	if dm.RefType == "branch" {
 		return fmt.Sprintf("%s/sb/%s.zip", dm.Repo.HTMLURL(), dm.CommitSHA[0:10])
 	}
 	return fmt.Sprintf("%s/sb/%s.zip", dm.Repo.HTMLURL(), dm.Ref)
 }
 
-// SBMetadataURL the URL of the Scripture Burrito metadata.json of the tag or branch, one file of the SB zipball
+// SBMetadataURL the URL of the Scripture Burrito metadata.json of the tag or branch, one file of the SB zipball, or "" when it can't be converted
 func (dm *Door43Metadata) SBMetadataURL() string {
+	if !dm.CanConvertToSB() {
+		return ""
+	}
 	ref := dm.Ref
 	if dm.RefType == "branch" {
 		ref = dm.CommitSHA[0:10]

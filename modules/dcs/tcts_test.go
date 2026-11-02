@@ -20,9 +20,17 @@ func TestParseTcTsManifestFlavor(t *testing.T) {
 		`{"package_version": 6, "type": {"id": "tq"}, "project": {"id": "tit"}, "resource": {"id": "tq"}}`:    {"parascriptural", "x-bcvquestions"},
 		`{"package_version": 6, "type": {"id": "tw"}, "project": {"id": "bible"}, "resource": {"id": "tw"}}`:  {"parascriptural", "x-bcvarticles"},
 		`{"package_version": 6, "type": {"id": "tn"}, "project": {"id": "obs"}, "resource": {"id": "obs"}}`:   {"peripheral", "x-obsnotes"},
+		`{"package_version": 3, "project_id": "gen", "project": {"type": "tn"}}`:                              {"parascriptural", "x-bcvnotes"},
+		`{"package_version": 1, "project_id": "obs"}`:                                                         {"gloss", "textStories"},
+		`{"package_version": 3, "project": {"id": "tw"}}`:                                                     {"parascriptural", "x-bcvarticles"},
+		`{"package_version": 3, "project": {"id": "ta"}}`:                                                     {"peripheral", "x-peripheralArticles"},
 	} {
 		ts, err := ParseTcTsManifest([]byte(manifest))
 		require.NoError(t, err)
 		assert.Equal(t, want, SBFlavor{ts.FlavorType, ts.Flavor}, manifest)
 	}
+
+	v2, err := ParseTcTsManifest([]byte(`{"package_version": 2, "slug": "phm", "target_language": {"slug": "aa", "name": "Afar"}}`))
+	require.NoError(t, err)
+	assert.Equal(t, "aa", v2.TargetLanguage.ID, "a v2 manifest names its language by slug")
 }
