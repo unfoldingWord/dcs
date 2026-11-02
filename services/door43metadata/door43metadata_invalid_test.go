@@ -112,6 +112,15 @@ func TestPopulateSBDoor43Metadata(t *testing.T) {
 		assert.NotEmpty(t, dm.ValidationError.Causes, "schema violations should carry the per-field causes")
 	})
 
+	t.Run("meta.version must be a whole 1.0.x version", func(t *testing.T) {
+		for version, valid := range map[string]bool{"1.0.0": true, "1.0.0-rc2": true, "1.0.1": true, "1.0.0garbage": false, "1.0.": false} {
+			dm := &repo_model.Door43Metadata{}
+			doc := strings.Replace(validSBMetadata, `"version": "1.0.0"`, `"version": "`+version+`"`, 1)
+			require.NoError(t, populateSBDoor43Metadata(ctx, nil, dm, repo, nil, []byte(doc)))
+			assert.Equal(t, valid, dm.ValidationError == nil, version)
+		}
+	})
+
 	t.Run("valid document is extracted and clears a previous error", func(t *testing.T) {
 		dm := &repo_model.Door43Metadata{ValidationError: metadataFileError("stale")}
 		require.NoError(t, populateSBDoor43Metadata(ctx, nil, dm, repo, nil, []byte(validSBMetadata)))
@@ -163,9 +172,10 @@ func TestPopulateRCDoor43Metadata(t *testing.T) {
 
 	t.Run("schema failure keeps the parsed document and the conformsto version", func(t *testing.T) {
 		dm := &repo_model.Door43Metadata{}
-		require.NoError(t, populateRCDoor43Metadata(ctx, nil, dm, repo, nil, []byte("dublin_core:\n  conformsto: rc0.3\n  title: Incomplete\n")))
+		require.NoError(t, populateRCDoor43Metadata(ctx, nil, dm, repo, nil, []byte("dublin_core:\n  conformsto: rc0.3\n  subject: Translator Notes\n  title: Incomplete\n")))
 		assert.Equal(t, "rc", dm.MetadataType)
 		assert.Equal(t, "0.3", dm.MetadataVersion)
+		assert.Equal(t, "Translation Notes", dm.Subject, "the subject is resolved even when the manifest fails the schema")
 		assert.NotNil(t, dm.Metadata)
 		require.NotNil(t, dm.ValidationError)
 		assert.NotEmpty(t, dm.ValidationError.Causes)
@@ -183,6 +193,20 @@ func TestPopulateRCDoor43Metadata(t *testing.T) {
 		assert.Nil(t, dm.ValidationError, "other rc versions stay accepted")
 		assert.Equal(t, "rc", dm.MetadataType)
 		assert.Equal(t, "0.3", dm.MetadataVersion)
+	})
+
+	t.Run("subject and flavor are the ones go-rc2sb converts the repo as", func(t *testing.T) {
+		obsNotes := strings.NewReplacer("subject: Bible", "subject: Study Notes", "identifier: gen", "identifier: obs", "path: ./01-GEN.usfm", "path: ./content").Replace(validRCManifest)
+		bibleNotes := strings.Replace(validRCManifest, "subject: Bible", "subject: Translation Notes", 1)
+		for manifest, want := range map[string][3]string{
+			obsNotes:   {"OBS Study Notes", "peripheral", "x-obsnotes"},
+			bibleNotes: {"Translation Notes", "parascriptural", "x-bcvnotes"},
+		} {
+			dm := &repo_model.Door43Metadata{}
+			require.NoError(t, populateRCDoor43Metadata(ctx, nil, dm, repo, nil, []byte(manifest)))
+			assert.Equal(t, want, [3]string{dm.Subject, dm.FlavorType, dm.Flavor})
+			assert.True(t, dm.CanConvertToSB())
+		}
 	})
 
 	t.Run("valid manifest is extracted", func(t *testing.T) {

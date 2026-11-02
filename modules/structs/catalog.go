@@ -18,11 +18,11 @@ type CatalogEntry struct {
 	Release    *Release    `json:"release,omitempty"`
 	TarballURL string      `json:"tarbar_url"`
 	ZipballURL string      `json:"zipball_url"`
-	// SBTarballURL the URL of this entry as a Scripture Burrito tarball; rc, ts and tc repos are converted on download
+	// SBTarballURL the URL of this entry as a Scripture Burrito tarball; rc, ts and tc repos are converted on download. Empty when no converter supports the entry's subject
 	SBTarballURL string `json:"sb_tarball_url"`
-	// SBZipballURL the URL of this entry as a Scripture Burrito zipball; rc, ts and tc repos are converted on download
+	// SBZipballURL the URL of this entry as a Scripture Burrito zipball; rc, ts and tc repos are converted on download. Empty when no converter supports the entry's subject
 	SBZipballURL string `json:"sb_zipball_url"`
-	// SBMetadataURL the URL of this entry's Scripture Burrito metadata.json, one file of the SB zipball
+	// SBMetadataURL the URL of this entry's Scripture Burrito metadata.json, one file of the SB zipball. Empty when no converter supports the entry's subject
 	SBMetadataURL          string        `json:"sb_metadata_url"`
 	GitTreesURL            string        `json:"git_trees_url"`
 	ContentsURL            string        `json:"contents_url"`

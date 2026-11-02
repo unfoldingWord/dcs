@@ -5,6 +5,8 @@ package dcs
 
 import (
 	"strings"
+
+	rc2sb "github.com/unfoldingWord/go-rc2sb"
 )
 
 // SubjectToResourceMap maps subjects to their valid resource IDs
@@ -100,6 +102,10 @@ var ConvertedSBFlavors = map[string]SBFlavor{
 	"Translation Words":               {"parascriptural", "x-bcvarticles"},
 	"TSV Translation Words Links":     {"parascriptural", "x-bcvarticles"},
 	"TSV OBS Translation Words Links": {"parascriptural", "x-bcvarticles"},
+	"Translation Notes":               {"parascriptural", "x-bcvnotes"},
+	"Study Notes":                     {"parascriptural", "x-bcvnotes"},
+	"Translation Questions":           {"parascriptural", "x-bcvquestions"},
+	"Study Questions":                 {"parascriptural", "x-bcvquestions"},
 	"TSV Translation Notes":           {"parascriptural", "x-bcvnotes"},
 	"TSV Study Notes":                 {"parascriptural", "x-bcvnotes"},
 	"TSV Translation Questions":       {"parascriptural", "x-bcvquestions"},
@@ -112,4 +118,31 @@ var ConvertedSBFlavors = map[string]SBFlavor{
 	"TSV OBS Study Questions":         {"peripheral", "x-obsquestions"},
 	"OBS Translation Questions":       {"peripheral", "x-obsquestions"},
 	"OBS Study Questions":             {"peripheral", "x-obsquestions"},
+}
+
+// tsSBSubjects are the ts subjects go-ts2rc converts to an RC that go-rc2sb converts
+var tsSBSubjects = map[string]bool{
+	"Bible":                     true,
+	"Open Bible Stories":        true,
+	"OBS Translation Notes":     true,
+	"OBS Translation Questions": true,
+	"Translation Notes":         true,
+	"Translation Questions":     true,
+	"Translation Words":         true,
+	"Translation Academy":       true,
+}
+
+// SBConvertible reports whether a repo of the metadata type and subject has a Scripture
+// Burrito download: an sb repo is one already, a tc repo converts by way of go-tc2rc, a ts
+// repo by way of go-ts2rc, and an rc repo when go-rc2sb converts its subject.
+func SBConvertible(metadataType, subject string) bool {
+	switch metadataType {
+	case "sb", "tc":
+		return true
+	case "ts":
+		return tsSBSubjects[subject]
+	case "rc":
+		return rc2sb.Supports(subject)
+	}
+	return false
 }

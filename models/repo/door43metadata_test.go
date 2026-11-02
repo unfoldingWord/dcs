@@ -64,20 +64,25 @@ func TestDoor43MetadataArchiveURLs(t *testing.T) {
 	repo := unittest.AssertExistsAndLoadBean(t, &repo_model.Repository{ID: 1})
 	const sha = "65f1bf27bc3bf70f64657658635e66094edbcb4d"
 
-	tag := &repo_model.Door43Metadata{Repo: repo, Ref: "v1.1", RefType: "tag", CommitSHA: sha}
+	tag := &repo_model.Door43Metadata{Repo: repo, Ref: "v1.1", RefType: "tag", CommitSHA: sha, MetadataType: "rc", Subject: "Bible"}
 	assert.Equal(t, repo.HTMLURL()+"/archive/v1.1.zip", tag.ZipballURL())
 	assert.Equal(t, repo.HTMLURL()+"/archive/v1.1.tar.gz", tag.TarballURL())
 	assert.Equal(t, repo.HTMLURL()+"/sb/v1.1.zip", tag.SBZipballURL())
 	assert.Equal(t, repo.HTMLURL()+"/sb/v1.1.tar.gz", tag.SBTarballURL())
 	assert.Equal(t, repo.HTMLURL()+"/sb/raw/metadata.json?ref=v1.1", tag.SBMetadataURL())
-	plusTag := &repo_model.Door43Metadata{Repo: repo, Ref: "v1+dcs", RefType: "tag", CommitSHA: sha}
+	plusTag := &repo_model.Door43Metadata{Repo: repo, Ref: "v1+dcs", RefType: "tag", CommitSHA: sha, MetadataType: "rc", Subject: "Bible"}
 	assert.Equal(t, repo.HTMLURL()+"/sb/raw/metadata.json?ref=v1%2Bdcs", plusTag.SBMetadataURL())
 
 	// A branch entry is pinned to the commit it was built from, not the moving branch name
-	branch := &repo_model.Door43Metadata{Repo: repo, Ref: "master", RefType: "branch", CommitSHA: sha}
+	branch := &repo_model.Door43Metadata{Repo: repo, Ref: "master", RefType: "branch", CommitSHA: sha, MetadataType: "rc", Subject: "Bible"}
 	assert.Equal(t, repo.HTMLURL()+"/archive/65f1bf27bc.zip", branch.ZipballURL())
 	assert.Equal(t, repo.HTMLURL()+"/archive/65f1bf27bc.tar.gz", branch.TarballURL())
 	assert.Equal(t, repo.HTMLURL()+"/sb/65f1bf27bc.zip", branch.SBZipballURL())
 	assert.Equal(t, repo.HTMLURL()+"/sb/65f1bf27bc.tar.gz", branch.SBTarballURL())
 	assert.Equal(t, repo.HTMLURL()+"/sb/raw/metadata.json?ref=65f1bf27bc", branch.SBMetadataURL())
+
+	lexicon := &repo_model.Door43Metadata{Repo: repo, Ref: "v1", RefType: "tag", CommitSHA: sha, MetadataType: "rc", Subject: "Greek Lexicon"}
+	assert.Empty(t, lexicon.SBZipballURL(), "no converter supports the subject, so there is no SB download")
+	assert.Empty(t, lexicon.SBMetadataURL())
+	assert.Equal(t, repo.HTMLURL()+"/archive/v1.zip", lexicon.ZipballURL())
 }
