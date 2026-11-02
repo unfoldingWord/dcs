@@ -28,22 +28,35 @@ func GetTcTsManifestFromBlob(ctx context.Context, blob *git.Blob) (*structs.TcTs
 
 // ParseTcTsManifest unmarshals the content of a manifest.json and derives the DCS
 // metadata fields from it. MetadataType is left empty when the file is neither a
-// translationCore (tc_version >= 7) nor a translationStudio (package_version >= 3) manifest.
+// translationCore (tc_version >= 1) nor a translationStudio (package_version >= 1) manifest.
 func ParseTcTsManifest(buf []byte) (*structs.TcTsManifest, error) {
 	t := &structs.TcTsManifest{}
 	if err := json.Unmarshal(buf, t); err != nil {
 		return nil, err
 	}
-	if t.TcVersion >= 7 {
+	if t.TcVersion >= 1 {
 		t.MetadataVersion = strconv.Itoa(t.TcVersion)
 		t.MetadataType = "tc"
 		t.Format = "usfm"
 		t.Subject = "Aligned Bible"
-		t.FlavorType = "scripture"
-		t.Flavor = "textTranslation"
-	} else if t.TsVersion >= 3 {
+	} else if t.TsVersion >= 1 {
 		t.MetadataVersion = strconv.Itoa(t.TsVersion)
 		t.MetadataType = "ts"
+		if t.TargetLanguage.ID == "" {
+			t.TargetLanguage.ID = t.TargetLanguage.Slug
+		}
+
+		if t.Project.ID == "" {
+			if t.ProjectID == "" && t.Slug != "" {
+				t.ProjectID = t.Slug
+			}
+			if t.ProjectID != "" {
+				t.Project.ID = t.ProjectID
+				if t.Project.Type == "" {
+					t.Project.Type = "text"
+				}
+			}
+		}
 
 		if t.Resource.ID == "" {
 			if t.ResourceID != "" {
@@ -66,36 +79,53 @@ func ParseTcTsManifest(buf []byte) (*structs.TcTsManifest, error) {
 		}
 
 		if t.Resource.ID == "obs" && (t.Project.Type == "tn" || t.Type.ID == "tn") {
+			t.Resource.ID = "obs-tn"
 			t.Subject = "OBS Translation Notes"
-			t.FlavorType = "peripheral"
-			t.Flavor = "x-OBSTranslationNotes"
+			t.Format = "json"
 		} else if t.Resource.ID == "obs" && (t.Project.Type == "tq" || t.Type.ID == "tq") {
+			t.Resource.ID = "obs-tq"
 			t.Subject = "OBS Translation Questions"
-			t.FlavorType = "peripheral"
-			t.Flavor = "x-OBSTranslationQuestions"
+			t.Format = "json"
 		} else if t.Resource.ID == "obs" {
 			t.Subject = "Open Bible Stories"
-			t.FlavorType = "gloss"
-			t.Flavor = "textStories"
+			t.Format = "text"
 		} else if t.Project.Type == "tn" || t.Type.ID == "tn" {
+			t.Resource.ID = "tn"
 			t.Subject = "Translation Notes"
-			t.FlavorType = "peripheral"
-			t.Flavor = "x-TranslationNotes"
+			t.Format = "json"
 		} else if t.Project.Type == "tq" || t.Type.ID == "tq" {
+			t.Resource.ID = "tq"
 			t.Subject = "Translation Questions"
-			t.FlavorType = "peripheral"
-			t.Flavor = "x-TranslationQuestions"
-		} else if t.Project.Type == "tw" || t.Type.ID == "tw" {
+			t.Format = "json"
+		} else if t.Project.Type == "tw" || t.Type.ID == "tw" || t.Project.ID == "tw" {
+			t.Resource.ID = "tw"
 			t.Subject = "Translation Words"
-			t.FlavorType = "peripheral"
-			t.Flavor = "x-peripheralArticles"
+			t.Format = "json"
+		} else if t.Project.Type == "ta" || t.Type.ID == "ta" || t.Project.ID == "ta" {
+			t.Resource.ID = "ta"
+			t.Subject = "Translation Academy"
+			t.Format = "json"
 		} else {
+			if t.Resource.ID == "" {
+				t.Resource.ID = "bible"
+			}
 			t.Subject = "Bible"
-			t.FlavorType = "scripture"
-			t.Flavor = "textTranslation"
+			t.Format = "usfm"
 		}
 	} else {
 		return t, nil
+	}
+
+	// The flavor of the burrito /sb/ converts the repo to, by way of go-ts2rc, which turns
+	// non-TSV Notes and Questions into their TSV subjects
+	// Try the exact match first
+	sbFlavor, ok := ConvertedSBFlavors[t.Subject]
+	if !ok {
+		// If not found, fall back to the "TSV " prefix
+		sbFlavor, ok = ConvertedSBFlavors["TSV "+t.Subject]
+	}
+	if ok {
+		t.FlavorType, t.Flavor = sbFlavor.FlavorType, sbFlavor.Flavor
 	}
 
 	if t.Resource.Name != "" {

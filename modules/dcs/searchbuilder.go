@@ -76,8 +76,8 @@ func searchBuilderSubjects() []string {
 	if dublinCore == nil || dublinCore.Properties["subject"] == nil {
 		return nil
 	}
-	subjects := make([]string, 0, len(dublinCore.Properties["subject"].Enum))
-	for _, v := range dublinCore.Properties["subject"].Enum {
+	subjects := make([]string, 0, len(dublinCore.Properties["subject"].Examples))
+	for _, v := range dublinCore.Properties["subject"].Examples {
 		if s, ok := v.(string); ok {
 			subjects = append(subjects, s)
 		}

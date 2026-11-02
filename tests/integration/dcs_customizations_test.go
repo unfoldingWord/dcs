@@ -172,6 +172,14 @@ func TestDCSAPIRepoSBArchive(t *testing.T) {
 	MakeRequest(t, NewRequest(t, "GET", "/api/v1/repos/user2/repo1/sb/master.zip"), http.StatusNotFound)
 	MakeRequest(t, NewRequest(t, "GET", "/user2/repo1/sb/master.zip"), http.StatusNotFound)
 
+	// An rc entry whose subject no converter supports has no SB download either
+	require.NoError(t, repo_model.InsertDoor43Metadata(t.Context(), &repo_model.Door43Metadata{
+		RepoID: 1, Ref: "v1.1", RefType: "tag", CommitSHA: "0000000000000000000000000000000000000011",
+		Stage: door43metadata_model.StageProd, MetadataType: "rc", MetadataVersion: "0.2", Subject: "Greek Lexicon",
+	}))
+	MakeRequest(t, NewRequest(t, "GET", "/api/v1/repos/user2/repo1/sb/v1.1.zip"), http.StatusNotFound)
+	MakeRequest(t, NewRequest(t, "GET", "/user2/repo1/sb/v1.1.zip"), http.StatusNotFound)
+
 	require.NoError(t, repo_model.InsertDoor43Metadata(t.Context(), &repo_model.Door43Metadata{
 		RepoID: 1, Ref: "master", RefType: "branch", CommitSHA: "65f1bf27bc3bf70f64657658635e66094edbcb4d",
 		Stage: door43metadata_model.StageLatest, MetadataType: "sb", MetadataVersion: "1.0.0",

@@ -106,7 +106,7 @@ func TestOBSIngredients(t *testing.T) {
 
 	sbOBS := func(ingredientPaths ...string) *dcs.SBMetadata100 {
 		sb := &dcs.SBMetadata100{
-			Identification: &dcs.SB100Identification{Name: dcs.LocalizedText{"fr": "Histoires Bibliques"}},
+			Identification: &dcs.SB100Identification{Name: dcs.LocalizedText{"fr": "Histoires Bibliques"}, Abbreviation: dcs.LocalizedText{"en": "obs"}},
 			Languages:      []*dcs.SB100Language{{Tag: "fr"}},
 			Type:           &dcs.SB100Type{FlavorType: dcs.SB100FlavorType{Name: "gloss", Flavor: dcs.SB100Flavor{Name: "textStories"}}},
 			Ingredients:    map[string]*dcs.SB100Ingredient{},

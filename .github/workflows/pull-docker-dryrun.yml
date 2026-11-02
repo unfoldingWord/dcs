@@ -16,6 +16,7 @@ jobs:
 
   # QEMU-based build is slow (40-50 minutes), so run arm64 and riscv64 when dockerfile changes.
   # Run amd64 when any docker-related files change, which is fast (4 minutes).
+  # DCS Customizations: upstream's arm64 and riscv64 dryrun jobs are removed — QEMU builds are slow and DCS only ships amd64 images
   container-amd64:
     if: needs.files-changed.outputs.docker == 'true'
     needs: [files-changed]
@@ -25,5 +26,3 @@ jobs:
       - uses: ./.github/actions/docker-dryrun
         with:
           platform: linux/amd64
-
-  # DCS Customizations: upstream's arm64 and riscv64 dryrun jobs are removed — QEMU builds are slow and DCS only ships amd64 images

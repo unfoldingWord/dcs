@@ -50,6 +50,7 @@ func (ls *localSchema) Get(reload bool) (*jsonschema.Schema, error) {
 
 func (ls *localSchema) compile() (*jsonschema.Schema, error) {
 	compiler := jsonschema.NewCompiler()
+	compiler.ExtractAnnotations = true // searchBuilderSubjects reads the RC subject "examples"
 	compiler.LoadURL = func(url string) (io.ReadCloser, error) {
 		rel, ok := strings.CutPrefix(url, ls.idPrefix)
 		if !ok {
@@ -64,8 +65,9 @@ func (ls *localSchema) compile() (*jsonschema.Schema, error) {
 	return compiler.Compile(ls.idPrefix + ls.rootFile)
 }
 
-// Validate checks data against the schema. A violation comes back as the
-// *ValidationError; the error return is reserved for the schema itself being unloadable.
+// Validate checks data against the schema. A violation, including a value JSON has no
+// type for, comes back as the *ValidationError; the error return is reserved for the
+// schema itself being unloadable.
 func (ls *localSchema) Validate(data map[string]any) (*jsonschema.ValidationError, error) {
 	if data == nil {
 		return &jsonschema.ValidationError{Message: "file cannot be empty"}, nil
@@ -77,6 +79,9 @@ func (ls *localSchema) Validate(data map[string]any) (*jsonschema.ValidationErro
 	if err = schema.Validate(data); err != nil {
 		if valErr, ok := errors.AsType[*jsonschema.ValidationError](err); ok {
 			return valErr, nil
+		}
+		if typeErr, ok := errors.AsType[jsonschema.InvalidJSONTypeError](err); ok {
+			return &jsonschema.ValidationError{Message: fmt.Sprintf("file has a value of a type JSON does not support (%s)", string(typeErr))}, nil
 		}
 		return nil, err
 	}
