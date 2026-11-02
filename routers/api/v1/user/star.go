@@ -33,6 +33,9 @@ func getStarredRepos(ctx *context.APIContext, user *user_model.User, private boo
 	if err != nil {
 		return nil, err
 	}
+	if err := repo_model.RepositoryList(starredRepos).LoadAttributes(ctx); err != nil {
+		return nil, err
+	}
 
 	/*** DCS Customizations ***/
 	if err := repo_model.RepositoryList(starredRepos).LoadLatestDMs(ctx); err != nil { // one batch instead of 4 queries per repo in ToRepo
@@ -120,6 +123,7 @@ func GetMyStarredRepos(ctx *context.APIContext) {
 	repos, err := getStarredRepos(ctx, ctx.Doer, true)
 	if err != nil {
 		ctx.APIErrorInternal(err)
+		return
 	}
 
 	ctx.SetLinkHeader(int64(ctx.Doer.NumStars), utils.GetListOptions(ctx).PageSize)

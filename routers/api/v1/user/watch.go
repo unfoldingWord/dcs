@@ -31,6 +31,9 @@ func getWatchedRepos(ctx *context.APIContext, user *user_model.User, private boo
 	if err != nil {
 		return nil, 0, err
 	}
+	if err := repo_model.RepositoryList(watchedRepos).LoadAttributes(ctx); err != nil {
+		return nil, 0, err
+	}
 
 	/*** DCS Customizations ***/
 	if err := repo_model.RepositoryList(watchedRepos).LoadLatestDMs(ctx); err != nil { // one batch instead of 4 queries per repo in ToRepo
@@ -80,6 +83,7 @@ func GetWatchedRepos(ctx *context.APIContext) {
 	repos, total, err := getWatchedRepos(ctx, ctx.ContextUser, private)
 	if err != nil {
 		ctx.APIErrorInternal(err)
+		return
 	}
 
 	ctx.SetLinkHeader(total, utils.GetListOptions(ctx).PageSize)
@@ -110,6 +114,7 @@ func GetMyWatchedRepos(ctx *context.APIContext) {
 	repos, total, err := getWatchedRepos(ctx, ctx.Doer, true)
 	if err != nil {
 		ctx.APIErrorInternal(err)
+		return
 	}
 	ctx.SetLinkHeader(total, utils.GetListOptions(ctx).PageSize)
 	ctx.SetTotalCountHeader(total)
