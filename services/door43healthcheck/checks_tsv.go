@@ -17,9 +17,9 @@ import (
 	"gitea.dev/modules/log"
 )
 
-// tsvHeadersBySubject are the exact 7-column TSV header schemas per subject (spec
-// Appendix B). Subjects not listed are validated in generic mode (self-consistent
-// column counts, ID and Occurrence rules) without an exact-header requirement.
+// tsvHeadersBySubject are the exact TSV header schemas per subject (spec Appendix B).
+// Subjects not listed are validated in generic mode (self-consistent column counts,
+// ID and Occurrence rules) without an exact-header requirement.
 var tsvHeadersBySubject = map[string][]string{
 	"TSV Translation Notes":           {"Reference", "ID", "Tags", "SupportReference", "Quote", "Occurrence", "Note"},
 	"TSV OBS Translation Notes":       {"Reference", "ID", "Tags", "SupportReference", "Quote", "Occurrence", "Note"},
@@ -28,9 +28,16 @@ var tsvHeadersBySubject = map[string][]string{
 	"TSV OBS Study Questions":         {"Reference", "ID", "Tags", "Quote", "Occurrence", "Question", "Response"},
 	"TSV Translation Words Links":     {"Reference", "ID", "Tags", "OrigWords", "Occurrence", "TWLink"},
 	"TSV OBS Translation Words Links": {"Reference", "ID", "Tags", "OrigWords", "Occurrence", "TWLink"},
-	"TSV Study Notes":                 {"Reference", "ID", "Tags", "Quote", "Occurrence", "Note"},
-	"TSV OBS Study Notes":             {"Reference", "ID", "Tags", "Quote", "Occurrence", "Note"},
+	"TSV Study Notes":                 {"Reference", "ID", "Tags", "SupportReference", "Quote", "Occurrence", "Note"},
+	"TSV OBS Study Notes":             {"Reference", "ID", "Tags", "SupportReference", "Quote", "Occurrence", "Note"},
 	"TSV Study Questions":             {"Reference", "ID", "Tags", "Quote", "Occurrence", "Question", "Response"},
+}
+
+// tsvAltHeadersBySubject are second headers a subject also accepts: Study Notes don't
+// need the SupportReference column they carried over from TN, so files may omit it
+var tsvAltHeadersBySubject = map[string][]string{
+	"TSV Study Notes":     {"Reference", "ID", "Tags", "Quote", "Occurrence", "Note"},
+	"TSV OBS Study Notes": {"Reference", "ID", "Tags", "Quote", "Occurrence", "Note"},
 }
 
 // tsv9Header is the legacy 9-column TN format; files carrying it are validated in
@@ -144,11 +151,16 @@ func checkTSVFileContent(dm *repo_model.Door43Metadata, path string, r io.Reader
 	// files get generic checks only; a file matching neither gets a TSV-001 Error and
 	// then generic checks against its own header (self-consistency still matters).
 	expected := tsvHeadersBySubject[dm.Subject]
-	strict := expected != nil && slices.Equal(header, expected)
+	alternate := tsvAltHeadersBySubject[dm.Subject]
+	strict := expected != nil && (slices.Equal(header, expected) || (alternate != nil && slices.Equal(header, alternate)))
 	if expected != nil && !strict && !slices.Equal(header, tsv9Header) {
+		required := "`" + strings.Join(expected, " | ") + "`"
+		if alternate != nil {
+			required += " or `" + strings.Join(alternate, " | ") + "`"
+		}
 		addIssue(repo_model.IssueCodeTSVHeaderInvalid, "",
-			fmt.Sprintf("**`%s`**: the header row is `%s` but this resource type requires exactly `%s`",
-				path, strings.Join(header, " | "), strings.Join(expected, " | ")))
+			fmt.Sprintf("**`%s`**: the header row is `%s` but this resource type requires exactly %s",
+				path, strings.Join(header, " | "), required))
 	}
 
 	colIdx := func(name string) int { return slices.Index(header, name) }

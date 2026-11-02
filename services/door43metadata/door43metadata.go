@@ -11,7 +11,6 @@ import (
 	"io"
 	"net/http"
 	"path/filepath"
-	"regexp"
 	"strconv"
 	"strings"
 	"time"
@@ -37,6 +36,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/santhosh-tekuri/jsonschema/v5"
+	rc2sb "github.com/unfoldingWord/go-rc2sb"
 	text_cases "golang.org/x/text/cases"
 	text_language "golang.org/x/text/language"
 	"xorm.io/builder"
@@ -270,6 +270,11 @@ func processDoor43MetadataForRepo(ctx context.Context, repo *repo_model.Reposito
 		return err // No need to process any thing else below
 	}
 
+	err := repo.LoadOwner(ctx) // after the purge, so an owner lookup failure cannot keep private metadata listed
+	if err != nil {
+		return err
+	}
+
 	if ref == "" {
 		log.Debug(">>>>>> PROCESSING REFS: %s", repo.FullName())
 		if err := processDoor43MetadataForRepoRefs(ctx, repo); err != nil {
@@ -285,11 +290,7 @@ func processDoor43MetadataForRepo(ctx context.Context, repo *repo_model.Reposito
 		}
 	}
 
-	err := processDoor43MetadataForRepoLatestDMs(ctx, repo)
-	if err != nil {
-		return err
-	}
-	err = repo.LoadOwner(ctx)
+	err = processDoor43MetadataForRepoLatestDMs(ctx, repo)
 	if err != nil {
 		return err
 	}
@@ -383,31 +384,30 @@ func GetDoor43MetadataFromRCManifest(ctx context.Context, gitRepo *git.Repositor
 
 	_ = repo.LoadOwner(ctx)
 	dublinCore := dcs.MapMap(manifest, "dublin_core")
-	re := regexp.MustCompile("^([^0-9]+)(.*)$")
-	matches := re.FindStringSubmatch(dcs.MapStr(dublinCore, "conformsto"))
-	if len(matches) == 3 {
-		metadataType = matches[1]
-		metadataVersion = matches[2]
-	} else {
-		// should never get here since schema validated
-		metadataType = "rc"
+	metadataType = "rc" // a manifest.yaml is an RC; the schema has already pinned conformsto to rc<version>
+	metadataVersion = strings.TrimPrefix(dcs.MapStr(dublinCore, "conformsto"), "rc")
+	if metadataVersion == "" {
 		metadataVersion = "0.2"
 	}
-	subject = dcs.MapStr(dublinCore, "subject")
+	// The subject go-rc2sb converts the repo as, so the entry agrees with its /sb/ download
+	subject = rc2sb.ResolveSubject(dcs.MapStr(dublinCore, "subject"), GetBooks(manifest))
+	if subject == "" {
+		subject = "unknown"
+	}
 	abbreviation = dcs.MapStr(dublinCore, "identifier")
 	title = dcs.MapStr(dublinCore, "title")
 	publisher = dcs.MapStr(dublinCore, "publisher")
 	if publisher == "" {
-		publisher = repo.Owner.FullName
-		if publisher == "" {
-			publisher = repo.OwnerName
-		}
+		publisher = repoPublisher(repo)
 	}
 	dcLanguage := dcs.MapMap(dublinCore, "language")
-	language = dcs.MapStr(dcLanguage, "identifier")
-	languageTitle = dcs.MapStr(dcLanguage, "title")
+	language = strings.ToLower(dcs.MapStr(dcLanguage, "identifier"))
+	languageTitle = dcs.GetLanguageTitle(language)
+	if languageTitle == "" {
+		languageTitle = dcs.MapStr(dcLanguage, "title")
+	}
+	languageDirection = directionForLanguage(language, dcs.MapStr(dcLanguage, "direction"))
 	format = dcs.MapStr(dublinCore, "format")
-	languageDirection = dcs.GetLanguageDirection(language)
 	languageIsGL = dcs.LanguageIsGL(language)
 	var bookPath string
 	for _, prod := range dcs.MapSlice(manifest, "projects") {
@@ -421,7 +421,10 @@ func GetDoor43MetadataFromRCManifest(ctx context.Context, gitRepo *git.Repositor
 				count, _ := getBookAlignmentCountSafe(ctx, gitRepo, ingredient.Path, commit)
 				ingredient.AlignmentCount = &count
 			}
-			if commit != nil {
+			if ingredient.Path == "." || ingredient.Path == "./" {
+				ingredient.Exists = true
+				ingredient.IsDir = true
+			} else if commit != nil {
 				if entry, err := commit.GetTreeEntryByPath(ctx, gitRepo, ingredient.Path); err == nil {
 					ingredient.Exists = true
 					ingredient.IsDir = entry.IsDir()
@@ -457,51 +460,34 @@ func GetDoor43MetadataFromRCManifest(ctx context.Context, gitRepo *git.Repositor
 			})
 		}
 	}
+	isTSV := strings.HasPrefix(subject, "TSV ")
 	if subject == "Bible" || subject == "Aligned Bible" || subject == "Greek New Testament" || subject == "Hebrew Old Testament" {
 		contentFormat = "usfm"
-		flavorType = "scripture"
-		flavor = "textTranslation"
-	} else if strings.HasPrefix(subject, "TSV ") {
+	} else if isTSV {
 		if strings.HasPrefix(bookPath, fmt.Sprintf("./%s_", abbreviation)) {
 			contentFormat = "tsv7"
 		} else {
 			contentFormat = "tsv9"
 		}
-		flavorType = "parascriptural"
-
-		switch subject {
-		case "TSV Translation Notes":
-			flavor = "x-bcvnotes"
-		case "TSV Translation Questions":
-			flavor = "x-bcvquestions"
-		case "TSV Translation Words Links":
-			flavor = "x-bcvarticles"
-		default:
-			flavor = "x-" + strings.ToLower(strings.Fields(subject)[len(strings.Fields(subject))-1])
-		}
+	} else if strings.Contains(format, "/") {
+		contentFormat = strings.Split(format, "/")[1]
+	} else if repo.PrimaryLanguage != nil {
+		contentFormat = strings.ToLower(repo.PrimaryLanguage.Language)
 	} else {
-		if strings.Contains(format, "/") {
-			contentFormat = strings.Split(format, "/")[1]
-		} else if repo.PrimaryLanguage != nil {
-			contentFormat = strings.ToLower(repo.PrimaryLanguage.Language)
-		} else {
-			contentFormat = "markdown"
-		}
-
-		switch subject {
-		case "Open Bible Stories":
-			flavorType = "gloss"
-			flavor = "textStories"
-		case "Translation Academy", "Translation Words":
-			flavorType = "peripheral"
-			flavor = "x-peripheralArticles"
-		default:
-			flavorType = "peripheral"
-			flavor = "x-" + strings.ReplaceAll(subject, " ", "")
-		}
+		contentFormat = "markdown"
 	}
-	var ok bool
-	checkingLevel, ok = manifest["checking"].(map[string]any)["checking_level"].(int)
+	if sbFlavor, ok := dcs.ConvertedSBFlavors[subject]; ok {
+		flavorType, flavor = sbFlavor.FlavorType, sbFlavor.Flavor
+	} else if sbFlavor, ok := dcs.ConvertedSBFlavors["TSV "+subject]; ok {
+		flavorType, flavor = sbFlavor.FlavorType, sbFlavor.Flavor
+	} else if isTSV {
+		flavorType = "parascriptural"
+		flavor = "x-" + strings.ToLower(strings.Fields(subject)[len(strings.Fields(subject))-1])
+	} else {
+		flavorType = "peripheral"
+		flavor = "x-" + strings.ToLower(strings.ReplaceAll(strings.ReplaceAll(subject, " ", ""), "-", ""))
+	}
+	checkingLevel, ok := manifest["checking"].(map[string]any)["checking_level"].(int)
 	if !ok {
 		cL, ok := manifest["checking"].(map[string]any)["checking_level"].(string)
 		if !ok {
@@ -565,10 +551,7 @@ func GetDoor43MetadataFromSBMetadata(ctx context.Context, gitRepo *git.Repositor
 	var subject string
 
 	_ = repo.LoadOwner(ctx)
-	publisher = repo.Owner.FullName
-	if publisher == "" {
-		publisher = repo.Owner.Name
-	}
+	publisher = repoPublisher(repo)
 
 	metadataType = "sb"
 	if sbMetadata.Meta != nil {
@@ -597,7 +580,7 @@ func GetDoor43MetadataFromSBMetadata(ctx context.Context, gitRepo *git.Repositor
 	languageDirection = dcs.GetLanguageDirection(language)
 	languageIsGL = dcs.LanguageIsGL(language)
 	repoNameSuffix := getSBRepoNameSuffix(repo.Name)
-	subject = getSBSubject(flavorType, flavor, abbreviation, repoNameSuffix)
+	subject = getSBSubject(flavorType, flavor, abbreviation, repoNameSuffix, title)
 
 	switch subject {
 	case "Bible", "Aligned Bible", "Greek New Testament", "Hebrew Old Testament":
@@ -609,10 +592,10 @@ func GetDoor43MetadataFromSBMetadata(ctx context.Context, gitRepo *git.Repositor
 	case "Open Bible Stories":
 		contentFormat = "markdown"
 		ingredients = getSBOBSIngredients(ctx, gitRepo, sbMetadata, commit)
-	case "TSV Translation Notes", "TSV Translation Questions", "TSV Translation Words Links":
+	case "TSV Translation Notes", "TSV Translation Questions", "TSV Translation Words Links", "TSV Study Notes", "TSV Study Questions":
 		contentFormat = "tsv7"
 		ingredients = getSBTSVIngredients(ctx, gitRepo, sbMetadata, commit)
-	case "TSV OBS Study Questions", "TSV OBS Translation Questions", "TSV OBS Study Notes", "TSV OBS Translation Notes":
+	case "TSV OBS Study Questions", "TSV OBS Translation Questions", "TSV OBS Study Notes", "TSV OBS Translation Notes", "TSV OBS Translation Words Links":
 		contentFormat = "tsv7"
 		ingredients = getSBOBSTSVIngredients(ctx, gitRepo, sbMetadata, commit)
 	case "Translation Academy":
@@ -703,146 +686,129 @@ func getSBRepoNameSuffix(repoName string) string {
 	return strings.ToLower(repoName)
 }
 
-func getSBSubject(flavorType, flavor, abbreviation, repoNameSuffix string) string {
+func getSBSubject(flavorType, flavor, abbreviation, repoNameSuffix, title string) string {
 	flavorLower := strings.ToLower(flavor)
 	abbreviationLower := strings.ToLower(abbreviation)
+	titleLower := strings.ToLower(title)
 
-	switch strings.ToLower(flavorType) {
-	case "scripture":
+	if strings.EqualFold(flavorType, "scripture") {
+		if flavorLower == "texttranslation" {
+			return "Bible" // Leave it as Bible now. If we find alignments later, will be Aligned Bible
+		}
 		if after, ok := strings.CutPrefix(flavor, "x-"); ok {
 			return text_cases.Title(text_language.English).String(after)
 		}
-		if flavor == "textTranslation" {
-			return "Bible" // Leave it as Bible now. If we find alignments later, will be Aligned Bible
-		}
-	case "gloss":
-		if flavor == "textStories" {
-			return "Open Bible Stories"
-		}
-	case "parascriptural":
-		switch flavorLower {
-		case "x-bcvnotes":
-			return "TSV Translation Notes"
-		case "x-bcvquestions":
-			return "TSV Translation Questions"
-		case "x-bcvarticles":
-			return "TSV Translation Words Links"
-		}
-	case "peripheral":
-		switch flavorLower {
-		case "x-greeklexicon", "x-greeklexicons":
-			return "Greek Lexicon"
-		case "x-hebrewlexicon", "x-hebrewlexicons":
-			return "Hebrew Lexicon"
-		case "x-lexicon", "x-lexicons":
-			switch abbreviationLower {
-			case "hl", "thl", "uhl":
-				return "Hebrew Lexicon"
-			case "gl", "tgl", "ugl":
-				return "Greek Lexicon"
-			default:
-				switch repoNameSuffix {
-				case "ugl":
-					return "Greek Lexicon"
-				case "uhl":
-					return "Hebrew Lexicon"
-				}
-			}
 
-		case "x-obsstudyquestions":
-			return "TSV OBS Study Questions"
-		case "x-obstranslationquestions":
-			return "TSV OBS Translation Questions"
-		case "x-obsquestions":
-			switch abbreviationLower {
-			case "obstq":
-				return "TSV OBS Translation Questions"
-			case "obssq":
-				return "TSV OBS Study Questions"
-			default:
-				switch repoNameSuffix {
-				case "obs-tq":
-					return "TSV OBS Translation Questions"
-				case "obs-sq":
-					return "TSV OBS Study Questions"
-				}
-			}
-		case "x-obsstudynotes":
-			return "TSV OBS Study Notes"
-		case "x-obstranslationnotes", "obstn":
-			return "TSV OBS Translation Notes"
-		case "x-obsnotes":
-			switch abbreviationLower {
-			case "obstn":
-				return "TSV OBS Translation Notes"
-			case "obssn":
-				return "TSV OBS Study Notes"
-			default:
-				switch repoNameSuffix {
-				case "obs-tn":
-					return "TSV OBS Translation Notes"
-				case "obs-sn":
-					return "TSV OBS Study Notes"
-				}
-			}
-		case "obssn":
-			return "TSV OBS Study Notes"
-		case "x-obstheologicalformation":
-			return "OBS Theological Formation"
-		case "x-peripheralarticles", "x-translationacademy", "x-translationwords":
-			switch abbreviationLower {
-			case "ta":
-				return "Translation Academy"
-			case "tw":
-				return "Translation Words"
-			default:
-				switch repoNameSuffix {
-				case "ta":
-					return "Translation Academy"
-				case "tw":
-					return "Translation Words"
-				}
-			}
-		default:
-			switch repoNameSuffix {
-			case "sn":
-				return "TSV Study Notes"
-			case "sq":
-				return "TSV Study Questions"
-			case "ta":
-				return "Translation Academy"
-			case "tw":
-				return "Translation Words"
-			case "tn":
-				return "TSV Translation Notes"
-			case "tq":
-				return "TSV Translation Questions"
-			case "twl":
-				return "TSV Translation Words Links"
-			case "obs":
-				return "Open Bible Stories"
-			case "obs-tn":
-				return "TSV OBS Translation Notes"
-			case "obs-tq":
-				return "TSV OBS Translation Questions"
-			case "obs-sn":
-				return "TSV OBS Study Notes"
-			case "obs-sq":
-				return "TSV OBS Study Questions"
-			case "glt", "gst", "ult", "ust":
-				return "Aligned Bible"
-			case "uhl", "thl", "hl":
-				return "Hebrew Lexicon"
-			case "ugl", "tgl", "gl":
-				return "Greek Lexicon"
-			case "ugg", "tgg", "gg":
-				return "Greek Grammar"
-			case "uhg", "thg", "hg":
-				return "Hebrew Grammar"
-			case "uag", "tag", "ag":
-				return "Aramaic Grammar"
-			}
+		return "Unknown"
+	}
+
+	// Now we don't care about flavor type, just go by flavorLower
+	switch flavorLower {
+	case "textstories":
+		return "Open Bible Stories"
+	case "x-bcvnotes":
+		if strings.HasSuffix(abbreviationLower, "sn") || repoNameSuffix == "sn" || strings.Contains(titleLower, "study notes") {
+			return "TSV Study Notes"
 		}
+		return "TSV Translation Notes"
+	case "x-bcvquestions":
+		if strings.HasSuffix(abbreviationLower, "sq") || repoNameSuffix == "sq" || strings.Contains(titleLower, "study questions") {
+			return "TSV Study Questions"
+		}
+		return "TSV Translation Questions"
+	case "x-obsnotes":
+		if strings.HasSuffix(abbreviationLower, "sn") || repoNameSuffix == "obs-sn" || strings.Contains(titleLower, "study notes") {
+			return "TSV OBS Study Notes"
+		}
+		return "TSV OBS Translation Notes"
+	case "x-obsquestions":
+		if strings.HasSuffix(abbreviationLower, "sq") || repoNameSuffix == "obs-sq" || strings.Contains(titleLower, "study questions") {
+			return "TSV OBS Study Questions"
+		}
+		return "TSV OBS Translation Questions"
+	case "x-obsstudyquestions":
+		return "TSV OBS Study Questions"
+	case "x-obstranslationquestions":
+		return "TSV OBS Translation Questions"
+	case "x-obsstudynotes":
+		return "TSV OBS Study Notes"
+	case "x-obstranslationnotes":
+		return "TSV OBS Translation Notes"
+	case "x-bcvarticles":
+		// go-rc2sb abbreviates both TW and TWL burritos "TW", so only the repo name tells them apart
+		switch {
+		case strings.HasPrefix(abbreviationLower, "obs"), repoNameSuffix == "obs-twl":
+			return "TSV OBS Translation Words Links"
+		case repoNameSuffix == "tw":
+			return "Translation Words"
+		}
+		return "TSV Translation Words Links"
+	case "x-greeklexicon", "x-greeklexicons":
+		return "Greek Lexicon"
+	case "x-hebrewlexicon", "x-hebrewlexicons", "x-hebrewaramaiclexicon":
+		return "Hebrew-Aramaic Lexicon"
+	case "x-lexicon", "x-lexicons":
+		switch abbreviationLower {
+		case "hl", "hal", "thl", "thal", "uhl", "uhal":
+			return "Hebrew-Aramaic Lexicon"
+		case "gl", "tgl", "ugl":
+			return "Greek Lexicon"
+		}
+	case "x-theologicalformation":
+		return "Theological Formation"
+	case "x-obstheologicalformation":
+		return "OBS Theological Formation"
+	case "x-translationacademy":
+		return "Translation Academy"
+	case "x-translationwords":
+		return "Translation Words"
+	case "x-peripheralarticles":
+		switch abbreviationLower {
+		case "ta":
+			return "Translation Academy"
+		case "tw":
+			return "Translation Words"
+		}
+	}
+
+	// A flavor that doesn't settle the subject falls back to the repo naming convention
+	switch repoNameSuffix {
+	case "sn":
+		return "TSV Study Notes"
+	case "sq":
+		return "TSV Study Questions"
+	case "ta":
+		return "Translation Academy"
+	case "tw":
+		return "Translation Words"
+	case "tn":
+		return "TSV Translation Notes"
+	case "tq":
+		return "TSV Translation Questions"
+	case "twl":
+		return "TSV Translation Words Links"
+	case "obs":
+		return "Open Bible Stories"
+	case "obs-tn":
+		return "TSV OBS Translation Notes"
+	case "obs-tq":
+		return "TSV OBS Translation Questions"
+	case "obs-sn":
+		return "TSV OBS Study Notes"
+	case "obs-sq":
+		return "TSV OBS Study Questions"
+	case "glt", "gst", "ult", "ust":
+		return "Aligned Bible"
+	case "uhl", "uhal", "thl", "thal", "hl", "hal":
+		return "Hebrew-Aramaic Lexicon"
+	case "ugl", "tgl", "gl":
+		return "Greek Lexicon"
+	case "ugg", "tgg", "gg":
+		return "Greek Grammar"
+	case "uhg", "thg", "hg":
+		return "Hebrew Grammar"
+	case "uag", "tag", "ag":
+		return "Aramaic Grammar"
 	}
 
 	return "Unknown"
@@ -1040,6 +1006,8 @@ func populateRCDoor43Metadata(ctx context.Context, gitRepo *git.Repository, dm *
 	if conformsTo := nestedString(manifest, "dublin_core", "conformsto"); strings.HasPrefix(conformsTo, "rc") {
 		dm.MetadataVersion = strings.TrimPrefix(conformsTo, "rc")
 	}
+	// go-rc2sb converts a manifest that fails the schema too, so the SB download goes by its subject either way
+	dm.Subject = rc2sb.ResolveSubject(nestedString(manifest, "dublin_core", "subject"), GetBooks(manifest))
 
 	dm.ValidationError, err = dcs.ValidateMapByRC02Schema(manifest)
 	if err != nil {
@@ -1092,16 +1060,17 @@ func populateTcTsDoor43Metadata(ctx context.Context, gitRepo *git.Repository, dm
 	}
 	if t.MetadataType == "" {
 		dm.MetadataType, dm.MetadataVersion = guessTcTsTypeAndVersion(t, buf, repo.Name)
-		dm.ValidationError = metadataFileError("manifest.json is not a supported manifest: translationCore needs tc_version 7 or later, translationStudio needs package_version 3 or later")
+		dm.ValidationError = metadataFileError("manifest.json is not a supported manifest: it needs a tc_version (translationCore) or package_version (translationStudio) of 1 or later.")
 		return errNotTcTsManifest
 	}
 	dm.MetadataType = t.MetadataType
 	dm.MetadataVersion = t.MetadataVersion
+	dm.Publisher = repoPublisher(repo)
 
 	if (t.Project.ID == "" || t.Project.ID == "bible") && t.Type.ID != "" {
 		t.Project.ID = t.Type.ID
 	}
-	if t.Project.ID != "tw" && t.Project.ID != "ta" && !dcs.IsValidBook(t.Project.ID) {
+	if t.Project.ID != "tw" && t.Project.ID != "ta" && t.Type.ID != "ta" && t.Type.ID != "tw" && !dcs.IsValidBook(t.Project.ID) {
 		dm.ValidationError = metadataFileError("manifest.json: project id %q is not a valid book identifier", t.Project.ID)
 		return nil
 	}
@@ -1122,6 +1091,15 @@ func populateTcTsDoor43Metadata(ctx context.Context, gitRepo *git.Repository, dm
 		versification = "ufw"
 	}
 
+	if t.Resource.ID == "" {
+		// tC names repos {lang}_{resource}_{book}_book; off that convention, a one-book repo goes by its book
+		if parts := strings.Split(strings.ToLower(repo.Name), "_"); len(parts) == 4 && parts[3] == "book" && dcs.IsValidBook(parts[2]) {
+			t.Resource.ID = parts[1]
+		} else {
+			t.Resource.ID = t.Project.ID
+		}
+	}
+
 	dm.Repo = repo
 	dm.Subject = t.Subject
 	dm.FlavorType = t.FlavorType
@@ -1129,9 +1107,12 @@ func populateTcTsDoor43Metadata(ctx context.Context, gitRepo *git.Repository, dm
 	dm.Title = t.Title
 	dm.Abbreviation = strings.ToLower(t.Resource.ID)
 	dm.Language = strings.ToLower(t.TargetLanguage.ID) // language codes are always stored lowercase
-	dm.LanguageTitle = t.TargetLanguage.Name
-	dm.LanguageDirection = t.TargetLanguage.Direction
-	dm.LanguageIsGL = dcs.LanguageIsGL(t.TargetLanguage.ID)
+	dm.LanguageTitle = dcs.GetLanguageTitle(dm.Language)
+	if dm.LanguageTitle == "" {
+		dm.LanguageTitle = t.TargetLanguage.Name
+	}
+	dm.LanguageDirection = directionForLanguage(dm.Language, t.TargetLanguage.Direction)
+	dm.LanguageIsGL = dcs.LanguageIsGL(dm.Language)
 	dm.ContentFormat = t.Format
 	dm.CheckingLevel = 1
 	ingredient := &structs.Ingredient{
@@ -1160,6 +1141,29 @@ func populateTcTsDoor43Metadata(ctx context.Context, gitRepo *git.Repository, dm
 	}
 
 	return nil
+}
+
+// directionForLanguage is langnames' direction for lang, or the manifest's own ltr/rtl
+// when langnames doesn't know the code (its lookup would just answer ltr)
+func directionForLanguage(lang, manifestDirection string) string {
+	if dir := strings.ToLower(manifestDirection); !dcs.IsValidLanguage(lang) && (dir == "ltr" || dir == "rtl") {
+		return dir
+	}
+	return dcs.GetLanguageDirection(lang)
+}
+
+// repoPublisher is the publisher of a repo whose metadata names none: the owner's full
+// name, else the owner's username
+func repoPublisher(repo *repo_model.Repository) string {
+	if repo.Owner != nil {
+		if repo.Owner.FullName != "" {
+			return repo.Owner.FullName
+		}
+		if repo.Owner.Name != "" {
+			return repo.Owner.Name
+		}
+	}
+	return repo.OwnerName
 }
 
 // guessTcTsTypeAndVersion picks tc or ts, and a version, for a manifest.json that did
@@ -1253,6 +1257,9 @@ func processDoor43MetadataForRepoRef(ctx context.Context, repo *repo_model.Repos
 		return errors.New("repo must not be empty, an archive, a mirror or private")
 	}
 
+	if err := repo.LoadOwner(ctx); err != nil { // the publisher fallback reads repo.Owner
+		return err
+	}
 	if err := repo.LoadLatestDMs(ctx); err != nil {
 		return err
 	}
@@ -1376,6 +1383,10 @@ func processDoor43MetadataForRepoRef(ctx context.Context, repo *repo_model.Repos
 
 	if err := dm.DetermineAttachmentFlags(ctx); err != nil {
 		log.Error("DetermineAttachmentFlags [%s/%s]: %v", repo.FullName(), ref, err)
+	}
+
+	if dm.Publisher == "" {
+		dm.Publisher = repoPublisher(repo)
 	}
 
 	if dm.ID > 0 {

@@ -48,7 +48,7 @@ Common checks (all of `rc`, `ts`, `tc`, `sb`):
   `options/schema/sb100` (a server's `custom/options/schema/...` copy overrides them;
   nothing is fetched from the network). `tc`/`ts` have no schema: a `manifest.json` is
   invalid when it is not JSON, has a field of the wrong type, declares neither
-  `tc_version >= 7` nor `package_version >= 3`, or names no valid book. Since tc and ts
+  `tc_version >= 1` nor `package_version >= 1`, or names no valid book. Since tc and ts
   share the file name, an invalid `manifest.json` is typed by the repo naming convention
   (`_book` suffix is tc, `_text_` is ts), then by the version key the file carries, else tc.
 - title is set and does not still say "unfoldingWord" (warning; skipped for the
@@ -99,7 +99,7 @@ Common checks (all of `rc`, `ts`, `tc`, `sb`):
 `rc`/`sb` TSV subjects (TSV-001…011):
 
 - header row exactly matches the subject's column schema (legacy 9-column TN files are
-  tolerated); every row has the header's column count; `ID` matches `^[a-z][a-z0-9]{3}$`
+  tolerated, and Study Notes may omit `SupportReference`); every row has the header's column count; `ID` matches `^[a-z][a-z0-9]{3}$`
   and is unique per file (duplicates break tC-Create); `Reference` grammar (incl.
   `{c}:front` and compound verse lists like `5:1,3,8-12`); `Occurrence` is an integer
   ≥ -1 when Quote/OrigWords has text (0 or blank when it's empty, e.g. intro rows);

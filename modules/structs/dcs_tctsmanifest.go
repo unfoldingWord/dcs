@@ -3,6 +3,39 @@
 
 package structs
 
+import (
+	"bytes"
+
+	"gitea.dev/modules/json"
+)
+
+// TcTsType is the "type" of a tC/tS manifest, which some manifests give as a bare ID string instead of an object.
+type TcTsType struct {
+	ID   string `json:"id"`
+	Name string `json:"name"`
+}
+
+// UnmarshalJSON inspects the raw bytes to determine if it's a string or object.
+func (t *TcTsType) UnmarshalJSON(data []byte) error {
+	// Trim leading/trailing whitespace
+	data = bytes.TrimSpace(data)
+
+	// If it starts with '{', it's a JSON object -> unmarshal all fields normally
+	if bytes.HasPrefix(data, []byte("{")) {
+		// Using an alias avoids infinite recursion loop during unmarshalling
+		type Alias TcTsType
+		var aux Alias
+		if err := json.Unmarshal(data, &aux); err != nil {
+			return err
+		}
+		*t = TcTsType(aux)
+		return nil
+	}
+
+	// Otherwise, treat it as a string and assign it directly to the ID field
+	return json.Unmarshal(data, &t.ID)
+}
+
 // tc v7: https://git.door43.org/qa99/en_ult_rom_book/raw/branch/master/manifest.json
 // tc v8: https://git.door43.org/pjoakes/en_ust_2co_book/src/branch/master/manifest.json
 // ts v3: https://git.door43.org/test2/uw-obs-aas/src/branch/master/manifest.json
@@ -20,21 +53,21 @@ type TcTsManifest struct {
 	Title           string
 	TargetLanguage  struct {
 		ID        string `json:"id"`
+		Slug      string `json:"slug"` // for tS package_version 2, which has no id
 		Name      string `json:"name"`
 		Direction string `json:"direction"`
 	} `json:"target_language"`
-	Type struct {
-		ID   string `json:"id"`
-		Name string `json:"name"`
-	} `json:"type"`
-	ResourceID string `json:"resource_id"` // for tS package_version < 5
+	Type       TcTsType `json:"type"`
+	ResourceID string   `json:"resource_id"` // for tS package_version < 5
 	Resource   struct {
 		ID   string `json:"id"`
 		Name string `json:"name"`
 	} `json:"resource"`
-	Project struct {
+	ProjectID string `json:"project_id"`
+	Project   struct {
 		ID   string `json:"id"`
 		Name string `json:"name"`
 		Type string `json:"type"`
 	} `json:"project"`
+	Slug string `json:"slug"`
 }
