@@ -56,6 +56,9 @@ func door43MetadataOwnerNames(names []string) []string {
 
 func runDoor43Metadata(ctx context.Context, c *cli.Command) error {
 	ownerNames := door43MetadataOwnerNames(c.StringSlice("owner"))
+	if c.IsSet("owner") && len(ownerNames) == 0 {
+		return errors.New("--owner(-o) names no owner") // not to be taken for a run over every repo
+	}
 	repoName := c.String("repo")
 	if repoName != "" && len(ownerNames) != 1 {
 		return errors.New("--repo(-r) needs exactly one --owner(-o)")

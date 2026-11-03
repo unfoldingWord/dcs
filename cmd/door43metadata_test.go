@@ -22,6 +22,11 @@ func TestDoor43MetadataArgs(t *testing.T) {
 		err := cmd.Run(t.Context(), append([]string{"door43metadata"}, args...))
 		assert.EqualError(t, err, "--repo(-r) needs exactly one --owner(-o)", "%q", args)
 	}
+	for _, owner := range []string{" ", ",", " , "} {
+		cmd := &cli.Command{Flags: CmdDoor43Metadata.Flags, Action: runDoor43Metadata}
+		err := cmd.Run(t.Context(), []string{"door43metadata", "--owner", owner})
+		assert.EqualError(t, err, "--owner(-o) names no owner", "a blank --owner must not become a full run: %q", owner)
+	}
 }
 
 func TestDoor43MetadataOwnerNames(t *testing.T) {
