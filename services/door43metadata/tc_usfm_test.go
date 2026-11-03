@@ -70,6 +70,14 @@ func TestPopulateTcDoor43Metadata_USFM(t *testing.T) {
 		assert.Equal(t, "./tit.usfm", dm.Ingredients[0].Path)
 	})
 
+	t.Run("USFM named after the repo wins over one named after the book", func(t *testing.T) {
+		dm := populate(t, "dcs-tc-usfm-repo", tcManifest, map[string]string{
+			"repo1.usfm": "\\id TIT\n\\c 1\n\\v 1 Paul\n",
+			"tit.usfm":   "\\id TIT\n\\c 1\n\\v 1 Paul\n",
+		})
+		assert.Equal(t, "./repo1.usfm", dm.Ingredients[0].Path)
+	})
+
 	t.Run("the only USFM, named after neither", func(t *testing.T) {
 		dm := populate(t, "dcs-tc-usfm-other", tcManifest, map[string]string{"57-TIT.usfm": "\\id TIT\n"})
 		assert.Equal(t, "./57-TIT.usfm", dm.Ingredients[0].Path)

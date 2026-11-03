@@ -13,6 +13,7 @@ import (
 	"path"
 	"path/filepath"
 	"regexp"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -1058,6 +1059,7 @@ func tcBookSource(ctx context.Context, gitRepo *git.Repository, commit *git.Comm
 		}
 	}
 	if len(usfmFiles) > 0 {
+		slices.Sort(usfmFiles) // go-tc2rc's fallback is the first by name
 		for _, want := range []string{repoName + ".usfm", projectID + ".usfm"} {
 			for _, name := range usfmFiles {
 				if strings.EqualFold(name, want) {
@@ -1167,7 +1169,9 @@ func populateTcTsDoor43Metadata(ctx context.Context, gitRepo *git.Repository, dm
 			switch {
 			case usfm != "":
 				bookPath = "./" + usfm
-				count, _ = GetBookAlignmentCount(ctx, gitRepo, bookPath, commit)
+				if count, err = GetBookAlignmentCount(ctx, gitRepo, bookPath, commit); err != nil {
+					log.Warn("GetBookAlignmentCount %s/%s %s: %v", repo.FullName(), dm.Ref, bookPath, err)
+				}
 			case chapterDir != "":
 				// With no USFM, as in a save from before tc_version, go-tc2rc converts <book>/<chapter>.json unaligned
 				bookPath = "./" + chapterDir
