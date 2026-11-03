@@ -20,12 +20,19 @@ func TestDoor43MetadataArgs(t *testing.T) {
 		{"--repo", "en_tn"},
 		{"--owner", "unfoldingWord", "--owner", "Door43-Catalog", "--repo", "en_tn"},
 	} {
-		cmd := &cli.Command{Flags: CmdDoor43Metadata.Flags, Action: runDoor43Metadata}
+		cmd := &cli.Command{Flags: door43MetadataFlags(), Action: runDoor43Metadata}
 		err := cmd.Run(t.Context(), append([]string{"door43metadata"}, args...))
 		assert.EqualError(t, err, "--repo(-r) needs exactly one --owner(-o)", "%q", args)
 	}
+	for _, owner := range []string{" ", ",", " , "} {
+		cmd := &cli.Command{Flags: door43MetadataFlags(), Action: runDoor43Metadata}
+		err := cmd.Run(t.Context(), []string{"door43metadata", "--owner", owner})
+		assert.EqualError(t, err, "--owner(-o) names no owner", "a blank --owner must not become a full run: %q", owner)
+	}
+	cmd := &cli.Command{Flags: door43MetadataFlags(), Action: runDoor43Metadata}
+	assert.EqualError(t, cmd.Run(t.Context(), []string{"door43metadata", "--topic", " , "}), "--topic names no topic")
 	for _, severity := range []string{"5", "-1"} {
-		cmd := &cli.Command{Flags: CmdDoor43Metadata.Flags, Action: runDoor43Metadata}
+		cmd := &cli.Command{Flags: door43MetadataFlags(), Action: runDoor43Metadata}
 		err := cmd.Run(t.Context(), []string{"door43metadata", "--healthcheck-severity", severity})
 		assert.EqualError(t, err, "--healthcheck-severity must be 1 (success), 2 (info), 3 (warning) or 4 (error)", severity)
 	}
@@ -42,7 +49,7 @@ func TestDoor43MetadataScope(t *testing.T) {
 
 func TestDoor43MetadataOwnerNames(t *testing.T) {
 	var got []string
-	cmd := &cli.Command{Flags: CmdDoor43Metadata.Flags, Action: func(_ context.Context, c *cli.Command) error {
+	cmd := &cli.Command{Flags: door43MetadataFlags(), Action: func(_ context.Context, c *cli.Command) error {
 		got = door43MetadataNames(c.StringSlice("owner"))
 		return nil
 	}}

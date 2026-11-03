@@ -26,7 +26,13 @@ var CmdDoor43Metadata = &cli.Command{
 	Usage:       "Scan repo(s) for the Door43 Metadata",
 	Description: "Updates the Door43 Metadata of public repos: all of them with no flags, or only those that match every flag given",
 	Action:      runDoor43Metadata,
-	Flags: []cli.Flag{
+	Flags:       door43MetadataFlags(),
+}
+
+// door43MetadataFlags returns new flags each call: a flag keeps having been set, so tests
+// running the command more than once need their own.
+func door43MetadataFlags() []cli.Flag {
+	return []cli.Flag{
 		&cli.StringSliceFlag{
 			Name:    "owner",
 			Aliases: []string{"o"},
@@ -54,7 +60,7 @@ var CmdDoor43Metadata = &cli.Command{
 			Name:  "topic",
 			Usage: "Only repos with this topic; repeat it or separate topics with commas, and a repo needs them all",
 		},
-	},
+	}
 }
 
 // door43MetadataNames trims the names given to a flag and drops empty ones and repeats,
@@ -101,6 +107,13 @@ func door43MetadataScope(ownerNames []string, opts repo_model.ReposForMetadataOp
 
 func runDoor43Metadata(ctx context.Context, c *cli.Command) error {
 	ownerNames := door43MetadataNames(c.StringSlice("owner"))
+	if c.IsSet("owner") && len(ownerNames) == 0 {
+		return errors.New("--owner(-o) names no owner") // not to be taken for a run over every repo
+	}
+	topics := door43MetadataNames(c.StringSlice("topic"))
+	if c.IsSet("topic") && len(topics) == 0 {
+		return errors.New("--topic names no topic") // not to be taken for no topic filter
+	}
 	repoName := strings.TrimSpace(c.String("repo"))
 	if repoName != "" && len(ownerNames) != 1 {
 		return errors.New("--repo(-r) needs exactly one --owner(-o)")
@@ -114,7 +127,7 @@ func runDoor43Metadata(ctx context.Context, c *cli.Command) error {
 		MinHealthcheckSeverity: repo_model.SeverityLevel(severity),
 		HasValidationError:     c.Bool("has-validation-error"),
 		HasRelease:             c.Bool("has-release"),
-		Topics:                 door43MetadataNames(c.StringSlice("topic")),
+		Topics:                 topics,
 	}
 
 	stdCtx, cancel := installSignals()
