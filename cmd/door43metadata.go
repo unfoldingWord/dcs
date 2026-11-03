@@ -115,6 +115,9 @@ func runDoor43Metadata(ctx context.Context, c *cli.Command) error {
 		return errors.New("--topic names no topic") // not to be taken for no topic filter
 	}
 	repoName := strings.TrimSpace(c.String("repo"))
+	if c.IsSet("repo") && repoName == "" {
+		return errors.New("--repo(-r) names no repo") // not to be taken for a run over every repo
+	}
 	if repoName != "" && len(ownerNames) != 1 {
 		return errors.New("--repo(-r) needs exactly one --owner(-o)")
 	}
@@ -180,14 +183,14 @@ func runDoor43Metadata(ctx context.Context, c *cli.Command) error {
 	if err = door43MetadataNoneSelected(ownerNames, repoName, n); err != nil {
 		return err
 	}
-	log.Info("Finished gathering the door43metadata for %d repos %s", n, scope)
-	return system.CreateRepositoryNotice("Finished Door43 Metadata Update for %d repos %s", n, scope)
+	log.Info("Finished gathering the door43metadata for %d repos (%s)", n, scope)
+	return system.CreateRepositoryNotice("Finished Door43 Metadata Update for %d repos (%s)", n, scope)
 }
 
 // door43MetadataNoneSelected fails a run for a named repo that the filters left out, so it isn't taken for done.
 func door43MetadataNoneSelected(ownerNames []string, repoName string, n int) error {
 	if repoName != "" && n == 0 {
-		return fmt.Errorf("%s/%s was not processed: with a filter, only a public, unarchived repo matching every flag is", ownerNames[0], repoName)
+		return fmt.Errorf("%s/%s was not processed: with a filter, a repo is processed only when it is public, unarchived and matches every flag", ownerNames[0], repoName)
 	}
 	return nil
 }

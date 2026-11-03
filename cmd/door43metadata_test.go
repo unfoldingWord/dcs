@@ -31,6 +31,10 @@ func TestDoor43MetadataArgs(t *testing.T) {
 	}
 	cmd := &cli.Command{Flags: door43MetadataFlags(), Action: runDoor43Metadata}
 	assert.EqualError(t, cmd.Run(t.Context(), []string{"door43metadata", "--topic", " , "}), "--topic names no topic")
+	for _, args := range [][]string{{"--repo", " "}, {"--repo", ""}, {"-o", "unfoldingWord", "-r", " "}} {
+		cmd := &cli.Command{Flags: door43MetadataFlags(), Action: runDoor43Metadata}
+		assert.EqualError(t, cmd.Run(t.Context(), append([]string{"door43metadata"}, args...)), "--repo(-r) names no repo", "a blank --repo must not become a wider run: %q", args)
+	}
 	for _, severity := range []string{"0", "5", "-1"} {
 		cmd := &cli.Command{Flags: door43MetadataFlags(), Action: runDoor43Metadata}
 		err := cmd.Run(t.Context(), []string{"door43metadata", "--healthcheck-severity", severity})
@@ -40,7 +44,7 @@ func TestDoor43MetadataArgs(t *testing.T) {
 
 func TestDoor43MetadataNoneSelected(t *testing.T) {
 	assert.EqualError(t, door43MetadataNoneSelected([]string{"unfoldingWord"}, "en_tn", 0),
-		"unfoldingWord/en_tn was not processed: with a filter, only a public, unarchived repo matching every flag is")
+		"unfoldingWord/en_tn was not processed: with a filter, a repo is processed only when it is public, unarchived and matches every flag")
 	assert.NoError(t, door43MetadataNoneSelected([]string{"unfoldingWord"}, "en_tn", 1))
 	assert.NoError(t, door43MetadataNoneSelected([]string{"unfoldingWord"}, "", 0), "a filter over many repos may match none")
 }
