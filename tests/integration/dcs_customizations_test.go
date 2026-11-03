@@ -221,6 +221,33 @@ func TestDCSAPIRepoSBArchive(t *testing.T) {
 	MakeRequest(t, NewRequest(t, "HEAD", "/api/v1/repos/user2/repo1/sb/master.zip").AddTokenAuth(token), http.StatusOK)
 }
 
+// TestDCSAPIRepoSBUnconvertibleContent covers a repo whose metadata says it converts but whose
+// content a converter rejects: 422 with the reason, not 500, cached or streamed.
+func TestDCSAPIRepoSBUnconvertibleContent(t *testing.T) {
+	defer tests.PrepareTestEnv(t)()
+
+	// repo1 has only a README, so go-rc2sb finds no manifest.yaml
+	require.NoError(t, repo_model.InsertDoor43Metadata(t.Context(), &repo_model.Door43Metadata{
+		RepoID: 1, Ref: "master", RefType: "branch", CommitSHA: "65f1bf27bc3bf70f64657658635e66094edbcb4d",
+		Stage: door43metadata_model.StageLatest, MetadataType: "rc", MetadataVersion: "0.2", Subject: "Bible",
+		IsLatestForStage: true, IsRepoMetadata: true,
+	}))
+
+	check := func(t *testing.T, url string) {
+		t.Helper()
+		resp := MakeRequest(t, NewRequest(t, "GET", url), http.StatusUnprocessableEntity)
+		assert.Contains(t, resp.Body.String(), "can't be converted to a Scripture Burrito")
+		assert.NotContains(t, resp.Body.String(), "repo-sb-archive", "the server's temporary directory stays out of the message")
+	}
+	for _, cache := range []bool{true, false} {
+		defer test.MockVariableValue(&setting.DCS.CacheSBArchives, cache)()
+		check(t, "/api/v1/repos/user2/repo1/sb/master.zip")
+		check(t, "/user2/repo1/sb/master.zip")
+	}
+	check(t, "/api/v1/repos/user2/repo1/sb/raw/metadata.json?ref=master")
+	check(t, "/user2/repo1/sb/raw/metadata.json?ref=master")
+}
+
 func sbZipEntry(t *testing.T, archive []byte, name string) []byte {
 	t.Helper()
 	zr, err := zip.NewReader(bytes.NewReader(archive), int64(len(archive)))

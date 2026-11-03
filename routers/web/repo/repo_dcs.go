@@ -21,6 +21,8 @@ func DownloadSBFile(ctx *context.Context) {
 		ctx.HTTPError(http.StatusBadRequest, err.Error())
 	case errors.Is(err, util.ErrNotExist), errors.Is(err, sbarchiver_service.RepoRefNotFoundError{}), errors.Is(err, sbarchiver_service.ErrRepoNotConvertible{}):
 		ctx.HTTPError(http.StatusNotFound, err.Error())
+	case errors.Is(err, sbarchiver_service.ErrUnconvertibleContent{}):
+		ctx.HTTPError(http.StatusUnprocessableEntity, err.Error())
 	default:
 		ctx.ServerError("sbarchiver_service.ServeSBFile", err)
 	}
