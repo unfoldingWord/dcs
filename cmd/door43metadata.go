@@ -119,7 +119,7 @@ func runDoor43Metadata(ctx context.Context, c *cli.Command) error {
 		return errors.New("--repo(-r) needs exactly one --owner(-o)")
 	}
 	severity := c.Int("healthcheck-severity")
-	if severity != 0 && (severity < int(repo_model.SeverityLevelSuccess) || severity > int(repo_model.SeverityLevelError)) {
+	if c.IsSet("healthcheck-severity") && (severity < int(repo_model.SeverityLevelSuccess) || severity > int(repo_model.SeverityLevelError)) {
 		return errors.New("--healthcheck-severity must be 1 (success), 2 (info), 3 (warning) or 4 (error)")
 	}
 	opts := repo_model.ReposForMetadataOptions{
@@ -163,7 +163,7 @@ func runDoor43Metadata(ctx context.Context, c *cli.Command) error {
 		if err := system.CreateRepositoryNotice("Starting FULL Door43 Metadata Update - PROCESSING ALL REPOS AND REFS"); err != nil {
 			return err
 		}
-		if err := door43metadata_service.UpdateDoor43Metadata(stdCtx, opts); err != nil {
+		if _, err := door43metadata_service.UpdateDoor43Metadata(stdCtx, opts); err != nil {
 			return err
 		}
 		log.Info("Finished gathering the door43metadata for all repos")
@@ -173,9 +173,21 @@ func runDoor43Metadata(ctx context.Context, c *cli.Command) error {
 	if err := system.CreateRepositoryNotice("Starting Door43 Metadata Update for the repos %s", scope); err != nil {
 		return err
 	}
-	if err := door43metadata_service.UpdateDoor43Metadata(stdCtx, opts); err != nil {
+	n, err := door43metadata_service.UpdateDoor43Metadata(stdCtx, opts)
+	if err != nil {
 		return err
 	}
-	log.Info("Finished gathering the door43metadata for the repos %s", scope)
-	return system.CreateRepositoryNotice("Finished Door43 Metadata Update for the repos %s", scope)
+	if err = door43MetadataNoneSelected(ownerNames, repoName, n); err != nil {
+		return err
+	}
+	log.Info("Finished gathering the door43metadata for %d repos %s", n, scope)
+	return system.CreateRepositoryNotice("Finished Door43 Metadata Update for %d repos %s", n, scope)
+}
+
+// door43MetadataNoneSelected fails a run for a named repo that the filters left out, so it isn't taken for done.
+func door43MetadataNoneSelected(ownerNames []string, repoName string, n int) error {
+	if repoName != "" && n == 0 {
+		return fmt.Errorf("%s/%s was not processed: with a filter, only a public, unarchived repo matching every flag is", ownerNames[0], repoName)
+	}
+	return nil
 }

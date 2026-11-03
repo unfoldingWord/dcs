@@ -26,7 +26,9 @@ func TestUpdateDoor43MetadataForOwners(t *testing.T) {
 		require.NoError(t, err)
 		commitFileOnBranch(t, gitrepo.RepoLocalPath(repo.CodeStorageRepo()), branch, "manifest.yaml", validRCManifest)
 	}
-	require.NoError(t, UpdateDoor43Metadata(ctx, repo_model.ReposForMetadataOptions{OwnerIDs: []int64{5}}))
+	n, err := UpdateDoor43Metadata(ctx, repo_model.ReposForMetadataOptions{OwnerIDs: []int64{5}})
+	require.NoError(t, err)
+	assert.Positive(t, n)
 
 	dm, err := repo_model.GetDoor43MetadataByRepoIDAndRef(ctx, 4, branch)
 	require.NoError(t, err, "user5's repo is processed")

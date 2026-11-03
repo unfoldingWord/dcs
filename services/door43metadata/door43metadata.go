@@ -1523,13 +1523,13 @@ func UpdateUserMetadata(ctx context.Context) error {
 }
 
 // UpdateDoor43Metadata re-processes every ref of the public repos that match opts: all of
-// them when opts is empty
-func UpdateDoor43Metadata(ctx context.Context, opts repo_model.ReposForMetadataOptions) error {
+// them when opts is empty. It returns how many repos it selected.
+func UpdateDoor43Metadata(ctx context.Context, opts repo_model.ReposForMetadataOptions) (int, error) {
 	log.Trace("Doing: UpdateDoor43Metadata")
 
 	repos, err := repo_model.GetReposForMetadata(ctx, opts)
 	if err != nil {
-		return fmt.Errorf("GetReposForMetadata: %w", err)
+		return 0, fmt.Errorf("GetReposForMetadata: %w", err)
 	}
 	log.Info("UpdateDoor43Metadata: %d repos to process", len(repos))
 
@@ -1558,7 +1558,7 @@ func UpdateDoor43Metadata(ctx context.Context, opts repo_model.ReposForMetadataO
 		}
 	}
 	log.Trace("Finished: UpdateDoor43Metadata")
-	return nil
+	return len(repos), nil
 }
 
 func DeleteDoor43MetadataByRepoAndRef(ctx context.Context, repo *repo_model.Repository, ref string) error {
