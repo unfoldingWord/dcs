@@ -22,6 +22,7 @@ import (
 	"slices"
 	"strings"
 	"sync"
+	"syscall"
 	"time"
 
 	"gitea.dev/models"
@@ -147,6 +148,71 @@ func (e ErrRepoNotConvertible) Error() string {
 func (e ErrRepoNotConvertible) Is(err error) bool {
 	_, ok := err.(ErrRepoNotConvertible)
 	return ok
+}
+
+// ErrUnconvertibleContent means a converter rejected the repository's content, such as a
+// manifest it can't read: the repository's problem, not the server's.
+type ErrUnconvertibleContent struct {
+	Err     error
+	tempDir string // stripped from ClientMessage
+}
+
+func (e ErrUnconvertibleContent) Error() string {
+	return "the repository's content can't be converted to a Scripture Burrito: " + e.Err.Error()
+}
+
+// ClientMessage is Error without the server's temporary directory, for the response.
+func (e ErrUnconvertibleContent) ClientMessage() string {
+	msg := e.Error()
+	if e.tempDir != "" {
+		msg = strings.ReplaceAll(msg, e.tempDir+string(filepath.Separator), "")
+		msg = strings.ReplaceAll(msg, e.tempDir, ".")
+	}
+	return msg
+}
+
+func (e ErrUnconvertibleContent) Unwrap() error { return e.Err }
+
+func (e ErrUnconvertibleContent) Is(err error) bool {
+	_, ok := err.(ErrUnconvertibleContent)
+	return ok
+}
+
+// conversionError tells why a converter failed on contentDir, the repo's content it read. The
+// server is at fault, and err is returned as it is, for a cancellation, a file system error
+// outside contentDir (the converter's output, a partner repo DCS supplied) or an operating
+// system condition such as a full disk. Otherwise the content is, and err becomes
+// ErrUnconvertibleContent.
+func conversionError(ctx context.Context, converter string, err error, contentDir, tempDir string) error {
+	if ctxErr := ctx.Err(); ctxErr != nil {
+		return fmt.Errorf("%s: %w", converter, ctxErr) // whatever the converter reported, the request ended
+	}
+	err = fmt.Errorf("%s: %w", converter, err)
+	if errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded) {
+		return err
+	}
+	for _, errno := range []syscall.Errno{syscall.ENOSPC, syscall.EDQUOT, syscall.EIO, syscall.EROFS, syscall.EACCES, syscall.EPERM, syscall.EMFILE, syscall.ENFILE, syscall.ENOMEM} {
+		if errors.Is(err, errno) {
+			return err
+		}
+	}
+	if pathErr, ok := errors.AsType[*fs.PathError](err); ok {
+		if rel, relErr := filepath.Rel(contentDir, pathErr.Path); relErr != nil || rel == ".." || strings.HasPrefix(rel, ".."+string(filepath.Separator)) {
+			return err
+		}
+	}
+	if _, ok := errors.AsType[*os.LinkError](err); ok {
+		return err // the converters only rename and link files they write
+	}
+	return ErrUnconvertibleContent{err, tempDir}
+}
+
+// reportErr is the error behind a go-ts2rc or go-tc2rc report's message.
+func reportErr(err error, msg string) error {
+	if err != nil {
+		return err
+	}
+	return errors.New(msg)
 }
 
 // NewRequest creates an SB archival request from URI suffix like "master.zip".
@@ -329,7 +395,7 @@ func (aReq *ArchiveRequest) Stream(ctx context.Context, repo *repo_model.Reposit
 		}
 		rep := ts2rc.Convert(ctx, cloneDir, rcDir, ts2rc.Options{TWSourceDir: twSourceDir})
 		if !rep.OK {
-			return fmt.Errorf("ts2rc.Convert: %s", rep.Error)
+			return conversionError(ctx, "ts2rc.Convert", reportErr(rep.Err, rep.Error), cloneDir, tmpDir)
 		}
 	}
 
@@ -338,7 +404,7 @@ func (aReq *ArchiveRequest) Stream(ctx context.Context, repo *repo_model.Reposit
 	if isTC {
 		rep := tc2rc.Convert(ctx, cloneDir, rcDir, tc2rc.Options{RepoName: repo.Name})
 		if !rep.OK {
-			return fmt.Errorf("tc2rc.Convert: %s", rep.Error)
+			return conversionError(ctx, "tc2rc.Convert", reportErr(rep.Err, rep.Error), cloneDir, tmpDir)
 		}
 	}
 
@@ -368,7 +434,7 @@ func (aReq *ArchiveRequest) Stream(ctx context.Context, repo *repo_model.Reposit
 		Upstream:    upstream,
 	})
 	if err != nil {
-		return fmt.Errorf("rc2sb.Convert: %w", err)
+		return conversionError(ctx, "rc2sb.Convert", err, rcDir, tmpDir)
 	}
 
 	prefixDir := ""
@@ -1026,6 +1092,10 @@ func doArchive(ctx context.Context, r *ArchiveRequest) (*repo_model.RepoArchiver
 	}(done, w, r, repo)
 
 	if _, err := storage.RepoArchives.Save(rPath, rd, -1); err != nil {
+		_ = rd.CloseWithError(err) // unblock the conversion if it is still writing
+		if streamErr := <-done; errors.Is(streamErr, ErrUnconvertibleContent{}) {
+			err = streamErr // not every storage keeps the reader's error in its own
+		}
 		if createdNew {
 			_, _ = db.DeleteByID[repo_model.RepoArchiver](ctx, archiver.ID)
 		}
@@ -1090,6 +1160,22 @@ func StartArchive(request *ArchiveRequest) error {
 	return sbArchiverQueue.Push(request)
 }
 
+// serveSBArchiveError answers a failed SB archive: 422 when the repository's content can't
+// be converted, logged at debug level as the client's problem, otherwise 500.
+func serveSBArchiveError(ctx *gitea_context.Base, archiveReq *ArchiveRequest, err error) {
+	header := ctx.Resp.Header() // the streamed path set the archive's headers before converting
+	header.Del("Content-Disposition")
+	header.Del("ETag")
+	header.Set("Cache-Control", "no-store")
+	if unconvertible, ok := errors.AsType[ErrUnconvertibleContent](err); ok {
+		log.Debug("SB archive %v: %v", archiveReq, err)
+		ctx.HTTPError(http.StatusUnprocessableEntity, unconvertible.ClientMessage())
+		return
+	}
+	log.Error("SB archive %v failed: %v", archiveReq, err)
+	ctx.HTTPError(http.StatusInternalServerError)
+}
+
 // ServeRepoSBArchive serves the generated SB archive to the client.
 func ServeRepoSBArchive(ctx *gitea_context.Base, repo *repo_model.Repository, archiveReq *ArchiveRequest) {
 	downloadName := repo.Name + "-" + archiveReq.GetArchiveName()
@@ -1110,16 +1196,14 @@ func ServeRepoSBArchive(ctx *gitea_context.Base, repo *repo_model.Repository, ar
 		httplib.ServeSetHeaders(ctx.Resp, httplib.ServeHeaderOptions{Filename: downloadName, ContentType: contentType})
 		ctx.Resp.Header().Set("Cache-Control", cacheControl)
 		if err := archiveReq.Stream(ctx, repo, ctx.Resp); err != nil && !ctx.Written() {
-			log.Error("SB archive %v streaming failed: %v", archiveReq, err)
-			ctx.HTTPError(http.StatusInternalServerError)
+			serveSBArchiveError(ctx, archiveReq, err)
 		}
 		return
 	}
 
 	archiver, err := archiveReq.Await(ctx)
 	if err != nil {
-		log.Error("SB archive %v await failed: %v", archiveReq, err)
-		ctx.HTTPError(http.StatusInternalServerError)
+		serveSBArchiveError(ctx, archiveReq, err)
 		return
 	}
 

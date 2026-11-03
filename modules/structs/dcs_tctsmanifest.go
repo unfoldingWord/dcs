@@ -36,6 +36,22 @@ func (t *TcTsType) UnmarshalJSON(data []byte) error {
 	return json.Unmarshal(data, &t.ID)
 }
 
+// TcTsGenerator is the app that wrote a tC/tS manifest, read from an object's "name".
+type TcTsGenerator struct {
+	Name string `json:"name"`
+}
+
+// UnmarshalJSON reads an object as is. A bare string still parses but names no generator,
+// as in go-tc2rc and go-ts2rc, which would not convert it as a tC save.
+func (g *TcTsGenerator) UnmarshalJSON(data []byte) error {
+	if data = bytes.TrimSpace(data); bytes.HasPrefix(data, []byte("{")) {
+		type Alias TcTsGenerator
+		return json.Unmarshal(data, (*Alias)(g))
+	}
+	var bare string
+	return json.Unmarshal(data, &bare)
+}
+
 // tc v7: https://git.door43.org/qa99/en_ult_rom_book/raw/branch/master/manifest.json
 // tc v8: https://git.door43.org/pjoakes/en_ust_2co_book/src/branch/master/manifest.json
 // ts v3: https://git.door43.org/test2/uw-obs-aas/src/branch/master/manifest.json
@@ -69,5 +85,7 @@ type TcTsManifest struct {
 		Name string `json:"name"`
 		Type string `json:"type"`
 	} `json:"project"`
-	Slug string `json:"slug"`
+	Slug            string        `json:"slug"`
+	Generator       TcTsGenerator `json:"generator"`
+	ContentMimeType string        `json:"content_mime_type"` // e.g. audio/wav for a recording, not a text project
 }

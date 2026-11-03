@@ -10,7 +10,10 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"path"
 	"path/filepath"
+	"regexp"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -390,9 +393,9 @@ func GetDoor43MetadataFromRCManifest(ctx context.Context, gitRepo *git.Repositor
 		metadataVersion = "0.2"
 	}
 	// The subject go-rc2sb converts the repo as, so the entry agrees with its /sb/ download
-	subject = rc2sb.ResolveSubject(dcs.MapStr(dublinCore, "subject"), GetBooks(manifest))
+	subject = rc2sb.ResolveRCSubject(dcs.MapStr(dublinCore, "subject"), dcs.MapStr(dublinCore, "identifier"), GetBooks(manifest))
 	if subject == "" {
-		subject = "unknown"
+		subject = "Unknown"
 	}
 	abbreviation = dcs.MapStr(dublinCore, "identifier")
 	title = dcs.MapStr(dublinCore, "title")
@@ -476,9 +479,7 @@ func GetDoor43MetadataFromRCManifest(ctx context.Context, gitRepo *git.Repositor
 	} else {
 		contentFormat = "markdown"
 	}
-	if sbFlavor, ok := dcs.ConvertedSBFlavors[subject]; ok {
-		flavorType, flavor = sbFlavor.FlavorType, sbFlavor.Flavor
-	} else if sbFlavor, ok := dcs.ConvertedSBFlavors["TSV "+subject]; ok {
+	if sbFlavor, ok := dcs.ConvertedSBFlavorFor(subject); ok {
 		flavorType, flavor = sbFlavor.FlavorType, sbFlavor.Flavor
 	} else if isTSV {
 		flavorType = "parascriptural"
@@ -987,6 +988,16 @@ func GetRCDoor43Metadata(ctx context.Context, gitRepo *git.Repository, dm *repo_
 	return populateRCDoor43Metadata(ctx, gitRepo, dm, repo, commit, buf)
 }
 
+// clearManifestFields empties the fields a manifest describes, so a ref whose manifest
+// no longer reads keeps nothing an earlier run stored for it.
+func clearManifestFields(dm *repo_model.Door43Metadata) {
+	dm.Subject, dm.FlavorType, dm.Flavor = "", "", ""
+	dm.Abbreviation, dm.Title, dm.Publisher = "", "", ""
+	dm.Language, dm.LanguageTitle, dm.LanguageDirection, dm.LanguageIsGL = "", "", "", false
+	dm.ContentFormat, dm.CheckingLevel = "", 0
+	dm.Ingredients, dm.Relations = nil, nil
+}
+
 // populateRCDoor43Metadata fills dm from the content of a manifest.yaml. The file's
 // presence makes the entry an "rc" one whatever its content: YAML that can't be parsed
 // or that fails the RC 0.2 schema is recorded with its error.
@@ -996,6 +1007,7 @@ func populateRCDoor43Metadata(ctx context.Context, gitRepo *git.Repository, dm *
 	dm.MetadataVersion = dcs.GetDefaultMetadataVersionForType("rc")
 	dm.Metadata = nil
 	dm.ValidationError = nil
+	clearManifestFields(dm)
 
 	manifest, err := dcs.ParseYAML(buf)
 	if err != nil {
@@ -1007,17 +1019,76 @@ func populateRCDoor43Metadata(ctx context.Context, gitRepo *git.Repository, dm *
 		dm.MetadataVersion = strings.TrimPrefix(conformsTo, "rc")
 	}
 	// go-rc2sb converts a manifest that fails the schema too, so the SB download goes by its subject either way
-	dm.Subject = rc2sb.ResolveSubject(nestedString(manifest, "dublin_core", "subject"), GetBooks(manifest))
+	dm.Subject = rc2sb.ResolveRCSubject(nestedString(manifest, "dublin_core", "subject"), nestedString(manifest, "dublin_core", "identifier"), GetBooks(manifest))
 
 	dm.ValidationError, err = dcs.ValidateMapByRC02Schema(manifest)
 	if err != nil {
 		return err // the schema itself could not be loaded: a server problem, not the repo's
 	}
 	if dm.ValidationError != nil {
+		if sbFlavor, ok := dcs.ConvertedSBFlavorFor(dm.Subject); ok {
+			dm.FlavorType, dm.Flavor = sbFlavor.FlavorType, sbFlavor.Flavor
+		}
 		return nil
 	}
 	return GetDoor43MetadataFromRCManifest(ctx, gitRepo, dm, manifest, repo, commit)
 }
+
+// tcBookSource finds what go-tc2rc converts in a tC commit: the root .usfm file it picks
+// (<repoName>.usfm, then <projectID>.usfm, then the first by name), or, when there is none,
+// the <projectID>/ folder of <chapter>.json files it builds unaligned text from.
+func tcBookSource(ctx context.Context, gitRepo *git.Repository, commit *git.Commit, repoName, projectID string) (usfm, chapterDir string, err error) {
+	tree, err := commit.SubTree(ctx, gitRepo, "")
+	if err != nil {
+		return "", "", err
+	}
+	entries, err := tree.ListEntries(ctx, gitRepo)
+	if err != nil {
+		return "", "", err
+	}
+	var usfmFiles []string
+	var bookDir *git.TreeEntry
+	for _, entry := range entries {
+		switch {
+		case entry.IsDir():
+			if bookDir == nil && strings.EqualFold(entry.Name(), projectID) {
+				bookDir = entry
+			}
+		case strings.EqualFold(path.Ext(entry.Name()), ".usfm"):
+			usfmFiles = append(usfmFiles, entry.Name())
+		}
+	}
+	if len(usfmFiles) > 0 {
+		slices.Sort(usfmFiles) // go-tc2rc's fallback is the first by name
+		for _, want := range []string{repoName + ".usfm", projectID + ".usfm"} {
+			for _, name := range usfmFiles {
+				if strings.EqualFold(name, want) {
+					return name, "", nil
+				}
+			}
+		}
+		return usfmFiles[0], "", nil
+	}
+	if bookDir == nil {
+		return "", "", nil
+	}
+	chapters, err := tree.SubTree(ctx, gitRepo, bookDir.Name())
+	if err != nil {
+		return "", "", err
+	}
+	chapterEntries, err := chapters.ListEntries(ctx, gitRepo)
+	if err != nil {
+		return "", "", err
+	}
+	for _, entry := range chapterEntries {
+		if !entry.IsDir() && chapterJSONRe.MatchString(entry.Name()) {
+			return "", bookDir.Name(), nil
+		}
+	}
+	return "", "", nil
+}
+
+var chapterJSONRe = regexp.MustCompile(`^[0-9]+\.json$`)
 
 // GetTcOrTsDoor43Metadata populates dm from the commit's manifest.json. It returns a
 // git not-exist error when the commit has no such file, and errNotTcTsManifest when
@@ -1043,6 +1114,7 @@ func populateTcTsDoor43Metadata(ctx context.Context, gitRepo *git.Repository, dm
 	dm.RepoID = repo.ID
 	dm.Metadata = nil
 	dm.ValidationError = nil
+	clearManifestFields(dm)
 
 	manifest, err := dcs.ParseJSON(buf)
 	if err != nil {
@@ -1065,6 +1137,10 @@ func populateTcTsDoor43Metadata(ctx context.Context, gitRepo *git.Repository, dm
 	}
 	dm.MetadataType = t.MetadataType
 	dm.MetadataVersion = t.MetadataVersion
+	if mime := strings.ToLower(strings.TrimSpace(t.ContentMimeType)); strings.HasPrefix(mime, "audio/") || strings.HasPrefix(mime, "video/") {
+		dm.ValidationError = metadataFileError("manifest.json describes %s content, a recording, not a text project DCS can catalog.", t.ContentMimeType)
+		return nil
+	}
 	dm.Publisher = repoPublisher(repo)
 
 	if (t.Project.ID == "" || t.Project.ID == "bible") && t.Type.ID != "" {
@@ -1086,7 +1162,21 @@ func populateTcTsDoor43Metadata(ctx context.Context, gitRepo *git.Repository, dm
 	} else {
 		bookPath = "./" + repo.Name + ".usfm"
 		if commit != nil {
-			count, _ = GetBookAlignmentCount(ctx, gitRepo, bookPath, commit)
+			usfm, chapterDir, err := tcBookSource(ctx, gitRepo, commit, repo.Name, t.Project.ID)
+			if err != nil {
+				return fmt.Errorf("reading the tree of %s: %v", commit.ID, err) // not wrapped: a git not-exist error here is not a missing manifest.json
+			}
+			switch {
+			case usfm != "":
+				bookPath = "./" + usfm
+				if count, err = GetBookAlignmentCount(ctx, gitRepo, bookPath, commit); err != nil {
+					log.Warn("GetBookAlignmentCount %s/%s %s: %v", repo.FullName(), dm.Ref, bookPath, err)
+				}
+			case chapterDir != "":
+				// With no USFM, as in a save from before tc_version, go-tc2rc converts <book>/<chapter>.json unaligned
+				bookPath = "./" + chapterDir
+				t.Subject = "Bible"
+			}
 		}
 		versification = "ufw"
 	}
@@ -1217,6 +1307,7 @@ func populateSBDoor43Metadata(ctx context.Context, gitRepo *git.Repository, dm *
 	dm.MetadataVersion = dcs.GetDefaultMetadataVersionForType("sb")
 	dm.Metadata = nil
 	dm.ValidationError = nil
+	clearManifestFields(dm)
 
 	metadata, err := dcs.ParseJSON(buf)
 	if err != nil {

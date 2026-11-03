@@ -197,6 +197,9 @@ func (dm *Door43Metadata) ZipballURL() string {
 
 // CanConvertToSB reports whether the entry has a Scripture Burrito download
 func (dm *Door43Metadata) CanConvertToSB() bool {
+	if dm.ValidationError != nil && dm.MetadataType != "rc" {
+		return false // only go-rc2sb converts a manifest that fails its schema
+	}
 	return dcs.SBConvertible(dm.MetadataType, dm.Subject)
 }
 

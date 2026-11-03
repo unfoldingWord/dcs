@@ -59,6 +59,31 @@ func TestDetermineAttachmentFlags(t *testing.T) {
 	assert.False(t, dm.HasOther)
 }
 
+// TestUpdateDoor43MetadataWritesClearedFields checks that re-processing can empty a column:
+// an invalid manifest clears what an earlier run stored (#465).
+func TestUpdateDoor43MetadataWritesClearedFields(t *testing.T) {
+	require.NoError(t, unittest.PrepareTestDatabase())
+	ctx := t.Context()
+	dm := &repo_model.Door43Metadata{
+		RepoID: 1, Ref: "dcs-cleared", RefType: "branch", CommitSHA: "0000000000000000000000000000000000000465",
+		MetadataType: "tc", MetadataVersion: "8", Subject: "Old subject", Flavor: "x-old", Title: "Old title",
+		Language: "ru", LanguageIsGL: true, CheckingLevel: 3,
+	}
+	require.NoError(t, repo_model.InsertDoor43Metadata(ctx, dm))
+
+	dm.Subject, dm.Flavor, dm.Title, dm.Language, dm.LanguageIsGL, dm.CheckingLevel = "", "", "", "", false, 0
+	require.NoError(t, repo_model.UpdateDoor43Metadata(ctx, dm))
+
+	stored, err := repo_model.GetDoor43MetadataByRepoIDAndRef(ctx, 1, "dcs-cleared")
+	require.NoError(t, err)
+	assert.Empty(t, stored.Subject)
+	assert.Empty(t, stored.Flavor)
+	assert.Empty(t, stored.Title)
+	assert.Empty(t, stored.Language)
+	assert.False(t, stored.LanguageIsGL)
+	assert.Zero(t, stored.CheckingLevel)
+}
+
 func TestDoor43MetadataArchiveURLs(t *testing.T) {
 	require.NoError(t, unittest.PrepareTestDatabase())
 	repo := unittest.AssertExistsAndLoadBean(t, &repo_model.Repository{ID: 1})
