@@ -1522,11 +1522,15 @@ func UpdateUserMetadata(ctx context.Context) error {
 	return nil
 }
 
-// UpdateDoor43Metadata generates door43_metadata table entries for valid repos/releases that don't have them
-func UpdateDoor43Metadata(ctx context.Context) error {
+// UpdateDoor43Metadata re-processes every ref of every public repo, or, given owners, of only those owners' repos
+func UpdateDoor43Metadata(ctx context.Context, owners ...*user_model.User) error {
 	log.Trace("Doing: UpdateDoor43Metadata")
 
-	repos, err := repo_model.GetReposForMetadata(ctx)
+	ownerIDs := make([]int64, 0, len(owners))
+	for _, owner := range owners {
+		ownerIDs = append(ownerIDs, owner.ID)
+	}
+	repos, err := repo_model.GetReposForMetadata(ctx, ownerIDs...)
 	if err != nil {
 		log.Error("GetReposForMetadata: %v", err)
 	}
@@ -1534,7 +1538,7 @@ func UpdateDoor43Metadata(ctx context.Context) error {
 	// The owner rollup is deferred out of the per-repo work and run once per distinct
 	// owner at the end: it reads every one of the owner's entries, so doing it inside
 	// the loop repeated the same scan for each of the owner's repos.
-	owners := map[int64]*user_model.User{}
+	rollups := map[int64]*user_model.User{}
 	for _, repo := range repos {
 		if err := processDoor43MetadataForRepo(ctx, repo, "", false); err != nil {
 			log.Info("Failed to process metadata for repo (%v): %v", repo, err)
@@ -1543,11 +1547,11 @@ func UpdateDoor43Metadata(ctx context.Context) error {
 			}
 		}
 		if repo.Owner != nil {
-			owners[repo.Owner.ID] = repo.Owner
+			rollups[repo.Owner.ID] = repo.Owner
 		}
 	}
 
-	for _, owner := range owners {
+	for _, owner := range rollups {
 		if err := processDoor43MetadataForUser(ctx, owner); err != nil {
 			log.Info("Failed to process metadata for user (%v): %v", owner, err)
 			if err = system.CreateRepositoryNotice("Failed to process metadata for user (%s): %v", owner.Name, err); err != nil {

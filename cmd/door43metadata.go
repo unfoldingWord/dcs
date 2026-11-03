@@ -6,9 +6,13 @@ package cmd
 import (
 	"context"
 	"errors"
+	"fmt"
+	"slices"
+	"strings"
 
 	repo_model "gitea.dev/models/repo"
 	"gitea.dev/models/system"
+	user_model "gitea.dev/models/user"
 	"gitea.dev/modules/log"
 	"gitea.dev/modules/storage"
 	door43metadata_service "gitea.dev/services/door43metadata"
@@ -20,32 +24,28 @@ import (
 var CmdDoor43Metadata = &cli.Command{
 	Name:        "door43metadata",
 	Usage:       "Scan repo(s) for the Door43 Metadata",
-	Description: "A command to update all repos or a repo's Door43 Metadata",
+	Description: "Updates the Door43 Metadata of every repo, of the repos of the given owners, or of one repo",
 	Action:      runDoor43Metadata,
 	Flags: []cli.Flag{
-		&cli.StringFlag{
+		&cli.StringSliceFlag{
 			Name:    "owner",
 			Aliases: []string{"o"},
-			Value:   "",
-			Usage:   `Name of a the owner of the repo (see repo argument) to generate the door43metadata. "repo" must be set as well`,
+			Usage:   `Owner whose repos to process; repeat it or separate names with commas for several. With "repo", the one owner of that repo`,
 		},
 		&cli.StringFlag{
 			Name:    "repo",
 			Aliases: []string{"r"},
 			Value:   "",
-			Usage:   `Name of a single repo to generate the door43metadata. "owner" must also be set for this to be accepted`,
+			Usage:   `Name of a single repo to process; needs exactly one "owner"`,
 		},
 	},
 }
 
 func runDoor43Metadata(ctx context.Context, c *cli.Command) error {
-	ownerName := c.String("owner")
+	ownerNames := slices.Compact(slices.Sorted(slices.Values(c.StringSlice("owner"))))
 	repoName := c.String("repo")
-	if ownerName != "" && repoName == "" {
-		return errors.New("--repo(-r) must be specified if --owner(-o) is used")
-	}
-	if ownerName == "" && repoName != "" {
-		return errors.New("--owner(-o) must be supplied if --repo(-r) is used")
+	if repoName != "" && len(ownerNames) != 1 {
+		return errors.New("--repo(-r) needs exactly one --owner(-o)")
 	}
 
 	stdCtx, cancel := installSignals()
@@ -59,12 +59,32 @@ func runDoor43Metadata(ctx context.Context, c *cli.Command) error {
 		return err
 	}
 
-	if ownerName != "" && repoName != "" {
-		repo, err := repo_model.GetRepositoryByOwnerAndName(stdCtx, ownerName, repoName)
+	if repoName != "" {
+		repo, err := repo_model.GetRepositoryByOwnerAndName(stdCtx, ownerNames[0], repoName)
 		if err != nil {
 			return err
 		}
 		return door43metadata_service.ProcessDoor43MetadataForRepo(stdCtx, repo, "")
+	}
+
+	if len(ownerNames) > 0 {
+		owners := make([]*user_model.User, 0, len(ownerNames))
+		for _, name := range ownerNames {
+			owner, err := user_model.GetUserByName(stdCtx, name)
+			if err != nil {
+				return fmt.Errorf("owner %q: %w", name, err)
+			}
+			owners = append(owners, owner)
+		}
+		names := strings.Join(ownerNames, ", ")
+		if err := system.CreateRepositoryNotice("Starting Door43 Metadata Update for the repos of %s", names); err != nil {
+			return err
+		}
+		if err := door43metadata_service.UpdateDoor43Metadata(stdCtx, owners...); err != nil {
+			return err
+		}
+		log.Info("Finished gathering the door43metadata for the repos of %s", names)
+		return system.CreateRepositoryNotice("Finished Door43 Metadata Update for the repos of %s", names)
 	}
 
 	if err := system.CreateRepositoryNotice("Starting FULL Door43 Metadata Update - PROCESSING ALL REPOS AND REFS"); err != nil {
