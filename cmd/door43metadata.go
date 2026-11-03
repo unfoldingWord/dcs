@@ -163,14 +163,14 @@ func runDoor43Metadata(ctx context.Context, c *cli.Command) error {
 
 	scope := door43MetadataScope(ownerNames, opts)
 	if scope == "" {
-		if err := system.CreateRepositoryNotice("Starting FULL Door43 Metadata Update - PROCESSING ALL REPOS AND REFS"); err != nil {
+		if err := system.CreateRepositoryNotice("Starting FULL Door43 Metadata Update - PROCESSING EVERY REF OF ALL PUBLIC, UNARCHIVED REPOS"); err != nil {
 			return err
 		}
 		if _, err := door43metadata_service.UpdateDoor43Metadata(stdCtx, opts); err != nil {
 			return err
 		}
 		log.Info("Finished gathering the door43metadata for all repos")
-		return system.CreateRepositoryNotice("FINISHED FULL Door43 Metadata Update - PROCESSED ALL REPOS AND REFS")
+		return system.CreateRepositoryNotice("FINISHED FULL Door43 Metadata Update - PROCESSED EVERY REF OF ALL PUBLIC, UNARCHIVED REPOS")
 	}
 
 	if err := system.CreateRepositoryNotice("Starting Door43 Metadata Update for the repos %s", scope); err != nil {
