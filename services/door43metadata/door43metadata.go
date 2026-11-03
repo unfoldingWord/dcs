@@ -476,9 +476,7 @@ func GetDoor43MetadataFromRCManifest(ctx context.Context, gitRepo *git.Repositor
 	} else {
 		contentFormat = "markdown"
 	}
-	if sbFlavor, ok := dcs.ConvertedSBFlavors[subject]; ok {
-		flavorType, flavor = sbFlavor.FlavorType, sbFlavor.Flavor
-	} else if sbFlavor, ok := dcs.ConvertedSBFlavors["TSV "+subject]; ok {
+	if sbFlavor, ok := dcs.ConvertedSBFlavorFor(subject); ok {
 		flavorType, flavor = sbFlavor.FlavorType, sbFlavor.Flavor
 	} else if isTSV {
 		flavorType = "parascriptural"
@@ -987,6 +985,16 @@ func GetRCDoor43Metadata(ctx context.Context, gitRepo *git.Repository, dm *repo_
 	return populateRCDoor43Metadata(ctx, gitRepo, dm, repo, commit, buf)
 }
 
+// clearManifestFields empties the fields a manifest describes, so a ref whose manifest
+// no longer reads keeps nothing an earlier run stored for it.
+func clearManifestFields(dm *repo_model.Door43Metadata) {
+	dm.Subject, dm.FlavorType, dm.Flavor = "", "", ""
+	dm.Abbreviation, dm.Title, dm.Publisher = "", "", ""
+	dm.Language, dm.LanguageTitle, dm.LanguageDirection, dm.LanguageIsGL = "", "", "", false
+	dm.ContentFormat, dm.CheckingLevel = "", 0
+	dm.Ingredients, dm.Relations = nil, nil
+}
+
 // populateRCDoor43Metadata fills dm from the content of a manifest.yaml. The file's
 // presence makes the entry an "rc" one whatever its content: YAML that can't be parsed
 // or that fails the RC 0.2 schema is recorded with its error.
@@ -996,6 +1004,7 @@ func populateRCDoor43Metadata(ctx context.Context, gitRepo *git.Repository, dm *
 	dm.MetadataVersion = dcs.GetDefaultMetadataVersionForType("rc")
 	dm.Metadata = nil
 	dm.ValidationError = nil
+	clearManifestFields(dm)
 
 	manifest, err := dcs.ParseYAML(buf)
 	if err != nil {
@@ -1014,6 +1023,9 @@ func populateRCDoor43Metadata(ctx context.Context, gitRepo *git.Repository, dm *
 		return err // the schema itself could not be loaded: a server problem, not the repo's
 	}
 	if dm.ValidationError != nil {
+		if sbFlavor, ok := dcs.ConvertedSBFlavorFor(dm.Subject); ok {
+			dm.FlavorType, dm.Flavor = sbFlavor.FlavorType, sbFlavor.Flavor
+		}
 		return nil
 	}
 	return GetDoor43MetadataFromRCManifest(ctx, gitRepo, dm, manifest, repo, commit)
@@ -1043,6 +1055,7 @@ func populateTcTsDoor43Metadata(ctx context.Context, gitRepo *git.Repository, dm
 	dm.RepoID = repo.ID
 	dm.Metadata = nil
 	dm.ValidationError = nil
+	clearManifestFields(dm)
 
 	manifest, err := dcs.ParseJSON(buf)
 	if err != nil {
@@ -1217,6 +1230,7 @@ func populateSBDoor43Metadata(ctx context.Context, gitRepo *git.Repository, dm *
 	dm.MetadataVersion = dcs.GetDefaultMetadataVersionForType("sb")
 	dm.Metadata = nil
 	dm.ValidationError = nil
+	clearManifestFields(dm)
 
 	metadata, err := dcs.ParseJSON(buf)
 	if err != nil {
