@@ -36,18 +36,20 @@ func (t *TcTsType) UnmarshalJSON(data []byte) error {
 	return json.Unmarshal(data, &t.ID)
 }
 
-// TcTsGenerator is the app that wrote a tC/tS manifest, read from an object's "name" or a bare string.
+// TcTsGenerator is the app that wrote a tC/tS manifest, read from an object's "name".
 type TcTsGenerator struct {
 	Name string `json:"name"`
 }
 
-// UnmarshalJSON reads an object as is and a string as the name.
+// UnmarshalJSON reads an object as is. A bare string still parses but names no generator,
+// as in go-tc2rc and go-ts2rc, which would not convert it as a tC save.
 func (g *TcTsGenerator) UnmarshalJSON(data []byte) error {
 	if data = bytes.TrimSpace(data); bytes.HasPrefix(data, []byte("{")) {
 		type Alias TcTsGenerator
 		return json.Unmarshal(data, (*Alias)(g))
 	}
-	return json.Unmarshal(data, &g.Name)
+	var bare string
+	return json.Unmarshal(data, &bare)
 }
 
 // tc v7: https://git.door43.org/qa99/en_ult_rom_book/raw/branch/master/manifest.json
