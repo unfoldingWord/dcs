@@ -1033,29 +1033,35 @@ func populateRCDoor43Metadata(ctx context.Context, gitRepo *git.Repository, dm *
 }
 
 // rootUSFMFile returns the .usfm file at the commit's root that go-tc2rc converts, preferring
-// <repoName>.usfm, or "" when there is none.
-func rootUSFMFile(ctx context.Context, gitRepo *git.Repository, commit *git.Commit, repoName string) string {
+// <repoName>.usfm, then <projectID>.usfm, then the first by name, or "" when there is none.
+func rootUSFMFile(ctx context.Context, gitRepo *git.Repository, commit *git.Commit, repoName, projectID string) (string, error) {
 	tree, err := commit.SubTree(ctx, gitRepo, "")
 	if err != nil {
-		return ""
+		return "", err
 	}
 	entries, err := tree.ListEntries(ctx, gitRepo)
 	if err != nil {
-		return ""
+		return "", err
 	}
-	var first string
+	var byProject, first string
 	for _, entry := range entries {
 		if entry.IsDir() || !strings.EqualFold(path.Ext(entry.Name()), ".usfm") {
 			continue
 		}
 		if strings.EqualFold(entry.Name(), repoName+".usfm") {
-			return entry.Name()
+			return entry.Name(), nil
+		}
+		if byProject == "" && projectID != "" && strings.EqualFold(entry.Name(), projectID+".usfm") {
+			byProject = entry.Name()
 		}
 		if first == "" {
 			first = entry.Name()
 		}
 	}
-	return first
+	if byProject != "" {
+		return byProject, nil
+	}
+	return first, nil
 }
 
 // GetTcOrTsDoor43Metadata populates dm from the commit's manifest.json. It returns a
@@ -1105,7 +1111,7 @@ func populateTcTsDoor43Metadata(ctx context.Context, gitRepo *git.Repository, dm
 	}
 	dm.MetadataType = t.MetadataType
 	dm.MetadataVersion = t.MetadataVersion
-	if mime := strings.ToLower(t.ContentMimeType); strings.HasPrefix(mime, "audio/") || strings.HasPrefix(mime, "video/") {
+	if mime := strings.ToLower(strings.TrimSpace(t.ContentMimeType)); strings.HasPrefix(mime, "audio/") || strings.HasPrefix(mime, "video/") {
 		dm.ValidationError = metadataFileError("manifest.json describes %s content, a recording, not a text project DCS can catalog.", t.ContentMimeType)
 		return nil
 	}
@@ -1130,7 +1136,9 @@ func populateTcTsDoor43Metadata(ctx context.Context, gitRepo *git.Repository, dm
 	} else {
 		bookPath = "./" + repo.Name + ".usfm"
 		if commit != nil {
-			if usfm := rootUSFMFile(ctx, gitRepo, commit, repo.Name); usfm != "" {
+			if usfm, err := rootUSFMFile(ctx, gitRepo, commit, repo.Name, t.Project.ID); err != nil {
+				log.Warn("%s/%s (%s): listing the root for a .usfm: %v", repo.FullName(), dm.Ref, commit.ID, err) // keep the subject rather than guess chapter JSON
+			} else if usfm != "" {
 				bookPath = "./" + usfm
 				count, _ = GetBookAlignmentCount(ctx, gitRepo, bookPath, commit)
 			} else {

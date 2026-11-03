@@ -62,4 +62,17 @@ func TestPopulateTcDoor43Metadata_USFM(t *testing.T) {
 		require.Len(t, dm.Ingredients, 1)
 		assert.Equal(t, "./tit.usfm", dm.Ingredients[0].Path, "go-tc2rc takes the only .usfm when none is named after the repo")
 	})
+
+	t.Run("a USFM named after the project wins over one sorted first", func(t *testing.T) {
+		manifest := `{"tc_version": 8, "project": {"id": "jon"}, "target_language": {"id": "en"}}`
+		commit := branchCommit(t, "dcs-tc-usfm-project", map[string]string{
+			"manifest.json": manifest,
+			"32-JON.usfm":   "\\id JON\n\\c 1\n\\v 1 Now\n",
+			"jon.usfm":      "\\id JON\n\\c 1\n\\v 1 Now\n",
+		})
+		dm := &repo_model.Door43Metadata{}
+		require.NoError(t, populateTcTsDoor43Metadata(ctx, gitRepo, dm, repo, commit, []byte(manifest)))
+		require.Len(t, dm.Ingredients, 1)
+		assert.Equal(t, "./jon.usfm", dm.Ingredients[0].Path)
+	})
 }
