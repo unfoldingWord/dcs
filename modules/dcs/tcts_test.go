@@ -37,7 +37,7 @@ func TestParseTcTsManifestFlavor(t *testing.T) {
 
 	bare, err := ParseTcTsManifest([]byte(`{"package_version": 1, "generator": "tc-desktop", "project": {"id": "tit"}}`))
 	require.NoError(t, err, "a generator given as a bare string still reads")
-	assert.Equal(t, "tc", bare.MetadataType)
+	assert.Equal(t, "ts", bare.MetadataType, "go-tc2rc only takes tc-desktop from a generator object, so a bare string is no tC save")
 
 	v2, err := ParseTcTsManifest([]byte(`{"package_version": 2, "slug": "phm", "target_language": {"slug": "aa", "name": "Afar"}}`))
 	require.NoError(t, err)
