@@ -1522,18 +1522,16 @@ func UpdateUserMetadata(ctx context.Context) error {
 	return nil
 }
 
-// UpdateDoor43Metadata re-processes every ref of every public repo, or, given owners, of only those owners' repos
-func UpdateDoor43Metadata(ctx context.Context, owners ...*user_model.User) error {
+// UpdateDoor43Metadata re-processes every ref of the public repos that match opts: all of
+// them when opts is empty. It returns how many repos it selected.
+func UpdateDoor43Metadata(ctx context.Context, opts repo_model.ReposForMetadataOptions) (int, error) {
 	log.Trace("Doing: UpdateDoor43Metadata")
 
-	ownerIDs := make([]int64, 0, len(owners))
-	for _, owner := range owners {
-		ownerIDs = append(ownerIDs, owner.ID)
-	}
-	repos, err := repo_model.GetReposForMetadata(ctx, ownerIDs...)
+	repos, err := repo_model.GetReposForMetadata(ctx, opts)
 	if err != nil {
-		return fmt.Errorf("GetReposForMetadata: %w", err)
+		return 0, fmt.Errorf("GetReposForMetadata: %w", err)
 	}
+	log.Info("UpdateDoor43Metadata: %d repos to process", len(repos))
 
 	// The owner rollup is deferred out of the per-repo work and run once per distinct
 	// owner at the end: it reads every one of the owner's entries, so doing it inside
@@ -1560,7 +1558,7 @@ func UpdateDoor43Metadata(ctx context.Context, owners ...*user_model.User) error
 		}
 	}
 	log.Trace("Finished: UpdateDoor43Metadata")
-	return nil
+	return len(repos), nil
 }
 
 func DeleteDoor43MetadataByRepoAndRef(ctx context.Context, repo *repo_model.Repository, ref string) error {

@@ -1187,11 +1187,41 @@ func GetReposQualifiedForSBConversion(ctx context.Context, topics []string) ([]*
 	return repos, err
 }
 
-// GetReposForMetadata gets the repos to process for metadata: all of them, or those of the given owners
-func GetReposForMetadata(ctx context.Context, ownerIDs ...int64) ([]*Repository, error) {
+// ReposForMetadataOptions narrows the repos GetReposForMetadata returns; every field set must hold
+type ReposForMetadataOptions struct {
+	OwnerIDs               []int64
+	RepoName               string        // the repo of that name, with one owner
+	MinHealthcheckSeverity SeverityLevel // a ref whose healthcheck found at least this severity
+	HasValidationError     bool          // a ref whose metadata file couldn't be read or validated
+	HasRelease             bool          // a published release: not a draft or a bare tag
+	Topics                 []string      // every one of these topics
+}
+
+// GetReposForMetadata gets the public, unarchived repos to process for metadata that match opts
+func GetReposForMetadata(ctx context.Context, opts ReposForMetadataOptions) ([]*Repository, error) {
 	cond := builder.Eq{"`repository`.is_archived": 0}.And(builder.Eq{"`repository`.is_private": 0})
-	if len(ownerIDs) > 0 {
-		cond = cond.And(builder.In("`repository`.owner_id", ownerIDs))
+	if len(opts.OwnerIDs) > 0 {
+		cond = cond.And(builder.In("`repository`.owner_id", opts.OwnerIDs))
+	}
+	if opts.RepoName != "" {
+		cond = cond.And(builder.Eq{"`repository`.lower_name": strings.ToLower(opts.RepoName)})
+	}
+	if opts.MinHealthcheckSeverity > 0 {
+		cond = cond.And(builder.In("`repository`.id", builder.Select("repo_id").From("door43_metadata").
+			Where(builder.Gte{"healthcheck_severity": opts.MinHealthcheckSeverity})))
+	}
+	if opts.HasValidationError {
+		cond = cond.And(builder.In("`repository`.id", builder.Select("repo_id").From("door43_metadata").
+			Where(builder.NotNull{"validation_error"})))
+	}
+	if opts.HasRelease {
+		cond = cond.And(builder.In("`repository`.id", builder.Select("repo_id").From("`release`").
+			Where(builder.Eq{"is_draft": false, "is_tag": false})))
+	}
+	for _, topic := range opts.Topics {
+		cond = cond.And(builder.In("`repository`.id", builder.Select("repo_id").From("repo_topic").
+			InnerJoin("topic", "`repo_topic`.topic_id = `topic`.id").
+			Where(builder.Eq{"`topic`.name": strings.ToLower(topic)})))
 	}
 	var repos []*Repository
 	err := db.GetEngine(ctx).

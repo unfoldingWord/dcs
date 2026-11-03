@@ -10,6 +10,7 @@ import (
 	repo_model "gitea.dev/models/repo"
 	"gitea.dev/models/unittest"
 
+	"github.com/santhosh-tekuri/jsonschema/v5"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -112,30 +113,48 @@ func TestDoor43MetadataArchiveURLs(t *testing.T) {
 	assert.Equal(t, repo.HTMLURL()+"/archive/v1.zip", lexicon.ZipballURL())
 }
 
-func TestGetReposForMetadataOwners(t *testing.T) {
+func TestGetReposForMetadataOptions(t *testing.T) {
 	require.NoError(t, unittest.PrepareTestDatabase())
 	ctx := t.Context()
-
-	all, err := repo_model.GetReposForMetadata(ctx)
-	require.NoError(t, err)
-	owner5, err := repo_model.GetReposForMetadata(ctx, 5)
-	require.NoError(t, err)
-	both, err := repo_model.GetReposForMetadata(ctx, 2, 5)
-	require.NoError(t, err)
-
-	require.NotEmpty(t, owner5)
-	for _, repo := range owner5 {
-		assert.Equal(t, int64(5), repo.OwnerID)
-		assert.False(t, repo.IsPrivate || repo.IsArchived, "private and archived repos have no metadata to process")
-	}
-	var owner2 int
-	for _, repo := range both {
-		assert.Contains(t, []int64{2, 5}, repo.OwnerID)
-		if repo.OwnerID == 2 {
-			owner2++
+	ids := func(t *testing.T, opts repo_model.ReposForMetadataOptions) []int64 {
+		t.Helper()
+		repos, err := repo_model.GetReposForMetadata(ctx, opts)
+		require.NoError(t, err)
+		var ids []int64
+		for _, repo := range repos {
+			assert.False(t, repo.IsPrivate || repo.IsArchived, "private and archived repos have no metadata to process")
+			ids = append(ids, repo.ID)
 		}
+		return ids
 	}
-	assert.Positive(t, owner2)
-	assert.Len(t, both, len(owner5)+owner2)
+
+	all := ids(t, repo_model.ReposForMetadataOptions{})
+	owner5 := ids(t, repo_model.ReposForMetadataOptions{OwnerIDs: []int64{5}})
+	both := ids(t, repo_model.ReposForMetadataOptions{OwnerIDs: []int64{2, 5}})
+	require.NotEmpty(t, owner5)
+	assert.Subset(t, both, owner5)
+	assert.Contains(t, both, int64(1), "user2/repo1")
 	assert.Greater(t, len(all), len(both))
+	assert.Equal(t, []int64{1}, ids(t, repo_model.ReposForMetadataOptions{OwnerIDs: []int64{2}, RepoName: "REPO1"}))
+
+	// repo1 has the topics golang and database, repo33 golang only
+	assert.Equal(t, []int64{1}, ids(t, repo_model.ReposForMetadataOptions{Topics: []string{"golang", "Database"}}), "a repo needs every topic")
+	assert.Subset(t, ids(t, repo_model.ReposForMetadataOptions{Topics: []string{"golang"}}), []int64{1})
+
+	withRelease := ids(t, repo_model.ReposForMetadataOptions{HasRelease: true})
+	assert.Contains(t, withRelease, int64(1), "repo1 has published releases")
+	assert.NotContains(t, withRelease, int64(4))
+
+	for _, dm := range []*repo_model.Door43Metadata{
+		{RepoID: 1, Ref: "dcs-error", RefType: "branch", CommitSHA: "0000000000000000000000000000000000000001", MetadataType: "rc", HealthcheckSeverity: repo_model.SeverityLevelError},
+		{RepoID: 4, Ref: "dcs-warning", RefType: "branch", CommitSHA: "0000000000000000000000000000000000000004", MetadataType: "rc", HealthcheckSeverity: repo_model.SeverityLevelWarning},
+		{RepoID: 4, Ref: "dcs-invalid", RefType: "branch", CommitSHA: "0000000000000000000000000000000000000044", MetadataType: "tc", ValidationError: &jsonschema.ValidationError{Message: "bad manifest"}},
+	} {
+		require.NoError(t, repo_model.InsertDoor43Metadata(ctx, dm))
+	}
+	assert.Equal(t, []int64{1}, ids(t, repo_model.ReposForMetadataOptions{MinHealthcheckSeverity: repo_model.SeverityLevelError}))
+	assert.ElementsMatch(t, []int64{1, 4}, ids(t, repo_model.ReposForMetadataOptions{MinHealthcheckSeverity: repo_model.SeverityLevelWarning}))
+	assert.Equal(t, []int64{4}, ids(t, repo_model.ReposForMetadataOptions{HasValidationError: true}))
+	assert.Empty(t, ids(t, repo_model.ReposForMetadataOptions{HasValidationError: true, HasRelease: true}), "every option must hold")
+	assert.Equal(t, []int64{1}, ids(t, repo_model.ReposForMetadataOptions{MinHealthcheckSeverity: repo_model.SeverityLevelWarning, HasRelease: true}))
 }
