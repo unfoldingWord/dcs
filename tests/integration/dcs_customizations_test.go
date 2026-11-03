@@ -238,6 +238,8 @@ func TestDCSAPIRepoSBUnconvertibleContent(t *testing.T) {
 		resp := MakeRequest(t, NewRequest(t, "GET", url), http.StatusUnprocessableEntity)
 		assert.Contains(t, resp.Body.String(), "can't be converted to a Scripture Burrito")
 		assert.NotContains(t, resp.Body.String(), "repo-sb-archive", "the server's temporary directory stays out of the message")
+		assert.Empty(t, resp.Header().Get("Content-Disposition"), "an error is no archive download")
+		assert.Empty(t, resp.Header().Get("ETag"))
 	}
 	for _, cache := range []bool{true, false} {
 		defer test.MockVariableValue(&setting.DCS.CacheSBArchives, cache)()

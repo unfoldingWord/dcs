@@ -1122,6 +1122,10 @@ func StartArchive(request *ArchiveRequest) error {
 // serveSBArchiveError answers a failed SB archive: 422 when the repository's content can't
 // be converted, logged at debug level as the client's problem, otherwise 500.
 func serveSBArchiveError(ctx *gitea_context.Base, archiveReq *ArchiveRequest, err error) {
+	header := ctx.Resp.Header() // the streamed path set the archive's headers before converting
+	header.Del("Content-Disposition")
+	header.Del("ETag")
+	header.Set("Cache-Control", "no-store")
 	if unconvertible, ok := errors.AsType[ErrUnconvertibleContent](err); ok {
 		log.Debug("SB archive %v: %v", archiveReq, err)
 		ctx.HTTPError(http.StatusUnprocessableEntity, unconvertible.Error())
