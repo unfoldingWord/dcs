@@ -37,7 +37,7 @@ func TestAPIStar(t *testing.T) {
 		repos := DecodeJSON(t, resp, []api.Repository{})
 		if assert.Len(t, repos, 1) {
 			assert.Equal(t, "user5/repo4", repos[0].FullName)
-			assert.Equal(t, "Go", repos[0].Language)
+			assert.Empty(t, repos[0].Language) // DCS Customizations: language is the content language from Door43 metadata, which repo4 has none of
 		}
 
 		req = NewRequest(t, "GET", "/api/v1/users/user2/starred").
