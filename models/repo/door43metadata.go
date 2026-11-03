@@ -1187,12 +1187,16 @@ func GetReposQualifiedForSBConversion(ctx context.Context, topics []string) ([]*
 	return repos, err
 }
 
-// GetReposForMetadata gets all the repos to process for metadata
-func GetReposForMetadata(ctx context.Context) ([]*Repository, error) {
+// GetReposForMetadata gets the repos to process for metadata: all of them, or those of the given owners
+func GetReposForMetadata(ctx context.Context, ownerIDs ...int64) ([]*Repository, error) {
+	cond := builder.Eq{"`repository`.is_archived": 0}.And(builder.Eq{"`repository`.is_private": 0})
+	if len(ownerIDs) > 0 {
+		cond = cond.And(builder.In("`repository`.owner_id", ownerIDs))
+	}
 	var repos []*Repository
 	err := db.GetEngine(ctx).
 		Join("INNER", "user", "`user`.id = `repository`.owner_id").
-		Where(builder.Eq{"`repository`.is_archived": 0}.And(builder.Eq{"`repository`.is_private": 0})).
+		Where(cond).
 		OrderBy("CASE WHEN `user`.lower_name = 'unfoldingword' THEN 0 " +
 			"WHEN `user`.lower_name = 'door43-catalog' THEN 1 " +
 			"WHEN `user`.lower_name LIKE '%_gl' THEN 2 " +

@@ -111,3 +111,31 @@ func TestDoor43MetadataArchiveURLs(t *testing.T) {
 	assert.Empty(t, lexicon.SBMetadataURL())
 	assert.Equal(t, repo.HTMLURL()+"/archive/v1.zip", lexicon.ZipballURL())
 }
+
+func TestGetReposForMetadataOwners(t *testing.T) {
+	require.NoError(t, unittest.PrepareTestDatabase())
+	ctx := t.Context()
+
+	all, err := repo_model.GetReposForMetadata(ctx)
+	require.NoError(t, err)
+	owner5, err := repo_model.GetReposForMetadata(ctx, 5)
+	require.NoError(t, err)
+	both, err := repo_model.GetReposForMetadata(ctx, 2, 5)
+	require.NoError(t, err)
+
+	require.NotEmpty(t, owner5)
+	for _, repo := range owner5 {
+		assert.Equal(t, int64(5), repo.OwnerID)
+		assert.False(t, repo.IsPrivate || repo.IsArchived, "private and archived repos have no metadata to process")
+	}
+	var owner2 int
+	for _, repo := range both {
+		assert.Contains(t, []int64{2, 5}, repo.OwnerID)
+		if repo.OwnerID == 2 {
+			owner2++
+		}
+	}
+	assert.Positive(t, owner2)
+	assert.Len(t, both, len(owner5)+owner2)
+	assert.Greater(t, len(all), len(both))
+}
