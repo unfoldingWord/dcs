@@ -131,7 +131,8 @@ func GetSBFile(ctx *context.APIContext) {
 	case errors.Is(err, util.ErrNotExist), errors.Is(err, sbarchiver_service.RepoRefNotFoundError{}), errors.Is(err, sbarchiver_service.ErrRepoNotConvertible{}):
 		ctx.APIError(http.StatusNotFound, err.Error())
 	case errors.Is(err, sbarchiver_service.ErrUnconvertibleContent{}):
-		ctx.APIError(http.StatusUnprocessableEntity, err.Error())
+		unconvertible, _ := errors.AsType[sbarchiver_service.ErrUnconvertibleContent](err)
+		ctx.APIError(http.StatusUnprocessableEntity, unconvertible.ClientMessage())
 	default:
 		ctx.APIErrorInternal(err)
 	}

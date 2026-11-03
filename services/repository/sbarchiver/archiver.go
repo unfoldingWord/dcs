@@ -22,6 +22,7 @@ import (
 	"slices"
 	"strings"
 	"sync"
+	"syscall"
 	"time"
 
 	"gitea.dev/models"
@@ -153,15 +154,21 @@ func (e ErrRepoNotConvertible) Is(err error) bool {
 // manifest it can't read: the repository's problem, not the server's.
 type ErrUnconvertibleContent struct {
 	Err     error
-	tempDir string // stripped from the message, which is shown to the client
+	tempDir string // stripped from ClientMessage
 }
 
 func (e ErrUnconvertibleContent) Error() string {
-	msg := e.Err.Error()
+	return "the repository's content can't be converted to a Scripture Burrito: " + e.Err.Error()
+}
+
+// ClientMessage is Error without the server's temporary directory, for the response.
+func (e ErrUnconvertibleContent) ClientMessage() string {
+	msg := e.Error()
 	if e.tempDir != "" {
 		msg = strings.ReplaceAll(msg, e.tempDir+string(filepath.Separator), "")
+		msg = strings.ReplaceAll(msg, e.tempDir, ".")
 	}
-	return "the repository's content can't be converted to a Scripture Burrito: " + msg
+	return msg
 }
 
 func (e ErrUnconvertibleContent) Unwrap() error { return e.Err }
@@ -169,6 +176,43 @@ func (e ErrUnconvertibleContent) Unwrap() error { return e.Err }
 func (e ErrUnconvertibleContent) Is(err error) bool {
 	_, ok := err.(ErrUnconvertibleContent)
 	return ok
+}
+
+// conversionError tells why a converter failed on contentDir, the repo's content it read. The
+// server is at fault, and err is returned as it is, for a cancellation, a file system error
+// outside contentDir (the converter's output, a partner repo DCS supplied) or an operating
+// system condition such as a full disk. Otherwise the content is, and err becomes
+// ErrUnconvertibleContent.
+func conversionError(ctx context.Context, converter string, err error, contentDir, tempDir string) error {
+	if ctxErr := ctx.Err(); ctxErr != nil {
+		return fmt.Errorf("%s: %w", converter, ctxErr) // whatever the converter reported, the request ended
+	}
+	err = fmt.Errorf("%s: %w", converter, err)
+	if errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded) {
+		return err
+	}
+	for _, errno := range []syscall.Errno{syscall.ENOSPC, syscall.EDQUOT, syscall.EIO, syscall.EROFS, syscall.EACCES, syscall.EPERM, syscall.EMFILE, syscall.ENFILE, syscall.ENOMEM} {
+		if errors.Is(err, errno) {
+			return err
+		}
+	}
+	if pathErr, ok := errors.AsType[*fs.PathError](err); ok {
+		if rel, relErr := filepath.Rel(contentDir, pathErr.Path); relErr != nil || rel == ".." || strings.HasPrefix(rel, ".."+string(filepath.Separator)) {
+			return err
+		}
+	}
+	if _, ok := errors.AsType[*os.LinkError](err); ok {
+		return err // the converters only rename and link files they write
+	}
+	return ErrUnconvertibleContent{err, tempDir}
+}
+
+// reportErr is the error behind a go-ts2rc or go-tc2rc report's message.
+func reportErr(err error, msg string) error {
+	if err != nil {
+		return err
+	}
+	return errors.New(msg)
 }
 
 // NewRequest creates an SB archival request from URI suffix like "master.zip".
@@ -351,7 +395,7 @@ func (aReq *ArchiveRequest) Stream(ctx context.Context, repo *repo_model.Reposit
 		}
 		rep := ts2rc.Convert(ctx, cloneDir, rcDir, ts2rc.Options{TWSourceDir: twSourceDir})
 		if !rep.OK {
-			return ErrUnconvertibleContent{fmt.Errorf("ts2rc.Convert: %s", rep.Error), tmpDir}
+			return conversionError(ctx, "ts2rc.Convert", reportErr(rep.Err, rep.Error), cloneDir, tmpDir)
 		}
 	}
 
@@ -360,7 +404,7 @@ func (aReq *ArchiveRequest) Stream(ctx context.Context, repo *repo_model.Reposit
 	if isTC {
 		rep := tc2rc.Convert(ctx, cloneDir, rcDir, tc2rc.Options{RepoName: repo.Name})
 		if !rep.OK {
-			return ErrUnconvertibleContent{fmt.Errorf("tc2rc.Convert: %s", rep.Error), tmpDir}
+			return conversionError(ctx, "tc2rc.Convert", reportErr(rep.Err, rep.Error), cloneDir, tmpDir)
 		}
 	}
 
@@ -390,10 +434,7 @@ func (aReq *ArchiveRequest) Stream(ctx context.Context, repo *repo_model.Reposit
 		Upstream:    upstream,
 	})
 	if err != nil {
-		if ctx.Err() != nil {
-			return ctx.Err()
-		}
-		return ErrUnconvertibleContent{fmt.Errorf("rc2sb.Convert: %w", err), tmpDir}
+		return conversionError(ctx, "rc2sb.Convert", err, rcDir, tmpDir)
 	}
 
 	prefixDir := ""
@@ -1128,7 +1169,7 @@ func serveSBArchiveError(ctx *gitea_context.Base, archiveReq *ArchiveRequest, er
 	header.Set("Cache-Control", "no-store")
 	if unconvertible, ok := errors.AsType[ErrUnconvertibleContent](err); ok {
 		log.Debug("SB archive %v: %v", archiveReq, err)
-		ctx.HTTPError(http.StatusUnprocessableEntity, unconvertible.Error())
+		ctx.HTTPError(http.StatusUnprocessableEntity, unconvertible.ClientMessage())
 		return
 	}
 	log.Error("SB archive %v failed: %v", archiveReq, err)
