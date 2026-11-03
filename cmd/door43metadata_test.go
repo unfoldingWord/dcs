@@ -4,9 +4,11 @@
 package cmd
 
 import (
+	"context"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"github.com/urfave/cli/v3"
 )
 
@@ -20,4 +22,14 @@ func TestDoor43MetadataArgs(t *testing.T) {
 		err := cmd.Run(t.Context(), append([]string{"door43metadata"}, args...))
 		assert.EqualError(t, err, "--repo(-r) needs exactly one --owner(-o)", "%q", args)
 	}
+}
+
+func TestDoor43MetadataOwnerNames(t *testing.T) {
+	var got []string
+	cmd := &cli.Command{Flags: CmdDoor43Metadata.Flags, Action: func(_ context.Context, c *cli.Command) error {
+		got = door43MetadataOwnerNames(c.StringSlice("owner"))
+		return nil
+	}}
+	require.NoError(t, cmd.Run(t.Context(), []string{"door43metadata", "--owner", "ru_gl, es-419_gl", "-o", "RU_GL", "-o", " "}))
+	assert.Equal(t, []string{"ru_gl", "es-419_gl"}, got, "comma-separated, trimmed, repeats and empty names dropped regardless of case")
 }

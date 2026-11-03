@@ -41,8 +41,21 @@ var CmdDoor43Metadata = &cli.Command{
 	},
 }
 
+// door43MetadataOwnerNames trims the --owner names and drops empty ones and repeats,
+// ignoring case as owner names do.
+func door43MetadataOwnerNames(names []string) []string {
+	var owners []string
+	for _, name := range names {
+		name = strings.TrimSpace(name)
+		if name != "" && !slices.ContainsFunc(owners, func(o string) bool { return strings.EqualFold(o, name) }) {
+			owners = append(owners, name)
+		}
+	}
+	return owners
+}
+
 func runDoor43Metadata(ctx context.Context, c *cli.Command) error {
-	ownerNames := slices.Compact(slices.Sorted(slices.Values(c.StringSlice("owner"))))
+	ownerNames := door43MetadataOwnerNames(c.StringSlice("owner"))
 	repoName := c.String("repo")
 	if repoName != "" && len(ownerNames) != 1 {
 		return errors.New("--repo(-r) needs exactly one --owner(-o)")
