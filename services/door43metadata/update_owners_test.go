@@ -8,7 +8,6 @@ import (
 
 	repo_model "gitea.dev/models/repo"
 	"gitea.dev/models/unittest"
-	user_model "gitea.dev/models/user"
 	"gitea.dev/modules/git/gitrepo"
 
 	"github.com/stretchr/testify/assert"
@@ -27,10 +26,7 @@ func TestUpdateDoor43MetadataForOwners(t *testing.T) {
 		require.NoError(t, err)
 		commitFileOnBranch(t, gitrepo.RepoLocalPath(repo.CodeStorageRepo()), branch, "manifest.yaml", validRCManifest)
 	}
-	user5, err := user_model.GetUserByID(ctx, 5)
-	require.NoError(t, err)
-
-	require.NoError(t, UpdateDoor43Metadata(ctx, user5))
+	require.NoError(t, UpdateDoor43Metadata(ctx, repo_model.ReposForMetadataOptions{OwnerIDs: []int64{5}}))
 
 	dm, err := repo_model.GetDoor43MetadataByRepoIDAndRef(ctx, 4, branch)
 	require.NoError(t, err, "user5's repo is processed")

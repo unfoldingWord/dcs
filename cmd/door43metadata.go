@@ -24,7 +24,7 @@ import (
 var CmdDoor43Metadata = &cli.Command{
 	Name:        "door43metadata",
 	Usage:       "Scan repo(s) for the Door43 Metadata",
-	Description: "Updates the Door43 Metadata of every repo, of the repos of the given owners, or of one repo",
+	Description: "Updates the Door43 Metadata of public repos: all of them with no flags, or only those that match every flag given",
 	Action:      runDoor43Metadata,
 	Flags: []cli.Flag{
 		&cli.StringSliceFlag{
@@ -38,27 +38,83 @@ var CmdDoor43Metadata = &cli.Command{
 			Value:   "",
 			Usage:   `Name of a single repo to process; needs exactly one "owner"`,
 		},
+		&cli.IntFlag{
+			Name:  "healthcheck-severity",
+			Usage: "Only repos with a ref whose healthcheck severity is at least this: 1 success, 2 info, 3 warning, 4 error",
+		},
+		&cli.BoolFlag{
+			Name:  "has-validation-error",
+			Usage: "Only repos with a ref whose metadata file couldn't be read or validated",
+		},
+		&cli.BoolFlag{
+			Name:  "has-release",
+			Usage: "Only repos with a published release, not a draft or a bare tag",
+		},
+		&cli.StringSliceFlag{
+			Name:  "topic",
+			Usage: "Only repos with this topic; repeat it or separate topics with commas, and a repo needs them all",
+		},
 	},
 }
 
-// door43MetadataOwnerNames trims the --owner names and drops empty ones and repeats,
-// ignoring case as owner names do.
-func door43MetadataOwnerNames(names []string) []string {
-	var owners []string
+// door43MetadataNames trims the names given to a flag and drops empty ones and repeats,
+// ignoring case as owner names and topics do.
+func door43MetadataNames(names []string) []string {
+	var kept []string
 	for _, name := range names {
 		name = strings.TrimSpace(name)
-		if name != "" && !slices.ContainsFunc(owners, func(o string) bool { return strings.EqualFold(o, name) }) {
-			owners = append(owners, name)
+		if name != "" && !slices.ContainsFunc(kept, func(k string) bool { return strings.EqualFold(k, name) }) {
+			kept = append(kept, name)
 		}
 	}
-	return owners
+	return kept
+}
+
+// door43MetadataFiltered reports whether opts narrows the repos beyond their owners and name.
+func door43MetadataFiltered(opts repo_model.ReposForMetadataOptions) bool {
+	return opts.MinHealthcheckSeverity > 0 || opts.HasValidationError || opts.HasRelease || len(opts.Topics) > 0
+}
+
+// door43MetadataScope describes the repos the flags select, for the notices, or "" for all of them.
+func door43MetadataScope(ownerNames []string, opts repo_model.ReposForMetadataOptions) string {
+	var parts []string
+	switch {
+	case opts.RepoName != "":
+		parts = append(parts, ownerNames[0]+"/"+opts.RepoName)
+	case len(ownerNames) > 0:
+		parts = append(parts, "of "+strings.Join(ownerNames, ", "))
+	}
+	if opts.MinHealthcheckSeverity > 0 {
+		parts = append(parts, fmt.Sprintf("with a healthcheck severity of %s or worse", opts.MinHealthcheckSeverity))
+	}
+	if opts.HasValidationError {
+		parts = append(parts, "with a validation error")
+	}
+	if opts.HasRelease {
+		parts = append(parts, "with a release")
+	}
+	if len(opts.Topics) > 0 {
+		parts = append(parts, "with the topics "+strings.Join(opts.Topics, ", "))
+	}
+	return strings.Join(parts, ", ")
 }
 
 func runDoor43Metadata(ctx context.Context, c *cli.Command) error {
-	ownerNames := door43MetadataOwnerNames(c.StringSlice("owner"))
-	repoName := c.String("repo")
+	ownerNames := door43MetadataNames(c.StringSlice("owner"))
+	repoName := strings.TrimSpace(c.String("repo"))
 	if repoName != "" && len(ownerNames) != 1 {
 		return errors.New("--repo(-r) needs exactly one --owner(-o)")
+	}
+	severity := c.Int("healthcheck-severity")
+	if severity != 0 && (severity < int(repo_model.SeverityLevelSuccess) || severity > int(repo_model.SeverityLevelError)) {
+		return errors.New("--healthcheck-severity must be 1 (success), 2 (info), 3 (warning) or 4 (error)")
+	}
+	opts := repo_model.ReposForMetadataOptions{
+		RepoName:               repoName,
+		MinHealthcheckSeverity: repo_model.SeverityLevel(severity),
+		HasValidationError:     c.Bool("has-validation-error"),
+		HasRelease:             c.Bool("has-release"),
+		Topics:                 door43MetadataNames(c.StringSlice("topic")),
 	}
 
 	stdCtx, cancel := installSignals()
@@ -72,7 +128,8 @@ func runDoor43Metadata(ctx context.Context, c *cli.Command) error {
 		return err
 	}
 
-	if repoName != "" {
+	// One repo and nothing else to match: processed even when private, which purges its metadata
+	if repoName != "" && !door43MetadataFiltered(opts) {
 		repo, err := repo_model.GetRepositoryByOwnerAndName(stdCtx, ownerNames[0], repoName)
 		if err != nil {
 			return err
@@ -80,34 +137,32 @@ func runDoor43Metadata(ctx context.Context, c *cli.Command) error {
 		return door43metadata_service.ProcessDoor43MetadataForRepo(stdCtx, repo, "")
 	}
 
-	if len(ownerNames) > 0 {
-		owners := make([]*user_model.User, 0, len(ownerNames))
-		for _, name := range ownerNames {
-			owner, err := user_model.GetUserByName(stdCtx, name)
-			if err != nil {
-				return fmt.Errorf("owner %q: %w", name, err)
-			}
-			owners = append(owners, owner)
+	for _, name := range ownerNames {
+		owner, err := user_model.GetUserByName(stdCtx, name)
+		if err != nil {
+			return fmt.Errorf("owner %q: %w", name, err)
 		}
-		names := strings.Join(ownerNames, ", ")
-		if err := system.CreateRepositoryNotice("Starting Door43 Metadata Update for the repos of %s", names); err != nil {
+		opts.OwnerIDs = append(opts.OwnerIDs, owner.ID)
+	}
+
+	scope := door43MetadataScope(ownerNames, opts)
+	if scope == "" {
+		if err := system.CreateRepositoryNotice("Starting FULL Door43 Metadata Update - PROCESSING ALL REPOS AND REFS"); err != nil {
 			return err
 		}
-		if err := door43metadata_service.UpdateDoor43Metadata(stdCtx, owners...); err != nil {
+		if err := door43metadata_service.UpdateDoor43Metadata(stdCtx, opts); err != nil {
 			return err
 		}
-		log.Info("Finished gathering the door43metadata for the repos of %s", names)
-		return system.CreateRepositoryNotice("Finished Door43 Metadata Update for the repos of %s", names)
+		log.Info("Finished gathering the door43metadata for all repos")
+		return system.CreateRepositoryNotice("FINISHED FULL Door43 Metadata Update - PROCESSED ALL REPOS AND REFS")
 	}
 
-	if err := system.CreateRepositoryNotice("Starting FULL Door43 Metadata Update - PROCESSING ALL REPOS AND REFS"); err != nil {
+	if err := system.CreateRepositoryNotice("Starting Door43 Metadata Update for the repos %s", scope); err != nil {
 		return err
 	}
-
-	if err := door43metadata_service.UpdateDoor43Metadata(stdCtx); err != nil {
+	if err := door43metadata_service.UpdateDoor43Metadata(stdCtx, opts); err != nil {
 		return err
 	}
-
-	log.Info("Finished gathering the door43metadata for all repos")
-	return system.CreateRepositoryNotice("FINISHED FULL Door43 Metadata Update - PROCESSED ALL REPOS AND REFS")
+	log.Info("Finished gathering the door43metadata for the repos %s", scope)
+	return system.CreateRepositoryNotice("Finished Door43 Metadata Update for the repos %s", scope)
 }

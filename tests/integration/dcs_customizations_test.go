@@ -250,6 +250,28 @@ func TestDCSAPIRepoSBUnconvertibleContent(t *testing.T) {
 	check(t, "/user2/repo1/sb/raw/metadata.json?ref=master")
 }
 
+// TestDCSReposForMetadataOptions runs every `gitea door43metadata` repo filter on each
+// database CI tests, since their subqueries name tables (release, topic) some quote differently.
+func TestDCSReposForMetadataOptions(t *testing.T) {
+	defer tests.PrepareTestEnv(t)()
+	require.NoError(t, repo_model.InsertDoor43Metadata(t.Context(), &repo_model.Door43Metadata{
+		RepoID: 1, Ref: "dcs-filters", RefType: "branch", CommitSHA: "0000000000000000000000000000000000000001",
+		MetadataType: "rc", HealthcheckSeverity: repo_model.SeverityLevelError,
+	}))
+
+	repos, err := repo_model.GetReposForMetadata(t.Context(), repo_model.ReposForMetadataOptions{
+		OwnerIDs: []int64{2}, RepoName: "repo1", MinHealthcheckSeverity: repo_model.SeverityLevelWarning,
+		HasRelease: true, Topics: []string{"golang", "database"},
+	})
+	require.NoError(t, err)
+	require.Len(t, repos, 1)
+	assert.Equal(t, int64(1), repos[0].ID)
+
+	repos, err = repo_model.GetReposForMetadata(t.Context(), repo_model.ReposForMetadataOptions{HasValidationError: true, Topics: []string{"golang"}})
+	require.NoError(t, err)
+	assert.Empty(t, repos)
+}
+
 func sbZipEntry(t *testing.T, archive []byte, name string) []byte {
 	t.Helper()
 	zr, err := zip.NewReader(bytes.NewReader(archive), int64(len(archive)))
