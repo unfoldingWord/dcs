@@ -16,6 +16,7 @@ import (
 	"gitea.dev/modules/dcs"
 	"gitea.dev/modules/git/gitcmd"
 	"gitea.dev/modules/git/gitrepo"
+	"gitea.dev/modules/structs"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -176,6 +177,8 @@ func TestPopulateRCDoor43Metadata(t *testing.T) {
 		assert.Equal(t, "rc", dm.MetadataType)
 		assert.Equal(t, "0.3", dm.MetadataVersion)
 		assert.Equal(t, "Translation Notes", dm.Subject, "the subject is resolved even when the manifest fails the schema")
+		assert.Equal(t, "parascriptural", dm.FlavorType, "and given the flavor go-rc2sb converts it to")
+		assert.Equal(t, "x-bcvnotes", dm.Flavor)
 		assert.NotNil(t, dm.Metadata)
 		require.NotNil(t, dm.ValidationError)
 		assert.NotEmpty(t, dm.ValidationError.Causes)
@@ -228,6 +231,81 @@ func TestPopulateRCDoor43Metadata(t *testing.T) {
 		require.NoError(t, populateRCDoor43Metadata(ctx, nil, dm, repo, nil, []byte(manifest)))
 		assert.Nil(t, dm.ValidationError)
 		assert.Equal(t, "2024-01-01", nestedString(dm.Metadata, "dublin_core", "issued"))
+	})
+}
+
+// TestPopulateDoor43Metadata_ClearsStaleFields re-reads a ref whose manifest no longer
+// reads, starting from the row an earlier run stored, as processDoor43MetadataForRepoRef does.
+func TestPopulateDoor43Metadata_ClearsStaleFields(t *testing.T) {
+	ctx := t.Context()
+	stale := func() *repo_model.Door43Metadata {
+		return &repo_model.Door43Metadata{
+			MetadataType: "tc", MetadataVersion: "8",
+			Subject: "Bible translation comprehension questions", FlavorType: "peripheral", Flavor: "x-bibletranslationcomprehensionquestions",
+			Abbreviation: "tq", Title: "Old title", Publisher: "Old publisher",
+			Language: "ru", LanguageTitle: "Russian", LanguageDirection: "ltr", LanguageIsGL: true,
+			ContentFormat: "markdown", CheckingLevel: 3,
+			Ingredients: []*structs.Ingredient{{Identifier: "gen"}}, Relations: []*structs.Relation{{Identifier: "ult"}},
+		}
+	}
+	assertCleared := func(t *testing.T, dm *repo_model.Door43Metadata) {
+		t.Helper()
+		require.NotNil(t, dm.ValidationError)
+		assert.Empty(t, dm.Abbreviation)
+		assert.Empty(t, dm.Title)
+		assert.Empty(t, dm.Publisher)
+		assert.Empty(t, dm.Language)
+		assert.Empty(t, dm.LanguageTitle)
+		assert.Empty(t, dm.LanguageDirection)
+		assert.False(t, dm.LanguageIsGL)
+		assert.Empty(t, dm.ContentFormat)
+		assert.Zero(t, dm.CheckingLevel)
+		assert.Empty(t, dm.Ingredients)
+		assert.Empty(t, dm.Relations)
+	}
+
+	t.Run("unsupported manifest.json", func(t *testing.T) {
+		dm := stale()
+		err := populateTcTsDoor43Metadata(ctx, nil, dm, testRepo(1), nil, []byte(`{"syntax_version": "1.0", "slug": "tq", "language": {"slug": "en"}}`))
+		require.ErrorIs(t, err, errNotTcTsManifest)
+		assertCleared(t, dm)
+		assert.Empty(t, dm.Subject)
+		assert.Empty(t, dm.Flavor)
+		assert.False(t, dm.CanConvertToSB(), "an invalid tc/ts entry has nothing to convert")
+	})
+
+	t.Run("manifest.json that is not JSON", func(t *testing.T) {
+		dm := stale()
+		require.NoError(t, populateTcTsDoor43Metadata(ctx, nil, dm, testRepo(1), nil, []byte(`{"tc_version": 8,`)))
+		assertCleared(t, dm)
+		assert.Empty(t, dm.Subject)
+	})
+
+	t.Run("metadata.json that fails the schema", func(t *testing.T) {
+		dm := stale()
+		require.NoError(t, populateSBDoor43Metadata(ctx, nil, dm, testRepo(1), nil, []byte(`{"format": "scripture burrito"}`)))
+		assertCleared(t, dm)
+		assert.Empty(t, dm.Subject)
+		assert.Empty(t, dm.FlavorType)
+		assert.False(t, dm.CanConvertToSB())
+	})
+
+	t.Run("manifest.yaml that fails the schema keeps its resolved subject and flavor", func(t *testing.T) {
+		dm := stale()
+		require.NoError(t, populateRCDoor43Metadata(ctx, nil, dm, testRepo(1), nil, []byte("dublin_core:\n  conformsto: rc0.2\n  subject: Bible translation comprehension questions\n")))
+		assertCleared(t, dm)
+		assert.Equal(t, "Translation Questions", dm.Subject)
+		assert.Equal(t, "x-bcvquestions", dm.Flavor)
+		assert.True(t, dm.CanConvertToSB(), "go-rc2sb converts a manifest that fails the schema")
+	})
+
+	t.Run("manifest.yaml that is not YAML", func(t *testing.T) {
+		dm := stale()
+		require.NoError(t, populateRCDoor43Metadata(ctx, nil, dm, testRepo(1), nil, []byte("dublin_core: [unclosed\n")))
+		assertCleared(t, dm)
+		assert.Empty(t, dm.Subject)
+		assert.Empty(t, dm.Flavor)
+		assert.False(t, dm.CanConvertToSB())
 	})
 }
 

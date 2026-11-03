@@ -120,6 +120,16 @@ var ConvertedSBFlavors = map[string]SBFlavor{
 	"OBS Study Questions":             {"peripheral", "x-obsquestions"},
 }
 
+// ConvertedSBFlavorFor returns the flavor go-rc2sb converts an RC of the subject to,
+// trying the subject's "TSV " form when the subject itself is not listed.
+func ConvertedSBFlavorFor(subject string) (SBFlavor, bool) {
+	if f, ok := ConvertedSBFlavors[subject]; ok {
+		return f, true
+	}
+	f, ok := ConvertedSBFlavors["TSV "+subject]
+	return f, ok
+}
+
 // tsSBSubjects are the ts subjects go-ts2rc converts to an RC that go-rc2sb converts
 var tsSBSubjects = map[string]bool{
 	"Bible":                     true,
