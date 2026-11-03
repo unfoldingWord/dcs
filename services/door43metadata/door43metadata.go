@@ -1532,7 +1532,7 @@ func UpdateDoor43Metadata(ctx context.Context, owners ...*user_model.User) error
 	}
 	repos, err := repo_model.GetReposForMetadata(ctx, ownerIDs...)
 	if err != nil {
-		log.Error("GetReposForMetadata: %v", err)
+		return fmt.Errorf("GetReposForMetadata: %w", err)
 	}
 
 	// The owner rollup is deferred out of the per-repo work and run once per distinct
