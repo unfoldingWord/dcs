@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"path"
 	"path/filepath"
 	"strconv"
 	"strings"
@@ -390,9 +391,9 @@ func GetDoor43MetadataFromRCManifest(ctx context.Context, gitRepo *git.Repositor
 		metadataVersion = "0.2"
 	}
 	// The subject go-rc2sb converts the repo as, so the entry agrees with its /sb/ download
-	subject = rc2sb.ResolveSubject(dcs.MapStr(dublinCore, "subject"), GetBooks(manifest))
+	subject = rc2sb.ResolveRCSubject(dcs.MapStr(dublinCore, "subject"), dcs.MapStr(dublinCore, "identifier"), GetBooks(manifest))
 	if subject == "" {
-		subject = "unknown"
+		subject = "Unknown"
 	}
 	abbreviation = dcs.MapStr(dublinCore, "identifier")
 	title = dcs.MapStr(dublinCore, "title")
@@ -1016,7 +1017,7 @@ func populateRCDoor43Metadata(ctx context.Context, gitRepo *git.Repository, dm *
 		dm.MetadataVersion = strings.TrimPrefix(conformsTo, "rc")
 	}
 	// go-rc2sb converts a manifest that fails the schema too, so the SB download goes by its subject either way
-	dm.Subject = rc2sb.ResolveSubject(nestedString(manifest, "dublin_core", "subject"), GetBooks(manifest))
+	dm.Subject = rc2sb.ResolveRCSubject(nestedString(manifest, "dublin_core", "subject"), nestedString(manifest, "dublin_core", "identifier"), GetBooks(manifest))
 
 	dm.ValidationError, err = dcs.ValidateMapByRC02Schema(manifest)
 	if err != nil {
@@ -1029,6 +1030,32 @@ func populateRCDoor43Metadata(ctx context.Context, gitRepo *git.Repository, dm *
 		return nil
 	}
 	return GetDoor43MetadataFromRCManifest(ctx, gitRepo, dm, manifest, repo, commit)
+}
+
+// rootUSFMFile returns the .usfm file at the commit's root that go-tc2rc converts, preferring
+// <repoName>.usfm, or "" when there is none.
+func rootUSFMFile(ctx context.Context, gitRepo *git.Repository, commit *git.Commit, repoName string) string {
+	tree, err := commit.SubTree(ctx, gitRepo, "")
+	if err != nil {
+		return ""
+	}
+	entries, err := tree.ListEntries(ctx, gitRepo)
+	if err != nil {
+		return ""
+	}
+	var first string
+	for _, entry := range entries {
+		if entry.IsDir() || !strings.EqualFold(path.Ext(entry.Name()), ".usfm") {
+			continue
+		}
+		if strings.EqualFold(entry.Name(), repoName+".usfm") {
+			return entry.Name()
+		}
+		if first == "" {
+			first = entry.Name()
+		}
+	}
+	return first
 }
 
 // GetTcOrTsDoor43Metadata populates dm from the commit's manifest.json. It returns a
@@ -1078,6 +1105,10 @@ func populateTcTsDoor43Metadata(ctx context.Context, gitRepo *git.Repository, dm
 	}
 	dm.MetadataType = t.MetadataType
 	dm.MetadataVersion = t.MetadataVersion
+	if mime := strings.ToLower(t.ContentMimeType); strings.HasPrefix(mime, "audio/") || strings.HasPrefix(mime, "video/") {
+		dm.ValidationError = metadataFileError("manifest.json describes %s content, a recording, not a text project DCS can catalog.", t.ContentMimeType)
+		return nil
+	}
 	dm.Publisher = repoPublisher(repo)
 
 	if (t.Project.ID == "" || t.Project.ID == "bible") && t.Type.ID != "" {
@@ -1099,7 +1130,14 @@ func populateTcTsDoor43Metadata(ctx context.Context, gitRepo *git.Repository, dm
 	} else {
 		bookPath = "./" + repo.Name + ".usfm"
 		if commit != nil {
-			count, _ = GetBookAlignmentCount(ctx, gitRepo, bookPath, commit)
+			if usfm := rootUSFMFile(ctx, gitRepo, commit, repo.Name); usfm != "" {
+				bookPath = "./" + usfm
+				count, _ = GetBookAlignmentCount(ctx, gitRepo, bookPath, commit)
+			} else {
+				// A save from before tc_version keeps its text in <book>/<chapter>.json, which go-tc2rc converts unaligned
+				bookPath = "./" + t.Project.ID
+				t.Subject = "Bible"
+			}
 		}
 		versification = "ufw"
 	}

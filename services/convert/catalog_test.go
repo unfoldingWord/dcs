@@ -84,4 +84,20 @@ func TestToCatalogStageSBURLs(t *testing.T) {
 	require.NotNil(t, stage)
 	assert.Equal(t, repo1.HTMLURL()+"/sb/v9.zip", stage.SBZipballURL)
 	assert.Equal(t, repo1.HTMLURL()+"/sb/raw/metadata.json?ref=v9", stage.SBMetadataURL)
+
+	lexicon := &repo_model.Door43Metadata{
+		RepoID: 1, Repo: repo1, Ref: "v1", RefType: "tag", CommitSHA: "0000000000000000000000000000000000000001",
+		Stage: door43metadata.StageProd, MetadataType: "rc", Subject: "Greek Lexicon",
+	}
+	stage = ToCatalogStage(t.Context(), lexicon)
+	require.NotNil(t, stage)
+	assert.Empty(t, stage.SBZipballURL, "no converter supports the subject")
+	assert.Empty(t, stage.SBTarballURL)
+	assert.Empty(t, stage.SBMetadataURL)
+	assert.NotEmpty(t, stage.ZipballURL)
+	entry := ToCatalogEntry(t.Context(), lexicon, nil, nil)
+	require.NotNil(t, entry)
+	assert.Empty(t, entry.SBZipballURL)
+	assert.Empty(t, entry.SBTarballURL)
+	assert.Empty(t, entry.SBMetadataURL)
 }

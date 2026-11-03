@@ -69,5 +69,9 @@ type TcTsManifest struct {
 		Name string `json:"name"`
 		Type string `json:"type"`
 	} `json:"project"`
-	Slug string `json:"slug"`
+	Slug      string `json:"slug"`
+	Generator struct {
+		Name string `json:"name"`
+	} `json:"generator"`
+	ContentMimeType string `json:"content_mime_type"` // e.g. audio/wav for a recording, not a text project
 }

@@ -279,6 +279,18 @@ func TestPopulateDoor43Metadata_ClearsStaleFields(t *testing.T) {
 		require.NoError(t, populateTcTsDoor43Metadata(ctx, nil, dm, testRepo(1), nil, []byte(`{"tc_version": 8,`)))
 		assertCleared(t, dm)
 		assert.Empty(t, dm.Subject)
+		assert.Empty(t, dm.FlavorType)
+		assert.False(t, dm.CanConvertToSB())
+	})
+
+	t.Run("manifest.json of an audio recording", func(t *testing.T) {
+		dm := stale()
+		require.NoError(t, populateTcTsDoor43Metadata(ctx, nil, dm, testRepo(1), nil, []byte(`{"package_version": 7, "content_mime_type": "audio/wav", "language": {"slug": "cmn"}, "project": {"id": "eph"}, "resource": {"slug": "ulb"}}`)))
+		assertCleared(t, dm)
+		assert.Equal(t, "ts", dm.MetadataType)
+		assert.Contains(t, dm.ValidationError.Message, "audio/wav content, a recording")
+		assert.Empty(t, dm.Subject)
+		assert.False(t, dm.CanConvertToSB())
 	})
 
 	t.Run("metadata.json that fails the schema", func(t *testing.T) {
@@ -297,6 +309,13 @@ func TestPopulateDoor43Metadata_ClearsStaleFields(t *testing.T) {
 		assert.Equal(t, "Translation Questions", dm.Subject)
 		assert.Equal(t, "x-bcvquestions", dm.Flavor)
 		assert.True(t, dm.CanConvertToSB(), "go-rc2sb converts a manifest that fails the schema")
+	})
+
+	t.Run("manifest.yaml with no subject takes it from the identifier", func(t *testing.T) {
+		dm := stale()
+		require.NoError(t, populateRCDoor43Metadata(ctx, nil, dm, testRepo(1), nil, []byte("dublin_core:\n  conformsto: rc0.2\n  identifier: ta\n  type: man\n  subject: ''\n")))
+		assert.Equal(t, "Translation Academy", dm.Subject)
+		assert.Equal(t, "x-peripheralArticles", dm.Flavor)
 	})
 
 	t.Run("manifest.yaml that is not YAML", func(t *testing.T) {
@@ -533,7 +552,10 @@ func TestProcessDoor43MetadataForRepoRef_InvalidMetadataFiles(t *testing.T) {
 	})
 
 	t.Run("tc: valid manifest.json", func(t *testing.T) {
-		commitFileOnBranch(t, repoPath, "dcs-valid-tc", "manifest.json", validTcManifest)
+		commitFilesOnBranch(t, repoPath, "dcs-valid-tc", map[string]string{
+			"manifest.json": validTcManifest,
+			"repo1.usfm":    "\\id GEN\n\\c 1\n\\v 1 In the beginning\n",
+		})
 		require.NoError(t, processDoor43MetadataForRepoRef(ctx, repo, "dcs-valid-tc"))
 		dm := loadDM(t, "dcs-valid-tc")
 		assert.Nil(t, dm.ValidationError)
