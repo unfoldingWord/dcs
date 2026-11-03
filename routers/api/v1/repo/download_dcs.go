@@ -52,6 +52,8 @@ func GetSBArchive(ctx *context.APIContext) {
 	//     description: the archive format is not .zip or .tar.gz
 	//   "404":
 	//     description: the ref does not exist, or the repository is not an rc, ts, tc or sb repository
+	//   "422":
+	//     description: the repository's content can't be converted to a Scripture Burrito
 
 	aReq, err := sbarchiver_service.NewRequest(ctx, ctx.Repo.Repository, ctx.Repo.GitRepo, ctx.PathParam("*"))
 	if err != nil {
@@ -118,6 +120,8 @@ func GetSBFile(ctx *context.APIContext) {
 	//     description: the path is empty or absolute, or has a backslash or an empty, `.` or `..` segment
 	//   "404":
 	//     description: the ref does not exist, the repository is not an rc, ts, tc or sb repository, or the file is not in the burrito
+	//   "422":
+	//     description: the repository's content can't be converted to a Scripture Burrito
 
 	err := sbarchiver_service.ServeSBFile(ctx.Base, ctx.Repo.Repository, ctx.Repo.GitRepo, ctx.FormTrim("ref"), ctx.PathParam("*"))
 	switch {
@@ -126,6 +130,9 @@ func GetSBFile(ctx *context.APIContext) {
 		ctx.APIError(http.StatusBadRequest, err.Error())
 	case errors.Is(err, util.ErrNotExist), errors.Is(err, sbarchiver_service.RepoRefNotFoundError{}), errors.Is(err, sbarchiver_service.ErrRepoNotConvertible{}):
 		ctx.APIError(http.StatusNotFound, err.Error())
+	case errors.Is(err, sbarchiver_service.ErrUnconvertibleContent{}):
+		unconvertible, _ := errors.AsType[sbarchiver_service.ErrUnconvertibleContent](err)
+		ctx.APIError(http.StatusUnprocessableEntity, unconvertible.ClientMessage())
 	default:
 		ctx.APIErrorInternal(err)
 	}
