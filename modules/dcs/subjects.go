@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	rc2sb "github.com/unfoldingWord/go-rc2sb"
+	ts2rc "github.com/unfoldingWord/go-ts2rc"
 )
 
 // SubjectToResourceMap maps subjects to their valid resource IDs
@@ -120,16 +121,14 @@ var ConvertedSBFlavors = map[string]SBFlavor{
 	"OBS Study Questions":             {"peripheral", "x-obsquestions"},
 }
 
-// tsSBSubjects are the ts subjects go-ts2rc converts to an RC that go-rc2sb converts
-var tsSBSubjects = map[string]bool{
-	"Bible":                     true,
-	"Open Bible Stories":        true,
-	"OBS Translation Notes":     true,
-	"OBS Translation Questions": true,
-	"Translation Notes":         true,
-	"Translation Questions":     true,
-	"Translation Words":         true,
-	"Translation Academy":       true,
+// ConvertedSBFlavorFor returns the flavor go-rc2sb converts an RC of the subject to,
+// trying the subject's "TSV " form when the subject itself is not listed.
+func ConvertedSBFlavorFor(subject string) (SBFlavor, bool) {
+	if f, ok := ConvertedSBFlavors[subject]; ok {
+		return f, true
+	}
+	f, ok := ConvertedSBFlavors["TSV "+subject]
+	return f, ok
 }
 
 // SBConvertible reports whether a repo of the metadata type and subject has a Scripture
@@ -140,7 +139,7 @@ func SBConvertible(metadataType, subject string) bool {
 	case "sb", "tc":
 		return true
 	case "ts":
-		return tsSBSubjects[subject]
+		return ts2rc.Supports(subject)
 	case "rc":
 		return rc2sb.Supports(subject)
 	}

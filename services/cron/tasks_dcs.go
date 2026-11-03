@@ -6,6 +6,7 @@ package cron
 import (
 	"context"
 
+	repo_model "gitea.dev/models/repo"
 	user_model "gitea.dev/models/user"
 	convert2sb_service "gitea.dev/services/convert2sb"
 	metadata_service "gitea.dev/services/door43metadata"
@@ -17,7 +18,8 @@ func registerUpdateDoor43MetadataTask() {
 		RunAtStart: false,
 		Schedule:   "@every 72h",
 	}, func(ctx context.Context, _ *user_model.User, _ *BaseConfig) error {
-		return metadata_service.UpdateDoor43Metadata(ctx)
+		_, err := metadata_service.UpdateDoor43Metadata(ctx, repo_model.ReposForMetadataOptions{})
+		return err
 	})
 }
 
