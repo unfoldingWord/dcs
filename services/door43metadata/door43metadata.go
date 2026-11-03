@@ -12,6 +12,7 @@ import (
 	"net/http"
 	"path"
 	"path/filepath"
+	"regexp"
 	"strconv"
 	"strings"
 	"time"
@@ -1032,31 +1033,60 @@ func populateRCDoor43Metadata(ctx context.Context, gitRepo *git.Repository, dm *
 	return GetDoor43MetadataFromRCManifest(ctx, gitRepo, dm, manifest, repo, commit)
 }
 
-// rootUSFMFile returns the .usfm file at the commit's root that go-tc2rc converts, preferring
-// <repoName>.usfm, or "" when there is none.
-func rootUSFMFile(ctx context.Context, gitRepo *git.Repository, commit *git.Commit, repoName string) string {
+// tcBookSource finds what go-tc2rc converts in a tC commit: the root .usfm file it picks
+// (<repoName>.usfm, then <projectID>.usfm, then the first by name), or, when there is none,
+// the <projectID>/ folder of <chapter>.json files it builds unaligned text from.
+func tcBookSource(ctx context.Context, gitRepo *git.Repository, commit *git.Commit, repoName, projectID string) (usfm, chapterDir string, err error) {
 	tree, err := commit.SubTree(ctx, gitRepo, "")
 	if err != nil {
-		return ""
+		return "", "", err
 	}
 	entries, err := tree.ListEntries(ctx, gitRepo)
 	if err != nil {
-		return ""
+		return "", "", err
 	}
-	var first string
+	var usfmFiles []string
+	var bookDir *git.TreeEntry
 	for _, entry := range entries {
-		if entry.IsDir() || !strings.EqualFold(path.Ext(entry.Name()), ".usfm") {
-			continue
-		}
-		if strings.EqualFold(entry.Name(), repoName+".usfm") {
-			return entry.Name()
-		}
-		if first == "" {
-			first = entry.Name()
+		switch {
+		case entry.IsDir():
+			if bookDir == nil && strings.EqualFold(entry.Name(), projectID) {
+				bookDir = entry
+			}
+		case strings.EqualFold(path.Ext(entry.Name()), ".usfm"):
+			usfmFiles = append(usfmFiles, entry.Name())
 		}
 	}
-	return first
+	if len(usfmFiles) > 0 {
+		for _, want := range []string{repoName + ".usfm", projectID + ".usfm"} {
+			for _, name := range usfmFiles {
+				if strings.EqualFold(name, want) {
+					return name, "", nil
+				}
+			}
+		}
+		return usfmFiles[0], "", nil
+	}
+	if bookDir == nil {
+		return "", "", nil
+	}
+	chapters, err := tree.SubTree(ctx, gitRepo, bookDir.Name())
+	if err != nil {
+		return "", "", err
+	}
+	chapterEntries, err := chapters.ListEntries(ctx, gitRepo)
+	if err != nil {
+		return "", "", err
+	}
+	for _, entry := range chapterEntries {
+		if !entry.IsDir() && chapterJSONRe.MatchString(entry.Name()) {
+			return "", bookDir.Name(), nil
+		}
+	}
+	return "", "", nil
 }
+
+var chapterJSONRe = regexp.MustCompile(`^[0-9]+\.json$`)
 
 // GetTcOrTsDoor43Metadata populates dm from the commit's manifest.json. It returns a
 // git not-exist error when the commit has no such file, and errNotTcTsManifest when
@@ -1105,7 +1135,7 @@ func populateTcTsDoor43Metadata(ctx context.Context, gitRepo *git.Repository, dm
 	}
 	dm.MetadataType = t.MetadataType
 	dm.MetadataVersion = t.MetadataVersion
-	if mime := strings.ToLower(t.ContentMimeType); strings.HasPrefix(mime, "audio/") || strings.HasPrefix(mime, "video/") {
+	if mime := strings.ToLower(strings.TrimSpace(t.ContentMimeType)); strings.HasPrefix(mime, "audio/") || strings.HasPrefix(mime, "video/") {
 		dm.ValidationError = metadataFileError("manifest.json describes %s content, a recording, not a text project DCS can catalog.", t.ContentMimeType)
 		return nil
 	}
@@ -1130,12 +1160,17 @@ func populateTcTsDoor43Metadata(ctx context.Context, gitRepo *git.Repository, dm
 	} else {
 		bookPath = "./" + repo.Name + ".usfm"
 		if commit != nil {
-			if usfm := rootUSFMFile(ctx, gitRepo, commit, repo.Name); usfm != "" {
+			usfm, chapterDir, err := tcBookSource(ctx, gitRepo, commit, repo.Name, t.Project.ID)
+			if err != nil {
+				return fmt.Errorf("reading the tree of %s: %v", commit.ID, err) // not wrapped: a git not-exist error here is not a missing manifest.json
+			}
+			switch {
+			case usfm != "":
 				bookPath = "./" + usfm
 				count, _ = GetBookAlignmentCount(ctx, gitRepo, bookPath, commit)
-			} else {
-				// A save from before tc_version keeps its text in <book>/<chapter>.json, which go-tc2rc converts unaligned
-				bookPath = "./" + t.Project.ID
+			case chapterDir != "":
+				// With no USFM, as in a save from before tc_version, go-tc2rc converts <book>/<chapter>.json unaligned
+				bookPath = "./" + chapterDir
 				t.Subject = "Bible"
 			}
 		}

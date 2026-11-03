@@ -293,6 +293,15 @@ func TestPopulateDoor43Metadata_ClearsStaleFields(t *testing.T) {
 		assert.False(t, dm.CanConvertToSB())
 	})
 
+	t.Run("manifest.json of a recording that reads as tC", func(t *testing.T) {
+		dm := stale()
+		require.NoError(t, populateTcTsDoor43Metadata(ctx, nil, dm, testRepo(1), nil, []byte(`{"tc_version": 8, "generator": {"name": "tc-desktop"}, "content_mime_type": " Audio/WAV", "project": {"id": "tit"}}`)))
+		assert.Equal(t, "tc", dm.MetadataType)
+		require.NotNil(t, dm.ValidationError)
+		assert.False(t, dm.CanConvertToSB(), "an invalid tc entry has no SB download")
+		assert.Empty(t, dm.SBZipballURL())
+	})
+
 	t.Run("metadata.json that fails the schema", func(t *testing.T) {
 		dm := stale()
 		require.NoError(t, populateSBDoor43Metadata(ctx, nil, dm, testRepo(1), nil, []byte(`{"format": "scripture burrito"}`)))

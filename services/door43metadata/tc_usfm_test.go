@@ -50,16 +50,42 @@ func TestPopulateTcDoor43Metadata_USFM(t *testing.T) {
 		assert.True(t, dm.CanConvertToSB())
 	})
 
-	t.Run("an exported USFM named after the book", func(t *testing.T) {
-		manifest := `{"tc_version": 8, "project": {"id": "tit"}, "target_language": {"id": "en"}}`
-		commit := branchCommit(t, "dcs-tc-usfm", map[string]string{
-			"manifest.json": manifest,
-			"tit.usfm":      "\\id TIT\n\\c 1\n\\v 1 Paul\n",
-		})
+	tcManifest := `{"tc_version": 8, "project": {"id": "tit"}, "target_language": {"id": "en"}}`
+	populate := func(t *testing.T, branch, manifest string, files map[string]string) *repo_model.Door43Metadata {
+		t.Helper()
+		files["manifest.json"] = manifest
 		dm := &repo_model.Door43Metadata{}
-		require.NoError(t, populateTcTsDoor43Metadata(ctx, gitRepo, dm, repo, commit, []byte(manifest)))
-		assert.Equal(t, "Aligned Bible", dm.Subject)
+		require.NoError(t, populateTcTsDoor43Metadata(ctx, gitRepo, dm, repo, branchCommit(t, branch, files), []byte(manifest)))
+		require.Nil(t, dm.ValidationError)
 		require.Len(t, dm.Ingredients, 1)
-		assert.Equal(t, "./tit.usfm", dm.Ingredients[0].Path, "go-tc2rc takes the only .usfm when none is named after the repo")
+		return dm
+	}
+
+	t.Run("USFM named after the book wins over another USFM, as in go-tc2rc", func(t *testing.T) {
+		dm := populate(t, "dcs-tc-usfm", tcManifest, map[string]string{
+			"57-TIT.usfm": "\\id TIT\n\\c 1\n\\v 1 Paul\n",
+			"tit.usfm":    "\\id TIT\n\\c 1\n\\v 1 Paul\n",
+		})
+		assert.Equal(t, "Aligned Bible", dm.Subject)
+		assert.Equal(t, "./tit.usfm", dm.Ingredients[0].Path)
+	})
+
+	t.Run("the only USFM, named after neither", func(t *testing.T) {
+		dm := populate(t, "dcs-tc-usfm-other", tcManifest, map[string]string{"57-TIT.usfm": "\\id TIT\n"})
+		assert.Equal(t, "./57-TIT.usfm", dm.Ingredients[0].Path)
+	})
+
+	t.Run("no USFM and no chapter JSON keeps the manifest's subject", func(t *testing.T) {
+		dm := populate(t, "dcs-tc-bare", tcManifest, map[string]string{"tit/notes.md": "not a chapter"})
+		assert.Equal(t, "Aligned Bible", dm.Subject, "go-tc2rc builds unaligned text only from <chapter>.json files")
+		assert.Equal(t, "./repo1.usfm", dm.Ingredients[0].Path)
+	})
+
+	t.Run("a tS project with no USFM is not a tC save", func(t *testing.T) {
+		manifest := `{"package_version": 6, "type": {"id": "text"}, "project": {"id": "tit"}, "resource": {"id": "ulb"}, "target_language": {"id": "en"}}`
+		dm := populate(t, "dcs-ts-text", manifest, map[string]string{"01/01.txt": "\\v 1 Paul"})
+		assert.Equal(t, "ts", dm.MetadataType)
+		assert.Equal(t, "Bible", dm.Subject)
+		assert.Equal(t, ".", dm.Ingredients[0].Path)
 	})
 }

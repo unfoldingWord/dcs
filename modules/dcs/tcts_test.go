@@ -35,6 +35,10 @@ func TestParseTcTsManifestFlavor(t *testing.T) {
 	assert.Equal(t, "tc", save.MetadataType, "a translationCore save from before tc_version names tc-desktop as its generator")
 	assert.Equal(t, "0", save.MetadataVersion)
 
+	bare, err := ParseTcTsManifest([]byte(`{"package_version": 1, "generator": "tc-desktop", "project": {"id": "tit"}}`))
+	require.NoError(t, err, "a generator given as a bare string still reads")
+	assert.Equal(t, "tc", bare.MetadataType)
+
 	v2, err := ParseTcTsManifest([]byte(`{"package_version": 2, "slug": "phm", "target_language": {"slug": "aa", "name": "Afar"}}`))
 	require.NoError(t, err)
 	assert.Equal(t, "aa", v2.TargetLanguage.ID, "a v2 manifest names its language by slug")
