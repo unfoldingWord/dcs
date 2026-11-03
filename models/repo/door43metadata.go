@@ -1204,6 +1204,9 @@ func GetReposForMetadata(ctx context.Context, opts ReposForMetadataOptions) ([]*
 		cond = cond.And(builder.In("`repository`.owner_id", opts.OwnerIDs))
 	}
 	if opts.RepoName != "" {
+		if len(opts.OwnerIDs) != 1 {
+			return nil, errors.New("GetReposForMetadata: RepoName needs exactly one owner") // a name alone would match that repo of every owner
+		}
 		cond = cond.And(builder.Eq{"`repository`.lower_name": strings.ToLower(opts.RepoName)})
 	}
 	if opts.MinHealthcheckSeverity > 0 {

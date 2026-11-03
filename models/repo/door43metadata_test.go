@@ -143,7 +143,7 @@ func TestGetReposForMetadataOptions(t *testing.T) {
 
 	withRelease := ids(t, repo_model.ReposForMetadataOptions{HasRelease: true})
 	assert.Contains(t, withRelease, int64(1), "repo1 has published releases")
-	assert.NotContains(t, withRelease, int64(4))
+	assert.NotContains(t, withRelease, int64(4), "repo4 has no releases")
 
 	for _, dm := range []*repo_model.Door43Metadata{
 		{RepoID: 1, Ref: "dcs-error", RefType: "branch", CommitSHA: "0000000000000000000000000000000000000001", MetadataType: "rc", HealthcheckSeverity: repo_model.SeverityLevelError},
@@ -157,4 +157,16 @@ func TestGetReposForMetadataOptions(t *testing.T) {
 	assert.Equal(t, []int64{4}, ids(t, repo_model.ReposForMetadataOptions{HasValidationError: true}))
 	assert.Empty(t, ids(t, repo_model.ReposForMetadataOptions{HasValidationError: true, HasRelease: true}), "every option must hold")
 	assert.Equal(t, []int64{1}, ids(t, repo_model.ReposForMetadataOptions{MinHealthcheckSeverity: repo_model.SeverityLevelWarning, HasRelease: true}))
+
+	release := func(tag string, draft, bareTag bool) *repo_model.Release {
+		return &repo_model.Release{RepoID: 4, PublisherID: 5, TagName: tag, LowerTagName: tag, Target: "master", Title: tag, IsDraft: draft, IsTag: bareTag}
+	}
+	require.NoError(t, db.Insert(ctx, release("v-draft", true, false)))
+	require.NoError(t, db.Insert(ctx, release("v-tag", false, true)))
+	assert.NotContains(t, ids(t, repo_model.ReposForMetadataOptions{HasRelease: true}), int64(4), "a draft and a bare tag are no release")
+	require.NoError(t, db.Insert(ctx, release("v1", false, false)))
+	assert.Contains(t, ids(t, repo_model.ReposForMetadataOptions{HasRelease: true}), int64(4), "a published release is")
+
+	_, err := repo_model.GetReposForMetadata(ctx, repo_model.ReposForMetadataOptions{RepoName: "repo1"})
+	assert.Error(t, err, "a repo name alone would match that repo of every owner")
 }
