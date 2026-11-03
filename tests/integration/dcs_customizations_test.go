@@ -31,6 +31,7 @@ import (
 	"gitea.dev/modules/util"
 	"gitea.dev/tests"
 
+	"github.com/santhosh-tekuri/jsonschema/v5"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -248,6 +249,37 @@ func TestDCSAPIRepoSBUnconvertibleContent(t *testing.T) {
 	}
 	check(t, "/api/v1/repos/user2/repo1/sb/raw/metadata.json?ref=master")
 	check(t, "/user2/repo1/sb/raw/metadata.json?ref=master")
+}
+
+// TestDCSReposForMetadataOptions runs every `gitea door43metadata` repo filter on each
+// database CI tests, since their subqueries name tables (release, topic) some quote differently.
+func TestDCSReposForMetadataOptions(t *testing.T) {
+	defer tests.PrepareTestEnv(t)()
+	require.NoError(t, repo_model.InsertDoor43Metadata(t.Context(), &repo_model.Door43Metadata{
+		RepoID: 1, Ref: "dcs-filters", RefType: "branch", CommitSHA: "0000000000000000000000000000000000000001",
+		MetadataType: "rc", HealthcheckSeverity: repo_model.SeverityLevelError,
+	}))
+
+	repos, err := repo_model.GetReposForMetadata(t.Context(), repo_model.ReposForMetadataOptions{
+		OwnerIDs: []int64{2}, RepoName: "repo1", MinHealthcheckSeverity: repo_model.SeverityLevelWarning,
+		HasRelease: true, Topics: []string{"golang", "database"},
+	})
+	require.NoError(t, err)
+	require.Len(t, repos, 1)
+	assert.Equal(t, int64(1), repos[0].ID)
+
+	repos, err = repo_model.GetReposForMetadata(t.Context(), repo_model.ReposForMetadataOptions{HasValidationError: true, Topics: []string{"golang"}})
+	require.NoError(t, err)
+	assert.Empty(t, repos, "repo1 has no invalid entry yet")
+
+	require.NoError(t, repo_model.InsertDoor43Metadata(t.Context(), &repo_model.Door43Metadata{
+		RepoID: 1, Ref: "dcs-filters-invalid", RefType: "branch", CommitSHA: "0000000000000000000000000000000000000002",
+		MetadataType: "tc", ValidationError: &jsonschema.ValidationError{Message: "bad manifest"},
+	}))
+	repos, err = repo_model.GetReposForMetadata(t.Context(), repo_model.ReposForMetadataOptions{HasValidationError: true, Topics: []string{"golang"}})
+	require.NoError(t, err)
+	require.Len(t, repos, 1, "a stored validation error matches")
+	assert.Equal(t, int64(1), repos[0].ID)
 }
 
 func sbZipEntry(t *testing.T, archive []byte, name string) []byte {

@@ -1522,19 +1522,21 @@ func UpdateUserMetadata(ctx context.Context) error {
 	return nil
 }
 
-// UpdateDoor43Metadata generates door43_metadata table entries for valid repos/releases that don't have them
-func UpdateDoor43Metadata(ctx context.Context) error {
+// UpdateDoor43Metadata re-processes every ref of the public repos that match opts: all of
+// them when opts is empty. It returns how many repos it selected.
+func UpdateDoor43Metadata(ctx context.Context, opts repo_model.ReposForMetadataOptions) (int, error) {
 	log.Trace("Doing: UpdateDoor43Metadata")
 
-	repos, err := repo_model.GetReposForMetadata(ctx)
+	repos, err := repo_model.GetReposForMetadata(ctx, opts)
 	if err != nil {
-		log.Error("GetReposForMetadata: %v", err)
+		return 0, fmt.Errorf("GetReposForMetadata: %w", err)
 	}
+	log.Info("UpdateDoor43Metadata: %d repos to process", len(repos))
 
 	// The owner rollup is deferred out of the per-repo work and run once per distinct
 	// owner at the end: it reads every one of the owner's entries, so doing it inside
 	// the loop repeated the same scan for each of the owner's repos.
-	owners := map[int64]*user_model.User{}
+	rollups := map[int64]*user_model.User{}
 	for _, repo := range repos {
 		if err := processDoor43MetadataForRepo(ctx, repo, "", false); err != nil {
 			log.Info("Failed to process metadata for repo (%v): %v", repo, err)
@@ -1543,11 +1545,11 @@ func UpdateDoor43Metadata(ctx context.Context) error {
 			}
 		}
 		if repo.Owner != nil {
-			owners[repo.Owner.ID] = repo.Owner
+			rollups[repo.Owner.ID] = repo.Owner
 		}
 	}
 
-	for _, owner := range owners {
+	for _, owner := range rollups {
 		if err := processDoor43MetadataForUser(ctx, owner); err != nil {
 			log.Info("Failed to process metadata for user (%v): %v", owner, err)
 			if err = system.CreateRepositoryNotice("Failed to process metadata for user (%s): %v", owner.Name, err); err != nil {
@@ -1556,7 +1558,7 @@ func UpdateDoor43Metadata(ctx context.Context) error {
 		}
 	}
 	log.Trace("Finished: UpdateDoor43Metadata")
-	return nil
+	return len(repos), nil
 }
 
 func DeleteDoor43MetadataByRepoAndRef(ctx context.Context, repo *repo_model.Repository, ref string) error {
