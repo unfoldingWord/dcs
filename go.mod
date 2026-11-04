@@ -81,15 +81,14 @@ require (
 	github.com/stretchr/testify v1.12.1
 	github.com/syndtr/goleveldb v1.0.0
 	github.com/ulikunitz/xz v0.5.17
-	github.com/unfoldingWord/go-rc2sb v0.8.0
-	github.com/unfoldingWord/go-tc2rc v0.1.0
-	github.com/unfoldingWord/go-ts2rc v0.2.0
+	github.com/unfoldingWord/go-rc2sb v0.9.0
+	github.com/unfoldingWord/go-tc2rc v0.3.0
+	github.com/unfoldingWord/go-ts2rc v0.4.0
 	github.com/urfave/cli-docs/v3 v3.1.0
 	github.com/urfave/cli/v3 v3.14.0
 	github.com/wneessen/go-mail v0.8.1
 	github.com/yohcop/openid-go v1.0.1
 	github.com/yuin/goldmark v1.8.6
-	github.com/yuin/goldmark-highlighting/v2 v2.0.0-20230729083705-37449abec8cc
 	gitlab.com/gitlab-org/api/client-go/v3 v3.39.1
 	go.yaml.in/yaml/v4 v4.0.0-rc.6.0.20261013184558-04dd63131525
 	golang.org/x/crypto v0.58.0

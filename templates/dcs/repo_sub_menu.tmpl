@@ -8,7 +8,7 @@
 		{{$metadataTypeTitle := (.RepoDM.MetadataTypeTitle)}}
 		{{$metadataTypeIcon := (.RepoDM.MetadataTypeIcon)}}
 		<a class="item muted" href="{{AppSubUrl}}/explore/repos?q=metadata_type:{{.RepoDM.MetadataType}}" data-tooltip-content="Metadata Type: {{$metadataTypeTitle}} v{{.RepoDM.MetadataVersion}}">
-			<img src="{{AssetUrlPrefix}}/img/dcs/{{$metadataTypeIcon}}" style="height:16px;vertical-align:middle"/> <span style="font-weight: bold">{{.RepoDM.MetadataType}}{{.RepoDM.MetadataVersion}}</span>
+			<img src="{{AssetUrlPrefix}}/img/dcs/{{$metadataTypeIcon}}" style="height:16px;vertical-align:middle"> <span style="font-weight: bold">{{.RepoDM.MetadataType}}{{.RepoDM.MetadataVersion}}</span>
 		</a>
 	{{end}}
 {{end}}

@@ -8,13 +8,17 @@ import (
 	"archive/zip"
 	"bytes"
 	"compress/gzip"
+	"context"
 	"errors"
+	"fmt"
 	"io"
 	"io/fs"
+	"net/http"
 	"os"
 	"path/filepath"
 	"runtime/debug"
 	"strings"
+	"syscall"
 	"testing"
 	"time"
 
@@ -523,4 +527,64 @@ func TestRequestedRefType(t *testing.T) {
 	refType, err = requestedRefType(t.Context(), repo, fallbackDM, testFirstCommit)
 	require.NoError(t, err)
 	assert.Empty(t, refType)
+}
+
+func TestConversionError(t *testing.T) {
+	tmp := t.TempDir()
+	content := filepath.Join(tmp, "rc")
+	readErr := &fs.PathError{Op: "open", Path: filepath.Join(content, "manifest.yaml"), Err: fs.ErrNotExist}
+	writeErr := &fs.PathError{Op: "mkdir", Path: filepath.Join(tmp, "sb", "ingredients"), Err: fs.ErrPermission}
+	for name, tc := range map[string]struct {
+		err           error
+		unconvertible bool
+	}{
+		"a content file it can't find":         {readErr, true},
+		"content it can't parse":               {errors.New("manifest.yaml: yaml: line 3: did not find expected key"), true},
+		"a report message with no error":       {reportErr(nil, "no .usfm file found"), true},
+		"writing its output":                   {writeErr, false},
+		"a full disk while reading content":    {&fs.PathError{Op: "read", Path: filepath.Join(content, "01.md"), Err: syscall.ENOSPC}, false},
+		"content it may not read":              {&fs.PathError{Op: "open", Path: filepath.Join(content, "LICENSE.md"), Err: syscall.EACCES}, false},
+		"a cancelled request":                  {fmt.Errorf("context error: %w", context.Canceled), false},
+		"renaming a file it wrote":             {&os.LinkError{Op: "rename", Old: "a", New: "b", Err: fs.ErrExist}, false},
+		"a path that only shares the dir name": {&fs.PathError{Op: "open", Path: content + "-payload/x.md", Err: fs.ErrNotExist}, false},
+	} {
+		got := conversionError(t.Context(), "rc2sb.Convert", tc.err, content, tmp)
+		_, unconvertible := errors.AsType[ErrUnconvertibleContent](got)
+		assert.Equal(t, tc.unconvertible, unconvertible, name)
+		assert.ErrorIs(t, got, tc.err, name)
+		assert.Contains(t, got.Error(), "rc2sb.Convert", name)
+	}
+
+	unconvertible, ok := errors.AsType[ErrUnconvertibleContent](conversionError(t.Context(), "rc2sb.Convert", readErr, content, tmp))
+	require.True(t, ok)
+	assert.Contains(t, unconvertible.Error(), filepath.Join(content, "manifest.yaml"), "the log keeps the full path")
+	assert.Contains(t, unconvertible.ClientMessage(), "rc/manifest.yaml")
+	assert.NotContains(t, unconvertible.ClientMessage(), tmp, "the temporary directory is stripped from what the client sees")
+
+	cancelled, cancel := context.WithCancel(t.Context())
+	cancel()
+	got := conversionError(cancelled, "rc2sb.Convert", readErr, content, tmp)
+	assert.ErrorIs(t, got, context.Canceled, "a request that ended is no content error, whatever the converter said")
+	assert.NotErrorIs(t, got, ErrUnconvertibleContent{})
+}
+
+// TestServeSBArchiveError answers a server failure 500 and a content rejection 422, both
+// without the archive's download headers that the streamed path set before converting.
+func TestServeSBArchiveError(t *testing.T) {
+	for _, tc := range []struct {
+		err  error
+		code int
+	}{
+		{conversionError(t.Context(), "rc2sb.Convert", &fs.PathError{Op: "mkdir", Path: "/tmp/x/sb", Err: syscall.ENOSPC}, "/tmp/x/rc", "/tmp/x"), http.StatusInternalServerError},
+		{conversionError(t.Context(), "rc2sb.Convert", errors.New("no manifest.yaml"), "/tmp/x/rc", "/tmp/x"), http.StatusUnprocessableEntity},
+	} {
+		ctx, resp := contexttest.MockContext(t, "/user2/repo1/sb/master.zip")
+		ctx.Resp.Header().Set("Content-Disposition", "attachment; filename=repo1-master-sb.zip")
+		ctx.Resp.Header().Set("ETag", `"x"`)
+		serveSBArchiveError(ctx.Base, &ArchiveRequest{}, tc.err)
+		assert.Equal(t, tc.code, resp.Code, tc.err.Error())
+		assert.Empty(t, resp.Header().Get("Content-Disposition"))
+		assert.Empty(t, resp.Header().Get("ETag"))
+		assert.Equal(t, "no-store", resp.Header().Get("Cache-Control"))
+	}
 }
