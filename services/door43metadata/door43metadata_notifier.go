@@ -233,7 +233,7 @@ func (m *metadataNotifier) MigrateRepository(ctx context.Context, doer, u *user_
 	processInBackground("MigrateRepository", repo, "")
 }
 
-func (m *metadataNotifier) TransferRepository(ctx context.Context, doer *user_model.User, repo *repo_model.Repository, newOwnerName string) {
+func (m *metadataNotifier) TransferRepository(ctx context.Context, doer *user_model.User, repo *repo_model.Repository, oldOwner *user_model.User) {
 	processInBackground("TransferRepository", repo, "")
 }
 

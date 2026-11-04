@@ -216,7 +216,7 @@ This document catalogs every DCS modification to existing Gitea files. New DCS-o
 | ------ | ------------- | ------ |
 | `services/release/release_test.go` | Changed test targets for DCS compatibility | LOW |
 | `tests/integration/links_test.go` | Updated for DCS links | LOW |
-| `tests/integration/user_test.go` | Updated for DCS behavior | LOW |
+| `tests/integration/user_settings_test.go` | DCS reserved usernames (about, catalog, tools) | LOW |
 
 ---
 
