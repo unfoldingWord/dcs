@@ -596,3 +596,44 @@ func TestProcessDoor43MetadataForRepoRef_InvalidMetadataFiles(t *testing.T) {
 		assert.Empty(t, issues, "healthcheck issues should be removed with their metadata row")
 	})
 }
+
+// TestProcessDoor43MetadataForRepo_OnlyEntryTurnsInvalid re-processes a repo's only entry
+// after its manifest stopped describing a text project. That entry was the repo's metadata
+// row, so it must not be backfilled from its own earlier values.
+func TestProcessDoor43MetadataForRepo_OnlyEntryTurnsInvalid(t *testing.T) {
+	unittest.PrepareTestEnv(t)
+	ctx := t.Context()
+	const branch = "dcs-only-entry"
+
+	loadRepo := func(t *testing.T) *repo_model.Repository {
+		t.Helper()
+		repo, err := repo_model.GetRepositoryByID(ctx, 1)
+		require.NoError(t, err)
+		return repo
+	}
+	repo := loadRepo(t)
+	repoPath := gitrepo.RepoLocalPath(repo.CodeStorageRepo())
+
+	commitFilesOnBranch(t, repoPath, branch, map[string]string{
+		"manifest.json": validTcManifest,
+		"repo1.usfm":    "\\id GEN\n\\c 1\n\\v 1 In the beginning\n",
+	})
+	require.NoError(t, ProcessDoor43MetadataForRepo(ctx, repo, branch))
+	valid, err := repo_model.GetDoor43MetadataByRepoIDAndRef(ctx, repo.ID, branch)
+	require.NoError(t, err)
+	require.Nil(t, valid.ValidationError)
+	require.True(t, valid.IsRepoMetadata)
+	require.Equal(t, "Aligned Bible", valid.Subject)
+	require.Equal(t, "textTranslation", valid.Flavor)
+
+	commitFileOnBranch(t, repoPath, branch, "manifest.json", `{"package_version": 7, "content_mime_type": "audio/wav", "language": {"slug": "cmn"}, "project": {"id": "eph"}, "resource": {"slug": "ulb"}}`)
+	require.NoError(t, ProcessDoor43MetadataForRepo(ctx, loadRepo(t), branch))
+	dm, err := repo_model.GetDoor43MetadataByRepoIDAndRef(ctx, repo.ID, branch)
+	require.NoError(t, err)
+	require.NotNil(t, dm.ValidationError)
+	assert.Equal(t, valid.ID, dm.ID)
+	assert.Empty(t, dm.FlavorType)
+	assert.Empty(t, dm.Flavor)
+	assert.NotEqual(t, "Aligned Bible", dm.Subject)
+	assert.Equal(t, "repo1", dm.Title, "display fields come from the repo name, as for any repo with no valid entry")
+}
