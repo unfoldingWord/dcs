@@ -31,6 +31,7 @@ import (
 	"gitea.dev/modules/util"
 	"gitea.dev/tests"
 
+	"github.com/santhosh-tekuri/jsonschema/v5"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -219,6 +220,66 @@ func TestDCSAPIRepoSBArchive(t *testing.T) {
 	MakeRequest(t, NewRequest(t, "HEAD", "/api/v1/repos/user2/repo1/sb/master.zip"), http.StatusNotFound)
 	token := getTokenForLoggedInUser(t, loginUser(t, "user2"), auth_model.AccessTokenScopeReadRepository)
 	MakeRequest(t, NewRequest(t, "HEAD", "/api/v1/repos/user2/repo1/sb/master.zip").AddTokenAuth(token), http.StatusOK)
+}
+
+// TestDCSAPIRepoSBUnconvertibleContent covers a repo whose metadata says it converts but whose
+// content a converter rejects: 422 with the reason, not 500, cached or streamed.
+func TestDCSAPIRepoSBUnconvertibleContent(t *testing.T) {
+	defer tests.PrepareTestEnv(t)()
+
+	// repo1 has only a README, so go-rc2sb finds no manifest.yaml
+	require.NoError(t, repo_model.InsertDoor43Metadata(t.Context(), &repo_model.Door43Metadata{
+		RepoID: 1, Ref: "master", RefType: "branch", CommitSHA: "65f1bf27bc3bf70f64657658635e66094edbcb4d",
+		Stage: door43metadata_model.StageLatest, MetadataType: "rc", MetadataVersion: "0.2", Subject: "Bible",
+		IsLatestForStage: true, IsRepoMetadata: true,
+	}))
+
+	check := func(t *testing.T, url string) {
+		t.Helper()
+		resp := MakeRequest(t, NewRequest(t, "GET", url), http.StatusUnprocessableEntity)
+		assert.Contains(t, resp.Body.String(), "can't be converted to a Scripture Burrito")
+		assert.NotContains(t, resp.Body.String(), "repo-sb-archive", "the server's temporary directory stays out of the message")
+		assert.Empty(t, resp.Header().Get("Content-Disposition"), "an error is no archive download")
+		assert.Empty(t, resp.Header().Get("ETag"))
+	}
+	for _, cache := range []bool{true, false} {
+		defer test.MockVariableValue(&setting.DCS.CacheSBArchives, cache)()
+		check(t, "/api/v1/repos/user2/repo1/sb/master.zip")
+		check(t, "/user2/repo1/sb/master.zip")
+	}
+	check(t, "/api/v1/repos/user2/repo1/sb/raw/metadata.json?ref=master")
+	check(t, "/user2/repo1/sb/raw/metadata.json?ref=master")
+}
+
+// TestDCSReposForMetadataOptions runs every `gitea door43metadata` repo filter on each
+// database CI tests, since their subqueries name tables (release, topic) some quote differently.
+func TestDCSReposForMetadataOptions(t *testing.T) {
+	defer tests.PrepareTestEnv(t)()
+	require.NoError(t, repo_model.InsertDoor43Metadata(t.Context(), &repo_model.Door43Metadata{
+		RepoID: 1, Ref: "dcs-filters", RefType: "branch", CommitSHA: "0000000000000000000000000000000000000001",
+		MetadataType: "rc", HealthcheckSeverity: repo_model.SeverityLevelError,
+	}))
+
+	repos, err := repo_model.GetReposForMetadata(t.Context(), repo_model.ReposForMetadataOptions{
+		OwnerIDs: []int64{2}, RepoName: "repo1", MinHealthcheckSeverity: repo_model.SeverityLevelWarning,
+		HasRelease: true, Topics: []string{"golang", "database"},
+	})
+	require.NoError(t, err)
+	require.Len(t, repos, 1)
+	assert.Equal(t, int64(1), repos[0].ID)
+
+	repos, err = repo_model.GetReposForMetadata(t.Context(), repo_model.ReposForMetadataOptions{HasValidationError: true, Topics: []string{"golang"}})
+	require.NoError(t, err)
+	assert.Empty(t, repos, "repo1 has no invalid entry yet")
+
+	require.NoError(t, repo_model.InsertDoor43Metadata(t.Context(), &repo_model.Door43Metadata{
+		RepoID: 1, Ref: "dcs-filters-invalid", RefType: "branch", CommitSHA: "0000000000000000000000000000000000000002",
+		MetadataType: "tc", ValidationError: &jsonschema.ValidationError{Message: "bad manifest"},
+	}))
+	repos, err = repo_model.GetReposForMetadata(t.Context(), repo_model.ReposForMetadataOptions{HasValidationError: true, Topics: []string{"golang"}})
+	require.NoError(t, err)
+	require.Len(t, repos, 1, "a stored validation error matches")
+	assert.Equal(t, int64(1), repos[0].ID)
 }
 
 func sbZipEntry(t *testing.T, archive []byte, name string) []byte {
