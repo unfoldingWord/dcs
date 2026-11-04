@@ -433,50 +433,54 @@ func (dm *Door43Metadata) CopyEmptyPropertiesFromRepoDM(ctx context.Context) {
 		return
 	}
 	_ = dm.Repo.LoadLatestDMs(ctx)
-	if dm.Repo.RepoDM == nil {
+	src := dm.Repo.RepoDM
+	if src == nil {
 		return
 	}
+	if src.ID == dm.ID { // this entry was the repo's row; its stored values are what it no longer says
+		src = SynthesizeRepoDM(dm.Repo)
+	}
 	if dm.Title == "" {
-		dm.Title = dm.Repo.RepoDM.Title
+		dm.Title = src.Title
 	}
 	if dm.Abbreviation == "" {
-		dm.Abbreviation = dm.Repo.RepoDM.Abbreviation
+		dm.Abbreviation = src.Abbreviation
 	}
 	if dm.MetadataType == "" {
-		dm.MetadataType = dm.Repo.RepoDM.MetadataType
+		dm.MetadataType = src.MetadataType
 	}
 	if dm.MetadataVersion == "" {
-		dm.MetadataVersion = dm.Repo.RepoDM.MetadataVersion
+		dm.MetadataVersion = src.MetadataVersion
 	}
 	if dm.Subject == "" {
-		dm.Subject = dm.Repo.RepoDM.Subject
+		dm.Subject = src.Subject
 	}
 	if dm.FlavorType == "" {
-		dm.FlavorType = dm.Repo.RepoDM.FlavorType
+		dm.FlavorType = src.FlavorType
 	}
 	if dm.Flavor == "" {
-		dm.Flavor = dm.Repo.RepoDM.Flavor
+		dm.Flavor = src.Flavor
 	}
 	if dm.Abbreviation == "" {
-		dm.Abbreviation = dm.Repo.RepoDM.Abbreviation
+		dm.Abbreviation = src.Abbreviation
 	}
 	if dm.Title == "" {
-		dm.Title = dm.Repo.RepoDM.Title
+		dm.Title = src.Title
 	}
 	if dm.Language == "" {
-		dm.Language = dm.Repo.RepoDM.Language
+		dm.Language = src.Language
 	}
 	if dm.LanguageTitle == "" {
-		dm.LanguageTitle = dm.Repo.RepoDM.LanguageTitle
+		dm.LanguageTitle = src.LanguageTitle
 	}
 	if dm.LanguageDirection == "" {
-		dm.LanguageDirection = dm.Repo.RepoDM.LanguageDirection
+		dm.LanguageDirection = src.LanguageDirection
 	}
 	if !dm.LanguageIsGL {
-		dm.LanguageIsGL = dm.Repo.RepoDM.LanguageIsGL
+		dm.LanguageIsGL = src.LanguageIsGL
 	}
 	if dm.ContentFormat == "" {
-		dm.ContentFormat = dm.Repo.RepoDM.ContentFormat
+		dm.ContentFormat = src.ContentFormat
 	}
 }
 
@@ -1204,6 +1208,9 @@ func GetReposForMetadata(ctx context.Context, opts ReposForMetadataOptions) ([]*
 		cond = cond.And(builder.In("`repository`.owner_id", opts.OwnerIDs))
 	}
 	if opts.RepoName != "" {
+		if len(opts.OwnerIDs) != 1 {
+			return nil, errors.New("GetReposForMetadata: RepoName needs exactly one owner") // a name alone would match that repo of every owner
+		}
 		cond = cond.And(builder.Eq{"`repository`.lower_name": strings.ToLower(opts.RepoName)})
 	}
 	if opts.MinHealthcheckSeverity > 0 {
