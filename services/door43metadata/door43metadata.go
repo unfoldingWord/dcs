@@ -604,14 +604,7 @@ func GetDoor43MetadataFromSBMetadata(ctx context.Context, gitRepo *git.Repositor
 		ingredients = getSBTranslationAcademyIngredients()
 	case "Translation Words":
 		contentFormat = "markdown"
-		ingredients = []*structs.Ingredient{{
-			Path:       "./ingredients",
-			Identifier: "bible",
-			Title:      "Translation Words",
-			Sort:       0,
-			IsDir:      true,
-			Exists:     true,
-		}}
+		ingredients = getSBTranslationWordsIngredients(ctx, gitRepo, sbMetadata, commit)
 	default:
 		// Keep scripture ingredient processing for custom x-* scripture flavors.
 		if strings.EqualFold(flavorType, "scripture") {
@@ -888,6 +881,26 @@ func getSBTSVIngredients(ctx context.Context, gitRepo *git.Repository, sbMetadat
 			IsDir:         isDir,
 			Exists:        true,
 		})
+	}
+	sortIngredients(ingredients)
+	return ingredients
+}
+
+// getSBTranslationWordsIngredients lists the articles' payload folder, when metadata.json lists
+// any article, before the book TSVs of links
+func getSBTranslationWordsIngredients(ctx context.Context, gitRepo *git.Repository, sbMetadata *dcs.SBMetadata100, commit *git.Commit) []*structs.Ingredient {
+	const payloadPath = "./ingredients/payload"
+	ingredients := getSBTSVIngredients(ctx, gitRepo, sbMetadata, commit)
+	for path := range sbMetadata.Ingredients {
+		if strings.HasPrefix(normalizeSBIngredientPath(path), payloadPath+"/") {
+			return slices.Insert(ingredients, 0, &structs.Ingredient{
+				Identifier: "payload",
+				Title:      "Translation Words",
+				Path:       payloadPath,
+				IsDir:      true,
+				Exists:     true,
+			})
+		}
 	}
 	return ingredients
 }
