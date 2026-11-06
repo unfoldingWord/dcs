@@ -843,6 +843,7 @@ func getSBScriptureIngredients(ctx context.Context, gitRepo *git.Repository, sbM
 			Exists:         true,
 		})
 	}
+	sortIngredients(ingredients)
 
 	return ingredients, contentFormat, hasAlignment
 }
