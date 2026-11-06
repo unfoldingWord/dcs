@@ -98,6 +98,8 @@ func TestGetDoor43MetadataFromSBMetadata_ScriptureSkipsInvalidIngredients(t *tes
 			},
 		},
 		Ingredients: map[string]*dcs.SB100Ingredient{
+			"ingredients/1co.md":      {Scope: sbScope("1CO")},
+			"ingredients/act.md":      {Scope: sbScope("ACT")},
 			"ingredients/gen.md":      {Scope: sbScope("GEN")},
 			"ingredients/empty.md":    nil,
 			"ingredients/noscope.txt": {},
@@ -108,8 +110,7 @@ func TestGetDoor43MetadataFromSBMetadata_ScriptureSkipsInvalidIngredients(t *tes
 	require.NoError(t, GetDoor43MetadataFromSBMetadata(ctx, nil, dm, sb, repo, nil))
 	assert.Equal(t, "Bible", dm.Subject)
 	assert.Equal(t, "md", dm.ContentFormat)
-	require.Len(t, dm.Ingredients, 1)
-	assert.Equal(t, "gen", dm.Ingredients[0].Identifier)
+	assert.Equal(t, []string{"gen", "act", "1co"}, dm.IngredientsIdentifierList())
 	assert.Equal(t, "Genesis", dm.Ingredients[0].Title)
 	assert.Equal(t, "./ingredients/gen.md", dm.Ingredients[0].Path)
 }
