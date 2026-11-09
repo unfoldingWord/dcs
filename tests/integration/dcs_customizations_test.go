@@ -574,8 +574,7 @@ projects:
 			},
 		}).AddTokenAuth(token), http.StatusCreated)
 		resp = MakeRequest(t, NewRequest(t, "GET", "/api/v1/repos/user2/repo1/sb/raw/metadata.json?ref=sb-obs-twl"), http.StatusOK)
-		// Not sbMetadata: go-rc2sb scopes an OBS TWL burrito by "OBS", which the SB schema's book IDs lack
-		require.NoError(t, json.Unmarshal(resp.Body.Bytes(), &metadata))
+		metadata = sbMetadata(t, resp.Body.Bytes())
 		require.Len(t, metadata.Identification.Upstream["dcs"], 1)
 		assert.Equal(t, twBranch.Commit.ID, metadata.Identification.Upstream["dcs"][0]["user2/en_tw"].Revision)
 		resp = MakeRequest(t, NewRequest(t, "GET", "/api/v1/repos/user2/repo1/sb/raw/ingredients/payload/kt/god.md?ref=sb-obs-twl"), http.StatusOK)
