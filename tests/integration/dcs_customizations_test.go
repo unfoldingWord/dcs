@@ -560,6 +560,27 @@ projects:
 		resp = MakeRequest(t, NewRequest(t, "GET", "/api/v1/repos/user2/repo1/sb/raw/ingredients/payload/kt/god.md?ref=sb-twl"), http.StatusOK)
 		assert.Equal(t, article, resp.Body.String())
 
+		// An OBS TWL burrito carries the same Translation Words payload
+		obsManifest := strings.NewReplacer(
+			"identifier: twl", "identifier: obs-twl",
+			"subject: TSV Translation Words Links", "subject: TSV OBS Translation Words Links",
+			"{identifier: tit, path: ./twl_TIT.tsv, title: Titus}", "{identifier: obs, path: ./twl_OBS.tsv, title: Open Bible Stories}",
+		).Replace(manifest)
+		MakeRequest(t, NewRequestWithJSON(t, "POST", "/api/v1/repos/user2/repo1/contents", &api.ChangeFilesOptions{
+			FileOptions: api.FileOptions{BranchName: "master", NewBranchName: "sb-obs-twl", Message: "Add OBS links"},
+			Files: []*api.ChangeFileOperation{
+				{Operation: "create", Path: "manifest.yaml", ContentBase64: base64.StdEncoding.EncodeToString([]byte(obsManifest))},
+				{Operation: "create", Path: "twl_OBS.tsv", ContentBase64: base64.StdEncoding.EncodeToString([]byte(links))},
+			},
+		}).AddTokenAuth(token), http.StatusCreated)
+		resp = MakeRequest(t, NewRequest(t, "GET", "/api/v1/repos/user2/repo1/sb/raw/metadata.json?ref=sb-obs-twl"), http.StatusOK)
+		// Not sbMetadata: go-rc2sb scopes an OBS TWL burrito by "OBS", which the SB schema's book IDs lack
+		require.NoError(t, json.Unmarshal(resp.Body.Bytes(), &metadata))
+		require.Len(t, metadata.Identification.Upstream["dcs"], 1)
+		assert.Equal(t, twBranch.Commit.ID, metadata.Identification.Upstream["dcs"][0]["user2/en_tw"].Revision)
+		resp = MakeRequest(t, NewRequest(t, "GET", "/api/v1/repos/user2/repo1/sb/raw/ingredients/payload/kt/god.md?ref=sb-obs-twl"), http.StatusOK)
+		assert.Equal(t, article, resp.Body.String())
+
 		// A renamed repo keeps its commits, but its metadata.json must name it as it is now
 		newName := "repo1-renamed"
 		MakeRequest(t, NewRequestWithJSON(t, "PATCH", "/api/v1/repos/user2/repo1", &api.EditRepoOption{Name: &newName}).AddTokenAuth(token), http.StatusOK)
