@@ -141,9 +141,15 @@ func TestPayloadRepoNameFor(t *testing.T) {
 		assert.Equal(t, want, name, language)
 		assert.False(t, isTWRepo)
 	}
-	name, isTWRepo := payloadRepoNameFor(&repo_model.Door43Metadata{Language: "en", Subject: "Translation Words"})
+	name, isTWRepo := payloadRepoNameFor(&repo_model.Door43Metadata{Language: "id", Subject: "TSV OBS Translation Words Links"})
+	assert.Equal(t, "id_tw", name)
+	assert.False(t, isTWRepo)
+	name, isTWRepo = payloadRepoNameFor(&repo_model.Door43Metadata{Language: "en", Subject: "Translation Words"})
 	assert.Equal(t, "en_twl", name)
 	assert.True(t, isTWRepo)
+	name, isTWRepo = payloadRepoNameFor(&repo_model.Door43Metadata{Language: "en", Subject: "TSV Translation Notes"})
+	assert.Equal(t, "", name)
+	assert.False(t, isTWRepo)
 }
 
 func TestConverterVersions(t *testing.T) {
