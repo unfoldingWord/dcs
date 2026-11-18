@@ -40,7 +40,7 @@ test('search code', async ({page, request}) => {
     login(page),
   ]);
   await page.goto(`/${owner}/${repoName}/search`);
-  const input = page.getByPlaceholder('Search code…');
+  const input = page.getByPlaceholder('Search files…'); // DCS Customizations: DCS overrides search.code_kind
   await input.fill('alphaterm "betaTerm = 1"');
   await input.press('Enter');
   await page.waitForURL(/[?&]q=alphaterm/);
