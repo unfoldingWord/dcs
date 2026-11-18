@@ -98,6 +98,8 @@ func TestGetDoor43MetadataFromSBMetadata_ScriptureSkipsInvalidIngredients(t *tes
 			},
 		},
 		Ingredients: map[string]*dcs.SB100Ingredient{
+			"ingredients/1co.md":      {Scope: sbScope("1CO")},
+			"ingredients/act.md":      {Scope: sbScope("ACT")},
 			"ingredients/gen.md":      {Scope: sbScope("GEN")},
 			"ingredients/empty.md":    nil,
 			"ingredients/noscope.txt": {},
@@ -108,10 +110,42 @@ func TestGetDoor43MetadataFromSBMetadata_ScriptureSkipsInvalidIngredients(t *tes
 	require.NoError(t, GetDoor43MetadataFromSBMetadata(ctx, nil, dm, sb, repo, nil))
 	assert.Equal(t, "Bible", dm.Subject)
 	assert.Equal(t, "md", dm.ContentFormat)
-	require.Len(t, dm.Ingredients, 1)
-	assert.Equal(t, "gen", dm.Ingredients[0].Identifier)
+	assert.Equal(t, []string{"gen", "act", "1co"}, dm.IngredientsIdentifierList())
 	assert.Equal(t, "Genesis", dm.Ingredients[0].Title)
 	assert.Equal(t, "./ingredients/gen.md", dm.Ingredients[0].Path)
+}
+
+func TestGetDoor43MetadataFromSBMetadata_TranslationWords(t *testing.T) {
+	repo := testRepo(789)
+	repo.Name = "en_tw"
+	sb := &dcs.SBMetadata100{
+		Identification: &dcs.SB100Identification{Abbreviation: dcs.LocalizedText{"en": "TW"}},
+		Type: &dcs.SB100Type{
+			FlavorType: dcs.SB100FlavorType{
+				Name:   "parascriptural",
+				Flavor: dcs.SB100Flavor{Name: "x-bcvarticles"},
+			},
+		},
+		Ingredients: map[string]*dcs.SB100Ingredient{
+			"ingredients/TIT.tsv":           {Scope: sbScope("TIT")},
+			"ingredients/GEN.tsv":           {Scope: sbScope("GEN")},
+			"ingredients/payload/kt/god.md": {},
+			"ingredients/LICENSE.md":        {},
+		},
+	}
+
+	dm := &repo_model.Door43Metadata{}
+	require.NoError(t, GetDoor43MetadataFromSBMetadata(t.Context(), nil, dm, sb, repo, nil))
+	assert.Equal(t, "Translation Words", dm.Subject)
+	assert.Equal(t, []string{"payload", "gen", "tit"}, dm.IngredientsIdentifierList())
+	assert.Equal(t, "./ingredients/payload", dm.Ingredients[0].Path)
+	assert.True(t, dm.Ingredients[0].IsDir)
+	assert.Equal(t, "./ingredients/GEN.tsv", dm.Ingredients[1].Path)
+
+	delete(sb.Ingredients, "ingredients/payload/kt/god.md")
+	dm = &repo_model.Door43Metadata{}
+	require.NoError(t, GetDoor43MetadataFromSBMetadata(t.Context(), nil, dm, sb, repo, nil))
+	assert.Equal(t, []string{"gen", "tit"}, dm.IngredientsIdentifierList())
 }
 
 // TestProcessDoor43MetadataForRepo_RepoDMAfterCreate replays the notifier
