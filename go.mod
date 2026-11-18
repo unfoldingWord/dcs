@@ -11,7 +11,7 @@ require (
 	gitea.com/go-chi/captcha v0.0.0-20240315150714-fb487f629098
 	gitea.com/go-chi/session v0.0.0-20260708011333-ebced8a7a2d6
 	gitea.com/lunny/dingtalk_webhook v0.0.0-20171025031554-e3534c89ef96
-	gitea.com/lunny/levelqueue v0.4.2-0.20230414023320-3c0159fe0fe4
+	gitea.com/lunny/levelqueue v0.5.1
 	gitea.dev/actionslib v1.2.1
 	gitea.dev/sdk v1.3.0
 	github.com/42wim/httpsig v1.2.4
@@ -22,7 +22,6 @@ require (
 	github.com/PuerkitoBio/goquery v1.13.0
 	github.com/SaveTheRbtz/zstd-seekable-format-go/pkg v0.10.0
 	github.com/alecthomas/chroma/v2 v2.27.0
-	github.com/blakesmith/ar v0.0.0-20190502131153-809d4375e1fb
 	github.com/blevesearch/bleve/v2 v2.6.1
 	github.com/bohde/codel v0.2.0
 	github.com/buildkite/terminal-to-html/v3 v3.17.1
