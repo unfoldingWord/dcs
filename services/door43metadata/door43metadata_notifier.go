@@ -107,7 +107,7 @@ func (m *metadataNotifier) CreateRepository(ctx context.Context, doer, u *user_m
 	}
 }
 
-func (m *metadataNotifier) NewRelease(ctx context.Context, rel *repo_model.Release) {
+func (m *metadataNotifier) NewRelease(ctx context.Context, _ *user_model.User, rel *repo_model.Release) {
 	if rel != nil && !rel.IsDraft {
 		// Expand files.json / links.json manifest attachments first (can be singular file.json and link.json too)
 		// so the metadata processing below sees the final attachments when determining the has_* content flags.
@@ -119,7 +119,7 @@ func (m *metadataNotifier) NewRelease(ctx context.Context, rel *repo_model.Relea
 	}
 }
 
-func (m *metadataNotifier) UpdateRelease(ctx context.Context, doer *user_model.User, rel *repo_model.Release) {
+func (m *metadataNotifier) UpdateRelease(ctx context.Context, doer *user_model.User, rel, _ *repo_model.Release) {
 	if rel != nil && !rel.IsDraft {
 		// Expand files.json / links.json manifest attachments first (can be singular file.json and link.json too)
 		// so the metadata processing below sees the final attachments when determining the has_* content flags.
@@ -202,7 +202,7 @@ func recheckDefaultBranch(ctx context.Context, repoID int64) {
 }
 
 func (m *metadataNotifier) NewTagRelease(ctx context.Context, rel *repo_model.Release) {
-	m.NewRelease(ctx, rel)
+	m.NewRelease(ctx, nil, rel)
 }
 
 func (m *metadataNotifier) PushCommits(ctx context.Context, pusher *user_model.User, repo *repo_model.Repository, opts *repository.PushUpdateOptions, commits *repository.PushCommits) {

@@ -192,6 +192,11 @@ func TestRequireSignInView(t *testing.T) {
 		/*** DCS Customizations - redirect URL matches the commit path we requested ***/
 		assert.Equal(t, "/user/login?redirect_to=%2Fuser2%2Frepo1%2Fsrc%2Fcommit%2Fmaster", resp.Header().Get("Location"))
 		/*** END DCS Customizations ***/
+
+		req = NewRequest(t, "GET", "/user2/repo1/media/branch/master/README.md")
+		MakeRequest(t, req, http.StatusOK)
+		req = NewRequest(t, "GET", "/user2/repo1/raw/commit/65f1bf27bc3bf70f64657658635e66094edbcb4d/README.md")
+		MakeRequest(t, req, http.StatusOK)
 	})
 }
 

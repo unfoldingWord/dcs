@@ -191,11 +191,11 @@ func RenderCatalogSearch(ctx *context.Context, opts *CatalogSearchOptions) {
 
 	dms, count, err = models.SearchCatalog(ctx, searchOpts)
 	if err != nil {
-		ctx.ServerError("SearchCatalog", err)
+		ctx.ServerErrorAuto(err)
 		return
 	}
 	if err := dms.LoadReleaseCounts(ctx); err != nil {
-		ctx.ServerError("LoadReleaseCounts", err)
+		ctx.ServerErrorAuto(err)
 		return
 	}
 	ctx.Data["Keyword"] = query

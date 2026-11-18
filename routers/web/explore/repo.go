@@ -138,7 +138,7 @@ func RenderRepoSearch(ctx *context.Context, opts *RepoSearchOptions) {
 		IsPrivate:          private,
 	})
 	if err != nil {
-		ctx.ServerError("SearchRepository", err)
+		ctx.ServerErrorAuto(err)
 		return
 	}
 

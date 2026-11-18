@@ -360,7 +360,27 @@ func GetTagNamesByRepoID(ctx context.Context, repoID int64) ([]string, error) {
 	return tags, sess.Find(&tags)
 }
 
-// GetLatestReleaseByRepoID returns the latest release for a repository
+func (r *Release) CanBeLatest() bool {
+	return !r.IsDraft && !r.IsPrerelease && !r.IsTag
+}
+
+func latestReleaseCond(repoID int64) builder.Cond {
+	return FindReleasesOptions{RepoID: repoID, IsPreRelease: optional.Some(false)}.ToConds()
+}
+
+func GetLatestRelease(ctx context.Context, repo *Repository) (*Release, error) {
+	if repo.LatestReleaseID != 0 {
+		rel, has, err := db.Get[Release](ctx, latestReleaseCond(repo.ID).And(builder.Eq{"id": repo.LatestReleaseID}))
+		if err != nil {
+			return nil, err
+		} else if has {
+			return rel, nil
+		}
+	}
+	return GetLatestReleaseByRepoID(ctx, repo.ID, false, optional.None[bool]()) // DCS Customizations
+}
+
+// GetLatestReleaseByRepoID returns the newest published stable release of a repository by date
 func GetLatestReleaseByRepoID(ctx context.Context, repoID int64, includePreRelease bool, inCatalog optional.Option[bool]) (*Release, error) {
 	/*** DCS Customizations - Refactored to use includePreRelease and inCatalog booleans ***/
 	cond := builder.NewCond().
@@ -392,6 +412,27 @@ func GetLatestReleaseByRepoID(ctx context.Context, repoID int64, includePreRelea
 	/*** END DCS Customizations ***/
 
 	return rel, nil
+}
+
+func SetLatestReleaseID(ctx context.Context, repo *Repository, releaseID int64) error {
+	repo.LatestReleaseID = releaseID
+	_, err := db.GetEngine(ctx).ID(repo.ID).Where(builder.Neq{"latest_release_id": releaseID}).
+		Cols("latest_release_id").NoAutoTime().Update(repo)
+	return err
+}
+
+func UnsetLatestReleaseID(ctx context.Context, repo *Repository, releaseID int64) error {
+	if releaseID == 0 {
+		return nil
+	}
+	if _, err := db.GetEngine(ctx).Where(builder.Eq{"id": repo.ID, "latest_release_id": releaseID}).
+		Cols("latest_release_id").NoAutoTime().Update(&Repository{LatestReleaseID: 0}); err != nil {
+		return err
+	}
+	if repo.LatestReleaseID == releaseID {
+		repo.LatestReleaseID = 0
+	}
+	return nil
 }
 
 type releaseMetaSearch struct {
@@ -580,9 +621,4 @@ func FindTagsByCommitIDs(ctx context.Context, repoID int64, commitIDs ...string)
 		res[r.Sha1] = append(res[r.Sha1], r)
 	}
 	return res, nil
-}
-
-func DeleteRepoReleases(ctx context.Context, repoID int64) error {
-	_, err := db.GetEngine(ctx).Where("repo_id = ?", repoID).Delete(new(Release))
-	return err
 }

@@ -87,11 +87,11 @@ func GetRelease(ctx *context.APIContext) {
 	ctx.JSON(http.StatusOK, convert.ToAPIRelease(ctx, ctx.Repo.Repository, release))
 }
 
-// GetLatestRelease gets the most recent non-prerelease, non-draft release of a repository, sorted by created_at
+// GetLatestRelease gets the release set as latest, else the most recent non-prerelease, non-draft release by created_at
 func GetLatestRelease(ctx *context.APIContext) {
 	// swagger:operation GET /repos/{owner}/{repo}/releases/latest repository repoGetLatestRelease
 	// ---
-	// summary: Gets the most recent non-prerelease, non-draft release of a repository, sorted by created_at
+	// summary: Gets the release set as latest, else the most recent non-prerelease, non-draft release of a repository by created_at
 	// produces:
 	// - application/json
 	// parameters:
@@ -118,7 +118,17 @@ func GetLatestRelease(ctx *context.APIContext) {
 	//     "$ref": "#/responses/Release"
 	//   default:
 	//     "$ref": "#/responses/error"
-	release, err := repo_model.GetLatestReleaseByRepoID(ctx, ctx.Repo.Repository.ID, ctx.FormBool("pre-release"), ctx.FormOptionalBool("in-catalog"))
+
+	/*** DCS Customizations ***/
+	includePreRelease, inCatalog := ctx.FormBool("pre-release"), ctx.FormOptionalBool("in-catalog")
+	var release *repo_model.Release
+	var err error
+	if includePreRelease || inCatalog.ValueOrDefault(false) {
+		release, err = repo_model.GetLatestReleaseByRepoID(ctx, ctx.Repo.Repository.ID, includePreRelease, inCatalog)
+	} else {
+		release, err = repo_model.GetLatestRelease(ctx, ctx.Repo.Repository)
+	}
+	/*** END DCS Customizations ***/
 	if err != nil && !repo_model.IsErrReleaseNotExist(err) {
 		ctx.APIErrorInternal(err)
 		return
@@ -285,7 +295,7 @@ func CreateRelease(ctx *context.APIContext) {
 		}
 		// GitHub doesn't have "tag_message", GitLab has: https://docs.gitlab.com/api/releases/#create-a-release
 		// It doesn't need to be the same as the "release note"
-		if err := release_service.CreateRelease(ctx, ctx.Repo.GitRepo, rel, nil, form.TagMessage); err != nil {
+		if err := release_service.CreateRelease(ctx, ctx.Repo.GitRepo, rel, nil, form.TagMessage, form.MakeLatest); err != nil {
 			if repo_model.IsErrReleaseAlreadyExist(err) {
 				ctx.APIError(http.StatusConflict, err.Error())
 			} else if release_service.IsErrProtectedTagName(err) {
@@ -313,7 +323,7 @@ func CreateRelease(ctx *context.APIContext) {
 		rel.Publisher = ctx.Doer
 		rel.Target = form.Target
 
-		if err = release_service.UpdateRelease(ctx, ctx.Doer, ctx.Repo.GitRepo, rel, nil, nil, nil); err != nil {
+		if err = release_service.UpdateRelease(ctx, ctx.Doer, ctx.Repo.GitRepo, rel, nil, nil, nil, form.MakeLatest); err != nil {
 			ctx.APIErrorInternal(err)
 			return
 		}
@@ -387,7 +397,7 @@ func EditRelease(ctx *context.APIContext) {
 	if form.IsPrerelease != nil {
 		rel.IsPrerelease = *form.IsPrerelease
 	}
-	if err := release_service.UpdateRelease(ctx, ctx.Doer, ctx.Repo.GitRepo, rel, nil, nil, nil); err != nil {
+	if err := release_service.UpdateRelease(ctx, ctx.Doer, ctx.Repo.GitRepo, rel, nil, nil, nil, form.MakeLatest); err != nil {
 		ctx.APIErrorInternal(err)
 		return
 	}

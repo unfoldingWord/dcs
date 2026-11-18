@@ -81,6 +81,10 @@ func (a *Attachment) AfterUpdate() {
 
 /*** END DCS Customizations ***/
 
+func (a *Attachment) IsLinked() bool {
+	return a.IssueID > 0 || a.ReleaseID > 0 || a.CommentID > 0
+}
+
 // IncreaseDownloadCount is update download count + 1
 func (a *Attachment) IncreaseDownloadCount(ctx context.Context) error {
 	// Update download count.

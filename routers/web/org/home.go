@@ -42,7 +42,7 @@ func orgHome(ctx *context.Context, viewRepositories bool) {
 	org := ctx.Org.Organization
 	if org == nil {
 		// some requests may reach here by "user" route patterns, e.g.: "/{owner}/-/repositories"
-		ctx.NotFound(nil)
+		ctx.NotFound()
 		return
 	}
 
@@ -116,7 +116,7 @@ func orgHome(ctx *context.Context, viewRepositories bool) {
 
 	members, _, err := organization.FindOrgMembers(ctx, opts)
 	if err != nil {
-		ctx.ServerError("FindOrgMembers", err)
+		ctx.ServerErrorAuto(err)
 		return
 	}
 
@@ -136,7 +136,7 @@ func orgHome(ctx *context.Context, viewRepositories bool) {
 				ListOptions: db.ListOptions{Page: 1, PageSize: orgOverviewTeamsLimit},
 			})
 			if err != nil {
-				ctx.ServerError("SearchTeam", err)
+				ctx.ServerErrorAuto(err)
 				return
 			}
 		}
@@ -147,7 +147,7 @@ func orgHome(ctx *context.Context, viewRepositories bool) {
 
 	prepareResult, err := shared_user.RenderUserOrgHeader(ctx)
 	if err != nil {
-		ctx.ServerError("RenderUserOrgHeader", err)
+		ctx.ServerErrorAuto(err)
 		return
 	}
 
@@ -187,7 +187,7 @@ func orgHome(ctx *context.Context, viewRepositories bool) {
 		MetadataVersions:   searchMap["metadata_version"], // DCS Customizations
 	})
 	if err != nil {
-		ctx.ServerError("SearchRepository", err)
+		ctx.ServerErrorAuto(err)
 		return
 	}
 
