@@ -10,10 +10,12 @@ import (
 	"io"
 	"path"
 	"path/filepath" // DCS Customizations
+	"slices"
 	"strings"
 
 	git_model "gitea.dev/models/git"
 	issue_model "gitea.dev/models/issues"
+	org_model "gitea.dev/models/organization"
 	"gitea.dev/models/renderhelper"
 	user_model "gitea.dev/models/user"
 	"gitea.dev/modules/actions"
@@ -32,7 +34,7 @@ import (
 func prepareLatestCommitInfo(ctx *context.Context) bool {
 	commit, err := ctx.Repo.Commit.GetCommitByPath(ctx, ctx.Repo.GitRepo, ctx.Repo.TreePath)
 	if err != nil {
-		ctx.ServerError("GetCommitByPath", err)
+		ctx.ServerErrorAuto(err)
 		return false
 	}
 
@@ -45,7 +47,7 @@ func prepareFileViewLfsAttrs(ctx *context.Context) (*attribute.Attributes, bool)
 		Attributes: []string{attribute.LinguistGenerated, attribute.LinguistVendored, attribute.LinguistLanguage, attribute.GitlabLanguage},
 	})
 	if err != nil {
-		ctx.ServerError("attribute.CheckAttributes", err)
+		ctx.ServerErrorAuto(err)
 		return nil, false
 	}
 	attrs := attrsMap[ctx.Repo.TreePath]
@@ -81,7 +83,7 @@ func handleFileViewRenderMarkup(ctx *context.Context, prefetchBuf []byte, utf8Re
 	var err error
 	ctx.Data["EscapeStatus"], ctx.Data["FileContent"], err = markupRenderToHTML(ctx, rctx, renderer, utf8Reader)
 	if err != nil {
-		ctx.ServerError("Render", err)
+		ctx.ServerErrorAuto(err)
 		return true
 	}
 
@@ -154,9 +156,53 @@ func handleFileViewRenderImage(ctx *context.Context, fInfo *fileInfo, prefetchBu
 	return true
 }
 
+type fileCodeOwner struct {
+	CodeOwnerName string
+	CodeOwnerLink string
+}
+
+func prepareFileCodeOwners(ctx *context.Context) {
+	rules, warnings1, err := issue_service.GetCodeOwnerRules(ctx, ctx.Repo.GitRepo, ctx.Repo.Commit)
+	if msg, _ := util.ErrorUnwrapForHTML(err, ctx.Locale); msg != "" {
+		ctx.Flash.Error(msg, true)
+		return
+	} else if err != nil {
+		log.Error("GetCodeOwnerRules: failed to read CODEOWNERS file at repo %s commit %s: %v", ctx.Repo.Repository.LogString(), ctx.Repo.CommitID, err)
+		return
+	}
+	matching, warnings2 := issue_service.MatchCodeOwnerRules(rules, []string{ctx.Repo.TreePath})
+	warnings := slices.Concat(warnings1, warnings2)
+	if len(warnings) > 0 {
+		ctx.Flash.Warning(strings.Join(warnings, "\n"), true)
+	}
+
+	var owners []fileCodeOwner
+	seen := make(map[string]bool)
+	add := func(name, link string) {
+		if !seen[link] {
+			owners = append(owners, fileCodeOwner{name, link})
+			seen[link] = true
+		}
+	}
+	for _, rule := range matching {
+		for _, user := range rule.Users {
+			add("@"+user.Name, user.HomeLink())
+		}
+		for _, team := range rule.Teams {
+			org, err := org_model.GetOrgByID(ctx, team.OrgID)
+			if err != nil {
+				continue
+			}
+			add("@"+org.Name+"/"+team.Name, org.HomeLink()+"/teams/"+util.PathEscapeSegments(team.LowerName))
+		}
+	}
+	ctx.Data["FileCodeOwners"] = owners
+}
+
 func prepareFileView(ctx *context.Context, entry *git.TreeEntry) {
 	ctx.Data["IsViewFile"] = true
 	ctx.Data["HideRepoInfo"] = true
+	prepareFileCodeOwners(ctx)
 
 	if !prepareLatestCommitInfo(ctx) {
 		return
@@ -209,7 +255,7 @@ func prepareFileView(ctx *context.Context, entry *git.TreeEntry) {
 	// avoid creating an unnecessary temporary cat file.
 	buf, dataRc, fInfo, err := getFileReader(ctx, ctx.Repo.Repository.ID, blob)
 	if err != nil {
-		ctx.ServerError("getFileReader", err)
+		ctx.ServerErrorAuto(err)
 		return
 	}
 	defer dataRc.Close()
@@ -284,13 +330,13 @@ func prepareFileViewEditorButtons(ctx *context.Context) bool {
 	lfsLock, err := git_model.GetTreePathLock(ctx, ctx.Repo.Repository.ID, ctx.Repo.TreePath)
 	ctx.Data["LFSLock"] = lfsLock
 	if err != nil {
-		ctx.ServerError("GetTreePathLock", err)
+		ctx.ServerErrorAuto(err)
 		return false
 	}
 	if lfsLock != nil {
 		u, err := user_model.GetUserByID(ctx, lfsLock.OwnerID)
 		if err != nil {
-			ctx.ServerError("GetTreePathLock", err)
+			ctx.ServerErrorAuto(err)
 			return false
 		}
 		ctx.Data["LFSLockOwner"] = u.Name

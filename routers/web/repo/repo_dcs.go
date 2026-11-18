@@ -25,6 +25,6 @@ func DownloadSBFile(ctx *context.Context) {
 		unconvertible, _ := errors.AsType[sbarchiver_service.ErrUnconvertibleContent](err)
 		ctx.HTTPError(http.StatusUnprocessableEntity, unconvertible.ClientMessage())
 	default:
-		ctx.ServerError("sbarchiver_service.ServeSBFile", err)
+		ctx.ServerErrorAuto(err)
 	}
 }

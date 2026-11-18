@@ -88,6 +88,7 @@ This document catalogs every DCS modification to existing Gitea files. New DCS-o
 | `services/context/repo.go` | LoadLatestDMs in repoAssignment, Door43Metadata by ref in RepoRefByType | HIGH | models/repo/door43metadata.go |
 | `services/convert/repository.go` | Removed Language field, wraps return with ToRepoDCS() | MEDIUM | services/convert/repository_dcs.go |
 | `services/release/release.go` | notify_service.NewTagRelease() call in CreateNewTag | MEDIUM | services/notify/notifier.go |
+| `services/migrations/gitea_uploader.go` | GetLatestReleaseByRepoID call passes the DCS includePreRelease/inCatalog arguments | LOW | models/repo/release.go |
 | `services/repository/create.go` | LICENSE → LICENSE.md extension change | LOW | - |
 | `services/forms/repo_form.go` | NewDoor43MetadataForm, EditDoor43MetadataForm structs | LOW | - |
 

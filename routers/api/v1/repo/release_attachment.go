@@ -50,7 +50,7 @@ func notifyReleaseAttachmentChanged(ctx *context.APIContext, releaseID int64, na
 			log.Error("notifyReleaseAttachmentChanged: LoadAttributes [%d]: %v", releaseID, err)
 			return
 		}
-		notify_service.UpdateRelease(ctx, ctx.Doer, rel)
+		notify_service.UpdateRelease(ctx, ctx.Doer, rel, rel) // only attachments changed
 		return
 	}
 	if err := door43metadata_service.UpdateDoor43MetadataAttachmentFlags(ctx, rel.RepoID, rel.ID); err != nil {

@@ -76,7 +76,7 @@ func HealthcheckDashboard(ctx *context.Context) {
 
 	dms, count, err := models.SearchCatalogByCondition(ctx, opts, cond)
 	if err != nil {
-		ctx.ServerError("SearchCatalogByCondition", err)
+		ctx.ServerErrorAuto(err)
 		return
 	}
 

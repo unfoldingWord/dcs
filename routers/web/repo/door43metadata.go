@@ -31,7 +31,7 @@ const (
 // GetRepoMetadata renders the metadata summary page (default branch + latest release)
 func GetRepoMetadata(ctx *context.Context) {
 	if err := ctx.Repo.Repository.LoadLatestDMs(ctx); err != nil {
-		ctx.ServerError("LoadLatestDMs", err)
+		ctx.ServerErrorAuto(err)
 		return
 	}
 	door43Metadatas := []*repo_model.Door43Metadata{}
@@ -42,7 +42,7 @@ func GetRepoMetadata(ctx *context.Context) {
 		door43Metadatas = append(door43Metadatas, ctx.Repo.Repository.LatestProdDM)
 	}
 	if err := prepareDoor43MetadataForView(ctx, door43Metadatas); err != nil {
-		ctx.ServerError("prepareDoor43MetadataForView", err)
+		ctx.ServerErrorAuto(err)
 		return
 	}
 
@@ -58,7 +58,7 @@ func GetRepoMetadata(ctx *context.Context) {
 // /healthcheck/{ref} shows the given branch or tag's own health check.
 func GetRepoHealthcheck(ctx *context.Context) {
 	if err := ctx.Repo.Repository.LoadLatestDMs(ctx); err != nil {
-		ctx.ServerError("LoadLatestDMs", err)
+		ctx.ServerErrorAuto(err)
 		return
 	}
 
@@ -69,7 +69,7 @@ func GetRepoHealthcheck(ctx *context.Context) {
 		dm, err = repo_model.GetDoor43MetadataByRepoIDAndRef(ctx, ctx.Repo.Repository.ID, ref)
 		if err != nil {
 			if !repo_model.IsErrDoor43MetadataNotExist(err) {
-				ctx.ServerError("GetDoor43MetadataByRepoIDAndRef", err)
+				ctx.ServerErrorAuto(err)
 				return
 			}
 			// no entry for this ref; fall through to the redirect below
@@ -97,7 +97,7 @@ func GetRepoHealthcheck(ctx *context.Context) {
 // GetAllRepoDoor43Metadata renders all door43metadatas for a repo with paginated releases
 func GetAllRepoDoor43Metadata(ctx *context.Context) {
 	if err := ctx.Repo.Repository.LoadLatestDMs(ctx); err != nil {
-		ctx.ServerError("LoadLatestDMs", err)
+		ctx.ServerErrorAuto(err)
 		return
 	}
 
@@ -109,7 +109,7 @@ func GetAllRepoDoor43Metadata(ctx *context.Context) {
 		OrderBy("is_repo_metadata DESC, stage ASC, release_date_unix DESC").
 		Find(&branchDms)
 	if err != nil {
-		ctx.ServerError("GetAllRepoDoor43Metadata", err)
+		ctx.ServerErrorAuto(err)
 		return
 	}
 
@@ -124,7 +124,7 @@ func GetAllRepoDoor43Metadata(ctx *context.Context) {
 		And(builder.Eq{"ref_type": "tag"}).
 		Count(&repo_model.Door43Metadata{})
 	if err != nil {
-		ctx.ServerError("CountDoor43MetadataReleases", err)
+		ctx.ServerErrorAuto(err)
 		return
 	}
 
@@ -136,11 +136,11 @@ func GetAllRepoDoor43Metadata(ctx *context.Context) {
 		Limit(releaseDMsPerPage, (page-1)*releaseDMsPerPage).
 		Find(&releaseDms)
 	if err != nil {
-		ctx.ServerError("FindDoor43MetadataReleases", err)
+		ctx.ServerErrorAuto(err)
 		return
 	}
 	if err := prepareDoor43MetadataForView(ctx, slices.Concat(branchDms, releaseDms)); err != nil {
-		ctx.ServerError("prepareDoor43MetadataForView", err)
+		ctx.ServerErrorAuto(err)
 		return
 	}
 
