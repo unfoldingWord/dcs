@@ -72,7 +72,7 @@ func getOBSTreeIngredients(ctx context.Context, gitRepo *git.Repository, commit 
 			ingredients = append(ingredients, ingredient)
 		}
 	}
-	sortOBSIngredients(ingredients)
+	sortIngredients(ingredients)
 	return ingredients
 }
 
@@ -103,7 +103,7 @@ func getSBOBSIngredients(ctx context.Context, gitRepo *git.Repository, sbMetadat
 			break
 		}
 	}
-	sortOBSIngredients(ingredients)
+	sortIngredients(ingredients)
 	return ingredients
 }
 
@@ -145,7 +145,7 @@ func parseOBSStoryTitle(content string, isMarkdown bool) string {
 	return strings.TrimSpace(strings.TrimLeft(line, "#"))
 }
 
-func sortOBSIngredients(ingredients []*structs.Ingredient) {
+func sortIngredients(ingredients []*structs.Ingredient) {
 	slices.SortFunc(ingredients, func(a, b *structs.Ingredient) int {
 		return cmp.Or(cmp.Compare(a.Sort, b.Sort), strings.Compare(a.Path, b.Path))
 	})
