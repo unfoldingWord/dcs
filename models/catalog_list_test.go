@@ -5,13 +5,16 @@ package models
 
 import (
 	"fmt"
+	"strings"
 	"testing"
 
 	"gitea.dev/models/db"
 	"gitea.dev/models/door43metadata"
 	repo_model "gitea.dev/models/repo"
 	"gitea.dev/models/unittest"
+	user_model "gitea.dev/models/user"
 	"gitea.dev/modules/optional"
+	"gitea.dev/modules/structs"
 	"gitea.dev/modules/timeutil"
 
 	"github.com/stretchr/testify/assert"
@@ -566,4 +569,181 @@ func TestSearchCatalogForBookPackage(t *testing.T) {
 	assert.Equal(t, map[int64]string{
 		requestedRepo: "v1", withBranches: "v1", releaseOnly: "v1",
 	}, search("master", &door43metadata.SearchCatalogOptions{Stage: door43metadata.StageProd}))
+}
+
+// TestSearchCatalogForBookPackageRelations checks the entries a book package takes from the
+// requested entry's manifest relations, for repo1 (user2, en, master):
+//   - en/ult: user2's own en_ult is in its package, so unfoldingWord's is not looked at
+//   - fr/tw?v=5: user2's own French fr_tw, unreleased, beats unfoldingWord's pinned v5
+//   - en/ust?v=1: unfoldingWord's pinned (non-latest) v1 beats Door43-Catalog's v1 and its own v2
+//   - en/glt?v=3: Door43-Catalog's pinned v3 beats unfoldingWord's v2
+//   - en/tq: user5's release, the most recent, beats user4's; unfoldingWord's is unreleased
+//   - en/ulb: unfoldingWord's release beats user5's more recent one
+//   - fr/tn: no fr_tn is released anywhere, so unfoldingWord's English en_tn stands in
+//   - en/ta: unfoldingWord's en_ta is outside the requested subjects
+//   - hbo/uhb?v=2.1.17, el-x-koine/ugnt: left to GetOrigLanguageBibles
+//
+// and for user2's French fr_tn:
+//   - fr/twl: user2's own English en_twl, unreleased, beats unfoldingWord's released one
+//   - fr/tq: only unfoldingWord's English counts, and its en_tq is unreleased
+func TestSearchCatalogForBookPackageRelations(t *testing.T) {
+	require.NoError(t, unittest.PrepareTestDatabase())
+	ctx := t.Context()
+
+	user2 := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: 2})
+	user4 := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: 4})
+	user5 := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: 5})
+	newOrg := func(name string) *user_model.User {
+		org := &user_model.User{Name: name, LowerName: strings.ToLower(name), Email: name + "@example.com", Type: user_model.UserTypeOrganization}
+		require.NoError(t, db.Insert(ctx, org))
+		return org
+	}
+	uw := newOrg("unfoldingWord")
+	d43 := newOrg("Door43-Catalog")
+	newRepo := func(owner *user_model.User, name string) int64 {
+		r := &repo_model.Repository{OwnerID: owner.ID, OwnerName: owner.Name, Name: name, LowerName: name}
+		require.NoError(t, db.Insert(ctx, r))
+		return r.ID
+	}
+	const requestedRepo = int64(1)
+	ownULT, uwULT := newRepo(user2, "en_ult"), newRepo(uw, "en_ult")
+	ownFrTW, uwFrTW := newRepo(user2, "fr_tw"), newRepo(uw, "fr_tw")
+	uwUST, d43UST := newRepo(uw, "en_ust"), newRepo(d43, "en_ust")
+	uwGLT, d43GLT := newRepo(uw, "en_glt"), newRepo(d43, "en_glt")
+	uwTQ, user4TQ, user5TQ := newRepo(uw, "en_tq"), newRepo(user4, "en_tq"), newRepo(user5, "en_tq")
+	uwULB, user5ULB := newRepo(uw, "en_ulb"), newRepo(user5, "en_ulb")
+	uwEnTN := newRepo(uw, "en_tn")
+	uwTA := newRepo(uw, "en_ta")
+	uhb, ugnt := newRepo(uw, "hbo_uhb"), newRepo(uw, "el-x-koine_ugnt")
+
+	relation := func(lang, id, version string) *structs.Relation {
+		return &structs.Relation{Language: lang, Identifier: id, Version: version}
+	}
+	type row struct {
+		repoID   int64
+		ref      string
+		stage    door43metadata.Stage
+		latest   bool
+		release  timeutil.TimeStamp
+		language string
+		subject  string
+	}
+	const (
+		bible = "Aligned Bible"
+		tw    = "Translation Words"
+		tq    = "TSV Translation Questions"
+		tn    = "TSV Translation Notes"
+		twl   = "TSV Translation Words Links"
+		prod  = door43metadata.StageProd
+		head  = door43metadata.StageLatest
+	)
+	rows := []row{
+		{ownULT, "master", head, true, 1000, "en", bible},
+		{uwULT, "v1", prod, true, 1000, "en", bible},
+		{ownFrTW, "master", head, true, 1000, "fr", tw},
+		{uwFrTW, "v5", prod, true, 1000, "fr", tw},
+		{uwUST, "master", head, true, 1000, "en", bible},
+		{uwUST, "v1", prod, false, 100, "en", bible},
+		{uwUST, "v2", prod, true, 990, "en", bible},
+		{d43UST, "v1", prod, true, 100, "en", bible},
+		{uwGLT, "v2", prod, true, 990, "en", bible},
+		{d43GLT, "v3", prod, true, 100, "en", bible},
+		{uwTQ, "master", head, true, 1000, "en", tq},
+		{user4TQ, "v1", prod, true, 500, "en", tq},
+		{user5TQ, "v1", prod, true, 800, "en", tq},
+		{uwULB, "v1", prod, true, 100, "en", bible},
+		{user5ULB, "v1", prod, true, 900, "en", bible},
+		{uwEnTN, "v3", prod, true, 990, "en", tn},
+		{uwTA, "v1", prod, true, 990, "en", "Translation Academy"},
+		{uhb, "v2.1.17", prod, false, 100, "hbo", "Hebrew Old Testament"},
+		{uhb, "v2.1.30", prod, true, 990, "hbo", "Hebrew Old Testament"},
+		{ugnt, "v0.18", prod, false, 100, "el-x-koine", "Greek New Testament"},
+		{ugnt, "v0.30", prod, true, 990, "el-x-koine", "Greek New Testament"},
+	}
+	inserted := 0
+	insert := func(r row, relations ...*structs.Relation) {
+		inserted++
+		dm := &repo_model.Door43Metadata{
+			RepoID: r.repoID, Ref: r.ref, RefType: "tag", CommitSHA: fmt.Sprintf("%040d", inserted),
+			Stage: r.stage, IsLatestForStage: r.latest, ReleaseDateUnix: r.release,
+			Language: r.language, Subject: r.subject, MetadataType: "rc", Relations: relations,
+		}
+		if r.stage == head {
+			dm.RefType = "branch"
+		}
+		_, err := db.GetEngine(ctx).Insert(dm)
+		require.NoError(t, err)
+	}
+	for _, r := range rows {
+		insert(r)
+	}
+	insert(row{requestedRepo, "master", head, true, 1000, "en", "TSV Study Notes"},
+		relation("en", "ult", ""), relation("fr", "tw", "5"), relation("en", "ust", "1"), relation("en", "glt", "3"),
+		relation("en", "tq", ""), relation("en", "ulb", ""), relation("fr", "tn", ""), relation("en", "ta", ""),
+		relation("hbo", "uhb", "2.1.17"), relation("el-x-koine", "ugnt", ""))
+
+	dm, err := repo_model.GetDoor43MetadataByRepoIDAndRef(ctx, requestedRepo, "master")
+	require.NoError(t, err)
+	dm.Repo = unittest.AssertExistsAndLoadBean(t, &repo_model.Repository{ID: requestedRepo})
+	refs := func(dms repo_model.Door43MetadataList) map[int64]string {
+		m := make(map[int64]string, len(dms))
+		for _, entry := range dms {
+			m[entry.RepoID] = entry.Ref
+		}
+		return m
+	}
+
+	results, count, err := SearchCatalogForBookPackage(ctx, dm, &door43metadata.SearchCatalogOptions{
+		Subjects:       []string{"TSV Study Notes", bible, "Hebrew Old Testament", tw, tq, tn},
+		IncludeHistory: true,
+	})
+	require.NoError(t, err)
+	assert.EqualValues(t, 8, count)
+	assert.Equal(t, map[int64]string{
+		requestedRepo: "master", ownULT: "master", ownFrTW: "master", uwUST: "v1", d43GLT: "v3", user5TQ: "v1", uwULB: "v1", uwEnTN: "v3",
+	}, refs(results))
+
+	// The pinned Hebrew release wins over the one closer in time; the unpinned Greek
+	// Bible is still the release closest in time.
+	results, _, err = GetOrigLanguageBibles(ctx, dm, nil)
+	require.NoError(t, err)
+	assert.Equal(t, map[int64]string{uhb: "v2.1.17", ugnt: "v0.30"}, refs(results))
+
+	ownFrTN, ownEnTWL, uwEnTWL := newRepo(user2, "fr_tn"), newRepo(user2, "en_twl"), newRepo(uw, "en_twl")
+	insert(row{ownEnTWL, "master", head, true, 1000, "en", twl})
+	insert(row{uwEnTWL, "v1", prod, true, 990, "en", twl})
+	insert(row{ownFrTN, "master", head, true, 1000, "fr", tn}, relation("fr", "twl", ""), relation("fr", "tq", ""))
+	frTN, err := repo_model.GetDoor43MetadataByRepoIDAndRef(ctx, ownFrTN, "master")
+	require.NoError(t, err)
+	frTN.Repo = unittest.AssertExistsAndLoadBean(t, &repo_model.Repository{ID: ownFrTN})
+	results, _, err = SearchCatalogForBookPackage(ctx, frTN, &door43metadata.SearchCatalogOptions{
+		Subjects:       []string{tn, twl, tq},
+		IncludeHistory: true,
+	})
+	require.NoError(t, err)
+	assert.Equal(t, map[int64]string{ownFrTN: "master", ownEnTWL: "master"}, refs(results))
+
+	// A non-default branch requests StageOther, which bare git tags share; user4's bare tag
+	// of fr_twl is not a release, so user2's own English en_twl still stands in.
+	user4FrTWL := newRepo(user4, "fr_twl")
+	bareTag := &repo_model.Release{RepoID: user4FrTWL, TagName: "draft", LowerTagName: "draft", IsTag: true}
+	require.NoError(t, db.Insert(ctx, bareTag))
+	other := func(repoID, releaseID int64, ref, refType, lang, subject string, relations ...*structs.Relation) {
+		inserted++
+		require.NoError(t, db.Insert(ctx, &repo_model.Door43Metadata{
+			RepoID: repoID, ReleaseID: releaseID, Ref: ref, RefType: refType, CommitSHA: fmt.Sprintf("%040d", inserted),
+			Stage: door43metadata.StageOther, ReleaseDateUnix: 1000, Language: lang, Subject: subject, MetadataType: "rc", Relations: relations,
+		}))
+	}
+	other(user4FrTWL, bareTag.ID, "draft", "tag", "fr", twl)
+	other(ownFrTN, 0, "feature", "branch", "fr", tn, relation("fr", "twl", ""))
+	feature, err := repo_model.GetDoor43MetadataByRepoIDAndRef(ctx, ownFrTN, "feature")
+	require.NoError(t, err)
+	feature.Repo = frTN.Repo
+	results, _, err = SearchCatalogForBookPackage(ctx, feature, &door43metadata.SearchCatalogOptions{
+		Subjects:       []string{tn, twl},
+		IncludeHistory: true,
+	})
+	require.NoError(t, err)
+	assert.Equal(t, map[int64]string{ownFrTN: "feature", ownEnTWL: "master"}, refs(results))
 }
