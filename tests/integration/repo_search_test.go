@@ -81,6 +81,7 @@ func TestWebSearchRepoCommitStatus(t *testing.T) {
 
 	req := NewRequestf(t, "GET", "/repo/search?uid=%d&q=%s", owner.ID, repo.Name)
 	resp := loginUser(t, "user4").MakeRequest(t, req, http.StatusOK)
+	// DCS Customizations: the repository object also carries the DCS fields (title ... healthcheck_url)
 	assert.JSONEq(t, `{
   "ok": true,
   "data": [ {
@@ -104,7 +105,12 @@ func TestWebSearchRepoCommitStatus(t *testing.T) {
       "allow_fast_forward_only_merge": false, "allow_merge_update": false, "allow_rebase_update": false, "allow_manual_merge": false,
       "autodetect_manual_merge": false, "default_delete_branch_after_merge": false, "default_merge_style": "", "default_update_style": "",
       "default_allow_maintainer_edit": false,
-      "mirror_interval": "", "mirror_updated": "0001-01-01T00:00:00Z", "mirror_last_sync_at": "0001-01-01T00:00:00Z"
+      "mirror_interval": "", "mirror_updated": "0001-01-01T00:00:00Z", "mirror_last_sync_at": "0001-01-01T00:00:00Z",
+      "title": "", "subject": "", "abbreviation": "", "flavor_type": "", "flavor": "",
+      "language_title": "", "language_direction": "", "language_is_gl": false,
+      "content_format": "", "metadata_type": "", "metadata_version": "", "checking_level": 0,
+      "ingredients": null, "relations": null, "catalog": null,
+      "healthcheck_severity": "", "healthcheck_url": ""
     },
     "latest_commit_status":{"state": "success", "target_url": "https://example.com/ci"},
     "locale_latest_commit_status": "Success"
